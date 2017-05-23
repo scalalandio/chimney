@@ -20,6 +20,16 @@ object DerivedTransformer {
   implicit def identityTransformer[T, Modifiers <: HList]: DerivedTransformer[T, T, Modifiers] =
     (src: T, _: Modifiers) => src
 
+  implicit def toValueClassTransformer[C <: AnyVal, V, Modifiers <: HList]
+    (implicit gen: Generic.Aux[C, V :: HNil])
+  : DerivedTransformer[V, C, Modifiers] =
+    (src: V, _: Modifiers) => gen.from(src :: HNil)
+
+  implicit def fromValueClassTransformer[C <: AnyVal, V, Modifiers <: HList]
+    (implicit gen: Generic.Aux[C, V :: HNil])
+  : DerivedTransformer[C, V, Modifiers] =
+    (src: C, _: Modifiers) => gen.to(src).head
+
   implicit def hnilCase[From, FromG <: HList, Modifiers <: HList]
   : DerivedTransformer[FromG @@ From, HNil, Modifiers] =
     (_: FromG @@ From, _: Modifiers) => HNil
