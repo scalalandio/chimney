@@ -1,4 +1,4 @@
-package io.chimney
+package io.scalaland.chimney
 
 import shapeless._
 import shapeless.labelled._
@@ -20,7 +20,6 @@ object Transformer {
   implicit def hconsCase[FromG <: HList, Label <: Symbol, FromFieldT, ToFieldT, TailTo <: HList]
     (implicit fieldSelector: Selector.Aux[FromG, Label, FromFieldT],
      fieldTransformer: Transformer[FromFieldT, ToFieldT],
-     labelWit: Witness.Aux[Label],
      tailTransformer: Transformer[FromG, TailTo]): Transformer[FromG, FieldType[Label, ToFieldT] :: TailTo] =
     (obj: FromG) =>
       field[Label](fieldTransformer.transform(fieldSelector(obj))) :: tailTransformer.transform(obj)

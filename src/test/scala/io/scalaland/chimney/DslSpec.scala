@@ -1,4 +1,4 @@
-package io.chimney
+package io.scalaland.chimney
 
 import org.scalatest.{MustMatchers, WordSpec}
 

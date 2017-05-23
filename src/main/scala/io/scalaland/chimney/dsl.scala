@@ -1,5 +1,4 @@
-package io.chimney
-
+package io.scalaland.chimney
 
 object dsl {
 
