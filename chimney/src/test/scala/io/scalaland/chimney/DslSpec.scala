@@ -118,6 +118,27 @@ class DslSpec extends WordSpec with MustMatchers {
 
       }
     }
+
+    "support common data types" should {
+
+      case class Foo(value: String)
+      case class Bar(value: String)
+
+      "support scala.Option" in {
+        Option(Foo("a")).transformInto[Option[Bar]]
+        Some(Foo("a")).transformInto[Some[Bar]]
+      }
+
+      "support scala.util.Either" in {
+        (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]]
+        Left(Foo("a")).transformInto[Left[Bar, Bar]]
+        Right(Foo("a")).transformInto[Left[Bar, Bar]]
+      }
+
+//      "support scala.collection.Seq" in {
+//        scala.collection.Seq(Foo("a")).transformInto[scala.collection.Seq[Bar]]
+//      }
+    }
   }
 }
 

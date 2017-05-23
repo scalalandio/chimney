@@ -4,6 +4,9 @@ import shapeless._
 import shapeless.labelled._
 import shapeless.tag._
 
+import scala.collection.TraversableLike
+import scala.collection.generic.CanBuildFrom
+
 
 trait DerivedTransformer[From, To, Modifiers <: HList] {
 
@@ -49,4 +52,40 @@ object DerivedTransformer {
     (src: From, modifiers: Modifiers) =>
       toLG.from(genTransformer.transform(tag[From](fromLG.to(src)), modifiers))
   }
+
+  implicit def optionTransformer[From, To, Modifiers <: HList]
+    (implicit innerTransformer: DerivedTransformer[From, To, Modifiers])
+  : DerivedTransformer[Option[From], Option[To], Modifiers] =
+    (src: Option[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_, modifiers))
+
+  implicit def someTransformer[From, To, Modifiers <: HList]
+    (implicit innerTransformer: DerivedTransformer[From, To, Modifiers])
+  : DerivedTransformer[Some[From], Option[To], Modifiers] =
+    (src: Some[From], modifiers: Modifiers) => Some(innerTransformer.transform(src.value, modifiers))
+
+  implicit def leftTransformer[FromL, ToL, FromR, ToR, Modifiers <: HList]
+  (implicit leftTransformer: DerivedTransformer[FromL, ToL, Modifiers])
+  : DerivedTransformer[Left[FromL, FromR], Left[ToL, ToR], Modifiers] =
+    (src: Left[FromL, FromR], modifiers: Modifiers) => Left(leftTransformer.transform(src.value, modifiers))
+
+  implicit def rightTransformer[FromL, ToL, FromR, ToR, Modifiers <: HList]
+  (implicit rightTransformer: DerivedTransformer[FromR, ToR, Modifiers])
+  : DerivedTransformer[Right[FromL, FromR], Right[ToL, ToR], Modifiers] =
+    (src: Right[FromL, FromR], modifiers: Modifiers) => Right(rightTransformer.transform(src.value, modifiers))
+
+  implicit def eitherTransformer[FromL, ToL, FromR, ToR, Modifiers <: HList]
+    (implicit leftTransformer: DerivedTransformer[FromL, ToL, Modifiers],
+     rightTransformer: DerivedTransformer[FromR, ToR, Modifiers])
+  : DerivedTransformer[Either[FromL, FromR], Either[ToL, ToR], Modifiers] =
+    (src: Either[FromL, FromR], modifiers: Modifiers) => src match {
+      case Left(value)  => Left(leftTransformer.transform(value, modifiers))
+      case Right(value) => Right(rightTransformer.transform(value, modifiers))
+    }
+
+//  implicit def traversableTransformer[From, To, Modifiers <: HList, M[_] <: Traversable[_], I <: M[From]]
+//    (implicit innerTransformer: DerivedTransformer[From, To, Modifiers],
+//     cbf: CanBuildFrom[M[To], To, M[To]]
+//    )
+//  : DerivedTransformer[M[From], M[To], Modifiers] =
+//    (src: M[From], modifiers: Modifiers) => src.asInstanceOf[Traversable[From]].map(innerTransformer.transform(_: From, modifiers)).to[M]
 }
