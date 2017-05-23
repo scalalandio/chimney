@@ -140,6 +140,10 @@ class DslSpec extends WordSpec with MustMatchers {
         List(Foo("a")).transformInto[List[Bar]] mustBe List(Bar("a"))
         Vector(Foo("a")).transformInto[Vector[Bar]] mustBe Vector(Bar("a"))
       }
+
+      "support Arrays" in {
+        Array(Foo("a")).transformInto[Array[Bar]] mustBe Array(Bar("a"))
+      }
     }
   }
 }

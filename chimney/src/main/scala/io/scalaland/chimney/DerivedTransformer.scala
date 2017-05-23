@@ -6,6 +6,7 @@ import shapeless.tag._
 
 import scala.collection.TraversableLike
 import scala.collection.generic.CanBuildFrom
+import scala.reflect.ClassTag
 
 
 trait DerivedTransformer[From, To, Modifiers <: HList] {
@@ -89,4 +90,9 @@ object DerivedTransformer {
      cbf: CanBuildFrom[M[From], To, M[To]])
   : DerivedTransformer[M[From], M[To], Modifiers] =
     (src: M[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_: From, modifiers)).to[M]
+
+  implicit def arrayTransformer[From, To, Modifiers <: HList]
+    (implicit innerTransformer: DerivedTransformer[From, To, Modifiers], toTag: ClassTag[To])
+  : DerivedTransformer[Array[From], Array[To], Modifiers] =
+    (src: Array[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_: From, modifiers))
 }
