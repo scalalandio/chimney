@@ -144,6 +144,10 @@ class DslSpec extends WordSpec with MustMatchers {
       "support Arrays" in {
         Array(Foo("a")).transformInto[Array[Bar]] mustBe Array(Bar("a"))
       }
+
+      "support Map" in {
+        Map("test" -> Foo("a")).transformInto[Map[String, Bar]] mustBe Map("test" -> Bar("a"))
+      }
     }
   }
 }

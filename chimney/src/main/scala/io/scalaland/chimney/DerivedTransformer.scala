@@ -95,4 +95,12 @@ object DerivedTransformer {
     (implicit innerTransformer: DerivedTransformer[From, To, Modifiers], toTag: ClassTag[To])
   : DerivedTransformer[Array[From], Array[To], Modifiers] =
     (src: Array[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_: From, modifiers))
+
+  implicit def mapTransformer[FromK, ToK, FromV, ToV, Modifiers <: HList]
+    (implicit keyTransformer: DerivedTransformer[FromK, ToK, Modifiers],
+     valueTransformer: DerivedTransformer[FromV, ToV, Modifiers])
+  : DerivedTransformer[Map[FromK, FromV], Map[ToK, ToV], Modifiers] =
+    (src: Map[FromK, FromV], modifiers: Modifiers) => src.map { case (k, v) =>
+      keyTransformer.transform(k, modifiers) -> valueTransformer.transform(v, modifiers)
+    }
 }
