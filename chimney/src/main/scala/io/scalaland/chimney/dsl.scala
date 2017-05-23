@@ -1,24 +1,34 @@
 package io.scalaland.chimney
 
+import shapeless.{HList, HNil, Witness, ::}
+
 object dsl {
 
   implicit class TransformerOps[From](val source: From) extends AnyVal {
 
-    def transformer[To]: TransformTo[From, To] = new TransformTo(source)
+    def into[To]: TransformerInto[From, To, HNil] =
+      new TransformerInto(source, HNil)
+
+    def transformInto[To](implicit derivedTransformer: DerivedTransformer[From, To, HNil]): To =
+      derivedTransformer.transform(source, HNil)
   }
 
-  class TransformTo[From, To](val source: From) extends AnyVal {
+  class TransformerInto[From, To, Modifiers <: HList](val source: From,
+                                                      val modifiers: Modifiers) {
 
-    def invoke(implicit transformer: Transformer.Aux[From, To]): To =
-      transformer.transform(source, Modifier.empty)
+    def withFieldConst[T](label: Witness.Lt[Symbol],
+                          value: T) = withFieldComputed(label, _ => value)
 
-    def invokeM[M <: Modifier](modifier: M)
-                              (implicit transformer: Transformer[From, To, M]): To =
-      transformer.transform(source, modifier)
+    def withFieldComputed[T](label: Witness.Lt[Symbol],
+                             f: From => T): TransformerInto[From, To, Modifier.fieldFunction[label.T, From, T] :: Modifiers] =
+      new TransformerInto(source, new Modifier.fieldFunction[label.T, From, T](f) :: modifiers)
+
+    def withFieldRenamed(label1: Witness.Lt[Symbol],
+                         label2: Witness.Lt[Symbol]): TransformerInto[From, To, Modifier.relabel[label1.T, label2.T] :: Modifiers] =
+      new TransformerInto(source, new Modifier.relabel[label1.T, label2.T] :: modifiers)
+
+    def transform(implicit transformer: DerivedTransformer[From, To, Modifiers]): To =
+      transformer.transform(source, modifiers)
   }
-
-  type Modifier = io.scalaland.chimney.Modifier
-  val Modifier = io.scalaland.chimney.Modifier
-
 
 }

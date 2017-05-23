@@ -22,7 +22,6 @@ val settings = Seq(
     "-Ywarn-numeric-widen",
     "-Xfatal-warnings",
     "-Xfuture",
-    "-Xlint",
     "-Xlint:adapted-args",
     "-Xlint:by-name-right-associative",
     "-Xlint:constant",
@@ -49,7 +48,7 @@ val settings = Seq(
 
 val versions = new {
   val shapelessVersion = "2.3.2"
-  val scalatestVersion = "3.0.0"
+  val scalatestVersion = "3.0.3"
 }
 
 val dependencies = Seq(
