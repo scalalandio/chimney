@@ -34,5 +34,13 @@ class DslSpec extends WordSpec with MustMatchers {
       batmanDTO.id mustBe batman.id
       batmanDTO.name mustBe batman.name.value
     }
+
+    "transform to a target case class which contains only subset of source fields" in {
+
+      case class Foo(x: Int, y: String, z: Double)
+      case class Bar(x: Int, z: Double)
+
+      Foo(3, "pi", 3.14).transformTo[Bar] mustBe Bar(3, 3.14)
+    }
   }
 }
