@@ -125,14 +125,14 @@ class DslSpec extends WordSpec with MustMatchers {
       case class Bar(value: String)
 
       "support scala.Option" in {
-        Option(Foo("a")).transformInto[Option[Bar]]
-        Some(Foo("a")).transformInto[Some[Bar]]
+        Option(Foo("a")).transformInto[Option[Bar]] mustBe Option(Bar("a"))
+        Some(Foo("a")).transformInto[Some[Bar]] mustBe Some(Bar("a"))
       }
 
       "support scala.util.Either" in {
-        (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]]
-        Left(Foo("a")).transformInto[Left[Bar, Bar]]
-        Right(Foo("a")).transformInto[Left[Bar, Bar]]
+        (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] mustBe Left(Bar("a"))
+        Left(Foo("a")).transformInto[Left[Bar, Bar]] mustBe Left(Bar("a"))
+        Right(Foo("a")).transformInto[Right[Bar, Bar]] mustBe Right(Bar("a"))
       }
 
 //      "support scala.collection.Seq" in {
