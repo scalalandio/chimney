@@ -82,10 +82,11 @@ object DerivedTransformer {
       case Right(value) => Right(rightTransformer.transform(value, modifiers))
     }
 
-//  implicit def traversableTransformer[From, To, Modifiers <: HList, M[_] <: Traversable[_], I <: M[From]]
-//    (implicit innerTransformer: DerivedTransformer[From, To, Modifiers],
-//     cbf: CanBuildFrom[M[To], To, M[To]]
-//    )
-//  : DerivedTransformer[M[From], M[To], Modifiers] =
-//    (src: M[From], modifiers: Modifiers) => src.asInstanceOf[Traversable[From]].map(innerTransformer.transform(_: From, modifiers)).to[M]
+  implicit def traversableTransformer[From, To, Modifiers <: HList, M[_]]
+    (implicit innerTransformer: DerivedTransformer[From, To, Modifiers],
+     ev1: M[From] <:< Traversable[From],
+     ev2: M[To] <:< Traversable[To],
+     cbf: CanBuildFrom[M[From], To, M[To]])
+  : DerivedTransformer[M[From], M[To], Modifiers] =
+    (src: M[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_: From, modifiers)).to[M]
 }

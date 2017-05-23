@@ -135,9 +135,11 @@ class DslSpec extends WordSpec with MustMatchers {
         Right(Foo("a")).transformInto[Right[Bar, Bar]] mustBe Right(Bar("a"))
       }
 
-//      "support scala.collection.Seq" in {
-//        scala.collection.Seq(Foo("a")).transformInto[scala.collection.Seq[Bar]]
-//      }
+      "support Traversable collections" in {
+        Seq(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
+        List(Foo("a")).transformInto[List[Bar]] mustBe List(Bar("a"))
+        Vector(Foo("a")).transformInto[Vector[Bar]] mustBe Vector(Bar("a"))
+      }
     }
   }
 }
