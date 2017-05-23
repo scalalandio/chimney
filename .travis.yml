@@ -4,8 +4,9 @@ scala:
    - 2.12.1
    - 2.12.2
 jdk:
+  - openjdk8
   - oraclejdk8
-
+dist: trusty
 sudo: false
 
 cache:
