@@ -127,8 +127,8 @@ class DslSpec extends WordSpec with MustMatchers {
       "support scala.Option" in {
         Option(Foo("a")).transformInto[Option[Bar]] mustBe Option(Bar("a"))
         (Some(Foo("a")): Option[Foo]).transformInto[Option[Bar]] mustBe Option(Bar("a"))
-        Some(Foo("a")).transformInto[Option[Bar]] mustBe Some(Bar("a")) // FIXIT
-        None.transformInto[Option[Bar]] mustBe None                     // FIXIT
+        Some(Foo("a")).transformInto[Option[Bar]] mustBe Some(Bar("a"))
+        None.transformInto[Option[Bar]] mustBe None
         (None: Option[Foo]).transformInto[Option[Bar]] mustBe None
         Some(Foo("a")).transformInto[Some[Bar]] mustBe Some(Bar("a"))
         None.transformInto[None.type] mustBe None
@@ -137,8 +137,8 @@ class DslSpec extends WordSpec with MustMatchers {
       "support scala.util.Either" in {
         (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] mustBe Left(Bar("a"))
         (Right(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] mustBe Right(Bar("a"))
-        Left(Foo("a")).transformInto[Either[Bar, Bar]] mustBe Left(Bar("a"))   // FIXIT
-        Right(Foo("a")).transformInto[Either[Bar, Bar]] mustBe Right(Bar("a")) // FIXIT
+        Left(Foo("a")).transformInto[Either[Bar, Bar]] mustBe Left(Bar("a"))
+        Right(Foo("a")).transformInto[Either[Bar, Bar]] mustBe Right(Bar("a"))
         Left(Foo("a")).transformInto[Left[Bar, Bar]] mustBe Left(Bar("a"))
         Right(Foo("a")).transformInto[Right[Bar, Bar]] mustBe Right(Bar("a"))
       }
