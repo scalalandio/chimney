@@ -118,6 +118,45 @@ class DslSpec extends WordSpec with MustMatchers {
 
       }
     }
+
+    "support common data types" should {
+
+      case class Foo(value: String)
+      case class Bar(value: String)
+
+      "support scala.Option" in {
+        Option(Foo("a")).transformInto[Option[Bar]] mustBe Option(Bar("a"))
+        (Some(Foo("a")): Option[Foo]).transformInto[Option[Bar]] mustBe Option(Bar("a"))
+        Some(Foo("a")).transformInto[Option[Bar]] mustBe Some(Bar("a"))
+        None.transformInto[Option[Bar]] mustBe None
+        (None: Option[Foo]).transformInto[Option[Bar]] mustBe None
+        Some(Foo("a")).transformInto[Some[Bar]] mustBe Some(Bar("a"))
+        None.transformInto[None.type] mustBe None
+      }
+
+      "support scala.util.Either" in {
+        (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] mustBe Left(Bar("a"))
+        (Right(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] mustBe Right(Bar("a"))
+        Left(Foo("a")).transformInto[Either[Bar, Bar]] mustBe Left(Bar("a"))
+        Right(Foo("a")).transformInto[Either[Bar, Bar]] mustBe Right(Bar("a"))
+        Left(Foo("a")).transformInto[Left[Bar, Bar]] mustBe Left(Bar("a"))
+        Right(Foo("a")).transformInto[Right[Bar, Bar]] mustBe Right(Bar("a"))
+      }
+
+      "support Traversable collections" in {
+        Seq(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
+        List(Foo("a")).transformInto[List[Bar]] mustBe List(Bar("a"))
+        Vector(Foo("a")).transformInto[Vector[Bar]] mustBe Vector(Bar("a"))
+      }
+
+      "support Arrays" in {
+        Array(Foo("a")).transformInto[Array[Bar]] mustBe Array(Bar("a"))
+      }
+
+      "support Map" in {
+        Map("test" -> Foo("a")).transformInto[Map[String, Bar]] mustBe Map("test" -> Bar("a"))
+      }
+    }
   }
 }
 
