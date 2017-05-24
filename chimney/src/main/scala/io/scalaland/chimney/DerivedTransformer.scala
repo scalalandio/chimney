@@ -4,7 +4,6 @@ import shapeless._
 import shapeless.labelled._
 import shapeless.tag._
 
-import scala.collection.TraversableLike
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
@@ -14,16 +13,26 @@ trait DerivedTransformer[From, To, Modifiers <: HList] {
   def transform(src: From, modifiers: Modifiers): To
 }
 
-object DerivedTransformer {
+object DerivedTransformer
+  extends BasicInstances
+  with ValueClassInstances
+  with OptionInstances
+  with EitherInstances
+  with CollectionInstances
+  with GenericInstances
 
-  implicit def fromNonDerived[T, U, Modifiers <: HList]
+trait BasicInstances {
+
+  implicit def fromTransformer[T, U, Modifiers <: HList]
     (implicit transformer: Transformer[T, U]): DerivedTransformer[T, U, Modifiers] =
     (src: T, _: Modifiers) =>
       transformer.transform(src)
 
   implicit def identityTransformer[T, Modifiers <: HList]: DerivedTransformer[T, T, Modifiers] =
     (src: T, _: Modifiers) => src
+}
 
+trait ValueClassInstances {
   implicit def toValueClassTransformer[C <: AnyVal, V, Modifiers <: HList]
     (implicit gen: Generic.Aux[C, V :: HNil])
   : DerivedTransformer[V, C, Modifiers] =
@@ -33,26 +42,9 @@ object DerivedTransformer {
     (implicit gen: Generic.Aux[C, V :: HNil])
   : DerivedTransformer[C, V, Modifiers] =
     (src: C, _: Modifiers) => gen.to(src).head
+}
 
-  implicit def hnilCase[From, FromG <: HList, Modifiers <: HList]
-  : DerivedTransformer[FromG @@ From, HNil, Modifiers] =
-    (_: FromG @@ From, _: Modifiers) => HNil
-
-  implicit def hconsCase[From, FromG <: HList, Label <: Symbol, ToFieldT, TailToG <: HList, Modifiers <: HList]
-    (implicit vp: ValueProvider[FromG, From, ToFieldT, Label, Modifiers],
-     tailTransformer: DerivedTransformer[FromG @@ From, TailToG, Modifiers])
-  : DerivedTransformer[FromG @@ From, FieldType[Label, ToFieldT] :: TailToG, Modifiers] = {
-    (src: FromG @@ From, modifiers: Modifiers) =>
-      field[Label](vp.provide(src, modifiers)) :: tailTransformer.transform(src, modifiers)
-  }
-
-  implicit def gen[From, To, FromG, ToG, Modifiers <: HList]
-    (implicit fromLG: LabelledGeneric.Aux[From, FromG],
-     toLG: LabelledGeneric.Aux[To, ToG],
-     genTransformer: DerivedTransformer[FromG @@ From, ToG, Modifiers]): DerivedTransformer[From, To, Modifiers] = {
-    (src: From, modifiers: Modifiers) =>
-      toLG.from(genTransformer.transform(tag[From](fromLG.to(src)), modifiers))
-  }
+trait OptionInstances {
 
   implicit def optionTransformer[From, To, Modifiers <: HList]
     (implicit innerTransformer: DerivedTransformer[From, To, Modifiers])
@@ -64,25 +56,35 @@ object DerivedTransformer {
   : DerivedTransformer[Some[From], Option[To], Modifiers] =
     (src: Some[From], modifiers: Modifiers) => Some(innerTransformer.transform(src.value, modifiers))
 
-  implicit def leftTransformer[FromL, ToL, FromR, ToR, Modifiers <: HList]
-  (implicit leftTransformer: DerivedTransformer[FromL, ToL, Modifiers])
-  : DerivedTransformer[Left[FromL, FromR], Left[ToL, ToR], Modifiers] =
-    (src: Left[FromL, FromR], modifiers: Modifiers) => Left(leftTransformer.transform(src.value, modifiers))
+  implicit def noneTransformer[From, To, Modifiers <: HList]
+    (implicit innerTransformer: DerivedTransformer[From, To, Modifiers])
+  : DerivedTransformer[None.type, Option[To], Modifiers] =
+    (_: None.type, _: Modifiers) => None
+}
 
-  implicit def rightTransformer[FromL, ToL, FromR, ToR, Modifiers <: HList]
-  (implicit rightTransformer: DerivedTransformer[FromR, ToR, Modifiers])
-  : DerivedTransformer[Right[FromL, FromR], Right[ToL, ToR], Modifiers] =
-    (src: Right[FromL, FromR], modifiers: Modifiers) => Right(rightTransformer.transform(src.value, modifiers))
+trait EitherInstances {
 
   implicit def eitherTransformer[FromL, ToL, FromR, ToR, Modifiers <: HList]
-    (implicit leftTransformer: DerivedTransformer[FromL, ToL, Modifiers],
-     rightTransformer: DerivedTransformer[FromR, ToR, Modifiers])
+   (implicit leftTransformer: DerivedTransformer[FromL, ToL, Modifiers],
+    rightTransformer: DerivedTransformer[FromR, ToR, Modifiers])
   : DerivedTransformer[Either[FromL, FromR], Either[ToL, ToR], Modifiers] =
     (src: Either[FromL, FromR], modifiers: Modifiers) => src match {
       case Left(value)  => Left(leftTransformer.transform(value, modifiers))
       case Right(value) => Right(rightTransformer.transform(value, modifiers))
     }
 
+  implicit def leftTransformer[FromL, ToL, FromR, ToR, Modifiers <: HList]
+    (implicit leftTransformer: DerivedTransformer[FromL, ToL, Modifiers])
+  : DerivedTransformer[Left[FromL, FromR], Either[ToL, ToR], Modifiers] =
+    (src: Left[FromL, FromR], modifiers: Modifiers) => Left(leftTransformer.transform(src.value, modifiers))
+
+  implicit def rightTransformer[FromL, ToL, FromR, ToR, Modifiers <: HList]
+    (implicit rightTransformer: DerivedTransformer[FromR, ToR, Modifiers])
+  : DerivedTransformer[Right[FromL, FromR], Either[ToL, ToR], Modifiers] =
+    (src: Right[FromL, FromR], modifiers: Modifiers) => Right(rightTransformer.transform(src.value, modifiers))
+}
+
+trait CollectionInstances {
   implicit def traversableTransformer[From, To, Modifiers <: HList, M[_]]
     (implicit innerTransformer: DerivedTransformer[From, To, Modifiers],
      ev1: M[From] <:< Traversable[From],
@@ -103,4 +105,28 @@ object DerivedTransformer {
     (src: Map[FromK, FromV], modifiers: Modifiers) => src.map { case (k, v) =>
       keyTransformer.transform(k, modifiers) -> valueTransformer.transform(v, modifiers)
     }
+
+}
+
+trait GenericInstances {
+
+  implicit def hnilCase[From, FromG <: HList, Modifiers <: HList]
+  : DerivedTransformer[FromG @@ From, HNil, Modifiers] =
+    (_: FromG @@ From, _: Modifiers) => HNil
+
+  implicit def hconsCase[From, FromG <: HList, Label <: Symbol, ToFieldT, TailToG <: HList, Modifiers <: HList]
+    (implicit vp: ValueProvider[FromG, From, ToFieldT, Label, Modifiers],
+     tailTransformer: DerivedTransformer[FromG @@ From, TailToG, Modifiers])
+  : DerivedTransformer[FromG @@ From, FieldType[Label, ToFieldT] :: TailToG, Modifiers] = {
+    (src: FromG @@ From, modifiers: Modifiers) =>
+      field[Label](vp.provide(src, modifiers)) :: tailTransformer.transform(src, modifiers)
+  }
+
+  implicit def gen[From, To, FromG, ToG, Modifiers <: HList]
+    (implicit fromLG: LabelledGeneric.Aux[From, FromG],
+     toLG: LabelledGeneric.Aux[To, ToG],
+     genTransformer: DerivedTransformer[FromG @@ From, ToG, Modifiers]): DerivedTransformer[From, To, Modifiers] = {
+    (src: From, modifiers: Modifiers) =>
+      toLG.from(genTransformer.transform(tag[From](fromLG.to(src)), modifiers))
+  }
 }
