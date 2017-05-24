@@ -1,7 +1,5 @@
 val settings = Seq(
-  organization := "io.scalaland",
   version := "0.1.0",
-
   scalaVersion := "2.12.2",
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
@@ -58,7 +56,10 @@ val dependencies = Seq(
 
 lazy val root = project.in(file("."))
   .settings(settings: _*)
+  .settings(publishSettings: _*)
+  .settings(noPublishSettings: _*)
   .aggregate(chimneyJVM, chimneyJS)
+  .dependsOn(chimneyJVM, chimneyJS)
 
 lazy val chimney = crossProject.crossType(CrossType.Pure)
   .settings(
@@ -67,8 +68,47 @@ lazy val chimney = crossProject.crossType(CrossType.Pure)
     description := "Scala library for boilerplate free data rewriting"
   )
   .settings(settings: _*)
+  .settings(publishSettings: _*)
   .settings(dependencies: _*)
+
 
 lazy val chimneyJVM = chimney.jvm
 
 lazy val chimneyJS = chimney.js
+
+lazy val publishSettings = Seq(
+  organization := "io.scalaland",
+  homepage := Some(url("https://scalaland.io")),
+  licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+  scmInfo := Some(ScmInfo(url("https://github.com/scalalandio/chimney"), "scm:git:git@github.com:scalalandio/chimney.git")),
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  },
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
+  pomIncludeRepository := { _ => false },
+  pomExtra := (
+    <developers>
+      <developer>
+        <id>krzemin</id>
+        <name>Piotr Krzemiński</name>
+        <url>http://github.com/krzemin</url>
+      </developer>
+      <developer>
+        <id>MateuszKubuszok</id>
+        <name>Mateusz Kubuszok</name>
+        <url>http://github.com/MateuszKubuszok</url>
+      </developer>
+    </developers>
+    )
+)
+
+lazy val noPublishSettings = Seq(
+  publish := (),
+  publishLocal := (),
+  publishArtifact := false
+)
