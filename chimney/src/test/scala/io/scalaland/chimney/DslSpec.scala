@@ -16,8 +16,8 @@ class DslSpec extends WordSpec with MustMatchers {
 
       implicit val _ = userNameToStringTransformer
 
-      UserName("Batman").transformInto[String] mustBe "Batman"
-      UserName("Batman").transformInto[String] mustBe "Batman"
+      UserName("Batman").into[String].transform mustBe "BatmanT"
+      UserName("Batman").transformInto[String] mustBe "BatmanT"
     }
 
     "use implicit transformer for nested field" in {
@@ -29,8 +29,8 @@ class DslSpec extends WordSpec with MustMatchers {
       val batman = User("123", UserName("Batman"))
       val batmanDTO = batman.transformInto[UserDTO]
 
-      batmanDTO.id mustBe batman.id
-      batmanDTO.name mustBe batman.name.value
+      batmanDTO.id mustBe "123"
+      batmanDTO.name mustBe "BatmanT"
     }
 
     "support different set of fields of source and target" when {
@@ -165,7 +165,7 @@ object Domain1 {
   case class UserName(value: String)
 
   val userNameToStringTransformer: Transformer[UserName, String] =
-    (_: UserName).value
+    (_: UserName).value + "T"
 
   case class UserDTO(id: String, name: String)
   case class User(id: String, name: UserName)
