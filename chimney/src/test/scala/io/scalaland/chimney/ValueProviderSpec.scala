@@ -36,14 +36,34 @@ class ValueProviderSpec extends WordSpec with MustMatchers {
         "test"
     }
 
-    "pick applicable modifier" in {
+    "pick applicable modifier" when {
 
-      ValueProvider.provide(Source("test"), 'foo, classOf[String],
-        Modifier.fieldConstant[Source, String]('na, "non-applicable") ::
+      "applicable is first" in {
+        ValueProvider.provide(Source("test"), 'foo, classOf[String],
           Modifier.fieldConstant[Source, String]('foo, "provided") ::
-          Modifier.fieldConstant[Source, String]('na, "non-applicable") ::
+            Modifier.fieldConstant[Source, String]('na, "non-applicable") ::
+            Modifier.fieldConstant[Source, String]('na, "non-applicable") ::
             HNil) mustBe
-        "provided"
+          "provided"
+      }
+
+      "applicable is in the middle" in {
+        ValueProvider.provide(Source("test"), 'foo, classOf[String],
+          Modifier.fieldConstant[Source, String]('na, "non-applicable") ::
+            Modifier.fieldConstant[Source, String]('foo, "provided") ::
+            Modifier.fieldConstant[Source, String]('na, "non-applicable") ::
+            HNil) mustBe
+          "provided"
+      }
+
+      "applicable is last" in {
+        ValueProvider.provide(Source("test"), 'foo, classOf[String],
+          Modifier.fieldConstant[Source, String]('na, "non-applicable") ::
+            Modifier.fieldConstant[Source, String]('na, "non-applicable") ::
+            Modifier.fieldConstant[Source, String]('foo, "provided") ::
+            HNil) mustBe
+          "provided"
+      }
     }
 
     "pick first of applicable modifiers" in {
