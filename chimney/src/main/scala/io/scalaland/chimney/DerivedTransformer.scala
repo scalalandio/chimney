@@ -157,12 +157,9 @@ object CoproductInstanceProvider {
 
   implicit def matchingObjCase[ToG <: Coproduct, ToHList <: HList, Label <: Symbol, T, TargetT, Modifiers <: HList]
     (implicit sel: ops.union.Selector.Aux[ToG, Label, TargetT],
-//     wit: Witness.Aux[TargetT],
-     wit2: Generic.Aux[TargetT, HNil],
+     wit: Witness.Aux[TargetT],
      inj: ops.coproduct.Inject[ToG, FieldType[Label, TargetT]])
   : CoproductInstanceProvider[ToG, Label, T, Modifiers] =
-    (_: FieldType[Label, T], _: Modifiers) => {
-//      inj(field[Label](wit.value))
-      inj(field[Label](wit2.from(HNil)))
-    }
+    (_: FieldType[Label, T], _: Modifiers) =>
+      inj(field[Label](wit.value))
 }

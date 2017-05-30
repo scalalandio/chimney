@@ -5,10 +5,10 @@ case class PersonId(id: Int) extends AnyVal
 case class Email(email: String) extends AnyVal
 
 sealed trait PhoneType
-case object `PhoneType.MOBILE` extends PhoneType
-case object `PhoneType.HOME` extends PhoneType
-case object `PhoneType.WORK` extends PhoneType
 
+case object MOBILE extends PhoneType
+case object HOME extends PhoneType
+case object WORK extends PhoneType
 
 object Person {
 

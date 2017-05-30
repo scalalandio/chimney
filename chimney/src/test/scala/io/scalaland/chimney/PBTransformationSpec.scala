@@ -26,7 +26,7 @@ class PBTransformationSpec extends WordSpec with MustMatchers {
 
     "transform enum represented as sealed trait hierarchy" in {
 
-      (addressbook.`PhoneType.MOBILE`: addressbook.PhoneType)
+      (addressbook.MOBILE: addressbook.PhoneType)
         .transformInto[examples.pb.addressbook.PhoneType] mustBe
         examples.pb.addressbook.PhoneType.MOBILE
     }
