@@ -124,6 +124,22 @@ trait GenericInstances {
       field[Label](vp.provide(src, modifiers)) :: tailTransformer.transform(src, modifiers)
   }
 
+  // $COVERAGE-OFF$
+  implicit def cnilCase[From, ToG <: Coproduct, Modifiers <: HList]
+  : DerivedTransformer[CNil @@ From, ToG, Modifiers] =
+    (_: CNil @@ From, _: Modifiers) => null.asInstanceOf[ToG]
+  // $COVERAGE-ON$
+
+  implicit def coproductCase[From, TailFromG <: Coproduct, Label <: Symbol, HeadT, ToG <: Coproduct, Modifiers <: HList]
+  (implicit cip: CoproductInstanceProvider[ToG, Label, HeadT, Modifiers],
+   tailTransformer: DerivedTransformer[TailFromG @@ From, ToG, Modifiers])
+  : DerivedTransformer[@@[FieldType[Label, HeadT] :+: TailFromG, From], ToG, Modifiers] =
+    (src: @@[FieldType[Label, HeadT] :+: TailFromG, From], modifiers: Modifiers) =>
+      (src : FieldType[Label, HeadT] :+: TailFromG) match {
+        case Inl(hd) => cip.provide(hd, modifiers)
+        case Inr(tl) => tailTransformer.transform(tag[From](tl), modifiers)
+      }
+
   implicit def gen[From, To, FromG, ToG, Modifiers <: HList]
     (implicit fromLG: LabelledGeneric.Aux[From, FromG],
      toLG: LabelledGeneric.Aux[To, ToG],
@@ -131,4 +147,22 @@ trait GenericInstances {
     (src: From, modifiers: Modifiers) =>
       toLG.from(genTransformer.transform(tag[From](fromLG.to(src)), modifiers))
   }
+}
+
+trait CoproductInstanceProvider[ToG <: Coproduct, Label <: Symbol, T, Modifiers <: HList] {
+  def provide(srcInstance: FieldType[Label, T], modifiers: Modifiers): ToG
+}
+
+object CoproductInstanceProvider {
+
+  implicit def matchingObjCase[ToG <: Coproduct, ToHList <: HList, Label <: Symbol, T, TargetT, Modifiers <: HList]
+    (implicit sel: ops.union.Selector.Aux[ToG, Label, TargetT],
+//     wit: Witness.Aux[TargetT],
+     wit2: Generic.Aux[TargetT, HNil],
+     inj: ops.coproduct.Inject[ToG, FieldType[Label, TargetT]])
+  : CoproductInstanceProvider[ToG, Label, T, Modifiers] =
+    (_: FieldType[Label, T], _: Modifiers) => {
+//      inj(field[Label](wit.value))
+      inj(field[Label](wit2.from(HNil)))
+    }
 }
