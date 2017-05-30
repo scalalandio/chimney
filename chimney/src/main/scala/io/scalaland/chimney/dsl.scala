@@ -20,12 +20,12 @@ object dsl {
                           value: T) = withFieldComputed(label, _ => value)
 
     def withFieldComputed[T](label: Witness.Lt[Symbol],
-                             f: From => T): TransformerInto[From, To, FieldFunctionModifier[label.T, From, T] :: Modifiers] =
-      new TransformerInto(source, new FieldFunctionModifier[label.T, From, T](f) :: modifiers)
+                             f: From => T): TransformerInto[From, To, Modifier.fieldFunction[label.T, From, T] :: Modifiers] =
+      new TransformerInto(source, new Modifier.fieldFunction[label.T, From, T](f) :: modifiers)
 
     def withFieldRenamed(label1: Witness.Lt[Symbol],
-                         label2: Witness.Lt[Symbol]): TransformerInto[From, To, RelabelModifier[label1.T, label2.T] :: Modifiers] =
-      new TransformerInto(source, new RelabelModifier[label1.T, label2.T] :: modifiers)
+                         label2: Witness.Lt[Symbol]): TransformerInto[From, To, Modifier.relabel[label1.T, label2.T] :: Modifiers] =
+      new TransformerInto(source, new Modifier.relabel[label1.T, label2.T] :: modifiers)
 
     def transform(implicit transformer: DerivedTransformer[From, To, Modifiers]): To =
       transformer.transform(source, modifiers)

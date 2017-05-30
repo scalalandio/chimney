@@ -117,7 +117,7 @@ trait GenericInstances {
     (_: FromG @@ From, _: Modifiers) => HNil
 
   implicit def hconsCase[From, FromG <: HList, Label <: Symbol, ToFieldT, TailToG <: HList, Modifiers <: HList]
-    (implicit vp: ValueProvider.Aux[FromG, From, Label, Modifiers, ToFieldT],
+    (implicit vp: ValueProvider[FromG, From, ToFieldT, Label, Modifiers],
      tailTransformer: DerivedTransformer[FromG @@ From, TailToG, Modifiers])
   : DerivedTransformer[FromG @@ From, FieldType[Label, ToFieldT] :: TailToG, Modifiers] = {
     (src: FromG @@ From, modifiers: Modifiers) =>
