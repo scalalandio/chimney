@@ -62,7 +62,4 @@ trait ValueProviderDerivation {
       (from: FromG, modifiers: M :: Ms) =>
         tvp.provide(from, modifiers.tail)
     }
-
-
-
 }
