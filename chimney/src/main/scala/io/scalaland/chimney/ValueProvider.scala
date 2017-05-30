@@ -8,7 +8,7 @@ trait ValueProvider[FromG <: HList, From, TargetLabel <: Symbol, Ms <: HList] {
   def provide(from: FromG, modifiers: Ms): TargetT
 }
 
-object ValueProvider extends LowPriValueProvider {
+object ValueProvider extends ValueProviderDerivation {
 
   type Aux[FromG_ <: HList, From_, TargetLabel_ <: Symbol, Ms_ <: HList, TargetT_] =
     ValueProvider[FromG_, From_, TargetLabel_, Ms_] { type TargetT = TargetT_ }
@@ -26,47 +26,43 @@ object ValueProvider extends LowPriValueProvider {
      vp: ValueProvider.Aux[FromG, From, targetLabel.T, Modifiers, TargetT])
   : TargetT = vp.provide(lg.to(from), modifiers)
 
+}
+
+trait ValueProviderDerivation {
 
   implicit def hnilCase[FromG <: HList, From, SourceT, TargetT, TargetLabel <: Symbol, Ms <: HNil]
     (implicit fieldSelector: ops.record.Selector.Aux[FromG, TargetLabel, SourceT],
      fieldTransformer: Lazy[DerivedTransformer[SourceT, TargetT, Ms]])
   : ValueProvider.Aux[FromG, From, TargetLabel, Ms, TargetT] =
-    instance {
+    ValueProvider.instance {
       (from: FromG, modifiers: Ms) =>
         fieldTransformer.value.transform(fieldSelector(from), modifiers)
     }
 
-  implicit def hconsFieldFunctionCase[FromG <: HList, From, TargetT, TargetLabel <: Symbol, MLabel <: Symbol, Ms <: HNil]
-    (implicit fromLG: LabelledGeneric.Aux[From, FromG],
-     eq: MLabel =:= TargetLabel)
-  : ValueProvider.Aux[FromG, From, TargetLabel, FieldFunctionModifier[MLabel, From, TargetT] :: Ms, TargetT] =
-    instance {
-      (from: FromG, modifiers: FieldFunctionModifier[MLabel, From, TargetT] :: Ms) =>
+  implicit def hconsFieldFunctionCase[FromG <: HList, From, TargetT, TargetLabel <: Symbol, Ms <: HList]
+    (implicit fromLG: LabelledGeneric.Aux[From, FromG])
+  : ValueProvider.Aux[FromG, From, TargetLabel, FieldFunctionModifier[TargetLabel, From, TargetT] :: Ms, TargetT] =
+    ValueProvider.instance {
+      (from: FromG, modifiers: FieldFunctionModifier[TargetLabel, From, TargetT] :: Ms) =>
         modifiers.head.f(fromLG.from(from))
     }
 
-  implicit def hconsRelabelCase[FromG <: HList, From, TargetT, TargetLabel <: Symbol, MFromLabel <: Symbol, MToLabel <: Symbol, Ms <: HNil]
-    (implicit fieldSelector: ops.record.Selector.Aux[FromG, MFromLabel, TargetT],
-     eq: MToLabel =:= TargetLabel)
-  : ValueProvider.Aux[FromG, From, TargetLabel, RelabelModifier[MFromLabel, MToLabel] :: Ms, TargetT] =
-    instance {
-      (from: FromG, _: RelabelModifier[MFromLabel, MToLabel] :: Ms) =>
+  implicit def hconsRelabelCase[FromG <: HList, From, TargetT, TargetLabel <: Symbol, MFromLabel <: Symbol, Ms <: HList]
+    (implicit fieldSelector: ops.record.Selector.Aux[FromG, MFromLabel, TargetT])
+  : ValueProvider.Aux[FromG, From, TargetLabel, RelabelModifier[MFromLabel, TargetLabel] :: Ms, TargetT] =
+    ValueProvider.instance {
+      (from: FromG, _: RelabelModifier[MFromLabel, TargetLabel] :: Ms) =>
         fieldSelector(from)
     }
 
-
-}
-
-trait LowPriValueProvider {
-
-
   implicit def hconsCase[FromG <: HList, From, TargetLabel <: Symbol, M, Ms <: HList, TargetT]
-  (implicit tvp: ValueProvider.Aux[FromG, From, TargetLabel, Ms, TargetT])
-  // does not compile if this constraint is enabled
-  //   ev1: M =:!= FieldFunctionModifier[TargetLabel, From, TargetT])
+    (implicit tvp: ValueProvider.Aux[FromG, From, TargetLabel, Ms, TargetT])
   : ValueProvider.Aux[FromG, From, TargetLabel, M :: Ms, TargetT] =
     ValueProvider.instance {
       (from: FromG, modifiers: M :: Ms) =>
         tvp.provide(from, modifiers.tail)
     }
+
+
+
 }
