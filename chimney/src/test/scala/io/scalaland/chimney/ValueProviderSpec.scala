@@ -75,5 +75,27 @@ class ValueProviderSpec extends WordSpec with MustMatchers {
           HNil) mustBe
         "provided1"
     }
+
+    "provide value for coproduct field" in {
+
+      ValueProvider.provide(Response(No), 'answer, classOf[Answer], HNil) mustBe
+        No
+
+      ValueProvider.provide(Response(Yes), 'answer, classOf[Answer], HNil) mustBe
+        Yes
+
+      ValueProvider.provide(Response2("no", No), 'answer, classOf[Answer], HNil) mustBe
+        No
+
+      ValueProvider.provide(Response2("si", Yes), 'answer, classOf[Answer], HNil) mustBe
+        Yes
+    }
   }
 }
+
+sealed trait Answer
+case object Yes extends Answer
+case object No extends Answer
+case class Response(answer: Answer)
+case class Response2(other: String, answer: Answer)
+

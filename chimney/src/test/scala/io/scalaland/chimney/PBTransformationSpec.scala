@@ -8,7 +8,7 @@ class PBTransformationSpec extends WordSpec with MustMatchers {
 
   import dsl._
 
-  "Chimney" should {
+  "Domain to Protobuf" should {
 
     "transform value classes between their primitive representations" in {
 
@@ -29,6 +29,27 @@ class PBTransformationSpec extends WordSpec with MustMatchers {
       (addressbook.MOBILE: addressbook.PhoneType)
         .transformInto[examples.pb.addressbook.PhoneType] mustBe
         examples.pb.addressbook.PhoneType.MOBILE
+
+      (addressbook.HOME: addressbook.PhoneType)
+        .transformInto[examples.pb.addressbook.PhoneType] mustBe
+        examples.pb.addressbook.PhoneType.HOME
+
+      (addressbook.WORK: addressbook.PhoneType)
+        .transformInto[examples.pb.addressbook.PhoneType] mustBe
+        examples.pb.addressbook.PhoneType.WORK
+    }
+
+    "transform bigger case classes" when {
+
+      "PhoneNumber" in {
+
+        addressbook.PhoneNumber("1234567", addressbook.HOME)
+          .transformInto[examples.pb.addressbook.Person.PhoneNumber] mustBe
+          examples.pb.addressbook.Person.PhoneNumber("1234567", examples.pb.addressbook.PhoneType.HOME)
+
+
+      }
+
     }
 
   }
