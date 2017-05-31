@@ -58,7 +58,7 @@ lazy val root = project.in(file("."))
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(noPublishSettings: _*)
-  .aggregate(chimneyJVM, chimneyJS)
+  .aggregate(chimneyJVM, chimneyJS, protosJVM, protosJS)
   .dependsOn(chimneyJVM, chimneyJS)
 
 lazy val chimney = crossProject.crossType(CrossType.Pure)
