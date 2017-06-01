@@ -16,7 +16,7 @@ e.g. some read model:
 case class DomainUser(id: Long, name: String, surname: String, ...)
 case class ApiUser(name: String, surname: String, ...)
 
-val domainUser = User(...)
+val domainUser: DomainUser = ...
 val apiUser = ApiUser(name = domainUser.name, surname = domainUser.surname, ...)
 ```
 
