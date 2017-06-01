@@ -9,7 +9,7 @@ Scala library for boilerplate free data rewriting
 
 ## Adding library to the project
 
-    libraryDependencies += "io.scalaland" %% "chimney" % chimneyVersion
+    libraryDependencies += "io.scalaland" %% "chimney" % "0.1.0"
 
 Due to [SI-7046](https://issues.scala-lang.org/browse/SI-7046) some derivations require at least Scala 2.12.1.
 
@@ -26,6 +26,7 @@ them like this:
     case class Butterfly(size: Int, name: String)
     val steveTheCatterpillar = Catterpillar(10, "Steve")
     val steveTheButterfly = steveTheCatterpillar.into[Butterfly].transform
+    // steveTheButterfly: Butterfly = Butterfly(10,Steve)
 
 In this very basic case we can also use syntax with a single call:
 
@@ -38,6 +39,7 @@ exist, but also drop them if target type doesn't need them:
     case class ApiUser(details: String)
 
     User(1L, "our user").transformInto[ApiUser]
+    // ApiUser = ApiUser(our user)
 
 As one might expect, usually we won't have such simple use cases. We
 might need to provide some value absent from the base type, or calculate
@@ -49,9 +51,11 @@ it from original object:
     Student("Paul", "University of Things").into[Employee]
         .withFieldConst('experience, List("Internship in Z Company"))
         .transform
+    // Employee = Employee(Paul,University of Things,List(Internship in Z Company))
     Student("Paula", "University of Things").into[Employee]
         .withFieldComputed('experience, student => List(s"${student.name}'s own company"))
         .transform
+    // Employee = Employee(Paula,University of Things,List(Paula's own company))
 
 Sometimes a field just change its name:
 
@@ -62,6 +66,7 @@ Sometimes a field just change its name:
         .withFieldRenamed('name, 'imya)
         .withFieldRenamed('surname, 'familia)
         .transform
+    // SpyRU = SpyRU(James,Bond)
 
 Additionally library should out-of-the support mappings for:
 
