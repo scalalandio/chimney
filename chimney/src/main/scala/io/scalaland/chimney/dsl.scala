@@ -9,7 +9,7 @@ object dsl {
     def into[To]: TransformerInto[From, To, HNil] =
       new TransformerInto(source, HNil)
 
-    def transformInto[To](implicit derivedTransformer: DerivedTransformer[From, To, HNil]): To =
+    def transformInto[To](implicit derivedTransformer: DerivedTransformer[From, From, To, HNil]): To =
       derivedTransformer.transform(source, HNil)
   }
 
@@ -27,7 +27,7 @@ object dsl {
                          label2: Witness.Lt[Symbol]): TransformerInto[From, To, Modifier.relabel[label1.T, label2.T] :: Modifiers] =
       new TransformerInto(source, new Modifier.relabel[label1.T, label2.T] :: modifiers)
 
-    def transform(implicit transformer: DerivedTransformer[From, To, Modifiers]): To =
+    def transform(implicit transformer: DerivedTransformer[From, From, To, Modifiers]): To =
       transformer.transform(source, modifiers)
   }
 
