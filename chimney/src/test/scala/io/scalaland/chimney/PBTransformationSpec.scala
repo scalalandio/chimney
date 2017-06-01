@@ -44,10 +44,8 @@ class PBTransformationSpec extends WordSpec with MustMatchers {
       "PhoneNumber" in {
 
         addressbook.PhoneNumber("1234567", addressbook.HOME)
-          .transformInto[examples.pb.addressbook.Person.PhoneNumber] mustBe
-          examples.pb.addressbook.Person.PhoneNumber("1234567", examples.pb.addressbook.PhoneType.HOME)
-
-
+          .transformInto[examples.pb.addressbook.PhoneNumber] mustBe
+          examples.pb.addressbook.PhoneNumber("1234567", examples.pb.addressbook.PhoneType.HOME)
       }
 
     }

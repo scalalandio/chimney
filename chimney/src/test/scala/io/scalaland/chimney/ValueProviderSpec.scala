@@ -89,6 +89,12 @@ class ValueProviderSpec extends WordSpec with MustMatchers {
 
       ValueProvider.provide(Response2("si", Yes), 'answer, classOf[Answer], HNil) mustBe
         Yes
+
+      ValueProvider.provide(Response2("no", No), 'other, classOf[String], HNil) mustBe
+        "no"
+
+      ValueProvider.provide(Response2("si", Yes), 'other, classOf[String], HNil) mustBe
+        "si"
     }
   }
 }
