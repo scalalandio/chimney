@@ -1,5 +1,5 @@
 val settings = Seq(
-  version := "0.1.0",
+  version := "0.1.1",
   scalaVersion := "2.12.2",
   scalacOptions ++= Seq(
     "-target:jvm-1.8",

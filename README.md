@@ -10,7 +10,7 @@ Scala library for boilerplate free data rewriting
 ## Adding library to the project
 
 ```scala
-libraryDependencies += "io.scalaland" %% "chimney" % "0.1.0"
+libraryDependencies += "io.scalaland" %% "chimney" % "0.1.1"
 ```
 
 Due to [SI-7046](https://issues.scala-lang.org/browse/SI-7046) some derivations require at least Scala 2.12.1.
