@@ -83,7 +83,8 @@ lazy val protos = crossProject.crossType(CrossType.Pure)
     PB.targets in Compile := Seq(
       scalapb.gen() -> (sourceManaged in Compile).value
     ),
-    PB.protoSources in Compile := Seq(file("protos/src/main/protobuf"))
+    PB.protoSources in Compile := Seq(file("protos/src/main/protobuf")),
+    coverageExcludedPackages := "<empty>;(.*)"
   )
   .settings(settings: _*)
   .settings(noPublishSettings: _*)
