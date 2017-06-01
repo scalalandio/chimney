@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness, ops}
+import shapeless.{::, HList, HNil, LabelledGeneric, Witness, ops}
 
 trait ValueProvider[FromG, From, T, Label <: Symbol, Modifiers <: HList] {
   def provide(from: FromG, modifiers: Modifiers): T
@@ -18,12 +18,12 @@ object ValueProvider extends ValueProviderDerivation {
 
 trait ValueProviderDerivation {
 
-  implicit def hnilCase[FromG <: HList, From, FromT, ToT, L <: Symbol, Modifiers <: HNil]
+  implicit def hnilCase[Modifiers <: HNil, FromG <: HList, From, FromT, ToT, L <: Symbol]
   (implicit fieldSelector: ops.record.Selector.Aux[FromG, L, FromT],
-   fieldTransformer: Lazy[DerivedTransformer[FromT, ToT, Modifiers]])
+   fieldTransformer: DerivedTransformer[FromT, ToT, Modifiers])
   : ValueProvider[FromG, From, ToT, L, Modifiers] =
     (from: FromG, modifiers: Modifiers) =>
-      fieldTransformer.value.transform(fieldSelector(from), modifiers)
+      fieldTransformer.transform(fieldSelector(from), modifiers)
 
   implicit def hconsFieldFunctionCase[FromG <: HList, From, T, L <: Symbol, Modifiers <: HList]
   (implicit fromLG: LabelledGeneric.Aux[From, FromG])

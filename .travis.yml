@@ -1,6 +1,6 @@
 language: scala
 scala:
-   - 2.12.0
+   # - 2.12.0 doesn't work due to SI-7046
    - 2.12.1
    - 2.12.2
 jdk:
