@@ -5,7 +5,37 @@
 [![codecov.io](http://codecov.io/github/scalalandio/chimney/coverage.svg?branch=master)](http://codecov.io/github/scalalandio/chimney?branch=master)
 [![License](http://img.shields.io/:license-Apache%202-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-Scala library for boilerplate free data rewriting
+Scala library for boilerplate-free data rewriting.
+
+Motivation for it was a annoyance coming from rewriting one case class
+into another: once case of such was a need to separate external API from
+internal model, the other was process of manually applying migrations to
+e.g. some read model:
+
+```scala
+case class DomainUser(id: Long, name: String, surname: String, ...)
+case class ApiUser(name: String, surname: String, ...)
+
+val domainUser = User(...)
+val apiUser = ApiUser(name = domainUser.name, surname = domainUser.surname, ...)
+```
+
+```scala
+object version1 {
+   case class Transaction(date: LocalDate, description: String, ...)
+}
+object version2 {
+   case class Transaction(date: LocalDate, description: String, ...)
+}
+val version1Transaction: version1.Transaction = ...
+val version2Transaction = version2.Transaction(
+   date = version1Transaction.date,
+   description = version1Transaction.description,
+   ...
+)
+```
+
+Chimney was created to remove the pain coming from such boilerplate.
 
 ## Adding library to the project
 
@@ -80,7 +110,7 @@ SpyGB("James", "Bond").into[SpyRU]
 // SpyRU = SpyRU(James,Bond)
 ```
 
-Additionally library should out-of-the support mappings for:
+Additionally library should out-of-the-box support mappings for:
 
   * value classes,
   * basic collections,
