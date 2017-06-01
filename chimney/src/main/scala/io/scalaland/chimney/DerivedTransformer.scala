@@ -15,6 +15,7 @@ trait DerivedTransformer[OriginalFrom, From, To, Modifiers <: HList] {
 
 object DerivedTransformer
   extends BasicInstances
+  with TagInstances
   with ValueClassInstances
   with OptionInstances
   with EitherInstances
@@ -33,6 +34,20 @@ trait BasicInstances {
 
   implicit def identityTransformer[T, Modifiers <: HList]: DerivedTransformer[T, T, T, Modifiers] =
     (src: T, _: Modifiers) => src
+}
+
+trait TagInstances {
+  implicit def toTaggedTransformer[T, U, Modifiers <: HList]
+  : DerivedTransformer[T, T, T @@ U, Modifiers] =
+    (src: T, _: Modifiers) => tag[U](src)
+
+  implicit def fromTaggedTransformer[T, U, Modifiers <: HList]
+  : DerivedTransformer[T @@ U, T @@ U, T, Modifiers] =
+    (src: T @@ U, _: Modifiers) => src
+
+  implicit def passTaggedTransformer[T, U, Modifiers <: HList]
+  : DerivedTransformer[T @@ U, T @@ U, T @@ U, Modifiers] =
+    (src: T @@ U, _: Modifiers) => src
 }
 
 trait ValueClassInstances {
@@ -113,7 +128,7 @@ trait CollectionInstances {
 
 }
 
-trait GenericInstances extends LowPriorityGenericInstances {
+trait GenericInstances {
 
   implicit def hnilCase[From, FromG <: HList, Modifiers <: HList]
   : DerivedTransformer[From, FromG, HNil, Modifiers] =
@@ -150,17 +165,5 @@ trait GenericInstances extends LowPriorityGenericInstances {
   : DerivedTransformer[From, From, To, Modifiers] = {
     (src: From, modifiers: Modifiers) =>
       toLG.from(genTransformer.value.transform(fromLG.to(src), modifiers))
-  }
-}
-
-trait LowPriorityGenericInstances {
-
-  implicit def gen2[From, To, FromG, ToG, Modifiers <: HList]
-  (implicit fromLG: LabelledGeneric.Aux[From, FromG],
-   toLG: LabelledGeneric.Aux[To, ToG],
-   genTransformer: DerivedTransformer[From, FromG, ToG, Modifiers])
-  : DerivedTransformer[From, From, To, Modifiers] = {
-    (src: From, modifiers: Modifiers) =>
-      toLG.from(genTransformer.transform(fromLG.to(src), modifiers))
   }
 }
