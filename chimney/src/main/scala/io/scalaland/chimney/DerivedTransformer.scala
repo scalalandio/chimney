@@ -2,7 +2,6 @@ package io.scalaland.chimney
 
 import shapeless._
 import shapeless.labelled._
-import shapeless.tag._
 
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag

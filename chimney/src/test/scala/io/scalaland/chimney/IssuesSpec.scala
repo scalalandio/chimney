@@ -1,6 +1,7 @@
 package io.scalaland.chimney
 
 import org.scalatest.{MustMatchers, WordSpec}
+import shapeless.HNil
 
 class IssuesSpec extends WordSpec with MustMatchers {
 
@@ -25,9 +26,10 @@ class IssuesSpec extends WordSpec with MustMatchers {
       sealed trait Test
 
       case class EntityWithTag1(id: Long, name: String @@ Test)
-      case class EntityWithTag2(id: Long, name: String @@ Test)
+      case class EntityWithTag2(name: String @@ Test)
 
-      EntityWithTag1(0L, tag[Test]("name")).transformInto[EntityWithTag2] mustBe EntityWithTag2(0L, tag[Test]("name"))
+//      (0L :: tag[Test]("name") :: HNil).transformInto[EntityWithTag2] mustBe EntityWithTag2(tag[Test]("name"))
+//      EntityWithTag1(0L, tag[Test]("name")).transformInto[EntityWithTag2] mustBe EntityWithTag2(tag[Test]("name"))
     }
   }
 
