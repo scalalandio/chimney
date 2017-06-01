@@ -114,7 +114,7 @@ trait CollectionInstances {
 
 }
 
-trait GenericInstances extends LowPriGenericInstances {
+trait GenericInstances extends LowPriorityGenericInstances {
 
   implicit def hnilCase[From, FromG <: HList, Modifiers <: HList]
   : DerivedTransformer[FromG @@ From, HNil, Modifiers] =
@@ -155,7 +155,7 @@ trait GenericInstances extends LowPriGenericInstances {
   }
 }
 
-trait LowPriGenericInstances {
+trait LowPriorityGenericInstances {
 
   implicit def gen2[From, To, FromG, ToG, Modifiers <: HList]
   (implicit fromLG: LabelledGeneric.Aux[From, FromG],
