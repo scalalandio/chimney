@@ -59,10 +59,10 @@ it from original object:
 
 Sometimes a field just change its name:
 
-    case class SpyUS(name: String, surname: String)
+    case class SpyGB(name: String, surname: String)
     case class SpyRU(imya: String, familia: String)
 
-    SpyUS("James", "Bond").into[SpyRU]
+    SpyGB("James", "Bond").into[SpyRU]
         .withFieldRenamed('name, 'imya)
         .withFieldRenamed('surname, 'familia)
         .transform
