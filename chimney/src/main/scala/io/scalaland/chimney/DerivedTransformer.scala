@@ -90,14 +90,14 @@ trait EitherInstances {
 
 trait CollectionInstances {
 
-  implicit def traversableTransformer[From, To, Modifiers <: HList, M[_]]
+  implicit def traversableTransformer[From, To, Modifiers <: HList, M1[_], M2[_]]
     (implicit innerTransformer: DerivedTransformer[From, To, Modifiers],
-     ev1: M[From] <:< Traversable[From],
-     ev2: M[To] <:< Traversable[To],
-     cbf: CanBuildFrom[M[From], To, M[To]])
-  : DerivedTransformer[M[From], M[To], Modifiers] =
-    (src: M[From], modifiers: Modifiers) =>
-      src.map(innerTransformer.transform(_: From, modifiers)).to[M]
+     ev1: M1[From] <:< Traversable[From],
+     ev2: M2[To] <:< Traversable[To],
+     cbf: CanBuildFrom[M1[From], To, M2[To]])
+  : DerivedTransformer[M1[From], M2[To], Modifiers] =
+    (src: M1[From], modifiers: Modifiers) =>
+      src.map(innerTransformer.transform(_: From, modifiers)).to[M2]
 
   implicit def arrayTransformer[From, To, Modifiers <: HList]
     (implicit innerTransformer: DerivedTransformer[From, To, Modifiers], toTag: ClassTag[To])
