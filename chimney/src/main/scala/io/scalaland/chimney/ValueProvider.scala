@@ -20,7 +20,7 @@ trait ValueProviderDerivation {
 
   implicit def hnilCase[From, FromG <: HList, Modifiers <: HNil, FromT, TargetT, L <: Symbol]
   (implicit fieldSelector: ops.record.Selector.Aux[FromG, L, FromT],
-   fieldTransformer: DerivedTransformer[FromT, FromT, TargetT, Modifiers])
+   fieldTransformer: DerivedTransformer[FromT, TargetT, Modifiers])
   : ValueProvider[From, FromG, TargetT, L, Modifiers] =
     (from: FromG, modifiers: Modifiers) =>
       fieldTransformer.transform(fieldSelector(from), modifiers)
