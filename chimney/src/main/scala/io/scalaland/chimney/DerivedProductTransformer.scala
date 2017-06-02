@@ -1,30 +1,55 @@
 package io.scalaland.chimney
 
-import shapeless._
-import shapeless.labelled._
+import shapeless.{ ::, HList, HNil }
+import shapeless.labelled.{ field, FieldType }
 
-trait DerivedProductTransformer[From, FromG <: HList, ToG <: HList, Modifiers <: HList] {
+/** Automatically derived type-call for mapping one [[shapeless.HList]] into another.
+  *
+  * It is an intermediate representation for Product types that is intended for [[DerivedTransformer]] to use.
+  *
+  * @tparam From original non-generic type: case class, tuple, etc.
+  * @tparam FromLG generic representation of [[From]]
+  * @tparam ToLG generic representation of a target type
+  * @tparam Modifiers list of modifiers that will be traversed before any attempt to obtain values the default way
+  */
+trait DerivedProductTransformer[From, FromLG <: HList, ToLG <: HList, Modifiers <: HList] {
 
-  def transform(src: FromG, modifiers: Modifiers): ToG
+  /** Transforms generic representation of original value into generic representation of a target type.
+    *
+    * @param src generic representation of original value
+    * @param modifiers list of modifiers matching [[Modifiers]] type
+    * @return generic representation of a target type
+    */
+  def transform(src: FromLG, modifiers: Modifiers): ToLG
 }
 
+/** Utilities and instances for [[DerivedProductTransformer]]. */
 object DerivedProductTransformer extends ProductInstances {
 
-  def apply[From, FromG <: HList, ToG <: HList, Modifiers <: HList](implicit dt: DerivedProductTransformer[From, FromG, ToG, Modifiers]): DerivedProductTransformer[From, FromG, ToG, Modifiers] = dt
+  /** Returns an instance for given parameters.
+    *
+    * @param dpt implicit instance
+    * @tparam From original non-generic type: sealed trait, etc.
+    * @tparam FromLG generic representation of [[From]]
+    * @tparam ToLG generic representation of a target type
+    * @tparam Modifiers list of modifiers that will be traversed before any attempt to obtain values the default way
+    */
+  final def apply[From, FromLG <: HList, ToLG <: HList, Modifiers <: HList](
+    implicit
+    dpt: DerivedProductTransformer[From, FromLG, ToLG, Modifiers]
+  ): DerivedProductTransformer[From, FromLG, ToLG, Modifiers] = dpt
 }
 
 trait ProductInstances {
 
-  implicit def hnilCase[From, FromG <: HList, Modifiers <: HList]
-  : DerivedProductTransformer[From, FromG, HNil, Modifiers] =
-    (_: FromG, _: Modifiers) => HNil
+  implicit final def hnilCase[From, FromLG <: HList, Modifiers <: HList]: DerivedProductTransformer[From, FromLG, HNil, Modifiers] =
+    (_: FromLG, _: Modifiers) => HNil
 
-  implicit def hconsCase[From, FromG <: HList, Label <: Symbol, ToFieldT, TailToG <: HList, Modifiers <: HList]
-  (implicit vp: ValueProvider[From, FromG, ToFieldT, Label, Modifiers],
-   tailTransformer: DerivedProductTransformer[From, FromG, TailToG, Modifiers])
-  : DerivedProductTransformer[From, FromG, FieldType[Label, ToFieldT] :: TailToG, Modifiers] = {
-    (src: FromG, modifiers: Modifiers) =>
+  implicit final def hconsCase[From, FromLG <: HList, Label <: Symbol, HeadToT, TailToLG <: HList, Modifiers <: HList](
+    implicit
+    vp: ValueProvider[From, FromLG, HeadToT, Label, Modifiers],
+    tailTransformer: DerivedProductTransformer[From, FromLG, TailToLG, Modifiers]
+  ): DerivedProductTransformer[From, FromLG, FieldType[Label, HeadToT] :: TailToLG, Modifiers] =
+    (src: FromLG, modifiers: Modifiers) =>
       field[Label](vp.provide(src, modifiers)) :: tailTransformer.transform(src, modifiers)
-  }
 }
-
