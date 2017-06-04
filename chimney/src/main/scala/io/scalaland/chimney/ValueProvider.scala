@@ -2,22 +2,8 @@ package io.scalaland.chimney
 
 import shapeless.{::, HList, HNil, LabelledGeneric, Witness, ops}
 
-/** Provides a value of a Product type.
-  *
-  * @tparam From original type
-  * @tparam FromLG generic representation of [[From]]
-  * @tparam TargetT target field's type
-  * @tparam Label field name used in original Product type
-  * @tparam Modifiers list of modifiers that will be traversed before any attempt to obtain values the default way
-  */
 trait ValueProvider[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList] {
 
-  /** Extracts target value from generic representation of original value.
-    *
-    * @param src generic representation of original value
-    * @param modifiers list of modifiers matching [[Modifiers]] type
-    * @return extracted target field's value
-    */
   def provide(src: FromLG, modifiers: Modifiers): TargetT
 }
 

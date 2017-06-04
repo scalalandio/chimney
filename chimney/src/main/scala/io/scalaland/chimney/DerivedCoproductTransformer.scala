@@ -3,37 +3,13 @@ package io.scalaland.chimney
 import shapeless.{ :+:, Coproduct, CNil, HList, Inl, Inr }
 import shapeless.labelled.FieldType
 
-/** Automatically derived type-call for mapping one [[shapeless.Coproduct]] into another.
-  *
-  * It is an intermediate representation for Coproduct types that is intended for [[DerivedTransformer]] to use.
-  *
-  * @tparam From original non-generic type: sealed trait, etc.
-  * @tparam FromLG generic representation of [[From]]
-  * @tparam ToLG generic representation of a target type
-  * @tparam Modifiers list of modifiers that will be traversed before any attempt to obtain values the default way
-  */
 trait DerivedCoproductTransformer[From, FromLG <: Coproduct, ToLG <: Coproduct, Modifiers <: HList] {
 
-  /** Transforms generic representation of original value into generic representation of a target type.
-    *
-    * @param src generic representation of original value
-    * @param modifiers list of modifiers matching [[Modifiers]] type
-    * @return generic representation of a target type
-    */
   def transform(src: FromLG, modifiers: Modifiers): ToLG
 }
 
-/** Utilities and instances for [[DerivedCoproductTransformer]]. */
 object DerivedCoproductTransformer extends CoproductInstances {
 
-  /** Returns an instance for given parameters.
-    *
-    * @param dct implicit instance
-    * @tparam From original non-generic type: sealed trait, etc.
-    * @tparam FromLG generic representation of [[From]]
-    * @tparam ToLG generic representation of a target type
-    * @tparam Modifiers list of modifiers that will be traversed before any attempt to obtain values the default way
-    */
   final def apply[From, FromLG <: Coproduct, ToLG <: Coproduct, Modifiers <: HList](
     implicit
     dct: DerivedCoproductTransformer[From, FromLG, ToLG, Modifiers]

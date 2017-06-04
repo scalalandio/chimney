@@ -5,24 +5,11 @@ import shapeless.{ ::, Coproduct, Generic, HList, HNil, LabelledGeneric, Lazy }
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
-/** Automatically derived type-class mapping [[From]] type into [[To]] type assuming some list of [[Modifiers]].
-  *
-  * @tparam From original type
-  * @tparam To target type
-  * @tparam Modifiers list of modifiers that will be traversed before any attempt to obtain values the default way
-  */
 trait DerivedTransformer[From, To, Modifiers <: HList] {
 
-  /** Transforms original value into a target type.
-    *
-    * @param src original value
-    * @param modifiers list of modifiers matching [[Modifiers]] type
-    * @return value transformed into a target type
-    */
   def transform(src: From, modifiers: Modifiers): To
 }
 
-/** Utilities and instances for [[DerivedTransformer]]. */
 object DerivedTransformer
   extends BasicInstances
     with ValueClassInstances
@@ -31,13 +18,6 @@ object DerivedTransformer
     with CollectionInstances
     with GenericInstances {
 
-  /** Returns an instance for given parameters.
-    *
-    * @param dt implicit instance
-    * @tparam From original non-generic type: sealed trait, etc.
-    * @tparam To non-generic target type
-    * @tparam Modifiers list of modifiers that will be traversed before any attempt to obtain values the default way
-    */
   final def apply[From, To, Modifiers <: HList](
     implicit
     dt: DerivedTransformer[From, To, Modifiers]
@@ -147,7 +127,7 @@ trait CollectionInstances {
 
 trait GenericInstances {
 
-  implicit final def withIntermediateProductRepr[From, To, FromLG <: HList, ToLG <: HList, Modifiers <: HList](
+  implicit final def genProduct[From, To, FromLG <: HList, ToLG <: HList, Modifiers <: HList](
     implicit
     fromLG: LabelledGeneric.Aux[From, FromLG],
     toLG: LabelledGeneric.Aux[To, ToLG],
@@ -155,7 +135,7 @@ trait GenericInstances {
   ): DerivedTransformer[From, To, Modifiers] =
     (src: From, modifiers: Modifiers) => toLG.from(intermediateTransformer.value.transform(fromLG.to(src), modifiers))
 
-  implicit final def withIntermediateCoproductRepr[From, To, FromLG <: Coproduct, ToLG <: Coproduct, Modifiers <: HList](
+  implicit final def genCoproduct[From, To, FromLG <: Coproduct, ToLG <: Coproduct, Modifiers <: HList](
     implicit
     fromLG: LabelledGeneric.Aux[From, FromLG],
     toLG: LabelledGeneric.Aux[To, ToLG],
