@@ -5,7 +5,6 @@ import shapeless.test._
 
 class DslSpec extends WordSpec with MustMatchers {
 
-
   import dsl._
 
   "A Chimney DSL" should {
@@ -89,13 +88,9 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "not compile if relabelling wrongly" in {
 
-        illTyped(
-          """Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform"""
-        )
+        illTyped("""Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform""")
 
-        illTyped(
-          """Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform"""
-        )
+        illTyped("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
       }
     }
 

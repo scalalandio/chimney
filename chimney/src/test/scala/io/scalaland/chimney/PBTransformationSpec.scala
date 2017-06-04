@@ -44,23 +44,26 @@ class PBTransformationSpec extends WordSpec with MustMatchers {
 
       "PhoneNumber" in {
 
-        addressbook.PhoneNumber("1234567", addressbook.HOME)
+        addressbook
+          .PhoneNumber("1234567", addressbook.HOME)
           .transformInto[pb.addressbook.PhoneNumber] mustBe
           pb.addressbook.PhoneNumber("1234567", pb.addressbook.PhoneType.HOME)
       }
 
       "Person" in {
 
-        addressbook.Person(
-          addressbook.PersonName("John"),
-          addressbook.PersonId(123),
-          addressbook.Email("john@example.com"),
-          List(
-            addressbook.PhoneNumber("1234567", addressbook.HOME),
-            addressbook.PhoneNumber("77332233", addressbook.WORK),
-            addressbook.PhoneNumber("88776655", addressbook.MOBILE)
+        addressbook
+          .Person(
+            addressbook.PersonName("John"),
+            addressbook.PersonId(123),
+            addressbook.Email("john@example.com"),
+            List(
+              addressbook.PhoneNumber("1234567", addressbook.HOME),
+              addressbook.PhoneNumber("77332233", addressbook.WORK),
+              addressbook.PhoneNumber("88776655", addressbook.MOBILE)
+            )
           )
-        ).transformInto[pb.addressbook.Person] mustBe
+          .transformInto[pb.addressbook.Person] mustBe
           pb.addressbook.Person(
             "John",
             123,
@@ -75,46 +78,48 @@ class PBTransformationSpec extends WordSpec with MustMatchers {
 
       "AddressBook" in {
 
-        addressbook.AddressBook(List(
-          addressbook.Person(
-            addressbook.PersonName("John"),
-            addressbook.PersonId(123),
-            addressbook.Email("john@example.com"),
+        addressbook
+          .AddressBook(
             List(
-              addressbook.PhoneNumber("1234567", addressbook.HOME),
-              addressbook.PhoneNumber("77332233", addressbook.WORK),
-              addressbook.PhoneNumber("88776655", addressbook.MOBILE)
-            )
-          ),
-          addressbook.Person(
-            addressbook.PersonName("Susan"),
-            addressbook.PersonId(321),
-            addressbook.Email("susan@example.com"),
-            List(
-              addressbook.PhoneNumber("200300400", addressbook.MOBILE)
+              addressbook.Person(
+                addressbook.PersonName("John"),
+                addressbook.PersonId(123),
+                addressbook.Email("john@example.com"),
+                List(
+                  addressbook.PhoneNumber("1234567", addressbook.HOME),
+                  addressbook.PhoneNumber("77332233", addressbook.WORK),
+                  addressbook.PhoneNumber("88776655", addressbook.MOBILE)
+                )
+              ),
+              addressbook.Person(
+                addressbook.PersonName("Susan"),
+                addressbook.PersonId(321),
+                addressbook.Email("susan@example.com"),
+                List(addressbook.PhoneNumber("200300400", addressbook.MOBILE))
+              )
             )
           )
-        )).transformInto[pb.addressbook.AddressBook] mustBe
-          pb.addressbook.AddressBook(Seq(
-            pb.addressbook.Person(
-              "John",
-              123,
-              "john@example.com",
-              Seq(
-                pb.addressbook.PhoneNumber("1234567", pb.addressbook.PhoneType.HOME),
-                pb.addressbook.PhoneNumber("77332233", pb.addressbook.PhoneType.WORK),
-                pb.addressbook.PhoneNumber("88776655", pb.addressbook.PhoneType.MOBILE)
-              )
-            ),
-            pb.addressbook.Person(
-              "Susan",
-              321,
-              "susan@example.com",
-              Seq(
-                pb.addressbook.PhoneNumber("200300400", pb.addressbook.PhoneType.MOBILE)
+          .transformInto[pb.addressbook.AddressBook] mustBe
+          pb.addressbook.AddressBook(
+            Seq(
+              pb.addressbook.Person(
+                "John",
+                123,
+                "john@example.com",
+                Seq(
+                  pb.addressbook.PhoneNumber("1234567", pb.addressbook.PhoneType.HOME),
+                  pb.addressbook.PhoneNumber("77332233", pb.addressbook.PhoneType.WORK),
+                  pb.addressbook.PhoneNumber("88776655", pb.addressbook.PhoneType.MOBILE)
+                )
+              ),
+              pb.addressbook.Person(
+                "Susan",
+                321,
+                "susan@example.com",
+                Seq(pb.addressbook.PhoneNumber("200300400", pb.addressbook.PhoneType.MOBILE))
               )
             )
-          ))
+          )
       }
     }
   }

@@ -13,7 +13,8 @@ class IssuesSpec extends WordSpec with MustMatchers {
       case class NewEntity(name: String)
       case class Entity(id: Long, name: String, isDeleted: Boolean)
 
-      NewEntity("name").into[Entity]
+      NewEntity("name")
+        .into[Entity]
         .withFieldConst('id, 0L)
         .withFieldConst('isDeleted, false)
         .transform mustBe

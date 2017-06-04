@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import shapeless.{ ::, HList, HNil, Witness }
+import shapeless.{::, HList, HNil, Witness}
 
 /** Provides syntax for API user. */
 object dsl {
@@ -16,10 +16,8 @@ object dsl {
 
   final class TransformerInto[From, To, Modifiers <: HList](val source: From, val modifiers: Modifiers) {
 
-    def withFieldConst[T](
-      label: Witness.Lt[Symbol],
-      value: T
-    ): TransformerInto[From, To, Modifier.fieldFunction[label.T, From, T] :: Modifiers] =
+    def withFieldConst[T](label: Witness.Lt[Symbol],
+                          value: T): TransformerInto[From, To, Modifier.fieldFunction[label.T, From, T] :: Modifiers] =
       withFieldComputed(label, _ => value)
 
     def withFieldComputed[T](
