@@ -1,19 +1,20 @@
 package io.scalaland.chimney
 
-import shapeless.labelled.{FieldType, field}
-import shapeless.{Coproduct, HList, Witness, ops}
+import shapeless.{ Coproduct, HList, Witness, ops }
+import shapeless.labelled.{ field, FieldType }
 
-trait CoproductInstanceProvider[ToG <: Coproduct, Label <: Symbol, T, Modifiers <: HList] {
-  def provide(srcInstance: FieldType[Label, T], modifiers: Modifiers): ToG
+trait CoproductInstanceProvider[Label <: Symbol, FromT, ToLG <: Coproduct, Modifiers <: HList] {
+
+  def provide(src: FieldType[Label, FromT], modifiers: Modifiers): ToLG
 }
 
 object CoproductInstanceProvider {
 
-  implicit def matchingObjCase[ToG <: Coproduct, ToHList <: HList, Label <: Symbol, T, TargetT, Modifiers <: HList]
-  (implicit sel: ops.union.Selector.Aux[ToG, Label, TargetT],
-   wit: Witness.Aux[TargetT],
-   inj: ops.coproduct.Inject[ToG, FieldType[Label, TargetT]])
-  : CoproductInstanceProvider[ToG, Label, T, Modifiers] =
-    (_: FieldType[Label, T], _: Modifiers) =>
-      inj(field[Label](wit.value))
+  implicit final def matchingObjCase[ToLG <: Coproduct, Label <: Symbol, FromT, TargetT, Modifiers <: HList](
+    implicit
+    sel: ops.union.Selector.Aux[ToLG, Label, TargetT],
+    wit: Witness.Aux[TargetT],
+    inj: ops.coproduct.Inject[ToLG, FieldType[Label, TargetT]]
+  ): CoproductInstanceProvider[Label, FromT, ToLG, Modifiers] =
+    (_: FieldType[Label, FromT], _: Modifiers) => inj(field[Label](wit.value))
 }

@@ -2,44 +2,50 @@ package io.scalaland.chimney
 
 import shapeless.{::, HList, HNil, LabelledGeneric, Witness, ops}
 
-trait ValueProvider[FromG, From, T, Label <: Symbol, Modifiers <: HList] {
-  def provide(from: FromG, modifiers: Modifiers): T
+trait ValueProvider[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList] {
+
+  def provide(src: FromLG, modifiers: Modifiers): TargetT
 }
 
 object ValueProvider extends ValueProviderDerivation {
 
-  def provide[From, FromG <: HList, TargetT, Modifiers <: HList]
-    (from: From, targetLabel: Witness.Lt[Symbol], clz: Class[TargetT], modifiers: Modifiers)
-    (implicit lg: LabelledGeneric.Aux[From, FromG],
-     vp: ValueProvider[FromG, From, TargetT, targetLabel.T, Modifiers])
-  : TargetT = vp.provide(lg.to(from), modifiers)
-
+  final def provide[From, FromLG <: HList, TargetT, Modifiers <: HList](
+    from: From,
+    targetLabel: Witness.Lt[Symbol],
+    clz: Class[TargetT],
+    modifiers: Modifiers
+  )(
+    implicit
+    lg: LabelledGeneric.Aux[From, FromLG],
+    vp: ValueProvider[From, FromLG, TargetT, targetLabel.T, Modifiers]
+  ): TargetT = vp.provide(lg.to(from), modifiers)
 }
 
 trait ValueProviderDerivation {
 
-  implicit def hnilCase[Modifiers <: HNil, FromG <: HList, From, FromT, ToT, L <: Symbol]
-  (implicit fieldSelector: ops.record.Selector.Aux[FromG, L, FromT],
-   fieldTransformer: DerivedTransformer[FromT, ToT, Modifiers])
-  : ValueProvider[FromG, From, ToT, L, Modifiers] =
-    (from: FromG, modifiers: Modifiers) =>
-      fieldTransformer.transform(fieldSelector(from), modifiers)
+  implicit final def hnilCase[From, FromLG <: HList, TargetT, Label <: Symbol, Modifiers <: HNil, FromT](
+    implicit
+    fieldSelector: ops.record.Selector.Aux[FromLG, Label, FromT],
+    fieldTransformer: DerivedTransformer[FromT, TargetT, Modifiers]
+  ): ValueProvider[From, FromLG, TargetT, Label, Modifiers] =
+    (src: FromLG, modifiers: Modifiers) => fieldTransformer.transform(fieldSelector(src), modifiers)
 
-  implicit def hconsFieldFunctionCase[FromG <: HList, From, T, L <: Symbol, Modifiers <: HList]
-  (implicit fromLG: LabelledGeneric.Aux[From, FromG])
-  : ValueProvider[FromG, From, T, L, Modifier.fieldFunction[L, From, T] :: Modifiers] =
-    (from: FromG, modifiers: Modifier.fieldFunction[L, From, T] :: Modifiers) =>
-      modifiers.head.f(fromLG.from(from))
+  implicit final def hconsFieldFunctionCase[From, FromLG <: HList, TargetT, Label <: Symbol, Modifiers <: HList](
+    implicit
+    fromLG: LabelledGeneric.Aux[From, FromLG]
+  ): ValueProvider[From, FromLG, TargetT, Label, Modifier.fieldFunction[Label, From, TargetT] :: Modifiers] =
+    (src: FromLG, modifiers: Modifier.fieldFunction[Label, From, TargetT] :: Modifiers) =>
+      modifiers.head.map(fromLG.from(src))
 
-  implicit def hconsRelabelCase[FromG <: HList, From, T, LFrom <: Symbol, L <: Symbol, Modifiers <: HList]
-  (implicit fieldSelector: ops.record.Selector.Aux[FromG, LFrom, T])
-  : ValueProvider[FromG, From, T, L, Modifier.relabel[LFrom, L] :: Modifiers] =
-    (from: FromG, _: Modifier.relabel[LFrom, L] :: Modifiers) =>
-      fieldSelector(from)
+  implicit final def hconsRelabelCase[From, FromLG <: HList, TargetT, LabelFrom <: Symbol, LabelTo <: Symbol, Modifiers <: HList](
+    implicit
+    fieldSelector: ops.record.Selector.Aux[FromLG, LabelFrom, TargetT]
+  ): ValueProvider[From, FromLG, TargetT, LabelTo, Modifier.relabel[LabelFrom, LabelTo] :: Modifiers] =
+    (src: FromLG, _: Modifier.relabel[LabelFrom, LabelTo] :: Modifiers) => fieldSelector(src)
 
-  implicit def hconsTailCase[FromG <: HList, From, T, L <: Symbol, M <: Modifier, Ms <: HList]
-  (implicit tvp: ValueProvider[FromG, From, T, L, Ms])
-  : ValueProvider[FromG, From, T, L, M :: Ms] =
-    (from: FromG, modifiers: M :: Ms) =>
-      tvp.provide(from, modifiers.tail)
+  implicit final def hconsTailCase[From, FromLG <: HList, TargetT, Label <: Symbol, M <: Modifier, Ms <: HList](
+    implicit
+    vp: ValueProvider[From, FromLG, TargetT, Label, Ms]
+  ): ValueProvider[From, FromLG, TargetT, Label, M :: Ms] =
+    (src: FromLG, modifiers: M :: Ms) => vp.provide(src, modifiers.tail)
 }

@@ -1,7 +1,7 @@
 package io.scalaland.chimney
 
 import org.scalatest.{MustMatchers, WordSpec}
-
+import shapeless.HNil
 
 class IssuesSpec extends WordSpec with MustMatchers {
 
@@ -18,6 +18,19 @@ class IssuesSpec extends WordSpec with MustMatchers {
         .withFieldConst('isDeleted, false)
         .transform mustBe
         Entity(0, "name", isDeleted = false)
+    }
+
+    "fix issue #21" in {
+      import shapeless.tag
+      import shapeless.tag._
+      sealed trait Test
+
+      case class EntityWithTag1(id: Long, name: String @@ Test)
+      case class EntityWithTag2(name: String @@ Test)
+
+      // This test doesn't work on 2.12+ due to:
+      // https://github.com/milessabin/shapeless/pull/726
+      // EntityWithTag1(0L, tag[Test]("name")).transformInto[EntityWithTag2] mustBe EntityWithTag2(tag[Test]("name"))
     }
   }
 
