@@ -13,6 +13,7 @@ cache:
   directories:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
+    - $HOME/.coursier/cache/
 
 before_cache:
   # Tricks to avoid unnecessary cache updates
