@@ -28,8 +28,9 @@ class IssuesSpec extends WordSpec with MustMatchers {
       case class EntityWithTag1(id: Long, name: String @@ Test)
       case class EntityWithTag2(name: String @@ Test)
 
-//      (0L :: tag[Test]("name") :: HNil).transformInto[EntityWithTag2] mustBe EntityWithTag2(tag[Test]("name"))
-//      EntityWithTag1(0L, tag[Test]("name")).transformInto[EntityWithTag2] mustBe EntityWithTag2(tag[Test]("name"))
+      // This test doesn't work on 2.12+ due to:
+      // https://github.com/milessabin/shapeless/pull/726
+      // EntityWithTag1(0L, tag[Test]("name")).transformInto[EntityWithTag2] mustBe EntityWithTag2(tag[Test]("name"))
     }
   }
 

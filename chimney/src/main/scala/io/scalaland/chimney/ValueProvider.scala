@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import shapeless.{ ::, HList, HNil, LabelledGeneric, Witness, ops }
+import shapeless.{::, HList, HNil, LabelledGeneric, Witness, ops}
 
 /** Provides a value of a Product type.
   *
