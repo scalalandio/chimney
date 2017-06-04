@@ -3,4 +3,5 @@ libraryDependencies += "com.trueaccord.scalapb" %% "compilerplugin-shaded" % "0.
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.0")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.17")
-addSbtPlugin("com.lucidchart" % "sbt-scalafmt" % "0.3")
+
+libraryDependencies += "com.geirsson" %% "scalafmt-bootstrap" % "0.6.6"
