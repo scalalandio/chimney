@@ -39,10 +39,7 @@ val settings = Seq(
     "-Xlint:type-parameter-shadow",
     "-Xlint:unsound-match"
   ),
-  scalacOptions in (Compile, console) --= Seq(
-    "-Ywarn-unused:imports",
-    "-Xfatal-warnings"
-  )
+  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
 
 val versions = new {
@@ -61,15 +58,13 @@ lazy val root = project
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(noPublishSettings: _*)
-  .settings(
-    commands += Command.args("scalafmt", "Run scalafmt cli.") {
-      case (state, args) =>
-        val Right(scalafmt) =
-          org.scalafmt.bootstrap.ScalafmtBootstrap.fromVersion(versions.scalafmt)
-        scalafmt.main("--non-interactive" +: args.toArray)
-        state
-    }
-  )
+  .settings(commands += Command.args("scalafmt", "Run scalafmt cli.") {
+    case (state, args) =>
+      val Right(scalafmt) =
+        org.scalafmt.bootstrap.ScalafmtBootstrap.fromVersion(versions.scalafmt)
+      scalafmt.main("--non-interactive" +: args.toArray)
+      state
+  })
   .aggregate(chimneyJVM, chimneyJS, protosJVM, protosJS)
   .dependsOn(chimneyJVM, chimneyJS)
 
@@ -93,9 +88,7 @@ lazy val protos = crossProject
   .settings(
     name := "chimney-protos",
     libraryDependencies += "com.trueaccord.scalapb" %%% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion,
-    PB.targets in Compile := Seq(
-      scalapb.gen() -> (sourceManaged in Compile).value
-    ),
+    PB.targets in Compile := Seq(scalapb.gen() -> (sourceManaged in Compile).value),
     PB.protoSources in Compile := Seq(file("protos/src/main/protobuf")),
     coverageExcludedPackages := "<empty>;(.*)"
   )
@@ -108,14 +101,9 @@ lazy val protosJS = protos.js
 lazy val publishSettings = Seq(
   organization := "io.scalaland",
   homepage := Some(url("https://scalaland.io")),
-  licenses := Seq(
-    "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
-  ),
+  licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
   scmInfo := Some(
-    ScmInfo(
-      url("https://github.com/scalalandio/chimney"),
-      "scm:git:git@github.com:scalalandio/chimney.git"
-    )
+    ScmInfo(url("https://github.com/scalalandio/chimney"), "scm:git:git@github.com:scalalandio/chimney.git")
   ),
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
