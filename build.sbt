@@ -62,6 +62,7 @@ lazy val root = project.in(file("."))
   .dependsOn(chimneyJVM, chimneyJS)
 
 lazy val chimney = crossProject.crossType(CrossType.Pure)
+  .enablePlugins(ScalafmtPlugin)
   .settings(
     moduleName  := "chimney",
     name        := "chimney",
