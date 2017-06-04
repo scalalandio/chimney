@@ -20,7 +20,7 @@ before_cache:
   - find $HOME/.sbt -name "*.lock" -delete
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test coverageReport
+  - sbt ++$TRAVIS_SCALA_VERSION clean "scalafmt --test" coverage test coverageReport
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

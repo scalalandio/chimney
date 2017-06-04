@@ -3,7 +3,8 @@ val settings = Seq(
   scalaVersion := "2.12.2",
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
-    "-encoding", "UTF-8",
+    "-encoding",
+    "UTF-8",
     "-unchecked",
     "-deprecation",
     "-explaintypes",
@@ -38,33 +39,40 @@ val settings = Seq(
     "-Xlint:type-parameter-shadow",
     "-Xlint:unsound-match"
   ),
-  scalacOptions in (Compile, console) --= Seq(
-    "-Ywarn-unused:imports",
-    "-Xfatal-warnings"
-  )
+  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
 
 val versions = new {
   val shapelessVersion = "2.3.2"
   val scalatestVersion = "3.0.3"
+  val scalafmt = "1.0.0-RC1"
 }
 
 val dependencies = Seq(
-  libraryDependencies += "com.chuusai"   %%% "shapeless" % versions.shapelessVersion,
+  libraryDependencies += "com.chuusai" %%% "shapeless" % versions.shapelessVersion,
   libraryDependencies += "org.scalatest" %%% "scalatest" % versions.scalatestVersion % "test"
 )
 
-lazy val root = project.in(file("."))
+lazy val root = project
+  .in(file("."))
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(noPublishSettings: _*)
+  .settings(commands += Command.args("scalafmt", "Run scalafmt cli.") {
+    case (state, args) =>
+      val Right(scalafmt) =
+        org.scalafmt.bootstrap.ScalafmtBootstrap.fromVersion(versions.scalafmt)
+      scalafmt.main("--non-interactive" +: args.toArray)
+      state
+  })
   .aggregate(chimneyJVM, chimneyJS, protosJVM, protosJS)
   .dependsOn(chimneyJVM, chimneyJS)
 
-lazy val chimney = crossProject.crossType(CrossType.Pure)
+lazy val chimney = crossProject
+  .crossType(CrossType.Pure)
   .settings(
-    moduleName  := "chimney",
-    name        := "chimney",
+    moduleName := "chimney",
+    name := "chimney",
     description := "Scala library for boilerplate free data rewriting"
   )
   .settings(settings: _*)
@@ -75,14 +83,12 @@ lazy val chimney = crossProject.crossType(CrossType.Pure)
 lazy val chimneyJVM = chimney.jvm
 lazy val chimneyJS = chimney.js
 
-
-lazy val protos = crossProject.crossType(CrossType.Pure)
+lazy val protos = crossProject
+  .crossType(CrossType.Pure)
   .settings(
     name := "chimney-protos",
     libraryDependencies += "com.trueaccord.scalapb" %%% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion,
-    PB.targets in Compile := Seq(
-      scalapb.gen() -> (sourceManaged in Compile).value
-    ),
+    PB.targets in Compile := Seq(scalapb.gen() -> (sourceManaged in Compile).value),
     PB.protoSources in Compile := Seq(file("protos/src/main/protobuf")),
     coverageExcludedPackages := "<empty>;(.*)"
   )
@@ -92,12 +98,13 @@ lazy val protos = crossProject.crossType(CrossType.Pure)
 lazy val protosJVM = protos.jvm
 lazy val protosJS = protos.js
 
-
 lazy val publishSettings = Seq(
   organization := "io.scalaland",
   homepage := Some(url("https://scalaland.io")),
   licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-  scmInfo := Some(ScmInfo(url("https://github.com/scalalandio/chimney"), "scm:git:git@github.com:scalalandio/chimney.git")),
+  scmInfo := Some(
+    ScmInfo(url("https://github.com/scalalandio/chimney"), "scm:git:git@github.com:scalalandio/chimney.git")
+  ),
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
     if (isSnapshot.value)
@@ -107,7 +114,9 @@ lazy val publishSettings = Seq(
   },
   publishMavenStyle := true,
   publishArtifact in Test := false,
-  pomIncludeRepository := { _ => false },
+  pomIncludeRepository := { _ =>
+    false
+  },
   pomExtra := (
     <developers>
       <developer>
@@ -121,11 +130,8 @@ lazy val publishSettings = Seq(
         <url>http://github.com/MateuszKubuszok</url>
       </developer>
     </developers>
-    )
+  )
 )
 
-lazy val noPublishSettings = Seq(
-  publish := (),
-  publishLocal := (),
-  publishArtifact := false
-)
+lazy val noPublishSettings =
+  Seq(publish := (), publishLocal := (), publishArtifact := false)

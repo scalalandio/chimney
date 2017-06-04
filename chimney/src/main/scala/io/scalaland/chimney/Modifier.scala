@@ -2,7 +2,6 @@ package io.scalaland.chimney
 
 import shapeless.Witness
 
-
 sealed trait Modifier
 
 object Modifier {
