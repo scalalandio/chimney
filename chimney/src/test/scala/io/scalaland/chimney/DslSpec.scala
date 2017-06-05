@@ -217,8 +217,8 @@ class DslSpec extends WordSpec with MustMatchers {
 
         triangle
           .into[shapes2.Shape]
-          .withCoproductInstance[shapes1.Triangle](triangleToPolygon)
-          .withCoproductInstance[shapes1.Rectangle](rectangleToPolygon)
+          .withCoproductInstance(triangleToPolygon)
+          .withCoproductInstance(rectangleToPolygon)
           .transform mustBe shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0)))
 
         val rectangle: shapes1.Shape =
@@ -226,8 +226,10 @@ class DslSpec extends WordSpec with MustMatchers {
 
         rectangle
           .into[shapes2.Shape]
-          .withCoproductInstance(triangleToPolygon)
-          .withCoproductInstance(rectangleToPolygon)
+          .withCoproductInstance[shapes1.Shape] {
+            case r: shapes1.Rectangle => rectangleToPolygon(r)
+            case t: shapes1.Triangle => triangleToPolygon(t)
+          }
           .transform mustBe shapes2.Polygon(
           List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
         )
