@@ -174,18 +174,28 @@ class DslSpec extends WordSpec with MustMatchers {
         "transforming from bigger to smaller enum" in {
           import examples._
 
-//          (colors2.Red: colors2.Color)
-//            .transformInto[colors1.Color] mustBe colors1.Red
-//          (colors2.Green: colors2.Color)
-//            .transformInto[colors1.Color] mustBe colors1.Green
-//          (colors2.Blue: colors2.Color)
-//            .transformInto[colors1.Color] mustBe colors1.Blue
-//          (colors2.Black: colors2.Color)
-//            .into[colors1.Color]
-//            .withCoproductInstance[colors2.Black.type] {
-//              case colors2.Black => colors1.Red
-//            }
-//            .transform mustBe colors1.Red
+          def blackIsRed(b: colors2.Black.type): colors1.Color =
+            colors1.Red
+
+          (colors2.Red: colors2.Color)
+            .into[colors1.Color]
+            .withCoproductInstance(blackIsRed)
+            .transform mustBe colors1.Red
+
+          (colors2.Green: colors2.Color)
+            .into[colors1.Color]
+            .withCoproductInstance(blackIsRed)
+            .transform mustBe colors1.Green
+
+          (colors2.Blue: colors2.Color)
+            .into[colors1.Color]
+            .withCoproductInstance(blackIsRed)
+            .transform mustBe colors1.Blue
+
+          (colors2.Black: colors2.Color)
+            .into[colors1.Color]
+            .withCoproductInstance(blackIsRed)
+            .transform mustBe colors1.Red
         }
       }
 

@@ -1,25 +1,31 @@
 package io.scalaland.chimney
 
 import shapeless.labelled.{FieldType, field}
-import shapeless.{::, Coproduct, HList, LabelledGeneric, Witness, ops}
+import shapeless.{::, Coproduct, HList, HNil, LabelledGeneric, Witness, ops}
 
 trait CoproductInstanceProvider[Label <: Symbol, FromT, ToLG <: Coproduct, Modifiers <: HList] {
 
   def provide(src: FieldType[Label, FromT], modifiers: Modifiers): ToLG
 }
 
-object CoproductInstanceProvider extends LowPriCIP {
+object CoproductInstanceProvider extends CoproductInstanceProviderDerivation {
 
-  implicit final def matchingObjCase[ToLG <: Coproduct, Label <: Symbol, FromT, TargetT, Modifiers <: HList](
+  final def provide[Label <: Symbol, FromT, To, ToLG <: Coproduct, Modifiers <: HList](
+    src: FieldType[Label, FromT],
+    clz: Class[To],
+    modifiers: Modifiers
+  )(implicit lg: LabelledGeneric.Aux[To, ToLG], cip: CoproductInstanceProvider[Label, FromT, ToLG, Modifiers]): To =
+    lg.from(cip.provide(src, modifiers))
+}
+
+trait CoproductInstanceProviderDerivation {
+
+  implicit final def matchingObjCase[ToLG <: Coproduct, Label <: Symbol, FromT, TargetT, Modifiers <: HNil](
     implicit sel: ops.union.Selector.Aux[ToLG, Label, TargetT],
     wit: Witness.Aux[TargetT],
     inj: ops.coproduct.Inject[ToLG, FieldType[Label, TargetT]]
   ): CoproductInstanceProvider[Label, FromT, ToLG, Modifiers] =
     (_: FieldType[Label, FromT], _: Modifiers) => inj(field[Label](wit.value))
-
-}
-
-trait LowPriCIP {
 
   implicit final def coproductInstanceCase[ToLG <: Coproduct,
                                            Label <: Symbol,
