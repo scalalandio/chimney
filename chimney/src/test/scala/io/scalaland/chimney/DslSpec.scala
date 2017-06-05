@@ -156,6 +156,83 @@ class DslSpec extends WordSpec with MustMatchers {
         Map("test" -> Foo("a")).transformInto[Map[String, Bar]] mustBe Map("test" -> Bar("a"))
       }
     }
+
+    "support for sealed hierarhies" when {
+
+      "enum types encoded as sealed hierarchies of case objects" when {
+        "transforming from smaller to bigger enum" in {
+          import examples._
+
+          (colors1.Red: colors1.Color)
+            .transformInto[colors2.Color] mustBe colors2.Red
+          (colors1.Green: colors1.Color)
+            .transformInto[colors2.Color] mustBe colors2.Green
+          (colors1.Blue: colors1.Color)
+            .transformInto[colors2.Color] mustBe colors2.Blue
+        }
+
+        "transforming from bigger to smaller enum" in {
+          import examples._
+
+//          (colors2.Red: colors2.Color)
+//            .transformInto[colors1.Color] mustBe colors1.Red
+//          (colors2.Green: colors2.Color)
+//            .transformInto[colors1.Color] mustBe colors1.Green
+//          (colors2.Blue: colors2.Color)
+//            .transformInto[colors1.Color] mustBe colors1.Blue
+//          (colors2.Black: colors2.Color)
+//            .into[colors1.Color]
+//            .withCoproductInstance[colors2.Black.type] {
+//              case colors2.Black => colors1.Red
+//            }
+//            .transform mustBe colors1.Red
+        }
+      }
+
+      "transformic non-isomorphic domains" in {
+
+        import examples._
+
+        def triangleToPolygon(t: shapes1.Triangle): shapes2.Shape =
+          shapes2.Polygon(
+            List(
+              t.p1.transformInto[shapes2.Point],
+              t.p2.transformInto[shapes2.Point],
+              t.p3.transformInto[shapes2.Point]
+            )
+          )
+
+        def rectangleToPolygon(r: shapes1.Rectangle): shapes2.Shape =
+          shapes2.Polygon(
+            List(
+              r.p1.transformInto[shapes2.Point],
+              shapes2.Point(r.p1.x, r.p2.y),
+              r.p2.transformInto[shapes2.Point],
+              shapes2.Point(r.p2.x, r.p1.y)
+            )
+          )
+
+        val triangle: shapes1.Shape =
+          shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0))
+
+        triangle
+          .into[shapes2.Shape]
+          .withCoproductInstance[shapes1.Triangle](triangleToPolygon)
+          .withCoproductInstance[shapes1.Rectangle](rectangleToPolygon)
+          .transform mustBe shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0)))
+
+        val rectangle: shapes1.Shape =
+          shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4))
+
+        rectangle
+          .into[shapes2.Shape]
+          .withCoproductInstance(triangleToPolygon)
+          .withCoproductInstance(rectangleToPolygon)
+          .transform mustBe shapes2.Polygon(
+          List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
+        )
+      }
+    }
   }
 }
 
