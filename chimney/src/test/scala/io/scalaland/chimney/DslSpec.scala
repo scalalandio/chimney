@@ -157,7 +157,7 @@ class DslSpec extends WordSpec with MustMatchers {
       }
     }
 
-    "support for sealed hierarhies" when {
+    "support for sealed hierarchies" when {
 
       "enum types encoded as sealed hierarchies of case objects" when {
         "transforming from smaller to bigger enum" in {
