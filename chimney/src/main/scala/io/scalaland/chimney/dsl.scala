@@ -32,6 +32,11 @@ object dsl {
     ): TransformerInto[From, To, Modifier.relabel[labelFrom.T, labelTo.T] :: Modifiers] =
       new TransformerInto(source, new Modifier.relabel[labelFrom.T, labelTo.T] :: modifiers)
 
+    def withCoproductInstance[Inst](
+      f: Inst => To
+    ): TransformerInto[From, To, Modifier.coproductInstance[Inst, To] :: Modifiers] =
+      new TransformerInto(source, new Modifier.coproductInstance[Inst, To](f) :: modifiers)
+
     def transform(implicit transformer: DerivedTransformer[From, To, Modifiers]): To =
       transformer.transform(source, modifiers)
   }
