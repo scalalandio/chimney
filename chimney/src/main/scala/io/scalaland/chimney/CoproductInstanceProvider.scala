@@ -18,7 +18,7 @@ object CoproductInstanceProvider extends CoproductInstanceProviderDerivation {
     lg.from(cip.provide(src, modifiers))
 }
 
-trait CoproductInstanceProviderDerivation {
+trait CoproductInstanceProviderDerivation extends LowPriorityCoproductInstanceProvider {
 
   implicit final def matchingObjCase[ToLG <: Coproduct, Label <: Symbol, FromT, TargetT, Modifiers <: HNil](
     implicit sel: ops.union.Selector.Aux[ToLG, Label, TargetT],
@@ -42,4 +42,14 @@ trait CoproductInstanceProviderDerivation {
     implicit cip: CoproductInstanceProvider[Label, FromT, ToLG, Modifiers]
   ): CoproductInstanceProvider[Label, FromT, ToLG, M :: Modifiers] =
     (src: FieldType[Label, FromT], modifiers: M :: Modifiers) => cip.provide(src, modifiers.tail)
+}
+
+trait LowPriorityCoproductInstanceProvider {
+  implicit final def matchingTransformerCase[ToLG <: Coproduct, Label <: Symbol, FromT, TargetT, Modifiers <: HNil](
+    implicit sel: ops.union.Selector.Aux[ToLG, Label, TargetT],
+    transformer: DerivedTransformer[FromT, TargetT, Modifiers],
+    inj: ops.coproduct.Inject[ToLG, FieldType[Label, TargetT]]
+  ): CoproductInstanceProvider[Label, FromT, ToLG, Modifiers] =
+    (src: FieldType[Label, FromT], modifiers: Modifiers) => inj(field[Label](transformer.transform(src, modifiers)))
+
 }

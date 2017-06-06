@@ -199,7 +199,7 @@ class DslSpec extends WordSpec with MustMatchers {
         }
       }
 
-      "transformic non-isomorphic domains" in {
+      "transforming non-isomorphic domains" in {
 
         import examples._
 
@@ -243,6 +243,23 @@ class DslSpec extends WordSpec with MustMatchers {
           .transform mustBe shapes2.Polygon(
           List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
         )
+      }
+
+      "transforming isomorphic domains that differ a detail" in {
+
+        import examples._
+
+        implicit val intToDoubleTransformer: Transformer[Int, Double] = _.toDouble
+
+        (shapes1
+          .Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
+          .transformInto[shapes3.Shape] mustBe
+          shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0))
+
+        (shapes1
+          .Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4)): shapes1.Shape)
+          .transformInto[shapes3.Shape] mustBe
+          shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0))
       }
     }
   }

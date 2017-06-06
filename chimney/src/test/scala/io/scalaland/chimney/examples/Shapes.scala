@@ -16,3 +16,12 @@ package shapes2 {
   sealed trait Shape
   case class Polygon(points: List[Point]) extends Shape
 }
+
+package shapes3 {
+
+  case class Point(x: Double, y: Double)
+
+  sealed trait Shape
+  case class Triangle(p3: Point, p2: Point, p1: Point) extends Shape
+  case class Rectangle(p1: Point, p2: Point) extends Shape
+}
