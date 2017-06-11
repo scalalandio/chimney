@@ -2,10 +2,10 @@ package io.scalaland.chimney
 
 import org.scalatest.{MustMatchers, WordSpec}
 import shapeless.test._
+import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.examples._
 
 class DslSpec extends WordSpec with MustMatchers {
-
-  import dsl._
 
   "A Chimney DSL" should {
 
@@ -161,7 +161,6 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "enum types encoded as sealed hierarchies of case objects" when {
         "transforming from smaller to bigger enum" in {
-          import examples._
 
           (colors1.Red: colors1.Color)
             .transformInto[colors2.Color] mustBe colors2.Red
@@ -172,7 +171,6 @@ class DslSpec extends WordSpec with MustMatchers {
         }
 
         "transforming from bigger to smaller enum" in {
-          import examples._
 
           def blackIsRed(b: colors2.Black.type): colors1.Color =
             colors1.Red
@@ -200,8 +198,6 @@ class DslSpec extends WordSpec with MustMatchers {
       }
 
       "transforming non-isomorphic domains" in {
-
-        import examples._
 
         def triangleToPolygon(t: shapes1.Triangle): shapes2.Shape =
           shapes2.Polygon(
@@ -246,8 +242,6 @@ class DslSpec extends WordSpec with MustMatchers {
       }
 
       "transforming isomorphic domains that differ a detail" in {
-
-        import examples._
 
         implicit val intToDoubleTransformer: Transformer[Int, Double] = _.toDouble
 

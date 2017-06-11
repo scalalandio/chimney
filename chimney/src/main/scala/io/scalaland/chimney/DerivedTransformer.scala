@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import shapeless.{::, Coproduct, Generic, HList, HNil, LabelledGeneric, Lazy}
+import shapeless._
 
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
