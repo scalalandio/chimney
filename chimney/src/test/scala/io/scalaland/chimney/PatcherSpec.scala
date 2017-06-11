@@ -18,6 +18,26 @@ class PatcherSpec extends WordSpec with MustMatchers {
       foo.patchWith(bar) mustBe
         Foo(10, "", 10.0)
     }
+
+    "patch objects with value classes in patch" in {
+
+      import TestDomain._
+
+      val user = User(10, Email("abc@def.com"), Phone(1234567890L))
+      val update = UpdateDetails("xyz@def.com", 123123123L)
+
+      user.patchWith(update) mustBe
+        User(10, Email("xyz@def.com"), Phone(123123123L))
+    }
   }
 
+}
+
+object TestDomain {
+
+  case class Email(address: String) extends AnyVal
+  case class Phone(number: Long) extends AnyVal
+
+  case class User(id: Int, email: Email, phone: Phone)
+  case class UpdateDetails(email: String, phone: Long)
 }
