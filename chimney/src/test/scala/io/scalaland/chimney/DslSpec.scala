@@ -2,10 +2,9 @@ package io.scalaland.chimney
 
 import org.scalatest.{MustMatchers, WordSpec}
 import shapeless.test._
+import io.scalaland.chimney.dsl._
 
 class DslSpec extends WordSpec with MustMatchers {
-
-  import dsl._
 
   "A Chimney DSL" should {
 
