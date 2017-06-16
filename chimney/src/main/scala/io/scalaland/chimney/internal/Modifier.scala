@@ -6,9 +6,9 @@ sealed trait Modifier
 
 object Modifier {
 
-  private[internal] class fieldFunction[Label <: Symbol, From, T](val map: From => T) extends Modifier
-  private[internal] class relabel[FromLabel <: Symbol, ToLabel <: Symbol] extends Modifier
-  private[internal] class coproductInstance[From, T](val f: From => T) extends Modifier
+  private[chimney] class fieldFunction[Label <: Symbol, From, T](val map: From => T) extends Modifier
+  private[chimney] class relabel[FromLabel <: Symbol, ToLabel <: Symbol] extends Modifier
+  private[chimney] class coproductInstance[From, T](val f: From => T) extends Modifier
 
   final def fieldConstant[From, T](label: Witness.Lt[Symbol], value: T): fieldFunction[label.T, From, T] =
     new fieldFunction[label.T, From, T]((_: From) => value)
