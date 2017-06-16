@@ -1,7 +1,7 @@
-package io.scalaland.chimney
+package io.scalaland.chimney.internal
 
+import shapeless.labelled.{FieldType, field}
 import shapeless.{::, HList, HNil}
-import shapeless.labelled.{field, FieldType}
 
 trait DerivedProductTransformer[From, FromLG <: HList, ToLG <: HList, Modifiers <: HList] {
 

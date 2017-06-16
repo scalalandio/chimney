@@ -1,5 +1,6 @@
 package io.scalaland.chimney
 
+import io.scalaland.chimney.internal.Modifier
 import shapeless.{::, HList, HNil, Witness}
 
 /** Provides syntax for API user. */

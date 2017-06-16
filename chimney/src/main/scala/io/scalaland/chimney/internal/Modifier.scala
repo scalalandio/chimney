@@ -1,4 +1,4 @@
-package io.scalaland.chimney
+package io.scalaland.chimney.internal
 
 import shapeless.Witness
 

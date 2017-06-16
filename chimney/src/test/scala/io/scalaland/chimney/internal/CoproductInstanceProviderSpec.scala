@@ -1,5 +1,6 @@
-package io.scalaland.chimney
+package io.scalaland.chimney.internal
 
+import io.scalaland.chimney.examples
 import org.scalatest.{MustMatchers, WordSpec}
 import shapeless.HNil
 import shapeless.syntax.singleton._
