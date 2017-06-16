@@ -1,7 +1,8 @@
-package io.scalaland.chimney
+package io.scalaland.chimney.internal
 
-import shapeless.labelled.{FieldType, field}
+import io.scalaland.chimney._
 import shapeless._
+import shapeless.labelled.{FieldType, field}
 
 trait CoproductInstanceProvider[Label <: Symbol, FromT, ToLG <: Coproduct, Modifiers <: HList] {
 

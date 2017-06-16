@@ -1,5 +1,6 @@
-package io.scalaland.chimney
+package io.scalaland.chimney.internal
 
+import io.scalaland.chimney._
 import shapeless.{::, HList, HNil, LabelledGeneric, Witness, ops}
 
 trait ValueProvider[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList] {

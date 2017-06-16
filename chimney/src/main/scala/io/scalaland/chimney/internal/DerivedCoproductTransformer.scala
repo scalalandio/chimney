@@ -1,7 +1,7 @@
-package io.scalaland.chimney
+package io.scalaland.chimney.internal
 
-import shapeless.{:+:, Coproduct, CNil, HList, Inl, Inr}
 import shapeless.labelled.FieldType
+import shapeless.{:+:, CNil, Coproduct, HList, Inl, Inr}
 
 trait DerivedCoproductTransformer[From, FromLG <: Coproduct, ToLG <: Coproduct, Modifiers <: HList] {
 
