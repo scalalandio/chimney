@@ -79,14 +79,16 @@ trait EitherInstances {
     implicit leftTransformer: DerivedTransformer[FromL, ToL, Modifiers]
   ): DerivedTransformer[Left[FromL, FromR], Either[ToL, ToR], Modifiers] =
     DerivedTransformer.instance { (src: Left[FromL, FromR], modifiers: Modifiers) =>
-      Left(leftTransformer.transform(src.a, modifiers))
+      val Left(value) = src
+      Left(leftTransformer.transform(value, modifiers))
     }
 
   implicit final def rightTransformer[FromL, ToL, FromR, ToR, Modifiers <: HList](
     implicit rightTransformer: DerivedTransformer[FromR, ToR, Modifiers]
   ): DerivedTransformer[Right[FromL, FromR], Either[ToL, ToR], Modifiers] =
     DerivedTransformer.instance { (src: Right[FromL, FromR], modifiers: Modifiers) =>
-      Right(rightTransformer.transform(src.b, modifiers))
+      val Right(value) = src
+      Right(rightTransformer.transform(value, modifiers))
     }
 }
 

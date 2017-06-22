@@ -7,7 +7,7 @@ val settings = Seq(
     "-encoding",
     "UTF-8",
     "-unchecked",
-    "-deprecation:false", // just for the time being
+    "-deprecation",
     "-explaintypes",
     "-feature",
     "-language:existentials",
@@ -24,7 +24,6 @@ val settings = Seq(
     "-Xfuture",
     "-Xlint:adapted-args",
     "-Xlint:by-name-right-associative",
-//    "-Xlint:constant",
     "-Xlint:delayedinit-select",
     "-Xlint:doc-detached",
     "-Xlint:inaccessible",
