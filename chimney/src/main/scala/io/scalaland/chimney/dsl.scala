@@ -3,7 +3,6 @@ package io.scalaland.chimney
 import io.scalaland.chimney.internal.Modifier
 import shapeless.{::, HList, HNil, Witness}
 
-/** Provides syntax for API user. */
 object dsl {
 
   implicit class TransformerOps[From](val source: From) extends AnyVal {

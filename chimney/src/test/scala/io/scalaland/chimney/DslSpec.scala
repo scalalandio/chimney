@@ -243,7 +243,10 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "transforming isomorphic domains that differ a detail" in {
 
-        implicit val intToDoubleTransformer: Transformer[Int, Double] = _.toDouble
+        implicit val intToDoubleTransformer: Transformer[Int, Double] =
+          new Transformer[Int, Double] {
+            def transform(src: Int): Double = src.toDouble
+          }
 
         (shapes1
           .Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
@@ -264,7 +267,9 @@ object Domain1 {
   case class UserName(value: String)
 
   val userNameToStringTransformer: Transformer[UserName, String] =
-    (_: UserName).value + "T"
+    new Transformer[UserName, String] {
+      def transform(src: UserName): String = src.value + "T"
+    }
 
   case class UserDTO(id: String, name: String)
   case class User(id: String, name: UserName)
