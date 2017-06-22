@@ -17,6 +17,13 @@ object ValueProvider extends ValueProviderDerivation {
     implicit lg: LabelledGeneric.Aux[From, FromLG],
     vp: ValueProvider[From, FromLG, TargetT, targetLabel.T, Modifiers]
   ): TargetT = vp.provide(lg.to(from), modifiers)
+
+  final def instance[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList](
+    f: (FromLG, Modifiers) => TargetT
+  ): ValueProvider[From, FromLG, TargetT, Label, Modifiers] =
+    new ValueProvider[From, FromLG, TargetT, Label, Modifiers] {
+      @inline final def provide(src: FromLG, modifiers: Modifiers): TargetT = f(src, modifiers)
+    }
 }
 
 trait ValueProviderDerivation {
@@ -25,13 +32,16 @@ trait ValueProviderDerivation {
     implicit fieldSelector: ops.record.Selector.Aux[FromLG, Label, FromT],
     fieldTransformer: DerivedTransformer[FromT, TargetT, Modifiers]
   ): ValueProvider[From, FromLG, TargetT, Label, Modifiers] =
-    (src: FromLG, modifiers: Modifiers) => fieldTransformer.transform(fieldSelector(src), modifiers)
+    ValueProvider.instance { (src: FromLG, modifiers: Modifiers) =>
+      fieldTransformer.transform(fieldSelector(src), modifiers)
+    }
 
   implicit final def hconsFieldFunctionCase[From, FromLG <: HList, TargetT, Label <: Symbol, Modifiers <: HList](
     implicit fromLG: LabelledGeneric.Aux[From, FromLG]
   ): ValueProvider[From, FromLG, TargetT, Label, Modifier.fieldFunction[Label, From, TargetT] :: Modifiers] =
-    (src: FromLG, modifiers: Modifier.fieldFunction[Label, From, TargetT] :: Modifiers) =>
+    ValueProvider.instance { (src: FromLG, modifiers: Modifier.fieldFunction[Label, From, TargetT] :: Modifiers) =>
       modifiers.head.map(fromLG.from(src))
+    }
 
   implicit final def hconsRelabelCase[From,
                                       FromLG <: HList,
@@ -41,10 +51,14 @@ trait ValueProviderDerivation {
                                       Modifiers <: HList](
     implicit fieldSelector: ops.record.Selector.Aux[FromLG, LabelFrom, TargetT]
   ): ValueProvider[From, FromLG, TargetT, LabelTo, Modifier.relabel[LabelFrom, LabelTo] :: Modifiers] =
-    (src: FromLG, _: Modifier.relabel[LabelFrom, LabelTo] :: Modifiers) => fieldSelector(src)
+    ValueProvider.instance { (src: FromLG, _: Modifier.relabel[LabelFrom, LabelTo] :: Modifiers) =>
+      fieldSelector(src)
+    }
 
   implicit final def hconsTailCase[From, FromLG <: HList, TargetT, Label <: Symbol, M <: Modifier, Ms <: HList](
     implicit vp: ValueProvider[From, FromLG, TargetT, Label, Ms]
   ): ValueProvider[From, FromLG, TargetT, Label, M :: Ms] =
-    (src: FromLG, modifiers: M :: Ms) => vp.provide(src, modifiers.tail)
+    ValueProvider.instance { (src: FromLG, modifiers: M :: Ms) =>
+      vp.provide(src, modifiers.tail)
+    }
 }

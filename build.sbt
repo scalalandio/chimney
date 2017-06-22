@@ -1,6 +1,7 @@
 val settings = Seq(
   version := "0.1.3",
   scalaVersion := "2.12.2",
+  crossScalaVersions := Seq("2.11.11", "2.12.2"),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
     "-encoding",
@@ -23,7 +24,6 @@ val settings = Seq(
     "-Xfuture",
     "-Xlint:adapted-args",
     "-Xlint:by-name-right-associative",
-    "-Xlint:constant",
     "-Xlint:delayedinit-select",
     "-Xlint:doc-detached",
     "-Xlint:inaccessible",

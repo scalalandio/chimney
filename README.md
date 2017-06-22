@@ -43,7 +43,7 @@ Chimney was created to remove the pain coming from such boilerplate.
 libraryDependencies += "io.scalaland" %% "chimney" % "0.1.3"
 ```
 
-Due to [SI-7046](https://issues.scala-lang.org/browse/SI-7046) some derivations require at least Scala 2.12.1.
+Due to [SI-7046](https://issues.scala-lang.org/browse/SI-7046) some derivations require at least Scala 2.12.1 or 2.11.9.
 
 ## Basic product type rewriting
 
