@@ -14,7 +14,9 @@ object DerivedCoproductTransformer extends CoproductInstances {
     implicit dct: DerivedCoproductTransformer[From, FromLG, ToLG, Modifiers]
   ): DerivedCoproductTransformer[From, FromLG, ToLG, Modifiers] = dct
 
-  final def instance[From, FromLG <: Coproduct, ToLG <: Coproduct, Modifiers <: HList](f: (FromLG, Modifiers) => ToLG): DerivedCoproductTransformer[From, FromLG, ToLG, Modifiers] =
+  final def instance[From, FromLG <: Coproduct, ToLG <: Coproduct, Modifiers <: HList](
+    f: (FromLG, Modifiers) => ToLG
+  ): DerivedCoproductTransformer[From, FromLG, ToLG, Modifiers] =
     new DerivedCoproductTransformer[From, FromLG, ToLG, Modifiers] {
       @inline final def transform(src: FromLG, modifiers: Modifiers): ToLG = f(src, modifiers)
     }
@@ -25,8 +27,8 @@ trait CoproductInstances {
   // $COVERAGE-OFF$
   implicit final def cnilCase[From, ToLG <: Coproduct, Modifiers <: HList]
     : DerivedCoproductTransformer[From, CNil, ToLG, Modifiers] =
-    DerivedCoproductTransformer.instance {
-      (_: CNil, _: Modifiers) => null.asInstanceOf[ToLG]
+    DerivedCoproductTransformer.instance { (_: CNil, _: Modifiers) =>
+      null.asInstanceOf[ToLG]
     }
   // $COVERAGE-ON$
 
@@ -39,11 +41,10 @@ trait CoproductInstances {
     implicit cip: CoproductInstanceProvider[Label, HeadToT, ToLG, Modifiers],
     tailTransformer: DerivedCoproductTransformer[From, TailFromLG, ToLG, Modifiers]
   ): DerivedCoproductTransformer[From, FieldType[Label, HeadToT] :+: TailFromLG, ToLG, Modifiers] =
-    DerivedCoproductTransformer.instance {
-      (src: FieldType[Label, HeadToT] :+: TailFromLG, modifiers: Modifiers) =>
-        src match {
-          case Inl(head) => cip.provide(head, modifiers)
-          case Inr(tail) => tailTransformer.transform(tail, modifiers)
-        }
+    DerivedCoproductTransformer.instance { (src: FieldType[Label, HeadToT] :+: TailFromLG, modifiers: Modifiers) =>
+      src match {
+        case Inl(head) => cip.provide(head, modifiers)
+        case Inr(tail) => tailTransformer.transform(tail, modifiers)
+      }
     }
 }

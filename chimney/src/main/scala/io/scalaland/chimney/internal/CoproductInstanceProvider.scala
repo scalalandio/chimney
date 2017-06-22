@@ -18,7 +18,9 @@ object CoproductInstanceProvider extends CoproductInstanceProviderDerivation {
   )(implicit lg: LabelledGeneric.Aux[To, ToLG], cip: CoproductInstanceProvider[Label, FromT, ToLG, Modifiers]): To =
     lg.from(cip.provide(src, modifiers))
 
-  final def instance[Label <: Symbol, FromT, ToLG <: Coproduct, Modifiers <: HList](f: (FieldType[Label, FromT], Modifiers) => ToLG): CoproductInstanceProvider[Label, FromT, ToLG, Modifiers] =
+  final def instance[Label <: Symbol, FromT, ToLG <: Coproduct, Modifiers <: HList](
+    f: (FieldType[Label, FromT], Modifiers) => ToLG
+  ): CoproductInstanceProvider[Label, FromT, ToLG, Modifiers] =
     new CoproductInstanceProvider[Label, FromT, ToLG, Modifiers] {
       @inline final def provide(src: FieldType[Label, FromT], modifiers: Modifiers): ToLG = f(src, modifiers)
     }
@@ -31,8 +33,8 @@ trait CoproductInstanceProviderDerivation extends LowPriorityCoproductInstancePr
     wit: Witness.Aux[TargetT],
     inj: ops.coproduct.Inject[ToLG, FieldType[Label, TargetT]]
   ): CoproductInstanceProvider[Label, FromT, ToLG, Modifiers] =
-    CoproductInstanceProvider.instance {
-      (_: FieldType[Label, FromT], _: Modifiers) => inj(field[Label](wit.value))
+    CoproductInstanceProvider.instance { (_: FieldType[Label, FromT], _: Modifiers) =>
+      inj(field[Label](wit.value))
     }
 
   implicit final def coproductInstanceCase[ToLG <: Coproduct,
@@ -51,8 +53,8 @@ trait CoproductInstanceProviderDerivation extends LowPriorityCoproductInstancePr
   implicit final def cconsTailCase[ToLG <: Coproduct, Label <: Symbol, FromT, M <: Modifier, Modifiers <: HList](
     implicit cip: CoproductInstanceProvider[Label, FromT, ToLG, Modifiers]
   ): CoproductInstanceProvider[Label, FromT, ToLG, M :: Modifiers] =
-    CoproductInstanceProvider.instance {
-      (src: FieldType[Label, FromT], modifiers: M :: Modifiers) => cip.provide(src, modifiers.tail)
+    CoproductInstanceProvider.instance { (src: FieldType[Label, FromT], modifiers: M :: Modifiers) =>
+      cip.provide(src, modifiers.tail)
     }
 }
 
@@ -62,8 +64,8 @@ trait LowPriorityCoproductInstanceProvider {
     transformer: DerivedTransformer[FromT, TargetT, Modifiers],
     inj: ops.coproduct.Inject[ToLG, FieldType[Label, TargetT]]
   ): CoproductInstanceProvider[Label, FromT, ToLG, Modifiers] =
-    CoproductInstanceProvider.instance {
-      (src: FieldType[Label, FromT], modifiers: Modifiers) => inj(field[Label](transformer.transform(src, modifiers)))
+    CoproductInstanceProvider.instance { (src: FieldType[Label, FromT], modifiers: Modifiers) =>
+      inj(field[Label](transformer.transform(src, modifiers)))
     }
 
 }

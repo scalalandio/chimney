@@ -14,7 +14,9 @@ object DerivedProductTransformer extends ProductInstances {
     implicit dpt: DerivedProductTransformer[From, FromLG, ToLG, Modifiers]
   ): DerivedProductTransformer[From, FromLG, ToLG, Modifiers] = dpt
 
-  final def instance[From, FromLG <: HList, ToLG <: HList, Modifiers <: HList](f: (FromLG, Modifiers) => ToLG):  DerivedProductTransformer[From, FromLG, ToLG, Modifiers] =
+  final def instance[From, FromLG <: HList, ToLG <: HList, Modifiers <: HList](
+    f: (FromLG, Modifiers) => ToLG
+  ): DerivedProductTransformer[From, FromLG, ToLG, Modifiers] =
     new DerivedProductTransformer[From, FromLG, ToLG, Modifiers] {
       @inline final def transform(src: FromLG, modifiers: Modifiers): ToLG = f(src, modifiers)
     }
@@ -24,16 +26,15 @@ trait ProductInstances {
 
   implicit final def hnilCase[From, FromLG <: HList, Modifiers <: HList]
     : DerivedProductTransformer[From, FromLG, HNil, Modifiers] =
-    DerivedProductTransformer.instance {
-      (_: FromLG, _: Modifiers) => HNil
+    DerivedProductTransformer.instance { (_: FromLG, _: Modifiers) =>
+      HNil
     }
 
   implicit final def hconsCase[From, FromLG <: HList, Label <: Symbol, HeadToT, TailToLG <: HList, Modifiers <: HList](
     implicit vp: ValueProvider[From, FromLG, HeadToT, Label, Modifiers],
     tailTransformer: DerivedProductTransformer[From, FromLG, TailToLG, Modifiers]
   ): DerivedProductTransformer[From, FromLG, FieldType[Label, HeadToT] :: TailToLG, Modifiers] =
-    DerivedProductTransformer.instance {
-      (src: FromLG, modifiers: Modifiers) =>
-        field[Label](vp.provide(src, modifiers)) :: tailTransformer.transform(src, modifiers)
+    DerivedProductTransformer.instance { (src: FromLG, modifiers: Modifiers) =>
+      field[Label](vp.provide(src, modifiers)) :: tailTransformer.transform(src, modifiers)
     }
 }
