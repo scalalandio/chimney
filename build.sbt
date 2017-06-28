@@ -1,6 +1,13 @@
+val versions = new {
+  val shapelessVersion = "2.3.2"
+  val scalatestVersion = "3.0.3"
+  val scalafmt = "1.0.0-RC1"
+  val scalaVersion = "2.12.2"
+}
+
 val settings = Seq(
   version := "0.1.4",
-  scalaVersion := "2.12.2",
+  scalaVersion := versions.scalaVersion,
   crossScalaVersions := Seq("2.11.11", "2.12.2"),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
@@ -42,15 +49,14 @@ val settings = Seq(
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
 
-val versions = new {
-  val shapelessVersion = "2.3.2"
-  val scalatestVersion = "3.0.3"
-  val scalafmt = "1.0.0-RC1"
-}
+
 
 val dependencies = Seq(
-  libraryDependencies += "com.chuusai" %%% "shapeless" % versions.shapelessVersion,
-  libraryDependencies += "org.scalatest" %%% "scalatest" % versions.scalatestVersion % "test"
+  libraryDependencies ++= Seq(
+    "org.scala-lang" % "scala-reflect" % versions.scalaVersion,
+    "com.chuusai" %%% "shapeless" % versions.shapelessVersion,
+    "org.scalatest" %%% "scalatest" % versions.scalatestVersion % "test"
+  )
 )
 
 lazy val root = project

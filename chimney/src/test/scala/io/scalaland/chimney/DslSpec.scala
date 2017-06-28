@@ -61,7 +61,7 @@ class DslSpec extends WordSpec with MustMatchers {
 
           Bar(3, 3.14)
             .into[Foo]
-            .withFieldComputed('y, _.x.toString)
+            .withFieldComputed(_.y, _.x.toString)
             .transform mustBe
             Foo(3, "3", 3.14)
         }
