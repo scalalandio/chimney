@@ -49,8 +49,6 @@ val settings = Seq(
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
 
-
-
 val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-reflect" % versions.scalaVersion,
@@ -127,7 +125,7 @@ lazy val publishSettings = Seq(
     <developers>
       <developer>
         <id>krzemin</id>
-        <name>Piotr Krzemiński</name>
+        <name>Piotr Krzemi?ski</name>
         <url>http://github.com/krzemin</url>
       </developer>
       <developer>

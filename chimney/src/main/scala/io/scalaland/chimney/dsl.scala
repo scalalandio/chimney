@@ -17,29 +17,33 @@ object dsl {
 
   final class TransformerInto[From, To, Modifiers <: HList](val source: From, val modifiers: Modifiers) {
 
-
-    def withFieldConst[T](selector: To => T,
-                          value: T): TransformerInto[From, To, _ <: Modifier.fieldFunction[Symbol, From, T] :: Modifiers] =
-    macro DslMacros.constFieldSelector
-
+    def withFieldConst[T](
+      selector: To => T,
+      value: T
+    ): TransformerInto[From, To, _ <: Modifier.fieldFunction[Symbol, From, T] :: Modifiers] =
+      macro DslMacros.constFieldSelector
 
     def withFieldConst[T](label: Witness.Lt[Symbol],
                           value: T): TransformerInto[From, To, Modifier.fieldFunction[label.T, From, T] :: Modifiers] =
       withFieldComputed(label, (_ => value): From => T)
 
+    def withFieldComputed[T](
+      selector: To => T,
+      map: From => T
+    ): TransformerInto[From, To, _ <: Modifier.fieldFunction[Symbol, From, T] :: Modifiers] =
+      macro DslMacros.computedFieldSelector
 
-    def withFieldComputed[T](selector: To => T,
-                             map: From => T): TransformerInto[From, To, _ <: Modifier.fieldFunction[Symbol, From, T] :: Modifiers] =
-    macro DslMacros.computedFieldSelector
-
-    def withFieldComputed[T](label: Witness.Lt[Symbol],
-                             map: From => T
+    def withFieldComputed[T](
+      label: Witness.Lt[Symbol],
+      map: From => T
     ): TransformerInto[From, To, Modifier.fieldFunction[label.T, From, T] :: Modifiers] =
       new TransformerInto(source, new Modifier.fieldFunction[label.T, From, T](map) :: modifiers)
 
-    def withFieldRenamed[T](selectorFrom: From => T,
-                            selectorTo: To => T): TransformerInto[From, To, _ <: Modifier.relabel[Symbol, Symbol] :: Modifiers] =
-    macro DslMacros.renamedFieldSelector
+    def withFieldRenamed[T](
+      selectorFrom: From => T,
+      selectorTo: To => T
+    ): TransformerInto[From, To, _ <: Modifier.relabel[Symbol, Symbol] :: Modifiers] =
+      macro DslMacros.renamedFieldSelector
 
     def withFieldRenamed(
       labelFrom: Witness.Lt[Symbol],
