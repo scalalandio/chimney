@@ -125,7 +125,7 @@ lazy val publishSettings = Seq(
     <developers>
       <developer>
         <id>krzemin</id>
-        <name>Piotr Krzemi?ski</name>
+        <name>Piotr Krzemiński</name>
         <url>http://github.com/krzemin</url>
       </developer>
       <developer>
