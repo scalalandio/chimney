@@ -61,7 +61,7 @@ class DslSpec extends WordSpec with MustMatchers {
 
           Bar(3, 3.14)
             .into[Foo]
-            .withFieldComputed('y, _.x.toString)
+            .withFieldComputed(_.y, _.x.toString)
             .transform mustBe
             Foo(3, "3", 3.14)
         }
@@ -81,7 +81,7 @@ class DslSpec extends WordSpec with MustMatchers {
       "relabel fields with relabelling modifier" in {
         Foo(10, "something")
           .into[Bar]
-          .withFieldRenamed('y, 'z)
+          .withFieldRenamed(_.y, _.z)
           .transform mustBe
           Bar(10, "something")
       }
