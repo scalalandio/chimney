@@ -33,8 +33,12 @@ private[chimney] object DslMacros {
         val symFrom = Symbol(fromFieldName.decodedName.toString)
         val symTo = Symbol(toFieldName.decodedName.toString)
         q"{${c.prefix}}.withFieldRenamed($symFrom, $symTo)"
+      case (q"($_) => $_.${fromFieldName: Name}", _) =>
+        c.abort(c.enclosingPosition, "Invalid TO selector")
+      case (_, q"($_) => $_.${toFieldName: Name}") =>
+        c.abort(c.enclosingPosition, "Invalid FROM selector")
       case _ =>
-        c.abort(c.enclosingPosition, "Invalid selector!")
+        c.abort(c.enclosingPosition, "Invalid selectors!")
     }
   }
 
