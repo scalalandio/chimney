@@ -12,7 +12,6 @@ private[chimney] object DslMacros {
     selector match {
       case q"($_) => $_.${fieldName: Name}" =>
         val sym = Symbol(fieldName.decodedName.toString)
-        println(sym)
         q"{${c.prefix}}.withFieldConst($sym, $value)"
       case _ =>
         c.abort(c.enclosingPosition, "Invalid selector!")
@@ -20,13 +19,12 @@ private[chimney] object DslMacros {
   }
 
   def computedFieldSelector(c: scala.reflect.macros.whitebox.Context)
-                        (selector: c.Tree, value: c.Tree): c.Tree = {
+                        (selector: c.Tree, map: c.Tree): c.Tree = {
     import c.universe._
     selector match {
       case q"($_) => $_.${fieldName: Name}" =>
         val sym = Symbol(fieldName.decodedName.toString)
-        println(sym)
-        q"{${c.prefix}}.withFieldComputed($sym, $value)"
+        q"{${c.prefix}}.withFieldComputed($sym, $map)"
       case _ =>
         c.abort(c.enclosingPosition, "Invalid selector!")
     }
@@ -38,7 +36,6 @@ private[chimney] object DslMacros {
     selector match {
       case q"($_) => $_.${fieldName: Name}" =>
         val sym = Symbol(fieldName.decodedName.toString)
-        println(sym)
         q"{${c.prefix}}.withFieldRenamed($sym, $value)"
       case _ =>
         c.abort(c.enclosingPosition, "Invalid selector!")

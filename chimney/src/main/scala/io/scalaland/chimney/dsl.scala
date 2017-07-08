@@ -29,12 +29,11 @@ object dsl {
 
 
     def withFieldComputed[T](selector: To => T,
-                          value: T): TransformerInto[From, To, _ <: Modifier.fieldFunction[Symbol, From, T] :: Modifiers] =
+                             map: From => T): TransformerInto[From, To, _ <: Modifier.fieldFunction[Symbol, From, T] :: Modifiers] =
     macro DslMacros.computedFieldSelector
 
-    def withFieldComputed[T](
-      label: Witness.Lt[Symbol],
-      map: From => T
+    def withFieldComputed[T](label: Witness.Lt[Symbol],
+                             map: From => T
     ): TransformerInto[From, To, Modifier.fieldFunction[label.T, From, T] :: Modifiers] =
       new TransformerInto(source, new Modifier.fieldFunction[label.T, From, T](map) :: modifiers)
 
