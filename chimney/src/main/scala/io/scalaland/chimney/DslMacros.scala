@@ -31,12 +31,13 @@ private[chimney] object DslMacros {
   }
 
   def renamedFieldSelector(c: scala.reflect.macros.whitebox.Context)
-                           (selector: c.Tree, value: c.Tree): c.Tree = {
+                           (selectorFrom: c.Tree, selectorTo: c.Tree): c.Tree = {
     import c.universe._
-    selector match {
-      case q"($_) => $_.${fieldName: Name}" =>
-        val sym = Symbol(fieldName.decodedName.toString)
-        q"{${c.prefix}}.withFieldRenamed($sym, $value)"
+    (selectorFrom, selectorTo) match {
+      case (q"($_) => $_.${fromFieldName: Name}", q"($_) => $_.${toFieldName: Name}") =>
+        val symFrom = Symbol(fromFieldName.decodedName.toString)
+        val symTo = Symbol(toFieldName.decodedName.toString)
+        q"{${c.prefix}}.withFieldRenamed($symFrom, $symTo)"
       case _ =>
         c.abort(c.enclosingPosition, "Invalid selector!")
     }

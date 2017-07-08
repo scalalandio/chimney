@@ -37,8 +37,8 @@ object dsl {
     ): TransformerInto[From, To, Modifier.fieldFunction[label.T, From, T] :: Modifiers] =
       new TransformerInto(source, new Modifier.fieldFunction[label.T, From, T](map) :: modifiers)
 
-    def withFieldRenamed[T](selector: To => T,
-                          value: T): TransformerInto[From, To, _ <: Modifier.relabel[Symbol, From] :: Modifiers] =
+    def withFieldRenamed[T](selectorFrom: From => T,
+                            selectorTo: To => T): TransformerInto[From, To, _ <: Modifier.relabel[Symbol, Symbol] :: Modifiers] =
     macro DslMacros.renamedFieldSelector
 
     def withFieldRenamed(
