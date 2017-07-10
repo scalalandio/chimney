@@ -6,7 +6,6 @@ private[chimney] object DslMacros {
   def constFieldSelector(c: scala.reflect.macros.whitebox.Context)(selector: c.Tree, value: c.Tree): c.Tree = {
     import c.universe._
     selector match {
-
       case q"(${_: ValDef}) => ${_: Ident}.${fieldName: Name}" =>
         val sym = Symbol(fieldName.decodedName.toString)
         q"{${c.prefix}}.withFieldConst($sym, $value)"
