@@ -30,13 +30,16 @@ private[chimney] object DslMacros {
                                                                      selectorTo: c.Tree): c.Tree = {
     import c.universe._
     (selectorFrom, selectorTo) match {
-      case (q"(${_: ValDef}) => ${_: Ident}.${fromFieldName: Name}", q"(${_: ValDef}) => ${_: Ident}.${toFieldName: Name}") =>
+      case (
+          q"(${_: ValDef}) => ${_: Ident}.${fromFieldName: Name}",
+          q"(${_: ValDef}) => ${_: Ident}.${toFieldName: Name}"
+          ) =>
         val symFrom = Symbol(fromFieldName.decodedName.toString)
         val symTo = Symbol(toFieldName.decodedName.toString)
         q"{${c.prefix}}.withFieldRenamed($symFrom, $symTo)"
-      case (q"(${_: ValDef}) => ${_: Ident}.${_: Name}", sel@_) =>
+      case (q"(${_: ValDef}) => ${_: Ident}.${_: Name}", sel @ _) =>
         c.abort(c.enclosingPosition, s"Selector of type ${sel.tpe} is not valid: $sel")
-      case (sel@_, q"(${_: ValDef}) => ${_: Ident}.${_: Name}") =>
+      case (sel @ _, q"(${_: ValDef}) => ${_: Ident}.${_: Name}") =>
         c.abort(c.enclosingPosition, s"Selector of type ${sel.tpe} is not valid: $sel")
       case (sel1, sel2) =>
         val inv1 = s"Selector of type ${sel1.tpe} is not valid: $sel1"
