@@ -34,36 +34,98 @@ class DslSpec extends WordSpec with MustMatchers {
 
     "support different set of fields of source and target" when {
 
-      case class Foo(x: Int, y: String, z: Double)
-      case class Bar(x: Int, z: Double)
+      case class Foo(x: Int, y: String, z: (Double, Double))
+      case class Bar(x: Int, z: (Double, Double))
 
       "field is dropped in the target" in {
-        Foo(3, "pi", 3.14).transformInto[Bar] mustBe Bar(3, 3.14)
+        Foo(3, "pi", (3.14, 3.14)).transformInto[Bar] mustBe Bar(3, (3.14, 3.14))
       }
 
       "field is added to the target" should {
 
         "not compile if source for the target fields is not provided" in {
 
-          illTyped("Bar(3, 3.14).transformInto[Foo]")
+          illTyped("Bar(3, (3.14, 3.14)).transformInto[Foo]")
         }
 
-        "fill the field with provided default value" in {
+        "fill the field with provided default value" should {
 
-          Bar(3, 3.14)
-            .into[Foo]
-            .withFieldConst('y, "pi")
-            .transform mustBe
-            Foo(3, "pi", 3.14)
+          "pass when selector is valid" in {
+
+            Bar(3, (3.14, 3.14))
+              .into[Foo]
+              .withFieldConst(_.y, "pi")
+              .transform mustBe
+              Foo(3, "pi", (3.14, 3.14))
+
+            Bar(3, (3.14, 3.14))
+              .into[Foo]
+              .withFieldConst(cc => cc.y, "pi")
+              .transform mustBe
+              Foo(3, "pi", (3.14, 3.14))
+          }
+
+          "not compile when the selector is invalid" in {
+
+            illTyped(
+              """Bar(3, (3.14, 3.14))
+                  .into[Foo]
+                  .withFieldConst(_.y, "pi")
+                  .withFieldConst(_.z._1, 0.0)
+                  .transform
+                """,
+              "Invalid selector!"
+            )
+
+            illTyped(
+              """Bar(3, (3.14, 3.14))
+                  .into[Foo]
+                  .withFieldConst(_.y + "abc", "pi")
+                  .transform
+                """,
+              "Invalid selector!"
+            )
+          }
         }
 
-        "fill the field with provided generator function" in {
+        "fill the field with provided generator function" should {
 
-          Bar(3, 3.14)
-            .into[Foo]
-            .withFieldComputed(_.y, _.x.toString)
-            .transform mustBe
-            Foo(3, "3", 3.14)
+          "pass when selector is valid" in {
+
+            Bar(3, (3.14, 3.14))
+              .into[Foo]
+              .withFieldComputed(_.y, _.x.toString)
+              .transform mustBe
+              Foo(3, "3", (3.14, 3.14))
+
+            Bar(3, (3.14, 3.14))
+              .into[Foo]
+              .withFieldComputed(cc => cc.y, _.x.toString)
+              .transform mustBe
+              Foo(3, "3", (3.14, 3.14))
+          }
+
+          "not compile when the selector is invalid" in {
+
+            illTyped(
+              """Bar(3, (3.14, 3.14))
+                  .into[Foo]
+                  .withFieldComputed(_.y, _.x.toString)
+                  .withFieldComputed(_.z._1, _.z._1 * 10.0)
+                  .transform
+                """,
+              "Invalid selector!"
+            )
+
+            illTyped(
+              """Bar(3, (3.14, 3.14))
+                  .into[Foo]
+                  .withFieldComputed(_.y + "abc", _.x.toString)
+                  .transform
+                """,
+              "Invalid selector!"
+            )
+          }
         }
       }
     }

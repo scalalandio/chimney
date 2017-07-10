@@ -6,7 +6,8 @@ private[chimney] object DslMacros {
   def constFieldSelector(c: scala.reflect.macros.whitebox.Context)(selector: c.Tree, value: c.Tree): c.Tree = {
     import c.universe._
     selector match {
-      case q"($_) => $_.${fieldName: Name}" =>
+
+      case q"(${_: ValDef}) => ${_: Ident}.${fieldName: Name}" =>
         val sym = Symbol(fieldName.decodedName.toString)
         q"{${c.prefix}}.withFieldConst($sym, $value)"
       case _ =>
@@ -17,7 +18,7 @@ private[chimney] object DslMacros {
   def computedFieldSelector(c: scala.reflect.macros.whitebox.Context)(selector: c.Tree, map: c.Tree): c.Tree = {
     import c.universe._
     selector match {
-      case q"($_) => $_.${fieldName: Name}" =>
+      case q"(${_: ValDef}) => ${_: Ident}.${fieldName: Name}" =>
         val sym = Symbol(fieldName.decodedName.toString)
         q"{${c.prefix}}.withFieldComputed($sym, $map)"
       case _ =>
