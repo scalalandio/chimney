@@ -88,11 +88,11 @@ case class Student(name: String, education: String)
 case class Employee(name: String, education: String, experience: List[String])
 
 Student("Paul", "University of Things").into[Employee]
-    .withFieldConst('experience, List("Internship in Z Company"))
+    .withFieldConst(_.experience, List("Internship in Z Company"))
     .transform
 // Employee = Employee(Paul,University of Things,List(Internship in Z Company))
 Student("Paula", "University of Things").into[Employee]
-    .withFieldComputed('experience, student => List(s"${student.name}'s own company"))
+    .withFieldComputed(_.experience, student => List(s"${student.name}'s own company"))
     .transform
 // Employee = Employee(Paula,University of Things,List(Paula's own company))
 ```
@@ -104,8 +104,8 @@ case class SpyGB(name: String, surname: String)
 case class SpyRU(imya: String, familia: String)
 
 SpyGB("James", "Bond").into[SpyRU]
-    .withFieldRenamed('name, 'imya)
-    .withFieldRenamed('surname, 'familia)
+    .withFieldRenamed(_.name, _.imya)
+    .withFieldRenamed(_.surname, _.familia)
     .transform
 // SpyRU = SpyRU(James,Bond)
 ```
