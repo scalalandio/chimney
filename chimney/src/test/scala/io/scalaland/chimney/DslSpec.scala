@@ -148,6 +148,39 @@ class DslSpec extends WordSpec with MustMatchers {
           Bar(10, "something")
       }
 
+      "not compile if relabelling selectors are invalid" in {
+
+        illTyped(
+          """
+            Foo(10, "something")
+              .into[Bar]
+              .withFieldRenamed(_.y + "abc", _.z)
+              .transform
+          """,
+          "Selector of type Foo => String is not valid: (.*)"
+        )
+
+        illTyped(
+          """
+            Foo(10, "something")
+              .into[Bar]
+              .withFieldRenamed(_.y, _.z + "abc")
+              .transform
+          """,
+          "Selector of type Bar => String is not valid: (.*)"
+        )
+
+        illTyped(
+          """
+            Foo(10, "something")
+              .into[Bar]
+              .withFieldRenamed(_.y + "abc", _.z + "abc")
+              .transform
+          """,
+          "Invalid selectors:(.*)"
+        )
+      }
+
       "not compile if relabelling wrongly" in {
 
         illTyped("""Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform""")
