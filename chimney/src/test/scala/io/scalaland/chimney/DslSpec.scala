@@ -67,24 +67,18 @@ class DslSpec extends WordSpec with MustMatchers {
 
           "not compile when the selector is invalid" in {
 
-            illTyped(
-              """Bar(3, (3.14, 3.14))
+            illTyped("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(_.y, "pi")
                   .withFieldConst(_.z._1, 0.0)
                   .transform
-                """,
-              "Invalid selector!"
-            )
+                """, "Invalid selector!")
 
-            illTyped(
-              """Bar(3, (3.14, 3.14))
+            illTyped("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(_.y + "abc", "pi")
                   .transform
-                """,
-              "Invalid selector!"
-            )
+                """, "Invalid selector!")
           }
         }
 
@@ -107,24 +101,18 @@ class DslSpec extends WordSpec with MustMatchers {
 
           "not compile when the selector is invalid" in {
 
-            illTyped(
-              """Bar(3, (3.14, 3.14))
+            illTyped("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(_.y, _.x.toString)
                   .withFieldComputed(_.z._1, _.z._1 * 10.0)
                   .transform
-                """,
-              "Invalid selector!"
-            )
+                """, "Invalid selector!")
 
-            illTyped(
-              """Bar(3, (3.14, 3.14))
+            illTyped("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(_.y + "abc", _.x.toString)
                   .transform
-                """,
-              "Invalid selector!"
-            )
+                """, "Invalid selector!")
           }
         }
       }
@@ -150,35 +138,26 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "not compile if relabelling selectors are invalid" in {
 
-        illTyped(
-          """
+        illTyped("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y + "abc", _.z)
               .transform
-          """,
-          "Selector of type Foo => String is not valid: (.*)"
-        )
+          """, "Selector of type Foo => String is not valid: (.*)")
 
-        illTyped(
-          """
+        illTyped("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y, _.z + "abc")
               .transform
-          """,
-          "Selector of type Bar => String is not valid: (.*)"
-        )
+          """, "Selector of type Bar => String is not valid: (.*)")
 
-        illTyped(
-          """
+        illTyped("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y + "abc", _.z + "abc")
               .transform
-          """,
-          "Invalid selectors:(.*)"
-        )
+          """, "Invalid selectors:(.*)")
       }
 
       "not compile if relabelling wrongly" in {
