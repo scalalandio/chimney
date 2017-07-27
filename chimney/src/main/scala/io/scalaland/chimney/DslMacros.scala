@@ -25,8 +25,7 @@ private[chimney] object DslMacros {
     }
   }
 
-  def renamedFieldSelector(c: scala.reflect.macros.whitebox.Context)(selectorFrom: c.Tree,
-                                                                     selectorTo: c.Tree): c.Tree = {
+  def renamedFieldSelector(c: scala.reflect.macros.whitebox.Context)(selectorFrom: c.Tree, selectorTo: c.Tree): c.Tree = {
     import c.universe._
     (selectorFrom, selectorTo) match {
       case (

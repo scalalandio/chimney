@@ -70,7 +70,7 @@ trait EitherInstances {
   ): DerivedTransformer[Either[FromL, FromR], Either[ToL, ToR], Modifiers] =
     DerivedTransformer.instance { (src: Either[FromL, FromR], modifiers: Modifiers) =>
       src match {
-        case Left(value) => Left(leftTransformer.transform(value, modifiers))
+        case Left(value)  => Left(leftTransformer.transform(value, modifiers))
         case Right(value) => Right(rightTransformer.transform(value, modifiers))
       }
     }
