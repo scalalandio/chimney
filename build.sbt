@@ -1,8 +1,10 @@
+name := "chimney"
+
 val versions = new {
   val shapelessVersion = "2.3.2"
   val scalatestVersion = "3.0.3"
   val scalafmt = "1.1.0"
-  val scalaVersion = "2.12.2"
+  val scalaVersion = "2.12.3"
 }
 
 val settings = Seq(
