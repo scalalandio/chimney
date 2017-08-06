@@ -21,22 +21,21 @@ trait CoproductInstances {
   // $COVERAGE-OFF$
   @sam implicit final def cnilCase[From, ToLG <: Coproduct, Modifiers <: HList]
     : DerivedCoproductTransformer[From, CNil, ToLG, Modifiers] =
-    (_: CNil, _: Modifiers) =>
-      null.asInstanceOf[ToLG] 
+    (_: CNil, _: Modifiers) => null.asInstanceOf[ToLG]
   // $COVERAGE-ON$
 
   @sam implicit final def coproductCase[From,
-                                       TailFromLG <: Coproduct,
-                                       Label <: Symbol,
-                                       HeadToT,
-                                       ToLG <: Coproduct,
-                                       Modifiers <: HList](
+                                        TailFromLG <: Coproduct,
+                                        Label <: Symbol,
+                                        HeadToT,
+                                        ToLG <: Coproduct,
+                                        Modifiers <: HList](
     implicit cip: CoproductInstanceProvider[Label, HeadToT, ToLG, Modifiers],
     tailTransformer: DerivedCoproductTransformer[From, TailFromLG, ToLG, Modifiers]
   ): DerivedCoproductTransformer[From, FieldType[Label, HeadToT] :+: TailFromLG, ToLG, Modifiers] =
-    (src: FieldType[Label, HeadToT] :+: TailFromLG, modifiers: Modifiers) => src match {
-      case Inl(head) => cip.provide(head, modifiers)
-      case Inr(tail) => tailTransformer.transform(tail, modifiers)
+    (src: FieldType[Label, HeadToT] :+: TailFromLG, modifiers: Modifiers) =>
+      src match {
+        case Inl(head) => cip.provide(head, modifiers)
+        case Inr(tail) => tailTransformer.transform(tail, modifiers)
     }
 }
-

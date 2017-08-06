@@ -22,4 +22,3 @@ object DerivedTransformer
   ): DerivedTransformer[From, To, Modifiers] = dt
 
 }
-

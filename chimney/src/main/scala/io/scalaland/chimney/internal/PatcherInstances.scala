@@ -24,7 +24,5 @@ trait PatcherInstances {
   @sam implicit def gen[T, P, TLG, PLG](implicit tlg: LabelledGeneric.Aux[T, TLG],
                                         plg: LabelledGeneric.Aux[P, PLG],
                                         patcher: Patcher[TLG, PLG]): Patcher[T, P] =
-    (obj: T, patch: P) =>
-      tlg.from(patcher.patch(tlg.to(obj), plg.to(patch)))
+    (obj: T, patch: P) => tlg.from(patcher.patch(tlg.to(obj), plg.to(patch)))
 }
-

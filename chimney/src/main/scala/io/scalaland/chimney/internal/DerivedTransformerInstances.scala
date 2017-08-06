@@ -12,8 +12,7 @@ trait BasicInstances {
   @sam implicit final def fromTransformer[T, U, Modifiers <: HList](
     implicit transformer: Transformer[T, U]
   ): DerivedTransformer[T, U, Modifiers] =
-    (src: T, _: Modifiers) =>
-      transformer.transform(src)
+    (src: T, _: Modifiers) => transformer.transform(src)
 
   @sam implicit final def identityTransformer[T, Modifiers <: HList]: DerivedTransformer[T, T, Modifiers] =
     (src: T, _: Modifiers) => src
@@ -37,14 +36,12 @@ trait OptionInstances {
   @sam implicit final def optionTransformer[From, To, Modifiers <: HList](
     implicit innerTransformer: DerivedTransformer[From, To, Modifiers]
   ): DerivedTransformer[Option[From], Option[To], Modifiers] =
-    (src: Option[From], modifiers: Modifiers) =>
-      src.map(innerTransformer.transform(_, modifiers))
+    (src: Option[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_, modifiers))
 
   @sam implicit final def someTransformer[From, To, Modifiers <: HList](
     implicit innerTransformer: DerivedTransformer[From, To, Modifiers]
   ): DerivedTransformer[Some[From], Option[To], Modifiers] =
-    (src: Some[From], modifiers: Modifiers) =>
-      Some(innerTransformer.transform(src.get, modifiers))
+    (src: Some[From], modifiers: Modifiers) => Some(innerTransformer.transform(src.get, modifiers))
 
   @sam implicit final def noneTransformer[From, To, Modifiers <: HList](
     implicit innerTransformer: DerivedTransformer[From, To, Modifiers]
@@ -58,9 +55,10 @@ trait EitherInstances {
     implicit leftTransformer: DerivedTransformer[FromL, ToL, Modifiers],
     rightTransformer: DerivedTransformer[FromR, ToR, Modifiers]
   ): DerivedTransformer[Either[FromL, FromR], Either[ToL, ToR], Modifiers] =
-    (src: Either[FromL, FromR], modifiers: Modifiers) => src match {
-      case Left(value)  => Left(leftTransformer.transform(value, modifiers))
-      case Right(value) => Right(rightTransformer.transform(value, modifiers))
+    (src: Either[FromL, FromR], modifiers: Modifiers) =>
+      src match {
+        case Left(value)  => Left(leftTransformer.transform(value, modifiers))
+        case Right(value) => Right(rightTransformer.transform(value, modifiers))
     }
 
   @sam implicit final def leftTransformer[FromL, ToL, FromR, ToR, Modifiers <: HList](
@@ -88,23 +86,22 @@ trait CollectionInstances {
     ev2: M2[To] <:< Traversable[To],
     cbf: CanBuildFrom[M1[From], To, M2[To]]
   ): DerivedTransformer[M1[From], M2[To], Modifiers] =
-    (src: M1[From], modifiers: Modifiers) =>
-      src.map(innerTransformer.transform(_: From, modifiers)).to[M2]
+    (src: M1[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_: From, modifiers)).to[M2]
 
   @sam implicit final def arrayTransformer[From, To, Modifiers <: HList](
     implicit innerTransformer: DerivedTransformer[From, To, Modifiers],
     toTag: ClassTag[To]
   ): DerivedTransformer[Array[From], Array[To], Modifiers] =
-    (src: Array[From], modifiers: Modifiers) =>
-      src.map(innerTransformer.transform(_: From, modifiers))
+    (src: Array[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_: From, modifiers))
 
   @sam implicit final def mapTransformer[FromK, ToK, FromV, ToV, Modifiers <: HList](
     implicit keyTransformer: DerivedTransformer[FromK, ToK, Modifiers],
     valueTransformer: DerivedTransformer[FromV, ToV, Modifiers]
   ): DerivedTransformer[Map[FromK, FromV], Map[ToK, ToV], Modifiers] =
-    (src: Map[FromK, FromV], modifiers: Modifiers) => src.map {
-      case (key, value) =>
-        keyTransformer.transform(key, modifiers) -> valueTransformer.transform(value, modifiers)
+    (src: Map[FromK, FromV], modifiers: Modifiers) =>
+      src.map {
+        case (key, value) =>
+          keyTransformer.transform(key, modifiers) -> valueTransformer.transform(value, modifiers)
     }
 }
 
@@ -115,14 +112,12 @@ trait GenericInstances {
     toLG: LabelledGeneric.Aux[To, ToLG],
     intermediateTransformer: Lazy[DerivedProductTransformer[From, FromLG, ToLG, Modifiers]]
   ): DerivedTransformer[From, To, Modifiers] =
-    (src: From, modifiers: Modifiers) =>
-      toLG.from(intermediateTransformer.value.transform(fromLG.to(src), modifiers))
+    (src: From, modifiers: Modifiers) => toLG.from(intermediateTransformer.value.transform(fromLG.to(src), modifiers))
 
   @sam implicit final def genCoproduct[From, To, FromLG <: Coproduct, ToLG <: Coproduct, Modifiers <: HList](
     implicit fromLG: LabelledGeneric.Aux[From, FromLG],
     toLG: LabelledGeneric.Aux[To, ToLG],
     intermediateTransformer: Lazy[DerivedCoproductTransformer[From, FromLG, ToLG, Modifiers]]
   ): DerivedTransformer[From, To, Modifiers] =
-    (src: From, modifiers: Modifiers) =>
-      toLG.from(intermediateTransformer.value.transform(fromLG.to(src), modifiers))
+    (src: From, modifiers: Modifiers) => toLG.from(intermediateTransformer.value.transform(fromLG.to(src), modifiers))
 }

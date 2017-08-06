@@ -22,11 +22,15 @@ trait ProductInstances {
     : DerivedProductTransformer[From, FromLG, HNil, Modifiers] =
     (_: FromLG, _: Modifiers) => HNil
 
-  @sam implicit final def hconsCase[From, FromLG <: HList, Label <: Symbol, HeadToT, TailToLG <: HList, Modifiers <: HList](
+  @sam implicit final def hconsCase[From,
+                                    FromLG <: HList,
+                                    Label <: Symbol,
+                                    HeadToT,
+                                    TailToLG <: HList,
+                                    Modifiers <: HList](
     implicit vp: ValueProvider[From, FromLG, HeadToT, Label, Modifiers],
     tailTransformer: DerivedProductTransformer[From, FromLG, TailToLG, Modifiers]
   ): DerivedProductTransformer[From, FromLG, FieldType[Label, HeadToT] :: TailToLG, Modifiers] =
     (src: FromLG, modifiers: Modifiers) =>
       field[Label](vp.provide(src, modifiers)) :: tailTransformer.transform(src, modifiers)
 }
-
