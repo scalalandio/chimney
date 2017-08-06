@@ -2,7 +2,7 @@ language: scala
 scala:
    - 2.11.11
    # - 2.12.0 doesn't work due to SI-7046
-   - 2.12.1
+   # - 2.12.1 no macro-paradise 2.1.1
    - 2.12.2
    - 2.12.3
 jdk:
