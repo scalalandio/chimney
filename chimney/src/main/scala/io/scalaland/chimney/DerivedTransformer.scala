@@ -21,11 +21,5 @@ object DerivedTransformer
     implicit dt: DerivedTransformer[From, To, Modifiers]
   ): DerivedTransformer[From, To, Modifiers] = dt
 
-  final def instance[From, To, Modifiers <: HList](
-    f: (From, Modifiers) => To
-  ): DerivedTransformer[From, To, Modifiers] =
-    new DerivedTransformer[From, To, Modifiers] {
-      @inline final def transform(src: From, modifiers: Modifiers): To =
-        f(src, modifiers)
-    }
 }
+
