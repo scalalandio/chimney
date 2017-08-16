@@ -65,13 +65,13 @@ lazy val root = project
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(noPublishSettings: _*)
-  .settings(commands += Command.args("scalafmt", "Run scalafmt cli.") {
-    case (state, args) =>
-      val Right(scalafmt) =
-        org.scalafmt.bootstrap.ScalafmtBootstrap.fromVersion(versions.scalafmt)
-      scalafmt.main("--non-interactive" +: args.toArray)
-      state
-  })
+//  .settings(commands += Command.args("scalafmt", "Run scalafmt cli.") {
+//    case (state, args) =>
+//      val Right(scalafmt) =
+//        org.scalafmt.bootstrap.ScalafmtBootstrap.fromVersion(versions.scalafmt)
+//      scalafmt.main("--non-interactive" +: args.toArray)
+//      state
+//  })
   .aggregate(chimneyJVM, chimneyJS, protosJVM, protosJS)
   .dependsOn(chimneyJVM, chimneyJS)
 
@@ -141,4 +141,4 @@ lazy val publishSettings = Seq(
 )
 
 lazy val noPublishSettings =
-  Seq(publish := (), publishLocal := (), publishArtifact := false)
+  Seq(publish := (()), publishLocal := (()), publishArtifact := false)
