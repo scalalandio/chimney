@@ -2,7 +2,6 @@ package io.scalaland.chimney.internal
 
 import shapeless.labelled.{FieldType, field}
 import shapeless.{::, HList, HNil}
-import samurai._
 
 trait DerivedProductTransformer[From, FromLG <: HList, ToLG <: HList, Modifiers <: HList] {
 
@@ -18,16 +17,11 @@ object DerivedProductTransformer extends ProductInstances {
 
 trait ProductInstances {
 
-  @sam implicit final def hnilCase[From, FromLG <: HList, Modifiers <: HList]
+  implicit final def hnilCase[From, FromLG <: HList, Modifiers <: HList]
     : DerivedProductTransformer[From, FromLG, HNil, Modifiers] =
     (_: FromLG, _: Modifiers) => HNil
 
-  @sam implicit final def hconsCase[From,
-                                    FromLG <: HList,
-                                    Label <: Symbol,
-                                    HeadToT,
-                                    TailToLG <: HList,
-                                    Modifiers <: HList](
+  implicit final def hconsCase[From, FromLG <: HList, Label <: Symbol, HeadToT, TailToLG <: HList, Modifiers <: HList](
     implicit vp: ValueProvider[From, FromLG, HeadToT, Label, Modifiers],
     tailTransformer: DerivedProductTransformer[From, FromLG, TailToLG, Modifiers]
   ): DerivedProductTransformer[From, FromLG, FieldType[Label, HeadToT] :: TailToLG, Modifiers] =

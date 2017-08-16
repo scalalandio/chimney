@@ -2,7 +2,6 @@ package io.scalaland.chimney.internal
 
 import shapeless.labelled.FieldType
 import shapeless.{:+:, CNil, Coproduct, HList, Inl, Inr}
-import samurai._
 
 trait DerivedCoproductTransformer[From, FromLG <: Coproduct, ToLG <: Coproduct, Modifiers <: HList] {
 
@@ -19,17 +18,17 @@ object DerivedCoproductTransformer extends CoproductInstances {
 trait CoproductInstances {
 
   // $COVERAGE-OFF$
-  @sam implicit final def cnilCase[From, ToLG <: Coproduct, Modifiers <: HList]
+  implicit final def cnilCase[From, ToLG <: Coproduct, Modifiers <: HList]
     : DerivedCoproductTransformer[From, CNil, ToLG, Modifiers] =
     (_: CNil, _: Modifiers) => null.asInstanceOf[ToLG]
   // $COVERAGE-ON$
 
-  @sam implicit final def coproductCase[From,
-                                        TailFromLG <: Coproduct,
-                                        Label <: Symbol,
-                                        HeadToT,
-                                        ToLG <: Coproduct,
-                                        Modifiers <: HList](
+  implicit final def coproductCase[From,
+                                   TailFromLG <: Coproduct,
+                                   Label <: Symbol,
+                                   HeadToT,
+                                   ToLG <: Coproduct,
+                                   Modifiers <: HList](
     implicit cip: CoproductInstanceProvider[Label, HeadToT, ToLG, Modifiers],
     tailTransformer: DerivedCoproductTransformer[From, TailFromLG, ToLG, Modifiers]
   ): DerivedCoproductTransformer[From, FieldType[Label, HeadToT] :+: TailFromLG, ToLG, Modifiers] =

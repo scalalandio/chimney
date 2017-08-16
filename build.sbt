@@ -5,7 +5,6 @@ val versions = new {
   val scalatestVersion = "3.0.3"
   val scalafmt = "1.1.0"
   val scalaVersion = "2.12.3"
-  val samuraiVersion = "1.1"
 }
 
 val settings = Seq(
@@ -47,7 +46,8 @@ val settings = Seq(
     "-Xlint:private-shadow",
     "-Xlint:stars-align",
     "-Xlint:type-parameter-shadow",
-    "-Xlint:unsound-match"
+    "-Xlint:unsound-match",
+    "-Xexperimental"
   ),
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
@@ -56,7 +56,6 @@ val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-reflect" % versions.scalaVersion,
     "com.chuusai" %%% "shapeless" % versions.shapelessVersion,
-    "io.scalaland" %%% "samurai" % versions.samuraiVersion,
     "org.scalatest" %%% "scalatest" % versions.scalatestVersion % "test"
   )
 )
@@ -81,9 +80,7 @@ lazy val chimney = crossProject
   .settings(
     moduleName := "chimney",
     name := "chimney",
-    description := "Scala library for boilerplate free data rewriting",
-    resolvers += Resolver.sonatypeRepo("releases"),
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+    description := "Scala library for boilerplate free data rewriting"
   )
   .settings(settings: _*)
   .settings(publishSettings: _*)
