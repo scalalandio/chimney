@@ -1,5 +1,3 @@
-name := "chimney"
-
 val versions = new {
   val shapelessVersion = "2.3.2"
   val scalatestVersion = "3.0.4"
