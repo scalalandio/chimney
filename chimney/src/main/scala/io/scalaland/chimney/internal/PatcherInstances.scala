@@ -26,12 +26,13 @@ trait PatcherInstances {
     upd: ops.record.Updater.Aux[TLG, FieldType[L, U], TLG],
     tailPatcher: Patcher[TLG, PTail]
   ): Patcher[TLG, FieldType[L, Option[T]] :: PTail] =
-    (obj: TLG, patch: FieldType[L, Option[T]] :: PTail) => (patch.head: Option[T]) match {
-      case Some(patchedValue) =>
-        val patchedHead = upd(obj, field[L](dt.transform(patchedValue, HNil)))
-        tailPatcher.patch(patchedHead, patch.tail)
-      case None =>
-        tailPatcher.patch(obj, patch.tail)
+    (obj: TLG, patch: FieldType[L, Option[T]] :: PTail) =>
+      (patch.head: Option[T]) match {
+        case Some(patchedValue) =>
+          val patchedHead = upd(obj, field[L](dt.transform(patchedValue, HNil)))
+          tailPatcher.patch(patchedHead, patch.tail)
+        case None =>
+          tailPatcher.patch(obj, patch.tail)
     }
 
   implicit def gen[T, P, TLG, PLG](implicit tlg: LabelledGeneric.Aux[T, TLG],
