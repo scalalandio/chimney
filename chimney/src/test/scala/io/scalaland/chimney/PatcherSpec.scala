@@ -33,9 +33,9 @@ class PatcherSpec extends WordSpec with MustMatchers {
 
       import TestDomain._
 
-      case class UserPatch(email: Option[Email], phone: Option[Phone])
+      case class UserPatch(email: Option[String], phone: Option[Phone])
 
-      val update = UserPatch(email = Some(Email("updated@example.com")), phone = None)
+      val update = UserPatch(email = Some("updated@example.com"), phone = None)
 
       exampleUser.patchWith(update) mustBe
         User(10, Email("updated@example.com"), Phone(1234567890L))
