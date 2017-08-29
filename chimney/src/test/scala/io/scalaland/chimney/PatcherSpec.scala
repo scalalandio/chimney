@@ -23,11 +23,32 @@ class PatcherSpec extends WordSpec with MustMatchers {
 
       import TestDomain._
 
-      val user = User(10, Email("abc@def.com"), Phone(1234567890L))
       val update = UpdateDetails("xyz@def.com", 123123123L)
 
-      user.patchWith(update) mustBe
+      exampleUser.patchWith(update) mustBe
         User(10, Email("xyz@def.com"), Phone(123123123L))
+    }
+
+    "support optional types in patch" in {
+
+      import TestDomain._
+
+      case class UserPatch(email: Option[String], phone: Option[Phone])
+
+      val update = UserPatch(email = Some("updated@example.com"), phone = None)
+
+      exampleUser.patchWith(update) mustBe
+        User(10, Email("updated@example.com"), Phone(1234567890L))
+    }
+
+    "support mixed optional and regular types" in {
+
+      import TestDomain._
+
+      case class UserPatch(email: String, phone: Option[Phone])
+      val update = UserPatch(email = "updated@example.com", phone = None)
+
+      exampleUser.patchWith(update) mustBe User(10, Email("updated@example.com"), Phone(1234567890L))
     }
   }
 
@@ -40,4 +61,7 @@ object TestDomain {
 
   case class User(id: Int, email: Email, phone: Phone)
   case class UpdateDetails(email: String, phone: Long)
+
+  val exampleUser = User(10, Email("abc@def.com"), Phone(1234567890L))
+
 }
