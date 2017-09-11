@@ -251,6 +251,8 @@ class DslSpec extends WordSpec with MustMatchers {
         Right(Foo("a")).transformInto[Either[Bar, Bar]] mustBe Right(Bar("a"))
         Left(Foo("a")).transformInto[Left[Bar, Bar]] mustBe Left(Bar("a"))
         Right(Foo("a")).transformInto[Right[Bar, Bar]] mustBe Right(Bar("a"))
+        (Left("a"): Either[String, String]).transformInto[Either[String, String]] mustBe Left("a")
+        (Right("a"): Either[String, String]).transformInto[Either[String, String]] mustBe Right("a")
       }
 
       "support Traversable collections" in {
@@ -259,16 +261,26 @@ class DslSpec extends WordSpec with MustMatchers {
         Vector(Foo("a")).transformInto[Vector[Bar]] mustBe Vector(Bar("a"))
         Set(Foo("a")).transformInto[Set[Bar]] mustBe Set(Bar("a"))
 
+        Seq("a").transformInto[Seq[String]] mustBe Seq("a")
+        List("a").transformInto[List[String]] mustBe List("a")
+        Vector("a").transformInto[Vector[String]] mustBe Vector("a")
+        Set("a").transformInto[Set[String]] mustBe Set("a")
+
         List(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
         Vector(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
+
+        List("a").transformInto[Seq[String]] mustBe Seq("a")
+        Vector("a").transformInto[Seq[String]] mustBe Seq("a")
       }
 
       "support Arrays" in {
         Array(Foo("a")).transformInto[Array[Bar]] mustBe Array(Bar("a"))
+        Array("a").transformInto[Array[String]] mustBe Array("a")
       }
 
       "support Map" in {
         Map("test" -> Foo("a")).transformInto[Map[String, Bar]] mustBe Map("test" -> Bar("a"))
+        Map("test" -> "a").transformInto[Map[String, String]] mustBe Map("test" -> "a")
       }
     }
 
