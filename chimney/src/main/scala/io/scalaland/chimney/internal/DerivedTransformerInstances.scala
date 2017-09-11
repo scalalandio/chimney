@@ -52,7 +52,8 @@ trait OptionInstances {
 trait EitherInstances {
 
   implicit final def eitherTransformer[FromL, ToL, FromR, ToR, Modifiers <: HList](
-    implicit leftTransformer: DerivedTransformer[FromL, ToL, Modifiers],
+    implicit neq: (FromL, FromR) =:!= (ToL, ToR),
+    leftTransformer: DerivedTransformer[FromL, ToL, Modifiers],
     rightTransformer: DerivedTransformer[FromR, ToR, Modifiers]
   ): DerivedTransformer[Either[FromL, FromR], Either[ToL, ToR], Modifiers] =
     (src: Either[FromL, FromR], modifiers: Modifiers) =>
@@ -81,7 +82,8 @@ trait EitherInstances {
 trait CollectionInstances {
 
   implicit final def traversableTransformer[From, To, Modifiers <: HList, M1[_], M2[_]](
-    implicit innerTransformer: DerivedTransformer[From, To, Modifiers],
+    implicit neq: M1[From] =:!= M2[To],
+    innerTransformer: DerivedTransformer[From, To, Modifiers],
     ev1: M1[From] <:< Traversable[From],
     ev2: M2[To] <:< Traversable[To],
     cbf: CanBuildFrom[M1[From], To, M2[To]]
@@ -89,13 +91,15 @@ trait CollectionInstances {
     (src: M1[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_: From, modifiers)).to[M2]
 
   implicit final def arrayTransformer[From, To, Modifiers <: HList](
-    implicit innerTransformer: DerivedTransformer[From, To, Modifiers],
+    implicit neq: From =:!= To,
+    innerTransformer: DerivedTransformer[From, To, Modifiers],
     toTag: ClassTag[To]
   ): DerivedTransformer[Array[From], Array[To], Modifiers] =
     (src: Array[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_: From, modifiers))
 
   implicit final def mapTransformer[FromK, ToK, FromV, ToV, Modifiers <: HList](
-    implicit keyTransformer: DerivedTransformer[FromK, ToK, Modifiers],
+    implicit neq: (FromK, FromV) =:!= (ToK, ToV),
+    keyTransformer: DerivedTransformer[FromK, ToK, Modifiers],
     valueTransformer: DerivedTransformer[FromV, ToV, Modifiers]
   ): DerivedTransformer[Map[FromK, FromV], Map[ToK, ToV], Modifiers] =
     (src: Map[FromK, FromV], modifiers: Modifiers) =>
