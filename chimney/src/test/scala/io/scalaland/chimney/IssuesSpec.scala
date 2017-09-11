@@ -33,6 +33,15 @@ class IssuesSpec extends WordSpec with MustMatchers {
       // https://github.com/milessabin/shapeless/pull/726
       // EntityWithTag1(0L, tag[Test]("name")).transformInto[EntityWithTag2] mustBe EntityWithTag2(tag[Test]("name"))
     }
+
+    "fix issue #40" in {
+
+      case class One(text: Option[String])
+      case class Two(text: Option[String])
+
+      One(None).transformInto[Two] mustBe Two(None)
+      One(Some("abc")).transformInto[Two] mustBe Two(Some("abc"))
+    }
   }
 
 }

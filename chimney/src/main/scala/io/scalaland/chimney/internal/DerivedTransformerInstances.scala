@@ -33,7 +33,8 @@ trait ValueClassInstances {
 trait OptionInstances {
 
   implicit final def optionTransformer[From, To, Modifiers <: HList](
-    implicit innerTransformer: DerivedTransformer[From, To, Modifiers]
+    implicit neq: From =:!= To,
+    innerTransformer: DerivedTransformer[From, To, Modifiers]
   ): DerivedTransformer[Option[From], Option[To], Modifiers] =
     (src: Option[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_, modifiers))
 

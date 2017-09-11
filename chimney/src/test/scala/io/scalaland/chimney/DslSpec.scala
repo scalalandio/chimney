@@ -240,6 +240,8 @@ class DslSpec extends WordSpec with MustMatchers {
         (None: Option[Foo]).transformInto[Option[Bar]] mustBe None
         Some(Foo("a")).transformInto[Some[Bar]] mustBe Some(Bar("a"))
         None.transformInto[None.type] mustBe None
+        (None: Option[String]).transformInto[Option[String]] mustBe None
+        Option("abc").transformInto[Option[String]] mustBe Some("abc")
       }
 
       "support scala.util.Either" in {
