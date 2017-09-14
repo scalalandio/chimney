@@ -8,7 +8,7 @@ val versions = new {
 }
 
 val settings = Seq(
-  version := "0.1.5",
+  version := "0.1.6",
   scalaVersion := versions.scalaVersion,
   crossScalaVersions := Seq("2.11.11", "2.12.3"),
   scalacOptions ++= Seq(
