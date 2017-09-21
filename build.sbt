@@ -1,7 +1,6 @@
 val versions = new {
   val shapelessVersion = "2.3.2"
   val scalatestVersion = "3.0.4"
-  val scalafmt = "1.1.0"
   val scalaVersion = "2.12.3"
 }
 
@@ -63,13 +62,6 @@ lazy val root = project
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(noPublishSettings: _*)
-//  .settings(commands += Command.args("scalafmt", "Run scalafmt cli.") {
-//    case (state, args) =>
-//      val Right(scalafmt) =
-//        org.scalafmt.bootstrap.ScalafmtBootstrap.fromVersion(versions.scalafmt)
-//      scalafmt.main("--non-interactive" +: args.toArray)
-//      state
-//  })
   .aggregate(chimneyJVM, chimneyJS, protosJVM, protosJS)
   .dependsOn(chimneyJVM, chimneyJS)
 
