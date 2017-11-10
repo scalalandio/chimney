@@ -1,13 +1,13 @@
 val versions = new {
   val shapelessVersion = "2.3.2"
   val scalatestVersion = "3.0.4"
-  val scalaVersion = "2.12.3"
+  val scalaVersion = "2.12.4"
 }
 
 val settings = Seq(
   version := "0.1.6",
   scalaVersion := versions.scalaVersion,
-  crossScalaVersions := Seq("2.11.11", "2.12.3"),
+  crossScalaVersions := Seq("2.11.12", "2.12.4"),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
     "-encoding",
