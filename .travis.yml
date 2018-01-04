@@ -2,7 +2,6 @@ language: scala
 scala:
    - 2.11.11
    - 2.11.12
-   # - 2.12.0 doesn't work due to SI-7046
    - 2.12.1
    - 2.12.2
    - 2.12.3
@@ -16,8 +15,7 @@ sudo: false
 cache:
   directories:
     - $HOME/.ivy2/cache
-    - $HOME/.sbt/boot/
-    - $HOME/.coursier/cache/
+    - $HOME/.sbt/boot
 
 before_cache:
   # Tricks to avoid unnecessary cache updates
@@ -25,7 +23,7 @@ before_cache:
   - find $HOME/.sbt -name "*.lock" -delete
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean "scalafmt --test" coverage test coverageReport
+  - sbt ++$TRAVIS_SCALA_VERSION clean scalafmtCheck test:scalafmtCheck coverage test coverageReport
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
