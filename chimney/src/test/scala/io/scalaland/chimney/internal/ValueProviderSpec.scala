@@ -98,6 +98,17 @@ class ValueProviderSpec extends WordSpec with MustMatchers {
         "provided1"
     }
 
+    "lub the value into the target type" in {
+      ValueProvider.provide(
+        Source("test"),
+        'foo,
+        classOf[Option[Int]],
+        Modifier.fieldConstant[Source, Option[Int]]('foo, None) ::
+          HNil
+      ) mustBe
+        None
+    }
+
     "provide value for coproduct field" in {
 
       ValueProvider.provide(Response(No), 'answer, classOf[Answer], HNil) mustBe

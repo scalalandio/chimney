@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal
 
 import io.scalaland.chimney._
-import shapeless.{::, HList, HNil, LabelledGeneric, Witness, ops}
+import shapeless._
 
 trait ValueProvider[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList] {
 
@@ -36,11 +36,12 @@ trait ValueProviderDerivation {
       fieldTransformer.transform(fieldSelector(src), modifiers)
     }
 
-  implicit final def hconsFieldFunctionCase[From, FromLG <: HList, TargetT, Label <: Symbol, Modifiers <: HList](
-    implicit fromLG: LabelledGeneric.Aux[From, FromLG]
-  ): ValueProvider[From, FromLG, TargetT, Label, Modifier.fieldFunction[Label, From, TargetT] :: Modifiers] =
-    ValueProvider.instance { (src: FromLG, modifiers: Modifier.fieldFunction[Label, From, TargetT] :: Modifiers) =>
-      modifiers.head.map(fromLG.from(src))
+  implicit final def hconsFieldFunctionCase[From, FromLG <: HList, TargetT, ModT, Label <: Symbol, Modifiers <: HList](
+    implicit fromLG: LabelledGeneric.Aux[From, FromLG],
+    lubTargetTModT: Lub[TargetT, ModT, TargetT]
+  ): ValueProvider[From, FromLG, TargetT, Label, Modifier.fieldFunction[Label, From, ModT] :: Modifiers] =
+    ValueProvider.instance { (src: FromLG, modifiers: Modifier.fieldFunction[Label, From, ModT] :: Modifiers) =>
+      lubTargetTModT.right(modifiers.head.map(fromLG.from(src)))
     }
 
   implicit final def hconsRelabelCase[From,

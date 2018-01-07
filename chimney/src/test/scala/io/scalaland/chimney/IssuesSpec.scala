@@ -1,7 +1,7 @@
 package io.scalaland.chimney
 
 import org.scalatest.{MustMatchers, WordSpec}
-import shapeless.HNil
+import shapeless._
 
 class IssuesSpec extends WordSpec with MustMatchers {
 
@@ -39,6 +39,19 @@ class IssuesSpec extends WordSpec with MustMatchers {
 
       One(None).transformInto[Two] mustBe Two(None)
       One(Some("abc")).transformInto[Two] mustBe Two(Some("abc"))
+    }
+
+    "fix issue #46" in {
+      case class X(a: Int)
+      case class Y(a: Int, b: Option[String])
+
+      X(5).into[Y].withFieldComputed(_.b, _ => Some("5")).transform
+      X(5).into[Y].withFieldComputed(_.b, _ => None).transform
+
+      case class Y2(a: Int, b: List[String])
+
+      X(5).into[Y2].withFieldComputed(_.b, _ => Nil).transform
+      X(5).into[Y2].withFieldConst(_.b, "a" :: Nil).transform
     }
   }
 
