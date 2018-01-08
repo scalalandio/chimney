@@ -114,7 +114,7 @@ trait GenericInstances {
   implicit final def genProduct[From, To, FromLG <: HList, ToLG <: HList, Modifiers <: HList](
     implicit fromLG: LabelledGeneric.Aux[From, FromLG],
     toLG: LabelledGeneric.Aux[To, ToLG],
-    intermediateTransformer: Lazy[DerivedProductTransformer[From, FromLG, ToLG, Modifiers]]
+    intermediateTransformer: Lazy[DerivedProductTransformer[From, FromLG, To, ToLG, Modifiers]]
   ): DerivedTransformer[From, To, Modifiers] =
     (src: From, modifiers: Modifiers) => toLG.from(intermediateTransformer.value.transform(fromLG.to(src), modifiers))
 
