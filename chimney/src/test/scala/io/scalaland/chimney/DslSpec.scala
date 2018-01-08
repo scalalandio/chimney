@@ -141,8 +141,10 @@ class DslSpec extends WordSpec with MustMatchers {
       }
 
       "not use default if another modifier is provided" in {
-        Foo(10).into[Bar]
-          .withFieldConst(_.y, 45L).transform mustBe
+        Foo(10)
+          .into[Bar]
+          .withFieldConst(_.y, 45L)
+          .transform mustBe
           Bar(10, 45L)
       }
     }
