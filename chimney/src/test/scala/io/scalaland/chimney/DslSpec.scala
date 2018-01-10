@@ -132,6 +132,23 @@ class DslSpec extends WordSpec with MustMatchers {
       }
     }
 
+    "support default parameters" should {
+      case class Foo(x: Int)
+      case class Bar(x: Int, y: Long = 30L)
+
+      "use default parameter" in {
+        Foo(10).transformInto[Bar] mustBe Bar(10, 30L)
+      }
+
+      "not use default if another modifier is provided" in {
+        Foo(10)
+          .into[Bar]
+          .withFieldConst(_.y, 45L)
+          .transform mustBe
+          Bar(10, 45L)
+      }
+    }
+
     "support relabelling of fields" should {
 
       case class Foo(x: Int, y: String)
