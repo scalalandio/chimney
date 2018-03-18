@@ -136,11 +136,13 @@ class DslSpec extends WordSpec with MustMatchers {
       case class Foo(x: Int)
       case class Bar(x: Int, y: Long = 30L)
       case class Baz(x: Int = 5, y: Long = 100L)
+      case class Baah(x: Int, y: Foo = Foo(0))
 
       "use default parameter value" when {
 
         "field does not exists in the source" in {
           Foo(10).transformInto[Bar] mustBe Bar(10, 30L)
+          Seq(Foo(30), Foo(40)).transformInto[Seq[Bar]] mustBe Seq(Bar(30, 30L), Bar(40, 30L))
         }
       }
 
@@ -148,6 +150,7 @@ class DslSpec extends WordSpec with MustMatchers {
 
         "field exists in the source" in {
           Bar(100, 200L).transformInto[Baz] mustBe Baz(100, 200L)
+          Seq(Bar(100, 200L), Bar(300, 400L)).transformInto[Seq[Baz]] mustBe Seq(Baz(100, 200L), Baz(300, 400L))
         }
 
         "another modifier is provided" in {
@@ -156,6 +159,15 @@ class DslSpec extends WordSpec with MustMatchers {
             .withFieldConst(_.y, 45L)
             .transform mustBe
             Bar(10, 45L)
+        }
+
+        "local transformer for default value also exists" in {
+
+          implicit val localTransformer: Transformer[Long, Foo] = { l: Long =>
+            Foo(l.toInt * 10)
+          }
+
+          Bar(100, 300L).transformInto[Baah] mustBe Baah(100, Foo(3000))
         }
       }
     }
