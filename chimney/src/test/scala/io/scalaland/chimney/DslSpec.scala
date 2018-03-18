@@ -135,17 +135,28 @@ class DslSpec extends WordSpec with MustMatchers {
     "support default parameters" should {
       case class Foo(x: Int)
       case class Bar(x: Int, y: Long = 30L)
+      case class Baz(x: Int = 5, y: Long = 100L)
 
-      "use default parameter" in {
-        Foo(10).transformInto[Bar] mustBe Bar(10, 30L)
+      "use default parameter value" when {
+
+        "field does not exists in the source" in {
+          Foo(10).transformInto[Bar] mustBe Bar(10, 30L)
+        }
       }
 
-      "not use default if another modifier is provided" in {
-        Foo(10)
-          .into[Bar]
-          .withFieldConst(_.y, 45L)
-          .transform mustBe
-          Bar(10, 45L)
+      "not use default parameter value" when {
+
+        "field exists in the source" in {
+          Bar(100, 200L).transformInto[Baz] mustBe Baz(100, 200L)
+        }
+
+        "another modifier is provided" in {
+          Foo(10)
+            .into[Bar]
+            .withFieldConst(_.y, 45L)
+            .transform mustBe
+            Bar(10, 45L)
+        }
       }
     }
 
