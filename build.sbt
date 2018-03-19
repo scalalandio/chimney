@@ -132,3 +132,10 @@ lazy val publishSettings = Seq(
 
 lazy val noPublishSettings =
   Seq(publish := (()), publishLocal := (()), publishArtifact := false)
+
+lazy val readme = scalatex.ScalatexReadme(
+  projectId = "readme",
+  wd = file("readme"),
+  url = "https://github.com/scalalandio/chimney/tree/master",
+  source = "Readme"
+).settings(scalaVersion := versions.scalaVersion)
