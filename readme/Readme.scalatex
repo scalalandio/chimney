@@ -1,5 +1,27 @@
 @import Main._
 @import scalatex.site._
 
-@sect{Chimney}
-  @p{Test}
+@sect("Chimney", "Scala library for boilerplate-free data transformations")
+  @sect{What Chimney does}
+    @p
+      Dirty things
+
+  @sect{Getting started}
+    @p
+      Go!
+
+  @sect{Usage}
+    @sect{AAA}
+        @hl.scala
+          val x = 5
+    @sect{BBB}
+        @p
+          Dirty things
+    @sect{CCC}
+        @p
+          Dirty things
+
+  @sect{Going crazy}
+    @p
+      Go!
+
