@@ -4,24 +4,60 @@
 @sect("Chimney", "Scala library for boilerplate-free data transformations")
   @sect{What Chimney does}
     @p
-      Dirty things
+      In strongly-typed language programmer's daily life sometimes happens
+      to transform an object of one type to another object which contains
+      number of the same or similar fields in their definitions.
+    @hl.scala
+      case class MakeCoffee(id: Int, kind: String, addict: String)
+      case class CoffeeMade(id: Int, kind: String, forAddict: String, at: ZonedDateTime)
+    @p
+      Usual approach is to just rewrite fields one by one
+    @hl.scala
+      val command = MakeCoffee(id = Random.nextInt,
+                               kind = "Espresso",
+                               addict = "Piotr")
+      val event = CoffeeMade(id = command.id,
+                             kind = command.kind,
+                             forAddict = command.addict,
+                             at = ZonedDateTime.now)
+    @p
+      While the example stays short and lean, in real-life code we usually end up
+      with tons of such boilerplate, especially when:
+      @ul
+        @li
+          we maintain typed schema and want to migrate between multiple schema
+          versions
+        @li
+          we apply practices like DDD (Domain-Driven-Design) where suggested
+          approach is to separate model schemas of different bounded contexts
+        @li
+          we use code-generation tools like Protocol Buffers that generate primitive
+          types like @hl.scala{Int} or @hl.scala{String}, while you'd prefer to
+          use value objects in you domain-level code to improve type-safety
+          and readability
+    @p
+      Chimney uses type-level meta-programming techniques based on
+      @lnk("Shapeless", "https://github.com/milessabin/shapeless") library
+      and provides compact DSL on top of transformation rules derivation engine
+      to transform your objects with as little boilerplate as possible
+      and compile-time safety!
+
+    @hl.scala
+      import io.scalaland.chimney.dsl._
+
+      val event = command.into[CoffeeMade]
+        .withFieldComputed(_.at, _ => ZonedDateTime.now)
+        .withFieldRenamed(_.addict, _.forAddict)
+        .transform
+
 
   @sect{Getting started}
     @p
-      Go!
-
-  @sect{Usage}
-    @sect{AAA}
-        @hl.scala
-          val x = 5
-    @sect{BBB}
-        @p
-          Dirty things
-    @sect{CCC}
-        @p
-          Dirty things
-
-  @sect{Going crazy}
+      To include chimney to your SBT project, add following line to you @code{build.sbt}
+    @hl.scala
+      libraryDependencies += "io.scalaland" %% "chimney" % "0.1.8"
     @p
-      Go!
-
+      Library is released for Scala 2.11 and 2.12.
+      If you want to use it with Scala.js, you need to replace @code{%%} with @code{%%%}.
+      Due to some @lnk("compiler bugs", "https://issues.scala-lang.org/browse/SI-7046"),
+      it's recommended to use at least Scala 2.11.9 or 2.12.1.

@@ -140,6 +140,7 @@ lazy val readme = scalatex
     url = "https://github.com/scalalandio/chimney/tree/master",
     source = "Readme"
   )
+  .settings(noPublishSettings : _*)
   .settings(
     scalaVersion := versions.scalaVersion,
     siteSourceDirectory := target.value / "scalatex",
