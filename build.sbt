@@ -1,6 +1,6 @@
 val versions = new {
   val shapelessVersion = "2.3.3"
-  val scalatestVersion = "3.0.4"
+  val scalatestVersion = "3.0.5"
   val scalaVersion = "2.12.4"
 }
 
