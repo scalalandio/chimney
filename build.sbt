@@ -141,4 +141,12 @@ lazy val readme = scalatex
     source = "Readme"
   )
   .settings(noPublishSettings : _*)
-  .settings(scalaVersion := versions.scalaVersion)
+  .settings(
+    scalaVersion := versions.scalaVersion,
+    siteSourceDirectory := target.value / "scalatex",
+    git.remoteRepo := "git@github.com:scalalandio/chimney.git",
+    includeFilter in (makeSite in Jekyll) := new FileFilter {
+      def accept(p: File) = true
+    }
+  )
+  .enablePlugins(GhpagesPlugin)
