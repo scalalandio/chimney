@@ -41,6 +41,12 @@ class IssuesSpec extends WordSpec with MustMatchers {
       One(Some("abc")).transformInto[Two] mustBe Two(Some("abc"))
     }
 
+    "fix issue #44" in {
+
+      implicit val vcTransformer: Transformer[VC, String] = _ => "abc"
+      VC("test").transformInto[String] mustBe "abc"
+    }
+
     "fix issue #46" in {
       case class X(a: Int)
       case class Y(a: Int, b: Option[String])
@@ -54,5 +60,6 @@ class IssuesSpec extends WordSpec with MustMatchers {
       X(5).into[Y2].withFieldConst(_.b, "a" :: Nil).transform
     }
   }
-
 }
+
+case class VC(x: String) extends AnyVal

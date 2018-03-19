@@ -14,13 +14,15 @@ trait IdentityInstance {
 
 trait ValueClassInstances {
 
-  implicit final def toValueClassTransformer[C <: AnyVal, V, Modifiers <: HList](
-    implicit gen: Generic.Aux[C, V :: HNil]
+  implicit final def toValueClassTransformer[C, V, Modifiers <: HList](
+    implicit ev: C <:< AnyVal,
+    gen: Generic.Aux[C, V :: HNil]
   ): DerivedTransformer[V, C, Modifiers] =
     (src: V, _: Modifiers) => gen.from(src :: HNil)
 
-  implicit final def fromValueClassTransformer[C <: AnyVal, V, Modifiers <: HList](
-    implicit gen: Generic.Aux[C, V :: HNil]
+  implicit final def fromValueClassTransformer[C, V, Modifiers <: HList](
+    implicit ev: C <:< AnyVal,
+    gen: Generic.Aux[C, V :: HNil]
   ): DerivedTransformer[C, V, Modifiers] =
     (src: C, _: Modifiers) => gen.to(src).head
 }
