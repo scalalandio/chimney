@@ -6,12 +6,7 @@ import shapeless._
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 
-trait BasicInstances {
-
-  implicit final def fromTransformer[T, U, Modifiers <: HList](
-    implicit transformer: Transformer[T, U]
-  ): DerivedTransformer[T, U, Modifiers] =
-    (src: T, _: Modifiers) => transformer.transform(src)
+trait IdentityInstance {
 
   implicit final def identityTransformer[T, Modifiers <: HList]: DerivedTransformer[T, T, Modifiers] =
     (src: T, _: Modifiers) => src

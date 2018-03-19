@@ -161,13 +161,22 @@ class DslSpec extends WordSpec with MustMatchers {
             Bar(10, 45L)
         }
 
-        "local transformer for default value also exists" in {
+        "local transformer for default value exists" in {
 
           implicit val localTransformer: Transformer[Long, Foo] = { l: Long =>
             Foo(l.toInt * 10)
           }
 
           Bar(100, 300L).transformInto[Baah] mustBe Baah(100, Foo(3000))
+        }
+
+        "local transformer for the whole entity exists" in {
+
+          implicit val fooBarTransformer: Transformer[Foo, Bar] = { foo: Foo =>
+            Bar(foo.x, 333L)
+          }
+
+          Foo(333).transformInto[Bar] mustBe Bar(333, 333L)
         }
       }
     }

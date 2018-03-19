@@ -10,7 +10,7 @@ trait DerivedTransformer[From, To, Modifiers <: HList] {
 }
 
 object DerivedTransformer
-    extends BasicInstances
+    extends IdentityInstance
     with ValueClassInstances
     with OptionInstances
     with EitherInstances
@@ -21,4 +21,8 @@ object DerivedTransformer
     implicit dt: DerivedTransformer[From, To, Modifiers]
   ): DerivedTransformer[From, To, Modifiers] = dt
 
+  implicit final def fromTransformer[T, U, Modifiers <: HList](
+    implicit transformer: Transformer[T, U]
+  ): DerivedTransformer[T, U, Modifiers] =
+    (src: T, _: Modifiers) => transformer.transform(src)
 }
