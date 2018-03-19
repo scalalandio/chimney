@@ -136,14 +136,9 @@ lazy val noPublishSettings =
 lazy val readme = scalatex
   .ScalatexReadme(
     projectId = "readme",
-    wd = file("readme"),
+    wd = file(""),
     url = "https://github.com/scalalandio/chimney/tree/master",
     source = "Readme"
   )
   .settings(noPublishSettings : _*)
-  .settings(
-    scalaVersion := versions.scalaVersion,
-    siteSourceDirectory := target.value / "scalatex",
-    git.remoteRepo := "git@github.com:scalalandio/chimney.git"
-  )
-  .enablePlugins(GhpagesPlugin)
+  .settings(scalaVersion := versions.scalaVersion)
