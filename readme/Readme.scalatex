@@ -1,6 +1,16 @@
 @import Main._
 @import scalatex.site._
 
+@a(
+  href:="https://github.com/scalalandio/chimney",
+  position.absolute,
+  top:=0,right:=0,border:=0,
+  img(
+    src:="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png",
+    alt:="Fork me on GitHub"
+  )
+)
+
 @sect("Chimney", "Scala library for boilerplate-free data transformations")
   @sect{What Chimney does}
     @p
@@ -242,19 +252,11 @@
         //   v2.User(2, "Anna", List(Address("Broadway", "00321")))
         // )
 
-    @sect{Transformations composability}
-      @p
-        todo
-
     @sect{Coproducts support}
       @p
         todo
 
     @sect{Patchers}
-      @p
-        todo
-
-    @sect{Tagged types}
       @p
         todo
 
