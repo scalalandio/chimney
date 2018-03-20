@@ -64,9 +64,9 @@ span.hljs-tag, span.hljs-symbol{
 <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Chimney" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Chimney<a class=" scalatex-site-Styles-headerLink" href="#Chimney" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /><h2 style="font-weight: 300;color: #ccc;padding: 0px;margin-top: 0px;">Scala library for boilerplate-free data transformations</h2></div><div class=" scalatex-site-Styles-content">
   <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="WhatChimneydoes" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">What Chimney does<a class=" scalatex-site-Styles-headerLink" href="#WhatChimneydoes" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
     <p>
-      In strongly-typed language programmer's daily life sometimes happens
+      In the daily life of a strongly-typed language's programmer sometimes happens
       to transform an object of one type to another object which contains
-      number of the same or similar fields in their definitions.</p>
+      a number of the same or similar fields in their definitions.</p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">case class MakeCoffee(id: Int, kind: String, addict: String)
 case class CoffeeMade(id: Int, kind: String, forAddict: String, at: ZonedDateTime)</code></pre>
     <p>
@@ -94,11 +94,11 @@ val event = CoffeeMade(id = command.id,
           use value objects in you domain-level code to improve type-safety
           and readability</li></ul></p>
     <p>
-      Chimney uses type-level meta-programming techniques based on
-      <a href="https://github.com/milessabin/shapeless">Shapeless</a> library
-      and provides compact DSL on top of transformation rules derivation engine
-      to transform your objects with as little boilerplate as possible
-      and compile-time safety!
+      Chimney provides a compact DSL with which you can define transformation
+      rules and transform your objects with as little boilerplate as possible.
+      Underneath it uses type-level meta-programming based on
+      <a href="https://github.com/milessabin/shapeless">Shapeless</a> and type-class
+      derivation to give you type-safety at compile-time!
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">import io.scalaland.chimney.dsl._
 
@@ -167,7 +167,9 @@ val steve = stevie.transformInto[Butterfly]
 //                                        ^
 </code></pre>
       <p>
-        In this scenario, we can use Chimney syntax to provide a missing value.
+        In this scenario, we can use Chimney syntax to provide a missing value. Notice
+        that <code>transformInto[T]</code> is a shortcut for <code>into[T].transform</code>, where
+        the latter form allow us to provide additional transformation rules.
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">val steve = stevie.into[Butterfly]
   .withFieldConst(_.wingsColor, &quot;white&quot;)
@@ -185,7 +187,7 @@ val steve = stevie.transformInto[Butterfly]
 </code></pre>
     <h1 id="Defaultvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Defaultvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Default values</h1>
       <p>
-        Chimney also respects default case classes values as possible target field value source.
+        Chimney also respects default case classes values a possible target field value source.
         When we want to rely on defaults, we don't need to provide values manually.
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">case class Butterfly(size: Int, name: String, wingsColor: String = &quot;purple&quot;)
@@ -246,7 +248,7 @@ val jamesRU = jamesGB.into[SpyRU]
 
     <h1 id="Customtransformations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Customtransformations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Custom transformations</h1>
       <p>
-        In case the transformation is relatively complex or for some reason you just
+        In case the transformation is relatively complex or if for some reason you just
         want o bypass Chimney derivation mechanism, you can always fall back to a simple
         function that you can plug into the Chimney transformation.
 </p>
@@ -365,4 +367,4 @@ val blue = alpha.into[Color]
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
