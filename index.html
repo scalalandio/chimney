@@ -350,8 +350,8 @@ val blue = alpha.into[Color]
     <h1 id="Patchers" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Patchers" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Patchers</h1>
       <p>
         Chimney supports also patching case classes. Patching is a bit different type
-        of transformation when you hold an object of some type, but want to require only
-        subset of fields. Consider following example.
+        of transformation when you hold an object of some type, but want to modify only
+        subset of fields. Consider following example:
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">case class Email(address: String) extends AnyVal
 case class Phone(number: Long) extends AnyVal
