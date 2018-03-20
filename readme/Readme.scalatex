@@ -254,7 +254,65 @@
 
     @sect{Coproducts support}
       @p
-        todo
+        With chimney you can not only transform case classes, but sealed trait hierarchies
+        (also known as coproducts) as well. Consider two following hierarchy definitions.
+
+      @hl.scala
+        sealed trait Color
+        object Color {
+          case object Red extends Color
+          case object Green extends Color
+          case object Blue extends Color
+        }
+
+        sealed trait Channel
+        object Channel {
+          case object Alpha extends Channel
+          case object Blue extends Channel
+          case object Green extends Channel
+          case object Red extends Channel
+        }
+
+      @p
+        Because of object names correspondence, we can transform @code{Color} to a @code{Channel}
+        in a simple way.
+
+      @hl.scala
+        val colRed: Color = Color.Red
+        val chanRed = colRed.transformInto[Channel]
+        // chanRed: Channel = Red
+
+      @p
+        How about other way round?
+
+      @hl.scala
+        chanRed.transformInto[Color]
+        // error: could not find implicit value for parameter derivedTransformer: io.scalaland.chimney.DerivedTransformer[Channel,Color,shapeless.HNil]
+        //        chanRed.transformInto[Color]
+        //                             ^
+
+      @p
+        This time we tried to transform a @code{Channel} to a @code{Color}. Notice that in this
+        case we don't have defined case object in target hierarchy with corresponding name for
+        @code{case object Alpha}. Wanting to keep the transformation total, we need to somehow
+        provide a value from a target domain. We can use @code{withCoproductInstance} to do that.
+        Let's convert any @code{Channel.Alpha} to @code{Color.Blue}.
+
+      @hl.scala
+        val red = chanRed.into[Color]
+          .withCoproductInstance { (_: Channel.Alpha.type) => Color.Blue }
+          .transform
+        // red: Color = Red
+
+        val alpha: Channel = Channel.Alpha
+        val blue = alpha.into[Color]
+          .withCoproductInstance { (_: Channel.Alpha.type) => Color.Blue }
+          .transform
+        // blue: Color = Blue
+
+      @p
+        After providing a default, Chimney can prove the transformation is total and use provided
+        function, when it's needed.
 
     @sect{Patchers}
       @p
