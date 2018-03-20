@@ -14,9 +14,9 @@
 @sect("Chimney", "Scala library for boilerplate-free data transformations")
   @sect{What Chimney does}
     @p
-      In strongly-typed language programmer's daily life sometimes happens
+      In the daily life of a strongly-typed language's programmer sometimes happens
       to transform an object of one type to another object which contains
-      number of the same or similar fields in their definitions.
+      a number of the same or similar fields in their definitions.
     @hl.scala
       case class MakeCoffee(id: Int, kind: String, addict: String)
       case class CoffeeMade(id: Int, kind: String, forAddict: String, at: ZonedDateTime)
@@ -46,11 +46,11 @@
           use value objects in you domain-level code to improve type-safety
           and readability
     @p
-      Chimney uses type-level meta-programming techniques based on
-      @lnk("Shapeless", "https://github.com/milessabin/shapeless") library
-      and provides compact DSL on top of transformation rules derivation engine
-      to transform your objects with as little boilerplate as possible
-      and compile-time safety!
+      Chimney provides a compact DSL with which you can define transformation
+      rules and transform your objects with as little boilerplate as possible.
+      Underneath it uses type-level meta-programming based on
+      @lnk("Shapeless", "https://github.com/milessabin/shapeless") and type-class
+      derivation to give you type-safety at compile-time!
 
     @hl.scala
       import io.scalaland.chimney.dsl._
@@ -125,7 +125,9 @@
         //                                        ^
 
       @p
-        In this scenario, we can use Chimney syntax to provide a missing value.
+        In this scenario, we can use Chimney syntax to provide a missing value. Notice
+        that @code{transformInto[T]} is a shortcut for @code{into[T].transform}, where
+        the latter form allow us to provide additional transformation rules.
 
       @hl.scala
         val steve = stevie.into[Butterfly]
@@ -145,7 +147,7 @@
 
     @sect{Default values}
       @p
-        Chimney also respects default case classes values as possible target field value source.
+        Chimney also respects default case classes values a possible target field value source.
         When we want to rely on defaults, we don't need to provide values manually.
 
       @hl.scala
@@ -209,7 +211,7 @@
 
     @sect{Custom transformations}
       @p
-        In case the transformation is relatively complex or for some reason you just
+        In case the transformation is relatively complex or if for some reason you just
         want o bypass Chimney derivation mechanism, you can always fall back to a simple
         function that you can plug into the Chimney transformation.
 
