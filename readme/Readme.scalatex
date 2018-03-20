@@ -21,8 +21,8 @@
                              forAddict = command.addict,
                              at = ZonedDateTime.now)
     @p
-      While the example stays short and lean, in real-life code we usually end up
-      with tons of such boilerplate, especially when:
+      While the example stays lean, in real-life code we usually end up with tons
+      of such boilerplate, especially when:
       @ul
         @li
           we maintain typed schema and want to migrate between multiple schema
@@ -50,10 +50,9 @@
         .withFieldRenamed(_.addict, _.forAddict)
         .transform
 
-
   @sect{Getting started}
     @p
-      To include chimney to your SBT project, add following line to you @code{build.sbt}
+      To include Chimney to your SBT project, add following line to you @code{build.sbt}
     @hl.scala
       libraryDependencies += "io.scalaland" %% "chimney" % "0.1.8"
     @p
@@ -61,3 +60,143 @@
       If you want to use it with Scala.js, you need to replace @code{%%} with @code{%%%}.
       Due to some @lnk("compiler bugs", "https://issues.scala-lang.org/browse/SI-7046"),
       it's recommended to use at least Scala 2.11.9 or 2.12.1.
+
+  @sect{Usage}
+    @p
+      In this section you will learn how to use Chimney example by example.
+
+    @sect{Basic transformations}
+      @p
+        When target object contains only fields present in source object, with corresponding
+        types, we can use shorthanded @code{transformInto}.
+
+      @hl.scala
+        case class Catterpillar(size: Int, name: String)
+        case class Butterfly(size: Int, name: String)
+
+        val stevie = Catterpillar(5, "Steve")
+        val steve = stevie.transformInto[Butterfly]
+        // Butterfly(5, "Steve")
+
+    @sect{Nested transformations}
+      @p
+        It also works when transformation needs to be recursive, possibly involving traversal
+        on nested collection.
+
+      @hl.scala
+        case class Youngs(insects: List[Catterpillar])
+        case class Adults(insects: List[Butterfly])
+
+        val kindergarden = Youngs(List(Catterpillar(5, "Steve"), Catterpillar(4, "Joe")))
+        val highschool = kindergarden.transformInto[Adults]
+        // Adults(List(Butterfly(5, "Steve"), Butterfly(4, "Joe"))
+
+      @p
+        We can use it as long as Chimney can recursively construct transformation for all fields
+        of a target object. In this example transformer for @hl.scala{List} type is constructed
+        basing on automatically derived @hl.scala{Catterpillar ~> Butterfly} mapping.
+
+    @sect{Providing missing values}
+      @p
+        Let's add a field to our @hl.scala{Butterfly} case class.
+
+      @hl.scala
+        case class Butterfly(size: Int, name: String, wingsColor: String)
+
+      @p
+        Now, when trying to perform the same transformation, we get compile-time error. This is
+        naturally expected, as we don't have any data source for new @code{wingsColor} field.
+
+      @hl.scala
+        val stevie = Catterpillar(5, "Steve")
+        val steve = stevie.transformInto[Butterfly]
+        // error: could not find implicit value for parameter derivedTransformer: io.scalaland.chimney.DerivedTransformer[Catterpillar,Butterfly,shapeless.HNil]
+        //        val steve = stevie.transformInto[Butterfly]
+        //                                        ^
+
+      @p
+        In this scenario, we can use Chimney syntax to provide a missing value.
+
+      @hl.scala
+        val steve = stevie.into[Butterfly]
+          .withFieldConst(_.wingsColor, "white")
+          .transform
+        // Butterfly(5, "Steve", "white")
+
+      @p
+        We can also construct a value dynamically, by providing a function.
+
+      @hl.scala
+        val steve = stevie.into[Butterfly]
+          .withFieldComputed(_.wingsColor, c => if(c.size > 4) "yellow" else "gray")
+          .transform
+        // Butterfly(5, "Steve", "yellow")
+
+
+    @sect{Default values}
+      @p
+        Chimney also respects default case classes values as possible target field value source.
+        When we want to rely on defaults, we don't need to provide values manually.
+
+      @hl.scala
+        case class Butterfly(size: Int, name: String, wingsColor: String = "purple")
+
+        val steve = stevie.transformInto[Butterfly]
+        // Butterfly(5, "Steve", "purple")
+
+      @p
+        Providing the value anyway for such case would just ignore the default from case class.
+
+    @sect{Standard types}
+      @p
+        Chimney supports deriving transformers for many standard Scala types, like
+        @code{Options}, @code{Eithers}, collection types including @code{Lists},
+        @code{Vectors}, @code{Sets}, @code{Maps}, etc.
+
+      @p
+        If you are interested to see how they are handled, it's recommended to explore
+        @lnk("the test suite", "https://github.com/scalalandio/chimney/blob/feature/documentation/chimney/src/test/scala/io/scalaland/chimney/DslSpec.scala").
+
+    @sect{Value classes}
+      @p
+        As nowadays value classes tends to be relatively widely pervasive, Chimney handles
+        then in a special way, supporting automatic value class field extraction and wrapping.
+
+      @hl.scala
+        object rich {
+          case class PersonId(id: Int) extends AnyVal
+          case class PersonName(name: String) extends AnyVal
+          case class Person(personId: PersonId, personName: PersonName, age: Int)
+        }
+        object plain {
+          case class Person(personId: Int, personName: String, age: Int)
+        }
+
+        val richPerson = rich.Person(PersonId(10), PersonName("Bill"), 30)
+        val plainPerson = richPerson.transformInto[plain.Person]
+        // plain.Person(10, "Bill", 30)
+        val richPerson2 = plainPerson.transformInto[rich.Person]
+        // rich.Person(PersonId(10), PersonName("Bill"), 30)
+
+  @sect{Advanced techniques}
+
+    @sect{Custom transformations}
+      @p
+        todo
+
+    @sect{Coproducts support}
+      @p
+        todo
+
+    @sect{Patchers}
+      @p
+        todo
+
+    @sect{Tagged types}
+      @p
+        todo
+
+  @sect{Contributing}
+    @p
+      todo
+
