@@ -349,15 +349,33 @@ val blue = alpha.into[Color]
 </p>
     <h1 id="Patchers" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Patchers" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Patchers</h1>
       <p>
-        todo
+        Chimney supports also patching case classes. Patching is a bit different type
+        of transformation when you hold an object of some type, but want to require only
+        subset of fields. Consider following example.
 </p>
-  <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Contributing" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Contributing<a class=" scalatex-site-Styles-headerLink" href="#Contributing" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-    <p>
-      todo
-</p></div>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">case class Email(address: String) extends AnyVal
+case class Phone(number: Long) extends AnyVal
+
+case class User(id: Int, email: Email, phone: Phone)
+case class UserUpdateForm(email: String, phone: Long)
+</code></pre>
+      <p>
+        Let's assume you want to apply update form to existing object of type <code>User</code>.
+</p>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">val user = User(10, Email(&quot;abc@domain.com&quot;), Phone(1234567890L))
+val updateForm = UserUpdateForm(&quot;xyz@domain.com&quot;, 123123123L)
+
+user.patchWith(updateForm)
+// User(10, Email(&quot;xyz@domain.com&quot;), Phone(123123123L))
+</code></pre>
+      <p>
+        Notice that when using patchers, we rely on standard transformers derivation
+        rules. In this case we used value classes in the <code>User</code> model, but plain
+        values in update form. Chimney was able to derive transformers for each patched
+        field, so it was able to successfully derive a patcher.</p></div>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"Chimney","children":[{"value":"What Chimney does","children":[]},{"value":"Getting started","children":[]},{"value":"Usage","children":[{"value":"Basic transformations","children":[]},{"value":"Nested transformations","children":[]},{"value":"Providing missing values","children":[]},{"value":"Default values","children":[]},{"value":"Standard types","children":[]},{"value":"Value classes","children":[]},{"value":"Field re-labelling","children":[]}]},{"value":"Advanced techniques","children":[{"value":"Custom transformations","children":[]},{"value":"Coproducts support","children":[]},{"value":"Patchers","children":[]}]},{"value":"Contributing","children":[]}]}]
+      [{"value":"Chimney","children":[{"value":"What Chimney does","children":[]},{"value":"Getting started","children":[]},{"value":"Usage","children":[{"value":"Basic transformations","children":[]},{"value":"Nested transformations","children":[]},{"value":"Providing missing values","children":[]},{"value":"Default values","children":[]},{"value":"Standard types","children":[]},{"value":"Value classes","children":[]},{"value":"Field re-labelling","children":[]}]},{"value":"Advanced techniques","children":[{"value":"Custom transformations","children":[]},{"value":"Coproducts support","children":[]},{"value":"Patchers","children":[]}]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -367,4 +385,4 @@ val blue = alpha.into[Color]
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
