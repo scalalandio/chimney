@@ -319,8 +319,8 @@
     @sect{Patchers}
       @p
         Chimney supports also patching case classes. Patching is a bit different type
-        of transformation when you hold an object of some type, but want to require only
-        subset of fields. Consider following example.
+        of transformation when you hold an object of some type, but want to modify only
+        subset of fields. Consider following example:
 
       @hl.scala
         case class Email(address: String) extends AnyVal
