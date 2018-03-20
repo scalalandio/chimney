@@ -59,6 +59,8 @@ span.hljs-tag, span.hljs-symbol{
 }
     </style><title>Chimney</title><script src="scripts.js"></script></head><body><div>
 
+<a href="https://github.com/scalalandio/chimney" style="position: absolute;top: 0px;right: 0px;border: 0;"><img src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub" /></a>
+
 <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Chimney" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Chimney<a class=" scalatex-site-Styles-headerLink" href="#Chimney" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /><h2 style="font-weight: 300;color: #ccc;padding: 0px;margin-top: 0px;">Scala library for boilerplate-free data transformations</h2></div><div class=" scalatex-site-Styles-content">
   <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="WhatChimneydoes" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">What Chimney does<a class=" scalatex-site-Styles-headerLink" href="#WhatChimneydoes" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
     <p>
@@ -224,21 +226,72 @@ val plainPerson = richPerson.transformInto[plain.Person]
 val richPerson2 = plainPerson.transformInto[rich.Person]
 // rich.Person(PersonId(10), PersonName(&quot;Bill&quot;), 30)
 </code></pre>
+    <h1 id="Fieldre-labelling" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Fieldre-labelling" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Field re-labelling</h1>
+      <p>
+        Sometimes a field only change its name. In such case you can use <code>withFieldRenamed</code>
+        operation to instruct the library about performed renaming.
+</p>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">case class SpyGB(name: String, surname: String)
+case class SpyRU(imya: String, familia: String)
+
+val jamesGB = SpyGB(&quot;James&quot;, &quot;Bond&quot;)
+
+val jamesRU = jamesGB.into[SpyRU]
+    .withFieldRenamed(_.name, _.imya)
+    .withFieldRenamed(_.surname, _.familia)
+    .transform
+// SpyRU(&quot;James&quot;, &quot;Bond&quot;)
+</code></pre>
   <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Advancedtechniques" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Advanced techniques<a class=" scalatex-site-Styles-headerLink" href="#Advancedtechniques" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
 
     <h1 id="Customtransformations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Customtransformations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Custom transformations</h1>
       <p>
-        todo
+        In case the transformation is relatively complex or for some reason you just
+        want o bypass Chimney derivation mechanism, you can always fall back to a simple
+        function that you can plug into the Chimney transformation.
 </p>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">trait Transformer[From, To] {
+  def transform(src: From): To
+}
+</code></pre>
+      <p>
+        The library defines a trait <code>Transformer</code>. You can plug that transformer in
+        by providing implicit instance in a local context.
+</p>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.Transformer
+
+object v1 {
+  case class User(id: Int, name: String, street: String, postalCode: String)
+}
+object v2 {
+  case class Address(street: String, postalCode: String)
+  case class User(id: Int, name: String, addresses: List[Address])
+}
+
+implicit val userV1toV2: Transformer[v1.User, v2.User] =
+  (user: v1.User) =&gt; v2.User(
+    id = user.id,
+    name = user.name,
+    addresses = List(v2.Address(user.street, user.postalCode))
+  )
+
+val v1Users = List(
+  v1.User(1, &quot;Steve&quot;, &quot;Love street&quot;, &quot;27000&quot;),
+  v1.User(2, &quot;Anna&quot;, &quot;Broadway&quot;, &quot;00321&quot;)
+)
+
+val v2Users = v1Users.transformInto[List[v2.User]]
+// List(
+//   v2.User(1, &quot;Steve&quot;, List(Address(&quot;Love street&quot;, &quot;27000&quot;))),
+//   v2.User(2, &quot;Anna&quot;, List(Address(&quot;Broadway&quot;, &quot;00321&quot;)))
+// )
+</code></pre>
     <h1 id="Coproductssupport" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Coproductssupport" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Coproducts support</h1>
       <p>
         todo
 </p>
     <h1 id="Patchers" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Patchers" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Patchers</h1>
-      <p>
-        todo
-</p>
-    <h1 id="Taggedtypes" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Taggedtypes" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Tagged types</h1>
       <p>
         todo
 </p>
@@ -248,7 +301,7 @@ val richPerson2 = plainPerson.transformInto[rich.Person]
 </p></div>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"Chimney","children":[{"value":"What Chimney does","children":[]},{"value":"Getting started","children":[]},{"value":"Usage","children":[{"value":"Basic transformations","children":[]},{"value":"Nested transformations","children":[]},{"value":"Providing missing values","children":[]},{"value":"Default values","children":[]},{"value":"Standard types","children":[]},{"value":"Value classes","children":[]}]},{"value":"Advanced techniques","children":[{"value":"Custom transformations","children":[]},{"value":"Coproducts support","children":[]},{"value":"Patchers","children":[]},{"value":"Tagged types","children":[]}]},{"value":"Contributing","children":[]}]}]
+      [{"value":"Chimney","children":[{"value":"What Chimney does","children":[]},{"value":"Getting started","children":[]},{"value":"Usage","children":[{"value":"Basic transformations","children":[]},{"value":"Nested transformations","children":[]},{"value":"Providing missing values","children":[]},{"value":"Default values","children":[]},{"value":"Standard types","children":[]},{"value":"Value classes","children":[]},{"value":"Field re-labelling","children":[]}]},{"value":"Advanced techniques","children":[{"value":"Custom transformations","children":[]},{"value":"Coproducts support","children":[]},{"value":"Patchers","children":[]}]},{"value":"Contributing","children":[]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -258,4 +311,4 @@ val richPerson2 = plainPerson.transformInto[rich.Person]
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
