@@ -5,113 +5,66 @@
 [![codecov.io](http://codecov.io/github/scalalandio/chimney/coverage.svg?branch=master)](http://codecov.io/github/scalalandio/chimney?branch=master)
 [![License](http://img.shields.io/:license-Apache%202-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt)
 
-Scala library for boilerplate-free data rewriting.
+Scala library for boilerplate-free data transformations.
 
-Motivation for it was a annoyance coming from rewriting one case class
-into another: once case of such was a need to separate external API from
-internal model, the other was process of manually applying migrations to
-e.g. some read model:
-
+In the daily life of a strongly-typed language's programmer sometimes happens
+to transform an object of one type to another object which contains
+a number of the same or similar fields in their definitions.
+      
 ```scala
-case class DomainUser(id: Long, name: String, surname: String, ...)
-case class ApiUser(name: String, surname: String, ...)
-
-val domainUser: DomainUser = ...
-val apiUser = ApiUser(name = domainUser.name, surname = domainUser.surname, ...)
+case class MakeCoffee(id: Int, kind: String, addict: String)
+case class CoffeeMade(id: Int, kind: String, forAddict: String, at: ZonedDateTime)
+```
+Usual approach is to just rewrite fields one by one
+```scala
+val command = MakeCoffee(id = Random.nextInt,
+                         kind = "Espresso",
+                         addict = "Piotr")
+val event = CoffeeMade(id = command.id,
+                       kind = command.kind,
+                       forAddict = command.addict,
+                       at = ZonedDateTime.now)
 ```
 
+While the example stays lean, in real-life code we usually end up with tons
+of such boilerplate, especially when:
+- we maintain typed schema and want to migrate between multiple schema versions
+- we apply practices like DDD (Domain-Driven-Design) where suggested
+  approach is to separate model schemas of different bounded contexts
+- we use code-generation tools like Protocol Buffers that generate primitive
+  types like `Int` or `String`, while you'd prefer to
+  use value objects in you domain-level code to improve type-safety
+  and readability  
+
+
+Chimney provides a compact DSL with which you can define transformation
+rules and transform your objects with as little boilerplate as possible.
+Underneath it uses type-level meta-programming based on
+[Shapeless](https://github.com/milessabin/shapeless) and type-class
+derivation to give you type-safety at compile-time!
+
 ```scala
-object version1 {
-   case class Transaction(date: LocalDate, description: String, ...)
-}
-object version2 {
-   case class Transaction(date: LocalDate, description: String, ...)
-}
-val version1Transaction: version1.Transaction = ...
-val version2Transaction = version2.Transaction(
-   date = version1Transaction.date,
-   description = version1Transaction.description,
-   ...
-)
+import io.scalaland.chimney.dsl._
+
+val event = command.into[CoffeeMade]
+  .withFieldComputed(_.at, _ => ZonedDateTime.now)
+  .withFieldRenamed(_.addict, _.forAddict)
+  .transform
 ```
 
-Chimney was created to remove the pain coming from such boilerplate.
+## Getting started
 
-## Adding library to the project
+To include Chimney to your SBT project, add following line to you `build.sbt`:
 
 ```scala
 libraryDependencies += "io.scalaland" %% "chimney" % "0.1.8"
 ```
 
-Due to [SI-7046](https://issues.scala-lang.org/browse/SI-7046) some derivations require at least Scala 2.12.1 or 2.11.9.
+Library is released for Scala 2.11 and 2.12.
+If you want to use it with Scala.js, you need to replace `%%` with `%%%`.
+Due to some [compiler bugs](https://issues.scala-lang.org/browse/SI-7046),
+it's recommended to use at least Scala 2.11.9 or 2.12.1.
 
-## Basic product type rewriting
+## Documentation
 
-In basic case we are trying to rewrite one product-type e.g. case class
-into another. For simplicity we can assume that respective types match
-and corresponding fields have the same names. Then we could transform
-them like this:
-
-```scala
-import io.scalaland.chimney.dsl._
-
-case class Catterpillar(size: Int, name: String)
-case class Butterfly(size: Int, name: String)
-val steveTheCatterpillar = Catterpillar(10, "Steve")
-val steveTheButterfly = steveTheCatterpillar.into[Butterfly].transform
-// steveTheButterfly: Butterfly = Butterfly(10,Steve)
-```
-
-In this very basic case we can also use syntax with a single call:
-
-```scala
-val steveTheButterfly = steveTheCatterpillar.transformInto[Butterfly]
-```
-
-As a matter of the fact we can not only copy fields by name, when they
-exist, but also drop them if target type doesn't need them:
-
-```scala
-case class User(id: Long, details: String)
-case class ApiUser(details: String)
-
-User(1L, "our user").transformInto[ApiUser]
-// ApiUser = ApiUser(our user)
-```
-
-As one might expect, usually we won't have such simple use cases. We
-might need to provide some value absent from the base type, or calculate
-it from original object:
-
-```scala
-case class Student(name: String, education: String)
-case class Employee(name: String, education: String, experience: List[String])
-
-Student("Paul", "University of Things").into[Employee]
-    .withFieldConst(_.experience, List("Internship in Z Company"))
-    .transform
-// Employee = Employee(Paul,University of Things,List(Internship in Z Company))
-Student("Paula", "University of Things").into[Employee]
-    .withFieldComputed(_.experience, student => List(s"${student.name}'s own company"))
-    .transform
-// Employee = Employee(Paula,University of Things,List(Paula's own company))
-```
-
-Sometimes a field just change its name:
-
-```scala
-case class SpyGB(name: String, surname: String)
-case class SpyRU(imya: String, familia: String)
-
-SpyGB("James", "Bond").into[SpyRU]
-    .withFieldRenamed(_.name, _.imya)
-    .withFieldRenamed(_.surname, _.familia)
-    .transform
-// SpyRU = SpyRU(James,Bond)
-```
-
-Additionally library should out-of-the-box support mappings for:
-
-  * value classes,
-  * basic collections,
-  * enumerations.
+Chimney documentation is available at https://scalalandio.github.io/chimney

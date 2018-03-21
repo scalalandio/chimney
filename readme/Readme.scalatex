@@ -62,7 +62,7 @@
 
   @sect{Getting started}
     @p
-      To include Chimney to your SBT project, add following line to you @code{build.sbt}
+      To include Chimney to your SBT project, add following line to you @code{build.sbt}:
     @hl.scala
       libraryDependencies += "io.scalaland" %% "chimney" % "0.1.8"
     @p
