@@ -180,7 +180,7 @@
     @sect{Value classes}
       @p
         As nowadays value classes tends to be relatively widely pervasive, Chimney handles
-        then in a special way, supporting automatic value class field extraction and wrapping.
+        them in a special way, supporting automatic value class field extraction and wrapping.
 
       @hl.scala
         object rich {
