@@ -220,7 +220,7 @@
     @sect{Custom transformations}
       @p
         In case the transformation is relatively complex or if for some reason you just
-        want o bypass Chimney derivation mechanism, you can always fall back to a simple
+        want to bypass Chimney derivation mechanism, you can always fall back to a simple
         function that you can plug into the Chimney transformation.
 
       @hl.scala
