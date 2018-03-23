@@ -54,7 +54,7 @@ val event = command.into[CoffeeMade]
 
 ## Getting started
 
-To include Chimney to your SBT project, add following line to you `build.sbt`:
+To include Chimney to your SBT project, add the following line to your `build.sbt`:
 
 ```scala
 libraryDependencies += "io.scalaland" %% "chimney" % "0.1.8"
