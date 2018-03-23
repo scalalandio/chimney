@@ -117,7 +117,8 @@ val event = command.into[CoffeeMade]
 </code></pre>
   <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Gettingstarted" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Getting started<a class=" scalatex-site-Styles-headerLink" href="#Gettingstarted" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
     <p>
-      To include Chimney to your SBT project, add following line to you <code>build.sbt</code>:</p>
+      To include Chimney to your SBT project, add the following line
+      to your <code>build.sbt</code>:</p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.1.8&quot;</code></pre>
     <p>
       Library is released for Scala 2.11 and 2.12.
@@ -131,8 +132,8 @@ val event = command.into[CoffeeMade]
 </p>
     <h1 id="Basictransformations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Basictransformations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Basic transformations</h1>
       <p>
-        When target object contains only fields present in source object, with corresponding
-        types, we can use shorthanded <code>transformInto</code>.
+        When target object contains only fields present in the source object,
+        with corresponding types, we can use shorthanded <code>transformInto</code>.
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">case class Catterpillar(size: Int, name: String)
 case class Butterfly(size: Int, name: String)
@@ -175,7 +176,7 @@ val steve = stevie.transformInto[Butterfly]
 //                                        ^
 </code></pre>
       <p>
-        In this scenario, we can use Chimney syntax to provide a missing value. Notice
+        In this scenario, we can use Chimney's syntax to provide a missing value. Notice
         that <code>transformInto[T]</code> is a shortcut for <code>into[T].transform</code>, where
         the latter form allow us to provide additional transformation rules.
 </p>
@@ -195,8 +196,9 @@ val steve = stevie.transformInto[Butterfly]
 </code></pre>
     <h1 id="Defaultvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Defaultvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Default values</h1>
       <p>
-        Chimney also respects default case classes values a possible target field value source.
-        When we want to rely on defaults, we don't need to provide values manually.
+        Chimney also respects case classes' default values as a possible target
+        field value source.. When we want to rely on defaults, we don't need to provide
+        values manually.
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">case class Butterfly(size: Int, name: String, wingsColor: String = &quot;purple&quot;)
 
@@ -257,7 +259,7 @@ val jamesRU = jamesGB.into[SpyRU]
     <h1 id="Customtransformations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Customtransformations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Custom transformations</h1>
       <p>
         In case the transformation is relatively complex or if for some reason you just
-        want o bypass Chimney derivation mechanism, you can always fall back to a simple
+        want to bypass Chimney derivation mechanism, you can always fall back to a simple
         function that you can plug into the Chimney transformation.
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">trait Transformer[From, To] {
@@ -299,7 +301,7 @@ val v2Users = v1Users.transformInto[List[v2.User]]
 </code></pre>
     <h1 id="Coproductssupport" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Coproductssupport" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Coproducts support</h1>
       <p>
-        With chimney you can not only transform case classes, but sealed trait hierarchies
+        With Chimney you can not only transform case classes, but sealed trait hierarchies
         (also known as coproducts) as well. Consider two following hierarchy definitions.
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">sealed trait Color
@@ -357,7 +359,7 @@ val blue = alpha.into[Color]
 </p>
     <h1 id="Patchers" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Patchers" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Patchers</h1>
       <p>
-        Chimney supports also patching case classes. Patching is a bit different type
+        Chimney also supports case class patching. It is a bit different type
         of transformation when you hold an object of some type, but want to modify only
         subset of fields. Consider following example:
 </p>
@@ -393,4 +395,4 @@ user.patchWith(updateForm)
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
