@@ -7,9 +7,9 @@
 
 Scala library for boilerplate-free data transformations.
 
-In the daily life of a strongly-typed language's programmer sometimes happens
-to transform an object of one type to another object which contains
-a number of the same or similar fields in their definitions.
+In the daily life of a strongly-typed language's programmer sometimes it
+happens we need to transform an object of one type to another object which
+contains a number of the same or similar fields in their definitions.
       
 ```scala
 case class MakeCoffee(id: Int, kind: String, addict: String)

@@ -22,9 +22,9 @@
 @sect("Chimney", "Scala library for boilerplate-free data transformations")
   @sect{What Chimney does}
     @p
-      In the daily life of a strongly-typed language's programmer sometimes happens
-      to transform an object of one type to another object which contains
-      a number of the same or similar fields in their definitions.
+      In the daily life of a strongly-typed language's programmer sometimes it
+      happens we need to transform an object of one type to another object which
+      contains a number of the same or similar fields in their definitions.
     @hl.scala
       case class MakeCoffee(id: Int, kind: String, addict: String)
       case class CoffeeMade(id: Int, kind: String, forAddict: String, at: ZonedDateTime)
