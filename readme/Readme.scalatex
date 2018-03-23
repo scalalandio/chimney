@@ -1,0 +1,356 @@
+@import Main._
+@import scalatex.site._
+
+@raw("""<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116165806-1"></script>""")
+
+@script
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-116165806-1');
+
+@a(
+  href:="https://github.com/scalalandio/chimney",
+  position.absolute,
+  top:=0,right:=0,border:=0,
+  img(
+    src:="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png",
+    alt:="Fork me on GitHub"
+  )
+)
+
+@sect("Chimney", "Scala library for boilerplate-free data transformations")
+  @sect{What Chimney does}
+    @p
+      In the daily life of a strongly-typed language's programmer sometimes it
+      happens we need to transform an object of one type to another object which
+      contains a number of the same or similar fields in their definitions.
+    @hl.scala
+      case class MakeCoffee(id: Int, kind: String, addict: String)
+      case class CoffeeMade(id: Int, kind: String, forAddict: String, at: ZonedDateTime)
+    @p
+      Usual approach is to just rewrite fields one by one
+    @hl.scala
+      val command = MakeCoffee(id = Random.nextInt,
+                               kind = "Espresso",
+                               addict = "Piotr")
+      val event = CoffeeMade(id = command.id,
+                             kind = command.kind,
+                             forAddict = command.addict,
+                             at = ZonedDateTime.now)
+    @p
+      While the example stays lean, in real-life code we usually end up with tons
+      of such boilerplate, especially when:
+      @ul
+        @li
+          we maintain typed schema and want to migrate between multiple schema
+          versions
+        @li
+          we apply practices like DDD (Domain-Driven-Design) where suggested
+          approach is to separate model schemas of different bounded contexts
+        @li
+          we use code-generation tools like Protocol Buffers that generate primitive
+          types like @hl.scala{Int} or @hl.scala{String}, while you'd prefer to
+          use value objects in you domain-level code to improve type-safety
+          and readability
+    @p
+      Chimney provides a compact DSL with which you can define transformation
+      rules and transform your objects with as little boilerplate as possible.
+      Underneath it uses type-level meta-programming based on
+      @lnk("Shapeless", "https://github.com/milessabin/shapeless") and type-class
+      derivation to give you type-safety at compile-time!
+
+    @hl.scala
+      import io.scalaland.chimney.dsl._
+
+      val event = command.into[CoffeeMade]
+        .withFieldComputed(_.at, _ => ZonedDateTime.now)
+        .withFieldRenamed(_.addict, _.forAddict)
+        .transform
+
+  @sect{Getting started}
+    @p
+      To include Chimney to your SBT project, add the following line
+      to your @code{build.sbt}:
+    @hl.scala
+      libraryDependencies += "io.scalaland" %% "chimney" % "0.1.8"
+    @p
+      Library is released for Scala 2.11 and 2.12.
+      If you want to use it with Scala.js, you need to replace @code{%%} with @code{%%%}.
+      Due to some @lnk("compiler bugs", "https://issues.scala-lang.org/browse/SI-7046"),
+      it's recommended to use at least Scala 2.11.9 or 2.12.1.
+
+  @sect{Usage}
+    @p
+      In this section you will learn how to use Chimney example by example.
+
+    @sect{Basic transformations}
+      @p
+        When target object contains only fields present in the source object,
+        with corresponding types, we can use shorthanded @code{transformInto}.
+
+      @hl.scala
+        case class Catterpillar(size: Int, name: String)
+        case class Butterfly(size: Int, name: String)
+
+        val stevie = Catterpillar(5, "Steve")
+        val steve = stevie.transformInto[Butterfly]
+        // Butterfly(5, "Steve")
+
+    @sect{Nested transformations}
+      @p
+        It also works when transformation needs to be recursive, possibly involving traversal
+        on nested collection.
+
+      @hl.scala
+        case class Youngs(insects: List[Catterpillar])
+        case class Adults(insects: List[Butterfly])
+
+        val kindergarden = Youngs(List(Catterpillar(5, "Steve"), Catterpillar(4, "Joe")))
+        val highschool = kindergarden.transformInto[Adults]
+        // Adults(List(Butterfly(5, "Steve"), Butterfly(4, "Joe"))
+
+      @p
+        We can use it as long as Chimney can recursively construct transformation for all fields
+        of a target object. In this example transformer for @hl.scala{List} type is constructed
+        basing on automatically derived @hl.scala{Catterpillar ~> Butterfly} mapping.
+
+    @sect{Providing missing values}
+      @p
+        Let's add a field to our @hl.scala{Butterfly} case class.
+
+      @hl.scala
+        case class Butterfly(size: Int, name: String, wingsColor: String)
+
+      @p
+        Now, when trying to perform the same transformation, we get compile-time error. This is
+        naturally expected, as we don't have any data source for new @code{wingsColor} field.
+
+      @hl.scala
+        val stevie = Catterpillar(5, "Steve")
+        val steve = stevie.transformInto[Butterfly]
+        // error: could not find implicit value for parameter derivedTransformer: io.scalaland.chimney.DerivedTransformer[Catterpillar,Butterfly,shapeless.HNil]
+        //        val steve = stevie.transformInto[Butterfly]
+        //                                        ^
+
+      @p
+        In this scenario, we can use Chimney's syntax to provide a missing value. Notice
+        that @code{transformInto[T]} is a shortcut for @code{into[T].transform}, where
+        the latter form allow us to provide additional transformation rules.
+
+      @hl.scala
+        val steve = stevie.into[Butterfly]
+          .withFieldConst(_.wingsColor, "white")
+          .transform
+        // Butterfly(5, "Steve", "white")
+
+      @p
+        We can also construct a value dynamically, by providing a function.
+
+      @hl.scala
+        val steve = stevie.into[Butterfly]
+          .withFieldComputed(_.wingsColor, c => if(c.size > 4) "yellow" else "gray")
+          .transform
+        // Butterfly(5, "Steve", "yellow")
+
+
+    @sect{Default values}
+      @p
+        Chimney also respects case classes' default values as a possible target
+        field value source.. When we want to rely on defaults, we don't need to provide
+        values manually.
+
+      @hl.scala
+        case class Butterfly(size: Int, name: String, wingsColor: String = "purple")
+
+        val steve = stevie.transformInto[Butterfly]
+        // Butterfly(5, "Steve", "purple")
+
+      @p
+        Providing the value anyway for such case would just ignore the default from case class.
+
+    @sect{Standard types}
+      @p
+        Chimney supports deriving transformers for many standard Scala types, like
+        @code{Options}, @code{Eithers}, collection types including @code{Lists},
+        @code{Vectors}, @code{Sets}, @code{Maps}, etc.
+
+      @p
+        If you are interested to see how they are handled, it's recommended to explore
+        @lnk("the test suite", "https://github.com/scalalandio/chimney/blob/feature/documentation/chimney/src/test/scala/io/scalaland/chimney/DslSpec.scala").
+
+    @sect{Value classes}
+      @p
+        As nowadays value classes tends to be relatively widely pervasive, Chimney handles
+        them in a special way, supporting automatic value class field extraction and wrapping.
+
+      @hl.scala
+        object rich {
+          case class PersonId(id: Int) extends AnyVal
+          case class PersonName(name: String) extends AnyVal
+          case class Person(personId: PersonId, personName: PersonName, age: Int)
+        }
+        object plain {
+          case class Person(personId: Int, personName: String, age: Int)
+        }
+
+        val richPerson = rich.Person(PersonId(10), PersonName("Bill"), 30)
+        val plainPerson = richPerson.transformInto[plain.Person]
+        // plain.Person(10, "Bill", 30)
+        val richPerson2 = plainPerson.transformInto[rich.Person]
+        // rich.Person(PersonId(10), PersonName("Bill"), 30)
+
+    @sect{Field re-labelling}
+      @p
+        Sometimes a field only change its name. In such case you can use @code{withFieldRenamed}
+        operation to instruct the library about performed renaming.
+
+      @hl.scala
+        case class SpyGB(name: String, surname: String)
+        case class SpyRU(imya: String, familia: String)
+
+        val jamesGB = SpyGB("James", "Bond")
+
+        val jamesRU = jamesGB.into[SpyRU]
+            .withFieldRenamed(_.name, _.imya)
+            .withFieldRenamed(_.surname, _.familia)
+            .transform
+        // SpyRU("James", "Bond")
+
+  @sect{Advanced techniques}
+
+    @sect{Custom transformations}
+      @p
+        In case the transformation is relatively complex or if for some reason you just
+        want to bypass Chimney derivation mechanism, you can always fall back to a simple
+        function that you can plug into the Chimney transformation.
+
+      @hl.scala
+        trait Transformer[From, To] {
+          def transform(src: From): To
+        }
+
+      @p
+        The library defines a trait @code{Transformer}. You can plug that transformer in
+        by providing implicit instance in a local context.
+
+      @hl.scala
+        import io.scalaland.chimney.dsl._
+        import io.scalaland.chimney.Transformer
+
+        object v1 {
+          case class User(id: Int, name: String, street: String, postalCode: String)
+        }
+        object v2 {
+          case class Address(street: String, postalCode: String)
+          case class User(id: Int, name: String, addresses: List[Address])
+        }
+
+        implicit val userV1toV2: Transformer[v1.User, v2.User] =
+          (user: v1.User) => v2.User(
+            id = user.id,
+            name = user.name,
+            addresses = List(v2.Address(user.street, user.postalCode))
+          )
+
+        val v1Users = List(
+          v1.User(1, "Steve", "Love street", "27000"),
+          v1.User(2, "Anna", "Broadway", "00321")
+        )
+
+        val v2Users = v1Users.transformInto[List[v2.User]]
+        // List(
+        //   v2.User(1, "Steve", List(Address("Love street", "27000"))),
+        //   v2.User(2, "Anna", List(Address("Broadway", "00321")))
+        // )
+
+    @sect{Coproducts support}
+      @p
+        With Chimney you can not only transform case classes, but sealed trait hierarchies
+        (also known as coproducts) as well. Consider two following hierarchy definitions.
+
+      @hl.scala
+        sealed trait Color
+        object Color {
+          case object Red extends Color
+          case object Green extends Color
+          case object Blue extends Color
+        }
+
+        sealed trait Channel
+        object Channel {
+          case object Alpha extends Channel
+          case object Blue extends Channel
+          case object Green extends Channel
+          case object Red extends Channel
+        }
+
+      @p
+        Because of object names correspondence, we can transform @code{Color} to a @code{Channel}
+        in a simple way.
+
+      @hl.scala
+        val colRed: Color = Color.Red
+        val chanRed = colRed.transformInto[Channel]
+        // chanRed: Channel = Red
+
+      @p
+        How about other way round?
+
+      @hl.scala
+        chanRed.transformInto[Color]
+        // error: could not find implicit value for parameter derivedTransformer: io.scalaland.chimney.DerivedTransformer[Channel,Color,shapeless.HNil]
+        //        chanRed.transformInto[Color]
+        //                             ^
+
+      @p
+        This time we tried to transform a @code{Channel} to a @code{Color}. Notice that in this
+        case we don't have defined case object in target hierarchy with corresponding name for
+        @code{case object Alpha}. Wanting to keep the transformation total, we need to somehow
+        provide a value from a target domain. We can use @code{withCoproductInstance} to do that.
+        Let's convert any @code{Channel.Alpha} to @code{Color.Blue}.
+
+      @hl.scala
+        val red = chanRed.into[Color]
+          .withCoproductInstance { (_: Channel.Alpha.type) => Color.Blue }
+          .transform
+        // red: Color = Red
+
+        val alpha: Channel = Channel.Alpha
+        val blue = alpha.into[Color]
+          .withCoproductInstance { (_: Channel.Alpha.type) => Color.Blue }
+          .transform
+        // blue: Color = Blue
+
+      @p
+        After providing a default, Chimney can prove the transformation is total and use provided
+        function, when it's needed.
+
+    @sect{Patchers}
+      @p
+        Chimney also supports case class patching. It is a bit different type
+        of transformation when you hold an object of some type, but want to modify only
+        subset of fields. Consider following example:
+
+      @hl.scala
+        case class Email(address: String) extends AnyVal
+        case class Phone(number: Long) extends AnyVal
+
+        case class User(id: Int, email: Email, phone: Phone)
+        case class UserUpdateForm(email: String, phone: Long)
+
+      @p
+        Let's assume you want to apply update form to existing object of type @code{User}.
+
+      @hl.scala
+        val user = User(10, Email("abc@@domain.com"), Phone(1234567890L))
+        val updateForm = UserUpdateForm("xyz@@domain.com", 123123123L)
+
+        user.patchWith(updateForm)
+        // User(10, Email("xyz@@domain.com"), Phone(123123123L))
+
+      @p
+        Notice that when using patchers, we rely on standard transformers derivation
+        rules. In this case we used value classes in the @code{User} model, but plain
+        values in update form. Chimney was able to derive transformers for each patched
+        field, so it was able to successfully derive a patcher.
