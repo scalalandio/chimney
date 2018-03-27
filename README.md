@@ -1,5 +1,4 @@
-# Chimney
-<img src="chimney.png" alt="Chimney logo" width="84" />
+# Chimney <img src="chimney.png" alt="Chimney logo" width="64" />
 
 [![Build Status](https://travis-ci.org/scalalandio/chimney.svg?branch=master)](https://travis-ci.org/scalalandio/chimney)
 [![Maven Central](https://img.shields.io/maven-central/v/io.scalaland/chimney_2.12.svg)](http://search.maven.org/#search%7Cga%7C1%7Cchimney)
