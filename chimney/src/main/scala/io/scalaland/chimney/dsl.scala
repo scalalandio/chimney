@@ -1,6 +1,5 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney
 import io.scalaland.chimney.internal.Modifier
 import shapeless.{::, HList, HNil, Witness}
 
@@ -59,7 +58,7 @@ object dsl {
       new TransformerInto(source, new Modifier.coproductInstance[Inst, To](f) :: modifiers)
 
     def disableDefaultValues: TransformerInto[From, To, Modifier.disableDefaultValues :: Modifiers] =
-      new TransformerInto(source, new chimney.internal.Modifier.disableDefaultValues :: modifiers)
+      new TransformerInto(source, new Modifier.disableDefaultValues :: modifiers)
 
     def transform(implicit transformer: DerivedTransformer[From, To, Modifiers]): To =
       transformer.transform(source, modifiers)
