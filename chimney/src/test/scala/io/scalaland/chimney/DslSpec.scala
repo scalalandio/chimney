@@ -167,6 +167,15 @@ class DslSpec extends WordSpec with MustMatchers {
             Bar(10, 45L)
         }
 
+        "default values are disabled and another modifier is provided" in {
+          Foo(10)
+            .into[Bar]
+            .disableDefaultValues
+            .withFieldConst(_.y, 45L)
+            .transform mustBe
+            Bar(10, 45L)
+        }
+
         "local transformer for default value exists" in {
 
           implicit val localTransformer: Transformer[Long, Foo] = { l: Long =>
@@ -188,11 +197,11 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "not compile when default parameter values are disabled" in {
         illTyped("""
-          Foo(10).into[Bar].disbaleDefaultValues.transform
+          Foo(10).into[Bar].disableDefaultValues.transform
         """)
 
         illTyped("""
-          Baah(10, Foo(300)).into[Baahr].disbaleDefaultValues.transform
+          Baah(10, Foo(300)).into[Baahr].disableDefaultValues.transform
         """)
       }
     }

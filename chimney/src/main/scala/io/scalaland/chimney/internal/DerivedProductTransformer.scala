@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal
 
 import shapeless._
 import shapeless.labelled._
-import shapeless.ops.hlist.FilterNot
+import shapeless.ops.hlist.Filter
 import shapeless.ops.record.Selector
 
 trait DerivedProductTransformer[From, FromLG <: HList, To, ToLG <: HList, Modifiers <: HList] {
@@ -47,7 +47,7 @@ trait LowPriorityProductInstances {
                                       Defaults <: HList,
                                       Modifiers <: HList](
     implicit
-    notDisabled: FilterNot.Aux[Modifiers, Modifier.disableDefaultValues, Modifiers],
+    notDisabled: Filter.Aux[Modifiers, Modifier.disableDefaultValues, HNil],
     defaults: Default.AsRecord.Aux[To, Defaults],
     defaultSelector: Selector.Aux[Defaults, Label, HeadToT],
     tailTransformer: DerivedProductTransformer[From, FromLG, To, TailToLG, Modifiers]
