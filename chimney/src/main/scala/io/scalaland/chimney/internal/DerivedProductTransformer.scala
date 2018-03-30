@@ -30,11 +30,11 @@ trait ProductInstances extends LowPriorityProductInstances {
                                HeadToT,
                                TailToLG <: HList,
                                Modifiers <: HList](
-    implicit vp: ValueProvider[From, FromLG, HeadToT, Label, Modifiers],
+    implicit vp: ValueProvider[From, FromLG, HeadToT, Label, Modifiers, HNil],
     tailTransformer: DerivedProductTransformer[From, FromLG, To, TailToLG, Modifiers]
   ): DerivedProductTransformer[From, FromLG, To, FieldType[Label, HeadToT] :: TailToLG, Modifiers] =
     (src: FromLG, modifiers: Modifiers) =>
-      field[Label](vp.provide(src, modifiers)) :: tailTransformer.transform(src, modifiers)
+      field[Label](vp.provide(src, modifiers, HNil)) :: tailTransformer.transform(src, modifiers)
 }
 
 trait LowPriorityProductInstances {
