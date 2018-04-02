@@ -10,14 +10,6 @@ trait ValueProvider[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList] 
 
 object ValueProvider extends ValueProviderDerivation {
 
-  final def provide[From, FromLG <: HList, TargetT, Modifiers <: HList](from: From,
-                                                                        targetLabel: Witness.Lt[Symbol],
-                                                                        clz: Class[TargetT],
-                                                                        modifiers: Modifiers)(
-    implicit lg: LabelledGeneric.Aux[From, FromLG],
-    vp: ValueProvider[From, FromLG, TargetT, targetLabel.T, Modifiers]
-  ): TargetT = vp.provide(lg.to(from), modifiers)
-
   final def instance[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList](
     f: (FromLG, Modifiers) => TargetT
   ): ValueProvider[From, FromLG, TargetT, Label, Modifiers] =
