@@ -174,6 +174,13 @@ class DslSpec extends WordSpec with MustMatchers {
             .withFieldConst(_.y, 45L)
             .transform mustBe
             Bar(10, 45L)
+
+          Foo(10)
+            .into[Bar]
+            .withFieldConst(_.y, 48L)
+            .disableDefaultValues
+            .transform mustBe
+            Bar(10, 48L)
         }
 
         "local transformer for default value exists" in {
