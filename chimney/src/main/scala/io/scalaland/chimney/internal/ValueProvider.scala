@@ -3,9 +3,9 @@ package io.scalaland.chimney.internal
 import io.scalaland.chimney._
 import shapeless._
 
-trait ValueProvider[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList, RecursiveModifiers <: HList] {
+trait ValueProvider[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList] {
 
-  def provide(src: FromLG, modifiers: Modifiers, recursiveModifiers: RecursiveModifiers): TargetT
+  def provide(src: FromLG, modifiers: Modifiers): TargetT
 }
 
 object ValueProvider extends ValueProviderDerivation {
@@ -15,47 +15,42 @@ object ValueProvider extends ValueProviderDerivation {
                                                                         clz: Class[TargetT],
                                                                         modifiers: Modifiers)(
     implicit lg: LabelledGeneric.Aux[From, FromLG],
-    vp: ValueProvider[From, FromLG, TargetT, targetLabel.T, Modifiers, HNil]
-  ): TargetT = vp.provide(lg.to(from), modifiers, HNil)
+    vp: ValueProvider[From, FromLG, TargetT, targetLabel.T, Modifiers]
+  ): TargetT = vp.provide(lg.to(from), modifiers)
 
-  final def instance[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList, RecursiveModifiers <: HList](
-    f: (FromLG, Modifiers, RecursiveModifiers) => TargetT
-  ): ValueProvider[From, FromLG, TargetT, Label, Modifiers, RecursiveModifiers] =
-    new ValueProvider[From, FromLG, TargetT, Label, Modifiers, RecursiveModifiers] {
-      @inline final def provide(src: FromLG, modifiers: Modifiers, recursiveModifiers: RecursiveModifiers): TargetT =
-        f(src, modifiers, recursiveModifiers)
+  final def instance[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList](
+    f: (FromLG, Modifiers) => TargetT
+  ): ValueProvider[From, FromLG, TargetT, Label, Modifiers] =
+    new ValueProvider[From, FromLG, TargetT, Label, Modifiers] {
+      @inline final def provide(src: FromLG, modifiers: Modifiers): TargetT =
+        f(src, modifiers)
     }
 }
 
-trait ValueProviderDerivation extends LowPriorityValueProviderDerivation {
+trait ValueProviderDerivation {
 
-  implicit final def hnilCase[From,
-                              FromLG <: HList,
-                              TargetT,
-                              Label <: Symbol,
-                              Modifiers <: HNil,
-                              RecursiveModifiers <: HList,
-                              FromT](
+  implicit final def hnilDefaultValuesRecCase[From, FromLG <: HList, TargetT, Label <: Symbol, FromT](
     implicit fieldSelector: ops.record.Selector.Aux[FromLG, Label, FromT],
-    fieldTransformer: DerivedTransformer[FromT, TargetT, RecursiveModifiers]
-  ): ValueProvider[From, FromLG, TargetT, Label, Modifiers, RecursiveModifiers] =
-    ValueProvider.instance { (src: FromLG, _: Modifiers, recursiveModifiers: RecursiveModifiers) =>
-      fieldTransformer.transform(fieldSelector(src), recursiveModifiers)
+    fieldTransformer: DerivedTransformer[FromT, TargetT, Modifier.enableDefaultValues :: HNil]
+  ): ValueProvider[From, FromLG, TargetT, Label, Modifier.enableDefaultValues :: HNil] =
+    ValueProvider.instance { (src: FromLG, modifiers: Modifier.enableDefaultValues :: HNil) =>
+      fieldTransformer.transform(fieldSelector(src), modifiers)
     }
 
-  implicit final def hconsFieldFunctionCase[From,
-                                            FromLG <: HList,
-                                            TargetT,
-                                            ModT,
-                                            Label <: Symbol,
-                                            Modifiers <: HList,
-                                            RecursiveModifiers <: HList](
+  implicit final def hnilCase[From, FromLG <: HList, TargetT, Label <: Symbol, FromT](
+    implicit fieldSelector: ops.record.Selector.Aux[FromLG, Label, FromT],
+    fieldTransformer: DerivedTransformer[FromT, TargetT, HNil]
+  ): ValueProvider[From, FromLG, TargetT, Label, HNil] =
+    ValueProvider.instance { (src: FromLG, modifiers: HNil) =>
+      fieldTransformer.transform(fieldSelector(src), modifiers)
+    }
+
+  implicit final def hconsFieldFunctionCase[From, FromLG <: HList, TargetT, ModT, Label <: Symbol, Modifiers <: HList](
     implicit fromLG: LabelledGeneric.Aux[From, FromLG],
     lubTargetTModT: Lub[TargetT, ModT, TargetT]
-  ): ValueProvider[From, FromLG, TargetT, Label, Modifier.fieldFunction[Label, From, ModT] :: Modifiers, RecursiveModifiers] =
-    ValueProvider.instance {
-      (src: FromLG, modifiers: Modifier.fieldFunction[Label, From, ModT] :: Modifiers, _: RecursiveModifiers) =>
-        lubTargetTModT.right(modifiers.head.map(fromLG.from(src)))
+  ): ValueProvider[From, FromLG, TargetT, Label, Modifier.fieldFunction[Label, From, ModT] :: Modifiers] =
+    ValueProvider.instance { (src: FromLG, modifiers: Modifier.fieldFunction[Label, From, ModT] :: Modifiers) =>
+      lubTargetTModT.right(modifiers.head.map(fromLG.from(src)))
     }
 
   implicit final def hconsRelabelCase[From,
@@ -63,42 +58,17 @@ trait ValueProviderDerivation extends LowPriorityValueProviderDerivation {
                                       TargetT,
                                       LabelFrom <: Symbol,
                                       LabelTo <: Symbol,
-                                      Modifiers <: HList,
-                                      RecursiveModifiers <: HList](
+                                      Modifiers <: HList](
     implicit fieldSelector: ops.record.Selector.Aux[FromLG, LabelFrom, TargetT]
-  ): ValueProvider[From, FromLG, TargetT, LabelTo, Modifier.relabel[LabelFrom, LabelTo] :: Modifiers, RecursiveModifiers] =
-    ValueProvider.instance {
-      (src: FromLG, _: Modifier.relabel[LabelFrom, LabelTo] :: Modifiers, _: RecursiveModifiers) =>
-        fieldSelector(src)
+  ): ValueProvider[From, FromLG, TargetT, LabelTo, Modifier.relabel[LabelFrom, LabelTo] :: Modifiers] =
+    ValueProvider.instance { (src: FromLG, _: Modifier.relabel[LabelFrom, LabelTo] :: Modifiers) =>
+      fieldSelector(src)
     }
 
-  implicit final def hconsDisableDefaultValuesCase[From,
-                                                   FromLG <: HList,
-                                                   TargetT,
-                                                   Label <: Symbol,
-                                                   Ms <: HList,
-                                                   RecursiveModifiers <: HList](
-    implicit vp: ValueProvider[From, FromLG, TargetT, Label, Ms, Modifier.disableDefaultValues :: RecursiveModifiers]
-  ): ValueProvider[From, FromLG, TargetT, Label, Modifier.disableDefaultValues :: Ms, RecursiveModifiers] =
-    ValueProvider.instance {
-      (src: FromLG, modifiers: Modifier.disableDefaultValues :: Ms, recursiveModifiers: RecursiveModifiers) =>
-        vp.provide(src, modifiers.tail, new Modifier.disableDefaultValues :: recursiveModifiers)
-    }
-
-}
-
-trait LowPriorityValueProviderDerivation {
-
-  implicit final def hconsTailCase[From,
-                                   FromLG <: HList,
-                                   TargetT,
-                                   Label <: Symbol,
-                                   M <: Modifier,
-                                   Ms <: HList,
-                                   RecursiveModifiers <: HList](
-    implicit vp: ValueProvider[From, FromLG, TargetT, Label, Ms, RecursiveModifiers]
-  ): ValueProvider[From, FromLG, TargetT, Label, M :: Ms, RecursiveModifiers] =
-    ValueProvider.instance { (src: FromLG, modifiers: M :: Ms, recursiveModifiers: RecursiveModifiers) =>
-      vp.provide(src, modifiers.tail, recursiveModifiers)
+  implicit final def hconsTailCase[From, FromLG <: HList, TargetT, Label <: Symbol, M <: Modifier, Ms <: HList](
+    implicit vp: ValueProvider[From, FromLG, TargetT, Label, Ms]
+  ): ValueProvider[From, FromLG, TargetT, Label, M :: Ms] =
+    ValueProvider.instance { (src: FromLG, modifiers: M :: Ms) =>
+      vp.provide(src, modifiers.tail)
     }
 }
