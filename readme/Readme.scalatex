@@ -157,7 +157,7 @@
     @sect{Default values}
       @p
         Chimney also respects case classes' default values as a possible target
-        field value source.. When we want to rely on defaults, we don't need to provide
+        field value source. When we want to rely on defaults, we don't need to provide
         values manually.
 
       @hl.scala
@@ -168,6 +168,20 @@
 
       @p
         Providing the value anyway for such case would just ignore the default from case class.
+
+      @sect{Disabling default values}
+
+        @p
+          It is possible to disable lookup for default values and require them to be passed explicitly.
+
+        @hl.scala
+          val steve = stevie
+            .into[Butterfly]
+            .disableDefaultValues
+            .transform
+          // error: could not find implicit value for parameter transformer: io.scalaland.chimney.DerivedTransformer[Catterpillar,Butterfly,io.scalaland.chimney.internal.Modifier.disableDefaultValues :: shapeless.HNil]
+          //            .transform
+          //            ^
 
     @sect{Standard types}
       @p

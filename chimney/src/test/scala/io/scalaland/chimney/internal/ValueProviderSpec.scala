@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal
 
 import org.scalatest.{MustMatchers, WordSpec}
-import shapeless.HNil
+import shapeless.{HList, HNil, LabelledGeneric, Witness}
 
 class ValueProviderSpec extends WordSpec with MustMatchers {
 
@@ -11,41 +11,31 @@ class ValueProviderSpec extends WordSpec with MustMatchers {
 
     "provide value for field with no modifiers" in {
 
-      ValueProvider.provide(Source("test"), 'foo, classOf[String], HNil) mustBe "test"
+      provide(Source("test"), 'foo, classOf[String]) mustBe "test"
     }
 
     "provide value for field with field constant modifier" in {
 
-      ValueProvider.provide(
-        Source("test"),
-        'foo,
-        classOf[String],
-        Modifier.fieldConstant[Source, String]('foo, "provided") :: HNil
-      ) mustBe
+      provide(Source("test"), 'foo, classOf[String], Modifier.fieldConstant[Source, String]('foo, "provided") :: HNil) mustBe
         "provided"
     }
 
     "provide value for field with field function modifier" in {
 
-      ValueProvider.provide(
-        Source("test"),
-        'foo,
-        classOf[String],
-        Modifier.fieldFunction[Source, String]('foo, _.foo * 2) :: HNil
-      ) mustBe
+      provide(Source("test"), 'foo, classOf[String], Modifier.fieldFunction[Source, String]('foo, _.foo * 2) :: HNil) mustBe
         "testtest"
     }
 
     "provide value for field with relabelling modifier" in {
 
-      ValueProvider.provide(Source("test"), 'bar, classOf[String], Modifier.relabel('foo, 'bar) :: HNil) mustBe
+      provide(Source("test"), 'bar, classOf[String], Modifier.relabel('foo, 'bar) :: HNil) mustBe
         "test"
     }
 
     "pick applicable modifier" when {
 
       "applicable is first" in {
-        ValueProvider.provide(
+        provide(
           Source("test"),
           'foo,
           classOf[String],
@@ -58,7 +48,7 @@ class ValueProviderSpec extends WordSpec with MustMatchers {
       }
 
       "applicable is in the middle" in {
-        ValueProvider.provide(
+        provide(
           Source("test"),
           'foo,
           classOf[String],
@@ -71,7 +61,7 @@ class ValueProviderSpec extends WordSpec with MustMatchers {
       }
 
       "applicable is last" in {
-        ValueProvider.provide(
+        provide(
           Source("test"),
           'foo,
           classOf[String],
@@ -86,7 +76,7 @@ class ValueProviderSpec extends WordSpec with MustMatchers {
 
     "pick first of applicable modifiers" in {
 
-      ValueProvider.provide(
+      provide(
         Source("test"),
         'foo,
         classOf[String],
@@ -99,7 +89,7 @@ class ValueProviderSpec extends WordSpec with MustMatchers {
     }
 
     "lub the value into the target type" in {
-      ValueProvider.provide(
+      provide(
         Source("test"),
         'foo,
         classOf[Option[Int]],
@@ -111,25 +101,39 @@ class ValueProviderSpec extends WordSpec with MustMatchers {
 
     "provide value for coproduct field" in {
 
-      ValueProvider.provide(Response(No), 'answer, classOf[Answer], HNil) mustBe
+      provide(Response(No), 'answer, classOf[Answer]) mustBe
         No
 
-      ValueProvider.provide(Response(Yes), 'answer, classOf[Answer], HNil) mustBe
+      provide(Response(Yes), 'answer, classOf[Answer]) mustBe
         Yes
 
-      ValueProvider.provide(Response2("no", No), 'answer, classOf[Answer], HNil) mustBe
+      provide(Response2("no", No), 'answer, classOf[Answer]) mustBe
         No
 
-      ValueProvider.provide(Response2("si", Yes), 'answer, classOf[Answer], HNil) mustBe
+      provide(Response2("si", Yes), 'answer, classOf[Answer]) mustBe
         Yes
 
-      ValueProvider.provide(Response2("no", No), 'other, classOf[String], HNil) mustBe
+      provide(Response2("no", No), 'other, classOf[String]) mustBe
         "no"
 
-      ValueProvider.provide(Response2("si", Yes), 'other, classOf[String], HNil) mustBe
+      provide(Response2("si", Yes), 'other, classOf[String]) mustBe
         "si"
     }
   }
+
+  final def provide[From, FromLG <: HList, TargetT, Modifiers <: HList](from: From,
+                                                                        targetLabel: Witness.Lt[Symbol],
+                                                                        clz: Class[TargetT],
+                                                                        modifiers: Modifiers)(
+    implicit lg: LabelledGeneric.Aux[From, FromLG],
+    vp: ValueProvider[From, FromLG, TargetT, targetLabel.T, Modifiers]
+  ): TargetT = vp.provide(lg.to(from), modifiers)
+
+  final def provide[From, FromLG <: HList, TargetT](from: From, targetLabel: Witness.Lt[Symbol], clz: Class[TargetT])(
+    implicit lg: LabelledGeneric.Aux[From, FromLG],
+    vp: ValueProvider[From, FromLG, TargetT, targetLabel.T, HNil]
+  ): TargetT = vp.provide(lg.to(from), HNil)
+
 }
 
 sealed trait Answer

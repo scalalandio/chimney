@@ -1,9 +1,7 @@
 package io.scalaland.chimney.internal
 
-import shapeless.labelled._
 import shapeless._
-import shapeless.record._
-import shapeless.ops.record.Selector
+import shapeless.labelled._
 
 trait DerivedProductTransformer[From, FromLG <: HList, To, ToLG <: HList, Modifiers <: HList] {
 
@@ -47,8 +45,9 @@ trait LowPriorityProductInstances {
                                       Defaults <: HList,
                                       Modifiers <: HList](
     implicit
+    defaultValuesEnabled: ops.hlist.Selector[Modifiers, Modifier.enableDefaultValues],
     defaults: Default.AsRecord.Aux[To, Defaults],
-    defaultSelector: Selector.Aux[Defaults, Label, HeadToT],
+    defaultSelector: ops.record.Selector.Aux[Defaults, Label, HeadToT],
     tailTransformer: DerivedProductTransformer[From, FromLG, To, TailToLG, Modifiers]
   ): DerivedProductTransformer[From, FromLG, To, FieldType[Label, HeadToT] :: TailToLG, Modifiers] =
     (src: FromLG, modifiers: Modifiers) =>

@@ -137,12 +137,18 @@ class DslSpec extends WordSpec with MustMatchers {
       case class Bar(x: Int, y: Long = 30L)
       case class Baz(x: Int = 5, y: Long = 100L)
       case class Baah(x: Int, y: Foo = Foo(0))
+      case class Baahr(x: Int, y: Bar)
 
       "use default parameter value" when {
 
         "field does not exists in the source" in {
           Foo(10).transformInto[Bar] mustBe Bar(10, 30L)
           Seq(Foo(30), Foo(40)).transformInto[Seq[Bar]] mustBe Seq(Bar(30, 30L), Bar(40, 30L))
+        }
+
+        "field does not exists in nested object" in {
+          Baah(10, Foo(300)).transformInto[Baahr] mustBe
+            Baahr(10, Bar(300, 30L))
         }
       }
 
@@ -159,6 +165,22 @@ class DslSpec extends WordSpec with MustMatchers {
             .withFieldConst(_.y, 45L)
             .transform mustBe
             Bar(10, 45L)
+        }
+
+        "default values are disabled and another modifier is provided" in {
+          Foo(10)
+            .into[Bar]
+            .disableDefaultValues
+            .withFieldConst(_.y, 45L)
+            .transform mustBe
+            Bar(10, 45L)
+
+          Foo(10)
+            .into[Bar]
+            .withFieldConst(_.y, 48L)
+            .disableDefaultValues
+            .transform mustBe
+            Bar(10, 48L)
         }
 
         "local transformer for default value exists" in {
@@ -178,6 +200,16 @@ class DslSpec extends WordSpec with MustMatchers {
 
           Foo(333).transformInto[Bar] mustBe Bar(333, 333L)
         }
+      }
+
+      "not compile when default parameter values are disabled" in {
+        illTyped("""
+          Foo(10).into[Bar].disableDefaultValues.transform
+        """)
+
+        illTyped("""
+          Baah(10, Foo(300)).into[Baahr].disableDefaultValues.transform
+        """)
       }
     }
 

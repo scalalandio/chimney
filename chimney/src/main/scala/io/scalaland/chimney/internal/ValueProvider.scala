@@ -10,29 +10,30 @@ trait ValueProvider[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList] 
 
 object ValueProvider extends ValueProviderDerivation {
 
-  final def provide[From, FromLG <: HList, TargetT, Modifiers <: HList](from: From,
-                                                                        targetLabel: Witness.Lt[Symbol],
-                                                                        clz: Class[TargetT],
-                                                                        modifiers: Modifiers)(
-    implicit lg: LabelledGeneric.Aux[From, FromLG],
-    vp: ValueProvider[From, FromLG, TargetT, targetLabel.T, Modifiers]
-  ): TargetT = vp.provide(lg.to(from), modifiers)
-
   final def instance[From, FromLG, TargetT, Label <: Symbol, Modifiers <: HList](
     f: (FromLG, Modifiers) => TargetT
   ): ValueProvider[From, FromLG, TargetT, Label, Modifiers] =
     new ValueProvider[From, FromLG, TargetT, Label, Modifiers] {
-      @inline final def provide(src: FromLG, modifiers: Modifiers): TargetT = f(src, modifiers)
+      @inline final def provide(src: FromLG, modifiers: Modifiers): TargetT =
+        f(src, modifiers)
     }
 }
 
 trait ValueProviderDerivation {
 
-  implicit final def hnilCase[From, FromLG <: HList, TargetT, Label <: Symbol, Modifiers <: HNil, FromT](
+  implicit final def hnilDefaultValuesRecCase[From, FromLG <: HList, TargetT, Label <: Symbol, FromT](
     implicit fieldSelector: ops.record.Selector.Aux[FromLG, Label, FromT],
-    fieldTransformer: DerivedTransformer[FromT, TargetT, Modifiers]
-  ): ValueProvider[From, FromLG, TargetT, Label, Modifiers] =
-    ValueProvider.instance { (src: FromLG, modifiers: Modifiers) =>
+    fieldTransformer: DerivedTransformer[FromT, TargetT, Modifier.enableDefaultValues :: HNil]
+  ): ValueProvider[From, FromLG, TargetT, Label, Modifier.enableDefaultValues :: HNil] =
+    ValueProvider.instance { (src: FromLG, modifiers: Modifier.enableDefaultValues :: HNil) =>
+      fieldTransformer.transform(fieldSelector(src), modifiers)
+    }
+
+  implicit final def hnilCase[From, FromLG <: HList, TargetT, Label <: Symbol, FromT](
+    implicit fieldSelector: ops.record.Selector.Aux[FromLG, Label, FromT],
+    fieldTransformer: DerivedTransformer[FromT, TargetT, HNil]
+  ): ValueProvider[From, FromLG, TargetT, Label, HNil] =
+    ValueProvider.instance { (src: FromLG, modifiers: HNil) =>
       fieldTransformer.transform(fieldSelector(src), modifiers)
     }
 
