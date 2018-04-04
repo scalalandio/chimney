@@ -131,7 +131,7 @@ lazy val publishSettings = Seq(
 )
 
 lazy val noPublishSettings =
-  Seq(publish := (()), publishLocal := (()), publishArtifact := false)
+  Seq(skip in publish := true, publishArtifact := false)
 
 lazy val readme = scalatex
   .ScalatexReadme(
