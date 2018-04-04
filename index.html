@@ -119,13 +119,33 @@ val event = command.into[CoffeeMade]
     <p>
       To include Chimney to your SBT project, add the following line
       to your <code>build.sbt</code>:</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.1.8&quot;</code></pre>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.1.9&quot;</code></pre>
     <p>
       Library is released for Scala 2.11 and 2.12.
       If you want to use it with Scala.js, you need to replace <code>%%</code> with <code>%%%</code>.
       Due to some <a href="https://issues.scala-lang.org/browse/SI-7046">compiler bugs</a>,
       it's recommended to use at least Scala 2.11.9 or 2.12.1.
 </p>
+    <h1 id="TryingwithAmmoniteREPL" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#TryingwithAmmoniteREPL" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Trying with Ammonite REPL</h1>
+      The quickest way to try out Chimney is to use a script that downloads
+      <a href="https://github.com/alexarchambault/coursier">coursier</a> and uses it
+      to fetch <a href="https://github.com/lihaoyi/Ammonite">Ammonite</a> REPL
+      with the latest version of Chimney. It drops you immediately into a REPL session.
+
+      <pre><code class="bash scalatex-site-Styles-highlightMe">curl -s https://raw.githubusercontent.com/scalalandio/chimney/master/try-chimney.sh | bash
+Loading...
+Welcome to the Ammonite Repl 1.1.0
+(Scala 2.12.4 Java 1.8.0_152)
+If you like Ammonite, please support our development at www.patreon.com/lihaoyi
+@ case class Foo(x: String, y: Int)
+defined class Foo
+
+@ case class Bar(x: String, y: Int, z: Boolean = true)
+defined class Bar
+
+@ Foo(&quot;abc&quot;, 10).transformInto[Bar]
+res2: Bar = Bar(&quot;abc&quot;, 10, true)
+</code></pre>
   <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Usage" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Usage<a class=" scalatex-site-Styles-headerLink" href="#Usage" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
     <p>
       In this section you will learn how to use Chimney example by example.
@@ -197,7 +217,7 @@ val steve = stevie.transformInto[Butterfly]
     <h1 id="Defaultvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Defaultvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Default values</h1>
       <p>
         Chimney also respects case classes' default values as a possible target
-        field value source.. When we want to rely on defaults, we don't need to provide
+        field value source. When we want to rely on defaults, we don't need to provide
         values manually.
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">case class Butterfly(size: Int, name: String, wingsColor: String = &quot;purple&quot;)
@@ -208,6 +228,19 @@ val steve = stevie.transformInto[Butterfly]
       <p>
         Providing the value anyway for such case would just ignore the default from case class.
 </p>
+      <h2 id="Disablingdefaultvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Disablingdefaultvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Disabling default values</h2>
+
+        <p>
+          It is possible to disable lookup for default values and require them to be passed explicitly.
+</p>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">val steve = stevie
+  .into[Butterfly]
+  .disableDefaultValues
+  .transform
+// error: could not find implicit value for parameter transformer: io.scalaland.chimney.DerivedTransformer[Catterpillar,Butterfly,io.scalaland.chimney.internal.Modifier.disableDefaultValues :: shapeless.HNil]
+//            .transform
+//            ^
+</code></pre>
     <h1 id="Standardtypes" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Standardtypes" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Standard types</h1>
       <p>
         Chimney supports deriving transformers for many standard Scala types, like
@@ -385,7 +418,7 @@ user.patchWith(updateForm)
         field, so it was able to successfully derive a patcher.</p></div>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"Chimney","children":[{"value":"What Chimney does","children":[]},{"value":"Getting started","children":[]},{"value":"Usage","children":[{"value":"Basic transformations","children":[]},{"value":"Nested transformations","children":[]},{"value":"Providing missing values","children":[]},{"value":"Default values","children":[]},{"value":"Standard types","children":[]},{"value":"Value classes","children":[]},{"value":"Field re-labelling","children":[]}]},{"value":"Advanced techniques","children":[{"value":"Custom transformations","children":[]},{"value":"Coproducts support","children":[]},{"value":"Patchers","children":[]}]}]}]
+      [{"value":"Chimney","children":[{"value":"What Chimney does","children":[]},{"value":"Getting started","children":[{"value":"Trying with Ammonite REPL","children":[]}]},{"value":"Usage","children":[{"value":"Basic transformations","children":[]},{"value":"Nested transformations","children":[]},{"value":"Providing missing values","children":[]},{"value":"Default values","children":[{"value":"Disabling default values","children":[]}]},{"value":"Standard types","children":[]},{"value":"Value classes","children":[]},{"value":"Field re-labelling","children":[]}]},{"value":"Advanced techniques","children":[{"value":"Custom transformations","children":[]},{"value":"Coproducts support","children":[]},{"value":"Patchers","children":[]}]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -395,4 +428,4 @@ user.patchWith(updateForm)
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
