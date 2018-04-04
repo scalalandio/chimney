@@ -84,7 +84,7 @@ lazy val protos = crossProject
   .crossType(CrossType.Pure)
   .settings(
     name := "chimney-protos",
-    libraryDependencies += "com.trueaccord.scalapb" %%% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion,
+    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
     PB.targets in Compile := Seq(scalapb.gen() -> (sourceManaged in Compile).value),
     PB.protoSources in Compile := Seq(file("protos/src/main/protobuf")),
     coverageExcludedPackages := "<empty>;(.*)"
