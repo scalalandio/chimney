@@ -78,13 +78,11 @@ trait EitherInstances {
 
 trait CollectionInstances {
 
-  implicit final def traversableTransformer[From, To, Modifiers <: HList, M1[_], M2[_]](
-    implicit neq: M1[From] =:!= M2[To],
-    innerTransformer: DerivedTransformer[From, To, Modifiers],
-    ev1: M1[From] <:< Traversable[From],
-    ev2: M2[To] <:< Traversable[To],
-    cbf: CanBuildFrom[M1[From], To, M2[To]]
-  ): DerivedTransformer[M1[From], M2[To], Modifiers] =
+  implicit final def traversableTransformer[From, To, Modifiers <: HList, M1[X] <: Traversable[X], M2[Y] <: Traversable[
+    Y
+  ]](implicit neq: M1[From] =:!= M2[To],
+     innerTransformer: DerivedTransformer[From, To, Modifiers],
+     cbf: CanBuildFrom[M1[From], To, M2[To]]): DerivedTransformer[M1[From], M2[To], Modifiers] =
     (src: M1[From], modifiers: Modifiers) => src.map(innerTransformer.transform(_: From, modifiers)).to[M2]
 
   implicit final def arrayTransformer[From, To, Modifiers <: HList](
