@@ -304,7 +304,6 @@ class DslSpec extends WordSpec with MustMatchers {
         "Batman".transformInto[UserName] mustBe UserName("Batman")
         UserDTO("100", "abc").transformInto[User] mustBe
           User("100", UserName("abc"))
-
       }
     }
 
@@ -317,7 +316,6 @@ class DslSpec extends WordSpec with MustMatchers {
         Option(Foo("a")).transformInto[Option[Bar]] mustBe Option(Bar("a"))
         (Some(Foo("a")): Option[Foo]).transformInto[Option[Bar]] mustBe Option(Bar("a"))
         Some(Foo("a")).transformInto[Option[Bar]] mustBe Some(Bar("a"))
-        None.transformInto[Option[Bar]] mustBe None
         (None: Option[Foo]).transformInto[Option[Bar]] mustBe None
         Some(Foo("a")).transformInto[Some[Bar]] mustBe Some(Bar("a"))
         None.transformInto[None.type] mustBe None
@@ -362,6 +360,8 @@ class DslSpec extends WordSpec with MustMatchers {
       "support Map" in {
         Map("test" -> Foo("a")).transformInto[Map[String, Bar]] mustBe Map("test" -> Bar("a"))
         Map("test" -> "a").transformInto[Map[String, String]] mustBe Map("test" -> "a")
+        Map(Foo("test") -> "x").transformInto[Map[Bar, String]] mustBe Map(Bar("test") -> "x")
+        Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] mustBe Map(Bar("test") -> Bar("x"))
       }
     }
 

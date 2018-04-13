@@ -19,7 +19,7 @@ object ValueProvider extends ValueProviderDerivation {
     }
 }
 
-trait ValueProviderDerivation {
+trait ValueProviderDerivation extends ValueProviderHNilInstance {
 
   implicit final def hnilDefaultValuesRecCase[From, FromLG <: HList, TargetT, Label <: Symbol, FromT](
     implicit fieldSelector: ops.record.Selector.Aux[FromLG, Label, FromT],
@@ -28,6 +28,9 @@ trait ValueProviderDerivation {
     ValueProvider.instance { (src: FromLG, modifiers: Modifier.enableDefaultValues :: HNil) =>
       fieldTransformer.transform(fieldSelector(src), modifiers)
     }
+}
+
+trait ValueProviderHNilInstance extends ValueProviderFieldFunctionInstance {
 
   implicit final def hnilCase[From, FromLG <: HList, TargetT, Label <: Symbol, FromT](
     implicit fieldSelector: ops.record.Selector.Aux[FromLG, Label, FromT],
@@ -36,6 +39,9 @@ trait ValueProviderDerivation {
     ValueProvider.instance { (src: FromLG, modifiers: HNil) =>
       fieldTransformer.transform(fieldSelector(src), modifiers)
     }
+}
+
+trait ValueProviderFieldFunctionInstance extends ValueProviderRelabelInstance {
 
   implicit final def hconsFieldFunctionCase[From, FromLG <: HList, TargetT, ModT, Label <: Symbol, Modifiers <: HList](
     implicit fromLG: LabelledGeneric.Aux[From, FromLG],
@@ -44,6 +50,9 @@ trait ValueProviderDerivation {
     ValueProvider.instance { (src: FromLG, modifiers: Modifier.fieldFunction[Label, From, ModT] :: Modifiers) =>
       lubTargetTModT.right(modifiers.head.map(fromLG.from(src)))
     }
+}
+
+trait ValueProviderRelabelInstance extends ValueProviderHConsTailInstance {
 
   implicit final def hconsRelabelCase[From,
                                       FromLG <: HList,
@@ -56,6 +65,9 @@ trait ValueProviderDerivation {
     ValueProvider.instance { (src: FromLG, _: Modifier.relabel[LabelFrom, LabelTo] :: Modifiers) =>
       fieldSelector(src)
     }
+}
+
+trait ValueProviderHConsTailInstance {
 
   implicit final def hconsTailCase[From, FromLG <: HList, TargetT, Label <: Symbol, M <: Modifier, Ms <: HList](
     implicit vp: ValueProvider[From, FromLG, TargetT, Label, Ms]

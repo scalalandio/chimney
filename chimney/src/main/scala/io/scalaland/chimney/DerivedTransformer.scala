@@ -4,18 +4,12 @@ import shapeless._
 
 import io.scalaland.chimney.internal._
 
-trait DerivedTransformer[From, To, Modifiers <: HList] {
+trait DerivedTransformer[-From, To, Modifiers <: HList] {
 
   def transform(src: From, modifiers: Modifiers): To
 }
 
-object DerivedTransformer
-    extends IdentityInstance
-    with ValueClassInstances
-    with OptionInstances
-    with EitherInstances
-    with CollectionInstances
-    with GenericInstances {
+object DerivedTransformer extends DerivedTransformerInstances {
 
   final def apply[From, To, Modifiers <: HList](
     implicit dt: DerivedTransformer[From, To, Modifiers]

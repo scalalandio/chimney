@@ -26,7 +26,7 @@ object CoproductInstanceProvider extends CoproductInstanceProviderDerivation {
     }
 }
 
-trait CoproductInstanceProviderDerivation extends LowPriorityCoproductInstanceProvider {
+trait CoproductInstanceProviderDerivation extends CoproductInstanceProviderModifierCase {
 
   implicit final def matchingObjCase[ToLG <: Coproduct, Label <: Symbol, FromT, TargetT, Modifiers <: HNil](
     implicit sel: ops.union.Selector.Aux[ToLG, Label, TargetT],
@@ -36,6 +36,9 @@ trait CoproductInstanceProviderDerivation extends LowPriorityCoproductInstancePr
     CoproductInstanceProvider.instance { (_: FieldType[Label, FromT], _: Modifiers) =>
       inj(field[Label](wit.value))
     }
+}
+
+trait CoproductInstanceProviderModifierCase extends CoproductInstanceProviderCConsTailCase {
 
   implicit final def coproductInstanceCase[ToLG <: Coproduct,
                                            Label <: Symbol,
@@ -49,6 +52,9 @@ trait CoproductInstanceProviderDerivation extends LowPriorityCoproductInstancePr
       (src: FieldType[Label, FromT], modifiers: Modifier.coproductInstance[Inst, To] :: Modifiers) =>
         lg.to(modifiers.head.f(src))
     }
+}
+
+trait CoproductInstanceProviderCConsTailCase extends CoproductInstanceProviderMatchingTransformerCase {
 
   implicit final def cconsTailCase[ToLG <: Coproduct, Label <: Symbol, FromT, M <: Modifier, Modifiers <: HList](
     implicit cip: CoproductInstanceProvider[Label, FromT, ToLG, Modifiers]
@@ -58,7 +64,8 @@ trait CoproductInstanceProviderDerivation extends LowPriorityCoproductInstancePr
     }
 }
 
-trait LowPriorityCoproductInstanceProvider {
+trait CoproductInstanceProviderMatchingTransformerCase {
+
   implicit final def matchingTransformerCase[ToLG <: Coproduct, Label <: Symbol, FromT, TargetT, Modifiers <: HNil](
     implicit sel: ops.union.Selector.Aux[ToLG, Label, TargetT],
     transformer: DerivedTransformer[FromT, TargetT, Modifiers],
@@ -67,5 +74,4 @@ trait LowPriorityCoproductInstanceProvider {
     CoproductInstanceProvider.instance { (src: FieldType[Label, FromT], modifiers: Modifiers) =>
       inj(field[Label](transformer.transform(src, modifiers)))
     }
-
 }

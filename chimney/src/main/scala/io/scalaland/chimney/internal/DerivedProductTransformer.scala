@@ -8,18 +8,14 @@ trait DerivedProductTransformer[From, FromLG <: HList, To, ToLG <: HList, Modifi
   def transform(src: FromLG, modifiers: Modifiers): ToLG
 }
 
-object DerivedProductTransformer extends ProductInstances {
-
-  final def apply[From, FromLG <: HList, To, ToLG <: HList, Modifiers <: HList](
-    implicit dpt: DerivedProductTransformer[From, FromLG, To, ToLG, Modifiers]
-  ): DerivedProductTransformer[From, FromLG, To, ToLG, Modifiers] = dpt
-}
-
-trait ProductInstances extends LowPriorityProductInstances {
+object DerivedProductTransformer extends ProductHConsInstance {
 
   implicit final def hnilCase[From, FromLG <: HList, To, Modifiers <: HList]
     : DerivedProductTransformer[From, FromLG, To, HNil, Modifiers] =
     (_: FromLG, _: Modifiers) => HNil
+}
+
+trait ProductHConsInstance extends ProductHConsDefaultInstance {
 
   implicit final def hconsCase[From,
                                FromLG <: HList,
@@ -35,7 +31,8 @@ trait ProductInstances extends LowPriorityProductInstances {
       field[Label](vp.provide(src, modifiers)) :: tailTransformer.transform(src, modifiers)
 }
 
-trait LowPriorityProductInstances {
+trait ProductHConsDefaultInstance {
+
   implicit final def hconsCaseDefault[From,
                                       FromLG <: HList,
                                       To,
