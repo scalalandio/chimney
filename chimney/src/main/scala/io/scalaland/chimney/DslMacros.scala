@@ -3,6 +3,7 @@ package io.scalaland.chimney
 import scala.language.experimental.macros
 
 private[chimney] object DslMacros {
+
   def constFieldSelector(c: scala.reflect.macros.whitebox.Context)(selector: c.Tree, value: c.Tree): c.Tree = {
     import c.universe._
     selector match {
