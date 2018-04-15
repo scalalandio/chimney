@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal
 
-private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Context) {
+private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Context)
+  extends MacroUtils {
 
   import c.universe._
 
@@ -13,6 +14,8 @@ private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Co
 
     val srcName = c.internal.reificationSupport.freshTermName(From.typeSymbol.name.decodedName.toString.toLowerCase + "$")
     val srcPrefixTree = Ident(TermName(srcName.decodedName.toString))
+
+    println(c.prefix.tree.tpe.decls)
 
     expandTransformerTree(srcPrefixTree)(From, To) match {
 
@@ -31,7 +34,7 @@ private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Co
         val errorMessage =
           s"""Chimney can't derive transformation from $From to $To
              |
-             |${printDerivationErrors(derivationErrors)}
+             |${ChimneyDerivationError.printErrors(derivationErrors)}
              |See $chimneyDocUrl for usage examples.
              |
              |""".stripMargin
@@ -128,7 +131,6 @@ private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Co
     }
   }
 
-
   def findLocalImplicitTransformer(From: Type, To: Type): Option[Tree] = {
     val tpeTree = c.typecheck(tree = tq"_root_.io.scalaland.chimney.Transformer[$From, $To]",
       silent = false,
@@ -141,89 +143,7 @@ private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Co
       .filterNot(_ == EmptyTree)
   }
 
-  private val primitives = Set(
-    typeOf[Double],
-    typeOf[Float],
-    typeOf[Short],
-    typeOf[Byte],
-    typeOf[Int],
-    typeOf[Long],
-    typeOf[Char],
-    typeOf[Boolean],
-    typeOf[Unit]
-  )
-
-  private implicit class TypeOps(t: Type) {
-
-    def isValueClass: Boolean =
-      t <:< typeOf[AnyVal] && !primitives.exists(_ =:= t)
-
-    def isCaseClass: Boolean =
-      t.typeSymbol.classSymbolOpt.exists(_.isCaseClass)
-
-    def caseClassParams: Iterable[MethodSymbol] =
-      t.decls.collect {
-        case m: MethodSymbol if m.isCaseAccessor || (isValueClass && m.isParamAccessor) =>
-          m.asMethod
-      }
-  }
-
-  private implicit class SymbolOps(s: Symbol) {
-
-    def classSymbolOpt: Option[ClassSymbol] =
-      if(s.isClass) Some(s.asClass) else None
-  }
-
-  private implicit class TreeOps(t: Tree) {
-
-    def debug: Tree = {
-      println("TREE: " + t)
-      println("RAW:  " + showRaw(t))
-      t
-    }
-  }
 
   private val chimneyDocUrl = "http://scalalandio.github.io/chimney"
 
-
-  sealed trait ChimneyDerivationError {
-    def sourceTypeName: String
-    def targetTypeName: String
-  }
-
-  case class MissingField(fieldName: String,
-                          fieldTypeName: String,
-                          sourceTypeName: String,
-                          targetTypeName: String) extends ChimneyDerivationError
-
-  case class MissingTransformer(fieldName: String,
-                                sourceFieldTypeName: String,
-                                targetFieldTypeName: String,
-                                sourceTypeName: String,
-                                targetTypeName: String) extends ChimneyDerivationError
-
-  case class NotSupportedDerivation(sourceTypeName: String,
-                                    targetTypeName: String) extends ChimneyDerivationError
-
-  private def printDerivationErrors(errors: Seq[ChimneyDerivationError]): String = {
-
-    errors
-      .groupBy(_.targetTypeName)
-      .map { case (targetTypeName, errs) =>
-
-        val errStrings = errs.map {
-          case MissingField(fieldName, fieldTypeName, sourceTypeName, _) =>
-            s"  $fieldName: $fieldTypeName - no field named $fieldName in source type $sourceTypeName"
-          case MissingTransformer(fieldName, sourceFieldTypeName, targetFieldTypeName, sourceTypeName, _) =>
-            s"  $fieldName: $targetFieldTypeName - can't derive transformation from $fieldName: $sourceFieldTypeName in source type $sourceTypeName"
-          case NotSupportedDerivation(sourceTypeName, _) =>
-            s"  derivation from $sourceTypeName is not supported in Chimney!"
-        }
-
-        s"""$targetTypeName
-           |${errStrings.mkString("\n")}
-           |""".stripMargin
-      }
-      .mkString("\n")
-  }
 }
