@@ -10,18 +10,14 @@ trait DerivedCoproductTransformer[From, FromLG <: Coproduct, ToLG <: Coproduct, 
 
 object DerivedCoproductTransformer extends CoproductInstances {
 
-  final def apply[From, FromLG <: Coproduct, ToLG <: Coproduct, Modifiers <: HList](
-    implicit dct: DerivedCoproductTransformer[From, FromLG, ToLG, Modifiers]
-  ): DerivedCoproductTransformer[From, FromLG, ToLG, Modifiers] = dct
-}
-
-trait CoproductInstances {
-
   // $COVERAGE-OFF$
   implicit final def cnilCase[From, ToLG <: Coproduct, Modifiers <: HList]
     : DerivedCoproductTransformer[From, CNil, ToLG, Modifiers] =
     (_: CNil, _: Modifiers) => null.asInstanceOf[ToLG]
   // $COVERAGE-ON$
+}
+
+trait CoproductInstances {
 
   implicit final def coproductCase[From,
                                    TailFromLG <: Coproduct,

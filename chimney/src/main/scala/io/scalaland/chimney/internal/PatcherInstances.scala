@@ -4,10 +4,13 @@ import io.scalaland.chimney._
 import shapeless.labelled._
 import shapeless._
 
-trait PatcherInstances {
+trait PatcherInstances extends PatcherHConstInstance {
 
   implicit def hnilCase[TLG <: HList]: Patcher[TLG, HNil] =
     (obj: TLG, _: HNil) => obj
+}
+
+trait PatcherHConstInstance extends PatcherOptionalHConsInstance {
 
   implicit def hconsCase[L <: Symbol, T, PTail <: HList, U, TLG <: HList](
     implicit sel: ops.record.Selector.Aux[TLG, L, U],
@@ -19,6 +22,9 @@ trait PatcherInstances {
       val patchedHead = upd(obj, field[L](dt.transform(patch.head, HNil)))
       tailPatcher.patch(patchedHead, patch.tail)
     }
+}
+
+trait PatcherOptionalHConsInstance extends PatcherGenericInstance {
 
   implicit def optionalHconsCase[L <: Symbol, T, PTail <: HList, U, TLG <: HList](
     implicit sel: ops.record.Selector.Aux[TLG, L, U],
@@ -34,6 +40,9 @@ trait PatcherInstances {
         case None =>
           tailPatcher.patch(obj, patch.tail)
     }
+}
+
+trait PatcherGenericInstance {
 
   implicit def gen[T, P, TLG, PLG](implicit tlg: LabelledGeneric.Aux[T, TLG],
                                    plg: LabelledGeneric.Aux[P, PLG],
