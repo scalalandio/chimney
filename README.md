@@ -58,7 +58,7 @@ val event = command.into[CoffeeMade]
 To include Chimney to your SBT project, add the following line to your `build.sbt`:
 
 ```scala
-libraryDependencies += "io.scalaland" %% "chimney" % "0.1.9"
+libraryDependencies += "io.scalaland" %% "chimney" % "0.1.10"
 ```
 
 Library is released for Scala 2.11 and 2.12.

@@ -73,7 +73,7 @@
       To include Chimney to your SBT project, add the following line
       to your @code{build.sbt}:
     @hl.scala
-      libraryDependencies += "io.scalaland" %% "chimney" % "0.1.9"
+      libraryDependencies += "io.scalaland" %% "chimney" % "0.1.10"
     @p
       Library is released for Scala 2.11 and 2.12.
       If you want to use it with Scala.js, you need to replace @code{%%} with @code{%%%}.
