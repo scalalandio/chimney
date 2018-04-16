@@ -41,7 +41,7 @@ trait DslMacros {
 
     println("expandTansform: " + c.prefix.tree)
 
-    val Typed(Block(stats, expr), _) = c.prefix.tree
+    val (stats, expr) = c.prefix.tree.extractBlock
 
     stats.foreach(println)
     println(expr)

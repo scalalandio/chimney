@@ -50,13 +50,17 @@ trait TransformerMacros {
 
   def expandTransformerTree(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
-    var errors = Seq.empty[DerivationError]
-
-    if (From.isCaseClass && To.isCaseClass) {
-      expandCaseClassTransformerTree(srcPrefixTree)(From, To)
-    } else {
-      Left(Seq(NotSupportedDerivation(From.typeSymbol.name.toString, To.typeSymbol.name.toString)))
-    }
+    findLocalImplicitTransformer(From, To)
+      .map { localImplicitTree =>
+        Right(q"$localImplicitTree.transform($srcPrefixTree)")
+      }
+      .getOrElse {
+        if (From.isCaseClass && To.isCaseClass) {
+          expandCaseClassTransformerTree(srcPrefixTree)(From, To)
+        } else {
+          Left(Seq(NotSupportedDerivation(From.typeSymbol.name.toString, To.typeSymbol.name.toString)))
+        }
+      }
   }
 
   def expandCaseClassTransformerTree(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {

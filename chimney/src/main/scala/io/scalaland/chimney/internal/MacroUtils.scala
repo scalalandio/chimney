@@ -37,13 +37,18 @@ trait MacroUtils {
       t
     }
 
-    def insertToBlock(tree: Tree): Tree = t match {
+    def extractBlock: (List[Tree], Tree) = t match {
       case Typed(tt, _) =>
-        tt.insertToBlock(tree)
+        tt.extractBlock
       case Block(stats, expr) =>
-        Block(stats :+ tree, expr)
+        (stats, expr)
       case other =>
-        Block(List(tree), other)
+        (Nil, other)
+    }
+
+    def insertToBlock(tree: Tree): Tree = {
+      val (stats, expr) = t.extractBlock
+      Block(stats :+ tree, expr)
     }
   }
 

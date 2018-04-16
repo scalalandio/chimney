@@ -1,37 +1,37 @@
-//package io.scalaland.chimney
-//
-//import org.scalatest.{MustMatchers, WordSpec}
-//import shapeless.test._
-//import io.scalaland.chimney.dsl._
-//import io.scalaland.chimney.examples._
-//
-//class DslSpec extends WordSpec with MustMatchers {
-//
-//  "A Chimney DSL" should {
-//
-//    "use implicit transformer directly" in {
-//
-//      import Domain1._
-//
-//      implicit val _ = userNameToStringTransformer
-//
-//      UserName("Batman").into[String].transform mustBe "BatmanT"
-//      UserName("Batman").transformInto[String] mustBe "BatmanT"
-//    }
-//
-//    "use implicit transformer for nested field" in {
-//
-//      import Domain1._
-//
-//      implicit val _ = userNameToStringTransformer
-//
-//      val batman = User("123", UserName("Batman"))
-//      val batmanDTO = batman.transformInto[UserDTO]
-//
-//      batmanDTO.id mustBe "123"
-//      batmanDTO.name mustBe "BatmanT"
-//    }
-//
+package io.scalaland.chimney
+
+import org.scalatest.{MustMatchers, WordSpec}
+import shapeless.test._
+import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.examples._
+
+class DslSpec extends WordSpec with MustMatchers {
+
+  "A Chimney DSL" should {
+
+    "use implicit transformer directly" in {
+
+      import Domain1._
+
+      implicit val _ = userNameToStringTransformer
+
+      UserName("Batman").into[String].transform mustBe "BatmanT"
+      UserName("Batman").transformInto[String] mustBe "BatmanT"
+    }
+
+    "use implicit transformer for nested field" in {
+
+      import Domain1._
+
+      implicit val _ = userNameToStringTransformer
+
+      val batman = User("123", UserName("Batman"))
+      val batmanDTO = batman.transformInto[UserDTO]
+
+      batmanDTO.id mustBe "123"
+      batmanDTO.name mustBe "BatmanT"
+    }
+
 //    "support different set of fields of source and target" when {
 //
 //      case class Foo(x: Int, y: String, z: (Double, Double))
@@ -131,7 +131,7 @@
 //        }
 //      }
 //    }
-//
+
 //    "support default parameters" should {
 //      case class Foo(x: Int)
 //      case class Bar(x: Int, y: Long = 30L)
@@ -212,7 +212,7 @@
 //        """)
 //      }
 //    }
-//
+
 //    "support relabelling of fields" should {
 //
 //      case class Foo(x: Int, y: String)
@@ -287,7 +287,7 @@
 //        illTyped("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
 //      }
 //    }
-//
+
 //    "support value classes" when {
 //
 //      import VCDomain1._
@@ -464,23 +464,23 @@
 //          shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0))
 //      }
 //    }
-//  }
-//}
-//
-//object Domain1 {
-//
-//  case class UserName(value: String)
-//
-//  val userNameToStringTransformer: Transformer[UserName, String] =
-//    (userName: UserName) => userName.value + "T"
-//
-//  case class UserDTO(id: String, name: String)
-//  case class User(id: String, name: UserName)
-//}
-//
-//object VCDomain1 {
-//
-//  case class UserName(value: String) extends AnyVal
-//  case class UserDTO(id: String, name: String)
-//  case class User(id: String, name: UserName)
-//}
+  }
+}
+
+object Domain1 {
+
+  case class UserName(value: String)
+
+  val userNameToStringTransformer: Transformer[UserName, String] =
+    (userName: UserName) => userName.value + "T"
+
+  case class UserDTO(id: String, name: String)
+  case class User(id: String, name: UserName)
+}
+
+object VCDomain1 {
+
+  case class UserName(value: String) extends AnyVal
+  case class UserDTO(id: String, name: String)
+  case class User(id: String, name: UserName)
+}

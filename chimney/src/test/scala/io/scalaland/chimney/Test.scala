@@ -20,13 +20,13 @@ object Test extends App {
 //  println(foo.transformInto[Bar1])
 //  println(foo.into[Bar1].disableDefaultValues.transform)
 //  println(foo.into[Bar1].withFieldConst(_.u, "dupa").transform)
-  println {
-    foo.into[Bar1]
-      .withFieldConst(_.zzz, new RuntimeException("lalala"))
-      .disableDefaultValues
-      .withFieldConst(_.u, "dupa")
-      .withFieldComputed(_.y, _.u.toString)
-      .withFieldConst(_.zzz, new Exception)
-      .transform
-  }
+//  println {
+//    foo.into[Bar1]
+//      .withFieldConst(_.zzz, new RuntimeException("lalala"))
+//      .disableDefaultValues
+//      .withFieldConst(_.u, "dupa")
+//      .withFieldComputed(_.y, _.u.toString)
+//      .withFieldConst(_.zzz, new Exception)
+//      .transform
+//  }
 }
