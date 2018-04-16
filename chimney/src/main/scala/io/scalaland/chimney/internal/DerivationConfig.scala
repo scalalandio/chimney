@@ -6,7 +6,8 @@ trait DerivationConfig {
 
   val c: blackbox.Context
 
+  case class PastedTree(isFun: Boolean, tree: c.Tree)
+
   case class Config(disableDefaultValues: Boolean,
-                    consts: Map[String, c.Tree],
-                    funs: Map[String, c.Tree])
+                    fieldTrees: Map[String, PastedTree])
 }

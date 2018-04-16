@@ -23,7 +23,7 @@ trait TransformerMacros {
     val srcPrefixTree = Ident(TermName(srcName.decodedName.toString))
 
 
-    expandTransformerTree(srcPrefixTree)(From, To) match {
+    expandTransformerTree(srcPrefixTree, config)(From, To) match {
 
       case Right(transformerTree) =>
         val tree = q"""
@@ -48,7 +48,7 @@ trait TransformerMacros {
     }
   }
 
-  def expandTransformerTree(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandTransformerTree(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     findLocalImplicitTransformer(From, To)
       .map { localImplicitTree =>
@@ -56,26 +56,60 @@ trait TransformerMacros {
       }
       .getOrElse {
         if (From.isCaseClass && To.isCaseClass) {
-          expandCaseClassTransformerTree(srcPrefixTree)(From, To)
+          expandCaseClassTransformerTree(srcPrefixTree, config)(From, To)
         } else {
           Left(Seq(NotSupportedDerivation(From.typeSymbol.name.toString, To.typeSymbol.name.toString)))
         }
       }
   }
 
-  def expandCaseClassTransformerTree(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  sealed trait FieldResolution
+  case class ResolvedFieldTree(tree: Tree) extends FieldResolution
+  case class MatchingField(ms: MethodSymbol) extends FieldResolution
+
+  def resolveField(targetField: MethodSymbol,
+                   fromParams: Iterable[MethodSymbol],
+                   srcPrefixTree: Tree,
+                   config: Config): Option[FieldResolution] = {
+
+    config.fieldTrees
+      .get(targetField.name.decodedName.toString)
+      .map { case PastedTree(isFun, tree) =>
+        ResolvedFieldTree {
+          if(isFun) {
+            q"$tree($srcPrefixTree)"
+          } else {
+            tree
+          }
+        }
+      }
+      .orElse {
+        fromParams
+          .find(_.name == targetField.name)
+          .map { ms =>
+            if (ms.returnType <:< targetField.returnType) {
+              ResolvedFieldTree {
+                q"$srcPrefixTree.${targetField.name}"
+              }
+            } else {
+              MatchingField(ms)
+            }
+          }
+      }
+  }
+
+  def expandCaseClassTransformerTree(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     var errors = Seq.empty[DerivationError]
 
-    val fromParams = From.caseClassParams
-    val toParams = To.caseClassParams
+    val fromFields = From.caseClassParams
+    val toFields = To.caseClassParams
 
-
-    val mapping = toParams.map { param =>
-      param -> fromParams.find(_.name == param.name)
-    }
-
-//    mapping.foreach(println)
+    val mapping = toFields
+      .map { targetField =>
+        targetField -> resolveField(targetField, fromFields, srcPrefixTree, config)
+      }
+      .toMap
 
     val missingFields = mapping.collect { case (field, None) => field }
 
@@ -91,18 +125,18 @@ trait TransformerMacros {
     }
 
     val args = mapping.collect {
-      case (targetField, Some(sourceField)) if sourceField.returnType <:< targetField.returnType =>
-        q"$srcPrefixTree.${sourceField.name}"
+      case (targetField, Some(ResolvedFieldTree(tree))) =>
+        tree
 
-      case (targetField, Some(sourceField)) =>
-//        println("SRCRET: " + sourceField.returnType + "  TARGRET: " + targetField.returnType)
+      case (targetField, Some(MatchingField(sourceField))) =>
 
         findLocalImplicitTransformer(sourceField.returnType, targetField.returnType) match {
           case Some(localImplicitTransformer) =>
             q"$localImplicitTransformer.transform($srcPrefixTree.${sourceField.name})"
 
           case None if sourceField.returnType.isCaseClass && targetField.returnType.isCaseClass =>
-            expandTransformerTree(q"$srcPrefixTree.${sourceField.name}")(sourceField.returnType, targetField.returnType) match {
+            val recConfig = config.copy(fieldTrees = Map.empty)
+            expandTransformerTree(q"$srcPrefixTree.${sourceField.name}", recConfig)(sourceField.returnType, targetField.returnType) match {
               case Left(errs) =>
                 errors ++= errs
                 EmptyTree

@@ -45,7 +45,7 @@ class ChimneyMacros(val c: blackbox.Context)
   }
 
   def genImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
-    val config = Config(disableDefaultValues = false, consts = Map.empty, funs = Map.empty)
+    val config = Config(disableDefaultValues = false, fieldTrees = Map.empty)
     genTransformer[From, To](config)
   }
 }

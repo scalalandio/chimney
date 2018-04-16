@@ -61,7 +61,7 @@ trait DslMacros {
 
   def captureConfiguration(stats: List[c.Tree]): Config = {
 
-    val config = Config(disableDefaultValues = false, consts = Map.empty, funs = Map.empty)
+    val config = Config(disableDefaultValues = false, fieldTrees = Map.empty)
 
     stats.foldLeft(config) { case (cfg, stat) =>
       stat match {
@@ -70,9 +70,11 @@ trait DslMacros {
             case Prefixes.disableDefaults =>
               cfg.copy(disableDefaultValues = true)
             case Prefixes.ConstPat(fieldName) =>
-              cfg.copy(consts = cfg.consts + (fieldName -> tree))
+              val pastedTree = PastedTree(isFun = false, tree)
+              cfg.copy(fieldTrees = cfg.fieldTrees + (fieldName -> pastedTree))
             case Prefixes.ComputedPat(fieldName) =>
-              cfg.copy(funs = cfg.funs + (fieldName -> tree))
+              val pastedTree = PastedTree(isFun = true, tree)
+              cfg.copy(fieldTrees = cfg.fieldTrees + (fieldName -> pastedTree))
           }
         case _ =>
           cfg

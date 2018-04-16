@@ -57,80 +57,80 @@ class DslSpec extends WordSpec with MustMatchers {
 
           "pass when selector is valid" in {
 
-//            Bar(3, (3.14, 3.14))
-//              .into[Foo]
-//              .withFieldConst(_.y, "pi")
-//              .transform mustBe
-//              Foo(3, "pi", (3.14, 3.14))
+            Bar(3, (3.14, 3.14))
+              .into[Foo]
+              .withFieldConst(_.y, "pi")
+              .transform mustBe
+              Foo(3, "pi", (3.14, 3.14))
 
-//            Bar(3, (3.14, 3.14))
-//              .into[Foo]
-//              .withFieldConst(cc => cc.y, "pi")
-//              .transform mustBe
-//              Foo(3, "pi", (3.14, 3.14))
+            Bar(3, (3.14, 3.14))
+              .into[Foo]
+              .withFieldConst(cc => cc.y, "pi")
+              .transform mustBe
+              Foo(3, "pi", (3.14, 3.14))
           }
-//
-//          "not compile when the selector is invalid" in {
-//
-//            illTyped("""Bar(3, (3.14, 3.14))
-//                  .into[Foo]
-//                  .withFieldConst(_.y, "pi")
-//                  .withFieldConst(_.z._1, 0.0)
-//                  .transform
-//                """, "Invalid selector!")
-//
-//            illTyped("""Bar(3, (3.14, 3.14))
-//                  .into[Foo]
-//                  .withFieldConst(_.y + "abc", "pi")
-//                  .transform
-//                """, "Invalid selector!")
-//
-//            illTyped("""Bar(3, (3.14, 3.14))
-//                  .into[Foo]
-//                  .withFieldConst(cc => haveY.y, "pi")
-//                  .transform
-//                """, "Invalid selector!")
-//          }
-//        }
-//
-//        "fill the field with provided generator function" should {
-//
-//          "pass when selector is valid" in {
-//
-//            Bar(3, (3.14, 3.14))
-//              .into[Foo]
-//              .withFieldComputed(_.y, _.x.toString)
-//              .transform mustBe
-//              Foo(3, "3", (3.14, 3.14))
-//
-//            Bar(3, (3.14, 3.14))
-//              .into[Foo]
-//              .withFieldComputed(cc => cc.y, _.x.toString)
-//              .transform mustBe
-//              Foo(3, "3", (3.14, 3.14))
-//          }
-//
-//          "not compile when the selector is invalid" in {
-//
-//            illTyped("""Bar(3, (3.14, 3.14))
-//                  .into[Foo]
-//                  .withFieldComputed(_.y, _.x.toString)
-//                  .withFieldComputed(_.z._1, _.z._1 * 10.0)
-//                  .transform
-//                """, "Invalid selector!")
-//
-//            illTyped("""Bar(3, (3.14, 3.14))
-//                  .into[Foo]
-//                  .withFieldComputed(_.y + "abc", _.x.toString)
-//                  .transform
-//                """, "Invalid selector!")
-//
-//            illTyped("""Bar(3, (3.14, 3.14))
-//                  .into[Foo]
-//                  .withFieldComputed(cc => haveY.y, _.x.toString)
-//                  .transform
-//                """, "Invalid selector!")
-//          }
+
+          "not compile when the selector is invalid" in {
+
+            illTyped("""Bar(3, (3.14, 3.14))
+                  .into[Foo]
+                  .withFieldConst(_.y, "pi")
+                  .withFieldConst(_.z._1, 0.0)
+                  .transform
+                """, "Invalid selector!")
+
+            illTyped("""Bar(3, (3.14, 3.14))
+                  .into[Foo]
+                  .withFieldConst(_.y + "abc", "pi")
+                  .transform
+                """, "Invalid selector!")
+
+            illTyped("""Bar(3, (3.14, 3.14))
+                  .into[Foo]
+                  .withFieldConst(cc => haveY.y, "pi")
+                  .transform
+                """, "Invalid selector!")
+          }
+        }
+
+        "fill the field with provided generator function" should {
+
+          "pass when selector is valid" in {
+
+            Bar(3, (3.14, 3.14))
+              .into[Foo]
+              .withFieldComputed(_.y, _.x.toString)
+              .transform mustBe
+              Foo(3, "3", (3.14, 3.14))
+
+            Bar(3, (3.14, 3.14))
+              .into[Foo]
+              .withFieldComputed(cc => cc.y, _.x.toString)
+              .transform mustBe
+              Foo(3, "3", (3.14, 3.14))
+          }
+
+          "not compile when the selector is invalid" in {
+
+            illTyped("""Bar(3, (3.14, 3.14))
+                  .into[Foo]
+                  .withFieldComputed(_.y, _.x.toString)
+                  .withFieldComputed(_.z._1, _.z._1 * 10.0)
+                  .transform
+                """, "Invalid selector!")
+
+            illTyped("""Bar(3, (3.14, 3.14))
+                  .into[Foo]
+                  .withFieldComputed(_.y + "abc", _.x.toString)
+                  .transform
+                """, "Invalid selector!")
+
+            illTyped("""Bar(3, (3.14, 3.14))
+                  .into[Foo]
+                  .withFieldComputed(cc => haveY.y, _.x.toString)
+                  .transform
+                """, "Invalid selector!")
+          }
         }
       }
     }
