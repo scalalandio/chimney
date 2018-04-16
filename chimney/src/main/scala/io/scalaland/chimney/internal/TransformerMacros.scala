@@ -1,8 +1,6 @@
 package io.scalaland.chimney.internal
 
-
 import scala.reflect.macros.blackbox
-
 
 trait TransformerMacros {
   this: MacroUtils with DerivationConfig =>
@@ -11,7 +9,9 @@ trait TransformerMacros {
 
   import c.universe._
 
-  def genTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag](config: Config): c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
+  def genTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag](
+    config: Config
+  ): c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
 
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
@@ -22,7 +22,6 @@ trait TransformerMacros {
       c.internal.reificationSupport.freshTermName(From.typeSymbol.name.decodedName.toString.toLowerCase + "$")
     val srcPrefixTree = Ident(TermName(srcName.decodedName.toString))
 
-    println("PREFIX TPE DECLS:" + c.prefix.tree.tpe.decls)
 
     expandTransformerTree(srcPrefixTree)(From, To) match {
 
@@ -60,22 +59,19 @@ trait TransformerMacros {
     }
   }
 
-  def expandCaseClassTransformerTree(srcPrefixTree: Tree)(From: Type,
-                                                          To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandCaseClassTransformerTree(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     var errors = Seq.empty[DerivationError]
 
     val fromParams = From.caseClassParams
     val toParams = To.caseClassParams
 
-    println(s"expandCaseClassTransformingExpr: $From ~> $To")
-    println(s"fromParams: $fromParams | toParams: $toParams")
 
     val mapping = toParams.map { param =>
       param -> fromParams.find(_.name == param.name)
     }
 
-    mapping.foreach(println)
+//    mapping.foreach(println)
 
     val missingFields = mapping.collect { case (field, None) => field }
 
@@ -95,7 +91,7 @@ trait TransformerMacros {
         q"$srcPrefixTree.${sourceField.name}"
 
       case (targetField, Some(sourceField)) =>
-        println("SRCRET: " + sourceField.returnType + "  TARGRET: " + targetField.returnType)
+//        println("SRCRET: " + sourceField.returnType + "  TARGRET: " + targetField.returnType)
 
         findLocalImplicitTransformer(sourceField.returnType, targetField.returnType) match {
           case Some(localImplicitTransformer) =>

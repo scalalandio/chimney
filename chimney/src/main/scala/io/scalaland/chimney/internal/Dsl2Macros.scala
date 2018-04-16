@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal
 
 import scala.reflect.macros.blackbox
+import scala.util.matching.Regex
 
 trait Dsl2Macros {
   this: TransformerMacros with Dsl2Macros with MacroUtils with DerivationConfig =>
@@ -12,13 +13,13 @@ trait Dsl2Macros {
   def expandDisableDefaultValues: c.Tree = {
 
     c.prefix.tree.insertToBlock{
-      q"val __chimney__disableDefaultValues = true"
+      q"val ${TermName(Prefixes.disableDefaults)} = true"
     }
   }
 
   def expandWithFieldConst(fieldName: c.Name, value: c.Tree): c.Tree = {
     val fieldNameStr = fieldName.decodedName.toString
-    val memNameStr = TermName(s"__chimney__const_$fieldNameStr")
+    val memNameStr = TermName(s"${Prefixes.const}$fieldNameStr")
 
     c.prefix.tree.insertToBlock {
       q"val $memNameStr = $value"
@@ -27,7 +28,7 @@ trait Dsl2Macros {
 
   def expandWithFieldComputed(fieldName: c.Name, map: c.Tree): c.Tree = {
     val fieldNameStr = fieldName.decodedName.toString
-    val memNameStr = TermName(s"__chimney__computed_$fieldNameStr")
+    val memNameStr = TermName(s"${Prefixes.computed}$fieldNameStr")
 
     c.prefix.tree.insertToBlock {
       q"val $memNameStr = $map"
@@ -51,10 +52,40 @@ trait Dsl2Macros {
     println(s"pTo: $pTo")
     println(s"source: $source")
 
-    val config = Config(disableDefaultValues = false, consts = Map.empty, funs = Map.empty)
+    val config = captureConfiguration(stats)
 
     val derivedTransformerTree = genTransformer[From, To](config).tree
 
     q"$derivedTransformerTree.transform($source)"
+  }
+
+  def captureConfiguration(stats: List[c.Tree]): Config = {
+
+    val config = Config(disableDefaultValues = false, consts = Map.empty, funs = Map.empty)
+
+    stats.foldLeft(config) { case (cfg, stat) =>
+      stat match {
+        case ValDef(_, TermName(memName), _, tree) =>
+          memName match {
+            case Prefixes.disableDefaults =>
+              cfg.copy(disableDefaultValues = true)
+            case Prefixes.ConstPat(fieldName) =>
+              cfg.copy(consts = cfg.consts + (fieldName -> tree))
+            case Prefixes.ComputedPat(fieldName) =>
+              cfg.copy(funs = cfg.funs + (fieldName -> tree))
+          }
+        case _ =>
+          cfg
+      }
+    }
+  }
+
+  private object Prefixes {
+    val disableDefaults: String = "__chimney$disableDefaultValues"
+    val const: String = "__chimney$const_"
+    val computed: String = "__chimney$computed_"
+
+    val ConstPat: Regex = """^\_\_chimney\$const\_(.*)$""".r
+    val ComputedPat: Regex = """^\_\_chimney\$computed\_(.*)$""".r
   }
 }

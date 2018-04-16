@@ -43,11 +43,9 @@ trait MacroUtils {
       case Block(stats, expr) =>
         Block(stats :+ tree, expr)
       case other =>
-        println(s"NOT BLOCK, but ${showRaw(other)}")
         Block(List(tree), other)
     }
   }
-
 
   private val primitives = Set(
     typeOf[Double],

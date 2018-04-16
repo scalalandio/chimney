@@ -34,7 +34,6 @@ val settings = Seq(
     "-Xlint:doc-detached",
     "-Xlint:inaccessible",
     "-Xlint:infer-any",
-    "-Xlint:missing-interpolator",
     "-Xlint:nullary-override",
     "-Xlint:nullary-unit",
     "-Xlint:option-implicit",
