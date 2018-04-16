@@ -8,6 +8,5 @@ trait DerivationConfig {
 
   case class PastedTree(isFun: Boolean, tree: c.Tree)
 
-  case class Config(disableDefaultValues: Boolean,
-                    fieldTrees: Map[String, PastedTree])
+  case class Config(disableDefaultValues: Boolean, fieldTrees: Map[String, PastedTree])
 }

@@ -6,8 +6,6 @@ import shapeless.{::, HList, HNil, Witness}
 
 import scala.language.experimental.macros
 
-
-
 object olddsl {
 
   implicit class TransformerOps[From](val source: From) extends AnyVal {

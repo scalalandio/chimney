@@ -12,7 +12,7 @@ trait DslMacros {
 
   def expandDisableDefaultValues: c.Tree = {
 
-    c.prefix.tree.insertToBlock{
+    c.prefix.tree.insertToBlock {
       q"val ${TermName(Prefixes.disableDefaults)} = true"
     }
   }
@@ -63,22 +63,23 @@ trait DslMacros {
 
     val config = Config(disableDefaultValues = false, fieldTrees = Map.empty)
 
-    stats.foldLeft(config) { case (cfg, stat) =>
-      stat match {
-        case ValDef(_, TermName(memName), _, tree) =>
-          memName match {
-            case Prefixes.disableDefaults =>
-              cfg.copy(disableDefaultValues = true)
-            case Prefixes.ConstPat(fieldName) =>
-              val pastedTree = PastedTree(isFun = false, tree)
-              cfg.copy(fieldTrees = cfg.fieldTrees + (fieldName -> pastedTree))
-            case Prefixes.ComputedPat(fieldName) =>
-              val pastedTree = PastedTree(isFun = true, tree)
-              cfg.copy(fieldTrees = cfg.fieldTrees + (fieldName -> pastedTree))
-          }
-        case _ =>
-          cfg
-      }
+    stats.foldLeft(config) {
+      case (cfg, stat) =>
+        stat match {
+          case ValDef(_, TermName(memName), _, tree) =>
+            memName match {
+              case Prefixes.disableDefaults =>
+                cfg.copy(disableDefaultValues = true)
+              case Prefixes.ConstPat(fieldName) =>
+                val pastedTree = PastedTree(isFun = false, tree)
+                cfg.copy(fieldTrees = cfg.fieldTrees + (fieldName -> pastedTree))
+              case Prefixes.ComputedPat(fieldName) =>
+                val pastedTree = PastedTree(isFun = true, tree)
+                cfg.copy(fieldTrees = cfg.fieldTrees + (fieldName -> pastedTree))
+            }
+          case _ =>
+            cfg
+        }
     }
   }
 

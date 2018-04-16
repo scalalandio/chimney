@@ -14,7 +14,6 @@ object dsl {
       transformer.transform(source)
   }
 
-
   final class TransformerInto[From, To](val source: From) {
 
     def disableDefaultValues: TransformerInto[From, To] =
@@ -30,4 +29,3 @@ object dsl {
       macro ChimneyMacros.transformImpl[From, To]
   }
 }
-

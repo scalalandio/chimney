@@ -26,7 +26,7 @@ trait MacroUtils {
   implicit class SymbolOps(s: Symbol) {
 
     def classSymbolOpt: Option[ClassSymbol] =
-      if(s.isClass) Some(s.asClass) else None
+      if (s.isClass) Some(s.asClass) else None
   }
 
   implicit class TreeOps(t: Tree) {

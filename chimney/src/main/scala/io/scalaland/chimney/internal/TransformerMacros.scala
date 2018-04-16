@@ -22,7 +22,6 @@ trait TransformerMacros {
       c.internal.reificationSupport.freshTermName(From.typeSymbol.name.decodedName.toString.toLowerCase + "$")
     val srcPrefixTree = Ident(TermName(srcName.decodedName.toString))
 
-
     expandTransformerTree(srcPrefixTree, config)(From, To) match {
 
       case Right(transformerTree) =>
@@ -48,7 +47,8 @@ trait TransformerMacros {
     }
   }
 
-  def expandTransformerTree(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandTransformerTree(srcPrefixTree: Tree, config: Config)(From: Type,
+                                                                 To: Type): Either[Seq[DerivationError], Tree] = {
 
     findLocalImplicitTransformer(From, To)
       .map { localImplicitTree =>
@@ -74,14 +74,15 @@ trait TransformerMacros {
 
     config.fieldTrees
       .get(targetField.name.decodedName.toString)
-      .map { case PastedTree(isFun, tree) =>
-        ResolvedFieldTree {
-          if(isFun) {
-            q"$tree($srcPrefixTree)"
-          } else {
-            tree
+      .map {
+        case PastedTree(isFun, tree) =>
+          ResolvedFieldTree {
+            if (isFun) {
+              q"$tree($srcPrefixTree)"
+            } else {
+              tree
+            }
           }
-        }
       }
       .orElse {
         fromParams
@@ -98,18 +99,17 @@ trait TransformerMacros {
       }
   }
 
-  def expandCaseClassTransformerTree(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandCaseClassTransformerTree(srcPrefixTree: Tree,
+                                     config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     var errors = Seq.empty[DerivationError]
 
     val fromFields = From.caseClassParams
     val toFields = To.caseClassParams
 
-    val mapping = toFields
-      .map { targetField =>
-        targetField -> resolveField(targetField, fromFields, srcPrefixTree, config)
-      }
-      .toMap
+    val mapping = toFields.map { targetField =>
+      targetField -> resolveField(targetField, fromFields, srcPrefixTree, config)
+    }.toMap
 
     val missingFields = mapping.collect { case (field, None) => field }
 
@@ -129,14 +129,16 @@ trait TransformerMacros {
         tree
 
       case (targetField, Some(MatchingField(sourceField))) =>
-
         findLocalImplicitTransformer(sourceField.returnType, targetField.returnType) match {
           case Some(localImplicitTransformer) =>
             q"$localImplicitTransformer.transform($srcPrefixTree.${sourceField.name})"
 
           case None if sourceField.returnType.isCaseClass && targetField.returnType.isCaseClass =>
             val recConfig = config.copy(fieldTrees = Map.empty)
-            expandTransformerTree(q"$srcPrefixTree.${sourceField.name}", recConfig)(sourceField.returnType, targetField.returnType) match {
+            expandTransformerTree(q"$srcPrefixTree.${sourceField.name}", recConfig)(
+              sourceField.returnType,
+              targetField.returnType
+            ) match {
               case Left(errs) =>
                 errors ++= errs
                 EmptyTree
