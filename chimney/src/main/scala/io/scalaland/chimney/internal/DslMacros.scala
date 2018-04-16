@@ -3,8 +3,8 @@ package io.scalaland.chimney.internal
 import scala.reflect.macros.blackbox
 import scala.util.matching.Regex
 
-trait Dsl2Macros {
-  this: TransformerMacros with Dsl2Macros with MacroUtils with DerivationConfig =>
+trait DslMacros {
+  this: TransformerMacros with DslMacros with MacroUtils with DerivationConfig =>
 
   val c: blackbox.Context
 
@@ -46,7 +46,7 @@ trait Dsl2Macros {
     stats.foreach(println)
     println(expr)
 
-    val q"io.scalaland.chimney.dsl2.TransformerOps[$pFrom]($source).into[$pTo]" = expr
+    val q"io.scalaland.chimney.dsl.TransformerOps[$pFrom]($source).into[$pTo]" = expr
 
     println(s"pFrom: $pFrom")
     println(s"pTo: $pTo")

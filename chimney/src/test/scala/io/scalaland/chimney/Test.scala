@@ -9,7 +9,7 @@ case class Foo(x: Int, z: Boolean, y: String, abc: Source, u: Int, zzz: RuntimeE
 case class Bar1(y: String, x: Int, abc: Target, u: String, zzz: Exception)
 case class Bar2(y: String, lululu: Unit, x: Int, abc: Target, u: String, kaka: String)
 
-import io.scalaland.chimney.dsl2._
+import io.scalaland.chimney.dsl._
 
 object Test extends App {
 

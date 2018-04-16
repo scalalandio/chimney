@@ -1,12 +1,12 @@
 package io.scalaland.chimney.internal
 
-import io.scalaland.chimney.dsl2.TransformerInto
+import io.scalaland.chimney.dsl.TransformerInto
 
 import scala.reflect.macros.blackbox
 
 class ChimneyMacros(val c: blackbox.Context)
     extends TransformerMacros
-    with Dsl2Macros
+    with DslMacros
     with MacroUtils
     with DerivationConfig {
 
