@@ -32,40 +32,43 @@ class DslSpec extends WordSpec with MustMatchers {
       batmanDTO.name mustBe "BatmanT"
     }
 
-//    "support different set of fields of source and target" when {
-//
-//      case class Foo(x: Int, y: String, z: (Double, Double))
-//      case class Bar(x: Int, z: (Double, Double))
-//      case class HaveY(y: String)
-//      val haveY = HaveY("")
-//
-//      "field is dropped in the target" in {
-//        Foo(3, "pi", (3.14, 3.14)).transformInto[Bar] mustBe Bar(3, (3.14, 3.14))
-//      }
-//
-//      "field is added to the target" should {
-//
-//        "not compile if source for the target fields is not provided" in {
-//
-//          illTyped("Bar(3, (3.14, 3.14)).transformInto[Foo]")
-//        }
-//
-//        "fill the field with provided default value" should {
-//
-//          "pass when selector is valid" in {
-//
+    "support different set of fields of source and target" when {
+
+      case class Foo(x: Int, y: String, z: (Double, Double))
+      case class Bar(x: Int, z: (Double, Double))
+      case class HaveY(y: String)
+      val haveY = HaveY("")
+
+      "field is dropped in the target" in {
+        Foo(3, "pi", (3.14, 3.14)).transformInto[Bar] mustBe Bar(3, (3.14, 3.14))
+      }
+
+      "field is added to the target" should {
+
+        "not compile if source for the target fields is not provided" in {
+
+          illTyped(
+            "Bar(3, (3.14, 3.14)).transformInto[Foo]",
+            "(.*)y: String - no field named y in source type Bar(.*)"
+          )
+        }
+
+        "fill the field with provided default value" should {
+
+          "pass when selector is valid" in {
+
 //            Bar(3, (3.14, 3.14))
 //              .into[Foo]
 //              .withFieldConst(_.y, "pi")
 //              .transform mustBe
 //              Foo(3, "pi", (3.14, 3.14))
-//
+
 //            Bar(3, (3.14, 3.14))
 //              .into[Foo]
 //              .withFieldConst(cc => cc.y, "pi")
 //              .transform mustBe
 //              Foo(3, "pi", (3.14, 3.14))
-//          }
+          }
 //
 //          "not compile when the selector is invalid" in {
 //
@@ -128,9 +131,9 @@ class DslSpec extends WordSpec with MustMatchers {
 //                  .transform
 //                """, "Invalid selector!")
 //          }
-//        }
-//      }
-//    }
+        }
+      }
+    }
 
 //    "support default parameters" should {
 //      case class Foo(x: Int)
