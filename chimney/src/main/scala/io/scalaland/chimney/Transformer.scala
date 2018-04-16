@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.TransformerMacros
+import io.scalaland.chimney.internal.ChimneyMacros
 import scala.language.experimental.macros
 
 trait Transformer[From, To] {
@@ -11,5 +11,5 @@ trait Transformer[From, To] {
 object Transformer {
 
   implicit def gen[From, To]: Transformer[From, To] =
-    macro TransformerMacros.genImpl[From, To]
+    macro ChimneyMacros.genImpl[From, To]
 }

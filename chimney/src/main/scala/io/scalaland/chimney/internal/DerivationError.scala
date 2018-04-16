@@ -1,25 +1,25 @@
 package io.scalaland.chimney.internal
 
-sealed trait ChimneyDerivationError {
+sealed trait DerivationError {
   def sourceTypeName: String
   def targetTypeName: String
 }
 
 case class MissingField(fieldName: String, fieldTypeName: String, sourceTypeName: String, targetTypeName: String)
-    extends ChimneyDerivationError
+    extends DerivationError
 
 case class MissingTransformer(fieldName: String,
                               sourceFieldTypeName: String,
                               targetFieldTypeName: String,
                               sourceTypeName: String,
                               targetTypeName: String)
-    extends ChimneyDerivationError
+    extends DerivationError
 
-case class NotSupportedDerivation(sourceTypeName: String, targetTypeName: String) extends ChimneyDerivationError
+case class NotSupportedDerivation(sourceTypeName: String, targetTypeName: String) extends DerivationError
 
-object ChimneyDerivationError {
+object DerivationError {
 
-  def printErrors(errors: Seq[ChimneyDerivationError]): String = {
+  def printErrors(errors: Seq[DerivationError]): String = {
 
     errors
       .groupBy(_.targetTypeName)

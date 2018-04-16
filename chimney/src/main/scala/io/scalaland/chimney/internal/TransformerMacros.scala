@@ -1,21 +1,28 @@
 package io.scalaland.chimney.internal
 
-private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Context)
-  extends MacroUtils {
+
+import scala.reflect.macros.blackbox
+
+
+trait TransformerMacros {
+  this: MacroUtils with DerivationConfig =>
+
+  val c: blackbox.Context
 
   import c.universe._
 
-  def genImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
+  def genTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag](config: Config): c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
 
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
 
-    println(s"XXXXX: $From ~~~~> $To")
+    println(s"XXXXX: $From ~~~~> $To, config = $config")
 
-    val srcName = c.internal.reificationSupport.freshTermName(From.typeSymbol.name.decodedName.toString.toLowerCase + "$")
+    val srcName =
+      c.internal.reificationSupport.freshTermName(From.typeSymbol.name.decodedName.toString.toLowerCase + "$")
     val srcPrefixTree = Ident(TermName(srcName.decodedName.toString))
 
-    println(c.prefix.tree.tpe.decls)
+    println("PREFIX TPE DECLS:" + c.prefix.tree.tpe.decls)
 
     expandTransformerTree(srcPrefixTree)(From, To) match {
 
@@ -30,11 +37,10 @@ private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Co
         c.Expr[io.scalaland.chimney.Transformer[From, To]](tree)
 
       case Left(derivationErrors) =>
-
         val errorMessage =
           s"""Chimney can't derive transformation from $From to $To
              |
-             |${ChimneyDerivationError.printErrors(derivationErrors)}
+             |${DerivationError.printErrors(derivationErrors)}
              |See $chimneyDocUrl for usage examples.
              |
              |""".stripMargin
@@ -43,24 +49,21 @@ private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Co
     }
   }
 
-  def expandTransformerTree(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[ChimneyDerivationError], Tree] = {
+  def expandTransformerTree(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
-    var errors = Seq.empty[ChimneyDerivationError]
+    var errors = Seq.empty[DerivationError]
 
-    if(From.isCaseClass && To.isCaseClass) {
+    if (From.isCaseClass && To.isCaseClass) {
       expandCaseClassTransformerTree(srcPrefixTree)(From, To)
     } else {
-      Left(
-        Seq(
-          NotSupportedDerivation(From.typeSymbol.name.toString, To.typeSymbol.name.toString)
-        )
-      )
+      Left(Seq(NotSupportedDerivation(From.typeSymbol.name.toString, To.typeSymbol.name.toString)))
     }
   }
 
-  def expandCaseClassTransformerTree(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[ChimneyDerivationError], Tree] = {
+  def expandCaseClassTransformerTree(srcPrefixTree: Tree)(From: Type,
+                                                          To: Type): Either[Seq[DerivationError], Tree] = {
 
-    var errors = Seq.empty[ChimneyDerivationError]
+    var errors = Seq.empty[DerivationError]
 
     val fromParams = From.caseClassParams
     val toParams = To.caseClassParams
@@ -76,7 +79,7 @@ private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Co
 
     val missingFields = mapping.collect { case (field, None) => field }
 
-    if(missingFields.nonEmpty) {
+    if (missingFields.nonEmpty) {
       missingFields.foreach { ms =>
         errors :+= MissingField(
           fieldName = ms.name.toString,
@@ -92,16 +95,13 @@ private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Co
         q"$srcPrefixTree.${sourceField.name}"
 
       case (targetField, Some(sourceField)) =>
-
         println("SRCRET: " + sourceField.returnType + "  TARGRET: " + targetField.returnType)
 
         findLocalImplicitTransformer(sourceField.returnType, targetField.returnType) match {
           case Some(localImplicitTransformer) =>
-
             q"$localImplicitTransformer.transform($srcPrefixTree.${sourceField.name})"
 
           case None if sourceField.returnType.isCaseClass && targetField.returnType.isCaseClass =>
-
             expandTransformerTree(q"$srcPrefixTree.${sourceField.name}")(sourceField.returnType, targetField.returnType) match {
               case Left(errs) =>
                 errors ++= errs
@@ -111,7 +111,6 @@ private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Co
             }
 
           case None =>
-
             errors :+= MissingTransformer(
               fieldName = targetField.name.toString,
               sourceFieldTypeName = sourceField.returnType.toString,
@@ -124,7 +123,7 @@ private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Co
         }
     }
 
-    if(errors.nonEmpty) {
+    if (errors.nonEmpty) {
       Left(errors)
     } else {
       Right(q"new $To(..$args)".debug)
@@ -132,18 +131,19 @@ private[chimney] class TransformerMacros(val c: scala.reflect.macros.blackbox.Co
   }
 
   def findLocalImplicitTransformer(From: Type, To: Type): Option[Tree] = {
-    val tpeTree = c.typecheck(tree = tq"_root_.io.scalaland.chimney.Transformer[$From, $To]",
+    val tpeTree = c.typecheck(
+      tree = tq"_root_.io.scalaland.chimney.Transformer[$From, $To]",
       silent = false,
       mode = c.TYPEmode,
       withImplicitViewsDisabled = true,
-      withMacrosDisabled = true)
+      withMacrosDisabled = true
+    )
 
-    scala.util.Try(c.inferImplicitValue(tpeTree.tpe, withMacrosDisabled = true))
+    scala.util
+      .Try(c.inferImplicitValue(tpeTree.tpe, withMacrosDisabled = true))
       .toOption
       .filterNot(_ == EmptyTree)
   }
 
-
   private val chimneyDocUrl = "http://scalalandio.github.io/chimney"
-
 }
