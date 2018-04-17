@@ -8,7 +8,8 @@ class ChimneyMacros(val c: blackbox.Context)
     extends TransformerMacros
     with DslMacros
     with MacroUtils
-    with DerivationConfig {
+    with DerivationConfig
+    with Prefixes {
 
   import c.universe._
 

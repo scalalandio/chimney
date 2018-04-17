@@ -4,7 +4,7 @@ import scala.reflect.macros.blackbox
 import scala.util.matching.Regex
 
 trait DslMacros {
-  this: TransformerMacros with DslMacros with MacroUtils with DerivationConfig =>
+  this: TransformerMacros with DslMacros with MacroUtils with DerivationConfig with Prefixes =>
 
   val c: blackbox.Context
 
@@ -19,20 +19,18 @@ trait DslMacros {
 
   def expandWithFieldConst(fieldName: c.Name, value: c.Tree): c.Tree = {
     val fieldNameStr = fieldName.decodedName.toString
-    val memNameStr = TermName(s"${Prefixes.const}$fieldNameStr")
 
     c.prefix.tree.insertToBlock {
-      q"val $memNameStr = $value"
+      q"val ${constRefName(fieldNameStr)} = $value"
     }
   }
 
   def expandWithFieldComputed(fieldName: c.Name, map: c.Tree): c.Tree = {
     val fieldNameStr = fieldName.decodedName.toString
-    val memNameStr = TermName(s"${Prefixes.computed}$fieldNameStr")
 
     c.prefix.tree.insertToBlock {
-      q"val $memNameStr = $map"
-    }
+      q"val ${computedRefName(fieldNameStr)} = $map"
+    }.debug
   }
 
   def expandTansform[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Tree = {
@@ -46,14 +44,14 @@ trait DslMacros {
     stats.foreach(println)
     println(expr)
 
-    val q"io.scalaland.chimney.dsl.TransformerOps[$pFrom]($source).into[$pTo]" = expr
+    val q"$transformerOpsTpe[$pFrom]($source).into[$pTo]" = expr
 
+    println(s"TPE: $transformerOpsTpe")
     println(s"pFrom: $pFrom")
     println(s"pTo: $pTo")
     println(s"source: $source")
 
     val config = captureConfiguration(stats)
-
     val derivedTransformerTree = genTransformer[From, To](config).tree
 
     q"$derivedTransformerTree.transform($source)"
@@ -81,14 +79,5 @@ trait DslMacros {
             cfg
         }
     }
-  }
-
-  private object Prefixes {
-    val disableDefaults: String = "__chimney$disableDefaultValues"
-    val const: String = "__chimney$const_"
-    val computed: String = "__chimney$computed_"
-
-    val ConstPat: Regex = """^\_\_chimney\$const\_(.*)$""".r
-    val ComputedPat: Regex = """^\_\_chimney\$computed\_(.*)$""".r
   }
 }

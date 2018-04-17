@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal
 import scala.reflect.macros.blackbox
 
 trait TransformerMacros {
-  this: MacroUtils with DerivationConfig =>
+  this: MacroUtils with DerivationConfig with Prefixes  =>
 
   val c: blackbox.Context
 
@@ -25,9 +25,15 @@ trait TransformerMacros {
     expandTransformerTree(srcPrefixTree, config)(From, To) match {
 
       case Right(transformerTree) =>
+
+        val prefixStats = c.prefix.tree.extractStats
+
         val tree = q"""
            new _root_.io.scalaland.chimney.Transformer[$From, $To] {
-             def transform($srcName: $From): $To = $transformerTree
+             def transform($srcName: $From): $To = {
+               ..$prefixStats
+               $transformerTree
+             }
            }
         """
         println(s"FINAL TREE:\n$tree")
@@ -72,15 +78,17 @@ trait TransformerMacros {
                    srcPrefixTree: Tree,
                    config: Config): Option[FieldResolution] = {
 
+    val fieldName = targetField.name.decodedName.toString
+
     config.fieldTrees
-      .get(targetField.name.decodedName.toString)
+      .get(fieldName)
       .map {
         case PastedTree(isFun, tree) =>
           ResolvedFieldTree {
             if (isFun) {
-              q"$tree($srcPrefixTree)"
+              q"${computedRefName(fieldName)}($srcPrefixTree)"
             } else {
-              tree
+              q"${constRefName(fieldName)}"
             }
           }
       }
@@ -92,11 +100,11 @@ trait TransformerMacros {
               ResolvedFieldTree {
                 q"$srcPrefixTree.${targetField.name}"
               }
-            } else if (!config.disableDefaultValues && targetField.isParamWithDefault) {
-              ResolvedFieldTree {
-                null
-//                targetField.
-              }
+//            } else if (!config.disableDefaultValues && targetField.isParamWithDefault) {
+//              println("LALALALALALALALALALALA")
+//              ResolvedFieldTree {
+//                q"""Bar3.apply$$default$$1()"""
+//              }
             } else {
               MatchingField(ms)
             }

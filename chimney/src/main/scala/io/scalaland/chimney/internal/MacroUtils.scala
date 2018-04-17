@@ -64,6 +64,15 @@ trait MacroUtils {
         (Nil, other)
     }
 
+    def extractStats: List[Tree] = t match {
+      case Typed(tt, _) =>
+        tt.extractStats
+      case Block(stats, _) =>
+        stats
+      case _ =>
+        Nil
+    }
+
     def insertToBlock(tree: Tree): Tree = {
       val (stats, expr) = t.extractBlock
       Block(stats :+ tree, expr)
