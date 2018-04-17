@@ -25,26 +25,16 @@ import io.scalaland.chimney.dsl._
 object Test extends App {
 
 
-//  val instance = {
-//    val __chimney$computed_abc: io.scalaland.chimney.Foo => String = ((x$3: io.scalaland.chimney.Foo) => x$3.toString());
-//    {
-//      new _root_.io.scalaland.chimney.Transformer[io.scalaland.chimney.Foo, io.scalaland.chimney.Bar4] {
-//        def transform(foo$3: io.scalaland.chimney.Foo): io.scalaland.chimney.Bar4 = new io.scalaland.chimney.Bar4(__chimney$computed_abc(foo$3))
-//      }
-//    }
-//  }
-
   implicit val intToStringTransformer: Transformer[Int, String] = (_: Int).toString
 
   val foo = Foo(10, false, "abc", Source(9999), 0, new RuntimeException, (), 'x', 2.0f)
 
-  println(foo.transformInto[Bar1])
+//  println(foo.transformInto[Bar1])
 
-  println(foo.into[Bar4].withFieldConst(_.abc, "abc").transform)
-  println(foo.into[Bar4].withFieldComputed(_.abc, _.toString).transform)
+//  println(foo.into[Bar4].withFieldConst(_.abc, "abc").transform)
+//  println(foo.into[Bar4].withFieldComputed(_.abc, _.toString))//.transform)
 
-
-//  println(foo.into[Bar1].disableDefaultValues.transform)
+  //  println(foo.into[Bar1].disableDefaultValues.transform)
 //  println(foo.into[Bar1].withFieldConst(_.u, "dupa").transform)
   println {
     foo

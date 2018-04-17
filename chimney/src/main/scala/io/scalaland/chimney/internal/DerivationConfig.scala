@@ -1,12 +1,11 @@
 package io.scalaland.chimney.internal
 
-import scala.reflect.macros.blackbox
+import scala.reflect.macros.whitebox
 
 trait DerivationConfig {
 
-  val c: blackbox.Context
+  val c: whitebox.Context
 
-  case class PastedTree(isFun: Boolean, tree: c.Tree)
-
-  case class Config(disableDefaultValues: Boolean, fieldTrees: Map[String, PastedTree])
+  case class Config(disableDefaultValues: Boolean,
+                    overridenFields: Set[String])
 }

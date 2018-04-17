@@ -1,12 +1,11 @@
 package io.scalaland.chimney.internal
 
-import scala.reflect.macros.blackbox
-import scala.util.matching.Regex
+import scala.reflect.macros.whitebox
 
 trait DslMacros {
   this: TransformerMacros with DslMacros with MacroUtils with DerivationConfig with Prefixes =>
 
-  val c: blackbox.Context
+  val c: whitebox.Context
 
   import c.universe._
 
@@ -33,51 +32,35 @@ trait DslMacros {
     }.debug
   }
 
-  def expandTansform[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Tree = {
+  def expandTansform[From: c.WeakTypeTag, To: c.WeakTypeTag, Overrides: c.WeakTypeTag]: c.Tree = {
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
+    val Overrides = weakTypeOf[Overrides]
 
-    println("expandTansform: " + c.prefix.tree)
+    val srcName = TermName(c.freshName("src"))
 
-    val (stats, expr) = c.prefix.tree.extractBlock
-
-    stats.foreach(println)
-    println(expr)
-
-    val q"$transformerOpsTpe[$pFrom]($source).into[$pTo]" = expr
-
-    println(s"TPE: $transformerOpsTpe")
-    println(s"pFrom: $pFrom")
-    println(s"pTo: $pTo")
-    println(s"source: $source")
-
-    val config = captureConfiguration(stats)
+    val config = captureConfiguration(Overrides)
+    println(s"RUNNIN WITH CONFIG: $config")
     val derivedTransformerTree = genTransformer[From, To](config).tree
 
-    q"$derivedTransformerTree.transform($source)"
+    q"""
+       val $srcName = ${c.prefix.tree}.source
+       $derivedTransformerTree.transform($srcName)
+     """
   }
 
-  def captureConfiguration(stats: List[c.Tree]): Config = {
+  def captureConfiguration(overridesTpe: Type, config: Config = Config(disableDefaultValues = false, overridenFields = Set.empty)): Config = {
 
-    val config = Config(disableDefaultValues = false, fieldTrees = Map.empty)
+    config
 
-    stats.foldLeft(config) {
-      case (cfg, stat) =>
-        stat match {
-          case ValDef(_, TermName(memName), _, tree) =>
-            memName match {
-              case Prefixes.disableDefaults =>
-                cfg.copy(disableDefaultValues = true)
-              case Prefixes.ConstPat(fieldName) =>
-                val pastedTree = PastedTree(isFun = false, tree)
-                cfg.copy(fieldTrees = cfg.fieldTrees + (fieldName -> pastedTree))
-              case Prefixes.ComputedPat(fieldName) =>
-                val pastedTree = PastedTree(isFun = true, tree)
-                cfg.copy(fieldTrees = cfg.fieldTrees + (fieldName -> pastedTree))
-            }
-          case _ =>
-            cfg
-        }
-    }
+//    overridesTpe match {
+//      case tq"Nl" => config
+//      case tq"Cns[FieldConst[$fieldName], $rest]" =>
+//        captureConfiguration(rest.tpe.asInstanceOf[Type], config.copy(overridenFields = config.overridenFields + fieldName.toString()))
+//      case tq"Cns[FieldComputed[$fieldName], $rest]" =>
+//        captureConfiguration(rest.tpe.asInstanceOf[Type], config.copy(overridenFields = config.overridenFields + fieldName.toString()))
+//      case _ =>
+//        c.abort(c.enclosingPosition, "Bad overriden type shape!")
+//    }
   }
 }

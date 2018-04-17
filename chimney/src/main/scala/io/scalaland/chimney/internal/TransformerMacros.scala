@@ -1,11 +1,11 @@
 package io.scalaland.chimney.internal
 
-import scala.reflect.macros.blackbox
+import scala.reflect.macros.whitebox
 
 trait TransformerMacros {
   this: MacroUtils with DerivationConfig with Prefixes  =>
 
-  val c: blackbox.Context
+  val c: whitebox.Context
 
   import c.universe._
 
@@ -80,36 +80,46 @@ trait TransformerMacros {
 
     val fieldName = targetField.name.decodedName.toString
 
-    config.fieldTrees
-      .get(fieldName)
-      .map {
-        case PastedTree(isFun, tree) =>
-          ResolvedFieldTree {
-            if (isFun) {
-              q"${computedRefName(fieldName)}($srcPrefixTree)"
-            } else {
-              q"${constRefName(fieldName)}"
-            }
-          }
+    if(config.overridenFields.contains(fieldName)) {
+      Some {
+        ResolvedFieldTree {
+          q"overrides.apply($fieldName).asInstanceOf[${targetField.returnType}]"
+        }
       }
-      .orElse {
-        fromParams
-          .find(_.name == targetField.name)
-          .map { ms =>
-            if (ms.returnType <:< targetField.returnType) {
-              ResolvedFieldTree {
-                q"$srcPrefixTree.${targetField.name}"
-              }
-//            } else if (!config.disableDefaultValues && targetField.isParamWithDefault) {
-//              println("LALALALALALALALALALALA")
-//              ResolvedFieldTree {
-//                q"""Bar3.apply$$default$$1()"""
-//              }
-            } else {
-              MatchingField(ms)
+    } else {
+      fromParams
+        .find(_.name == targetField.name)
+        .map { ms =>
+          if (ms.returnType <:< targetField.returnType) {
+            ResolvedFieldTree {
+              q"$srcPrefixTree.${targetField.name}"
             }
+            //            } else if (!config.disableDefaultValues && targetField.isParamWithDefault) {
+            //              println("LALALALALALALALALALALA")
+            //              ResolvedFieldTree {
+            //                q"""Bar3.apply$$default$$1()"""
+            //              }
+          } else {
+            MatchingField(ms)
           }
-      }
+        }
+    }
+//
+//    config.fieldTrees
+//      .get(fieldName)
+//      .map {
+//        case PastedTree(isFun, tree) =>
+//          ResolvedFieldTree {
+//            if (isFun) {
+//              q"${computedRefName(fieldName)}($srcPrefixTree)"
+//            } else {
+//              q"${constRefName(fieldName)}"
+//            }
+//          }
+//      }
+//      .orElse {
+//
+//      }
   }
 
   def expandCaseClassTransformerTree(srcPrefixTree: Tree,
@@ -147,7 +157,7 @@ trait TransformerMacros {
             q"$localImplicitTransformer.transform($srcPrefixTree.${sourceField.name})"
 
           case None if sourceField.returnType.isCaseClass && targetField.returnType.isCaseClass =>
-            val recConfig = config.copy(fieldTrees = Map.empty)
+            val recConfig = config.copy(overridenFields = Set.empty)
             expandTransformerTree(q"$srcPrefixTree.${sourceField.name}", recConfig)(
               sourceField.returnType,
               targetField.returnType

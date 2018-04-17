@@ -1,10 +1,9 @@
 package io.scalaland.chimney.internal
 
-import io.scalaland.chimney.dsl.TransformerInto
 
-import scala.reflect.macros.blackbox
+import scala.reflect.macros.whitebox
 
-class ChimneyMacros(val c: blackbox.Context)
+class ChimneyMacros(val c: whitebox.Context)
     extends TransformerMacros
     with DslMacros
     with MacroUtils
@@ -13,40 +12,72 @@ class ChimneyMacros(val c: blackbox.Context)
 
   import c.universe._
 
-  def disableDefaultValuesImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Expr[TransformerInto[From, To]] = {
-    c.Expr[TransformerInto[From, To]](expandDisableDefaultValues.debug)
-  }
+  def withFieldConstImpl2[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, Overrides: c.WeakTypeTag](
+    selector: c.Tree,
+    value: c.Tree
+  ): c.Tree = {
 
-  def withFieldConstImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag](
-    selector: c.Expr[To => T],
-    value: c.Expr[T]
-  ): c.Expr[TransformerInto[From, To]] = {
-    selector.tree match {
+    selector match {
       case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: Name}" if vd.name == idt.name =>
-        c.Expr[TransformerInto[From, To]](expandWithFieldConst(fieldName, value.tree))
+
+        val From = weakTypeOf[From]
+        val To = weakTypeOf[To]
+        val Overrides = weakTypeOf[Overrides]
+
+        val fieldNameConst = Constant(fieldName.decodedName.toString)
+        val fieldNameLit = Literal(fieldNameConst)
+        val singletonFieldTpe = c.internal.constantType(fieldNameConst)
+        val fieldConstTpe = tq"_root_.io.scalaland.chimney.internal.FieldConst[$singletonFieldTpe]"
+        val overridesTpe = tq"_root_.io.scalaland.chimney.internal.Cns[$fieldConstTpe, $Overrides]"
+        val fn = TermName(c.freshName("ti"))
+
+        q"""
+           {
+             val $fn = ${c.prefix.tree}
+             new TransformerInto[$From, $To, $overridesTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $value))
+           }
+         """.debug
       case _ =>
         c.abort(c.enclosingPosition, "Invalid selector!")
     }
   }
 
-  def withFieldComputedImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag](
-    selector: c.Expr[To => T],
-    map: c.Expr[From => T]
-  ): c.Expr[TransformerInto[From, To]] = {
-    selector.tree match {
+  def withFieldComputedImpl2[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, Overrides: c.WeakTypeTag](
+    selector: c.Tree,
+    map: c.Tree
+  ): c.Tree = {
+    selector match {
       case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: Name}" if vd.name == idt.name =>
-        c.Expr[TransformerInto[From, To]](expandWithFieldComputed(fieldName, map.tree))
+
+        val From = weakTypeOf[From]
+        val To = weakTypeOf[To]
+        val Overrides = weakTypeOf[Overrides]
+
+        val fieldNameConst = Constant(fieldName.decodedName.toString)
+        val fieldNameLit = Literal(fieldNameConst)
+        val singletonFieldTpe = c.internal.constantType(fieldNameConst)
+        val fieldComputedTpe = tq"_root_.io.scalaland.chimney.internal.FieldComputed[$singletonFieldTpe]"
+        val overridesTpe = tq"_root_.io.scalaland.chimney.internal.Cns[$fieldComputedTpe, $Overrides]"
+        val fn = TermName(c.freshName("ti"))
+
+        q"""
+           {
+             val $fn = ${c.prefix.tree}
+             new TransformerInto[$From, $To, $overridesTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $map))
+           }
+         """.debug
+
       case _ =>
         c.abort(c.enclosingPosition, "Invalid selector!")
     }
   }
 
-  def transformImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Expr[To] = {
-    c.Expr[To](expandTansform[From, To])
+  def transformImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, Overrides: c.WeakTypeTag]: c.Expr[To] = {
+    c.Expr[To](expandTansform[From, To, Overrides])
   }
 
   def genImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
-    val config = Config(disableDefaultValues = false, fieldTrees = Map.empty)
+    val config = Config(disableDefaultValues = false, overridenFields = Set.empty)
     genTransformer[From, To](config)
   }
 }

@@ -1,11 +1,11 @@
 package io.scalaland.chimney.internal
 
-import scala.reflect.macros.blackbox
+import scala.reflect.macros.whitebox
 import scala.util.matching.Regex
 
 trait Prefixes {
 
-  val c: blackbox.Context
+  val c: whitebox.Context
 
   import c.universe._
 
@@ -23,4 +23,5 @@ trait Prefixes {
 
   def computedRefName(name: String): TermName =
     TermName(s"${Prefixes.computed}$name")
+
 }
