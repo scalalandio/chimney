@@ -92,6 +92,11 @@ trait TransformerMacros {
               ResolvedFieldTree {
                 q"$srcPrefixTree.${targetField.name}"
               }
+            } else if (!config.disableDefaultValues && targetField.isParamWithDefault) {
+              ResolvedFieldTree {
+                null
+//                targetField.
+              }
             } else {
               MatchingField(ms)
             }
@@ -109,7 +114,7 @@ trait TransformerMacros {
 
     val mapping = toFields.map { targetField =>
       targetField -> resolveField(targetField, fromFields, srcPrefixTree, config)
-    }.toMap
+    }
 
     val missingFields = mapping.collect { case (field, None) => field }
 

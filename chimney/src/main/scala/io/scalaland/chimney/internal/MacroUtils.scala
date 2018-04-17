@@ -16,11 +16,29 @@ trait MacroUtils {
     def isCaseClass: Boolean =
       t.typeSymbol.classSymbolOpt.exists(_.isCaseClass)
 
-    def caseClassParams: Iterable[MethodSymbol] =
+    def caseClassParams: Iterable[MethodSymbol] = {
+
+      //      t.decls.filter(_.as)
+
       t.decls.collect {
         case m: MethodSymbol if m.isCaseAccessor || (isValueClass && m.isParamAccessor) =>
           m.asMethod
       }
+    }
+
+//    def caseClassDefaults: Map[String, c.Tree] = {
+//
+//      val primaryConstructor = t.decls.collectFirst {
+//        case m if m.isMethod && m.asMethod.isPrimaryConstructor =>
+//          m.asMethod
+//      }.getOrElse {
+//        c.abort(c.enclosingPosition, s"Cannot get primary constructor of $t")
+//        //primaryConstructor.par
+//        null
+//      }
+//
+//      Map.empty
+//    }
   }
 
   implicit class SymbolOps(s: Symbol) {

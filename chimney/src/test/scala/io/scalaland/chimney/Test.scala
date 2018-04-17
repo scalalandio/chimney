@@ -14,6 +14,7 @@ case class Foo(x: Int,
                kukuku: Unit,
                lululu: Char,
                kaka: Float)
+
 case class Bar1(y: String, x: Int, abc: Target, u: String, zzz: Exception)
 case class Bar2(y: String, lululu: Unit, x: Int, abc: Target, u: String, kaka: String)
 
@@ -25,8 +26,8 @@ object Test extends App {
 
   val foo = Foo(10, false, "abc", Source(9999), 0, new RuntimeException, (), 'x', 2.0f)
 
-//  println(foo.transformInto[Bar1])
-//  println(foo.into[Bar1].disableDefaultValues.transform)
+  println(foo.transformInto[Bar1])
+  //  println(foo.into[Bar1].disableDefaultValues.transform)
 //  println(foo.into[Bar1].withFieldConst(_.u, "dupa").transform)
 //  println {
 //    foo.into[Bar1]
