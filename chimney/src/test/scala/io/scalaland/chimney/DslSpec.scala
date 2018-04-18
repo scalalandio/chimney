@@ -213,80 +213,80 @@ class DslSpec extends WordSpec with MustMatchers {
 //      }
 //    }
 
-//    "support relabelling of fields" should {
-//
-//      case class Foo(x: Int, y: String)
-//      case class Bar(x: Int, z: String)
-//      case class HaveY(y: String)
-//      val haveY = HaveY("")
-//      case class HaveZ(z: String)
-//      val haveZ = HaveZ("")
-//
-//      "not compile if relabelling modifier is not provided" in {
-//
-//        illTyped("""Foo(10, "something").transformInto[Bar]""")
-//      }
-//
-//      "relabel fields with relabelling modifier" in {
-//        Foo(10, "something")
-//          .into[Bar]
-//          .withFieldRenamed(_.y, _.z)
-//          .transform mustBe
-//          Bar(10, "something")
-//      }
-//
-//      "not compile if relabelling selectors are invalid" in {
-//
-//        illTyped("""
-//            Foo(10, "something")
-//              .into[Bar]
-//              .withFieldRenamed(_.y + "abc", _.z)
-//              .transform
-//          """, "Selector of type Foo => String is not valid: (.*)")
-//
-//        illTyped("""
-//            Foo(10, "something")
-//              .into[Bar]
-//              .withFieldRenamed(cc => haveY.y, _.z)
-//              .transform
-//          """, "Selector of type Foo => String is not valid: (.*)")
-//
-//        illTyped("""
-//            Foo(10, "something")
-//              .into[Bar]
-//              .withFieldRenamed(_.y, _.z + "abc")
-//              .transform
-//          """, "Selector of type Bar => String is not valid: (.*)")
-//
-//        illTyped("""
-//            Foo(10, "something")
-//              .into[Bar]
-//              .withFieldRenamed(_.y, cc => haveZ.z)
-//              .transform
-//          """, "Selector of type Bar => String is not valid: (.*)")
-//
-//        illTyped("""
-//            Foo(10, "something")
-//              .into[Bar]
-//              .withFieldRenamed(_.y + "abc", _.z + "abc")
-//              .transform
-//          """, "Invalid selectors:(.*)")
-//
-//        illTyped("""
-//            Foo(10, "something")
-//              .into[Bar]
-//              .withFieldRenamed(cc => haveY.y, cc => haveZ.z)
-//              .transform
-//          """, "Invalid selectors:(.*)")
-//      }
-//
-//      "not compile if relabelled in a wrong way" in {
-//
-//        illTyped("""Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform""")
-//
-//        illTyped("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
-//      }
-//    }
+    "support relabelling of fields" should {
+
+      case class Foo(x: Int, y: String)
+      case class Bar(x: Int, z: String)
+      case class HaveY(y: String)
+      val haveY = HaveY("")
+      case class HaveZ(z: String)
+      val haveZ = HaveZ("")
+
+      "not compile if relabelling modifier is not provided" in {
+
+        illTyped("""Foo(10, "something").transformInto[Bar]""")
+      }
+
+      "relabel fields with relabelling modifier" in {
+        Foo(10, "something")
+          .into[Bar]
+          .withFieldRenamed(_.y, _.z)
+          .transform mustBe
+          Bar(10, "something")
+      }
+
+      "not compile if relabelling selectors are invalid" in {
+
+        illTyped("""
+            Foo(10, "something")
+              .into[Bar]
+              .withFieldRenamed(_.y + "abc", _.z)
+              .transform
+          """, "Selector of type Foo => String is not valid: (.*)")
+
+        illTyped("""
+            Foo(10, "something")
+              .into[Bar]
+              .withFieldRenamed(cc => haveY.y, _.z)
+              .transform
+          """, "Selector of type Foo => String is not valid: (.*)")
+
+        illTyped("""
+            Foo(10, "something")
+              .into[Bar]
+              .withFieldRenamed(_.y, _.z + "abc")
+              .transform
+          """, "Selector of type Bar => String is not valid: (.*)")
+
+        illTyped("""
+            Foo(10, "something")
+              .into[Bar]
+              .withFieldRenamed(_.y, cc => haveZ.z)
+              .transform
+          """, "Selector of type Bar => String is not valid: (.*)")
+
+        illTyped("""
+            Foo(10, "something")
+              .into[Bar]
+              .withFieldRenamed(_.y + "abc", _.z + "abc")
+              .transform
+          """, "Invalid selectors:(.*)")
+
+        illTyped("""
+            Foo(10, "something")
+              .into[Bar]
+              .withFieldRenamed(cc => haveY.y, cc => haveZ.z)
+              .transform
+          """, "Invalid selectors:(.*)")
+      }
+
+      "not compile if relabelled in a wrong way" in {
+
+        illTyped("""Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform""")
+
+        illTyped("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
+      }
+    }
 
 //    "support value classes" when {
 //

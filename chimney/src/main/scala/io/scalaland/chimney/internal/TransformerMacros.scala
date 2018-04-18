@@ -36,8 +36,6 @@ trait TransformerMacros {
         c.Expr[io.scalaland.chimney.Transformer[From, To]](tree)
 
       case Left(derivationErrors) =>
-        println(s"DERI ERRS: $derivationErrors")
-
         val errorMessage =
           s"""Chimney can't derive transformation from $From to $To
              |
@@ -53,20 +51,13 @@ trait TransformerMacros {
   def expandTransformerTree(srcPrefixTree: Tree, config: Config)(From: Type,
                                                                  To: Type): Either[Seq[DerivationError], Tree] = {
 
-    println(s"expand from $From to $To")
-
     findLocalImplicitTransformer(From, To)
       .map { localImplicitTree =>
-        println("LOCAL IMPLICIT FOUND!")
         Right(q"$localImplicitTree.transform($srcPrefixTree)")
       }
       .getOrElse {
-        println("LOCAL IMPLICIT NOT FOUND, DERIVING!!!")
         if (From.isCaseClass && To.isCaseClass) {
-          println("EXPAND CASE CLASS")
-          val res = expandCaseClassTransformerTree(srcPrefixTree, config)(From, To)
-          println(s"EXPAND RES: $res")
-          res
+          expandCaseClassTransformerTree(srcPrefixTree, config)(From, To)
         } else {
           Left(Seq(NotSupportedDerivation(From.typeSymbol.name.toString, To.typeSymbol.name.toString)))
         }
@@ -88,6 +79,13 @@ trait TransformerMacros {
       Some {
         ResolvedFieldTree {
           q"${TermName(config.prefixValName)}.overrides($fieldName).asInstanceOf[${targetField.returnType}]"
+        }
+      }
+    } else if (config.renamedFields.contains(fieldName)) {
+      val fromFieldName = TermName(config.renamedFields(fieldName))
+      Some {
+        ResolvedFieldTree {
+          q"$srcPrefixTree.$fromFieldName"
         }
       }
     } else {
@@ -135,8 +133,6 @@ trait TransformerMacros {
       }
     }
 
-    println(s"errors: $errors")
-
     val args = mapping.collect {
       case (targetField, Some(ResolvedFieldTree(tree))) =>
         tree
@@ -171,8 +167,6 @@ trait TransformerMacros {
             EmptyTree
         }
     }
-
-    println(s"ERRS2: $errors")
 
     if (errors.nonEmpty) {
       Left(errors)

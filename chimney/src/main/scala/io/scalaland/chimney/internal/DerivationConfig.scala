@@ -8,5 +8,6 @@ trait DerivationConfig {
 
   case class Config(disableDefaultValues: Boolean = false,
                     overridenFields: Set[String] = Set.empty,
+                    renamedFields: Map[String, String] = Map.empty,
                     prefixValName: String = "")
 }

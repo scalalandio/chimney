@@ -79,13 +79,18 @@ trait MacroUtils {
     }
 
     def extractSelectorFieldName: Name = {
+      extractSelectorFieldNameOpt.getOrElse {
+        c.abort(c.enclosingPosition, "Invalid selector!")
+      }
+    }
+
+    def extractSelectorFieldNameOpt: Option[Name] = {
       t match {
         case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: Name}" if vd.name == idt.name =>
-          fieldName
+          Some(fieldName)
         case _ =>
-          c.abort(c.enclosingPosition, "Invalid selector!")
+          None
       }
-
     }
   }
 

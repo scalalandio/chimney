@@ -28,6 +28,27 @@ class ChimneyMacros(val c: whitebox.Context)
     expandFieldComputed[From, To, C](fieldName, map)
   }
 
+  def withFieldRenamedImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, C: c.WeakTypeTag](
+    selectorFrom: c.Tree,
+    selectorTo: c.Tree
+  ): c.Tree = {
+    val fieldNameFromOpt = selectorFrom.extractSelectorFieldNameOpt
+    val fieldNameToOpt = selectorTo.extractSelectorFieldNameOpt
+
+    (fieldNameFromOpt, fieldNameToOpt) match {
+      case (Some(fieldNameFrom), Some(fieldNameTo)) =>
+        expandFieldRenamed[From, To, C](fieldNameFrom, fieldNameTo)
+      case (Some(_), None) =>
+        c.abort(c.enclosingPosition, s"Selector of type ${selectorTo.tpe} is not valid: $selectorTo")
+      case (None, Some(_)) =>
+        c.abort(c.enclosingPosition, s"Selector of type ${selectorFrom.tpe} is not valid: $selectorFrom")
+      case (None, None) =>
+        val inv1 = s"Selector of type ${selectorFrom.tpe} is not valid: $selectorFrom"
+        val inv2 = s"Selector of type ${selectorTo.tpe} is not valid: $selectorTo"
+        c.abort(c.enclosingPosition, s"Invalid selectors:\n$inv1\n$inv2")
+    }
+  }
+
   def transformIntoImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Expr[To] = {
     c.Expr[To](expandTansformInto[From, To])
   }

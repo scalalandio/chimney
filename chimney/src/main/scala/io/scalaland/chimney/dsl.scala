@@ -26,6 +26,9 @@ object dsl {
     def withFieldComputed[T](selector: To => T, map: From => T): TransformerInto[From, To, _] =
       macro ChimneyMacros.withFieldComputedImpl[From, To, T, C]
 
+    def withFieldRenamed[T](selectorFrom: From => T, selectorTo: To => T): TransformerInto[From, To, _] =
+      macro ChimneyMacros.withFieldRenamedImpl[From, To, T, C]
+
     def transform: To =
       macro ChimneyMacros.transformImpl[From, To, C]
   }

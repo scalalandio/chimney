@@ -50,6 +50,20 @@ trait DslMacros {
     """
   }
 
+  def expandFieldRenamed[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](fieldNameFrom: Name,
+                                                                                   fieldNameTo: Name): c.Tree = {
+    val From = weakTypeOf[From]
+    val To = weakTypeOf[To]
+    val C = weakTypeOf[C]
+
+    val singletonFromTpe = c.internal.constantType(Constant(fieldNameFrom.decodedName.toString))
+    val singletonToTpe = c.internal.constantType(Constant(fieldNameTo.decodedName.toString))
+
+    val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.FieldRelabelled[$singletonFromTpe, $singletonToTpe, $C]"
+
+    q"${c.prefix.tree}.asInstanceOf[TransformerInto[$From, $To, $newCfgTpe]]"
+  }
+
   def expandTansformInto[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Tree = {
     val config = Config()
     val derivedTransformerTree = genTransformer[From, To](config).tree
@@ -60,8 +74,6 @@ trait DslMacros {
     val C = weakTypeOf[C]
     val srcName = c.freshName("src")
     val config = captureConfiguration(C).copy(prefixValName = srcName)
-
-    println(s"RUNNIN WITH CONFIG: $config")
 
     val derivedTransformerTree = genTransformer[From, To](config).tree
 
@@ -77,6 +89,7 @@ trait DslMacros {
     val disableDefaultsT = typeOf[DisableDefaults[_]].typeConstructor
     val fieldConstT = typeOf[FieldConst[_, _]].typeConstructor
     val fieldComputedT = typeOf[FieldComputed[_, _]].typeConstructor
+    val fieldRelabelledT = typeOf[FieldRelabelled[_, _, _]].typeConstructor
 
     if (overridesTpe == emptyT) {
       config
@@ -87,6 +100,13 @@ trait DslMacros {
       val fieldNameConst = fieldNameT.asInstanceOf[scala.reflect.internal.Types#UniqueConstantType].value
       val fieldName = fieldNameConst.value.asInstanceOf[String]
       captureConfiguration(rest, config.copy(overridenFields = config.overridenFields + fieldName))
+    } else if (overridesTpe.typeConstructor == fieldRelabelledT) {
+      val List(fieldNameFromT, fieldNameToT, rest) = overridesTpe.typeArgs
+      val fieldNameFromConst = fieldNameFromT.asInstanceOf[scala.reflect.internal.Types#UniqueConstantType].value
+      val fieldNameFrom = fieldNameFromConst.value.asInstanceOf[String]
+      val fieldNameToConst = fieldNameToT.asInstanceOf[scala.reflect.internal.Types#UniqueConstantType].value
+      val fieldNameTo = fieldNameToConst.value.asInstanceOf[String]
+      captureConfiguration(rest, config.copy(renamedFields = config.renamedFields.updated(fieldNameTo, fieldNameFrom)))
     } else {
       c.abort(c.enclosingPosition, "Bad overriden type shape!")
     }

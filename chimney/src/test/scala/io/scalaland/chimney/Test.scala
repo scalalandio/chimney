@@ -20,10 +20,8 @@ case class Bar2(y: String, lululu: Unit, x: Int, abc: Target, u: String, kaka: S
 case class Bar3(koo: Double = 3.0, u: Int)
 case class Bar4(abc: String)
 
-
 case class Def(x: Int, z: (Double, Double))
 case class Abc(x: Int, y: String, z: (Double, Double, Int))
-
 
 import io.scalaland.chimney.dsl._
 
