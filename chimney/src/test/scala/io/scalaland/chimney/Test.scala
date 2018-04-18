@@ -1,5 +1,7 @@
 package io.scalaland.chimney
 
+import io.scalaland.chimney.internal.Empty
+
 import scala.language.experimental.macros
 
 case class Source(zzz: Int)
@@ -24,7 +26,6 @@ import io.scalaland.chimney.dsl._
 
 object Test extends App {
 
-
   implicit val intToStringTransformer: Transformer[Int, String] = (_: Int).toString
 
   val foo = Foo(10, false, "abc", Source(9999), 0, new RuntimeException, (), 'x', 2.0f)
@@ -46,6 +47,5 @@ object Test extends App {
       .withFieldConst(_.zzz, new Exception)
       .transform
   }
-
-//  println(foo.transformInto[Bar3])
+  //  println(foo.transformInto[Bar3])
 }

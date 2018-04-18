@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal
 import scala.reflect.macros.whitebox
 
 trait TransformerMacros {
-  this: MacroUtils with DerivationConfig with Prefixes  =>
+  this: MacroUtils with DerivationConfig with Prefixes =>
 
   val c: whitebox.Context
 
@@ -25,18 +25,13 @@ trait TransformerMacros {
     expandTransformerTree(srcPrefixTree, config)(From, To) match {
 
       case Right(transformerTree) =>
-
-        val prefixStats = c.prefix.tree.extractStats
-
         val tree = q"""
            new _root_.io.scalaland.chimney.Transformer[$From, $To] {
              def transform($srcName: $From): $To = {
-               ..$prefixStats
                $transformerTree
              }
            }
         """
-        println(s"FINAL TREE:\n$tree")
 
         c.Expr[io.scalaland.chimney.Transformer[From, To]](tree)
 
@@ -80,10 +75,10 @@ trait TransformerMacros {
 
     val fieldName = targetField.name.decodedName.toString
 
-    if(config.overridenFields.contains(fieldName)) {
+    if (config.overridenFields.contains(fieldName)) {
       Some {
         ResolvedFieldTree {
-          q"overrides.apply($fieldName).asInstanceOf[${targetField.returnType}]"
+          q"${TermName(config.prefixValName)}.overrides($fieldName).asInstanceOf[${targetField.returnType}]"
         }
       }
     } else {
@@ -104,22 +99,6 @@ trait TransformerMacros {
           }
         }
     }
-//
-//    config.fieldTrees
-//      .get(fieldName)
-//      .map {
-//        case PastedTree(isFun, tree) =>
-//          ResolvedFieldTree {
-//            if (isFun) {
-//              q"${computedRefName(fieldName)}($srcPrefixTree)"
-//            } else {
-//              q"${constRefName(fieldName)}"
-//            }
-//          }
-//      }
-//      .orElse {
-//
-//      }
   }
 
   def expandCaseClassTransformerTree(srcPrefixTree: Tree,
@@ -185,7 +164,7 @@ trait TransformerMacros {
     if (errors.nonEmpty) {
       Left(errors)
     } else {
-      Right(q"new $To(..$args)".debug)
+      Right(q"new $To(..$args)")
     }
   }
 

@@ -1,6 +1,5 @@
 package io.scalaland.chimney.internal
 
-
 import scala.reflect.macros.whitebox
 
 class ChimneyMacros(val c: whitebox.Context)
@@ -12,60 +11,56 @@ class ChimneyMacros(val c: whitebox.Context)
 
   import c.universe._
 
-  def withFieldConstImpl2[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, Overrides: c.WeakTypeTag](
+  def withFieldConstImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, C: c.WeakTypeTag](
     selector: c.Tree,
     value: c.Tree
   ): c.Tree = {
 
     selector match {
       case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: Name}" if vd.name == idt.name =>
-
         val From = weakTypeOf[From]
         val To = weakTypeOf[To]
-        val Overrides = weakTypeOf[Overrides]
+        val C = weakTypeOf[C]
 
         val fieldNameConst = Constant(fieldName.decodedName.toString)
         val fieldNameLit = Literal(fieldNameConst)
         val singletonFieldTpe = c.internal.constantType(fieldNameConst)
-        val fieldConstTpe = tq"_root_.io.scalaland.chimney.internal.FieldConst[$singletonFieldTpe]"
-        val overridesTpe = tq"_root_.io.scalaland.chimney.internal.Cns[$fieldConstTpe, $Overrides]"
+        val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.FieldConst[$singletonFieldTpe, $C]"
         val fn = TermName(c.freshName("ti"))
 
         q"""
            {
              val $fn = ${c.prefix.tree}
-             new TransformerInto[$From, $To, $overridesTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $value))
+             new TransformerInto[$From, $To, $newCfgTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $value))
            }
-         """.debug
+         """
       case _ =>
         c.abort(c.enclosingPosition, "Invalid selector!")
     }
   }
 
-  def withFieldComputedImpl2[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, Overrides: c.WeakTypeTag](
+  def withFieldComputedImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, C: c.WeakTypeTag](
     selector: c.Tree,
     map: c.Tree
   ): c.Tree = {
     selector match {
       case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: Name}" if vd.name == idt.name =>
-
         val From = weakTypeOf[From]
         val To = weakTypeOf[To]
-        val Overrides = weakTypeOf[Overrides]
+        val C = weakTypeOf[C]
 
         val fieldNameConst = Constant(fieldName.decodedName.toString)
         val fieldNameLit = Literal(fieldNameConst)
         val singletonFieldTpe = c.internal.constantType(fieldNameConst)
-        val fieldComputedTpe = tq"_root_.io.scalaland.chimney.internal.FieldComputed[$singletonFieldTpe]"
-        val overridesTpe = tq"_root_.io.scalaland.chimney.internal.Cns[$fieldComputedTpe, $Overrides]"
+        val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.FieldComputed[$singletonFieldTpe, $C]"
         val fn = TermName(c.freshName("ti"))
 
         q"""
            {
              val $fn = ${c.prefix.tree}
-             new TransformerInto[$From, $To, $overridesTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $map))
+             new TransformerInto[$From, $To, $newCfgTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $map($fn.source)))
            }
-         """.debug
+         """
 
       case _ =>
         c.abort(c.enclosingPosition, "Invalid selector!")
