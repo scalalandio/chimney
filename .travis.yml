@@ -24,7 +24,7 @@ before_cache:
   - find $HOME/.sbt -name "*.lock" -delete
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean scalafmtCheck test:scalafmtCheck coverage test coverageReport
+  - sbt ++$TRAVIS_SCALA_VERSION clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test coverage chimneyJVM/test coverageReport
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
