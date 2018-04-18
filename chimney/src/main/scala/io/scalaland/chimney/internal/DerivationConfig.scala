@@ -6,5 +6,7 @@ trait DerivationConfig {
 
   val c: whitebox.Context
 
-  case class Config(disableDefaultValues: Boolean, overridenFields: Set[String], prefixValName: String = "")
+  case class Config(disableDefaultValues: Boolean = false,
+                    overridenFields: Set[String] = Set.empty,
+                    prefixValName: String = "")
 }

@@ -77,6 +77,16 @@ trait MacroUtils {
       val (stats, expr) = t.extractBlock
       Block(stats :+ tree, expr)
     }
+
+    def extractSelectorFieldName: Name = {
+      t match {
+        case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: Name}" if vd.name == idt.name =>
+          fieldName
+        case _ =>
+          c.abort(c.enclosingPosition, "Invalid selector!")
+      }
+
+    }
   }
 
   private val primitives = Set(

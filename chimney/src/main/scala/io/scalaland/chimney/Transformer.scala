@@ -10,6 +10,6 @@ trait Transformer[From, To] {
 
 object Transformer {
 
-  implicit def gen[From, To]: Transformer[From, To] =
-    macro ChimneyMacros.genImpl[From, To]
+  implicit def derive[From, To]: Transformer[From, To] =
+    macro ChimneyMacros.deriveTransformerImpl[From, To]
 }

@@ -45,10 +45,10 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "field is added to the target" should {
 
-//        "not compile if source for the target fields is not provided" in {
-//
-//          illTyped("Bar(3, (3.14, 3.14)).transformInto[Foo]", "(.*)y: String - no field named y in source type Bar(.*)")
-//        }
+        "not compile if source for the target fields is not provided" in {
+
+          illTyped("Bar(3, (3.14, 3.14)).transformInto[Foo]", "(.*)y: String - no field named y in source type Bar(.*)")
+        }
 
         "fill the field with provided default value" should {
 

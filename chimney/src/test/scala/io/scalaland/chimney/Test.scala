@@ -1,7 +1,5 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.Empty
-
 import scala.language.experimental.macros
 
 case class Source(zzz: Int)
@@ -22,6 +20,11 @@ case class Bar2(y: String, lululu: Unit, x: Int, abc: Target, u: String, kaka: S
 case class Bar3(koo: Double = 3.0, u: Int)
 case class Bar4(abc: String)
 
+
+case class Def(x: Int, z: (Double, Double))
+case class Abc(x: Int, y: String, z: (Double, Double, Int))
+
+
 import io.scalaland.chimney.dsl._
 
 object Test extends App {
@@ -30,22 +33,27 @@ object Test extends App {
 
   val foo = Foo(10, false, "abc", Source(9999), 0, new RuntimeException, (), 'x', 2.0f)
 
-//  println(foo.transformInto[Bar1])
+  println(foo.transformInto[Bar1])
 
 //  println(foo.into[Bar4].withFieldConst(_.abc, "abc").transform)
 //  println(foo.into[Bar4].withFieldComputed(_.abc, _.toString))//.transform)
 
   //  println(foo.into[Bar1].disableDefaultValues.transform)
 //  println(foo.into[Bar1].withFieldConst(_.u, "dupa").transform)
-  println {
-    foo
-      .into[Bar1]
-      .withFieldConst(_.zzz, new RuntimeException("lalala"))
-      .disableDefaultValues
-      .withFieldConst(_.u, "dupa")
-      .withFieldComputed(_.y, _.u.toString)
-      .withFieldConst(_.zzz, new Exception)
-      .transform
-  }
+//  println {
+//    foo
+//      .into[Bar1]
+//      .withFieldConst(_.zzz, new RuntimeException("lalala"))
+//      .disableDefaultValues
+//      .withFieldConst(_.u, "dupa")
+//      .withFieldComputed(_.y, _.toString)
+//      .withFieldConst(_.zzz, new Exception)
+//      .transform
+//  }
+
+//  Def(3, (3.14, 3.14)).transformInto[Abc]
+
+//  Def(3, (3.14, 3.14)).into[Abc].transform
+
   //  println(foo.transformInto[Bar3])
 }

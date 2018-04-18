@@ -11,8 +11,8 @@ object dsl {
     final def into[To]: TransformerInto[From, To, Empty] =
       new TransformerInto[From, To, Empty](source, Map.empty)
 
-    final def transformInto[To](implicit transformer: Transformer[From, To]): To =
-      transformer.transform(source)
+    final def transformInto[To]: To =
+      macro ChimneyMacros.transformIntoImpl[From, To]
   }
 
   final class TransformerInto[From, To, C <: Cfg](val source: From, val overrides: Map[String, Any]) {

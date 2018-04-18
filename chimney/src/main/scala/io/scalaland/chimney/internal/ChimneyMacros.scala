@@ -16,63 +16,28 @@ class ChimneyMacros(val c: whitebox.Context)
     value: c.Tree
   ): c.Tree = {
 
-    selector match {
-      case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: Name}" if vd.name == idt.name =>
-        val From = weakTypeOf[From]
-        val To = weakTypeOf[To]
-        val C = weakTypeOf[C]
-
-        val fieldNameConst = Constant(fieldName.decodedName.toString)
-        val fieldNameLit = Literal(fieldNameConst)
-        val singletonFieldTpe = c.internal.constantType(fieldNameConst)
-        val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.FieldConst[$singletonFieldTpe, $C]"
-        val fn = TermName(c.freshName("ti"))
-
-        q"""
-           {
-             val $fn = ${c.prefix.tree}
-             new TransformerInto[$From, $To, $newCfgTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $value))
-           }
-         """
-      case _ =>
-        c.abort(c.enclosingPosition, "Invalid selector!")
-    }
+    val fieldName = selector.extractSelectorFieldName
+    expandWithFieldConst[From, To, C](fieldName, value)
   }
 
   def withFieldComputedImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, C: c.WeakTypeTag](
     selector: c.Tree,
     map: c.Tree
   ): c.Tree = {
-    selector match {
-      case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: Name}" if vd.name == idt.name =>
-        val From = weakTypeOf[From]
-        val To = weakTypeOf[To]
-        val C = weakTypeOf[C]
-
-        val fieldNameConst = Constant(fieldName.decodedName.toString)
-        val fieldNameLit = Literal(fieldNameConst)
-        val singletonFieldTpe = c.internal.constantType(fieldNameConst)
-        val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.FieldComputed[$singletonFieldTpe, $C]"
-        val fn = TermName(c.freshName("ti"))
-
-        q"""
-           {
-             val $fn = ${c.prefix.tree}
-             new TransformerInto[$From, $To, $newCfgTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $map($fn.source)))
-           }
-         """
-
-      case _ =>
-        c.abort(c.enclosingPosition, "Invalid selector!")
-    }
+    val fieldName = selector.extractSelectorFieldName
+    expandFieldComputed[From, To, C](fieldName, map)
   }
 
-  def transformImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, Overrides: c.WeakTypeTag]: c.Expr[To] = {
-    c.Expr[To](expandTansform[From, To, Overrides])
+  def transformIntoImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Expr[To] = {
+    c.Expr[To](expandTansformInto[From, To])
   }
 
-  def genImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
-    val config = Config(disableDefaultValues = false, overridenFields = Set.empty)
-    genTransformer[From, To](config)
+  def transformImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[To] = {
+    c.Expr[To](expandTansform[From, To, C])
+  }
+
+  def deriveTransformerImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]
+    : c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
+    genTransformer[From, To](Config())
   }
 }
