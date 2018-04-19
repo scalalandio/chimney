@@ -24,7 +24,7 @@ trait DslMacros {
     q"""
       {
         val $fn = ${c.prefix.tree}
-        new _root_io.scalaland.chimney.dsl.TransformerInto[$From, $To, $newCfgTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $value))
+        new _root_.io.scalaland.chimney.dsl.TransformerInto[$From, $To, $newCfgTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $value))
       }
     """
   }
@@ -45,7 +45,7 @@ trait DslMacros {
     q"""
       {
         val $fn = ${c.prefix.tree}
-        new _root_io.scalaland.chimney.dsl.TransformerInto[$From, $To, $newCfgTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $map($fn.source)))
+        new _root_.io.scalaland.chimney.dsl.TransformerInto[$From, $To, $newCfgTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $map($fn.source)))
       }
     """
   }
@@ -61,7 +61,7 @@ trait DslMacros {
 
     val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.FieldRelabelled[$singletonFromTpe, $singletonToTpe, $C]"
 
-    q"${c.prefix.tree}.asInstanceOf[_root_io.scalaland.chimney.dsl.TransformerInto[$From, $To, $newCfgTpe]]"
+    q"${c.prefix.tree}.asInstanceOf[_root_.io.scalaland.chimney.dsl.TransformerInto[$From, $To, $newCfgTpe]]"
   }
 
   def expandTansformInto[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Tree = {
