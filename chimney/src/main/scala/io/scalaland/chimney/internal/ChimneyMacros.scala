@@ -5,10 +5,9 @@ import scala.reflect.macros.whitebox
 class ChimneyMacros(val c: whitebox.Context)
     extends TransformerMacros
     with DslMacros
+    with DerivationGuards
     with MacroUtils
     with DerivationConfig {
-
-  import c.universe._
 
   def withFieldConstImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, C: c.WeakTypeTag](
     selector: c.Tree,

@@ -17,14 +17,19 @@ trait MacroUtils {
       t.typeSymbol.classSymbolOpt.exists(_.isCaseClass)
 
     def caseClassParams: Iterable[MethodSymbol] = {
-
-      //      t.decls.filter(_.as)
-
       t.decls.collect {
         case m: MethodSymbol if m.isCaseAccessor || (isValueClass && m.isParamAccessor) =>
           m.asMethod
       }
     }
+
+    def valueClassMember: Option[MethodSymbol] = {
+      t.decls.collectFirst {
+        case m: MethodSymbol if m.isParamAccessor =>
+          m.asMethod
+      }
+    }
+
 
 //    def caseClassDefaults: Map[String, c.Tree] = {
 //

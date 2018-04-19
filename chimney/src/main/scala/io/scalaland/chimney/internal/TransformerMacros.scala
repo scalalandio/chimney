@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal
 import scala.reflect.macros.whitebox
 
 trait TransformerMacros {
-  this: MacroUtils with DerivationConfig =>
+  this: DerivationGuards with MacroUtils with DerivationConfig =>
 
   val c: whitebox.Context
 
@@ -40,7 +40,7 @@ trait TransformerMacros {
           s"""Chimney can't derive transformation from $From to $To
              |
              |${DerivationError.printErrors(derivationErrors)}
-             |See $chimneyDocUrl for usage examples.
+             |Consult $chimneyDocUrl for usage examples.
              |
              |""".stripMargin
 
@@ -56,63 +56,36 @@ trait TransformerMacros {
         Right(q"$localImplicitTree.transform($srcPrefixTree)")
       }
       .getOrElse {
-        if (From.isCaseClass && To.isCaseClass) {
+        if (bothCaseClasses(From, To)) {
           expandCaseClassTransformerTree(srcPrefixTree, config)(From, To)
+        } else if (fromValueClassToType(From, To)) {
+          expandValueClassToType(srcPrefixTree)(From, To)
+        } else if (fromTypeToValueClass(From, To)) {
+          expandTypeToValueClass(srcPrefixTree)(From, To)
         } else {
           Left(Seq(NotSupportedDerivation(From.typeSymbol.name.toString, To.typeSymbol.name.toString)))
         }
       }
   }
 
-  def canTryDeriveTransformer(from: Type, to: Type): Boolean = {
-    def areBothCaseClasses: Boolean = from.isCaseClass && to.isCaseClass
+  def expandValueClassToType(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
-
-    areBothCaseClasses
+    From.valueClassMember
+      .map { member =>
+        Right {
+          q"$srcPrefixTree.${member.name}"
+        }
+      }
+      .getOrElse {
+        Left {
+          Seq(CantFindValueClassMember(From.typeSymbol.name.toString, To.typeSymbol.name.toString))
+        }
+      }
   }
 
-  sealed trait FieldResolution
-  case class ResolvedFieldTree(tree: Tree) extends FieldResolution
-  case class MatchingField(ms: MethodSymbol) extends FieldResolution
+  def expandTypeToValueClass(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
-  def resolveField(targetField: MethodSymbol,
-                   fromParams: Iterable[MethodSymbol],
-                   srcPrefixTree: Tree,
-                   config: Config): Option[FieldResolution] = {
-
-    val fieldName = targetField.name.decodedName.toString
-
-    if (config.overridenFields.contains(fieldName)) {
-      Some {
-        ResolvedFieldTree {
-          q"${TermName(config.prefixValName)}.overrides($fieldName).asInstanceOf[${targetField.returnType}]"
-        }
-      }
-    } else if (config.renamedFields.contains(fieldName)) {
-      val fromFieldName = TermName(config.renamedFields(fieldName))
-      Some {
-        ResolvedFieldTree {
-          q"$srcPrefixTree.$fromFieldName"
-        }
-      }
-    } else {
-      fromParams
-        .find(_.name == targetField.name)
-        .map { ms =>
-          if (ms.returnType <:< targetField.returnType) {
-            ResolvedFieldTree {
-              q"$srcPrefixTree.${targetField.name}"
-            }
-            //            } else if (!config.disableDefaultValues && targetField.isParamWithDefault) {
-            //              println("LALALALALALALALALALALA")
-            //              ResolvedFieldTree {
-            //                q"""Bar3.apply$$default$$1()"""
-            //              }
-          } else {
-            MatchingField(ms)
-          }
-        }
-    }
+    Right(q"new $To($srcPrefixTree)")
   }
 
   def expandCaseClassTransformerTree(srcPrefixTree: Tree,
@@ -179,6 +152,50 @@ trait TransformerMacros {
       Left(errors)
     } else {
       Right(q"new $To(..$args)")
+    }
+  }
+
+  sealed trait FieldResolution
+  case class ResolvedFieldTree(tree: Tree) extends FieldResolution
+  case class MatchingField(ms: MethodSymbol) extends FieldResolution
+
+  def resolveField(targetField: MethodSymbol,
+                   fromParams: Iterable[MethodSymbol],
+                   srcPrefixTree: Tree,
+                   config: Config): Option[FieldResolution] = {
+
+    val fieldName = targetField.name.decodedName.toString
+
+    if (config.overridenFields.contains(fieldName)) {
+      Some {
+        ResolvedFieldTree {
+          q"${TermName(config.prefixValName)}.overrides($fieldName).asInstanceOf[${targetField.returnType}]"
+        }
+      }
+    } else if (config.renamedFields.contains(fieldName)) {
+      val fromFieldName = TermName(config.renamedFields(fieldName))
+      Some {
+        ResolvedFieldTree {
+          q"$srcPrefixTree.$fromFieldName"
+        }
+      }
+    } else {
+      fromParams
+        .find(_.name == targetField.name)
+        .map { ms =>
+          if (ms.returnType <:< targetField.returnType) {
+            ResolvedFieldTree {
+              q"$srcPrefixTree.${targetField.name}"
+            }
+            //            } else if (!config.disableDefaultValues && targetField.isParamWithDefault) {
+            //              println("LALALALALALALALALALALA")
+            //              ResolvedFieldTree {
+            //                q"""Bar3.apply$$default$$1()"""
+            //              }
+          } else {
+            MatchingField(ms)
+          }
+        }
     }
   }
 

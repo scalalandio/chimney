@@ -1,21 +1,24 @@
 package io.scalaland.chimney.internal
 
-sealed trait DerivationError {
+sealed trait DerivationError extends Product with Serializable {
   def sourceTypeName: String
   def targetTypeName: String
 }
 
-case class MissingField(fieldName: String, fieldTypeName: String, sourceTypeName: String, targetTypeName: String)
+final case class MissingField(fieldName: String, fieldTypeName: String, sourceTypeName: String, targetTypeName: String)
     extends DerivationError
 
-case class MissingTransformer(fieldName: String,
-                              sourceFieldTypeName: String,
-                              targetFieldTypeName: String,
-                              sourceTypeName: String,
-                              targetTypeName: String)
+final case class MissingTransformer(fieldName: String,
+                                    sourceFieldTypeName: String,
+                                    targetFieldTypeName: String,
+                                    sourceTypeName: String,
+                                    targetTypeName: String)
     extends DerivationError
 
-case class NotSupportedDerivation(sourceTypeName: String, targetTypeName: String) extends DerivationError
+final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName: String) extends DerivationError
+
+final case class NotSupportedDerivation(sourceTypeName: String, targetTypeName: String) extends DerivationError
+
 
 object DerivationError {
 
@@ -30,6 +33,8 @@ object DerivationError {
               s"  $fieldName: $fieldTypeName - no field named $fieldName in source type $sourceTypeName"
             case MissingTransformer(fieldName, sourceFieldTypeName, targetFieldTypeName, sourceTypeName, _) =>
               s"  $fieldName: $targetFieldTypeName - can't derive transformation from $fieldName: $sourceFieldTypeName in source type $sourceTypeName"
+            case CantFindValueClassMember(sourceTypeName, _) =>
+              s"  can't find member of value class $sourceTypeName"
             case NotSupportedDerivation(sourceTypeName, _) =>
               s"  derivation from $sourceTypeName is not supported in Chimney!"
           }

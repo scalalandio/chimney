@@ -288,24 +288,24 @@ class DslSpec extends WordSpec with MustMatchers {
       }
     }
 
-//    "support value classes" when {
-//
-//      import VCDomain1._
-//
-//      "transforming value class to a value" in {
-//
-//        UserName("Batman").transformInto[String] mustBe "Batman"
-//        User("100", UserName("abc")).transformInto[UserDTO] mustBe
-//          UserDTO("100", "abc")
-//      }
-//
-//      "transforming value to a value class" in {
-//
-//        "Batman".transformInto[UserName] mustBe UserName("Batman")
-//        UserDTO("100", "abc").transformInto[User] mustBe
-//          User("100", UserName("abc"))
-//      }
-//    }
+    "support value classes" when {
+
+      import VCDomain1._
+
+      "transforming value class to a value" in {
+
+        UserName("Batman").transformInto[String] mustBe "Batman"
+        User("100", UserName("abc")).transformInto[UserDTO] mustBe
+          UserDTO("100", "abc")
+      }
+
+      "transforming value to a value class" in {
+
+        "Batman".transformInto[UserName] mustBe UserName("Batman")
+        UserDTO("100", "abc").transformInto[User] mustBe
+          User("100", UserName("abc"))
+      }
+    }
 //
 //    "support common data types" should {
 //
