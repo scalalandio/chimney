@@ -6,8 +6,7 @@ class ChimneyMacros(val c: whitebox.Context)
     extends TransformerMacros
     with DslMacros
     with MacroUtils
-    with DerivationConfig
-    with Prefixes {
+    with DerivationConfig {
 
   import c.universe._
 

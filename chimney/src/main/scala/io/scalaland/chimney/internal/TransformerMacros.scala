@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal
 import scala.reflect.macros.whitebox
 
 trait TransformerMacros {
-  this: MacroUtils with DerivationConfig with Prefixes =>
+  this: MacroUtils with DerivationConfig =>
 
   val c: whitebox.Context
 
