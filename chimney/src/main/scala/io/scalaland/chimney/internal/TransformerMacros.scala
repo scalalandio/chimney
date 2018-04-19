@@ -64,6 +64,13 @@ trait TransformerMacros {
       }
   }
 
+  def canTryDeriveTransformer(from: Type, to: Type): Boolean = {
+    def areBothCaseClasses: Boolean = from.isCaseClass && to.isCaseClass
+
+
+    areBothCaseClasses
+  }
+
   sealed trait FieldResolution
   case class ResolvedFieldTree(tree: Tree) extends FieldResolution
   case class MatchingField(ms: MethodSymbol) extends FieldResolution
@@ -134,7 +141,7 @@ trait TransformerMacros {
     }
 
     val args = mapping.collect {
-      case (targetField, Some(ResolvedFieldTree(tree))) =>
+      case (_, Some(ResolvedFieldTree(tree))) =>
         tree
 
       case (targetField, Some(MatchingField(sourceField))) =>
@@ -142,7 +149,7 @@ trait TransformerMacros {
           case Some(localImplicitTransformer) =>
             q"$localImplicitTransformer.transform($srcPrefixTree.${sourceField.name})"
 
-          case None if sourceField.returnType.isCaseClass && targetField.returnType.isCaseClass =>
+          case None if canTryDeriveTransformer(sourceField.returnType, targetField.returnType) =>
             val recConfig = config.copy(overridenFields = Set.empty)
             expandTransformerTree(q"$srcPrefixTree.${sourceField.name}", recConfig)(
               sourceField.returnType,
@@ -178,7 +185,7 @@ trait TransformerMacros {
   def findLocalImplicitTransformer(From: Type, To: Type): Option[Tree] = {
     val tpeTree = c.typecheck(
       tree = tq"_root_.io.scalaland.chimney.Transformer[$From, $To]",
-      silent = false,
+      silent = true,
       mode = c.TYPEmode,
       withImplicitViewsDisabled = true,
       withMacrosDisabled = true
