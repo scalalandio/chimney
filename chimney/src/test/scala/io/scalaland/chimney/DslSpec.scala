@@ -47,7 +47,10 @@ class DslSpec extends WordSpec with MustMatchers {
 
         "not compile if source for the target fields is not provided" in {
 
-          illTyped("Bar(3, (3.14, 3.14)).transformInto[Foo]", "(.*)y: String - no field named y in source type Bar(.*)")
+          illTyped(
+            "Bar(3, (3.14, 3.14)).transformInto[Foo]",
+            "(.*)y: java.lang.String - no field named y in source type io.scalaland.chimney.DslSpec.Bar(.*)"
+          )
         }
 
         "fill the field with provided default value" should {
@@ -306,12 +309,12 @@ class DslSpec extends WordSpec with MustMatchers {
           User("100", UserName("abc"))
       }
     }
-//
-//    "support common data types" should {
-//
-//      case class Foo(value: String)
-//      case class Bar(value: String)
-//
+
+    "support common data types" should {
+
+      case class Foo(value: String)
+      case class Bar(value: String)
+
 //      "support scala.Option" in {
 //        Option(Foo("a")).transformInto[Option[Bar]] mustBe Option(Bar("a"))
 //        (Some(Foo("a")): Option[Foo]).transformInto[Option[Bar]] mustBe Option(Bar("a"))
@@ -334,36 +337,50 @@ class DslSpec extends WordSpec with MustMatchers {
 //        (Right("a"): Either[String, String]).transformInto[Either[String, String]] mustBe Right("a")
 //      }
 //
-//      "support Traversable collections" in {
-//        Seq(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
-//        List(Foo("a")).transformInto[List[Bar]] mustBe List(Bar("a"))
-//        Vector(Foo("a")).transformInto[Vector[Bar]] mustBe Vector(Bar("a"))
-//        Set(Foo("a")).transformInto[Set[Bar]] mustBe Set(Bar("a"))
-//
-//        Seq("a").transformInto[Seq[String]] mustBe Seq("a")
-//        List("a").transformInto[List[String]] mustBe List("a")
-//        Vector("a").transformInto[Vector[String]] mustBe Vector("a")
-//        Set("a").transformInto[Set[String]] mustBe Set("a")
-//
-//        List(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
-//        Vector(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
-//
-//        List("a").transformInto[Seq[String]] mustBe Seq("a")
-//        Vector("a").transformInto[Seq[String]] mustBe Seq("a")
-//      }
-//
-//      "support Arrays" in {
-//        Array(Foo("a")).transformInto[Array[Bar]] mustBe Array(Bar("a"))
-//        Array("a").transformInto[Array[String]] mustBe Array("a")
-//      }
-//
+      "support Traversable collections" in {
+        Seq(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
+        List(Foo("a")).transformInto[List[Bar]] mustBe List(Bar("a"))
+        Vector(Foo("a")).transformInto[Vector[Bar]] mustBe Vector(Bar("a"))
+        Set(Foo("a")).transformInto[Set[Bar]] mustBe Set(Bar("a"))
+
+        Seq("a").transformInto[Seq[String]] mustBe Seq("a")
+        List("a").transformInto[List[String]] mustBe List("a")
+        Vector("a").transformInto[Vector[String]] mustBe Vector("a")
+        Set("a").transformInto[Set[String]] mustBe Set("a")
+
+        List(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
+        Vector(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
+
+        List("a").transformInto[Seq[String]] mustBe Seq("a")
+        Vector("a").transformInto[Seq[String]] mustBe Seq("a")
+
+        Vector("a").transformInto[Array[String]] mustBe Array("a")
+
+      }
+
+      "support Arrays" in {
+        Array(Foo("a")).transformInto[Array[Bar]] mustBe Array(Bar("a"))
+        Array("a").transformInto[Array[String]] mustBe Array("a")
+      }
+
+      "support conversion between Traversables and Arrays" in {
+
+        Array(Foo("a")).transformInto[List[Bar]] mustBe List(Bar("a"))
+        Array("a", "b").transformInto[Seq[String]] mustBe Seq("a", "b")
+        Array(3, 2, 1).transformInto[Vector[Int]] mustBe Vector(3, 2, 1)
+
+        Vector("a").transformInto[Array[String]] mustBe Array("a")
+        List(1, 6, 3).transformInto[Array[Int]] mustBe Array(1, 6, 3)
+        Seq(Bar("x"), Bar("y")).transformInto[Array[Foo]] mustBe Array(Foo("x"), Foo("y"))
+      }
+
 //      "support Map" in {
 //        Map("test" -> Foo("a")).transformInto[Map[String, Bar]] mustBe Map("test" -> Bar("a"))
 //        Map("test" -> "a").transformInto[Map[String, String]] mustBe Map("test" -> "a")
 //        Map(Foo("test") -> "x").transformInto[Map[Bar, String]] mustBe Map(Bar("test") -> "x")
 //        Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] mustBe Map(Bar("test") -> Bar("x"))
 //      }
-//    }
+    }
 //
 //    "support for sealed hierarchies" when {
 //

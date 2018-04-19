@@ -28,7 +28,7 @@ object DerivationError {
       .groupBy(_.targetTypeName)
       .map {
         case (targetTypeName, errs) =>
-          val errStrings = errs.map {
+          val errStrings = errs.distinct.map {
             case MissingField(fieldName, fieldTypeName, sourceTypeName, _) =>
               s"  $fieldName: $fieldTypeName - no field named $fieldName in source type $sourceTypeName"
             case MissingTransformer(fieldName, sourceFieldTypeName, targetFieldTypeName, sourceTypeName, _) =>

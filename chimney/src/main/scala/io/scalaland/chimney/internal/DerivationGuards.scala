@@ -9,6 +9,10 @@ trait DerivationGuards {
 
   import c.universe._
 
+  def isSubtype(from: Type, to: Type): Boolean = {
+    from <:< to
+  }
+
   def bothCaseClasses(from: Type, to: Type): Boolean = {
     from.isCaseClass && to.isCaseClass
   }
@@ -21,7 +25,22 @@ trait DerivationGuards {
     to.isValueClass && to.valueClassMember.exists(_.returnType =:= from)
   }
 
-  def canTryDeriveTransformer(from: Type, to: Type): Boolean = {
-    bothCaseClasses(from, to) || fromValueClassToType(from, to) || fromTypeToValueClass(from, to)
+  def bothOfTraversableOrArray(from: Type, to: Type): Boolean = {
+    traversableOrArray(from) && traversableOrArray(to)
   }
+
+  def canTryDeriveTransformer(from: Type, to: Type): Boolean = {
+    isSubtype(from, to) ||
+      bothCaseClasses(from, to) ||
+      fromValueClassToType(from, to) ||
+      fromTypeToValueClass(from, to) ||
+      bothOfTraversableOrArray(from, to)
+  }
+
+  def traversableOrArray(t: Type): Boolean = {
+    t <:< traversableT || t <:< arrayT
+  }
+
+  val traversableT: Type = typeOf[Traversable[_]]
+  val arrayT: Type = typeOf[Array[_]]
 }

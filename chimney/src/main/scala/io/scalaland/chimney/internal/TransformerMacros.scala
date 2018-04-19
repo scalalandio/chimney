@@ -56,14 +56,20 @@ trait TransformerMacros {
         Right(q"$localImplicitTree.transform($srcPrefixTree)")
       }
       .getOrElse {
-        if (bothCaseClasses(From, To)) {
+        if (isSubtype(From, To)) {
+          Right(srcPrefixTree)
+        } else if (bothOfTraversableOrArray(From, To)) {
+          expandTraversableOrArray(srcPrefixTree)(From, To)
+        } else if (bothCaseClasses(From, To)) {
           expandCaseClassTransformerTree(srcPrefixTree, config)(From, To)
         } else if (fromValueClassToType(From, To)) {
           expandValueClassToType(srcPrefixTree)(From, To)
         } else if (fromTypeToValueClass(From, To)) {
           expandTypeToValueClass(srcPrefixTree)(From, To)
         } else {
-          Left(Seq(NotSupportedDerivation(From.typeSymbol.name.toString, To.typeSymbol.name.toString)))
+          Left {
+            Seq(NotSupportedDerivation(From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
+          }
         }
       }
   }
@@ -88,6 +94,34 @@ trait TransformerMacros {
     Right(q"new $To($srcPrefixTree)")
   }
 
+  def expandTraversableOrArray(srcPrefixTree: Tree)(From: Type,
+                                                    To: Type): Either[Seq[DerivationError], Tree] = {
+
+    val FromCollectionT = From.typeArgs.head
+    val ToCollectionT = To.typeArgs.head
+
+    val fn = Ident(c.internal.reificationSupport.freshTermName("x$"))
+
+    expandTransformerTree(fn, Config())(FromCollectionT, ToCollectionT).right.map { innerTransformerTree =>
+      val f = q"($fn: $FromCollectionT) => $innerTransformerTree"
+      val isIdentity = fn == innerTransformerTree
+
+      if (From.typeConstructor =:= To.typeConstructor) {
+        if(isIdentity) {
+          srcPrefixTree
+        } else {
+          q"$srcPrefixTree.map($f)"
+        }
+      } else {
+        if(isIdentity) {
+          q"$srcPrefixTree.to[${To.typeConstructor}]"
+        } else {
+          q"$srcPrefixTree.map($f).to[${To.typeConstructor}]"
+        }
+      }
+    }
+  }
+
   def expandCaseClassTransformerTree(srcPrefixTree: Tree,
                                      config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
@@ -106,9 +140,9 @@ trait TransformerMacros {
       missingFields.foreach { ms =>
         errors :+= MissingField(
           fieldName = ms.name.toString,
-          fieldTypeName = ms.returnType.toString,
-          sourceTypeName = From.toString,
-          targetTypeName = To.toString
+          fieldTypeName = ms.returnType.typeSymbol.fullName,
+          sourceTypeName = From.typeSymbol.fullName,
+          targetTypeName = To.typeSymbol.fullName
         )
       }
     }
@@ -138,10 +172,10 @@ trait TransformerMacros {
           case None =>
             errors :+= MissingTransformer(
               fieldName = targetField.name.toString,
-              sourceFieldTypeName = sourceField.returnType.toString,
-              targetFieldTypeName = targetField.returnType.toString,
-              sourceTypeName = From.toString,
-              targetTypeName = To.toString
+              sourceFieldTypeName = sourceField.returnType.typeSymbol.fullName,
+              targetFieldTypeName = targetField.returnType.typeSymbol.fullName,
+              sourceTypeName = From.typeSymbol.fullName,
+              targetTypeName = To.typeSymbol.fullName
             )
 
             EmptyTree

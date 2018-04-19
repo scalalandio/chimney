@@ -23,15 +23,22 @@ case class Bar4(abc: String)
 case class Def(x: Int, z: (Double, Double))
 case class Abc(x: Int, y: String, z: (Double, Double, Int))
 
+case class Foooo(value: String)
+case class Barrr(value: String)
+
+
 import io.scalaland.chimney.dsl._
+
+
+
 
 object Test extends App {
 
-  implicit val intToStringTransformer: Transformer[Int, String] = (_: Int).toString
+//  implicit val intToStringTransformer: Transformer[Int, String] = (_: Int).toString
 
-  val foo = Foo(10, false, "abc", Source(9999), 0, new RuntimeException, (), 'x', 2.0f)
+//  val foo = Foo(10, false, "abc", Source(9999), 0, new RuntimeException, (), 'x', 2.0f)
 
-  println(foo.transformInto[Bar1])
+//  println(foo.transformInto[Bar1])
 
 //  println(foo.into[Bar4].withFieldConst(_.abc, "abc").transform)
 //  println(foo.into[Bar4].withFieldComputed(_.abc, _.toString))//.transform)
@@ -54,4 +61,7 @@ object Test extends App {
 //  Def(3, (3.14, 3.14)).into[Abc].transform
 
   //  println(foo.transformInto[Bar3])
+
+  Seq(Foooo("a")).transformInto[Seq[Barrr]]
+
 }
