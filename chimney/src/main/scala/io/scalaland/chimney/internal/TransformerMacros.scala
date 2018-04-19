@@ -103,18 +103,18 @@ trait TransformerMacros {
     val fn = Ident(c.internal.reificationSupport.freshTermName("x$"))
 
     expandTransformerTree(fn, Config())(FromCollectionT, ToCollectionT).right.map { innerTransformerTree =>
-      val f = q"($fn: $FromCollectionT) => $innerTransformerTree"
-      val isIdentity = fn == innerTransformerTree
+      val sameCollectionTypes = From.typeConstructor =:= To.typeConstructor
 
-      if (From.typeConstructor =:= To.typeConstructor) {
-        if(isIdentity) {
+      if(fn == innerTransformerTree) {
+        if(sameCollectionTypes) {
           srcPrefixTree
         } else {
-          q"$srcPrefixTree.map($f)"
+          q"$srcPrefixTree.to[${To.typeConstructor}]"
         }
       } else {
-        if(isIdentity) {
-          q"$srcPrefixTree.to[${To.typeConstructor}]"
+        val f = q"($fn: $FromCollectionT) => $innerTransformerTree"
+        if(sameCollectionTypes) {
+          q"$srcPrefixTree.map($f)"
         } else {
           q"$srcPrefixTree.map($f).to[${To.typeConstructor}]"
         }
