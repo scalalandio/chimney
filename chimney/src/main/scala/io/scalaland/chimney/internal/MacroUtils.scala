@@ -29,8 +29,6 @@ trait MacroUtils {
           m.asMethod
       }
     }
-
-
 //    def caseClassDefaults: Map[String, c.Tree] = {
 //
 //      val primaryConstructor = t.decls.collectFirst {
