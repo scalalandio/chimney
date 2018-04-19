@@ -19,7 +19,6 @@ final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName
 
 final case class NotSupportedDerivation(sourceTypeName: String, targetTypeName: String) extends DerivationError
 
-
 object DerivationError {
 
   def printErrors(errors: Seq[DerivationError]): String = {

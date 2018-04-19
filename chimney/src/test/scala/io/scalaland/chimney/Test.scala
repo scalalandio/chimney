@@ -26,11 +26,7 @@ case class Abc(x: Int, y: String, z: (Double, Double, Int))
 case class Foooo(value: String)
 case class Barrr(value: String)
 
-
 import io.scalaland.chimney.dsl._
-
-
-
 
 object Test extends App {
 
@@ -63,5 +59,4 @@ object Test extends App {
   //  println(foo.transformInto[Bar3])
 
   Seq(Foooo("a")).transformInto[Seq[Barrr]]
-
 }

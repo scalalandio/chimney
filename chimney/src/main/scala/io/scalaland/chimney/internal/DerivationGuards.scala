@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal
 import scala.reflect.macros.whitebox
 
 trait DerivationGuards {
-  this : MacroUtils =>
+  this: MacroUtils =>
 
   val c: whitebox.Context
 
@@ -31,10 +31,10 @@ trait DerivationGuards {
 
   def canTryDeriveTransformer(from: Type, to: Type): Boolean = {
     isSubtype(from, to) ||
-      bothCaseClasses(from, to) ||
-      fromValueClassToType(from, to) ||
-      fromTypeToValueClass(from, to) ||
-      bothOfTraversableOrArray(from, to)
+    bothCaseClasses(from, to) ||
+    fromValueClassToType(from, to) ||
+    fromTypeToValueClass(from, to) ||
+    bothOfTraversableOrArray(from, to)
   }
 
   def traversableOrArray(t: Type): Boolean = {

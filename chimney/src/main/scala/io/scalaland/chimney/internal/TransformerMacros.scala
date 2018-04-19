@@ -94,8 +94,7 @@ trait TransformerMacros {
     Right(q"new $To($srcPrefixTree)")
   }
 
-  def expandTraversableOrArray(srcPrefixTree: Tree)(From: Type,
-                                                    To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandTraversableOrArray(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val FromCollectionT = From.typeArgs.head
     val ToCollectionT = To.typeArgs.head
@@ -105,15 +104,15 @@ trait TransformerMacros {
     expandTransformerTree(fn, Config())(FromCollectionT, ToCollectionT).right.map { innerTransformerTree =>
       val sameCollectionTypes = From.typeConstructor =:= To.typeConstructor
 
-      if(fn == innerTransformerTree) {
-        if(sameCollectionTypes) {
+      if (fn == innerTransformerTree) {
+        if (sameCollectionTypes) {
           srcPrefixTree
         } else {
           q"$srcPrefixTree.to[${To.typeConstructor}]"
         }
       } else {
         val f = q"($fn: $FromCollectionT) => $innerTransformerTree"
-        if(sameCollectionTypes) {
+        if (sameCollectionTypes) {
           q"$srcPrefixTree.map($f)"
         } else {
           q"$srcPrefixTree.map($f).to[${To.typeConstructor}]"
