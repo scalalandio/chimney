@@ -64,6 +64,8 @@ trait TransformerMacros {
           expandValueClassToType(srcPrefixTree)(From, To)
         } else if (fromTypeToValueClass(From, To)) {
           expandTypeToValueClass(srcPrefixTree)(From, To)
+        } else if (bothMaps(From, To)) {
+          expandMaps(srcPrefixTree, config)(From, To)
         } else if (bothOfTraversableOrArray(From, To)) {
           expandTraversableOrArray(srcPrefixTree, config)(From, To)
         } else {
@@ -94,7 +96,35 @@ trait TransformerMacros {
     Right(q"new $To($srcPrefixTree)")
   }
 
-  def expandTraversableOrArray(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandMaps(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+
+    val List(fromKeyT, fromValueT) = From.typeArgs
+    val List(toKeyT, toValueT) = To.typeArgs
+
+    val fnK = c.internal.reificationSupport.freshTermName("k$")
+    val fnV = c.internal.reificationSupport.freshTermName("v$")
+
+    val keyTransformerE = expandTransformerTree(Ident(fnK), config.rec)(fromKeyT, toKeyT)
+    val valueTransformerE = expandTransformerTree(Ident(fnV), config.rec)(fromValueT, toValueT)
+
+    if(keyTransformerE.isLeft || valueTransformerE.isLeft) {
+      Left(keyTransformerE.left.getOrElse(Nil) ++ valueTransformerE.left.getOrElse(Nil))
+    } else {
+      val keyTransformer = keyTransformerE.right.get
+      val valueTransformer = valueTransformerE.right.get
+
+      Right {
+        q"""
+          $srcPrefixTree.map { case ($fnK: $fromKeyT, $fnV: $fromValueT) =>
+            ($keyTransformer, $valueTransformer)
+          }
+         """
+      }
+    }
+  }
+
+  def expandTraversableOrArray(srcPrefixTree: Tree, config: Config)(From: Type,
+                                                                    To: Type): Either[Seq[DerivationError], Tree] = {
 
     val FromCollectionT = From.typeArgs.head
     val ToCollectionT = To.typeArgs.head

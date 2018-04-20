@@ -371,12 +371,12 @@ class DslSpec extends WordSpec with MustMatchers {
         Seq(Bar("x"), Bar("y")).transformInto[Array[Foo]] mustBe Array(Foo("x"), Foo("y"))
       }
 
-//      "support Map" in {
-//        Map("test" -> Foo("a")).transformInto[Map[String, Bar]] mustBe Map("test" -> Bar("a"))
-//        Map("test" -> "a").transformInto[Map[String, String]] mustBe Map("test" -> "a")
-//        Map(Foo("test") -> "x").transformInto[Map[Bar, String]] mustBe Map(Bar("test") -> "x")
-//        Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] mustBe Map(Bar("test") -> Bar("x"))
-//      }
+      "support Map" in {
+        Map("test" -> Foo("a")).transformInto[Map[String, Bar]] mustBe Map("test" -> Bar("a"))
+        Map("test" -> "a").transformInto[Map[String, String]] mustBe Map("test" -> "a")
+        Map(Foo("test") -> "x").transformInto[Map[Bar, String]] mustBe Map(Bar("test") -> "x")
+        Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] mustBe Map(Bar("test") -> Bar("x"))
+      }
     }
 //
 //    "support for sealed hierarchies" when {
