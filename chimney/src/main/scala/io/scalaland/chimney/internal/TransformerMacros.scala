@@ -58,14 +58,14 @@ trait TransformerMacros {
       .getOrElse {
         if (isSubtype(From, To)) {
           Right(srcPrefixTree)
-        } else if (bothOfTraversableOrArray(From, To)) {
-          expandTraversableOrArray(srcPrefixTree)(From, To)
         } else if (bothCaseClasses(From, To)) {
           expandCaseClassTransformerTree(srcPrefixTree, config)(From, To)
         } else if (fromValueClassToType(From, To)) {
           expandValueClassToType(srcPrefixTree)(From, To)
         } else if (fromTypeToValueClass(From, To)) {
           expandTypeToValueClass(srcPrefixTree)(From, To)
+        } else if (bothOfTraversableOrArray(From, To)) {
+          expandTraversableOrArray(srcPrefixTree, config)(From, To)
         } else {
           Left {
             Seq(NotSupportedDerivation(From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
@@ -94,14 +94,14 @@ trait TransformerMacros {
     Right(q"new $To($srcPrefixTree)")
   }
 
-  def expandTraversableOrArray(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandTraversableOrArray(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val FromCollectionT = From.typeArgs.head
     val ToCollectionT = To.typeArgs.head
 
     val fn = Ident(c.internal.reificationSupport.freshTermName("x$"))
 
-    expandTransformerTree(fn, Config())(FromCollectionT, ToCollectionT).right.map { innerTransformerTree =>
+    expandTransformerTree(fn, config.rec)(FromCollectionT, ToCollectionT).right.map { innerTransformerTree =>
       val sameCollectionTypes = From.typeConstructor =:= To.typeConstructor
 
       if (fn == innerTransformerTree) {
@@ -156,8 +156,7 @@ trait TransformerMacros {
             q"$localImplicitTransformer.transform($srcPrefixTree.${sourceField.name})"
 
           case None if canTryDeriveTransformer(sourceField.returnType, targetField.returnType) =>
-            val recConfig = config.copy(overridenFields = Set.empty)
-            expandTransformerTree(q"$srcPrefixTree.${sourceField.name}", recConfig)(
+            expandTransformerTree(q"$srcPrefixTree.${sourceField.name}", config.rec)(
               sourceField.returnType,
               targetField.returnType
             ) match {
