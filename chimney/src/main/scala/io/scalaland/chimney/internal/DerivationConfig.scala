@@ -1,10 +1,10 @@
 package io.scalaland.chimney.internal
 
-import scala.reflect.macros.whitebox
+import scala.reflect.macros.blackbox
 
 trait DerivationConfig {
 
-  val c: whitebox.Context
+  val c: blackbox.Context
 
   case class Config(disableDefaultValues: Boolean = false,
                     overridenFields: Set[String] = Set.empty,

@@ -2,12 +2,7 @@ package io.scalaland.chimney.internal
 
 import scala.reflect.macros.whitebox
 
-class ChimneyMacros(val c: whitebox.Context)
-    extends TransformerMacros
-    with DslMacros
-    with DerivationGuards
-    with MacroUtils
-    with DerivationConfig {
+class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros with MacroUtils {
 
   def withFieldConstImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, C: c.WeakTypeTag](
     selector: c.Tree,
@@ -45,18 +40,5 @@ class ChimneyMacros(val c: whitebox.Context)
         val inv2 = s"Selector of type ${selectorTo.tpe} is not valid: $selectorTo"
         c.abort(c.enclosingPosition, s"Invalid selectors:\n$inv1\n$inv2")
     }
-  }
-
-  def transformIntoImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Expr[To] = {
-    c.Expr[To](expandTansformInto[From, To])
-  }
-
-  def transformImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[To] = {
-    c.Expr[To](expandTansform[From, To, C])
-  }
-
-  def deriveTransformerImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]
-    : c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
-    genTransformer[From, To](Config())
   }
 }

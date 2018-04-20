@@ -1,10 +1,10 @@
 package io.scalaland.chimney.internal
 
-import scala.reflect.macros.whitebox
+import scala.reflect.macros.blackbox
 
 trait MacroUtils {
 
-  val c: whitebox.Context
+  val c: blackbox.Context
 
   import c.universe._
 

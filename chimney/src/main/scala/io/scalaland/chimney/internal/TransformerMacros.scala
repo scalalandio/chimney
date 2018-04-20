@@ -1,11 +1,11 @@
 package io.scalaland.chimney.internal
 
-import scala.reflect.macros.whitebox
+import scala.reflect.macros.blackbox
 
 trait TransformerMacros {
   this: DerivationGuards with MacroUtils with DerivationConfig =>
 
-  val c: whitebox.Context
+  val c: blackbox.Context
 
   import c.universe._
 
