@@ -212,7 +212,7 @@
 
       @p
         If you are interested to see how they are handled, it's recommended to explore
-        @lnk("the test suite", "https://github.com/scalalandio/chimney/blob/feature/documentation/chimney/src/test/scala/io/scalaland/chimney/DslSpec.scala").
+        @lnk("the test suite", "https://github.com/scalalandio/chimney/blob/master/chimney/src/test/scala/io/scalaland/chimney/DslSpec.scala").
 
     @sect{Value classes}
       @p
