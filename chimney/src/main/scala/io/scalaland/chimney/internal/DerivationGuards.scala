@@ -25,8 +25,16 @@ trait DerivationGuards {
     to.isValueClass && to.valueClassMember.exists(_.returnType =:= from)
   }
 
+  def bothOptions(from: Type, to: Type): Boolean = {
+    from <:< optionTpe && to <:< optionTpe
+  }
+
+  def bothEithers(from: Type, to: Type): Boolean = {
+    from <:< eitherTpe && to <:< eitherTpe
+  }
+
   def bothMaps(from: Type, to: Type): Boolean = {
-    from <:< mapT && to <:< mapT
+    from <:< mapTpe && to <:< mapTpe
   }
 
   def bothOfTraversableOrArray(from: Type, to: Type): Boolean = {
@@ -35,18 +43,26 @@ trait DerivationGuards {
 
   def canTryDeriveTransformer(from: Type, to: Type): Boolean = {
     isSubtype(from, to) ||
-    bothCaseClasses(from, to) ||
     fromValueClassToType(from, to) ||
     fromTypeToValueClass(from, to) ||
+    bothOptions(from, to) ||
+    bothEithers(from, to) ||
     bothMaps(from, to) ||
-    bothOfTraversableOrArray(from, to)
+    bothOfTraversableOrArray(from, to) ||
+    bothCaseClasses(from, to)
   }
 
   def traversableOrArray(t: Type): Boolean = {
-    t <:< traversableT || t <:< arrayT
+    t <:< traversableTpe || t <:< arrayTpe
   }
 
-  val traversableT: Type = typeOf[Traversable[_]]
-  val arrayT: Type = typeOf[Array[_]]
-  val mapT: Type = typeOf[scala.collection.Map[_, _]]
+  val optionTpe: Type = typeOf[Option[_]]
+  val someTpe: Type = typeOf[Some[_]]
+  val noneTpe: Type = typeOf[None.type]
+  val eitherTpe: Type = typeOf[Either[_, _]]
+  val leftTpe: Type = typeOf[Left[_, _]]
+  val rightTpe: Type = typeOf[Right[_, _]]
+  val mapTpe: Type = typeOf[scala.collection.Map[_, _]]
+  val traversableTpe: Type = typeOf[Traversable[_]]
+  val arrayTpe: Type = typeOf[Array[_]]
 }
