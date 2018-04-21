@@ -9,6 +9,7 @@ trait DerivationConfig {
   case class Config(disableDefaultValues: Boolean = false,
                     overridenFields: Set[String] = Set.empty,
                     renamedFields: Map[String, String] = Map.empty,
+                    coproductInstances: Set[(c.Symbol, c.Type)] = Set.empty, // pair: inst type, target type
                     prefixValName: String = "") {
 
     def rec: Config =

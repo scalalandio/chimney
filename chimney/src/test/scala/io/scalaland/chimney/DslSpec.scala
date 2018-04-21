@@ -391,32 +391,32 @@ class DslSpec extends WordSpec with MustMatchers {
           (colors1.Blue: colors1.Color)
             .transformInto[colors2.Color] mustBe colors2.Blue
         }
-//
-//        "transforming from bigger to smaller enum" in {
-//
-//          def blackIsRed(b: colors2.Black.type): colors1.Color =
-//            colors1.Red
-//
-//          (colors2.Red: colors2.Color)
-//            .into[colors1.Color]
-//            .withCoproductInstance(blackIsRed)
-//            .transform mustBe colors1.Red
-//
-//          (colors2.Green: colors2.Color)
-//            .into[colors1.Color]
-//            .withCoproductInstance(blackIsRed)
-//            .transform mustBe colors1.Green
-//
-//          (colors2.Blue: colors2.Color)
-//            .into[colors1.Color]
-//            .withCoproductInstance(blackIsRed)
-//            .transform mustBe colors1.Blue
-//
-//          (colors2.Black: colors2.Color)
-//            .into[colors1.Color]
-//            .withCoproductInstance(blackIsRed)
-//            .transform mustBe colors1.Red
-//        }
+
+        "transforming from bigger to smaller enum" in {
+
+          def blackIsRed(b: colors2.Black.type): colors1.Color =
+            colors1.Red
+
+          (colors2.Black: colors2.Color)
+            .into[colors1.Color]
+            .withCoproductInstance(blackIsRed)
+            .transform mustBe colors1.Red
+
+          (colors2.Red: colors2.Color)
+            .into[colors1.Color]
+            .withCoproductInstance(blackIsRed)
+            .transform mustBe colors1.Red
+
+          (colors2.Green: colors2.Color)
+            .into[colors1.Color]
+            .withCoproductInstance(blackIsRed)
+            .transform mustBe colors1.Green
+
+          (colors2.Blue: colors2.Color)
+            .into[colors1.Color]
+            .withCoproductInstance(blackIsRed)
+            .transform mustBe colors1.Blue
+        }
       }
 //
 //      "transforming non-isomorphic domains" in {

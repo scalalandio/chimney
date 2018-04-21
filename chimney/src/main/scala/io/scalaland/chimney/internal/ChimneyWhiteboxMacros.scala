@@ -41,4 +41,11 @@ class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros w
         c.abort(c.enclosingPosition, s"Invalid selectors:\n$inv1\n$inv2")
     }
   }
+
+  def withCoproductInstanceImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, Inst: c.WeakTypeTag, C: c.WeakTypeTag](
+    f: c.Tree
+  ): c.Tree = {
+    expandCoproductInstance[From, To, Inst, C](f)
+  }
+
 }

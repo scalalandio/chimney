@@ -45,6 +45,13 @@ trait MacroUtils {
 //
 //      Map.empty
 //    }
+
+    def singletonString: String = {
+      t.asInstanceOf[scala.reflect.internal.Types#UniqueConstantType]
+        .value
+        .value
+        .asInstanceOf[String]
+    }
   }
 
   implicit class SymbolOps(s: Symbol) {

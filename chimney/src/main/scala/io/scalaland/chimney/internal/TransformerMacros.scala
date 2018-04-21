@@ -239,19 +239,26 @@ trait TransformerMacros {
     val ccs = fromInstances.toSeq.map { instSymbol =>
       // looking for some transforming instance tree
 
-      targetNamedInstances.get(instSymbol.name.toString) match {
+      val instName = instSymbol.name.toString
+
+      targetNamedInstances.get(instName) match {
         case Some(matchingTargetSymbol) =>
           if (matchingTargetSymbol.isModuleClass && instSymbol.isModuleClass) {
-            println(s"matching object instance: $matchingTargetSymbol")
             Some(cq"_: ${instSymbol.asType} => ${matchingTargetSymbol.asClass.module}")
           } else {
             // look for transformer
             None
           }
 
+        case None if config.coproductInstances.contains((instSymbol, To)) =>
+          val fn = c.internal.reificationSupport.freshTermName(instName.toLowerCase + "$")
+          val instFullName = instSymbol.fullName.toString
+          val fullTargetName = To.typeSymbol.fullName.toString
+          Some(
+            cq"$fn: ${instSymbol.asType} => ${TermName(config.prefixValName)}.instances(($instFullName, $fullTargetName)).asInstanceOf[Any => $To]($fn).asInstanceOf[$To]"
+          )
+
         case None =>
-          // can later look for provided function
-          // but need to implement in DSL first
           None
       }
     }
