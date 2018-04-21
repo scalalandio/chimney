@@ -16,6 +16,9 @@ trait MacroUtils {
     def isCaseClass: Boolean =
       t.typeSymbol.classSymbolOpt.exists(_.isCaseClass)
 
+    def isSealedClass: Boolean =
+      t.typeSymbol.classSymbolOpt.exists(_.isSealed)
+
     def caseClassParams: Iterable[MethodSymbol] = {
       t.decls.collect {
         case m: MethodSymbol if m.isCaseAccessor || (isValueClass && m.isParamAccessor) =>

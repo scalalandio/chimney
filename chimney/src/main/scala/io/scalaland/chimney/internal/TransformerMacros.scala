@@ -72,6 +72,8 @@ trait TransformerMacros {
           expandTraversableOrArray(srcPrefixTree, config)(From, To)
         } else if (bothCaseClasses(From, To)) {
           expandCaseClassTransformerTree(srcPrefixTree, config)(From, To)
+        } else if (bothSealedClasses(From, To)) {
+          expandSealedClasses(srcPrefixTree, config)(From, To)
         } else {
           Left {
             Seq(NotSupportedDerivation(From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
@@ -219,6 +221,48 @@ trait TransformerMacros {
         }
       }
     }
+  }
+
+  def expandSealedClasses(srcPrefixTree: Tree, config: Config)(From: Type,
+                                                               To: Type): Either[Seq[DerivationError], Tree] = {
+    val fromCS = From.typeSymbol.classSymbolOpt.get
+    val toCS = To.typeSymbol.classSymbolOpt.get
+
+    val fromInstances = fromCS.knownDirectSubclasses
+    val toInstances = toCS.knownDirectSubclasses
+
+    fromInstances.foreach(i => println(s"FROM :$i"))
+    toInstances.foreach(i => println(s"TO :$i"))
+
+    val targetNamedInstances = toInstances.map(s => s.name.toString -> s).toMap
+
+    val ccs = fromInstances.toSeq.map { instSymbol =>
+      // looking for some transforming instance tree
+
+      targetNamedInstances.get(instSymbol.name.toString) match {
+        case Some(matchingTargetSymbol) =>
+          if (matchingTargetSymbol.isModuleClass && instSymbol.isModuleClass) {
+            println(s"matching object instance: $matchingTargetSymbol")
+            Some(cq"_: ${instSymbol.asType} => ${matchingTargetSymbol.asClass.module}")
+          } else {
+            // look for transformer
+            None
+          }
+
+        case None =>
+          // can later look for provided function
+          // but need to implement in DSL first
+          None
+      }
+    }
+
+    val clauses = ccs.flatten
+
+    Right {
+      q"$srcPrefixTree match { case ..$clauses }".debug
+    }
+
+//    Left(Nil)
   }
 
   def expandCaseClassTransformerTree(srcPrefixTree: Tree,

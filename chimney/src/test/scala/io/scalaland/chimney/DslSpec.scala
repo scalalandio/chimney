@@ -378,19 +378,19 @@ class DslSpec extends WordSpec with MustMatchers {
         Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] mustBe Map(Bar("test") -> Bar("x"))
       }
     }
-//
-//    "support for sealed hierarchies" when {
-//
-//      "enum types encoded as sealed hierarchies of case objects" when {
-//        "transforming from smaller to bigger enum" in {
-//
-//          (colors1.Red: colors1.Color)
-//            .transformInto[colors2.Color] mustBe colors2.Red
-//          (colors1.Green: colors1.Color)
-//            .transformInto[colors2.Color] mustBe colors2.Green
-//          (colors1.Blue: colors1.Color)
-//            .transformInto[colors2.Color] mustBe colors2.Blue
-//        }
+
+    "support for sealed hierarchies" when {
+
+      "enum types encoded as sealed hierarchies of case objects" when {
+        "transforming from smaller to bigger enum" in {
+
+          (colors1.Red: colors1.Color)
+            .transformInto[colors2.Color] mustBe colors2.Red
+          (colors1.Green: colors1.Color)
+            .transformInto[colors2.Color] mustBe colors2.Green
+          (colors1.Blue: colors1.Color)
+            .transformInto[colors2.Color] mustBe colors2.Blue
+        }
 //
 //        "transforming from bigger to smaller enum" in {
 //
@@ -417,7 +417,7 @@ class DslSpec extends WordSpec with MustMatchers {
 //            .withCoproductInstance(blackIsRed)
 //            .transform mustBe colors1.Red
 //        }
-//      }
+      }
 //
 //      "transforming non-isomorphic domains" in {
 //
@@ -477,7 +477,7 @@ class DslSpec extends WordSpec with MustMatchers {
 //          .transformInto[shapes3.Shape] mustBe
 //          shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0))
 //      }
-//    }
+    }
   }
 }
 

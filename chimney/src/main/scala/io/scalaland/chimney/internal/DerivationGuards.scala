@@ -13,10 +13,6 @@ trait DerivationGuards {
     from <:< to
   }
 
-  def bothCaseClasses(from: Type, to: Type): Boolean = {
-    from.isCaseClass && to.isCaseClass
-  }
-
   def fromValueClassToType(from: Type, to: Type): Boolean = {
     from.isValueClass && from.valueClassMember.exists(_.returnType =:= to)
   }
@@ -41,6 +37,14 @@ trait DerivationGuards {
     traversableOrArray(from) && traversableOrArray(to)
   }
 
+  def bothCaseClasses(from: Type, to: Type): Boolean = {
+    from.isCaseClass && to.isCaseClass
+  }
+
+  def bothSealedClasses(from: Type, to: Type): Boolean = {
+    from.isSealedClass && to.isSealedClass
+  }
+
   def canTryDeriveTransformer(from: Type, to: Type): Boolean = {
     isSubtype(from, to) ||
     fromValueClassToType(from, to) ||
@@ -49,7 +53,8 @@ trait DerivationGuards {
     bothEithers(from, to) ||
     bothMaps(from, to) ||
     bothOfTraversableOrArray(from, to) ||
-    bothCaseClasses(from, to)
+    bothCaseClasses(from, to) ||
+    bothSealedClasses(from, to)
   }
 
   def traversableOrArray(t: Type): Boolean = {
