@@ -31,7 +31,7 @@ trait TransformerMacros {
                $transformerTree
              }
            }
-        """
+        """.debug
 
         c.Expr[io.scalaland.chimney.Transformer[From, To]](tree)
 
@@ -71,7 +71,7 @@ trait TransformerMacros {
         } else if (bothOfTraversableOrArray(From, To)) {
           expandTraversableOrArray(srcPrefixTree, config)(From, To)
         } else if (bothCaseClasses(From, To)) {
-          expandCaseClassTransformerTree(srcPrefixTree, config)(From, To)
+          expandCaseClasses(srcPrefixTree, config)(From, To)
         } else if (bothSealedClasses(From, To)) {
           expandSealedClasses(srcPrefixTree, config)(From, To)
         } else {
@@ -256,9 +256,8 @@ trait TransformerMacros {
               val instTpe = instSymbol.asType.toType
               val targetTpe = matchingTargetSymbol.asType.toType
 
-              expandCaseClassTransformerTree(Ident(fn), config.rec)(instTpe, targetTpe).right.map {
-                innerTransformerTree =>
-                  cq"$fn: ${instSymbol.asType} => $innerTransformerTree".debug
+              expandCaseClasses(Ident(fn), config.rec)(instTpe, targetTpe).right.map { innerTransformerTree =>
+                cq"$fn: ${instSymbol.asType} => $innerTransformerTree".debug
               }
             } else {
               Left {
@@ -305,21 +304,17 @@ trait TransformerMacros {
     }
   }
 
-  def expandCaseClassTransformerTree(srcPrefixTree: Tree,
-                                     config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandCaseClasses(srcPrefixTree: Tree, config: Config)(From: Type,
+                                                             To: Type): Either[Seq[DerivationError], Tree] = {
 
     var errors = Seq.empty[DerivationError]
 
     val fromFields = From.caseClassParams
     val toFields = To.caseClassParams
 
-    println(s"FROM FIELDS: $fromFields  || TO FIELDS: $toFields")
-
     val mapping = toFields.map { targetField =>
-      targetField -> resolveField(targetField, fromFields, srcPrefixTree, config)
+      targetField -> resolveField(srcPrefixTree, config)(targetField, fromFields, To.typeSymbol.asClass)
     }
-
-    println(mapping)
 
     val missingFields = mapping.collect { case (field, None) => field }
 
@@ -379,10 +374,9 @@ trait TransformerMacros {
   case class ResolvedFieldTree(tree: Tree) extends FieldResolution
   case class MatchingField(ms: MethodSymbol) extends FieldResolution
 
-  def resolveField(targetField: MethodSymbol,
-                   fromParams: Iterable[MethodSymbol],
-                   srcPrefixTree: Tree,
-                   config: Config): Option[FieldResolution] = {
+  def resolveField(srcPrefixTree: Tree, config: Config)(targetField: MethodSymbol,
+                                                        fromParams: Iterable[MethodSymbol],
+                                                        targetCaseClass: ClassSymbol): Option[FieldResolution] = {
 
     val fieldName = targetField.name.decodedName.toString
 
@@ -407,13 +401,21 @@ trait TransformerMacros {
             ResolvedFieldTree {
               q"$srcPrefixTree.${targetField.name}"
             }
-            //            } else if (!config.disableDefaultValues && targetField.isParamWithDefault) {
-            //              println("LALALALALALALALALALALA")
-            //              ResolvedFieldTree {
-            //                q"""Bar3.apply$$default$$1()"""
-            //              }
           } else {
             MatchingField(ms)
+          }
+        }
+        .orElse {
+          println(s"defaults disabled: ${config.disableDefaultValues}")
+          println(s"defaults map: ${targetCaseClass.caseClassDefaults}")
+
+          val targetDefault = targetCaseClass.caseClassDefaults.get(targetField.name.toString)
+
+          if (!config.disableDefaultValues && targetDefault.isDefined) {
+            println("LALALALALALALALALALALA")
+            Some(ResolvedFieldTree(targetDefault.get))
+          } else {
+            None
           }
         }
     }
@@ -434,5 +436,5 @@ trait TransformerMacros {
       .filterNot(_ == EmptyTree)
   }
 
-  private val chimneyDocUrl = "http://scalalandio.github.io/chimney"
+  private val chimneyDocUrl = "https://scalalandio.github.io/chimney"
 }
