@@ -418,65 +418,66 @@ class DslSpec extends WordSpec with MustMatchers {
             .transform mustBe colors1.Blue
         }
       }
-//
-//      "transforming non-isomorphic domains" in {
-//
-//        def triangleToPolygon(t: shapes1.Triangle): shapes2.Shape =
-//          shapes2.Polygon(
-//            List(
-//              t.p1.transformInto[shapes2.Point],
-//              t.p2.transformInto[shapes2.Point],
-//              t.p3.transformInto[shapes2.Point]
-//            )
-//          )
-//
-//        def rectangleToPolygon(r: shapes1.Rectangle): shapes2.Shape =
-//          shapes2.Polygon(
-//            List(
-//              r.p1.transformInto[shapes2.Point],
-//              shapes2.Point(r.p1.x, r.p2.y),
-//              r.p2.transformInto[shapes2.Point],
-//              shapes2.Point(r.p2.x, r.p1.y)
-//            )
-//          )
-//
-//        val triangle: shapes1.Shape =
-//          shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0))
-//
-//        triangle
-//          .into[shapes2.Shape]
-//          .withCoproductInstance(triangleToPolygon)
-//          .withCoproductInstance(rectangleToPolygon)
-//          .transform mustBe shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0)))
-//
-//        val rectangle: shapes1.Shape =
-//          shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4))
-//
-//        rectangle
-//          .into[shapes2.Shape]
-//          .withCoproductInstance[shapes1.Shape] {
-//            case r: shapes1.Rectangle => rectangleToPolygon(r)
-//            case t: shapes1.Triangle  => triangleToPolygon(t)
-//          }
-//          .transform mustBe shapes2.Polygon(
-//          List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
-//        )
-//      }
-//
-//      "transforming isomorphic domains that differ a detail" in {
-//
-//        implicit val intToDoubleTransformer: Transformer[Int, Double] = (_: Int).toDouble
-//
-//        (shapes1
-//          .Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
-//          .transformInto[shapes3.Shape] mustBe
-//          shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0))
-//
-//        (shapes1
-//          .Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4)): shapes1.Shape)
-//          .transformInto[shapes3.Shape] mustBe
-//          shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0))
-//      }
+
+      "transforming non-isomorphic domains" in {
+
+        def triangleToPolygon(t: shapes1.Triangle): shapes2.Shape =
+          shapes2.Polygon(
+            List(
+              t.p1.transformInto[shapes2.Point],
+              t.p2.transformInto[shapes2.Point],
+              t.p3.transformInto[shapes2.Point]
+            )
+          )
+
+        def rectangleToPolygon(r: shapes1.Rectangle): shapes2.Shape =
+          shapes2.Polygon(
+            List(
+              r.p1.transformInto[shapes2.Point],
+              shapes2.Point(r.p1.x, r.p2.y),
+              r.p2.transformInto[shapes2.Point],
+              shapes2.Point(r.p2.x, r.p1.y)
+            )
+          )
+
+        val triangle: shapes1.Shape =
+          shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0))
+
+        triangle
+          .into[shapes2.Shape]
+          .withCoproductInstance(triangleToPolygon)
+          .withCoproductInstance(rectangleToPolygon)
+          .transform mustBe shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0)))
+
+        val rectangle: shapes1.Shape =
+          shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4))
+
+        rectangle
+          .into[shapes2.Shape]
+          .withCoproductInstance[shapes1.Shape] {
+            case r: shapes1.Rectangle => rectangleToPolygon(r)
+            case t: shapes1.Triangle  => triangleToPolygon(t)
+          }
+          .transform mustBe shapes2.Polygon(
+          List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
+        )
+      }
+
+      "transforming isomorphic domains that differ a detail" in {
+
+        implicit val intToDoubleTransformer: Transformer[Int, Double] =
+          (_: Int).toDouble
+
+        (shapes1
+          .Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
+          .transformInto[shapes3.Shape] mustBe
+          shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0))
+
+        (shapes1
+          .Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4)): shapes1.Shape)
+          .transformInto[shapes3.Shape] mustBe
+          shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0))
+      }
     }
   }
 }

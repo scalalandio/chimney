@@ -14,7 +14,7 @@ trait MacroUtils {
       t <:< typeOf[AnyVal] && !primitives.exists(_ =:= t)
 
     def isCaseClass: Boolean =
-      t.typeSymbol.classSymbolOpt.exists(_.isCaseClass)
+      t.typeSymbol.isCaseClass
 
     def isSealedClass: Boolean =
       t.typeSymbol.classSymbolOpt.exists(_.isSealed)
@@ -58,6 +58,9 @@ trait MacroUtils {
 
     def classSymbolOpt: Option[ClassSymbol] =
       if (s.isClass) Some(s.asClass) else None
+
+    def isCaseClass: Boolean =
+      classSymbolOpt.exists(_.isCaseClass)
   }
 
   implicit class TreeOps(t: Tree) {

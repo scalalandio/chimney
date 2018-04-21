@@ -225,51 +225,84 @@ trait TransformerMacros {
 
   def expandSealedClasses(srcPrefixTree: Tree, config: Config)(From: Type,
                                                                To: Type): Either[Seq[DerivationError], Tree] = {
-    val fromCS = From.typeSymbol.classSymbolOpt.get
-    val toCS = To.typeSymbol.classSymbolOpt.get
 
-    val fromInstances = fromCS.knownDirectSubclasses
-    val toInstances = toCS.knownDirectSubclasses
+    if (config.coproductInstances.contains((From.typeSymbol, To))) {
 
-    fromInstances.foreach(i => println(s"FROM :$i"))
-    toInstances.foreach(i => println(s"TO :$i"))
+      val instFullName = From.typeSymbol.fullName.toString
+      val fullTargetName = To.typeSymbol.fullName.toString
 
-    val targetNamedInstances = toInstances.map(s => s.name.toString -> s).toMap
+      Right {
+        q"${TermName(config.prefixValName)}.instances(($instFullName, $fullTargetName)).asInstanceOf[Any => $To]($srcPrefixTree).asInstanceOf[$To]"
+      }
+    } else {
 
-    val ccs = fromInstances.toSeq.map { instSymbol =>
-      // looking for some transforming instance tree
+      val fromCS = From.typeSymbol.classSymbolOpt.get
+      val toCS = To.typeSymbol.classSymbolOpt.get
 
-      val instName = instSymbol.name.toString
+      val fromInstances = fromCS.knownDirectSubclasses
+      val toInstances = toCS.knownDirectSubclasses
 
-      targetNamedInstances.get(instName) match {
-        case Some(matchingTargetSymbol) =>
-          if (matchingTargetSymbol.isModuleClass && instSymbol.isModuleClass) {
-            Some(cq"_: ${instSymbol.asType} => ${matchingTargetSymbol.asClass.module}")
-          } else {
-            // look for transformer
-            None
-          }
+      val targetNamedInstances = toInstances.map(s => s.name.toString -> s).toMap
 
-        case None if config.coproductInstances.contains((instSymbol, To)) =>
-          val fn = c.internal.reificationSupport.freshTermName(instName.toLowerCase + "$")
-          val instFullName = instSymbol.fullName.toString
-          val fullTargetName = To.typeSymbol.fullName.toString
-          Some(
-            cq"$fn: ${instSymbol.asType} => ${TermName(config.prefixValName)}.instances(($instFullName, $fullTargetName)).asInstanceOf[Any => $To]($fn).asInstanceOf[$To]"
-          )
+      val instanceClauses = fromInstances.toSeq.map { instSymbol =>
+        val instName = instSymbol.name.toString
+        targetNamedInstances.get(instName) match {
+          case Some(matchingTargetSymbol) =>
+            if ((instSymbol.isModuleClass || instSymbol.isCaseClass) && matchingTargetSymbol.isModuleClass) {
+              Right(cq"_: ${instSymbol.asType} => ${matchingTargetSymbol.asClass.module}")
+            } else if (instSymbol.isCaseClass && matchingTargetSymbol.isCaseClass) {
 
-        case None =>
-          None
+              val fn = c.internal.reificationSupport.freshTermName(instName.toLowerCase + "$")
+              val instTpe = instSymbol.asType.toType
+              val targetTpe = matchingTargetSymbol.asType.toType
+
+              expandCaseClassTransformerTree(Ident(fn), config.rec)(instTpe, targetTpe).right.map {
+                innerTransformerTree =>
+                  cq"$fn: ${instSymbol.asType} => $innerTransformerTree".debug
+              }
+            } else {
+              Left {
+                Seq(
+                  CantFindCoproductInstanceTransformer(
+                    instSymbol.fullName,
+                    From.typeSymbol.fullName.toString,
+                    To.typeSymbol.fullName.toString
+                  )
+                )
+              }
+            }
+          case None if config.coproductInstances.contains((instSymbol, To)) =>
+            val fn = c.internal.reificationSupport.freshTermName(instName.toLowerCase + "$")
+            val instFullName = instSymbol.fullName.toString
+            val fullTargetName = To.typeSymbol.fullName.toString
+            Right(
+              cq"$fn: ${instSymbol.asType} => ${TermName(config.prefixValName)}.instances(($instFullName, $fullTargetName)).asInstanceOf[Any => $To]($fn).asInstanceOf[$To]"
+            )
+
+          case None =>
+            Left {
+              Seq(
+                CantFindCoproductInstanceTransformer(
+                  instSymbol.fullName,
+                  From.typeSymbol.fullName.toString,
+                  To.typeSymbol.fullName.toString
+                )
+              )
+            }
+        }
+      }
+
+      if (instanceClauses.forall(_.isRight)) {
+        val clauses = instanceClauses.map(_.right.get)
+        Right {
+          q"$srcPrefixTree match { case ..$clauses }".debug
+        }
+      } else {
+        Left {
+          instanceClauses.collect { case Left(derivationErrors) => derivationErrors }.flatten
+        }
       }
     }
-
-    val clauses = ccs.flatten
-
-    Right {
-      q"$srcPrefixTree match { case ..$clauses }".debug
-    }
-
-//    Left(Nil)
   }
 
   def expandCaseClassTransformerTree(srcPrefixTree: Tree,
@@ -280,9 +313,13 @@ trait TransformerMacros {
     val fromFields = From.caseClassParams
     val toFields = To.caseClassParams
 
+    println(s"FROM FIELDS: $fromFields  || TO FIELDS: $toFields")
+
     val mapping = toFields.map { targetField =>
       targetField -> resolveField(targetField, fromFields, srcPrefixTree, config)
     }
+
+    println(mapping)
 
     val missingFields = mapping.collect { case (field, None) => field }
 
