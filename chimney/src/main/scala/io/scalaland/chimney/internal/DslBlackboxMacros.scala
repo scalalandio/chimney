@@ -51,7 +51,7 @@ trait DslBlackboxMacros {
         config.copy(coproductInstances = config.coproductInstances + (instanceType.typeSymbol -> targetType))
       )
     } else {
-      c.abort(c.enclosingPosition, "Bad overriden type shape!")
+      c.abort(c.enclosingPosition, "Bad internal config type shape!")
     }
   }
 }
