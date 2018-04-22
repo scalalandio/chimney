@@ -14,12 +14,12 @@ trait PatcherHConstInstance extends PatcherOptionalHConsInstance {
 
   implicit def hconsCase[L <: Symbol, T, PTail <: HList, U, TLG <: HList](
     implicit sel: ops.record.Selector.Aux[TLG, L, U],
-    dt: DerivedTransformer[T, U, HNil],
+    dt: Transformer[T, U],
     upd: ops.record.Updater.Aux[TLG, FieldType[L, U], TLG],
     tailPatcher: Patcher[TLG, PTail]
   ): Patcher[TLG, FieldType[L, T] :: PTail] =
     (obj: TLG, patch: FieldType[L, T] :: PTail) => {
-      val patchedHead = upd(obj, field[L](dt.transform(patch.head, HNil)))
+      val patchedHead = upd(obj, field[L](dt.transform(patch.head)))
       tailPatcher.patch(patchedHead, patch.tail)
     }
 }

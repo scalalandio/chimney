@@ -37,4 +37,10 @@ object dsl {
     def transform: To =
       macro ChimneyBlackboxMacros.transformImpl[From, To, C]
   }
+
+  implicit class PatcherOps[T](val obj: T) extends AnyVal {
+
+    final def patchWith[P](patch: P)(implicit patcher: Patcher[T, P]): T =
+      patcher.patch(obj, patch)
+  }
 }

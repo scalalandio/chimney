@@ -16,7 +16,7 @@ trait TransformerMacros {
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
 
-    println(s"XXXXX: $From ~~~~> $To, config = $config")
+    println(s"genTransformer: $From ~~~~> $To, config = $config")
 
     val srcName =
       c.internal.reificationSupport.freshTermName(From.typeSymbol.name.decodedName.toString.toLowerCase + "$")
@@ -31,7 +31,7 @@ trait TransformerMacros {
                $transformerTree
              }
            }
-        """.debug
+        """
 
         c.Expr[io.scalaland.chimney.Transformer[From, To]](tree)
 
@@ -245,6 +245,7 @@ trait TransformerMacros {
       val targetNamedInstances = toInstances.map(s => s.name.toString -> s).toMap
 
       val instanceClauses = fromInstances.toSeq.map { instSymbol =>
+        instSymbol.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
         val instName = instSymbol.name.toString
         targetNamedInstances.get(instName) match {
           case Some(matchingTargetSymbol) =>
@@ -257,7 +258,7 @@ trait TransformerMacros {
               val targetTpe = matchingTargetSymbol.asType.toType
 
               expandCaseClasses(Ident(fn), config.rec)(instTpe, targetTpe).right.map { innerTransformerTree =>
-                cq"$fn: ${instSymbol.asType} => $innerTransformerTree".debug
+                cq"$fn: ${instSymbol.asType} => $innerTransformerTree"
               }
             } else {
               Left {
@@ -294,7 +295,7 @@ trait TransformerMacros {
       if (instanceClauses.forall(_.isRight)) {
         val clauses = instanceClauses.map(_.right.get)
         Right {
-          q"$srcPrefixTree match { case ..$clauses }".debug
+          q"$srcPrefixTree match { case ..$clauses }"
         }
       } else {
         Left {
