@@ -16,7 +16,7 @@ trait TransformerMacros {
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
 
-    println(s"genTransformer: $From ~~~~> $To, config = $config")
+//    println(s"genTransformer: $From ~~~~> $To, config = $config")
 
     val srcName =
       c.internal.reificationSupport.freshTermName(From.typeSymbol.name.decodedName.toString.toLowerCase + "$")
@@ -407,13 +407,8 @@ trait TransformerMacros {
           }
         }
         .orElse {
-          println(s"defaults disabled: ${config.disableDefaultValues}")
-          println(s"defaults map: ${targetCaseClass.caseClassDefaults}")
-
           val targetDefault = targetCaseClass.caseClassDefaults.get(targetField.name.toString)
-
           if (!config.disableDefaultValues && targetDefault.isDefined) {
-            println("LALALALALALALALALALALA")
             Some(ResolvedFieldTree(targetDefault.get))
           } else {
             None
