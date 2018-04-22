@@ -28,14 +28,14 @@ trait PatcherOptionalHConsInstance extends PatcherGenericInstance {
 
   implicit def optionalHconsCase[L <: Symbol, T, PTail <: HList, U, TLG <: HList](
     implicit sel: ops.record.Selector.Aux[TLG, L, U],
-    dt: DerivedTransformer[T, U, HNil],
+    dt: Transformer[T, U],
     upd: ops.record.Updater.Aux[TLG, FieldType[L, U], TLG],
     tailPatcher: Patcher[TLG, PTail]
   ): Patcher[TLG, FieldType[L, Option[T]] :: PTail] =
     (obj: TLG, patch: FieldType[L, Option[T]] :: PTail) =>
       (patch.head: Option[T]) match {
         case Some(patchedValue) =>
-          val patchedHead = upd(obj, field[L](dt.transform(patchedValue, HNil)))
+          val patchedHead = upd(obj, field[L](dt.transform(patchedValue)))
           tailPatcher.patch(patchedHead, patch.tail)
         case None =>
           tailPatcher.patch(obj, patch.tail)
