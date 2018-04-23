@@ -3,7 +3,6 @@ package io.scalaland.chimney
 import org.scalatest.{MustMatchers, WordSpec}
 import io.scalaland.chimney.examples.addressbook
 import io.scalaland.chimney.examples.pb
-import shapeless.test._
 
 class PBTransformationSpec extends WordSpec with MustMatchers {
 
@@ -20,9 +19,9 @@ class PBTransformationSpec extends WordSpec with MustMatchers {
 
     "not compile if target type is wrong for value class" in {
 
-      illTyped(""" addressbook.PersonName("John").transformInto[Int] """)
-      illTyped(""" addressbook.PersonId(5).transformInto[String] """)
-      illTyped(""" addressbook.Email("john@example.com").transformInto[Float] """)
+      assertTypeError(""" addressbook.PersonName("John").transformInto[Int] """)
+      assertTypeError(""" addressbook.PersonId(5).transformInto[String] """)
+      assertTypeError(""" addressbook.Email("john@example.com").transformInto[Float] """)
     }
 
     "transform enum represented as sealed trait hierarchy" in {

@@ -21,8 +21,7 @@ class IssuesSpec extends WordSpec with MustMatchers {
     }
 
     "fix issue #21" in {
-      import shapeless.tag
-      import shapeless.tag._
+      import tag._
       sealed trait Test
 
       case class EntityWithTag1(id: Long, name: String @@ Test)
@@ -62,3 +61,14 @@ class IssuesSpec extends WordSpec with MustMatchers {
 }
 
 case class VC(x: String) extends AnyVal
+
+object tag {
+  def apply[U] = new Tagger[U]
+
+  trait Tagged[U]
+  type @@[+T, U] = T with Tagged[U]
+
+  class Tagger[U] {
+    def apply[T](t: T): T @@ U = t.asInstanceOf[T @@ U]
+  }
+}

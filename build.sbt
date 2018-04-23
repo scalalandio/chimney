@@ -1,5 +1,4 @@
 val versions = new {
-  val shapelessVersion = "2.3.3"
   val scalatestVersion = "3.0.5"
   val scalaVersion = "2.12.5"
 }
@@ -52,7 +51,6 @@ val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-    "com.chuusai" %%% "shapeless" % versions.shapelessVersion,
     "org.scalatest" %%% "scalatest" % versions.scalatestVersion % "test"
   )
 )

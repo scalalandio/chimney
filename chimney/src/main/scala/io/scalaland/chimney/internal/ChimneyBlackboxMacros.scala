@@ -3,7 +3,8 @@ package io.scalaland.chimney.internal
 import scala.reflect.macros.blackbox
 
 class ChimneyBlackboxMacros(val c: blackbox.Context)
-    extends TransformerMacros
+    extends PatcherMacros
+    with TransformerMacros
     with DslBlackboxMacros
     with DerivationGuards
     with MacroUtils
@@ -16,5 +17,9 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
   def deriveTransformerImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]
     : c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
     genTransformer[From, To](Config())
+  }
+
+  def derivePatcherImpl[T: c.WeakTypeTag, Patch: c.WeakTypeTag]: c.Expr[io.scalaland.chimney.Patcher[T, Patch]] = {
+    genPatcher[T, Patch]()
   }
 }

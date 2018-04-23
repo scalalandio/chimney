@@ -16,8 +16,6 @@ trait TransformerMacros {
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
 
-//    println(s"genTransformer: $From ~~~~> $To, config = $config")
-
     val srcName =
       c.internal.reificationSupport.freshTermName(From.typeSymbol.name.decodedName.toString.toLowerCase + "$")
     val srcPrefixTree = Ident(TermName(srcName.decodedName.toString))

@@ -1,7 +1,6 @@
 package io.scalaland.chimney
 
 import org.scalatest.{MustMatchers, WordSpec}
-import shapeless.test._
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.examples._
 
@@ -47,10 +46,7 @@ class DslSpec extends WordSpec with MustMatchers {
 
         "not compile if source for the target fields is not provided" in {
 
-          illTyped(
-            "Bar(3, (3.14, 3.14)).transformInto[Foo]",
-            "(.*)y: java.lang.String - no field named y in source type io.scalaland.chimney.DslSpec.Bar(.*)"
-          )
+          assertTypeError("Bar(3, (3.14, 3.14)).transformInto[Foo]")
         }
 
         "fill the field with provided default value" should {
@@ -72,24 +68,24 @@ class DslSpec extends WordSpec with MustMatchers {
 
           "not compile when the selector is invalid" in {
 
-            illTyped("""Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(_.y, "pi")
                   .withFieldConst(_.z._1, 0.0)
                   .transform
-                """, "Invalid selector!")
+                """)
 
-            illTyped("""Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(_.y + "abc", "pi")
                   .transform
-                """, "Invalid selector!")
+                """)
 
-            illTyped("""Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(cc => haveY.y, "pi")
                   .transform
-                """, "Invalid selector!")
+                """)
           }
         }
 
@@ -112,24 +108,24 @@ class DslSpec extends WordSpec with MustMatchers {
 
           "not compile when the selector is invalid" in {
 
-            illTyped("""Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(_.y, _.x.toString)
                   .withFieldComputed(_.z._1, _.z._1 * 10.0)
                   .transform
-                """, "Invalid selector!")
+                """)
 
-            illTyped("""Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(_.y + "abc", _.x.toString)
                   .transform
-                """, "Invalid selector!")
+                """)
 
-            illTyped("""Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(cc => haveY.y, _.x.toString)
                   .transform
-                """, "Invalid selector!")
+                """)
           }
         }
       }
@@ -206,11 +202,11 @@ class DslSpec extends WordSpec with MustMatchers {
       }
 
       "not compile when default parameter values are disabled" in {
-        illTyped("""
+        assertTypeError("""
           Foo(10).into[Bar].disableDefaultValues.transform
         """)
 
-        illTyped("""
+        assertTypeError("""
           Baah(10, Foo(300)).into[Baahr].disableDefaultValues.transform
         """)
       }
@@ -227,7 +223,7 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "not compile if relabelling modifier is not provided" in {
 
-        illTyped("""Foo(10, "something").transformInto[Bar]""")
+        assertTypeError("""Foo(10, "something").transformInto[Bar]""")
       }
 
       "relabel fields with relabelling modifier" in {
@@ -240,54 +236,54 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "not compile if relabelling selectors are invalid" in {
 
-        illTyped("""
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y + "abc", _.z)
               .transform
-          """, "Selector of type Foo => String is not valid: (.*)")
+          """)
 
-        illTyped("""
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(cc => haveY.y, _.z)
               .transform
-          """, "Selector of type Foo => String is not valid: (.*)")
+          """)
 
-        illTyped("""
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y, _.z + "abc")
               .transform
-          """, "Selector of type Bar => String is not valid: (.*)")
+          """)
 
-        illTyped("""
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y, cc => haveZ.z)
               .transform
-          """, "Selector of type Bar => String is not valid: (.*)")
+          """)
 
-        illTyped("""
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y + "abc", _.z + "abc")
               .transform
-          """, "Invalid selectors:(.*)")
+          """)
 
-        illTyped("""
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(cc => haveY.y, cc => haveZ.z)
               .transform
-          """, "Invalid selectors:(.*)")
+          """)
       }
 
       "not compile if relabelled in a wrong way" in {
 
-        illTyped("""Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform""")
+        assertTypeError("""Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform""")
 
-        illTyped("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
+        assertTypeError("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
       }
     }
 
