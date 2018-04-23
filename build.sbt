@@ -5,7 +5,7 @@ val versions = new {
 }
 
 val settings = Seq(
-  version := "0.1.10",
+  version := "0.2.0-SNAPSHOT",
   scalaVersion := versions.scalaVersion,
   crossScalaVersions := Seq("2.11.12", "2.12.5"),
   scalacOptions ++= Seq(
@@ -34,7 +34,6 @@ val settings = Seq(
     "-Xlint:doc-detached",
     "-Xlint:inaccessible",
     "-Xlint:infer-any",
-    "-Xlint:missing-interpolator",
     "-Xlint:nullary-override",
     "-Xlint:nullary-unit",
     "-Xlint:option-implicit",
@@ -52,6 +51,7 @@ val settings = Seq(
 val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    "org.scala-lang" % "scala-compiler" % scalaVersion.value,
     "com.chuusai" %%% "shapeless" % versions.shapelessVersion,
     "org.scalatest" %%% "scalatest" % versions.scalatestVersion % "test"
   )

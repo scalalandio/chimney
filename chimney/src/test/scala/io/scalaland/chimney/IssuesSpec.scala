@@ -1,7 +1,6 @@
 package io.scalaland.chimney
 
 import org.scalatest.{MustMatchers, WordSpec}
-import shapeless._
 
 class IssuesSpec extends WordSpec with MustMatchers {
 
@@ -15,8 +14,8 @@ class IssuesSpec extends WordSpec with MustMatchers {
 
       NewEntity("name")
         .into[Entity]
-        .withFieldConst('id, 0L)
-        .withFieldConst('isDeleted, false)
+        .withFieldConst(_.id, 0L)
+        .withFieldConst(_.isDeleted, false)
         .transform mustBe
         Entity(0, "name", isDeleted = false)
     }

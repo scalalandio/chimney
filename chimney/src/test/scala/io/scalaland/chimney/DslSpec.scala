@@ -47,7 +47,10 @@ class DslSpec extends WordSpec with MustMatchers {
 
         "not compile if source for the target fields is not provided" in {
 
-          illTyped("Bar(3, (3.14, 3.14)).transformInto[Foo]")
+          illTyped(
+            "Bar(3, (3.14, 3.14)).transformInto[Foo]",
+            "(.*)y: java.lang.String - no field named y in source type io.scalaland.chimney.DslSpec.Bar(.*)"
+          )
         }
 
         "fill the field with provided default value" should {
@@ -357,6 +360,17 @@ class DslSpec extends WordSpec with MustMatchers {
         Array("a").transformInto[Array[String]] mustBe Array("a")
       }
 
+      "support conversion between Traversables and Arrays" in {
+
+        Array(Foo("a")).transformInto[List[Bar]] mustBe List(Bar("a"))
+        Array("a", "b").transformInto[Seq[String]] mustBe Seq("a", "b")
+        Array(3, 2, 1).transformInto[Vector[Int]] mustBe Vector(3, 2, 1)
+
+        Vector("a").transformInto[Array[String]] mustBe Array("a")
+        List(1, 6, 3).transformInto[Array[Int]] mustBe Array(1, 6, 3)
+        Seq(Bar("x"), Bar("y")).transformInto[Array[Foo]] mustBe Array(Foo("x"), Foo("y"))
+      }
+
       "support Map" in {
         Map("test" -> Foo("a")).transformInto[Map[String, Bar]] mustBe Map("test" -> Bar("a"))
         Map("test" -> "a").transformInto[Map[String, String]] mustBe Map("test" -> "a")
@@ -383,6 +397,11 @@ class DslSpec extends WordSpec with MustMatchers {
           def blackIsRed(b: colors2.Black.type): colors1.Color =
             colors1.Red
 
+          (colors2.Black: colors2.Color)
+            .into[colors1.Color]
+            .withCoproductInstance(blackIsRed)
+            .transform mustBe colors1.Red
+
           (colors2.Red: colors2.Color)
             .into[colors1.Color]
             .withCoproductInstance(blackIsRed)
@@ -397,11 +416,6 @@ class DslSpec extends WordSpec with MustMatchers {
             .into[colors1.Color]
             .withCoproductInstance(blackIsRed)
             .transform mustBe colors1.Blue
-
-          (colors2.Black: colors2.Color)
-            .into[colors1.Color]
-            .withCoproductInstance(blackIsRed)
-            .transform mustBe colors1.Red
         }
       }
 
@@ -451,7 +465,8 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "transforming isomorphic domains that differ a detail" in {
 
-        implicit val intToDoubleTransformer: Transformer[Int, Double] = (_: Int).toDouble
+        implicit val intToDoubleTransformer: Transformer[Int, Double] =
+          (_: Int).toDouble
 
         (shapes1
           .Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
