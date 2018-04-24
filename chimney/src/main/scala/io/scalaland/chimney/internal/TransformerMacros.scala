@@ -373,7 +373,7 @@ trait TransformerMacros {
   case class ResolvedFieldTree(tree: Tree) extends FieldResolution
   case class MatchingField(ms: MethodSymbol) extends FieldResolution
 
-  def resolveField(srcPrefixTree: Tree, config: Config, From: Type, To: Type)(
+  def resolveField(srcPrefixTree: Tree, config: Config, tFrom: Type, tTo: Type)(
     targetField: MethodSymbol,
     fromParams: Iterable[MethodSymbol],
     targetCaseClass: ClassSymbol
@@ -384,7 +384,7 @@ trait TransformerMacros {
     if (config.overridenFields.contains(fieldName)) {
       Some {
         ResolvedFieldTree {
-          q"${TermName(config.prefixValName)}.overrides($fieldName).asInstanceOf[${targetField.typeSignatureIn(To)}]"
+          q"${TermName(config.prefixValName)}.overrides($fieldName).asInstanceOf[${targetField.typeSignatureIn(tTo)}]"
         }
       }
     } else if (config.renamedFields.contains(fieldName)) {
@@ -398,7 +398,7 @@ trait TransformerMacros {
       fromParams
         .find(_.name == targetField.name)
         .map { ms =>
-          if (ms.typeSignatureIn(From) <:< targetField.typeSignatureIn(To)) {
+          if (ms.typeSignatureIn(tFrom) <:< targetField.typeSignatureIn(tTo)) {
             ResolvedFieldTree {
               q"$srcPrefixTree.${targetField.name}"
             }
