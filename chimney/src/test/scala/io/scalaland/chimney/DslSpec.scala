@@ -476,7 +476,7 @@ class DslSpec extends WordSpec with MustMatchers {
       }
     }
 
-    "support for polymorphic source/target objects and modifiers" in {
+    "support for polymorphic source/target objects and modifiers" when {
 
       import Poly._
 

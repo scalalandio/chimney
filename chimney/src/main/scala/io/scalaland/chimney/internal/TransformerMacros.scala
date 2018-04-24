@@ -312,7 +312,7 @@ trait TransformerMacros {
     val toFields = To.caseClassParams
 
     val mapping = toFields.map { targetField =>
-      targetField -> resolveField(srcPrefixTree, config)(targetField, fromFields, To.typeSymbol.asClass)
+      targetField -> resolveField(srcPrefixTree, config, From, To)(targetField, fromFields, To.typeSymbol.asClass)
     }
 
     val missingFields = mapping.collect { case (field, None) => field }
@@ -333,7 +333,7 @@ trait TransformerMacros {
         tree
 
       case (targetField, Some(MatchingField(sourceField))) =>
-        findLocalImplicitTransformer(sourceField.returnType, targetField.returnType) match {
+        findLocalImplicitTransformer(sourceField.typeSignatureIn(From), targetField.typeSignatureIn(To)) match {
           case Some(localImplicitTransformer) =>
             q"$localImplicitTransformer.transform($srcPrefixTree.${sourceField.name})"
 
@@ -373,16 +373,18 @@ trait TransformerMacros {
   case class ResolvedFieldTree(tree: Tree) extends FieldResolution
   case class MatchingField(ms: MethodSymbol) extends FieldResolution
 
-  def resolveField(srcPrefixTree: Tree, config: Config)(targetField: MethodSymbol,
-                                                        fromParams: Iterable[MethodSymbol],
-                                                        targetCaseClass: ClassSymbol): Option[FieldResolution] = {
+  def resolveField(srcPrefixTree: Tree, config: Config, From: Type, To: Type)(
+    targetField: MethodSymbol,
+    fromParams: Iterable[MethodSymbol],
+    targetCaseClass: ClassSymbol
+  ): Option[FieldResolution] = {
 
     val fieldName = targetField.name.decodedName.toString
 
     if (config.overridenFields.contains(fieldName)) {
       Some {
         ResolvedFieldTree {
-          q"${TermName(config.prefixValName)}.overrides($fieldName).asInstanceOf[${targetField.returnType}]"
+          q"${TermName(config.prefixValName)}.overrides($fieldName).asInstanceOf[${targetField.typeSignatureIn(To)}]"
         }
       }
     } else if (config.renamedFields.contains(fieldName)) {
@@ -396,7 +398,7 @@ trait TransformerMacros {
       fromParams
         .find(_.name == targetField.name)
         .map { ms =>
-          if (ms.returnType <:< targetField.returnType) {
+          if (ms.typeSignatureIn(From) <:< targetField.typeSignatureIn(To)) {
             ResolvedFieldTree {
               q"$srcPrefixTree.${targetField.name}"
             }
