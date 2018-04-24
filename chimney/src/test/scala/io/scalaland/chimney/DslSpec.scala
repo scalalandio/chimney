@@ -375,7 +375,7 @@ class DslSpec extends WordSpec with MustMatchers {
       }
     }
 
-    "support for sealed hierarchies" when {
+    "support sealed hierarchies" when {
 
       "enum types encoded as sealed hierarchies of case objects" when {
         "transforming from smaller to bigger enum" in {
@@ -476,7 +476,7 @@ class DslSpec extends WordSpec with MustMatchers {
       }
     }
 
-    "support for polymorphic source/target objects and modifiers" when {
+    "support polymorphic source/target objects and modifiers" when {
 
       import Poly._
 
