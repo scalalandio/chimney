@@ -475,6 +475,45 @@ class DslSpec extends WordSpec with MustMatchers {
           shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0))
       }
     }
+
+    "support for polymorphic source/target objects and modifiers" in {
+
+      import Poly._
+
+      "monomorphic source to polymorphic target" in {
+
+        def transform[T]: (String => T) => MonoSource => PolyTarget[T] =
+          fun => _.into[PolyTarget[T]].withFieldComputed(_.poly, src => fun(src.poly)).transform
+
+        transform[String](identity)(monoSource) mustBe polyTarget
+      }
+
+      "polymorphic source to monomorphic target" in {
+
+        def transform[T]: PolySource[T] => MonoTarget =
+          _.into[MonoTarget].withFieldComputed(_.poly, _.poly.toString).transform
+
+        transform[String](polySource) mustBe monoTarget
+      }
+
+      "polymorphic source to polymorphic target" in {
+
+        def transform[T]: PolySource[T] => PolyTarget[T] =
+          _.transformInto[PolyTarget[T]]
+
+        transform[String](polySource) mustBe polyTarget
+      }
+
+      "handle type-inference for polymorphic computation" in {
+
+        def fun[T]: PolySource[T] => String = _.poly.toString
+
+        def transform[T]: PolySource[T] => MonoTarget =
+          _.into[MonoTarget].withFieldComputed(_.poly, fun).transform
+
+        transform[String](polySource) mustBe monoTarget
+      }
+    }
   }
 }
 
@@ -494,4 +533,17 @@ object VCDomain1 {
   case class UserName(value: String) extends AnyVal
   case class UserDTO(id: String, name: String)
   case class User(id: String, name: UserName)
+}
+
+object Poly {
+
+  case class MonoSource(poly: String, other: String)
+  case class PolySource[T](poly: T, other: String)
+  case class MonoTarget(poly: String, other: String)
+  case class PolyTarget[T](poly: T, other: String)
+
+  val monoSource = MonoSource("test", "test")
+  val polySource = PolySource("test", "test")
+  val monoTarget = MonoTarget("test", "test")
+  val polyTarget = PolyTarget("test", "test")
 }
