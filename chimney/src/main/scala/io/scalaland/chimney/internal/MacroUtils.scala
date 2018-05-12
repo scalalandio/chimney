@@ -76,6 +76,7 @@ trait MacroUtils extends CompanionUtils {
     }
   }
 
+  // $COVERAGE-OFF$
   implicit class TreeOps(t: Tree) {
 
     def debug: Tree = {
@@ -122,6 +123,7 @@ trait MacroUtils extends CompanionUtils {
       }
     }
   }
+  // $COVERAGE-ON$
 
   private val primitives = Set(
     typeOf[Double],

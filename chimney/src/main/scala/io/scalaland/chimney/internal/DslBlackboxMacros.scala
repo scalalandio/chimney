@@ -51,7 +51,9 @@ trait DslBlackboxMacros {
         config.copy(coproductInstances = config.coproductInstances + (instanceType.typeSymbol -> targetType))
       )
     } else {
+      // $COVERAGE-OFF$
       c.abort(c.enclosingPosition, "Bad internal config type shape!")
+      // $COVERAGE-ON$
     }
   }
 }
