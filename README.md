@@ -40,9 +40,6 @@ of such boilerplate, especially when:
 
 Chimney provides a compact DSL with which you can define transformation
 rules and transform your objects with as little boilerplate as possible.
-Underneath it uses type-level meta-programming based on
-[Shapeless](https://github.com/milessabin/shapeless) and type-class
-derivation to give you type-safety at compile-time!
 
 ```scala
 import io.scalaland.chimney.dsl._
@@ -53,12 +50,18 @@ val event = command.into[CoffeeMade]
   .transform
 ```
 
+Underneath it uses Scala macros to give you:
+- type-safety at compile-time
+- fast generated code, almost equivalent to hand-written version
+- excellent error messages
+- minimal overhead on compilation time
+
 ## Getting started
 
 To include Chimney to your SBT project, add the following line to your `build.sbt`:
 
 ```scala
-libraryDependencies += "io.scalaland" %% "chimney" % "0.1.10"
+libraryDependencies += "io.scalaland" %% "chimney" % "0.2.0"
 ```
 
 Library is released for Scala 2.11 and 2.12.
