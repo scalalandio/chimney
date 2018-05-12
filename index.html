@@ -104,9 +104,6 @@ val event = CoffeeMade(id = command.id,
     <p>
       Chimney provides a compact DSL with which you can define transformation
       rules and transform your objects with as little boilerplate as possible.
-      Underneath it uses type-level meta-programming based on
-      <a href="https://github.com/milessabin/shapeless">Shapeless</a> and type-class
-      derivation to give you type-safety at compile-time!
 </p>
     <pre><code class="scala scalatex-site-Styles-highlightMe">import io.scalaland.chimney.dsl._
 
@@ -115,11 +112,23 @@ val event = command.into[CoffeeMade]
   .withFieldRenamed(_.addict, _.forAddict)
   .transform
 </code></pre>
+    <p>
+      Underneath it uses Scala macros to give you:
+      <ul>
+        <li>
+          type-safety at compile-time</li>
+        <li>
+          fast generated code, almost equivalent to hand-written version</li>
+        <li>
+          excellent error messages</li>
+        <li>
+          minimal overhead on compilation time
+</li></ul></p>
   <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Gettingstarted" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Getting started<a class=" scalatex-site-Styles-headerLink" href="#Gettingstarted" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
     <p>
       To include Chimney to your SBT project, add the following line
       to your <code>build.sbt</code>:</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.1.10&quot;</code></pre>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.2.0&quot;</code></pre>
     <p>
       Library is released for Scala 2.11 and 2.12.
       If you want to use it with Scala.js, you need to replace <code>%%</code> with <code>%%%</code>.
@@ -191,7 +200,13 @@ val highschool = kindergarden.transformInto[Adults]
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">val stevie = Catterpillar(5, &quot;Steve&quot;)
 val steve = stevie.transformInto[Butterfly]
-// error: could not find implicit value for parameter derivedTransformer: io.scalaland.chimney.DerivedTransformer[Catterpillar,Butterfly,shapeless.HNil]
+// error: Chimney can't derive transformation from Catterpillar to Butterfly
+//
+// Butterfly
+//   wingsColor: String - no field named wingsColor in source type Catterpillar
+//
+// Consult https://scalalandio.github.io/chimney for usage examples.
+//
 //        val steve = stevie.transformInto[Butterfly]
 //                                        ^
 </code></pre>
@@ -231,13 +246,20 @@ val steve = stevie.transformInto[Butterfly]
       <h2 id="Disablingdefaultvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Disablingdefaultvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Disabling default values</h2>
 
         <p>
-          It is possible to disable lookup for default values and require them to be passed explicitly.
+          It is possible to disable lookup for default values and require them to be passed explicitly,
+          using <code>.disableDefaultValues</code> operation.
 </p>
         <pre><code class="scala scalatex-site-Styles-highlightMe">val steve = stevie
   .into[Butterfly]
   .disableDefaultValues
   .transform
-// error: could not find implicit value for parameter transformer: io.scalaland.chimney.DerivedTransformer[Catterpillar,Butterfly,io.scalaland.chimney.internal.Modifier.disableDefaultValues :: shapeless.HNil]
+// error: Chimney can't derive transformation from Catterpillar to Butterfly
+//
+// Butterfly
+//   wingsColor: String - no field named wingsColor in source type Catterpillar
+//
+// Consult https://scalalandio.github.io/chimney for usage examples.
+//
 //            .transform
 //            ^
 </code></pre>
@@ -245,7 +267,7 @@ val steve = stevie.transformInto[Butterfly]
       <p>
         Chimney supports deriving transformers for many standard Scala types, like
         <code>Options</code>, <code>Eithers</code>, collection types including <code>Lists</code>,
-        <code>Vectors</code>, <code>Sets</code>, <code>Maps</code>, etc.
+        <code>Vectors</code>, <code>Sets</code>, <code>Maps</code>, <code>Arrays</code> and many more.
 </p>
       <p>
         If you are interested to see how they are handled, it's recommended to explore
@@ -364,7 +386,13 @@ val chanRed = colRed.transformInto[Channel]
         How about other way round?
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">chanRed.transformInto[Color]
-// error: could not find implicit value for parameter derivedTransformer: io.scalaland.chimney.DerivedTransformer[Channel,Color,shapeless.HNil]
+// error: Chimney can't derive transformation from Channel to Color
+//
+// Color
+//   can't transform coproduct instance Channel.Alpha to Color
+//
+// Consult https://scalalandio.github.io/chimney for usage examples.
+//
 //        chanRed.transformInto[Color]
 //                             ^
 </code></pre>
@@ -428,4 +456,4 @@ user.patchWith(updateForm)
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
