@@ -1,6 +1,6 @@
 val versions = new {
   val scalatestVersion = "3.0.5"
-  val scalaVersion = "2.12.5"
+  val scalaVersion = "2.12.6"
 }
 
 val settings = Seq(
