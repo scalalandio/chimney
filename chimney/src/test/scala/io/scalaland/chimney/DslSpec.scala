@@ -514,6 +514,21 @@ class DslSpec extends WordSpec with MustMatchers {
         transform[String](polySource) mustBe monoTarget
       }
     }
+
+    "support abstracting over a value in dsl opertions" in {
+
+      case class Foo(x: String)
+      case class Bar(z: Double, y: Int, x: String)
+
+      val partialTransformer = Foo("abc").into[Bar]
+        .withFieldComputed(_.y, _.x.length)
+
+      val transformer1 = partialTransformer.withFieldConst(_.z, 1.0)
+      val transformer2 = partialTransformer.withFieldComputed(_.z, _.x.length * 2.0)
+
+      transformer1.transform mustBe Bar(1.0, 3, "abc")
+      transformer2.transform mustBe Bar(6.0, 3, "abc")
+    }
   }
 }
 
