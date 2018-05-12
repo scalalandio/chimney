@@ -56,9 +56,6 @@
     @p
       Chimney provides a compact DSL with which you can define transformation
       rules and transform your objects with as little boilerplate as possible.
-      Underneath it uses type-level meta-programming based on
-      @lnk("Shapeless", "https://github.com/milessabin/shapeless") and type-class
-      derivation to give you type-safety at compile-time!
 
     @hl.scala
       import io.scalaland.chimney.dsl._
@@ -68,12 +65,24 @@
         .withFieldRenamed(_.addict, _.forAddict)
         .transform
 
+    @p
+      Underneath it uses Scala macros to give you:
+      @ul
+        @li
+          type-safety at compile-time
+        @li
+          fast generated code, almost equivalent to hand-written version
+        @li
+          excellent error messages
+        @li
+          minimal overhead on compilation time
+
   @sect{Getting started}
     @p
       To include Chimney to your SBT project, add the following line
       to your @code{build.sbt}:
     @hl.scala
-      libraryDependencies += "io.scalaland" %% "chimney" % "0.1.10"
+      libraryDependencies += "io.scalaland" %% "chimney" % "0.2.0"
     @p
       Library is released for Scala 2.11 and 2.12.
       If you want to use it with Scala.js, you need to replace @code{%%} with @code{%%%}.
@@ -150,7 +159,13 @@
       @hl.scala
         val stevie = Catterpillar(5, "Steve")
         val steve = stevie.transformInto[Butterfly]
-        // error: could not find implicit value for parameter derivedTransformer: io.scalaland.chimney.DerivedTransformer[Catterpillar,Butterfly,shapeless.HNil]
+        // error: Chimney can't derive transformation from Catterpillar to Butterfly
+        //
+        // Butterfly
+        //   wingsColor: String - no field named wingsColor in source type Catterpillar
+        //
+        // Consult https://scalalandio.github.io/chimney for usage examples.
+        //
         //        val steve = stevie.transformInto[Butterfly]
         //                                        ^
 
@@ -193,14 +208,21 @@
       @sect{Disabling default values}
 
         @p
-          It is possible to disable lookup for default values and require them to be passed explicitly.
+          It is possible to disable lookup for default values and require them to be passed explicitly,
+          using @code{.disableDefaultValues} operation.
 
         @hl.scala
           val steve = stevie
             .into[Butterfly]
             .disableDefaultValues
             .transform
-          // error: could not find implicit value for parameter transformer: io.scalaland.chimney.DerivedTransformer[Catterpillar,Butterfly,io.scalaland.chimney.internal.Modifier.disableDefaultValues :: shapeless.HNil]
+          // error: Chimney can't derive transformation from Catterpillar to Butterfly
+          //
+          // Butterfly
+          //   wingsColor: String - no field named wingsColor in source type Catterpillar
+          //
+          // Consult https://scalalandio.github.io/chimney for usage examples.
+          //
           //            .transform
           //            ^
 
@@ -208,7 +230,7 @@
       @p
         Chimney supports deriving transformers for many standard Scala types, like
         @code{Options}, @code{Eithers}, collection types including @code{Lists},
-        @code{Vectors}, @code{Sets}, @code{Maps}, etc.
+        @code{Vectors}, @code{Sets}, @code{Maps}, @code{Arrays} and many more.
 
       @p
         If you are interested to see how they are handled, it's recommended to explore
@@ -334,7 +356,13 @@
 
       @hl.scala
         chanRed.transformInto[Color]
-        // error: could not find implicit value for parameter derivedTransformer: io.scalaland.chimney.DerivedTransformer[Channel,Color,shapeless.HNil]
+        // error: Chimney can't derive transformation from Channel to Color
+        //
+        // Color
+        //   can't transform coproduct instance Channel.Alpha to Color
+        //
+        // Consult https://scalalandio.github.io/chimney for usage examples.
+        //
         //        chanRed.transformInto[Color]
         //                             ^
 
