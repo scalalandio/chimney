@@ -68,23 +68,20 @@ class DslSpec extends WordSpec with MustMatchers {
 
           "not compile when the selector is invalid" in {
 
-            assertTypeError(
-              """Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(_.y, "pi")
                   .withFieldConst(_.z._1, 0.0)
                   .transform
                 """)
 
-            assertTypeError(
-              """Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(_.y + "abc", "pi")
                   .transform
                 """)
 
-            assertTypeError(
-              """Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(cc => haveY.y, "pi")
                   .transform
@@ -111,23 +108,20 @@ class DslSpec extends WordSpec with MustMatchers {
 
           "not compile when the selector is invalid" in {
 
-            assertTypeError(
-              """Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(_.y, _.x.toString)
                   .withFieldComputed(_.z._1, _.z._1 * 10.0)
                   .transform
                 """)
 
-            assertTypeError(
-              """Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(_.y + "abc", _.x.toString)
                   .transform
                 """)
 
-            assertTypeError(
-              """Bar(3, (3.14, 3.14))
+            assertTypeError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(cc => haveY.y, _.x.toString)
                   .transform
@@ -208,13 +202,11 @@ class DslSpec extends WordSpec with MustMatchers {
       }
 
       "not compile when default parameter values are disabled" in {
-        assertTypeError(
-          """
+        assertTypeError("""
           Foo(10).into[Bar].disableDefaultValues.transform
         """)
 
-        assertTypeError(
-          """
+        assertTypeError("""
           Baah(10, Foo(300)).into[Baahr].disableDefaultValues.transform
         """)
       }
@@ -244,48 +236,42 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "not compile if relabelling selectors are invalid" in {
 
-        assertTypeError(
-          """
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y + "abc", _.z)
               .transform
           """)
 
-        assertTypeError(
-          """
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(cc => haveY.y, _.z)
               .transform
           """)
 
-        assertTypeError(
-          """
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y, _.z + "abc")
               .transform
           """)
 
-        assertTypeError(
-          """
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y, cc => haveZ.z)
               .transform
           """)
 
-        assertTypeError(
-          """
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y + "abc", _.z + "abc")
               .transform
           """)
 
-        assertTypeError(
-          """
+        assertTypeError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(cc => haveY.y, cc => haveZ.z)
@@ -466,9 +452,9 @@ class DslSpec extends WordSpec with MustMatchers {
         rectangle
           .into[shapes2.Shape]
           .withCoproductInstance[shapes1.Shape] {
-          case r: shapes1.Rectangle => rectangleToPolygon(r)
-          case t: shapes1.Triangle => triangleToPolygon(t)
-        }
+            case r: shapes1.Rectangle => rectangleToPolygon(r)
+            case t: shapes1.Triangle  => triangleToPolygon(t)
+          }
           .transform mustBe shapes2.Polygon(
           List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
         )
@@ -535,7 +521,8 @@ class DslSpec extends WordSpec with MustMatchers {
       case class Foo(x: String)
       case class Bar(z: Double, y: Int, x: String)
 
-      val partialTransformer = Foo("abc").into[Bar]
+      val partialTransformer = Foo("abc")
+        .into[Bar]
         .withFieldComputed(_.y, _.x.length)
 
       val transformer1 = partialTransformer.withFieldConst(_.z, 1.0)
