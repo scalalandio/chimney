@@ -4,33 +4,67 @@ import scala.reflect.macros.whitebox
 
 class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros with MacroUtils {
 
-  def withFieldConstImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, C: c.WeakTypeTag](
+  def withFieldConstImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, U: c.WeakTypeTag, C: c.WeakTypeTag](
     selector: c.Tree,
     value: c.Tree
   ): c.Tree = {
-
     val fieldName = selector.extractSelectorFieldName
-    expandWithFieldConst[From, To, C](fieldName, value)
+
+    if (!(c.weakTypeOf[U] <:< c.weakTypeOf[T])) {
+      val msg =
+        s"""Type mismatch!
+           |Value passed to `withFieldConst` is of type: ${c.weakTypeOf[U]}
+           |Type required by '$fieldName' field: ${c.weakTypeOf[T]}
+         """.stripMargin
+
+      c.abort(c.enclosingPosition, msg)
+    } else {
+      expandWithFieldConst[From, To, C](fieldName, value)
+    }
   }
 
-  def withFieldComputedImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, C: c.WeakTypeTag](
-    selector: c.Tree,
-    map: c.Tree
-  ): c.Tree = {
+  def withFieldComputedImpl[From: c.WeakTypeTag,
+                            To: c.WeakTypeTag,
+                            T: c.WeakTypeTag,
+                            U: c.WeakTypeTag,
+                            C: c.WeakTypeTag](selector: c.Tree, map: c.Tree): c.Tree = {
     val fieldName = selector.extractSelectorFieldName
-    expandFieldComputed[From, To, C](fieldName, map)
+
+    if (!(c.weakTypeOf[U] <:< c.weakTypeOf[T])) {
+      val msg =
+        s"""Type mismatch!
+           |Function passed to `withFieldComputed` returns type: ${c.weakTypeOf[U]}
+           |Type required by '$fieldName' field: ${c.weakTypeOf[T]}
+         """.stripMargin
+
+      c.abort(c.enclosingPosition, msg)
+    } else {
+      expandFieldComputed[From, To, C](fieldName, map)
+    }
   }
 
-  def withFieldRenamedImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, C: c.WeakTypeTag](
-    selectorFrom: c.Tree,
-    selectorTo: c.Tree
-  ): c.Tree = {
+  def withFieldRenamedImpl[From: c.WeakTypeTag,
+                           To: c.WeakTypeTag,
+                           T: c.WeakTypeTag,
+                           U: c.WeakTypeTag,
+                           C: c.WeakTypeTag](selectorFrom: c.Tree, selectorTo: c.Tree): c.Tree = {
+
     val fieldNameFromOpt = selectorFrom.extractSelectorFieldNameOpt
     val fieldNameToOpt = selectorTo.extractSelectorFieldNameOpt
 
     (fieldNameFromOpt, fieldNameToOpt) match {
       case (Some(fieldNameFrom), Some(fieldNameTo)) =>
-        expandFieldRenamed[From, To, C](fieldNameFrom, fieldNameTo)
+        if (!(c.weakTypeOf[U] =:= c.weakTypeOf[T])) {
+          val msg =
+            s"""Type mismatch!
+               |First selector points to field '$fieldNameFrom' of type : ${c.weakTypeOf[T]}
+               |Second selector points to field '$fieldNameTo' of type : ${c.weakTypeOf[U]}
+            """.stripMargin
+          c.abort(c.enclosingPosition, msg)
+        } else {
+          expandFieldRenamed[From, To, C](fieldNameFrom, fieldNameTo)
+        }
+
       case (Some(_), None) =>
         c.abort(c.enclosingPosition, s"Selector of type ${selectorTo.tpe} is not valid: $selectorTo")
       case (None, Some(_)) =>

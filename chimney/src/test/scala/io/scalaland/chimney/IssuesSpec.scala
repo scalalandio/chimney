@@ -57,6 +57,40 @@ class IssuesSpec extends WordSpec with MustMatchers {
       X(5).into[Y2].withFieldComputed(_.b, _ => Nil).transform
       X(5).into[Y2].withFieldConst(_.b, "a" :: Nil).transform
     }
+
+    "fix issue #66" should {
+
+      case class Foo1(y: String)
+      case class Foo2(y: String, x: Int)
+      case class Foo3(x: Int)
+
+      "fix for `withFieldConst`" in {
+
+        assertDoesNotCompile("""
+          Foo1("test")
+            .into[Foo2]
+            .withFieldConst(_.x, "xyz")
+        """)
+      }
+
+      "fix for `withFieldComputed`" in {
+
+        assertDoesNotCompile("""
+          Foo1("test")
+            .into[Foo2]
+            .withFieldComputed(_.x, _ => "xyz")
+        """)
+      }
+
+      "fix for `withFieldRenamed`" in {
+
+        assertDoesNotCompile("""
+          Foo1("test")
+            .into[Foo3]
+            .withFieldRenamed(_.y, _.x)
+        """)
+      }
+    }
   }
 }
 

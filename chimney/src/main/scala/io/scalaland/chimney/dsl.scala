@@ -22,14 +22,14 @@ object dsl {
     def disableDefaultValues: TransformerInto[From, To, DisableDefaults[C]] =
       new TransformerInto[From, To, DisableDefaults[C]](source, overrides, instances)
 
-    def withFieldConst[T](selector: To => T, value: T): TransformerInto[From, To, _] =
-      macro ChimneyWhiteboxMacros.withFieldConstImpl[From, To, T, C]
+    def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[From, To, _] =
+      macro ChimneyWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
 
-    def withFieldComputed[T](selector: To => T, map: From => T): TransformerInto[From, To, _] =
-      macro ChimneyWhiteboxMacros.withFieldComputedImpl[From, To, T, C]
+    def withFieldComputed[T, U](selector: To => T, map: From => U): TransformerInto[From, To, _] =
+      macro ChimneyWhiteboxMacros.withFieldComputedImpl[From, To, T, U, C]
 
-    def withFieldRenamed[T](selectorFrom: From => T, selectorTo: To => T): TransformerInto[From, To, _] =
-      macro ChimneyWhiteboxMacros.withFieldRenamedImpl[From, To, T, C]
+    def withFieldRenamed[T, U](selectorFrom: From => T, selectorTo: To => U): TransformerInto[From, To, _] =
+      macro ChimneyWhiteboxMacros.withFieldRenamedImpl[From, To, T, U, C]
 
     def withCoproductInstance[Inst](f: Inst => To): TransformerInto[From, To, _] =
       macro ChimneyWhiteboxMacros.withCoproductInstanceImpl[From, To, Inst, C]
