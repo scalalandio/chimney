@@ -1,3 +1,5 @@
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+
 val versions = new {
   val scalatestVersion = "3.0.5"
   val scalaVersion = "2.12.6"
@@ -63,7 +65,7 @@ lazy val root = project
   .aggregate(chimneyJVM, chimneyJS, protosJVM, protosJS)
   .dependsOn(chimneyJVM, chimneyJS)
 
-lazy val chimney = crossProject
+lazy val chimney = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(
     moduleName := "chimney",
@@ -78,7 +80,7 @@ lazy val chimney = crossProject
 lazy val chimneyJVM = chimney.jvm
 lazy val chimneyJS = chimney.js
 
-lazy val protos = crossProject
+lazy val protos = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(
     name := "chimney-protos",
