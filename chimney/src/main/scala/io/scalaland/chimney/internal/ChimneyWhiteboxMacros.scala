@@ -10,7 +10,7 @@ class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros w
   ): c.Tree = {
     val fieldName = selector.extractSelectorFieldName
 
-    if(!(c.weakTypeOf[U] <:< c.weakTypeOf[T])) {
+    if (!(c.weakTypeOf[U] <:< c.weakTypeOf[T])) {
       val msg =
         s"""Type mismatch!
            |Value passed to `withFieldConst` is of type: ${c.weakTypeOf[U]}
@@ -23,13 +23,14 @@ class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros w
     }
   }
 
-  def withFieldComputedImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, U: c.WeakTypeTag, C: c.WeakTypeTag](
-    selector: c.Tree,
-    map: c.Tree
-  ): c.Tree = {
+  def withFieldComputedImpl[From: c.WeakTypeTag,
+                            To: c.WeakTypeTag,
+                            T: c.WeakTypeTag,
+                            U: c.WeakTypeTag,
+                            C: c.WeakTypeTag](selector: c.Tree, map: c.Tree): c.Tree = {
     val fieldName = selector.extractSelectorFieldName
 
-    if(!(c.weakTypeOf[U] <:< c.weakTypeOf[T])) {
+    if (!(c.weakTypeOf[U] <:< c.weakTypeOf[T])) {
       val msg =
         s"""Type mismatch!
            |Function passed to `withFieldComputed` returns type: ${c.weakTypeOf[U]}
@@ -42,18 +43,18 @@ class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros w
     }
   }
 
-  def withFieldRenamedImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, U: c.WeakTypeTag, C: c.WeakTypeTag](
-    selectorFrom: c.Tree,
-    selectorTo: c.Tree
-  ): c.Tree = {
+  def withFieldRenamedImpl[From: c.WeakTypeTag,
+                           To: c.WeakTypeTag,
+                           T: c.WeakTypeTag,
+                           U: c.WeakTypeTag,
+                           C: c.WeakTypeTag](selectorFrom: c.Tree, selectorTo: c.Tree): c.Tree = {
 
     val fieldNameFromOpt = selectorFrom.extractSelectorFieldNameOpt
     val fieldNameToOpt = selectorTo.extractSelectorFieldNameOpt
 
     (fieldNameFromOpt, fieldNameToOpt) match {
       case (Some(fieldNameFrom), Some(fieldNameTo)) =>
-
-        if(!(c.weakTypeOf[U] =:= c.weakTypeOf[T])) {
+        if (!(c.weakTypeOf[U] =:= c.weakTypeOf[T])) {
           val msg =
             s"""Type mismatch!
                |First selector points to field '$fieldNameFrom' of type : ${c.weakTypeOf[T]}
