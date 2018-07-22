@@ -304,7 +304,7 @@ trait TransformerMacros {
   }
 
   def expandDestinationCaseClass(srcPrefixTree: Tree, config: Config)(From: Type,
-                                                             To: Type): Either[Seq[DerivationError], Tree] = {
+                                                                      To: Type): Either[Seq[DerivationError], Tree] = {
 
     var errors = Seq.empty[DerivationError]
 

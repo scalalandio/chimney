@@ -532,7 +532,6 @@ class DslSpec extends WordSpec with MustMatchers {
       transformer2.transform mustBe Bar(6.0, 3, "abc")
     }
 
-
     "transform from non-case class to case class" when {
       import NonCaseDomain._
 
@@ -554,10 +553,11 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "support java beans" in {
         val source = new JavaBeanSource("test-id", "test-name")
-        val target = source.into[CasesTarget]
-            .withFieldRenamed(_.getId, _.id)
-            .withFieldRenamed(_.getName, _.name)
-            .transform
+        val target = source
+          .into[CasesTarget]
+          .withFieldRenamed(_.getId, _.id)
+          .withFieldRenamed(_.getName, _.name)
+          .transform
 
         target.id mustBe source.getId
         target.name mustBe source.getName
