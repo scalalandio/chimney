@@ -531,6 +531,39 @@ class DslSpec extends WordSpec with MustMatchers {
       transformer1.transform mustBe Bar(1.0, 3, "abc")
       transformer2.transform mustBe Bar(6.0, 3, "abc")
     }
+
+
+    "transform from non-case class to case class" when {
+      import NonCaseDomain._
+
+      "support non-case classes inputs" in {
+        val source = new ClassSource("test-id", "test-name")
+        val target = source.transformInto[CasesTarget]
+
+        target.id mustBe source.id
+        target.name mustBe source.name
+      }
+
+      "support trait inputs" in {
+        val source: TraitSource = new TraitSourceImpl("test-id", "test-name")
+        val target = source.transformInto[CasesTarget]
+
+        target.id mustBe source.id
+        target.name mustBe source.name
+      }
+
+      "support java beans" in {
+        val source = new JavaBeanSource("test-id", "test-name")
+        val target = source.into[CasesTarget]
+            .withFieldRenamed(_.getId, _.id)
+            .withFieldRenamed(_.getName, _.name)
+            .transform
+
+        target.id mustBe source.getId
+        target.name mustBe source.getName
+      }
+    }
+
   }
 }
 
@@ -571,4 +604,21 @@ object Poly {
   val polySource = PolySource("test", "test")
   val monoTarget = MonoTarget("test", "test")
   val polyTarget = PolyTarget("test", "test")
+}
+
+object NonCaseDomain {
+  case class CasesTarget(val id: String, val name: String)
+
+  class ClassSource(val id: String, val name: String)
+
+  trait TraitSource {
+    val id: String
+    val name: String
+  }
+  class TraitSourceImpl(val id: String, val name: String) extends TraitSource
+
+  class JavaBeanSource(id: String, name: String) {
+    def getId: String = id
+    def getName: String = name
+  }
 }

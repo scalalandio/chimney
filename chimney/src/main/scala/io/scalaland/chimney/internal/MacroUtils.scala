@@ -26,6 +26,13 @@ trait MacroUtils extends CompanionUtils {
       }
     }
 
+    def getterMethods: Iterable[MethodSymbol] = {
+      t.decls.collect {
+        case m: MethodSymbol if m.isGetter =>
+          m.asMethod
+      }
+    }
+
     def valueClassMember: Option[MethodSymbol] = {
       t.decls.collectFirst {
         case m: MethodSymbol if m.isParamAccessor =>

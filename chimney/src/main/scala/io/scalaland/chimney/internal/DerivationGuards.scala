@@ -37,8 +37,8 @@ trait DerivationGuards {
     traversableOrArray(from) && traversableOrArray(to)
   }
 
-  def bothCaseClasses(from: Type, to: Type): Boolean = {
-    from.isCaseClass && to.isCaseClass
+  def destinationCaseClass(to: Type): Boolean = {
+    to.isCaseClass
   }
 
   def bothSealedClasses(from: Type, to: Type): Boolean = {
@@ -53,7 +53,7 @@ trait DerivationGuards {
     bothEithers(from, to) ||
     bothMaps(from, to) ||
     bothOfTraversableOrArray(from, to) ||
-    bothCaseClasses(from, to) ||
+    destinationCaseClass(to) ||
     bothSealedClasses(from, to)
   }
 
