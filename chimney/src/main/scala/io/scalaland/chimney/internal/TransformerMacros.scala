@@ -68,8 +68,8 @@ trait TransformerMacros {
           expandMaps(srcPrefixTree, config)(From, To)
         } else if (bothOfTraversableOrArray(From, To)) {
           expandTraversableOrArray(srcPrefixTree, config)(From, To)
-        } else if (bothCaseClasses(From, To)) {
-          expandCaseClasses(srcPrefixTree, config)(From, To)
+        } else if (destinationCaseClass(To)) {
+          expandDestinationCaseClass(srcPrefixTree, config)(From, To)
         } else if (bothSealedClasses(From, To)) {
           expandSealedClasses(srcPrefixTree, config)(From, To)
         } else {
@@ -255,7 +255,7 @@ trait TransformerMacros {
               val instTpe = instSymbol.asType.toType
               val targetTpe = matchingTargetSymbol.asType.toType
 
-              expandCaseClasses(Ident(fn), config.rec)(instTpe, targetTpe).right.map { innerTransformerTree =>
+              expandDestinationCaseClass(Ident(fn), config.rec)(instTpe, targetTpe).right.map { innerTransformerTree =>
                 cq"$fn: ${instSymbol.asType} => $innerTransformerTree"
               }
             } else {
@@ -303,12 +303,12 @@ trait TransformerMacros {
     }
   }
 
-  def expandCaseClasses(srcPrefixTree: Tree, config: Config)(From: Type,
-                                                             To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandDestinationCaseClass(srcPrefixTree: Tree, config: Config)(From: Type,
+                                                                      To: Type): Either[Seq[DerivationError], Tree] = {
 
     var errors = Seq.empty[DerivationError]
 
-    val fromFields = From.caseClassParams
+    val fromFields = From.getterMethods
     val toFields = To.caseClassParams
 
     val mapping = toFields.map { targetField =>
@@ -317,15 +317,13 @@ trait TransformerMacros {
 
     val missingFields = mapping.collect { case (field, None) => field }
 
-    if (missingFields.nonEmpty) {
-      missingFields.foreach { ms =>
-        errors :+= MissingField(
-          fieldName = ms.name.toString,
-          fieldTypeName = ms.returnType.typeSymbol.fullName,
-          sourceTypeName = From.typeSymbol.fullName,
-          targetTypeName = To.typeSymbol.fullName
-        )
-      }
+    missingFields.foreach { ms =>
+      errors :+= MissingField(
+        fieldName = ms.name.toString,
+        fieldTypeName = ms.returnType.typeSymbol.fullName,
+        sourceTypeName = From.typeSymbol.fullName,
+        targetTypeName = To.typeSymbol.fullName
+      )
     }
 
     val args = mapping.collect {
