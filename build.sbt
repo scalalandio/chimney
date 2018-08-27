@@ -8,7 +8,7 @@ val versions = new {
 val settings = Seq(
   version := "0.2.1",
   scalaVersion := versions.scalaVersion,
-  crossScalaVersions := Seq("2.11.12", "2.12.7"),
+  crossScalaVersions := Seq("2.11.12", "2.12.7", "2.13.0-M4"),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
     "-encoding",
@@ -20,7 +20,6 @@ val settings = Seq(
     "-language:existentials",
     "-language:higherKinds",
     "-language:implicitConversions",
-    "-Yno-adapted-args",
     "-Ywarn-dead-code",
     "-Ywarn-inaccessible",
     "-Ywarn-infer-any",
@@ -44,8 +43,7 @@ val settings = Seq(
     "-Xlint:stars-align",
     "-Xlint:type-parameter-shadow",
     "-Xlint:unsound-match",
-    "-Xexperimental"
-  ),
+  ) ++ (if (scalaVersion.value >= "2.13") Nil else Seq("-Yno-adapted-args", "-Xexperimental")),
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
 

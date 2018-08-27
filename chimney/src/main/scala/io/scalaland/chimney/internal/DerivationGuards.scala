@@ -34,7 +34,7 @@ trait DerivationGuards {
   }
 
   def bothOfTraversableOrArray(from: Type, to: Type): Boolean = {
-    traversableOrArray(from) && traversableOrArray(to)
+    iterableOrArray(from) && iterableOrArray(to)
   }
 
   def destinationCaseClass(to: Type): Boolean = {
@@ -57,8 +57,8 @@ trait DerivationGuards {
     bothSealedClasses(from, to)
   }
 
-  def traversableOrArray(t: Type): Boolean = {
-    t <:< traversableTpe || t <:< arrayTpe
+  def iterableOrArray(t: Type): Boolean = {
+    t <:< iterableTpe || t <:< arrayTpe
   }
 
   val optionTpe: Type = typeOf[Option[_]]
@@ -68,6 +68,6 @@ trait DerivationGuards {
   val leftTpe: Type = typeOf[Left[_, _]]
   val rightTpe: Type = typeOf[Right[_, _]]
   val mapTpe: Type = typeOf[scala.collection.Map[_, _]]
-  val traversableTpe: Type = typeOf[Traversable[_]]
+  val iterableTpe: Type = typeOf[Iterable[_]]
   val arrayTpe: Type = typeOf[Array[_]]
 }
