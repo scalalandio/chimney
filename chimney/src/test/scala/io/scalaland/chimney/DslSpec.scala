@@ -111,7 +111,9 @@ class DslSpec extends WordSpec with MustMatchers {
           }
 
           "not compile if default value is disabled and .disableOptionDefaultsToNone" in {
-            assertTypeError("""SomeFoo("foo").into[Foobar2].disableDefaultValues.disableOptionDefaultsToNone.transform""")
+            assertTypeError(
+              """SomeFoo("foo").into[Foobar2].disableDefaultValues.disableOptionDefaultsToNone.transform"""
+            )
           }
         }
 

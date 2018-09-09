@@ -1,6 +1,13 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.{ChimneyBlackboxMacros, ChimneyWhiteboxMacros, DisableDefaults, Empty, Cfg, DisableOptionDefaultsToNone}
+import io.scalaland.chimney.internal.{
+  ChimneyBlackboxMacros,
+  ChimneyWhiteboxMacros,
+  DisableDefaults,
+  Empty,
+  Cfg,
+  DisableOptionDefaultsToNone
+}
 
 import scala.language.experimental.macros
 
