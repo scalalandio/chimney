@@ -570,6 +570,7 @@ class DslSpec extends WordSpec with MustMatchers {
           .transform
         target.id mustBe source.getId
         target.name mustBe source.getName
+        target.flag mustBe source.isFlag
       }
     }
 
