@@ -50,6 +50,30 @@ class PatcherSpec extends WordSpec with MustMatchers {
 
       exampleUser.patchWith(update) mustBe User(10, Email("updated@example.com"), Phone(1234567890L))
     }
+
+    "optional fields in the patched object overwritten by None" in {
+
+      import TestDomain._
+
+      case class UserPatch(email: String, phone: Option[Phone])
+      val update = UserPatch(email = "updated@example.com", phone = None)
+
+      exampleUserWithOptionalField.patchWith(update) mustBe
+        UserWithOptionalField(10, Email("updated@example.com"), None)
+    }
+
+    "fields of type Option[T] in the patched object not overwritten by None of type Option[Option[T]]" in {
+
+      import TestDomain._
+
+      case class UserWithOptional(id: Int, email: Email, phone: Option[Phone])
+
+      case class UserPatch(email: String, phone: Option[Option[Phone]])
+      val update = UserPatch(email = "updated@example.com", phone = None)
+
+      exampleUserWithOptionalField.patchWith(update) mustBe
+        UserWithOptionalField(10, Email("updated@example.com"), Some(Phone(1234567890L)))
+    }
   }
 
 }
@@ -62,6 +86,9 @@ object TestDomain {
   case class User(id: Int, email: Email, phone: Phone)
   case class UpdateDetails(email: String, phone: Long)
 
+  case class UserWithOptionalField(id: Int, email: Email, phone: Option[Phone])
+
   val exampleUser = User(10, Email("abc@def.com"), Phone(1234567890L))
+  val exampleUserWithOptionalField = UserWithOptionalField(10, Email("abc@def.com"), Option(Phone(1234567890L)))
 
 }
