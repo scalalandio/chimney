@@ -550,7 +550,7 @@ class DslSpec extends WordSpec with MustMatchers {
         target.id mustBe source.id
         target.name mustBe source.name
       }
-
+/*
       "support java beans" in {
         val source = new JavaBeanSource("test-id", "test-name")
         val target = source
@@ -561,6 +561,39 @@ class DslSpec extends WordSpec with MustMatchers {
 
         target.id mustBe source.getId
         target.name mustBe source.getName
+      }*/
+      "transform with rename between different types: correct" in {
+        case class User(id: Int, name: String, age: Option[Int])
+        case class UserPL(id: Int, imie: String, wiek: Either[Unit, Int])
+
+        implicit val ageToWiekTransformer: Transformer[Option[Int], Either[Unit, Int]] =
+          new Transformer[Option[Int], Either[Unit, Int]] {
+            def transform(obj: Option[Int]): Either[Unit, Int] =
+              obj.fold[Either[Unit, Int]](Left(()))(Right.apply)
+          }
+        val user: User = User(1, "Kuba", Some(28))
+        val userPl = UserPL(1, "Kuba", Right(28))
+        user.into[UserPL].withFieldRenamed(_.name, _.imie)
+          .withFieldRenamed(_.age, _.wiek)
+          .transform mustBe userPl
+
+      }
+
+      "transform with rename between different types: incorrect" in {
+        case class User(id: Int, name: String, age: Option[Int])
+        case class UserPL(id: Int, imie: String, wiek: Either[Unit, Int])
+
+        implicit val ageToWiekTransformer: Transformer[Option[Int], Either[Unit, Int]] =
+          new Transformer[Option[Int], Either[Unit, Int]] {
+            def transform(obj: Option[Int]): Either[Unit, Int] =
+              obj.fold[Either[Unit, Int]](Left(()))(Right.apply)
+          }
+        val user: User = User(1, "Kuba", None)
+        val userPl = UserPL(1, "Kuba", Left(Unit))
+        user.into[UserPL].withFieldRenamed(_.name, _.imie)
+          .withFieldRenamed(_.age, _.wiek)
+          .transform mustBe userPl
+
       }
     }
 
