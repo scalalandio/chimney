@@ -67,7 +67,7 @@ lazy val root = project
   .aggregate(chimneyJVM, chimneyJS)
   .dependsOn(chimneyJVM, chimneyJS)
 
-lazy val chimney = crossProject(JSPlatform, JVMPlatform)
+lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .dependsOn(protos % "test->test")
   .settings(
@@ -82,8 +82,9 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform)
 
 lazy val chimneyJVM = chimney.jvm
 lazy val chimneyJS = chimney.js
+lazy val chimneyNative = chimney.native
 
-lazy val protos = crossProject(JSPlatform, JVMPlatform)
+lazy val protos = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .settings(
     moduleName := "chimney-protos",
@@ -94,6 +95,7 @@ lazy val protos = crossProject(JSPlatform, JVMPlatform)
 
 lazy val protosJVM = protos.jvm
 lazy val protosJS = protos.js
+lazy val protosNative = protos.native
 
 
 lazy val publishSettings = Seq(
