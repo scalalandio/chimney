@@ -383,9 +383,9 @@ trait TransformerMacros {
       val sourceName = m.name.decodedName.toString
       val targetNameCapitalized = fieldName.capitalize
       if(config.disableBeanGetterLookup) {
-        sourceName == fieldName || sourceName == s"get$targetNameCapitalized" || sourceName == s"is$targetNameCapitalized"
-      } else {
         sourceName == fieldName
+      } else {
+        sourceName == fieldName || sourceName == s"get$targetNameCapitalized" || sourceName == s"is$targetNameCapitalized"
       }
     }
 
@@ -408,7 +408,7 @@ trait TransformerMacros {
         .map { ms =>
           if (ms.typeSignatureIn(tFrom) <:< targetField.typeSignatureIn(tTo)) {
             ResolvedFieldTree {
-              q"$srcPrefixTree.${targetField.name}"
+              q"$srcPrefixTree.${ms.name}"
             }
           } else {
             MatchingField(ms)
