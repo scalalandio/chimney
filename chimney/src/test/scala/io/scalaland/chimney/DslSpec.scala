@@ -214,12 +214,13 @@ class DslSpec extends WordSpec with MustMatchers {
     "transform with rename " should {
       case class User(id: Int, name: String, age: Option[Int])
       case class UserPL(id: Int, imie: String, wiek: Either[Unit, Int])
+      def ageToWiekTransformer: Transformer[Option[Int], Either[Unit, Int]] =
+        new Transformer[Option[Int], Either[Unit, Int]] {
+          def transform(obj: Option[Int]): Either[Unit, Int] =
+            obj.fold[Either[Unit, Int]](Left(()))(Right.apply)
+        }
       "between different types: correct" in {
-        implicit val ageToWiekTransformer: Transformer[Option[Int], Either[Unit, Int]] =
-          new Transformer[Option[Int], Either[Unit, Int]] {
-            def transform(obj: Option[Int]): Either[Unit, Int] =
-              obj.fold[Either[Unit, Int]](Left(()))(Right.apply)
-          }
+        implicit val trans = ageToWiekTransformer
         val user: User = User(1, "Kuba", Some(28))
         val userPl = UserPL(1, "Kuba", Right(28))
         user.into[UserPL].withFieldRenamed(_.name, _.imie)
@@ -229,11 +230,7 @@ class DslSpec extends WordSpec with MustMatchers {
       }
 
       "between different types: incorrect" in {
-        implicit val ageToWiekTransformer: Transformer[Option[Int], Either[Unit, Int]] =
-          new Transformer[Option[Int], Either[Unit, Int]] {
-            def transform(obj: Option[Int]): Either[Unit, Int] =
-              obj.fold[Either[Unit, Int]](Left(()))(Right.apply)
-          }
+        implicit val trans = ageToWiekTransformer
         val user: User = User(1, "Kuba", None)
         val userPl = UserPL(1, "Kuba", Left(Unit))
         user.into[UserPL].withFieldRenamed(_.name, _.imie)
