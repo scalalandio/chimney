@@ -108,8 +108,7 @@ class DslSpec extends WordSpec with MustMatchers {
             Foo("foo").into[Foobar2].optionDefaultsToNone.transform mustBe Foobar2("foo", Some(42))
           }
 
-          "not compile" when {
-            "flag is not set" in {
+          "not compile when flag is not set" in {
               assertTypeError("""Foo("foo").into[Foobar].transform""")
             }
           }
