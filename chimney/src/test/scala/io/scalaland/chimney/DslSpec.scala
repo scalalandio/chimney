@@ -223,7 +223,9 @@ class DslSpec extends WordSpec with MustMatchers {
         implicit val trans = ageToWiekTransformer
         val user: User = User(1, "Kuba", Some(28))
         val userPl = UserPL(1, "Kuba", Right(28))
-        user.into[UserPL].withFieldRenamed(_.name, _.imie)
+        user
+          .into[UserPL]
+          .withFieldRenamed(_.name, _.imie)
           .withFieldRenamed(_.age, _.wiek)
           .transform mustBe userPl
 
@@ -233,7 +235,9 @@ class DslSpec extends WordSpec with MustMatchers {
         implicit val trans = ageToWiekTransformer
         val user: User = User(1, "Kuba", None)
         val userPl = UserPL(1, "Kuba", Left(Unit))
-        user.into[UserPL].withFieldRenamed(_.name, _.imie)
+        user
+          .into[UserPL]
+          .withFieldRenamed(_.name, _.imie)
           .withFieldRenamed(_.age, _.wiek)
           .transform mustBe userPl
 
@@ -242,12 +246,10 @@ class DslSpec extends WordSpec with MustMatchers {
       "between different types: without implicit" in {
         val user: User = User(1, "Kuba", None)
         val userPl = UserPL(1, "Kuba", Left(Unit))
-        assertDoesNotCompile(
-          """        user.into[UserPL].withFieldRenamed(_.name, _.imie)
+        assertDoesNotCompile("""        user.into[UserPL].withFieldRenamed(_.name, _.imie)
             |          .withFieldRenamed(_.age, _.wiek)
             |          .transform
           """.stripMargin)
-
 
       }
     }

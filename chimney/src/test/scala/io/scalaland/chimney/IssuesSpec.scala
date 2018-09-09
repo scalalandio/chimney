@@ -83,9 +83,9 @@ class IssuesSpec extends WordSpec with MustMatchers {
       }
 
       "fix for `withFieldRenamed`" in {
-          Foo1("test")
-            .into[Foo3]
-            .withFieldRenamed(_.y, _.x)
+        Foo1("test")
+          .into[Foo3]
+          .withFieldRenamed(_.y, _.x)
       }
     }
   }
