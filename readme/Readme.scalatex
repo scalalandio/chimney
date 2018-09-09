@@ -417,3 +417,26 @@
         rules. In this case we used value classes in the @code{User} model, but plain
         values in update form. Chimney was able to derive transformers for each patched
         field, so it was able to successfully derive a patcher.
+
+      @sect{Optional patch values}
+        @p
+          It is possible to patch using optional values of type @code{Option[T]} as long as the
+          transformer is available for @code{T}. When the value is present, it will be transformed,
+          otherwise it will be ignored and the field will be left as it was in the original object.
+          Let us consider the following patch for the class @code{User} defined above:
+
+        @hl.scala
+          case class UserPatch(email: Option[String], phone: Option[Phone])
+
+        @p
+          Then it is possible to patch as follows:
+
+        @hl.scala
+          val update = UserPatch(email = Some("updated@@example.com"), phone = None)
+
+          exampleUser.patchWith(update)
+          //  User(10, Email("updated@@example.com"), Phone(1234567890L))
+
+        @p
+          The @code{phone} remained the same as in the @code{exampleUser}, while the optional
+          e-mail string got transformed to an @code{Email} instance.
