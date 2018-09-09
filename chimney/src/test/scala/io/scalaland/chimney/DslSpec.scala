@@ -89,6 +89,32 @@ class DslSpec extends WordSpec with MustMatchers {
           }
         }
 
+        "support default values for Options" should {
+          case class Foo(x: String)
+          case class Foobar(x: String, y: Option[Int])
+          case class Foobar2(x: String, y: Option[Int] = Some(42))
+
+          "use None as default" when {
+            "flag is set" in {
+              Foo("foo").into[Foobar].optionDefaultsToNone.transform mustBe Foobar("foo", None)
+            }
+
+            "flag is set and target has default value, but default values are disabled" in {
+              Foo("foo").into[Foobar2].optionDefaultsToNone.disableDefaultValues.transform mustBe Foobar2("foo", None)
+            }
+          }
+
+          "not use None as default when other default value is set" in {
+            Foo("foo").into[Foobar2].optionDefaultsToNone.transform mustBe Foobar2("foo", Some(42))
+          }
+
+          "not compile" when {
+            "flag is not set" in {
+              assertTypeError("""Foo("foo").into[Foobar].transform""")
+            }
+          }
+        }
+
         "fill the field with provided generator function" should {
 
           "pass when selector is valid" in {

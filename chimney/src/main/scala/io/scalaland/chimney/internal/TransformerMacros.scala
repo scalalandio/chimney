@@ -412,6 +412,14 @@ trait TransformerMacros {
             None
           }
         }
+        .orElse {
+          val targetTypeIsOption = targetField.returnType <:< typeOf[Option[_]]
+          if (targetTypeIsOption && config.optionDefaultsToNone) {
+            Some(ResolvedFieldTree(q"scala.None"))
+          } else {
+            None
+          }
+        }
     }
   }
 
