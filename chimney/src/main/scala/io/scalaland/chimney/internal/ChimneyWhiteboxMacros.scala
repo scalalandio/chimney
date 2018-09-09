@@ -54,16 +54,7 @@ class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros w
 
     (fieldNameFromOpt, fieldNameToOpt) match {
       case (Some(fieldNameFrom), Some(fieldNameTo)) =>
-        if (!(c.weakTypeOf[U] =:= c.weakTypeOf[T])) {
-          val msg =
-            s"""Type mismatch!
-               |First selector points to field '$fieldNameFrom' of type : ${c.weakTypeOf[T]}
-               |Second selector points to field '$fieldNameTo' of type : ${c.weakTypeOf[U]}
-            """.stripMargin
-          c.abort(c.enclosingPosition, msg)
-        } else {
-          expandFieldRenamed[From, To, C](fieldNameFrom, fieldNameTo)
-        }
+        expandFieldRenamed[From, To, C](fieldNameFrom, fieldNameTo)
 
       case (Some(_), None) =>
         c.abort(c.enclosingPosition, s"Selector of type ${selectorTo.tpe} is not valid: $selectorTo")

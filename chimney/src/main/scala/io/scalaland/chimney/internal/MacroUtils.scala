@@ -28,7 +28,7 @@ trait MacroUtils extends CompanionUtils {
 
     def getterMethods: Iterable[MethodSymbol] = {
       t.decls.collect {
-        case m: MethodSymbol if m.isGetter =>
+        case m: MethodSymbol if m.isGetter || ((m.paramLists.isEmpty || m.paramLists == List(List())) && m.isPublic) =>
           m.asMethod
       }
     }

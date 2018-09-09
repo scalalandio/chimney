@@ -387,9 +387,13 @@ trait TransformerMacros {
       }
     } else if (config.renamedFields.contains(fieldName)) {
       val fromFieldName = TermName(config.renamedFields(fieldName))
-      Some {
-        ResolvedFieldTree {
-          q"$srcPrefixTree.$fromFieldName"
+      fromParams.find(_.name == fromFieldName).map { ms =>
+        if (targetField.returnType =:= ms.returnType) {
+          ResolvedFieldTree {
+            q"$srcPrefixTree.$fromFieldName"
+          }
+        } else {
+          MatchingField(ms)
         }
       }
     } else {
