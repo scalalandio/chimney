@@ -592,7 +592,7 @@ class DslSpec extends WordSpec with MustMatchers {
         target.id mustBe source.id
         target.name mustBe source.name
       }
-/*
+
       "support java beans" in {
         val source = new JavaBeanSource("test-id", "test-name")
         val target = source
@@ -603,7 +603,7 @@ class DslSpec extends WordSpec with MustMatchers {
 
         target.id mustBe source.getId
         target.name mustBe source.getName
-      }*/
+      }
 
     }
 
