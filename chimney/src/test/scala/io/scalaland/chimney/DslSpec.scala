@@ -562,6 +562,15 @@ class DslSpec extends WordSpec with MustMatchers {
         target.id mustBe source.getId
         target.name mustBe source.getName
       }
+
+      "support automatic reading from java bean getters" in {
+        val source = new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
+        val target = source
+          .into[CasesTargetWithFlag]
+          .transform
+        target.id mustBe source.getId
+        target.name mustBe source.getName
+      }
     }
 
   }
@@ -608,6 +617,7 @@ object Poly {
 
 object NonCaseDomain {
   case class CasesTarget(val id: String, val name: String)
+  case class CasesTargetWithFlag(val id: String, val name: String, val flag: Boolean)
 
   class ClassSource(val id: String, val name: String)
 
@@ -620,5 +630,11 @@ object NonCaseDomain {
   class JavaBeanSource(id: String, name: String) {
     def getId: String = id
     def getName: String = name
+  }
+
+  class JavaBeanSourceWithFlag(id: String, name: String, flag: Boolean) {
+    def getId: String = id
+    def getName: String = name
+    def isFlag: Boolean = flag
   }
 }
