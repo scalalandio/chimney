@@ -632,7 +632,7 @@ object NonCaseDomain {
     def getName: String = name
   }
 
-  class JavaBeanSourceWithFlag(id: String, name: String, flag: Boolean) {
+  class JavaBeanSourceWithFlag(private var id: String, private var name: String, private var flag: Boolean) {
     def getId: String = id
     def getName: String = name
     def isFlag: Boolean = flag

@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.{ChimneyBlackboxMacros, ChimneyWhiteboxMacros, DisableDefaults, Empty, Cfg}
+import io.scalaland.chimney.internal._
 
 import scala.language.experimental.macros
 
@@ -21,6 +21,9 @@ object dsl {
 
     def disableDefaultValues: TransformerInto[From, To, DisableDefaults[C]] =
       new TransformerInto[From, To, DisableDefaults[C]](source, overrides, instances)
+
+    def disableBeanGetterLookup: TransformerInto[From, To, DisableBeanGetterLookup[C]] =
+      new TransformerInto[From, To, DisableBeanGetterLookup[C]](source, overrides, instances)
 
     def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[From, To, _] =
       macro ChimneyWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
