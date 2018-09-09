@@ -15,3 +15,4 @@ case class PhoneNumber(number: String, `type`: PhoneType)
 case class Person(name: PersonName, id: PersonId, email: Email, phones: List[PhoneNumber])
 
 case class AddressBook(people: List[Person])
+
