@@ -8,4 +8,4 @@ final class FieldConst[Name <: String, C <: Cfg] extends Cfg
 final class FieldComputed[Name <: String, C <: Cfg] extends Cfg
 final class FieldRelabelled[FromName <: String, ToName <: String, C <: Cfg] extends Cfg
 final class CoproductInstance[InstType, TargetType, C <: Cfg] extends Cfg
-final class OptionDefaultsToNone[C <: Cfg] extends Cfg
+final class DisableOptionDefaultsToNone[C <: Cfg] extends Cfg

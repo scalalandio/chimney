@@ -94,23 +94,24 @@ class DslSpec extends WordSpec with MustMatchers {
           case class Foobar(x: String, y: Option[Int])
           case class Foobar2(x: String, y: Option[Int] = Some(42))
 
-          "use None as default" when {
-            "flag is set" in {
-              Foo("foo").into[Foobar].optionDefaultsToNone.transform mustBe Foobar("foo", None)
-            }
+          "use None if default value is missing" in {
+            Foo("foo").into[Foobar].transform mustBe Foobar("foo", None)
+          }
 
-            "flag is set and target has default value, but default values are disabled" in {
-              Foo("foo").into[Foobar2].optionDefaultsToNone.disableDefaultValues.transform mustBe Foobar2("foo", None)
-            }
+          "target has default value, but default values are disabled" in {
+            Foo("foo").into[Foobar2].disableDefaultValues.transform mustBe Foobar2("foo", None)
           }
 
           "not use None as default when other default value is set" in {
-            Foo("foo").into[Foobar2].optionDefaultsToNone.transform mustBe Foobar2("foo", Some(42))
+            Foo("foo").into[Foobar2].transform mustBe Foobar2("foo", Some(42))
           }
 
-          "not compile when flag is not set" in {
-              assertTypeError("""Foo("foo").into[Foobar].transform""")
-            }
+          "not compile if default value is missing and .disableOptionDefaultsToNone" in {
+            assertTypeError("""Foo("foo").into[Foobar].disableOptionDefaultsToNone.transform""")
+          }
+
+          "not compile if default value is disabled and .disableOptionDefaultsToNone" in {
+            assertTypeError("""Foo("foo").into[Foobar2].disableDefaultValues.disableOptionDefaultsToNone.transform""")
           }
         }
 
