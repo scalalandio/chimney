@@ -104,6 +104,7 @@ class DslSpec extends WordSpec with MustMatchers {
 
           "not use None as default when other default value is set" in {
             SomeFoo("foo").into[Foobar2].transform mustBe Foobar2("foo", Some(42))
+            SomeFoo("foo").into[Foobar2].disableOptionDefaultsToNone.transform mustBe Foobar2("foo", Some(42))
           }
 
           "not compile if default value is missing and .disableOptionDefaultsToNone" in {
