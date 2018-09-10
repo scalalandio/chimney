@@ -308,7 +308,7 @@ trait TransformerMacros {
 
     var errors = Seq.empty[DerivationError]
 
-    val fromFields = From.parameterlessMethods
+    val fromFields = From.getterMethods
     val toFields = To.caseClassParams
 
     val mapping = toFields.map { targetField =>
@@ -382,10 +382,12 @@ trait TransformerMacros {
     val fieldNameLookup = (m: MethodSymbol) => {
       val sourceName = m.name.decodedName.toString
       val targetNameCapitalized = fieldName.capitalize
-      if(config.disableBeanGetterLookup) {
+      if (config.disableBeanGetterLookup) {
         sourceName == fieldName
       } else {
-        sourceName == fieldName || sourceName == s"get$targetNameCapitalized" || sourceName == s"is$targetNameCapitalized"
+        sourceName == fieldName ||
+        sourceName == s"get$targetNameCapitalized" ||
+        (sourceName == s"is$targetNameCapitalized" && m.returnType == typeTag[Boolean].tpe)
       }
     }
 
