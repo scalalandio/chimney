@@ -11,6 +11,7 @@ trait DerivationConfig {
                     overridenFields: Set[String] = Set.empty,
                     renamedFields: Map[String, String] = Map.empty,
                     coproductInstances: Set[(c.Symbol, c.Type)] = Set.empty, // pair: inst type, target type
+                    optionDefaultsToNone: Boolean = true,
                     prefixValName: String = "") {
 
     def rec: Config =

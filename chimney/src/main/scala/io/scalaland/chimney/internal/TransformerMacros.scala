@@ -397,9 +397,13 @@ trait TransformerMacros {
       }
     } else if (config.renamedFields.contains(fieldName)) {
       val fromFieldName = TermName(config.renamedFields(fieldName))
-      Some {
-        ResolvedFieldTree {
-          q"$srcPrefixTree.$fromFieldName"
+      fromParams.find(_.name == fromFieldName).map { ms =>
+        if (targetField.returnType =:= ms.returnType) {
+          ResolvedFieldTree {
+            q"$srcPrefixTree.$fromFieldName"
+          }
+        } else {
+          MatchingField(ms)
         }
       }
     } else {
@@ -418,6 +422,14 @@ trait TransformerMacros {
           val targetDefault = targetCaseClass.caseClassDefaults.get(targetField.name.toString)
           if (!config.disableDefaultValues && targetDefault.isDefined) {
             Some(ResolvedFieldTree(targetDefault.get))
+          } else {
+            None
+          }
+        }
+        .orElse {
+          val targetTypeIsOption = targetField.returnType <:< typeOf[Option[_]]
+          if (targetTypeIsOption && config.optionDefaultsToNone) {
+            Some(ResolvedFieldTree(q"_root_.scala.None"))
           } else {
             None
           }

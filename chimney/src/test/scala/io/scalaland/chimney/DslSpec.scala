@@ -89,6 +89,35 @@ class DslSpec extends WordSpec with MustMatchers {
           }
         }
 
+        "support default values for Options" should {
+          case class SomeFoo(x: String)
+          case class Foobar(x: String, y: Option[Int])
+          case class Foobar2(x: String, y: Option[Int] = Some(42))
+
+          "use None if default value is missing" in {
+            SomeFoo("foo").into[Foobar].transform mustBe Foobar("foo", None)
+          }
+
+          "target has default value, but default values are disabled" in {
+            SomeFoo("foo").into[Foobar2].disableDefaultValues.transform mustBe Foobar2("foo", None)
+          }
+
+          "not use None as default when other default value is set" in {
+            SomeFoo("foo").into[Foobar2].transform mustBe Foobar2("foo", Some(42))
+            SomeFoo("foo").into[Foobar2].disableOptionDefaultsToNone.transform mustBe Foobar2("foo", Some(42))
+          }
+
+          "not compile if default value is missing and .disableOptionDefaultsToNone" in {
+            assertTypeError("""SomeFoo("foo").into[Foobar].disableOptionDefaultsToNone.transform""")
+          }
+
+          "not compile if default value is disabled and .disableOptionDefaultsToNone" in {
+            assertTypeError(
+              """SomeFoo("foo").into[Foobar2].disableDefaultValues.disableOptionDefaultsToNone.transform"""
+            )
+          }
+        }
+
         "fill the field with provided generator function" should {
 
           "pass when selector is valid" in {
@@ -211,12 +240,55 @@ class DslSpec extends WordSpec with MustMatchers {
         """)
       }
     }
+    "transform with rename " should {
+      case class User(id: Int, name: String, age: Option[Int])
+      case class UserPL(id: Int, imie: String, wiek: Either[Unit, Int])
+      def ageToWiekTransformer: Transformer[Option[Int], Either[Unit, Int]] =
+        new Transformer[Option[Int], Either[Unit, Int]] {
+          def transform(obj: Option[Int]): Either[Unit, Int] =
+            obj.fold[Either[Unit, Int]](Left(()))(Right.apply)
+        }
+      "between different types: correct" in {
+        implicit val trans = ageToWiekTransformer
+        val user: User = User(1, "Kuba", Some(28))
+        val userPl = UserPL(1, "Kuba", Right(28))
+        user
+          .into[UserPL]
+          .withFieldRenamed(_.name, _.imie)
+          .withFieldRenamed(_.age, _.wiek)
+          .transform mustBe userPl
+
+      }
+
+      "between different types: incorrect" in {
+        implicit val trans = ageToWiekTransformer
+        val user: User = User(1, "Kuba", None)
+        val userPl = UserPL(1, "Kuba", Left(Unit))
+        user
+          .into[UserPL]
+          .withFieldRenamed(_.name, _.imie)
+          .withFieldRenamed(_.age, _.wiek)
+          .transform mustBe userPl
+
+      }
+
+      "between different types: without implicit" in {
+        val user: User = User(1, "Kuba", None)
+        val userPl = UserPL(1, "Kuba", Left(Unit))
+        assertDoesNotCompile("""        user.into[UserPL].withFieldRenamed(_.name, _.imie)
+            |          .withFieldRenamed(_.age, _.wiek)
+            |          .transform
+          """.stripMargin)
+
+      }
+    }
 
     "support relabelling of fields" should {
 
       case class Foo(x: Int, y: String)
       case class Bar(x: Int, z: String)
       case class HaveY(y: String)
+
       val haveY = HaveY("")
       case class HaveZ(z: String)
       val haveZ = HaveZ("")
@@ -285,6 +357,7 @@ class DslSpec extends WordSpec with MustMatchers {
 
         assertTypeError("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
       }
+
     }
 
     "support value classes" when {
