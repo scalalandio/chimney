@@ -624,26 +624,47 @@ class DslSpec extends WordSpec with MustMatchers {
         target.name mustBe source.name
       }
 
-      "support java beans" in {
-        val source = new JavaBeanSource("test-id", "test-name")
-        val target = source
-          .into[CasesTarget]
-          .withFieldRenamed(_.getId, _.id)
-          .withFieldRenamed(_.getName, _.name)
-          .transform
+      "support java beans" should {
 
-        target.id mustBe source.getId
-        target.name mustBe source.getName
-      }
+        "work with basic renaming" in {
+          val source = new JavaBeanSource("test-id", "test-name")
+          val target = source
+            .into[CasesTarget]
+            .withFieldRenamed(_.getId, _.id)
+            .withFieldRenamed(_.getName, _.name)
+            .transform
 
-      "support automatic reading from java bean getters" in {
-        val source = new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
-        val target = source
-          .into[CasesTargetWithFlag]
-          .transform
-        target.id mustBe source.getId
-        target.name mustBe source.getName
-        target.flag mustBe source.isFlag
+          target.id mustBe source.getId
+          target.name mustBe source.getName
+        }
+
+        "support automatic reading from java bean getters" in {
+          val source = new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
+          val target = source
+            .into[CasesTargetWithFlag]
+            .transform
+          target.id mustBe source.getId
+          target.name mustBe source.getName
+          target.flag mustBe source.isFlag
+        }
+
+        "not compile when bean getter lookup is disabled" in {
+          assertTypeError("""
+            new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).into[CasesTargetWithFlag].disableBeanGetterLookup.transform
+          """)
+        }
+
+        "not compile when matching an is- getter with type other than Boolean" in {
+          assertTypeError("""
+             |case class MistypedTarget(flag: Int)
+             |class MistypedSource(private var flag: Int) {
+             |  def isFlag: Int = flag
+             |}
+             |new MistypedSource(1).into[MistypedTarget].transform
+          """.stripMargin)
+        }
+
+
       }
     }
 
