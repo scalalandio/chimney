@@ -626,12 +626,13 @@ class DslSpec extends WordSpec with MustMatchers {
 
       "support java beans" should {
 
-        "work with basic renaming" in {
+        "work with basic renaming when bean getter lookup is disabled" in {
           val source = new JavaBeanSource("test-id", "test-name")
           val target = source
             .into[CasesTarget]
             .withFieldRenamed(_.getId, _.id)
             .withFieldRenamed(_.getName, _.name)
+            .disableBeanGetterLookup
             .transform
 
           target.id mustBe source.getId
