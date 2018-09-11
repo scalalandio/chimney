@@ -649,9 +649,11 @@ class DslSpec extends WordSpec with MustMatchers {
         }
 
         "not compile when bean getter lookup is disabled" in {
-          assertTypeError("""
+          assertTypeError(
+            """
             new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).into[CasesTargetWithFlag].disableBeanGetterLookup.transform
-          """)
+          """
+          )
         }
 
         "not compile when matching an is- getter with type other than Boolean" in {
@@ -663,7 +665,6 @@ class DslSpec extends WordSpec with MustMatchers {
              |new MistypedSource(1).into[MistypedTarget].transform
           """.stripMargin)
         }
-
 
       }
     }
