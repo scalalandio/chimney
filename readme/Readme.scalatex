@@ -440,3 +440,34 @@
         @p
           The @code{phone} remained the same as in the @code{exampleUser}, while the optional
           e-mail string got transformed to an @code{Email} instance.
+
+    @sect{Java Beans}
+      @p
+        Chimney supports automatic field renaming for classes that follow Java beans naming convention.
+        Let's assume the following classes:
+
+      @hl.scala
+        class MyBean(private var id: Long,
+          private var name: String,
+          private var flag: Boolean) {
+            def getId: Long = id
+            def getName: String = name
+            def isFlag: Boolean = flag
+        }
+
+        case class MyCaseClass(id: String, name: String, flag: Boolean)
+
+      The conversion will work out-of-the-box, without any other requirements:
+
+      @hl.scala
+        val cc = new MyBean(1, "beanie", true).transformInto[MyCaseClass]
+
+      Please note that Chimney matches accessor methods solely based on name and return type, and has no way of ensuring
+      that a method named similarly to a getter is idempotent and does not actually perform side effects in its body.
+      If you'd like to disable this feature, you can use the @code{.disableBeanGetterLookup} operation:
+
+      @hl.scala
+        val cc = new MyBean(1, "beanie", true)
+          .into[MyCaseClass]
+          .disableBeanGetterLookup
+          .transform

@@ -379,6 +379,18 @@ trait TransformerMacros {
 
     val fieldName = targetField.name.decodedName.toString
 
+    val fieldNameLookup = (m: MethodSymbol) => {
+      val sourceName = m.name.decodedName.toString
+      val targetNameCapitalized = fieldName.capitalize
+      if (config.disableBeanGetterLookup) {
+        sourceName == fieldName
+      } else {
+        sourceName == fieldName ||
+        sourceName == s"get$targetNameCapitalized" ||
+        (sourceName == s"is$targetNameCapitalized" && m.returnType == typeTag[Boolean].tpe)
+      }
+    }
+
     if (config.overridenFields.contains(fieldName)) {
       Some {
         ResolvedFieldTree {
@@ -398,11 +410,11 @@ trait TransformerMacros {
       }
     } else {
       fromParams
-        .find(_.name == targetField.name)
+        .find(fieldNameLookup)
         .map { ms =>
           if (ms.typeSignatureIn(tFrom) <:< targetField.typeSignatureIn(tTo)) {
             ResolvedFieldTree {
-              q"$srcPrefixTree.${targetField.name}"
+              q"$srcPrefixTree.${ms.name}"
             }
           } else {
             MatchingField(ms)
