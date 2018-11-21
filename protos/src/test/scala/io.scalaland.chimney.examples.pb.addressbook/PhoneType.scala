@@ -5,26 +5,6 @@
 
 package io.scalaland.chimney.examples.pb.addressbook
 
-@SerialVersionUID(0L)
-final case class AddressBook(
-  people: _root_.scala.collection.Seq[io.scalaland.chimney.examples.pb.addressbook.Person] =
-    _root_.scala.collection.Seq.empty
-)
-
-/** @param id
-  *   Unique ID number for this person.
-  */
-@SerialVersionUID(0L)
-final case class Person(name: _root_.scala.Predef.String = "",
-                        id: _root_.scala.Int = 0,
-                        email: _root_.scala.Predef.String = "",
-                        phones: _root_.scala.collection.Seq[io.scalaland.chimney.examples.pb.addressbook.PhoneNumber] =
-                          _root_.scala.collection.Seq.empty)
-@SerialVersionUID(0L)
-final case class PhoneNumber(number: _root_.scala.Predef.String = "",
-                             `type`: io.scalaland.chimney.examples.pb.addressbook.PhoneType =
-                               io.scalaland.chimney.examples.pb.addressbook.PhoneType.MOBILE)
-
 sealed trait PhoneType {
   type EnumType = PhoneType
   def isMobile: _root_.scala.Boolean = false
