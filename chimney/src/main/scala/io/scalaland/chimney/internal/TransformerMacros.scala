@@ -207,6 +207,9 @@ trait TransformerMacros {
       if (fn == innerTransformerTree) {
         if (sameCollectionTypes) {
           srcPrefixTree
+        } else if (scala.util.Properties.versionNumberString >= "2.13") {
+          val ToCompanionRef = patchedCompanionRef(c)(To)
+          q"$srcPrefixTree.to($ToCompanionRef)"
         } else {
           q"$srcPrefixTree.to[${To.typeConstructor}]"
         }
@@ -214,6 +217,9 @@ trait TransformerMacros {
         val f = q"($fn: $FromCollectionT) => $innerTransformerTree"
         if (sameCollectionTypes) {
           q"$srcPrefixTree.map($f)"
+        } else if (scala.util.Properties.versionNumberString >= "2.13") {
+          val ToCompanionRef = patchedCompanionRef(c)(To)
+          q"$srcPrefixTree.map($f).to($ToCompanionRef)"
         } else {
           q"$srcPrefixTree.map($f).to[${To.typeConstructor}]"
         }
