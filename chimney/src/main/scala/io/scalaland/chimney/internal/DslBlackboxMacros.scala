@@ -25,9 +25,9 @@ trait DslBlackboxMacros {
   def captureConfiguration(cfgTpe: Type, config: Config = Config()): Config = {
 
     val emptyT = typeOf[Empty]
-    val disableDefaultsT = typeOf[DisableDefaults[_]].typeConstructor
+    val disableDefaultValuesT = typeOf[DisableDefaultValues[_]].typeConstructor
     val enableBeanGettersT = typeOf[EnableBeanGetters[_]].typeConstructor
-    val disableOptionDefaultsToNone = typeOf[DisableOptionDefaultsToNone[_]].typeConstructor
+    val enableOptionDefaultsToNone = typeOf[EnableOptionDefaultsToNone[_]].typeConstructor
     val fieldConstT = typeOf[FieldConst[_, _]].typeConstructor
     val fieldComputedT = typeOf[FieldComputed[_, _]].typeConstructor
     val fieldRelabelledT = typeOf[FieldRelabelled[_, _, _]].typeConstructor
@@ -35,12 +35,12 @@ trait DslBlackboxMacros {
 
     if (cfgTpe == emptyT) {
       config
-    } else if (cfgTpe.typeConstructor == disableDefaultsT) {
-      captureConfiguration(cfgTpe.typeArgs.head, config.copy(disableDefaultValues = true))
+    } else if (cfgTpe.typeConstructor == disableDefaultValuesT) {
+      captureConfiguration(cfgTpe.typeArgs.head, config.copy(processDefaultValues = false))
     } else if (cfgTpe.typeConstructor == enableBeanGettersT) {
       captureConfiguration(cfgTpe.typeArgs.head, config.copy(enableBeanGetters = true))
-    } else if (cfgTpe.typeConstructor == disableOptionDefaultsToNone) {
-      captureConfiguration(cfgTpe.typeArgs.head, config.copy(optionDefaultsToNone = false))
+    } else if (cfgTpe.typeConstructor == enableOptionDefaultsToNone) {
+      captureConfiguration(cfgTpe.typeArgs.head, config.copy(optionDefaultsToNone = true))
     } else if (Set(fieldConstT, fieldComputedT).contains(cfgTpe.typeConstructor)) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString

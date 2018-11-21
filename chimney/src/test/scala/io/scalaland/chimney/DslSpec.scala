@@ -94,25 +94,25 @@ object DslSpec extends TestSuite {
           case class Foobar(x: String, y: Option[Int])
           case class Foobar2(x: String, y: Option[Int] = Some(42))
 
-          "use None if default value is missing" - {
-            SomeFoo("foo").into[Foobar].transform ==> Foobar("foo", None)
+          "use None when .enableOptionDefaultsToNone" - {
+            SomeFoo("foo").into[Foobar].enableOptionDefaultsToNone.transform ==> Foobar("foo", None)
           }
 
-          "target has default value, but default values are disabled" - {
-            SomeFoo("foo").into[Foobar2].disableDefaultValues.transform ==> Foobar2("foo", None)
+          "target has default value, but default values are disabled and .enableOptionDefaultsToNone" - {
+            SomeFoo("foo").into[Foobar2].disableDefaultValues.enableOptionDefaultsToNone.transform ==> Foobar2("foo", None)
           }
 
-          "not use None as default - other default value is set" - {
+          "not use None as default when other default value is set" - {
             SomeFoo("foo").into[Foobar2].transform ==> Foobar2("foo", Some(42))
-            SomeFoo("foo").into[Foobar2].disableOptionDefaultsToNone.transform ==> Foobar2("foo", Some(42))
+            SomeFoo("foo").into[Foobar2].enableOptionDefaultsToNone.transform ==> Foobar2("foo", Some(42))
           }
 
-          "not compile if default value is missing and .disableOptionDefaultsToNone" - {
-            compileError("""SomeFoo("foo").into[Foobar].disableOptionDefaultsToNone.transform""")
+          "not compile if default value is missing and no .enableOptionDefaultsToNone" - {
+            compileError("""SomeFoo("foo").into[Foobar].transform""")
           }
 
-          "not compile if default value is disabled and .disableOptionDefaultsToNone" - {
-            compileError("""SomeFoo("foo").into[Foobar2].disableDefaultValues.disableOptionDefaultsToNone.transform""")
+          "not compile if default values are disabled and no .enableOptionDefaultsToNone" - {
+            compileError("""SomeFoo("foo").into[Foobar2].disableDefaultValues.transform""")
           }
         }
 

@@ -428,7 +428,7 @@ trait TransformerMacros {
         }
         .orElse {
           val targetDefault = targetCaseClass.caseClassDefaults.get(targetField.name.toString)
-          if (!config.disableDefaultValues && targetDefault.isDefined) {
+          if (config.processDefaultValues && targetDefault.isDefined) {
             Some(ResolvedFieldTree(targetDefault.get))
           } else {
             None

@@ -19,14 +19,14 @@ object dsl {
                                                   val overrides: Map[String, Any],
                                                   val instances: Map[(String, String), Any]) {
 
-    def disableDefaultValues: TransformerInto[From, To, DisableDefaults[C]] =
-      new TransformerInto[From, To, DisableDefaults[C]](source, overrides, instances)
+    def disableDefaultValues: TransformerInto[From, To, DisableDefaultValues[C]] =
+      new TransformerInto[From, To, DisableDefaultValues[C]](source, overrides, instances)
 
     def enableBeanGetters: TransformerInto[From, To, EnableBeanGetters[C]] =
       new TransformerInto[From, To, EnableBeanGetters[C]](source, overrides, instances)
 
-    def disableOptionDefaultsToNone: TransformerInto[From, To, DisableOptionDefaultsToNone[C]] =
-      new TransformerInto[From, To, DisableOptionDefaultsToNone[C]](source, overrides, instances)
+    def enableOptionDefaultsToNone: TransformerInto[From, To, EnableOptionDefaultsToNone[C]] =
+      new TransformerInto[From, To, EnableOptionDefaultsToNone[C]](source, overrides, instances)
 
     def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[From, To, _] =
       macro ChimneyWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
