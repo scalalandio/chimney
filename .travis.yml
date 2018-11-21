@@ -7,8 +7,8 @@ jdk:
   - openjdk8
   - openjdk11
 
-dist: trusty
-sudo: false
+dist: xenial
+sudo: true
 
 cache:
   directories:
@@ -18,7 +18,7 @@ cache:
 before_install:
   - unset _JAVA_OPTIONS
   - export JAVA_OPTS="$JAVA_OPTS -Xms512m -Xmx2048m"
-  - apt-get update && apt-get install -y clang libunwind-dev libgc-dev libre2-dev
+  - if [[ "$TRAVIS_SCALA_VERSION" == 2.11.* ]]; then sudo apt-get update && sudo apt-get install -y clang libunwind-dev libre2-dev; fi
 
 before_cache:
   # Tricks to avoid unnecessary cache updates
