@@ -7,8 +7,12 @@ jdk:
   - openjdk8
   - openjdk11
 
-dist: xenial
-sudo: true
+dist: trusty
+sudo: required
+
+addons:
+  apt:
+    update: true
 
 cache:
   directories:
@@ -18,7 +22,6 @@ cache:
 before_install:
   - unset _JAVA_OPTIONS
   - export JAVA_OPTS="$JAVA_OPTS -Xms512m -Xmx2048m"
-  - if [[ "$TRAVIS_SCALA_VERSION" == 2.11.* ]]; then sudo apt-get update && sudo apt-get install -y clang libunwind-dev libre2-dev; fi
 
 before_cache:
   # Tricks to avoid unnecessary cache updates
@@ -27,6 +30,7 @@ before_cache:
 
 before_script:
   - unset _JAVA_OPTIONS
+  - if [[ "$TRAVIS_SCALA_VERSION" == 2.11.* ]]; then curl https://raw.githubusercontent.com/scala-native/scala-native/master/scripts/travis_setup.sh | bash -x; fi
 
 script:
   - if [[ "$TRAVIS_SCALA_VERSION" == 2.11.* ]]; then testNative=chimneyNative/test; else testNative=""; fi && sbt ++$TRAVIS_SCALA_VERSION clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test $testNative coverage chimneyJVM/test coverageReport
