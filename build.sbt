@@ -62,7 +62,7 @@ lazy val root = project
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(noPublishSettings: _*)
-  .aggregate(chimneyJVM, chimneyJS, protosJVM, protosJS)
+  .aggregate(chimneyJVM, chimneyJS)
   .dependsOn(chimneyJVM, chimneyJS)
 
 lazy val chimney = crossProject(JSPlatform, JVMPlatform)
@@ -76,25 +76,9 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform)
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(dependencies: _*)
-  .dependsOn(protos % "test->compile")
 
 lazy val chimneyJVM = chimney.jvm
 lazy val chimneyJS = chimney.js
-
-lazy val protos = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Pure)
-  .settings(
-    name := "chimney-protos",
-    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
-    PB.targets in Compile := Seq(scalapb.gen() -> (sourceManaged in Compile).value),
-    PB.protoSources in Compile := Seq(file("protos/src/main/protobuf")),
-    coverageExcludedPackages := "<empty>;(.*)"
-  )
-  .settings(settings: _*)
-  .settings(noPublishSettings: _*)
-
-lazy val protosJVM = protos.jvm
-lazy val protosJS = protos.js
 
 lazy val publishSettings = Seq(
   organization := "io.scalaland",
