@@ -630,7 +630,6 @@ object DslSpec extends TestSuite {
             .into[CasesTarget]
             .withFieldRenamed(_.getId, _.id)
             .withFieldRenamed(_.getName, _.name)
-            .disableBeanGetterLookup
             .transform
 
           target.id ==> source.getId
@@ -638,10 +637,13 @@ object DslSpec extends TestSuite {
         }
 
         "support automatic reading from java bean getters" - {
+
           val source = new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
           val target = source
             .into[CasesTargetWithFlag]
+            .enableBeanGetters
             .transform
+
           target.id ==> source.getId
           target.name ==> source.getName
           target.flag ==> source.isFlag
@@ -650,7 +652,7 @@ object DslSpec extends TestSuite {
         "not compile when bean getter lookup is disabled" - {
           compileError(
             """
-            new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).into[CasesTargetWithFlag].disableBeanGetterLookup.transform
+            new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).into[CasesTargetWithFlag].transform
           """
           )
         }
@@ -661,10 +663,9 @@ object DslSpec extends TestSuite {
              class MistypedSource(private var flag: Int) {
                def isFlag: Int = flag
              }
-             new MistypedSource(1).into[MistypedTarget].transform
+             new MistypedSource(1).into[MistypedTarget].enableBeanGetters.transform
           """)
         }
-
       }
     }
 

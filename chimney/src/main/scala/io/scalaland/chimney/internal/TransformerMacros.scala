@@ -388,12 +388,12 @@ trait TransformerMacros {
     val fieldNameLookup = (m: MethodSymbol) => {
       val sourceName = m.name.decodedName.toString
       val targetNameCapitalized = fieldName.capitalize
-      if (config.disableBeanGetterLookup) {
-        sourceName == fieldName
-      } else {
+      if (config.enableBeanGetters) {
         sourceName == fieldName ||
         sourceName == s"get$targetNameCapitalized" ||
         (sourceName == s"is$targetNameCapitalized" && m.returnType == typeTag[Boolean].tpe)
+      } else {
+        sourceName == fieldName
       }
     }
 
