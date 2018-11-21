@@ -1,55 +1,55 @@
 package io.scalaland.chimney
 
-import org.scalatest.{MustMatchers, WordSpec}
+import utest._
 import io.scalaland.chimney.examples.addressbook
 import io.scalaland.chimney.examples.pb
 
-class PBTransformationSpec extends WordSpec with MustMatchers {
+object PBTransformationSpec extends TestSuite {
 
   import dsl._
 
-  "Domain to Protobuf" should {
+  val tests = Tests {
 
-    "transform value classes between their primitive representations" in {
+    "transform value classes between their primitive representations" - {
 
-      addressbook.PersonName("John").transformInto[String] mustBe "John"
-      addressbook.PersonId(5).transformInto[Int] mustBe 5
-      addressbook.Email("john@example.com").transformInto[String] mustBe "john@example.com"
+      addressbook.PersonName("John").transformInto[String] ==> "John"
+      addressbook.PersonId(5).transformInto[Int] ==> 5
+      addressbook.Email("john@example.com").transformInto[String] ==> "john@example.com"
     }
 
-    "not compile if target type is wrong for value class" in {
+    "not compile if target type is wrong for value class" - {
 
-      assertTypeError(""" addressbook.PersonName("John").transformInto[Int] """)
-      assertTypeError(""" addressbook.PersonId(5).transformInto[String] """)
-      assertTypeError(""" addressbook.Email("john@example.com").transformInto[Float] """)
+      compileError(""" addressbook.PersonName("John").transformInto[Int] """)
+      compileError(""" addressbook.PersonId(5).transformInto[String] """)
+      compileError(""" addressbook.Email("john@example.com").transformInto[Float] """)
     }
 
-    "transform enum represented as sealed trait hierarchy" in {
+    "transform enum represented as sealed trait hierarchy" - {
 
       (addressbook.MOBILE: addressbook.PhoneType)
-        .transformInto[pb.addressbook.PhoneType] mustBe
+        .transformInto[pb.addressbook.PhoneType] ==>
         pb.addressbook.PhoneType.MOBILE
 
       (addressbook.HOME: addressbook.PhoneType)
-        .transformInto[pb.addressbook.PhoneType] mustBe
+        .transformInto[pb.addressbook.PhoneType] ==>
         pb.addressbook.PhoneType.HOME
 
       (addressbook.WORK: addressbook.PhoneType)
-        .transformInto[pb.addressbook.PhoneType] mustBe
+        .transformInto[pb.addressbook.PhoneType] ==>
         pb.addressbook.PhoneType.WORK
     }
 
-    "transform bigger case classes" when {
+    "transform bigger case classes" - {
 
-      "PhoneNumber" in {
+      "PhoneNumber" - {
 
         addressbook
           .PhoneNumber("1234567", addressbook.HOME)
-          .transformInto[pb.addressbook.PhoneNumber] mustBe
+          .transformInto[pb.addressbook.PhoneNumber] ==>
           pb.addressbook.PhoneNumber("1234567", pb.addressbook.PhoneType.HOME)
       }
 
-      "Person" in {
+      "Person" - {
 
         addressbook
           .Person(
@@ -62,7 +62,7 @@ class PBTransformationSpec extends WordSpec with MustMatchers {
               addressbook.PhoneNumber("88776655", addressbook.MOBILE)
             )
           )
-          .transformInto[pb.addressbook.Person] mustBe
+          .transformInto[pb.addressbook.Person] ==>
           pb.addressbook.Person(
             "John",
             123,
@@ -75,7 +75,7 @@ class PBTransformationSpec extends WordSpec with MustMatchers {
           )
       }
 
-      "AddressBook" in {
+      "AddressBook" - {
 
         addressbook
           .AddressBook(
@@ -98,7 +98,7 @@ class PBTransformationSpec extends WordSpec with MustMatchers {
               )
             )
           )
-          .transformInto[pb.addressbook.AddressBook] mustBe
+          .transformInto[pb.addressbook.AddressBook] ==>
           pb.addressbook.AddressBook(
             Seq(
               pb.addressbook.Person(

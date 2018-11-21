@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 val versions = new {
-  val scalatestVersion = "3.0.5"
+  val utestVersion = "0.6.6"
   val scalaVersion = "2.12.6"
 }
 
@@ -53,7 +53,7 @@ val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
-    "org.scalatest" %%% "scalatest" % versions.scalatestVersion % "test"
+    "com.lihaoyi" %%% "utest" % versions.utestVersion % "test"
   )
 )
 
@@ -70,7 +70,8 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform)
   .settings(
     moduleName := "chimney",
     name := "chimney",
-    description := "Scala library for boilerplate free data rewriting"
+    description := "Scala library for boilerplate free data rewriting",
+    testFrameworks += new TestFramework("utest.runner.Framework")
   )
   .settings(settings: _*)
   .settings(publishSettings: _*)

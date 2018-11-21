@@ -1,24 +1,24 @@
 package io.scalaland.chimney
 
-import org.scalatest.{MustMatchers, WordSpec}
+import utest._
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.examples._
 
-class DslSpec extends WordSpec with MustMatchers {
+object DslSpec extends TestSuite {
 
-  "A Chimney DSL" should {
+  val tests = Tests {
 
-    "use implicit transformer directly" in {
+    "use implicit transformer directly" - {
 
       import Domain1._
 
       implicit val _ = userNameToStringTransformer
 
-      UserName("Batman").into[String].transform mustBe "BatmanT"
-      UserName("Batman").transformInto[String] mustBe "BatmanT"
+      UserName("Batman").into[String].transform ==> "BatmanT"
+      UserName("Batman").transformInto[String] ==> "BatmanT"
     }
 
-    "use implicit transformer for nested field" in {
+    "use implicit transformer for nested field" - {
 
       import Domain1._
 
@@ -27,61 +27,61 @@ class DslSpec extends WordSpec with MustMatchers {
       val batman = User("123", UserName("Batman"))
       val batmanDTO = batman.transformInto[UserDTO]
 
-      batmanDTO.id mustBe "123"
-      batmanDTO.name mustBe "BatmanT"
+      batmanDTO.id ==> "123"
+      batmanDTO.name ==> "BatmanT"
     }
 
-    "support different set of fields of source and target" when {
+    "support different set of fields of source and target" - {
 
       case class Foo(x: Int, y: String, z: (Double, Double))
       case class Bar(x: Int, z: (Double, Double))
       case class HaveY(y: String)
       val haveY = HaveY("")
 
-      "field is dropped in the target" in {
-        Foo(3, "pi", (3.14, 3.14)).transformInto[Bar] mustBe Bar(3, (3.14, 3.14))
+      "field is dropped - the target" - {
+        Foo(3, "pi", (3.14, 3.14)).transformInto[Bar] ==> Bar(3, (3.14, 3.14))
       }
 
-      "field is added to the target" should {
+      "field is added to the target" - {
 
-        "not compile if source for the target fields is not provided" in {
+        "not compile if source for the target fields is not provided" - {
 
-          assertTypeError("Bar(3, (3.14, 3.14)).transformInto[Foo]")
+          compileError("Bar(3, (3.14, 3.14)).transformInto[Foo]")
         }
 
-        "fill the field with provided default value" should {
+        "fill the field with provided default value" - {
 
-          "pass when selector is valid" in {
+          "pass when selector is valid" - {
 
             Bar(3, (3.14, 3.14))
               .into[Foo]
               .withFieldConst(_.y, "pi")
-              .transform mustBe
+              .transform ==>
               Foo(3, "pi", (3.14, 3.14))
 
             Bar(3, (3.14, 3.14))
               .into[Foo]
               .withFieldConst(cc => cc.y, "pi")
-              .transform mustBe
+              .transform ==>
               Foo(3, "pi", (3.14, 3.14))
           }
 
-          "not compile when the selector is invalid" in {
+          "not compile when selector is invalid" - {
 
-            assertTypeError("""Bar(3, (3.14, 3.14))
+            compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(_.y, "pi")
                   .withFieldConst(_.z._1, 0.0)
                   .transform
                 """)
 
-            assertTypeError("""Bar(3, (3.14, 3.14))
+            compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(_.y + "abc", "pi")
                   .transform
                 """)
 
-            assertTypeError("""Bar(3, (3.14, 3.14))
+            compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(cc => haveY.y, "pi")
                   .transform
@@ -89,68 +89,68 @@ class DslSpec extends WordSpec with MustMatchers {
           }
         }
 
-        "support default values for Options" should {
+        "support default values for Options" - {
           case class SomeFoo(x: String)
           case class Foobar(x: String, y: Option[Int])
           case class Foobar2(x: String, y: Option[Int] = Some(42))
 
-          "use None if default value is missing" in {
-            SomeFoo("foo").into[Foobar].transform mustBe Foobar("foo", None)
+          "use None if default value is missing" - {
+            SomeFoo("foo").into[Foobar].transform ==> Foobar("foo", None)
           }
 
-          "target has default value, but default values are disabled" in {
-            SomeFoo("foo").into[Foobar2].disableDefaultValues.transform mustBe Foobar2("foo", None)
+          "target has default value, but default values are disabled" - {
+            SomeFoo("foo").into[Foobar2].disableDefaultValues.transform ==> Foobar2("foo", None)
           }
 
-          "not use None as default when other default value is set" in {
-            SomeFoo("foo").into[Foobar2].transform mustBe Foobar2("foo", Some(42))
-            SomeFoo("foo").into[Foobar2].disableOptionDefaultsToNone.transform mustBe Foobar2("foo", Some(42))
+          "not use None as default - other default value is set" - {
+            SomeFoo("foo").into[Foobar2].transform ==> Foobar2("foo", Some(42))
+            SomeFoo("foo").into[Foobar2].disableOptionDefaultsToNone.transform ==> Foobar2("foo", Some(42))
           }
 
-          "not compile if default value is missing and .disableOptionDefaultsToNone" in {
-            assertTypeError("""SomeFoo("foo").into[Foobar].disableOptionDefaultsToNone.transform""")
+          "not compile if default value is missing and .disableOptionDefaultsToNone" - {
+            compileError("""SomeFoo("foo").into[Foobar].disableOptionDefaultsToNone.transform""")
           }
 
-          "not compile if default value is disabled and .disableOptionDefaultsToNone" in {
-            assertTypeError(
+          "not compile if default value is disabled and .disableOptionDefaultsToNone" - {
+            compileError(
               """SomeFoo("foo").into[Foobar2].disableDefaultValues.disableOptionDefaultsToNone.transform"""
             )
           }
         }
 
-        "fill the field with provided generator function" should {
+        "fill the field with provided generator function" - {
 
-          "pass when selector is valid" in {
+          "pass when selector is valid" - {
 
             Bar(3, (3.14, 3.14))
               .into[Foo]
               .withFieldComputed(_.y, _.x.toString)
-              .transform mustBe
+              .transform ==>
               Foo(3, "3", (3.14, 3.14))
 
             Bar(3, (3.14, 3.14))
               .into[Foo]
               .withFieldComputed(cc => cc.y, _.x.toString)
-              .transform mustBe
+              .transform ==>
               Foo(3, "3", (3.14, 3.14))
           }
 
-          "not compile when the selector is invalid" in {
+          "not compile when selector is invalid" - {
 
-            assertTypeError("""Bar(3, (3.14, 3.14))
+            compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(_.y, _.x.toString)
                   .withFieldComputed(_.z._1, _.z._1 * 10.0)
                   .transform
                 """)
 
-            assertTypeError("""Bar(3, (3.14, 3.14))
+            compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(_.y + "abc", _.x.toString)
                   .transform
                 """)
 
-            assertTypeError("""Bar(3, (3.14, 3.14))
+            compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(cc => haveY.y, _.x.toString)
                   .transform
@@ -160,87 +160,87 @@ class DslSpec extends WordSpec with MustMatchers {
       }
     }
 
-    "support default parameters" should {
+    "support default parameters" - {
       case class Foo(x: Int)
       case class Bar(x: Int, y: Long = 30L)
       case class Baz(x: Int = 5, y: Long = 100L)
       case class Baah(x: Int, y: Foo = Foo(0))
       case class Baahr(x: Int, y: Bar)
 
-      "use default parameter value" when {
+      "use default parameter value" - {
 
-        "field does not exists in the source" in {
-          Foo(10).transformInto[Bar] mustBe Bar(10, 30L)
-          Seq(Foo(30), Foo(40)).transformInto[Seq[Bar]] mustBe Seq(Bar(30, 30L), Bar(40, 30L))
+        "field does not exists - the source" - {
+          Foo(10).transformInto[Bar] ==> Bar(10, 30L)
+          Seq(Foo(30), Foo(40)).transformInto[Seq[Bar]] ==> Seq(Bar(30, 30L), Bar(40, 30L))
         }
 
-        "field does not exists in nested object" in {
-          Baah(10, Foo(300)).transformInto[Baahr] mustBe
+        "field does not exists - nested object" - {
+          Baah(10, Foo(300)).transformInto[Baahr] ==>
             Baahr(10, Bar(300, 30L))
         }
       }
 
-      "not use default parameter value" when {
+      "not use default parameter value" - {
 
-        "field exists in the source" in {
-          Bar(100, 200L).transformInto[Baz] mustBe Baz(100, 200L)
-          Seq(Bar(100, 200L), Bar(300, 400L)).transformInto[Seq[Baz]] mustBe Seq(Baz(100, 200L), Baz(300, 400L))
+        "field exists - the source" - {
+          Bar(100, 200L).transformInto[Baz] ==> Baz(100, 200L)
+          Seq(Bar(100, 200L), Bar(300, 400L)).transformInto[Seq[Baz]] ==> Seq(Baz(100, 200L), Baz(300, 400L))
         }
 
-        "another modifier is provided" in {
+        "another modifier is provided" - {
           Foo(10)
             .into[Bar]
             .withFieldConst(_.y, 45L)
-            .transform mustBe
+            .transform ==>
             Bar(10, 45L)
         }
 
-        "default values are disabled and another modifier is provided" in {
+        "default values are disabled and another modifier is provided" - {
           Foo(10)
             .into[Bar]
             .disableDefaultValues
             .withFieldConst(_.y, 45L)
-            .transform mustBe
+            .transform ==>
             Bar(10, 45L)
 
           Foo(10)
             .into[Bar]
             .withFieldConst(_.y, 48L)
             .disableDefaultValues
-            .transform mustBe
+            .transform ==>
             Bar(10, 48L)
         }
 
-        "local transformer for default value exists" in {
+        "local transformer for default value exists" - {
 
           implicit val localTransformer: Transformer[Long, Foo] = { l: Long =>
             Foo(l.toInt * 10)
           }
 
-          Bar(100, 300L).transformInto[Baah] mustBe Baah(100, Foo(3000))
+          Bar(100, 300L).transformInto[Baah] ==> Baah(100, Foo(3000))
         }
 
-        "local transformer for the whole entity exists" in {
+        "local transformer for the whole entity exists" - {
 
           implicit val fooBarTransformer: Transformer[Foo, Bar] = { foo: Foo =>
             Bar(foo.x, 333L)
           }
 
-          Foo(333).transformInto[Bar] mustBe Bar(333, 333L)
+          Foo(333).transformInto[Bar] ==> Bar(333, 333L)
         }
       }
 
-      "not compile when default parameter values are disabled" in {
-        assertTypeError("""
+      "not compile when default parameter values are disabled" - {
+        compileError("""
           Foo(10).into[Bar].disableDefaultValues.transform
         """)
 
-        assertTypeError("""
+        compileError("""
           Baah(10, Foo(300)).into[Baahr].disableDefaultValues.transform
         """)
       }
     }
-    "transform with rename " should {
+    "transform with rename " - {
       case class User(id: Int, name: String, age: Option[Int])
       case class UserPL(id: Int, imie: String, wiek: Either[Unit, Int])
       def ageToWiekTransformer: Transformer[Option[Int], Either[Unit, Int]] =
@@ -248,7 +248,7 @@ class DslSpec extends WordSpec with MustMatchers {
           def transform(obj: Option[Int]): Either[Unit, Int] =
             obj.fold[Either[Unit, Int]](Left(()))(Right.apply)
         }
-      "between different types: correct" in {
+      "between different types: correct" - {
         implicit val trans = ageToWiekTransformer
         val user: User = User(1, "Kuba", Some(28))
         val userPl = UserPL(1, "Kuba", Right(28))
@@ -256,11 +256,11 @@ class DslSpec extends WordSpec with MustMatchers {
           .into[UserPL]
           .withFieldRenamed(_.name, _.imie)
           .withFieldRenamed(_.age, _.wiek)
-          .transform mustBe userPl
+          .transform ==> userPl
 
       }
 
-      "between different types: incorrect" in {
+      "between different types: incorrect" - {
         implicit val trans = ageToWiekTransformer
         val user: User = User(1, "Kuba", None)
         val userPl = UserPL(1, "Kuba", Left(Unit))
@@ -268,22 +268,22 @@ class DslSpec extends WordSpec with MustMatchers {
           .into[UserPL]
           .withFieldRenamed(_.name, _.imie)
           .withFieldRenamed(_.age, _.wiek)
-          .transform mustBe userPl
+          .transform ==> userPl
 
       }
 
-      "between different types: without implicit" in {
+      "between different types: without implicit" - {
         val user: User = User(1, "Kuba", None)
         val userPl = UserPL(1, "Kuba", Left(Unit))
-        assertDoesNotCompile("""        user.into[UserPL].withFieldRenamed(_.name, _.imie)
-            |          .withFieldRenamed(_.age, _.wiek)
-            |          .transform
-          """.stripMargin)
-
+        compileError("""
+            user.into[UserPL].withFieldRenamed(_.name, _.imie)
+                .withFieldRenamed(_.age, _.wiek)
+                .transform
+          """)
       }
     }
 
-    "support relabelling of fields" should {
+    "support relabelling of fields" - {
 
       case class Foo(x: Int, y: String)
       case class Bar(x: Int, z: String)
@@ -293,57 +293,57 @@ class DslSpec extends WordSpec with MustMatchers {
       case class HaveZ(z: String)
       val haveZ = HaveZ("")
 
-      "not compile if relabelling modifier is not provided" in {
+      "not compile if relabelling modifier is not provided" - {
 
-        assertTypeError("""Foo(10, "something").transformInto[Bar]""")
+        compileError("""Foo(10, "something").transformInto[Bar]""")
       }
 
-      "relabel fields with relabelling modifier" in {
+      "relabel fields with relabelling modifier" - {
         Foo(10, "something")
           .into[Bar]
           .withFieldRenamed(_.y, _.z)
-          .transform mustBe
+          .transform ==>
           Bar(10, "something")
       }
 
-      "not compile if relabelling selectors are invalid" in {
+      "not compile if relabelling selectors are invalid" - {
 
-        assertTypeError("""
+        compileError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y + "abc", _.z)
               .transform
           """)
 
-        assertTypeError("""
+        compileError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(cc => haveY.y, _.z)
               .transform
           """)
 
-        assertTypeError("""
+        compileError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y, _.z + "abc")
               .transform
           """)
 
-        assertTypeError("""
+        compileError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y, cc => haveZ.z)
               .transform
           """)
 
-        assertTypeError("""
+        compileError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y + "abc", _.z + "abc")
               .transform
           """)
 
-        assertTypeError("""
+        compileError("""
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(cc => haveY.y, cc => haveZ.z)
@@ -351,118 +351,118 @@ class DslSpec extends WordSpec with MustMatchers {
           """)
       }
 
-      "not compile if relabelled in a wrong way" in {
+      "not compile if relabelled - a wrong way" - {
 
-        assertTypeError("""Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform""")
+        compileError("""Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform""")
 
-        assertTypeError("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
+        compileError("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
       }
 
     }
 
-    "support value classes" when {
+    "support value classes" - {
 
       import VCDomain1._
 
-      "transforming value class to a value" in {
+      "transforming value class to a value" - {
 
-        UserName("Batman").transformInto[String] mustBe "Batman"
-        User("100", UserName("abc")).transformInto[UserDTO] mustBe
+        UserName("Batman").transformInto[String] ==> "Batman"
+        User("100", UserName("abc")).transformInto[UserDTO] ==>
           UserDTO("100", "abc")
       }
 
-      "transforming value to a value class" in {
+      "transforming value to a value class" - {
 
-        "Batman".transformInto[UserName] mustBe UserName("Batman")
-        UserDTO("100", "abc").transformInto[User] mustBe
+        "Batman".transformInto[UserName] ==> UserName("Batman")
+        UserDTO("100", "abc").transformInto[User] ==>
           User("100", UserName("abc"))
       }
     }
 
-    "support common data types" should {
+    "support common data types" - {
 
       case class Foo(value: String)
       case class Bar(value: String)
 
-      "support scala.Option" in {
-        Option(Foo("a")).transformInto[Option[Bar]] mustBe Option(Bar("a"))
-        (Some(Foo("a")): Option[Foo]).transformInto[Option[Bar]] mustBe Option(Bar("a"))
-        Some(Foo("a")).transformInto[Option[Bar]] mustBe Some(Bar("a"))
-        (None: Option[Foo]).transformInto[Option[Bar]] mustBe None
-        Some(Foo("a")).transformInto[Some[Bar]] mustBe Some(Bar("a"))
-        None.transformInto[None.type] mustBe None
-        (None: Option[String]).transformInto[Option[String]] mustBe None
-        Option("abc").transformInto[Option[String]] mustBe Some("abc")
+      "support scala.Option" - {
+        Option(Foo("a")).transformInto[Option[Bar]] ==> Option(Bar("a"))
+        (Some(Foo("a")): Option[Foo]).transformInto[Option[Bar]] ==> Option(Bar("a"))
+        Some(Foo("a")).transformInto[Option[Bar]] ==> Some(Bar("a"))
+        (None: Option[Foo]).transformInto[Option[Bar]] ==> None
+        Some(Foo("a")).transformInto[Some[Bar]] ==> Some(Bar("a"))
+        None.transformInto[None.type] ==> None
+        (None: Option[String]).transformInto[Option[String]] ==> None
+        Option("abc").transformInto[Option[String]] ==> Some("abc")
       }
 
-      "support scala.util.Either" in {
-        (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] mustBe Left(Bar("a"))
-        (Right(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] mustBe Right(Bar("a"))
-        Left(Foo("a")).transformInto[Either[Bar, Bar]] mustBe Left(Bar("a"))
-        Right(Foo("a")).transformInto[Either[Bar, Bar]] mustBe Right(Bar("a"))
-        Left(Foo("a")).transformInto[Left[Bar, Bar]] mustBe Left(Bar("a"))
-        Right(Foo("a")).transformInto[Right[Bar, Bar]] mustBe Right(Bar("a"))
-        (Left("a"): Either[String, String]).transformInto[Either[String, String]] mustBe Left("a")
-        (Right("a"): Either[String, String]).transformInto[Either[String, String]] mustBe Right("a")
+      "support scala.util.Either" - {
+        (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Left(Bar("a"))
+        (Right(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Right(Bar("a"))
+        Left(Foo("a")).transformInto[Either[Bar, Bar]] ==> Left(Bar("a"))
+        Right(Foo("a")).transformInto[Either[Bar, Bar]] ==> Right(Bar("a"))
+        Left(Foo("a")).transformInto[Left[Bar, Bar]] ==> Left(Bar("a"))
+        Right(Foo("a")).transformInto[Right[Bar, Bar]] ==> Right(Bar("a"))
+        (Left("a"): Either[String, String]).transformInto[Either[String, String]] ==> Left("a")
+        (Right("a"): Either[String, String]).transformInto[Either[String, String]] ==> Right("a")
       }
 
-      "support Traversable collections" in {
-        Seq(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
-        List(Foo("a")).transformInto[List[Bar]] mustBe List(Bar("a"))
-        Vector(Foo("a")).transformInto[Vector[Bar]] mustBe Vector(Bar("a"))
-        Set(Foo("a")).transformInto[Set[Bar]] mustBe Set(Bar("a"))
+      "support Traversable collections" - {
+        Seq(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))
+        List(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a"))
+        Vector(Foo("a")).transformInto[Vector[Bar]] ==> Vector(Bar("a"))
+        Set(Foo("a")).transformInto[Set[Bar]] ==> Set(Bar("a"))
 
-        Seq("a").transformInto[Seq[String]] mustBe Seq("a")
-        List("a").transformInto[List[String]] mustBe List("a")
-        Vector("a").transformInto[Vector[String]] mustBe Vector("a")
-        Set("a").transformInto[Set[String]] mustBe Set("a")
+        Seq("a").transformInto[Seq[String]] ==> Seq("a")
+        List("a").transformInto[List[String]] ==> List("a")
+        Vector("a").transformInto[Vector[String]] ==> Vector("a")
+        Set("a").transformInto[Set[String]] ==> Set("a")
 
-        List(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
-        Vector(Foo("a")).transformInto[Seq[Bar]] mustBe Seq(Bar("a"))
+        List(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))
+        Vector(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))
 
-        List("a").transformInto[Seq[String]] mustBe Seq("a")
-        Vector("a").transformInto[Seq[String]] mustBe Seq("a")
+        List("a").transformInto[Seq[String]] ==> Seq("a")
+        Vector("a").transformInto[Seq[String]] ==> Seq("a")
       }
 
-      "support Arrays" in {
-        Array(Foo("a")).transformInto[Array[Foo]] mustBe Array(Foo("a"))
-        Array(Foo("a")).transformInto[Array[Bar]] mustBe Array(Bar("a"))
-        Array("a").transformInto[Array[String]] mustBe Array("a")
+      "support Arrays" - {
+        Array(Foo("a")).transformInto[Array[Foo]] ==> Array(Foo("a"))
+        Array(Foo("a")).transformInto[Array[Bar]] ==> Array(Bar("a"))
+        Array("a").transformInto[Array[String]] ==> Array("a")
       }
 
-      "support conversion between Traversables and Arrays" in {
+      "support conversion between Traversables and Arrays" - {
 
-        Array(Foo("a")).transformInto[List[Bar]] mustBe List(Bar("a"))
-        Array("a", "b").transformInto[Seq[String]] mustBe Seq("a", "b")
-        Array(3, 2, 1).transformInto[Vector[Int]] mustBe Vector(3, 2, 1)
+        Array(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a"))
+        Array("a", "b").transformInto[Seq[String]] ==> Seq("a", "b")
+        Array(3, 2, 1).transformInto[Vector[Int]] ==> Vector(3, 2, 1)
 
-        Vector("a").transformInto[Array[String]] mustBe Array("a")
-        List(1, 6, 3).transformInto[Array[Int]] mustBe Array(1, 6, 3)
-        Seq(Bar("x"), Bar("y")).transformInto[Array[Foo]] mustBe Array(Foo("x"), Foo("y"))
+        Vector("a").transformInto[Array[String]] ==> Array("a")
+        List(1, 6, 3).transformInto[Array[Int]] ==> Array(1, 6, 3)
+        Seq(Bar("x"), Bar("y")).transformInto[Array[Foo]] ==> Array(Foo("x"), Foo("y"))
       }
 
-      "support Map" in {
-        Map("test" -> Foo("a")).transformInto[Map[String, Bar]] mustBe Map("test" -> Bar("a"))
-        Map("test" -> "a").transformInto[Map[String, String]] mustBe Map("test" -> "a")
-        Map(Foo("test") -> "x").transformInto[Map[Bar, String]] mustBe Map(Bar("test") -> "x")
-        Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] mustBe Map(Bar("test") -> Bar("x"))
+      "support Map" - {
+        Map("test" -> Foo("a")).transformInto[Map[String, Bar]] ==> Map("test" -> Bar("a"))
+        Map("test" -> "a").transformInto[Map[String, String]] ==> Map("test" -> "a")
+        Map(Foo("test") -> "x").transformInto[Map[Bar, String]] ==> Map(Bar("test") -> "x")
+        Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] ==> Map(Bar("test") -> Bar("x"))
       }
     }
 
-    "support sealed hierarchies" when {
+    "support sealed hierarchies" - {
 
-      "enum types encoded as sealed hierarchies of case objects" when {
-        "transforming from smaller to bigger enum" in {
+      "enum types encoded as sealed hierarchies of case objects" - {
+        "transforming from smaller to bigger enum" - {
 
           (colors1.Red: colors1.Color)
-            .transformInto[colors2.Color] mustBe colors2.Red
+            .transformInto[colors2.Color] ==> colors2.Red
           (colors1.Green: colors1.Color)
-            .transformInto[colors2.Color] mustBe colors2.Green
+            .transformInto[colors2.Color] ==> colors2.Green
           (colors1.Blue: colors1.Color)
-            .transformInto[colors2.Color] mustBe colors2.Blue
+            .transformInto[colors2.Color] ==> colors2.Blue
         }
 
-        "transforming from bigger to smaller enum" in {
+        "transforming from bigger to smaller enum" - {
 
           def blackIsRed(b: colors2.Black.type): colors1.Color =
             colors1.Red
@@ -470,26 +470,26 @@ class DslSpec extends WordSpec with MustMatchers {
           (colors2.Black: colors2.Color)
             .into[colors1.Color]
             .withCoproductInstance(blackIsRed)
-            .transform mustBe colors1.Red
+            .transform ==> colors1.Red
 
           (colors2.Red: colors2.Color)
             .into[colors1.Color]
             .withCoproductInstance(blackIsRed)
-            .transform mustBe colors1.Red
+            .transform ==> colors1.Red
 
           (colors2.Green: colors2.Color)
             .into[colors1.Color]
             .withCoproductInstance(blackIsRed)
-            .transform mustBe colors1.Green
+            .transform ==> colors1.Green
 
           (colors2.Blue: colors2.Color)
             .into[colors1.Color]
             .withCoproductInstance(blackIsRed)
-            .transform mustBe colors1.Blue
+            .transform ==> colors1.Blue
         }
       }
 
-      "transforming non-isomorphic domains" in {
+      "transforming non-isomorphic domains" - {
 
         def triangleToPolygon(t: shapes1.Triangle): shapes2.Shape =
           shapes2.Polygon(
@@ -517,7 +517,7 @@ class DslSpec extends WordSpec with MustMatchers {
           .into[shapes2.Shape]
           .withCoproductInstance(triangleToPolygon)
           .withCoproductInstance(rectangleToPolygon)
-          .transform mustBe shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0)))
+          .transform ==> shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0)))
 
         val rectangle: shapes1.Shape =
           shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4))
@@ -528,68 +528,68 @@ class DslSpec extends WordSpec with MustMatchers {
             case r: shapes1.Rectangle => rectangleToPolygon(r)
             case t: shapes1.Triangle  => triangleToPolygon(t)
           }
-          .transform mustBe shapes2.Polygon(
+          .transform ==> shapes2.Polygon(
           List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
         )
       }
 
-      "transforming isomorphic domains that differ a detail" in {
+      "transforming isomorphic domains that differ a detail" - {
 
         implicit val intToDoubleTransformer: Transformer[Int, Double] =
           (_: Int).toDouble
 
         (shapes1
           .Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
-          .transformInto[shapes3.Shape] mustBe
+          .transformInto[shapes3.Shape] ==>
           shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0))
 
         (shapes1
           .Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4)): shapes1.Shape)
-          .transformInto[shapes3.Shape] mustBe
+          .transformInto[shapes3.Shape] ==>
           shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0))
       }
     }
 
-    "support polymorphic source/target objects and modifiers" when {
+    "support polymorphic source/target objects and modifiers" - {
 
       import Poly._
 
-      "monomorphic source to polymorphic target" in {
+      "monomorphic source to polymorphic target" - {
 
         def transform[T]: (String => T) => MonoSource => PolyTarget[T] =
           fun => _.into[PolyTarget[T]].withFieldComputed(_.poly, src => fun(src.poly)).transform
 
-        transform[String](identity)(monoSource) mustBe polyTarget
+        transform[String](identity)(monoSource) ==> polyTarget
       }
 
-      "polymorphic source to monomorphic target" in {
+      "polymorphic source to monomorphic target" - {
 
         def transform[T]: PolySource[T] => MonoTarget =
           _.into[MonoTarget].withFieldComputed(_.poly, _.poly.toString).transform
 
-        transform[String](polySource) mustBe monoTarget
+        transform[String](polySource) ==> monoTarget
       }
 
-      "polymorphic source to polymorphic target" in {
+      "polymorphic source to polymorphic target" - {
 
         def transform[T]: PolySource[T] => PolyTarget[T] =
           _.transformInto[PolyTarget[T]]
 
-        transform[String](polySource) mustBe polyTarget
+        transform[String](polySource) ==> polyTarget
       }
 
-      "handle type-inference for polymorphic computation" in {
+      "handle type-inference for polymorphic computation" - {
 
         def fun[T]: PolySource[T] => String = _.poly.toString
 
         def transform[T]: PolySource[T] => MonoTarget =
           _.into[MonoTarget].withFieldComputed(_.poly, fun).transform
 
-        transform[String](polySource) mustBe monoTarget
+        transform[String](polySource) ==> monoTarget
       }
     }
 
-    "support abstracting over a value in dsl opertions" in {
+    "support abstracting over a value in dsl operations" - {
 
       case class Foo(x: String)
       case class Bar(z: Double, y: Int, x: String)
@@ -601,32 +601,32 @@ class DslSpec extends WordSpec with MustMatchers {
       val transformer1 = partialTransformer.withFieldConst(_.z, 1.0)
       val transformer2 = partialTransformer.withFieldComputed(_.z, _.x.length * 2.0)
 
-      transformer1.transform mustBe Bar(1.0, 3, "abc")
-      transformer2.transform mustBe Bar(6.0, 3, "abc")
+      transformer1.transform ==> Bar(1.0, 3, "abc")
+      transformer2.transform ==> Bar(6.0, 3, "abc")
     }
 
-    "transform from non-case class to case class" when {
+    "transform from non-case class to case class" - {
       import NonCaseDomain._
 
-      "support non-case classes inputs" in {
+      "support non-case classes inputs" - {
         val source = new ClassSource("test-id", "test-name")
         val target = source.transformInto[CasesTarget]
 
-        target.id mustBe source.id
-        target.name mustBe source.name
+        target.id ==> source.id
+        target.name ==> source.name
       }
 
-      "support trait inputs" in {
+      "support trait inputs" - {
         val source: TraitSource = new TraitSourceImpl("test-id", "test-name")
         val target = source.transformInto[CasesTarget]
 
-        target.id mustBe source.id
-        target.name mustBe source.name
+        target.id ==> source.id
+        target.name ==> source.name
       }
 
-      "support java beans" should {
+      "support java beans" - {
 
-        "work with basic renaming when bean getter lookup is disabled" in {
+        "work with basic renaming when bean getter lookup is disabled" - {
           val source = new JavaBeanSource("test-id", "test-name")
           val target = source
             .into[CasesTarget]
@@ -635,36 +635,35 @@ class DslSpec extends WordSpec with MustMatchers {
             .disableBeanGetterLookup
             .transform
 
-          target.id mustBe source.getId
-          target.name mustBe source.getName
+          target.id ==> source.getId
+          target.name ==> source.getName
         }
 
-        "support automatic reading from java bean getters" in {
+        "support automatic reading from java bean getters" - {
           val source = new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
           val target = source
             .into[CasesTargetWithFlag]
             .transform
-          target.id mustBe source.getId
-          target.name mustBe source.getName
-          target.flag mustBe source.isFlag
+          target.id ==> source.getId
+          target.name ==> source.getName
+          target.flag ==> source.isFlag
         }
 
-        "not compile when bean getter lookup is disabled" in {
-          assertTypeError(
-            """
+        "not compile when bean getter lookup is disabled" - {
+          compileError("""
             new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).into[CasesTargetWithFlag].disableBeanGetterLookup.transform
           """
           )
         }
 
-        "not compile when matching an is- getter with type other than Boolean" in {
-          assertTypeError("""
-             |case class MistypedTarget(flag: Int)
-             |class MistypedSource(private var flag: Int) {
-             |  def isFlag: Int = flag
-             |}
-             |new MistypedSource(1).into[MistypedTarget].transform
-          """.stripMargin)
+        "not compile when matching an is- getter with type other than Boolean" - {
+          compileError("""
+             case class MistypedTarget(flag: Int)
+             class MistypedSource(private var flag: Int) {
+               def isFlag: Int = flag
+             }
+             new MistypedSource(1).into[MistypedTarget].transform
+          """)
         }
 
       }
