@@ -71,8 +71,7 @@ object IssuesSpec extends TestSuite {
           Foo1("test")
             .into[Foo2]
             .withFieldConst(_.x, "xyz")
-          """
-        )
+          """)
       }
 
       "fix for `withFieldComputed`" - {

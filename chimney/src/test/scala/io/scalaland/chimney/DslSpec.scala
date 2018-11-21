@@ -112,9 +112,7 @@ object DslSpec extends TestSuite {
           }
 
           "not compile if default value is disabled and .disableOptionDefaultsToNone" - {
-            compileError(
-              """SomeFoo("foo").into[Foobar2].disableDefaultValues.disableOptionDefaultsToNone.transform"""
-            )
+            compileError("""SomeFoo("foo").into[Foobar2].disableDefaultValues.disableOptionDefaultsToNone.transform""")
           }
         }
 
@@ -650,7 +648,8 @@ object DslSpec extends TestSuite {
         }
 
         "not compile when bean getter lookup is disabled" - {
-          compileError("""
+          compileError(
+            """
             new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).into[CasesTargetWithFlag].disableBeanGetterLookup.transform
           """
           )
