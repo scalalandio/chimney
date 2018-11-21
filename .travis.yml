@@ -15,10 +15,18 @@ cache:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot
 
+before_install:
+  - unset _JAVA_OPTIONS
+  - export JAVA_OPTS="$JAVA_OPTS -Xms512m -Xmx2048m"
+  - apt-get update && apt-get install -y clang libunwind-dev libgc-dev libre2-dev
+
 before_cache:
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
   - find $HOME/.sbt -name "*.lock" -delete
+
+before_script:
+  - unset _JAVA_OPTIONS
 
 script:
   - if [[ "$TRAVIS_SCALA_VERSION" == 2.11.* ]]; then testNative=chimneyNative/test; else testNative=""; fi && sbt ++$TRAVIS_SCALA_VERSION clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test $testNative coverage chimneyJVM/test coverageReport
