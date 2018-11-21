@@ -79,6 +79,7 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(dependencies: _*)
+  .nativeSettings(nativeLinkStubs := true)
 
 lazy val chimneyJVM = chimney.jvm
 lazy val chimneyJS = chimney.js
