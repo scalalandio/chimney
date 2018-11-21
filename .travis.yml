@@ -21,7 +21,7 @@ before_cache:
   - find $HOME/.sbt -name "*.lock" -delete
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test coverage chimneyJVM/test coverageReport
+  - if [[ "$TRAVIS_SCALA_VERSION" == 2.11.* ]]; then testNative=chimneyNative/test; else testNative=""; fi && sbt ++$TRAVIS_SCALA_VERSION clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test $testNative coverage chimneyJVM/test coverageReport
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
