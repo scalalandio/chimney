@@ -99,7 +99,8 @@ object DslSpec extends TestSuite {
           }
 
           "target has default value, but default values are disabled and .enableOptionDefaultsToNone" - {
-            SomeFoo("foo").into[Foobar2].disableDefaultValues.enableOptionDefaultsToNone.transform ==> Foobar2("foo", None)
+            SomeFoo("foo").into[Foobar2].disableDefaultValues.enableOptionDefaultsToNone.transform ==>
+              Foobar2("foo", None)
           }
 
           "not use None as default when other default value is set" - {
