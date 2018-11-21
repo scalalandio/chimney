@@ -11,23 +11,16 @@ val settings = Seq(
   crossScalaVersions := Seq("2.11.12", "2.12.7", "2.13.0-M5"),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
-    "-encoding",
-    "UTF-8",
+    "-encoding", "UTF-8",
     "-unchecked",
     "-deprecation",
     "-explaintypes",
     "-feature",
-    "-language:existentials",
-    "-language:higherKinds",
-    "-language:implicitConversions",
     "-Ywarn-dead-code",
-    "-Ywarn-nullary-override",
-    "-Ywarn-nullary-unit",
     "-Ywarn-numeric-widen",
-    "-Xfatal-warnings",
+//    "-Xfatal-warnings",
     "-Xfuture",
     "-Xlint:adapted-args",
-    "-Xlint:by-name-right-associative",
     "-Xlint:delayedinit-select",
     "-Xlint:doc-detached",
     "-Xlint:inaccessible",
@@ -39,8 +32,7 @@ val settings = Seq(
     "-Xlint:poly-implicit-overload",
     "-Xlint:private-shadow",
     "-Xlint:stars-align",
-    "-Xlint:type-parameter-shadow",
-    "-Xlint:unsound-match",
+    "-Xlint:type-parameter-shadow"
   ) ++ (
     if (scalaVersion.value >= "2.13")
       Nil
@@ -49,7 +41,11 @@ val settings = Seq(
         "-Xexperimental",
         "-Yno-adapted-args",
         "-Ywarn-inaccessible",
-        "-Ywarn-infer-any"
+        "-Ywarn-infer-any",
+        "-Ywarn-nullary-override",
+        "-Ywarn-nullary-unit",
+        "-Xlint:by-name-right-associative",
+        "-Xlint:unsound-match"
       )
     ),
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
