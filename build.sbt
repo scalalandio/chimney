@@ -8,7 +8,7 @@ val versions = new {
 val settings = Seq(
   version := "0.2.1",
   scalaVersion := versions.scalaVersion,
-  crossScalaVersions := Seq("2.11.12", "2.12.7", "2.13.0-M4"),
+  crossScalaVersions := Seq("2.11.12", "2.12.7", "2.13.0-M5"),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
     "-encoding",
