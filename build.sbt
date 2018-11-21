@@ -21,7 +21,6 @@ val settings = Seq(
     "-language:higherKinds",
     "-language:implicitConversions",
     "-Ywarn-dead-code",
-    "-Ywarn-inaccessible",
     "-Ywarn-infer-any",
     "-Ywarn-nullary-override",
     "-Ywarn-nullary-unit",
@@ -43,7 +42,7 @@ val settings = Seq(
     "-Xlint:stars-align",
     "-Xlint:type-parameter-shadow",
     "-Xlint:unsound-match",
-  ) ++ (if (scalaVersion.value >= "2.13") Nil else Seq("-Yno-adapted-args", "-Xexperimental")),
+  ) ++ (if (scalaVersion.value >= "2.13") Nil else Seq("-Yno-adapted-args", "-Xexperimental", "-Ywarn-inaccessible")),
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
 
