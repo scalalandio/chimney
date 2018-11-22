@@ -42,8 +42,12 @@ trait DerivationGuards {
   }
 
   def destinationJavaBean(to: Type): Boolean = {
-    val primaryConstructor = to.typeSymbol.asClass.primaryConstructor
-    primaryConstructor.isPublic && primaryConstructor.asMethod.paramLists == List(Nil) && to.setterMethods.nonEmpty
+    if(to.typeSymbol.isClass) {
+      val primaryConstructor = to.typeSymbol.asClass.primaryConstructor
+      primaryConstructor.isPublic && primaryConstructor.asMethod.paramLists == List(Nil) && to.setterMethods.nonEmpty
+    } else {
+      false
+    }
   }
 
   def bothSealedClasses(from: Type, to: Type): Boolean = {
