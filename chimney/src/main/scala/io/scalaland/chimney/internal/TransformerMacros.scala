@@ -434,24 +434,7 @@ trait TransformerMacros {
     (errors, args)
   }
 
-  case class Target(name: String, tpe: Type, kind: Target.Kind)
-  object Target {
-    sealed trait Kind
-    case object ClassField extends Kind
-    case object JavaBeanSetter extends Kind
-
-    def fromJavaBeanSetter(ms: MethodSymbol, site: Type): Target =
-      Target(ms.canonicalName, ms.beanSetterParamTypeIn(site), JavaBeanSetter)
-
-    def fromField(ms: MethodSymbol, site: Type): Target =
-      Target(ms.canonicalName, ms.resultTypeIn(site), ClassField)
-  }
-
-  sealed trait TargetResolution
-  case class ResolvedTargetTree(tree: Tree) extends TargetResolution
-  case class MatchingSourceAccessor(ms: MethodSymbol) extends TargetResolution
-
-  def resolveTarget(srcPrefixTree: Tree, config: Config, tFrom: Type, tTo: Type)(
+  def resolveTarget(srcPrefixTree: Tree, config: Config, From: Type, To: Type)(
     target: Target,
     fromGetters: Iterable[MethodSymbol],
     targetCaseClass: Option[ClassSymbol]
@@ -466,7 +449,7 @@ trait TransformerMacros {
     } else if (config.renamedFields.contains(target.name)) {
       val fromFieldName = TermName(config.renamedFields(target.name))
       fromGetters.find(_.name == fromFieldName).map { ms =>
-        if (target.tpe <:< ms.resultTypeIn(tFrom)) {
+        if (target.tpe <:< ms.resultTypeIn(From)) {
           ResolvedTargetTree {
             q"$srcPrefixTree.$fromFieldName"
           }
@@ -476,9 +459,9 @@ trait TransformerMacros {
       }
     } else {
       fromGetters
-        .find(lookupAccessor(config, target, tFrom))
+        .find(lookupAccessor(config, target, From))
         .map { ms =>
-          if (ms.resultTypeIn(tFrom) <:< target.tpe) {
+          if (ms.resultTypeIn(From) <:< target.tpe) {
             ResolvedTargetTree {
               q"$srcPrefixTree.${ms.name}"
             }
@@ -509,13 +492,13 @@ trait TransformerMacros {
     }
   }
 
-  def lookupAccessor(config: Config, target: Target, tFrom: Type)(ms: MethodSymbol): Boolean = {
+  def lookupAccessor(config: Config, target: Target, From: Type)(ms: MethodSymbol): Boolean = {
     val sourceName = ms.name.decodedName.toString
     if (config.enableBeanGetters) {
       val targetNameCapitalized = target.name.capitalize
       sourceName == target.name ||
       sourceName == s"get$targetNameCapitalized" ||
-      (sourceName == s"is$targetNameCapitalized" && ms.resultTypeIn(tFrom) == typeOf[Boolean])
+      (sourceName == s"is$targetNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])
     } else {
       sourceName == target.name
     }
@@ -535,6 +518,23 @@ trait TransformerMacros {
       .toOption
       .filterNot(_ == EmptyTree)
   }
+
+  case class Target(name: String, tpe: Type, kind: Target.Kind)
+  object Target {
+    sealed trait Kind
+    case object ClassField extends Kind
+    case object JavaBeanSetter extends Kind
+
+    def fromJavaBeanSetter(ms: MethodSymbol, site: Type): Target =
+      Target(ms.canonicalName, ms.beanSetterParamTypeIn(site), JavaBeanSetter)
+
+    def fromField(ms: MethodSymbol, site: Type): Target =
+      Target(ms.canonicalName, ms.resultTypeIn(site), ClassField)
+  }
+
+  sealed trait TargetResolution
+  case class ResolvedTargetTree(tree: Tree) extends TargetResolution
+  case class MatchingSourceAccessor(ms: MethodSymbol) extends TargetResolution
 
   private val chimneyDocUrl = "https://scalalandio.github.io/chimney"
 }
