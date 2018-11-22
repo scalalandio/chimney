@@ -30,7 +30,19 @@ trait MacroUtils extends CompanionUtils {
       def isParameterless(m: MethodSymbol) = m.paramLists.isEmpty || m.paramLists == List(List())
       t.decls.collect {
         case m: MethodSymbol if m.isPublic && (m.isGetter || isParameterless(m)) =>
-          m.asMethod
+          m
+      }
+    }
+
+    def setterMethods: Iterable[MethodSymbol] = {
+      t.members.collect {
+        case m: MethodSymbol if
+          m.isPublic &&
+            m.name.decodedName.toString.startsWith("set") &&
+            m.paramLists.lengthCompare(1) == 0 &&
+            m.paramLists.head.lengthCompare(1) == 0 &&
+            m.returnType == typeOf[Unit] =>
+          m
       }
     }
 
@@ -81,6 +93,21 @@ trait MacroUtils extends CompanionUtils {
           }
         }
         .getOrElse(Map.empty)
+    }
+  }
+
+  implicit class MethodSymbolOps(ms: MethodSymbol) {
+
+    def canonicalName: String = {
+      val name = ms.name.decodedName.toString
+      if(name.startsWith("set")) {
+        val stripedPrefix = name.drop(3)
+        val lowerizedName = stripedPrefix.toCharArray
+        lowerizedName(0) = lowerizedName(0).toLower
+        new String(lowerizedName)
+      } else {
+        name
+      }
     }
   }
 

@@ -8,6 +8,7 @@ trait DerivationConfig {
 
   case class Config(processDefaultValues: Boolean = true,
                     enableBeanGetters: Boolean = false,
+                    enableBeanSetters: Boolean = false,
                     optionDefaultsToNone: Boolean = false,
                     overridenFields: Set[String] = Set.empty,
                     renamedFields: Map[String, String] = Map.empty,

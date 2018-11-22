@@ -25,6 +25,9 @@ object dsl {
     def enableBeanGetters: TransformerInto[From, To, EnableBeanGetters[C]] =
       new TransformerInto[From, To, EnableBeanGetters[C]](source, overrides, instances)
 
+    def enableBeanSetters: TransformerInto[From, To, EnableBeanSetters[C]] =
+      new TransformerInto[From, To, EnableBeanSetters[C]](source, overrides, instances)
+
     def enableOptionDefaultsToNone: TransformerInto[From, To, EnableOptionDefaultsToNone[C]] =
       new TransformerInto[From, To, EnableOptionDefaultsToNone[C]](source, overrides, instances)
 

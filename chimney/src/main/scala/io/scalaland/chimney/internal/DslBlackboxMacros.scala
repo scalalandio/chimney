@@ -27,6 +27,7 @@ trait DslBlackboxMacros {
     val emptyT = typeOf[Empty]
     val disableDefaultValuesT = typeOf[DisableDefaultValues[_]].typeConstructor
     val enableBeanGettersT = typeOf[EnableBeanGetters[_]].typeConstructor
+    val enableBeanSettersT = typeOf[EnableBeanSetters[_]].typeConstructor
     val enableOptionDefaultsToNone = typeOf[EnableOptionDefaultsToNone[_]].typeConstructor
     val fieldConstT = typeOf[FieldConst[_, _]].typeConstructor
     val fieldComputedT = typeOf[FieldComputed[_, _]].typeConstructor
@@ -39,6 +40,8 @@ trait DslBlackboxMacros {
       captureConfiguration(cfgTpe.typeArgs.head, config.copy(processDefaultValues = false))
     } else if (cfgTpe.typeConstructor == enableBeanGettersT) {
       captureConfiguration(cfgTpe.typeArgs.head, config.copy(enableBeanGetters = true))
+    } else if (cfgTpe.typeConstructor == enableBeanSettersT) {
+      captureConfiguration(cfgTpe.typeArgs.head, config.copy(enableBeanSetters = true))
     } else if (cfgTpe.typeConstructor == enableOptionDefaultsToNone) {
       captureConfiguration(cfgTpe.typeArgs.head, config.copy(optionDefaultsToNone = true))
     } else if (Set(fieldConstT, fieldComputedT).contains(cfgTpe.typeConstructor)) {
