@@ -40,15 +40,17 @@ object JavaBeansSpec extends TestSuite {
           """
             new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).into[CaseClassWithFlag].transform
           """
+        ).check(
+          "",
+          "Chimney can't derive transformation from io.scalaland.chimney.JavaBeanSourceWithFlag to io.scalaland.chimney.CaseClassWithFlag"
         )
-          .check("", "Chimney can't derive transformation from io.scalaland.chimney.JavaBeanSourceWithFlag to io.scalaland.chimney.CaseClassWithFlag")
       }
 
       "not compile when matching an is- getter with type other than Boolean" - {
 
         compileError("""
              case class MistypedTarget(flag: Int)
-             class MistypedSource(private var flag: Int) {
+             class MistypedSource(private var flag: Int)k {
                def isFlag: Int = flag
              }
              new MistypedSource(1).into[MistypedTarget].enableBeanGetters.transform
@@ -79,7 +81,10 @@ object JavaBeansSpec extends TestSuite {
               .into[JavaBeanTarget]
               .transform
           """)
-          .check("", "Chimney can't derive transformation from io.scalaland.chimney.CaseClassWithFlag to io.scalaland.chimney.JavaBeanTarget")
+          .check(
+            "",
+            "Chimney can't derive transformation from io.scalaland.chimney.CaseClassWithFlag to io.scalaland.chimney.JavaBeanTarget"
+          )
       }
 
       "not compile when accessors are missing" - {
@@ -90,7 +95,10 @@ object JavaBeansSpec extends TestSuite {
               .enableBeanSetters
               .transform
           """)
-          .check("", "Chimney can't derive transformation from io.scalaland.chimney.CaseClassNoFlag to io.scalaland.chimney.JavaBeanTarget")
+          .check(
+            "",
+            "Chimney can't derive transformation from io.scalaland.chimney.CaseClassNoFlag to io.scalaland.chimney.JavaBeanTarget"
+          )
       }
 
       "convert java bean to java bean" - {

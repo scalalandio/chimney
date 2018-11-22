@@ -89,8 +89,8 @@ object IssuesSpec extends TestSuite {
 
         assert(
           Foo1("test")
-          .into[Foo3]
-          .withFieldRenamed(_.y, _.x) != null
+            .into[Foo3]
+            .withFieldRenamed(_.y, _.x) != null
         )
       }
     }
