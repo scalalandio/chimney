@@ -40,7 +40,7 @@ object DerivationError {
             case CantFindCoproductInstanceTransformer(instance, _, _) =>
               s"  can't transform coproduct instance $instance to $targetTypeName"
             case NotSupportedDerivation(sourceTypeName, _) =>
-              s"  derivation from $sourceTypeName is not supported in Chimney!"
+              s"  derivation from $sourceTypeName to $targetTypeName is not supported in Chimney!"
           }
 
           s"""$targetTypeName
