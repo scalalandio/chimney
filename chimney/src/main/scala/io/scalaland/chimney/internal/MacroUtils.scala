@@ -34,16 +34,8 @@ trait MacroUtils extends CompanionUtils {
       }
     }
 
-    def setterMethods: Iterable[MethodSymbol] = {
-      t.members.collect {
-        case m: MethodSymbol if
-          m.isPublic &&
-            m.name.decodedName.toString.startsWith("set") &&
-            m.paramLists.lengthCompare(1) == 0 &&
-            m.paramLists.head.lengthCompare(1) == 0 &&
-            m.returnType == typeOf[Unit] =>
-          m
-      }
+    def beanSetterMethods: Iterable[MethodSymbol] = {
+      t.members.collect { case m: MethodSymbol if m.isBeanSetter => m }
     }
 
     def valueClassMember: Option[MethodSymbol] = {
@@ -108,6 +100,18 @@ trait MacroUtils extends CompanionUtils {
       } else {
         name
       }
+    }
+
+    def isBeanSetter: Boolean = {
+      ms.isPublic &&
+        ms.name.decodedName.toString.startsWith("set") &&
+        ms.paramLists.lengthCompare(1) == 0 &&
+        ms.paramLists.head.lengthCompare(1) == 0 &&
+        ms.returnType == typeOf[Unit]
+    }
+
+    def resultTypeIn(site: Type): Type = {
+      ms.typeSignatureIn(site).finalResultType
     }
   }
 

@@ -326,7 +326,7 @@ trait TransformerMacros {
     missingFields.foreach { ms =>
       errors :+= MissingField(
         fieldName = ms.name.toString,
-        fieldTypeName = ms.returnType.typeSymbol.fullName,
+        fieldTypeName = ms.resultTypeIn(To).typeSymbol.fullName,
         sourceTypeName = From.typeSymbol.fullName,
         targetTypeName = To.typeSymbol.fullName
       )
@@ -341,10 +341,11 @@ trait TransformerMacros {
           case Some(localImplicitTransformer) =>
             q"$localImplicitTransformer.transform($srcPrefixTree.${sourceField.name})"
 
-          case None if canTryDeriveTransformer(sourceField.returnType, targetField.returnType) =>
+          case None if canTryDeriveTransformer(sourceField.resultTypeIn(From), targetField.resultTypeIn(To)) =>
+
             expandTransformerTree(q"$srcPrefixTree.${sourceField.name}", config.rec)(
-              sourceField.returnType,
-              targetField.returnType
+              sourceField.resultTypeIn(From),
+              targetField.resultTypeIn(To)
             ) match {
               case Left(errs) =>
                 errors ++= errs
@@ -356,8 +357,8 @@ trait TransformerMacros {
           case None =>
             errors :+= MissingTransformer(
               fieldName = targetField.name.toString,
-              sourceFieldTypeName = sourceField.returnType.typeSymbol.fullName,
-              targetFieldTypeName = targetField.returnType.typeSymbol.fullName,
+              sourceFieldTypeName = sourceField.resultTypeIn(From).typeSymbol.fullName,
+              targetFieldTypeName = targetField.resultTypeIn(To).typeSymbol.fullName,
               sourceTypeName = From.typeSymbol.fullName,
               targetTypeName = To.typeSymbol.fullName
             )
@@ -391,7 +392,7 @@ trait TransformerMacros {
       if (config.enableBeanGetters) {
         sourceName == fieldName ||
         sourceName == s"get$targetNameCapitalized" ||
-        (sourceName == s"is$targetNameCapitalized" && m.returnType == typeTag[Boolean].tpe)
+        (sourceName == s"is$targetNameCapitalized" && m.resultTypeIn(tFrom) == typeOf[Boolean])
       } else {
         sourceName == fieldName
       }
@@ -406,7 +407,7 @@ trait TransformerMacros {
     } else if (config.renamedFields.contains(fieldName)) {
       val fromFieldName = TermName(config.renamedFields(fieldName))
       fromParams.find(_.name == fromFieldName).map { ms =>
-        if (targetField.returnType =:= ms.returnType) {
+        if (targetField.resultTypeIn(tTo) <:< ms.resultTypeIn(tFrom)) {
           ResolvedFieldTree {
             q"$srcPrefixTree.$fromFieldName"
           }
@@ -418,7 +419,7 @@ trait TransformerMacros {
       fromParams
         .find(fieldNameLookup)
         .map { ms =>
-          if (ms.typeSignatureIn(tFrom) <:< targetField.typeSignatureIn(tTo)) {
+          if (ms.resultTypeIn(tFrom) <:< targetField.resultTypeIn(tTo)) {
             ResolvedFieldTree {
               q"$srcPrefixTree.${ms.name}"
             }
@@ -435,7 +436,7 @@ trait TransformerMacros {
           }
         }
         .orElse {
-          val targetTypeIsOption = targetField.returnType <:< typeOf[Option[_]]
+          val targetTypeIsOption = targetField.resultTypeIn(tTo) <:< typeOf[Option[_]]
           if (targetTypeIsOption && config.optionDefaultsToNone) {
             Some(ResolvedFieldTree(q"_root_.scala.None"))
           } else {
