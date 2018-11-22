@@ -53,21 +53,21 @@ object JavaBeansSpec extends TestSuite {
       }
     }
 
-//    "writing to Java beans" - {
-//
-//      "convert case class to java bean using setters on the target object" - {
-//
-//        val expected = new JavaBeanTarget
-//        expected.setId("100")
-//        expected.setName("name")
-//        expected.setFlag(true)
-//
-//        CaseClassWithFlag("100", "name", flag = true)
-//          .into[JavaBeanTarget]
-//          .enableBeanSetters
-//          .transform ==> expected
-//      }
-//    }
+    "writing to Java beans" - {
+
+      "convert case class to java bean using setters on the target object" - {
+
+        val expected = new JavaBeanTarget
+        expected.setId("100")
+        expected.setName("name")
+        expected.setFlag(true)
+
+        CaseClassWithFlag("100", "name", flag = true)
+          .into[JavaBeanTarget]
+          .enableBeanSetters
+          .transform ==> expected
+      }
+    }
   }
 
 }

@@ -62,6 +62,7 @@ trait MacroUtils extends CompanionUtils {
       classSymbolOpt.exists(_.isCaseClass)
 
     lazy val caseClassDefaults: Map[String, c.Tree] = {
+      s.typeSignature
       classSymbolOpt
         .flatMap { classSymbol =>
           val classType = classSymbol.toType
@@ -92,7 +93,7 @@ trait MacroUtils extends CompanionUtils {
 
     def canonicalName: String = {
       val name = ms.name.decodedName.toString
-      if(name.startsWith("set")) {
+      if(isBeanSetter) {
         val stripedPrefix = name.drop(3)
         val lowerizedName = stripedPrefix.toCharArray
         lowerizedName(0) = lowerizedName(0).toLower
@@ -112,6 +113,10 @@ trait MacroUtils extends CompanionUtils {
 
     def resultTypeIn(site: Type): Type = {
       ms.typeSignatureIn(site).finalResultType
+    }
+
+    def beanSetterParamTypeIn(site: Type): Type = {
+      ms.paramLists.head.head.typeSignatureIn(site)
     }
   }
 

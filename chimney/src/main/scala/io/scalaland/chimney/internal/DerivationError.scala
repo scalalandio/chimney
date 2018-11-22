@@ -6,7 +6,10 @@ sealed trait DerivationError extends Product with Serializable {
 }
 
 final case class MissingField(fieldName: String, fieldTypeName: String, sourceTypeName: String, targetTypeName: String)
-    extends DerivationError
+  extends DerivationError
+
+final case class MissingJavaBeanSetterParam(setterName: String, requiredTypeName: String, sourceTypeName: String, targetTypeName: String)
+  extends DerivationError
 
 final case class MissingTransformer(fieldName: String,
                                     sourceFieldTypeName: String,
@@ -32,7 +35,9 @@ object DerivationError {
         case (targetTypeName, errs) =>
           val errStrings = errs.distinct.map {
             case MissingField(fieldName, fieldTypeName, sourceTypeName, _) =>
-              s"  $fieldName: $fieldTypeName - no field named $fieldName in source type $sourceTypeName"
+              s"  $fieldName: $fieldTypeName - no accessor named $fieldName in source type $sourceTypeName"
+            case MissingJavaBeanSetterParam(setterName, requiredTypeName, sourceTypeName, _) =>
+              s"  set${setterName.capitalize}($setterName: $requiredTypeName) - no accessor named $setterName in source type $sourceTypeName"
             case MissingTransformer(fieldName, sourceFieldTypeName, targetFieldTypeName, sourceTypeName, _) =>
               s"  $fieldName: $targetFieldTypeName - can't derive transformation from $fieldName: $sourceFieldTypeName in source type $sourceTypeName"
             case CantFindValueClassMember(sourceTypeName, _) =>
