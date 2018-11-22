@@ -379,9 +379,10 @@ trait TransformerMacros {
       val fn = TermName(c.freshName(To.typeSymbol.name.decodedName.toString.toLowerCase))
 
       val objCreation = q"val $fn = new $To"
-      val setterInvocations = (mapping.map(_._1) zip args).map { case (target, argTree) =>
-        val setterName = TermName("set" + target.name.capitalize)
-        q"$fn.$setterName($argTree)"
+      val setterInvocations = (mapping.map(_._1) zip args).map {
+        case (target, argTree) =>
+          val setterName = TermName("set" + target.name.capitalize)
+          q"$fn.$setterName($argTree)"
       }.toSeq
 
       Right {
@@ -390,8 +391,9 @@ trait TransformerMacros {
     }
   }
 
-  def resolveTargetArgTrees(srcPrefixTree: Tree, config: Config, From: Type, To: Type)
-                           (mapping: Iterable[(Target, Option[TargetResolution])]): (Seq[DerivationError], Iterable[Tree]) = {
+  def resolveTargetArgTrees(srcPrefixTree: Tree, config: Config, From: Type, To: Type)(
+    mapping: Iterable[(Target, Option[TargetResolution])]
+  ): (Seq[DerivationError], Iterable[Tree]) = {
 
     var errors = Seq.empty[DerivationError]
 
@@ -487,7 +489,7 @@ trait TransformerMacros {
         .orElse {
           if (config.processDefaultValues && targetCaseClass.isDefined) {
             val targetDefault = targetCaseClass.get.caseClassDefaults.get(target.name)
-            if(targetDefault.isDefined) {
+            if (targetDefault.isDefined) {
               Some(ResolvedTargetTree(targetDefault.get))
             } else {
               None
@@ -512,8 +514,8 @@ trait TransformerMacros {
     if (config.enableBeanGetters) {
       val targetNameCapitalized = target.name.capitalize
       sourceName == target.name ||
-        sourceName == s"get$targetNameCapitalized" ||
-        (sourceName == s"is$targetNameCapitalized" && ms.resultTypeIn(tFrom) == typeOf[Boolean])
+      sourceName == s"get$targetNameCapitalized" ||
+      (sourceName == s"is$targetNameCapitalized" && ms.resultTypeIn(tFrom) == typeOf[Boolean])
     } else {
       sourceName == target.name
     }

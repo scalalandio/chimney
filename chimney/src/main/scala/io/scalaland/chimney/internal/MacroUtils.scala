@@ -92,7 +92,7 @@ trait MacroUtils extends CompanionUtils {
 
     def canonicalName: String = {
       val name = ms.name.decodedName.toString
-      if(isBeanSetter) {
+      if (isBeanSetter) {
         val stripedPrefix = name.drop(3)
         val lowerizedName = stripedPrefix.toCharArray
         lowerizedName(0) = lowerizedName(0).toLower
@@ -104,10 +104,10 @@ trait MacroUtils extends CompanionUtils {
 
     def isBeanSetter: Boolean = {
       ms.isPublic &&
-        ms.name.decodedName.toString.startsWith("set") &&
-        ms.paramLists.lengthCompare(1) == 0 &&
-        ms.paramLists.head.lengthCompare(1) == 0 &&
-        ms.returnType == typeOf[Unit]
+      ms.name.decodedName.toString.startsWith("set") &&
+      ms.paramLists.lengthCompare(1) == 0 &&
+      ms.paramLists.head.lengthCompare(1) == 0 &&
+      ms.returnType == typeOf[Unit]
     }
 
     def resultTypeIn(site: Type): Type = {

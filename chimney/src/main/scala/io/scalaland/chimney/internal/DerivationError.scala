@@ -6,10 +6,13 @@ sealed trait DerivationError extends Product with Serializable {
 }
 
 final case class MissingField(fieldName: String, fieldTypeName: String, sourceTypeName: String, targetTypeName: String)
-  extends DerivationError
+    extends DerivationError
 
-final case class MissingJavaBeanSetterParam(setterName: String, requiredTypeName: String, sourceTypeName: String, targetTypeName: String)
-  extends DerivationError
+final case class MissingJavaBeanSetterParam(setterName: String,
+                                            requiredTypeName: String,
+                                            sourceTypeName: String,
+                                            targetTypeName: String)
+    extends DerivationError
 
 final case class MissingTransformer(fieldName: String,
                                     sourceFieldTypeName: String,

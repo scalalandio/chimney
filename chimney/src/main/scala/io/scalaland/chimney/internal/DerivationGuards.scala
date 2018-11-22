@@ -42,7 +42,7 @@ trait DerivationGuards {
   }
 
   def destinationJavaBean(to: Type): Boolean = {
-    if(to.typeSymbol.isClass) {
+    if (to.typeSymbol.isClass) {
       val primaryConstructor = to.typeSymbol.asClass.primaryConstructor
       primaryConstructor.isPublic && primaryConstructor.asMethod.paramLists == List(Nil) && to.beanSetterMethods.nonEmpty
     } else {
