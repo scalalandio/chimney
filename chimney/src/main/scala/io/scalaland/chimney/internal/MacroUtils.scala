@@ -27,9 +27,8 @@ trait MacroUtils extends CompanionUtils {
     }
 
     def getterMethods: Iterable[MethodSymbol] = {
-      def isParameterless(m: MethodSymbol) = m.paramLists.isEmpty || m.paramLists == List(List())
       t.decls.collect {
-        case m: MethodSymbol if m.isPublic && (m.isGetter || isParameterless(m)) =>
+        case m: MethodSymbol if m.isPublic && (m.isGetter || m.isParameterless) =>
           m
       }
     }
@@ -117,6 +116,10 @@ trait MacroUtils extends CompanionUtils {
 
     def beanSetterParamTypeIn(site: Type): Type = {
       ms.paramLists.head.head.typeSignatureIn(site)
+    }
+
+    def isParameterless: Boolean = {
+      ms.paramLists.isEmpty || ms.paramLists == List(List())
     }
   }
 
