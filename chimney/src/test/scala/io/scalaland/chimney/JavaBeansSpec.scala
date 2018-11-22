@@ -67,6 +67,46 @@ object JavaBeansSpec extends TestSuite {
           .enableBeanSetters
           .transform ==> expected
       }
+
+      "not compile when bean setters are not enabled" - {
+
+        compileError("""
+            CaseClassWithFlag("100", "name", flag = true)
+              .into[JavaBeanTarget]
+              .transform
+          """)
+      }
+
+      "not compile when accessors are missing" - {
+
+        compileError("""
+            CaseClassNoFlag("100", "name")
+              .into[JavaBeanTarget]
+              .enableBeanSetters
+              .transform
+          """)
+      }
+
+      "convert java bean to java bean" - {
+
+        val source = new JavaBeanSourceWithFlag("200", "name", flag = false)
+
+        val expected = new JavaBeanTarget
+        expected.setId("200")
+        expected.setName("name")
+        expected.setFlag(false)
+
+        // need to enable both setters and getters; only one of them is not enough for this use case!
+        compileError("source.into[JavaBeanTarget].transform")
+        compileError("source.into[JavaBeanTarget].enableBeanGetters.transform")
+        compileError("source.into[JavaBeanTarget].enableBeanSetters.transform")
+
+        source
+          .into[JavaBeanTarget]
+          .enableBeanGetters
+          .enableBeanSetters
+          .transform ==> expected
+      }
     }
   }
 
@@ -95,6 +135,10 @@ class JavaBeanTarget {
   def setId(id: String): Unit = { this.id = id }
   def setName(name: String): Unit = { this.name = name }
   def setFlag(flag: Boolean): Unit = { this.flag = flag }
+
+  // make sure that only public setters are taken into account
+  protected def setFoo(foo: Unit): Unit = ()
+  private def setBar(bar: Int): Unit = ()
 
   def getId: String = id
   def getName: String = name
