@@ -50,7 +50,7 @@ object JavaBeansSpec extends TestSuite {
 
         compileError("""
              case class MistypedTarget(flag: Int)
-             class MistypedSource(private var flag: Int)k {
+             class MistypedSource(private var flag: Int) {
                def isFlag: Int = flag
              }
              new MistypedSource(1).into[MistypedTarget].enableBeanGetters.transform
