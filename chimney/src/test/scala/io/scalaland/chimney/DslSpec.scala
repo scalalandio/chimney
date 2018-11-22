@@ -555,6 +555,8 @@ object DslSpec extends TestSuite {
 
       "monomorphic source to polymorphic target" - {
 
+        monoSource.transformInto[PolyTarget[String]] ==> polyTarget
+
         def transform[T]: (String => T) => MonoSource => PolyTarget[T] =
           fun => _.into[PolyTarget[T]].withFieldComputed(_.poly, src => fun(src.poly)).transform
 
