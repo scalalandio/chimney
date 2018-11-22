@@ -555,6 +555,8 @@ object DslSpec extends TestSuite {
 
       "monomorphic source to polymorphic target" - {
 
+        monoSource.transformInto[PolyTarget[String]] ==> polyTarget
+
         def transform[T]: (String => T) => MonoSource => PolyTarget[T] =
           fun => _.into[PolyTarget[T]].withFieldComputed(_.poly, src => fun(src.poly)).transform
 
@@ -609,7 +611,7 @@ object DslSpec extends TestSuite {
 
       "support non-case classes inputs" - {
         val source = new ClassSource("test-id", "test-name")
-        val target = source.transformInto[CasesTarget]
+        val target = source.transformInto[CaseClassNoFlag]
 
         target.id ==> source.id
         target.name ==> source.name
@@ -617,56 +619,10 @@ object DslSpec extends TestSuite {
 
       "support trait inputs" - {
         val source: TraitSource = new TraitSourceImpl("test-id", "test-name")
-        val target = source.transformInto[CasesTarget]
+        val target = source.transformInto[CaseClassNoFlag]
 
         target.id ==> source.id
         target.name ==> source.name
-      }
-
-      "support java beans" - {
-
-        "work with basic renaming when bean getter lookup is disabled" - {
-          val source = new JavaBeanSource("test-id", "test-name")
-          val target = source
-            .into[CasesTarget]
-            .withFieldRenamed(_.getId, _.id)
-            .withFieldRenamed(_.getName, _.name)
-            .transform
-
-          target.id ==> source.getId
-          target.name ==> source.getName
-        }
-
-        "support automatic reading from java bean getters" - {
-
-          val source = new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
-          val target = source
-            .into[CasesTargetWithFlag]
-            .enableBeanGetters
-            .transform
-
-          target.id ==> source.getId
-          target.name ==> source.getName
-          target.flag ==> source.isFlag
-        }
-
-        "not compile when bean getter lookup is disabled" - {
-          compileError(
-            """
-            new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).into[CasesTargetWithFlag].transform
-          """
-          )
-        }
-
-        "not compile when matching an is- getter with type other than Boolean" - {
-          compileError("""
-             case class MistypedTarget(flag: Int)
-             class MistypedSource(private var flag: Int) {
-               def isFlag: Int = flag
-             }
-             new MistypedSource(1).into[MistypedTarget].enableBeanGetters.transform
-          """)
-        }
       }
     }
 
@@ -713,8 +669,6 @@ object Poly {
 }
 
 object NonCaseDomain {
-  case class CasesTarget(val id: String, val name: String)
-  case class CasesTargetWithFlag(val id: String, val name: String, val flag: Boolean)
 
   class ClassSource(val id: String, val name: String)
 
@@ -722,16 +676,6 @@ object NonCaseDomain {
     val id: String
     val name: String
   }
+
   class TraitSourceImpl(val id: String, val name: String) extends TraitSource
-
-  class JavaBeanSource(id: String, name: String) {
-    def getId: String = id
-    def getName: String = name
-  }
-
-  class JavaBeanSourceWithFlag(private var id: String, private var name: String, private var flag: Boolean) {
-    def getId: String = id
-    def getName: String = name
-    def isFlag: Boolean = flag
-  }
 }

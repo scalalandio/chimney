@@ -70,6 +70,8 @@ trait TransformerMacros {
           expandTraversableOrArray(srcPrefixTree, config)(From, To)
         } else if (destinationCaseClass(To)) {
           expandDestinationCaseClass(srcPrefixTree, config)(From, To)
+        } else if (config.enableBeanSetters && destinationJavaBean(To)) {
+          expandDestinationJavaBean(srcPrefixTree, config)(From, To)
         } else if (bothSealedClasses(From, To)) {
           expandSealedClasses(srcPrefixTree, config)(From, To)
         } else {
@@ -314,37 +316,100 @@ trait TransformerMacros {
 
     var errors = Seq.empty[DerivationError]
 
-    val fromFields = From.getterMethods
+    val fromGetters = From.getterMethods
     val toFields = To.caseClassParams
 
     val mapping = toFields.map { targetField =>
-      targetField -> resolveField(srcPrefixTree, config, From, To)(targetField, fromFields, To.typeSymbol.asClass)
+      val target = Target.fromField(targetField, To)
+      target -> resolveTarget(srcPrefixTree, config, From, To)(target, fromGetters, Some(To.typeSymbol.asClass))
     }
 
-    val missingFields = mapping.collect { case (field, None) => field }
+    val missingTargets = mapping.collect { case (target, None) => target }
 
-    missingFields.foreach { ms =>
+    missingTargets.foreach { target =>
       errors :+= MissingField(
-        fieldName = ms.name.toString,
-        fieldTypeName = ms.returnType.typeSymbol.fullName,
+        fieldName = target.name.toString,
+        fieldTypeName = target.tpe.typeSymbol.fullName,
         sourceTypeName = From.typeSymbol.fullName,
         targetTypeName = To.typeSymbol.fullName
       )
     }
 
+    val (resolutionErrors, args) = resolveTargetArgTrees(srcPrefixTree, config, From, To)(mapping)
+
+    errors ++= resolutionErrors
+
+    if (errors.nonEmpty) {
+      Left(errors)
+    } else {
+      Right(q"new $To(..$args)")
+    }
+  }
+
+  def expandDestinationJavaBean(srcPrefixTree: Tree, config: Config)(From: Type,
+                                                                     To: Type): Either[Seq[DerivationError], Tree] = {
+    var errors = Seq.empty[DerivationError]
+
+    val fromGetters = From.getterMethods
+    val beanSetters = To.beanSetterMethods
+
+    val mapping = beanSetters.map { beanSetter =>
+      val target = Target.fromJavaBeanSetter(beanSetter, To)
+      target -> resolveTarget(srcPrefixTree, config, From, To)(target, fromGetters, None)
+    }
+
+    val missingTargets = mapping.collect { case (target, None) => target }
+
+    missingTargets.foreach { target =>
+      errors :+= MissingJavaBeanSetterParam(
+        setterName = target.name,
+        requiredTypeName = target.tpe.typeSymbol.fullName,
+        sourceTypeName = From.typeSymbol.fullName,
+        targetTypeName = To.typeSymbol.fullName
+      )
+    }
+
+    val (resolutionErrors, args) = resolveTargetArgTrees(srcPrefixTree, config, From, To)(mapping)
+
+    errors ++= resolutionErrors
+
+    if (errors.nonEmpty) {
+      Left(errors)
+    } else {
+      val fn = TermName(c.freshName(To.typeSymbol.name.decodedName.toString.toLowerCase))
+
+      val objCreation = q"val $fn = new $To"
+      val setterInvocations = (mapping.map(_._1) zip args).map {
+        case (target, argTree) =>
+          val setterName = TermName("set" + target.name.capitalize)
+          q"$fn.$setterName($argTree)"
+      }.toSeq
+
+      Right {
+        q"{..${objCreation +: setterInvocations}; $fn}"
+      }
+    }
+  }
+
+  def resolveTargetArgTrees(srcPrefixTree: Tree, config: Config, From: Type, To: Type)(
+    mapping: Iterable[(Target, Option[TargetResolution])]
+  ): (Seq[DerivationError], Iterable[Tree]) = {
+
+    var errors = Seq.empty[DerivationError]
+
     val args = mapping.collect {
-      case (_, Some(ResolvedFieldTree(tree))) =>
+      case (_, Some(ResolvedTargetTree(tree))) =>
         tree
 
-      case (targetField, Some(MatchingField(sourceField))) =>
-        findLocalImplicitTransformer(sourceField.typeSignatureIn(From), targetField.typeSignatureIn(To)) match {
+      case (target, Some(MatchingSourceAccessor(sourceField))) =>
+        findLocalImplicitTransformer(sourceField.resultTypeIn(From), target.tpe) match {
           case Some(localImplicitTransformer) =>
             q"$localImplicitTransformer.transform($srcPrefixTree.${sourceField.name})"
 
-          case None if canTryDeriveTransformer(sourceField.returnType, targetField.returnType) =>
+          case None if canTryDeriveTransformer(sourceField.resultTypeIn(From), target.tpe) =>
             expandTransformerTree(q"$srcPrefixTree.${sourceField.name}", config.rec)(
-              sourceField.returnType,
-              targetField.returnType
+              sourceField.resultTypeIn(From),
+              target.tpe
             ) match {
               case Left(errs) =>
                 errors ++= errs
@@ -355,9 +420,9 @@ trait TransformerMacros {
 
           case None =>
             errors :+= MissingTransformer(
-              fieldName = targetField.name.toString,
-              sourceFieldTypeName = sourceField.returnType.typeSymbol.fullName,
-              targetFieldTypeName = targetField.returnType.typeSymbol.fullName,
+              fieldName = target.name,
+              sourceFieldTypeName = sourceField.resultTypeIn(From).typeSymbol.fullName,
+              targetFieldTypeName = target.tpe.typeSymbol.fullName,
               sourceTypeName = From.typeSymbol.fullName,
               targetTypeName = To.typeSymbol.fullName
             )
@@ -366,82 +431,76 @@ trait TransformerMacros {
         }
     }
 
-    if (errors.nonEmpty) {
-      Left(errors)
-    } else {
-      Right(q"new $To(..$args)")
-    }
+    (errors, args)
   }
 
-  sealed trait FieldResolution
-  case class ResolvedFieldTree(tree: Tree) extends FieldResolution
-  case class MatchingField(ms: MethodSymbol) extends FieldResolution
+  def resolveTarget(srcPrefixTree: Tree, config: Config, From: Type, To: Type)(
+    target: Target,
+    fromGetters: Iterable[MethodSymbol],
+    targetCaseClass: Option[ClassSymbol]
+  ): Option[TargetResolution] = {
 
-  def resolveField(srcPrefixTree: Tree, config: Config, tFrom: Type, tTo: Type)(
-    targetField: MethodSymbol,
-    fromParams: Iterable[MethodSymbol],
-    targetCaseClass: ClassSymbol
-  ): Option[FieldResolution] = {
-
-    val fieldName = targetField.name.decodedName.toString
-
-    val fieldNameLookup = (m: MethodSymbol) => {
-      val sourceName = m.name.decodedName.toString
-      val targetNameCapitalized = fieldName.capitalize
-      if (config.enableBeanGetters) {
-        sourceName == fieldName ||
-        sourceName == s"get$targetNameCapitalized" ||
-        (sourceName == s"is$targetNameCapitalized" && m.returnType == typeTag[Boolean].tpe)
-      } else {
-        sourceName == fieldName
-      }
-    }
-
-    if (config.overridenFields.contains(fieldName)) {
+    if (config.overridenFields.contains(target.name)) {
       Some {
-        ResolvedFieldTree {
-          q"${TermName(config.prefixValName)}.overrides($fieldName).asInstanceOf[${targetField.typeSignatureIn(tTo)}]"
+        ResolvedTargetTree {
+          q"${TermName(config.prefixValName)}.overrides(${target.name}).asInstanceOf[${target.tpe}]"
         }
       }
-    } else if (config.renamedFields.contains(fieldName)) {
-      val fromFieldName = TermName(config.renamedFields(fieldName))
-      fromParams.find(_.name == fromFieldName).map { ms =>
-        if (targetField.returnType =:= ms.returnType) {
-          ResolvedFieldTree {
+    } else if (config.renamedFields.contains(target.name)) {
+      val fromFieldName = TermName(config.renamedFields(target.name))
+      fromGetters.find(_.name == fromFieldName).map { ms =>
+        if (target.tpe <:< ms.resultTypeIn(From)) {
+          ResolvedTargetTree {
             q"$srcPrefixTree.$fromFieldName"
           }
         } else {
-          MatchingField(ms)
+          MatchingSourceAccessor(ms)
         }
       }
     } else {
-      fromParams
-        .find(fieldNameLookup)
+      fromGetters
+        .find(lookupAccessor(config, target, From))
         .map { ms =>
-          if (ms.typeSignatureIn(tFrom) <:< targetField.typeSignatureIn(tTo)) {
-            ResolvedFieldTree {
+          if (ms.resultTypeIn(From) <:< target.tpe) {
+            ResolvedTargetTree {
               q"$srcPrefixTree.${ms.name}"
             }
           } else {
-            MatchingField(ms)
+            MatchingSourceAccessor(ms)
           }
         }
         .orElse {
-          val targetDefault = targetCaseClass.caseClassDefaults.get(targetField.name.toString)
-          if (config.processDefaultValues && targetDefault.isDefined) {
-            Some(ResolvedFieldTree(targetDefault.get))
+          if (config.processDefaultValues && targetCaseClass.isDefined) {
+            val targetDefault = targetCaseClass.get.caseClassDefaults.get(target.name)
+            if (targetDefault.isDefined) {
+              Some(ResolvedTargetTree(targetDefault.get))
+            } else {
+              None
+            }
           } else {
             None
           }
         }
         .orElse {
-          val targetTypeIsOption = targetField.returnType <:< typeOf[Option[_]]
+          val targetTypeIsOption = target.tpe <:< typeOf[Option[_]]
           if (targetTypeIsOption && config.optionDefaultsToNone) {
-            Some(ResolvedFieldTree(q"_root_.scala.None"))
+            Some(ResolvedTargetTree(q"_root_.scala.None"))
           } else {
             None
           }
         }
+    }
+  }
+
+  def lookupAccessor(config: Config, target: Target, From: Type)(ms: MethodSymbol): Boolean = {
+    val sourceName = ms.name.decodedName.toString
+    if (config.enableBeanGetters) {
+      val targetNameCapitalized = target.name.capitalize
+      sourceName == target.name ||
+      sourceName == s"get$targetNameCapitalized" ||
+      (sourceName == s"is$targetNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])
+    } else {
+      sourceName == target.name
     }
   }
 
@@ -459,6 +518,23 @@ trait TransformerMacros {
       .toOption
       .filterNot(_ == EmptyTree)
   }
+
+  case class Target(name: String, tpe: Type, kind: Target.Kind)
+  object Target {
+    sealed trait Kind
+    case object ClassField extends Kind
+    case object JavaBeanSetter extends Kind
+
+    def fromJavaBeanSetter(ms: MethodSymbol, site: Type): Target =
+      Target(ms.canonicalName, ms.beanSetterParamTypeIn(site), JavaBeanSetter)
+
+    def fromField(ms: MethodSymbol, site: Type): Target =
+      Target(ms.canonicalName, ms.resultTypeIn(site), ClassField)
+  }
+
+  sealed trait TargetResolution
+  case class ResolvedTargetTree(tree: Tree) extends TargetResolution
+  case class MatchingSourceAccessor(ms: MethodSymbol) extends TargetResolution
 
   private val chimneyDocUrl = "https://scalalandio.github.io/chimney"
 }

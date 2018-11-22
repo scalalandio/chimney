@@ -41,6 +41,15 @@ trait DerivationGuards {
     to.isCaseClass
   }
 
+  def destinationJavaBean(to: Type): Boolean = {
+    if (to.typeSymbol.isClass) {
+      val primaryConstructor = to.typeSymbol.asClass.primaryConstructor
+      primaryConstructor.isPublic && primaryConstructor.asMethod.paramLists == List(Nil) && to.beanSetterMethods.nonEmpty
+    } else {
+      false
+    }
+  }
+
   def bothSealedClasses(from: Type, to: Type): Boolean = {
     from.isSealedClass && to.isSealedClass
   }
@@ -54,6 +63,7 @@ trait DerivationGuards {
     bothMaps(from, to) ||
     bothOfTraversableOrArray(from, to) ||
     destinationCaseClass(to) ||
+    destinationJavaBean(to) ||
     bothSealedClasses(from, to)
   }
 

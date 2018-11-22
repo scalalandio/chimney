@@ -27,11 +27,14 @@ trait MacroUtils extends CompanionUtils {
     }
 
     def getterMethods: Iterable[MethodSymbol] = {
-      def isParameterless(m: MethodSymbol) = m.paramLists.isEmpty || m.paramLists == List(List())
       t.decls.collect {
-        case m: MethodSymbol if m.isPublic && (m.isGetter || isParameterless(m)) =>
-          m.asMethod
+        case m: MethodSymbol if m.isPublic && (m.isGetter || m.isParameterless) =>
+          m
       }
+    }
+
+    def beanSetterMethods: Iterable[MethodSymbol] = {
+      t.members.collect { case m: MethodSymbol if m.isBeanSetter => m }
     }
 
     def valueClassMember: Option[MethodSymbol] = {
@@ -58,6 +61,7 @@ trait MacroUtils extends CompanionUtils {
       classSymbolOpt.exists(_.isCaseClass)
 
     lazy val caseClassDefaults: Map[String, c.Tree] = {
+      s.typeSignature
       classSymbolOpt
         .flatMap { classSymbol =>
           val classType = classSymbol.toType
@@ -81,6 +85,41 @@ trait MacroUtils extends CompanionUtils {
           }
         }
         .getOrElse(Map.empty)
+    }
+  }
+
+  implicit class MethodSymbolOps(ms: MethodSymbol) {
+
+    def canonicalName: String = {
+      val name = ms.name.decodedName.toString
+      if (isBeanSetter) {
+        val stripedPrefix = name.drop(3)
+        val lowerizedName = stripedPrefix.toCharArray
+        lowerizedName(0) = lowerizedName(0).toLower
+        new String(lowerizedName)
+      } else {
+        name
+      }
+    }
+
+    def isBeanSetter: Boolean = {
+      ms.isPublic &&
+      ms.name.decodedName.toString.startsWith("set") &&
+      ms.paramLists.lengthCompare(1) == 0 &&
+      ms.paramLists.head.lengthCompare(1) == 0 &&
+      ms.returnType == typeOf[Unit]
+    }
+
+    def resultTypeIn(site: Type): Type = {
+      ms.typeSignatureIn(site).finalResultType
+    }
+
+    def beanSetterParamTypeIn(site: Type): Type = {
+      ms.paramLists.head.head.typeSignatureIn(site)
+    }
+
+    def isParameterless: Boolean = {
+      ms.paramLists.isEmpty || ms.paramLists == List(List())
     }
   }
 
