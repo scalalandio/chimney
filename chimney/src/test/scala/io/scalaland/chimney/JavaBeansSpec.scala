@@ -107,9 +107,19 @@ object JavaBeansSpec extends TestSuite {
           .enableBeanSetters
           .transform ==> expected
       }
+
+      "convert to java bean involving recursive transformation" - {
+
+        val expected = new EnclosingBean
+        expected.setCcNoFlag(CaseClassNoFlag("300", "name"))
+
+        EnclosingCaseClass(CaseClassNoFlag("300", "name"))
+          .into[EnclosingBean]
+          .enableBeanSetters
+          .transform ==> expected
+      }
     }
   }
-
 }
 
 case class CaseClassNoFlag(id: String, name: String)
@@ -148,6 +158,24 @@ class JavaBeanTarget {
     obj match {
       case jbt: JavaBeanTarget =>
         this.id == jbt.getId && this.name == jbt.getName && this.flag == jbt.isFlag
+      case _ =>
+        false
+    }
+  }
+}
+
+case class EnclosingCaseClass(ccNoFlag: CaseClassNoFlag)
+
+class EnclosingBean {
+  private var ccNoFlag: CaseClassNoFlag = _
+
+  def getCcNoFlag: CaseClassNoFlag = ccNoFlag
+  def setCcNoFlag(ccNoFlag: CaseClassNoFlag): Unit = { this.ccNoFlag = ccNoFlag }
+
+  override def equals(obj: Any): Boolean = {
+    obj match {
+      case eb: EnclosingBean =>
+        this.ccNoFlag == eb.ccNoFlag
       case _ =>
         false
     }
