@@ -50,13 +50,13 @@ object IssuesSpec extends TestSuite {
       case class X(a: Int)
       case class Y(a: Int, b: Option[String])
 
-      X(5).into[Y].withFieldComputed(_.b, _ => Some("5")).transform
-      X(5).into[Y].withFieldComputed(_.b, _ => None).transform
+      X(5).into[Y].withFieldComputed(_.b, _ => Some("5")).transform ==> Y(5, Some("5"))
+      X(5).into[Y].withFieldComputed(_.b, _ => None).transform ==> Y(5, None)
 
       case class Y2(a: Int, b: List[String])
 
-      X(5).into[Y2].withFieldComputed(_.b, _ => Nil).transform
-      X(5).into[Y2].withFieldConst(_.b, "a" :: Nil).transform
+      X(5).into[Y2].withFieldComputed(_.b, _ => Nil).transform ==> Y2(5, Nil)
+      X(5).into[Y2].withFieldConst(_.b, "a" :: Nil).transform ==> Y2(5, List("a"))
     }
 
     "fix issue #66" - {
@@ -72,6 +72,7 @@ object IssuesSpec extends TestSuite {
             .into[Foo2]
             .withFieldConst(_.x, "xyz")
           """)
+          .check("", "Value passed to `withFieldConst` is of type: String")
       }
 
       "fix for `withFieldComputed`" - {
@@ -81,12 +82,16 @@ object IssuesSpec extends TestSuite {
             .into[Foo2]
             .withFieldComputed(_.x, _ => "xyz")
         """)
+          .check("", "Function passed to `withFieldComputed` returns type: String")
       }
 
       "fix for `withFieldRenamed`" - {
-        Foo1("test")
+
+        assert(
+          Foo1("test")
           .into[Foo3]
-          .withFieldRenamed(_.y, _.x)
+          .withFieldRenamed(_.y, _.x) != null
+        )
       }
     }
   }

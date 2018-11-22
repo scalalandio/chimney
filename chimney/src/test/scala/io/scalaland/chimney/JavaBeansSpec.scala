@@ -35,14 +35,17 @@ object JavaBeansSpec extends TestSuite {
       }
 
       "not compile when bean getter lookup is disabled" - {
+
         compileError(
           """
             new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).into[CaseClassWithFlag].transform
           """
         )
+          .check("", "Chimney can't derive transformation from io.scalaland.chimney.JavaBeanSourceWithFlag to io.scalaland.chimney.CaseClassWithFlag")
       }
 
       "not compile when matching an is- getter with type other than Boolean" - {
+
         compileError("""
              case class MistypedTarget(flag: Int)
              class MistypedSource(private var flag: Int) {
@@ -50,6 +53,7 @@ object JavaBeansSpec extends TestSuite {
              }
              new MistypedSource(1).into[MistypedTarget].enableBeanGetters.transform
           """)
+          .check("", "Chimney can't derive transformation from MistypedSource to MistypedTarget")
       }
     }
 
@@ -75,6 +79,7 @@ object JavaBeansSpec extends TestSuite {
               .into[JavaBeanTarget]
               .transform
           """)
+          .check("", "Chimney can't derive transformation from io.scalaland.chimney.CaseClassWithFlag to io.scalaland.chimney.JavaBeanTarget")
       }
 
       "not compile when accessors are missing" - {
@@ -85,6 +90,7 @@ object JavaBeansSpec extends TestSuite {
               .enableBeanSetters
               .transform
           """)
+          .check("", "Chimney can't derive transformation from io.scalaland.chimney.CaseClassNoFlag to io.scalaland.chimney.JavaBeanTarget")
       }
 
       "convert java bean to java bean" - {

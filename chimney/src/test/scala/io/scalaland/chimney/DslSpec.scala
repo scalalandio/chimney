@@ -47,6 +47,7 @@ object DslSpec extends TestSuite {
         "not compile if source for the target fields is not provided" - {
 
           compileError("Bar(3, (3.14, 3.14)).transformInto[Foo]")
+            .check("", "no accessor named y in source type io.scalaland.chimney.DslSpec.Bar")
         }
 
         "fill the field with provided default value" - {
@@ -74,18 +75,21 @@ object DslSpec extends TestSuite {
                   .withFieldConst(_.z._1, 0.0)
                   .transform
                 """)
+              .check("", "Invalid selector!")
 
             compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(_.y + "abc", "pi")
                   .transform
                 """)
+              .check("", "Invalid selector!")
 
             compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(cc => haveY.y, "pi")
                   .transform
                 """)
+              .check("", "Invalid selector!")
           }
         }
 
@@ -110,10 +114,12 @@ object DslSpec extends TestSuite {
 
           "not compile if default value is missing and no .enableOptionDefaultsToNone" - {
             compileError("""SomeFoo("foo").into[Foobar].transform""")
+              .check("", "Chimney can't derive transformation from SomeFoo to Foobar")
           }
 
           "not compile if default values are disabled and no .enableOptionDefaultsToNone" - {
             compileError("""SomeFoo("foo").into[Foobar2].disableDefaultValues.transform""")
+              .check("", "Chimney can't derive transformation from SomeFoo to Foobar2")
           }
         }
 
@@ -142,18 +148,21 @@ object DslSpec extends TestSuite {
                   .withFieldComputed(_.z._1, _.z._1 * 10.0)
                   .transform
                 """)
+              .check("", "Invalid selector!")
 
             compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(_.y + "abc", _.x.toString)
                   .transform
                 """)
+              .check("", "Invalid selector!")
 
             compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(cc => haveY.y, _.x.toString)
                   .transform
                 """)
+              .check("", "Invalid selector!")
           }
         }
       }
@@ -233,12 +242,15 @@ object DslSpec extends TestSuite {
         compileError("""
           Foo(10).into[Bar].disableDefaultValues.transform
         """)
+          .check("", "Chimney can't derive transformation from Foo to Bar")
 
         compileError("""
           Baah(10, Foo(300)).into[Baahr].disableDefaultValues.transform
         """)
+          .check("", "Chimney can't derive transformation from Baah to Baahr")
       }
     }
+
     "transform with rename " - {
       case class User(id: Int, name: String, age: Option[Int])
       case class UserPL(id: Int, imie: String, wiek: Either[Unit, Int])
@@ -279,6 +291,7 @@ object DslSpec extends TestSuite {
                 .withFieldRenamed(_.age, _.wiek)
                 .transform
           """)
+          .check("", "Chimney can't derive transformation from User to UserPL")
       }
     }
 
@@ -295,6 +308,7 @@ object DslSpec extends TestSuite {
       "not compile if relabelling modifier is not provided" - {
 
         compileError("""Foo(10, "something").transformInto[Bar]""")
+          .check("", "Chimney can't derive transformation from Foo to Bar")
       }
 
       "relabel fields with relabelling modifier" - {
@@ -313,6 +327,7 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(_.y + "abc", _.z)
               .transform
           """)
+          .check("", "Selector of type Foo => String is not valid")
 
         compileError("""
             Foo(10, "something")
@@ -320,6 +335,7 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(cc => haveY.y, _.z)
               .transform
           """)
+          .check("", "Selector of type Foo => String is not valid")
 
         compileError("""
             Foo(10, "something")
@@ -327,6 +343,7 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(_.y, _.z + "abc")
               .transform
           """)
+          .check("", "Selector of type Bar => String is not valid")
 
         compileError("""
             Foo(10, "something")
@@ -334,6 +351,7 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(_.y, cc => haveZ.z)
               .transform
           """)
+          .check("", "Selector of type Bar => String is not valid")
 
         compileError("""
             Foo(10, "something")
@@ -341,6 +359,7 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(_.y + "abc", _.z + "abc")
               .transform
           """)
+          .check("", "Selector of type Bar => String is not valid")
 
         compileError("""
             Foo(10, "something")
@@ -348,13 +367,16 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(cc => haveY.y, cc => haveZ.z)
               .transform
           """)
+          .check("", "Selector of type Foo => String is not valid")
       }
 
       "not compile if relabelled - a wrong way" - {
 
         compileError("""Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform""")
+          .check("", "type mismatch")
 
         compileError("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
+          .check("", "type mismatch")
       }
 
     }
