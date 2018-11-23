@@ -128,10 +128,10 @@ val event = command.into[CoffeeMade]
     <p>
       To include Chimney to your SBT project, add the following line
       to your <code>build.sbt</code>:</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.2.1&quot;</code></pre>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.3.0&quot;</code></pre>
     <p>
-      Library is released for Scala 2.11 and 2.12.
-      If you want to use it with Scala.js, you need to replace <code>%%</code> with <code>%%%</code>.
+      Library is released for Scala 2.11.x, 2.12.x and 2.13.0-M5.
+      If you want to use it with Scala.js(or Scala Native), you need to replace <code>%%</code> with <code>%%%</code>.
       Due to some <a href="https://issues.scala-lang.org/browse/SI-7046">compiler bugs</a>,
       it's recommended to use at least Scala 2.11.9 or 2.12.1.
 </p>
@@ -309,6 +309,34 @@ val jamesRU = jamesGB.into[SpyRU]
     .transform
 // SpyRU(&quot;James&quot;, &quot;Bond&quot;)
 </code></pre>
+    <h1 id="Defaultoptionvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Defaultoptionvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Default option values</h1>
+      <p>
+        In case you have added an optional field to a type, wanting to write migration from old data, usually you
+        set new optional type to <code>None</code>.
+</p>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">case class Foo(a: Int, b: String)
+case class FooV2(a: Int, b: String, newField: Option[Double])
+</code></pre>
+      <p>
+        Usual approach would be to use <code>.withFieldConst</code> to set new field value.
+</p>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">Foo(5, &quot;test&quot;)
+  .into[FooV2]
+  .withFieldConst(_.newField, None)
+  .transform
+// FooV2(5, &quot;test&quot;, None)
+</code></pre>
+      <p>
+        At some scale this may turn out to be cumbersome. Therefore, it's possible to handle such <code>Option</code> field
+        values for which we can't find counterpart in data source as <code>None</code> by default. You just need to enable
+        this behavior by using <code>.enableOptionDefaultsToNone</code>.
+</p>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">Foo(5, &quot;test&quot;)
+  .into[FooV2]
+  .enableOptionDefaultsToNone
+  .transform
+// FooV2(5, &quot;test&quot;, None)
+</code></pre>
   <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Advancedtechniques" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Advanced techniques<a class=" scalatex-site-Styles-headerLink" href="#Advancedtechniques" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
 
     <h1 id="Customtransformations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Customtransformations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Custom transformations</h1>
@@ -464,10 +492,97 @@ exampleUser.patchWith(update)
 </code></pre>
         <p>
           The <code>phone</code> remained the same as in the <code>exampleUser</code>, while the optional
-          e-mail string got transformed to an <code>Email</code> instance.</p></div>
+          e-mail string got transformed to an <code>Email</code> instance.
+</p>
+    <h1 id="Javabeans" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Javabeans" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Java beans</h1>
+
+      Beside Scala case classes, Chimney supports transformation of Java beans.
+
+      <h2 id="ReadingfromJavabeans" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#ReadingfromJavabeans" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Reading from Java beans</h2>
+        <p>
+          Chimney supports automatic field renaming for classes that follow Java beans naming convention.
+          Let's assume the following classes:
+</p>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">class MyBean(private var id: Long,
+             private var name: String,
+             private var flag: Boolean) {
+    def getId: Long = id
+    def getName: String = name
+    def isFlag: Boolean = flag
+}
+
+case class MyCaseClass(id: Long, name: String, flag: Boolean)
+</code></pre>
+        <p>
+          The conversion works if you explicitly enable it with <code>.enableBeanGetters</code>:
+</p>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">new MyBean(1L, &quot;beanie&quot;, true)
+  .into[MyCaseClass]
+  .enableBeanGetters
+  .transform
+//  MyCaseClass(1L, &quot;beanie&quot;, true)
+
+</code></pre>
+        <p>
+          Please note that Chimney matches accessor methods solely based on name and return type, and has
+          no way of ensuring that a method named similarly to a getter is idempotent and does not actually
+          perform side effects in its body.
+</p>
+      <h2 id="WritingtoJavabeans" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#WritingtoJavabeans" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Writing to Java beans</h2>
+
+        <p>
+          Dual to reading, Chimney supports transforming types into Java beans.
+</p>
+        <p>
+          Chimney considers as bean a class that:
+
+          <ul>
+            <li>
+              primary constructor is public and parameter-less</li>
+            <li>
+              contains at least one, single-parameter setter method that returns <code>Unit</code>
+</li></ul>
+          Chimney will then require data sources for all such setters.
+</p>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">class MyBean {
+  private var id: Long = _
+  private var name: String = _
+  private var flag: Boolean = _
+
+  def getId: Long = id
+  def setId(id: Long): Unit = { this.id = id }
+
+  def getName: String = name
+  def setName(name: String): Unit = { this.name = name }
+
+  def isFlag: Boolean = flag
+  def setFlag(flag: Boolean): Unit = { this.flag = flag }
+}
+</code></pre>
+        <p>
+          The conversion works if you explicitly enable it with <code>.enableBeanSetters</code>:
+</p>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">val obj = MyCaseClass(10L, &quot;beanie&quot;, true)
+val bean = obj
+  .into[MyBean]
+  .enableBeanSetters
+  .transform
+</code></pre>
+        <p>
+          Chimney generates code equivalent to:
+</p>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">val bean = new MyBean
+bean.setId(obj.id)
+bean.setName(obj.name)
+bean.setFlag(obj.flag)
+</code></pre>
+        <h3 id="Limitations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Limitations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Limitations</h3>
+
+          <p>
+            Currently it's not possible to override or provide values for missing setters.</p></div>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"Chimney","children":[{"value":"What Chimney does","children":[]},{"value":"Getting started","children":[{"value":"Trying with Ammonite REPL","children":[]}]},{"value":"Usage","children":[{"value":"Basic transformations","children":[]},{"value":"Nested transformations","children":[]},{"value":"Providing missing values","children":[]},{"value":"Default values","children":[{"value":"Disabling default values","children":[]}]},{"value":"Standard types","children":[]},{"value":"Value classes","children":[]},{"value":"Field re-labelling","children":[]}]},{"value":"Advanced techniques","children":[{"value":"Custom transformations","children":[]},{"value":"Coproducts support","children":[]},{"value":"Patchers","children":[{"value":"Optional patch values","children":[]}]}]}]}]
+      [{"value":"Chimney","children":[{"value":"What Chimney does","children":[]},{"value":"Getting started","children":[{"value":"Trying with Ammonite REPL","children":[]}]},{"value":"Usage","children":[{"value":"Basic transformations","children":[]},{"value":"Nested transformations","children":[]},{"value":"Providing missing values","children":[]},{"value":"Default values","children":[{"value":"Disabling default values","children":[]}]},{"value":"Standard types","children":[]},{"value":"Value classes","children":[]},{"value":"Field re-labelling","children":[]},{"value":"Default option values","children":[]}]},{"value":"Advanced techniques","children":[{"value":"Custom transformations","children":[]},{"value":"Coproducts support","children":[]},{"value":"Patchers","children":[{"value":"Optional patch values","children":[]}]},{"value":"Java beans","children":[{"value":"Reading from Java beans","children":[]},{"value":"Writing to Java beans","children":[{"value":"Limitations","children":[]}]}]}]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -477,4 +592,4 @@ exampleUser.patchWith(update)
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
