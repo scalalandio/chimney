@@ -652,7 +652,7 @@ object DslSpec extends TestSuite {
     "transform T to Option[T]" - {
 
       "abc".transformInto[Option[String]] ==> Some("abc")
-      (null : String).transformInto[Option[String]] ==> None
+      (null: String).transformInto[Option[String]] ==> None
     }
 
   }

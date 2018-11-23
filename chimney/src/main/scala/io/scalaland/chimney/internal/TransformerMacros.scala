@@ -104,8 +104,8 @@ trait TransformerMacros {
     Right(q"new $To($srcPrefixTree)")
   }
 
-  def expandTargetWrappedInOption(srcPrefixTree: Tree, config: Config)
-                                 (From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandTargetWrappedInOption(srcPrefixTree: Tree, config: Config)(From: Type,
+                                                                       To: Type): Either[Seq[DerivationError], Tree] = {
     Right(q"_root_.scala.Option[$From]($srcPrefixTree)")
   }
 
