@@ -60,6 +60,8 @@ trait TransformerMacros {
           expandValueClassToType(srcPrefixTree)(From, To)
         } else if (fromTypeToValueClass(From, To)) {
           expandTypeToValueClass(srcPrefixTree)(From, To)
+        } else if (targetWrappedInOption(From, To)) {
+          expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
         } else if (bothOptions(From, To)) {
           expandOptions(srcPrefixTree, config)(From, To)
         } else if (bothEithers(From, To)) {
@@ -100,6 +102,11 @@ trait TransformerMacros {
   def expandTypeToValueClass(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     Right(q"new $To($srcPrefixTree)")
+  }
+
+  def expandTargetWrappedInOption(srcPrefixTree: Tree, config: Config)
+                                 (From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+    Right(q"_root_.scala.Option[$From]($srcPrefixTree)")
   }
 
   def expandOptions(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {

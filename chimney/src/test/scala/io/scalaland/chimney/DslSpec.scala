@@ -251,7 +251,7 @@ object DslSpec extends TestSuite {
       }
     }
 
-    "transform with rename " - {
+    "transform with rename" - {
       case class User(id: Int, name: String, age: Option[Int])
       case class UserPL(id: Int, imie: String, wiek: Either[Unit, Int])
       def ageToWiekTransformer: Transformer[Option[Int], Either[Unit, Int]] =
@@ -259,6 +259,7 @@ object DslSpec extends TestSuite {
           def transform(obj: Option[Int]): Either[Unit, Int] =
             obj.fold[Either[Unit, Int]](Left(()))(Right.apply)
         }
+
       "between different types: correct" - {
         implicit val trans = ageToWiekTransformer
         val user: User = User(1, "Kuba", Some(28))
@@ -646,6 +647,12 @@ object DslSpec extends TestSuite {
         target.id ==> source.id
         target.name ==> source.name
       }
+    }
+
+    "transform T to Option[T]" - {
+
+      "abc".transformInto[Option[String]] ==> Some("abc")
+      (null : String).transformInto[Option[String]] ==> None
     }
 
   }

@@ -21,6 +21,10 @@ trait DerivationGuards {
     to.isValueClass && to.valueClassMember.exists(_.returnType =:= from)
   }
 
+  def targetWrappedInOption(from: Type, to: Type): Boolean = {
+    to <:< optionTpe && to.typeArgs.head =:= from
+  }
+
   def bothOptions(from: Type, to: Type): Boolean = {
     from <:< optionTpe && to <:< optionTpe
   }
