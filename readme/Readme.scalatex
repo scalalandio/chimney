@@ -274,6 +274,37 @@
             .transform
         // SpyRU("James", "Bond")
 
+    @sect{Default option values}
+      @p
+        In case you have added an optional field to a type, wanting to write migration from old data, usually you
+        set new optional type to @code{None}.
+
+      @hl.scala
+        case class Foo(a: Int, b: String)
+        case class FooV2(a: Int, b: String, newField: Option[Double])
+
+      @p
+        Usual approach would be to use @code{.withFieldConst} to set new field value.
+
+      @hl.scala
+        Foo(5, "test")
+          .into[FooV2]
+          .withFieldConst(_.newField, None)
+          .transform
+        // FooV2(5, "test", None)
+
+      @p
+        At some scale this may turn out to be cumbersome. Therefore, it's possible to handle such @code{Option} field
+        values for which we can't find counterpart in data source as @code{None} by default. You just need to enable
+        this behavior by using @code{.enableOptionDefaultsToNone}.
+
+      @hl.scala
+        Foo(5, "test")
+          .into[FooV2]
+          .enableOptionDefaultsToNone
+          .transform
+        // FooV2(5, "test", None)
+
   @sect{Advanced techniques}
 
     @sect{Custom transformations}
