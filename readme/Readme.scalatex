@@ -82,10 +82,10 @@
       To include Chimney to your SBT project, add the following line
       to your @code{build.sbt}:
     @hl.scala
-      libraryDependencies += "io.scalaland" %% "chimney" % "0.2.1"
+      libraryDependencies += "io.scalaland" %% "chimney" % "0.3.0"
     @p
-      Library is released for Scala 2.11 and 2.12.
-      If you want to use it with Scala.js, you need to replace @code{%%} with @code{%%%}.
+      Library is released for Scala 2.11.x, 2.12.x and 2.13.0-M5.
+      If you want to use it with Scala.js(or Scala Native), you need to replace @code{%%} with @code{%%%}.
       Due to some @lnk("compiler bugs", "https://issues.scala-lang.org/browse/SI-7046"),
       it's recommended to use at least Scala 2.11.9 or 2.12.1.
 
@@ -441,33 +441,94 @@
           The @code{phone} remained the same as in the @code{exampleUser}, while the optional
           e-mail string got transformed to an @code{Email} instance.
 
-    @sect{Java Beans}
-      @p
-        Chimney supports automatic field renaming for classes that follow Java beans naming convention.
-        Let's assume the following classes:
+    @sect{Java beans}
 
-      @hl.scala
-        class MyBean(private var id: Long,
-          private var name: String,
-          private var flag: Boolean) {
+      Beside Scala case classes, Chimney supports transformation of Java beans.
+
+      @sect{Reading from Java beans}
+        @p
+          Chimney supports automatic field renaming for classes that follow Java beans naming convention.
+          Let's assume the following classes:
+
+        @hl.scala
+          class MyBean(private var id: Long,
+                       private var name: String,
+                       private var flag: Boolean) {
+              def getId: Long = id
+              def getName: String = name
+              def isFlag: Boolean = flag
+          }
+
+          case class MyCaseClass(id: Long, name: String, flag: Boolean)
+
+        @p
+          The conversion works if you explicitly enable it with @code{.enableBeanGetters}:
+
+        @hl.scala
+          new MyBean(1L, "beanie", true)
+            .into[MyCaseClass]
+            .enableBeanGetters
+            .transform
+          //  MyCaseClass(1L, "beanie", true)
+
+
+        @p
+          Please note that Chimney matches accessor methods solely based on name and return type, and has
+          no way of ensuring that a method named similarly to a getter is idempotent and does not actually
+          perform side effects in its body.
+
+      @sect{Writing to Java beans}
+
+        @p
+          Dual to reading, Chimney supports transforming types into Java beans.
+
+        @p
+          Chimney considers as bean a class that:
+
+          @ul
+            @li
+              primary constructor is public and parameter-less
+            @li
+              contains at least one, single-parameter setter method that returns @code{Unit}
+
+          Chimney will then require data sources for all such setters.
+
+        @hl.scala
+          class MyBean {
+            private var id: Long = _
+            private var name: String = _
+            private var flag: Boolean = _
+
             def getId: Long = id
+            def setId(id: Long): Unit = { this.id = id }
+
             def getName: String = name
+            def setName(name: String): Unit = { this.name = name }
+
             def isFlag: Boolean = flag
-        }
+            def setFlag(flag: Boolean): Unit = { this.flag = flag }
+          }
 
-        case class MyCaseClass(id: String, name: String, flag: Boolean)
+        @p
+          The conversion works if you explicitly enable it with @code{.enableBeanSetters}:
 
-      The conversion will work out-of-the-box, without any other requirements:
+        @hl.scala
+          val obj = MyCaseClass(10L, "beanie", true)
+          val bean = obj
+            .into[MyBean]
+            .enableBeanSetters
+            .transform
 
-      @hl.scala
-        val cc = new MyBean(1, "beanie", true).transformInto[MyCaseClass]
+        @p
+          Chimney generates code equivalent to:
 
-      Please note that Chimney matches accessor methods solely based on name and return type, and has no way of ensuring
-      that a method named similarly to a getter is idempotent and does not actually perform side effects in its body.
-      If you'd like to disable this feature, you can use the @code{.disableBeanGetterLookup} operation:
+        @hl.scala
+          val bean = new MyBean
+          bean.setId(obj.id)
+          bean.setName(obj.name)
+          bean.setFlag(obj.flag)
 
-      @hl.scala
-        val cc = new MyBean(1, "beanie", true)
-          .into[MyCaseClass]
-          .disableBeanGetterLookup
-          .transform
+        @sect{Limitations}
+
+          @p
+            Currently it's not possible to override or provide values for missing setters.

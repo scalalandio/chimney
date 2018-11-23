@@ -5,6 +5,7 @@
 [![Javadocs](https://www.javadoc.io/badge/io.scalaland/chimney_2.11.svg?color=red&label=scaladoc)](https://www.javadoc.io/doc/io.scalaland/chimney_2.11)
 [![codecov.io](http://codecov.io/github/scalalandio/chimney/coverage.svg?branch=master)](http://codecov.io/github/scalalandio/chimney?branch=master)
 [![License](http://img.shields.io/:license-Apache%202-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt) [![Join the chat at https://gitter.im/scalalandio/chimney](https://badges.gitter.im/scalalandio/chimney.svg)](https://gitter.im/scalalandio/chimney?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Scala.js](https://www.scala-js.org/assets/badges/scalajs-0.6.17.svg)](https://www.scala-js.org)
 
 Scala library for boilerplate-free data transformations.
 
@@ -61,11 +62,12 @@ Underneath it uses Scala macros to give you:
 To include Chimney to your SBT project, add the following line to your `build.sbt`:
 
 ```scala
-libraryDependencies += "io.scalaland" %% "chimney" % "0.2.1"
+libraryDependencies += "io.scalaland" %% "chimney" % "0.3.0"
 ```
 
-Library is released for Scala 2.11 and 2.12.
-If you want to use it with Scala.js, you need to replace `%%` with `%%%`.
+Library is released for Scala 2.11.x, 2.12.x and 2.13.0-M5.
+
+If you want to use it with Scala.js (or Scala Native), you need to replace `%%` with `%%%`.
 Due to some [compiler bugs](https://issues.scala-lang.org/browse/SI-7046),
 it's recommended to use at least Scala 2.11.9 or 2.12.1.
 
