@@ -105,6 +105,7 @@ trait MacroUtils extends CompanionUtils {
     def isBeanSetter: Boolean = {
       ms.isPublic &&
       ms.name.decodedName.toString.startsWith("set") &&
+      ms.name.decodedName.toString.lengthCompare(3) > 0 &&
       ms.paramLists.lengthCompare(1) == 0 &&
       ms.paramLists.head.lengthCompare(1) == 0 &&
       ms.returnType == typeOf[Unit]
