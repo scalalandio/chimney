@@ -94,6 +94,14 @@ object IssuesSpec extends TestSuite {
         )
       }
     }
+
+    "fix issue #94" - {
+
+      case class Foo1(x: Int)
+      case class Foo2(x: Option[Int])
+
+      Foo1(5).transformInto[Foo2] ==> Foo2(Some(5))
+    }
   }
 }
 

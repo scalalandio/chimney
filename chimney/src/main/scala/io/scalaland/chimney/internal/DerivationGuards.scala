@@ -60,6 +60,7 @@ trait DerivationGuards {
 
   def canTryDeriveTransformer(from: Type, to: Type): Boolean = {
     isSubtype(from, to) ||
+    targetWrappedInOption(from, to) ||
     fromValueClassToType(from, to) ||
     fromTypeToValueClass(from, to) ||
     bothOptions(from, to) ||
