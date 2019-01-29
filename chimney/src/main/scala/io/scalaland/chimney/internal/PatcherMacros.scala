@@ -48,15 +48,15 @@ trait PatcherMacros {
       val fnObj = c.internal.reificationSupport.freshTermName("obj$")
       val fnPatch = c.internal.reificationSupport.freshTermName("patch$")
 
-      val targetMapping = patchParams.toSeq.map { pParam =>
-        tParamsByName.get(pParam.name) match {
-          case Some(tParam) if pParam.returnType <:< tParam.returnType =>
-            Right(q"$fnPatch.${pParam.name}")
-          case Some(tParam) =>
-            transformOptionalValue(fnPatch, pParam, tParam, fnObj)
-          case None =>
-            Left(s"Field named '${pParam.name}' not found in target patching type $T!")
-        }
+      val matchingParams = patchParams.toSeq flatMap { pParam =>
+        tParamsByName.get(pParam.name).map(_ -> pParam)
+      }
+
+      val targetMapping = matchingParams.map {
+        case (tParam, pParam) if pParam.returnType <:< tParam.returnType =>
+          Right(q"$fnPatch.${pParam.name}")
+        case (tParam, pParam) =>
+          transformOptionalValue(fnPatch, pParam, tParam, fnObj)
       }
 
       if (targetMapping.exists(_.isLeft)) {
