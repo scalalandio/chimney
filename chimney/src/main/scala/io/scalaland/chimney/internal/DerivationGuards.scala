@@ -45,6 +45,8 @@ trait DerivationGuards {
     to.isCaseClass
   }
 
+  // add new: destinationIsTuple
+
   def destinationJavaBean(to: Type): Boolean = {
     if (to.typeSymbol.isClass) {
       val primaryConstructor = to.typeSymbol.asClass.primaryConstructor

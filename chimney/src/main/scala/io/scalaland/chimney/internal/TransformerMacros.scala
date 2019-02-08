@@ -70,7 +70,9 @@ trait TransformerMacros {
           expandMaps(srcPrefixTree, config)(From, To)
         } else if (bothOfTraversableOrArray(From, To)) {
           expandTraversableOrArray(srcPrefixTree, config)(From, To)
-        } else if (destinationCaseClass(To)) {
+        }
+          // destinationIsTuple -> expandDestinationTuple
+          else if (destinationCaseClass(To)) {
           expandDestinationCaseClass(srcPrefixTree, config)(From, To)
         } else if (config.enableBeanSetters && destinationJavaBean(To)) {
           expandDestinationJavaBean(srcPrefixTree, config)(From, To)
@@ -326,6 +328,8 @@ trait TransformerMacros {
     val fromGetters = From.getterMethods
     val toFields = To.caseClassParams
 
+    // special case for when From is tuple - then we don't perform name-based resolution
+
     val mapping = toFields.map { targetField =>
       val target = Target.fromField(targetField, To)
       target -> resolveTarget(srcPrefixTree, config, From, To)(target, fromGetters, Some(To.typeSymbol.asClass))
@@ -359,6 +363,8 @@ trait TransformerMacros {
 
     val fromGetters = From.getterMethods
     val beanSetters = To.beanSetterMethods
+
+    // special case for when From is tuple - then we don't perform name-based resolution
 
     val mapping = beanSetters.map { beanSetter =>
       val target = Target.fromJavaBeanSetter(beanSetter, To)
