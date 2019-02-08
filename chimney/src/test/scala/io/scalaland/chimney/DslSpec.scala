@@ -655,6 +655,26 @@ object DslSpec extends TestSuite {
       (null: String).transformInto[Option[String]] ==> None
     }
 
+    "transform between case classes and tuples" - {
+
+      case class Foo(field1: Int, field2: Double, field3: String)
+
+      Foo(0, 3.14, "pi")
+        .transformInto[(Int, Double, String)] ==> (0, 3.14, "pi")
+
+      (0, 3.14, "pi").transformInto[Foo]
+
+      "even recursively" - {
+
+        case class Bar(foo: Foo, baz: Boolean)
+
+        Bar(Foo(100, 2.71, "e"), baz = false)
+          .transformInto[((Int, Double, String), Boolean)] ==> ((100, 2.71, "e"), false)
+
+        ((100, 2.71, "e"), true).transformInto[Bar] ==>
+          Bar(Foo(100, 2.71, "e"), baz = true)
+      }
+    }
   }
 }
 
