@@ -70,9 +70,9 @@ trait TransformerMacros {
           expandMaps(srcPrefixTree, config)(From, To)
         } else if (bothOfTraversableOrArray(From, To)) {
           expandTraversableOrArray(srcPrefixTree, config)(From, To)
-        }
-          // destinationIsTuple -> expandDestinationTuple
-          else if (destinationCaseClass(To)) {
+        } else if (isTuple(To)) {
+          expandDestinationTuple(srcPrefixTree, config)(From, To)
+        } else if (destinationCaseClass(To)) {
           expandDestinationCaseClass(srcPrefixTree, config)(From, To)
         } else if (config.enableBeanSetters && destinationJavaBean(To)) {
           expandDestinationJavaBean(srcPrefixTree, config)(From, To)
@@ -320,6 +320,41 @@ trait TransformerMacros {
     }
   }
 
+  def expandDestinationTuple(srcPrefixTree: Tree, config: Config)(From: Type,
+                                                                  To: Type): Either[Seq[DerivationError], Tree] = {
+
+    var errors = Seq.empty[DerivationError]
+
+    val fromGetters = From.getterMethods
+    val toFields = To.caseClassParams
+
+    val mapping = toFields.map { targetField =>
+      val target = Target.fromField(targetField, To)
+      target -> resolveTarget(srcPrefixTree, config, From, To)(target, fromGetters, Some(To.typeSymbol.asClass))
+    }
+
+    val missingTargets = mapping.collect { case (target, None) => target }
+
+    missingTargets.foreach { target =>
+      errors :+= MissingField(
+        fieldName = target.name.toString,
+        fieldTypeName = target.tpe.typeSymbol.fullName,
+        sourceTypeName = From.typeSymbol.fullName,
+        targetTypeName = To.typeSymbol.fullName
+      )
+    }
+
+    val (resolutionErrors, args) = resolveTargetArgTrees(srcPrefixTree, config, From, To)(mapping)
+
+    errors ++= resolutionErrors
+
+    if (errors.nonEmpty) {
+      Left(errors)
+    } else {
+      Right(q"new $To(..$args)")
+    }
+  }
+
   def expandDestinationCaseClass(srcPrefixTree: Tree, config: Config)(From: Type,
                                                                       To: Type): Either[Seq[DerivationError], Tree] = {
 
@@ -327,8 +362,6 @@ trait TransformerMacros {
 
     val fromGetters = From.getterMethods
     val toFields = To.caseClassParams
-
-    // special case for when From is tuple - then we don't perform name-based resolution
 
     val mapping = toFields.map { targetField =>
       val target = Target.fromField(targetField, To)
@@ -364,11 +397,18 @@ trait TransformerMacros {
     val fromGetters = From.getterMethods
     val beanSetters = To.beanSetterMethods
 
-    // special case for when From is tuple - then we don't perform name-based resolution
-
-    val mapping = beanSetters.map { beanSetter =>
-      val target = Target.fromJavaBeanSetter(beanSetter, To)
-      target -> resolveTarget(srcPrefixTree, config, From, To)(target, fromGetters, None)
+    val mapping = if (isTuple(From)) {
+      beanSetters.zipWithIndex.map {
+        case (_, index) =>
+          val tupleArg = From.member(TermName(s"_${index + 1}")).asMethod
+          val target = Target.fromField(tupleArg, To)
+          target -> resolveTarget(srcPrefixTree, config, From, To)(target, fromGetters, Some(To.typeSymbol.asClass))
+      }
+    } else {
+      beanSetters.map { targetField =>
+        val target = Target.fromField(targetField, To)
+        target -> resolveTarget(srcPrefixTree, config, From, To)(target, fromGetters, Some(To.typeSymbol.asClass))
+      }
     }
 
     val missingTargets = mapping.collect { case (target, None) => target }
@@ -469,6 +509,30 @@ trait TransformerMacros {
         } else {
           MatchingSourceAccessor(ms)
         }
+      }
+    } else if (isTuple(From)) {
+      println(s"from tuple: $From ${To.getterMethods}")
+      To.getterMethods.zipWithIndex.collectFirst {
+        // check if types matches
+        case (method, index) if target.name == method.name =>
+          ResolvedTargetTree {
+            val tupleArg = From.member(TermName(s"_${index + 1}")).asMethod
+            println(s"found: $tupleArg")
+            q"${TermName(config.prefixValName)}.$tupleArg.asInstanceOf[${target.tpe}]"
+          }
+      }
+    } else if (isTuple(To)) {
+      println(s"$target")
+      println(s"to tuple: $To ${fromGetters.map(_.name)}")
+      fromGetters.zipWithIndex.collectFirst {
+        // check if types matches
+        // tries to figure out target, translate it to index and extract method name from the transformed
+        case (method, index) if target.name == s"_${index + 1}" =>
+            //if scala.util.Try(To.member(TermName(s"_${index + 1}")).asMethod == method).getOrElse(false) =>
+          println(s"found: $method")
+          ResolvedTargetTree {
+            q"${TermName(config.prefixValName)}.$method.asInstanceOf[${target.tpe}]"
+          }
       }
     } else {
       fromGetters
