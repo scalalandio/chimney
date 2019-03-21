@@ -455,10 +455,10 @@ trait TransformerMacros {
       }
     } else if (config.renamedFields.contains(target.name)) {
       val fromFieldName = TermName(config.renamedFields(target.name))
-      fromGetters.find(_.name == fromFieldName).map { ms =>
+      fromGetters.find(_.name.decodedName == fromFieldName.decodedName).map { ms =>
         if (target.tpe <:< ms.resultTypeIn(From)) {
           ResolvedTargetTree {
-            q"$srcPrefixTree.$fromFieldName"
+            q"$srcPrefixTree.${fromFieldName.encodedName.toTermName}"
           }
         } else {
           MatchingSourceAccessor(ms)

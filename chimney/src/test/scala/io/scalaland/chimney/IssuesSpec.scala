@@ -102,6 +102,16 @@ object IssuesSpec extends TestSuite {
 
       Foo1(5).transformInto[Foo2] ==> Foo2(Some(5))
     }
+
+    "fix issue #101" - {
+
+      case class Foo(`a.b`: String)
+      case class Bar(b: String)
+
+      import io.scalaland.chimney.dsl._
+
+      Foo("a").into[Bar].withFieldRenamed(_.`a.b`, _.b).transform
+    }
   }
 }
 
