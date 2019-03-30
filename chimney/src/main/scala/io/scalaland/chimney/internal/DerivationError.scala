@@ -26,6 +26,8 @@ final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName
 final case class CantFindCoproductInstanceTransformer(instance: String, sourceTypeName: String, targetTypeName: String)
     extends DerivationError
 
+final case class IncompatibleSourceTuple(sourceArity: Int, targetArity: Int, sourceTypeName: String, targetTypeName: String) extends DerivationError
+
 final case class NotSupportedDerivation(sourceTypeName: String, targetTypeName: String) extends DerivationError
 
 object DerivationError {
@@ -47,6 +49,8 @@ object DerivationError {
               s"  can't find member of value class $sourceTypeName"
             case CantFindCoproductInstanceTransformer(instance, _, _) =>
               s"  can't transform coproduct instance $instance to $targetTypeName"
+            case IncompatibleSourceTuple(sourceArity, targetArity, sourceTypeName, _) =>
+              s"  source tuple $sourceTypeName is of arity $sourceArity, while target type $targetTypeName is of arity $targetArity; they need to be equal!"
             case NotSupportedDerivation(sourceTypeName, _) =>
               s"  derivation from $sourceTypeName to $targetTypeName is not supported in Chimney!"
           }

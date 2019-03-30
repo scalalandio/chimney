@@ -93,6 +93,7 @@ trait DerivationGuards {
     bothEithers(from, to) ||
     bothMaps(from, to) ||
     bothOfTraversableOrArray(from, to) ||
+//    isTuple(to) ||
     destinationCaseClass(to) ||
     destinationJavaBean(to) ||
     bothSealedClasses(from, to)
