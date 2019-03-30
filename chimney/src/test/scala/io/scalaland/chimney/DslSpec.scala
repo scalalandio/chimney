@@ -659,8 +659,10 @@ object DslSpec extends TestSuite {
 
       case class Foo(field1: Int, field2: Double, field3: String)
 
-//      Foo(0, 3.14, "pi")
-//        .transformInto[(Int, Double, String)] ==> (0, 3.14, "pi")
+      val expected = (0, 3.14, "pi")
+
+      Foo(0, 3.14, "pi")
+        .transformInto[(Int, Double, String)] ==> expected
 
       (0, 3.14, "pi").transformInto[Foo]
 
@@ -668,8 +670,10 @@ object DslSpec extends TestSuite {
 
         case class Bar(foo: Foo, baz: Boolean)
 
-//        Bar(Foo(100, 2.71, "e"), baz = false)
-//          .transformInto[((Int, Double, String), Boolean)] ==> ((100, 2.71, "e"), false)
+        val expected = ((100, 2.71, "e"), false)
+
+        Bar(Foo(100, 2.71, "e"), baz = false)
+          .transformInto[((Int, Double, String), Boolean)] ==> expected
 
         ((100, 2.71, "e"), true).transformInto[Bar] ==>
           Bar(Foo(100, 2.71, "e"), baz = true)
