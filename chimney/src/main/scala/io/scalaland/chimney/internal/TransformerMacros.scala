@@ -517,30 +517,6 @@ trait TransformerMacros {
           MatchingSourceAccessor(ms)
         }
       }
-//    } else if (isTuple(From)) {
-//      println(s"from tuple: $From ${To.getterMethods}")
-//      To.getterMethods.zipWithIndex.collectFirst {
-//        // check if types matches
-//        case (method, index) if target.name == method.name =>
-//          ResolvedTargetTree {
-//            val tupleArg = From.member(TermName(s"_${index + 1}")).asMethod
-//            println(s"found: $tupleArg")
-//            q"${TermName(config.prefixValName)}.$tupleArg.asInstanceOf[${target.tpe}]"
-//          }
-//      }
-//    } else if (isTuple(To)) {
-//      println(s"$target")
-//      println(s"to tuple: $To ${fromGetters.map(_.name)}")
-//      fromGetters.zipWithIndex.collectFirst {
-//        // check if types matches
-//        // tries to figure out target, translate it to index and extract method name from the transformed
-//        case (method, index) if target.name == s"_${index + 1}" =>
-//            //if scala.util.Try(To.member(TermName(s"_${index + 1}")).asMethod == method).getOrElse(false) =>
-//          println(s"found: $method")
-//          ResolvedTargetTree {
-//            q"${TermName(config.prefixValName)}.$method.asInstanceOf[${target.tpe}]"
-//          }
-//      }
     } else {
       fromGetters
         .find(lookupAccessor(config, target, From))
