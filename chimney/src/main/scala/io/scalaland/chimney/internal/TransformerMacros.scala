@@ -343,17 +343,6 @@ trait TransformerMacros {
       }
     }
 
-    val missingTargets = mapping.collect { case (target, None) => target }
-
-    missingTargets.foreach { target =>
-      errors :+= MissingField(
-        fieldName = target.name.toString,
-        fieldTypeName = target.tpe.typeSymbol.fullName,
-        sourceTypeName = From.typeSymbol.fullName,
-        targetTypeName = To.typeSymbol.fullName
-      )
-    }
-
     val (resolutionErrors, args) = resolveTargetArgTrees(srcPrefixTree, config, From, To)(mapping)
 
     errors ++= resolutionErrors
