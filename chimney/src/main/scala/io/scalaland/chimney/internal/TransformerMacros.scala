@@ -328,12 +328,18 @@ trait TransformerMacros {
     val fromGetters = From.caseClassParams
     val toFields = To.caseClassParams
 
-    val mapping = if(fromGetters.size != toFields.size) {
-      errors :+= IncompatibleSourceTuple(fromGetters.size, toFields.size, From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString)
+    val mapping = if (fromGetters.size != toFields.size) {
+      errors :+= IncompatibleSourceTuple(
+        fromGetters.size,
+        toFields.size,
+        From.typeSymbol.fullName.toString,
+        To.typeSymbol.fullName.toString
+      )
       Iterable.empty
     } else {
-      (fromGetters zip toFields).map { case (sourceField, targetField) =>
-        Target.fromField(targetField, To) -> Option(MatchingSourceAccessor(sourceField))
+      (fromGetters zip toFields).map {
+        case (sourceField, targetField) =>
+          Target.fromField(targetField, To) -> Option(MatchingSourceAccessor(sourceField))
       }
     }
 
@@ -366,14 +372,20 @@ trait TransformerMacros {
 
     val toFields = To.caseClassParams
 
-    val mapping = if(isTuple(From)) {
+    val mapping = if (isTuple(From)) {
       val fromGetters = From.caseClassParams
-      if(fromGetters.size != toFields.size) {
-        errors :+= IncompatibleSourceTuple(fromGetters.size, toFields.size, From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString)
+      if (fromGetters.size != toFields.size) {
+        errors :+= IncompatibleSourceTuple(
+          fromGetters.size,
+          toFields.size,
+          From.typeSymbol.fullName.toString,
+          To.typeSymbol.fullName.toString
+        )
         Iterable.empty
       } else {
-        (fromGetters zip toFields).map { case (sourceField, targetField) =>
-          Target.fromField(targetField, To) -> Some(MatchingSourceAccessor(sourceField))
+        (fromGetters zip toFields).map {
+          case (sourceField, targetField) =>
+            Target.fromField(targetField, To) -> Some(MatchingSourceAccessor(sourceField))
         }
       }
     } else {

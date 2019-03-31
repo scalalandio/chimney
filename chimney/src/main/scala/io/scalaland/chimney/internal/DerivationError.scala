@@ -26,7 +26,11 @@ final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName
 final case class CantFindCoproductInstanceTransformer(instance: String, sourceTypeName: String, targetTypeName: String)
     extends DerivationError
 
-final case class IncompatibleSourceTuple(sourceArity: Int, targetArity: Int, sourceTypeName: String, targetTypeName: String) extends DerivationError
+final case class IncompatibleSourceTuple(sourceArity: Int,
+                                         targetArity: Int,
+                                         sourceTypeName: String,
+                                         targetTypeName: String)
+    extends DerivationError
 
 final case class NotSupportedDerivation(sourceTypeName: String, targetTypeName: String) extends DerivationError
 
