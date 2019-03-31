@@ -678,6 +678,21 @@ object DslSpec extends TestSuite {
         ((100, 2.71, "e"), true).transformInto[Bar] ==>
           Bar(Foo(100, 2.71, "e"), baz = true)
       }
+
+      "handle tuple transformation errors" - {
+
+        compileError("""(0, "test").transformInto[Foo]""")
+          .check("", "source tuple scala.Tuple2 is of arity 2, while target type io.scalaland.chimney.DslSpec.Foo is of arity 3; they need to be equal!")
+
+        compileError("""(10.5, "abc", 6).transformInto[Foo]""")
+          .check("", "can't derive transformation")
+
+        compileError("""Foo(10, 36.6, "test").transformInto[(Double, String, Int, Float, Boolean)]""")
+          .check("", "source tuple io.scalaland.chimney.DslSpec.Foo is of arity 3, while target type scala.Tuple5 is of arity 5; they need to be equal!")
+
+        compileError("""Foo(10, 36.6, "test").transformInto[(Int, Double, Boolean)]""")
+          .check("", "can't derive transformation")
+      }
     }
   }
 }
