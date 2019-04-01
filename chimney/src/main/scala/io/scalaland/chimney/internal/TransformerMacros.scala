@@ -70,6 +70,8 @@ trait TransformerMacros {
           expandMaps(srcPrefixTree, config)(From, To)
         } else if (bothOfTraversableOrArray(From, To)) {
           expandTraversableOrArray(srcPrefixTree, config)(From, To)
+        } else if (isTuple(To)) {
+          expandDestinationTuple(srcPrefixTree, config)(From, To)
         } else if (destinationCaseClass(To)) {
           expandDestinationCaseClass(srcPrefixTree, config)(From, To)
         } else if (config.enableBeanSetters && destinationJavaBean(To)) {
@@ -318,17 +320,69 @@ trait TransformerMacros {
     }
   }
 
+  def expandDestinationTuple(srcPrefixTree: Tree, config: Config)(From: Type,
+                                                                  To: Type): Either[Seq[DerivationError], Tree] = {
+
+    var errors = Seq.empty[DerivationError]
+
+    val fromGetters = From.caseClassParams
+    val toFields = To.caseClassParams
+
+    val mapping = if (fromGetters.size != toFields.size) {
+      errors :+= IncompatibleSourceTuple(
+        fromGetters.size,
+        toFields.size,
+        From.typeSymbol.fullName.toString,
+        To.typeSymbol.fullName.toString
+      )
+      Iterable.empty
+    } else {
+      (fromGetters zip toFields).map {
+        case (sourceField, targetField) =>
+          Target.fromField(targetField, To) -> Option(MatchingSourceAccessor(sourceField))
+      }
+    }
+
+    val (resolutionErrors, args) = resolveTargetArgTrees(srcPrefixTree, config, From, To)(mapping)
+
+    errors ++= resolutionErrors
+
+    if (errors.nonEmpty) {
+      Left(errors)
+    } else {
+      Right(q"new $To(..$args)")
+    }
+  }
+
   def expandDestinationCaseClass(srcPrefixTree: Tree, config: Config)(From: Type,
                                                                       To: Type): Either[Seq[DerivationError], Tree] = {
 
     var errors = Seq.empty[DerivationError]
 
-    val fromGetters = From.getterMethods
     val toFields = To.caseClassParams
 
-    val mapping = toFields.map { targetField =>
-      val target = Target.fromField(targetField, To)
-      target -> resolveTarget(srcPrefixTree, config, From, To)(target, fromGetters, Some(To.typeSymbol.asClass))
+    val mapping = if (isTuple(From)) {
+      val fromGetters = From.caseClassParams
+      if (fromGetters.size != toFields.size) {
+        errors :+= IncompatibleSourceTuple(
+          fromGetters.size,
+          toFields.size,
+          From.typeSymbol.fullName.toString,
+          To.typeSymbol.fullName.toString
+        )
+        Iterable.empty
+      } else {
+        (fromGetters zip toFields).map {
+          case (sourceField, targetField) =>
+            Target.fromField(targetField, To) -> Some(MatchingSourceAccessor(sourceField))
+        }
+      }
+    } else {
+      val fromGetters = From.getterMethods
+      toFields.map { targetField =>
+        val target = Target.fromField(targetField, To)
+        target -> resolveTarget(srcPrefixTree, config, From, To)(target, fromGetters, Some(To.typeSymbol.asClass))
+      }
     }
 
     val missingTargets = mapping.collect { case (target, None) => target }

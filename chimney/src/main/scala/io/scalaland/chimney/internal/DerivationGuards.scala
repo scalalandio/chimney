@@ -41,6 +41,32 @@ trait DerivationGuards {
     iterableOrArray(from) && iterableOrArray(to)
   }
 
+  def isTuple(to: Type): Boolean =
+    Seq(
+      typeOf[Tuple1[_]],
+      typeOf[Tuple2[_, _]],
+      typeOf[Tuple3[_, _, _]],
+      typeOf[Tuple4[_, _, _, _]],
+      typeOf[Tuple5[_, _, _, _, _]],
+      typeOf[Tuple6[_, _, _, _, _, _]],
+      typeOf[Tuple7[_, _, _, _, _, _, _]],
+      typeOf[Tuple8[_, _, _, _, _, _, _, _]],
+      typeOf[Tuple9[_, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple10[_, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple11[_, _, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple12[_, _, _, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple13[_, _, _, _, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple14[_, _, _, _, _, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple15[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple16[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple17[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple18[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple19[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple20[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple21[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]],
+      typeOf[Tuple22[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]]
+    ).exists(to <:< _)
+
   def destinationCaseClass(to: Type): Boolean = {
     to.isCaseClass
   }
@@ -67,6 +93,7 @@ trait DerivationGuards {
     bothEithers(from, to) ||
     bothMaps(from, to) ||
     bothOfTraversableOrArray(from, to) ||
+    isTuple(to) ||
     destinationCaseClass(to) ||
     destinationJavaBean(to) ||
     bothSealedClasses(from, to)
