@@ -8,7 +8,7 @@ val versions = new {
 val settings = Seq(
   version := "0.3.1",
   scalaVersion := versions.scalaVersion,
-  crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0-M5"),
+  crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0-RC1"),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
     "-encoding", "UTF-8",
@@ -19,7 +19,6 @@ val settings = Seq(
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
 //    "-Xfatal-warnings",
-    "-Xfuture",
     "-Xlint:adapted-args",
     "-Xlint:delayedinit-select",
     "-Xlint:doc-detached",
@@ -38,6 +37,7 @@ val settings = Seq(
       Nil
     else
       Seq(
+        "-Xfuture",
         "-Xexperimental",
         "-Yno-adapted-args",
         "-Ywarn-inaccessible",

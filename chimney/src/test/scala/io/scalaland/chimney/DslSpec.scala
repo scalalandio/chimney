@@ -12,7 +12,7 @@ object DslSpec extends TestSuite {
 
       import Domain1._
 
-      implicit val _ = userNameToStringTransformer
+      implicit def trans: Transformer[UserName, String] = userNameToStringTransformer
 
       UserName("Batman").into[String].transform ==> "BatmanT"
       UserName("Batman").transformInto[String] ==> "BatmanT"
@@ -22,7 +22,7 @@ object DslSpec extends TestSuite {
 
       import Domain1._
 
-      implicit val _ = userNameToStringTransformer
+      implicit def trans: Transformer[UserName, String] = userNameToStringTransformer
 
       val batman = User("123", UserName("Batman"))
       val batmanDTO = batman.transformInto[UserDTO]
@@ -261,7 +261,7 @@ object DslSpec extends TestSuite {
         }
 
       "between different types: correct" - {
-        implicit val trans = ageToWiekTransformer
+        implicit def trans: Transformer[Option[Int], Either[Unit, Int]] = ageToWiekTransformer
         val user: User = User(1, "Kuba", Some(28))
         val userPl = UserPL(1, "Kuba", Right(28))
         user
@@ -273,9 +273,9 @@ object DslSpec extends TestSuite {
       }
 
       "between different types: incorrect" - {
-        implicit val trans = ageToWiekTransformer
+        implicit def trans: Transformer[Option[Int], Either[Unit, Int]] = ageToWiekTransformer
         val user: User = User(1, "Kuba", None)
-        val userPl = UserPL(1, "Kuba", Left(Unit))
+        val userPl = UserPL(1, "Kuba", Left(()))
         user
           .into[UserPL]
           .withFieldRenamed(_.name, _.imie)
@@ -286,7 +286,7 @@ object DslSpec extends TestSuite {
 
       "between different types: without implicit" - {
         val user: User = User(1, "Kuba", None)
-        val userPl = UserPL(1, "Kuba", Left(Unit))
+        val userPl = UserPL(1, "Kuba", Left(()))
         compileError("""
             user.into[UserPL].withFieldRenamed(_.name, _.imie)
                 .withFieldRenamed(_.age, _.wiek)
