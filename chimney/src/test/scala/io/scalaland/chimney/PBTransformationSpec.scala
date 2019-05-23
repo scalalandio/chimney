@@ -18,19 +18,21 @@ object PBTransformationSpec extends TestSuite {
     }
 
     "not compile if target type is wrong for value class" - {
-
+      // FIXME could not find implicit value for parameter transformer: io.scalaland.chimney.Transformer[io.scalaland.chimney.examples.addressbook.PersonName,Int]
       compileError(""" addressbook.PersonName("John").transformInto[Int] """)
         .check(
           "",
           "Chimney can't derive transformation from io.scalaland.chimney.examples.addressbook.PersonName to Int"
         )
 
+      // FIXME could not find implicit value for parameter transformer: io.scalaland.chimney.Transformer[io.scalaland.chimney.examples.addressbook.PersonId,String]
       compileError(""" addressbook.PersonId(5).transformInto[String] """)
         .check(
           "",
           "Chimney can't derive transformation from io.scalaland.chimney.examples.addressbook.PersonId to String"
         )
 
+      // FIXME could not find implicit value for parameter transformer: io.scalaland.chimney.Transformer[io.scalaland.chimney.examples.addressbook.PersonId,String]
       compileError(""" addressbook.Email("john@example.com").transformInto[Float] """)
         .check("", "Chimney can't derive transformation from io.scalaland.chimney.examples.addressbook.Email to Float")
     }

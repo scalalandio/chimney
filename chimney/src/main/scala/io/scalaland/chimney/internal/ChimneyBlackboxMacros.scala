@@ -9,17 +9,13 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
     with DerivationGuards
     with MacroUtils
     with DerivationConfig {
-
-  def transformImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[To] = {
-    c.Expr[To](expandTansform[From, To, C])
-  }
+  def transformImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[To] =
+    c.Expr[To](expandTransform[From, To, C])
 
   def deriveTransformerImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]
-    : c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
+    : c.Expr[Exported[io.scalaland.chimney.Transformer[From, To]]] =
     genTransformer[From, To](Config())
-  }
 
-  def derivePatcherImpl[T: c.WeakTypeTag, Patch: c.WeakTypeTag]: c.Expr[io.scalaland.chimney.Patcher[T, Patch]] = {
+  def derivePatcherImpl[T: c.WeakTypeTag, Patch: c.WeakTypeTag]: c.Expr[io.scalaland.chimney.Patcher[T, Patch]] =
     genPatcher[T, Patch]()
-  }
 }

@@ -1,7 +1,6 @@
 package io.scalaland.chimney.internal
 
 import scala.reflect.macros.blackbox
-
 trait DslBlackboxMacros {
   this: TransformerMacros with MacroUtils with DerivationConfig =>
 
@@ -9,7 +8,7 @@ trait DslBlackboxMacros {
 
   import c.universe._
 
-  def expandTansform[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {
+  def expandTransform[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {
     val C = weakTypeOf[C]
     val srcName = c.freshName("src")
     val config = captureConfiguration(C).copy(prefixValName = srcName)
@@ -18,7 +17,7 @@ trait DslBlackboxMacros {
 
     q"""
        val ${TermName(srcName)} = ${c.prefix.tree}
-       $derivedTransformerTree.transform(${TermName(srcName)}.source)
+       $derivedTransformerTree.instance.transform(${TermName(srcName)}.source)
     """
   }
 

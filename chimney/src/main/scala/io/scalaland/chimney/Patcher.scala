@@ -8,7 +8,5 @@ trait Patcher[T, Patch] {
 }
 
 object Patcher {
-
-  implicit def derive[T, Patch]: Patcher[T, Patch] =
-    macro ChimneyBlackboxMacros.derivePatcherImpl[T, Patch]
+  implicit def derive[T, Patch]: Patcher[T, Patch] = macro ChimneyBlackboxMacros.derivePatcherImpl[T, Patch]
 }

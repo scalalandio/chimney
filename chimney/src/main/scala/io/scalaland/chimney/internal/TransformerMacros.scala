@@ -8,11 +8,11 @@ trait TransformerMacros {
   val c: blackbox.Context
 
   import c.universe._
+  private val chimneyDocUrl = "https://scalalandio.github.io/chimney"
 
   def genTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag](
     config: Config
-  ): c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
-
+  ): c.Expr[Exported[io.scalaland.chimney.Transformer[From, To]]] = {
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
 
@@ -21,18 +21,16 @@ trait TransformerMacros {
     val srcPrefixTree = Ident(TermName(srcName.decodedName.toString))
 
     expandTransformerTree(srcPrefixTree, config)(From, To) match {
-
       case Right(transformerTree) =>
         val tree = q"""
-           new _root_.io.scalaland.chimney.Transformer[$From, $To] {
+           new _root_.io.scalaland.chimney.internal.Exported(new _root_.io.scalaland.chimney.Transformer[$From, $To] {
              def transform($srcName: $From): $To = {
                $transformerTree
              }
-           }
+           })
         """
 
-        c.Expr[io.scalaland.chimney.Transformer[From, To]](tree)
-
+        c.Expr[Exported[io.scalaland.chimney.Transformer[From, To]]](tree)
       case Left(derivationErrors) =>
         val errorMessage =
           s"""Chimney can't derive transformation from $From to $To
@@ -48,42 +46,41 @@ trait TransformerMacros {
 
   def expandTransformerTree(srcPrefixTree: Tree, config: Config)(From: Type,
                                                                  To: Type): Either[Seq[DerivationError], Tree] = {
-
-    findLocalImplicitTransformer(From, To)
-      .map { localImplicitTree =>
-        Right(q"$localImplicitTree.transform($srcPrefixTree)")
-      }
-      .getOrElse {
-        if (isSubtype(From, To)) {
-          Right(srcPrefixTree)
-        } else if (fromValueClassToType(From, To)) {
-          expandValueClassToType(srcPrefixTree)(From, To)
-        } else if (fromTypeToValueClass(From, To)) {
-          expandTypeToValueClass(srcPrefixTree)(From, To)
-        } else if (targetWrappedInOption(From, To)) {
-          expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
-        } else if (bothOptions(From, To)) {
-          expandOptions(srcPrefixTree, config)(From, To)
-        } else if (bothEithers(From, To)) {
-          expandEithers(srcPrefixTree, config)(From, To)
-        } else if (bothMaps(From, To)) {
-          expandMaps(srcPrefixTree, config)(From, To)
-        } else if (bothOfTraversableOrArray(From, To)) {
-          expandTraversableOrArray(srcPrefixTree, config)(From, To)
-        } else if (isTuple(To)) {
-          expandDestinationTuple(srcPrefixTree, config)(From, To)
-        } else if (destinationCaseClass(To)) {
-          expandDestinationCaseClass(srcPrefixTree, config)(From, To)
-        } else if (config.enableBeanSetters && destinationJavaBean(To)) {
-          expandDestinationJavaBean(srcPrefixTree, config)(From, To)
-        } else if (bothSealedClasses(From, To)) {
-          expandSealedClasses(srcPrefixTree, config)(From, To)
-        } else {
+    if (isSubtype(From, To)) {
+      Right(srcPrefixTree)
+    } else if (fromValueClassToType(From, To)) {
+      expandValueClassToType(srcPrefixTree)(From, To)
+    } else if (fromTypeToValueClass(From, To)) {
+      expandTypeToValueClass(srcPrefixTree)(From, To)
+    } else if (targetWrappedInOption(From, To)) {
+      expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
+    } else if (bothOptions(From, To)) {
+      expandOptions(srcPrefixTree, config)(From, To)
+    } else if (bothEithers(From, To)) {
+      expandEithers(srcPrefixTree, config)(From, To)
+    } else if (bothMaps(From, To)) {
+      expandMaps(srcPrefixTree, config)(From, To)
+    } else if (bothOfTraversableOrArray(From, To)) {
+      expandTraversableOrArray(srcPrefixTree, config)(From, To)
+    } else if (isTuple(To)) {
+      expandDestinationTuple(srcPrefixTree, config)(From, To)
+    } else if (destinationCaseClass(To)) {
+      expandDestinationCaseClass(srcPrefixTree, config)(From, To)
+    } else if (config.enableBeanSetters && destinationJavaBean(To)) {
+      expandDestinationJavaBean(srcPrefixTree, config)(From, To)
+    } else if (bothSealedClasses(From, To)) {
+      expandSealedClasses(srcPrefixTree, config)(From, To)
+    } else {
+      findLocalImplicitTransformer(From, To)
+        .map { localImplicitTree =>
+          Right(q"$localImplicitTree.transform($srcPrefixTree)")
+        }
+        .getOrElse {
           Left {
             Seq(NotSupportedDerivation(From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
           }
         }
-      }
+    }
   }
 
   def expandValueClassToType(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
@@ -463,32 +460,33 @@ trait TransformerMacros {
         tree
 
       case (target, Some(MatchingSourceAccessor(sourceField))) =>
-        findLocalImplicitTransformer(sourceField.resultTypeIn(From), target.tpe) match {
-          case Some(localImplicitTransformer) =>
-            q"$localImplicitTransformer.transform($srcPrefixTree.${sourceField.name})"
+        if (canTryDeriveTransformer(sourceField.resultTypeIn(From), target.tpe)) {
+          expandTransformerTree(q"$srcPrefixTree.${sourceField.name}", config.rec)(
+            sourceField.resultTypeIn(From),
+            target.tpe
+          ) match {
+            case Left(errs) =>
+              errors ++= errs
+              EmptyTree
+            case Right(tree) =>
+              tree
+          }
+        } else {
+          findLocalImplicitTransformer(sourceField.resultTypeIn(From), target.tpe) match {
+            case Some(localImplicitTransformer) =>
+              q"$localImplicitTransformer.transform($srcPrefixTree.${sourceField.name})"
 
-          case None if canTryDeriveTransformer(sourceField.resultTypeIn(From), target.tpe) =>
-            expandTransformerTree(q"$srcPrefixTree.${sourceField.name}", config.rec)(
-              sourceField.resultTypeIn(From),
-              target.tpe
-            ) match {
-              case Left(errs) =>
-                errors ++= errs
-                EmptyTree
-              case Right(tree) =>
-                tree
-            }
+            case None =>
+              errors :+= MissingTransformer(
+                fieldName = target.name,
+                sourceFieldTypeName = sourceField.resultTypeIn(From).typeSymbol.fullName,
+                targetFieldTypeName = target.tpe.typeSymbol.fullName,
+                sourceTypeName = From.typeSymbol.fullName,
+                targetTypeName = To.typeSymbol.fullName
+              )
 
-          case None =>
-            errors :+= MissingTransformer(
-              fieldName = target.name,
-              sourceFieldTypeName = sourceField.resultTypeIn(From).typeSymbol.fullName,
-              targetFieldTypeName = target.tpe.typeSymbol.fullName,
-              sourceTypeName = From.typeSymbol.fullName,
-              targetTypeName = To.typeSymbol.fullName
-            )
-
-            EmptyTree
+              EmptyTree
+          }
         }
     }
 
@@ -582,20 +580,18 @@ trait TransformerMacros {
 
   case class Target(name: String, tpe: Type, kind: Target.Kind)
   object Target {
-    sealed trait Kind
-    case object ClassField extends Kind
-    case object JavaBeanSetter extends Kind
-
     def fromJavaBeanSetter(ms: MethodSymbol, site: Type): Target =
       Target(ms.canonicalName, ms.beanSetterParamTypeIn(site), JavaBeanSetter)
 
     def fromField(ms: MethodSymbol, site: Type): Target =
       Target(ms.canonicalName, ms.resultTypeIn(site), ClassField)
+
+    sealed trait Kind
+    case object ClassField extends Kind
+    case object JavaBeanSetter extends Kind
   }
 
   sealed trait TargetResolution
   case class ResolvedTargetTree(tree: Tree) extends TargetResolution
   case class MatchingSourceAccessor(ms: MethodSymbol) extends TargetResolution
-
-  private val chimneyDocUrl = "https://scalalandio.github.io/chimney"
 }
