@@ -24,8 +24,7 @@ trait PatcherMacros {
             expandTransformerTree(q"$fnPatch.${pParam.name}.get", Config())(
               pParam.returnType.typeArgs.head,
               tParam.returnType
-            )
-              .mapRight { innerTransformerTree =>
+            ).mapRight { innerTransformerTree =>
                 q"if($fnPatch.${pParam.name}.isDefined) { $innerTransformerTree } else { $fnObj.${pParam.name} }"
               }
               .mapLeft(errors ++ _)

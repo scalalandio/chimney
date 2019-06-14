@@ -7,14 +7,14 @@ trait EitherUtils {
     def mapRight[C](f: B => C): Either[A, C] = {
       either match {
         case Right(value) => Right(f(value))
-        case Left(value) => Left(value)
+        case Left(value)  => Left(value)
       }
     }
 
     def mapLeft[C](f: A => C): Either[C, B] = {
       either match {
         case Right(value) => Right(value)
-        case Left(value) => Left(f(value))
+        case Left(value)  => Left(f(value))
       }
     }
 

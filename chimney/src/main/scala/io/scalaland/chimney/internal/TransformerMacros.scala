@@ -144,7 +144,7 @@ trait TransformerMacros {
     dupa.merge
 
     if (From <:< leftTpe && !(To <:< someTpe)) {
-      val prefixTree = if(scala.util.Properties.versionNumberString >= "2.12") {
+      val prefixTree = if (scala.util.Properties.versionNumberString >= "2.12") {
         q"$srcPrefixTree.value"
       } else {
         q"$srcPrefixTree.left.get"
@@ -153,14 +153,13 @@ trait TransformerMacros {
         q"new _root_.scala.util.Left($leftTransformer)"
       }
     } else if (From <:< rightTpe && !(To <:< leftTpe)) {
-      val prefixTree = if(scala.util.Properties.versionNumberString >= "2.12") {
+      val prefixTree = if (scala.util.Properties.versionNumberString >= "2.12") {
         q"$srcPrefixTree.value"
       } else {
         q"$srcPrefixTree.right.get"
       }
-      expandTransformerTree(prefixTree, config.rec)(fromRightT, toRightT).mapRight {
-        rightTransformer =>
-          q"new _root_.scala.util.Right($rightTransformer)"
+      expandTransformerTree(prefixTree, config.rec)(fromRightT, toRightT).mapRight { rightTransformer =>
+        q"new _root_.scala.util.Right($rightTransformer)"
       }
     } else if (!(To <:< leftTpe) && !(To <:< rightTpe)) {
       val leftTransformerE = expandTransformerTree(Ident(fnL), config.rec)(fromLeftT, toLeftT)
