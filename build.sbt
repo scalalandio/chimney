@@ -1,7 +1,7 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 val versions = new {
-  val scalaVersion = "2.12.8"
+  val scalaVersion = "2.13.0"
 }
 
 val settings = Seq(
