@@ -24,7 +24,6 @@ object IssuesSpec extends TestSuite {
     val expected: Bar = Bar(BarA.A0)
   }
 
-
   val tests = Tests {
 
     "fix issue #19" - {
@@ -137,8 +136,6 @@ object IssuesSpec extends TestSuite {
     }
   }
 }
-
-
 
 case class VC(x: String) extends AnyVal
 

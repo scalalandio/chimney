@@ -75,9 +75,9 @@ trait DerivationGuards {
     if (to.typeSymbol.isClass) {
       val primaryConstructor = to.typeSymbol.asClass.primaryConstructor
       primaryConstructor.isPublic &&
-        primaryConstructor.isMethod &&
-        primaryConstructor.asMethod.paramLists == List(Nil) &&
-        to.beanSetterMethods.nonEmpty
+      primaryConstructor.isMethod &&
+      primaryConstructor.asMethod.paramLists == List(Nil) &&
+      to.beanSetterMethods.nonEmpty
     } else {
       false
     }
