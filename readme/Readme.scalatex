@@ -84,7 +84,7 @@
     @hl.scala
       libraryDependencies += "io.scalaland" %% "chimney" % "0.3.2"
     @p
-      Library is released for Scala 2.11.x, 2.12.x and 2.13.0-RC1.
+      Library is released for Scala 2.11.x, 2.12.x and 2.13.x.
       If you want to use it with Scala.js(or Scala Native), you need to replace @code{%%} with @code{%%%}.
       Due to some @lnk("compiler bugs", "https://issues.scala-lang.org/browse/SI-7046"),
       it's recommended to use at least Scala 2.11.9 or 2.12.1.
