@@ -6,6 +6,24 @@ object IssuesSpec extends TestSuite {
 
   import dsl._
 
+  // Compilation fails when moved inside the Tests block
+  object Issue108 {
+    case class Foo(i: FooA)
+    sealed trait FooA extends Product with Serializable
+    object FooA {
+      case object A0 extends FooA
+    }
+
+    case class Bar(i: BarA)
+    sealed trait BarA extends Product with Serializable
+    object BarA {
+      case object A0 extends BarA
+    }
+
+    val result: Bar = Foo(FooA.A0).transformInto[Bar]
+    val expected: Bar = Bar(BarA.A0)
+  }
+
   val tests = Tests {
 
     "fix issue #19" - {
@@ -111,6 +129,10 @@ object IssuesSpec extends TestSuite {
       import io.scalaland.chimney.dsl._
 
       Foo("a").into[Bar].withFieldRenamed(_.`a.b`, _.b).transform
+    }
+
+    "fix issue #108" - {
+      Issue108.result ==> Issue108.expected
     }
   }
 }

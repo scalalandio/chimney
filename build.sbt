@@ -1,14 +1,13 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 val versions = new {
-  val utestVersion = "0.6.7"
   val scalaVersion = "2.12.8"
 }
 
 val settings = Seq(
   version := "0.3.1",
   scalaVersion := versions.scalaVersion,
-  crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0-RC1"),
+  crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
     "-encoding", "UTF-8",
@@ -55,7 +54,7 @@ val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
-    "com.lihaoyi" %%% "utest" % versions.utestVersion % "test"
+    "com.lihaoyi" %%% "utest" % (if (scalaVersion.value >= "2.12") "0.6.9" else "0.6.8") % "test"
   )
 )
 
