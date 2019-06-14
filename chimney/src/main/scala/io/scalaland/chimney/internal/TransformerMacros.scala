@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal
 import scala.reflect.macros.blackbox
 
 trait TransformerMacros {
-  this: DerivationGuards with MacroUtils with DerivationConfig =>
+  this: DerivationGuards with MacroUtils with DerivationConfig with EitherUtils =>
 
   val c: blackbox.Context
 
@@ -121,12 +121,12 @@ trait TransformerMacros {
         Seq(NotSupportedDerivation(From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
       }
     } else if (From <:< someTpe && To <:< someTpe) {
-      expandTransformerTree(q"$srcPrefixTree.get", config.rec)(fromInnerT, toInnerT).right.map { innerTransformer =>
+      expandTransformerTree(q"$srcPrefixTree.get", config.rec)(fromInnerT, toInnerT).mapRight { innerTransformer =>
         q"new _root_.scala.Some[$toInnerT]($innerTransformer)"
       }
     } else {
       val fn = c.internal.reificationSupport.freshTermName("x$")
-      expandTransformerTree(Ident(fn), config.rec)(fromInnerT, toInnerT).right.map { innerTransformer =>
+      expandTransformerTree(Ident(fn), config.rec)(fromInnerT, toInnerT).mapRight { innerTransformer =>
         q"$srcPrefixTree.map(($fn: $fromInnerT) => $innerTransformer)"
       }
     }
@@ -140,12 +140,25 @@ trait TransformerMacros {
     val fnL = c.internal.reificationSupport.freshTermName("left$")
     val fnR = c.internal.reificationSupport.freshTermName("right$")
 
+    val dupa: Either[Int, String] = Left(2)
+    dupa.merge
+
     if (From <:< leftTpe && !(To <:< someTpe)) {
-      expandTransformerTree(q"$srcPrefixTree.left.get", config.rec)(fromLeftT, toLeftT).right.map { leftTransformer =>
+      val prefixTree = if(scala.util.Properties.versionNumberString >= "2.12") {
+        q"$srcPrefixTree.value"
+      } else {
+        q"$srcPrefixTree.left.get"
+      }
+      expandTransformerTree(prefixTree, config.rec)(fromLeftT, toLeftT).mapRight { leftTransformer =>
         q"new _root_.scala.util.Left($leftTransformer)"
       }
     } else if (From <:< rightTpe && !(To <:< leftTpe)) {
-      expandTransformerTree(q"$srcPrefixTree.right.get", config.rec)(fromRightT, toRightT).right.map {
+      val prefixTree = if(scala.util.Properties.versionNumberString >= "2.12") {
+        q"$srcPrefixTree.value"
+      } else {
+        q"$srcPrefixTree.right.get"
+      }
+      expandTransformerTree(prefixTree, config.rec)(fromRightT, toRightT).mapRight {
         rightTransformer =>
           q"new _root_.scala.util.Right($rightTransformer)"
       }
@@ -153,14 +166,10 @@ trait TransformerMacros {
       val leftTransformerE = expandTransformerTree(Ident(fnL), config.rec)(fromLeftT, toLeftT)
       val rightTransformerE = expandTransformerTree(Ident(fnR), config.rec)(fromRightT, toRightT)
 
-      if (leftTransformerE.isLeft || rightTransformerE.isLeft) {
-        Left(leftTransformerE.left.getOrElse(Nil) ++ rightTransformerE.left.getOrElse(Nil))
-      } else {
-        val leftTransformer = leftTransformerE.right.get
-        val rightTransformer = rightTransformerE.right.get
-
-        Right {
-          q"""
+      (leftTransformerE, rightTransformerE) match {
+        case (Right(leftTransformer), Right(rightTransformer)) =>
+          Right {
+            q"""
             $srcPrefixTree match {
               case _root_.scala.util.Left($fnL) =>
                 new _root_.scala.util.Left($leftTransformer)
@@ -168,7 +177,9 @@ trait TransformerMacros {
                 new _root_.scala.util.Right($rightTransformer)
             }
           """
-        }
+          }
+        case _ =>
+          Left(leftTransformerE.left.getOrElse(Nil) ++ rightTransformerE.left.getOrElse(Nil))
       }
     } else {
       Left {
@@ -188,19 +199,17 @@ trait TransformerMacros {
     val keyTransformerE = expandTransformerTree(Ident(fnK), config.rec)(fromKeyT, toKeyT)
     val valueTransformerE = expandTransformerTree(Ident(fnV), config.rec)(fromValueT, toValueT)
 
-    if (keyTransformerE.isLeft || valueTransformerE.isLeft) {
-      Left(keyTransformerE.left.getOrElse(Nil) ++ valueTransformerE.left.getOrElse(Nil))
-    } else {
-      val keyTransformer = keyTransformerE.right.get
-      val valueTransformer = valueTransformerE.right.get
-
-      Right {
-        q"""
+    (keyTransformerE, valueTransformerE) match {
+      case (Right(keyTransformer), Right(valueTransformer)) =>
+        Right {
+          q"""
           $srcPrefixTree.map { case ($fnK: $fromKeyT, $fnV: $fromValueT) =>
             ($keyTransformer, $valueTransformer)
           }
          """
-      }
+        }
+      case _ =>
+        Left(keyTransformerE.left.getOrElse(Nil) ++ valueTransformerE.left.getOrElse(Nil))
     }
   }
 
@@ -212,7 +221,7 @@ trait TransformerMacros {
 
     val fn = Ident(c.internal.reificationSupport.freshTermName("x$"))
 
-    expandTransformerTree(fn, config.rec)(FromCollectionT, ToCollectionT).right.map { innerTransformerTree =>
+    expandTransformerTree(fn, config.rec)(FromCollectionT, ToCollectionT).mapRight { innerTransformerTree =>
       val sameCollectionTypes = From.typeConstructor =:= To.typeConstructor
 
       if (fn == innerTransformerTree) {
@@ -272,7 +281,7 @@ trait TransformerMacros {
               val instTpe = instSymbol.asType.toType
               val targetTpe = matchingTargetSymbol.asType.toType
 
-              expandDestinationCaseClass(Ident(fn), config.rec)(instTpe, targetTpe).right.map { innerTransformerTree =>
+              expandDestinationCaseClass(Ident(fn), config.rec)(instTpe, targetTpe).mapRight { innerTransformerTree =>
                 cq"$fn: ${instSymbol.asType} => $innerTransformerTree"
               }
             } else {
@@ -308,7 +317,7 @@ trait TransformerMacros {
       }
 
       if (instanceClauses.forall(_.isRight)) {
-        val clauses = instanceClauses.map(_.right.get)
+        val clauses = instanceClauses.map(_.getRight)
         Right {
           q"$srcPrefixTree match { case ..$clauses }"
         }

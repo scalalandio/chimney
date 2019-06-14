@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal
 import scala.reflect.macros.blackbox
 
 trait PatcherMacros {
-  this: TransformerMacros with DerivationGuards with MacroUtils with DerivationConfig =>
+  this: TransformerMacros with DerivationGuards with MacroUtils with DerivationConfig with EitherUtils =>
 
   val c: blackbox.Context
 
@@ -24,12 +24,11 @@ trait PatcherMacros {
             expandTransformerTree(q"$fnPatch.${pParam.name}.get", Config())(
               pParam.returnType.typeArgs.head,
               tParam.returnType
-            ).right
-              .map { innerTransformerTree =>
+            )
+              .mapRight { innerTransformerTree =>
                 q"if($fnPatch.${pParam.name}.isDefined) { $innerTransformerTree } else { $fnObj.${pParam.name} }"
               }
-              .left
-              .map(errors ++ _)
+              .mapLeft(errors ++ _)
           } else {
             Left(DerivationError.printErrors(errors))
           }
@@ -63,7 +62,7 @@ trait PatcherMacros {
         val errors = targetMapping.collect { case Left(err) => err }.mkString("\n")
         c.abort(c.enclosingPosition, errors)
       } else {
-        val paramTrees = targetMapping.map(_.right.get)
+        val paramTrees = targetMapping.map(_.getRight)
         val patchMapping = (patchParams zip paramTrees).map { case (param, tree) => param.name -> tree }.toMap
 
         val args = tParams.map { tParam =>

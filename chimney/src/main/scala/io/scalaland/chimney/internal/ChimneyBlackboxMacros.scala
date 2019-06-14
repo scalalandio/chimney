@@ -8,7 +8,8 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
     with DslBlackboxMacros
     with DerivationGuards
     with MacroUtils
-    with DerivationConfig {
+    with DerivationConfig
+    with EitherUtils {
 
   def transformImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[To] = {
     c.Expr[To](expandTansform[From, To, C])
