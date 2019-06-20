@@ -140,9 +140,6 @@ trait TransformerMacros {
     val fnL = c.internal.reificationSupport.freshTermName("left$")
     val fnR = c.internal.reificationSupport.freshTermName("right$")
 
-    val dupa: Either[Int, String] = Left(2)
-    dupa.merge
-
     if (From <:< leftTpe && !(To <:< someTpe)) {
       val prefixTree = if (scala.util.Properties.versionNumberString >= "2.12") {
         q"$srcPrefixTree.value"
