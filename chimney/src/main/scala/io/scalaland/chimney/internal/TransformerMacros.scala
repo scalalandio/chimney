@@ -10,7 +10,8 @@ trait TransformerMacros {
   import c.universe._
 
   def genTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag](
-    config: Config
+    config: Config,
+    findImplicit: Boolean = true
   ): c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
 
     val From = weakTypeOf[From]
@@ -20,7 +21,7 @@ trait TransformerMacros {
       c.internal.reificationSupport.freshTermName(From.typeSymbol.name.decodedName.toString.toLowerCase + "$")
     val srcPrefixTree = Ident(TermName(srcName.decodedName.toString))
 
-    expandTransformerTree(srcPrefixTree, config)(From, To) match {
+    expandTransformerTree(srcPrefixTree, config, findImplicit)(From, To) match {
 
       case Right(transformerTree) =>
         val tree = q"""
@@ -46,10 +47,11 @@ trait TransformerMacros {
     }
   }
 
-  def expandTransformerTree(srcPrefixTree: Tree, config: Config)(From: Type,
-                                                                 To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandTransformerTree(srcPrefixTree: Tree,
+                            config: Config,
+                            findImplicit: Boolean = true)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
-    findLocalImplicitTransformer(From, To)
+    (if (findImplicit) findLocalImplicitTransformer(From, To) else None)
       .map { localImplicitTree =>
         Right(q"$localImplicitTree.transform($srcPrefixTree)")
       }

@@ -14,7 +14,7 @@ trait DslBlackboxMacros {
     val srcName = c.freshName("src")
     val config = captureConfiguration(C).copy(prefixValName = srcName)
 
-    val derivedTransformerTree = genTransformer[From, To](config).tree
+    val derivedTransformerTree = genTransformer[From, To](config, findImplicit = false).tree
 
     q"""
        val ${TermName(srcName)} = ${c.prefix.tree}

@@ -14,7 +14,6 @@ object DslSpec extends TestSuite {
 
       implicit def trans: Transformer[UserName, String] = userNameToStringTransformer
 
-      UserName("Batman").into[String].transform ==> "BatmanT"
       UserName("Batman").transformInto[String] ==> "BatmanT"
     }
 
@@ -29,6 +28,25 @@ object DslSpec extends TestSuite {
 
       batmanDTO.id ==> "123"
       batmanDTO.name ==> "BatmanT"
+    }
+
+    "use implicit transformer defined locally" - {
+
+      import Domain1._
+
+      implicit val trans: Transformer[User, UserDTO] =
+        (user: User) => user.into[UserDTO].withFieldComputed(_.name, _.name.value).transform
+
+      User("101", UserName("WOW")).transformInto[UserDTO] ==> UserDTO("101", "WOW")
+    }
+
+    "forbid use into[String].transform syntax" - {
+      case class User(name: String)
+
+      implicit val trans: Transformer[User, String] = _.name
+
+      compileError("""User("Kek").into[String].transform""")
+        .check("", "Chimney can't derive transformation from User to String")
     }
 
     "support different set of fields of source and target" - {
