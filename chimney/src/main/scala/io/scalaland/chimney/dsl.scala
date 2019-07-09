@@ -31,6 +31,9 @@ object dsl {
     def enableOptionDefaultsToNone: TransformerInto[From, To, EnableOptionDefaultsToNone[C]] =
       new TransformerInto[From, To, EnableOptionDefaultsToNone[C]](source, overrides, instances)
 
+    def disableLocalImplicitLookup: TransformerInto[From, To, DisableLocalImplicitLookup[C]] =
+      new TransformerInto[From, To, DisableLocalImplicitLookup[C]](source, overrides, instances)
+
     def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[From, To, _] =
       macro ChimneyWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
 

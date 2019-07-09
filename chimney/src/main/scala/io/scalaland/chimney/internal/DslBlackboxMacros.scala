@@ -29,6 +29,7 @@ trait DslBlackboxMacros {
     val enableBeanGettersT = typeOf[EnableBeanGetters[_]].typeConstructor
     val enableBeanSettersT = typeOf[EnableBeanSetters[_]].typeConstructor
     val enableOptionDefaultsToNone = typeOf[EnableOptionDefaultsToNone[_]].typeConstructor
+    val disableLocalImplicitLookup = typeOf[DisableLocalImplicitLookup[_]].typeConstructor
     val fieldConstT = typeOf[FieldConst[_, _]].typeConstructor
     val fieldComputedT = typeOf[FieldComputed[_, _]].typeConstructor
     val fieldRelabelledT = typeOf[FieldRelabelled[_, _, _]].typeConstructor
@@ -44,6 +45,8 @@ trait DslBlackboxMacros {
       captureConfiguration(cfgTpe.typeArgs.head, config.copy(enableBeanSetters = true))
     } else if (cfgTpe.typeConstructor == enableOptionDefaultsToNone) {
       captureConfiguration(cfgTpe.typeArgs.head, config.copy(optionDefaultsToNone = true))
+    } else if (cfgTpe.typeConstructor == disableLocalImplicitLookup) {
+      captureConfiguration(cfgTpe.typeArgs.head, config.copy(disableLocalImplicitLookup = true))
     } else if (Set(fieldConstT, fieldComputedT).contains(cfgTpe.typeConstructor)) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString

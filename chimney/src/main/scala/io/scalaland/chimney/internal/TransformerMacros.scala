@@ -48,42 +48,45 @@ trait TransformerMacros {
 
   def expandTransformerTree(srcPrefixTree: Tree, config: Config)(From: Type,
                                                                  To: Type): Either[Seq[DerivationError], Tree] = {
-
-    findLocalImplicitTransformer(From, To)
-      .map { localImplicitTree =>
+    val localTransformer = if (config.disableLocalImplicitLookup) {
+      None
+    } else {
+      findLocalImplicitTransformer(From, To).map { localImplicitTree =>
         Right(q"$localImplicitTree.transform($srcPrefixTree)")
       }
-      .getOrElse {
-        if (isSubtype(From, To)) {
-          Right(srcPrefixTree)
-        } else if (fromValueClassToType(From, To)) {
-          expandValueClassToType(srcPrefixTree)(From, To)
-        } else if (fromTypeToValueClass(From, To)) {
-          expandTypeToValueClass(srcPrefixTree)(From, To)
-        } else if (targetWrappedInOption(From, To)) {
-          expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
-        } else if (bothOptions(From, To)) {
-          expandOptions(srcPrefixTree, config)(From, To)
-        } else if (bothEithers(From, To)) {
-          expandEithers(srcPrefixTree, config)(From, To)
-        } else if (bothMaps(From, To)) {
-          expandMaps(srcPrefixTree, config)(From, To)
-        } else if (bothOfTraversableOrArray(From, To)) {
-          expandTraversableOrArray(srcPrefixTree, config)(From, To)
-        } else if (isTuple(To)) {
-          expandDestinationTuple(srcPrefixTree, config)(From, To)
-        } else if (destinationCaseClass(To)) {
-          expandDestinationCaseClass(srcPrefixTree, config)(From, To)
-        } else if (config.enableBeanSetters && destinationJavaBean(To)) {
-          expandDestinationJavaBean(srcPrefixTree, config)(From, To)
-        } else if (bothSealedClasses(From, To)) {
-          expandSealedClasses(srcPrefixTree, config)(From, To)
-        } else {
-          Left {
-            Seq(NotSupportedDerivation(From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
-          }
+    }
+
+    localTransformer.getOrElse {
+      if (isSubtype(From, To)) {
+        Right(srcPrefixTree)
+      } else if (fromValueClassToType(From, To)) {
+        expandValueClassToType(srcPrefixTree)(From, To)
+      } else if (fromTypeToValueClass(From, To)) {
+        expandTypeToValueClass(srcPrefixTree)(From, To)
+      } else if (targetWrappedInOption(From, To)) {
+        expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
+      } else if (bothOptions(From, To)) {
+        expandOptions(srcPrefixTree, config)(From, To)
+      } else if (bothEithers(From, To)) {
+        expandEithers(srcPrefixTree, config)(From, To)
+      } else if (bothMaps(From, To)) {
+        expandMaps(srcPrefixTree, config)(From, To)
+      } else if (bothOfTraversableOrArray(From, To)) {
+        expandTraversableOrArray(srcPrefixTree, config)(From, To)
+      } else if (isTuple(To)) {
+        expandDestinationTuple(srcPrefixTree, config)(From, To)
+      } else if (destinationCaseClass(To)) {
+        expandDestinationCaseClass(srcPrefixTree, config)(From, To)
+      } else if (config.enableBeanSetters && destinationJavaBean(To)) {
+        expandDestinationJavaBean(srcPrefixTree, config)(From, To)
+      } else if (bothSealedClasses(From, To)) {
+        expandSealedClasses(srcPrefixTree, config)(From, To)
+      } else {
+        Left {
+          Seq(NotSupportedDerivation(From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
         }
       }
+    }
   }
 
   def expandValueClassToType(srcPrefixTree: Tree)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
