@@ -11,6 +11,9 @@ object dsl {
     final def into[To]: TransformerInto[From, To, Empty] =
       new TransformerInto[From, To, Empty](source, Map.empty, Map.empty)
 
+    final def defineInto[To]: TransformerInto[From, To, EnableOptionDefaultsToNone[Empty]] =
+      new TransformerInto[From, To, EnableOptionDefaultsToNone[Empty]](source, Map.empty, Map.empty)
+
     final def transformInto[To](implicit transformer: Transformer[From, To]): To =
       transformer.transform(source)
   }

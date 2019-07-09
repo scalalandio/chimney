@@ -46,6 +46,20 @@ object DslSpec extends TestSuite {
       User("101", UserName("WOW")).transformInto[UserDTO] ==> UserDTO("101", "WOW")
     }
 
+    "use dsl inside implicit transformer definition (alternative syntax - .defineInto)" - {
+
+      import Domain1._
+
+      implicit val invalidTransformerDefinition: Transformer[User, UserDTO] =
+        (user: User) => {
+          user.defineInto[UserDTO]
+            .withFieldComputed(_.name, _.name.value)
+            .transform
+        }
+
+      User("101", UserName("WOW")).transformInto[UserDTO] ==> UserDTO("101", "WOW")
+    }
+
     "support different set of fields of source and target" - {
 
       case class Foo(x: Int, y: String, z: (Double, Double))
