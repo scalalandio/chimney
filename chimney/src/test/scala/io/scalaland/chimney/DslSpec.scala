@@ -37,7 +37,8 @@ object DslSpec extends TestSuite {
 
       implicit val invalidTransformerDefinition: Transformer[User, UserDTO] =
         (user: User) => {
-          user.into[UserDTO]
+          user
+            .into[UserDTO]
             .disableLocalImplicitLookup
             .withFieldComputed(_.name, _.name.value)
             .transform
@@ -52,7 +53,8 @@ object DslSpec extends TestSuite {
 
       implicit val invalidTransformerDefinition: Transformer[User, UserDTO] =
         (user: User) => {
-          user.defineInto[UserDTO]
+          user
+            .defineInto[UserDTO]
             .withFieldComputed(_.name, _.name.value)
             .transform
         }

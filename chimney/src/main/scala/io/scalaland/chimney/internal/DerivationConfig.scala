@@ -17,10 +17,6 @@ trait DerivationConfig {
                     prefixValName: String = "") {
 
     def rec: Config =
-      copy(
-        disableLocalImplicitLookup = false,
-        overridenFields = Set.empty,
-        renamedFields = Map.empty
-      )
+      copy(disableLocalImplicitLookup = false, overridenFields = Set.empty, renamedFields = Map.empty)
   }
 }
