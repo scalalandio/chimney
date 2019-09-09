@@ -123,6 +123,17 @@ object DslSpec extends TestSuite {
           }
         }
 
+        "use implicit transformer for option when .enableUnsafeOption" - {
+          case class Foobar(x: Option[Int])
+          case class Foobar2(x: String)
+
+          implicit val stringToIntTransformer: Transformer[Int, String] = _.toString
+
+          "use transformer when .enableUnsafeOption" - {
+            Foobar(Some(1)).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1")
+          }
+        }
+
         "fill the field with provided generator function" - {
 
           "pass when selector is valid" - {

@@ -60,10 +60,12 @@ trait TransformerMacros {
           expandValueClassToType(srcPrefixTree)(From, To)
         } else if (fromTypeToValueClass(From, To)) {
           expandTypeToValueClass(srcPrefixTree)(From, To)
-        } else if (targetWrappedInOption(From, To)) {
-          expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
         } else if (bothOptions(From, To)) {
           expandOptions(srcPrefixTree, config)(From, To)
+        } else if (targetWrappedInOption(From, To)) {
+          expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
+        } else if (config.enableUnsafeOption && sourceWrappedInOption(From, To)) {
+          expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
         } else if (bothEithers(From, To)) {
           expandEithers(srcPrefixTree, config)(From, To)
         } else if (bothMaps(From, To)) {
@@ -108,7 +110,32 @@ trait TransformerMacros {
 
   def expandTargetWrappedInOption(srcPrefixTree: Tree, config: Config)(From: Type,
                                                                        To: Type): Either[Seq[DerivationError], Tree] = {
-    Right(q"_root_.scala.Option[$From]($srcPrefixTree)")
+    val toInnerT = To.typeArgs.head
+    if (To <:< noneTpe) {
+      Left {
+        Seq(NotSupportedDerivation(From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
+      }
+    } else if (toInnerT =:= From) {
+      Right(q"_root_.scala.Option[$From]($srcPrefixTree)")
+    } else {
+      expandTransformerTree(q"$srcPrefixTree", config.rec)(From, toInnerT).mapRight { innerTransformer =>
+        q"_root_.scala.Option[$toInnerT]($innerTransformer)"
+      }
+    }
+  }
+
+  def expandSourceWrappedInOption(srcPrefixTree: Tree, config: Config)(From: Type,
+                                                                       To: Type): Either[Seq[DerivationError], Tree] = {
+    val fromInnerT = From.typeArgs.head
+    if (From <:< noneTpe) {
+      Left {
+        Seq(NotSupportedDerivation(From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
+      }
+    } else {
+      expandTransformerTree(q"$srcPrefixTree.get", config.rec)(fromInnerT, To).mapRight { innerTransformer =>
+        q"($innerTransformer)"
+      }
+    }
   }
 
   def expandOptions(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
