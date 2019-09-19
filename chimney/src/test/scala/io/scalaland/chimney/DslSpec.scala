@@ -482,6 +482,40 @@ object DslSpec extends TestSuite {
       }
     }
 
+    "support with .enableUnsafeOption" - {
+      implicit val stringToIntTransformer: Transformer[Int, String] = _.toString
+
+      "use implicit transformer" - {
+        case class Foobar(x: Option[Int])
+        case class Foobar2(x: String)
+
+        case class NestedFoobar(foobar: Option[Foobar])
+        case class NestedFoobar2(foobar: Foobar2)
+
+        Foobar(Some(1)).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1")
+        NestedFoobar(Some(Foobar(Some(1)))).into[NestedFoobar2].enableUnsafeOption.transform ==> NestedFoobar2(
+          Foobar2("1")
+        )
+      }
+
+      "preserve option to option mapping" - {
+        case class Foobar(x: Option[Int], y: Option[String])
+        case class Foobar2(x: String, y: Option[String])
+
+        Foobar(Some(1), Some("foobar")).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1", Some("foobar"))
+        Foobar(Some(1), None).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1", None)
+      }
+
+      "transforming None leads to NoSuchElementException" - {
+        case class Foobar(x: Option[Int])
+        case class Foobar2(x: String)
+
+        intercept[NoSuchElementException] {
+          Foobar(None).into[Foobar2].enableUnsafeOption.transform
+        }
+      }
+    }
+
     "support sealed hierarchies" - {
 
       "enum types encoded as sealed hierarchies of case objects" - {
