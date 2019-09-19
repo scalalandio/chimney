@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import utest._
 import io.scalaland.chimney.examples.addressbook
+import io.scalaland.chimney.examples.order
 import io.scalaland.chimney.examples.pb
 
 object PBTransformationSpec extends TestSuite {
@@ -130,6 +131,23 @@ object PBTransformationSpec extends TestSuite {
               )
             )
           )
+      }
+
+      "Order" - {
+        val domainOrder =
+          order.Order(
+            List(order.OrderLine(order.Item(123, "foo"), 3), order.OrderLine(order.Item(321, "bar"), 1)),
+            order.Customer(123, "John", "Beer", order.Address("street", 1137, "city"))
+          )
+        val pbOrder = pb.order.Order(
+          Seq(
+            pb.order.OrderLine(Option(pb.order.Item(123, "foo")), 3),
+            pb.order.OrderLine(Option(pb.order.Item(321, "bar")), 1)
+          ),
+          Option(pb.order.Customer(123, "John", "Beer", Option(pb.order.Address("street", 1137, "city"))))
+        )
+        domainOrder.into[pb.order.Order].enableUnsafeOption.transform ==> pbOrder
+        pbOrder.into[order.Order].enableUnsafeOption.transform ==> domainOrder
       }
     }
   }
