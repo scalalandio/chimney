@@ -21,12 +21,8 @@ trait DerivationGuards {
     to.isValueClass && to.valueClassMember.exists(_.returnType =:= from)
   }
 
-  def targetWrappedInOption(from: Type, to: Type): Boolean = {
-    to <:< optionTpe
-  }
-
-  def sourceWrappedInOption(from: Type, to: Type): Boolean = {
-    from <:< optionTpe
+  def isWrappedInOption(t: Type): Boolean = {
+    t <:< optionTpe
   }
 
   def bothOptions(from: Type, to: Type): Boolean = {
@@ -93,8 +89,8 @@ trait DerivationGuards {
 
   def canTryDeriveTransformer(from: Type, to: Type): Boolean = {
     isSubtype(from, to) ||
-    sourceWrappedInOption(from, to) ||
-    targetWrappedInOption(from, to) ||
+    isWrappedInOption(from) ||
+    isWrappedInOption(to) ||
     fromValueClassToType(from, to) ||
     fromTypeToValueClass(from, to) ||
     bothOptions(from, to) ||

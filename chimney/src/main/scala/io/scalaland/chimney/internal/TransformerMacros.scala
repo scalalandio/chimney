@@ -62,9 +62,9 @@ trait TransformerMacros {
           expandTypeToValueClass(srcPrefixTree)(From, To)
         } else if (bothOptions(From, To)) {
           expandOptions(srcPrefixTree, config)(From, To)
-        } else if (targetWrappedInOption(From, To)) {
+        } else if (isWrappedInOption(To)) {
           expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
-        } else if (config.enableUnsafeOption && sourceWrappedInOption(From, To)) {
+        } else if (config.enableUnsafeOption && isWrappedInOption(From)) {
           expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
         } else if (bothEithers(From, To)) {
           expandEithers(srcPrefixTree, config)(From, To)
