@@ -426,6 +426,9 @@ object DslSpec extends TestSuite {
         None.transformInto[None.type] ==> None
         (None: Option[String]).transformInto[Option[String]] ==> None
         Option("abc").transformInto[Option[String]] ==> Some("abc")
+        compileError(""""Some(foobar)".into[None].transform""")
+        case class BarNone(value: None.type)
+        compileError("""Some(Foo("a")).into[BarNone].transform""")
       }
 
       "support scala.util.Either" - {
@@ -513,6 +516,14 @@ object DslSpec extends TestSuite {
         intercept[NoSuchElementException] {
           Foobar(None).into[Foobar2].enableUnsafeOption.transform
         }
+      }
+
+      "transforming fixed None type does not compile" - {
+        compileError("""None.into[String].enableUnsafeOption.transform""")
+
+        case class Foobar(x: None.type)
+        case class Foobar2(x: String)
+        compileError("""Foobar(None).into[Foobar2].enableUnsafeOption.transform""")
       }
     }
 
