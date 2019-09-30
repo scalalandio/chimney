@@ -134,6 +134,29 @@ object IssuesSpec extends TestSuite {
     "fix issue #108" - {
       Issue108.result ==> Issue108.expected
     }
+
+    "fix issue #133" - {
+      case class Bar1(i: Int)
+      case class Bar2(i: String)
+      case class Bar3(i: Option[Int])
+
+      case class Baz1(b: Bar1)
+      case class Baz2(b: Option[Bar1])
+      case class Baz3(b: Bar2)
+      case class Baz4(b: Option[Bar2])
+
+      implicit val intToString: Transformer[Int, String] = _.toString
+
+      1.transformInto[String] ==> "1"
+      Option(1).into[Int].enableUnsafeOption.transform ==> 1
+      Option(1).into[String].enableUnsafeOption.transform ==> "1"
+      Bar1(1).transformInto[Bar2] ==> Bar2("1")
+      Option(Bar1(1)).into[Bar1].enableUnsafeOption.transform ==> Bar1(1)
+      Baz2(Option(Bar1(1))).into[Baz1].enableUnsafeOption.transform ==> Baz1(Bar1(1))
+      Option(Bar1(1)).into[Bar2].enableUnsafeOption.transform ==> Bar2("1")
+      Baz2(Option(Bar1(1))).into[Baz4].enableUnsafeOption.transform ==> Baz4(Option(Bar2("1")))
+      Bar3(Option(1)).into[Bar2].enableUnsafeOption.transform ==> Bar2("1")
+    }
   }
 }
 

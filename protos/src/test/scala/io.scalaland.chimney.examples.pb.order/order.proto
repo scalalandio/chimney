@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package io.scalaland.chimney.examples.pb;
+
+message Item {
+    int32 id = 1;
+    string name = 2;
+}
+
+message OrderLine {
+    Item item = 1;
+    int32 quantity = 2;
+}
+
+message Address {
+    string street = 1;
+    int32 zip_code = 2;
+    string city = 3;
+}
+
+message Customer {
+    int32 id = 1;
+    string first_name = 2;
+    string last_name = 3;
+    Address address = 4;
+}
+
+message Order {
+    repeated OrderLine lines = 1;
+    Customer customer = 2;
+}
