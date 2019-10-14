@@ -123,6 +123,17 @@ object DslSpec extends TestSuite {
           }
         }
 
+        "use implicit transformer for option when .enableUnsafeOption" - {
+          case class Foobar(x: Option[Int])
+          case class Foobar2(x: String)
+
+          implicit val stringToIntTransformer: Transformer[Int, String] = _.toString
+
+          "use transformer when .enableUnsafeOption" - {
+            Foobar(Some(1)).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1")
+          }
+        }
+
         "fill the field with provided generator function" - {
 
           "pass when selector is valid" - {
@@ -415,6 +426,9 @@ object DslSpec extends TestSuite {
         None.transformInto[None.type] ==> None
         (None: Option[String]).transformInto[Option[String]] ==> None
         Option("abc").transformInto[Option[String]] ==> Some("abc")
+        compileError(""""Some(foobar)".into[None].transform""")
+        case class BarNone(value: None.type)
+        compileError("""Some(Foo("a")).into[BarNone].transform""")
       }
 
       "support scala.util.Either" - {
@@ -468,6 +482,48 @@ object DslSpec extends TestSuite {
         Map("test" -> "a").transformInto[Map[String, String]] ==> Map("test" -> "a")
         Map(Foo("test") -> "x").transformInto[Map[Bar, String]] ==> Map(Bar("test") -> "x")
         Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] ==> Map(Bar("test") -> Bar("x"))
+      }
+    }
+
+    "support with .enableUnsafeOption" - {
+      implicit val stringToIntTransformer: Transformer[Int, String] = _.toString
+
+      "use implicit transformer" - {
+        case class Foobar(x: Option[Int])
+        case class Foobar2(x: String)
+
+        case class NestedFoobar(foobar: Option[Foobar])
+        case class NestedFoobar2(foobar: Foobar2)
+
+        Foobar(Some(1)).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1")
+        NestedFoobar(Some(Foobar(Some(1)))).into[NestedFoobar2].enableUnsafeOption.transform ==> NestedFoobar2(
+          Foobar2("1")
+        )
+      }
+
+      "preserve option to option mapping" - {
+        case class Foobar(x: Option[Int], y: Option[String])
+        case class Foobar2(x: String, y: Option[String])
+
+        Foobar(Some(1), Some("foobar")).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1", Some("foobar"))
+        Foobar(Some(1), None).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1", None)
+      }
+
+      "transforming None leads to NoSuchElementException" - {
+        case class Foobar(x: Option[Int])
+        case class Foobar2(x: String)
+
+        intercept[NoSuchElementException] {
+          Foobar(None).into[Foobar2].enableUnsafeOption.transform
+        }
+      }
+
+      "transforming fixed None type does not compile" - {
+        compileError("""None.into[String].enableUnsafeOption.transform""")
+
+        case class Foobar(x: None.type)
+        case class Foobar2(x: String)
+        compileError("""Foobar(None).into[Foobar2].enableUnsafeOption.transform""")
       }
     }
 
