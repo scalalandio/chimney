@@ -9,7 +9,7 @@ trait DslBlackboxMacros {
 
   import c.universe._
 
-  def expandTansform[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {
+  def expandTransform[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {
     val C = weakTypeOf[C]
     val srcName = c.freshName("src")
     val config = captureConfiguration(C).copy(prefixValName = srcName)

@@ -5,7 +5,6 @@ val versions = new {
 }
 
 val settings = Seq(
-  version := "0.3.3",
   scalaVersion := versions.scalaVersion,
   crossScalaVersions := Seq("2.11.12", "2.12.10", "2.13.1"),
   scalacOptions ++= Seq(
@@ -63,8 +62,8 @@ lazy val root = project
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(noPublishSettings: _*)
-  .aggregate(chimneyJVM, chimneyJS)
-  .dependsOn(chimneyJVM, chimneyJS)
+  .aggregate(chimneyJVM, chimneyJS, `chimney-validatedJVM`, `chimney-validatedJs`)
+  .dependsOn(chimneyJVM, chimneyJS, `chimney-validatedJVM`, `chimney-validatedJs`)
 
 lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -72,6 +71,7 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     moduleName := "chimney",
     name := "chimney",
+    version := "0.3.3",
     description := "Scala library for boilerplate free data rewriting",
     testFrameworks += new TestFramework("utest.runner.Framework")
   )
@@ -83,6 +83,30 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 lazy val chimneyJVM = chimney.jvm
 lazy val chimneyJS = chimney.js
 lazy val chimneyNative = chimney.native
+
+val commonCats = libraryDependencies += "org.typelevel" %%% "cats-core" % "2.0.0"
+val nativeCats = libraryDependencies += "com.github.lolgab" %%% "cats-core" % "2.0.0-M4"
+
+lazy val `chimney-validated` = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .dependsOn(chimney)
+  .settings(
+    moduleName := "chimney-validated",
+    name := "chimney-validated",
+    version := "0.0.1",
+    description := "Extension module for using error validating transformers",
+    testFrameworks += new TestFramework("utest.runner.Framework")
+  )
+  .settings(settings: _*)
+  .settings(publishSettings: _*)
+  .settings(dependencies: _*)
+  .nativeSettings(nativeCats)
+  .jvmSettings(commonCats)
+  .jsSettings(commonCats)
+
+lazy val `chimney-validatedJVM` = `chimney-validated`.jvm
+lazy val `chimney-validatedJs` = `chimney-validated`.js
+lazy val `chimney-validatedNative` = `chimney-validated`.native
 
 lazy val protos = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
