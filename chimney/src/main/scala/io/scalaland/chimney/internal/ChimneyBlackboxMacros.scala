@@ -12,7 +12,7 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
     with EitherUtils {
 
   def transformImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[To] = {
-    c.Expr[To](expandTansform[From, To, C])
+    c.Expr[To](expandTransform[From, To, C])
   }
 
   def deriveTransformerImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]
