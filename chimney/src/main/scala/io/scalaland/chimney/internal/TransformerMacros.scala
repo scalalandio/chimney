@@ -81,10 +81,7 @@ trait TransformerMacros {
         } else if (bothSealedClasses(From, To)) {
           expandSealedClasses(srcPrefixTree, config)(From, To)
         } else {
-          Left {
-            val fieldName = toFieldName(srcPrefixTree)
-            Seq(NotSupportedDerivation(fieldName, From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
-          }
+          notSupportedDerivation(srcPrefixTree, From, To)
         }
       }
   }
@@ -113,10 +110,7 @@ trait TransformerMacros {
                                                                        To: Type): Either[Seq[DerivationError], Tree] = {
     val toInnerT = To.typeArgs.head
     if (To <:< noneTpe) {
-      Left {
-        val fieldName = toFieldName(srcPrefixTree)
-        Seq(NotSupportedDerivation(fieldName, From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
-      }
+      notSupportedDerivation(srcPrefixTree, From, To)
     } else if (toInnerT =:= From) {
       Right(q"_root_.scala.Option[$From]($srcPrefixTree)")
     } else {
@@ -130,10 +124,7 @@ trait TransformerMacros {
                                                                        To: Type): Either[Seq[DerivationError], Tree] = {
     val fromInnerT = From.typeArgs.head
     if (From <:< noneTpe) {
-      Left {
-        val fieldName = toFieldName(srcPrefixTree)
-        Seq(NotSupportedDerivation(fieldName, From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
-      }
+      notSupportedDerivation(srcPrefixTree, From, To)
     } else {
       expandTransformerTree(q"$srcPrefixTree.get", config.rec)(fromInnerT, To).mapRight { innerTransformer =>
         q"($innerTransformer)"
@@ -147,10 +138,7 @@ trait TransformerMacros {
     val toInnerT = To.typeArgs.head
 
     if ((From <:< someTpe && To <:< noneTpe) || (From <:< noneTpe && To <:< someTpe)) {
-      Left {
-        val fieldName = toFieldName(srcPrefixTree)
-        Seq(NotSupportedDerivation(fieldName, From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
-      }
+      notSupportedDerivation(srcPrefixTree, From, To)
     } else if (From <:< someTpe && To <:< someTpe) {
       expandTransformerTree(q"$srcPrefixTree.get", config.rec)(fromInnerT, toInnerT).mapRight { innerTransformer =>
         q"new _root_.scala.Some[$toInnerT]($innerTransformer)"
@@ -209,10 +197,7 @@ trait TransformerMacros {
           Left(leftTransformerE.left.getOrElse(Nil) ++ rightTransformerE.left.getOrElse(Nil))
       }
     } else {
-      Left {
-        val fieldName = toFieldName(srcPrefixTree)
-        Seq(NotSupportedDerivation(fieldName, From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
-      }
+      notSupportedDerivation(srcPrefixTree, From, To)
     }
   }
 
@@ -616,6 +601,19 @@ trait TransformerMacros {
       .toOption
       .filterNot(_ == EmptyTree)
   }
+
+  private def notSupportedDerivation(srcPrefixTree: Tree,
+                                     fromTpe: Type,
+                                     toTpe: Type): Left[Seq[NotSupportedDerivation], Nothing] =
+    Left {
+      Seq(
+        NotSupportedDerivation(
+          toFieldName(srcPrefixTree),
+          fromTpe.typeSymbol.fullName.toString,
+          toTpe.typeSymbol.fullName.toString
+        )
+      )
+    }
 
   private def freshTermName(srcPrefixTree: Tree): c.universe.TermName = {
     c.internal.reificationSupport.freshTermName(toFieldName(srcPrefixTree) + "$")
