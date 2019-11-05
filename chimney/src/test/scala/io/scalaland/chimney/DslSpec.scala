@@ -429,10 +429,10 @@ object DslSpec extends TestSuite {
         compileError(""""Some(foobar)".into[None.type].transform""")
           .check("", "derivation from string: java.lang.String to scala.None is not supported in Chimney!")
         case class BarNone(value: None.type)
-        compileError("""Some(Foo("a")).into[BarNone].transform""")
+        compileError("""Foo("a").into[BarNone].transform""")
           .check(
             "",
-            "derivation from some.value: io.scalaland.chimney.DslSpec.Foo to scala.None is not supported in Chimney!"
+            "derivation from foo.value: java.lang.String to scala.None is not supported in Chimney!"
           )
       }
 
