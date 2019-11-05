@@ -108,7 +108,7 @@ trait TransformerMacros {
 
   def expandTargetWrappedInOption(srcPrefixTree: Tree, config: Config)(From: Type,
                                                                        To: Type): Either[Seq[DerivationError], Tree] = {
-    val toInnerT = To.typeArgs.head
+    def toInnerT = To.typeArgs.head
     if (To <:< noneTpe) {
       notSupportedDerivation(srcPrefixTree, From, To)
     } else if (toInnerT =:= From) {
@@ -122,10 +122,10 @@ trait TransformerMacros {
 
   def expandSourceWrappedInOption(srcPrefixTree: Tree, config: Config)(From: Type,
                                                                        To: Type): Either[Seq[DerivationError], Tree] = {
-    val fromInnerT = From.typeArgs.head
     if (From <:< noneTpe) {
       notSupportedDerivation(srcPrefixTree, From, To)
     } else {
+      val fromInnerT = From.typeArgs.head
       expandTransformerTree(q"$srcPrefixTree.get", config.rec)(fromInnerT, To).mapRight { innerTransformer =>
         q"($innerTransformer)"
       }
