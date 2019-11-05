@@ -426,9 +426,14 @@ object DslSpec extends TestSuite {
         None.transformInto[None.type] ==> None
         (None: Option[String]).transformInto[Option[String]] ==> None
         Option("abc").transformInto[Option[String]] ==> Some("abc")
-        compileError(""""Some(foobar)".into[None].transform""")
+        compileError(""""Some(foobar)".into[None.type].transform""")
+          .check("", "derivation from string: java.lang.String to scala.None is not supported in Chimney!")
         case class BarNone(value: None.type)
         compileError("""Some(Foo("a")).into[BarNone].transform""")
+          .check(
+            "",
+            "derivation from some.value: io.scalaland.chimney.DslSpec.Foo to scala.None is not supported in Chimney!"
+          )
       }
 
       "support scala.util.Either" - {
@@ -520,10 +525,12 @@ object DslSpec extends TestSuite {
 
       "transforming fixed None type does not compile" - {
         compileError("""None.into[String].enableUnsafeOption.transform""")
+          .check("", "derivation from none: scala.None to java.lang.String is not supported in Chimney!")
 
         case class Foobar(x: None.type)
         case class Foobar2(x: String)
         compileError("""Foobar(None).into[Foobar2].enableUnsafeOption.transform""")
+          .check("", "derivation from foobar.x: scala.None to java.lang.String is not supported in Chimney!")
       }
     }
 
