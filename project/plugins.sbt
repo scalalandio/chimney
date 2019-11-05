@@ -6,5 +6,5 @@ addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "0.6.0")
 
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
 
-addSbtPlugin("com.lihaoyi" % "scalatex-sbt-plugin" % "0.3.11")
+addSbtPlugin("com.lihaoyi" % "scalatex-sbt-plugin" % "0.3.12")
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
