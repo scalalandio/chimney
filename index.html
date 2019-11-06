@@ -128,7 +128,7 @@ val event = command.into[CoffeeMade]
     <p>
       To include Chimney to your SBT project, add the following line
       to your <code>build.sbt</code>:</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.3.3&quot;</code></pre>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.3.4&quot;</code></pre>
     <p>
       Library is released for Scala 2.11.x, 2.12.x and 2.13.x.
       If you want to use it with Scala.js(or Scala Native), you need to replace <code>%%</code> with <code>%%%</code>.
@@ -203,7 +203,7 @@ val steve = stevie.transformInto[Butterfly]
 // error: Chimney can't derive transformation from Catterpillar to Butterfly
 //
 // Butterfly
-//   wingsColor: String - no field named wingsColor in source type Catterpillar
+//   wingsColor: String - no accessor named wingsColor in source type Catterpillar
 //
 // Consult https://scalalandio.github.io/chimney for usage examples.
 //
