@@ -162,7 +162,7 @@
         // error: Chimney can't derive transformation from Catterpillar to Butterfly
         //
         // Butterfly
-        //   wingsColor: String - no field named wingsColor in source type Catterpillar
+        //   wingsColor: String - no accessor named wingsColor in source type Catterpillar
         //
         // Consult https://scalalandio.github.io/chimney for usage examples.
         //
