@@ -67,10 +67,9 @@ trait VTransformerMacros {
               expandVMaps(srcPrefixTree, config)(From, To)
             } else if (bothOfTraversableOrArray(From, To)) {
               expandVTraversableOrArray(srcPrefixTree, config)(From, To)
-            } else
-              Left {
-                Seq(NotSupportedDerivation(From.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString))
-              }
+            } else {
+              notSupportedDerivation(srcPrefixTree, From, To)
+            }
           }
       }
 

@@ -135,7 +135,7 @@ object IssuesSpec extends TestSuite {
       Issue108.result ==> Issue108.expected
     }
 
-    "fix issue #133" - {
+    "fix issue #113" - {
       case class Bar1(i: Int)
       case class Bar2(i: String)
       case class Bar3(i: Option[Int])
@@ -156,6 +156,23 @@ object IssuesSpec extends TestSuite {
       Option(Bar1(1)).into[Bar2].enableUnsafeOption.transform ==> Bar2("1")
       Baz2(Option(Bar1(1))).into[Baz4].enableUnsafeOption.transform ==> Baz4(Option(Bar2("1")))
       Bar3(Option(1)).into[Bar2].enableUnsafeOption.transform ==> Bar2("1")
+    }
+
+    "fix issue #121" - {
+      case class FooNested(num: Option[Int])
+      case class Foo(maybeString: Option[Set[String]], nested: FooNested)
+
+      case class BarNested(num: String)
+      case class Bar(maybeString: scala.collection.immutable.Seq[String], nested: BarNested)
+
+      val foo = Foo(None, FooNested(None))
+
+      compileError("foo.into[Bar].transform")
+        .check(
+          "",
+          "derivation from foo.maybeString: scala.Option to scala.collection.immutable.Seq is not supported in Chimney!",
+          "derivation from foo.nested.num: scala.Option to java.lang.String is not supported in Chimney!"
+        )
     }
   }
 }
