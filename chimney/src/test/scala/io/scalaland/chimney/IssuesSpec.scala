@@ -174,6 +174,19 @@ object IssuesSpec extends TestSuite {
           "derivation from foo.nested.num: scala.Option to java.lang.String is not supported in Chimney!"
         )
     }
+
+    "fix issue #125" - {
+      case class Strings(elems: Set[String])
+      case class Lengths(elems: Seq[Int])
+
+      implicit def lengthTranformer = new Transformer[String, Int] {
+        override def transform(string: String): Int = string.length
+      }
+
+      val inputStrings = Strings(Set("one", "two", "three"))
+      val lengths = inputStrings.into[Lengths].transform
+      lengths.elems.size ==> 3
+    }
   }
 }
 
