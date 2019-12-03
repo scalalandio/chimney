@@ -71,7 +71,7 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     moduleName := "chimney",
     name := "chimney",
-    version := "0.3.4",
+    version := "0.3.5",
     description := "Scala library for boilerplate free data rewriting",
     testFrameworks += new TestFramework("utest.runner.Framework")
   )

@@ -252,9 +252,9 @@ trait TransformerMacros {
           q"$srcPrefixTree.map($f)"
         } else if (scala.util.Properties.versionNumberString >= "2.13") {
           val ToCompanionRef = patchedCompanionRef(c)(To)
-          q"$srcPrefixTree.map($f).to($ToCompanionRef)"
+          q"$srcPrefixTree.iterator.map($f).to($ToCompanionRef)"
         } else {
-          q"$srcPrefixTree.map($f).to[${To.typeConstructor}]"
+          q"$srcPrefixTree.iterator.map($f).to[${To.typeConstructor}]"
         }
       }
     }
