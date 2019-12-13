@@ -1,8 +1,8 @@
 package io.scalaland.chimney.validated
 
+import cats.data.ValidatedNec
 import io.scalaland.chimney.internal._
 import io.scalaland.chimney.validated.internal.{ChimneyVBlackboxMacros, ChimneyVWhiteboxMacros, VCfg, VEmpty}
-import io.scalaland.chimney.validated.aliases._
 
 import scala.language.experimental.macros
 
@@ -11,8 +11,8 @@ object dsl {
     final def intoV[To]: TransformerVInto[From, To, Empty, VEmpty] =
       new TransformerVInto[From, To, Empty, VEmpty](source, Map.empty, Map.empty, Map.empty)
 
-    final def tryTransformInto[To](implicit T: VTransformer[From, To]): V[To] =
-      T.transformToV(source)
+    final def tryTransformInto[To](implicit T: VTransformer[From, To]): ValidatedNec[VTransformer.Error, To] =
+      T.transform(source)
   }
 
   final class TransformerVInto[From, To, C <: Cfg, VC <: VCfg](val source: From,
@@ -41,13 +41,15 @@ object dsl {
     def withFieldRenamed[T, U](selectorFrom: From => T, selectorTo: To => U): TransformerVInto[From, To, _, VC] =
       macro ChimneyVWhiteboxMacros.withFieldRenamedImpl[From, To, T, U, C, VC]
 
-    def withFieldConstV[T, U](selector: To => T, value: IV[U]): TransformerVInto[From, To, C, _] =
+    def withFieldConstV[T, U](selector: To => T,
+                              value: ValidatedNec[VTransformer.Error, U]): TransformerVInto[From, To, C, _] =
       macro ChimneyVWhiteboxMacros.withFieldConstVImpl[From, To, T, U, C, VC]
 
-    def withFieldComputedV[T, U](selector: To => T, map: From => IV[U]): TransformerVInto[From, To, C, _] =
+    def withFieldComputedV[T, U](selector: To => T,
+                                 map: From => ValidatedNec[VTransformer.Error, U]): TransformerVInto[From, To, C, _] =
       macro ChimneyVWhiteboxMacros.withFieldComputedVImpl[From, To, T, U, C, VC]
 
-    def tryTransform: IV[To] =
+    def tryTransform: ValidatedNec[VTransformer.Error, To] =
       macro ChimneyVBlackboxMacros.transformVImpl[From, To, C, VC]
   }
 }

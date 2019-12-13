@@ -1,13 +1,14 @@
 package io.scalaland.chimney.validated
 
-import cats.data.Validated
+import cats.data.{Validated, ValidatedNec, NonEmptyChain}
 import cats.implicits._
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.validated.dsl._
-import io.scalaland.chimney.validated.aliases._
 import utest._
 
 object VTransformerSpec extends TestSuite {
+  def showErrors[A](res: ValidatedNec[VTransformer.Error, A]): ValidatedNec[String, A] =
+    res.leftMap(_.map(_.info))
 
   val tests = Tests {
     "pure case" - {
@@ -25,10 +26,10 @@ object VTransformerSpec extends TestSuite {
 
       case class To(a: Int, b: Int, c: List[Int])
 
-      val list = List[IV[String]]("kek".validNec, "lol".validNec)
+      val list = List[ValidatedNec[VTransformer.Error, String]]("kek".validNec, "lol".validNec)
 
       implicit val intParse: VTransformer[String, Int] =
-        str => Validated.catchNonFatal(str.toInt).leftMap(_ => NEC(VTransformer.Error(s"$str is not int")))
+        str => Validated.catchNonFatal(str.toInt).leftMap(_ => NonEmptyChain(VTransformer.Error(s"$str is not int")))
 
       val success = From(1, "2".some, List("3", "4"))
 
@@ -38,10 +39,10 @@ object VTransformerSpec extends TestSuite {
 
       success.tryTransformInto[To] ==> To(1, 2, List(3, 4)).validNec
 
-      failure.tryTransformInto[To] ==> "Should be required on b".invalidNec
+      showErrors(failure.tryTransformInto[To]) ==> "Should be required on b".invalidNec
 
-      failureIntParse.tryTransformInto[To] ==> Validated.Invalid(
-        NEC("str is not int on b", "str2 is not int on c.[0]", "str3 is not int on c.[1]")
+      showErrors(failureIntParse.tryTransformInto[To]) ==> Validated.Invalid(
+        NonEmptyChain("str is not int on b", "str2 is not int on c.[0]", "str3 is not int on c.[1]")
       )
     }
 
@@ -60,8 +61,8 @@ object VTransformerSpec extends TestSuite {
 
       success.tryTransformInto[To] ==> To(1, InnerTo(10, 20), "e").validNec
 
-      failure.tryTransformInto[To] ==> Validated.Invalid(
-        NEC("Should be required on b.c", "Should be required on b.d", "Should be required on e")
+      showErrors(failure.tryTransformInto[To]) ==> Validated.Invalid(
+        NonEmptyChain("Should be required on b.c", "Should be required on b.d", "Should be required on e")
       )
     }
 
@@ -86,7 +87,7 @@ object VTransformerSpec extends TestSuite {
 
       success.tryTransformInto[To] ==> To(1, InnerTo(2, "b"), 3, "e".some).validNec
 
-      failure.tryTransformInto[To] ==> Validated.Invalid(NEC("Should be required on b.innerA"))
+      showErrors(failure.tryTransformInto[To]) ==> Validated.Invalid(NonEmptyChain("Should be required on b.innerA"))
     }
 
     "with vconst and vcomputed" - {
@@ -102,12 +103,13 @@ object VTransformerSpec extends TestSuite {
         .withFieldComputedV(_.ee, _.e.validNec)
         .tryTransform ==> To(1, "b", "c", "d", "e").validNec
 
-      from
-        .intoV[To]
-        .withFieldConstV(_.d, VTransformer.Error("Invalid value").invalidNec)
-        .withFieldComputedV(_.ee, _ => VTransformer.Error("Invalid value 2").invalidNec)
-        .tryTransform
-        .leftMap(_.map(_.info)) ==> Validated.Invalid(NEC("Invalid value on d", "Invalid value 2 on ee"))
+      showErrors(
+        from
+          .intoV[To]
+          .withFieldConstV(_.d, VTransformer.Error("Invalid value").invalidNec)
+          .withFieldComputedV(_.ee, _ => VTransformer.Error("Invalid value 2").invalidNec)
+          .tryTransform
+      ) ==> Validated.Invalid(NonEmptyChain("Invalid value on d", "Invalid value 2 on ee"))
     }
 
     "support map" - {
@@ -116,7 +118,7 @@ object VTransformerSpec extends TestSuite {
       case class To(mapka: Map[Int, Int])
 
       implicit val intParse: VTransformer[String, Int] =
-        str => Validated.catchNonFatal(str.toInt).leftMap(_ => NEC(VTransformer.Error(s"$str is not int")))
+        str => Validated.catchNonFatal(str.toInt).leftMap(_ => NonEmptyChain(VTransformer.Error(s"$str is not int")))
 
       val success = From(Map("1" -> "2", "3" -> "4"))
 
@@ -124,17 +126,17 @@ object VTransformerSpec extends TestSuite {
 
       success.tryTransformInto[To] ==> To(Map(1 -> 2, 3 -> 4)).validNec
 
-      failure.tryTransformInto[To] ==> Validated.Invalid(
-        NEC("kek is not int on mapka.keys", "lol is not int on mapka.kek")
+      showErrors(failure.tryTransformInto[To]) ==> Validated.Invalid(
+        NonEmptyChain("kek is not int on mapka.keys", "lol is not int on mapka.kek")
       )
     }
 
     "not compile on unsupported transformation" - {
       compileError("""1.tryTransformInto[String]""")
-        .check("", "derivation from scala.Int to java.lang.String is not supported in Chimney")
+        .check("", "derivation from int: scala.Int to java.lang.String is not supported in Chimney!")
 
       compileError("""Map("kek" -> "lol").tryTransformInto[Map[Int, Int]]""")
-        .check("", "derivation from java.lang.String to scala.Int is not supported in Chimney!")
+        .check("", "derivation from key: java.lang.String to scala.Int is not supported in Chimney!")
     }
 
     "tuple to case class" - {
@@ -175,7 +177,7 @@ object VTransformerSpec extends TestSuite {
       case class To4(collection: List[Int])
 
       implicit val intParse: VTransformer[String, Int] =
-        str => Validated.catchNonFatal(str.toInt).leftMap(_ => NEC(VTransformer.Error(s"$str is not int")))
+        str => Validated.catchNonFatal(str.toInt).leftMap(_ => NonEmptyChain(VTransformer.Error(s"$str is not int")))
 
       val from = From(List("1", "2", "3"))
 
@@ -194,7 +196,7 @@ object VTransformerSpec extends TestSuite {
       case class To(a: String, b: Int, c: String)
 
       compileError("""From("1", "2", "3").tryTransformInto[To]""")
-        .check("", "derivation from java.lang.String to scala.Int is not supported in Chimney!")
+        .check("", "derivation from from.b: java.lang.String to scala.Int is not supported in Chimney!")
     }
   }
 }

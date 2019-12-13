@@ -261,8 +261,8 @@ trait VTransformerMacros {
     val List(fromKeyT, fromValueT) = From.typeArgs
     val List(toKeyT, toValueT) = To.typeArgs
 
-    val fnK = c.internal.reificationSupport.freshTermName("k$")
-    val fnV = c.internal.reificationSupport.freshTermName("v$")
+    val fnK = c.internal.reificationSupport.freshTermName("key$")
+    val fnV = c.internal.reificationSupport.freshTermName("value$")
 
     val keyTransformerE = expandVTransformerTree(Ident(fnK), config.rec)(fromKeyT, toKeyT)
     val valueTransformerE = expandVTransformerTree(Ident(fnV), config.rec)(fromValueT, toValueT)

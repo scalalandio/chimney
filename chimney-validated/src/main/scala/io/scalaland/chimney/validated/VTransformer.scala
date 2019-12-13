@@ -1,16 +1,13 @@
 package io.scalaland.chimney.validated
 
 import cats.implicits._
+import cats.data.{NonEmptyChain, ValidatedNec}
 import io.scalaland.chimney.validated.internal.ChimneyVBlackboxMacros
-import io.scalaland.chimney.validated.aliases._
 
 import scala.language.experimental.macros
 
 trait VTransformer[From, To] {
-  def transform(src: From): IV[To]
-
-  def transformToV(src: From): V[To] =
-    transform(src).leftMap(_.map(_.info))
+  def transform(src: From): ValidatedNec[VTransformer.Error, To]
 }
 
 object VTransformer {
@@ -19,25 +16,25 @@ object VTransformer {
   }
 
   object Error {
-    private case class Deep(message: String, path: NEL[String])
+    private case class Deep(message: String, path: NonEmptyChain[String])
         extends Error(s"$message on ${path.toList.mkString(".")}") {
       def addPrefix(prefix: String): Error =
-        Deep(message, NEL(prefix, path.toList))
+        Deep(message, path.prepend(prefix))
     }
 
     private case class Root(message: String) extends Error(message) {
       def addPrefix(prefix: String): Error =
-        Deep(message, NEL.of(prefix))
+        Deep(message, NonEmptyChain(prefix))
     }
 
     def apply(message: String): Error =
       Root(message)
   }
 
-  def addPrefix[A](iv: IV[A], prefix: String): IV[A] =
-    iv.leftMap(_.map(_.addPrefix(prefix)))
+  def addPrefix[To](res: ValidatedNec[VTransformer.Error, To], prefix: String): ValidatedNec[VTransformer.Error, To] =
+    res.leftMap(_.map(_.addPrefix(prefix)))
 
-  def error[A](message: String): IV[A] =
+  def error[To](message: String): ValidatedNec[VTransformer.Error, To] =
     Error(message).invalidNec
 
   implicit def derive[From, To]: VTransformer[From, To] =
