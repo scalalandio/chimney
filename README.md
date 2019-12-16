@@ -97,3 +97,7 @@ res2: Bar = Bar("abc", 10, true)
 ## Documentation
 
 Chimney documentation is available at https://scalalandio.github.io/chimney
+
+## Thanks
+
+Thanks to [JProfiler (Java profiler)](https://www.ej-technologies.com/products/jprofiler/overview.html) for helping us develop the library and allowing us to use it during development.
