@@ -14,10 +14,12 @@ trait PatcherMacros {
     val T = weakTypeOf[T]
     val Patch = weakTypeOf[Patch]
 
-    def transformOptionalValue(fnPatch: c.universe.TermName,
-                               pParam: c.universe.MethodSymbol,
-                               tParam: c.universe.MethodSymbol,
-                               fnObj: c.universe.TermName) = {
+    def transformOptionalValue(
+        fnPatch: c.universe.TermName,
+        pParam: c.universe.MethodSymbol,
+        tParam: c.universe.MethodSymbol,
+        fnObj: c.universe.TermName
+    ) = {
       expandTransformerTree(q"$fnPatch.${pParam.name}", Config())(pParam.returnType, tParam.returnType).left
         .flatMap { errors =>
           if (pParam.returnType.typeConstructor =:= optionTpe.typeConstructor) {

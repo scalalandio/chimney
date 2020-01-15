@@ -10,7 +10,7 @@ trait TransformerMacros {
   import c.universe._
 
   def genTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag](
-    config: Config
+      config: Config
   ): c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
 
     val From = weakTypeOf[From]
@@ -46,8 +46,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandTransformerTree(srcPrefixTree: Tree, config: Config)(From: Type,
-                                                                 To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandTransformerTree(
+      srcPrefixTree: Tree,
+      config: Config
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     findLocalImplicitTransformer(From, To)
       .map { localImplicitTree =>
@@ -106,8 +108,10 @@ trait TransformerMacros {
     Right(q"new $To($srcPrefixTree)")
   }
 
-  def expandTargetWrappedInOption(srcPrefixTree: Tree, config: Config)(From: Type,
-                                                                       To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandTargetWrappedInOption(
+      srcPrefixTree: Tree,
+      config: Config
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
     def toInnerT = To.typeArgs.head
     if (To <:< noneTpe) {
       notSupportedDerivation(srcPrefixTree, From, To)
@@ -120,8 +124,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandSourceWrappedInOption(srcPrefixTree: Tree, config: Config)(From: Type,
-                                                                       To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandSourceWrappedInOption(
+      srcPrefixTree: Tree,
+      config: Config
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
     if (From <:< noneTpe) {
       notSupportedDerivation(srcPrefixTree, From, To)
     } else {
@@ -226,8 +232,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandTraversableOrArray(srcPrefixTree: Tree, config: Config)(From: Type,
-                                                                    To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandTraversableOrArray(
+      srcPrefixTree: Tree,
+      config: Config
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val FromCollectionT = From.typeArgs.head
     val ToCollectionT = To.typeArgs.head
@@ -260,8 +268,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandSealedClasses(srcPrefixTree: Tree, config: Config)(From: Type,
-                                                               To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandSealedClasses(
+      srcPrefixTree: Tree,
+      config: Config
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     if (config.coproductInstances.contains((From.typeSymbol, To))) {
 
@@ -342,8 +352,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandDestinationTuple(srcPrefixTree: Tree, config: Config)(From: Type,
-                                                                  To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandDestinationTuple(
+      srcPrefixTree: Tree,
+      config: Config
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     var errors = Seq.empty[DerivationError]
 
@@ -376,8 +388,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandDestinationCaseClass(srcPrefixTree: Tree, config: Config)(From: Type,
-                                                                      To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandDestinationCaseClass(
+      srcPrefixTree: Tree,
+      config: Config
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     var errors = Seq.empty[DerivationError]
 
@@ -429,8 +443,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandDestinationJavaBean(srcPrefixTree: Tree, config: Config)(From: Type,
-                                                                     To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandDestinationJavaBean(
+      srcPrefixTree: Tree,
+      config: Config
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
     var errors = Seq.empty[DerivationError]
 
     val fromGetters = From.getterMethods
@@ -475,7 +491,7 @@ trait TransformerMacros {
   }
 
   def resolveTargetArgTrees(srcPrefixTree: Tree, config: Config, From: Type, To: Type)(
-    mapping: Iterable[(Target, Option[TargetResolution])]
+      mapping: Iterable[(Target, Option[TargetResolution])]
   ): (Seq[DerivationError], Iterable[Tree]) = {
 
     var errors = Seq.empty[DerivationError]
@@ -518,9 +534,9 @@ trait TransformerMacros {
   }
 
   def resolveTarget(srcPrefixTree: Tree, config: Config, From: Type, To: Type)(
-    target: Target,
-    fromGetters: Iterable[MethodSymbol],
-    targetCaseClass: Option[ClassSymbol]
+      target: Target,
+      fromGetters: Iterable[MethodSymbol],
+      targetCaseClass: Option[ClassSymbol]
   ): Option[TargetResolution] = {
 
     if (config.overridenFields.contains(target.name)) {
@@ -602,9 +618,11 @@ trait TransformerMacros {
       .filterNot(_ == EmptyTree)
   }
 
-  private def notSupportedDerivation(srcPrefixTree: Tree,
-                                     fromTpe: Type,
-                                     toTpe: Type): Left[Seq[NotSupportedDerivation], Nothing] =
+  private def notSupportedDerivation(
+      srcPrefixTree: Tree,
+      fromTpe: Type,
+      toTpe: Type
+  ): Left[Seq[NotSupportedDerivation], Nothing] =
     Left {
       Seq(
         NotSupportedDerivation(

@@ -8,29 +8,32 @@ sealed trait DerivationError extends Product with Serializable {
 final case class MissingField(fieldName: String, fieldTypeName: String, sourceTypeName: String, targetTypeName: String)
     extends DerivationError
 
-final case class MissingJavaBeanSetterParam(setterName: String,
-                                            requiredTypeName: String,
-                                            sourceTypeName: String,
-                                            targetTypeName: String)
-    extends DerivationError
+final case class MissingJavaBeanSetterParam(
+    setterName: String,
+    requiredTypeName: String,
+    sourceTypeName: String,
+    targetTypeName: String
+) extends DerivationError
 
-final case class MissingTransformer(fieldName: String,
-                                    sourceFieldTypeName: String,
-                                    targetFieldTypeName: String,
-                                    sourceTypeName: String,
-                                    targetTypeName: String)
-    extends DerivationError
+final case class MissingTransformer(
+    fieldName: String,
+    sourceFieldTypeName: String,
+    targetFieldTypeName: String,
+    sourceTypeName: String,
+    targetTypeName: String
+) extends DerivationError
 
 final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName: String) extends DerivationError
 
 final case class CantFindCoproductInstanceTransformer(instance: String, sourceTypeName: String, targetTypeName: String)
     extends DerivationError
 
-final case class IncompatibleSourceTuple(sourceArity: Int,
-                                         targetArity: Int,
-                                         sourceTypeName: String,
-                                         targetTypeName: String)
-    extends DerivationError
+final case class IncompatibleSourceTuple(
+    sourceArity: Int,
+    targetArity: Int,
+    sourceTypeName: String,
+    targetTypeName: String
+) extends DerivationError
 
 final case class NotSupportedDerivation(fieldName: String, sourceTypeName: String, targetTypeName: String)
     extends DerivationError

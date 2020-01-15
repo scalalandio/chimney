@@ -6,15 +6,17 @@ trait DerivationConfig {
 
   val c: blackbox.Context
 
-  case class Config(processDefaultValues: Boolean = true,
-                    enableBeanGetters: Boolean = false,
-                    enableBeanSetters: Boolean = false,
-                    optionDefaultsToNone: Boolean = false,
-                    enableUnsafeOption: Boolean = false,
-                    overridenFields: Set[String] = Set.empty,
-                    renamedFields: Map[String, String] = Map.empty,
-                    coproductInstances: Set[(c.Symbol, c.Type)] = Set.empty, // pair: inst type, target type
-                    prefixValName: String = "") {
+  case class Config(
+      processDefaultValues: Boolean = true,
+      enableBeanGetters: Boolean = false,
+      enableBeanSetters: Boolean = false,
+      optionDefaultsToNone: Boolean = false,
+      enableUnsafeOption: Boolean = false,
+      overridenFields: Set[String] = Set.empty,
+      renamedFields: Map[String, String] = Map.empty,
+      coproductInstances: Set[(c.Symbol, c.Type)] = Set.empty, // pair: inst type, target type
+      prefixValName: String = ""
+  ) {
 
     def rec: Config =
       copy(overridenFields = Set.empty, renamedFields = Map.empty)

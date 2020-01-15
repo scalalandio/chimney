@@ -15,9 +15,11 @@ object dsl {
       transformer.transform(source)
   }
 
-  final class TransformerInto[From, To, C <: Cfg](val source: From,
-                                                  val overrides: Map[String, Any],
-                                                  val instances: Map[(String, String), Any]) {
+  final class TransformerInto[From, To, C <: Cfg](
+      val source: From,
+      val overrides: Map[String, Any],
+      val instances: Map[(String, String), Any]
+  ) {
 
     def disableDefaultValues: TransformerInto[From, To, DisableDefaultValues[C]] =
       new TransformerInto[From, To, DisableDefaultValues[C]](source, overrides, instances)

@@ -8,8 +8,10 @@ trait DslWhiteboxMacros {
 
   import c.universe._
 
-  def expandWithFieldConst[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](fieldName: Name,
-                                                                                     value: c.Tree): c.Tree = {
+  def expandWithFieldConst[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](
+      fieldName: Name,
+      value: c.Tree
+  ): c.Tree = {
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
     val C = weakTypeOf[C]
@@ -28,8 +30,10 @@ trait DslWhiteboxMacros {
     """
   }
 
-  def expandFieldComputed[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](fieldName: Name,
-                                                                                    map: c.Tree): c.Tree = {
+  def expandFieldComputed[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](
+      fieldName: Name,
+      map: c.Tree
+  ): c.Tree = {
 
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
@@ -49,8 +53,10 @@ trait DslWhiteboxMacros {
     """
   }
 
-  def expandFieldRenamed[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](fieldNameFrom: Name,
-                                                                                   fieldNameTo: Name): c.Tree = {
+  def expandFieldRenamed[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](
+      fieldNameFrom: Name,
+      fieldNameTo: Name
+  ): c.Tree = {
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
     val C = weakTypeOf[C]
@@ -64,7 +70,7 @@ trait DslWhiteboxMacros {
   }
 
   def expandCoproductInstance[From: c.WeakTypeTag, To: c.WeakTypeTag, Inst: c.WeakTypeTag, C: c.WeakTypeTag](
-    f: c.Tree
+      f: c.Tree
   ): c.Tree = {
 
     val From = weakTypeOf[From]

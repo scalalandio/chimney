@@ -16,7 +16,7 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
   }
 
   def deriveTransformerImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]
-    : c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
+      : c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
     genTransformer[From, To](Config())
   }
 
