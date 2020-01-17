@@ -135,7 +135,7 @@ object IssuesSpec extends TestSuite {
 
       case class Foo(a: String, b: Int, c: Int)
 
-      "fix 'wrong forward definition' when defining implicit transformer" - {
+      "fix 'wrong forward definition' when defining implicit val transformer" - {
         case class Bar(a: String, b: Int, x: Long)
 
         implicit val fooBarTransformer: Transformer[Foo, Bar] =
@@ -147,7 +147,31 @@ object IssuesSpec extends TestSuite {
         Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1, 6)
       }
 
-      "fix stack overflow when defining implicit transformer wrapped in object" - {
+      "fix stack overflow when defining implicit def transformer" - {
+        case class Bar(a: String, b: Int, x: Long)
+
+        implicit def fooBarTransformer: Transformer[Foo, Bar] =
+          Transformer
+            .define[Foo, Bar]
+            .withFieldComputed(_.x, _.c.toLong * 2)
+            .buildTransformer
+
+        Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1, 6)
+      }
+
+      "fix stack overflow when defining implicit lazy val transformer" - {
+        case class Bar(a: String, b: Int, x: Long)
+
+        implicit lazy val fooBarTransformer: Transformer[Foo, Bar] =
+          Transformer
+            .define[Foo, Bar]
+            .withFieldComputed(_.x, _.c.toLong * 2)
+            .buildTransformer
+
+        Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1, 6)
+      }
+
+      "fix stack overflow when defining implicit val transformer wrapped in object" - {
         case class Bar(a: String, b: Int, x: Long)
 
         object TransformerInstances {
@@ -156,7 +180,6 @@ object IssuesSpec extends TestSuite {
               .define[Foo, Bar]
               .withFieldComputed(_.x, _.c.toLong * 2)
               .buildTransformer
-
         }
 
         import TransformerInstances._

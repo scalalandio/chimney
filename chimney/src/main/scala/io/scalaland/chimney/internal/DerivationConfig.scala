@@ -21,6 +21,11 @@ trait DerivationConfig {
   ) {
 
     def rec: Config =
-      copy(constFields = Set.empty, computedFields = Set.empty, renamedFields = Map.empty)
+      copy(
+        constFields = Set.empty,
+        computedFields = Set.empty,
+        renamedFields = Map.empty,
+        definitionScope = None
+      )
   }
 }
