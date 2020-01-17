@@ -25,7 +25,7 @@ trait DslWhiteboxMacros {
     q"""
       {
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.dsl.TransformerInto[$From, $To, $newCfgTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $value), $fn.instances)
+        new _root_.io.scalaland.chimney.internal.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides.updated($fieldNameLit, $value), $fn.instances)
       }
     """
   }
@@ -43,12 +43,12 @@ trait DslWhiteboxMacros {
     val fieldNameLit = Literal(fieldNameConst)
     val singletonFieldTpe = c.internal.constantType(fieldNameConst)
     val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.FieldComputed[$singletonFieldTpe, $C]"
-    val fn = TermName(c.freshName("ti"))
+    val fn = TermName(c.freshName("td"))
 
     q"""
       {
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.dsl.TransformerInto[$From, $To, $newCfgTpe]($fn.source, $fn.overrides.updated($fieldNameLit, $map($fn.source)), $fn.instances)
+        new _root_.io.scalaland.chimney.internal.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides.updated($fieldNameLit, $map), $fn.instances)
       }
     """
   }
@@ -66,7 +66,7 @@ trait DslWhiteboxMacros {
 
     val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.FieldRelabelled[$singletonFromTpe, $singletonToTpe, $C]"
 
-    q"${c.prefix.tree}.asInstanceOf[_root_.io.scalaland.chimney.dsl.TransformerInto[$From, $To, $newCfgTpe]]"
+    q"${c.prefix.tree}.asInstanceOf[_root_.io.scalaland.chimney.internal.dsl.TransformerDefinition[$From, $To, $newCfgTpe]]"
   }
 
   def expandCoproductInstance[From: c.WeakTypeTag, To: c.WeakTypeTag, Inst: c.WeakTypeTag, C: c.WeakTypeTag](
@@ -79,7 +79,7 @@ trait DslWhiteboxMacros {
     val C = weakTypeOf[C]
 
     val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.CoproductInstance[$Inst, $To, $C]"
-    val fn = TermName(c.freshName("ti"))
+    val fn = TermName(c.freshName("td"))
 
     val fullInstName = Inst.typeSymbol.fullName.toString
     val fullTargetName = To.typeSymbol.fullName.toString
@@ -87,7 +87,7 @@ trait DslWhiteboxMacros {
     q"""
       {
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.dsl.TransformerInto[$From, $To, $newCfgTpe]($fn.source, $fn.overrides, $fn.instances.updated(($fullInstName, $fullTargetName), $f))
+        new _root_.io.scalaland.chimney.internal.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides, $fn.instances.updated(($fullInstName, $fullTargetName), $f))
       }
     """
   }

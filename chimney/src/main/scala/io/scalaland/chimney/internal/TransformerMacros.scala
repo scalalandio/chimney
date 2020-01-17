@@ -51,8 +51,14 @@ trait TransformerMacros {
       config: Config
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
-    findLocalImplicitTransformer(From, To)
-      .map { localImplicitTree =>
+    val localInstance: Option[Tree] =
+      if(config.definitionScope.contains((From, To))) {
+        None
+      } else {
+        findLocalImplicitTransformer(From, To)
+      }
+
+    localInstance.map { localImplicitTree =>
         Right(q"$localImplicitTree.transform($srcPrefixTree)")
       }
       .getOrElse {
@@ -279,7 +285,13 @@ trait TransformerMacros {
       val fullTargetName = To.typeSymbol.fullName.toString
 
       Right {
-        q"${TermName(config.prefixValName)}.instances(($instFullName, $fullTargetName)).asInstanceOf[Any => $To]($srcPrefixTree).asInstanceOf[$To]"
+        q"""
+            ${config.transformerDefinitionPrefix}
+              .instances(($instFullName, $fullTargetName))
+              .asInstanceOf[Any => $To]
+              .apply($srcPrefixTree)
+              .asInstanceOf[$To]
+        """
       }
     } else {
 
@@ -323,7 +335,7 @@ trait TransformerMacros {
             val instFullName = instSymbol.fullName.toString
             val fullTargetName = To.typeSymbol.fullName.toString
             Right(
-              cq"$fn: ${instSymbol.asType} => ${TermName(config.prefixValName)}.instances(($instFullName, $fullTargetName)).asInstanceOf[Any => $To]($fn).asInstanceOf[$To]"
+              cq"$fn: ${instSymbol.asType} => ${config.transformerDefinitionPrefix}.instances(($instFullName, $fullTargetName)).asInstanceOf[Any => $To]($fn).asInstanceOf[$To]"
             )
 
           case None =>
@@ -539,10 +551,26 @@ trait TransformerMacros {
       targetCaseClass: Option[ClassSymbol]
   ): Option[TargetResolution] = {
 
-    if (config.overridenFields.contains(target.name)) {
+    if (config.constFields.contains(target.name)) {
       Some {
         ResolvedTargetTree {
-          q"${TermName(config.prefixValName)}.overrides(${target.name}).asInstanceOf[${target.tpe}]"
+          q"""
+             ${config.transformerDefinitionPrefix}
+                .overrides(${target.name})
+                .asInstanceOf[${target.tpe}]
+          """
+        }
+      }
+    } else if (config.computedFields.contains(target.name)) {
+      Some {
+        ResolvedTargetTree {
+          q"""
+             ${config.transformerDefinitionPrefix}
+                .overrides(${target.name})
+                .asInstanceOf[$From => ${target.tpe}]
+                .apply($srcPrefixTree)
+                .asInstanceOf[${target.tpe}]
+          """
         }
       }
     } else if (config.renamedFields.contains(target.name)) {

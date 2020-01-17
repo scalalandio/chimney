@@ -9,16 +9,32 @@ trait DslBlackboxMacros {
 
   import c.universe._
 
-  def expandTransform[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {
+  def buildDefinedTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {
     val C = weakTypeOf[C]
-    val srcName = c.freshName("src")
-    val config = captureConfiguration(C).copy(prefixValName = srcName)
+    val tdName = TermName(c.freshName("td"))
+    val config = captureConfiguration(C).copy(
+      transformerDefinitionPrefix = q"$tdName",
+      definitionScope = Some((weakTypeOf[From], weakTypeOf[To]))
+    )
 
     val derivedTransformerTree = genTransformer[From, To](config).tree
 
     q"""
-       val ${TermName(srcName)} = ${c.prefix.tree}
-       $derivedTransformerTree.transform(${TermName(srcName)}.source)
+       val $tdName = ${c.prefix.tree}
+       $derivedTransformerTree
+    """
+  }
+
+  def expandTransform[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {
+    val C = weakTypeOf[C]
+    val tiName = TermName(c.freshName("ti"))
+    val config = captureConfiguration(C).copy(transformerDefinitionPrefix = q"$tiName.td")
+
+    val derivedTransformerTree = genTransformer[From, To](config).tree
+
+    q"""
+       val $tiName = ${c.prefix.tree}
+       $derivedTransformerTree.transform($tiName.source)
     """
   }
 
@@ -47,10 +63,20 @@ trait DslBlackboxMacros {
       captureConfiguration(cfgTpe.typeArgs.head, config.copy(optionDefaultsToNone = true))
     } else if (cfgTpe.typeConstructor == enableUnsafeOption) {
       captureConfiguration(cfgTpe.typeArgs.head, config.copy(enableUnsafeOption = true))
-    } else if (Set(fieldConstT, fieldComputedT).contains(cfgTpe.typeConstructor)) {
+    } else if (cfgTpe.typeConstructor == fieldConstT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString
-      captureConfiguration(rest, config.copy(overridenFields = config.overridenFields + fieldName))
+      captureConfiguration(rest, config.copy(
+        constFields = config.constFields + fieldName,
+        computedFields = config.computedFields - fieldName
+      ))
+    } else if (cfgTpe.typeConstructor == fieldComputedT) {
+      val List(fieldNameT, rest) = cfgTpe.typeArgs
+      val fieldName = fieldNameT.singletonString
+      captureConfiguration(rest, config.copy(
+        computedFields = config.computedFields + fieldName,
+        constFields = config.constFields - fieldName
+      ))
     } else if (cfgTpe.typeConstructor == fieldRelabelledT) {
       val List(fieldNameFromT, fieldNameToT, rest) = cfgTpe.typeArgs
       val fieldNameFrom = fieldNameFromT.singletonString

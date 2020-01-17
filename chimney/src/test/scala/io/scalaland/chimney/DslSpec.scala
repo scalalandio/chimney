@@ -273,6 +273,7 @@ object DslSpec extends TestSuite {
 
       "between different types: correct" - {
         implicit def trans: Transformer[Option[Int], Either[Unit, Int]] = ageToWiekTransformer
+
         val user: User = User(1, "Kuba", Some(28))
         val userPl = UserPL(1, "Kuba", Right(28))
         user
@@ -285,6 +286,7 @@ object DslSpec extends TestSuite {
 
       "between different types: incorrect" - {
         implicit def trans: Transformer[Option[Int], Either[Unit, Int]] = ageToWiekTransformer
+
         val user: User = User(1, "Kuba", None)
         val userPl = UserPL(1, "Kuba", Left(()))
         user
@@ -767,6 +769,7 @@ object DslSpec extends TestSuite {
         """)
           .check("", "can't derive transformation")
       }
+
     }
   }
 }

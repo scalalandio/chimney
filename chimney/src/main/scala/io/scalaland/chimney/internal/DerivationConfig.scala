@@ -12,13 +12,15 @@ trait DerivationConfig {
       enableBeanSetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,
       enableUnsafeOption: Boolean = false,
-      overridenFields: Set[String] = Set.empty,
+      constFields: Set[String] = Set.empty,
+      computedFields: Set[String] = Set.empty,
       renamedFields: Map[String, String] = Map.empty,
       coproductInstances: Set[(c.Symbol, c.Type)] = Set.empty, // pair: inst type, target type
-      prefixValName: String = ""
+      transformerDefinitionPrefix: c.Tree = c.universe.EmptyTree,
+      definitionScope: Option[(c.Type, c.Type)] = None
   ) {
 
     def rec: Config =
-      copy(overridenFields = Set.empty, renamedFields = Map.empty)
+      copy(constFields = Set.empty, computedFields = Set.empty, renamedFields = Map.empty)
   }
 }
