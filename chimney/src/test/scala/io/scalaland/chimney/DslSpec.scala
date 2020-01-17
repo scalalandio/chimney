@@ -769,6 +769,7 @@ object DslSpec extends TestSuite {
         """)
           .check("", "can't derive transformation")
       }
+
     }
 
     "support recursive data structures" - {
