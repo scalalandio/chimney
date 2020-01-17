@@ -771,7 +771,7 @@ object DslSpec extends TestSuite {
       }
     }
 
-    "support recursive transformations" - {
+    "support recursive data structures" - {
 
       case class Foo(x: Option[Foo])
       case class Bar(x: Option[Bar])
