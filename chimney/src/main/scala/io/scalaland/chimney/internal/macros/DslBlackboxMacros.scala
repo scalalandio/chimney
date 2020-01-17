@@ -69,17 +69,23 @@ trait DslBlackboxMacros {
     } else if (cfgTpe.typeConstructor == fieldConstT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString
-      captureConfiguration(rest, config.copy(
-        constFields = config.constFields + fieldName,
-        computedFields = config.computedFields - fieldName
-      ))
+      captureConfiguration(
+        rest,
+        config.copy(
+          constFields = config.constFields + fieldName,
+          computedFields = config.computedFields - fieldName
+        )
+      )
     } else if (cfgTpe.typeConstructor == fieldComputedT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString
-      captureConfiguration(rest, config.copy(
-        computedFields = config.computedFields + fieldName,
-        constFields = config.constFields - fieldName
-      ))
+      captureConfiguration(
+        rest,
+        config.copy(
+          computedFields = config.computedFields + fieldName,
+          constFields = config.constFields - fieldName
+        )
+      )
     } else if (cfgTpe.typeConstructor == fieldRelabelledT) {
       val List(fieldNameFromT, fieldNameToT, rest) = cfgTpe.typeArgs
       val fieldNameFrom = fieldNameFromT.singletonString

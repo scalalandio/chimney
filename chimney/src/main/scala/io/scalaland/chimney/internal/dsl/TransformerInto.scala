@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.dsl
 
 import io.scalaland.chimney.internal._
-import io.scalaland.chimney.internal.macros.{ChimneyBlackboxMacros, TransformerDefinitionWhiteboxMacros, TransformerIntoWhiteboxMacros}
+import io.scalaland.chimney.internal.macros.{ChimneyBlackboxMacros, TransformerIntoWhiteboxMacros}
 
 import scala.language.experimental.macros
 

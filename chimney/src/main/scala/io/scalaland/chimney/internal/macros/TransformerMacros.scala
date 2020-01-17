@@ -55,13 +55,14 @@ trait TransformerMacros {
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val localInstance: Option[Tree] =
-      if(config.definitionScope.contains((From, To))) {
+      if (config.definitionScope.contains((From, To))) {
         None
       } else {
         findLocalImplicitTransformer(From, To)
       }
 
-    localInstance.map { localImplicitTree =>
+    localInstance
+      .map { localImplicitTree =>
         Right(q"$localImplicitTree.transform($srcPrefixTree)")
       }
       .getOrElse {
