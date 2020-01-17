@@ -1,4 +1,4 @@
-package io.scalaland.chimney.internal
+package io.scalaland.chimney.internal.macros
 
 import scala.reflect.macros.whitebox
 

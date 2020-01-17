@@ -1,6 +1,7 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.ChimneyBlackboxMacros
+import io.scalaland.chimney.internal.macros.ChimneyBlackboxMacros
+
 import scala.language.experimental.macros
 
 trait Patcher[T, Patch] {

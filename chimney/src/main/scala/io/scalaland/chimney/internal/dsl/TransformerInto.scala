@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.dsl
 
 import io.scalaland.chimney.internal._
+import io.scalaland.chimney.internal.macros.{ChimneyBlackboxMacros, TransformerDefinitionWhiteboxMacros, TransformerIntoWhiteboxMacros}
 
 import scala.language.experimental.macros
 
@@ -25,16 +26,16 @@ final class TransformerInto[From, To, C <: Cfg](
     new TransformerInto(source, td.enableUnsafeOption)
 
   def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[From, To, _] =
-    macro ChimneyWhiteboxMacros.withFieldConstImpl2[From, To, T, U, C]
+    macro TransformerIntoWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
 
   def withFieldComputed[T, U](selector: To => T, map: From => U): TransformerInto[From, To, _] =
-    macro ChimneyWhiteboxMacros.withFieldComputedImpl2[From, To, T, U, C]
+    macro TransformerIntoWhiteboxMacros.withFieldComputedImpl[From, To, T, U, C]
 
   def withFieldRenamed[T, U](selectorFrom: From => T, selectorTo: To => U): TransformerInto[From, To, _] =
-    macro ChimneyWhiteboxMacros.withFieldRenamedImpl2[From, To, T, U, C]
+    macro TransformerIntoWhiteboxMacros.withFieldRenamedImpl[From, To, T, U, C]
 
   def withCoproductInstance[Inst](f: Inst => To): TransformerInto[From, To, _] =
-    macro ChimneyWhiteboxMacros.withCoproductInstanceImpl2[From, To, Inst, C]
+    macro TransformerIntoWhiteboxMacros.withCoproductInstanceImpl[From, To, Inst, C]
 
   def transform: To =
     macro ChimneyBlackboxMacros.transformImpl[From, To, C]

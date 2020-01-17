@@ -1,4 +1,7 @@
-package io.scalaland.chimney.internal
+package io.scalaland.chimney.internal.macros
+
+import io.scalaland.chimney.internal.DerivationConfig
+import io.scalaland.chimney.internal.utils.{DerivationGuards, EitherUtils, MacroUtils}
 
 import scala.reflect.macros.blackbox
 

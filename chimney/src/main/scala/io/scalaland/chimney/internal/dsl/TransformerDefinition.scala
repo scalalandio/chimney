@@ -2,6 +2,8 @@ package io.scalaland.chimney.internal.dsl
 
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.internal._
+import io.scalaland.chimney.internal.macros.{ChimneyBlackboxMacros, TransformerDefinitionWhiteboxMacros}
+
 import scala.language.experimental.macros
 
 final class TransformerDefinition[From, To, C <: Cfg](
@@ -24,16 +26,16 @@ final class TransformerDefinition[From, To, C <: Cfg](
     new TransformerDefinition[From, To, EnableUnsafeOption[C]](overrides, instances)
 
   def withFieldConst[T, U](selector: To => T, value: U): TransformerDefinition[From, To, _] =
-    macro ChimneyWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
+    macro TransformerDefinitionWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
 
   def withFieldComputed[T, U](selector: To => T, map: From => U): TransformerDefinition[From, To, _] =
-    macro ChimneyWhiteboxMacros.withFieldComputedImpl[From, To, T, U, C]
+    macro TransformerDefinitionWhiteboxMacros.withFieldComputedImpl[From, To, T, U, C]
 
   def withFieldRenamed[T, U](selectorFrom: From => T, selectorTo: To => U): TransformerDefinition[From, To, _] =
-    macro ChimneyWhiteboxMacros.withFieldRenamedImpl[From, To, T, U, C]
+    macro TransformerDefinitionWhiteboxMacros.withFieldRenamedImpl[From, To, T, U, C]
 
   def withCoproductInstance[Inst](f: Inst => To): TransformerDefinition[From, To, _] =
-    macro ChimneyWhiteboxMacros.withCoproductInstanceImpl[From, To, Inst, C]
+    macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[From, To, Inst, C]
 
   def buildTransformer: Transformer[From, To] =
     macro ChimneyBlackboxMacros.buildTransformerImpl[From, To, C]

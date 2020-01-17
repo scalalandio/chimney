@@ -1,21 +1,12 @@
-package io.scalaland.chimney.internal
+package io.scalaland.chimney.internal.macros
+
+import io.scalaland.chimney.internal.utils.MacroUtils
 
 import scala.reflect.macros.whitebox
 
-class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros with MacroUtils {
+class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros with MacroUtils {
 
   import c.universe._
-
-  def withFieldConstImpl2[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, U: c.WeakTypeTag, C: c.WeakTypeTag](
-      selector: c.Tree,
-      value: c.Tree
-  ): c.Tree = {
-    val fn = TermName(c.freshName("ti"))
-    q"""
-        val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.internal.dsl.TransformerInto($fn.source, $fn.td.withFieldConst($selector, $value))
-     """
-  }
 
   def withFieldConstImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, U: c.WeakTypeTag, C: c.WeakTypeTag](
       selector: c.Tree,
@@ -34,20 +25,6 @@ class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros w
     } else {
       expandWithFieldConst[From, To, C](fieldName, value)
     }
-  }
-
-  def withFieldComputedImpl2[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      T: c.WeakTypeTag,
-      U: c.WeakTypeTag,
-      C: c.WeakTypeTag
-  ](selector: c.Tree, map: c.Tree): c.Tree = {
-    val fn = TermName(c.freshName("ti"))
-    q"""
-        val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.internal.dsl.TransformerInto($fn.source, $fn.td.withFieldComputed($selector, $map))
-     """
   }
 
   def withFieldComputedImpl[
@@ -70,20 +47,6 @@ class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros w
     } else {
       expandFieldComputed[From, To, C](fieldName, map)
     }
-  }
-
-  def withFieldRenamedImpl2[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      T: c.WeakTypeTag,
-      U: c.WeakTypeTag,
-      C: c.WeakTypeTag
-  ](selectorFrom: c.Tree, selectorTo: c.Tree): c.Tree = {
-    val fn = TermName(c.freshName("ti"))
-    q"""
-        val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.internal.dsl.TransformerInto($fn.source, $fn.td.withFieldRenamed($selectorFrom, $selectorTo))
-     """
   }
 
   def withFieldRenamedImpl[
@@ -110,16 +73,6 @@ class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros w
         val inv2 = s"Selector of type ${selectorTo.tpe} is not valid: $selectorTo"
         c.abort(c.enclosingPosition, s"Invalid selectors:\n$inv1\n$inv2")
     }
-  }
-
-  def withCoproductInstanceImpl2[From: c.WeakTypeTag, To: c.WeakTypeTag, Inst: c.WeakTypeTag, C: c.WeakTypeTag](
-      f: c.Tree
-  ): c.Tree = {
-    val fn = TermName(c.freshName("ti"))
-    q"""
-        val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.internal.dsl.TransformerInto($fn.source, $fn.td.withCoproductInstance($f))
-     """
   }
 
   def withCoproductInstanceImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, Inst: c.WeakTypeTag, C: c.WeakTypeTag](

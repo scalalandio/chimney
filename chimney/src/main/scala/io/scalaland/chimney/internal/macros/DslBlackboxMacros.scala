@@ -1,4 +1,7 @@
-package io.scalaland.chimney.internal
+package io.scalaland.chimney.internal.macros
+
+import io.scalaland.chimney.internal.utils.MacroUtils
+import io.scalaland.chimney.internal._
 
 import scala.reflect.macros.blackbox
 
