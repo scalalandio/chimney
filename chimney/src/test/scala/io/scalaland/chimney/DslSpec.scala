@@ -785,7 +785,7 @@ object DslSpec extends TestSuite {
       }
 
       "generated automatically" - {
-        implicit lazy val fooToBarTransformer: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
+        implicit def fooToBarTransformer: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
 
         Foo(Some(Foo(None))).transformInto[Bar] ==> Bar(Some(Bar(None)))
       }

@@ -159,18 +159,6 @@ object IssuesSpec extends TestSuite {
         Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1, 6)
       }
 
-      "fix stack overflow when defining implicit lazy val transformer" - {
-        case class Bar(a: String, b: Int, x: Long)
-
-        implicit lazy val fooBarTransformer: Transformer[Foo, Bar] =
-          Transformer
-            .define[Foo, Bar]
-            .withFieldComputed(_.x, _.c.toLong * 2)
-            .buildTransformer
-
-        Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1, 6)
-      }
-
       "fix stack overflow when defining implicit val transformer wrapped in object" - {
         case class Bar(a: String, b: Int, x: Long)
 
