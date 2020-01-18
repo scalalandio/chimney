@@ -8,7 +8,7 @@ import scala.language.experimental.macros
 
 object dsl {
 
-  implicit class TransformerOps[From](val source: From) extends AnyVal {
+  implicit class TransformerOps[From](private val source: From) extends AnyVal {
 
     final def into[To]: TransformerInto[From, To, TransformerCfg.Empty] =
       new TransformerInto(source, new TransformerDefinition[From, To, TransformerCfg.Empty](Map.empty, Map.empty))
@@ -17,7 +17,7 @@ object dsl {
       transformer.transform(source)
   }
 
-  implicit class PatcherOps[T](val obj: T) extends AnyVal {
+  implicit class PatcherOps[T](private val obj: T) extends AnyVal {
 
     final def using[P](patch: P): PatcherInto[T, P, PatcherCfg.Empty] =
       new PatcherInto[T, P, PatcherCfg.Empty](obj, patch)
