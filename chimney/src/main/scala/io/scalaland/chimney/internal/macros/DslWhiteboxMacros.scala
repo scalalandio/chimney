@@ -19,7 +19,7 @@ trait DslWhiteboxMacros {
     val fieldNameConst = Constant(fieldName.decodedName.toString)
     val fieldNameLit = Literal(fieldNameConst)
     val singletonFieldTpe = c.internal.constantType(fieldNameConst)
-    val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.FieldConst[$singletonFieldTpe, $C]"
+    val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.TransformerCfg.FieldConst[$singletonFieldTpe, $C]"
     val fn = TermName(c.freshName("ti"))
 
     q"""
@@ -42,7 +42,7 @@ trait DslWhiteboxMacros {
     val fieldNameConst = Constant(fieldName.decodedName.toString)
     val fieldNameLit = Literal(fieldNameConst)
     val singletonFieldTpe = c.internal.constantType(fieldNameConst)
-    val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.FieldComputed[$singletonFieldTpe, $C]"
+    val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.TransformerCfg.FieldComputed[$singletonFieldTpe, $C]"
     val fn = TermName(c.freshName("td"))
 
     q"""
@@ -64,7 +64,7 @@ trait DslWhiteboxMacros {
     val singletonFromTpe = c.internal.constantType(Constant(fieldNameFrom.decodedName.toString))
     val singletonToTpe = c.internal.constantType(Constant(fieldNameTo.decodedName.toString))
 
-    val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.FieldRelabelled[$singletonFromTpe, $singletonToTpe, $C]"
+    val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.TransformerCfg.FieldRelabelled[$singletonFromTpe, $singletonToTpe, $C]"
 
     q"${c.prefix.tree}.asInstanceOf[_root_.io.scalaland.chimney.internal.dsl.TransformerDefinition[$From, $To, $newCfgTpe]]"
   }
@@ -78,7 +78,7 @@ trait DslWhiteboxMacros {
     val Inst = weakTypeOf[Inst]
     val C = weakTypeOf[C]
 
-    val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.CoproductInstance[$Inst, $To, $C]"
+    val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.TransformerCfg.CoproductInstance[$Inst, $To, $C]"
     val fn = TermName(c.freshName("td"))
 
     val fullInstName = Inst.typeSymbol.fullName.toString

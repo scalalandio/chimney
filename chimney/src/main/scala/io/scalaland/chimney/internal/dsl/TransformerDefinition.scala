@@ -1,12 +1,13 @@
 package io.scalaland.chimney.internal.dsl
 
 import io.scalaland.chimney.Transformer
+import io.scalaland.chimney.internal.TransformerCfg._
 import io.scalaland.chimney.internal._
 import io.scalaland.chimney.internal.macros.{ChimneyBlackboxMacros, TransformerDefinitionWhiteboxMacros}
 
 import scala.language.experimental.macros
 
-final class TransformerDefinition[From, To, C <: Cfg](
+final class TransformerDefinition[From, To, C <: TransformerCfg](
     val overrides: Map[String, Any],
     val instances: Map[(String, String), Any]
 ) {

@@ -25,7 +25,7 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
 
   def deriveTransformerImpl[From: c.WeakTypeTag, To: c.WeakTypeTag]: c.Expr[Transformer[From, To]] = {
     import c.universe._
-    genTransformer[From, To](Config(definitionScope = Some((weakTypeOf[From], weakTypeOf[To]))))
+    genTransformer[From, To](TransformerConfig(definitionScope = Some((weakTypeOf[From], weakTypeOf[To]))))
   }
 
   def derivePatcherImpl[T: c.WeakTypeTag, Patch: c.WeakTypeTag]: c.Expr[Patcher[T, Patch]] = {

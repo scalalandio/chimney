@@ -9,8 +9,8 @@ object dsl {
 
   implicit class TransformerOps[From](val source: From) extends AnyVal {
 
-    final def into[To]: TransformerInto[From, To, Empty] =
-      new TransformerInto[From, To, Empty](source, new TransformerDefinition[From, To, Empty](Map.empty, Map.empty))
+    final def into[To]: TransformerInto[From, To, TransformerCfg.Empty] =
+      new TransformerInto(source, new TransformerDefinition[From, To, TransformerCfg.Empty](Map.empty, Map.empty))
 
     final def transformInto[To](implicit transformer: Transformer[From, To]): To =
       transformer.transform(source)

@@ -23,10 +23,10 @@ trait PatcherMacros {
         tParam: c.universe.MethodSymbol,
         fnObj: c.universe.TermName
     ) = {
-      expandTransformerTree(q"$fnPatch.${pParam.name}", Config())(pParam.returnType, tParam.returnType).left
+      expandTransformerTree(q"$fnPatch.${pParam.name}", TransformerConfig())(pParam.returnType, tParam.returnType).left
         .flatMap { errors =>
           if (pParam.returnType.typeConstructor =:= optionTpe.typeConstructor) {
-            expandTransformerTree(q"$fnPatch.${pParam.name}.get", Config())(
+            expandTransformerTree(q"$fnPatch.${pParam.name}.get", TransformerConfig())(
               pParam.returnType.typeArgs.head,
               tParam.returnType
             ).mapRight { innerTransformerTree =>

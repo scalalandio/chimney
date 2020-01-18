@@ -6,7 +6,7 @@ trait DerivationConfig {
 
   val c: blackbox.Context
 
-  case class Config(
+  case class TransformerConfig(
       processDefaultValues: Boolean = true,
       enableBeanGetters: Boolean = false,
       enableBeanSetters: Boolean = false,
@@ -20,7 +20,7 @@ trait DerivationConfig {
       definitionScope: Option[(c.Type, c.Type)] = None
   ) {
 
-    def rec: Config =
+    def rec: TransformerConfig =
       copy(
         constFields = Set.empty,
         computedFields = Set.empty,
@@ -28,4 +28,8 @@ trait DerivationConfig {
         definitionScope = None
       )
   }
+
+  case class PatcherConfig(
+      enableIncompletePatches: Boolean = false
+  )
 }

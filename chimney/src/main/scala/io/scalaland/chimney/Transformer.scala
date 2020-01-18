@@ -1,5 +1,6 @@
 package io.scalaland.chimney
 
+import io.scalaland.chimney.internal.TransformerCfg
 import io.scalaland.chimney.internal.dsl.TransformerDefinition
 import io.scalaland.chimney.internal.macros.ChimneyBlackboxMacros
 
@@ -15,6 +16,6 @@ object Transformer {
   implicit def derive[From, To]: Transformer[From, To] =
     macro ChimneyBlackboxMacros.deriveTransformerImpl[From, To]
 
-  def define[From, To]: TransformerDefinition[From, To, internal.Empty] =
-    new TransformerDefinition[From, To, internal.Empty](Map.empty, Map.empty)
+  def define[From, To]: TransformerDefinition[From, To, TransformerCfg.Empty] =
+    new TransformerDefinition[From, To, TransformerCfg.Empty](Map.empty, Map.empty)
 }

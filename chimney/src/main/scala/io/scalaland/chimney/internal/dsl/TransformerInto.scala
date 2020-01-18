@@ -1,11 +1,12 @@
 package io.scalaland.chimney.internal.dsl
 
+import io.scalaland.chimney.internal.TransformerCfg._
 import io.scalaland.chimney.internal._
 import io.scalaland.chimney.internal.macros.{ChimneyBlackboxMacros, TransformerIntoWhiteboxMacros}
 
 import scala.language.experimental.macros
 
-final class TransformerInto[From, To, C <: Cfg](
+final class TransformerInto[From, To, C <: TransformerCfg](
     val source: From,
     val td: TransformerDefinition[From, To, C]
 ) {
