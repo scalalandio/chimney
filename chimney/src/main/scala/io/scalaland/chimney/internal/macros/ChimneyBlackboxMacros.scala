@@ -1,6 +1,5 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.DerivationConfig
 import io.scalaland.chimney.internal.utils.{DerivationGuards, EitherUtils, MacroUtils}
 import io.scalaland.chimney.{Patcher, Transformer}
 
@@ -11,7 +10,6 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
     with TransformerMacros
     with DerivationGuards
     with MacroUtils
-    with DerivationConfig
     with EitherUtils {
 
   def buildTransformerImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[Transformer[From, To]] = {

@@ -1,12 +1,12 @@
 package io.scalaland.chimney.internal.macros
 
 import io.scalaland.chimney.internal.utils.{DerivationGuards, EitherUtils, MacroUtils}
-import io.scalaland.chimney.internal.{DerivationConfig, DerivationError, PatcherCfg}
+import io.scalaland.chimney.internal.{DerivationError, PatcherConfiguration}
 
 import scala.reflect.macros.blackbox
 
-trait PatcherMacros {
-  this: TransformerMacros with DerivationGuards with MacroUtils with DerivationConfig with EitherUtils =>
+trait PatcherMacros extends PatcherConfiguration {
+  this: TransformerMacros with DerivationGuards with MacroUtils with EitherUtils =>
 
   val c: blackbox.Context
 
@@ -112,21 +112,4 @@ trait PatcherMacros {
       }
   }
 
-  def capturePatcherConfig(cfgTpe: Type, config: PatcherConfig = PatcherConfig()): PatcherConfig = {
-
-    import PatcherCfg._
-
-    val emptyT = typeOf[Empty]
-    val enableIncompletePatches = typeOf[EnableIncompletePatches[_]].typeConstructor
-
-    if (cfgTpe =:= emptyT) {
-      config
-    } else if (cfgTpe.typeConstructor =:= enableIncompletePatches) {
-      capturePatcherConfig(cfgTpe.typeArgs.head, config.copy(enableIncompletePatches = true))
-    } else {
-      // $COVERAGE-OFF$
-      c.abort(c.enclosingPosition, "Bad internal patcher config type shape!")
-      // $COVERAGE-ON$
-    }
-  }
 }
