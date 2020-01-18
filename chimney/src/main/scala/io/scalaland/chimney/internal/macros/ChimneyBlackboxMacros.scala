@@ -9,7 +9,6 @@ import scala.reflect.macros.blackbox
 class ChimneyBlackboxMacros(val c: blackbox.Context)
     extends PatcherMacros
     with TransformerMacros
-    with DslBlackboxMacros
     with DerivationGuards
     with MacroUtils
     with DerivationConfig
@@ -28,7 +27,11 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
     genTransformer[From, To](TransformerConfig(definitionScope = Some((weakTypeOf[From], weakTypeOf[To]))))
   }
 
+  def patchImpl[T: c.WeakTypeTag, Patch: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[T] = {
+    c.Expr[T](expandPatch[T, Patch, C])
+  }
+
   def derivePatcherImpl[T: c.WeakTypeTag, Patch: c.WeakTypeTag]: c.Expr[Patcher[T, Patch]] = {
-    genPatcher[T, Patch]()
+    genPatcher[T, Patch](PatcherConfig())
   }
 }

@@ -1,7 +1,7 @@
 package io.scalaland.chimney
 
-import utest._
 import io.scalaland.chimney.dsl._
+import utest._
 
 object PatcherSpec extends TestSuite {
 
@@ -15,7 +15,7 @@ object PatcherSpec extends TestSuite {
       val foo = Foo(0, "", 0.0)
       val bar = Bar(10.0, 10)
 
-      foo.patchWith(bar) ==>
+      foo.patchUsing(bar) ==>
         Foo(10, "", 10.0)
     }
 
@@ -25,8 +25,27 @@ object PatcherSpec extends TestSuite {
 
       val update = UpdateDetails("xyz@def.com", 123123123L)
 
-      exampleUser.patchWith(update) ==>
+      exampleUser.patchUsing(update) ==>
         User(10, Email("xyz@def.com"), Phone(123123123L))
+    }
+
+    "patch with incomplete patches" - {
+
+      import TestDomain._
+
+      case class IncompletePatch(phone: Phone, address: String)
+      // note address doesn't exist in User
+
+      val patch = IncompletePatch(Phone(4321L), "Unknown")
+
+      compileError("exampleUser.patchUsing(patch)")
+        .check("", "Field named 'address' not found in target patching type io.scalaland.chimney.TestDomain.User!")
+
+      exampleUser
+        .using(patch)
+        .enableIncompletePatches
+        .patch ==>
+        exampleUser.copy(phone = patch.phone)
     }
 
     "support optional types in patch" - {
@@ -37,7 +56,7 @@ object PatcherSpec extends TestSuite {
 
       val update = UserPatch(email = Some("updated@example.com"), phone = None)
 
-      exampleUser.patchWith(update) ==>
+      exampleUser.patchUsing(update) ==>
         User(10, Email("updated@example.com"), Phone(1234567890L))
     }
 
@@ -48,7 +67,7 @@ object PatcherSpec extends TestSuite {
       case class UserPatch(email: String, phone: Option[Phone])
       val update = UserPatch(email = "updated@example.com", phone = None)
 
-      exampleUser.patchWith(update) ==>
+      exampleUser.patchUsing(update) ==>
         User(10, Email("updated@example.com"), Phone(1234567890L))
     }
 
@@ -59,7 +78,7 @@ object PatcherSpec extends TestSuite {
       case class UserPatch(email: String, phone: Option[Phone])
       val update = UserPatch(email = "updated@example.com", phone = None)
 
-      exampleUserWithOptionalField.patchWith(update) ==>
+      exampleUserWithOptionalField.patchUsing(update) ==>
         UserWithOptionalField(10, Email("updated@example.com"), None)
     }
 
@@ -72,7 +91,7 @@ object PatcherSpec extends TestSuite {
       case class UserPatch(email: String, phone: Option[Option[Phone]])
       val update = UserPatch(email = "updated@example.com", phone = None)
 
-      exampleUserWithOptionalField.patchWith(update) ==>
+      exampleUserWithOptionalField.patchUsing(update) ==>
         UserWithOptionalField(10, Email("updated@example.com"), Some(Phone(1234567890L)))
     }
   }

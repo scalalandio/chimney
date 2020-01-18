@@ -22,7 +22,11 @@ object dsl {
     final def using[P](patch: P): PatcherInto[T, P, PatcherCfg.Empty] =
       new PatcherInto[T, P, PatcherCfg.Empty](obj, patch)
 
-    final def patchWith[P](patch: P)(implicit patcher: Patcher[T, P]): T =
+    final def patchUsing[P](patch: P)(implicit patcher: Patcher[T, P]): T =
       patcher.patch(obj, patch)
+
+    @deprecated("please use .patchUsing", "0.4.0")
+    final def patchWith[P](patch: P)(implicit patcher: Patcher[T, P]): T =
+      obj.patchUsing(patch)
   }
 }
