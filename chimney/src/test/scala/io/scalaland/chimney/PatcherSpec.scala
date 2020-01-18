@@ -29,21 +29,24 @@ object PatcherSpec extends TestSuite {
         User(10, Email("xyz@def.com"), Phone(123123123L))
     }
 
-    "patch with incomplete patches" - {
+    "patch with redundant fields" - {
 
       import TestDomain._
 
-      case class IncompletePatch(phone: Phone, address: String)
+      case class PatchWithRedundantField(phone: Phone, address: String)
       // note address doesn't exist in User
 
-      val patch = IncompletePatch(Phone(4321L), "Unknown")
+      val patch = PatchWithRedundantField(Phone(4321L), "Unknown")
 
       compileError("exampleUser.patchUsing(patch)")
-        .check("", "Field named 'address' not found in target patching type io.scalaland.chimney.TestDomain.User!")
+        .check(
+          "",
+          "Field named 'address' not found in target patching type io.scalaland.chimney.TestDomain.User!"
+        )
 
       exampleUser
         .using(patch)
-        .enableIncompletePatches
+        .ignoreRedundantPatcherFields
         .patch ==>
         exampleUser.copy(phone = patch.phone)
     }

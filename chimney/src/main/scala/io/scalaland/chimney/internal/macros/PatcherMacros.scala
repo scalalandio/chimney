@@ -55,7 +55,7 @@ trait PatcherMacros extends PatcherConfiguration {
               transformOptionalValue(fnPatch, pParam, tParam, fnObj)
             )
           case None =>
-            if (config.enableIncompletePatches) {
+            if (config.ignoreRedundantPatcherFields) {
               None
             } else {
               Some(
