@@ -7,6 +7,7 @@ sealed abstract class PatcherCfg
 object PatcherCfg {
   final class Empty extends PatcherCfg
   final class IgnoreRedundantPatcherFields[C <: PatcherCfg] extends PatcherCfg
+  final class IgnoreNoneInPatch[C <: PatcherCfg] extends PatcherCfg
 }
 
 trait PatcherConfiguration {
@@ -16,6 +17,7 @@ trait PatcherConfiguration {
   import c.universe._
 
   case class PatcherConfig(
+      ignoreNoneInPatch: Boolean = false,
       ignoreRedundantPatcherFields: Boolean = false
   )
 
@@ -25,11 +27,14 @@ trait PatcherConfiguration {
 
     val emptyT = typeOf[Empty]
     val ignoreRedundantPatcherFields = typeOf[IgnoreRedundantPatcherFields[_]].typeConstructor
+    val ignoreNoneInPatch = typeOf[IgnoreNoneInPatch[_]].typeConstructor
 
     if (cfgTpe =:= emptyT) {
       config
     } else if (cfgTpe.typeConstructor =:= ignoreRedundantPatcherFields) {
       capturePatcherConfig(cfgTpe.typeArgs.head, config.copy(ignoreRedundantPatcherFields = true))
+    } else if (cfgTpe.typeConstructor =:= ignoreNoneInPatch) {
+      capturePatcherConfig(cfgTpe.typeArgs.head, config.copy(ignoreNoneInPatch = true))
     } else {
       // $COVERAGE-OFF$
       c.abort(c.enclosingPosition, "Bad internal patcher config type shape!")

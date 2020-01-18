@@ -97,6 +97,31 @@ object PatcherSpec extends TestSuite {
       exampleUserWithOptionalField.patchUsing(update) ==>
         UserWithOptionalField(10, Email("updated@example.com"), Some(Phone(1234567890L)))
     }
+
+    "allow ignoring nones in patches" - {
+
+      import TestDomain._
+
+      case class Foo(x: Option[Int])
+      case class PhonePatch(phone: Option[Phone])
+      case class IntPatch(phone: Option[Long])
+
+      exampleUserWithOptionalField.patchUsing(PhonePatch(None)) ==>
+        exampleUserWithOptionalField.copy(phone = None)
+
+      exampleUserWithOptionalField.patchUsing(IntPatch(None)) ==>
+        exampleUserWithOptionalField.copy(phone = None)
+
+      exampleUserWithOptionalField
+        .using(PhonePatch(None))
+        .ignoreNoneInPatch
+        .patch ==> exampleUserWithOptionalField
+
+      exampleUserWithOptionalField
+        .using(IntPatch(None))
+        .ignoreNoneInPatch
+        .patch ==> exampleUserWithOptionalField
+    }
   }
 
 }

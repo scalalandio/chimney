@@ -45,24 +45,7 @@ trait PatcherMacros extends PatcherConfiguration {
       val fnPatch = c.internal.reificationSupport.freshTermName("patch$")
 
       val targetMapping = patchParams.toSeq.flatMap { pParam =>
-        tParamsByName.get(pParam.name) match {
-          case Some(tParam) if pParam.returnType <:< tParam.returnType =>
-            Some(
-              Right(q"$fnPatch.${pParam.name}")
-            )
-          case Some(tParam) =>
-            Some(
-              transformOptionalValue(fnPatch, pParam, tParam, fnObj)
-            )
-          case None =>
-            if (config.ignoreRedundantPatcherFields) {
-              None
-            } else {
-              Some(
-                Left(s"Field named '${pParam.name}' not found in target patching type $T!")
-              )
-            }
-        }
+        resolveFieldMapping(config, T, tParamsByName, fnObj, fnPatch, pParam)
       }
 
       if (targetMapping.exists(_.isLeft)) {
@@ -89,27 +72,66 @@ trait PatcherMacros extends PatcherConfiguration {
     }
   }
 
-  def transformOptionalValue(
-      fnPatch: c.universe.TermName,
-      pParam: c.universe.MethodSymbol,
-      tParam: c.universe.MethodSymbol,
-      fnObj: c.universe.TermName
-  ): Either[String, Tree] = {
-    expandTransformerTree(q"$fnPatch.${pParam.name}", TransformerConfig())(pParam.returnType, tParam.returnType).left
-      .flatMap { errors =>
-        if (pParam.returnType.typeConstructor =:= optionTpe.typeConstructor) {
-          expandTransformerTree(q"$fnPatch.${pParam.name}.get", TransformerConfig())(
-            pParam.returnType.typeArgs.head,
-            tParam.returnType
-          ).mapRight { innerTransformerTree =>
-              q"if($fnPatch.${pParam.name}.isDefined) { $innerTransformerTree } else { $fnObj.${pParam.name} }"
-            }
-            .mapLeft(errors ++ _)
-            .mapLeft(DerivationError.printErrors)
-        } else {
-          Left(DerivationError.printErrors(errors))
-        }
-      }
-  }
+  def resolveFieldMapping(
+      config: PatcherConfig,
+      T: Type,
+      tParamsByName: Map[TermName, MethodSymbol],
+      fnObj: TermName,
+      fnPatch: TermName,
+      pParam: MethodSymbol
+  ): Option[Either[String, Tree]] = {
 
+    def patchField = q"$fnPatch.${pParam.name}"
+    def entityField = q"$fnObj.${pParam.name}"
+
+    tParamsByName.get(pParam.name) match {
+      case Some(tParam)
+          if config.ignoreNoneInPatch &&
+            bothOptions(pParam.returnType, tParam.returnType) =>
+        Some {
+          if (pParam.returnType <:< tParam.returnType) {
+            Right(q"$patchField.orElse($entityField)")
+          } else {
+            expandTransformerTree(patchField, TransformerConfig())(
+              pParam.returnType,
+              tParam.returnType
+            ).mapRight { transformerTree =>
+                q"$transformerTree.orElse($entityField)"
+              }
+              .mapLeft(DerivationError.printErrors)
+          }
+        }
+      case Some(tParam) if pParam.returnType <:< tParam.returnType =>
+        Some(Right(patchField))
+      case Some(tParam) =>
+        Some(
+          expandTransformerTree(patchField, TransformerConfig())(
+            pParam.returnType,
+            tParam.returnType
+          ).left
+            .flatMap { errors =>
+              if (isOption(pParam.returnType)) {
+                expandTransformerTree(q"$patchField.get", TransformerConfig())(
+                  pParam.returnType.typeArgs.head,
+                  tParam.returnType
+                ).mapRight { innerTransformerTree =>
+                    q"if($patchField.isDefined) { $innerTransformerTree } else { $entityField }"
+                  }
+                  .mapLeft(errors ++ _)
+                  .mapLeft(DerivationError.printErrors)
+              } else {
+                Left(DerivationError.printErrors(errors))
+              }
+            }
+        )
+      case None =>
+        if (config.ignoreRedundantPatcherFields) {
+          None
+        } else {
+          Some(
+            Left(s"Field named '${pParam.name}' not found in target patching type $T!")
+          )
+        }
+    }
+  }
 }
