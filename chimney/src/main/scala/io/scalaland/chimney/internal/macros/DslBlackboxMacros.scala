@@ -104,7 +104,25 @@ trait DslBlackboxMacros {
       )
     } else {
       // $COVERAGE-OFF$
-      c.abort(c.enclosingPosition, "Bad internal config type shape!")
+      c.abort(c.enclosingPosition, "Bad internal transformer config type shape!")
+      // $COVERAGE-ON$
+    }
+  }
+
+  def capturePatcherConfig(cfgTpe: Type, config: PatcherConfig = PatcherConfig()): PatcherConfig = {
+
+    import PatcherCfg._
+
+    val emptyT = typeOf[Empty]
+    val enableIncompletePatches = typeOf[EnableIncompletePatches[_]].typeConstructor
+
+    if (cfgTpe =:= emptyT) {
+      config
+    } else if (cfgTpe.typeConstructor =:= enableIncompletePatches) {
+      capturePatcherConfig(cfgTpe.typeArgs.head, config.copy(enableIncompletePatches = true))
+    } else {
+      // $COVERAGE-OFF$
+      c.abort(c.enclosingPosition, "Bad internal patcher config type shape!")
       // $COVERAGE-ON$
     }
   }
