@@ -12,19 +12,19 @@ final class TransformerInto[From, To, C <: TransformerCfg](
 ) {
 
   def disableDefaultValues: TransformerInto[From, To, DisableDefaultValues[C]] =
-    new TransformerInto(source, td.disableDefaultValues)
+    this.asInstanceOf[TransformerInto[From, To, DisableDefaultValues[C]]]
 
   def enableBeanGetters: TransformerInto[From, To, EnableBeanGetters[C]] =
-    new TransformerInto(source, td.enableBeanGetters)
+    this.asInstanceOf[TransformerInto[From, To, EnableBeanGetters[C]]]
 
   def enableBeanSetters: TransformerInto[From, To, EnableBeanSetters[C]] =
-    new TransformerInto(source, td.enableBeanSetters)
+    this.asInstanceOf[TransformerInto[From, To, EnableBeanSetters[C]]]
 
   def enableOptionDefaultsToNone: TransformerInto[From, To, EnableOptionDefaultsToNone[C]] =
-    new TransformerInto(source, td.enableOptionDefaultsToNone)
+    this.asInstanceOf[TransformerInto[From, To, EnableOptionDefaultsToNone[C]]]
 
   def enableUnsafeOption: TransformerInto[From, To, EnableUnsafeOption[C]] =
-    new TransformerInto(source, td.enableUnsafeOption)
+    this.asInstanceOf[TransformerInto[From, To, EnableUnsafeOption[C]]]
 
   def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[From, To, _] =
     macro TransformerIntoWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
