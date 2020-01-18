@@ -177,7 +177,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandOptions(srcPrefixTree: Tree, config: TransformerConfig)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandOptions(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val fromInnerT = From.typeArgs.head
     val toInnerT = To.typeArgs.head
@@ -196,7 +199,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandEithers(srcPrefixTree: Tree, config: TransformerConfig)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandEithers(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val List(fromLeftT, fromRightT) = From.typeArgs
     val List(toLeftT, toRightT) = To.typeArgs
@@ -246,7 +252,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandMaps(srcPrefixTree: Tree, config: TransformerConfig)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandMaps(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val List(fromKeyT, fromValueT) = From.typeArgs
     val List(toKeyT, toValueT) = To.typeArgs

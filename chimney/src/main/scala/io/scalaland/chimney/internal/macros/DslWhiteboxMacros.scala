@@ -64,7 +64,8 @@ trait DslWhiteboxMacros {
     val singletonFromTpe = c.internal.constantType(Constant(fieldNameFrom.decodedName.toString))
     val singletonToTpe = c.internal.constantType(Constant(fieldNameTo.decodedName.toString))
 
-    val newCfgTpe = tq"_root_.io.scalaland.chimney.internal.TransformerCfg.FieldRelabelled[$singletonFromTpe, $singletonToTpe, $C]"
+    val newCfgTpe =
+      tq"_root_.io.scalaland.chimney.internal.TransformerCfg.FieldRelabelled[$singletonFromTpe, $singletonToTpe, $C]"
 
     q"${c.prefix.tree}.asInstanceOf[_root_.io.scalaland.chimney.internal.dsl.TransformerDefinition[$From, $To, $newCfgTpe]]"
   }
