@@ -25,7 +25,7 @@ trait DslWhiteboxMacros {
     q"""
       {
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.internal.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides.updated($fieldNameLit, $value), $fn.instances)
+        new _root_.io.scalaland.chimney.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides.updated($fieldNameLit, $value), $fn.instances)
       }
     """
   }
@@ -48,7 +48,7 @@ trait DslWhiteboxMacros {
     q"""
       {
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.internal.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides.updated($fieldNameLit, $map), $fn.instances)
+        new _root_.io.scalaland.chimney.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides.updated($fieldNameLit, $map), $fn.instances)
       }
     """
   }
@@ -67,7 +67,7 @@ trait DslWhiteboxMacros {
     val newCfgTpe =
       tq"_root_.io.scalaland.chimney.internal.TransformerCfg.FieldRelabelled[$singletonFromTpe, $singletonToTpe, $C]"
 
-    q"${c.prefix.tree}.asInstanceOf[_root_.io.scalaland.chimney.internal.dsl.TransformerDefinition[$From, $To, $newCfgTpe]]"
+    q"${c.prefix.tree}.asInstanceOf[_root_.io.scalaland.chimney.dsl.TransformerDefinition[$From, $To, $newCfgTpe]]"
   }
 
   def expandCoproductInstance[From: c.WeakTypeTag, To: c.WeakTypeTag, Inst: c.WeakTypeTag, C: c.WeakTypeTag](
@@ -88,7 +88,7 @@ trait DslWhiteboxMacros {
     q"""
       {
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.internal.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides, $fn.instances.updated(($fullInstName, $fullTargetName), $f))
+        new _root_.io.scalaland.chimney.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides, $fn.instances.updated(($fullInstName, $fullTargetName), $f))
       }
     """
   }

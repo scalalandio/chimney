@@ -1,13 +1,11 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.PatcherCfg
-import io.scalaland.chimney.internal.TransformerCfg
-import io.scalaland.chimney.internal.dsl.{PatcherUsing, TransformerDefinition, TransformerInto}
+import io.scalaland.chimney.internal.{PatcherCfg, TransformerCfg}
 
 import scala.language.experimental.macros
 
-object dsl {
-
+package object dsl {
+  
   implicit class TransformerOps[From](private val source: From) extends AnyVal {
 
     final def into[To]: TransformerInto[From, To, TransformerCfg.Empty] =

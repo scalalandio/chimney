@@ -17,7 +17,7 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslWh
     val fn = TermName(c.freshName("ti"))
     q"""
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.internal.dsl.TransformerInto($fn.source, $fn.td.withFieldConst($selector, $value))
+        new _root_.io.scalaland.chimney.dsl.TransformerInto($fn.source, $fn.td.withFieldConst($selector, $value))
      """
   }
 
@@ -50,7 +50,7 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslWh
     val fn = TermName(c.freshName("ti"))
     q"""
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.internal.dsl.TransformerInto($fn.source, $fn.td.withFieldComputed($selector, $map))
+        new _root_.io.scalaland.chimney.dsl.TransformerInto($fn.source, $fn.td.withFieldComputed($selector, $map))
      """
   }
 
@@ -86,7 +86,7 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslWh
     val fn = TermName(c.freshName("ti"))
     q"""
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.internal.dsl.TransformerInto($fn.source, $fn.td.withFieldRenamed($selectorFrom, $selectorTo))
+        new _root_.io.scalaland.chimney.dsl.TransformerInto($fn.source, $fn.td.withFieldRenamed($selectorFrom, $selectorTo))
      """
   }
 
@@ -122,7 +122,7 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslWh
     val fn = TermName(c.freshName("ti"))
     q"""
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.internal.dsl.TransformerInto($fn.source, $fn.td.withCoproductInstance($f))
+        new _root_.io.scalaland.chimney.dsl.TransformerInto($fn.source, $fn.td.withCoproductInstance($f))
      """
   }
 

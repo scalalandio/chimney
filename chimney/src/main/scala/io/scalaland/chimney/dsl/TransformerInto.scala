@@ -1,4 +1,4 @@
-package io.scalaland.chimney.internal.dsl
+package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.TransformerCfg._
 import io.scalaland.chimney.internal._
