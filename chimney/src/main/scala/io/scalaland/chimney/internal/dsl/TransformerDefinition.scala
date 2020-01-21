@@ -12,19 +12,19 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     val instances: Map[(String, String), Any]
 ) {
   def disableDefaultValues: TransformerDefinition[From, To, DisableDefaultValues[C]] =
-    new TransformerDefinition[From, To, DisableDefaultValues[C]](overrides, instances)
+    this.asInstanceOf[TransformerDefinition[From, To, DisableDefaultValues[C]]]
 
   def enableBeanGetters: TransformerDefinition[From, To, EnableBeanGetters[C]] =
-    new TransformerDefinition[From, To, EnableBeanGetters[C]](overrides, instances)
+    this.asInstanceOf[TransformerDefinition[From, To, EnableBeanGetters[C]]]
 
   def enableBeanSetters: TransformerDefinition[From, To, EnableBeanSetters[C]] =
-    new TransformerDefinition[From, To, EnableBeanSetters[C]](overrides, instances)
+    this.asInstanceOf[TransformerDefinition[From, To, EnableBeanSetters[C]]]
 
   def enableOptionDefaultsToNone: TransformerDefinition[From, To, EnableOptionDefaultsToNone[C]] =
-    new TransformerDefinition[From, To, EnableOptionDefaultsToNone[C]](overrides, instances)
+    this.asInstanceOf[TransformerDefinition[From, To, EnableOptionDefaultsToNone[C]]]
 
   def enableUnsafeOption: TransformerDefinition[From, To, EnableUnsafeOption[C]] =
-    new TransformerDefinition[From, To, EnableUnsafeOption[C]](overrides, instances)
+    this.asInstanceOf[TransformerDefinition[From, To, EnableUnsafeOption[C]]]
 
   def withFieldConst[T, U](selector: To => T, value: U): TransformerDefinition[From, To, _] =
     macro TransformerDefinitionWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
