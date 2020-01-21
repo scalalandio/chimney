@@ -2,7 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.internal.PatcherCfg
 import io.scalaland.chimney.internal.TransformerCfg
-import io.scalaland.chimney.internal.dsl.{PatcherInto, TransformerDefinition, TransformerInto}
+import io.scalaland.chimney.internal.dsl.{PatcherUsing, TransformerDefinition, TransformerInto}
 
 import scala.language.experimental.macros
 
@@ -19,8 +19,8 @@ object dsl {
 
   implicit class PatcherOps[T](private val obj: T) extends AnyVal {
 
-    final def using[P](patch: P): PatcherInto[T, P, PatcherCfg.Empty] =
-      new PatcherInto[T, P, PatcherCfg.Empty](obj, patch)
+    final def using[P](patch: P): PatcherUsing[T, P, PatcherCfg.Empty] =
+      new PatcherUsing[T, P, PatcherCfg.Empty](obj, patch)
 
     final def patchUsing[P](patch: P)(implicit patcher: Patcher[T, P]): T =
       patcher.patch(obj, patch)
