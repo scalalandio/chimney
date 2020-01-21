@@ -801,37 +801,6 @@ object DslSpec extends TestSuite {
         Bar1(1, Baz(Some(Bar1(2, Baz(None))))).transformInto[Bar2] ==> Bar2(Baz(Some(Bar2(Baz(None)))))
       }
     }
-
-    "support recursive data structures" - {
-
-      case class Foo(x: Option[Foo])
-      case class Bar(x: Option[Bar])
-
-      "defined by hand" - {
-        implicit def fooToBarTransformer: Transformer[Foo, Bar] = (foo: Foo) => {
-          Bar(foo.x.map(fooToBarTransformer.transform))
-        }
-
-        Foo(Some(Foo(None))).transformInto[Bar] ==> Bar(Some(Bar(None)))
-      }
-
-      "generated automatically" - {
-        implicit def fooToBarTransformer: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
-
-        Foo(Some(Foo(None))).transformInto[Bar] ==> Bar(Some(Bar(None)))
-      }
-
-      "support mutual recursion" - {
-
-        case class Baz[T](bar: Option[T])
-        case class Bar1(x: Int, foo: Baz[Bar1])
-        case class Bar2(foo: Baz[Bar2])
-
-        implicit def bar1ToBar2Transformer: Transformer[Bar1, Bar2] = Transformer.derive[Bar1, Bar2]
-
-        Bar1(1, Baz(Some(Bar1(2, Baz(None))))).transformInto[Bar2] ==> Bar2(Baz(Some(Bar2(Baz(None)))))
-      }
-    }
   }
 }
 
