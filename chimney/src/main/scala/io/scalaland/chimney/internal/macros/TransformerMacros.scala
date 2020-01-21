@@ -1,19 +1,48 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.utils.{DerivationGuards, EitherUtils, MacroUtils}
 import io.scalaland.chimney.internal._
+import io.scalaland.chimney.internal.utils.{DerivationGuards, EitherUtils, MacroUtils}
 
 import scala.reflect.macros.blackbox
 
-trait TransformerMacros {
-  this: DerivationGuards with MacroUtils with DerivationConfig with EitherUtils =>
+trait TransformerMacros extends TransformerConfiguration {
+  this: DerivationGuards with MacroUtils with EitherUtils =>
 
   val c: blackbox.Context
 
   import c.universe._
 
+  def buildDefinedTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {
+    val C = weakTypeOf[C]
+    val tdName = TermName(c.freshName("td"))
+    val config = captureTransformerConfig(C).copy(
+      transformerDefinitionPrefix = q"$tdName",
+      definitionScope = Some((weakTypeOf[From], weakTypeOf[To]))
+    )
+
+    val derivedTransformerTree = genTransformer[From, To](config).tree
+
+    q"""
+       val $tdName = ${c.prefix.tree}
+       $derivedTransformerTree
+    """
+  }
+
+  def expandTransform[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {
+    val C = weakTypeOf[C]
+    val tiName = TermName(c.freshName("ti"))
+    val config = captureTransformerConfig(C).copy(transformerDefinitionPrefix = q"$tiName.td")
+
+    val derivedTransformerTree = genTransformer[From, To](config).tree
+
+    q"""
+       val $tiName = ${c.prefix.tree}
+       $derivedTransformerTree.transform($tiName.source)
+    """
+  }
+
   def genTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag](
-      config: Config
+      config: TransformerConfig
   ): c.Expr[io.scalaland.chimney.Transformer[From, To]] = {
 
     val From = weakTypeOf[From]
@@ -51,7 +80,7 @@ trait TransformerMacros {
 
   def expandTransformerTree(
       srcPrefixTree: Tree,
-      config: Config
+      config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val localInstance: Option[Tree] =
@@ -120,7 +149,7 @@ trait TransformerMacros {
 
   def expandTargetWrappedInOption(
       srcPrefixTree: Tree,
-      config: Config
+      config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
     def toInnerT = To.typeArgs.head
     if (To <:< noneTpe) {
@@ -136,7 +165,7 @@ trait TransformerMacros {
 
   def expandSourceWrappedInOption(
       srcPrefixTree: Tree,
-      config: Config
+      config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
     if (From <:< noneTpe) {
       notSupportedDerivation(srcPrefixTree, From, To)
@@ -148,7 +177,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandOptions(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandOptions(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val fromInnerT = From.typeArgs.head
     val toInnerT = To.typeArgs.head
@@ -167,7 +199,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandEithers(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandEithers(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val List(fromLeftT, fromRightT) = From.typeArgs
     val List(toLeftT, toRightT) = To.typeArgs
@@ -217,7 +252,10 @@ trait TransformerMacros {
     }
   }
 
-  def expandMaps(srcPrefixTree: Tree, config: Config)(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  def expandMaps(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val List(fromKeyT, fromValueT) = From.typeArgs
     val List(toKeyT, toValueT) = To.typeArgs
@@ -244,7 +282,7 @@ trait TransformerMacros {
 
   def expandTraversableOrArray(
       srcPrefixTree: Tree,
-      config: Config
+      config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     val FromCollectionT = From.typeArgs.head
@@ -280,7 +318,7 @@ trait TransformerMacros {
 
   def expandSealedClasses(
       srcPrefixTree: Tree,
-      config: Config
+      config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     if (config.coproductInstances.contains((From.typeSymbol, To))) {
@@ -370,7 +408,7 @@ trait TransformerMacros {
 
   def expandDestinationTuple(
       srcPrefixTree: Tree,
-      config: Config
+      config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     var errors = Seq.empty[DerivationError]
@@ -406,7 +444,7 @@ trait TransformerMacros {
 
   def expandDestinationCaseClass(
       srcPrefixTree: Tree,
-      config: Config
+      config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
     var errors = Seq.empty[DerivationError]
@@ -461,7 +499,7 @@ trait TransformerMacros {
 
   def expandDestinationJavaBean(
       srcPrefixTree: Tree,
-      config: Config
+      config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
     var errors = Seq.empty[DerivationError]
 
@@ -506,7 +544,7 @@ trait TransformerMacros {
     }
   }
 
-  def resolveTargetArgTrees(srcPrefixTree: Tree, config: Config, From: Type, To: Type)(
+  def resolveTargetArgTrees(srcPrefixTree: Tree, config: TransformerConfig, From: Type, To: Type)(
       mapping: Iterable[(Target, Option[TargetResolution])]
   ): (Seq[DerivationError], Iterable[Tree]) = {
 
@@ -549,7 +587,7 @@ trait TransformerMacros {
     (errors, args)
   }
 
-  def resolveTarget(srcPrefixTree: Tree, config: Config, From: Type, To: Type)(
+  def resolveTarget(srcPrefixTree: Tree, config: TransformerConfig, From: Type, To: Type)(
       target: Target,
       fromGetters: Iterable[MethodSymbol],
       targetCaseClass: Option[ClassSymbol]
@@ -623,7 +661,7 @@ trait TransformerMacros {
     }
   }
 
-  def lookupAccessor(config: Config, target: Target, From: Type)(ms: MethodSymbol): Boolean = {
+  def lookupAccessor(config: TransformerConfig, target: Target, From: Type)(ms: MethodSymbol): Boolean = {
     val sourceName = ms.name.decodedName.toString
     if (config.enableBeanGetters) {
       val targetNameCapitalized = target.name.capitalize

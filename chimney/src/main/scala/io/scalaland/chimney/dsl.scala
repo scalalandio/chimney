@@ -1,24 +1,32 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.dsl.{TransformerDefinition, TransformerInto}
-import io.scalaland.chimney.internal._
+import io.scalaland.chimney.internal.PatcherCfg
+import io.scalaland.chimney.internal.TransformerCfg
+import io.scalaland.chimney.internal.dsl.{PatcherInto, TransformerDefinition, TransformerInto}
 
 import scala.language.experimental.macros
 
 object dsl {
 
-  implicit class TransformerOps[From](val source: From) extends AnyVal {
+  implicit class TransformerOps[From](private val source: From) extends AnyVal {
 
-    final def into[To]: TransformerInto[From, To, Empty] =
-      new TransformerInto[From, To, Empty](source, new TransformerDefinition[From, To, Empty](Map.empty, Map.empty))
+    final def into[To]: TransformerInto[From, To, TransformerCfg.Empty] =
+      new TransformerInto(source, new TransformerDefinition[From, To, TransformerCfg.Empty](Map.empty, Map.empty))
 
     final def transformInto[To](implicit transformer: Transformer[From, To]): To =
       transformer.transform(source)
   }
 
-  implicit class PatcherOps[T](val obj: T) extends AnyVal {
+  implicit class PatcherOps[T](private val obj: T) extends AnyVal {
 
-    final def patchWith[P](patch: P)(implicit patcher: Patcher[T, P]): T =
+    final def using[P](patch: P): PatcherInto[T, P, PatcherCfg.Empty] =
+      new PatcherInto[T, P, PatcherCfg.Empty](obj, patch)
+
+    final def patchUsing[P](patch: P)(implicit patcher: Patcher[T, P]): T =
       patcher.patch(obj, patch)
+
+    @deprecated("please use .patchUsing", "0.4.0")
+    final def patchWith[P](patch: P)(implicit patcher: Patcher[T, P]): T =
+      obj.patchUsing(patch)
   }
 }
