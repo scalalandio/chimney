@@ -1,8 +1,12 @@
-package io.scalaland.chimney.internal
+package io.scalaland.chimney.internal.macros
+
+import io.scalaland.chimney.internal.utils.MacroUtils
 
 import scala.reflect.macros.whitebox
 
-class ChimneyWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros with MacroUtils {
+class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslWhiteboxMacros with MacroUtils {
+
+  import c.universe._
 
   def withFieldConstImpl[From: c.WeakTypeTag, To: c.WeakTypeTag, T: c.WeakTypeTag, U: c.WeakTypeTag, C: c.WeakTypeTag](
       selector: c.Tree,

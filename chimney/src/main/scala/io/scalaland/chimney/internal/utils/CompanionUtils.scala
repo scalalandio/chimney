@@ -1,6 +1,6 @@
-package io.scalaland.chimney.internal
+package io.scalaland.chimney.internal.utils
 
-import scala.reflect.macros.{runtime, blackbox}
+import scala.reflect.macros.{blackbox, runtime}
 import scala.tools.nsc.Global
 
 trait CompanionUtils {

@@ -131,6 +131,74 @@ object IssuesSpec extends TestSuite {
       Foo("a").into[Bar].withFieldRenamed(_.`a.b`, _.b).transform
     }
 
+    "fix issue #105" - {
+
+      case class Foo(a: String, b: Int, c: Int)
+
+      "fix 'wrong forward definition' when defining implicit val transformer" - {
+        case class Bar(a: String, b: Int, x: Long)
+
+        implicit val fooBarTransformer: Transformer[Foo, Bar] =
+          Transformer
+            .define[Foo, Bar]
+            .withFieldComputed(_.x, _.c.toLong * 2)
+            .buildTransformer
+
+        Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1, 6)
+      }
+
+      "fix stack overflow when defining implicit def transformer" - {
+        case class Bar(a: String, b: Int, x: Long)
+
+        implicit def fooBarTransformer: Transformer[Foo, Bar] =
+          Transformer
+            .define[Foo, Bar]
+            .withFieldComputed(_.x, _.c.toLong * 2)
+            .buildTransformer
+
+        Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1, 6)
+      }
+
+      "fix stack overflow when defining implicit val transformer wrapped in object" - {
+        case class Bar(a: String, b: Int, x: Long)
+
+        object TransformerInstances {
+          implicit val fooBarTransformer: Transformer[Foo, Bar] =
+            Transformer
+              .define[Foo, Bar]
+              .withFieldComputed(_.x, _.c.toLong * 2)
+              .buildTransformer
+        }
+
+        import TransformerInstances._
+
+        Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1, 6)
+        Foo("a", 1, 3).transformInto[Bar](fooBarTransformer) ==> Bar("a", 1, 6)
+      }
+
+      "fix 'wrong forward reference' when assigning .derive to local transformer instance" - {
+        case class Bar(a: String, b: Int)
+
+        implicit val fooBarTransformer: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
+
+        Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1)
+      }
+
+      "fix stack overflow when assigning .derive to local transformer instance wrapped in object" - {
+        case class Bar(a: String, b: Int)
+
+        object TransformerInstances {
+          implicit val fooBarTransformer: Transformer[Foo, Bar] =
+            Transformer.derive[Foo, Bar]
+        }
+
+        import TransformerInstances._
+
+        Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1)
+        Foo("a", 1, 3).transformInto[Bar](fooBarTransformer) ==> Bar("a", 1)
+      }
+    }
+
     "fix issue #108" - {
       Issue108.result ==> Issue108.expected
     }
