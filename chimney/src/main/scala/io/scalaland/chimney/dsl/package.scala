@@ -5,7 +5,7 @@ import io.scalaland.chimney.internal.{PatcherCfg, TransformerCfg}
 import scala.language.experimental.macros
 
 package object dsl {
-  
+
   implicit class TransformerOps[From](private val source: From) extends AnyVal {
 
     final def into[To]: TransformerInto[From, To, TransformerCfg.Empty] =
