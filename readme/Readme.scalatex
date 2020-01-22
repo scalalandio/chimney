@@ -559,8 +559,9 @@
       @sect{Optional patch values}
         @p
           It is possible to patch using optional values of type @code{Option[T]} as long as the
-          transformer is available for @code{T}. When the value is present, it will be transformed,
-          otherwise it will be ignored and the field will be left as it was in the original object.
+          transformer is available for @code{T}. If the value is present (@code{Some}),
+          it's used for patching field in target object; otherwise (@code{None}) it's' ignored
+          and the field value is copied from the original object.
           Let us consider the following patch for the class @code{User} defined above:
 
         @hl.scala
@@ -578,6 +579,87 @@
         @p
           The @code{phone} remained the same as in the @code{exampleUser}, while the optional
           e-mail string got transformed to an @code{Email} instance.
+
+      @sect{Option[T] on both sides}
+        @p
+          An interesting case appears when both patch case class and patched
+          object define fields @code{f: Option[T]}. Depending on values
+          of @code{f} in patched object and patch, we would like to
+          apply following semantic table.
+
+        @table(`class` := "pure-table")
+          @tr
+            @th
+              @code{patchedObject.f}
+            @th
+              @code{patch.f}
+            @th
+              patching result
+          @tr
+            @td
+              @code{None}
+            @td
+              @code{Some(value)}
+            @td
+              @code{Some(value)}
+          @tr
+            @td
+              @code{Some(value1)}
+            @td
+              @code{Some(value2)}
+            @td
+              @code{Some(value2)}
+          @tr
+            @td
+              @code{None}
+            @td
+              @code{None}
+            @td
+              @code{None}
+          @tr
+            @td
+              @code{Some(value)}
+            @td
+              @code{None}
+            @td
+              @code{None} or @code{Some(value)}?
+
+        @p
+          When a @code{patch.f} contains some value, it's immediately used for
+          replacing field in target object (rows 1 and 2), regardless of original
+          object field value.
+          When both field are @code{None}s, patching result is also @code{None}
+          (row 3).
+
+        @p
+          But if original object contains a some value, but patch comes
+          with a @code{None}, we can do two things:
+
+          @ul
+            @li
+              clear value in target object (replace it with @code{None})
+            @li
+              or ignore updating this particular field (as in previous section)
+
+          Both choices may have perfect sense, depending on the context.
+          By default, Chimney does the former (clears the value), but it
+          also gives a simple way to always ignore @code{None}s from patch.
+
+        @hl.scala
+          case class User(name: Option[String], age: Option[Int])
+          case class UserPatch(name: Option[String], age: Option[Int])
+
+          val user = User(Some("John"), Some(30))
+          val userPatch = UserPatch(None, None)
+
+          user.patchUsing(userPatch)
+          // clears both fields: User(None, None)
+
+          user
+            .using(userPatch)
+            .ignoreNoneInPatch
+            .patch
+          // ignores updating both fields: User(Some("John"), Some(30))
 
     @sect{Java beans}
       Beside Scala case classes, Chimney supports transformation of Java beans.
