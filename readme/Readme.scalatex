@@ -76,6 +76,8 @@
           excellent error messages
         @li
           minimal overhead on compilation time
+        @li
+          a way to express custom transformation logic
 
   @sect{Getting started}
     @p
@@ -311,14 +313,17 @@
         want to bypass Chimney derivation mechanism, you can always fall back to a simple
         function that you can plug into the Chimney transformation.
 
+      @p
+        The library defines a type class @code{Transformer}:
+
       @hl.scala
         trait Transformer[From, To] {
           def transform(src: From): To
         }
 
       @p
-        The library defines a trait @code{Transformer}. You can plug that transformer in
-        by providing implicit instance in a local context.
+        You can plug that your own transformer in by providing implicit instance in
+        a local context.
 
       @hl.scala
         import io.scalaland.chimney.dsl._
@@ -349,6 +354,62 @@
         //   v2.User(1, "Steve", List(Address("Love street", "27000"))),
         //   v2.User(2, "Anna", List(Address("Broadway", "00321")))
         // )
+
+      As we can see, Chimney correctly picked and used implicit
+      @code{Transformer[v1.User, v2.User]} defined locally in
+      transformation between list of users.
+
+      But is it really a necessity to define custom transformer
+      completely manually?
+
+      @sect{Transformer definition DSL}
+        @p
+          One can think that if we only need to provide function implementation
+          of type @code{v1.User => v2.User}, why not use Chimney's DSL in order
+          to generate the transformation?
+
+        @hl.scala
+          implicit val userV2toV2: Transformer[v1.User, v2.User] =
+            (user: v1.User) => user
+              .into[v2.User]
+              .withFieldComputed(_.addresses, u => List(v2.Address(u.street, u.postalCode)))
+              .transform
+
+        @p
+          While it looks reasonably, it will not work as expected :(
+
+        @p
+          Chimney's macro, before trying to derive any transformer, tries to
+          find instance of required transformer in implicit scope. Unfortunately,
+          it will pick @code{userV2toV2}, because types match, this value is
+          marked as implicit and is available in macro expansion scope. Depending
+          on few details, it will either end up as compilation error, or
+          will lead to @code{StackOverflowError} at runtime.
+
+        @p
+          Since version 0.4.0 there is a simple solution to this problem.
+
+        @hl.scala
+          implicit val userV2toV2: Transformer[v1.User, v2.User] =
+            Transformer.define[v1.User, v2.User]
+              .withFieldComputed(_.addresses, u => List(v2.Address(u.street, u.postalCode)))
+              .buildTransformer
+
+        @p
+          We need to use special syntax @code{Transformer.define[From, To]}
+          which introduces us to new transformer builder between types
+          @code{From} and @code{To}. In transformer builder we can use
+          all operations available to usual transformer DSL. The only
+          difference is that we don't call @code{.transform} at the end
+          (since we don't transform value in place), but
+          @code{buildTransformer} (because we generate transformer here).
+          Such generated transformer is semantically equivalent to
+          hand-written transformer from previous section.
+
+        @p
+          Chimney solves self reference implicit problem by not looking
+          for implicit instance for @code{Transformer[From, To]} when
+          using transformer builder  @code{Transformer.define[From, To]}.
 
     @sect{Coproducts support}
       @p
