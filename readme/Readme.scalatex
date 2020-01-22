@@ -206,7 +206,6 @@
         Providing the value anyway for such case would just ignore the default from case class.
 
       @sect{Disabling default values}
-
         @p
           It is possible to disable lookup for default values and require them to be passed explicitly,
           using @code{.disableDefaultValues} operation.
@@ -306,7 +305,6 @@
         // FooV2(5, "test", None)
 
   @sect{Advanced techniques}
-
     @sect{Custom transformations}
       @p
         In case the transformation is relatively complex or if for some reason you just
@@ -473,7 +471,6 @@
           e-mail string got transformed to an @code{Email} instance.
 
     @sect{Java beans}
-
       Beside Scala case classes, Chimney supports transformation of Java beans.
 
       @sect{Reading from Java beans}
@@ -509,7 +506,6 @@
           perform side effects in its body.
 
       @sect{Writing to Java beans}
-
         @p
           Dual to reading, Chimney supports transforming types into Java beans.
 
@@ -560,12 +556,10 @@
           bean.setFlag(obj.flag)
 
         @sect{Limitations}
-
           @p
             Currently it's not possible to override or provide values for missing setters.
 
     @sect{Unsafe option}
-
       Chimney supports opt-in unsafe transformation from optional types into non-optional types.
 
       @p
