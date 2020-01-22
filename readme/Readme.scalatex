@@ -531,6 +531,31 @@
         values in update form. Chimney was able to derive transformers for each patched
         field, so it was able to successfully derive a patcher.
 
+      @sect{Redundant fields in patch}
+        @p
+          When patch case class contains a field that does not exist
+          in patched object, Chimney will not be able to generate patcher.
+
+        @hl.scala
+          case class UserUpdateForm2(email: String, phone: Long, address: String)
+
+          user.patchUsing(UserUpdateForm2("xyz@@domain.com", 123123123L, "some address"))
+          // Field named 'address' not found in target patching type User
+
+        @p
+          This default behavior is intentional to prevent silent oversight
+          of typos in patcher field names.
+
+        @p
+          But there is a way to ignore redundant patcher fields explicitly.
+
+        @hl.scala
+          user
+            .using(UserUpdateForm2("xyz@@domain.com", 123123123L, "some address"))
+            .ignoreRedundantPatcherFields
+            .patch
+          // User(10, Email("xyz@@domain.com"), Phone(123123123L))
+
       @sect{Optional patch values}
         @p
           It is possible to patch using optional values of type @code{Option[T]} as long as the
