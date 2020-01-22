@@ -522,7 +522,7 @@
         val user = User(10, Email("abc@@domain.com"), Phone(1234567890L))
         val updateForm = UserUpdateForm("xyz@@domain.com", 123123123L)
 
-        user.patchWith(updateForm)
+        user.patchUsing(updateForm)
         // User(10, Email("xyz@@domain.com"), Phone(123123123L))
 
       @p
@@ -547,7 +547,7 @@
         @hl.scala
           val update = UserPatch(email = Some("updated@@example.com"), phone = None)
 
-          exampleUser.patchWith(update)
+          exampleUser.patchUsing(update)
           //  User(10, Email("updated@@example.com"), Phone(1234567890L))
 
         @p
