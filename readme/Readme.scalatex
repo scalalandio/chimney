@@ -411,6 +411,29 @@
           for implicit instance for @code{Transformer[From, To]} when
           using transformer builder  @code{Transformer.define[From, To]}.
 
+    @sect{Recursive data types}
+      @p
+        Chimney can generate transformers between recursive data structures.
+        Consider following example.
+
+      @hl.scala
+        case class Foo(x: Option[Foo])
+        case class Bar(x: Option[Bar])
+
+      @p
+        We would like to define transformer instance which would be able
+        to convert a value @code{Foo(Some(Foo(None)))} to @code{Bar(Some(Bar(None)))}.
+        In order to avoid aforementioned issues with self-referencing, you
+        must define your recursive transformer instance as @code{implicit def}
+        or @code{implicit lazy val}.
+
+      @hl.scala
+        implicit def fooToBarTransformer: Transformer[Foo, Bar] =
+          Transformer.derive[Foo, Bar] // or Transformer.define[Foo, Bar].buildTransformer
+
+        Foo(Some(Foo(None))).transformInto[Bar]
+        // Bar(Some(Bar(None)))
+
     @sect{Coproducts support}
       @p
         With Chimney you can not only transform case classes, but sealed trait hierarchies
