@@ -322,7 +322,7 @@
         }
 
       @p
-        You can plug that your own transformer in by providing implicit instance in
+        You can plug your own transformer in by providing implicit instance in
         a local context.
 
       @hl.scala
