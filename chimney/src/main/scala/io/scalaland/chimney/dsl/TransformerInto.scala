@@ -11,8 +11,8 @@ import scala.language.experimental.macros
   *
   * @param  source object to transform
   * @param  td     transformer definition
-  * @tparam From   data type that will be used as input
-  * @tparam To     data type that will be used as output
+  * @tparam From   type of input value
+  * @tparam To     type of output value
   * @tparam C      type-level encoded config
   */
 final class TransformerInto[From, To, C <: TransformerCfg](

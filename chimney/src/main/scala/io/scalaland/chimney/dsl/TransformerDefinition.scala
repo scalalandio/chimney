@@ -9,8 +9,8 @@ import scala.language.experimental.macros
 
 /** Allows customization of [[io.scalaland.chimney.Transformer]] derivation
   *
-  * @tparam From data type that will be used as input
-  * @tparam To   data type that will be used as output
+  * @tparam From type of input value
+  * @tparam To   type of output value
   * @tparam C    type-level encoded config
   */
 final class TransformerDefinition[From, To, C <: TransformerCfg](

@@ -8,8 +8,8 @@ import scala.language.experimental.macros
 
 /** Maps data from one type `From` into another `To`.
   *
-  * @tparam From data type that will be used as input
-  * @tparam To   data type that will be used as output
+  * @tparam From type of input value
+  * @tparam To   type of output value
   */
 trait Transformer[From, To] {
   def transform(src: From): To
@@ -19,8 +19,8 @@ object Transformer {
 
   /** Provides [[io.scalaland.chimney.Transformer]] derived with the default settings.
     *
-    * @tparam From data type that will be used as input
-    * @tparam Into data type that will be used as output
+    * @tparam From type of input value
+    * @tparam Into type of output value
     * @return [[io.scalaland.chimney.Transformer]] type class definition
     */
   implicit def derive[From, To]: Transformer[From, To] =
@@ -31,8 +31,8 @@ object Transformer {
     *
     * @see [[io.scalaland.chimney.dsl.TransformerDefinition]] for available settings
     *
-    * @tparam From data type that will be used as input
-    * @tparam Into data type that will be used as output
+    * @tparam From type of input value
+    * @tparam Into type of output value
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]] with defaults
     */
   def define[From, To]: TransformerDefinition[From, To, TransformerCfg.Empty] =
