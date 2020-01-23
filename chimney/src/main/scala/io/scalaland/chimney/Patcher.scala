@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.macros.ChimneyBlackboxMacros
 
 import scala.language.experimental.macros
 
-/** Type class definition that wraps patching behavior
+/** Type class definition that wraps patching behavior.
  *
  * @tparam T type of object to apply patch to
  * @tparam Patch type of patch object
@@ -16,7 +16,7 @@ trait Patcher[T, Patch] {
 object Patcher {
 
   /** Provides implicit [[io.scalaland.chimney.Patcher]] instance
-   * for arbitrary types
+   * for arbitrary types.
    *
    * @tparam T type of object to apply patch to
    * @tparam Patch type of patch object
