@@ -43,4 +43,4 @@ jobs:
         run: sbt ++${{ matrix.scala }} clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test coverage chimneyJVM/test coverageReport
       - name: Run Scala Native tests
         if: startsWith(matrix.scala, '2.11' )
-        run: sbt chimneyNative/test
+        run: sbt ++${{ matrix.scala }} chimneyNative/test
