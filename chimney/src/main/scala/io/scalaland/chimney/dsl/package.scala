@@ -26,7 +26,7 @@ package object dsl {
     /** Performs in-place transformation of wrapped source value to target type.
       *
       * If you want to customize transformer behavior, consider using
-      * [[io.scalaland.chimney.dsl.TransformerOps#into into]] method.
+      * [[io.scalaland.chimney.dsl.TransformerOps#into]] method.
       *
       * @see [[io.scalaland.chimney.Transformer#derive]] for default implicit instance
       * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class

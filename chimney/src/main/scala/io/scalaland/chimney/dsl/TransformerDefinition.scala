@@ -9,31 +9,6 @@ import scala.language.experimental.macros
 
 /** Allows customization of [[io.scalaland.chimney.Transformer]] derivation
   *
-  * By default derivation will expect that:
-  *
-  * - for every field in `To` there is a corresponding field in `From`
-  * - their types match or it is possible to find/derive [[io.scalaland.chimney.Transformer]] for them
-  *
-  * For some case this is insufficient and a manual intervention is needed:
-  *
-  * - derivation should be informed that field in `From` corresponds with field
-  *   of a different name in `To`,
-  * - derivation should be informed that missing `To` field's value should be
-  *   a constant/computed value,
-  * - convertion to/from `Option` should get a special treatment,
-  * - input/output type is a Java Bean with a convention different to Scala one's.
-  *
-  * In such case you can use methods of this class to change derivation configuration.
-  *
-  * {{{
-  * implicit val fooToBar: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
-  *   .setting1
-  *   .setting2
-  *   .buildTransformer
-  * }}}
-  *
-  * @see [[io.scalaland.chimney.dsl.TransformerInto]] for building transformer and applying it immediately
-  *
   * @tparam From data type that will be used as input
   * @tparam To   data type that will be used as output
   * @tparam C    type-level encoded config
@@ -46,6 +21,9 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
   /** Fail derivation if `From` type is missing field even if `To` has default value for it
     *
     * By default in such case derivation will fallback to default values.
+    *
+    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def disableDefaultValues: TransformerDefinition[From, To, DisableDefaultValues[C]] =
     this.asInstanceOf[TransformerDefinition[From, To, DisableDefaultValues[C]]]
@@ -53,6 +31,9 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
   /** Enable Java Beans naming convention (`.getName`, `.isName`) on `From`
     *
     * By default only Scala conversions (`.name`) are allowed.
+    *
+    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def enableBeanGetters: TransformerDefinition[From, To, EnableBeanGetters[C]] =
     this.asInstanceOf[TransformerDefinition[From, To, EnableBeanGetters[C]]]
@@ -60,6 +41,9 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
   /** Enable Java Beans naming convention (`.setName(value)`) on `To`
     *
     * By default only Scala conversions (`.copy(name = value)`) are allowed.
+    *
+    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def enableBeanSetters: TransformerDefinition[From, To, EnableBeanSetters[C]] =
     this.asInstanceOf[TransformerDefinition[From, To, EnableBeanSetters[C]]]
@@ -68,6 +52,9 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     * value is available but present in `To` as `Option` type
     *
     * By default in such case derivation will fail.
+    *
+    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def enableOptionDefaultsToNone: TransformerDefinition[From, To, EnableOptionDefaultsToNone[C]] =
     this.asInstanceOf[TransformerDefinition[From, To, EnableOptionDefaultsToNone[C]]]
@@ -75,6 +62,9 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
   /** Allow running `.get` if `From` contains `Option[A]` and `To` requires `A`
     *
     * By default in such case derivation will fail.
+    *
+    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def enableUnsafeOption: TransformerDefinition[From, To, EnableUnsafeOption[C]] =
     this.asInstanceOf[TransformerDefinition[From, To, EnableUnsafeOption[C]]]
@@ -83,8 +73,10 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     *
     * By default if `From` is missing field picked by `selector` derivation will fail.
     *
+    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
+    * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def withFieldConst[T, U](selector: To => T, value: U): TransformerDefinition[From, To, _] =
     macro TransformerDefinitionWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
@@ -93,8 +85,10 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     *
     * By default if `From` is missing field picked by `selector` derivation will fail.
     *
+    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
     * @param selector target field in `To`, defined like `_.name`
     * @param map      function to use to compute value of the target field
+    * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def withFieldComputed[T, U](selector: To => T, map: From => U): TransformerDefinition[From, To, _] =
     macro TransformerDefinitionWhiteboxMacros.withFieldComputedImpl[From, To, T, U, C]
@@ -103,8 +97,10 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     *
     * By default if `From` is missing field picked by `selectorTo` derivation will fail.
     *
+    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
     * @param selectorFrom source field in `From`, defined like `_.originalName`
     * @param selectorTo   target field in `To`, defined like `_.newName`
+    * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def withFieldRenamed[T, U](selectorFrom: From => T, selectorTo: To => U): TransformerDefinition[From, To, _] =
     macro TransformerDefinitionWhiteboxMacros.withFieldRenamedImpl[From, To, T, U, C]
@@ -116,12 +112,17 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it will fail.
     *
+    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
     * @param f function to calculate values of components that cannot be mapped automatically
+    * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def withCoproductInstance[Inst](f: Inst => To): TransformerDefinition[From, To, _] =
     macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[From, To, Inst, C]
 
-  /** Build Transformer using current configuration */
+  /** Build Transformer using current configuration
+    *
+    * @return [[io.scalaland.chimney.Transformer]] type class definition
+    */
   def buildTransformer: Transformer[From, To] =
     macro ChimneyBlackboxMacros.buildTransformerImpl[From, To, C]
 }
