@@ -44,3 +44,6 @@ jobs:
       - name: Run Scala Native tests
         if: startsWith(matrix.scala, '2.11' )
         run: sbt ++${{ matrix.scala }} chimneyNative/test
+      - uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
