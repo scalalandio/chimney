@@ -1,0 +1,29 @@
+name: Scala CI
+
+on: push
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Cache .jabba
+        id: cache-jabba
+        uses: actions/cache@v1
+        with:
+          path: ~/.jabba
+          key: ${{ runner.os }}-jabba
+      - name: Cache .sbt
+        id: cache-sbt
+        uses: actions/cache@v1
+        with:
+          path: ~/.sbt
+          key: ${{ runner.os }}-sbt
+      - name: Set up JDK 13
+        uses: olafurpg/setup-scala@v5
+        with:
+          java-version: openjdk@1.13
+      - name: Build fat jar
+        run: sbt clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test coverage chimneyJVM/test coverageReport
