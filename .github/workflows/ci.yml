@@ -36,12 +36,12 @@ jobs:
         uses: olafurpg/setup-scala@v5
         with:
           java-version: ${{ matrix.jvm }}
-      - name: Install Scala Native deps (2.11 build only)
+      - name: Install Scala Native deps (2.11 builds only)
         if: startsWith(matrix.scala, '2.11' )
         run: sudo apt-get install -y clang libgc-dev libunwind8-dev libre2-dev
       - name: Clean, Check code formatting, compile, test, generate coverage report
         run: sbt ++${{ matrix.scala }} clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test coverage chimneyJVM/test coverageReport
-      - name: Run Scala Native tests
+      - name: Run Scala Native tests (2.11 builds only)
         if: startsWith(matrix.scala, '2.11' )
         run: sbt ++${{ matrix.scala }} chimneyNative/test
       - uses: codecov/codecov-action@v1
