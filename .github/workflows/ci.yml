@@ -1,4 +1,4 @@
-name: Scala CI
+name: CI build
 
 on: push
 
@@ -6,6 +6,16 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        scala:
+          - 2.11.12
+          - 2.12.8
+          - 2.13.1
+        jvm:
+          - openjdk@8
+          - openjdk@1.11
 
     steps:
       - uses: actions/checkout@v1
@@ -21,9 +31,9 @@ jobs:
         with:
           path: ~/.sbt
           key: ${{ runner.os }}-sbt
-      - name: Set up JDK 13
+      - name: Set up ${{ matrix.jvm }}
         uses: olafurpg/setup-scala@v5
         with:
-          java-version: openjdk@1.13
-      - name: Build fat jar
-        run: sbt clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test coverage chimneyJVM/test coverageReport
+          java-version: ${{ matrix.jvm }}
+      - name: Clean, Check code formatting, compile, test, generate coverage report
+        run: sbt ++${{ matrix.scala }} clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test coverage chimneyJVM/test coverageReport
