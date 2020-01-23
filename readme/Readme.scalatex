@@ -76,13 +76,15 @@
           excellent error messages
         @li
           minimal overhead on compilation time
+        @li
+          a way to express custom transformation logic
 
   @sect{Getting started}
     @p
       To include Chimney to your SBT project, add the following line
       to your @code{build.sbt}:
     @hl.scala
-      libraryDependencies += "io.scalaland" %% "chimney" % "0.3.5"
+      libraryDependencies += "io.scalaland" %% "chimney" % "0.4.0"
     @p
       Library is released for Scala 2.11.x, 2.12.x and 2.13.x.
       If you want to use it with Scala.js(or Scala Native), you need to replace @code{%%} with @code{%%%}.
@@ -206,7 +208,6 @@
         Providing the value anyway for such case would just ignore the default from case class.
 
       @sect{Disabling default values}
-
         @p
           It is possible to disable lookup for default values and require them to be passed explicitly,
           using @code{.disableDefaultValues} operation.
@@ -306,12 +307,14 @@
         // FooV2(5, "test", None)
 
   @sect{Advanced techniques}
-
     @sect{Custom transformations}
       @p
         In case the transformation is relatively complex or if for some reason you just
         want to bypass Chimney derivation mechanism, you can always fall back to a simple
         function that you can plug into the Chimney transformation.
+
+      @p
+        The library defines a type class @code{Transformer}:
 
       @hl.scala
         trait Transformer[From, To] {
@@ -319,8 +322,8 @@
         }
 
       @p
-        The library defines a trait @code{Transformer}. You can plug that transformer in
-        by providing implicit instance in a local context.
+        You can plug your own transformer in by providing implicit instance in
+        a local context.
 
       @hl.scala
         import io.scalaland.chimney.dsl._
@@ -351,6 +354,85 @@
         //   v2.User(1, "Steve", List(Address("Love street", "27000"))),
         //   v2.User(2, "Anna", List(Address("Broadway", "00321")))
         // )
+
+      As we can see, Chimney correctly picked and used implicit
+      @code{Transformer[v1.User, v2.User]} defined locally in
+      transformation between list of users.
+
+      But is it really a necessity to define custom transformer
+      completely manually?
+
+      @sect{Transformer definition DSL}
+        @p
+          One can think that if we only need to provide function implementation
+          of type @code{v1.User => v2.User}, why not use Chimney's DSL in order
+          to generate the transformation?
+
+        @hl.scala
+          implicit val userV2toV2: Transformer[v1.User, v2.User] =
+            (user: v1.User) => user
+              .into[v2.User]
+              .withFieldComputed(_.addresses, u => List(v2.Address(u.street, u.postalCode)))
+              .transform
+
+        @p
+          While it looks reasonably, it will not work as expected :(
+
+        @p
+          Chimney's macro, before trying to derive any transformer, tries to
+          find instance of required transformer in implicit scope. Unfortunately,
+          it will pick @code{userV2toV2}, because types match, this value is
+          marked as implicit and is available in macro expansion scope. Depending
+          on few details, it will either end up as compilation error, or
+          will lead to @code{StackOverflowError} at runtime.
+
+        @p
+          Since version 0.4.0 there is a simple solution to this problem.
+
+        @hl.scala
+          implicit val userV2toV2: Transformer[v1.User, v2.User] =
+            Transformer.define[v1.User, v2.User]
+              .withFieldComputed(_.addresses, u => List(v2.Address(u.street, u.postalCode)))
+              .buildTransformer
+
+        @p
+          We need to use special syntax @code{Transformer.define[From, To]}
+          which introduces us to new transformer builder between types
+          @code{From} and @code{To}. In transformer builder we can use
+          all operations available to usual transformer DSL. The only
+          difference is that we don't call @code{.transform} at the end
+          (since we don't transform value in place), but
+          @code{buildTransformer} (because we generate transformer here).
+          Such generated transformer is semantically equivalent to
+          hand-written transformer from previous section.
+
+        @p
+          Chimney solves self reference implicit problem by not looking
+          for implicit instance for @code{Transformer[From, To]} when
+          using transformer builder  @code{Transformer.define[From, To]}.
+
+    @sect{Recursive data types}
+      @p
+        Chimney can generate transformers between recursive data structures.
+        Consider following example.
+
+      @hl.scala
+        case class Foo(x: Option[Foo])
+        case class Bar(x: Option[Bar])
+
+      @p
+        We would like to define transformer instance which would be able
+        to convert a value @code{Foo(Some(Foo(None)))} to @code{Bar(Some(Bar(None)))}.
+        In order to avoid aforementioned issues with self-referencing, you
+        must define your recursive transformer instance as @code{implicit def}
+        or @code{implicit lazy val}.
+
+      @hl.scala
+        implicit def fooToBarTransformer: Transformer[Foo, Bar] =
+          Transformer.derive[Foo, Bar] // or Transformer.define[Foo, Bar].buildTransformer
+
+        Foo(Some(Foo(None))).transformInto[Bar]
+        // Bar(Some(Bar(None)))
 
     @sect{Coproducts support}
       @p
@@ -440,7 +522,7 @@
         val user = User(10, Email("abc@@domain.com"), Phone(1234567890L))
         val updateForm = UserUpdateForm("xyz@@domain.com", 123123123L)
 
-        user.patchWith(updateForm)
+        user.patchUsing(updateForm)
         // User(10, Email("xyz@@domain.com"), Phone(123123123L))
 
       @p
@@ -449,11 +531,37 @@
         values in update form. Chimney was able to derive transformers for each patched
         field, so it was able to successfully derive a patcher.
 
+      @sect{Redundant fields in patch}
+        @p
+          When patch case class contains a field that does not exist
+          in patched object, Chimney will not be able to generate patcher.
+
+        @hl.scala
+          case class UserUpdateForm2(email: String, phone: Long, address: String)
+
+          user.patchUsing(UserUpdateForm2("xyz@@domain.com", 123123123L, "some address"))
+          // Field named 'address' not found in target patching type User
+
+        @p
+          This default behavior is intentional to prevent silent oversight
+          of typos in patcher field names.
+
+        @p
+          But there is a way to ignore redundant patcher fields explicitly.
+
+        @hl.scala
+          user
+            .using(UserUpdateForm2("xyz@@domain.com", 123123123L, "some address"))
+            .ignoreRedundantPatcherFields
+            .patch
+          // User(10, Email("xyz@@domain.com"), Phone(123123123L))
+
       @sect{Optional patch values}
         @p
           It is possible to patch using optional values of type @code{Option[T]} as long as the
-          transformer is available for @code{T}. When the value is present, it will be transformed,
-          otherwise it will be ignored and the field will be left as it was in the original object.
+          transformer is available for @code{T}. If the value is present (@code{Some}),
+          it's used for patching field in target object; otherwise (@code{None}) it's' ignored
+          and the field value is copied from the original object.
           Let us consider the following patch for the class @code{User} defined above:
 
         @hl.scala
@@ -465,15 +573,95 @@
         @hl.scala
           val update = UserPatch(email = Some("updated@@example.com"), phone = None)
 
-          exampleUser.patchWith(update)
+          exampleUser.patchUsing(update)
           //  User(10, Email("updated@@example.com"), Phone(1234567890L))
 
         @p
           The @code{phone} remained the same as in the @code{exampleUser}, while the optional
           e-mail string got transformed to an @code{Email} instance.
 
-    @sect{Java beans}
+      @sect{Option[T] on both sides}
+        @p
+          An interesting case appears when both patch case class and patched
+          object define fields @code{f: Option[T]}. Depending on values
+          of @code{f} in patched object and patch, we would like to
+          apply following semantic table.
 
+        @table(`class` := "pure-table")
+          @tr
+            @th
+              @code{patchedObject.f}
+            @th
+              @code{patch.f}
+            @th
+              patching result
+          @tr
+            @td
+              @code{None}
+            @td
+              @code{Some(value)}
+            @td
+              @code{Some(value)}
+          @tr
+            @td
+              @code{Some(value1)}
+            @td
+              @code{Some(value2)}
+            @td
+              @code{Some(value2)}
+          @tr
+            @td
+              @code{None}
+            @td
+              @code{None}
+            @td
+              @code{None}
+          @tr
+            @td
+              @code{Some(value)}
+            @td
+              @code{None}
+            @td
+              @code{None} or @code{Some(value)}?
+
+        @p
+          When a @code{patch.f} contains some value, it's immediately used for
+          replacing field in target object (rows 1 and 2), regardless of original
+          object field value.
+          When both field are @code{None}s, patching result is also @code{None}
+          (row 3).
+
+        @p
+          But if original object contains a some value, but patch comes
+          with a @code{None}, we can do two things:
+
+          @ul
+            @li
+              clear value in target object (replace it with @code{None})
+            @li
+              or ignore updating this particular field (as in previous section)
+
+          Both choices may have perfect sense, depending on the context.
+          By default, Chimney does the former (clears the value), but it
+          also gives a simple way to always ignore @code{None}s from patch.
+
+        @hl.scala
+          case class User(name: Option[String], age: Option[Int])
+          case class UserPatch(name: Option[String], age: Option[Int])
+
+          val user = User(Some("John"), Some(30))
+          val userPatch = UserPatch(None, None)
+
+          user.patchUsing(userPatch)
+          // clears both fields: User(None, None)
+
+          user
+            .using(userPatch)
+            .ignoreNoneInPatch
+            .patch
+          // ignores updating both fields: User(Some("John"), Some(30))
+
+    @sect{Java beans}
       Beside Scala case classes, Chimney supports transformation of Java beans.
 
       @sect{Reading from Java beans}
@@ -509,7 +697,6 @@
           perform side effects in its body.
 
       @sect{Writing to Java beans}
-
         @p
           Dual to reading, Chimney supports transforming types into Java beans.
 
@@ -560,12 +747,10 @@
           bean.setFlag(obj.flag)
 
         @sect{Limitations}
-
           @p
             Currently it's not possible to override or provide values for missing setters.
 
     @sect{Unsafe option}
-
       Chimney supports opt-in unsafe transformation from optional types into non-optional types.
 
       @p
