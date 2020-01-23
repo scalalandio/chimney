@@ -24,7 +24,7 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     *
     * By default in such case derivation will fallback to default values.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @see [[https://scalalandio.github.io/chimney/#Defaultoptionvalues]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
   def disableDefaultValues: TransformerInto[From, To, DisableDefaultValues[C]] =
@@ -34,7 +34,7 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     *
     * By default only Scala conversions (`.name`) are allowed.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @see [[https://scalalandio.github.io/chimney/#ReadingfromJavabeans]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
   def enableBeanGetters: TransformerInto[From, To, EnableBeanGetters[C]] =
@@ -44,28 +44,29 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     *
     * By default only Scala conversions (`.copy(name = value)`) are allowed.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @see [[https://scalalandio.github.io/chimney/#WritingtoJavabeans]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
   def enableBeanSetters: TransformerInto[From, To, EnableBeanSetters[C]] =
     this.asInstanceOf[TransformerInto[From, To, EnableBeanSetters[C]]]
 
-  /** Allow usage of None if field is missing in `From`, no rename/const value/calulated
-    * value is available but present in `To` as `Option` type
+  /** Sets target value of optional field to None if field is missing from source type From
     *
-    * By default in such case derivation will fail.
+    * By default in such case compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @see [[https://scalalandio.github.io/chimney/#Defaultoptionvalues]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
   def enableOptionDefaultsToNone: TransformerInto[From, To, EnableOptionDefaultsToNone[C]] =
     this.asInstanceOf[TransformerInto[From, To, EnableOptionDefaultsToNone[C]]]
 
-  /** Allow running `.get` if `From` contains `Option[A]` and `To` requires `A`
+  /** Enable unsafe call to `.get` when source type From contains field of type `Option[A]`, but target type To defines this fields as `A`
     *
-    * By default in such case derivation will fail.
+    * It's unsafe as code generated this way may throw at runtime.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * By default in such case compilation fails.
+    *
+    * @see [[https://scalalandio.github.io/chimney/#Unsafeoption]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
   def enableUnsafeOption: TransformerInto[From, To, EnableUnsafeOption[C]] =
@@ -73,9 +74,9 @@ final class TransformerInto[From, To, C <: TransformerCfg](
 
   /** Use `value` provided here for field picked using `selector`.
     *
-    * By default if `From` is missing field picked by `selector` derivation will fail.
+    * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @see [[https://scalalandio.github.io/chimney/#Providingmissingvalues]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
   def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[From, To, _] =
@@ -83,9 +84,9 @@ final class TransformerInto[From, To, C <: TransformerCfg](
 
   /** Use `map` provided here to compute value of field picked using `selector`.
     *
-    * By default if `From` is missing field picked by `selector` derivation will fail.
+    * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @see [[https://scalalandio.github.io/chimney/#Providingmissingvalues]] for more details
     * @param selector target field in `To`, defined like `_.name`
     * @param map      function to use to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
@@ -95,9 +96,9 @@ final class TransformerInto[From, To, C <: TransformerCfg](
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
     *
-    * By default if `From` is missing field picked by `selectorTo` derivation will fail.
+    * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @see [[https://scalalandio.github.io/chimney/#Fieldre-labelling]] for more details
     * @param selectorFrom source field in `From`, defined like `_.originalName`
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
@@ -112,7 +113,7 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it will fail.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Usage]] for more details
+    * @see [[https://scalalandio.github.io/chimney/#Coproductssupport]] for more details
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
