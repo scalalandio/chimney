@@ -55,9 +55,9 @@ final class TransformerInto[From, To, C <: TransformerCfg](
   def enableBeanGetters: TransformerInto[From, To, EnableBeanGetters[C]] =
     this.asInstanceOf[TransformerInto[From, To, EnableBeanGetters[C]]]
 
-  /** Enable Java Beans naming convention (`.setName`) on `To`
+  /** Enable Java Beans naming convention (`.setName(value)`) on `To`
     * 
-    * By default only Scala conversions (`.name =`) are allowed.
+    * By default only Scala conversions (`.copy(name = value)`) are allowed.
     * 
     * @see [[io.scalaland.chimney.dsl.TransformerDefinition#enableBeanSetters]]
     */
@@ -86,11 +86,6 @@ final class TransformerInto[From, To, C <: TransformerCfg](
   /** Use `value` provided here for field picked using `selector`.
     * 
     * By default if `From` is missing field picked by `selector` derivation will fail.
-    * 
-    * @see [[io.scalaland.chimney.dsl.TransformerDefinition#withFieldConst]] 
-    * 
-    * @param selector target field in `To`, defined like `_.name`
-    * @param value    constant value to use for the target field
     */
   def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[From, To, _] =
     macro TransformerIntoWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]

@@ -36,8 +36,7 @@ import scala.language.experimental.macros
   * 
   * @tparam From data type that will be used as input
   * @tparam To   data type that will be used as output
-  * @tparam C    type-level encoded list of settings
-  *              (implementation detail, but it is important to not change it manually)
+  * @tparam C    type-level encoded config
   */
 final class TransformerDefinition[From, To, C <: TransformerCfg](
     val overrides: Map[String, Any],
@@ -58,9 +57,9 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
   def enableBeanGetters: TransformerDefinition[From, To, EnableBeanGetters[C]] =
     this.asInstanceOf[TransformerDefinition[From, To, EnableBeanGetters[C]]]
 
-  /** Enable Java Beans naming convention (`.setName`) on `To`
+  /** Enable Java Beans naming convention (`.setName(value)`) on `To`
     * 
-    * By default only Scala conversions (`.name =`) are allowed.
+    * By default only Scala conversions (`.copy(name = value)`) are allowed.
     */
   def enableBeanSetters: TransformerDefinition[From, To, EnableBeanSetters[C]] =
     this.asInstanceOf[TransformerDefinition[From, To, EnableBeanSetters[C]]]
