@@ -30,12 +30,12 @@ class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
   def ignoreNoneInPatch: PatcherUsing[T, P, IgnoreNoneInPatch[C]] =
     this.asInstanceOf[PatcherUsing[T, P, IgnoreNoneInPatch[C]]]
 
-  /** In case that patch object contains redundant field (i.e. field that
+  /** In case that patch object contains a redundant field (i.e. field that
     * is not present in patched object type), this option enables ignoring
     * value of such fields and generate patch successfully.
     *
-    * By default, when Chimney detects redundant field in patch object, it
-    * fails compilation in order to prevent silent oversight of field name
+    * By default, when Chimney detects a redundant field in patch object, it
+    * fails the compilation in order to prevent silent oversight of field name
     * typos.
     *
     * @see [[https://scalalandio.github.io/chimney/#Patchers]] for more details
@@ -49,5 +49,4 @@ class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
     * @return patched value
     */
   def patch: T = macro ChimneyBlackboxMacros.patchImpl[T, P, C]
-
 }
