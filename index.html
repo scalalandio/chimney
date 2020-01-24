@@ -122,13 +122,15 @@ val event = command.into[CoffeeMade]
         <li>
           excellent error messages</li>
         <li>
-          minimal overhead on compilation time
+          minimal overhead on compilation time</li>
+        <li>
+          a way to express custom transformation logic
 </li></ul></p>
   <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Gettingstarted" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Getting started<a class=" scalatex-site-Styles-headerLink" href="#Gettingstarted" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
     <p>
       To include Chimney to your SBT project, add the following line
       to your <code>build.sbt</code>:</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.3.5&quot;</code></pre>
+    <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.4.0&quot;</code></pre>
     <p>
       Library is released for Scala 2.11.x, 2.12.x and 2.13.x.
       If you want to use it with Scala.js(or Scala Native), you need to replace <code>%%</code> with <code>%%%</code>.
@@ -244,7 +246,6 @@ val steve = stevie.transformInto[Butterfly]
         Providing the value anyway for such case would just ignore the default from case class.
 </p>
       <h2 id="Disablingdefaultvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Disablingdefaultvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Disabling default values</h2>
-
         <p>
           It is possible to disable lookup for default values and require them to be passed explicitly,
           using <code>.disableDefaultValues</code> operation.
@@ -338,20 +339,22 @@ case class FooV2(a: Int, b: String, newField: Option[Double])
 // FooV2(5, &quot;test&quot;, None)
 </code></pre>
   <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Advancedtechniques" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Advanced techniques<a class=" scalatex-site-Styles-headerLink" href="#Advancedtechniques" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-
     <h1 id="Customtransformations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Customtransformations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Custom transformations</h1>
       <p>
         In case the transformation is relatively complex or if for some reason you just
         want to bypass Chimney derivation mechanism, you can always fall back to a simple
         function that you can plug into the Chimney transformation.
 </p>
+      <p>
+        The library defines a type class <code>Transformer</code>:
+</p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">trait Transformer[From, To] {
   def transform(src: From): To
 }
 </code></pre>
       <p>
-        The library defines a trait <code>Transformer</code>. You can plug that transformer in
-        by providing implicit instance in a local context.
+        You can plug your own transformer in by providing implicit instance in
+        a local context.
 </p>
       <pre><code class="scala scalatex-site-Styles-highlightMe">import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.Transformer
@@ -381,6 +384,81 @@ val v2Users = v1Users.transformInto[List[v2.User]]
 //   v2.User(1, &quot;Steve&quot;, List(Address(&quot;Love street&quot;, &quot;27000&quot;))),
 //   v2.User(2, &quot;Anna&quot;, List(Address(&quot;Broadway&quot;, &quot;00321&quot;)))
 // )
+</code></pre>
+      As we can see, Chimney correctly picked and used implicit
+      <code>Transformer[v1.User, v2.User]</code> defined locally in
+      transformation between list of users.
+
+      But is it really a necessity to define custom transformer
+      completely manually?
+
+      <h2 id="TransformerdefinitionDSL" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#TransformerdefinitionDSL" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Transformer definition DSL</h2>
+        <p>
+          One can think that if we only need to provide function implementation
+          of type <code>v1.User =&gt; v2.User</code>, why not use Chimney's DSL in order
+          to generate the transformation?
+</p>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">implicit val userV2toV2: Transformer[v1.User, v2.User] =
+  (user: v1.User) =&gt; user
+    .into[v2.User]
+    .withFieldComputed(_.addresses, u =&gt; List(v2.Address(u.street, u.postalCode)))
+    .transform
+</code></pre>
+        <p>
+          While it looks reasonably, it will not work as expected :(
+</p>
+        <p>
+          Chimney's macro, before trying to derive any transformer, tries to
+          find instance of required transformer in implicit scope. Unfortunately,
+          it will pick <code>userV2toV2</code>, because types match, this value is
+          marked as implicit and is available in macro expansion scope. Depending
+          on few details, it will either end up as compilation error, or
+          will lead to <code>StackOverflowError</code> at runtime.
+</p>
+        <p>
+          Since version 0.4.0 there is a simple solution to this problem.
+</p>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">implicit val userV2toV2: Transformer[v1.User, v2.User] =
+  Transformer.define[v1.User, v2.User]
+    .withFieldComputed(_.addresses, u =&gt; List(v2.Address(u.street, u.postalCode)))
+    .buildTransformer
+</code></pre>
+        <p>
+          We need to use special syntax <code>Transformer.define[From, To]</code>
+          which introduces us to new transformer builder between types
+          <code>From</code> and <code>To</code>. In transformer builder we can use
+          all operations available to usual transformer DSL. The only
+          difference is that we don't call <code>.transform</code> at the end
+          (since we don't transform value in place), but
+          <code>buildTransformer</code> (because we generate transformer here).
+          Such generated transformer is semantically equivalent to
+          hand-written transformer from previous section.
+</p>
+        <p>
+          Chimney solves self reference implicit problem by not looking
+          for implicit instance for <code>Transformer[From, To]</code> when
+          using transformer builder  <code>Transformer.define[From, To]</code>.
+</p>
+    <h1 id="Recursivedatatypes" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Recursivedatatypes" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Recursive data types</h1>
+      <p>
+        Chimney can generate transformers between recursive data structures.
+        Consider following example.
+</p>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">case class Foo(x: Option[Foo])
+case class Bar(x: Option[Bar])
+</code></pre>
+      <p>
+        We would like to define transformer instance which would be able
+        to convert a value <code>Foo(Some(Foo(None)))</code> to <code>Bar(Some(Bar(None)))</code>.
+        In order to avoid aforementioned issues with self-referencing, you
+        must define your recursive transformer instance as <code>implicit def</code>
+        or <code>implicit lazy val</code>.
+</p>
+      <pre><code class="scala scalatex-site-Styles-highlightMe">implicit def fooToBarTransformer: Transformer[Foo, Bar] =
+  Transformer.derive[Foo, Bar] // or Transformer.define[Foo, Bar].buildTransformer
+
+Foo(Some(Foo(None))).transformInto[Bar]
+// Bar(Some(Bar(None)))
 </code></pre>
     <h1 id="Coproductssupport" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Coproductssupport" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Coproducts support</h1>
       <p>
@@ -464,7 +542,7 @@ case class UserUpdateForm(email: String, phone: Long)
       <pre><code class="scala scalatex-site-Styles-highlightMe">val user = User(10, Email(&quot;abc@domain.com&quot;), Phone(1234567890L))
 val updateForm = UserUpdateForm(&quot;xyz@domain.com&quot;, 123123123L)
 
-user.patchWith(updateForm)
+user.patchUsing(updateForm)
 // User(10, Email(&quot;xyz@domain.com&quot;), Phone(123123123L))
 </code></pre>
       <p>
@@ -473,11 +551,35 @@ user.patchWith(updateForm)
         values in update form. Chimney was able to derive transformers for each patched
         field, so it was able to successfully derive a patcher.
 </p>
+      <h2 id="Redundantfieldsinpatch" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Redundantfieldsinpatch" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Redundant fields in patch</h2>
+        <p>
+          When patch case class contains a field that does not exist
+          in patched object, Chimney will not be able to generate patcher.
+</p>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">case class UserUpdateForm2(email: String, phone: Long, address: String)
+
+user.patchUsing(UserUpdateForm2(&quot;xyz@domain.com&quot;, 123123123L, &quot;some address&quot;))
+// Field named 'address' not found in target patching type User
+</code></pre>
+        <p>
+          This default behavior is intentional to prevent silent oversight
+          of typos in patcher field names.
+</p>
+        <p>
+          But there is a way to ignore redundant patcher fields explicitly.
+</p>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">user
+  .using(UserUpdateForm2(&quot;xyz@domain.com&quot;, 123123123L, &quot;some address&quot;))
+  .ignoreRedundantPatcherFields
+  .patch
+// User(10, Email(&quot;xyz@domain.com&quot;), Phone(123123123L))
+</code></pre>
       <h2 id="Optionalpatchvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Optionalpatchvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Optional patch values</h2>
         <p>
           It is possible to patch using optional values of type <code>Option[T]</code> as long as the
-          transformer is available for <code>T</code>. When the value is present, it will be transformed,
-          otherwise it will be ignored and the field will be left as it was in the original object.
+          transformer is available for <code>T</code>. If the value is present (<code>Some</code>),
+          it's used for patching field in target object; otherwise (<code>None</code>) it's' ignored
+          and the field value is copied from the original object.
           Let us consider the following patch for the class <code>User</code> defined above:
 </p>
         <pre><code class="scala scalatex-site-Styles-highlightMe">case class UserPatch(email: Option[String], phone: Option[Phone])
@@ -487,15 +589,94 @@ user.patchWith(updateForm)
 </p>
         <pre><code class="scala scalatex-site-Styles-highlightMe">val update = UserPatch(email = Some(&quot;updated@example.com&quot;), phone = None)
 
-exampleUser.patchWith(update)
+exampleUser.patchUsing(update)
 //  User(10, Email(&quot;updated@example.com&quot;), Phone(1234567890L))
 </code></pre>
         <p>
           The <code>phone</code> remained the same as in the <code>exampleUser</code>, while the optional
           e-mail string got transformed to an <code>Email</code> instance.
 </p>
-    <h1 id="Javabeans" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Javabeans" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Java beans</h1>
+      <h2 id="Option[T]onbothsides" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Option[T]onbothsides" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Option[T] on both sides</h2>
+        <p>
+          An interesting case appears when both patch case class and patched
+          object define fields <code>f: Option[T]</code>. Depending on values
+          of <code>f</code> in patched object and patch, we would like to
+          apply following semantic table.
+</p>
+        <table class="pure-table">
+          <tr>
+            <th>
+              <code>patchedObject.f</code></th>
+            <th>
+              <code>patch.f</code></th>
+            <th>
+              patching result</th></tr>
+          <tr>
+            <td>
+              <code>None</code></td>
+            <td>
+              <code>Some(value)</code></td>
+            <td>
+              <code>Some(value)</code></td></tr>
+          <tr>
+            <td>
+              <code>Some(value1)</code></td>
+            <td>
+              <code>Some(value2)</code></td>
+            <td>
+              <code>Some(value2)</code></td></tr>
+          <tr>
+            <td>
+              <code>None</code></td>
+            <td>
+              <code>None</code></td>
+            <td>
+              <code>None</code></td></tr>
+          <tr>
+            <td>
+              <code>Some(value)</code></td>
+            <td>
+              <code>None</code></td>
+            <td>
+              <code>None</code> or <code>Some(value)</code>?
+</td></tr></table>
+        <p>
+          When a <code>patch.f</code> contains some value, it's immediately used for
+          replacing field in target object (rows 1 and 2), regardless of original
+          object field value.
+          When both field are <code>None</code>s, patching result is also <code>None</code>
+          (row 3).
+</p>
+        <p>
+          But if original object contains a some value, but patch comes
+          with a <code>None</code>, we can do two things:
 
+          <ul>
+            <li>
+              clear value in target object (replace it with <code>None</code>)</li>
+            <li>
+              or ignore updating this particular field (as in previous section)
+</li></ul>
+          Both choices may have perfect sense, depending on the context.
+          By default, Chimney does the former (clears the value), but it
+          also gives a simple way to always ignore <code>None</code>s from patch.
+</p>
+        <pre><code class="scala scalatex-site-Styles-highlightMe">case class User(name: Option[String], age: Option[Int])
+case class UserPatch(name: Option[String], age: Option[Int])
+
+val user = User(Some(&quot;John&quot;), Some(30))
+val userPatch = UserPatch(None, None)
+
+user.patchUsing(userPatch)
+// clears both fields: User(None, None)
+
+user
+  .using(userPatch)
+  .ignoreNoneInPatch
+  .patch
+// ignores updating both fields: User(Some(&quot;John&quot;), Some(30))
+</code></pre>
+    <h1 id="Javabeans" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Javabeans" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Java beans</h1>
       Beside Scala case classes, Chimney supports transformation of Java beans.
 
       <h2 id="ReadingfromJavabeans" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#ReadingfromJavabeans" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Reading from Java beans</h2>
@@ -529,7 +710,6 @@ case class MyCaseClass(id: Long, name: String, flag: Boolean)
           perform side effects in its body.
 </p>
       <h2 id="WritingtoJavabeans" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#WritingtoJavabeans" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Writing to Java beans</h2>
-
         <p>
           Dual to reading, Chimney supports transforming types into Java beans.
 </p>
@@ -577,12 +757,10 @@ bean.setName(obj.name)
 bean.setFlag(obj.flag)
 </code></pre>
         <h3 id="Limitations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Limitations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Limitations</h3>
-
           <p>
             Currently it's not possible to override or provide values for missing setters.
 </p>
     <h1 id="Unsafeoption" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Unsafeoption" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Unsafe option</h1>
-
       Chimney supports opt-in unsafe transformation from optional types into non-optional types.
 
       <p>
@@ -646,7 +824,7 @@ case class Order(lines: List[OrderLine], customer: Customer)
       <pre><code class="scala scalatex-site-Styles-highlightMe">val pbOrder = domainOrder.into[pb.Order].enableUnsafeOption.transform</code></pre></div>
 </div><script>
     scalatex.scrollspy.Controller().main(
-      [{"value":"Chimney","children":[{"value":"What Chimney does","children":[]},{"value":"Getting started","children":[{"value":"Trying with Ammonite REPL","children":[]}]},{"value":"Usage","children":[{"value":"Basic transformations","children":[]},{"value":"Nested transformations","children":[]},{"value":"Providing missing values","children":[]},{"value":"Default values","children":[{"value":"Disabling default values","children":[]}]},{"value":"Standard types","children":[]},{"value":"Value classes","children":[]},{"value":"Field re-labelling","children":[]},{"value":"Default option values","children":[]}]},{"value":"Advanced techniques","children":[{"value":"Custom transformations","children":[]},{"value":"Coproducts support","children":[]},{"value":"Patchers","children":[{"value":"Optional patch values","children":[]}]},{"value":"Java beans","children":[{"value":"Reading from Java beans","children":[]},{"value":"Writing to Java beans","children":[{"value":"Limitations","children":[]}]}]},{"value":"Unsafe option","children":[{"value":"Mapping proto3 types","children":[]}]}]}]}]
+      [{"value":"Chimney","children":[{"value":"What Chimney does","children":[]},{"value":"Getting started","children":[{"value":"Trying with Ammonite REPL","children":[]}]},{"value":"Usage","children":[{"value":"Basic transformations","children":[]},{"value":"Nested transformations","children":[]},{"value":"Providing missing values","children":[]},{"value":"Default values","children":[{"value":"Disabling default values","children":[]}]},{"value":"Standard types","children":[]},{"value":"Value classes","children":[]},{"value":"Field re-labelling","children":[]},{"value":"Default option values","children":[]}]},{"value":"Advanced techniques","children":[{"value":"Custom transformations","children":[{"value":"Transformer definition DSL","children":[]}]},{"value":"Recursive data types","children":[]},{"value":"Coproducts support","children":[]},{"value":"Patchers","children":[{"value":"Redundant fields in patch","children":[]},{"value":"Optional patch values","children":[]},{"value":"Option[T] on both sides","children":[]}]},{"value":"Java beans","children":[{"value":"Reading from Java beans","children":[]},{"value":"Writing to Java beans","children":[{"value":"Limitations","children":[]}]}]},{"value":"Unsafe option","children":[{"value":"Mapping proto3 types","children":[]}]}]}]}]
   )</script><script>
     ['DOMContentLoaded', 'load'].forEach(function(ev){
       addEventListener(ev, function(){
@@ -656,4 +834,4 @@ case class Order(lines: List[OrderLine], customer: Customer)
         );
       })
     })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
