@@ -8,7 +8,35 @@ trait MacroUtils extends CompanionUtils {
 
   import c.universe._
 
+  implicit class NameOps(n: Name) {
+    def toNameConstant: Constant = Constant(n.decodedName.toString)
+    def toNameLiteral: Literal = Literal(toNameConstant)
+    def toSingletonTpe: ConstantType = c.internal.constantType(toNameConstant)
+  }
+
   implicit class TypeOps(t: Type) {
+
+    def applyTypeArg(arg: Type): Type = {
+      val ee = t.etaExpand
+      if (ee.typeParams.size != 1) {
+        // $COVERAGE-OFF$
+        c.abort(c.enclosingPosition, s"Type $ee must have single type parameter!")
+        // $COVERAGE-ON$
+      }
+      ee.finalResultType.substituteTypes(ee.typeParams, List(arg))
+    }
+
+    def applyTypeArgs(args: Type*): Type = {
+      val ee = t.etaExpand
+      if (ee.typeParams.size != args.size) {
+        // $COVERAGE-OFF$
+        val een = ee.typeParams.size
+        val argsn = args.size
+        c.abort(c.enclosingPosition, s"Type $ee has different arity ($een) than applied to applyTypeArgs ($argsn)!")
+        // $COVERAGE-ON$
+      }
+      ee.finalResultType.substituteTypes(ee.typeParams, args.toList)
+    }
 
     def isValueClass: Boolean =
       t <:< typeOf[AnyVal] && !primitives.exists(_ =:= t)
@@ -19,22 +47,22 @@ trait MacroUtils extends CompanionUtils {
     def isSealedClass: Boolean =
       t.typeSymbol.classSymbolOpt.exists(_.isSealed)
 
-    def caseClassParams: Iterable[MethodSymbol] = {
+    def caseClassParams: Seq[MethodSymbol] = {
       t.decls.collect {
         case m: MethodSymbol if m.isCaseAccessor || (isValueClass && m.isParamAccessor) =>
           m.asMethod
-      }
+      }.toSeq
     }
 
-    def getterMethods: Iterable[MethodSymbol] = {
+    def getterMethods: Seq[MethodSymbol] = {
       t.decls.collect {
         case m: MethodSymbol if m.isPublic && (m.isGetter || m.isParameterless) =>
           m
-      }
+      }.toSeq
     }
 
-    def beanSetterMethods: Iterable[MethodSymbol] = {
-      t.members.collect { case m: MethodSymbol if m.isBeanSetter => m }
+    def beanSetterMethods: Seq[MethodSymbol] = {
+      t.members.collect { case m: MethodSymbol if m.isBeanSetter => m }.toSeq
     }
 
     def valueClassMember: Option[MethodSymbol] = {
@@ -49,6 +77,20 @@ trait MacroUtils extends CompanionUtils {
         .value
         .value
         .asInstanceOf[String]
+    }
+
+    def collectionInnerTpe: Type = {
+      t.typeArgs match {
+        case List(unaryInnerT) => unaryInnerT
+        case List(innerT1, innerT2) =>
+          c.typecheck(tq"($innerT1, $innerT2)", c.TYPEmode).tpe
+        // $COVERAGE-OFF$
+        case Nil =>
+          c.abort(c.enclosingPosition, "Collection type must have type parameters!")
+        case _ =>
+          c.abort(c.enclosingPosition, "Collection types with more than 2 type arguments are not supported!")
+        // $COVERAGE-ON$
+      }
     }
   }
 
@@ -84,7 +126,21 @@ trait MacroUtils extends CompanionUtils {
             }.toMap
           }
         }
-        .getOrElse(Map.empty)
+        .getOrElse {
+          // $COVERAGE-OFF$
+          Map.empty
+          // $COVERAGE-ON$
+        }
+    }
+
+    def typeInSealedParent(parentTpe: Type): Type = {
+      s.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
+
+      val sEta = s.asType.toType.etaExpand
+      sEta.finalResultType.substituteTypes(
+        sEta.baseType(parentTpe.typeSymbol).typeArgs.map(_.typeSymbol),
+        parentTpe.typeArgs
+      )
     }
   }
 
@@ -170,8 +226,47 @@ trait MacroUtils extends CompanionUtils {
           None
       }
     }
+
+    def convertCollection(TargetTpe: Type, InnerTpe: Type): Tree = {
+      if (TargetTpe <:< typeOf[scala.collection.Map[_, _]] && scala.util.Properties.versionNumberString < "2.13") {
+        q"$t.toMap"
+      } else {
+        q"$t.to(_root_.scala.Predef.implicitly[_root_.scala.collection.compat.Factory[$InnerTpe, $TargetTpe]])"
+      }
+    }
+
+    def getLeftTree: Tree = {
+      if (scala.util.Properties.versionNumberString >= "2.12") {
+        q"$t.value"
+      } else {
+        q"$t.left.get"
+      }
+    }
+
+    def getRightTree: Tree = {
+      if (scala.util.Properties.versionNumberString >= "2.12") {
+        q"$t.value"
+      } else {
+        q"$t.right.get"
+      }
+    }
   }
   // $COVERAGE-ON$
+
+  implicit class TransformerDefinitionTreeOps(td: Tree) {
+
+    def addOverride(fieldName: Name, value: Tree): Tree = {
+      q"$td.__addOverride(${fieldName.toNameLiteral}, $value)"
+    }
+
+    def addInstance(fullInstName: String, fullTargetName: String, f: Tree): Tree = {
+      q"$td.__addInstance($fullInstName, $fullTargetName, $f)"
+    }
+
+    def refineConfig(cfgTpe: Type): Tree = {
+      q"$td.__refineConfig[$cfgTpe]"
+    }
+  }
 
   private val primitives = Set(
     typeOf[Double],

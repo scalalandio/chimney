@@ -5,8 +5,12 @@ sealed trait DerivationError extends Product with Serializable {
   def targetTypeName: String
 }
 
-final case class MissingField(fieldName: String, fieldTypeName: String, sourceTypeName: String, targetTypeName: String)
-    extends DerivationError
+final case class MissingAccessor(
+    fieldName: String,
+    fieldTypeName: String,
+    sourceTypeName: String,
+    targetTypeName: String
+) extends DerivationError
 
 final case class MissingJavaBeanSetterParam(
     setterName: String,
@@ -47,7 +51,7 @@ object DerivationError {
       .map {
         case (targetTypeName, errs) =>
           val errStrings = errs.distinct.map {
-            case MissingField(fieldName, fieldTypeName, sourceTypeName, _) =>
+            case MissingAccessor(fieldName, fieldTypeName, sourceTypeName, _) =>
               s"  $fieldName: $fieldTypeName - no accessor named $fieldName in source type $sourceTypeName"
             case MissingJavaBeanSetterParam(setterName, requiredTypeName, sourceTypeName, _) =>
               s"  set${setterName.capitalize}($setterName: $requiredTypeName) - no accessor named $setterName in source type $sourceTypeName"
