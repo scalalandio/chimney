@@ -75,6 +75,12 @@ lazy val root = project
   .settings(noPublishSettings: _*)
   .aggregate(chimneyJVM, chimneyJS)
   .dependsOn(chimneyJVM, chimneyJS)
+  .enablePlugins(SphinxPlugin, GhpagesPlugin)
+  .settings(
+    Sphinx / version := version.value,
+    Sphinx / sourceDirectory := file("docs") / "source",
+    git.remoteRepo := "git@github.com:scalalandio/chimney.git"
+  )
 
 lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
@@ -145,21 +151,3 @@ lazy val publishSettings = Seq(
 
 lazy val noPublishSettings =
   Seq(skip in publish := true, publishArtifact := false)
-
-lazy val readme = scalatex
-  .ScalatexReadme(
-    projectId = "readme",
-    wd = file(""),
-    url = "https://github.com/scalalandio/chimney/tree/master",
-    source = "Readme"
-  )
-  .settings(noPublishSettings : _*)
-  .settings(
-    scalaVersion := "2.12.10",
-    siteSourceDirectory := target.value / "scalatex",
-    git.remoteRepo := "git@github.com:scalalandio/chimney.git",
-    includeFilter in (makeSite in Jekyll) := new FileFilter {
-      def accept(p: File) = true
-    }
-  )
-  .enablePlugins(GhpagesPlugin)
