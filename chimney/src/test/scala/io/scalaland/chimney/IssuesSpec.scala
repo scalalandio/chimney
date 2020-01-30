@@ -233,9 +233,7 @@ object IssuesSpec extends TestSuite {
       case class BarNested(num: String)
       case class Bar(maybeString: scala.collection.immutable.Seq[String], nested: BarNested)
 
-      val foo = Foo(None, FooNested(None))
-
-      compileError("foo.into[Bar].transform")
+      compileError("Foo(None, FooNested(None)).into[Bar].transform")
         .check(
           "",
           "derivation from foo.maybeString: scala.Option to scala.collection.immutable.Seq is not supported in Chimney!",
@@ -254,6 +252,14 @@ object IssuesSpec extends TestSuite {
       val inputStrings = Strings(Set("one", "two", "three"))
       val lengths = inputStrings.into[Lengths].transform
       lengths.elems.size ==> 3
+    }
+
+    "fix issue #139" - {
+      case class WithoutOption(i: Int)
+      case class WithOption(i: Option[Int])
+
+      // this should compile without warning
+      Transformer.define[WithOption, WithoutOption].enableUnsafeOption.buildTransformer
     }
   }
 }

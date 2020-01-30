@@ -14,18 +14,21 @@ trait TransformerMacros extends TransformerConfiguration {
 
   def buildDefinedTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {
     val C = weakTypeOf[C]
-    val tdName = TermName(c.freshName("td"))
     val config = captureTransformerConfig(C).copy(
-      transformerDefinitionPrefix = q"$tdName",
       definitionScope = Some((weakTypeOf[From], weakTypeOf[To]))
     )
 
-    val derivedTransformerTree = genTransformer[From, To](config).tree
+    if (!config.valueLevelAccessNeeded) {
+      genTransformer[From, To](config).tree
+    } else {
+      val tdName = TermName(c.freshName("td"))
+      val derivedTransformer = genTransformer[From, To](config.copy(transformerDefinitionPrefix = q"$tdName")).tree
 
-    q"""
-       val $tdName = ${c.prefix.tree}
-       $derivedTransformerTree
-    """
+      q"""
+        val $tdName = ${c.prefix.tree}
+        $derivedTransformer
+      """
+    }
   }
 
   def expandTransform[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {

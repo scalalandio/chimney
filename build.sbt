@@ -17,7 +17,7 @@ val settings = Seq(
     "-feature",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
-//    "-Xfatal-warnings",
+    "-Xfatal-warnings",
     "-Xlint:adapted-args",
     "-Xlint:delayedinit-select",
     "-Xlint:doc-detached",
@@ -45,6 +45,13 @@ val settings = Seq(
         "-Ywarn-nullary-unit",
         "-Xlint:by-name-right-associative",
         "-Xlint:unsound-match"
+      ) ++ (
+      if (scalaVersion.value >= "2.12")
+        Seq(
+          "-Ywarn-unused:locals",
+          "-Ywarn-macros:after"
+        ) else
+      Nil
       )
     ),
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
