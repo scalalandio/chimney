@@ -46,6 +46,10 @@ trait TransformerConfiguration extends MacroUtils {
         renamedFields = Map.empty,
         definitionScope = None
       )
+
+    def valueLevelAccessNeeded: Boolean = {
+      constFields.nonEmpty || computedFields.nonEmpty || coproductInstances.nonEmpty
+    }
   }
 
   def captureTransformerConfig(cfgTpe: Type, config: TransformerConfig = TransformerConfig()): TransformerConfig = {

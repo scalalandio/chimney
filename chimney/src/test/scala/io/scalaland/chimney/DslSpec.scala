@@ -36,7 +36,6 @@ object DslSpec extends TestSuite {
       case class Foo(x: Int, y: String, z: (Double, Double))
       case class Bar(x: Int, z: (Double, Double))
       case class HaveY(y: String)
-      val haveY = HaveY("")
 
       "field is dropped - the target" - {
         Foo(3, "pi", (3.14, 3.14)).transformInto[Bar] ==> Bar(3, (3.14, 3.14))
@@ -84,7 +83,9 @@ object DslSpec extends TestSuite {
                 """)
               .check("", "Invalid selector!")
 
-            compileError("""Bar(3, (3.14, 3.14))
+            compileError("""
+                val haveY = HaveY("")
+                Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(cc => haveY.y, "pi")
                   .transform
@@ -168,7 +169,9 @@ object DslSpec extends TestSuite {
                 """)
               .check("", "Invalid selector!")
 
-            compileError("""Bar(3, (3.14, 3.14))
+            compileError("""
+                val haveY = HaveY("")
+                Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(cc => haveY.y, _.x.toString)
                   .transform
@@ -298,9 +301,8 @@ object DslSpec extends TestSuite {
       }
 
       "between different types: without implicit" - {
-        val user: User = User(1, "Kuba", None)
-        val userPl = UserPL(1, "Kuba", Left(()))
         compileError("""
+            val user: User = User(1, "Kuba", None)
             user.into[UserPL].withFieldRenamed(_.name, _.imie)
                 .withFieldRenamed(_.age, _.wiek)
                 .transform
@@ -314,10 +316,7 @@ object DslSpec extends TestSuite {
       case class Foo(x: Int, y: String)
       case class Bar(x: Int, z: String)
       case class HaveY(y: String)
-
-      val haveY = HaveY("")
       case class HaveZ(z: String)
-      val haveZ = HaveZ("")
 
       "not compile if relabelling modifier is not provided" - {
 
@@ -344,6 +343,7 @@ object DslSpec extends TestSuite {
           .check("", "Selector of type Foo => String is not valid")
 
         compileError("""
+            val haveY = HaveY("")
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(cc => haveY.y, _.z)
@@ -360,6 +360,7 @@ object DslSpec extends TestSuite {
           .check("", "Selector of type Bar => String is not valid")
 
         compileError("""
+            val haveZ = HaveZ("")
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(_.y, cc => haveZ.z)
@@ -376,6 +377,8 @@ object DslSpec extends TestSuite {
           .check("", "Selector of type Bar => String is not valid")
 
         compileError("""
+            val haveY = HaveY("")
+            val haveZ = HaveZ("")
             Foo(10, "something")
               .into[Bar]
               .withFieldRenamed(cc => haveY.y, cc => haveZ.z)
