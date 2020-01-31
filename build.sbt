@@ -31,7 +31,8 @@ val settings = Seq(
     "-Xlint:private-shadow",
     "-Xlint:stars-align",
     "-Xlint:type-parameter-shadow"
-  ) ++ (
+  ),
+  scalacOptions ++= (
     if (scalaVersion.value >= "2.13")
       Nil
     else
@@ -45,14 +46,16 @@ val settings = Seq(
         "-Ywarn-nullary-unit",
         "-Xlint:by-name-right-associative",
         "-Xlint:unsound-match"
-      ) ++ (
-      if (scalaVersion.value >= "2.12")
-        Seq(
-          "-Ywarn-unused:locals",
-          "-Ywarn-macros:after"
-        ) else
-      Nil
       )
+    ),
+  scalacOptions ++= (
+    if (scalaVersion.value >= "2.12")
+      Seq(
+        "-Ywarn-unused:locals",
+        "-Ywarn-macros:after"
+      )
+    else
+      Nil
     ),
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
