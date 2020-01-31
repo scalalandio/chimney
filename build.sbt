@@ -17,7 +17,6 @@ val settings = Seq(
     "-feature",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
-    "-Xfatal-warnings",
     "-Xlint:adapted-args",
     "-Xlint:delayedinit-select",
     "-Xlint:doc-detached",
@@ -52,7 +51,8 @@ val settings = Seq(
     if (scalaVersion.value >= "2.12")
       Seq(
         "-Ywarn-unused:locals",
-        "-Ywarn-macros:after"
+        "-Ywarn-macros:after",
+        "-Xfatal-warnings"
       )
     else
       Nil
