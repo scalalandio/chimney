@@ -1,6 +1,6 @@
 # Chimney <img src="chimney.png" alt="Chimney logo" width="64" />
 
-[![Build Status](https://travis-ci.org/scalalandio/chimney.svg?branch=master)](https://travis-ci.org/scalalandio/chimney)
+![CI build](https://github.com/scalalandio/chimney/workflows/CI%20build/badge.svg)
 [![Maven Central](https://img.shields.io/maven-central/v/io.scalaland/chimney_2.12.svg)](http://search.maven.org/#search%7Cga%7C1%7Cchimney)
 [![Javadocs](https://www.javadoc.io/badge/io.scalaland/chimney_2.11.svg?color=red&label=scaladoc)](https://www.javadoc.io/doc/io.scalaland/chimney_2.11)
 [![codecov.io](http://codecov.io/github/scalalandio/chimney/coverage.svg?branch=master)](http://codecov.io/github/scalalandio/chimney?branch=master)
