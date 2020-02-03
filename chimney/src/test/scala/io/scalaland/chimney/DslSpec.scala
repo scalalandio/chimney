@@ -427,7 +427,7 @@ object DslSpec extends TestSuite {
         (Some(Foo("a")): Option[Foo]).transformInto[Option[Bar]] ==> Option(Bar("a", ()))
         Some(Foo("a")).transformInto[Option[Bar]] ==> Some(Bar("a", ()))
         (None: Option[Foo]).transformInto[Option[Bar]] ==> None
-        Some(Foo("a")).transformInto[Some[Bar]] ==> Some(Bar("a",()))
+        Some(Foo("a")).transformInto[Some[Bar]] ==> Some(Bar("a", ()))
         None.transformInto[None.type] ==> None
         (None: Option[String]).transformInto[Option[String]] ==> None
         Option("abc").transformInto[Option[String]] ==> Some("abc")
@@ -439,29 +439,29 @@ object DslSpec extends TestSuite {
       }
 
       "support scala.util.Either" - {
-        (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Left(Bar("a",()))
-        (Right(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Right(Bar("a",()))
-        Left(Foo("a")).transformInto[Either[Bar, Bar]] ==> Left(Bar("a",()))
-        Right(Foo("a")).transformInto[Either[Bar, Bar]] ==> Right(Bar("a",()))
-        Left(Foo("a")).transformInto[Left[Bar, Bar]] ==> Left(Bar("a",()))
-        Right(Foo("a")).transformInto[Right[Bar, Bar]] ==> Right(Bar("a",()))
+        (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Left(Bar("a", ()))
+        (Right(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Right(Bar("a", ()))
+        Left(Foo("a")).transformInto[Either[Bar, Bar]] ==> Left(Bar("a", ()))
+        Right(Foo("a")).transformInto[Either[Bar, Bar]] ==> Right(Bar("a", ()))
+        Left(Foo("a")).transformInto[Left[Bar, Bar]] ==> Left(Bar("a", ()))
+        Right(Foo("a")).transformInto[Right[Bar, Bar]] ==> Right(Bar("a", ()))
         (Left("a"): Either[String, String]).transformInto[Either[String, String]] ==> Left("a")
         (Right("a"): Either[String, String]).transformInto[Either[String, String]] ==> Right("a")
       }
 
       "support Traversable collections" - {
-        Seq(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a",()))
-        List(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a",()))
-        Vector(Foo("a")).transformInto[Vector[Bar]] ==> Vector(Bar("a",()))
-        Set(Foo("a")).transformInto[Set[Bar]] ==> Set(Bar("a",()))
+        Seq(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a", ()))
+        List(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a", ()))
+        Vector(Foo("a")).transformInto[Vector[Bar]] ==> Vector(Bar("a", ()))
+        Set(Foo("a")).transformInto[Set[Bar]] ==> Set(Bar("a", ()))
 
         Seq("a").transformInto[Seq[String]] ==> Seq("a")
         List("a").transformInto[List[String]] ==> List("a")
         Vector("a").transformInto[Vector[String]] ==> Vector("a")
         Set("a").transformInto[Set[String]] ==> Set("a")
 
-        List(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a",()))
-        Vector(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a",()))
+        List(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a", ()))
+        Vector(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a", ()))
 
         List("a").transformInto[Seq[String]] ==> Seq("a")
         Vector("a").transformInto[Seq[String]] ==> Seq("a")
@@ -469,13 +469,13 @@ object DslSpec extends TestSuite {
 
       "support Arrays" - {
         Array(Foo("a")).transformInto[Array[Foo]] ==> Array(Foo("a"))
-        Array(Foo("a")).transformInto[Array[Bar]] ==> Array(Bar("a",()))
+        Array(Foo("a")).transformInto[Array[Bar]] ==> Array(Bar("a", ()))
         Array("a").transformInto[Array[String]] ==> Array("a")
       }
 
       "support conversion between Traversables and Arrays" - {
 
-        Array(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a",()))
+        Array(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a", ()))
         Array("a", "b").transformInto[Seq[String]] ==> Seq("a", "b")
         Array(3, 2, 1).transformInto[Vector[Int]] ==> Vector(3, 2, 1)
 
@@ -675,6 +675,14 @@ object DslSpec extends TestSuite {
           _.into[MonoTarget].withFieldComputed(_.poly, fun).transform
 
         transform[String](polySource) ==> monoTarget
+      }
+      
+      "automatically fill Unit parameters" - {
+        case class Foo(value: String)
+        case class Bar[T](value: String, poly: T)
+        type UnitBar = Bar[Unit]
+
+        Foo("test").transformInto[UnitBar] ==> Bar("test", ())
       }
     }
 
