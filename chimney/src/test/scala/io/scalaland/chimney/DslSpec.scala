@@ -438,6 +438,13 @@ object DslSpec extends TestSuite {
           .check("", "derivation from foo.value: java.lang.String to scala.None is not supported in Chimney!")
       }
 
+      "support automatically filling of scala.Unit" - {
+        case class Buzz(value: String)
+        case class NewBuzz(value: String, unit: Unit)
+
+        Buzz("a").transformInto[NewBuzz] ==> NewBuzz("a", ())
+      }
+
       "support scala.util.Either" - {
         (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Left(Bar("a"))
         (Right(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Right(Bar("a"))
@@ -675,6 +682,15 @@ object DslSpec extends TestSuite {
           _.into[MonoTarget].withFieldComputed(_.poly, fun).transform
 
         transform[String](polySource) ==> monoTarget
+      }
+      
+      "automatically fill Unit parameters" - {
+        case class Foo(value: String)
+        case class Bar[T](value: String, poly: T)
+        type UnitBar = Bar[Unit]
+
+        Foo("test").transformInto[UnitBar] ==> Bar("test", ())
+        Foo("test").transformInto[Bar[Unit]] ==> Bar("test", ())
       }
     }
 

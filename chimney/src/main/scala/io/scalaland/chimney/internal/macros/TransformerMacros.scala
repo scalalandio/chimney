@@ -661,6 +661,13 @@ trait TransformerMacros extends TransformerConfiguration {
             None
           }
         }
+        .orElse {
+          if (target.tpe <:< typeOf[Unit]) {
+            Some(ResolvedTargetTree(q"()"))
+          } else {
+            None
+          }
+        }
     }
   }
 

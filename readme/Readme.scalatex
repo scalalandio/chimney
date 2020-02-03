@@ -230,7 +230,7 @@
     @sect{Standard types}
       @p
         Chimney supports deriving transformers for many standard Scala types, like
-        @code{Options}, @code{Eithers}, collection types including @code{Lists},
+        @code{Unit}, @code{Options}, @code{Eithers}, collection types including @code{Lists},
         @code{Vectors}, @code{Sets}, @code{Maps}, @code{Arrays} and many more.
 
       @p
@@ -305,6 +305,19 @@
           .enableOptionDefaultsToNone
           .transform
         // FooV2(5, "test", None)
+
+    @sect{Default Unit value}
+      @p
+        In case you have added an @code{Unit} field to a type, wanting to write migration from old data, you want to set new type to @code{())}.
+
+      @hl.scala
+        case class Foo(a: Int, b: String)
+        case class Bar(a: Int, b: String, newField: Unit)
+
+        Foo(5, "test")
+          .into[Bar]
+          .transform
+        // Bar(5, "test", ())
 
   @sect{Advanced techniques}
     @sect{Custom transformations}
