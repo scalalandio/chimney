@@ -420,14 +420,14 @@ object DslSpec extends TestSuite {
     "support common data types" - {
 
       case class Foo(value: String)
-      case class Bar(value: String, unit: Unit)
+      case class Bar(value: String)
 
       "support scala.Option" - {
-        Option(Foo("a")).transformInto[Option[Bar]] ==> Option(Bar("a", ()))
-        (Some(Foo("a")): Option[Foo]).transformInto[Option[Bar]] ==> Option(Bar("a", ()))
-        Some(Foo("a")).transformInto[Option[Bar]] ==> Some(Bar("a", ()))
+        Option(Foo("a")).transformInto[Option[Bar]] ==> Option(Bar("a"))
+        (Some(Foo("a")): Option[Foo]).transformInto[Option[Bar]] ==> Option(Bar("a"))
+        Some(Foo("a")).transformInto[Option[Bar]] ==> Some(Bar("a"))
         (None: Option[Foo]).transformInto[Option[Bar]] ==> None
-        Some(Foo("a")).transformInto[Some[Bar]] ==> Some(Bar("a", ()))
+        Some(Foo("a")).transformInto[Some[Bar]] ==> Some(Bar("a"))
         None.transformInto[None.type] ==> None
         (None: Option[String]).transformInto[Option[String]] ==> None
         Option("abc").transformInto[Option[String]] ==> Some("abc")
@@ -438,30 +438,37 @@ object DslSpec extends TestSuite {
           .check("", "derivation from foo.value: java.lang.String to scala.None is not supported in Chimney!")
       }
 
+      "support automatically filling of scala.Unit" - {
+        case class Buzz(value: String)
+        case class NewBuzz(value: String, unit: Unit)
+
+        Buzz("a").transformInto[NewBuzz] ==> NewBuzz("a", ())
+      }
+
       "support scala.util.Either" - {
-        (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Left(Bar("a", ()))
-        (Right(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Right(Bar("a", ()))
-        Left(Foo("a")).transformInto[Either[Bar, Bar]] ==> Left(Bar("a", ()))
-        Right(Foo("a")).transformInto[Either[Bar, Bar]] ==> Right(Bar("a", ()))
-        Left(Foo("a")).transformInto[Left[Bar, Bar]] ==> Left(Bar("a", ()))
-        Right(Foo("a")).transformInto[Right[Bar, Bar]] ==> Right(Bar("a", ()))
+        (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Left(Bar("a"))
+        (Right(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Right(Bar("a"))
+        Left(Foo("a")).transformInto[Either[Bar, Bar]] ==> Left(Bar("a"))
+        Right(Foo("a")).transformInto[Either[Bar, Bar]] ==> Right(Bar("a"))
+        Left(Foo("a")).transformInto[Left[Bar, Bar]] ==> Left(Bar("a"))
+        Right(Foo("a")).transformInto[Right[Bar, Bar]] ==> Right(Bar("a"))
         (Left("a"): Either[String, String]).transformInto[Either[String, String]] ==> Left("a")
         (Right("a"): Either[String, String]).transformInto[Either[String, String]] ==> Right("a")
       }
 
       "support Traversable collections" - {
-        Seq(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a", ()))
-        List(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a", ()))
-        Vector(Foo("a")).transformInto[Vector[Bar]] ==> Vector(Bar("a", ()))
-        Set(Foo("a")).transformInto[Set[Bar]] ==> Set(Bar("a", ()))
+        Seq(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))
+        List(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a"))
+        Vector(Foo("a")).transformInto[Vector[Bar]] ==> Vector(Bar("a"))
+        Set(Foo("a")).transformInto[Set[Bar]] ==> Set(Bar("a"))
 
         Seq("a").transformInto[Seq[String]] ==> Seq("a")
         List("a").transformInto[List[String]] ==> List("a")
         Vector("a").transformInto[Vector[String]] ==> Vector("a")
         Set("a").transformInto[Set[String]] ==> Set("a")
 
-        List(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a", ()))
-        Vector(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a", ()))
+        List(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))
+        Vector(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))
 
         List("a").transformInto[Seq[String]] ==> Seq("a")
         Vector("a").transformInto[Seq[String]] ==> Seq("a")
@@ -469,26 +476,26 @@ object DslSpec extends TestSuite {
 
       "support Arrays" - {
         Array(Foo("a")).transformInto[Array[Foo]] ==> Array(Foo("a"))
-        Array(Foo("a")).transformInto[Array[Bar]] ==> Array(Bar("a", ()))
+        Array(Foo("a")).transformInto[Array[Bar]] ==> Array(Bar("a"))
         Array("a").transformInto[Array[String]] ==> Array("a")
       }
 
       "support conversion between Traversables and Arrays" - {
 
-        Array(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a", ()))
+        Array(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a"))
         Array("a", "b").transformInto[Seq[String]] ==> Seq("a", "b")
         Array(3, 2, 1).transformInto[Vector[Int]] ==> Vector(3, 2, 1)
 
         Vector("a").transformInto[Array[String]] ==> Array("a")
         List(1, 6, 3).transformInto[Array[Int]] ==> Array(1, 6, 3)
-        Seq(Bar("x", ()), Bar("y", ())).transformInto[Array[Foo]] ==> Array(Foo("x"), Foo("y"))
+        Seq(Bar("x"), Bar("y")).transformInto[Array[Foo]] ==> Array(Foo("x"), Foo("y"))
       }
 
       "support Map" - {
-        Map("test" -> Foo("a")).transformInto[Map[String, Bar]] ==> Map("test" -> Bar("a", ()))
+        Map("test" -> Foo("a")).transformInto[Map[String, Bar]] ==> Map("test" -> Bar("a"))
         Map("test" -> "a").transformInto[Map[String, String]] ==> Map("test" -> "a")
-        Map(Foo("test") -> "x").transformInto[Map[Bar, String]] ==> Map(Bar("test", ()) -> "x")
-        Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] ==> Map(Bar("test", ()) -> Bar("x", ()))
+        Map(Foo("test") -> "x").transformInto[Map[Bar, String]] ==> Map(Bar("test") -> "x")
+        Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] ==> Map(Bar("test") -> Bar("x"))
       }
     }
 
