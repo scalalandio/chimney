@@ -441,8 +441,10 @@ object DslSpec extends TestSuite {
       "support automatically filling of scala.Unit" - {
         case class Buzz(value: String)
         case class NewBuzz(value: String, unit: Unit)
+        case class FooBuzz(unit:Unit)
 
         Buzz("a").transformInto[NewBuzz] ==> NewBuzz("a", ())
+        Buzz("a").transformInto[FooBuzz] ==> FooBuzz(())
       }
 
       "support scala.util.Either" - {
