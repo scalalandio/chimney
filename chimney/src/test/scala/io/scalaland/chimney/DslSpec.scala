@@ -690,6 +690,7 @@ object DslSpec extends TestSuite {
         type UnitBar = Bar[Unit]
 
         Foo("test").transformInto[UnitBar] ==> Bar("test", ())
+        Foo("test").transformInto[Bar[Unit]] ==> Bar("test", ())
       }
     }
 
