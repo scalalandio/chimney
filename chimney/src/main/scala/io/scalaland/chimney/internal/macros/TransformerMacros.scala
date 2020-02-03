@@ -662,8 +662,7 @@ trait TransformerMacros extends TransformerConfiguration {
           }
         }
         .orElse {
-          val targetTypeIsUnit = target.tpe <:< typeOf[Unit]
-          if (targetTypeIsUnit) {
+          if (target.tpe <:< typeOf[Unit]) {
             Some(ResolvedTargetTree(q"()"))
           } else {
             None
