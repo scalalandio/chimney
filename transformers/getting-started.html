@@ -1,0 +1,270 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Getting started with transformers &mdash; Chimney 0.4.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Customizing transformers" href="customizing-transformers.html" />
+    <link rel="prev" title="Community" href="../getting-started/community.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Chimney
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Transformers</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting started with transformers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic-transformations">Basic transformations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nested-transformations">Nested transformations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="customizing-transformers.html">Customizing transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="standard-transformers.html">Standard transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="default-values.html">Default values support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="own-transformations.html">Plugging in own transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="java-beans.html">Java beans</a></li>
+<li class="toctree-l1"><a class="reference internal" href="unsafe-options.html">Unsafe options transformation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Patchers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/getting-started.html">Getting started with patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/redundant-fields.html">Redundant fields in patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Chimney</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Getting started with transformers</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="getting-started-with-transformers">
+<h1>Getting started with transformers<a class="headerlink" href="#getting-started-with-transformers" title="Permalink to this headline">¶</a></h1>
+<p>In this section you will learn how to use Chimney transformers
+example by example.</p>
+<div class="section" id="basic-transformations">
+<h2>Basic transformations<a class="headerlink" href="#basic-transformations" title="Permalink to this headline">¶</a></h2>
+<p>When target object contains only fields present in the source object,
+with corresponding types, we can use shorthanded <code class="docutils literal notranslate"><span class="pre">transformInto</span></code>.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">case</span> <span class="k">class</span> <span class="nc">Catterpillar</span><span class="o">(</span><span class="n">size</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Butterfly</span><span class="o">(</span><span class="n">size</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">stevie</span> <span class="k">=</span> <span class="nc">Catterpillar</span><span class="o">(</span><span class="mi">5</span><span class="o">,</span> <span class="s">&quot;Steve&quot;</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">steve</span> <span class="k">=</span> <span class="n">stevie</span><span class="o">.</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Butterfly</span><span class="o">]</span>
+<span class="c1">// Butterfly(5, &quot;Steve&quot;)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="nested-transformations">
+<h2>Nested transformations<a class="headerlink" href="#nested-transformations" title="Permalink to this headline">¶</a></h2>
+<p>It also works when transformation needs to be recursive, possibly
+involving traversal on nested collection.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">case</span> <span class="k">class</span> <span class="nc">Youngs</span><span class="o">(</span><span class="n">insects</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Catterpillar</span><span class="o">])</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Adults</span><span class="o">(</span><span class="n">insects</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Butterfly</span><span class="o">])</span>
+
+<span class="k">val</span> <span class="n">kindergarden</span> <span class="k">=</span> <span class="nc">Youngs</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="nc">Catterpillar</span><span class="o">(</span><span class="mi">5</span><span class="o">,</span> <span class="s">&quot;Steve&quot;</span><span class="o">),</span> <span class="nc">Catterpillar</span><span class="o">(</span><span class="mi">4</span><span class="o">,</span> <span class="s">&quot;Joe&quot;</span><span class="o">)))</span>
+<span class="k">val</span> <span class="n">highschool</span> <span class="k">=</span> <span class="n">kindergarden</span><span class="o">.</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Adults</span><span class="o">]</span>
+<span class="c1">// Adults(List(Butterfly(5, &quot;Steve&quot;), Butterfly(4, &quot;Joe&quot;))</span>
+</pre></div>
+</div>
+<p>We can use it as long as Chimney can recursively construct transformation
+for all fields of a target object. In this example transformer for
+<code class="docutils literal notranslate"><span class="pre">List</span></code> type is constructed basing on automatically derived
+<code class="docutils literal notranslate"><span class="pre">Catterpillar</span> <span class="pre">-&gt;</span> <span class="pre">Butterfly</span></code> mapping.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="customizing-transformers.html" class="btn btn-neutral float-right" title="Customizing transformers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../getting-started/community.html" class="btn btn-neutral float-left" title="Community" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017-2020, scalaland.io
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-116165806-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+
+    
+   
+
+</body>
+</html>

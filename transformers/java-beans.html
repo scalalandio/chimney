@@ -1,0 +1,320 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Java beans &mdash; Chimney 0.4.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Unsafe options transformation" href="unsafe-options.html" />
+    <link rel="prev" title="Plugging in own transformations" href="own-transformations.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Chimney
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Transformers</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started with transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="customizing-transformers.html">Customizing transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="standard-transformers.html">Standard transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="default-values.html">Default values support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="own-transformations.html">Plugging in own transformations</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Java beans</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#reading-from-java-beans">Reading from Java beans</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#writing-to-java-beans">Writing to Java beans</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#current-limitations">Current limitations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="unsafe-options.html">Unsafe options transformation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Patchers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/getting-started.html">Getting started with patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/redundant-fields.html">Redundant fields in patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Chimney</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Java beans</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="java-beans">
+<h1>Java beans<a class="headerlink" href="#java-beans" title="Permalink to this headline">¶</a></h1>
+<p>Beside Scala case classes, Chimney supports transformation
+of Java beans.</p>
+<div class="section" id="reading-from-java-beans">
+<h2>Reading from Java beans<a class="headerlink" href="#reading-from-java-beans" title="Permalink to this headline">¶</a></h2>
+<p>Chimney supports automatic field renaming for classes that
+follow Java beans naming convention. Let’s assume
+the following classes.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyBean</span><span class="o">(</span><span class="k">private</span> <span class="k">var</span> <span class="n">id</span><span class="k">:</span> <span class="kt">Long</span><span class="o">,</span>
+             <span class="k">private</span> <span class="k">var</span> <span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span>
+             <span class="k">private</span> <span class="k">var</span> <span class="n">flag</span><span class="k">:</span> <span class="kt">Boolean</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="n">getId</span><span class="k">:</span> <span class="kt">Long</span> <span class="o">=</span> <span class="n">id</span>
+    <span class="k">def</span> <span class="n">getName</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="k">def</span> <span class="n">isFlag</span><span class="k">:</span> <span class="kt">Boolean</span> <span class="o">=</span> <span class="n">flag</span>
+<span class="o">}</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">MyCaseClass</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Long</span><span class="o">,</span> <span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">flag</span><span class="k">:</span> <span class="kt">Boolean</span><span class="o">)</span>
+</pre></div>
+</div>
+<p>The conversion works only if you explicitly enable it with
+<code class="docutils literal notranslate"><span class="pre">.enableBeanGetters</span></code> operation.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">new</span> <span class="nc">MyBean</span><span class="o">(</span><span class="mi">1L</span><span class="o">,</span> <span class="s">&quot;beanie&quot;</span><span class="o">,</span> <span class="kc">true</span><span class="o">)</span>
+  <span class="o">.</span><span class="n">into</span><span class="o">[</span><span class="kt">MyCaseClass</span><span class="o">]</span>
+  <span class="o">.</span><span class="n">enableBeanGetters</span>
+  <span class="o">.</span><span class="n">transform</span>
+<span class="c1">//  MyCaseClass(1L, &quot;beanie&quot;, true)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Chimney matches accessor methods solely based on name and
+return type, and has no way of ensuring that a method named
+similarly to a getter is idempotent and does not actually
+perform side effects in its body.</p>
+</div>
+</div>
+<div class="section" id="writing-to-java-beans">
+<h2>Writing to Java beans<a class="headerlink" href="#writing-to-java-beans" title="Permalink to this headline">¶</a></h2>
+<p>Dual to reading, Chimney supports transforming types into Java beans.</p>
+<p>Chimney considers as bean a class that:</p>
+<ul class="simple">
+<li><p>primary constructor is public and parameter-less</p></li>
+<li><p>contains at least one, single-parameter setter method that returns <code class="docutils literal notranslate"><span class="pre">Unit</span></code></p></li>
+</ul>
+<p>Chimney will then require data sources for all such setters.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyBean</span> <span class="o">{</span>
+  <span class="k">private</span> <span class="k">var</span> <span class="n">id</span><span class="k">:</span> <span class="kt">Long</span> <span class="o">=</span> <span class="k">_</span>
+  <span class="k">private</span> <span class="k">var</span> <span class="n">name</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="k">_</span>
+  <span class="k">private</span> <span class="k">var</span> <span class="n">flag</span><span class="k">:</span> <span class="kt">Boolean</span> <span class="o">=</span> <span class="k">_</span>
+
+  <span class="k">def</span> <span class="n">getId</span><span class="k">:</span> <span class="kt">Long</span> <span class="o">=</span> <span class="n">id</span>
+  <span class="k">def</span> <span class="n">setId</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Long</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span> <span class="k">this</span><span class="o">.</span><span class="n">id</span> <span class="k">=</span> <span class="n">id</span> <span class="o">}</span>
+
+  <span class="k">def</span> <span class="n">getName</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="n">name</span>
+  <span class="k">def</span> <span class="n">setName</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span> <span class="k">this</span><span class="o">.</span><span class="n">name</span> <span class="k">=</span> <span class="n">name</span> <span class="o">}</span>
+
+  <span class="k">def</span> <span class="n">isFlag</span><span class="k">:</span> <span class="kt">Boolean</span> <span class="o">=</span> <span class="n">flag</span>
+  <span class="k">def</span> <span class="n">setFlag</span><span class="o">(</span><span class="n">flag</span><span class="k">:</span> <span class="kt">Boolean</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span> <span class="k">this</span><span class="o">.</span><span class="n">flag</span> <span class="k">=</span> <span class="n">flag</span> <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The conversion works if you explicitly enable it with <code class="docutils literal notranslate"><span class="pre">.enableBeanSetters</span></code>.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">obj</span> <span class="k">=</span> <span class="nc">MyCaseClass</span><span class="o">(</span><span class="mi">10L</span><span class="o">,</span> <span class="s">&quot;beanie&quot;</span><span class="o">,</span> <span class="kc">true</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">bean</span> <span class="k">=</span> <span class="n">obj</span>
+  <span class="o">.</span><span class="n">into</span><span class="o">[</span><span class="kt">MyBean</span><span class="o">]</span>
+  <span class="o">.</span><span class="n">enableBeanSetters</span>
+  <span class="o">.</span><span class="n">transform</span>
+</pre></div>
+</div>
+<p>Chimney generates code equivalent to:</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">bean</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">MyBean</span>
+<span class="n">bean</span><span class="o">.</span><span class="n">setId</span><span class="o">(</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="o">)</span>
+<span class="n">bean</span><span class="o">.</span><span class="n">setName</span><span class="o">(</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="o">)</span>
+<span class="n">bean</span><span class="o">.</span><span class="n">setFlag</span><span class="o">(</span><span class="n">obj</span><span class="o">.</span><span class="n">flag</span><span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="current-limitations">
+<h2>Current limitations<a class="headerlink" href="#current-limitations" title="Permalink to this headline">¶</a></h2>
+<p>Currently it’s not possible to override or provide values
+for missing setters.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="unsafe-options.html" class="btn btn-neutral float-right" title="Unsafe options transformation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="own-transformations.html" class="btn btn-neutral float-left" title="Plugging in own transformations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017-2020, scalaland.io
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-116165806-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+
+    
+   
+
+</body>
+</html>

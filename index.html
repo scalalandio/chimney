@@ -1,837 +1,383 @@
-<!DOCTYPE html><html><head><link href="META-INF/resources/webjars/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" /><link href="styles.css" rel="stylesheet" /><link rel="shortcut icon" type="image/png" href="favicon.png" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><style>
-.scalatex-site-Styles-headerLink{
-  color: #777;
-  opacity: 0.05;
-  text-decoration: none;
-}
 
 
-.scalatex-site-Styles-hoverContainer:hover .scalatex-site-Styles-headerLink{
-  color: #777;
-  opacity: 0.5;
-  text-decoration: none;
-}
-.scalatex-site-Styles-hoverContainer:hover .scalatex-site-Styles-headerLink:hover{
-  opacity: 1.0;
-}
-.scalatex-site-Styles-hoverContainer:hover .scalatex-site-Styles-headerLink:active{
-  opacity: 0.75;
-}
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Welcome to Chimney’s documentation! &mdash; Chimney 0.4.1 documentation</title>
+  
 
-.scalatex-site-Styles-content{
-  color: #777;
-  line-height: 1.6em;
-  margin: 0 auto;
-  margin-left: auto;
-  margin-right: auto;
-  max-width: 800px;
-  padding: 0 1em;
-  padding-bottom: 50px;
-}
-.scalatex-site-Styles-content *{
-  position: relative;
-}
-.scalatex-site-Styles-content p{
-  text-align: justify;
-}
-.scalatex-site-Styles-content a:link{
-  color: #37a;
-  text-decoration: none;
-}
-.scalatex-site-Styles-content a:visited{
-  color: #949;
-  text-decoration: none;
-}
-.scalatex-site-Styles-content a:hover{
-  text-decoration: underline;
-}
-.scalatex-site-Styles-content a:active{
-  color: #000;
-  text-decoration: underline;
-}
-.scalatex-site-Styles-content code{
-  color: #000;
-}
+  
+  
+  
+  
 
-/*Workaround for bug in highlight.js IDEA theme*/
-span.hljs-tag, span.hljs-symbol{
-    background: none;
-}
-    </style><title>Chimney</title><script src="scripts.js"></script></head><body><div>
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
 
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116165806-1"></script>
+    
 
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'UA-116165806-1');
-</script>
-<a href="https://github.com/scalalandio/chimney" style="position: absolute;top: 0px;right: 0px;border: 0;"><img src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub" /></a>
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quickstart" href="getting-started/quickstart.html" /> 
+</head>
 
-<div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Chimney" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Chimney<a class=" scalatex-site-Styles-headerLink" href="#Chimney" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /><h2 style="font-weight: 300;color: #ccc;padding: 0px;margin-top: 0px;">Scala library for boilerplate-free data transformations</h2></div><div class=" scalatex-site-Styles-content">
-  <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="WhatChimneydoes" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">What Chimney does<a class=" scalatex-site-Styles-headerLink" href="#WhatChimneydoes" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home"> Chimney
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting-started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started/community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="transformers/getting-started.html">Getting started with transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/customizing-transformers.html">Customizing transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/standard-transformers.html">Standard transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/default-values.html">Default values support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/own-transformations.html">Plugging in own transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/java-beans.html">Java beans</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/unsafe-options.html">Unsafe options transformation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Patchers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="patchers/getting-started.html">Getting started with patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patchers/redundant-fields.html">Redundant fields in patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Chimney</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#">Docs</a> &raquo;</li>
+        
+      <li>Welcome to Chimney’s documentation!</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="welcome-to-chimney-s-documentation">
+<h1>Welcome to Chimney’s documentation!<a class="headerlink" href="#welcome-to-chimney-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p><strong>Chimney</strong> is Scala library for boilerplate-free data transformations.</p>
+<div class="section" id="transformers">
+<h2>Transformers<a class="headerlink" href="#transformers" title="Permalink to this headline">¶</a></h2>
+<p>In the daily life of a strongly-typed language’s programmer sometimes it
+happens we need to transform an object of one type to another object which
+contains a number of the same or similar fields in their definitions.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">case</span> <span class="k">class</span> <span class="nc">MakeCoffee</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">kind</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">addict</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">CoffeeMade</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">kind</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">forAddict</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">at</span><span class="k">:</span> <span class="kt">ZonedDateTime</span><span class="o">)</span>
+</pre></div>
+</div>
+<p>Usual approach is to just rewrite fields one by one</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">command</span> <span class="k">=</span> <span class="nc">MakeCoffee</span><span class="o">(</span><span class="n">id</span> <span class="k">=</span> <span class="nc">Random</span><span class="o">.</span><span class="n">nextInt</span><span class="o">,</span>
+                         <span class="n">kind</span> <span class="k">=</span> <span class="s">&quot;Espresso&quot;</span><span class="o">,</span>
+                         <span class="n">addict</span> <span class="k">=</span> <span class="s">&quot;Piotr&quot;</span><span class="o">)</span>
+<span class="c1">// MakeCoffee(24, &quot;Espresso&quot;, &quot;Piotr&quot;)</span>
+
+<span class="k">val</span> <span class="n">event</span> <span class="k">=</span> <span class="nc">CoffeeMade</span><span class="o">(</span><span class="n">id</span> <span class="k">=</span> <span class="n">command</span><span class="o">.</span><span class="n">id</span><span class="o">,</span>
+                       <span class="n">kind</span> <span class="k">=</span> <span class="n">command</span><span class="o">.</span><span class="n">kind</span><span class="o">,</span>
+                       <span class="n">forAddict</span> <span class="k">=</span> <span class="n">command</span><span class="o">.</span><span class="n">addict</span><span class="o">,</span>
+                       <span class="n">at</span> <span class="k">=</span> <span class="nc">ZonedDateTime</span><span class="o">.</span><span class="n">now</span><span class="o">)</span>
+<span class="c1">// CoffeeMade(24, &quot;Espresso&quot;, &quot;Piotr&quot;, &quot;2020-02-03T20:26:59.659647+07:00[Asia/Bangkok]&quot;)</span>
+</pre></div>
+</div>
+<p>While the example stays short, in real-life code we usually end up with tons
+of such boilerplate, especially when:</p>
+<ul class="simple">
+<li><p>we maintain typed schema and want to migrate between multiple schema versions</p></li>
+<li><p>we apply practices like DDD (Domain-Driven-Design) where suggested
+approach is to separate model schemas of different bounded contexts</p></li>
+<li><p>we use code-generation tools like Protocol Buffers that generate primitive
+types like <code class="docutils literal notranslate"><span class="pre">Int</span></code> or <code class="docutils literal notranslate"><span class="pre">String</span></code>, while you’d prefer to use value objects
+in you domain-level code to improve type-safety and readability</p></li>
+</ul>
+<p>Chimney provides a compact DSL with which you can define transformation
+rules and transform your objects with as little boilerplate as possible.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="nn">io.scalaland.chimney.dsl._</span>
+
+<span class="k">val</span> <span class="n">event</span> <span class="k">=</span> <span class="n">command</span><span class="o">.</span><span class="n">into</span><span class="o">[</span><span class="kt">CoffeeMade</span><span class="o">]</span>
+  <span class="o">.</span><span class="n">withFieldComputed</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">at</span><span class="o">,</span> <span class="k">_</span> <span class="k">=&gt;</span> <span class="nc">ZonedDateTime</span><span class="o">.</span><span class="n">now</span><span class="o">)</span>
+  <span class="o">.</span><span class="n">withFieldRenamed</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">addict</span><span class="o">,</span> <span class="k">_</span><span class="o">.</span><span class="n">forAddict</span><span class="o">)</span>
+  <span class="o">.</span><span class="n">transform</span>
+<span class="c1">// CoffeeMade(24, &quot;Espresso&quot;, &quot;Piotr&quot;, &quot;2020-02-03T20:26:59.659647+07:00[Asia/Bangkok]&quot;)</span>
+</pre></div>
+</div>
+<p>Read <a class="reference internal" href="transformers/getting-started.html#getting-started-with-transformers"><span class="std std-ref">Getting started with transformers</span></a> to learn more about
+Chimney’s transformers.</p>
+</div>
+<div class="section" id="patching">
+<h2>Patching<a class="headerlink" href="#patching" title="Permalink to this headline">¶</a></h2>
+<p>Beside transformers, Chimney supports case class patching as well.
+It’s a bit different type of transformation which happens when you
+hold an object of some type and want to modify only subset of its
+fields with values taken from other (<em>patch</em>) object.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">case</span> <span class="k">class</span> <span class="nc">User</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">address</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">phone</span><span class="k">:</span> <span class="kt">Long</span><span class="o">)</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">UserUpdateForm</span><span class="o">(</span><span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">phone</span><span class="k">:</span> <span class="kt">Long</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">user</span> <span class="k">=</span> <span class="nc">User</span><span class="o">(</span><span class="mi">10</span><span class="o">,</span> <span class="s">&quot;abc@example.com&quot;</span><span class="o">,</span> <span class="s">&quot;Broadway&quot;</span><span class="o">,</span> <span class="mi">123456789L</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">updateForm</span> <span class="k">=</span> <span class="nc">UserUpdateForm</span><span class="o">(</span><span class="s">&quot;xyz@example.com&quot;</span><span class="o">,</span> <span class="mi">123123123L</span><span class="o">)</span>
+
+<span class="n">user</span><span class="o">.</span><span class="n">patchUsing</span><span class="o">(</span><span class="n">updateForm</span><span class="o">)</span>
+<span class="c1">// User(10, &quot;xyz@example.com&quot;, &quot;Broadway&quot;, 123123123L)</span>
+</pre></div>
+</div>
+<p>Read <a class="reference internal" href="patchers/getting-started.html#getting-started-with-patchers"><span class="std std-ref">Getting started with patchers</span></a> to learn more about
+Chimney’s patchers.</p>
+</div>
+<div class="section" id="chimney-s-features">
+<h2>Chimney’s features<a class="headerlink" href="#chimney-s-features" title="Permalink to this headline">¶</a></h2>
+<p>Chimney uses Scala macros to give you:</p>
+<ul class="simple">
+<li><p>type-safety at compile-time</p></li>
+<li><p>fast generated code, almost equivalent to hand-written version</p></li>
+<li><p>excellent error messages</p></li>
+<li><p>minimal overhead on compilation time</p></li>
+<li><p>a way to express custom transformation logic</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="contents">
+<h1>Contents:<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting-started/quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting-started/quickstart.html#using-sbt">Using SBT</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started/quickstart.html#using-ammonite">Using Ammonite</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started/community.html">Community</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="transformers/getting-started.html">Getting started with transformers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transformers/getting-started.html#basic-transformations">Basic transformations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/getting-started.html#nested-transformations">Nested transformations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/customizing-transformers.html">Customizing transformers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transformers/customizing-transformers.html#providing-missing-values">Providing missing values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/customizing-transformers.html#fields-renaming">Fields renaming</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/customizing-transformers.html#transforming-coproducts">Transforming coproducts</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/standard-transformers.html">Standard transformers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transformers/standard-transformers.html#identity-transformation">Identity transformation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/standard-transformers.html#supertype-transformation">Supertype transformation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/standard-transformers.html#value-classes">Value classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/standard-transformers.html#options">Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/standard-transformers.html#collections">Collections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/standard-transformers.html#maps">Maps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/standard-transformers.html#either">Either</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/default-values.html">Default values support</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transformers/default-values.html#automatic-value-provision">Automatic value provision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/default-values.html#disabling-default-values-in-generated-transformer">Disabling default values in generated transformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/default-values.html#default-values-for-option-fields">Default values for <code class="docutils literal notranslate"><span class="pre">Option</span></code> fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/default-values.html#default-values-for-unit-fields">Default values for <code class="docutils literal notranslate"><span class="pre">Unit</span></code> fields</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/own-transformations.html">Plugging in own transformations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transformers/own-transformations.html#transformer-type-class">Transformer type class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/own-transformations.html#transformer-definition-dsl">Transformer definition DSL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/own-transformations.html#recursive-data-types-support">Recursive data types support</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/java-beans.html">Java beans</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transformers/java-beans.html#reading-from-java-beans">Reading from Java beans</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/java-beans.html#writing-to-java-beans">Writing to Java beans</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/java-beans.html#current-limitations">Current limitations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/unsafe-options.html">Unsafe options transformation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transformers/unsafe-options.html#proto3-motivational-example">Proto3 motivational example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/unsafe-options.html#enabling-unsafe-option-extraction">Enabling unsafe option extraction</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Patchers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="patchers/getting-started.html">Getting started with patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patchers/redundant-fields.html">Redundant fields in patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="patchers/options-handling.html">Handling optional fields</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="patchers/options-handling.html#option-t-on-both-sides"><code class="docutils literal notranslate"><span class="pre">Option[T]</span></code> on both sides</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="getting-started/quickstart.html" class="btn btn-neutral float-right" title="Quickstart" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
     <p>
-      In the daily life of a strongly-typed language's programmer sometimes it
-      happens we need to transform an object of one type to another object which
-      contains a number of the same or similar fields in their definitions.</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">case class MakeCoffee(id: Int, kind: String, addict: String)
-case class CoffeeMade(id: Int, kind: String, forAddict: String, at: ZonedDateTime)</code></pre>
-    <p>
-      Usual approach is to just rewrite fields one by one</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">val command = MakeCoffee(id = Random.nextInt,
-                         kind = &quot;Espresso&quot;,
-                         addict = &quot;Piotr&quot;)
-val event = CoffeeMade(id = command.id,
-                       kind = command.kind,
-                       forAddict = command.addict,
-                       at = ZonedDateTime.now)</code></pre>
-    <p>
-      While the example stays lean, in real-life code we usually end up with tons
-      of such boilerplate, especially when:
-      <ul>
-        <li>
-          we maintain typed schema and want to migrate between multiple schema
-          versions</li>
-        <li>
-          we apply practices like DDD (Domain-Driven-Design) where suggested
-          approach is to separate model schemas of different bounded contexts</li>
-        <li>
-          we use code-generation tools like Protocol Buffers that generate primitive
-          types like <code class="scala scalatex-site-Styles-highlightMe" style="display: inline;padding: 0px;margin: 0px;">Int</code> or <code class="scala scalatex-site-Styles-highlightMe" style="display: inline;padding: 0px;margin: 0px;">String</code>, while you'd prefer to
-          use value objects in you domain-level code to improve type-safety
-          and readability</li></ul></p>
-    <p>
-      Chimney provides a compact DSL with which you can define transformation
-      rules and transform your objects with as little boilerplate as possible.
-</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">import io.scalaland.chimney.dsl._
+        &copy; Copyright 2017-2020, scalaland.io
 
-val event = command.into[CoffeeMade]
-  .withFieldComputed(_.at, _ =&gt; ZonedDateTime.now)
-  .withFieldRenamed(_.addict, _.forAddict)
-  .transform
-</code></pre>
-    <p>
-      Underneath it uses Scala macros to give you:
-      <ul>
-        <li>
-          type-safety at compile-time</li>
-        <li>
-          fast generated code, almost equivalent to hand-written version</li>
-        <li>
-          excellent error messages</li>
-        <li>
-          minimal overhead on compilation time</li>
-        <li>
-          a way to express custom transformation logic
-</li></ul></p>
-  <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Gettingstarted" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Getting started<a class=" scalatex-site-Styles-headerLink" href="#Gettingstarted" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-    <p>
-      To include Chimney to your SBT project, add the following line
-      to your <code>build.sbt</code>:</p>
-    <pre><code class="scala scalatex-site-Styles-highlightMe">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.4.1&quot;</code></pre>
-    <p>
-      Library is released for Scala 2.11.x, 2.12.x and 2.13.x.
-      If you want to use it with Scala.js(or Scala Native), you need to replace <code>%%</code> with <code>%%%</code>.
-      Due to some <a href="https://issues.scala-lang.org/browse/SI-7046">compiler bugs</a>,
-      it's recommended to use at least Scala 2.11.9 or 2.12.1.
-</p>
-    <h1 id="TryingwithAmmoniteREPL" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#TryingwithAmmoniteREPL" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Trying with Ammonite REPL</h1>
-      The quickest way to try out Chimney is to use a script that downloads
-      <a href="https://github.com/alexarchambault/coursier">coursier</a> and uses it
-      to fetch <a href="https://github.com/lihaoyi/Ammonite">Ammonite</a> REPL
-      with the latest version of Chimney. It drops you immediately into a REPL session.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
-      <pre><code class="bash scalatex-site-Styles-highlightMe">curl -s https://raw.githubusercontent.com/scalalandio/chimney/master/try-chimney.sh | bash
-Loading...
-Welcome to the Ammonite Repl 1.1.0
-(Scala 2.12.4 Java 1.8.0_152)
-If you like Ammonite, please support our development at www.patreon.com/lihaoyi
-@ case class Foo(x: String, y: Int)
-defined class Foo
+</footer>
 
-@ case class Bar(x: String, y: Int, z: Boolean = true)
-defined class Bar
+        </div>
+      </div>
 
-@ Foo(&quot;abc&quot;, 10).transformInto[Bar]
-res2: Bar = Bar(&quot;abc&quot;, 10, true)
-</code></pre>
-  <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Usage" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Usage<a class=" scalatex-site-Styles-headerLink" href="#Usage" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-    <p>
-      In this section you will learn how to use Chimney example by example.
-</p>
-    <h1 id="Basictransformations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Basictransformations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Basic transformations</h1>
-      <p>
-        When target object contains only fields present in the source object,
-        with corresponding types, we can use shorthanded <code>transformInto</code>.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">case class Catterpillar(size: Int, name: String)
-case class Butterfly(size: Int, name: String)
+    </section>
 
-val stevie = Catterpillar(5, &quot;Steve&quot;)
-val steve = stevie.transformInto[Butterfly]
-// Butterfly(5, &quot;Steve&quot;)
-</code></pre>
-    <h1 id="Nestedtransformations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Nestedtransformations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Nested transformations</h1>
-      <p>
-        It also works when transformation needs to be recursive, possibly involving traversal
-        on nested collection.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">case class Youngs(insects: List[Catterpillar])
-case class Adults(insects: List[Butterfly])
+  </div>
+  
 
-val kindergarden = Youngs(List(Catterpillar(5, &quot;Steve&quot;), Catterpillar(4, &quot;Joe&quot;)))
-val highschool = kindergarden.transformInto[Adults]
-// Adults(List(Butterfly(5, &quot;Steve&quot;), Butterfly(4, &quot;Joe&quot;))
-</code></pre>
-      <p>
-        We can use it as long as Chimney can recursively construct transformation for all fields
-        of a target object. In this example transformer for <code class="scala scalatex-site-Styles-highlightMe" style="display: inline;padding: 0px;margin: 0px;">List</code> type is constructed
-        basing on automatically derived <code class="scala scalatex-site-Styles-highlightMe" style="display: inline;padding: 0px;margin: 0px;">Catterpillar ~&gt; Butterfly</code> mapping.
-</p>
-    <h1 id="Providingmissingvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Providingmissingvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Providing missing values</h1>
-      <p>
-        Let's add a field to our <code class="scala scalatex-site-Styles-highlightMe" style="display: inline;padding: 0px;margin: 0px;">Butterfly</code> case class.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">case class Butterfly(size: Int, name: String, wingsColor: String)
-</code></pre>
-      <p>
-        Now, when trying to perform the same transformation, we get compile-time error. This is
-        naturally expected, as we don't have any data source for new <code>wingsColor</code> field.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">val stevie = Catterpillar(5, &quot;Steve&quot;)
-val steve = stevie.transformInto[Butterfly]
-// error: Chimney can't derive transformation from Catterpillar to Butterfly
-//
-// Butterfly
-//   wingsColor: String - no accessor named wingsColor in source type Catterpillar
-//
-// Consult https://scalalandio.github.io/chimney for usage examples.
-//
-//        val steve = stevie.transformInto[Butterfly]
-//                                        ^
-</code></pre>
-      <p>
-        In this scenario, we can use Chimney's syntax to provide a missing value. Notice
-        that <code>transformInto[T]</code> is a shortcut for <code>into[T].transform</code>, where
-        the latter form allow us to provide additional transformation rules.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">val steve = stevie.into[Butterfly]
-  .withFieldConst(_.wingsColor, &quot;white&quot;)
-  .transform
-// Butterfly(5, &quot;Steve&quot;, &quot;white&quot;)
-</code></pre>
-      <p>
-        We can also construct a value dynamically, by providing a function.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">val steve = stevie.into[Butterfly]
-  .withFieldComputed(_.wingsColor, c =&gt; if(c.size &gt; 4) &quot;yellow&quot; else &quot;gray&quot;)
-  .transform
-// Butterfly(5, &quot;Steve&quot;, &quot;yellow&quot;)
 
-</code></pre>
-    <h1 id="Defaultvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Defaultvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Default values</h1>
-      <p>
-        Chimney also respects case classes' default values as a possible target
-        field value source. When we want to rely on defaults, we don't need to provide
-        values manually.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">case class Butterfly(size: Int, name: String, wingsColor: String = &quot;purple&quot;)
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
 
-val steve = stevie.transformInto[Butterfly]
-// Butterfly(5, &quot;Steve&quot;, &quot;purple&quot;)
-</code></pre>
-      <p>
-        Providing the value anyway for such case would just ignore the default from case class.
-</p>
-      <h2 id="Disablingdefaultvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Disablingdefaultvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Disabling default values</h2>
-        <p>
-          It is possible to disable lookup for default values and require them to be passed explicitly,
-          using <code>.disableDefaultValues</code> operation.
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">val steve = stevie
-  .into[Butterfly]
-  .disableDefaultValues
-  .transform
-// error: Chimney can't derive transformation from Catterpillar to Butterfly
-//
-// Butterfly
-//   wingsColor: String - no field named wingsColor in source type Catterpillar
-//
-// Consult https://scalalandio.github.io/chimney for usage examples.
-//
-//            .transform
-//            ^
-</code></pre>
-    <h1 id="Standardtypes" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Standardtypes" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Standard types</h1>
-      <p>
-        Chimney supports deriving transformers for many standard Scala types, like
-        <code>Options</code>, <code>Eithers</code>, collection types including <code>Lists</code>,
-        <code>Vectors</code>, <code>Sets</code>, <code>Maps</code>, <code>Arrays</code> and many more.
-</p>
-      <p>
-        If you are interested to see how they are handled, it's recommended to explore
-        <a href="https://github.com/scalalandio/chimney/blob/master/chimney/src/test/scala/io/scalaland/chimney/DslSpec.scala">the test suite</a>.
-</p>
-    <h1 id="Valueclasses" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Valueclasses" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Value classes</h1>
-      <p>
-        As nowadays value classes tends to be relatively widely pervasive, Chimney handles
-        them in a special way, supporting automatic value class field extraction and wrapping.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">object rich {
-  case class PersonId(id: Int) extends AnyVal
-  case class PersonName(name: String) extends AnyVal
-  case class Person(personId: PersonId, personName: PersonName, age: Int)
-}
-object plain {
-  case class Person(personId: Int, personName: String, age: Int)
-}
+  
+  
+    
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-val richPerson = rich.Person(PersonId(10), PersonName(&quot;Bill&quot;), 30)
-val plainPerson = richPerson.transformInto[plain.Person]
-// plain.Person(10, &quot;Bill&quot;, 30)
-val richPerson2 = plainPerson.transformInto[rich.Person]
-// rich.Person(PersonId(10), PersonName(&quot;Bill&quot;), 30)
-</code></pre>
-    <h1 id="Fieldre-labelling" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Fieldre-labelling" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Field re-labelling</h1>
-      <p>
-        Sometimes a field only change its name. In such case you can use <code>withFieldRenamed</code>
-        operation to instruct the library about performed renaming.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">case class SpyGB(name: String, surname: String)
-case class SpyRU(imya: String, familia: String)
+    ga('create', 'UA-116165806-1', 'auto');
+    ga('send', 'pageview');
+    </script>
 
-val jamesGB = SpyGB(&quot;James&quot;, &quot;Bond&quot;)
+    
+   
 
-val jamesRU = jamesGB.into[SpyRU]
-    .withFieldRenamed(_.name, _.imya)
-    .withFieldRenamed(_.surname, _.familia)
-    .transform
-// SpyRU(&quot;James&quot;, &quot;Bond&quot;)
-</code></pre>
-    <h1 id="Defaultoptionvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Defaultoptionvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Default option values</h1>
-      <p>
-        In case you have added an optional field to a type, wanting to write migration from old data, usually you
-        set new optional type to <code>None</code>.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">case class Foo(a: Int, b: String)
-case class FooV2(a: Int, b: String, newField: Option[Double])
-</code></pre>
-      <p>
-        Usual approach would be to use <code>.withFieldConst</code> to set new field value.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">Foo(5, &quot;test&quot;)
-  .into[FooV2]
-  .withFieldConst(_.newField, None)
-  .transform
-// FooV2(5, &quot;test&quot;, None)
-</code></pre>
-      <p>
-        At some scale this may turn out to be cumbersome. Therefore, it's possible to handle such <code>Option</code> field
-        values for which we can't find counterpart in data source as <code>None</code> by default. You just need to enable
-        this behavior by using <code>.enableOptionDefaultsToNone</code>.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">Foo(5, &quot;test&quot;)
-  .into[FooV2]
-  .enableOptionDefaultsToNone
-  .transform
-// FooV2(5, &quot;test&quot;, None)
-</code></pre>
-  <div style="margin: 0px;color: #333;text-align: center;padding: 2.5em 2em 0;border-bottom: 1px solid #eee;display: block;" id="Advancedtechniques" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><h1 style="margin: 0.2em 0;font-size: 3em;font-weight: 300;">Advanced techniques<a class=" scalatex-site-Styles-headerLink" href="#Advancedtechniques" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a></h1><br /></div>
-    <h1 id="Customtransformations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Customtransformations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Custom transformations</h1>
-      <p>
-        In case the transformation is relatively complex or if for some reason you just
-        want to bypass Chimney derivation mechanism, you can always fall back to a simple
-        function that you can plug into the Chimney transformation.
-</p>
-      <p>
-        The library defines a type class <code>Transformer</code>:
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">trait Transformer[From, To] {
-  def transform(src: From): To
-}
-</code></pre>
-      <p>
-        You can plug your own transformer in by providing implicit instance in
-        a local context.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.Transformer
-
-object v1 {
-  case class User(id: Int, name: String, street: String, postalCode: String)
-}
-object v2 {
-  case class Address(street: String, postalCode: String)
-  case class User(id: Int, name: String, addresses: List[Address])
-}
-
-implicit val userV1toV2: Transformer[v1.User, v2.User] =
-  (user: v1.User) =&gt; v2.User(
-    id = user.id,
-    name = user.name,
-    addresses = List(v2.Address(user.street, user.postalCode))
-  )
-
-val v1Users = List(
-  v1.User(1, &quot;Steve&quot;, &quot;Love street&quot;, &quot;27000&quot;),
-  v1.User(2, &quot;Anna&quot;, &quot;Broadway&quot;, &quot;00321&quot;)
-)
-
-val v2Users = v1Users.transformInto[List[v2.User]]
-// List(
-//   v2.User(1, &quot;Steve&quot;, List(Address(&quot;Love street&quot;, &quot;27000&quot;))),
-//   v2.User(2, &quot;Anna&quot;, List(Address(&quot;Broadway&quot;, &quot;00321&quot;)))
-// )
-</code></pre>
-      As we can see, Chimney correctly picked and used implicit
-      <code>Transformer[v1.User, v2.User]</code> defined locally in
-      transformation between list of users.
-
-      But is it really a necessity to define custom transformer
-      completely manually?
-
-      <h2 id="TransformerdefinitionDSL" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#TransformerdefinitionDSL" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Transformer definition DSL</h2>
-        <p>
-          One can think that if we only need to provide function implementation
-          of type <code>v1.User =&gt; v2.User</code>, why not use Chimney's DSL in order
-          to generate the transformation?
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">implicit val userV2toV2: Transformer[v1.User, v2.User] =
-  (user: v1.User) =&gt; user
-    .into[v2.User]
-    .withFieldComputed(_.addresses, u =&gt; List(v2.Address(u.street, u.postalCode)))
-    .transform
-</code></pre>
-        <p>
-          While it looks reasonably, it will not work as expected :(
-</p>
-        <p>
-          Chimney's macro, before trying to derive any transformer, tries to
-          find instance of required transformer in implicit scope. Unfortunately,
-          it will pick <code>userV2toV2</code>, because types match, this value is
-          marked as implicit and is available in macro expansion scope. Depending
-          on few details, it will either end up as compilation error, or
-          will lead to <code>StackOverflowError</code> at runtime.
-</p>
-        <p>
-          Since version 0.4.0 there is a simple solution to this problem.
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">implicit val userV2toV2: Transformer[v1.User, v2.User] =
-  Transformer.define[v1.User, v2.User]
-    .withFieldComputed(_.addresses, u =&gt; List(v2.Address(u.street, u.postalCode)))
-    .buildTransformer
-</code></pre>
-        <p>
-          We need to use special syntax <code>Transformer.define[From, To]</code>
-          which introduces us to new transformer builder between types
-          <code>From</code> and <code>To</code>. In transformer builder we can use
-          all operations available to usual transformer DSL. The only
-          difference is that we don't call <code>.transform</code> at the end
-          (since we don't transform value in place), but
-          <code>buildTransformer</code> (because we generate transformer here).
-          Such generated transformer is semantically equivalent to
-          hand-written transformer from previous section.
-</p>
-        <p>
-          Chimney solves self reference implicit problem by not looking
-          for implicit instance for <code>Transformer[From, To]</code> when
-          using transformer builder  <code>Transformer.define[From, To]</code>.
-</p>
-    <h1 id="Recursivedatatypes" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Recursivedatatypes" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Recursive data types</h1>
-      <p>
-        Chimney can generate transformers between recursive data structures.
-        Consider following example.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">case class Foo(x: Option[Foo])
-case class Bar(x: Option[Bar])
-</code></pre>
-      <p>
-        We would like to define transformer instance which would be able
-        to convert a value <code>Foo(Some(Foo(None)))</code> to <code>Bar(Some(Bar(None)))</code>.
-        In order to avoid aforementioned issues with self-referencing, you
-        must define your recursive transformer instance as <code>implicit def</code>
-        or <code>implicit lazy val</code>.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">implicit def fooToBarTransformer: Transformer[Foo, Bar] =
-  Transformer.derive[Foo, Bar] // or Transformer.define[Foo, Bar].buildTransformer
-
-Foo(Some(Foo(None))).transformInto[Bar]
-// Bar(Some(Bar(None)))
-</code></pre>
-    <h1 id="Coproductssupport" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Coproductssupport" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Coproducts support</h1>
-      <p>
-        With Chimney you can not only transform case classes, but sealed trait hierarchies
-        (also known as coproducts) as well. Consider two following hierarchy definitions.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">sealed trait Color
-object Color {
-  case object Red extends Color
-  case object Green extends Color
-  case object Blue extends Color
-}
-
-sealed trait Channel
-object Channel {
-  case object Alpha extends Channel
-  case object Blue extends Channel
-  case object Green extends Channel
-  case object Red extends Channel
-}
-</code></pre>
-      <p>
-        Because of object names correspondence, we can transform <code>Color</code> to a <code>Channel</code>
-        in a simple way.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">val colRed: Color = Color.Red
-val chanRed = colRed.transformInto[Channel]
-// chanRed: Channel = Red
-</code></pre>
-      <p>
-        How about other way round?
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">chanRed.transformInto[Color]
-// error: Chimney can't derive transformation from Channel to Color
-//
-// Color
-//   can't transform coproduct instance Channel.Alpha to Color
-//
-// Consult https://scalalandio.github.io/chimney for usage examples.
-//
-//        chanRed.transformInto[Color]
-//                             ^
-</code></pre>
-      <p>
-        This time we tried to transform a <code>Channel</code> to a <code>Color</code>. Notice that in this
-        case we don't have defined case object in target hierarchy with corresponding name for
-        <code>case object Alpha</code>. Wanting to keep the transformation total, we need to somehow
-        provide a value from a target domain. We can use <code>withCoproductInstance</code> to do that.
-        Let's convert any <code>Channel.Alpha</code> to <code>Color.Blue</code>.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">val red = chanRed.into[Color]
-  .withCoproductInstance { (_: Channel.Alpha.type) =&gt; Color.Blue }
-  .transform
-// red: Color = Red
-
-val alpha: Channel = Channel.Alpha
-val blue = alpha.into[Color]
-  .withCoproductInstance { (_: Channel.Alpha.type) =&gt; Color.Blue }
-  .transform
-// blue: Color = Blue
-</code></pre>
-      <p>
-        After providing a default, Chimney can prove the transformation is total and use provided
-        function, when it's needed.
-</p>
-    <h1 id="Patchers" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Patchers" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Patchers</h1>
-      <p>
-        Chimney also supports case class patching. It is a bit different type
-        of transformation when you hold an object of some type, but want to modify only
-        subset of fields. Consider following example:
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">case class Email(address: String) extends AnyVal
-case class Phone(number: Long) extends AnyVal
-
-case class User(id: Int, email: Email, phone: Phone)
-case class UserUpdateForm(email: String, phone: Long)
-</code></pre>
-      <p>
-        Let's assume you want to apply update form to existing object of type <code>User</code>.
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">val user = User(10, Email(&quot;abc@domain.com&quot;), Phone(1234567890L))
-val updateForm = UserUpdateForm(&quot;xyz@domain.com&quot;, 123123123L)
-
-user.patchUsing(updateForm)
-// User(10, Email(&quot;xyz@domain.com&quot;), Phone(123123123L))
-</code></pre>
-      <p>
-        Notice that when using patchers, we rely on standard transformers derivation
-        rules. In this case we used value classes in the <code>User</code> model, but plain
-        values in update form. Chimney was able to derive transformers for each patched
-        field, so it was able to successfully derive a patcher.
-</p>
-      <h2 id="Redundantfieldsinpatch" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Redundantfieldsinpatch" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Redundant fields in patch</h2>
-        <p>
-          When patch case class contains a field that does not exist
-          in patched object, Chimney will not be able to generate patcher.
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">case class UserUpdateForm2(email: String, phone: Long, address: String)
-
-user.patchUsing(UserUpdateForm2(&quot;xyz@domain.com&quot;, 123123123L, &quot;some address&quot;))
-// Field named 'address' not found in target patching type User
-</code></pre>
-        <p>
-          This default behavior is intentional to prevent silent oversight
-          of typos in patcher field names.
-</p>
-        <p>
-          But there is a way to ignore redundant patcher fields explicitly.
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">user
-  .using(UserUpdateForm2(&quot;xyz@domain.com&quot;, 123123123L, &quot;some address&quot;))
-  .ignoreRedundantPatcherFields
-  .patch
-// User(10, Email(&quot;xyz@domain.com&quot;), Phone(123123123L))
-</code></pre>
-      <h2 id="Optionalpatchvalues" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Optionalpatchvalues" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Optional patch values</h2>
-        <p>
-          It is possible to patch using optional values of type <code>Option[T]</code> as long as the
-          transformer is available for <code>T</code>. If the value is present (<code>Some</code>),
-          it's used for patching field in target object; otherwise (<code>None</code>) it's' ignored
-          and the field value is copied from the original object.
-          Let us consider the following patch for the class <code>User</code> defined above:
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">case class UserPatch(email: Option[String], phone: Option[Phone])
-</code></pre>
-        <p>
-          Then it is possible to patch as follows:
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">val update = UserPatch(email = Some(&quot;updated@example.com&quot;), phone = None)
-
-exampleUser.patchUsing(update)
-//  User(10, Email(&quot;updated@example.com&quot;), Phone(1234567890L))
-</code></pre>
-        <p>
-          The <code>phone</code> remained the same as in the <code>exampleUser</code>, while the optional
-          e-mail string got transformed to an <code>Email</code> instance.
-</p>
-      <h2 id="Option[T]onbothsides" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Option[T]onbothsides" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Option[T] on both sides</h2>
-        <p>
-          An interesting case appears when both patch case class and patched
-          object define fields <code>f: Option[T]</code>. Depending on values
-          of <code>f</code> in patched object and patch, we would like to
-          apply following semantic table.
-</p>
-        <table class="pure-table">
-          <tr>
-            <th>
-              <code>patchedObject.f</code></th>
-            <th>
-              <code>patch.f</code></th>
-            <th>
-              patching result</th></tr>
-          <tr>
-            <td>
-              <code>None</code></td>
-            <td>
-              <code>Some(value)</code></td>
-            <td>
-              <code>Some(value)</code></td></tr>
-          <tr>
-            <td>
-              <code>Some(value1)</code></td>
-            <td>
-              <code>Some(value2)</code></td>
-            <td>
-              <code>Some(value2)</code></td></tr>
-          <tr>
-            <td>
-              <code>None</code></td>
-            <td>
-              <code>None</code></td>
-            <td>
-              <code>None</code></td></tr>
-          <tr>
-            <td>
-              <code>Some(value)</code></td>
-            <td>
-              <code>None</code></td>
-            <td>
-              <code>None</code> or <code>Some(value)</code>?
-</td></tr></table>
-        <p>
-          When a <code>patch.f</code> contains some value, it's immediately used for
-          replacing field in target object (rows 1 and 2), regardless of original
-          object field value.
-          When both field are <code>None</code>s, patching result is also <code>None</code>
-          (row 3).
-</p>
-        <p>
-          But if original object contains a some value, but patch comes
-          with a <code>None</code>, we can do two things:
-
-          <ul>
-            <li>
-              clear value in target object (replace it with <code>None</code>)</li>
-            <li>
-              or ignore updating this particular field (as in previous section)
-</li></ul>
-          Both choices may have perfect sense, depending on the context.
-          By default, Chimney does the former (clears the value), but it
-          also gives a simple way to always ignore <code>None</code>s from patch.
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">case class User(name: Option[String], age: Option[Int])
-case class UserPatch(name: Option[String], age: Option[Int])
-
-val user = User(Some(&quot;John&quot;), Some(30))
-val userPatch = UserPatch(None, None)
-
-user.patchUsing(userPatch)
-// clears both fields: User(None, None)
-
-user
-  .using(userPatch)
-  .ignoreNoneInPatch
-  .patch
-// ignores updating both fields: User(Some(&quot;John&quot;), Some(30))
-</code></pre>
-    <h1 id="Javabeans" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Javabeans" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Java beans</h1>
-      Beside Scala case classes, Chimney supports transformation of Java beans.
-
-      <h2 id="ReadingfromJavabeans" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#ReadingfromJavabeans" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Reading from Java beans</h2>
-        <p>
-          Chimney supports automatic field renaming for classes that follow Java beans naming convention.
-          Let's assume the following classes:
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">class MyBean(private var id: Long,
-             private var name: String,
-             private var flag: Boolean) {
-    def getId: Long = id
-    def getName: String = name
-    def isFlag: Boolean = flag
-}
-
-case class MyCaseClass(id: Long, name: String, flag: Boolean)
-</code></pre>
-        <p>
-          The conversion works if you explicitly enable it with <code>.enableBeanGetters</code>:
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">new MyBean(1L, &quot;beanie&quot;, true)
-  .into[MyCaseClass]
-  .enableBeanGetters
-  .transform
-//  MyCaseClass(1L, &quot;beanie&quot;, true)
-
-</code></pre>
-        <p>
-          Please note that Chimney matches accessor methods solely based on name and return type, and has
-          no way of ensuring that a method named similarly to a getter is idempotent and does not actually
-          perform side effects in its body.
-</p>
-      <h2 id="WritingtoJavabeans" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#WritingtoJavabeans" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Writing to Java beans</h2>
-        <p>
-          Dual to reading, Chimney supports transforming types into Java beans.
-</p>
-        <p>
-          Chimney considers as bean a class that:
-
-          <ul>
-            <li>
-              primary constructor is public and parameter-less</li>
-            <li>
-              contains at least one, single-parameter setter method that returns <code>Unit</code>
-</li></ul>
-          Chimney will then require data sources for all such setters.
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">class MyBean {
-  private var id: Long = _
-  private var name: String = _
-  private var flag: Boolean = _
-
-  def getId: Long = id
-  def setId(id: Long): Unit = { this.id = id }
-
-  def getName: String = name
-  def setName(name: String): Unit = { this.name = name }
-
-  def isFlag: Boolean = flag
-  def setFlag(flag: Boolean): Unit = { this.flag = flag }
-}
-</code></pre>
-        <p>
-          The conversion works if you explicitly enable it with <code>.enableBeanSetters</code>:
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">val obj = MyCaseClass(10L, &quot;beanie&quot;, true)
-val bean = obj
-  .into[MyBean]
-  .enableBeanSetters
-  .transform
-</code></pre>
-        <p>
-          Chimney generates code equivalent to:
-</p>
-        <pre><code class="scala scalatex-site-Styles-highlightMe">val bean = new MyBean
-bean.setId(obj.id)
-bean.setName(obj.name)
-bean.setFlag(obj.flag)
-</code></pre>
-        <h3 id="Limitations" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Limitations" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Limitations</h3>
-          <p>
-            Currently it's not possible to override or provide values for missing setters.
-</p>
-    <h1 id="Unsafeoption" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Unsafeoption" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Unsafe option</h1>
-      Chimney supports opt-in unsafe transformation from optional types into non-optional types.
-
-      <p>
-        This mode is enabled explicitly with <code>.enableUnsafeOption</code>.
-        Transforming <code>None</code> into a concrete value will lead to <code>NoSuchElementException</code> at runtime,
-        so use at your own risk.
-</p>
-      <h2 id="Mappingproto3types" style="display: block;" class=" scalatex-site-Styles-hoverContainer scalatex-site-Styles-headerTag"><a class=" scalatex-site-Styles-headerLink" href="#Mappingproto3types" style="position: absolute;right: 0px;"><i class="fa fa-link"></i></a>Mapping proto3 types</h2>
-        Unsafe option mode is typically useful when mapping proto3-generated classes to domain classes.
-        Scalapb indeed generates fields wrapped in <code>Option</code> types for messages. In certain scenarios,
-        it can be safe to assume that the value is always present, thus allowing for significant boilerplate reduction.
-
-      <p>
-        Here's an example protobuf definition:
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">syntax = &quot;proto3&quot;;
-package pb;
-message Item {
-    int32 id = 1;
-    string name = 2;
-}
-message OrderLine {
-    Item item = 1;
-    int32 quantity = 2;
-}
-message Address {
-    string street = 1;
-    int32 zip_code = 2;
-    string city = 3;
-}
-message Customer {
-    int32 id = 1;
-    string first_name = 2;
-    string last_name = 3;
-    Address address = 4;
-}
-message Order {
-    repeated OrderLine lines = 1;
-    Customer customer = 2;
-}
-</code></pre>
-      <p>
-        And the equivalent domain model definitions:
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">package domain
-
-case class Item(id: Int, name: String)
-case class OrderLine(item: Item, quantity: Int)
-case class Address(street: String, zipCode: Int, city: String)
-case class Customer(id: Int, firstName: String, lastName: String, address: Address)
-case class Order(lines: List[OrderLine], customer: Customer)
-</code></pre>
-      <p>
-        Transforming from one representation to the other can be achieved directly using <code>.enableUnsafeOption</code>:
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">val domainOrder = pbOrder.into[domain.Order].enableUnsafeOption.transform
-</code></pre>
-      <p>
-        and vice-versa:
-</p>
-      <pre><code class="scala scalatex-site-Styles-highlightMe">val pbOrder = domainOrder.into[pb.Order].enableUnsafeOption.transform</code></pre></div>
-</div><script>
-    scalatex.scrollspy.Controller().main(
-      [{"value":"Chimney","children":[{"value":"What Chimney does","children":[]},{"value":"Getting started","children":[{"value":"Trying with Ammonite REPL","children":[]}]},{"value":"Usage","children":[{"value":"Basic transformations","children":[]},{"value":"Nested transformations","children":[]},{"value":"Providing missing values","children":[]},{"value":"Default values","children":[{"value":"Disabling default values","children":[]}]},{"value":"Standard types","children":[]},{"value":"Value classes","children":[]},{"value":"Field re-labelling","children":[]},{"value":"Default option values","children":[]}]},{"value":"Advanced techniques","children":[{"value":"Custom transformations","children":[{"value":"Transformer definition DSL","children":[]}]},{"value":"Recursive data types","children":[]},{"value":"Coproducts support","children":[]},{"value":"Patchers","children":[{"value":"Redundant fields in patch","children":[]},{"value":"Optional patch values","children":[]},{"value":"Option[T] on both sides","children":[]}]},{"value":"Java beans","children":[{"value":"Reading from Java beans","children":[]},{"value":"Writing to Java beans","children":[{"value":"Limitations","children":[]}]}]},{"value":"Unsafe option","children":[{"value":"Mapping proto3 types","children":[]}]}]}]}]
-  )</script><script>
-    ['DOMContentLoaded', 'load'].forEach(function(ev){
-      addEventListener(ev, function(){
-        Array.prototype.forEach.call(
-          document.getElementsByClassName('scalatex-site-Styles-highlightMe'),
-          hljs.highlightBlock
-        );
-      })
-    })
-  </script></body></html>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+</body>
+</html>
