@@ -446,6 +446,7 @@ object DslSpec extends TestSuite {
 
         Buzz("a").transformInto[NewBuzz] ==> NewBuzz("a", ())
         Buzz("a").transformInto[FooBuzz] ==> FooBuzz(())
+        NewBuzz("a", null: Unit).transformInto[FooBuzz] ==> FooBuzz(null: Unit)
         compileError("""Buzz("a").transformInto[ConflictingFooBuzz]""")
           .check("", "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.DslSpec.Buzz")
       }
