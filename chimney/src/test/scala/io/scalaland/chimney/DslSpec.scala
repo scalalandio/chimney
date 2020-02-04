@@ -441,8 +441,17 @@ object DslSpec extends TestSuite {
       "support automatically filling of scala.Unit" - {
         case class Buzz(value: String)
         case class NewBuzz(value: String, unit: Unit)
+        case class FooBuzz(unit: Unit)
+        case class ConflictingFooBuzz(value: Unit)
 
         Buzz("a").transformInto[NewBuzz] ==> NewBuzz("a", ())
+        Buzz("a").transformInto[FooBuzz] ==> FooBuzz(())
+        NewBuzz("a", null.asInstanceOf[Unit]).transformInto[FooBuzz] ==> FooBuzz(null.asInstanceOf[Unit])
+        compileError("""Buzz("a").transformInto[ConflictingFooBuzz]""")
+          .check(
+            "",
+            "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.DslSpec.Buzz"
+          )
       }
 
       "support scala.util.Either" - {
@@ -683,7 +692,7 @@ object DslSpec extends TestSuite {
 
         transform[String](polySource) ==> monoTarget
       }
-      
+
       "automatically fill Unit parameters" - {
         case class Foo(value: String)
         case class Bar[T](value: String, poly: T)
