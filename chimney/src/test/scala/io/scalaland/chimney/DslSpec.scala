@@ -532,11 +532,11 @@ object DslSpec extends TestSuite {
         Foobar(Some(1), None).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1", None)
       }
 
-      "transforming None leads to NoSuchElementException" - {
+      "transforming None leads to TransformationException" - {
         case class Foobar(x: Option[Int])
         case class Foobar2(x: String)
 
-        intercept[NoSuchElementException] {
+        intercept[TransformationException] {
           Foobar(None).into[Foobar2].enableUnsafeOption.transform
         }
       }

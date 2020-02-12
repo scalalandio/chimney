@@ -1,17 +1,20 @@
 package io.scalaland.chimney.internal.macros
 
+import io.scalaland.chimney.internal.utils.MacroUtils
+
 import scala.reflect.macros.whitebox
 
-trait DslWhiteboxMacros {
+trait DslWhiteboxMacros { this: MacroUtils =>
 
   val c: whitebox.Context
 
   import c.universe._
 
-  def expandWithFieldConst[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](
+  def expandWithFieldConstF[F[_]: WTTF, From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](
       fieldName: Name,
       value: c.Tree
   ): c.Tree = {
+    val F = WTTF[F]
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
     val C = weakTypeOf[C]
@@ -25,16 +28,16 @@ trait DslWhiteboxMacros {
     q"""
       {
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides.updated($fieldNameLit, $value), $fn.instances)
+        new _root_.io.scalaland.chimney.dsl.TransformerDefinition[$F, $From, $To, $newCfgTpe]($fn.overrides.updated($fieldNameLit, $value), $fn.instances)
       }
     """
   }
 
-  def expandFieldComputed[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](
+  def expandFieldComputedF[F[_]: WTTF, From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](
       fieldName: Name,
       map: c.Tree
   ): c.Tree = {
-
+    val F = WTTF[F]
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
     val C = weakTypeOf[C]
@@ -48,15 +51,16 @@ trait DslWhiteboxMacros {
     q"""
       {
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides.updated($fieldNameLit, $map), $fn.instances)
+        new _root_.io.scalaland.chimney.dsl.TransformerDefinition[$F, $From, $To, $newCfgTpe]($fn.overrides.updated($fieldNameLit, $map), $fn.instances)
       }
     """
   }
 
-  def expandFieldRenamed[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](
+  def expandFieldRenamed[F[_]: WTTF, From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](
       fieldNameFrom: Name,
       fieldNameTo: Name
   ): c.Tree = {
+    val F = WTTF[F]
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
     val C = weakTypeOf[C]
@@ -67,13 +71,20 @@ trait DslWhiteboxMacros {
     val newCfgTpe =
       tq"_root_.io.scalaland.chimney.internal.TransformerCfg.FieldRelabelled[$singletonFromTpe, $singletonToTpe, $C]"
 
-    q"${c.prefix.tree}.asInstanceOf[_root_.io.scalaland.chimney.dsl.TransformerDefinition[$From, $To, $newCfgTpe]]"
+    q"${c.prefix.tree}.asInstanceOf[_root_.io.scalaland.chimney.dsl.TransformerDefinition[$F, $From, $To, $newCfgTpe]]"
   }
 
-  def expandCoproductInstance[From: c.WeakTypeTag, To: c.WeakTypeTag, Inst: c.WeakTypeTag, C: c.WeakTypeTag](
+  def expandCoproductInstance[
+      F[_]: WTTF,
+      From: c.WeakTypeTag,
+      To: c.WeakTypeTag,
+      Inst: c.WeakTypeTag,
+      C: c.WeakTypeTag
+  ](
       f: c.Tree
   ): c.Tree = {
 
+    val F = WTTF[F]
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]
     val Inst = weakTypeOf[Inst]
@@ -88,7 +99,7 @@ trait DslWhiteboxMacros {
     q"""
       {
         val $fn = ${c.prefix.tree}
-        new _root_.io.scalaland.chimney.dsl.TransformerDefinition[$From, $To, $newCfgTpe]($fn.overrides, $fn.instances.updated(($fullInstName, $fullTargetName), $f))
+        new _root_.io.scalaland.chimney.dsl.TransformerDefinition[$F, $From, $To, $newCfgTpe]($fn.overrides, $fn.instances.updated(($fullInstName, $fullTargetName), $f))
       }
     """
   }

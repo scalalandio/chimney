@@ -8,6 +8,13 @@ trait MacroUtils extends CompanionUtils {
 
   import c.universe._
 
+  type WTTF[F[_]] = c.WeakTypeTag[F[Unit]]
+
+  object WTTF {
+    def apply[F[_]: WTTF]: Type =
+      weakTypeOf[F[Unit]].typeConstructor
+  }
+
   implicit class TypeOps(t: Type) {
 
     def isValueClass: Boolean =

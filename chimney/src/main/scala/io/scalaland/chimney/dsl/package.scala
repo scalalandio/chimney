@@ -17,11 +17,22 @@ package object dsl {
 
     /** Allows to customize transformer generation to your target type
       *
+      * @tparam F  transformation context
       * @tparam To target type
       * @return [[io.scalaland.chimney.dsl.TransformerInto]]
       */
-    final def into[To]: TransformerInto[From, To, TransformerCfg.Empty] =
-      new TransformerInto(source, new TransformerDefinition[From, To, TransformerCfg.Empty](Map.empty, Map.empty))
+    final def intoF[F[_]: TransformationContext, To]: TransformerInto[F, From, To, TransformerCfg.Empty] =
+      new TransformerInto(source, new TransformerDefinition[F, From, To, TransformerCfg.Empty](Map.empty, Map.empty))
+
+    /** Allows to customize transformer generation to your target type
+      * @tparam To target type
+      * @return [[io.scalaland.chimney.dsl.TransformerInto]]
+      */
+    final def into[To]: TransformerInto[Id, From, To, TransformerCfg.Empty] =
+      intoF[Id, To]
+
+    final def transformIntoF[F[_], To](implicit transformerF: TransformerF[F, From, To]): F[To] =
+      transformerF.transform(source)
 
     /** Performs in-place transformation of wrapped source value to target type.
       *
@@ -34,7 +45,7 @@ package object dsl {
       * @return transformed value of target type
       */
     final def transformInto[To](implicit transformer: Transformer[From, To]): To =
-      transformer.transform(source)
+      transformIntoF[Id, To]
   }
 
   /** Provides patcher operations on values of any type

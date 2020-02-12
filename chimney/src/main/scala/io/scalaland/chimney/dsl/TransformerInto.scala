@@ -11,13 +11,14 @@ import scala.language.experimental.macros
   *
   * @param  source object to transform
   * @param  td     transformer definition
+  * @tparam F    type of context output lifted to
   * @tparam From   type of input value
   * @tparam To     type of output value
   * @tparam C      type-level encoded config
   */
-final class TransformerInto[From, To, C <: TransformerCfg](
+final class TransformerInto[F[_], From, To, C <: TransformerCfg](
     val source: From,
-    val td: TransformerDefinition[From, To, C]
+    val td: TransformerDefinition[F, From, To, C]
 ) {
 
   /** Fail derivation if `From` type is missing field even if `To` has default value for it
@@ -27,8 +28,8 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @see [[https://scalalandio.github.io/chimney/#Defaultoptionvalues]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
-  def disableDefaultValues: TransformerInto[From, To, DisableDefaultValues[C]] =
-    this.asInstanceOf[TransformerInto[From, To, DisableDefaultValues[C]]]
+  def disableDefaultValues: TransformerInto[F, From, To, DisableDefaultValues[C]] =
+    this.asInstanceOf[TransformerInto[F, From, To, DisableDefaultValues[C]]]
 
   /** Enable Java Beans naming convention (`.getName`, `.isName`) on `From`
     *
@@ -37,8 +38,8 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @see [[https://scalalandio.github.io/chimney/#ReadingfromJavabeans]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
-  def enableBeanGetters: TransformerInto[From, To, EnableBeanGetters[C]] =
-    this.asInstanceOf[TransformerInto[From, To, EnableBeanGetters[C]]]
+  def enableBeanGetters: TransformerInto[F, From, To, EnableBeanGetters[C]] =
+    this.asInstanceOf[TransformerInto[F, From, To, EnableBeanGetters[C]]]
 
   /** Enable Java Beans naming convention (`.setName(value)`) on `To`
     *
@@ -47,8 +48,8 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @see [[https://scalalandio.github.io/chimney/#WritingtoJavabeans]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
-  def enableBeanSetters: TransformerInto[From, To, EnableBeanSetters[C]] =
-    this.asInstanceOf[TransformerInto[From, To, EnableBeanSetters[C]]]
+  def enableBeanSetters: TransformerInto[F, From, To, EnableBeanSetters[C]] =
+    this.asInstanceOf[TransformerInto[F, From, To, EnableBeanSetters[C]]]
 
   /** Sets target value of optional field to None if field is missing from source type From
     *
@@ -57,8 +58,8 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @see [[https://scalalandio.github.io/chimney/#Defaultoptionvalues]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
-  def enableOptionDefaultsToNone: TransformerInto[From, To, EnableOptionDefaultsToNone[C]] =
-    this.asInstanceOf[TransformerInto[From, To, EnableOptionDefaultsToNone[C]]]
+  def enableOptionDefaultsToNone: TransformerInto[F, From, To, EnableOptionDefaultsToNone[C]] =
+    this.asInstanceOf[TransformerInto[F, From, To, EnableOptionDefaultsToNone[C]]]
 
   /** Enable unsafe call to `.get` when source type From contains field of type `Option[A]`, but target type To defines this fields as `A`
     *
@@ -69,8 +70,8 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @see [[https://scalalandio.github.io/chimney/#Unsafeoption]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
-  def enableUnsafeOption: TransformerInto[From, To, EnableUnsafeOption[C]] =
-    this.asInstanceOf[TransformerInto[From, To, EnableUnsafeOption[C]]]
+  def enableUnsafeOption: TransformerInto[F, From, To, EnableUnsafeOption[C]] =
+    this.asInstanceOf[TransformerInto[F, From, To, EnableUnsafeOption[C]]]
 
   /** Use `value` provided here for field picked using `selector`.
     *
@@ -79,8 +80,11 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @see [[https://scalalandio.github.io/chimney/#Providingmissingvalues]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
-  def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[From, To, _] =
-    macro TransformerIntoWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
+  def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[F, From, To, _] =
+    macro TransformerIntoWhiteboxMacros.withFieldConstImpl[F, From, To, T, U, C]
+
+  def withFieldConstF[T, U](selector: To => T, value: F[U]): TransformerInto[F, From, To, _] =
+    macro TransformerIntoWhiteboxMacros.withFieldConstImplF[F, From, To, T, U, C]
 
   /** Use `map` provided here to compute value of field picked using `selector`.
     *
@@ -91,8 +95,11 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @param map      function to use to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     * */
-  def withFieldComputed[T, U](selector: To => T, map: From => U): TransformerInto[From, To, _] =
-    macro TransformerIntoWhiteboxMacros.withFieldComputedImpl[From, To, T, U, C]
+  def withFieldComputed[T, U](selector: To => T, map: From => U): TransformerInto[F, From, To, _] =
+    macro TransformerIntoWhiteboxMacros.withFieldComputedImpl[F, From, To, T, U, C]
+
+  def withFieldComputedF[T, U](selector: To => T, map: From => F[U]): TransformerInto[F, From, To, _] =
+    macro TransformerIntoWhiteboxMacros.withFieldComputedImplF[F, From, To, T, U, C]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
     *
@@ -103,8 +110,8 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     * */
-  def withFieldRenamed[T, U](selectorFrom: From => T, selectorTo: To => U): TransformerInto[From, To, _] =
-    macro TransformerIntoWhiteboxMacros.withFieldRenamedImpl[From, To, T, U, C]
+  def withFieldRenamed[T, U](selectorFrom: From => T, selectorTo: To => U): TransformerInto[F, From, To, _] =
+    macro TransformerIntoWhiteboxMacros.withFieldRenamedImpl[F, From, To, T, U, C]
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another
     *
@@ -117,13 +124,13 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     */
-  def withCoproductInstance[Inst](f: Inst => To): TransformerInto[From, To, _] =
-    macro TransformerIntoWhiteboxMacros.withCoproductInstanceImpl[From, To, Inst, C]
+  def withCoproductInstance[Inst](f: Inst => To): TransformerInto[F, From, To, _] =
+    macro TransformerIntoWhiteboxMacros.withCoproductInstanceImpl[F, From, To, Inst, C]
 
   /** Apply configured transformation in-place
     *
     * @return transformed value
     */
-  def transform: To =
-    macro ChimneyBlackboxMacros.transformImpl[From, To, C]
+  def transform: F[To] =
+    macro ChimneyBlackboxMacros.transformImpl[F, From, To, C]
 }

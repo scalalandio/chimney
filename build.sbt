@@ -44,7 +44,8 @@ val settings = Seq(
         "-Ywarn-nullary-override",
         "-Ywarn-nullary-unit",
         "-Xlint:by-name-right-associative",
-        "-Xlint:unsound-match"
+        "-Xlint:unsound-match",
+        "-language:higherKinds"
       )
     ),
   scalacOptions ++= (
@@ -93,6 +94,25 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 lazy val chimneyJVM = chimney.jvm
 lazy val chimneyJS = chimney.js
 lazy val chimneyNative = chimney.native
+
+val commonCats = libraryDependencies += "org.typelevel" %%% "cats-core" % "2.0.0"
+val nativeCats = libraryDependencies += "com.github.lolgab" %%% "cats-core" % "2.0.0-M4"
+lazy val `chimney-cats` = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .dependsOn(chimney)
+  .settings(
+    moduleName := "chimney-cats",
+    name := "chimney-cats",
+    version := "0.0.1",
+    description := "Module for validated transformers support",
+    testFrameworks += new TestFramework("utest.runner.Framework")
+  )
+  .settings(settings: _*)
+  .settings(publishSettings: _*)
+  .settings(dependencies: _*)
+  .nativeSettings(nativeCats)
+  .jvmSettings(commonCats)
+  .jsSettings(commonCats)
 
 lazy val protos = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)

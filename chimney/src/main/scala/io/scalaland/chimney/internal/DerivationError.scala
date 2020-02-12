@@ -35,8 +35,10 @@ final case class IncompatibleSourceTuple(
     targetTypeName: String
 ) extends DerivationError
 
-final case class NotSupportedDerivation(fieldName: String, sourceTypeName: String, targetTypeName: String)
+final case class NotSupportedDerivation(fieldName: String, sourceTypeName: String, targetTypeName: String, ctx: String)
     extends DerivationError
+
+case class CantFindTraverseList(sourceTypeName: String, targetTypeName: String) extends DerivationError
 
 object DerivationError {
 
@@ -59,8 +61,10 @@ object DerivationError {
               s"  can't transform coproduct instance $instance to $targetTypeName"
             case IncompatibleSourceTuple(sourceArity, targetArity, sourceTypeName, _) =>
               s"  source tuple $sourceTypeName is of arity $sourceArity, while target type $targetTypeName is of arity $targetArity; they need to be equal!"
-            case NotSupportedDerivation(fieldName, sourceTypeName, _) =>
+            case NotSupportedDerivation(fieldName, sourceTypeName, _, _) =>
               s"  derivation from $fieldName: $sourceTypeName to $targetTypeName is not supported in Chimney!"
+            case CantFindTraverseList(sourceTypeName, targetTypeName) =>
+              s"  can't find Traverse[List] to convert $sourceTypeName to $targetTypeName. import io.scalaland.chimney.cats.validated._ or implement it by yourself"
           }
 
           s"""$targetTypeName
