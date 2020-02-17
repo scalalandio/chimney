@@ -22,7 +22,7 @@ object CatsSpec extends TestSuite {
 
       From(InnerFrom("a", Map("aaa" -> "bbb", "ccc" -> "ddd"), None), Some(2), "b", List("c", "d"))
         .transformIntoF[V, To]
-        .leftMap(_.map(_.info)) ==> Validated.Invalid(
+        .formatErrors ==> Validated.Invalid(
         NonEmptyChain(
           "a is not int on inner.a",
           "aaa is not int on inner.mapka.keys",
@@ -75,7 +75,7 @@ object CatsSpec extends TestSuite {
         .withFieldConstF(_.d, TransformationError("Invalid value").invalidNec)
         .withFieldComputedF(_.ee, _ => TransformationError("Invalid value 2").invalidNec)
         .transform
-        .leftMap(_.map(_.info)) ==> Validated.Invalid(NonEmptyChain("Invalid value on d", "Invalid value 2 on ee"))
+        .formatErrors ==> Validated.Invalid(NonEmptyChain("Invalid value on d", "Invalid value 2 on ee"))
     }
   }
 }

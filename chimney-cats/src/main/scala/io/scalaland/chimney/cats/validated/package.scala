@@ -3,13 +3,14 @@ package io.scalaland.chimney.cats
 import cats.instances.{ListInstances, VectorInstances}
 import io.scalaland.chimney.typeclasses.Traverse
 import io.scalaland.chimney.{TransformationContext, TransformationException}
+import cats.data.Validated
 
 package object validated extends ListInstances with VectorInstances {
   type NEC[+A] = cats.data.NonEmptyChain[A]
   val NEC = cats.data.NonEmptyChain
 
-  type V[+A] = cats.data.Validated[NEC[TransformationError], A]
-  val V = cats.data.Validated
+  type V[+A] = Validated[NEC[TransformationError], A]
+  val V = Validated
 
   implicit val vContext: TransformationContext[V] = new TransformationContext[V] {
     override def error[A](message: String): V[A] =
@@ -41,12 +42,15 @@ package object validated extends ListInstances with VectorInstances {
     override def mapWithIndex[A, B](fa: F[A])(f: (A, Int) => B): F[B] =
       catz.mapWithIndex(fa)(f)
 
-    override def sequence[G[_]: TransformationContext, A](fga: F[G[A]]): G[F[A]]=
+    override def sequence[G[_]: TransformationContext, A](fga: F[G[A]]): G[F[A]] =
       catz.sequence(fga)
   }
 
   implicit class vOps[A](v: V[A]) {
+    def formatErrors: Validated[NEC[String], A] =
+      v.leftMap(_.map(err => s"${err.message} on ${err.errorPath.iterator.mkString(".")}"))
+
     def squash: Either[TransformationException, A] =
-      v.leftMap(nec => TransformationException(nec.map(_.info).toChain.iterator.mkString(", "))).toEither
+      v.formatErrors.leftMap(nec => TransformationException(nec.iterator.mkString(", "))).toEither
   }
 }
