@@ -64,7 +64,7 @@ val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
-    "com.lihaoyi" %%% "utest" % (if (scalaVersion.value >= "2.12") "0.7.3" else "0.6.8") % "test"
+    "com.lihaoyi" %%% "utest" % (if (scalaVersion.value >= "2.12") "0.7.4" else "0.6.8") % "test"
   )
 )
 
