@@ -45,7 +45,7 @@ trait PatcherMacros extends PatcherConfiguration {
       val fnPatch = c.internal.reificationSupport.freshTermName("patch$")
 
       val targetMapping = patchParams.toSeq.flatMap { pParam =>
-        resolveFieldMapping(config, T, tParamsByName, fnObj, fnPatch, pParam)
+        resolveFieldMapping(config, T, Patch, tParamsByName, fnObj, fnPatch, pParam)
       }
 
       if (targetMapping.exists(_.isLeft)) {
@@ -75,6 +75,7 @@ trait PatcherMacros extends PatcherConfiguration {
   def resolveFieldMapping(
       config: PatcherConfig,
       T: Type,
+      Patch: Type,
       tParamsByName: Map[TermName, MethodSymbol],
       fnObj: TermName,
       fnPatch: TermName,
@@ -84,36 +85,37 @@ trait PatcherMacros extends PatcherConfiguration {
     def patchField = q"$fnPatch.${pParam.name}"
     def entityField = q"$fnObj.${pParam.name}"
 
+    val patchParamTpe = pParam.resultTypeIn(Patch)
+
     tParamsByName.get(pParam.name) match {
-      case Some(tParam)
-          if config.ignoreNoneInPatch &&
-            bothOptions(pParam.returnType, tParam.returnType) =>
+      case Some(tParam) if config.ignoreNoneInPatch && bothOptions(patchParamTpe, tParam.resultTypeIn(T)) =>
         Some {
-          if (pParam.returnType <:< tParam.returnType) {
+          val tParamTpe = tParam.resultTypeIn(T)
+          if (patchParamTpe <:< tParamTpe) {
             Right(q"$patchField.orElse($entityField)")
           } else {
             expandTransformerTree(patchField, TransformerConfig())(
-              pParam.returnType,
-              tParam.returnType
+              patchParamTpe,
+              tParamTpe
             ).mapRight { transformerTree =>
                 q"$transformerTree.orElse($entityField)"
               }
               .mapLeft(DerivationError.printErrors)
           }
         }
-      case Some(tParam) if pParam.returnType <:< tParam.returnType =>
+      case Some(tParam) if patchParamTpe <:< tParam.resultTypeIn(T) =>
         Some(Right(patchField))
       case Some(tParam) =>
         Some(
           expandTransformerTree(patchField, TransformerConfig())(
-            pParam.returnType,
-            tParam.returnType
+            patchParamTpe,
+            tParam.resultTypeIn(T)
           ).left
             .flatMap { errors =>
-              if (isOption(pParam.returnType)) {
+              if (isOption(patchParamTpe)) {
                 expandTransformerTree(q"$patchField.get", TransformerConfig())(
-                  pParam.returnType.typeArgs.head,
-                  tParam.returnType
+                  patchParamTpe.typeArgs.head,
+                  tParam.resultTypeIn(T)
                 ).mapRight { innerTransformerTree =>
                     q"if($patchField.isDefined) { $innerTransformerTree } else { $entityField }"
                   }
