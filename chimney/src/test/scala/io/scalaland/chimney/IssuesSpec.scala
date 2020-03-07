@@ -261,6 +261,35 @@ object IssuesSpec extends TestSuite {
       // this should compile without warning
       Transformer.define[WithOption, WithoutOption].enableUnsafeOption.buildTransformer
     }
+
+    "fix issue #149" - {
+      import language.higherKinds
+
+      "example 1" - {
+        case class EntryId(id: Int)
+        case class EntryT[Id](id: Id)
+        case class Patch(id: EntryId)
+
+        EntryT(EntryId(10)).patchUsing(Patch(EntryId(20))) ==> EntryT(EntryId(20))
+      }
+
+      "example 2" - {
+        case class Data[F[_]](name: F[String])
+        case class Real(name: String)
+
+        Real("abc").patchUsing(Data(Option("xyz"))) ==> Real("xyz")
+      }
+
+      "example 3" - {
+        case class Data(x: Int)
+        case class Patch[F[_]](x: F[Int])
+        type Id[X] = X
+
+        Data(10).patchUsing(Patch[Option](None)) ==> Data(10)
+        Data(10).patchUsing(Patch(Some(20))) ==> Data(20)
+        Data(10).patchUsing(Patch[Id](20)) ==> Data(20)
+      }
+    }
   }
 }
 
