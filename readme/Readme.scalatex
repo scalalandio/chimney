@@ -280,7 +280,7 @@
         By default, chimney will only consider @code{val}s and @code{lazy val}s defined within the source type,
         because methods may perform side effects (e.g. mutation some state in the source object)
 
-        You can ask Chimney to consider methods with @{.enableMethodCalls}. Note that only methods that are public
+        You can ask Chimney to consider methods with @{.enableMethodAccessors}. Note that only methods that are public
         and have no parameter list are considered.
 
       @hl.scala
@@ -291,7 +291,7 @@
 
         Foo(1)
           .into[FooV2]
-          .enableMethodCalls
+          .enableMethodAccessors
           .transform
         // FooV2(1, "m")
 

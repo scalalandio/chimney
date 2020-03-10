@@ -77,8 +77,8 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     * @see [[https://scalalandio.github.io/chimney/#UsingMethodCalls]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
-  def enableMethodCalls: TransformerDefinition[From, To, EnableMethodCalls[C]] =
-    this.asInstanceOf[TransformerDefinition[From, To, EnableMethodCalls[C]]]
+  def enableMethodAccessors: TransformerDefinition[From, To, EnableMethodAccessors[C]] =
+    this.asInstanceOf[TransformerDefinition[From, To, EnableMethodAccessors[C]]]
 
   /** Use `value` provided here for field picked using `selector`.
     *

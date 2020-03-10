@@ -585,14 +585,14 @@ object DslSpec extends TestSuite {
           .withFieldRenamed(_.valField, _.v)
           .withFieldRenamed(_.lazyValField, _.lv)
           .withFieldRenamed(_.method, _.m)
-          .enableMethodCalls
+          .enableMethodAccessors
           .transform
 
         res ==> FooBar4(p = "param", v = "valField", lv = "lazyValField", m = "method")
       }
 
-      "works if transform is configured with .enableMethodCalls" - {
-        Foobar("param").into[Foobar3].enableMethodCalls.transform ==> Foobar3(
+      "works if transform is configured with .enableMethodAccessors" - {
+        Foobar("param").into[Foobar3].enableMethodAccessors.transform ==> Foobar3(
           param = "param",
           valField = "valField",
           lazyValField = "lazyValField",
@@ -603,7 +603,7 @@ object DslSpec extends TestSuite {
       "protected and private methods are not considered (even if accessible)" - {
         case class Foo2(param: String, protect: String, priv: String)
 
-        compileError("""Foobar("param").into[Foo2].enableMethodCalls.transform""").check(
+        compileError("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
           "",
           "protect: java.lang.String - no accessor named protect in source type io.scalaland.chimney.DslSpec.Foobar",
           "priv: java.lang.String - no accessor named priv in source type io.scalaland.chimney.DslSpec.Foobar"
