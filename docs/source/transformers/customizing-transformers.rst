@@ -77,6 +77,29 @@ performed renaming.
   // SpyRU("James", "Bond")
 
 
+Using method accessors
+----------------------
+
+By default, Chimney will only consider ``val`` and ``lazy val`` defined within the source type,
+because methods may perform side effects (e.g. mutation some state in the source object).
+
+You can ask Chimney to consider methods with ``.enableMethodAccessors``. Note that only methods that are public
+and have no parameter list are considered.
+
+.. code-block:: scala
+
+  case class Foo(a: Int) {
+    def m: String = "m"
+  }
+  case class FooV2(a: Int, m: String)
+
+  Foo(1)
+    .into[FooV2]
+    .enableMethodAccessors
+    .transform
+  // FooV2(1, "m")
+
+
 Transforming coproducts
 -----------------------
 
