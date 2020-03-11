@@ -7,9 +7,9 @@ Using SBT
 To include Chimney to your SBT project, add the following line
 to your ``build.sbt``:
 
-.. code-block:: scala
+.. parsed-literal::
 
-  libraryDependencies += "io.scalaland" %% "chimney" % "0.4.1"
+  libraryDependencies += "io.scalaland" %% "chimney" % "|version|"
 
 
 Library is released for Scala 2.11.x, 2.12.x and 2.13.x. If you want to
