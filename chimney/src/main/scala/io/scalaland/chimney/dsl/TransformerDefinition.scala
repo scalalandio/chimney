@@ -70,6 +70,16 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
   def enableUnsafeOption: TransformerDefinition[From, To, EnableUnsafeOption[C]] =
     this.asInstanceOf[TransformerDefinition[From, To, EnableUnsafeOption[C]]]
 
+  /** Enable values to be supplied from method calls. Source method must be public and have no parameter list.
+    *
+    * By default this is disabled because method calls may perform side effects (e.g. mutations)
+    *
+    * @see [[https://scalalandio.github.io/chimney/#UsingMethodCalls]] for more details
+    * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    */
+  def enableMethodAccessors: TransformerDefinition[From, To, EnableMethodAccessors[C]] =
+    this.asInstanceOf[TransformerDefinition[From, To, EnableMethodAccessors[C]]]
+
   /** Use `value` provided here for field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.

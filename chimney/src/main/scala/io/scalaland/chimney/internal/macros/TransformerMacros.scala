@@ -679,6 +679,7 @@ trait TransformerMacros extends TransformerConfiguration {
       sourceName == s"get$targetNameCapitalized" ||
       (sourceName == s"is$targetNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])
     } else {
+      (config.enableMethodAccessors || ms.isStable) && // isStable means or val/lazy val
       sourceName == target.name
     }
   }

@@ -552,6 +552,65 @@ object DslSpec extends TestSuite {
       }
     }
 
+    "support using method calls to fill values from target type" - {
+      case class Foobar(param: String) {
+        val valField: String = "valField"
+        lazy val lazyValField: String = "lazyValField"
+        def method: String = "method"
+
+        protected def protect: String = "protect"
+        private[chimney] def priv: String = "priv"
+      }
+
+      case class Foobar2(param: String, valField: String, lazyValField: String)
+      case class Foobar3(param: String, valField: String, lazyValField: String, method: String)
+
+      "val and lazy vals work" - {
+        Foobar("param").into[Foobar2].transform ==> Foobar2("param", "valField", "lazyValField")
+      }
+
+      "method is disabled by default" - {
+        compileError("""Foobar("param").into[Foobar3].transform""").check(
+          "",
+          "method: java.lang.String - no accessor named method in source type io.scalaland.chimney.DslSpec.Foobar"
+        )
+      }
+
+      "works with rename" - {
+        case class FooBar4(p: String, v: String, lv: String, m: String)
+
+        val res = Foobar("param")
+          .into[FooBar4]
+          .withFieldRenamed(_.param, _.p)
+          .withFieldRenamed(_.valField, _.v)
+          .withFieldRenamed(_.lazyValField, _.lv)
+          .withFieldRenamed(_.method, _.m)
+          .enableMethodAccessors
+          .transform
+
+        res ==> FooBar4(p = "param", v = "valField", lv = "lazyValField", m = "method")
+      }
+
+      "works if transform is configured with .enableMethodAccessors" - {
+        Foobar("param").into[Foobar3].enableMethodAccessors.transform ==> Foobar3(
+          param = "param",
+          valField = "valField",
+          lazyValField = "lazyValField",
+          method = "method"
+        )
+      }
+
+      "protected and private methods are not considered (even if accessible)" - {
+        case class Foo2(param: String, protect: String, priv: String)
+
+        compileError("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
+          "",
+          "protect: java.lang.String - no accessor named protect in source type io.scalaland.chimney.DslSpec.Foobar",
+          "priv: java.lang.String - no accessor named priv in source type io.scalaland.chimney.DslSpec.Foobar"
+        )
+      }
+    }
+
     "support sealed hierarchies" - {
 
       "enum types encoded as sealed hierarchies of case objects" - {
