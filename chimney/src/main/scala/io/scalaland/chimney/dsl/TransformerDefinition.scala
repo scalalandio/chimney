@@ -62,7 +62,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     *
     * @see [[https://scalalandio.github.io/chimney/#Providingmissingvalues]] for more details
     * @param selector target field in `To`, defined like `_.name`
-    * @param map      function to use to compute value of the target field
+    * @param map      function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def withFieldComputed[T, U](selector: To => T, map: From => U): TransformerDefinition[From, To, _ <: TransformerCfg] =
@@ -74,7 +74,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     *
     * @see [[https://scalalandio.github.io/chimney/#Providingmissingvalues]] for more details
     * @param selector target field in `To`, defined like `_.name`
-    * @param map      function to use to compute value of the target field
+    * @param map      function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
     */
   def withFieldComputedF[F[+_], T, U](
