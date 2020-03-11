@@ -136,18 +136,24 @@ object TransformerFSupport {
     ): Either[C[E], M] = {
       val bs = fac.newBuilder
       val eb = ef.newBuilder
+      var hasErr = false
 
       while (it.hasNext) {
         f(it.next()) match {
           case Left(errs) =>
             eb ++= errs
+            if (!hasErr) {
+              hasErr = true
+              bs.clear()
+            }
           case Right(b) =>
-            bs += b
+            if (!hasErr) {
+              bs += b
+            }
         }
       }
 
-      val errs = eb.result()
-      if (errs.iterator.isEmpty) Right(bs.result()) else Left(errs)
+      if (!hasErr) Right(bs.result()) else Left(eb.result())
     }
   }
 
