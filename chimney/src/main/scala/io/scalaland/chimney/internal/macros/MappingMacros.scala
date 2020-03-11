@@ -47,10 +47,13 @@ trait MappingMacros extends Model with TransformerConfiguration {
   ): Map[Target, Option[ResolvedAccessor]] = {
     val fromGetters = From.getterMethods
     targets.map { target =>
-      val lookupName = config.renamedFields.getOrElse(target.name, target.name)
-      target -> fromGetters
-        .find(lookupAccessor(config, lookupName, From))
-        .map(ms => ResolvedAccessor(ms, wasRenamed = lookupName != target.name))
+      target -> {
+        val lookupName = config.renamedFields.getOrElse(target.name, target.name)
+        val wasRenamed = lookupName != target.name
+        fromGetters
+          .find(lookupAccessor(config, lookupName, wasRenamed, From))
+          .map(ms => ResolvedAccessor(ms, wasRenamed))
+      }
     }.toMap
   }
 
@@ -155,6 +158,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
   def lookupAccessor(
       config: TransformerConfig,
       lookupName: String,
+      wasRenamed: Boolean,
       From: Type
   )(ms: MethodSymbol): Boolean = {
     val sourceName = ms.name.decodedName.toString
@@ -164,6 +168,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       sourceName == s"get$lookupNameCapitalized" ||
       (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])
     } else {
+      (ms.isStable || wasRenamed || config.enableMethodAccessors) && // isStable means or val/lazy val
       sourceName == lookupName
     }
   }

@@ -5,6 +5,15 @@ import io.scalaland.chimney.internal.TransformerCfg._
 
 trait ConfigDsl[CC[_ <: TransformerCfg], C <: TransformerCfg] {
 
+  /** Enable values to be supplied from method calls. Source method must be public and have no parameter list.
+    *
+    * By default this is disabled because method calls may perform side effects (e.g. mutations)
+    *
+    * @see [[https://scalalandio.github.io/chimney/#UsingMethodCalls]] for more details
+    */
+  def enableMethodAccessors: CC[EnableMethodAccessors[C]] =
+    this.asInstanceOf[CC[EnableMethodAccessors[C]]]
+
   /** Fail derivation if `From` type is missing field even if `To` has default value for it.
     *
     * By default in such case derivation will fallback to default values.
