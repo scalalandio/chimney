@@ -112,6 +112,8 @@ Contents:
    transformers/own-transformations
    transformers/java-beans
    transformers/unsafe-options
+   transformers/lifted-transformers
+   transformers/cats-integration
 
 
 .. toctree::

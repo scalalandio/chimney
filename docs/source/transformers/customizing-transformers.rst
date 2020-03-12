@@ -1,3 +1,5 @@
+.. _customizing-transformers:
+
 Customizing transformers
 ========================
 

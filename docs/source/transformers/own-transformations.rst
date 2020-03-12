@@ -6,8 +6,11 @@ some reason you just want to bypass Chimney derivation mechanism,
 you can always fall back to a simple function that you can plug
 into the Chimney transformation.
 
-Transformer type class
-----------------------
+
+.. _transformer-typeclass:
+
+``Transformer`` type class
+--------------------------
 
 The library defines a type class ``Transformer`` that just
 wraps transformation function.
@@ -60,6 +63,8 @@ between list of users.
 But is it really a necessity to define custom transformer
 completely manually?
 
+
+.. _transformer-definition-dsl:
 
 Transformer definition DSL
 --------------------------
