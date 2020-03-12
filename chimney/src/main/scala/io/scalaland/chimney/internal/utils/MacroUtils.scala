@@ -102,7 +102,7 @@ trait MacroUtils extends CompanionUtils {
     def isCaseClass: Boolean =
       classSymbolOpt.exists(_.isCaseClass)
 
-    lazy val caseClassDefaults: Map[String, c.Tree] = {
+    lazy val caseClassDefaults: Map[String, Tree] = {
       s.typeSignature
       classSymbolOpt
         .flatMap { classSymbol =>

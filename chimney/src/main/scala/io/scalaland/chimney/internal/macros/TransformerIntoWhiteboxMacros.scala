@@ -8,7 +8,7 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils 
 
   import c.universe._
 
-  def withFieldConstImpl(selector: c.Tree, value: c.Tree): c.Tree = {
+  def withFieldConstImpl(selector: Tree, value: Tree): Tree = {
     // when value inlined, it crashes the compiler in 2.11/2.12
     val v = TermName(c.freshName("v"))
     q"""
@@ -18,15 +18,15 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils 
   }
 
   def withFieldConstFImpl[F[+_]](
-      selector: c.Tree,
-      value: c.Tree
+      selector: Tree,
+      value: Tree
   )(
-      implicit F: c.WeakTypeTag[F[_]]
-  ): c.Tree = {
+      implicit F: WeakTypeTag[F[_]]
+  ): Tree = {
     q"${c.prefix.tree}.lift[$F].withFieldConstF($selector, $value)"
   }
 
-  def withFieldComputedImpl(selector: c.Tree, map: c.Tree): c.Tree = {
+  def withFieldComputedImpl(selector: Tree, map: Tree): Tree = {
     // when map inlined, it crashes the compiler on 2.12/2.13
     val f = TermName(c.freshName("f"))
     q"""
@@ -36,23 +36,23 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils 
   }
 
   def withFieldComputedFImpl[F[+_]](
-      selector: c.Tree,
-      map: c.Tree
+      selector: Tree,
+      map: Tree
   )(
-      implicit F: c.WeakTypeTag[F[_]]
-  ): c.Tree = {
+      implicit F: WeakTypeTag[F[_]]
+  ): Tree = {
     q"${c.prefix.tree}.lift[$F].withFieldComputedF($selector, $map)"
   }
 
-  def withFieldRenamedImpl(selectorFrom: c.Tree, selectorTo: c.Tree): c.Tree = {
+  def withFieldRenamedImpl(selectorFrom: Tree, selectorTo: Tree): Tree = {
     q"${c.prefix.tree}.__refineTransformerDefinition(_.withFieldRenamed($selectorFrom, $selectorTo))"
   }
 
-  def withCoproductInstanceImpl(f: c.Tree): c.Tree = {
+  def withCoproductInstanceImpl(f: Tree): Tree = {
     q"${c.prefix.tree}.__refineTransformerDefinition(_.withCoproductInstance($f))"
   }
 
-  def withCoproductInstanceFImpl[F[+_]](f: c.Tree)(implicit F: c.WeakTypeTag[F[_]]): c.Tree = {
+  def withCoproductInstanceFImpl[F[+_]](f: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
     q"${c.prefix.tree}.lift[$F].withCoproductInstanceF($f)"
   }
 }

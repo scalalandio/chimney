@@ -41,14 +41,14 @@ trait TransformerConfiguration extends MacroUtils {
       constFields: Set[String] = Set.empty,
       computedFields: Set[String] = Set.empty,
       renamedFields: Map[String, String] = Map.empty,
-      coproductInstances: Set[(c.Symbol, c.Type)] = Set.empty, // pair: inst type, target type
-      transformerDefinitionPrefix: c.Tree = c.universe.EmptyTree,
-      definitionScope: Option[(c.Type, c.Type)] = None,
-      wrapperType: Option[c.Type] = None,
-      wrapperSupportInstance: c.Tree = c.universe.EmptyTree,
+      coproductInstances: Set[(Symbol, Type)] = Set.empty, // pair: inst type, target type
+      transformerDefinitionPrefix: Tree = EmptyTree,
+      definitionScope: Option[(Type, Type)] = None,
+      wrapperType: Option[Type] = None,
+      wrapperSupportInstance: Tree = EmptyTree,
       constFFields: Set[String] = Set.empty,
       computedFFields: Set[String] = Set.empty,
-      coproductInstancesF: Set[(c.Symbol, c.Type)] = Set.empty // pair: inst type, target type
+      coproductInstancesF: Set[(Symbol, Type)] = Set.empty // pair: inst type, target type
   ) {
 
     def rec: TransformerConfig =

@@ -12,9 +12,9 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
 
   import c.universe._
 
-  def buildDefinedTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](
-      tfsTree: c.Tree = c.universe.EmptyTree
-  ): c.Tree = {
+  def buildDefinedTransformer[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag](
+      tfsTree: Tree = EmptyTree
+  ): Tree = {
     val C = weakTypeOf[C]
     val config = captureTransformerConfig(C).copy(
       definitionScope = Some((weakTypeOf[From], weakTypeOf[To])),
@@ -34,9 +34,9 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     }
   }
 
-  def expandTransform[From: c.WeakTypeTag, To: c.WeakTypeTag, C: c.WeakTypeTag](
-      tfsTree: c.Tree = c.universe.EmptyTree
-  ): c.Tree = {
+  def expandTransform[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag](
+      tfsTree: Tree = EmptyTree
+  ): Tree = {
     val C = weakTypeOf[C]
     val tiName = TermName(c.freshName("ti"))
     val config = captureTransformerConfig(C)
@@ -53,9 +53,9 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     """
   }
 
-  def genTransformer[From: c.WeakTypeTag, To: c.WeakTypeTag](
+  def genTransformer[From: WeakTypeTag, To: WeakTypeTag](
       config: TransformerConfig
-  ): c.Tree = {
+  ): Tree = {
 
     val From = weakTypeOf[From]
     val To = weakTypeOf[To]

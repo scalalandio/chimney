@@ -11,19 +11,19 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macro
   import CfgTpeConstructors._
 
   def withFieldConstImpl[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      T: c.WeakTypeTag,
-      U: c.WeakTypeTag,
-      C: c.WeakTypeTag
-  ](selector: c.Tree, value: c.Tree): c.Tree = {
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      T: WeakTypeTag,
+      U: WeakTypeTag,
+      C: WeakTypeTag
+  ](selector: Tree, value: Tree): Tree = {
     val fieldName = selector.extractSelectorFieldName
 
-    if (!(c.weakTypeOf[U] <:< c.weakTypeOf[T])) {
+    if (!(weakTypeOf[U] <:< weakTypeOf[T])) {
       val msg =
         s"""Type mismatch!
-           |Value passed to `withFieldConst` is of type: ${c.weakTypeOf[U]}
-           |Type required by '$fieldName' field: ${c.weakTypeOf[T]}
+           |Value passed to `withFieldConst` is of type: ${weakTypeOf[U]}
+           |Type required by '$fieldName' field: ${weakTypeOf[T]}
          """.stripMargin
 
       c.abort(c.enclosingPosition, msg)
@@ -34,24 +34,24 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macro
     }
   }
 
-  def withFieldConstFImpl[F[+_]](selector: c.Tree, value: c.Tree)(implicit F: c.WeakTypeTag[F[_]]): c.Tree = {
+  def withFieldConstFImpl[F[+_]](selector: Tree, value: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
     q"${c.prefix}.lift[$F].withFieldConstF($selector, $value)"
   }
 
   def withFieldComputedImpl[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      T: c.WeakTypeTag,
-      U: c.WeakTypeTag,
-      C: c.WeakTypeTag
-  ](selector: c.Tree, map: c.Tree): c.Tree = {
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      T: WeakTypeTag,
+      U: WeakTypeTag,
+      C: WeakTypeTag
+  ](selector: Tree, map: Tree): Tree = {
     val fieldName = selector.extractSelectorFieldName
 
-    if (!(c.weakTypeOf[U] <:< c.weakTypeOf[T])) {
+    if (!(weakTypeOf[U] <:< weakTypeOf[T])) {
       val msg =
         s"""Type mismatch!
-           |Function passed to `withFieldComputed` returns type: ${c.weakTypeOf[U]}
-           |Type required by '$fieldName' field: ${c.weakTypeOf[T]}
+           |Function passed to `withFieldComputed` returns type: ${weakTypeOf[U]}
+           |Type required by '$fieldName' field: ${weakTypeOf[T]}
          """.stripMargin
 
       c.abort(c.enclosingPosition, msg)
@@ -62,17 +62,17 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macro
     }
   }
 
-  def withFieldComputedFImpl[F[+_]](selector: c.Tree, map: c.Tree)(implicit F: c.WeakTypeTag[F[_]]): c.Tree = {
+  def withFieldComputedFImpl[F[+_]](selector: Tree, map: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
     q"${c.prefix}.lift[$F].withFieldComputedF($selector, $map)"
   }
 
   def withFieldRenamedImpl[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      T: c.WeakTypeTag,
-      U: c.WeakTypeTag,
-      C: c.WeakTypeTag
-  ](selectorFrom: c.Tree, selectorTo: c.Tree): c.Tree = {
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      T: WeakTypeTag,
+      U: WeakTypeTag,
+      C: WeakTypeTag
+  ](selectorFrom: Tree, selectorTo: Tree): Tree = {
 
     val fieldNameFromOpt = selectorFrom.extractSelectorFieldNameOpt
     val fieldNameToOpt = selectorTo.extractSelectorFieldNameOpt
@@ -95,11 +95,11 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macro
   }
 
   def withCoproductInstanceImpl[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      Inst: c.WeakTypeTag,
-      C: c.WeakTypeTag
-  ](f: c.Tree): c.Tree = {
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Inst: WeakTypeTag,
+      C: WeakTypeTag
+  ](f: Tree): Tree = {
     val To = weakTypeOf[To]
     val Inst = weakTypeOf[Inst]
     c.prefix.tree
@@ -109,11 +109,11 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macro
 
   def withCoproductInstanceFImpl[
       F[+_],
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      Inst: c.WeakTypeTag,
-      C: c.WeakTypeTag
-  ](f: c.Tree)(implicit F: c.WeakTypeTag[F[_]]): c.Tree = {
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Inst: WeakTypeTag,
+      C: WeakTypeTag
+  ](f: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
     q"${c.prefix}.lift[$F].withCoproductInstanceF($f)"
   }
 
