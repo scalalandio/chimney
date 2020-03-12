@@ -323,22 +323,45 @@ semantically equivalent to the following, hand-crafted version.
     }
   }
 
-Note that:
+``tfs.product`` is used to combine results of successful validations into
+a tuple type ``(email, age): (String, Int)``. In case that some validations
+failed, validation errors are combined together also by ``tfs.product``.
 
-- ``tfs.product`` is used to combine results of successful validations into
-  a tuple - ``(email, age): (String, Int)``
-- ``tfs.map`` is used in order to construct target ``RegisteredUser`` value
-  only if all of the validations pass
-- only functions provided by ``withFieldComputedF`` are working with the wrapper
-  type ``F``
-- remaining fields transformations (indentity transformer for
-  ``username`` and a function provided by ``withFieldComputed`` for ``password``)
-  works without any wrapping with ``F`` which leads to particularly efficient
-  generated code
+Then, if all validations passed, ``tfs.map`` transforms their results to
+a target value of type ``RegisteredUser``. Otherwise, ``tfs.map`` just
+passes validation errors as a final result.
+
+.. note::
+
+  - only functions provided by ``withFieldComputedF`` are working with the wrapper
+    type ``F``
+  - remaining fields transformations (indentity transformer for
+    ``username`` and a function provided by ``withFieldComputed`` for ``password``)
+    work without any wrapping with ``F``
+
+  This strategy leads to generating particularly efficient code.
 
 
 .. _deriving-transformerf:
 
 Deriving lifted transformers
 ----------------------------
+
+When deriving a ``TransformerF[F, From, To]`` instance, where:
+
+- type ``From`` consists of some type ``F1``
+- type ``To`` consists of some type ``T1``
+- ``F1`` in ``From`` is a counterpart of ``T1`` in ``To``
+
+...we need to have transformation from ``F1`` to ``T1`` in order to be able to
+derive requested ``TransformerF``.
+
+The rule is that:
+
+1. we first check for function ``F1 => F[T1]`` passed to lifted DSL
+   operations (``withFieldConstF``, ``withFieldComputedF``, etc.)
+2. then we check for function ``F1 => T1`` passed to total DSL
+   operations (``withFieldConst``, ``withFieldComputed``, etc.)
+3. then we try to derive total ``Transformer[F1, T1]``
+4. then we try to derive lifted ``Transformer[F, F1, T1]``
 
