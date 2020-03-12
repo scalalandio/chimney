@@ -151,7 +151,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       config: TransformerConfig
   ): Either[Seq[DerivationError], Tree] = {
     Right {
-      mkWrappedTransformerBody0(config)(srcPrefixTree)
+      mkTransformerBodyTree0(config)(srcPrefixTree)
     }
   }
 
@@ -166,7 +166,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     From.valueClassMember
       .map { member =>
         Right {
-          mkWrappedTransformerBody0(config) {
+          mkTransformerBodyTree0(config) {
             q"$srcPrefixTree.${member.name}"
           }
         }
@@ -188,7 +188,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       To: Type
   ): Either[Seq[DerivationError], Tree] = {
     Right {
-      mkWrappedTransformerBody0(config) {
+      mkTransformerBodyTree0(config) {
         q"new $To($srcPrefixTree)"
       }
     }
@@ -218,7 +218,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       resolveRecursiveTransformerBody(innerSrcPrefix, config.rec)(fromInnerT, To)
         .mapRight { innerTransformerBody =>
           val fn = freshTermName(innerSrcPrefix).toString
-          mkWrappedTransformerBody1(To, Target(fn, To), innerTransformerBody, config) { tree =>
+          mkTransformerBodyTree1(To, Target(fn, To), innerTransformerBody, config) { tree =>
             q"($tree)"
           }
         }
@@ -240,7 +240,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       resolveRecursiveTransformerBody(fn, config.rec)(fromInnerT, toInnerT)
         .mapRight {
           case TransformerBodyTree(innerTree, false) =>
-            mkWrappedTransformerBody0(config) {
+            mkTransformerBodyTree0(config) {
               q"$srcPrefixTree.map(($fn: $fromInnerT) => $innerTree)"
             }
 
@@ -270,14 +270,14 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     if (From <:< leftTpe && !(To <:< rightTpe)) {
       resolveRecursiveTransformerBody(srcPrefixTree.getLeftTree, config.rec)(fromLeftT, toLeftT)
         .mapRight { tbt =>
-          mkWrappedTransformerBody1(To, Target(fnL.name.toString, toLeftT), tbt, config) { leftArgTree =>
+          mkTransformerBodyTree1(To, Target(fnL.name.toString, toLeftT), tbt, config) { leftArgTree =>
             q"new _root_.scala.util.Left($leftArgTree)"
           }
         }
     } else if (From <:< rightTpe && !(To <:< leftTpe)) {
       resolveRecursiveTransformerBody(srcPrefixTree.getRightTree, config.rec)(fromRightT, toRightT)
         .mapRight { tbt =>
-          mkWrappedTransformerBody1(To, Target(fnR.name.toString, toRightT), tbt, config) { rightArgTree =>
+          mkTransformerBodyTree1(To, Target(fnR.name.toString, toRightT), tbt, config) { rightArgTree =>
             q"new _root_.scala.util.Right($rightArgTree)"
           }
         }
@@ -291,12 +291,11 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
           val leftN = freshTermName("left")
           val rightN = freshTermName("right")
 
-          val leftBody = mkWrappedTransformerBody1(To, Target(leftN.toString, toLeftT), leftTbt, config) {
-            leftArgTree =>
-              q"new _root_.scala.util.Left($leftArgTree)"
+          val leftBody = mkTransformerBodyTree1(To, Target(leftN.toString, toLeftT), leftTbt, config) { leftArgTree =>
+            q"new _root_.scala.util.Left($leftArgTree)"
           }
 
-          val rightBody = mkWrappedTransformerBody1(To, Target(rightN.toString, toRightT), rightTbt, config) {
+          val rightBody = mkTransformerBodyTree1(To, Target(rightN.toString, toRightT), rightTbt, config) {
             rightArgTree =>
               q"new _root_.scala.util.Right($rightArgTree)"
           }
@@ -407,7 +406,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
               targetNamedInstances.get(instName) match {
                 case Some(matchingTargetTpe)
                     if (instSymbol.isModuleClass || instSymbol.isCaseClass) && matchingTargetTpe.typeSymbol.isModuleClass =>
-                  val tree = mkWrappedTransformerBody0(config) {
+                  val tree = mkTransformerBodyTree0(config) {
                     q"${matchingTargetTpe.typeSymbol.asClass.module}"
                   }
                   Right(cq"_: ${instSymbol.asType} => $tree")
@@ -463,7 +462,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       )
     } else if (config.coproductInstances.contains((From.typeSymbol, To))) {
       Some(
-        mkWrappedTransformerBody0(config) {
+        mkTransformerBodyTree0(config) {
           mkCoproductInstance(
             config.transformerDefinitionPrefix,
             srcPrefixTree,
@@ -493,7 +492,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
         val targets = To.caseClassParams.map(Target.fromField(_, To))
         val bodyTreeArgs = targets.map(target => transformerBodyPerTarget(target))
 
-        mkWrappedTransformerBody(To, targets, bodyTreeArgs, config) { args =>
+        mkTransformerBodyTree(To, targets, bodyTreeArgs, config) { args =>
           mkNewClass(To, args)
         }
       }
@@ -524,7 +523,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     targetTransformerBodiesMapping.mapRight { transformerBodyPerTarget =>
       val bodyTreeArgs = targets.map(target => transformerBodyPerTarget(target))
 
-      mkWrappedTransformerBody(To, targets, bodyTreeArgs, config) { args =>
+      mkTransformerBodyTree(To, targets, bodyTreeArgs, config) { args =>
         mkNewClass(To, args)
       }
     }
@@ -543,7 +542,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     resolveTransformerBodyTreeFromAccessorsMapping(srcPrefixTree, accessorsMapping, From, To, config)
       .mapRight { transformerBodyPerTarget =>
         val bodyTreeArgs = targets.map(target => transformerBodyPerTarget(target))
-        mkWrappedTransformerBody(To, targets, bodyTreeArgs, config) { args =>
+        mkTransformerBodyTree(To, targets, bodyTreeArgs, config) { args =>
           mkNewJavaBean(To, targets zip args)
         }
       }

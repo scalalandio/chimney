@@ -45,7 +45,7 @@ trait TargetConstructorMacros extends Model {
     """
   }
 
-  def mkWrappedTransformerBody0(
+  def mkTransformerBodyTree0(
       config: TransformerConfig
   )(
       targetValueTree: Tree
@@ -57,7 +57,7 @@ trait TargetConstructorMacros extends Model {
     }
   }
 
-  def mkWrappedTransformerBody1(
+  def mkTransformerBodyTree1(
       To: Type,
       target: Target,
       transformerBodyTree: TransformerBodyTree,
@@ -65,12 +65,12 @@ trait TargetConstructorMacros extends Model {
   )(
       mkTargetValueTree: Tree => Tree
   ): Tree = {
-    mkWrappedTransformerBody(To, Seq(target), Seq(transformerBodyTree), config) {
+    mkTransformerBodyTree(To, Seq(target), Seq(transformerBodyTree), config) {
       case Seq(innerTree) => mkTargetValueTree(innerTree)
     }
   }
 
-  def mkWrappedTransformerBody(
+  def mkTransformerBodyTree(
       To: Type,
       targets: Seq[Target],
       bodyTreeArgs: Seq[TransformerBodyTree],
