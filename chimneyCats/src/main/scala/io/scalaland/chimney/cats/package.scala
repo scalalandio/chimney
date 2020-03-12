@@ -5,7 +5,9 @@ import _root_.cats.kernel.Semigroup
 
 import scala.collection.compat._
 
-package object cats extends LowPriorityImplicits {
+package object cats extends CatsImplicits
+
+trait CatsImplicits extends LowPriorityImplicits {
 
   // normally, these instances are not needed, but few tests with .enableUnsafeOption fail to compile without them
   implicit def TransformerFValidatedNecSupport[E]: TransformerFSupport[ValidatedNec[E, +*]] =
