@@ -22,7 +22,7 @@ Using Ammonite
 --------------
 
 The quickest way to try out Chimney is to use a script that downloads
-`coursier <https://github.com/alexarchambault/coursier>`_ and uses it
+`coursier <https://github.com/alexarchambault/coursier>`_ and use it
 to fetch `Ammonite REPL <https://github.com/lihaoyi/Ammonite>`_ with the
 latest version of Chimney. It drops you immediately into a REPL session.
 

@@ -5,7 +5,7 @@ Chimney supports case class patching. It is a bit different type
 of transformation when you hold an object of some type, but want
 to modify only subset of fields.
 
-Consider following example.
+Consider the following example.
 
 .. code-block:: scala
 
@@ -26,7 +26,7 @@ of type ``User``.
   user.patchUsing(updateForm)
   // User(10, Email("xyz@@domain.com"), Phone(123123123L))
 
-Notice that when using patchers, we rely on standard transformers
+Notice that when using patchers, we rely on standard transformers'
 derivation rules. In this case we used value classes in the
 ``User`` model, but plain values in update form. Chimney was
 able to derive transformers for each patched field, so it was

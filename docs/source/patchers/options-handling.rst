@@ -3,8 +3,8 @@ Handling optional fields
 
 It is possible to patch using optional values of type ``Option[T]``
 as long as the transformer is available for ``T``. If the value
-is present (``Some``), it's used for patching field in target object;
-otherwise (``None``) it's' ignored and the field value is copied from
+is present (``Some``), it's used for patching a field in the target object;
+otherwise (``None``) it's ignored and the field value is copied from
 the original object.
 
 Let's consider the following patch.
@@ -25,7 +25,7 @@ Then it is possible to patch as follows:
   //  User(10, "updated@@example.com", 1234567890L)
 
 Field ``phone`` remained the same as in the original ``user``, while
-the optional e-mail string got updated from patch object.
+the optional e-mail string got updated from a patch object.
 
 ``Option[T]`` on both sides
 ---------------------------

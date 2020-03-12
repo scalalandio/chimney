@@ -1,7 +1,7 @@
 Welcome to Chimney's documentation!
 ===================================
 
-**Chimney** is Scala library for boilerplate-free data transformations.
+**Chimney** is a Scala library for boilerplate-free data transformations.
 
 Transformers
 ------------
