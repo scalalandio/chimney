@@ -1,0 +1,15 @@
+name: Build docs
+
+on: pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: ammaraskar/sphinx-action@master
+        with:
+          docs-folder: "docs/"
+          pre-build-command: "pip install sphinx_rtd_theme"
+          build-command: "sphinx-build -b html source build"
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"

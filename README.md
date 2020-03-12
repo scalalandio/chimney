@@ -98,6 +98,21 @@ res2: Bar = Bar("abc", 10, true)
 
 Chimney documentation is available at https://scalalandio.github.io/chimney
 
+#### Building documentation locally
+
+In order to build documentation locally, you need to install
+[Sphinx](https://www.sphinx-doc.org) documentation generator first.
+
+Then in project's root directory run command:
+
+```
+sbt makeSite
+```
+
+HTML Documentation should be generated at `target/sphinx/html/index.html`.
+
+
 ## Thanks
 
-Thanks to [JProfiler (Java profiler)](https://www.ej-technologies.com/products/jprofiler/overview.html) for helping us develop the library and allowing us to use it during development.
+Thanks to [JProfiler (Java profiler)](https://www.ej-technologies.com/products/jprofiler/overview.html)
+for helping us develop the library and allowing us to use it during development.
