@@ -39,8 +39,7 @@ package object dsl {
 
   implicit class TransformerFOps[From](private val source: From) extends AnyVal {
 
-    /**
-      * Allows to customize wrapped transformer generation to your target type.
+    /** Allows to customize wrapped transformer generation to your target type.
       *
       * @tparam F  wrapper type constructor
       * @tparam To target type

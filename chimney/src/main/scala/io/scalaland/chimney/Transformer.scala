@@ -48,7 +48,7 @@ object Transformer {
     *
     * @tparam F    wrapper type constructor
     * @tparam From type of input value
-    * @tparam To type of output value
+    * @tparam To   type of output value
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]] with defaults
     */
   def defineF[F[+_], From, To]
