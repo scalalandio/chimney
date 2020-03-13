@@ -741,17 +741,17 @@ object DslFSpec extends TestSuite {
       implicit val liftedTransformer: TransformerF[Either[List[String], +*], InnerIn, InnerOut] =
         in => Right(InnerOut(s"lifted: ${in.value}"))
 
-      "fail compilation if there is unresolved conflict" - {
-        compileError("""
-          OuterIn(InnerIn("test"))
-            .intoF[Either[List[String], +*], OuterOut]
-            .transform
-          """)
-          .check(
-            "",
-            "There are implicits for both Transformer and TransformerF for field .value - consult docs on how to resolve conflict manualy"
-          )
-      }
+//      "fail compilation if there is unresolved conflict" - {
+//        compileError("""
+//          OuterIn(InnerIn("test"))
+//            .intoF[Either[List[String], +*], OuterOut]
+//            .transform
+//          """)
+//          .check(
+//            "",
+//            "There are implicits for both Transformer and TransformerF for field .value - consult docs on how to resolve conflict manualy"
+//          )
+//      }
 
       "resolve conflict explicitly using .withFieldComputed" - {
         OuterIn(InnerIn("test"))
@@ -765,6 +765,20 @@ object DslFSpec extends TestSuite {
           .intoF[Either[List[String], +*], OuterOut]
           .withFieldComputedF(_.value, v => liftedTransformer.transform(v.value))
           .transform ==> Right(OuterOut(InnerOut("lifted: test")))
+      }
+
+      "resolve conflict explicitly prioritizing: last wins" - {
+        OuterIn(InnerIn("test"))
+          .intoF[Either[List[String], +*], OuterOut]
+          .withFieldComputed(_.value, v => pureTransformer.transform(v.value))
+          .withFieldComputedF(_.value, v => liftedTransformer.transform(v.value))
+          .transform ==> Right(OuterOut(InnerOut("lifted: test")))
+
+        OuterIn(InnerIn("test"))
+          .intoF[Either[List[String], +*], OuterOut]
+          .withFieldComputedF(_.value, v => liftedTransformer.transform(v.value))
+          .withFieldComputed(_.value, v => pureTransformer.transform(v.value))
+          .transform ==> Right(OuterOut(InnerOut("pure: test")))
       }
     }
   }
