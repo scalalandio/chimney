@@ -726,5 +726,65 @@ object DslFSpec extends TestSuite {
         }
       }
     }
+
+    "implicit conflict resolution" - {
+
+      final case class InnerIn(value: String)
+      final case class InnerOut(value: String)
+
+      final case class OuterIn(value: InnerIn)
+      final case class OuterOut(value: InnerOut)
+
+      implicit val pureTransformer: Transformer[InnerIn, InnerOut] =
+        in => InnerOut(s"pure: ${in.value}")
+
+      implicit val liftedTransformer: TransformerF[Either[List[String], +*], InnerIn, InnerOut] =
+        in => Right(InnerOut(s"lifted: ${in.value}"))
+
+      "fail compilation if there is unresolved conflict" - {
+
+        compileError("""
+          type EitherListStr[+X] = Either[List[String], X]
+          OuterIn(InnerIn("test"))
+            .intoF[EitherListStr, OuterOut]
+            .transform
+          """)
+          .check(
+            "",
+            "Ambiguous implicits while resolving Chimney recursive transformation",
+            "TransformerF[EitherListStr, InnerIn, InnerOut]: liftedTransformer",
+            "Transformer[InnerIn, InnerOut]: pureTransformer",
+            "Please eliminate ambiguity from implicit scope or use withFieldComputed/withFieldComputedF to decide which one should be used"
+          )
+      }
+
+      "resolve conflict explicitly using .withFieldComputed" - {
+        OuterIn(InnerIn("test"))
+          .intoF[Either[List[String], +*], OuterOut]
+          .withFieldComputed(_.value, v => pureTransformer.transform(v.value))
+          .transform ==> Right(OuterOut(InnerOut("pure: test")))
+      }
+
+      "resolve conflict explicitly using .withFieldComputedF" - {
+        OuterIn(InnerIn("test"))
+          .intoF[Either[List[String], +*], OuterOut]
+          .withFieldComputedF(_.value, v => liftedTransformer.transform(v.value))
+          .transform ==> Right(OuterOut(InnerOut("lifted: test")))
+      }
+
+      "resolve conflict explicitly prioritizing: last wins" - {
+        OuterIn(InnerIn("test"))
+          .intoF[Either[List[String], +*], OuterOut]
+          .withFieldComputed(_.value, v => pureTransformer.transform(v.value))
+          .withFieldComputedF(_.value, v => liftedTransformer.transform(v.value))
+          .transform ==> Right(OuterOut(InnerOut("lifted: test")))
+
+        OuterIn(InnerIn("test"))
+          .intoF[Either[List[String], +*], OuterOut]
+          .withFieldComputedF(_.value, v => liftedTransformer.transform(v.value))
+          .withFieldComputed(_.value, v => pureTransformer.transform(v.value))
+          .transform ==> Right(OuterOut(InnerOut("pure: test")))
+      }
+    }
   }
 }

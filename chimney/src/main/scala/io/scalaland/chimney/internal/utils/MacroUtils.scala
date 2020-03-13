@@ -250,6 +250,10 @@ trait MacroUtils extends CompanionUtils {
         q"$t.right.get"
       }
     }
+
+    def callTransform(input: Tree): Tree = {
+      q"$t.transform($input)"
+    }
   }
   // $COVERAGE-ON$
 
@@ -265,6 +269,25 @@ trait MacroUtils extends CompanionUtils {
 
     def refineConfig(cfgTpe: Type): Tree = {
       q"$td.__refineConfig[$cfgTpe]"
+    }
+
+    def refineTransformerDefinition(refinementTree: Tree) = {
+      q"$td.__refineTransformerDefinition($refinementTree)"
+    }
+
+    def refineTransformerDefinition_Hack(refinementTree: Map[String, Tree] => Tree, valTrees: (String, Tree)*): Tree = {
+      // normally, we would like to use refineTransformerDefinition, which works well on Scala 2.11
+      // in few cases on Scala 2.12+ it ends up as 'Error while emitting XXX.scala' compiler error
+      // with this hack, we can work around scalac bugs
+
+      val fnValTrees = valTrees.map { case (name, tree) => c.freshName(name) -> tree }
+      val fnMapTree = (valTrees.map(_._1) zip fnValTrees.map(_._1).map(x => Ident(TermName(x)))).toMap
+      q"""
+        {
+          ..${fnValTrees.map { case (fn, tree) => q"val ${TermName(fn)} = $tree" }}
+          $td.__refineTransformerDefinition(${refinementTree(fnMapTree)})
+        }
+      """
     }
   }
 

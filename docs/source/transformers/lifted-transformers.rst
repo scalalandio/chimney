@@ -360,8 +360,16 @@ The rule is that:
 
 1. we first check for function ``F1 => F[T1]`` passed to lifted DSL
    operations (``withFieldConstF``, ``withFieldComputedF``, etc.)
-2. then we check for function ``F1 => T1`` passed to total DSL
-   operations (``withFieldConst``, ``withFieldComputed``, etc.)
-3. then we try to derive total ``Transformer[F1, T1]``
-4. then we try to derive lifted ``Transformer[F, F1, T1]``
+   or function ``F1 => T1`` passed to total DSL operations
+   (``withFieldConst``, ``withFieldComputed``, etc.)
 
+   - whichever was found, it's used in the first place
+   - the last one passed in DSL for given field/type wins
+
+2. then we look for implicit instances for ``TransformerF[F, F1, T1]``
+   and ``Transformer[F1, T1]``
+
+   - if both of them were found, ambiguity compilation error is reported
+   - if only one of them was found, it's used
+3. we try to derive total ``Transformer[F1, T1]`` using library rules
+4. we try to derive lifted ``TransformerF[F, F1, T1]`` using library rules
