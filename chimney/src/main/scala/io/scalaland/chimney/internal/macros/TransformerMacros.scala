@@ -49,7 +49,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
 
     q"""
        val $tiName = ${c.prefix.tree}
-       $derivedTransformerTree.transform($tiName.source)
+       ${derivedTransformerTree.callTransform(q"$tiName.source")}
     """
   }
 
@@ -104,46 +104,45 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
-    val localInstance: Option[Tree] =
-      if (config.definitionScope.contains((From, To))) {
-        None
-      } else {
-        findLocalImplicitTransformer(From, To, config.wrapperType)
-      }
-
-    localInstance
-      .map { localImplicitTree =>
-        Right(q"$localImplicitTree.transform($srcPrefixTree)")
-      }
+    resolveImplicitTransformer(srcPrefixTree, config)(From, To)
+      .map(localImplicitTree => Right(localImplicitTree.callTransform(srcPrefixTree)))
       .getOrElse {
-        if (isSubtype(From, To)) {
-          expandSubtypes(srcPrefixTree, config)
-        } else if (fromValueClassToType(From, To)) {
-          expandValueClassToType(srcPrefixTree, config)(From, To)
-        } else if (fromTypeToValueClass(From, To)) {
-          expandTypeToValueClass(srcPrefixTree, config)(From, To)
-        } else if (bothOptions(From, To)) {
-          expandOptions(srcPrefixTree, config)(From, To)
-        } else if (isOption(To)) {
-          expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
-        } else if (config.enableUnsafeOption && isOption(From)) {
-          expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
-        } else if (bothEithers(From, To)) {
-          expandEithers(srcPrefixTree, config)(From, To)
-        } else if (bothOfIterableOrArray(From, To)) {
-          expandIterableOrArray(srcPrefixTree, config)(From, To)
-        } else if (isTuple(To)) {
-          expandDestinationTuple(srcPrefixTree, config)(From, To)
-        } else if (destinationCaseClass(To)) {
-          expandDestinationCaseClass(srcPrefixTree, config)(From, To)
-        } else if (config.enableBeanSetters && destinationJavaBean(To)) {
-          expandDestinationJavaBean(srcPrefixTree, config)(From, To)
-        } else if (bothSealedClasses(From, To)) {
-          expandSealedClasses(srcPrefixTree, config)(From, To)
-        } else {
-          notSupportedDerivation(srcPrefixTree, From, To)
-        }
+        deriveTransformerTree(srcPrefixTree, config)(From, To)
       }
+  }
+
+  def deriveTransformerTree(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+    if (isSubtype(From, To)) {
+      expandSubtypes(srcPrefixTree, config)
+    } else if (fromValueClassToType(From, To)) {
+      expandValueClassToType(srcPrefixTree, config)(From, To)
+    } else if (fromTypeToValueClass(From, To)) {
+      expandTypeToValueClass(srcPrefixTree, config)(From, To)
+    } else if (bothOptions(From, To)) {
+      expandOptions(srcPrefixTree, config)(From, To)
+    } else if (isOption(To)) {
+      expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
+    } else if (config.enableUnsafeOption && isOption(From)) {
+      expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
+    } else if (bothEithers(From, To)) {
+      expandEithers(srcPrefixTree, config)(From, To)
+    } else if (bothOfIterableOrArray(From, To)) {
+      expandIterableOrArray(srcPrefixTree, config)(From, To)
+    } else if (isTuple(To)) {
+      expandDestinationTuple(srcPrefixTree, config)(From, To)
+    } else if (destinationCaseClass(To)) {
+      expandDestinationCaseClass(srcPrefixTree, config)(From, To)
+    } else if (config.enableBeanSetters && destinationJavaBean(To)) {
+      expandDestinationJavaBean(srcPrefixTree, config)(From, To)
+    } else if (bothSealedClasses(From, To)) {
+      expandSealedClasses(srcPrefixTree, config)(From, To)
+    } else {
+      notSupportedDerivation(srcPrefixTree, From, To)
+    }
+
   }
 
   def expandSubtypes(
@@ -623,18 +622,55 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       srcPrefixTree: Tree,
       config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], TransformerBodyTree] = {
-    def resursiveTransformerBody =
-      expandTransformerTree(srcPrefixTree, config.rec.copy(wrapperType = None))(From, To)
-        .mapRight(tree => TransformerBodyTree(tree, isWrapped = false))
 
-    def recursiveTransformerBodyWrapped =
-      expandTransformerTree(srcPrefixTree, config.rec)(From, To)
-        .mapRight(tree => TransformerBodyTree(tree, isWrapped = true))
+    val recConfig = config.rec
+    val recConfigNoWrapper = recConfig.copy(wrapperType = None)
 
     if (config.wrapperType.isDefined) {
-      resursiveTransformerBody rightOrElse recursiveTransformerBodyWrapped
+      val implicitTransformerF = resolveImplicitTransformer(srcPrefixTree, recConfig)(From, To)
+      val implicitTransformer = resolveImplicitTransformer(srcPrefixTree, recConfigNoWrapper)(From, To)
+
+      (implicitTransformerF, implicitTransformer) match {
+        case (Some(localImplicitTreeF), Some(localImplicitTree)) =>
+          c.abort(
+            c.enclosingPosition,
+            s"""Ambiguous implicits while resolving Chimney recursive transformation:
+              |
+              |TransformerF[${config.wrapperType.get}, $From, $To]: $localImplicitTreeF
+              |Transformer[$From, $To]: $localImplicitTree
+              |
+              |Please eliminate ambiguity from implicit scope or use withFieldComputed/withFieldComputedF to decide which one should be used
+              |""".stripMargin
+          )
+        case (Some(localImplicitTreeF), None) =>
+          Right(TransformerBodyTree(localImplicitTreeF.callTransform(srcPrefixTree), isWrapped = true))
+        case (None, Some(localImplicitTree)) =>
+          Right(TransformerBodyTree(localImplicitTree.callTransform(srcPrefixTree), isWrapped = false))
+        case (None, None) =>
+          def deriveTransformer =
+            deriveTransformerTree(srcPrefixTree, recConfigNoWrapper)(From, To)
+              .mapRight(tree => TransformerBodyTree(tree, isWrapped = false))
+
+          def deriveTransformerF =
+            deriveTransformerTree(srcPrefixTree, recConfig)(From, To)
+              .mapRight(tree => TransformerBodyTree(tree, isWrapped = true))
+
+          deriveTransformer rightOrElse deriveTransformerF
+      }
     } else {
-      resursiveTransformerBody
+      expandTransformerTree(srcPrefixTree, recConfig)(From, To)
+        .mapRight(tree => TransformerBodyTree(tree, isWrapped = false))
+    }
+  }
+
+  def resolveImplicitTransformer(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): Option[Tree] = {
+    if (config.definitionScope.contains((From, To))) {
+      None
+    } else {
+      findLocalImplicitTransformer(From, To, config.wrapperType)
     }
   }
 

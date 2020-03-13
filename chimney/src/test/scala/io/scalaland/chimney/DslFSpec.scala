@@ -741,17 +741,22 @@ object DslFSpec extends TestSuite {
       implicit val liftedTransformer: TransformerF[Either[List[String], +*], InnerIn, InnerOut] =
         in => Right(InnerOut(s"lifted: ${in.value}"))
 
-//      "fail compilation if there is unresolved conflict" - {
-//        compileError("""
-//          OuterIn(InnerIn("test"))
-//            .intoF[Either[List[String], +*], OuterOut]
-//            .transform
-//          """)
-//          .check(
-//            "",
-//            "There are implicits for both Transformer and TransformerF for field .value - consult docs on how to resolve conflict manualy"
-//          )
-//      }
+      "fail compilation if there is unresolved conflict" - {
+
+        compileError("""
+          type EitherListStr[+X] = Either[List[String], X]
+          OuterIn(InnerIn("test"))
+            .intoF[EitherListStr, OuterOut]
+            .transform
+          """)
+          .check(
+            "",
+            "Ambiguous implicits while resolving Chimney recursive transformation",
+            "TransformerF[EitherListStr, InnerIn, InnerOut]: liftedTransformer",
+            "Transformer[InnerIn, InnerOut]: pureTransformer",
+            "Please eliminate ambiguity from implicit scope or use withFieldComputed/withFieldComputedF to decide which one should be used"
+          )
+      }
 
       "resolve conflict explicitly using .withFieldComputed" - {
         OuterIn(InnerIn("test"))
