@@ -726,5 +726,53 @@ object DslFSpec extends TestSuite {
         }
       }
     }
+
+    "implicit conflict resolution" - {
+
+      final case class InnerIn(value: String)
+      final case class InnerOut(value: String)
+
+      final case class OuterIn(value: InnerIn)
+      final case class OuterOut(value: InnerOut)
+
+      implicit val pureTransformer: Transformer[InnerIn, InnerOut] =
+        in => InnerOut(in.value)
+      implicit val liftedTransformer: TransformerF[Either[List[String], +*], InnerIn, InnerOut] =
+        in => Right(InnerOut(s"lifted: ${in.value}"))
+
+      "fail compilation if there is unresolved conflict" - {
+        compileError("""
+          OuterIn(InnerIn("test"))
+            .intoF[Either[List[String], +*]]
+            .transform
+          """)
+          .check(
+            "",
+            "There are implicits for both Transformer and TransformerF for field .value - consult docs on how to resolve conflict manualy"
+          )
+      }
+
+      "resolve conflict explicitly using .withFieldComputed" - {
+        OuterIn(InnerIn("test"))
+          .intoF[Either[List[String], +*]]
+          .withFieldComputed(_.value, v => pureTransformer.transform(v))
+          .transform ==> OuterOut(InnerOut("test"))
+      }
+
+      "resolve conflict explicitly using .withFieldComputedF" - {
+        OuterIn(InnerIn("test"))
+          .intoF[Either[List[String], +*]]
+          .withFieldComputedF(_.value, v => liftedTransformer.transform(v))
+          .transform ==> OuterOut(InnerOut("lifted: test"))
+      }
+
+      "resolve conflict explicitly prioritizing .withFieldComputedF over .withFieldComputed" - {
+        OuterIn(InnerIn("test"))
+          .intoF[Either[List[String], +*]]
+          .withFieldComputed(_.value, v => pureTransformer.transform(v))
+          .withFieldComputedF(_.value, v => liftedTransformer.transform(v))
+          .transform ==> OuterOut(InnerOut("lifted: test"))
+      }
+    }
   }
 }
