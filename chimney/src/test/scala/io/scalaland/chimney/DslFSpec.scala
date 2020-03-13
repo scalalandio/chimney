@@ -736,14 +736,15 @@ object DslFSpec extends TestSuite {
       final case class OuterOut(value: InnerOut)
 
       implicit val pureTransformer: Transformer[InnerIn, InnerOut] =
-        in => InnerOut(in.value)
+        in => InnerOut(s"pure: ${in.value}")
+
       implicit val liftedTransformer: TransformerF[Either[List[String], +*], InnerIn, InnerOut] =
         in => Right(InnerOut(s"lifted: ${in.value}"))
 
       "fail compilation if there is unresolved conflict" - {
         compileError("""
           OuterIn(InnerIn("test"))
-            .intoF[Either[List[String], +*]]
+            .intoF[Either[List[String], +*], OuterOut]
             .transform
           """)
           .check(
@@ -754,24 +755,16 @@ object DslFSpec extends TestSuite {
 
       "resolve conflict explicitly using .withFieldComputed" - {
         OuterIn(InnerIn("test"))
-          .intoF[Either[List[String], +*]]
-          .withFieldComputed(_.value, v => pureTransformer.transform(v))
-          .transform ==> OuterOut(InnerOut("test"))
+          .intoF[Either[List[String], +*], OuterOut]
+          .withFieldComputed(_.value, v => pureTransformer.transform(v.value))
+          .transform ==> Right(OuterOut(InnerOut("pure: test")))
       }
 
       "resolve conflict explicitly using .withFieldComputedF" - {
         OuterIn(InnerIn("test"))
-          .intoF[Either[List[String], +*]]
-          .withFieldComputedF(_.value, v => liftedTransformer.transform(v))
-          .transform ==> OuterOut(InnerOut("lifted: test"))
-      }
-
-      "resolve conflict explicitly prioritizing .withFieldComputedF over .withFieldComputed" - {
-        OuterIn(InnerIn("test"))
-          .intoF[Either[List[String], +*]]
-          .withFieldComputed(_.value, v => pureTransformer.transform(v))
-          .withFieldComputedF(_.value, v => liftedTransformer.transform(v))
-          .transform ==> OuterOut(InnerOut("lifted: test"))
+          .intoF[Either[List[String], +*], OuterOut]
+          .withFieldComputedF(_.value, v => liftedTransformer.transform(v.value))
+          .transform ==> Right(OuterOut(InnerOut("lifted: test")))
       }
     }
   }
