@@ -280,7 +280,7 @@ trait MacroUtils extends CompanionUtils {
       val fnMapTree = (valTrees.map(_._1) zip fnValTrees.map(_._1).map(x => Ident(TermName(x)))).toMap
       q"""
         {
-          ..${fnValTrees.map { case (fn, tree) => q"val ${TermName(fn)} = $tree"} }
+          ..${fnValTrees.map { case (fn, tree) => q"val ${TermName(fn)} = $tree" }}
           $td.__refineTransformerDefinition(${refinementTree(fnMapTree)})
         }
       """
