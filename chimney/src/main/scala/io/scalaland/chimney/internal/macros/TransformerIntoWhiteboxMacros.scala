@@ -9,12 +9,10 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils 
   import c.universe._
 
   def withFieldConstImpl(selector: Tree, value: Tree): Tree = {
-    // when value inlined, it crashes the compiler in 2.11/2.12
-    val v = TermName(c.freshName("v"))
-    q"""
-      val $v = $value
-      ${c.prefix.tree}.__refineTransformerDefinition(_.withFieldConst($selector, $v))
-    """
+    c.prefix.tree.refineTransformerDefinition_Hack(
+      trees => q"_.withFieldConst($selector, ${trees("value")})",
+      "value" -> value
+    )
   }
 
   def withFieldConstFImpl[F[+_]](
@@ -27,12 +25,10 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils 
   }
 
   def withFieldComputedImpl(selector: Tree, map: Tree): Tree = {
-    // when map inlined, it crashes the compiler on 2.12/2.13
-    val f = TermName(c.freshName("f"))
-    q"""
-      val $f = $map
-      ${c.prefix.tree}.__refineTransformerDefinition(_.withFieldComputed($selector, $f))
-    """
+    c.prefix.tree.refineTransformerDefinition_Hack(
+      trees => q"_.withFieldComputed($selector, ${trees("map")})",
+      "map" -> map
+    )
   }
 
   def withFieldComputedFImpl[F[+_]](
@@ -45,11 +41,14 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils 
   }
 
   def withFieldRenamedImpl(selectorFrom: Tree, selectorTo: Tree): Tree = {
-    q"${c.prefix.tree}.__refineTransformerDefinition(_.withFieldRenamed($selectorFrom, $selectorTo))"
+    c.prefix.tree.refineTransformerDefinition(q"_.withFieldRenamed($selectorFrom, $selectorTo)")
   }
 
   def withCoproductInstanceImpl(f: Tree): Tree = {
-    q"${c.prefix.tree}.__refineTransformerDefinition(_.withCoproductInstance($f))"
+    c.prefix.tree.refineTransformerDefinition_Hack(
+      trees => q"_.withCoproductInstance(${trees("f")})",
+      "f" -> f
+    )
   }
 
   def withCoproductInstanceFImpl[F[+_]](f: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
