@@ -6,8 +6,10 @@ Chimney supports opt-in unsafe transformation from ``Option[T]`` to
 
 .. warning::
 
-  Transforming ``None`` into a concrete value will lead to
-  ``NoSuchElementException`` at runtime, so use at your own risk.
+  Transforming ``None`` into a concrete value will lead to ``NoSuchElementException``
+  at runtime, so use it at your own risk.
+
+  Since version 0.5.0 there is available better, safe alternative: :ref:`lifted-transformers`.
 
 Proto3 motivational example
 ---------------------------

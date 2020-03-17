@@ -12,7 +12,7 @@ trait PatcherMacros extends PatcherConfiguration {
 
   import c.universe._
 
-  def expandPatch[T: c.WeakTypeTag, Patch: c.WeakTypeTag, C: c.WeakTypeTag]: c.Tree = {
+  def expandPatch[T: WeakTypeTag, Patch: WeakTypeTag, C: WeakTypeTag]: Tree = {
     val C = weakTypeOf[C]
     val piName = TermName(c.freshName("pi"))
     val config = capturePatcherConfig(C)
@@ -25,7 +25,7 @@ trait PatcherMacros extends PatcherConfiguration {
     """
   }
 
-  def genPatcher[T: c.WeakTypeTag, Patch: c.WeakTypeTag](
+  def genPatcher[T: WeakTypeTag, Patch: WeakTypeTag](
       config: PatcherConfig
   ): c.Expr[io.scalaland.chimney.Patcher[T, Patch]] = {
 

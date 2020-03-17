@@ -18,12 +18,21 @@ trait EitherUtils {
       }
     }
 
+    def flatMapRight[A1 >: A, B1](f: B => Either[A1, B1]): Either[A1, B1] = {
+      either match {
+        case Right(value) => f(value)
+        case left         => left.asInstanceOf[Either[A1, B1]]
+      }
+    }
+
     def getRight: B = {
       either match {
         case Right(value) =>
           value
         case _ =>
+          // $COVERAGE-OFF$
           throw new NoSuchElementException
+        // $COVERAGE-ON$
       }
     }
 
@@ -32,8 +41,31 @@ trait EitherUtils {
         case Left(value) =>
           value
         case _ =>
+          // $COVERAGE-OFF$
           throw new NoSuchElementException
+        // $COVERAGE-ON$
       }
+    }
+
+    def rightOrElse[A1 >: A, B1 >: B](or: => Either[A1, B1]): Either[A1, B1] = {
+      either match {
+        case Right(_) => either
+        case _        => or
+      }
+    }
+
+  }
+
+  implicit class MapOps[K, E, V](map: Map[K, Either[E, V]]) {
+
+    def partitionEitherValues: (Map[K, E], Map[K, V]) = {
+      val (lefts, rights) = map.partition(_._2.isLeft)
+      (
+        lefts.map { case (k, v)  => k -> v.getLeft },
+        rights.map { case (k, v) => k -> v.getRight }
+      )
     }
   }
 }
+
+object EitherUtils extends EitherUtils

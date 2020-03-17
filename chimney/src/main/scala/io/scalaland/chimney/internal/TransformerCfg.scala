@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal
 
 import io.scalaland.chimney.internal.utils.MacroUtils
 
+import scala.language.existentials
 import scala.reflect.macros.blackbox
 
 sealed abstract class TransformerCfg
@@ -18,6 +19,10 @@ object TransformerCfg {
   final class FieldComputed[Name <: String, C <: TransformerCfg] extends TransformerCfg
   final class FieldRelabelled[FromName <: String, ToName <: String, C <: TransformerCfg] extends TransformerCfg
   final class CoproductInstance[InstType, TargetType, C <: TransformerCfg] extends TransformerCfg
+  final class WrapperType[F[+_], C <: TransformerCfg] extends TransformerCfg
+  final class FieldConstF[Name <: String, C <: TransformerCfg] extends TransformerCfg
+  final class FieldComputedF[Name <: String, C <: TransformerCfg] extends TransformerCfg
+  final class CoproductInstanceF[InstType, TargetType, C <: TransformerCfg] extends TransformerCfg
 }
 
 trait TransformerConfiguration extends MacroUtils {
@@ -36,9 +41,14 @@ trait TransformerConfiguration extends MacroUtils {
       constFields: Set[String] = Set.empty,
       computedFields: Set[String] = Set.empty,
       renamedFields: Map[String, String] = Map.empty,
-      coproductInstances: Set[(c.Symbol, c.Type)] = Set.empty, // pair: inst type, target type
-      transformerDefinitionPrefix: c.Tree = c.universe.EmptyTree,
-      definitionScope: Option[(c.Type, c.Type)] = None
+      coproductInstances: Set[(Symbol, Type)] = Set.empty, // pair: inst type, target type
+      transformerDefinitionPrefix: Tree = EmptyTree,
+      definitionScope: Option[(Type, Type)] = None,
+      wrapperType: Option[Type] = None,
+      wrapperSupportInstance: Tree = EmptyTree,
+      constFFields: Set[String] = Set.empty,
+      computedFFields: Set[String] = Set.empty,
+      coproductInstancesF: Set[(Symbol, Type)] = Set.empty // pair: inst type, target type
   ) {
 
     def rec: TransformerConfig =
@@ -46,16 +56,59 @@ trait TransformerConfiguration extends MacroUtils {
         constFields = Set.empty,
         computedFields = Set.empty,
         renamedFields = Map.empty,
-        definitionScope = None
+        definitionScope = None,
+        constFFields = Set.empty,
+        computedFFields = Set.empty
       )
 
     def valueLevelAccessNeeded: Boolean = {
-      constFields.nonEmpty || computedFields.nonEmpty || coproductInstances.nonEmpty
+      constFields.nonEmpty ||
+      computedFields.nonEmpty ||
+      coproductInstances.nonEmpty ||
+      constFFields.nonEmpty ||
+      computedFFields.nonEmpty ||
+      coproductInstancesF.nonEmpty
+    }
+
+    def cleanField(name: String): TransformerConfig = {
+      copy(
+        constFields = constFields - name,
+        constFFields = constFFields - name,
+        computedFields = computedFields - name,
+        computedFFields = computedFFields - name
+      )
+    }
+
+    def constField(fieldName: String): TransformerConfig = {
+      cleanField(fieldName).copy(constFields = constFields + fieldName)
+    }
+
+    def computedField(fieldName: String): TransformerConfig = {
+      cleanField(fieldName).copy(computedFields = computedFields + fieldName)
+    }
+
+    def coproductInstance(instanceType: Type, targetType: Type): TransformerConfig = {
+      copy(coproductInstances = coproductInstances + (instanceType.typeSymbol -> targetType))
+    }
+
+    def renameField(fieldNameTo: String, fieldNameFrom: String): TransformerConfig = {
+      cleanField(fieldNameTo).copy(renamedFields = renamedFields.updated(fieldNameTo, fieldNameFrom))
+    }
+
+    def constFieldF(fieldName: String): TransformerConfig = {
+      cleanField(fieldName).copy(constFFields = constFFields + fieldName)
+    }
+
+    def computedFieldF(fieldName: String): TransformerConfig = {
+      cleanField(fieldName).copy(computedFFields = computedFFields + fieldName)
+    }
+
+    def coproductInstanceF(instanceType: Type, targetType: Type): TransformerConfig = {
+      copy(coproductInstancesF = coproductInstancesF + (instanceType.typeSymbol -> targetType))
     }
   }
 
-  def captureTransformerConfig(cfgTpe: Type, config: TransformerConfig = TransformerConfig()): TransformerConfig = {
-
+  object CfgTpeConstructors {
     import TransformerCfg._
 
     val emptyT = typeOf[Empty]
@@ -69,55 +122,60 @@ trait TransformerConfiguration extends MacroUtils {
     val fieldComputedT = typeOf[FieldComputed[_, _]].typeConstructor
     val fieldRelabelledT = typeOf[FieldRelabelled[_, _, _]].typeConstructor
     val coproductInstanceT = typeOf[CoproductInstance[_, _, _]].typeConstructor
+    val wrapperTypeT = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
+    val fieldConstFT = typeOf[FieldConstF[_, _]].typeConstructor
+    val fieldComputedFT = typeOf[FieldComputedF[_, _]].typeConstructor
+    val coproductInstanceFT = typeOf[CoproductInstanceF[_, _, _]].typeConstructor
+  }
+
+  def captureTransformerConfig(cfgTpe: Type): TransformerConfig = {
+
+    import CfgTpeConstructors._
 
     if (cfgTpe =:= emptyT) {
-      config
+      TransformerConfig()
     } else if (cfgTpe.typeConstructor =:= disableDefaultValuesT) {
-      captureTransformerConfig(cfgTpe.typeArgs.head, config.copy(processDefaultValues = false))
+      captureTransformerConfig(cfgTpe.typeArgs.head).copy(processDefaultValues = false)
     } else if (cfgTpe.typeConstructor =:= enableBeanGettersT) {
-      captureTransformerConfig(cfgTpe.typeArgs.head, config.copy(enableBeanGetters = true))
+      captureTransformerConfig(cfgTpe.typeArgs.head).copy(enableBeanGetters = true)
     } else if (cfgTpe.typeConstructor =:= enableBeanSettersT) {
-      captureTransformerConfig(cfgTpe.typeArgs.head, config.copy(enableBeanSetters = true))
+      captureTransformerConfig(cfgTpe.typeArgs.head).copy(enableBeanSetters = true)
     } else if (cfgTpe.typeConstructor =:= enableOptionDefaultsToNone) {
-      captureTransformerConfig(cfgTpe.typeArgs.head, config.copy(optionDefaultsToNone = true))
+      captureTransformerConfig(cfgTpe.typeArgs.head).copy(optionDefaultsToNone = true)
     } else if (cfgTpe.typeConstructor =:= enableUnsafeOption) {
-      captureTransformerConfig(cfgTpe.typeArgs.head, config.copy(enableUnsafeOption = true))
+      captureTransformerConfig(cfgTpe.typeArgs.head).copy(enableUnsafeOption = true)
     } else if (cfgTpe.typeConstructor =:= enableMethodAccessors) {
-      captureTransformerConfig(cfgTpe.typeArgs.head, config.copy(enableMethodAccessors = true))
+      captureTransformerConfig(cfgTpe.typeArgs.head).copy(enableMethodAccessors = true)
     } else if (cfgTpe.typeConstructor =:= fieldConstT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString
-      captureTransformerConfig(
-        rest,
-        config.copy(
-          constFields = config.constFields + fieldName,
-          computedFields = config.computedFields - fieldName
-        )
-      )
+      captureTransformerConfig(rest).constField(fieldName)
     } else if (cfgTpe.typeConstructor =:= fieldComputedT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString
-      captureTransformerConfig(
-        rest,
-        config.copy(
-          computedFields = config.computedFields + fieldName,
-          constFields = config.constFields - fieldName
-        )
-      )
+      captureTransformerConfig(rest).computedField(fieldName)
     } else if (cfgTpe.typeConstructor =:= fieldRelabelledT) {
       val List(fieldNameFromT, fieldNameToT, rest) = cfgTpe.typeArgs
       val fieldNameFrom = fieldNameFromT.singletonString
       val fieldNameTo = fieldNameToT.singletonString
-      captureTransformerConfig(
-        rest,
-        config.copy(renamedFields = config.renamedFields.updated(fieldNameTo, fieldNameFrom))
-      )
+      captureTransformerConfig(rest).renameField(fieldNameTo, fieldNameFrom)
     } else if (cfgTpe.typeConstructor =:= coproductInstanceT) {
       val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-      captureTransformerConfig(
-        rest,
-        config.copy(coproductInstances = config.coproductInstances + (instanceType.typeSymbol -> targetType))
-      )
+      captureTransformerConfig(rest).coproductInstance(instanceType, targetType)
+    } else if (cfgTpe.typeConstructor =:= wrapperTypeT) {
+      val List(f, rest) = cfgTpe.typeArgs
+      captureTransformerConfig(rest).copy(wrapperType = Some(f))
+    } else if (cfgTpe.typeConstructor =:= fieldConstFT) {
+      val List(fieldNameT, rest) = cfgTpe.typeArgs
+      val fieldName = fieldNameT.singletonString
+      captureTransformerConfig(rest).constFieldF(fieldName)
+    } else if (cfgTpe.typeConstructor =:= fieldComputedFT) {
+      val List(fieldNameT, rest) = cfgTpe.typeArgs
+      val fieldName = fieldNameT.singletonString
+      captureTransformerConfig(rest).computedFieldF(fieldName)
+    } else if (cfgTpe.typeConstructor =:= coproductInstanceFT) {
+      val List(instanceType, targetType, rest) = cfgTpe.typeArgs
+      captureTransformerConfig(rest).coproductInstanceF(instanceType, targetType)
     } else {
       // $COVERAGE-OFF$
       c.abort(c.enclosingPosition, "Bad internal transformer config type shape!")

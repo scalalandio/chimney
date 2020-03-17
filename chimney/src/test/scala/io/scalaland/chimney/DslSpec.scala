@@ -1,8 +1,8 @@
 package io.scalaland.chimney
 
-import utest._
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.examples._
+import utest._
 
 object DslSpec extends TestSuite {
 
@@ -427,15 +427,16 @@ object DslSpec extends TestSuite {
         (Some(Foo("a")): Option[Foo]).transformInto[Option[Bar]] ==> Option(Bar("a"))
         Some(Foo("a")).transformInto[Option[Bar]] ==> Some(Bar("a"))
         (None: Option[Foo]).transformInto[Option[Bar]] ==> None
-        Some(Foo("a")).transformInto[Some[Bar]] ==> Some(Bar("a"))
-        None.transformInto[None.type] ==> None
         (None: Option[String]).transformInto[Option[String]] ==> None
         Option("abc").transformInto[Option[String]] ==> Some("abc")
-        compileError(""""Some(foobar)".into[None.type].transform""")
-          .check("", "derivation from string: java.lang.String to scala.None is not supported in Chimney!")
+        compileError("""Some("foobar").into[None.type].transform""")
+          .check("", "derivation from some: scala.Some to scala.None is not supported in Chimney!")
         case class BarNone(value: None.type)
         compileError("""Foo("a").into[BarNone].transform""")
-          .check("", "derivation from foo.value: java.lang.String to scala.None is not supported in Chimney!")
+          .check(
+            "",
+            "value: scala.None - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.DslSpec.Foo"
+          )
       }
 
       "support automatically filling of scala.Unit" - {
@@ -447,6 +448,7 @@ object DslSpec extends TestSuite {
         Buzz("a").transformInto[NewBuzz] ==> NewBuzz("a", ())
         Buzz("a").transformInto[FooBuzz] ==> FooBuzz(())
         NewBuzz("a", null.asInstanceOf[Unit]).transformInto[FooBuzz] ==> FooBuzz(null.asInstanceOf[Unit])
+
         compileError("""Buzz("a").transformInto[ConflictingFooBuzz]""")
           .check(
             "",
@@ -465,7 +467,7 @@ object DslSpec extends TestSuite {
         (Right("a"): Either[String, String]).transformInto[Either[String, String]] ==> Right("a")
       }
 
-      "support Traversable collections" - {
+      "support Iterables collections" - {
         Seq(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))
         List(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a"))
         Vector(Foo("a")).transformInto[Vector[Bar]] ==> Vector(Bar("a"))
@@ -489,7 +491,7 @@ object DslSpec extends TestSuite {
         Array("a").transformInto[Array[String]] ==> Array("a")
       }
 
-      "support conversion between Traversables and Arrays" - {
+      "support conversion between Iterables and Arrays" - {
 
         Array(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a"))
         Array("a", "b").transformInto[Seq[String]] ==> Seq("a", "b")
@@ -505,6 +507,24 @@ object DslSpec extends TestSuite {
         Map("test" -> "a").transformInto[Map[String, String]] ==> Map("test" -> "a")
         Map(Foo("test") -> "x").transformInto[Map[Bar, String]] ==> Map(Bar("test") -> "x")
         Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] ==> Map(Bar("test") -> Bar("x"))
+      }
+
+      "support conversion between Iterables and Maps" - {
+
+        Seq(Foo("10") -> Bar("20"), Foo("20") -> Bar("40")).transformInto[Map[Bar, Foo]] ==>
+          Map(Bar("10") -> Foo("20"), Bar("20") -> Foo("40"))
+
+        Map(Foo("10") -> Bar("20"), Foo("20") -> Bar("40")).transformInto[List[(Bar, Foo)]] ==>
+          List(Bar("10") -> Foo("20"), Bar("20") -> Foo("40"))
+      }
+
+      "support conversion between Arrays and Maps" - {
+
+        Array(Foo("10") -> Bar("20"), Foo("20") -> Bar("40")).transformInto[Map[Bar, Foo]] ==>
+          Map(Bar("10") -> Foo("20"), Bar("20") -> Foo("40"))
+
+        Map(Foo("10") -> Bar("20"), Foo("20") -> Bar("40")).transformInto[Array[(Bar, Foo)]] ==>
+          Array(Bar("10") -> Foo("20"), Bar("20") -> Foo("40"))
       }
     }
 
@@ -547,8 +567,12 @@ object DslSpec extends TestSuite {
 
         case class Foobar(x: None.type)
         case class Foobar2(x: String)
+
         compileError("""Foobar(None).into[Foobar2].enableUnsafeOption.transform""")
-          .check("", "derivation from foobar.x: scala.None to java.lang.String is not supported in Chimney!")
+          .check(
+            "",
+            "x: java.lang.String - can't derive transformation from x: scala.None in source type io.scalaland.chimney.DslSpec.Foobar"
+          )
       }
     }
 

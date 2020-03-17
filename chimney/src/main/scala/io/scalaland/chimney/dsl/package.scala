@@ -8,14 +8,14 @@ import scala.language.experimental.macros
   */
 package object dsl {
 
-  /** Provides transformer operations on values of any type
+  /** Provides transformer operations on values of any type.
     *
     * @param source wrapped source value
     * @tparam From type of source value
     */
   implicit class TransformerOps[From](private val source: From) extends AnyVal {
 
-    /** Allows to customize transformer generation to your target type
+    /** Allows to customize transformer generation to your target type.
       *
       * @tparam To target type
       * @return [[io.scalaland.chimney.dsl.TransformerInto]]
@@ -23,7 +23,7 @@ package object dsl {
     final def into[To]: TransformerInto[From, To, TransformerCfg.Empty] =
       new TransformerInto(source, new TransformerDefinition[From, To, TransformerCfg.Empty](Map.empty, Map.empty))
 
-    /** Performs in-place transformation of wrapped source value to target type.
+    /** Performs in-place transformation of captured source value to target type.
       *
       * If you want to customize transformer behavior, consider using
       * [[io.scalaland.chimney.dsl.TransformerOps#into]] method.
@@ -31,9 +31,40 @@ package object dsl {
       * @see [[io.scalaland.chimney.Transformer#derive]] for default implicit instance
       * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
       * @tparam To target type
-      * @return transformed value of target type
+      * @return transformed value of target type `To`
       */
     final def transformInto[To](implicit transformer: Transformer[From, To]): To =
+      transformer.transform(source)
+  }
+
+  implicit class TransformerFOps[From](private val source: From) extends AnyVal {
+
+    /** Allows to customize wrapped transformer generation to your target type.
+      *
+      * @tparam F  wrapper type constructor
+      * @tparam To target type
+      * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
+      */
+    final def intoF[F[+_], To]: TransformerFInto[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty]] =
+      new TransformerFInto(
+        source,
+        new TransformerFDefinition[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty]](
+          Map.empty,
+          Map.empty
+        )
+      )
+
+    /** Performs in-place wrapped transformation of captured source value to target type.
+      *
+      * If you want to customize transformer behavior, consider using
+      * [[io.scalaland.chimney.dsl.TransformerFOps#intoF]] method.
+      *
+      * @see [[io.scalaland.chimney.TransformerF#derive]] for default implicit instance
+      * @param transformer implicit instance of [[io.scalaland.chimney.TransformerF]] type class
+      * @tparam To target type
+      * @return transformed wrapped target value of type `F[To]`
+      */
+    final def transformIntoF[F[+_], To](implicit transformer: TransformerF[F, From, To]): F[To] =
       transformer.transform(source)
   }
 
@@ -80,7 +111,10 @@ package object dsl {
       * @return patched value
       */
     @deprecated("please use .patchUsing", "0.4.0")
-    final def patchWith[P](patch: P)(implicit patcher: Patcher[T, P]): T =
+    final def patchWith[P](patch: P)(implicit patcher: Patcher[T, P]): T = {
+      // $COVERAGE-OFF$
       obj.patchUsing(patch)
+      // $COVERAGE-ON$
+    }
   }
 }

@@ -1,3 +1,5 @@
+.. _standard-transformers:
+
 Standard transformers
 =====================
 

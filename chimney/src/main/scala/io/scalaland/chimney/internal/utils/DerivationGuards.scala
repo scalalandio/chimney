@@ -33,11 +33,7 @@ trait DerivationGuards {
     from <:< eitherTpe && to <:< eitherTpe
   }
 
-  def bothMaps(from: Type, to: Type): Boolean = {
-    from <:< mapTpe && to <:< mapTpe
-  }
-
-  def bothOfTraversableOrArray(from: Type, to: Type): Boolean = {
+  def bothOfIterableOrArray(from: Type, to: Type): Boolean = {
     iterableOrArray(from) && iterableOrArray(to)
   }
 
@@ -67,6 +63,10 @@ trait DerivationGuards {
       typeOf[Tuple22[_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]]
     ).exists(to <:< _)
 
+  def isUnit(tpe: Type): Boolean = {
+    tpe <:< typeOf[Unit]
+  }
+
   def destinationCaseClass(to: Type): Boolean = {
     to.isCaseClass
   }
@@ -79,28 +79,14 @@ trait DerivationGuards {
       primaryConstructor.asMethod.paramLists == List(Nil) &&
       to.beanSetterMethods.nonEmpty
     } else {
+      // $COVERAGE-OFF$
       false
+      // $COVERAGE-ON$
     }
   }
 
   def bothSealedClasses(from: Type, to: Type): Boolean = {
     from.isSealedClass && to.isSealedClass
-  }
-
-  def canTryDeriveTransformer(from: Type, to: Type): Boolean = {
-    isSubtype(from, to) ||
-    isOption(from) ||
-    isOption(to) ||
-    fromValueClassToType(from, to) ||
-    fromTypeToValueClass(from, to) ||
-    bothOptions(from, to) ||
-    bothEithers(from, to) ||
-    bothMaps(from, to) ||
-    bothOfTraversableOrArray(from, to) ||
-    isTuple(to) ||
-    destinationCaseClass(to) ||
-    destinationJavaBean(to) ||
-    bothSealedClasses(from, to)
   }
 
   def iterableOrArray(t: Type): Boolean = {
@@ -113,7 +99,6 @@ trait DerivationGuards {
   val eitherTpe: Type = typeOf[Either[_, _]]
   val leftTpe: Type = typeOf[Left[_, _]]
   val rightTpe: Type = typeOf[Right[_, _]]
-  val mapTpe: Type = typeOf[scala.collection.Map[_, _]]
   val iterableTpe: Type = typeOf[Iterable[_]]
   val arrayTpe: Type = typeOf[Array[_]]
 }

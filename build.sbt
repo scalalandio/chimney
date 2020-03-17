@@ -29,7 +29,8 @@ val settings = Seq(
     "-Xlint:poly-implicit-overload",
     "-Xlint:private-shadow",
     "-Xlint:stars-align",
-    "-Xlint:type-parameter-shadow"
+    "-Xlint:type-parameter-shadow",
+    "-language:higherKinds"
   ),
   scalacOptions ++= (
     if (scalaVersion.value >= "2.13")
@@ -62,6 +63,7 @@ val settings = Seq(
 
 val dependencies = Seq(
   libraryDependencies ++= Seq(
+    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.1.4",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
     "com.lihaoyi" %%% "utest" % (if (scalaVersion.value >= "2.12") "0.7.4" else "0.6.8") % "test"
@@ -73,8 +75,8 @@ lazy val root = project
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(noPublishSettings: _*)
-  .aggregate(chimneyJVM, chimneyJS)
-  .dependsOn(chimneyJVM, chimneyJS)
+  .aggregate(chimneyJVM, chimneyJS, chimneyCatsJVM, chimneyCatsJS)
+  .dependsOn(chimneyJVM, chimneyJS, chimneyCatsJVM, chimneyCatsJS)
   .enablePlugins(SphinxPlugin, GhpagesPlugin)
   .settings(
     Sphinx / version := version.value,
@@ -89,7 +91,8 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     moduleName := "chimney",
     name := "chimney",
     description := "Scala library for boilerplate free data rewriting",
-    testFrameworks += new TestFramework("utest.runner.Framework")
+    testFrameworks += new TestFramework("utest.runner.Framework"),
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.0" cross CrossVersion.full)
   )
   .settings(settings: _*)
   .settings(publishSettings: _*)
@@ -99,6 +102,24 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 lazy val chimneyJVM = chimney.jvm
 lazy val chimneyJS = chimney.js
 lazy val chimneyNative = chimney.native
+
+lazy val chimneyCats = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .dependsOn(chimney % "test->test;compile->compile")
+  .settings(
+    moduleName := "chimney-cats",
+    name := "chimney-cats",
+    description := "Chimney module for validated transformers support",
+    testFrameworks += new TestFramework("utest.runner.Framework"),
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.0" cross CrossVersion.full)
+  )
+  .settings(settings: _*)
+  .settings(publishSettings: _*)
+  .settings(dependencies: _*)
+  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.0.0" % "provided")
+
+lazy val chimneyCatsJVM = chimneyCats.jvm
+lazy val chimneyCatsJS = chimneyCats.js
 
 lazy val protos = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)

@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.utils.MacroUtils
 
 import scala.reflect.macros.whitebox
 
-class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils {
+class TransformerFIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils {
 
   import c.universe._
 
@@ -15,13 +15,11 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils 
     )
   }
 
-  def withFieldConstFImpl[F[+_]](
-      selector: Tree,
-      value: Tree
-  )(
-      implicit F: WeakTypeTag[F[_]]
-  ): Tree = {
-    q"${c.prefix.tree}.lift[$F].withFieldConstF($selector, $value)"
+  def withFieldConstFImpl(selector: Tree, value: Tree): Tree = {
+    c.prefix.tree.refineTransformerDefinition_Hack(
+      trees => q"_.withFieldConstF($selector, ${trees("value")})",
+      "value" -> value
+    )
   }
 
   def withFieldComputedImpl(selector: Tree, map: Tree): Tree = {
@@ -31,13 +29,11 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils 
     )
   }
 
-  def withFieldComputedFImpl[F[+_]](
-      selector: Tree,
-      map: Tree
-  )(
-      implicit F: WeakTypeTag[F[_]]
-  ): Tree = {
-    q"${c.prefix.tree}.lift[$F].withFieldComputedF($selector, $map)"
+  def withFieldComputedFImpl(selector: Tree, map: Tree): Tree = {
+    c.prefix.tree.refineTransformerDefinition_Hack(
+      trees => q"_.withFieldComputedF($selector, ${trees("map")})",
+      "map" -> map
+    )
   }
 
   def withFieldRenamedImpl(selectorFrom: Tree, selectorTo: Tree): Tree = {
@@ -51,7 +47,11 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils 
     )
   }
 
-  def withCoproductInstanceFImpl[F[+_]](f: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
-    q"${c.prefix.tree}.lift[$F].withCoproductInstanceF($f)"
+  def withCoproductInstanceFImpl(f: Tree): Tree = {
+    c.prefix.tree.refineTransformerDefinition_Hack(
+      trees => q"_.withCoproductInstanceF(${trees("f")})",
+      "f" -> f
+    )
   }
+
 }
