@@ -259,6 +259,23 @@ trait MacroUtils extends CompanionUtils {
 
   implicit class TransformerDefinitionTreeOps(td: Tree) {
 
+    def accessConst(name: String, targetTpe: Type): Tree = {
+      q"""
+        $td
+          .overrides($name)
+          .asInstanceOf[$targetTpe]
+      """
+    }
+
+    def accessComputed(name: String, srcPrefixTree: Tree, fromTpe: Type, targetTpe: Type): Tree = {
+      q"""
+        $td
+          .overrides($name)
+          .asInstanceOf[$fromTpe => $targetTpe]
+          .apply($srcPrefixTree)
+      """
+    }
+
     def addOverride(fieldName: Name, value: Tree): Tree = {
       q"$td.__addOverride(${fieldName.toNameLiteral}, $value)"
     }
