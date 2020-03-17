@@ -118,7 +118,8 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg](
   /** Build TransformerF using current configuration.
     *
     * It runs macro that tries to derive instance of `TransformerF[F, From, To]`.
-    * It requires [[io.scalaland.chimney.TransformerFSupport[F]]] instance to be
+    *
+    * It requires [[io.scalaland.chimney.TransformerFSupport]] instance for `F` to be
     * available in implicit scope of invocation of this method.
     *
     * When transformation can't be derived, it results with compilation error.

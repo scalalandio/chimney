@@ -112,6 +112,10 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg](
     *
     * It runs macro that tries to derive instance of `TransformerF[F, From, To]`
     * and immediately apply it to captured `source` value.
+    *
+    * It requires [[io.scalaland.chimney.TransformerFSupport]] instance for `F` to be
+    * available in implicit scope of invocation of this method.
+    *
     * When transformation can't be derived, it results with compilation error.
     *
     * @return transformed value of type `F[To]`
