@@ -24,7 +24,7 @@ class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
     * By default, when `None` is delivered in patch, Chimney clears
     * the value of such field on patching.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Patchers]] for more details
+    * @see [[https://scalalandio.github.io/chimney/patchers/options-handling.html]] for more details
     * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
     */
   def ignoreNoneInPatch: PatcherUsing[T, P, IgnoreNoneInPatch[C]] =
@@ -38,7 +38,7 @@ class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
     * fails the compilation in order to prevent silent oversight of field name
     * typos.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Patchers]] for more details
+    * @see [[https://scalalandio.github.io/chimney/patchers/redundant-fields.html]] for more details
     * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
     */
   def ignoreRedundantPatcherFields: PatcherUsing[T, P, IgnoreRedundantPatcherFields[C]] =

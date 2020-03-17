@@ -9,7 +9,7 @@ trait ConfigDsl[CC[_ <: TransformerCfg], C <: TransformerCfg] {
     *
     * By default this is disabled because method calls may perform side effects (e.g. mutations)
     *
-    * @see [[https://scalalandio.github.io/chimney/#UsingMethodCalls]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#using-method-accessors]] for more details
     */
   def enableMethodAccessors: CC[EnableMethodAccessors[C]] =
     this.asInstanceOf[CC[EnableMethodAccessors[C]]]
@@ -18,7 +18,7 @@ trait ConfigDsl[CC[_ <: TransformerCfg], C <: TransformerCfg] {
     *
     * By default in such case derivation will fallback to default values.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Defaultoptionvalues]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#disabling-default-values-in-generated-transformer]] for more details
     */
   def disableDefaultValues: CC[DisableDefaultValues[C]] =
     this.asInstanceOf[CC[DisableDefaultValues[C]]]
@@ -27,7 +27,7 @@ trait ConfigDsl[CC[_ <: TransformerCfg], C <: TransformerCfg] {
     *
     * By default only Scala conversions (`.name`) are allowed.
     *
-    * @see [[https://scalalandio.github.io/chimney/#ReadingfromJavabeans]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#reading-from-java-beans]] for more details
     */
   def enableBeanGetters: CC[EnableBeanGetters[C]] =
     this.asInstanceOf[CC[EnableBeanGetters[C]]]
@@ -36,7 +36,7 @@ trait ConfigDsl[CC[_ <: TransformerCfg], C <: TransformerCfg] {
     *
     * By default only Scala conversions (`.copy(name = value)`) are allowed.
     *
-    * @see [[https://scalalandio.github.io/chimney/#WritingtoJavabeans]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#writing-to-java-beans]] for more details
     */
   def enableBeanSetters: CC[EnableBeanSetters[C]] =
     this.asInstanceOf[CC[EnableBeanSetters[C]]]
@@ -45,7 +45,7 @@ trait ConfigDsl[CC[_ <: TransformerCfg], C <: TransformerCfg] {
     *
     * By default in such case compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Defaultoptionvalues]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#default-values-for-option-fields]] for more details
     */
   def enableOptionDefaultsToNone: CC[EnableOptionDefaultsToNone[C]] =
     this.asInstanceOf[CC[EnableOptionDefaultsToNone[C]]]
@@ -57,7 +57,7 @@ trait ConfigDsl[CC[_ <: TransformerCfg], C <: TransformerCfg] {
     *
     * By default in such case compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Unsafeoption]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/unsafe-options.html]] for more details
     */
   def enableUnsafeOption: CC[EnableUnsafeOption[C]] =
     this.asInstanceOf[CC[EnableUnsafeOption[C]]]

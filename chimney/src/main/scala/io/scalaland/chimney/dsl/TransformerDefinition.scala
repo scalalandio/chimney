@@ -33,7 +33,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Providingmissingvalues]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
@@ -45,7 +45,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Providingmissingvalues]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
@@ -60,7 +60,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Providingmissingvalues]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
     * @param selector target field in `To`, defined like `_.name`
     * @param map      function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
@@ -72,7 +72,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Providingmissingvalues]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
     * @param selector target field in `To`, defined like `_.name`
     * @param map      function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
@@ -87,7 +87,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     *
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Fieldre-labelling]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#fields-renaming]] for more details
     * @param selectorFrom source field in `From`, defined like `_.originalName`
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
@@ -105,7 +105,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Coproductssupport]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
@@ -119,7 +119,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg](
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
     *
-    * @see [[https://scalalandio.github.io/chimney/#Coproductssupport]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
     */
