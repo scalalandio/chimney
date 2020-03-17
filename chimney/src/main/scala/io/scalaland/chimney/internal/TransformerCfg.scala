@@ -132,7 +132,7 @@ trait TransformerConfiguration extends MacroUtils {
       val fieldNameFrom = fieldNameFromT.singletonString
       val fieldNameTo = fieldNameToT.singletonString
       captureTransformerConfig(rest)
-        .fieldOverride(fieldNameTo, FieldOverride.RenamedFrom(fieldNameFrom)) // renameField(fieldNameTo, fieldNameFrom)
+        .fieldOverride(fieldNameTo, FieldOverride.RenamedFrom(fieldNameFrom))
     } else if (cfgTpe.typeConstructor =:= coproductInstanceT) {
       val List(instanceType, targetType, rest) = cfgTpe.typeArgs
       captureTransformerConfig(rest).coproductInstance(instanceType, targetType)
