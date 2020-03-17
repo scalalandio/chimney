@@ -16,13 +16,13 @@ object TransformerCfg {
   final class EnableUnsafeOption[C <: TransformerCfg] extends TransformerCfg
   final class EnableMethodAccessors[C <: TransformerCfg] extends TransformerCfg
   final class FieldConst[Name <: String, C <: TransformerCfg] extends TransformerCfg
+  final class FieldConstF[Name <: String, C <: TransformerCfg] extends TransformerCfg
   final class FieldComputed[Name <: String, C <: TransformerCfg] extends TransformerCfg
+  final class FieldComputedF[Name <: String, C <: TransformerCfg] extends TransformerCfg
   final class FieldRelabelled[FromName <: String, ToName <: String, C <: TransformerCfg] extends TransformerCfg
   final class CoproductInstance[InstType, TargetType, C <: TransformerCfg] extends TransformerCfg
-  final class WrapperType[F[+_], C <: TransformerCfg] extends TransformerCfg
-  final class FieldConstF[Name <: String, C <: TransformerCfg] extends TransformerCfg
-  final class FieldComputedF[Name <: String, C <: TransformerCfg] extends TransformerCfg
   final class CoproductInstanceF[InstType, TargetType, C <: TransformerCfg] extends TransformerCfg
+  final class WrapperType[F[+_], C <: TransformerCfg] extends TransformerCfg
 }
 
 trait TransformerConfiguration extends MacroUtils {
@@ -32,6 +32,7 @@ trait TransformerConfiguration extends MacroUtils {
   import c.universe._
 
   sealed abstract class FieldOverride(val needValueLevelAccess: Boolean)
+
   object FieldOverride {
     case object Const extends FieldOverride(true)
     case object ConstF extends FieldOverride(true)
@@ -92,13 +93,13 @@ trait TransformerConfiguration extends MacroUtils {
     val enableUnsafeOption = typeOf[EnableUnsafeOption[_]].typeConstructor
     val enableMethodAccessors = typeOf[EnableMethodAccessors[_]].typeConstructor
     val fieldConstT = typeOf[FieldConst[_, _]].typeConstructor
+    val fieldConstFT = typeOf[FieldConstF[_, _]].typeConstructor
     val fieldComputedT = typeOf[FieldComputed[_, _]].typeConstructor
+    val fieldComputedFT = typeOf[FieldComputedF[_, _]].typeConstructor
     val fieldRelabelledT = typeOf[FieldRelabelled[_, _, _]].typeConstructor
     val coproductInstanceT = typeOf[CoproductInstance[_, _, _]].typeConstructor
-    val wrapperTypeT = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
-    val fieldConstFT = typeOf[FieldConstF[_, _]].typeConstructor
-    val fieldComputedFT = typeOf[FieldComputedF[_, _]].typeConstructor
     val coproductInstanceFT = typeOf[CoproductInstanceF[_, _, _]].typeConstructor
+    val wrapperTypeT = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
   }
 
   def captureTransformerConfig(cfgTpe: Type): TransformerConfig = {
