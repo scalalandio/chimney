@@ -1,0 +1,358 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Plugging in own transformations &mdash; Chimney 0.5.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Java beans" href="java-beans.html" />
+    <link rel="prev" title="Default values support" href="default-values.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Chimney
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.5.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Transformers</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started with transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="customizing-transformers.html">Customizing transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="standard-transformers.html">Standard transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="default-values.html">Default values support</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Plugging in own transformations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#transformer-type-class"><code class="docutils literal notranslate"><span class="pre">Transformer</span></code> type class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#transformer-definition-dsl">Transformer definition DSL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#recursive-data-types-support">Recursive data types support</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="java-beans.html">Java beans</a></li>
+<li class="toctree-l1"><a class="reference internal" href="unsafe-options.html">Unsafe options transformation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lifted-transformers.html">Lifted transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cats-integration.html">Cats integration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Patchers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/getting-started.html">Getting started with patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/redundant-fields.html">Redundant fields in patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Chimney</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Plugging in own transformations</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="plugging-in-own-transformations">
+<h1>Plugging in own transformations<a class="headerlink" href="#plugging-in-own-transformations" title="Permalink to this headline">¶</a></h1>
+<p>In case the transformation is relatively complex or if for
+some reason you just want to bypass Chimney derivation mechanism,
+you can always fall back to a simple function that you can plug
+into the Chimney transformation.</p>
+<div class="section" id="transformer-type-class">
+<span id="transformer-typeclass"></span><h2><code class="docutils literal notranslate"><span class="pre">Transformer</span></code> type class<a class="headerlink" href="#transformer-type-class" title="Permalink to this headline">¶</a></h2>
+<p>The library defines a type class <code class="docutils literal notranslate"><span class="pre">Transformer</span></code> that just
+wraps transformation function.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">trait</span> <span class="nc">Transformer</span><span class="o">[</span><span class="kt">From</span><span class="p">,</span> <span class="kt">To</span><span class="o">]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">transform</span><span class="o">(</span><span class="n">src</span><span class="k">:</span> <span class="kt">From</span><span class="o">)</span><span class="k">:</span> <span class="kt">To</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>You can plug your own transformer in by providing implicit
+instance in a local context.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="nn">io.scalaland.chimney.dsl._</span>
+<span class="k">import</span> <span class="nn">io.scalaland.chimney.Transformer</span>
+
+<span class="k">object</span> <span class="nc">v1</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="k">class</span> <span class="nc">User</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">street</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">postalCode</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+<span class="o">}</span>
+<span class="k">object</span> <span class="nc">v2</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="k">class</span> <span class="nc">Address</span><span class="o">(</span><span class="n">street</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">postalCode</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+  <span class="k">case</span> <span class="k">class</span> <span class="nc">User</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">addresses</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Address</span><span class="o">])</span>
+<span class="o">}</span>
+
+<span class="k">implicit</span> <span class="k">val</span> <span class="n">userV1toV2</span><span class="k">:</span> <span class="kt">Transformer</span><span class="o">[</span><span class="kt">v1.User</span><span class="p">,</span> <span class="kt">v2.User</span><span class="o">]</span> <span class="k">=</span>
+  <span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">v1.User</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">v2</span><span class="o">.</span><span class="nc">User</span><span class="o">(</span>
+    <span class="n">id</span> <span class="k">=</span> <span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="o">,</span>
+    <span class="n">name</span> <span class="k">=</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="o">,</span>
+    <span class="n">addresses</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span><span class="n">v2</span><span class="o">.</span><span class="nc">Address</span><span class="o">(</span><span class="n">user</span><span class="o">.</span><span class="n">street</span><span class="o">,</span> <span class="n">user</span><span class="o">.</span><span class="n">postalCode</span><span class="o">))</span>
+  <span class="o">)</span>
+
+<span class="k">val</span> <span class="n">v1Users</span> <span class="k">=</span> <span class="nc">List</span><span class="o">(</span>
+  <span class="n">v1</span><span class="o">.</span><span class="nc">User</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="s">&quot;Steve&quot;</span><span class="o">,</span> <span class="s">&quot;Love street&quot;</span><span class="o">,</span> <span class="s">&quot;27000&quot;</span><span class="o">),</span>
+  <span class="n">v1</span><span class="o">.</span><span class="nc">User</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="s">&quot;Anna&quot;</span><span class="o">,</span> <span class="s">&quot;Broadway&quot;</span><span class="o">,</span> <span class="s">&quot;00321&quot;</span><span class="o">)</span>
+<span class="o">)</span>
+
+<span class="k">val</span> <span class="n">v2Users</span> <span class="k">=</span> <span class="n">v1Users</span><span class="o">.</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">List</span><span class="o">[</span><span class="kt">v2.User</span><span class="o">]]</span>
+<span class="c1">// List(</span>
+<span class="c1">//   v2.User(1, &quot;Steve&quot;, List(Address(&quot;Love street&quot;, &quot;27000&quot;))),</span>
+<span class="c1">//   v2.User(2, &quot;Anna&quot;, List(Address(&quot;Broadway&quot;, &quot;00321&quot;)))</span>
+<span class="c1">// )</span>
+</pre></div>
+</div>
+<p>As we can see, Chimney correctly picked and used implicit
+<code class="docutils literal notranslate"><span class="pre">Transformer[v1.User,</span> <span class="pre">v2.User]</span></code> defined locally in transformation
+between list of users.</p>
+<p>But is it really a necessity to define custom transformer
+completely manually?</p>
+</div>
+<div class="section" id="transformer-definition-dsl">
+<span id="id1"></span><h2>Transformer definition DSL<a class="headerlink" href="#transformer-definition-dsl" title="Permalink to this headline">¶</a></h2>
+<p>One can think that if we only need to provide function implementation
+of type <code class="docutils literal notranslate"><span class="pre">v1.User</span> <span class="pre">=&gt;</span> <span class="pre">v2.User</span></code>, why not use Chimney’s DSL in order
+to generate the transformation?</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">implicit</span> <span class="k">val</span> <span class="n">userV2toV2</span><span class="k">:</span> <span class="kt">Transformer</span><span class="o">[</span><span class="kt">v1.User</span><span class="p">,</span> <span class="kt">v2.User</span><span class="o">]</span> <span class="k">=</span>
+  <span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">v1.User</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">user</span>
+    <span class="o">.</span><span class="n">into</span><span class="o">[</span><span class="kt">v2.User</span><span class="o">]</span>
+    <span class="o">.</span><span class="n">withFieldComputed</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">addresses</span><span class="o">,</span> <span class="n">u</span> <span class="k">=&gt;</span> <span class="nc">List</span><span class="o">(</span><span class="n">v2</span><span class="o">.</span><span class="nc">Address</span><span class="o">(</span><span class="n">u</span><span class="o">.</span><span class="n">street</span><span class="o">,</span> <span class="n">u</span><span class="o">.</span><span class="n">postalCode</span><span class="o">)))</span>
+    <span class="o">.</span><span class="n">transform</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>While it looks reasonably, it will not work as expected :(</p>
+</div>
+<p>Chimney’s macro, before trying to derive any transformer, tries to
+find instance of required transformer in implicit scope. Unfortunately,
+it will pick <code class="docutils literal notranslate"><span class="pre">userV2toV2</span></code>, because types match, this value is
+marked as implicit and is available in macro expansion scope. Depending
+on few details, it will either end up as compilation error, or
+will lead to <code class="docutils literal notranslate"><span class="pre">StackOverflowError</span></code> at runtime.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Since version 0.4.0 there is a simple solution to this problem.</p>
+</div>
+<p>We need to use special syntax <code class="docutils literal notranslate"><span class="pre">Transformer.define[From,</span> <span class="pre">To]</span></code>
+which introduces us to new transformer builder between types
+<code class="docutils literal notranslate"><span class="pre">From</span></code> and <code class="docutils literal notranslate"><span class="pre">To</span></code>.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">implicit</span> <span class="k">val</span> <span class="n">userV2toV2</span><span class="k">:</span> <span class="kt">Transformer</span><span class="o">[</span><span class="kt">v1.User</span><span class="p">,</span> <span class="kt">v2.User</span><span class="o">]</span> <span class="k">=</span>
+  <span class="nc">Transformer</span><span class="o">.</span><span class="n">define</span><span class="o">[</span><span class="kt">v1.User</span><span class="p">,</span> <span class="kt">v2.User</span><span class="o">]</span>
+    <span class="o">.</span><span class="n">withFieldComputed</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">addresses</span><span class="o">,</span> <span class="n">u</span> <span class="k">=&gt;</span> <span class="nc">List</span><span class="o">(</span><span class="n">v2</span><span class="o">.</span><span class="nc">Address</span><span class="o">(</span><span class="n">u</span><span class="o">.</span><span class="n">street</span><span class="o">,</span> <span class="n">u</span><span class="o">.</span><span class="n">postalCode</span><span class="o">)))</span>
+    <span class="o">.</span><span class="n">buildTransformer</span>
+</pre></div>
+</div>
+<p>In transformer builder we can use all operations available
+to usual transformer DSL. The only difference is that we don’t
+call <code class="docutils literal notranslate"><span class="pre">.transform</span></code> at the end (since we don’t transform value
+in place), but <code class="docutils literal notranslate"><span class="pre">buildTransformer</span></code> (because we generate
+transformer here). Such generated transformer is semantically
+equivalent to hand-written transformer from previous section.</p>
+<p>Chimney solves self reference implicit problem by not looking
+for implicit instance for <code class="docutils literal notranslate"><span class="pre">Transformer[From,</span> <span class="pre">To]</span></code> when
+using transformer builder  <code class="docutils literal notranslate"><span class="pre">Transformer.define[From,</span> <span class="pre">To]</span></code>.</p>
+</div>
+<div class="section" id="recursive-data-types-support">
+<h2>Recursive data types support<a class="headerlink" href="#recursive-data-types-support" title="Permalink to this headline">¶</a></h2>
+<p>Chimney can generate transformers between recursive data structures.
+Consider following example.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">case</span> <span class="k">class</span> <span class="nc">Foo</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Foo</span><span class="o">])</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Bar</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Bar</span><span class="o">])</span>
+</pre></div>
+</div>
+<p>We would like to define transformer instance which would be able
+to convert a value <code class="docutils literal notranslate"><span class="pre">Foo(Some(Foo(None)))</span></code> to <code class="docutils literal notranslate"><span class="pre">Bar(Some(Bar(None)))</span></code>.
+In order to avoid aforementioned issues with self-referencing, you
+must define your recursive transformer instance as <code class="docutils literal notranslate"><span class="pre">implicit</span> <span class="pre">def</span></code>
+or <code class="docutils literal notranslate"><span class="pre">implicit</span> <span class="pre">lazy</span> <span class="pre">val</span></code>.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">implicit</span> <span class="k">def</span> <span class="n">fooToBarTransformer</span><span class="k">:</span> <span class="kt">Transformer</span><span class="o">[</span><span class="kt">Foo</span><span class="p">,</span> <span class="kt">Bar</span><span class="o">]</span> <span class="k">=</span>
+  <span class="nc">Transformer</span><span class="o">.</span><span class="n">derive</span><span class="o">[</span><span class="kt">Foo</span><span class="p">,</span> <span class="kt">Bar</span><span class="o">]</span> <span class="c1">// or Transformer.define[Foo, Bar].buildTransformer</span>
+
+<span class="nc">Foo</span><span class="o">(</span><span class="nc">Some</span><span class="o">(</span><span class="nc">Foo</span><span class="o">(</span><span class="nc">None</span><span class="o">))).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Bar</span><span class="o">]</span>
+<span class="c1">// Bar(Some(Bar(None)))</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="java-beans.html" class="btn btn-neutral float-right" title="Java beans" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="default-values.html" class="btn btn-neutral float-left" title="Default values support" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017-2020, scalaland.io
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-116165806-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+
+    
+   
+
+</body>
+</html>

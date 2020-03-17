@@ -1,0 +1,310 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Unsafe options transformation &mdash; Chimney 0.5.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Lifted transformers" href="lifted-transformers.html" />
+    <link rel="prev" title="Java beans" href="java-beans.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Chimney
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.5.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Transformers</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started with transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="customizing-transformers.html">Customizing transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="standard-transformers.html">Standard transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="default-values.html">Default values support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="own-transformations.html">Plugging in own transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="java-beans.html">Java beans</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Unsafe options transformation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#proto3-motivational-example">Proto3 motivational example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enabling-unsafe-option-extraction">Enabling unsafe option extraction</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lifted-transformers.html">Lifted transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cats-integration.html">Cats integration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Patchers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/getting-started.html">Getting started with patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/redundant-fields.html">Redundant fields in patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Chimney</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Unsafe options transformation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="unsafe-options-transformation">
+<h1>Unsafe options transformation<a class="headerlink" href="#unsafe-options-transformation" title="Permalink to this headline">¶</a></h1>
+<p>Chimney supports opt-in unsafe transformation from <code class="docutils literal notranslate"><span class="pre">Option[T]</span></code> to
+<code class="docutils literal notranslate"><span class="pre">T</span></code> if enabled explicitly with <code class="docutils literal notranslate"><span class="pre">.enableUnsafeOption</span></code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Transforming <code class="docutils literal notranslate"><span class="pre">None</span></code> into a concrete value will lead to <code class="docutils literal notranslate"><span class="pre">NoSuchElementException</span></code>
+at runtime, so use it at your own risk.</p>
+<p>Since version 0.5.0 there is available better, safe alternative: <a class="reference internal" href="lifted-transformers.html#lifted-transformers"><span class="std std-ref">Lifted transformers</span></a>.</p>
+</div>
+<div class="section" id="proto3-motivational-example">
+<h2>Proto3 motivational example<a class="headerlink" href="#proto3-motivational-example" title="Permalink to this headline">¶</a></h2>
+<p>Unsafe option mode is typically useful when mapping proto3-generated
+classes to domain classes. <a class="reference external" href="https://scalapb.github.io">ScalaPB</a> indeed
+generates fields wrapped in <code class="docutils literal notranslate"><span class="pre">Option</span></code> types for messages. In certain
+scenarios, it can be safe to assume that the value is always present,
+thus allowing for significant boilerplate reduction.</p>
+<p>Here’s an example protobuf definition.</p>
+<div class="highlight-proto notranslate"><div class="highlight"><pre><span></span><span class="na">syntax</span> <span class="o">=</span> <span class="s">&quot;proto3&quot;</span><span class="p">;</span>
+<span class="kn">package</span> <span class="nn">pb</span><span class="p">;</span>
+<span class="kd">message</span> <span class="nc">Item</span> <span class="p">{</span>
+    <span class="kt">int32</span> <span class="na">id</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="kt">string</span> <span class="na">name</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kd">message</span> <span class="nc">OrderLine</span> <span class="p">{</span>
+    <span class="n">Item</span> <span class="na">item</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="kt">int32</span> <span class="na">quantity</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kd">message</span> <span class="nc">Address</span> <span class="p">{</span>
+    <span class="kt">string</span> <span class="na">street</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="kt">int32</span> <span class="na">zip_code</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="kt">string</span> <span class="na">city</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kd">message</span> <span class="nc">Customer</span> <span class="p">{</span>
+    <span class="kt">int32</span> <span class="na">id</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="kt">string</span> <span class="na">first_name</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="kt">string</span> <span class="na">last_name</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+    <span class="n">Address</span> <span class="na">address</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kd">message</span> <span class="nc">Order</span> <span class="p">{</span>
+    <span class="k">repeated</span> <span class="n">OrderLine</span> <span class="na">lines</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">Customer</span> <span class="na">customer</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>And the equivalent domain model definitions:</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">package</span> <span class="nn">domain</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Item</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">OrderLine</span><span class="o">(</span><span class="n">item</span><span class="k">:</span> <span class="kt">Item</span><span class="o">,</span> <span class="n">quantity</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Address</span><span class="o">(</span><span class="n">street</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">zipCode</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">city</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Customer</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">firstName</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">lastName</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">address</span><span class="k">:</span> <span class="kt">Address</span><span class="o">)</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Order</span><span class="o">(</span><span class="n">lines</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">OrderLine</span><span class="o">],</span> <span class="n">customer</span><span class="k">:</span> <span class="kt">Customer</span><span class="o">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="enabling-unsafe-option-extraction">
+<h2>Enabling unsafe option extraction<a class="headerlink" href="#enabling-unsafe-option-extraction" title="Permalink to this headline">¶</a></h2>
+<p>Transforming from one representation to the other can be achieved directly
+using <code class="docutils literal notranslate"><span class="pre">.enableUnsafeOption</span></code>.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">domainOrder</span> <span class="k">=</span> <span class="n">pbOrder</span><span class="o">.</span><span class="n">into</span><span class="o">[</span><span class="kt">domain.Order</span><span class="o">]</span>
+  <span class="o">.</span><span class="n">enableUnsafeOption</span>
+  <span class="o">.</span><span class="n">transform</span>
+</pre></div>
+</div>
+<p>and vice-versa:</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">val</span> <span class="n">pbOrder</span> <span class="k">=</span> <span class="n">domainOrder</span><span class="o">.</span><span class="n">into</span><span class="o">[</span><span class="kt">pb.Order</span><span class="o">]</span>
+  <span class="o">.</span><span class="n">enableUnsafeOption</span>
+  <span class="o">.</span><span class="n">transform</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lifted-transformers.html" class="btn btn-neutral float-right" title="Lifted transformers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="java-beans.html" class="btn btn-neutral float-left" title="Java beans" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017-2020, scalaland.io
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-116165806-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+
+    
+   
+
+</body>
+</html>
