@@ -48,7 +48,10 @@ trait MappingMacros extends Model with TransformerConfiguration {
     val fromGetters = From.getterMethods
     targets.map { target =>
       target -> {
-        val lookupName = config.renamedFields.getOrElse(target.name, target.name)
+        val lookupName = config.fieldOverrides.get(target.name) match {
+          case Some(FieldOverride.RenamedFrom(sourceName)) => sourceName
+          case _                                           => target.name
+        }
         val wasRenamed = lookupName != target.name
         fromGetters
           .find(lookupAccessor(config, lookupName, wasRenamed, From))
@@ -64,57 +67,39 @@ trait MappingMacros extends Model with TransformerConfiguration {
       config: TransformerConfig
   ): Map[Target, TransformerBodyTree] = {
     targets.flatMap { target =>
-      if (config.wrapperType.isDefined && config.constFFields.contains(target.name)) {
-        Some {
-          target -> TransformerBodyTree(
-            q"""
-             ${config.transformerDefinitionPrefix}
-               .overrides(${target.name})
-               .asInstanceOf[${config.wrapperType.get.applyTypeArg(target.tpe)}]
-            """,
-            isWrapped = true
-          )
-        }
-      } else if (config.wrapperType.isDefined && config.computedFFields.contains(target.name)) {
-        val fTargetTpe = config.wrapperType.get.applyTypeArg(target.tpe)
-        Some {
-          target -> TransformerBodyTree(
-            q"""
-             ${config.transformerDefinitionPrefix}
-               .overrides(${target.name})
-               .asInstanceOf[$From => $fTargetTpe]
-               .apply($srcPrefixTree)
-               .asInstanceOf[$fTargetTpe]
-            """,
-            isWrapped = true
-          )
-        }
-      } else if (config.constFields.contains(target.name)) {
-        Some {
-          target -> TransformerBodyTree(
-            q"""
-             ${config.transformerDefinitionPrefix}
-                .overrides(${target.name})
-                .asInstanceOf[${target.tpe}]
-            """,
-            isWrapped = false
-          )
-        }
-      } else if (config.computedFields.contains(target.name)) {
-        Some {
-          target -> TransformerBodyTree(
-            q"""
-             ${config.transformerDefinitionPrefix}
-                .overrides(${target.name})
-                .asInstanceOf[$From => ${target.tpe}]
-                .apply($srcPrefixTree)
-                .asInstanceOf[${target.tpe}]
-            """,
-            isWrapped = false
-          )
-        }
-      } else {
-        None
+      config.fieldOverrides.get(target.name) match {
+        case Some(FieldOverride.Const) =>
+          Some {
+            target -> TransformerBodyTree(
+              config.transformerDefinitionPrefix.accessConst(target.name, target.tpe),
+              isWrapped = false
+            )
+          }
+        case Some(FieldOverride.ConstF) if config.wrapperType.isDefined =>
+          val fTargetTpe = config.wrapperType.get.applyTypeArg(target.tpe)
+          Some {
+            target -> TransformerBodyTree(
+              config.transformerDefinitionPrefix.accessConst(target.name, fTargetTpe),
+              isWrapped = true
+            )
+          }
+        case Some(FieldOverride.Computed) =>
+          Some {
+            target -> TransformerBodyTree(
+              config.transformerDefinitionPrefix.accessComputed(target.name, srcPrefixTree, From, target.tpe),
+              isWrapped = false
+            )
+          }
+        case Some(FieldOverride.ComputedF) if config.wrapperType.isDefined =>
+          val fTargetTpe = config.wrapperType.get.applyTypeArg(target.tpe)
+          Some {
+            target -> TransformerBodyTree(
+              config.transformerDefinitionPrefix.accessComputed(target.name, srcPrefixTree, From, fTargetTpe),
+              isWrapped = true
+            )
+          }
+        case _ =>
+          None
       }
     }.toMap
   }
