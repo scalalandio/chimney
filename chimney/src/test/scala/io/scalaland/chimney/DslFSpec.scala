@@ -786,5 +786,50 @@ object DslFSpec extends TestSuite {
           .transform ==> Right(OuterOut(InnerOut("pure: test")))
       }
     }
+
+    "error path" - {
+      type V[+A] = Either[List[TransformationError[String]], A]
+
+      def printError(err: TransformationError[String]): String =
+        s"${err.message} on ${err.showErrorPath}"
+
+      implicit val intParse: TransformerF[V, String, Int] =
+        str => str.parseInt.fold[V[Int]](Left(List(TransformationError(s"Can't parse int from $str"))))(Right(_))
+
+      "case classes" - {
+        case class Foo(a: String, b: String, c: InnerFoo)
+
+        case class InnerFoo(d: String, e: String)
+
+        case class Bar(a: Int, b: Int, c: InnerBar)
+
+        case class InnerBar(d: Int, e: Int)
+
+        Foo("mmm", "nnn", InnerFoo("lll", "jjj")).transformIntoF[V, Bar].mapLeft(_.map(printError)) ==>
+          Left(
+            List(
+              "Can't parse int from mmm on a",
+              "Can't parse int from nnn on b",
+              "Can't parse int from lll on c.d",
+              "Can't parse int from jjj on c.e"
+            )
+          )
+      }
+
+      "list" - {
+        case class Foo(list: List[String])
+
+        case class Bar(list: List[Int])
+
+        Foo(List("a", "b", "c")).transformIntoF[V, Bar].mapLeft(_.map(printError)) ==>
+          Left(
+            List(
+              "Can't parse int from a on list[0]",
+              "Can't parse int from b on list[1]",
+              "Can't parse int from c on list[2]",
+            )
+          )
+      }
+    }
   }
 }

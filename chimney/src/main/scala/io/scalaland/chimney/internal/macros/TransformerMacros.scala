@@ -39,11 +39,14 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
   ): Tree = {
     val C = weakTypeOf[C]
     val tiName = TermName(c.freshName("ti"))
-    val config = captureTransformerConfig(C)
-      .copy(
-        transformerDefinitionPrefix = q"$tiName.td",
-        wrapperSupportInstance = tfsTree
-      )
+    val capturedConfig = captureTransformerConfig(C)
+    val config =
+      capturedConfig
+        .copy(
+          transformerDefinitionPrefix = q"$tiName.td",
+          wrapperSupportInstance = tfsTree,
+          wrapperErrorPathSupportInstance = findTransformerErrorPathSupport(capturedConfig.wrapperType)
+        )
 
     val derivedTransformerTree = genTransformer[From, To](config)
 
@@ -329,13 +332,28 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       .mapRight {
         case TransformerBodyTree(innerTransformerTree, true) =>
           if (config.wrapperType.isDefined) {
-            q"""
-              ${config.wrapperSupportInstance}
-                .traverse[$To, $FromInnerT, $ToInnerT](
+            config.wrapperErrorPathSupportInstance match {
+              case Some(errorPathSupport) =>
+                val idx = Ident(freshTermName("idx"))
+
+                q"""${config.wrapperSupportInstance}.traverse[$To, ($FromInnerT, _root_.scala.Int), $ToInnerT](
+                  $srcPrefixTree.iterator.zipWithIndex,
+                  { case (${fn.name}: $FromInnerT, ${idx.name}: _root_.scala.Int) =>
+                    $errorPathSupport.addPath[$ToInnerT](
+                      $innerTransformerTree,
+                      _root_.io.scalaland.chimney.ErrorPathNode.Index($idx)
+                    )
+                  }
+                )
+              """
+              case None =>
+                q"""${config.wrapperSupportInstance}.traverse[$To, $FromInnerT, $ToInnerT](
                   $srcPrefixTree.iterator,
                   ($fn: $FromInnerT) => $innerTransformerTree
                 )
-            """
+              """
+            }
+
           } else {
             // this case is not possible due to resolveRecursiveTransformerBody semantics: it will not
             // even search for lifted inner transformer when wrapper type is not requested
@@ -609,13 +627,30 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       From: Type,
       config: TransformerConfig
   ): Either[Seq[DerivationError], TransformerBodyTree] = {
-    resolveRecursiveTransformerBody(
+    val resolved = resolveRecursiveTransformerBody(
       q"$srcPrefixTree.${accessor.symbol.name}",
       config
     )(
       accessor.symbol.resultTypeIn(From),
       target.tpe
     )
+
+    config.wrapperErrorPathSupportInstance match {
+      case Some(errorPathSupport) =>
+        resolved.mapRight { bodyTree =>
+          if (bodyTree.isWrapped)
+            bodyTree.copy(tree =
+              q"""$errorPathSupport.addPath[${target.tpe}](
+                 ${bodyTree.tree},
+                 _root_.io.scalaland.chimney.ErrorPathNode.Accessor(${accessor.symbol.name.toString})
+               )
+             """
+            )
+          else
+            bodyTree
+        }
+      case None => resolved
+    }
   }
 
   def resolveRecursiveTransformerBody(
@@ -682,6 +717,14 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
         tq"_root_.io.scalaland.chimney.Transformer[$From, $To]"
     }
 
+    findLocalImplicit(searchTypeTree)
+  }
+
+  def findTransformerErrorPathSupport(wrapperType: Option[Type]): Option[Tree] = {
+    wrapperType.flatMap(tpe => findLocalImplicit(tq"_root_.io.scalaland.chimney.TransformerFErrorPathSupport[$tpe]"))
+  }
+
+  def findLocalImplicit(searchTypeTree: Tree): Option[Tree] = {
     val tpeTree = c.typecheck(
       tree = searchTypeTree,
       silent = true,

@@ -2,19 +2,26 @@ package io.scalaland.chimney
 
 import _root_.cats.data._
 import _root_.cats.kernel.Semigroup
+import _root_.cats.{Applicative, ApplicativeError}
 
 import scala.collection.compat._
 
-package object cats extends CatsImplicits
-
-trait CatsImplicits extends LowPriorityImplicits {
+package object cats extends LowPriorityImplicits {
 
   // normally, these instances are not needed, but few tests with .enableUnsafeOption fail to compile without them
   implicit def TransformerFValidatedNecSupport[E]: TransformerFSupport[ValidatedNec[E, +*]] =
-    TransformerFValidatedSupport[NonEmptyChain[E]](implicitly)
+    TransformerFValidatedSupport[NonEmptyChain[E]]
 
   implicit def TransformerFValidatedNelSupport[E]: TransformerFSupport[ValidatedNel[E, +*]] =
-    TransformerFValidatedSupport[NonEmptyList[E]](implicitly)
+    TransformerFValidatedSupport[NonEmptyList[E]]
+
+  implicit def TransformerFErrorValidatedNecSupport[M]
+      : TransformerFErrorPathSupport[ValidatedNec[TransformationError[M], +*]] =
+    TransformerFValidatedErrorPathSupport[ValidatedNec[TransformationError[M], +*], NonEmptyChain, M]
+
+  implicit def TransformerFErrorValidatedNelSupport[M]
+      : TransformerFErrorPathSupport[ValidatedNel[TransformationError[M], +*]] =
+    TransformerFValidatedErrorPathSupport[ValidatedNel[TransformationError[M], +*], NonEmptyList, M]
 }
 
 trait LowPriorityImplicits {
@@ -43,5 +50,15 @@ trait LowPriorityImplicits {
             Validated.Valid(b.result())
         }
       }
+    }
+
+  implicit def TransformerFValidatedErrorPathSupport[F[+_], EE[_]: Applicative, M](
+      implicit applicativeError: ApplicativeError[F, EE[TransformationError[M]]]
+  ): TransformerFErrorPathSupport[F] =
+    new TransformerFErrorPathSupport[F] {
+      override def addPath[A](fa: F[A], node: ErrorPathNode): F[A] =
+        applicativeError.handleErrorWith(fa)(ee =>
+          applicativeError.raiseError(Applicative[EE].map(ee)(_.prepend(node)))
+        )
     }
 }
