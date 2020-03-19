@@ -18,4 +18,16 @@ object ErrorPathNode {
 
     val separator: String = ""
   }
+
+  case class MapKey[K](key: K) extends ErrorPathNode {
+    def show: String = s"[$key]"
+
+    val separator: String = ""
+  }
+
+  case object MapKeys extends ErrorPathNode {
+    val show: String = "keys"
+
+    val separator: String = "."
+  }
 }

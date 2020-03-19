@@ -451,7 +451,10 @@ object CatsValidatedSpec extends TestSuite {
 
         implicit val intParse: TransformerF[V, String, Int] =
           str =>
-            Validated.fromOption(str.parseInt, NonEmptyChain.one(TransformationError[String](s"Can't parse int from $str")))
+            Validated.fromOption(
+              str.parseInt,
+              NonEmptyChain.one(TransformationError[String](s"Can't parse int from $str"))
+            )
 
         "case classes" - {
           case class Foo(a: String, b: String, c: InnerFoo)
@@ -483,7 +486,24 @@ object CatsValidatedSpec extends TestSuite {
               NonEmptyChain(
                 "Can't parse int from a on list[0]",
                 "Can't parse int from b on list[1]",
-                "Can't parse int from c on list[2]",
+                "Can't parse int from c on list[2]"
+              )
+            )
+        }
+
+        "map" - {
+          case class Foo(map: Map[String, String], map2: Map[String, String])
+
+          case class Bar(map: Map[Int, Int], map2: Map[String, Int])
+
+          Foo(Map("a" -> "b", "c" -> "d"), Map("e" -> "f")).transformIntoF[V, Bar].leftMap(_.map(printError)) ==>
+            Validated.Invalid(
+              NonEmptyChain(
+                "Can't parse int from a on map.keys",
+                "Can't parse int from b on map[a]",
+                "Can't parse int from c on map.keys",
+                "Can't parse int from d on map[c]",
+                "Can't parse int from f on map2[e]"
               )
             )
         }

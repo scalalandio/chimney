@@ -132,6 +132,8 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
     } else if (bothEithers(From, To)) {
       expandEithers(srcPrefixTree, config)(From, To)
+    } else if (bothMaps(From, To)) {
+      expandMaps(srcPrefixTree, config)(From, To)
     } else if (bothOfIterableOrArray(From, To)) {
       expandIterableOrArray(srcPrefixTree, config)(From, To)
     } else if (isTuple(To)) {
@@ -315,6 +317,64 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       }
     } else {
       notSupportedDerivation(srcPrefixTree, From, To)
+    }
+  }
+
+  def expandMaps(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+    (config.wrapperErrorPathSupportInstance, config.wrapperType) match {
+      case (Some(errorPathSupport), Some(f)) =>
+        val List(fromKeyT, fromValueT) = From.typeArgs
+        val List(toKeyT, toValueT) = To.typeArgs
+
+        val fnK = Ident(freshTermName("k"))
+        val fnV = Ident(freshTermName("v"))
+
+        val keyTransformerE = resolveRecursiveTransformerBody(fnK, config.rec)(fromKeyT, toKeyT)
+        val valueTransformerE = resolveRecursiveTransformerBody(fnV, config.rec)(fromValueT, toValueT)
+
+        (keyTransformerE, valueTransformerE) match {
+          case (Right(keyTransformer), Right(valueTransformer)) =>
+            val wrapper = config.wrapperSupportInstance
+            val toTupleType = c.typecheck(tq"($toKeyT, $toValueT)", c.TYPEmode).tpe
+            val wrappedToTupleType = f.applyTypeArg(toTupleType)
+
+            val keyTransformerWrapped =
+              if (keyTransformer.isWrapped)
+                keyTransformer.tree
+              else q"$wrapper.pure[$toKeyT](${keyTransformer.tree})"
+
+            val valueTransformerWrapped =
+              if (valueTransformer.isWrapped)
+                valueTransformer.tree
+              else q"$wrapper.pure[$toValueT](${valueTransformer.tree})"
+
+            Right(
+              q"""$wrapper.traverse[$To, $wrappedToTupleType, $toTupleType](
+                  $srcPrefixTree.iterator.map[$wrappedToTupleType] {
+                    case (${fnK.name}: $fromKeyT, ${fnV.name}: $fromValueT) =>
+                      $wrapper.product[$toKeyT, $toValueT](
+                        $errorPathSupport.addPath(
+                          $keyTransformerWrapped,
+                          _root_.io.scalaland.chimney.ErrorPathNode.MapKeys
+                        ),
+                        $errorPathSupport.addPath(
+                          $valueTransformerWrapped,
+                          _root_.io.scalaland.chimney.ErrorPathNode.MapKey[$fromKeyT]($fnK)
+                        )
+                      )
+                  },
+                  _root_.scala.Predef.identity[$wrappedToTupleType]
+                )
+             """
+            )
+          case _ =>
+            Left(keyTransformerE.left.getOrElse(Nil) ++ valueTransformerE.left.getOrElse(Nil))
+        }
+
+      case _ => expandIterableOrArray(srcPrefixTree, config)(From, To)
     }
   }
 
@@ -639,13 +699,11 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       case Some(errorPathSupport) =>
         resolved.mapRight { bodyTree =>
           if (bodyTree.isWrapped)
-            bodyTree.copy(tree =
-              q"""$errorPathSupport.addPath[${target.tpe}](
+            bodyTree.copy(tree = q"""$errorPathSupport.addPath[${target.tpe}](
                  ${bodyTree.tree},
                  _root_.io.scalaland.chimney.ErrorPathNode.Accessor(${accessor.symbol.name.toString})
                )
-             """
-            )
+             """)
           else
             bodyTree
         }

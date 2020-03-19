@@ -826,7 +826,24 @@ object DslFSpec extends TestSuite {
             List(
               "Can't parse int from a on list[0]",
               "Can't parse int from b on list[1]",
-              "Can't parse int from c on list[2]",
+              "Can't parse int from c on list[2]"
+            )
+          )
+      }
+
+      "map" - {
+        case class Foo(map: Map[String, String], map2: Map[String, String])
+
+        case class Bar(map: Map[Int, Int], map2: Map[String, Int])
+
+        Foo(Map("a" -> "b", "c" -> "d"), Map("e" -> "f")).transformIntoF[V, Bar].mapLeft(_.map(printError)) ==>
+          Left(
+            List(
+              "Can't parse int from a on map.keys",
+              "Can't parse int from b on map[a]",
+              "Can't parse int from c on map.keys",
+              "Can't parse int from d on map[c]",
+              "Can't parse int from f on map2[e]"
             )
           )
       }

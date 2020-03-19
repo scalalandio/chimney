@@ -11,7 +11,10 @@ object TransformerFErrorPathSupport {
       implicit ef: Factory[TransformationError[M], C[TransformationError[M]]]
   ): TransformerFErrorPathSupport[Either[C[TransformationError[M]], +*]] =
     new TransformerFErrorPathSupport[Either[C[TransformationError[M]], +*]] {
-      def addPath[A](fa: Either[C[TransformationError[M]], A], node: ErrorPathNode): Either[C[TransformationError[M]], A] =
+      def addPath[A](
+          fa: Either[C[TransformationError[M]], A],
+          node: ErrorPathNode
+      ): Either[C[TransformationError[M]], A] =
         fa match {
           case Left(errors) => Left(ef.fromSpecific(errors.iterator.map(_.prepend(node))))
           case right        => right
