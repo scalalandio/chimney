@@ -847,6 +847,37 @@ object DslFSpec extends TestSuite {
             )
           )
       }
+
+      "java beans" - {
+        class Foo(a: String, b: String) {
+          def getA: String = a
+          def getB: String = b
+        }
+
+        case class Bar(a: Int, b: Int)
+
+        new Foo("a", "b")
+          .intoF[V, Bar]
+          .enableBeanGetters
+          .transform
+          .mapLeft(_.map(printError)) ==>
+          Left(
+            List(
+              "Can't parse int from a on getA",
+              "Can't parse int from b on getB"
+            )
+          )
+      }
+
+      "tuples" - {
+        ("a", "b").transformIntoF[V, (Int, Int)].mapLeft(_.map(printError)) ==>
+          Left(
+            List(
+              "Can't parse int from a on _1",
+              "Can't parse int from b on _2"
+            )
+          )
+      }
     }
   }
 }
