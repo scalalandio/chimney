@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import scala.collection.compat.{Factory, IterableOnce}
+import scala.collection.compat._
 
 /** Type class adding support or error path for lifted transformers.
   *
@@ -11,6 +11,7 @@ import scala.collection.compat.{Factory, IterableOnce}
   * @tparam F wrapper type constructor
   */
 trait TransformerFErrorPathSupport[F[+_]] {
+
   /** Prepend node of path to each error in wrapped value.
     *
     * @param fa wrapped value

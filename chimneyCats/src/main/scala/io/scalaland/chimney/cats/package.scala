@@ -57,8 +57,7 @@ trait LowPriorityImplicits {
   ): TransformerFErrorPathSupport[F] =
     new TransformerFErrorPathSupport[F] {
       override def addPath[A](fa: F[A], node: ErrorPathNode): F[A] =
-        applicativeError.handleErrorWith(fa)(ee =>
-          applicativeError.raiseError(Applicative[EE].map(ee)(_.prepend(node)))
+        applicativeError.handleErrorWith(fa)(ee => applicativeError.raiseError(Applicative[EE].map(ee)(_.prepend(node)))
         )
     }
 }

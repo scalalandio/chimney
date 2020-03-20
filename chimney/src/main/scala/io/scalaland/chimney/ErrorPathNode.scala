@@ -7,27 +7,27 @@ sealed trait ErrorPathNode {
 }
 
 object ErrorPathNode {
-  case class Accessor(name: String) extends ErrorPathNode {
+  final case class Accessor(name: String) extends ErrorPathNode {
     def show: String = name
 
-    val separator: String = "."
+    def separator: String = "."
   }
 
-  case class Index(value: Int) extends ErrorPathNode {
-    def show: String = s"[$value]"
+  final case class Index(value: Int) extends ErrorPathNode {
+    def show: String = s"($value)"
 
-    val separator: String = ""
+    def separator: String = ""
   }
 
-  case class MapKey[K](key: K) extends ErrorPathNode {
-    def show: String = s"[$key]"
+  final case class MapKey(key: AnyRef) extends ErrorPathNode {
+    def show: String = s"($key)"
 
-    val separator: String = ""
+    def separator: String = ""
   }
 
   case object MapKeys extends ErrorPathNode {
-    val show: String = "keys"
+    def show: String = "keys"
 
-    val separator: String = "."
+    def separator: String = "."
   }
 }

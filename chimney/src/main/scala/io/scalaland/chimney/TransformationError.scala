@@ -7,7 +7,7 @@ package io.scalaland.chimney
   */
 case class TransformationError[M](message: M, errorPath: List[ErrorPathNode] = Nil) {
   def prepend(node: ErrorPathNode): TransformationError[M] =
-    TransformationError[M](message, errorPath.prepended(node))
+    TransformationError[M](message, node :: errorPath)
 
   def showErrorPath: String =
     errorPath match {

@@ -89,12 +89,12 @@ trait DerivationGuards {
     from.isSealedClass && to.isSealedClass
   }
 
-  def bothMaps(from: Type, to: Type): Boolean = {
-    from <:< mapTpe && to <:< mapTpe
-  }
-
   def iterableOrArray(t: Type): Boolean = {
     t <:< iterableTpe || t <:< arrayTpe
+  }
+
+  def isMap(t: Type): Boolean = {
+    t <:< mapTpe
   }
 
   val optionTpe: Type = typeOf[Option[_]]
