@@ -345,7 +345,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
               if (keyTransformer.isWrapped)
                 q"""$errorPathSupport.addPath[$toKeyT](
                    ${keyTransformer.tree},
-                   _root_.io.scalaland.chimney.ErrorPathNode.MapKeys
+                   _root_.io.scalaland.chimney.ErrorPathNode.MapKey($fnK)
                  )
                 """
               else q"$wrapper.pure[$toKeyT](${keyTransformer.tree})"
@@ -354,7 +354,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
               if (valueTransformer.isWrapped)
                 q"""$errorPathSupport.addPath[$toValueT](
                     ${valueTransformer.tree},
-                    _root_.io.scalaland.chimney.ErrorPathNode.MapKey($fnK)
+                    _root_.io.scalaland.chimney.ErrorPathNode.MapValue($fnK)
                  )
                """
               else q"$wrapper.pure[$toValueT](${valueTransformer.tree})"

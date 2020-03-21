@@ -19,14 +19,14 @@ object ErrorPathNode {
     def separator: String = ""
   }
 
-  final case class MapKey(key: AnyRef) extends ErrorPathNode {
+  final case class MapValue(key: AnyRef) extends ErrorPathNode {
     def show: String = s"($key)"
 
     def separator: String = ""
   }
 
-  case object MapKeys extends ErrorPathNode {
-    def show: String = "keys"
+  final case class MapKey(key: AnyRef) extends ErrorPathNode {
+    def show: String = s"keys($key)"
 
     def separator: String = "."
   }

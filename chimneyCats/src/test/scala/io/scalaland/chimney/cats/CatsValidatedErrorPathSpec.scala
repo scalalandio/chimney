@@ -58,22 +58,29 @@ object CatsValidatedErrorPathSpec extends TestSuite {
       }
 
       "map" - {
-        case class FooKey(str: String)
+        case class FooKey(value: String)
 
-        case class Foo(map: Map[String, String], map2: Map[FooKey, String])
+        case class FooValue(value: String)
 
-        case class Bar(map: Map[Int, Int], map2: Map[BarKey, Int])
+        case class Foo(map: Map[String, String], map2: Map[FooKey, FooValue])
 
-        case class BarKey(str: String)
+        case class Bar(map: Map[Int, Int], map2: Map[BarKey, BarValue])
 
-        Foo(Map("a" -> "b", "c" -> "d"), Map(FooKey("e") -> "f")).transformIntoF[V, Bar].leftMap(_.map(printError)) ==>
+        case class BarKey(value: Int)
+
+        case class BarValue(value: Int)
+
+        Foo(Map("a" -> "b", "c" -> "d"), Map(FooKey("e") -> FooValue("f")))
+          .transformIntoF[V, Bar]
+          .leftMap(_.map(printError)) ==>
           Validated.Invalid(
             NonEmptyChain(
-              "Can't parse int from a on map.keys",
+              "Can't parse int from a on map.keys(a)",
               "Can't parse int from b on map(a)",
-              "Can't parse int from c on map.keys",
+              "Can't parse int from c on map.keys(c)",
               "Can't parse int from d on map(c)",
-              "Can't parse int from f on map2(FooKey(e))"
+              "Can't parse int from e on map2.keys(FooKey(e)).value",
+              "Can't parse int from f on map2(FooKey(e)).value"
             )
           )
       }

@@ -63,9 +63,9 @@ object ErrorPathSpec extends TestSuite {
 
         val errors = Left(
           List(
-            "Can't parse int from a on map.keys",
+            "Can't parse int from a on map.keys(a)",
             "Can't parse int from b on map(a)",
-            "Can't parse int from c on map.keys",
+            "Can't parse int from c on map.keys(c)",
             "Can't parse int from d on map(c)",
             "Can't parse int from f on map2(e)"
           )
