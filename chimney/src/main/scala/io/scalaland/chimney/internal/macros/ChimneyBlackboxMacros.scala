@@ -56,7 +56,8 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
         TransformerConfig(
           definitionScope = Some((weakTypeOf[From], weakTypeOf[To])),
           wrapperType = Some(F.tpe),
-          wrapperSupportInstance = tfs.tree
+          wrapperSupportInstance = tfs.tree,
+          wrapperFromOptionInstance = findFromOptionSupport(Some(F.tpe))
         )
       )
     )

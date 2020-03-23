@@ -39,11 +39,12 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
   ): Tree = {
     val C = weakTypeOf[C]
     val tiName = TermName(c.freshName("ti"))
-    val config = captureTransformerConfig(C)
-      .copy(
-        transformerDefinitionPrefix = q"$tiName.td",
-        wrapperSupportInstance = tfsTree
-      )
+    val capturedConfig = captureTransformerConfig(C)
+    val config = capturedConfig.copy(
+      transformerDefinitionPrefix = q"$tiName.td",
+      wrapperSupportInstance = tfsTree,
+      wrapperFromOptionInstance = findFromOptionSupport(capturedConfig.wrapperType)
+    )
 
     val derivedTransformerTree = genTransformer[From, To](config)
 
@@ -125,7 +126,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       expandOptions(srcPrefixTree, config)(From, To)
     } else if (isOption(To)) {
       expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
-    } else if (config.enableUnsafeOption && isOption(From)) {
+    } else if (isOption(From)) {
       expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
     } else if (bothEithers(From, To)) {
       expandEithers(srcPrefixTree, config)(From, To)
@@ -213,14 +214,30 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       notSupportedDerivation(srcPrefixTree, From, To)
     } else {
       val fromInnerT = From.typeArgs.head
-      val innerSrcPrefix = q"$srcPrefixTree.get"
-      resolveRecursiveTransformerBody(innerSrcPrefix, config.rec)(fromInnerT, To)
-        .mapRight { innerTransformerBody =>
-          val fn = freshTermName(innerSrcPrefix).toString
-          mkTransformerBodyTree1(To, Target(fn, To), innerTransformerBody, config) { tree =>
-            q"($tree)"
+
+      config.wrapperFromOptionInstance match {
+        case Some(fromOptionSupport) if !config.enableUnsafeOption && config.wrapperType.isDefined =>
+          val fn = Ident(freshTermName(srcPrefixTree))
+          resolveRecursiveTransformerBody(fn, config.rec)(fromInnerT, To).mapRight { innerTransformerBody =>
+            val wrappedInnerTransformerBody =
+              if (innerTransformerBody.isWrapped)
+                innerTransformerBody.tree
+              else q"${config.wrapperSupportInstance}.pure[$To](${innerTransformerBody.tree})"
+
+            q"$fromOptionSupport.fromOption[$fromInnerT, $To]($srcPrefixTree, ($fn: $fromInnerT) => $wrappedInnerTransformerBody)"
           }
-        }
+
+        case _ if config.enableUnsafeOption =>
+          val innerSrcPrefix = q"$srcPrefixTree.get"
+          resolveRecursiveTransformerBody(innerSrcPrefix, config.rec)(fromInnerT, To)
+            .mapRight { innerTransformerBody =>
+              val fn = freshTermName(innerSrcPrefix).toString
+              mkTransformerBodyTree1(To, Target(fn, To), innerTransformerBody, config) { tree =>
+                q"($tree)"
+              }
+            }
+        case _ => notSupportedDerivation(srcPrefixTree, From, To)
+      }
     }
   }
 
@@ -682,6 +699,14 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
         tq"_root_.io.scalaland.chimney.Transformer[$From, $To]"
     }
 
+    findLocalImplicit(searchTypeTree)
+  }
+
+  def findFromOptionSupport(wrapperType: Option[Type]): Option[Tree] = {
+    wrapperType.flatMap(tpe => findLocalImplicit(tq"_root_.io.scalaland.chimney.TransformerFFromOptionSupport[$tpe]"))
+  }
+
+  def findLocalImplicit(searchTypeTree: Tree): Option[Tree] = {
     val tpeTree = c.typecheck(
       tree = searchTypeTree,
       silent = true,

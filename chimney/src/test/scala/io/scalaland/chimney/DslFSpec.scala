@@ -786,5 +786,39 @@ object DslFSpec extends TestSuite {
           .transform ==> Right(OuterOut(InnerOut("pure: test")))
       }
     }
+
+    "safe option unwrapping" - {
+      // Raw domain
+      case class RawData(id: Option[Int], inner: Option[RawInner])
+
+      case class RawInner(id: Option[Int], str: Option[String])
+
+      // Domain
+      case class Data(id: Int, inner: Inner)
+
+      case class Inner(id: Int, str: String)
+
+      val validRaw = RawData(Some(1), Some(RawInner(Some(2), Some("str"))))
+
+      val invalidRaw = RawData(None, Some(RawInner(None, None)))
+
+      val valid = Data(1, Inner(2, "str"))
+
+      type EitherF[+A] = Either[List[TransformationError[String]], A]
+
+      validRaw.transformIntoF[Option, Data] ==> Some(valid)
+
+      validRaw.transformIntoF[EitherF, Data] ==> Right(valid)
+
+      invalidRaw.transformIntoF[Option, Data] ==> None
+
+      invalidRaw.transformIntoF[EitherF, Data] ==> Left(
+        List(
+          TransformationError.OptionUnwrappingError,
+          TransformationError.OptionUnwrappingError,
+          TransformationError.OptionUnwrappingError
+        )
+      )
+    }
   }
 }
