@@ -290,6 +290,40 @@ object IssuesSpec extends TestSuite {
         Data(10).patchUsing(Patch[Id](20)) ==> Data(20)
       }
     }
+
+    "fix issue #156" - {
+
+      object internal {
+        case class Event(venue: Venue)
+
+        sealed trait Venue {
+          def name: String
+        }
+
+        case class ManuallyFilled(name: String) extends Venue
+      }
+
+      object dto {
+        case class Event(venue: Venue)
+        case class Venue(name: String)
+      }
+
+      import io.scalaland.chimney.dsl._
+      val venue = internal.ManuallyFilled("Venue Name")
+      val event = internal.Event(venue)
+
+      // Case class to case class rule, with case class param accessor
+      venue.transformInto[dto.Venue] ==> dto.Venue("Venue Name")
+
+      // These two will fail to compile as target is case class, but source type is internal.Venue,
+      // thus it will try to access `def name` accessor without .enableMethodAccessors flag
+      compileError("event.venue.transformInto[dto.Venue]")
+      compileError("(venue: internal.Venue).transformInto[dto.Venue]")
+
+      // When .enableMethodAccessors turned on, both should work fine
+      event.venue.into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
+      (venue: internal.Venue).into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
+    }
   }
 }
 
