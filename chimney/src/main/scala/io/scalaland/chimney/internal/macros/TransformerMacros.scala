@@ -125,6 +125,8 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       expandOptions(srcPrefixTree, config)(From, To)
     } else if (isOption(To)) {
       expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
+    } else if (config.enableOptCollectionFlatting & optIterableOrArray(From) && iterableOrArray(To)) {
+      expandOptCollectionFlatting(srcPrefixTree, config)(From, To)
     } else if (config.enableUnsafeOption && isOption(From)) {
       expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
     } else if (bothEithers(From, To)) {
@@ -312,6 +314,35 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       }
     } else {
       notSupportedDerivation(srcPrefixTree, From, To)
+    }
+  }
+
+  def expandOptCollectionFlatting(srcPrefixTree: Tree, config: TransformerConfig)(
+      From: Type,
+      To: Type
+  ): Either[Seq[DerivationError], Tree] = {
+    val ToInnerT = To.collectionInnerTpe
+
+    val emptyTree = mkTransformerBodyTree0(config)(
+      q"_root_.scala.collection.immutable.List.empty[$ToInnerT]".convertCollection(To, ToInnerT)
+    )
+
+    if (From <:< noneTpe) {
+      Right(emptyTree)
+    } else {
+      val FromCollectionT = From.typeArgs.head
+      val fn = Ident(freshTermName(srcPrefixTree))
+
+      resolveRecursiveTransformerBody(fn, config.rec)(FromCollectionT, To).mapRight { nonEmptyT =>
+        val nonEmptyTree =
+          if (nonEmptyT.isWrapped)
+            nonEmptyT.tree
+          else mkTransformerBodyTree0(config)(nonEmptyT.tree)
+
+        val outTpe = config.wrapperType.fold(To)(_.applyTypeArg(To))
+
+        q"$srcPrefixTree.fold[$outTpe]($emptyTree)(($fn: $FromCollectionT) => $nonEmptyTree)"
+      }
     }
   }
 

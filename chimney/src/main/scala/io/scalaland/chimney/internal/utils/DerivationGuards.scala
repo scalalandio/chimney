@@ -89,6 +89,10 @@ trait DerivationGuards {
     from.isSealedClass && to.isSealedClass
   }
 
+  def optIterableOrArray(t: Type): Boolean = {
+    isOption(t) && (t <:< noneTpe || iterableOrArray(t.typeArgs.head))
+  }
+
   def iterableOrArray(t: Type): Boolean = {
     t <:< iterableTpe || t <:< arrayTpe
   }

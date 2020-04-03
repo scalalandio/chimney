@@ -786,5 +786,49 @@ object DslFSpec extends TestSuite {
           .transform ==> Right(OuterOut(InnerOut("pure: test")))
       }
     }
+
+    "support enableOptCollectionFlatting" - {
+      "F = Option" - {
+        implicit val intParse: TransformerF[Option, String, Int] =
+          str => scala.util.Try(str.toInt).toOption
+
+        case class ClassA(seq: Option[Seq[String]])
+
+        case class ClassB(seq: Seq[Int])
+
+        ClassA(None).intoF[Option, ClassB].enableOptCollectionFlatting.transform ==> Some(ClassB(Seq.empty))
+
+        ClassA(Some(Seq.empty)).intoF[Option, ClassB].enableOptCollectionFlatting.transform ==> Some(ClassB(Seq.empty))
+
+        ClassA(Some(Seq("1"))).intoF[Option, ClassB].enableOptCollectionFlatting.transform ==> Some(ClassB(Seq(1)))
+
+        ClassA(Some(Seq("a"))).intoF[Option, ClassB].enableOptCollectionFlatting.transform ==> None
+      }
+
+      "F = Either[List[String], +*]]" - {
+        type V[+A] = Either[List[String], A]
+
+        implicit val intParse: TransformerF[V, String, Int] =
+          str =>
+            scala.util.Try(str.toInt) match {
+              case scala.util.Success(int) => Right(int)
+              case _                       => Left(List(s"Can't parse int from $str"))
+            }
+
+        case class ClassA(seq: Option[Seq[String]])
+
+        case class ClassB(seq: Seq[Int])
+
+        ClassA(None).intoF[V, ClassB].enableOptCollectionFlatting.transform ==> Right(ClassB(Seq.empty))
+
+        ClassA(Some(Seq.empty)).intoF[V, ClassB].enableOptCollectionFlatting.transform ==> Right(ClassB(Seq.empty))
+
+        ClassA(Some(Seq("1"))).intoF[V, ClassB].enableOptCollectionFlatting.transform ==> Right(ClassB(Seq(1)))
+
+        ClassA(Some(Seq("a"))).intoF[V, ClassB].enableOptCollectionFlatting.transform ==> Left(
+          List("Can't parse int from a")
+        )
+      }
+    }
   }
 }

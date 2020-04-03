@@ -14,6 +14,16 @@ trait ConfigDsl[CC[_ <: TransformerCfg], C <: TransformerCfg] {
   def enableMethodAccessors: CC[EnableMethodAccessors[C]] =
     this.asInstanceOf[CC[EnableMethodAccessors[C]]]
 
+  /** Enable transformation from Option[Collection[A]] to Collection[B] if transformation from A to B can be derived.
+    * If Option is empty, it will be empty collection
+    *
+    * By default in such case compilation fails.
+    *
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#using-method-accessors]] for more details
+    */
+  def enableOptCollectionFlatting: CC[EnableOptCollectionFlatting[C]] =
+    this.asInstanceOf[CC[EnableOptCollectionFlatting[C]]]
+
   /** Fail derivation if `From` type is missing field even if `To` has default value for it.
     *
     * By default in such case derivation will fallback to default values.

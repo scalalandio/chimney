@@ -290,6 +290,23 @@ object IssuesSpec extends TestSuite {
         Data(10).patchUsing(Patch[Id](20)) ==> Data(20)
       }
     }
+
+    "fix issue #158" - {
+      case class ClassA(a: Option[Seq[Int]])
+      case class ClassB(a: Seq[String])
+
+      implicit val intToString: Transformer[Int, String] = _.toString
+
+      None.into[Array[String]].enableOptCollectionFlatting.transform ==> Array[Int]()
+
+      Some(Array(1)).into[List[String]].enableOptCollectionFlatting.transform ==> List("1")
+
+      ClassA(None).into[ClassB].enableOptCollectionFlatting.transform ==> ClassB(Seq.empty)
+
+      ClassA(Some(Seq.empty)).into[ClassB].enableOptCollectionFlatting.transform ==> ClassB(Seq.empty)
+
+      ClassA(Some(Seq(1))).into[ClassB].enableOptCollectionFlatting.transform ==> ClassB(Seq("1"))
+    }
   }
 }
 
