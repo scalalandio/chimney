@@ -20,6 +20,16 @@ trait Model extends TransformerConfiguration {
   }
 
   case class TransformerBodyTree(tree: Tree, isWrapped: Boolean)
-  case class ResolvedAccessor(symbol: MethodSymbol, wasRenamed: Boolean)
 
+  sealed trait Accessor extends Product with Serializable
+  object Accessor {
+    implicit val accessorOrdering: Ordering[Accessor] = Ordering.by {
+      case NotFound     => 0
+      case DefAvailable => 1
+      case _: Resolved  => 2
+    }
+    case object NotFound extends Accessor
+    case class Resolved(symbol: MethodSymbol, wasRenamed: Boolean) extends Accessor
+    case object DefAvailable extends Accessor
+  }
 }

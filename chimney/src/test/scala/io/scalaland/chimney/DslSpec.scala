@@ -596,7 +596,7 @@ object DslSpec extends TestSuite {
       "method is disabled by default" - {
         compileError("""Foobar("param").into[Foobar3].transform""").check(
           "",
-          "method: java.lang.String - no accessor named method in source type io.scalaland.chimney.DslSpec.Foobar"
+          "method: java.lang.String - no accessor named method in source type io.scalaland.chimney.DslSpec.Foobar, but there was a method with this name. Try to `.enableMethodAccessors`"
         )
       }
 

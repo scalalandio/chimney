@@ -9,7 +9,8 @@ final case class MissingAccessor(
     fieldName: String,
     fieldTypeName: String,
     sourceTypeName: String,
-    targetTypeName: String
+    targetTypeName: String,
+    defAvailable: Boolean = false
 ) extends DerivationError
 
 final case class MissingJavaBeanSetterParam(
@@ -51,8 +52,10 @@ object DerivationError {
       .map {
         case (targetTypeName, errs) =>
           val errStrings = errs.distinct.map {
-            case MissingAccessor(fieldName, fieldTypeName, sourceTypeName, _) =>
-              s"  $fieldName: $fieldTypeName - no accessor named $fieldName in source type $sourceTypeName"
+            case MissingAccessor(fieldName, fieldTypeName, sourceTypeName, _, defAvailable) =>
+              val defAvailableHint =
+                if (defAvailable) ", but there was a method with this name. Try to `.enableMethodAccessors`" else ""
+              s"  $fieldName: $fieldTypeName - no accessor named $fieldName in source type $sourceTypeName" + defAvailableHint
             case MissingJavaBeanSetterParam(setterName, requiredTypeName, sourceTypeName, _) =>
               s"  set${setterName.capitalize}($setterName: $requiredTypeName) - no accessor named $setterName in source type $sourceTypeName"
             case MissingTransformer(fieldName, sourceFieldTypeName, targetFieldTypeName, sourceTypeName, _) =>

@@ -15,7 +15,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
   def resolveSourceTupleAccessors(
       From: Type,
       To: Type
-  ): Either[Seq[DerivationError], Map[Target, ResolvedAccessor]] = {
+  ): Either[Seq[DerivationError], Map[Target, Accessor.Resolved]] = {
     val tupleElems = From.caseClassParams
     val targetFields = To.caseClassParams
 
@@ -34,7 +34,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       Right {
         (tupleElems zip targetFields).map {
           case (tupleElem, targetField) =>
-            Target.fromField(targetField, To) -> ResolvedAccessor(tupleElem, wasRenamed = false)
+            Target.fromField(targetField, To) -> Accessor.Resolved(tupleElem, wasRenamed = false)
         }.toMap
       }
     }
@@ -44,7 +44,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       From: Type,
       targets: Iterable[Target],
       config: TransformerConfig
-  ): Map[Target, Option[ResolvedAccessor]] = {
+  ): Map[Target, Accessor] = {
     val fromGetters = From.getterMethods
     targets.map { target =>
       target -> {
@@ -54,8 +54,10 @@ trait MappingMacros extends Model with TransformerConfiguration {
         }
         val wasRenamed = lookupName != target.name
         fromGetters
-          .find(lookupAccessor(config, lookupName, wasRenamed, From))
-          .map(ms => ResolvedAccessor(ms, wasRenamed))
+          .map(lookupAccessor(config, lookupName, wasRenamed, From))
+          .maxOption
+          .getOrElse(Accessor.NotFound)
+
       }
     }.toMap
   }
@@ -145,16 +147,27 @@ trait MappingMacros extends Model with TransformerConfiguration {
       lookupName: String,
       wasRenamed: Boolean,
       From: Type
-  )(ms: MethodSymbol): Boolean = {
+  )(ms: MethodSymbol): Accessor = {
     val sourceName = ms.name.decodedName.toString
     if (config.enableBeanGetters) {
       val lookupNameCapitalized = lookupName.capitalize
-      sourceName == lookupName ||
-      sourceName == s"get$lookupNameCapitalized" ||
-      (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])
+      if (sourceName == lookupName ||
+          sourceName == s"get$lookupNameCapitalized" ||
+          (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])) {
+        Accessor.Resolved(ms, wasRenamed)
+      } else {
+        Accessor.NotFound
+      }
     } else {
-      (ms.isStable || wasRenamed || config.enableMethodAccessors) && // isStable means or val/lazy val
-      sourceName == lookupName
+      if (sourceName == lookupName) {
+        if (ms.isStable || wasRenamed || config.enableMethodAccessors) { // isStable means or val/lazy val
+          Accessor.Resolved(ms, wasRenamed)
+        } else {
+          Accessor.DefAvailable
+        }
+      } else {
+        Accessor.NotFound
+      }
     }
   }
 
