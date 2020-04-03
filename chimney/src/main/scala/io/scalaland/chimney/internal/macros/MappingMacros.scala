@@ -55,7 +55,12 @@ trait MappingMacros extends Model with TransformerConfiguration {
         val wasRenamed = lookupName != target.name
         fromGetters
           .map(lookupAccessor(config, lookupName, wasRenamed, From))
-          .maxOption
+          .sortBy {
+            case _: Accessor.Resolved  => 0
+            case Accessor.DefAvailable => 1
+            case Accessor.NotFound     => 2
+          }
+          .headOption
           .getOrElse(Accessor.NotFound)
 
       }
