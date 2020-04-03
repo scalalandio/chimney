@@ -21,8 +21,8 @@ trait ConfigDsl[CC[_ <: TransformerCfg], C <: TransformerCfg] {
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#using-method-accessors]] for more details
     */
-  def enableOptCollectionFlatting: CC[EnableOptCollectionFlatting[C]] =
-    this.asInstanceOf[CC[EnableOptCollectionFlatting[C]]]
+  def enableOptCollectionFlattening: CC[EnableOptCollectionFlattening[C]] =
+    this.asInstanceOf[CC[EnableOptCollectionFlattening[C]]]
 
   /** Fail derivation if `From` type is missing field even if `To` has default value for it.
     *

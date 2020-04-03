@@ -331,15 +331,15 @@ object IssuesSpec extends TestSuite {
 
       implicit val intToString: Transformer[Int, String] = _.toString
 
-      None.into[Array[String]].enableOptCollectionFlatting.transform ==> Array[Int]()
+      None.into[Array[String]].enableOptCollectionFlattening.transform ==> Array[Int]()
 
-      Some(Array(1)).into[List[String]].enableOptCollectionFlatting.transform ==> List("1")
+      Some(Array(1)).into[List[String]].enableOptCollectionFlattening.transform ==> List("1")
 
-      ClassA(None).into[ClassB].enableOptCollectionFlatting.transform ==> ClassB(Seq.empty)
+      ClassA(None).into[ClassB].enableOptCollectionFlattening.transform ==> ClassB(Seq.empty)
 
-      ClassA(Some(Seq.empty)).into[ClassB].enableOptCollectionFlatting.transform ==> ClassB(Seq.empty)
+      ClassA(Some(Seq.empty)).into[ClassB].enableOptCollectionFlattening.transform ==> ClassB(Seq.empty)
 
-      ClassA(Some(Seq(1))).into[ClassB].enableOptCollectionFlatting.transform ==> ClassB(Seq("1"))
+      ClassA(Some(Seq(1))).into[ClassB].enableOptCollectionFlattening.transform ==> ClassB(Seq("1"))
     }
   }
 }

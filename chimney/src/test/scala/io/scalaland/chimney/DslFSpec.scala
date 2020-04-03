@@ -787,7 +787,7 @@ object DslFSpec extends TestSuite {
       }
     }
 
-    "support enableOptCollectionFlatting" - {
+    "support enableOptCollectionFlattening" - {
       "F = Option" - {
         implicit val intParse: TransformerF[Option, String, Int] =
           str => scala.util.Try(str.toInt).toOption
@@ -796,13 +796,15 @@ object DslFSpec extends TestSuite {
 
         case class ClassB(seq: Seq[Int])
 
-        ClassA(None).intoF[Option, ClassB].enableOptCollectionFlatting.transform ==> Some(ClassB(Seq.empty))
+        ClassA(None).intoF[Option, ClassB].enableOptCollectionFlattening.transform ==> Some(ClassB(Seq.empty))
 
-        ClassA(Some(Seq.empty)).intoF[Option, ClassB].enableOptCollectionFlatting.transform ==> Some(ClassB(Seq.empty))
+        ClassA(Some(Seq.empty)).intoF[Option, ClassB].enableOptCollectionFlattening.transform ==> Some(
+          ClassB(Seq.empty)
+        )
 
-        ClassA(Some(Seq("1"))).intoF[Option, ClassB].enableOptCollectionFlatting.transform ==> Some(ClassB(Seq(1)))
+        ClassA(Some(Seq("1"))).intoF[Option, ClassB].enableOptCollectionFlattening.transform ==> Some(ClassB(Seq(1)))
 
-        ClassA(Some(Seq("a"))).intoF[Option, ClassB].enableOptCollectionFlatting.transform ==> None
+        ClassA(Some(Seq("a"))).intoF[Option, ClassB].enableOptCollectionFlattening.transform ==> None
       }
 
       "F = Either[List[String], +*]]" - {
@@ -819,13 +821,13 @@ object DslFSpec extends TestSuite {
 
         case class ClassB(seq: Seq[Int])
 
-        ClassA(None).intoF[V, ClassB].enableOptCollectionFlatting.transform ==> Right(ClassB(Seq.empty))
+        ClassA(None).intoF[V, ClassB].enableOptCollectionFlattening.transform ==> Right(ClassB(Seq.empty))
 
-        ClassA(Some(Seq.empty)).intoF[V, ClassB].enableOptCollectionFlatting.transform ==> Right(ClassB(Seq.empty))
+        ClassA(Some(Seq.empty)).intoF[V, ClassB].enableOptCollectionFlattening.transform ==> Right(ClassB(Seq.empty))
 
-        ClassA(Some(Seq("1"))).intoF[V, ClassB].enableOptCollectionFlatting.transform ==> Right(ClassB(Seq(1)))
+        ClassA(Some(Seq("1"))).intoF[V, ClassB].enableOptCollectionFlattening.transform ==> Right(ClassB(Seq(1)))
 
-        ClassA(Some(Seq("a"))).intoF[V, ClassB].enableOptCollectionFlatting.transform ==> Left(
+        ClassA(Some(Seq("a"))).intoF[V, ClassB].enableOptCollectionFlattening.transform ==> Left(
           List("Can't parse int from a")
         )
       }

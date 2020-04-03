@@ -125,8 +125,8 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       expandOptions(srcPrefixTree, config)(From, To)
     } else if (isOption(To)) {
       expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
-    } else if (config.enableOptCollectionFlatting & optIterableOrArray(From) && iterableOrArray(To)) {
-      expandOptCollectionFlatting(srcPrefixTree, config)(From, To)
+    } else if (config.enableOptCollectionFlattening & optIterableOrArray(From) && iterableOrArray(To)) {
+      expandOptCollectionFlattening(srcPrefixTree, config)(From, To)
     } else if (config.enableUnsafeOption && isOption(From)) {
       expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
     } else if (bothEithers(From, To)) {
@@ -317,7 +317,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     }
   }
 
-  def expandOptCollectionFlatting(srcPrefixTree: Tree, config: TransformerConfig)(
+  def expandOptCollectionFlattening(srcPrefixTree: Tree, config: TransformerConfig)(
       From: Type,
       To: Type
   ): Either[Seq[DerivationError], Tree] = {
