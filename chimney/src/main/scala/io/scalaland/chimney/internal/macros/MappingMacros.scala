@@ -15,7 +15,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
   def resolveSourceTupleAccessors(
       From: Type,
       To: Type
-  ): Either[Seq[DerivationError], Map[Target, Accessor.Resolved]] = {
+  ): Either[Seq[DerivationError], Map[Target, AccessorResolution.Resolved]] = {
     val tupleElems = From.caseClassParams
     val targetFields = To.caseClassParams
 
@@ -34,7 +34,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       Right {
         (tupleElems zip targetFields).map {
           case (tupleElem, targetField) =>
-            Target.fromField(targetField, To) -> Accessor.Resolved(tupleElem, wasRenamed = false)
+            Target.fromField(targetField, To) -> AccessorResolution.Resolved(tupleElem, wasRenamed = false)
         }.toMap
       }
     }
@@ -44,7 +44,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       From: Type,
       targets: Iterable[Target],
       config: TransformerConfig
-  ): Map[Target, Accessor] = {
+  ): Map[Target, AccessorResolution] = {
     val fromGetters = From.getterMethods
     targets.map { target =>
       target -> {
@@ -56,12 +56,12 @@ trait MappingMacros extends Model with TransformerConfiguration {
         fromGetters
           .map(lookupAccessor(config, lookupName, wasRenamed, From))
           .sortBy {
-            case _: Accessor.Resolved  => 0
-            case Accessor.DefAvailable => 1
-            case Accessor.NotFound     => 2
+            case _: AccessorResolution.Resolved  => 0
+            case AccessorResolution.DefAvailable => 1
+            case AccessorResolution.NotFound     => 2
           }
           .headOption
-          .getOrElse(Accessor.NotFound)
+          .getOrElse(AccessorResolution.NotFound)
 
       }
     }.toMap
@@ -152,26 +152,26 @@ trait MappingMacros extends Model with TransformerConfiguration {
       lookupName: String,
       wasRenamed: Boolean,
       From: Type
-  )(ms: MethodSymbol): Accessor = {
+  )(ms: MethodSymbol): AccessorResolution = {
     val sourceName = ms.name.decodedName.toString
     if (config.enableBeanGetters) {
       val lookupNameCapitalized = lookupName.capitalize
       if (sourceName == lookupName ||
           sourceName == s"get$lookupNameCapitalized" ||
           (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])) {
-        Accessor.Resolved(ms, wasRenamed)
+        AccessorResolution.Resolved(ms, wasRenamed)
       } else {
-        Accessor.NotFound
+        AccessorResolution.NotFound
       }
     } else {
       if (sourceName == lookupName) {
         if (ms.isStable || wasRenamed || config.enableMethodAccessors) { // isStable means or val/lazy val
-          Accessor.Resolved(ms, wasRenamed)
+          AccessorResolution.Resolved(ms, wasRenamed)
         } else {
-          Accessor.DefAvailable
+          AccessorResolution.DefAvailable
         }
       } else {
-        Accessor.NotFound
+        AccessorResolution.NotFound
       }
     }
   }

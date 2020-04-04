@@ -545,14 +545,14 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
 
   def resolveTransformerBodyTreeFromAccessorsMapping(
       srcPrefixTree: Tree,
-      accessorsMapping: Map[Target, Accessor],
+      accessorsMapping: Map[Target, AccessorResolution],
       From: Type,
       To: Type,
       config: TransformerConfig
   ): Either[Seq[DerivationError], Map[Target, TransformerBodyTree]] = {
 
     val (erroredTargets, resolvedBodyTrees) = accessorsMapping.map {
-      case (target, accessor: Accessor.Resolved) =>
+      case (target, accessor: AccessorResolution.Resolved) =>
         target -> resolveTransformerBodyTreeFromAccessor(srcPrefixTree, target, accessor, From, config)
       case (target, accessor) =>
         target -> Left(
@@ -562,7 +562,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
               fieldTypeName = target.tpe.typeSymbol.fullName,
               sourceTypeName = From.typeSymbol.fullName,
               targetTypeName = To.typeSymbol.fullName,
-              defAvailable = accessor == Accessor.DefAvailable
+              defAvailable = accessor == AccessorResolution.DefAvailable
             )
           )
         )
@@ -572,8 +572,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       Right(resolvedBodyTrees)
     } else {
       val targetsToFallback = erroredTargets.collect {
-        case (target, _) if !accessorsMapping(target).isInstanceOf[Accessor.Resolved] =>
-          target
+        case (target, _) if !accessorsMapping(target).isResolved => target
       }
       val fallbackTransformerBodies = resolveFallbackTransformerBodies(targetsToFallback, To, config)
       val unresolvedTargets = accessorsMapping.keySet
@@ -585,14 +584,14 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       } else {
         val errors = unresolvedTargets.toSeq.flatMap { target =>
           accessorsMapping(target) match {
-            case Accessor.Resolved(symbol: MethodSymbol, wasRenamed: Boolean) =>
-              MissingTransformer(
+            case AccessorResolution.Resolved(symbol: MethodSymbol, wasRenamed: Boolean) =>
+              erroredTargets(target) :+ MissingTransformer(
                 fieldName = target.name,
                 sourceFieldTypeName = symbol.resultTypeIn(From).typeSymbol.fullName,
                 targetFieldTypeName = target.tpe.typeSymbol.fullName,
                 sourceTypeName = From.typeSymbol.fullName,
                 targetTypeName = To.typeSymbol.fullName
-              ) +: erroredTargets(target)
+              )
             case _ => erroredTargets(target)
           }
         }
@@ -604,7 +603,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
   def resolveTransformerBodyTreeFromAccessor(
       srcPrefixTree: Tree,
       target: Target,
-      accessor: Accessor.Resolved,
+      accessor: AccessorResolution.Resolved,
       From: Type,
       config: TransformerConfig
   ): Either[Seq[DerivationError], TransformerBodyTree] = {
