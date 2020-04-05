@@ -159,7 +159,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       if (sourceName == lookupName ||
           sourceName == s"get$lookupNameCapitalized" ||
           (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])) {
-        AccessorResolution.Resolved(ms, wasRenamed)
+        AccessorResolution.Resolved(ms, wasRenamed = false)
       } else {
         AccessorResolution.NotFound
       }
