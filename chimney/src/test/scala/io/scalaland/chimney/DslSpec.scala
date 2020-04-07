@@ -613,14 +613,16 @@ object DslSpec extends TestSuite {
       }
 
       "method is disabled by default" - {
-        case class Foobar5(param: String,
-                           valField: String,
-                           lazyValField: String,
-                           method1: String,
-                           method2: String,
-                           method3: String,
-                           method4: String,
-                           method5: String)
+        case class Foobar5(
+            param: String,
+            valField: String,
+            lazyValField: String,
+            method1: String,
+            method2: String,
+            method3: String,
+            method4: String,
+            method5: String
+        )
         compileError("""Foobar("param").into[Foobar5].transform""").check(
           "",
           "method1: java.lang.String - no accessor named method1 in source type io.scalaland.chimney.DslSpec.Foobar",
