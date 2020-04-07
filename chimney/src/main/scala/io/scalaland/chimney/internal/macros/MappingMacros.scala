@@ -3,6 +3,7 @@ package io.scalaland.chimney.internal.macros
 import io.scalaland.chimney.internal.{DerivationError, IncompatibleSourceTuple, TransformerConfiguration}
 import io.scalaland.chimney.internal.utils.{DerivationGuards, MacroUtils}
 
+import scala.collection.immutable.ListMap
 import scala.reflect.macros.blackbox
 
 trait MappingMacros extends Model with TransformerConfiguration {
@@ -46,21 +47,24 @@ trait MappingMacros extends Model with TransformerConfiguration {
       config: TransformerConfig
   ): Map[Target, AccessorResolution] = {
     val fromGetters = From.getterMethods
-    targets.map { target =>
-      target -> {
-        val lookupName = config.fieldOverrides.get(target.name) match {
-          case Some(FieldOverride.RenamedFrom(sourceName)) => sourceName
-          case _                                           => target.name
-        }
-        val wasRenamed = lookupName != target.name
-        fromGetters
-          .map(lookupAccessor(config, lookupName, wasRenamed, From))
-          .find(_ != AccessorResolution.NotFound)
-          .headOption
-          .getOrElse(AccessorResolution.NotFound)
+    val accessorsMapping = targets
+      .map { target =>
+        target -> {
+          val lookupName = config.fieldOverrides.get(target.name) match {
+            case Some(FieldOverride.RenamedFrom(sourceName)) => sourceName
+            case _                                           => target.name
+          }
+          val wasRenamed = lookupName != target.name
+          fromGetters
+            .map(lookupAccessor(config, lookupName, wasRenamed, From))
+            .find(_ != AccessorResolution.NotFound)
+            .headOption
+            .getOrElse(AccessorResolution.NotFound)
 
+        }
       }
-    }.toMap
+
+    ListMap(accessorsMapping.toSeq: _*)
   }
 
   def resolveOverrides(
@@ -115,7 +119,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
 
     lazy val targetCaseClassDefaults = To.typeSymbol.asClass.caseClassDefaults
 
-    targets.flatMap { target =>
+    val fallbackTransformers = targets.flatMap { target =>
       def defaultValueFallback =
         if (config.processDefaultValues && To.isCaseClass) {
           targetCaseClassDefaults
@@ -140,7 +144,8 @@ trait MappingMacros extends Model with TransformerConfiguration {
         }
 
       defaultValueFallback orElse optionNoneFallback orElse unitFallback
-    }.toMap
+    }
+    ListMap(fallbackTransformers.toSeq: _*)
   }
 
   def lookupAccessor(

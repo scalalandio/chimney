@@ -74,7 +74,7 @@ object DerivationError {
             if (fieldsWithMethodAccessor.nonEmpty) {
               val first3Fields = fieldsWithMethodAccessor.take(3).mkString(", ")
               val otherFields = fieldsWithMethodAccessor.length - 3
-              val fields = if (otherFields > 0) s"$first3Fields and $otherFields other method" else first3Fields
+              val fields = if (otherFields > 0) s"$first3Fields and $otherFields other methods" else first3Fields
 
               s"There are methods in $sourceTypeName that might be used as accessors for $fields fields in $targetTypeName. Consider using `.enableMethodAccessors`"
             } else ""

@@ -575,14 +575,14 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
         case (target, _) if !accessorsMapping(target).isResolved => target
       }
       val fallbackTransformerBodies = resolveFallbackTransformerBodies(targetsToFallback, To, config)
-      val unresolvedTargets = accessorsMapping.keySet
-        .diff(resolvedBodyTrees.keySet)
-        .diff(fallbackTransformerBodies.keySet)
+      val unresolvedTargets = accessorsMapping.keys.toList
+        .diff(resolvedBodyTrees.keys.toList)
+        .diff(fallbackTransformerBodies.keys.toList)
 
       if (unresolvedTargets.isEmpty) {
         Right(resolvedBodyTrees ++ fallbackTransformerBodies)
       } else {
-        val errors = unresolvedTargets.toSeq.flatMap { target =>
+        val errors = unresolvedTargets.flatMap { target =>
           accessorsMapping(target) match {
             case AccessorResolution.Resolved(symbol: MethodSymbol, wasRenamed: Boolean) =>
               erroredTargets(target) :+ MissingTransformer(
