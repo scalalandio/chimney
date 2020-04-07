@@ -580,24 +580,21 @@ object DslSpec extends TestSuite {
       case class Foobar(param: String) {
         val valField: String = "valField"
         lazy val lazyValField: String = "lazyValField"
-        def method: String = "method"
+        def method1: String = "method1"
+        def method2: String = "method2"
+        def method3: String = "method3"
+        def method5: String = "method5"
+        def method4: String = "method4"
 
         protected def protect: String = "protect"
         private[chimney] def priv: String = "priv"
       }
 
       case class Foobar2(param: String, valField: String, lazyValField: String)
-      case class Foobar3(param: String, valField: String, lazyValField: String, method: String)
+      case class Foobar3(param: String, valField: String, lazyValField: String, method1: String)
 
       "val and lazy vals work" - {
         Foobar("param").into[Foobar2].transform ==> Foobar2("param", "valField", "lazyValField")
-      }
-
-      "method is disabled by default" - {
-        compileError("""Foobar("param").into[Foobar3].transform""").check(
-          "",
-          "method: java.lang.String - no accessor named method in source type io.scalaland.chimney.DslSpec.Foobar, but there was a method with this name. Try to `.enableMethodAccessors`"
-        )
       }
 
       "works with rename" - {
@@ -608,11 +605,31 @@ object DslSpec extends TestSuite {
           .withFieldRenamed(_.param, _.p)
           .withFieldRenamed(_.valField, _.v)
           .withFieldRenamed(_.lazyValField, _.lv)
-          .withFieldRenamed(_.method, _.m)
+          .withFieldRenamed(_.method1, _.m)
           .enableMethodAccessors
           .transform
 
-        res ==> FooBar4(p = "param", v = "valField", lv = "lazyValField", m = "method")
+        res ==> FooBar4(p = "param", v = "valField", lv = "lazyValField", m = "method1")
+      }
+
+      "method is disabled by default" - {
+        case class Foobar5(param: String,
+                           valField: String,
+                           lazyValField: String,
+                           method1: String,
+                           method2: String,
+                           method3: String,
+                           method4: String,
+                           method5: String)
+        compileError("""Foobar("param").into[Foobar5].transform""").check(
+          "",
+          "method1: java.lang.String - no accessor named method1 in source type io.scalaland.chimney.DslSpec.Foobar",
+          "method2: java.lang.String - no accessor named method2 in source type io.scalaland.chimney.DslSpec.Foobar",
+          "method3: java.lang.String - no accessor named method3 in source type io.scalaland.chimney.DslSpec.Foobar",
+          "method4: java.lang.String - no accessor named method4 in source type io.scalaland.chimney.DslSpec.Foobar",
+          "method5: java.lang.String - no accessor named method5 in source type io.scalaland.chimney.DslSpec.Foobar",
+          "2 other methods fields in io.scalaland.chimney.DslSpec.Foobar5. Consider using `.enableMethodAccessors`"
+        )
       }
 
       "works if transform is configured with .enableMethodAccessors" - {
@@ -620,7 +637,7 @@ object DslSpec extends TestSuite {
           param = "param",
           valField = "valField",
           lazyValField = "lazyValField",
-          method = "method"
+          method1 = "method1"
         )
       }
 

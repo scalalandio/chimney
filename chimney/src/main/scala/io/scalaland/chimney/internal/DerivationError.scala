@@ -44,18 +44,15 @@ final case class NotSupportedDerivation(fieldName: String, sourceTypeName: Strin
     extends DerivationError
 
 object DerivationError {
-
   def printErrors(errors: Seq[DerivationError]): String = {
 
     errors
-      .groupBy(_.targetTypeName)
+      .groupBy(e => (e.targetTypeName, e.sourceTypeName))
       .map {
-        case (targetTypeName, errs) =>
+        case ((targetTypeName, sourceTypeName), errs) =>
           val errStrings = errs.distinct.map {
-            case MissingAccessor(fieldName, fieldTypeName, sourceTypeName, _, defAvailable) =>
-              val defAvailableHint =
-                if (defAvailable) ", but there was a method with this name. Try to `.enableMethodAccessors`" else ""
-              s"  $fieldName: $fieldTypeName - no accessor named $fieldName in source type $sourceTypeName" + defAvailableHint
+            case MissingAccessor(fieldName, fieldTypeName, sourceTypeName, _, _) =>
+              s"  $fieldName: $fieldTypeName - no accessor named $fieldName in source type $sourceTypeName"
             case MissingJavaBeanSetterParam(setterName, requiredTypeName, sourceTypeName, _) =>
               s"  set${setterName.capitalize}($setterName: $requiredTypeName) - no accessor named $setterName in source type $sourceTypeName"
             case MissingTransformer(fieldName, sourceFieldTypeName, targetFieldTypeName, sourceTypeName, _) =>
@@ -70,8 +67,22 @@ object DerivationError {
               s"  derivation from $fieldName: $sourceTypeName to $targetTypeName is not supported in Chimney!"
           }
 
+          val fieldsWithMethodAccessor = errors.collect {
+            case MissingAccessor(fieldName, _, _, _, true) => s"`$fieldName`"
+          }
+          val methodAccessorHint =
+            if (fieldsWithMethodAccessor.nonEmpty) {
+              val first3Fields = fieldsWithMethodAccessor.take(3).mkString(", ")
+              val otherFields = fieldsWithMethodAccessor.length - 3
+              val fields = if (otherFields > 0) s"$first3Fields and $otherFields other method" else first3Fields
+
+              s"There are methods in $sourceTypeName that might be used as accessors for $fields fields in $targetTypeName. Consider using `.enableMethodAccessors`"
+            } else ""
+
           s"""$targetTypeName
            |${errStrings.mkString("\n")}
+           |
+           |$methodAccessorHint
            |""".stripMargin
       }
       .mkString("\n")

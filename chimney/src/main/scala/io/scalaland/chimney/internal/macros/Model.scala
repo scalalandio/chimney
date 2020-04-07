@@ -26,13 +26,13 @@ trait Model extends TransformerConfiguration {
   }
   object AccessorResolution {
     case object NotFound extends AccessorResolution {
-      override val isResolved: Boolean = false
+      override def isResolved: Boolean = false
     }
     case class Resolved(symbol: MethodSymbol, wasRenamed: Boolean) extends AccessorResolution {
-      override val isResolved: Boolean = true
+      override def isResolved: Boolean = true
     }
     case object DefAvailable extends AccessorResolution {
-      override val isResolved: Boolean = false
+      override def isResolved: Boolean = false
     }
   }
 }
