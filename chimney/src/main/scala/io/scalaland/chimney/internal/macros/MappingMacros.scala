@@ -47,7 +47,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       config: TransformerConfig
   ): Map[Target, AccessorResolution] = {
     val fromGetters = From.getterMethods
-    val accessorsMapping = targets
+    targets
       .map { target =>
         target -> {
           val lookupName = config.fieldOverrides.get(target.name) match {
@@ -63,8 +63,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
 
         }
       }
-
-    ListMap(accessorsMapping.toSeq: _*)
+      .to(ListMap)
   }
 
   def resolveOverrides(
@@ -119,33 +118,34 @@ trait MappingMacros extends Model with TransformerConfiguration {
 
     lazy val targetCaseClassDefaults = To.typeSymbol.asClass.caseClassDefaults
 
-    val fallbackTransformers = targets.flatMap { target =>
-      def defaultValueFallback =
-        if (config.processDefaultValues && To.isCaseClass) {
-          targetCaseClassDefaults
-            .get(target.name)
-            .map(defaultValueTree => target -> TransformerBodyTree(defaultValueTree, isWrapped = false))
-        } else {
-          None
-        }
+    targets
+      .flatMap { target =>
+        def defaultValueFallback =
+          if (config.processDefaultValues && To.isCaseClass) {
+            targetCaseClassDefaults
+              .get(target.name)
+              .map(defaultValueTree => target -> TransformerBodyTree(defaultValueTree, isWrapped = false))
+          } else {
+            None
+          }
 
-      def optionNoneFallback =
-        if (config.optionDefaultsToNone && isOption(target.tpe)) {
-          Some(target -> TransformerBodyTree(q"_root_.scala.None", isWrapped = false))
-        } else {
-          None
-        }
+        def optionNoneFallback =
+          if (config.optionDefaultsToNone && isOption(target.tpe)) {
+            Some(target -> TransformerBodyTree(q"_root_.scala.None", isWrapped = false))
+          } else {
+            None
+          }
 
-      def unitFallback =
-        if (isUnit(target.tpe)) {
-          Some(target -> TransformerBodyTree(q"()", isWrapped = false))
-        } else {
-          None
-        }
+        def unitFallback =
+          if (isUnit(target.tpe)) {
+            Some(target -> TransformerBodyTree(q"()", isWrapped = false))
+          } else {
+            None
+          }
 
-      defaultValueFallback orElse optionNoneFallback orElse unitFallback
-    }
-    ListMap(fallbackTransformers.toSeq: _*)
+        defaultValueFallback orElse optionNoneFallback orElse unitFallback
+      }
+      .to(ListMap)
   }
 
   def lookupAccessor(
