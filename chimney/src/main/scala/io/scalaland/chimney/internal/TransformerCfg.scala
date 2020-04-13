@@ -11,4 +11,6 @@ object TransformerCfg {
   final class CoproductInstance[InstType, TargetType, C <: TransformerCfg] extends TransformerCfg
   final class CoproductInstanceF[InstType, TargetType, C <: TransformerCfg] extends TransformerCfg
   final class WrapperType[F[+_], C <: TransformerCfg] extends TransformerCfg
+  final class EnableSnakeToCamel[C <: TransformerCfg] extends TransformerCfg
+  final class EnableCamelToSnake[C <: TransformerCfg] extends TransformerCfg
 }
