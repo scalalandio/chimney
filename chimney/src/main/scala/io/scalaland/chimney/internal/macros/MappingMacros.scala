@@ -146,7 +146,8 @@ trait MappingMacros extends Model with TransformerConfiguration {
       wasRenamed: Boolean,
       From: Type
   )(ms: MethodSymbol): Boolean = {
-    val sourceName = ms.name.decodedName.toString
+    
+    val sourceName = config.namingConventions._1(ms.name.decodedName.toString)
     if (config.enableBeanGetters) {
       val lookupNameCapitalized = lookupName.capitalize
       sourceName == lookupName ||
@@ -154,7 +155,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])
     } else {
       (ms.isStable || wasRenamed || config.enableMethodAccessors) && // isStable means or val/lazy val
-      sourceName == lookupName
+      sourceName == config.namingConventions._2(lookupName)
     }
   }
 

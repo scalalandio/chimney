@@ -62,4 +62,8 @@ trait ConfigDsl[CC[_ <: TransformerCfg], C <: TransformerCfg] {
   def enableUnsafeOption: CC[EnableUnsafeOption[C]] =
     this.asInstanceOf[CC[EnableUnsafeOption[C]]]
 
+  def enableSnakeToCamel: CC[EnableSnakeToCamel[C]] = this.asInstanceOf[CC[EnableSnakeToCamel[C]]]
+
+  def enableCamelToSnake: CC[EnableCamelToSnake[C]] = this.asInstanceOf[CC[EnableCamelToSnake[C]]]
+
 }
