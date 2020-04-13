@@ -23,6 +23,8 @@ object TransformerCfg {
   final class CoproductInstance[InstType, TargetType, C <: TransformerCfg] extends TransformerCfg
   final class CoproductInstanceF[InstType, TargetType, C <: TransformerCfg] extends TransformerCfg
   final class WrapperType[F[+_], C <: TransformerCfg] extends TransformerCfg
+  final class EnableSnakeToCamel[C <: TransformerCfg ] extends TransformerCfg
+  final class EnableCamelToSnake[C <: TransformerCfg] extends TransformerCfg
 }
 
 trait TransformerConfiguration extends MacroUtils {
@@ -54,7 +56,8 @@ trait TransformerConfiguration extends MacroUtils {
       definitionScope: Option[(Type, Type)] = None,
       wrapperType: Option[Type] = None,
       wrapperSupportInstance: Tree = EmptyTree,
-      coproductInstancesF: Set[(Symbol, Type)] = Set.empty // pair: inst type, target type
+      coproductInstancesF: Set[(Symbol, Type)] = Set.empty, // pair: inst type, target type
+      namingConventions: (String => String, String => String) = (identity, identity) // Function to apply on the From accessor to get it in the To convention
   ) {
 
     def rec: TransformerConfig =
@@ -71,6 +74,14 @@ trait TransformerConfiguration extends MacroUtils {
 
     def fieldOverride(fieldName: String, fieldOverride: FieldOverride): TransformerConfig = {
       copy(fieldOverrides = fieldOverrides + (fieldName -> fieldOverride))
+    }
+
+    def snakeToCamel: TransformerConfig = {
+        copy(namingConventions = (identity, snakeCaseTransformation))
+    }
+
+    def camelToSnake: TransformerConfig = {
+      copy(namingConventions = (snakeCaseTransformation, identity))
     }
 
     def coproductInstance(instanceType: Type, targetType: Type): TransformerConfig = {
@@ -100,6 +111,8 @@ trait TransformerConfiguration extends MacroUtils {
     val coproductInstanceT = typeOf[CoproductInstance[_, _, _]].typeConstructor
     val coproductInstanceFT = typeOf[CoproductInstanceF[_, _, _]].typeConstructor
     val wrapperTypeT = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
+    val camelToSnakeT = typeOf[EnableCamelToSnake[_]].typeConstructor
+    val snakeToCamelT = typeOf[EnableSnakeToCamel[_]].typeConstructor
   }
 
   def captureTransformerConfig(cfgTpe: Type): TransformerConfig = {
@@ -151,10 +164,24 @@ trait TransformerConfiguration extends MacroUtils {
     } else if (cfgTpe.typeConstructor =:= coproductInstanceFT) {
       val List(instanceType, targetType, rest) = cfgTpe.typeArgs
       captureTransformerConfig(rest).coproductInstanceF(instanceType, targetType)
+    } else if (cfgTpe.typeConstructor =:= camelToSnakeT) {
+      captureTransformerConfig(cfgTpe.typeArgs.head).camelToSnake
+    } else if (cfgTpe.typeConstructor =:= snakeToCamelT) {
+      captureTransformerConfig(cfgTpe.typeArgs.head).snakeToCamel
     } else {
       // $COVERAGE-OFF$
       c.abort(c.enclosingPosition, "Bad internal transformer config type shape!")
       // $COVERAGE-ON$
     }
+  }
+
+  // This code is copied from circe 
+  import java.util.regex.Pattern
+  private val basePattern: Pattern = Pattern.compile("([A-Z]+)([A-Z][a-z])")
+  private val swapPattern: Pattern = Pattern.compile("([a-z\\d])([A-Z])")
+
+  val snakeCaseTransformation: String => String = s => {
+    val partial = basePattern.matcher(s).replaceAll("$1_$2")
+    swapPattern.matcher(partial).replaceAll("$1_$2").toLowerCase
   }
 }
