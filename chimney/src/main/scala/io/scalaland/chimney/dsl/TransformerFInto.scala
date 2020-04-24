@@ -6,7 +6,7 @@ import io.scalaland.chimney.internal.macros.{ChimneyBlackboxMacros, TransformerF
 
 import scala.language.experimental.macros
 
-final class TransformerFInto[F[+_], From, To, C <: TransformerCfg](
+final class TransformerFInto[F[+ _], From, To, C <: TransformerCfg](
     val source: From,
     val td: TransformerFDefinition[F, From, To, C]
 ) extends ConfigDsl[Lambda[`C1 <: TransformerCfg` => TransformerFInto[F, From, To, C1]], C] {
@@ -20,7 +20,7 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg](
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
     */
-  def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[From, To, _ <: TransformerCfg] =
+  def withFieldConst[T, U](selector: To => T, value: U): TransformerFInto[F, From, To, _ <: TransformerCfg] =
     macro TransformerFIntoWhiteboxMacros.withFieldConstImpl
 
   /** Use wrapped `value` provided here for field picked using `selector`.
