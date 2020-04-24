@@ -6,7 +6,7 @@ import io.scalaland.chimney.internal.macros.{ChimneyBlackboxMacros, TransformerF
 
 import scala.language.experimental.macros
 
-final class TransformerFInto[F[+ _], From, To, C <: TransformerCfg](
+final class TransformerFInto[F[+_], From, To, C <: TransformerCfg](
     val source: From,
     val td: TransformerFDefinition[F, From, To, C]
 ) extends ConfigDsl[Lambda[`C1 <: TransformerCfg` => TransformerFInto[F, From, To, C1]], C] {

@@ -651,7 +651,7 @@ object DslFSpec extends TestSuite {
         "F = Either[List[String], +*]]" - {
           // without this specific instantiation on 2.11 shortToLongPureInner is not picked correctly
           implicit val workaround
-            : TransformerF[Either[List[String], +*], short.NumScale[Int, Nothing], long.NumScale[String]] =
+              : TransformerF[Either[List[String], +*], short.NumScale[Int, Nothing], long.NumScale[String]] =
             ScalesTransformer.shortToLongPureInner[Either[List[String], +*], Int, String]
 
           (short.Zero: short.NumScale[Int, Nothing])
@@ -699,7 +699,7 @@ object DslFSpec extends TestSuite {
 
           // without this specific instantiation on 2.11 shortToLongWrappedInner is not picked correctly
           implicit val workaround
-            : TransformerF[Either[List[String], +*], short.NumScale[String, Nothing], long.NumScale[Int]] =
+              : TransformerF[Either[List[String], +*], short.NumScale[String, Nothing], long.NumScale[Int]] =
             ScalesTransformer.shortToLongWrappedInner[Either[List[String], +*], String, Int]
 
           (short.Zero: short.NumScale[String, Nothing])
