@@ -7,7 +7,11 @@ val versions = new {
 val settings = Seq(
   version := "0.5.1",
   scalaVersion := versions.scalaVersion,
-  crossScalaVersions := Seq("2.11.12", "2.12.11", "2.13.1"),
+  crossScalaVersions :=
+    (if (scalaJSVersion.startsWith("1."))
+      Seq("2.12.11", "2.13.1")
+     else
+       Seq("2.11.12", "2.12.11", "2.13.1")),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
     "-encoding", "UTF-8",
@@ -116,7 +120,7 @@ lazy val chimneyCats = crossProject(JSPlatform, JVMPlatform)
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(dependencies: _*)
-  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.0.0" % "provided")
+  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % (if (scalaBinaryVersion.value == "2.11") "2.0.0" else "2.1.1") % "provided")
 
 lazy val chimneyCatsJVM = chimneyCats.jvm
 lazy val chimneyCatsJS = chimneyCats.js
