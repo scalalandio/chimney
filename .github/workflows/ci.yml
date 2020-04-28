@@ -1,6 +1,10 @@
 name: CI build
 
-on: push
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   build:
@@ -9,22 +13,11 @@ jobs:
 
     strategy:
       matrix:
-        scala:
-          - 2.11.12
-          - 2.12.11
-          - 2.13.1
-        jvm:
-          - openjdk@8
-          - openjdk@1.11
-        scalajs:
-          - 0.6.32
-          - 1.0.1
+        scala: [2.11.12, 2.12.11, 2.13.1]
+        jvm: [openjdk@8, openjdk@1.11]
+        scalajs: [0.6.32, 1.0.1]
         exclude:
           - scala: 2.11.12
-            jvm: openjdk@8
-            scalajs: 1.0.1
-          - scala: 2.11.12
-            jvm: openjdk@1.11
             scalajs: 1.0.1
       fail-fast: false
 
