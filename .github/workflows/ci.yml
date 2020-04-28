@@ -16,6 +16,12 @@ jobs:
         jvm:
           - openjdk@8
           - openjdk@1.11
+        scalajs:
+          - 0.6.32
+          - 1.0.1
+        exclude:
+          - scala: 2.11.12
+          - scalajs: 1.0.1
       fail-fast: false
 
     steps:
@@ -41,6 +47,8 @@ jobs:
         run: sudo apt-get install -y clang libgc-dev libunwind8-dev libre2-dev
       - name: Clean, Check code formatting, compile, test, generate coverage report
         run: sbt ++${{ matrix.scala }} clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test coverage chimneyJVM/test coverageReport
+        env:
+          SCALAJS_VERSION: ${{ matrix.scalajs }}
       - name: Run Scala Native tests (2.11 builds only)
         if: startsWith(matrix.scala, '2.11' )
         run: sbt ++${{ matrix.scala }} chimneyNative/test
