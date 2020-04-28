@@ -21,6 +21,10 @@ jobs:
           - 1.0.1
         exclude:
           - scala: 2.11.12
+            jvm: openjdk@8
+            scalajs: 1.0.1
+          - scala: 2.11.12
+            jvm: openjdk@1.11
             scalajs: 1.0.1
       fail-fast: false
 
