@@ -726,7 +726,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     srcPrefixTree
       .toString()
       .replaceAll("\\$\\d+", "")
-      .replaceAllLiterally("$u002E", ".")
+      .replace("$u002E", ".")
   }
 
   private val chimneyDocUrl = "https://scalalandio.github.io/chimney"

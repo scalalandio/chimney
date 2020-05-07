@@ -389,11 +389,11 @@ object DslSpec extends TestSuite {
 
       "not compile if relabelled - a wrong way" - {
 
-        compileError("""Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform""")
-          .check("", "type mismatch")
+        compileError("""Foo(10, "something").into[Bar].withFieldRenamed(_.y, _.x).transform""")
+          .check("", "Chimney can't derive transformation from Foo to Bar")
 
-        compileError("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
-          .check("", "type mismatch")
+        compileError("""Foo(10, "something").into[Bar].withFieldRenamed(_.x, _.z).transform""")
+          .check("", "Chimney can't derive transformation from Foo to Bar")
       }
 
     }
