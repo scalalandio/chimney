@@ -104,7 +104,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
-    resolveImplicitTransformer(srcPrefixTree, config)(From, To)
+    resolveImplicitTransformer(config)(From, To)
       .map(localImplicitTree => Right(localImplicitTree.callTransform(srcPrefixTree)))
       .getOrElse {
         deriveTransformerTree(srcPrefixTree, config)(From, To)
@@ -627,8 +627,8 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     val recConfigNoWrapper = recConfig.copy(wrapperType = None)
 
     if (config.wrapperType.isDefined) {
-      val implicitTransformerF = resolveImplicitTransformer(srcPrefixTree, recConfig)(From, To)
-      val implicitTransformer = resolveImplicitTransformer(srcPrefixTree, recConfigNoWrapper)(From, To)
+      val implicitTransformerF = resolveImplicitTransformer(recConfig)(From, To)
+      val implicitTransformer = resolveImplicitTransformer(recConfigNoWrapper)(From, To)
 
       (implicitTransformerF, implicitTransformer) match {
         case (Some(localImplicitTreeF), Some(localImplicitTree)) =>
@@ -664,14 +664,47 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
   }
 
   def resolveImplicitTransformer(
-      srcPrefixTree: Tree,
       config: TransformerConfig
   )(From: Type, To: Type): Option[Tree] = {
     if (config.definitionScope.contains((From, To))) {
       None
     } else {
-      findLocalImplicitTransformer(From, To, config.wrapperType)
+      findLocalImplicitTransformer(From, To, config.wrapperType).orElse {
+        if (config.wrapperType.isEmpty)
+          resolveImplicitTransformerComposition(config)(From, To)
+        else None
+      }
     }
+  }
+
+  def resolveImplicitTransformerComposition(config: TransformerConfig)(From: Type, To: Type): Option[Tree] = {
+    val constructor = typeOf[io.scalaland.chimney.TransformerComposition[_, _]].typeConstructor
+    val expanded = constructor.etaExpand
+    val tpe = expanded.finalResultType.substituteTypes(expanded.typeParams, List(From, To))
+
+    scala.util
+      .Try(c.inferImplicitValue(tpe, silent = true, withMacrosDisabled = true))
+      .toOption
+      .filterNot(_ == EmptyTree)
+      .flatMap { compositionTree =>
+        val compositionTpe = compositionTree.tpe.finalResultType
+
+        val typeSymbols = compositionTpe.decls.collect {
+          case ts: TypeSymbol => (ts.name.toString, ts.toTypeIn(compositionTpe))
+        }.toMap
+
+        val inFrom = typeSymbols("InFrom")
+        val outFrom = typeSymbols("InTo")
+
+        val fn = TermName(c.freshName("fn"))
+
+        expandTransformerTree(Ident(fn), config.rec)(inFrom, outFrom).mapRight { inner =>
+          q"$compositionTree.apply(($fn: $inFrom) => $inner)"
+        } match {
+          case Right(tree) => Some(tree)
+          case _           => None
+        }
+      }
   }
 
   def findLocalImplicitTransformer(From: Type, To: Type, wrapperType: Option[Type]): Option[Tree] = {

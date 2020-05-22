@@ -324,6 +324,24 @@ object IssuesSpec extends TestSuite {
       event.venue.into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
       (venue: internal.Venue).into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
     }
+
+    "fix issue #158" - {
+      case class From(seq: Option[Seq[String]])
+
+      case class To(seq: Seq[String])
+
+      implicit def optSeq[A, B]: TransformerComposition.Aux[A, B, Option[Seq[A]], Seq[B]] =
+        TransformerComposition.build(optSeq => inner => optSeq.getOrElse(Seq.empty).map(inner.transform))
+
+      case class InvalidTo(seq: Seq[Int])
+
+      From(Some(Seq("1"))).transformInto[To] ==> To(Seq("1"))
+
+      From(None).transformInto[To] ==> To(Seq.empty)
+
+      compileError("""From(Some(Seq("1"))).transformInto[InvalidTo]""")
+        .check("", "Chimney can't derive transformation from From to InvalidTo")
+    }
   }
 }
 

@@ -786,5 +786,21 @@ object DslFSpec extends TestSuite {
           .transform ==> Right(OuterOut(InnerOut("pure: test")))
       }
     }
+
+    "with transformer composition" - {
+      case class From(seq: Option[Seq[String]], value: String)
+
+      case class To(seq: Seq[String], value: Int)
+
+      implicit def optSeq[A, B]: TransformerComposition.Aux[A, B, Option[Seq[A]], Seq[B]] =
+        TransformerComposition.build(optSeq => inner => optSeq.getOrElse(Seq.empty).map(inner.transform))
+
+      implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
+        str => Right(str.toInt)
+
+      val transformer = TransformerF.derive[Either[List[String], +*], From, To]
+
+      transformer.transform(From(Some(Seq("1")), "2")) ==> Right(To(Seq("1"), 2))
+    }
   }
 }
