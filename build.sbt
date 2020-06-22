@@ -38,7 +38,7 @@ val settings = Seq(
   ),
   scalacOptions ++= (
     if (scalaVersion.value >= "2.13")
-      Nil
+      Seq("-Wunused:patvars")
     else
       Seq(
         "-Xfuture",

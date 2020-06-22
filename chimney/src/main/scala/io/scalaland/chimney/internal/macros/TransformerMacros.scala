@@ -397,8 +397,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
 
           resolveCoproductInstance(srcPrefixTree, instTpe, To, config)
             .map { instanceTree =>
-              val fn = freshTermName(instName)
-              Right(cq"$fn: $instTpe => $instanceTree")
+              Right(cq"_: $instTpe => $instanceTree")
             }
             .getOrElse {
               val instSymbol = instTpe.typeSymbol
@@ -420,8 +419,8 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
                     Seq(
                       CantFindCoproductInstanceTransformer(
                         instSymbol.fullName,
-                        From.typeSymbol.fullName.toString,
-                        To.typeSymbol.fullName.toString
+                        From.typeSymbol.fullName,
+                        To.typeSymbol.fullName
                       )
                     )
                   }
@@ -584,7 +583,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       } else {
         val errors = unresolvedTargets.flatMap { target =>
           accessorsMapping(target) match {
-            case AccessorResolution.Resolved(symbol: MethodSymbol, wasRenamed: Boolean) =>
+            case AccessorResolution.Resolved(symbol: MethodSymbol, _) =>
               erroredTargets(target) :+ MissingTransformer(
                 fieldName = target.name,
                 sourceFieldTypeName = symbol.resultTypeIn(From).typeSymbol.fullName,

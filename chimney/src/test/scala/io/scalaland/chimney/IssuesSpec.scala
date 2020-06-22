@@ -324,6 +324,43 @@ object IssuesSpec extends TestSuite {
       event.venue.into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
       (venue: internal.Venue).into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
     }
+
+    "fix issue #168" - {
+
+      "objects case" - {
+        sealed trait Version1
+        final case object Instance1 extends Version1
+        sealed trait Version2
+        final case object Instance2 extends Version2
+
+        val v1: Version1 = Instance1
+        val v2: Version2 = v1
+          .into[Version2]
+          .withCoproductInstance { (_: Instance1.type) =>
+            Instance2
+          }
+          .transform
+
+        v2 ==> Instance2
+      }
+
+      "classes case" - {
+        sealed trait Version1
+        final case class Instance1(p: Int) extends Version1
+        sealed trait Version2
+        final case class Instance2(p1: Int, p2: Int) extends Version2
+
+        val v1: Version1 = Instance1(10)
+        val v2: Version2 = v1
+          .into[Version2]
+          .withCoproductInstance { (i: Instance1) =>
+            Instance2(i.p / 2, i.p / 2)
+          }
+          .transform
+
+        v2 ==> Instance2(5, 5)
+      }
+    }
   }
 }
 
