@@ -584,7 +584,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       } else {
         val errors = unresolvedTargets.flatMap { target =>
           accessorsMapping(target) match {
-            case AccessorResolution.Resolved(symbol: MethodSymbol, wasRenamed: Boolean) =>
+            case AccessorResolution.Resolved(symbol: MethodSymbol, _) =>
               erroredTargets(target) :+ MissingTransformer(
                 fieldName = target.name,
                 sourceFieldTypeName = symbol.resultTypeIn(From).typeSymbol.fullName,
