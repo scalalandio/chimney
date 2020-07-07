@@ -2,6 +2,8 @@ package io.scalaland.chimney
 
 import _root_.cats.data._
 import _root_.cats.kernel.Semigroup
+import _root_.cats.Traverse
+import _root_.cats.instances.list._
 
 import scala.collection.compat._
 
@@ -15,9 +17,33 @@ trait CatsImplicits extends LowPriorityImplicits {
 
   implicit def TransformerFValidatedNelSupport[E]: TransformerFSupport[ValidatedNel[E, +*]] =
     TransformerFValidatedSupport[NonEmptyList[E]](implicitly)
+
+  implicit def TransformerFIorNecSupport[E]: TransformerFSupport[IorNec[E, +*]] =
+    TransformerFIorSupport[NonEmptyChain[E]](implicitly)
+
+  implicit def TransformerFIorNelSupport[E]: TransformerFSupport[IorNel[E, +*]] =
+    TransformerFIorSupport[NonEmptyList[E]](implicitly)
+
+  implicit def TransformerFIorNesSupport[E]: TransformerFSupport[IorNes[E, +*]] =
+    TransformerFIorSupport[NonEmptySet[E]](implicitly)
 }
 
 trait LowPriorityImplicits {
+
+  implicit def TransformerFIorSupport[EE: Semigroup]: TransformerFSupport[Ior[EE, +*]] =
+    new TransformerFSupport[Ior[EE, +*]] {
+      override def pure[A](value: A): Ior[EE, A] =
+        Ior.right(value)
+
+      override def product[A, B](fa: Ior[EE, A], fb: => Ior[EE, B]): Ior[EE, (A, B)] =
+        fa.flatMap(a => fb.map(b => (a, b)))
+
+      override def map[A, B](fa: Ior[EE, A], f: A => B): Ior[EE, B] =
+        fa.map(f)
+
+      override def traverse[M, A, B](it: Iterator[A], f: A => Ior[EE, B])(implicit fac: Factory[B, M]): Ior[EE, M] =
+        Traverse[List].traverse[Ior[EE, *], A, B](it.toList)(f).map(fac.fromSpecific(_))
+    }
 
   implicit def TransformerFValidatedSupport[EE: Semigroup]: TransformerFSupport[Validated[EE, +*]] =
     new TransformerFSupport[Validated[EE, +*]] {
