@@ -2,10 +2,10 @@ package io.scalaland.chimney
 
 import _root_.cats.data._
 import _root_.cats.kernel.Semigroup
-import _root_.cats.Traverse
-import _root_.cats.instances.list._
+import _root_.cats.{Apply, Eval}
 
 import scala.collection.compat._
+import scala.collection.compat.immutable.{LazyList => CompatLazyList}
 
 package object cats extends CatsImplicits
 
@@ -42,7 +42,11 @@ trait LowPriorityImplicits {
         fa.map(f)
 
       override def traverse[M, A, B](it: Iterator[A], f: A => Ior[EE, B])(implicit fac: Factory[B, M]): Ior[EE, M] =
-        Traverse[List].traverse[Ior[EE, *], A, B](it.toList)(f).map(fac.fromSpecific(_))
+        it.foldRight(Eval.always(pure(CompatLazyList.empty[B]))) { (next: A, acc: Eval[Ior[EE, CompatLazyList[B]]]) =>
+            Apply[Ior[EE, *]].map2Eval(f(next), acc)(_ #:: _)
+          }
+          .value
+          .map(fac.fromSpecific(_))
     }
 
   implicit def TransformerFValidatedSupport[EE: Semigroup]: TransformerFSupport[Validated[EE, +*]] =
