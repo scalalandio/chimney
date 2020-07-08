@@ -394,6 +394,18 @@ object IssuesSpec extends TestSuite {
         (Bar: Foo).transformIntoF[Option, Foo2] ==> Some(Bar2)
         (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
       }
+
+      "withCoproductInstanceF followed by withCoproductInstance" - {
+        implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
+          TransformerF
+            .define[Option, Foo, Foo2]
+            .withCoproductInstanceF((_: Bar.type) => Some(Bar2))
+            .withCoproductInstance((_: Baz.type) => Baz2)
+            .buildTransformer
+
+        (Bar: Foo).transformIntoF[Option, Foo2] ==> Some(Bar2)
+        (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
+      }
     }
   }
 }
