@@ -466,7 +466,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
             srcPrefixTree,
             From.typeSymbol,
             To,
-            config.wrapperType
+            None
           )
         }
       )
