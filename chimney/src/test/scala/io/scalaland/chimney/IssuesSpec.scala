@@ -361,6 +361,40 @@ object IssuesSpec extends TestSuite {
         v2 ==> Instance2(5, 5)
       }
     }
+
+    "fix issue #173" - {
+      sealed trait Foo
+      case object Bar extends Foo
+      case object Baz extends Foo
+
+      sealed trait Foo2
+      case object Bar2 extends Foo2
+      case object Baz2 extends Foo2
+
+      "withCoproductInstanceF twice" - {
+        implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
+          TransformerF
+            .define[Option, Foo, Foo2]
+            .withCoproductInstanceF((_: Bar.type) => Some(Bar2))
+            .withCoproductInstanceF((_: Baz.type) => Some(Baz2))
+            .buildTransformer
+
+        (Bar: Foo).transformIntoF[Option, Foo2] ==> Some(Bar2)
+        (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
+      }
+
+      "withCoproductInstance followed by withCoproductInstanceF" - {
+        implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
+          TransformerF
+            .define[Option, Foo, Foo2]
+            .withCoproductInstance((_: Bar.type) => Bar2)
+            .withCoproductInstanceF((_: Baz.type) => Some(Baz2))
+            .buildTransformer
+
+        (Bar: Foo).transformIntoF[Option, Foo2] ==> Some(Bar2)
+        (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
+      }
+    }
   }
 }
 
