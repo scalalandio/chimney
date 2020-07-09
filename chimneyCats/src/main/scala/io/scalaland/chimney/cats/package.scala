@@ -2,10 +2,8 @@ package io.scalaland.chimney
 
 import _root_.cats.data._
 import _root_.cats.kernel.Semigroup
-import _root_.cats.{Apply, Eval}
 
 import scala.collection.compat._
-import scala.collection.compat.immutable.{LazyList => CompatLazyList}
 
 package object cats extends CatsImplicits
 
@@ -41,12 +39,32 @@ trait LowPriorityImplicits {
       override def map[A, B](fa: Ior[EE, A], f: A => B): Ior[EE, B] =
         fa.map(f)
 
-      override def traverse[M, A, B](it: Iterator[A], f: A => Ior[EE, B])(implicit fac: Factory[B, M]): Ior[EE, M] =
-        it.foldRight(Eval.always(pure(CompatLazyList.empty[B]))) { (next: A, acc: Eval[Ior[EE, CompatLazyList[B]]]) =>
-            Apply[Ior[EE, *]].map2Eval(f(next), acc)(_ #:: _)
+      override def traverse[M, A, B](it: Iterator[A], f: A => Ior[EE, B])(implicit fac: Factory[B, M]): Ior[EE, M] = {
+        var leftSide: EE = null.asInstanceOf[EE]
+        val rightSide = fac.newBuilder
+        var isLeft = false
+
+        while (it.hasNext && !isLeft) {
+          f(it.next()) match {
+            case Ior.Left(a) =>
+              if (leftSide == null) leftSide = a
+              else leftSide = Semigroup[EE].combine(leftSide, a)
+              isLeft = true
+
+            case Ior.Right(b) =>
+              rightSide += b
+
+            case Ior.Both(a, b) =>
+              if (leftSide == null) leftSide = a
+              else leftSide = Semigroup[EE].combine(leftSide, a)
+              rightSide += b
           }
-          .value
-          .map(fac.fromSpecific(_))
+        }
+
+        if (isLeft) Ior.left(leftSide)
+        else if (leftSide != null) Ior.both(leftSide, rightSide.result())
+        else Ior.right(rightSide.result())
+      }
     }
 
   implicit def TransformerFValidatedSupport[EE: Semigroup]: TransformerFSupport[Validated[EE, +*]] =
