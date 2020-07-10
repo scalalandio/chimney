@@ -16,6 +16,11 @@ If you want to use it with Scala.js, you need to replace ``%%`` with ``%%%``.
 The module provides package ``io.scalaland.chimney.cats`` with all the goodies
 described here.
 
+.. important::
+
+  You need to import ``io.scalaland.chimney.cats._`` in order to support
+  the ``Validated`` and ``Ior`` datatypes for lifted transformers.
+
 .. _cats-validated:
 
 ``Validated`` support for lifted transformers
@@ -28,11 +33,6 @@ Through Chimney cats integration module, you obtain support for
 - ``cats.Semigroup`` implicit instance is available for chosen ``EE`` type
 
 Usual choice for ``EE`` is ``cats.data.NonEmptyChain[String]``.
-
-.. important::
-
-  You need to import ``io.scalaland.chimney.cats._`` in order to use support
-  for ``Validated`` type for lifted transformers.
 
 
 Let's look at the following example.
@@ -100,4 +100,106 @@ Now let's try to use lifted transformers defined above.
   //   )
   // )
 
+.. _cats-ior:
 
+``Ior`` support for lifted transformers
+---------------------------------------
+Like ``Validated[EE, +*]``, the Chimney cats integration module also supports 
+`Ior[EE, +*] <https://typelevel.org/cats/datatypes/ior.html>`_ where:
+
+- ``EE`` - type of an error channel
+- ``cats.Semigroup`` implicit instance is available for chosen ``EE`` type
+
+The usual choice for ``EE`` is ``cats.data.NonEmptyChain[String]`` (which has a 
+``Semigroup`` typeclass instance).
+
+Let's look at the following example:
+
+.. code-block:: scala
+
+  import io.scalaland.chimney.cats._
+  import cats.data.NonEmptyChain
+
+  case class RegistrationForm(email: String,
+                              username: String,
+                              password: String,
+                              age: String)
+
+  case class RegisteredUser(email: String,
+                            username: String,
+                            passwordHash: String,
+                            age: Int)
+
+  implicit val transformer: TransformerF[Ior[NonEmptyChain[String], +*], RegistrationForm, RegisteredUser] =
+    Transformer
+      .defineF[Ior[NonEmptyChain[String], +*], RegistrationForm, RegisteredUser]
+      .withFieldComputedF(
+        _.username,
+        form =>
+          if (form.username.contains(".")) Ior.both(NonEmptyChain(s"${form.username} . is deprecated"), form.username)
+          else Ior.right(form.username)
+      )
+      .withFieldComputedF(
+        _.email,
+        form => {
+          if (form.email.contains('@')) Ior.right(form.email)
+          else if (form.username.contains("."))
+            Ior.both(NonEmptyChain(s"${form.username} contains . which is deprecated"), form.email)
+          else Ior.left(NonEmptyChain(s"${form.username}'s email: does not contain '@' character"))
+        }
+      )
+      .withFieldComputed(_.passwordHash, form => hashpw(form.password))
+      .withFieldComputedF(
+        _.age,
+        form =>
+          form.age.toIntOption match {
+            case Some(value) if value >= 18 => Ior.right(value)
+            case Some(value) if value >= 10 => Ior.both(NonEmptyChain(s"${form.username}: quite young"), value)
+            case Some(_)                    => Ior.left(NonEmptyChain(s"${form.username}'s age: must be at least 18 years of age"))
+            case None                       => Ior.left(NonEmptyChain(s"${form.username}'s age: invalid number"))
+          }
+      )
+      .buildTransformer
+
+Now let's try to use lifted transformers defined above.
+
+.. code-block:: scala
+
+    Array(
+      RegistrationForm("john@example.com", "John.Doe", "s3cr3t", "10"), // Both
+      RegistrationForm("alice@example.com", "Alice", "s3cr3t", "19"),   // Right        
+      RegistrationForm("bob@example.com", "Bob", "s3cr3t", "21.5")      // Left
+    ).transformIntoF[Ior[NonEmptyChain[String], +*], List[RegisteredUser]]
+    // Left(
+    //  Chain(
+    //    "John.Doe . is deprecated",
+    //    "John.Doe: quite young",
+    //    "Bob's age: invalid number"
+    //  )
+    // )
+
+As you can see with the example above, we see that ``Ior`` accumulates data on the left side whenever it encounters ``Both`` or ``Right`` 
+and will stop accumulating when it encounters a ``Left``.  Let's look at another example:
+
+.. code-block:: scala
+
+    Array(
+      RegistrationForm("john@example.com", "John.Doe", "s3cr3t", "40"),
+      RegistrationForm("alice@example.com", "Alice", "s3cr3t", "17"),
+      RegistrationForm("bob@example.com", "Bob", "s3cr3t", "21")
+    ).transformIntoF[Ior[NonEmptyChain[String], +*], List[RegisteredUser]]
+
+    // Both(
+    //  Chain(
+    //    "John.Doe . is deprecated", 
+    //    "Alice: quite young"
+    //  ),
+    //  List(
+    //    RegisteredUser("john@example.com", "John.Doe", "...", 40), 
+    //    RegisteredUser("alice@example.com", "Alice", "...", 17), 
+    //    RegisteredUser("bob@example.com", "Bob", "...", 21)
+    //  )
+    // )
+
+In this example, we see that there are no critical errors (i.e. validation's returning only ``Left``) and we see that we end up with a 
+result with warnings (``Both``).
