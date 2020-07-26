@@ -1,6 +1,6 @@
 import scala.util.Properties._
 
-val scalaJSVersion = envOrElse("SCALAJS_VERSION", "1.0.1")
+val scalaJSVersion = envOrElse("SCALAJS_VERSION", "1.1.1")
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.6.1")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % scalaJSVersion)
