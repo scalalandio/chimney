@@ -1,17 +1,17 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 val versions = new {
-  val scalaVersion = "2.13.2"
+  val scala211 = "2.11.12"
+  val scala212 = "2.12.11"
+  val scala213 = "2.13.3"
 }
 
 val settings = Seq(
   version := "0.5.2",
-  scalaVersion := versions.scalaVersion,
+  scalaVersion := versions.scala213,
   crossScalaVersions :=
-    (if (scalaJSVersion.startsWith("1."))
-      Seq("2.12.11", "2.13.2")
-     else
-       Seq("2.11.12", "2.12.11", "2.13.2")),
+    (if (scalaJSVersion.startsWith("1.")) Nil else Seq(versions.scala211)) ++
+      Seq(versions.scala212, versions.scala213),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
     "-encoding", "UTF-8",
@@ -26,7 +26,6 @@ val settings = Seq(
     "-Xlint:doc-detached",
     "-Xlint:inaccessible",
     "-Xlint:infer-any",
-    "-Xlint:nullary-override",
     "-Xlint:nullary-unit",
     "-Xlint:option-implicit",
     "-Xlint:package-object-classes",
@@ -49,7 +48,8 @@ val settings = Seq(
         "-Ywarn-nullary-override",
         "-Ywarn-nullary-unit",
         "-Xlint:by-name-right-associative",
-        "-Xlint:unsound-match"
+        "-Xlint:unsound-match",
+        "-Xlint:nullary-override"
       )
     ),
   scalacOptions ++= (

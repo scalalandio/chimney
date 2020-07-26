@@ -167,7 +167,7 @@ object JavaBeansSpec extends TestSuite {
 
 case class CaseClassNoFlag(id: String, name: String)
 case class CaseClassWithFlagMethod(id: String, name: String) {
-  def flag(): Boolean = true
+  def flag: Boolean = true
 }
 
 case class CaseClassWithFlag(id: String, name: String, flag: Boolean)
