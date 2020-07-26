@@ -1,38 +1,39 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Cats integration &mdash; Chimney 0.5.2 documentation</title>
+  <title>Cats integration &mdash; Chimney 0.5.3 documentation</title>
   
-
-  
-  
-  
-  
-
-  
-  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
-  
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script type="text/javascript" src="../_static/jquery.js"></script>
-        <script type="text/javascript" src="../_static/underscore.js"></script>
-        <script type="text/javascript" src="../_static/doctools.js"></script>
-        <script type="text/javascript" src="../_static/language_data.js"></script>
-    
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-
-    
 
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Getting started with patchers" href="../patchers/getting-started.html" />
@@ -50,7 +51,7 @@
           
 
           
-            <a href="../index.html" class="icon icon-home"> Chimney
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> Chimney
           
 
           
@@ -60,7 +61,7 @@
             
             
               <div class="version">
-                0.5.2
+                0.5.3
               </div>
             
           
@@ -77,6 +78,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -101,6 +103,7 @@
 <li class="toctree-l1"><a class="reference internal" href="lifted-transformers.html">Lifted transformers</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Cats integration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#validated-support-for-lifted-transformers"><code class="docutils literal notranslate"><span class="pre">Validated</span></code> support for lifted transformers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ior-support-for-lifted-transformers"><code class="docutils literal notranslate"><span class="pre">Ior</span></code> support for lifted transformers</a></li>
 </ul>
 </li>
 </ul>
@@ -114,6 +117,7 @@
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -152,7 +156,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../index.html">Docs</a> &raquo;</li>
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Cats integration</li>
     
@@ -175,11 +179,16 @@
 <span id="id1"></span><h1>Cats integration<a class="headerlink" href="#cats-integration" title="Permalink to this headline">¶</a></h1>
 <p>Chimney provides <a class="reference external" href="https://typelevel.org/cats">Cats</a> library integration module.
 To include it to your SBT project, add the following line to your <code class="docutils literal notranslate"><span class="pre">build.sbt</span></code>:</p>
-<pre class="literal-block">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney-cats&quot; % &quot;0.5.2&quot;</pre>
+<pre class="literal-block">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney-cats&quot; % &quot;0.5.3&quot;</pre>
 <p>The module is released for Scala 2.11.x, 2.12.x and 2.13.x and cats 2.0.0.
 If you want to use it with Scala.js, you need to replace <code class="docutils literal notranslate"><span class="pre">%%</span></code> with <code class="docutils literal notranslate"><span class="pre">%%%</span></code>.</p>
 <p>The module provides package <code class="docutils literal notranslate"><span class="pre">io.scalaland.chimney.cats</span></code> with all the goodies
 described here.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>You need to import <code class="docutils literal notranslate"><span class="pre">io.scalaland.chimney.cats._</span></code> in order to support
+the <code class="docutils literal notranslate"><span class="pre">Validated</span></code> and <code class="docutils literal notranslate"><span class="pre">Ior</span></code> datatypes for lifted transformers.</p>
+</div>
 <div class="section" id="validated-support-for-lifted-transformers">
 <span id="cats-validated"></span><h2><code class="docutils literal notranslate"><span class="pre">Validated</span></code> support for lifted transformers<a class="headerlink" href="#validated-support-for-lifted-transformers" title="Permalink to this headline">¶</a></h2>
 <p>Through Chimney cats integration module, you obtain support for
@@ -189,11 +198,6 @@ described here.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">cats.Semigroup</span></code> implicit instance is available for chosen <code class="docutils literal notranslate"><span class="pre">EE</span></code> type</p></li>
 </ul>
 <p>Usual choice for <code class="docutils literal notranslate"><span class="pre">EE</span></code> is <code class="docutils literal notranslate"><span class="pre">cats.data.NonEmptyChain[String]</span></code>.</p>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>You need to import <code class="docutils literal notranslate"><span class="pre">io.scalaland.chimney.cats._</span></code> in order to use support
-for <code class="docutils literal notranslate"><span class="pre">Validated</span></code> type for lifted transformers.</p>
-</div>
 <p>Let’s look at the following example.</p>
 <div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="nn">io.scalaland.chimney.cats._</span>
 <span class="k">import</span> <span class="nn">cats.data.</span><span class="o">{</span><span class="nc">NonEmptyChain</span><span class="o">,</span> <span class="nc">Validated</span><span class="o">}</span>
@@ -256,6 +260,101 @@ for <code class="docutils literal notranslate"><span class="pre">Validated</span
 </pre></div>
 </div>
 </div>
+<div class="section" id="ior-support-for-lifted-transformers">
+<span id="cats-ior"></span><h2><code class="docutils literal notranslate"><span class="pre">Ior</span></code> support for lifted transformers<a class="headerlink" href="#ior-support-for-lifted-transformers" title="Permalink to this headline">¶</a></h2>
+<p>Like <code class="docutils literal notranslate"><span class="pre">Validated[EE,</span> <span class="pre">+*]</span></code>, the Chimney cats integration module also supports
+<a class="reference external" href="https://typelevel.org/cats/datatypes/ior.html">Ior[EE, +*]</a> where:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">EE</span></code> - type of an error channel</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cats.Semigroup</span></code> implicit instance is available for chosen <code class="docutils literal notranslate"><span class="pre">EE</span></code> type</p></li>
+</ul>
+<p>The usual choice for <code class="docutils literal notranslate"><span class="pre">EE</span></code> is <code class="docutils literal notranslate"><span class="pre">cats.data.NonEmptyChain[String]</span></code> (which has a
+<code class="docutils literal notranslate"><span class="pre">Semigroup</span></code> typeclass instance).</p>
+<p>Let’s look at the following example:</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="nn">io.scalaland.chimney.cats._</span>
+<span class="k">import</span> <span class="nn">cats.data.NonEmptyChain</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">RegistrationForm</span><span class="o">(</span><span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span>
+                            <span class="n">username</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span>
+                            <span class="n">password</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span>
+                            <span class="n">age</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">RegisteredUser</span><span class="o">(</span><span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span>
+                          <span class="n">username</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span>
+                          <span class="n">passwordHash</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span>
+                          <span class="n">age</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+
+<span class="k">implicit</span> <span class="k">val</span> <span class="n">transformer</span><span class="k">:</span> <span class="kt">TransformerF</span><span class="o">[</span><span class="kt">Ior</span><span class="o">[</span><span class="kt">NonEmptyChain</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span><span class="p">,</span> <span class="kt">+*</span><span class="o">]</span><span class="p">,</span> <span class="kt">RegistrationForm</span><span class="p">,</span> <span class="kt">RegisteredUser</span><span class="o">]</span> <span class="k">=</span>
+  <span class="nc">Transformer</span>
+    <span class="o">.</span><span class="n">defineF</span><span class="o">[</span><span class="kt">Ior</span><span class="o">[</span><span class="kt">NonEmptyChain</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span><span class="p">,</span> <span class="kt">+*</span><span class="o">]</span><span class="p">,</span> <span class="kt">RegistrationForm</span><span class="p">,</span> <span class="kt">RegisteredUser</span><span class="o">]</span>
+    <span class="o">.</span><span class="n">withFieldComputedF</span><span class="o">(</span>
+      <span class="k">_</span><span class="o">.</span><span class="n">username</span><span class="o">,</span>
+      <span class="n">form</span> <span class="k">=&gt;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">form</span><span class="o">.</span><span class="n">username</span><span class="o">.</span><span class="n">contains</span><span class="o">(</span><span class="s">&quot;.&quot;</span><span class="o">))</span> <span class="nc">Ior</span><span class="o">.</span><span class="n">both</span><span class="o">(</span><span class="nc">NonEmptyChain</span><span class="o">(</span><span class="s">s&quot;</span><span class="si">${</span><span class="n">form</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s"> . is deprecated&quot;</span><span class="o">),</span> <span class="n">form</span><span class="o">.</span><span class="n">username</span><span class="o">)</span>
+        <span class="k">else</span> <span class="nc">Ior</span><span class="o">.</span><span class="n">right</span><span class="o">(</span><span class="n">form</span><span class="o">.</span><span class="n">username</span><span class="o">)</span>
+    <span class="o">)</span>
+    <span class="o">.</span><span class="n">withFieldComputedF</span><span class="o">(</span>
+      <span class="k">_</span><span class="o">.</span><span class="n">email</span><span class="o">,</span>
+      <span class="n">form</span> <span class="k">=&gt;</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">form</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">contains</span><span class="o">(</span><span class="sc">&#39;@&#39;</span><span class="o">))</span> <span class="nc">Ior</span><span class="o">.</span><span class="n">right</span><span class="o">(</span><span class="n">form</span><span class="o">.</span><span class="n">email</span><span class="o">)</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">form</span><span class="o">.</span><span class="n">username</span><span class="o">.</span><span class="n">contains</span><span class="o">(</span><span class="s">&quot;.&quot;</span><span class="o">))</span>
+          <span class="nc">Ior</span><span class="o">.</span><span class="n">both</span><span class="o">(</span><span class="nc">NonEmptyChain</span><span class="o">(</span><span class="s">s&quot;</span><span class="si">${</span><span class="n">form</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s"> contains . which is deprecated&quot;</span><span class="o">),</span> <span class="n">form</span><span class="o">.</span><span class="n">email</span><span class="o">)</span>
+        <span class="k">else</span> <span class="nc">Ior</span><span class="o">.</span><span class="n">left</span><span class="o">(</span><span class="nc">NonEmptyChain</span><span class="o">(</span><span class="s">s&quot;</span><span class="si">${</span><span class="n">form</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s">&#39;s email: does not contain &#39;@&#39; character&quot;</span><span class="o">))</span>
+      <span class="o">}</span>
+    <span class="o">)</span>
+    <span class="o">.</span><span class="n">withFieldComputed</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">passwordHash</span><span class="o">,</span> <span class="n">form</span> <span class="k">=&gt;</span> <span class="n">hashpw</span><span class="o">(</span><span class="n">form</span><span class="o">.</span><span class="n">password</span><span class="o">))</span>
+    <span class="o">.</span><span class="n">withFieldComputedF</span><span class="o">(</span>
+      <span class="k">_</span><span class="o">.</span><span class="n">age</span><span class="o">,</span>
+      <span class="n">form</span> <span class="k">=&gt;</span>
+        <span class="n">form</span><span class="o">.</span><span class="n">age</span><span class="o">.</span><span class="n">toIntOption</span> <span class="k">match</span> <span class="o">{</span>
+          <span class="k">case</span> <span class="nc">Some</span><span class="o">(</span><span class="n">value</span><span class="o">)</span> <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;=</span> <span class="mi">18</span> <span class="k">=&gt;</span> <span class="nc">Ior</span><span class="o">.</span><span class="n">right</span><span class="o">(</span><span class="n">value</span><span class="o">)</span>
+          <span class="k">case</span> <span class="nc">Some</span><span class="o">(</span><span class="n">value</span><span class="o">)</span> <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;=</span> <span class="mi">10</span> <span class="k">=&gt;</span> <span class="nc">Ior</span><span class="o">.</span><span class="n">both</span><span class="o">(</span><span class="nc">NonEmptyChain</span><span class="o">(</span><span class="s">s&quot;</span><span class="si">${</span><span class="n">form</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s">: quite young&quot;</span><span class="o">),</span> <span class="n">value</span><span class="o">)</span>
+          <span class="k">case</span> <span class="nc">Some</span><span class="o">(</span><span class="k">_</span><span class="o">)</span>                    <span class="k">=&gt;</span> <span class="nc">Ior</span><span class="o">.</span><span class="n">left</span><span class="o">(</span><span class="nc">NonEmptyChain</span><span class="o">(</span><span class="s">s&quot;</span><span class="si">${</span><span class="n">form</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s">&#39;s age: must be at least 18 years of age&quot;</span><span class="o">))</span>
+          <span class="k">case</span> <span class="nc">None</span>                       <span class="k">=&gt;</span> <span class="nc">Ior</span><span class="o">.</span><span class="n">left</span><span class="o">(</span><span class="nc">NonEmptyChain</span><span class="o">(</span><span class="s">s&quot;</span><span class="si">${</span><span class="n">form</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s">&#39;s age: invalid number&quot;</span><span class="o">))</span>
+        <span class="o">}</span>
+    <span class="o">)</span>
+    <span class="o">.</span><span class="n">buildTransformer</span>
+</pre></div>
+</div>
+<p>Now let’s try to use lifted transformers defined above.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="nc">Array</span><span class="o">(</span>
+  <span class="nc">RegistrationForm</span><span class="o">(</span><span class="s">&quot;john@example.com&quot;</span><span class="o">,</span> <span class="s">&quot;John.Doe&quot;</span><span class="o">,</span> <span class="s">&quot;s3cr3t&quot;</span><span class="o">,</span> <span class="s">&quot;10&quot;</span><span class="o">),</span> <span class="c1">// Both</span>
+  <span class="nc">RegistrationForm</span><span class="o">(</span><span class="s">&quot;alice@example.com&quot;</span><span class="o">,</span> <span class="s">&quot;Alice&quot;</span><span class="o">,</span> <span class="s">&quot;s3cr3t&quot;</span><span class="o">,</span> <span class="s">&quot;19&quot;</span><span class="o">),</span>   <span class="c1">// Right</span>
+  <span class="nc">RegistrationForm</span><span class="o">(</span><span class="s">&quot;bob@example.com&quot;</span><span class="o">,</span> <span class="s">&quot;Bob&quot;</span><span class="o">,</span> <span class="s">&quot;s3cr3t&quot;</span><span class="o">,</span> <span class="s">&quot;21.5&quot;</span><span class="o">)</span>      <span class="c1">// Left</span>
+<span class="o">).</span><span class="n">transformIntoF</span><span class="o">[</span><span class="kt">Ior</span><span class="o">[</span><span class="kt">NonEmptyChain</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span><span class="p">,</span> <span class="kt">+*</span><span class="o">]</span><span class="p">,</span> <span class="kt">List</span><span class="o">[</span><span class="kt">RegisteredUser</span><span class="o">]]</span>
+<span class="c1">// Left(</span>
+<span class="c1">//  Chain(</span>
+<span class="c1">//    &quot;John.Doe . is deprecated&quot;,</span>
+<span class="c1">//    &quot;John.Doe: quite young&quot;,</span>
+<span class="c1">//    &quot;Bob&#39;s age: invalid number&quot;</span>
+<span class="c1">//  )</span>
+<span class="c1">// )</span>
+</pre></div>
+</div>
+<p>As you can see with the example above, we see that <code class="docutils literal notranslate"><span class="pre">Ior</span></code> accumulates data on the left side whenever it encounters <code class="docutils literal notranslate"><span class="pre">Both</span></code> or <code class="docutils literal notranslate"><span class="pre">Right</span></code>
+and will stop accumulating when it encounters a <code class="docutils literal notranslate"><span class="pre">Left</span></code>.  Let’s look at another example:</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="nc">Array</span><span class="o">(</span>
+  <span class="nc">RegistrationForm</span><span class="o">(</span><span class="s">&quot;john@example.com&quot;</span><span class="o">,</span> <span class="s">&quot;John.Doe&quot;</span><span class="o">,</span> <span class="s">&quot;s3cr3t&quot;</span><span class="o">,</span> <span class="s">&quot;40&quot;</span><span class="o">),</span>
+  <span class="nc">RegistrationForm</span><span class="o">(</span><span class="s">&quot;alice@example.com&quot;</span><span class="o">,</span> <span class="s">&quot;Alice&quot;</span><span class="o">,</span> <span class="s">&quot;s3cr3t&quot;</span><span class="o">,</span> <span class="s">&quot;17&quot;</span><span class="o">),</span>
+  <span class="nc">RegistrationForm</span><span class="o">(</span><span class="s">&quot;bob@example.com&quot;</span><span class="o">,</span> <span class="s">&quot;Bob&quot;</span><span class="o">,</span> <span class="s">&quot;s3cr3t&quot;</span><span class="o">,</span> <span class="s">&quot;21&quot;</span><span class="o">)</span>
+<span class="o">).</span><span class="n">transformIntoF</span><span class="o">[</span><span class="kt">Ior</span><span class="o">[</span><span class="kt">NonEmptyChain</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span><span class="p">,</span> <span class="kt">+*</span><span class="o">]</span><span class="p">,</span> <span class="kt">List</span><span class="o">[</span><span class="kt">RegisteredUser</span><span class="o">]]</span>
+
+<span class="c1">// Both(</span>
+<span class="c1">//  Chain(</span>
+<span class="c1">//    &quot;John.Doe . is deprecated&quot;,</span>
+<span class="c1">//    &quot;Alice: quite young&quot;</span>
+<span class="c1">//  ),</span>
+<span class="c1">//  List(</span>
+<span class="c1">//    RegisteredUser(&quot;john@example.com&quot;, &quot;John.Doe&quot;, &quot;...&quot;, 40),</span>
+<span class="c1">//    RegisteredUser(&quot;alice@example.com&quot;, &quot;Alice&quot;, &quot;...&quot;, 17),</span>
+<span class="c1">//    RegisteredUser(&quot;bob@example.com&quot;, &quot;Bob&quot;, &quot;...&quot;, 21)</span>
+<span class="c1">//  )</span>
+<span class="c1">// )</span>
+</pre></div>
+</div>
+<p>In this example, we see that there are no critical errors (i.e. validation’s returning only <code class="docutils literal notranslate"><span class="pre">Left</span></code>) and we see that we end up with a
+result with warnings (<code class="docutils literal notranslate"><span class="pre">Both</span></code>).</p>
+</div>
 </div>
 
 
@@ -278,11 +377,19 @@ for <code class="docutils literal notranslate"><span class="pre">Validated</span
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2017-2020, scalaland.io
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -293,7 +400,6 @@ for <code class="docutils literal notranslate"><span class="pre">Validated</span
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {
