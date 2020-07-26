@@ -19,6 +19,8 @@ jobs:
         exclude:
           - scala: 2.11.12
             scalajs: 1.1.1
+          - scala: 2.13.3
+            scalajs: 0.6.32
       fail-fast: false
 
     steps:
