@@ -45,7 +45,7 @@ object CatsIorSpec extends TestSuite {
 
         "2-arg (accumulates errors)" - {
           okForm
-            .into[Person]
+            .intoF[IorNec[String, +*], Person]
             .withFieldComputedF(_.age, _ => Ior.both(NonEmptyChain("age warning"), 10))
             .withFieldComputedF(_.height, _ => Ior.both(NonEmptyChain("height warning"), 100.0))
             .transform ==> Ior.both(NonEmptyChain("age warning", "height warning"), Person("John", 10, 100.0))
