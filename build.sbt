@@ -7,7 +7,7 @@ val versions = new {
 }
 
 val settings = Seq(
-  version := "0.5.2",
+  version := "0.5.3",
   scalaVersion := versions.scala213,
   crossScalaVersions :=
     (if (scalaJSVersion.startsWith("1.")) Nil else Seq(versions.scala211)) ++
