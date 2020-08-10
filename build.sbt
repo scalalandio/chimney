@@ -75,8 +75,8 @@ lazy val root = project
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(noPublishSettings: _*)
-  .aggregate(chimneyJVM, chimneyJS, chimneyCatsJVM, chimneyCatsJS)
-  .dependsOn(chimneyJVM, chimneyJS, chimneyCatsJVM, chimneyCatsJS)
+  .aggregate(chimneyJVM, chimneyJS, chimneyCatsJVM, chimneyCatsJS, customRulesJVM, customRulesJS)
+  .dependsOn(chimneyJVM, chimneyJS, chimneyCatsJVM, chimneyCatsJS, customRulesJVM, customRulesJS)
   .enablePlugins(SphinxPlugin, GhpagesPlugin)
   .settings(
     Sphinx / version := version.value,
@@ -133,6 +133,22 @@ lazy val protos = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 lazy val protosJVM = protos.jvm
 lazy val protosJS = protos.js
 lazy val protosNative = protos.native
+
+lazy val customRules = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
+  .dependsOn(chimney % "test->test;compile->compile")
+  .settings(
+    moduleName := "chimney-custom-rules",
+    name := "chimney-custom-rules",
+    testFrameworks += new TestFramework("utest.runner.Framework")
+  )
+  .settings(settings: _*)
+  .settings(dependencies: _*)
+  .settings(noPublishSettings: _*)
+
+lazy val customRulesJVM = customRules.jvm
+lazy val customRulesJS = customRules.js
+lazy val customRulesNative = customRules.native
 
 
 lazy val publishSettings = Seq(

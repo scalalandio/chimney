@@ -114,7 +114,17 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
   def deriveTransformerTree(
       srcPrefixTree: Tree,
       config: TransformerConfig
-  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+  )(From: Type, To: Type): TransformationResult = {
+    config.customRules.find(rule => rule.fromCondition(From) && rule.toCondition(To)) match {
+      case Some(rule) => rule.derivation(srcPrefixTree, config)(From, To)
+      case None       => deriveDefaultTransformerTree(srcPrefixTree, config)(From, To)
+    }
+  }
+
+  def deriveDefaultTransformerTree(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): TransformationResult = {
     if (isSubtype(From, To)) {
       expandSubtypes(srcPrefixTree, config)
     } else if (fromValueClassToType(From, To)) {
@@ -711,19 +721,19 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       )
     }
 
-  private def freshTermName(srcPrefixTree: Tree): c.universe.TermName = {
+  protected def freshTermName(srcPrefixTree: Tree): c.universe.TermName = {
     freshTermName(toFieldName(srcPrefixTree))
   }
 
-  private def freshTermName(tpe: Type): c.universe.TermName = {
+  protected def freshTermName(tpe: Type): c.universe.TermName = {
     freshTermName(tpe.typeSymbol.name.decodedName.toString.toLowerCase)
   }
 
-  private def freshTermName(prefix: String): c.universe.TermName = {
+  protected def freshTermName(prefix: String): c.universe.TermName = {
     c.internal.reificationSupport.freshTermName(prefix.toLowerCase + "$")
   }
 
-  private def toFieldName(srcPrefixTree: Tree): String = {
+  protected def toFieldName(srcPrefixTree: Tree): String = {
     // undo the encoding of freshTermName
     srcPrefixTree
       .toString()

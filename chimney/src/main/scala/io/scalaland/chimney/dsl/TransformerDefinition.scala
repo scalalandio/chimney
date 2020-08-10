@@ -13,7 +13,7 @@ import scala.language.experimental.macros
   * @tparam To   type of output value
   * @tparam C    type-level encoded config
   */
-final class TransformerDefinition[From, To, C <: TransformerCfg](
+class TransformerDefinition[From, To, C <: TransformerCfg](
     val overrides: Map[String, Any],
     val instances: Map[(String, String), Any]
 ) extends ConfigDsl[Lambda[`C1 <: TransformerCfg` => TransformerDefinition[From, To, C1]], C] {

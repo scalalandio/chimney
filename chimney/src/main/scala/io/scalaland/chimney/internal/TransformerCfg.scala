@@ -41,6 +41,16 @@ trait TransformerConfiguration extends MacroUtils {
     case class RenamedFrom(sourceName: String) extends FieldOverride(false)
   }
 
+  type TransformationResult = Either[Seq[DerivationError], Tree]
+
+  type TransformationDerivation = (Tree, TransformerConfig) => (Type, Type) => TransformationResult
+
+  case class TransformationRule(
+      fromCondition: Type => Boolean,
+      toCondition: Type => Boolean,
+      derivation: TransformationDerivation
+  )
+
   case class TransformerConfig(
       processDefaultValues: Boolean = true,
       enableBeanGetters: Boolean = false,
@@ -54,7 +64,8 @@ trait TransformerConfiguration extends MacroUtils {
       definitionScope: Option[(Type, Type)] = None,
       wrapperType: Option[Type] = None,
       wrapperSupportInstance: Tree = EmptyTree,
-      coproductInstancesF: Set[(Symbol, Type)] = Set.empty // pair: inst type, target type
+      coproductInstancesF: Set[(Symbol, Type)] = Set.empty, // pair: inst type, target type,
+      customRules: List[TransformationRule] = List.empty
   ) {
 
     def rec: TransformerConfig =
@@ -107,7 +118,7 @@ trait TransformerConfiguration extends MacroUtils {
     import CfgTpeConstructors._
 
     if (cfgTpe =:= emptyT) {
-      TransformerConfig()
+      defaultConfig
     } else if (cfgTpe.typeConstructor =:= disableDefaultValuesT) {
       captureTransformerConfig(cfgTpe.typeArgs.head).copy(processDefaultValues = false)
     } else if (cfgTpe.typeConstructor =:= enableBeanGettersT) {
@@ -156,5 +167,9 @@ trait TransformerConfiguration extends MacroUtils {
       c.abort(c.enclosingPosition, "Bad internal transformer config type shape!")
       // $COVERAGE-ON$
     }
+  }
+
+  def defaultConfig: TransformerConfig = {
+    TransformerConfig()
   }
 }

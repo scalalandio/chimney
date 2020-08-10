@@ -39,7 +39,7 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
   def deriveTransformerImpl[From: WeakTypeTag, To: WeakTypeTag]: c.Expr[chimney.Transformer[From, To]] = {
     c.Expr[chimney.Transformer[From, To]](
       genTransformer[From, To](
-        TransformerConfig(
+        defaultConfig.copy(
           definitionScope = Some((weakTypeOf[From], weakTypeOf[To]))
         )
       )
@@ -53,7 +53,7 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
   ): c.Expr[TransformerF[F, From, To]] = {
     c.Expr[TransformerF[F, From, To]](
       genTransformer[From, To](
-        TransformerConfig(
+        defaultConfig.copy(
           definitionScope = Some((weakTypeOf[From], weakTypeOf[To])),
           wrapperType = Some(F.tpe),
           wrapperSupportInstance = tfs.tree
