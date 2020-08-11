@@ -407,6 +407,19 @@ object IssuesSpec extends TestSuite {
         (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
       }
     }
+
+    "fix issue #177" - {
+      case class Foo(x: Int)
+      case class Bar(x: Int)
+      case class FooW(a: Option[Foo])
+      case class BarW(a: Option[Bar])
+
+      // this should be used and shouldn't trip the unused warning
+      implicit val fooToBarTransformerF: TransformerF[Option, Foo, Bar] =
+        f => Some(Bar(f.x + 10))
+
+      FooW(Some(Foo(1))).transformIntoF[Option, BarW] ==> Some(BarW(Some(Bar(11))))
+    }
   }
 }
 

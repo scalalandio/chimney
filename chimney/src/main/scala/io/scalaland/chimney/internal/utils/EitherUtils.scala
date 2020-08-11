@@ -47,13 +47,6 @@ trait EitherUtils {
       }
     }
 
-    def rightOrElse[A1 >: A, B1 >: B](or: => Either[A1, B1]): Either[A1, B1] = {
-      either match {
-        case Right(_) => either
-        case _        => or
-      }
-    }
-
   }
 
   implicit class MapOps[K, E, V](map: Map[K, Either[E, V]]) {

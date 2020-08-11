@@ -644,15 +644,8 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
         case (None, Some(localImplicitTree)) =>
           Right(TransformerBodyTree(localImplicitTree.callTransform(srcPrefixTree), isWrapped = false))
         case (None, None) =>
-          def deriveTransformer =
-            deriveTransformerTree(srcPrefixTree, recConfigNoWrapper)(From, To)
-              .mapRight(tree => TransformerBodyTree(tree, isWrapped = false))
-
-          def deriveTransformerF =
-            deriveTransformerTree(srcPrefixTree, recConfig)(From, To)
-              .mapRight(tree => TransformerBodyTree(tree, isWrapped = true))
-
-          deriveTransformer rightOrElse deriveTransformerF
+          deriveTransformerTree(srcPrefixTree, recConfig)(From, To)
+            .mapRight(tree => TransformerBodyTree(tree, isWrapped = true))
       }
     } else {
       expandTransformerTree(srcPrefixTree, recConfig)(From, To)
