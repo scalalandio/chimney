@@ -6,5 +6,6 @@ project/project
 project/target
 .bloop
 .metals
+.vscode
 project/metals.sbt
 docs/build
