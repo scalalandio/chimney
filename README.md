@@ -45,6 +45,7 @@ rules and transform your objects with as little boilerplate as possible.
 
 ```scala
 import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.derivation.auto._
 
 val event = command.into[CoffeeMade]
   .withFieldComputed(_.at, _ => ZonedDateTime.now)
