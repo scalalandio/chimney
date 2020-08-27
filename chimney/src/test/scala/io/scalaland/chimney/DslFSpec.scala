@@ -1,6 +1,7 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.derivation.auto._
 import io.scalaland.chimney.examples._
 import io.scalaland.chimney.examples.trip._
 import io.scalaland.chimney.internal.utils.EitherUtils._

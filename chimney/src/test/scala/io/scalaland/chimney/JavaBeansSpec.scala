@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import utest._
 import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.derivation.auto._
 
 object JavaBeansSpec extends TestSuite {
 

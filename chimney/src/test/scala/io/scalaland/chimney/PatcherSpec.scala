@@ -1,6 +1,7 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.derivation.auto._
 import utest._
 
 object PatcherSpec extends TestSuite {

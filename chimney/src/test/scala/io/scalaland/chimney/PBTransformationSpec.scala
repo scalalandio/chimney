@@ -8,6 +8,7 @@ import io.scalaland.chimney.examples.pb
 object PBTransformationSpec extends TestSuite {
 
   import dsl._
+  import derivation.auto._
 
   val tests = Tests {
 

@@ -1,6 +1,7 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.derivation.auto._
 import io.scalaland.chimney.examples._
 import utest._
 
@@ -915,7 +916,7 @@ object DslSpec extends TestSuite {
       }
 
       "generated automatically" - {
-        implicit def fooToBarTransformer: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
+        implicit def fooToBarTransformer: Transformer[Foo, Bar] = derive[Foo, Bar]
 
         Foo(Some(Foo(None))).transformInto[Bar] ==> Bar(Some(Bar(None)))
       }
@@ -926,7 +927,7 @@ object DslSpec extends TestSuite {
         case class Bar1(x: Int, foo: Baz[Bar1])
         case class Bar2(foo: Baz[Bar2])
 
-        implicit def bar1ToBar2Transformer: Transformer[Bar1, Bar2] = Transformer.derive[Bar1, Bar2]
+        implicit def bar1ToBar2Transformer: Transformer[Bar1, Bar2] = derive[Bar1, Bar2]
 
         Bar1(1, Baz(Some(Bar1(2, Baz(None))))).transformInto[Bar2] ==> Bar2(Baz(Some(Bar2(Baz(None)))))
       }

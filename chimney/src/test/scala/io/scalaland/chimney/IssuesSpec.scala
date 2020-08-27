@@ -5,6 +5,7 @@ import utest._
 object IssuesSpec extends TestSuite {
 
   import dsl._
+  import derivation.auto._
 
   // Compilation fails when moved inside the Tests block
   object Issue108 {
@@ -179,7 +180,7 @@ object IssuesSpec extends TestSuite {
       "fix 'wrong forward reference' when assigning .derive to local transformer instance" - {
         case class Bar(a: String, b: Int)
 
-        implicit val fooBarTransformer: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
+        implicit val fooBarTransformer: Transformer[Foo, Bar] = derive[Foo, Bar]
 
         Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1)
       }
@@ -189,7 +190,7 @@ object IssuesSpec extends TestSuite {
 
         object TransformerInstances {
           implicit val fooBarTransformer: Transformer[Foo, Bar] =
-            Transformer.derive[Foo, Bar]
+            derive[Foo, Bar]
         }
 
         import TransformerInstances._
