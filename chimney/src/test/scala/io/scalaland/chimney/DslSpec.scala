@@ -912,6 +912,38 @@ object DslSpec extends TestSuite {
         Bar1(1, Baz(Some(Bar1(2, Baz(None))))).transformInto[Bar2] ==> Bar2(Baz(Some(Bar2(Baz(None)))))
       }
     }
+
+    "support macro dependent transformers" - {
+      "Option[List[A]] -> List[B]" - {
+        implicit def optListT[A, B](implicit underlying: Transformer[A, B]): Transformer[Option[List[A]], List[B]] =
+          _.toList.flatten.map(underlying.transform)
+
+        case class ClassA(a: Option[List[ClassAA]])
+        case class ClassB(a: List[ClassBB])
+        case class ClassC(a: List[ClassBB], other: String)
+        case class ClassD(a: List[ClassBB], other: String)
+
+        case class ClassAA(s: String)
+
+        case class ClassBB(s: String)
+
+        ClassA(None).transformInto[ClassB] ==> ClassB(Nil)
+
+        ClassA(Some(List.empty)).transformInto[ClassB] ==> ClassB(Nil)
+
+        ClassA(Some(List(ClassAA("l")))).transformInto[ClassB] ==> ClassB(List(ClassBB("l")))
+
+        ClassA(Some(List(ClassAA("l")))).into[ClassC].withFieldConst(_.other, "other").transform ==> ClassC(
+          List(ClassBB("l")),
+          "other"
+        )
+
+        implicit val defined: Transformer[ClassA, ClassD] =
+          Transformer.define[ClassA, ClassD].withFieldConst(_.other, "another").buildTransformer
+
+        ClassA(Some(List(ClassAA("l")))).transformInto[ClassD] ==> ClassD(List(ClassBB("l")), "another")
+      }
+    }
   }
 }
 
