@@ -684,13 +684,26 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       silent = true,
       mode = c.TYPEmode,
       withImplicitViewsDisabled = true,
-      withMacrosDisabled = true
+      withMacrosDisabled = false
     )
 
     scala.util
-      .Try(c.inferImplicitValue(tpeTree.tpe, silent = true, withMacrosDisabled = true))
+      .Try(c.inferImplicitValue(tpeTree.tpe, silent = true, withMacrosDisabled = false))
       .toOption
-      .filterNot(_ == EmptyTree)
+      .filterNot { tree =>
+        tree == EmptyTree ||
+        isDeriving(tree)
+      }
+  }
+
+  private def isDeriving(tree: Tree): Boolean = {
+    tree match {
+      case TypeApply(Select(qualifier, name), _) =>
+        qualifier.tpe =:= weakTypeOf[io.scalaland.chimney.Transformer.type] && name.toString == "derive"
+      case Apply(TypeApply(Select(qualifier, name), _), _) =>
+        qualifier.tpe =:= weakTypeOf[io.scalaland.chimney.TransformerF.type] && name.toString == "derive"
+      case _ => false
+    }
   }
 
   private def notSupportedDerivation(
