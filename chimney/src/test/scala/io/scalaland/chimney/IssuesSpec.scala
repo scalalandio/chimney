@@ -409,16 +409,45 @@ object IssuesSpec extends TestSuite {
     }
 
     "fix issue #177" - {
-      case class Foo(x: Int)
-      case class Bar(x: Int)
-      case class FooW(a: Option[Foo])
-      case class BarW(a: Option[Bar])
 
-      // this should be used and shouldn't trip the unused warning
-      implicit val fooToBarTransformerF: TransformerF[Option, Foo, Bar] =
-        f => Some(Bar(f.x + 10))
+      "case 1" - {
+        case class Foo(x: Int)
+        case class Bar(x: Int)
+        case class FooW(a: Option[Foo])
+        case class BarW(a: Option[Bar])
 
-      FooW(Some(Foo(1))).transformIntoF[Option, BarW] ==> Some(BarW(Some(Bar(11))))
+        // this should be used and shouldn't trip the unused warning
+        implicit val fooToBarTransformerF: TransformerF[Option, Foo, Bar] =
+          f => Some(Bar(f.x + 10))
+
+        FooW(Some(Foo(1))).transformIntoF[Option, BarW] ==> Some(BarW(Some(Bar(11))))
+      }
+
+      "case 2" - {
+        case class Foo(x: Int, y: String)
+
+        sealed abstract case class Bar(x: Int, y: String)
+        object Bar {
+          def make(x: Int, y: String): Bar = new Bar(x, y) {}
+        }
+
+        implicit val fooToBar: TransformerF[Option, Foo, Bar] =
+          f => Some(Bar.make(f.x, f.y))
+
+        Foo(1, "test").transformIntoF[Option, Bar] ==> Some(new Bar(1, "test") {})
+        List(Foo(1, "test")).transformIntoF[Option, List[Bar]] ==> Some(List(new Bar(1, "test") {}))
+        (1, Foo(1, "test")).transformIntoF[Option, (Int, Bar)] ==> Some((1, new Bar(1, "test") {}))
+
+        // this caused an issue - did not compile, works fine after fix
+        (1, List(Foo(1, "test"))).transformIntoF[Option, (Int, List[Bar])] ==> Some((1, List(new Bar(1, "test") {})))
+      }
+
+      "case 3" - {
+        case class Foo(x: Int, y: String)
+        case class Bar(x: Int, y: String)
+        implicit val t: TransformerF[Option, Foo, Bar] = f => Some(Bar(f.y.length, f.x.toString)) // Swapped
+        (1, List(Foo(1, "test"))).transformIntoF[Option, (Int, List[Bar])] ==> Some((1, List(Bar(4, "1"))))
+      }
     }
   }
 }
