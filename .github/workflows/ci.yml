@@ -15,7 +15,7 @@ jobs:
       matrix:
         scala: [2.11.12, 2.12.12, 2.13.3]
         jvm: [openjdk@8, openjdk@1.11]
-        scalajs: [0.6.33, 1.1.1]
+        scalajs: [0.6.33, 1.2.0]
         exclude:
           - scala: 2.11.12
             scalajs: 1.1.1

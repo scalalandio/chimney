@@ -67,10 +67,10 @@ val settings = Seq(
 
 val dependencies = Seq(
   libraryDependencies ++= Seq(
-    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.1.6",
+    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.2.0",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
-    "com.lihaoyi" %%% "utest" % (if (scalaVersion.value >= "2.12") "0.7.4" else "0.6.8") % "test"
+    "com.lihaoyi" %%% "utest" % (if (scalaVersion.value >= "2.12") "0.7.5" else "0.6.8") % "test"
   )
 )
 
@@ -120,7 +120,7 @@ lazy val chimneyCats = crossProject(JSPlatform, JVMPlatform)
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(dependencies: _*)
-  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % (if (scalaBinaryVersion.value == "2.11") "2.0.0" else "2.1.1") % "provided")
+  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % (if (scalaBinaryVersion.value == "2.11") "2.0.0" else "2.2.0") % "provided")
 
 lazy val chimneyCatsJVM = chimneyCats.jvm
 lazy val chimneyCatsJS = chimneyCats.js
