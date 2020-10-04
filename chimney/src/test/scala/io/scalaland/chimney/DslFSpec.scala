@@ -80,9 +80,10 @@ object DslFSpec extends TestSuite {
           "either" - {
             okForm
               .intoF[Either[List[String], +*], Person]
+              .withFieldConst(_.name, "Joe")
               .withFieldComputedF(_.height, _.height.parseDouble.toEither("bad height"))
               .withFieldComputedF(_.age, _.age.parseInt.toEither("bad age"))
-              .transform ==> Right(Person("John", 10, 140))
+              .transform ==> Right(Person("Joe", 10, 140))
           }
         }
 
@@ -785,6 +786,36 @@ object DslFSpec extends TestSuite {
           .withFieldComputed(_.value, v => pureTransformer.transform(v.value))
           .transform ==> Right(OuterOut(InnerOut("pure: test")))
       }
+    }
+
+    "safe option unwrapping" - {
+      type F[+A] = Either[List[String], A]
+
+      implicit val intParserEither: TransformerF[F, String, Int] =
+        _.parseInt.toEither("bad int")
+
+      implicit def optionUnwrapping[A, B](implicit underlying: TransformerF[F, A, B]): TransformerF[F, Option[A], B] = {
+        case Some(value) => underlying.transform(value)
+        case None        => Left(List("Expected value, got none"))
+      }
+
+      // Raw domain
+      case class RawData(id: Option[String], inner: Option[RawInner])
+
+      case class RawInner(id: Option[Int], str: Option[String])
+
+      // Domain
+      case class Data(id: Int, inner: Inner)
+
+      case class Inner(id: Int, str: String)
+
+      RawData(Some("1"), Some(RawInner(Some(2), Some("str")))).transformIntoF[F, Data] ==> Right(
+        Data(1, Inner(2, "str"))
+      )
+
+      RawData(Some("a"), Some(RawInner(None, None))).transformIntoF[F, Data] ==> Left(
+        List("bad int", "Expected value, got none", "Expected value, got none")
+      )
     }
   }
 }

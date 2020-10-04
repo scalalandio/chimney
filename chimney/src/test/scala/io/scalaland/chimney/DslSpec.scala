@@ -389,11 +389,11 @@ object DslSpec extends TestSuite {
 
       "not compile if relabelled - a wrong way" - {
 
-        compileError("""Foo(10, "something").into[Bar].withFieldRenamed('y, 'ne).transform""")
-          .check("", "type mismatch")
+        compileError("""Foo(10, "something").into[Bar].withFieldRenamed(_.y, _.x).transform""")
+          .check("", "Chimney can't derive transformation from Foo to Bar")
 
-        compileError("""Foo(10, "something").into[Bar].withFieldRenamed('ne, 'z).transform""")
-          .check("", "type mismatch")
+        compileError("""Foo(10, "something").into[Bar].withFieldRenamed(_.x, _.z).transform""")
+          .check("", "Chimney can't derive transformation from Foo to Bar")
       }
 
     }
@@ -580,24 +580,21 @@ object DslSpec extends TestSuite {
       case class Foobar(param: String) {
         val valField: String = "valField"
         lazy val lazyValField: String = "lazyValField"
-        def method: String = "method"
+        def method1: String = "method1"
+        def method2: String = "method2"
+        def method3: String = "method3"
+        def method5: String = "method5"
+        def method4: String = "method4"
 
         protected def protect: String = "protect"
         private[chimney] def priv: String = "priv"
       }
 
       case class Foobar2(param: String, valField: String, lazyValField: String)
-      case class Foobar3(param: String, valField: String, lazyValField: String, method: String)
+      case class Foobar3(param: String, valField: String, lazyValField: String, method1: String)
 
       "val and lazy vals work" - {
         Foobar("param").into[Foobar2].transform ==> Foobar2("param", "valField", "lazyValField")
-      }
-
-      "method is disabled by default" - {
-        compileError("""Foobar("param").into[Foobar3].transform""").check(
-          "",
-          "method: java.lang.String - no accessor named method in source type io.scalaland.chimney.DslSpec.Foobar"
-        )
       }
 
       "works with rename" - {
@@ -608,11 +605,33 @@ object DslSpec extends TestSuite {
           .withFieldRenamed(_.param, _.p)
           .withFieldRenamed(_.valField, _.v)
           .withFieldRenamed(_.lazyValField, _.lv)
-          .withFieldRenamed(_.method, _.m)
+          .withFieldRenamed(_.method1, _.m)
           .enableMethodAccessors
           .transform
 
-        res ==> FooBar4(p = "param", v = "valField", lv = "lazyValField", m = "method")
+        res ==> FooBar4(p = "param", v = "valField", lv = "lazyValField", m = "method1")
+      }
+
+      "method is disabled by default" - {
+        case class Foobar5(
+            param: String,
+            valField: String,
+            lazyValField: String,
+            method1: String,
+            method2: String,
+            method3: String,
+            method4: String,
+            method5: String
+        )
+        compileError("""Foobar("param").into[Foobar5].transform""").check(
+          "",
+          "method1: java.lang.String - no accessor named method1 in source type io.scalaland.chimney.DslSpec.Foobar",
+          "method2: java.lang.String - no accessor named method2 in source type io.scalaland.chimney.DslSpec.Foobar",
+          "method3: java.lang.String - no accessor named method3 in source type io.scalaland.chimney.DslSpec.Foobar",
+          "method4: java.lang.String - no accessor named method4 in source type io.scalaland.chimney.DslSpec.Foobar",
+          "method5: java.lang.String - no accessor named method5 in source type io.scalaland.chimney.DslSpec.Foobar",
+          "There are methods in io.scalaland.chimney.DslSpec.Foobar that might be used as accessors for `method1`, `method2`, `method3` and 2 other methods fields in io.scalaland.chimney.DslSpec.Foobar5. Consider using `.enableMethodAccessors`"
+        )
       }
 
       "works if transform is configured with .enableMethodAccessors" - {
@@ -620,7 +639,7 @@ object DslSpec extends TestSuite {
           param = "param",
           valField = "valField",
           lazyValField = "lazyValField",
-          method = "method"
+          method1 = "method1"
         )
       }
 
@@ -910,6 +929,38 @@ object DslSpec extends TestSuite {
         implicit def bar1ToBar2Transformer: Transformer[Bar1, Bar2] = Transformer.derive[Bar1, Bar2]
 
         Bar1(1, Baz(Some(Bar1(2, Baz(None))))).transformInto[Bar2] ==> Bar2(Baz(Some(Bar2(Baz(None)))))
+      }
+    }
+
+    "support macro dependent transformers" - {
+      "Option[List[A]] -> List[B]" - {
+        implicit def optListT[A, B](implicit underlying: Transformer[A, B]): Transformer[Option[List[A]], List[B]] =
+          _.toList.flatten.map(underlying.transform)
+
+        case class ClassA(a: Option[List[ClassAA]])
+        case class ClassB(a: List[ClassBB])
+        case class ClassC(a: List[ClassBB], other: String)
+        case class ClassD(a: List[ClassBB], other: String)
+
+        case class ClassAA(s: String)
+
+        case class ClassBB(s: String)
+
+        ClassA(None).transformInto[ClassB] ==> ClassB(Nil)
+
+        ClassA(Some(List.empty)).transformInto[ClassB] ==> ClassB(Nil)
+
+        ClassA(Some(List(ClassAA("l")))).transformInto[ClassB] ==> ClassB(List(ClassBB("l")))
+
+        ClassA(Some(List(ClassAA("l")))).into[ClassC].withFieldConst(_.other, "other").transform ==> ClassC(
+          List(ClassBB("l")),
+          "other"
+        )
+
+        implicit val defined: Transformer[ClassA, ClassD] =
+          Transformer.define[ClassA, ClassD].withFieldConst(_.other, "another").buildTransformer
+
+        ClassA(Some(List(ClassAA("l")))).transformInto[ClassD] ==> ClassD(List(ClassBB("l")), "another")
       }
     }
   }

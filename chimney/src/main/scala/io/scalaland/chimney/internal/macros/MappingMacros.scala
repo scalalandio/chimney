@@ -3,6 +3,7 @@ package io.scalaland.chimney.internal.macros
 import io.scalaland.chimney.internal.{DerivationError, IncompatibleSourceTuple, TransformerConfiguration}
 import io.scalaland.chimney.internal.utils.{DerivationGuards, MacroUtils}
 
+import scala.collection.immutable.ListMap
 import scala.reflect.macros.blackbox
 
 trait MappingMacros extends Model with TransformerConfiguration {
@@ -15,7 +16,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
   def resolveSourceTupleAccessors(
       From: Type,
       To: Type
-  ): Either[Seq[DerivationError], Map[Target, ResolvedAccessor]] = {
+  ): Either[Seq[DerivationError], Map[Target, AccessorResolution.Resolved]] = {
     val tupleElems = From.caseClassParams
     val targetFields = To.caseClassParams
 
@@ -34,7 +35,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       Right {
         (tupleElems zip targetFields).map {
           case (tupleElem, targetField) =>
-            Target.fromField(targetField, To) -> ResolvedAccessor(tupleElem, wasRenamed = false)
+            Target.fromField(targetField, To) -> AccessorResolution.Resolved(tupleElem, wasRenamed = false)
         }.toMap
       }
     }
@@ -44,20 +45,26 @@ trait MappingMacros extends Model with TransformerConfiguration {
       From: Type,
       targets: Iterable[Target],
       config: TransformerConfig
-  ): Map[Target, Option[ResolvedAccessor]] = {
+  ): Map[Target, AccessorResolution] = {
     val fromGetters = From.getterMethods
-    targets.map { target =>
-      target -> {
-        val lookupName = config.fieldOverrides.get(target.name) match {
-          case Some(FieldOverride.RenamedFrom(sourceName)) => sourceName
-          case _                                           => target.name
+    val accessorsMapping = targets
+      .map { target =>
+        target -> {
+          val lookupName = config.fieldOverrides.get(target.name) match {
+            case Some(FieldOverride.RenamedFrom(sourceName)) => sourceName
+            case _                                           => target.name
+          }
+          val wasRenamed = lookupName != target.name
+          fromGetters
+            .map(lookupAccessor(config, lookupName, wasRenamed, From))
+            .find(_ != AccessorResolution.NotFound)
+            .headOption
+            .getOrElse(AccessorResolution.NotFound)
+
         }
-        val wasRenamed = lookupName != target.name
-        fromGetters
-          .find(lookupAccessor(config, lookupName, wasRenamed, From))
-          .map(ms => ResolvedAccessor(ms, wasRenamed))
       }
-    }.toMap
+
+    ListMap(accessorsMapping.toSeq: _*)
   }
 
   def resolveOverrides(
@@ -112,7 +119,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
 
     lazy val targetCaseClassDefaults = To.typeSymbol.asClass.caseClassDefaults
 
-    targets.flatMap { target =>
+    val fallbackTransformers = targets.flatMap { target =>
       def defaultValueFallback =
         if (config.processDefaultValues && To.isCaseClass) {
           targetCaseClassDefaults
@@ -137,7 +144,8 @@ trait MappingMacros extends Model with TransformerConfiguration {
         }
 
       defaultValueFallback orElse optionNoneFallback orElse unitFallback
-    }.toMap
+    }
+    ListMap(fallbackTransformers.toSeq: _*)
   }
 
   def lookupAccessor(
@@ -145,16 +153,27 @@ trait MappingMacros extends Model with TransformerConfiguration {
       lookupName: String,
       wasRenamed: Boolean,
       From: Type
-  )(ms: MethodSymbol): Boolean = {
+  )(ms: MethodSymbol): AccessorResolution = {
     val sourceName = ms.name.decodedName.toString
     if (config.enableBeanGetters) {
       val lookupNameCapitalized = lookupName.capitalize
-      sourceName == lookupName ||
-      sourceName == s"get$lookupNameCapitalized" ||
-      (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])
+      if (sourceName == lookupName ||
+          sourceName == s"get$lookupNameCapitalized" ||
+          (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])) {
+        AccessorResolution.Resolved(ms, wasRenamed = false)
+      } else {
+        AccessorResolution.NotFound
+      }
     } else {
-      (ms.isStable || wasRenamed || config.enableMethodAccessors) && // isStable means or val/lazy val
-      sourceName == lookupName
+      if (sourceName == lookupName) {
+        if (ms.isStable || wasRenamed || config.enableMethodAccessors) { // isStable means or val/lazy val
+          AccessorResolution.Resolved(ms, wasRenamed)
+        } else {
+          AccessorResolution.DefAvailable
+        }
+      } else {
+        AccessorResolution.NotFound
+      }
     }
   }
 

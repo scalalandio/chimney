@@ -20,6 +20,19 @@ trait Model extends TransformerConfiguration {
   }
 
   case class TransformerBodyTree(tree: Tree, isWrapped: Boolean)
-  case class ResolvedAccessor(symbol: MethodSymbol, wasRenamed: Boolean)
 
+  sealed trait AccessorResolution extends Product with Serializable {
+    def isResolved: Boolean
+  }
+  object AccessorResolution {
+    case object NotFound extends AccessorResolution {
+      override def isResolved: Boolean = false
+    }
+    case class Resolved(symbol: MethodSymbol, wasRenamed: Boolean) extends AccessorResolution {
+      override def isResolved: Boolean = true
+    }
+    case object DefAvailable extends AccessorResolution {
+      override def isResolved: Boolean = false
+    }
+  }
 }

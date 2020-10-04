@@ -6,6 +6,7 @@
 [![codecov.io](http://codecov.io/github/scalalandio/chimney/coverage.svg?branch=master)](http://codecov.io/github/scalalandio/chimney?branch=master)
 [![License](http://img.shields.io/:license-Apache%202-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt) [![Join the chat at https://gitter.im/scalalandio/chimney](https://badges.gitter.im/scalalandio/chimney.svg)](https://gitter.im/scalalandio/chimney?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Scala.js](https://www.scala-js.org/assets/badges/scalajs-0.6.17.svg)](https://www.scala-js.org)
+[![Scala.js](https://www.scala-js.org/assets/badges/scalajs-1.0.0.svg)](https://www.scala-js.org)
 
 Scala library for boilerplate-free data transformations.
 
@@ -62,7 +63,7 @@ Underneath it uses Scala macros to give you:
 To include Chimney to your SBT project, add the following line to your `build.sbt`:
 
 ```scala
-libraryDependencies += "io.scalaland" %% "chimney" % "0.5.0"
+libraryDependencies += "io.scalaland" %% "chimney" % "0.5.3"
 ```
 
 Library is released for Scala 2.11.x, 2.12.x and 2.13.x.

@@ -479,5 +479,4 @@ The rule is that:
 
    - if both of them were found, ambiguity compilation error is reported
    - if only one of them was found, it's used
-3. we try to derive total ``Transformer[F1, T1]`` using library rules
-4. we try to derive lifted ``TransformerF[F, F1, T1]`` using library rules
+3. we try to derive lifted ``TransformerF[F, F1, T1]`` using library rules

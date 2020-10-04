@@ -20,7 +20,7 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg](
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
     */
-  def withFieldConst[T, U](selector: To => T, value: U): TransformerInto[From, To, _ <: TransformerCfg] =
+  def withFieldConst[T, U](selector: To => T, value: U): TransformerFInto[F, From, To, _ <: TransformerCfg] =
     macro TransformerFIntoWhiteboxMacros.withFieldConstImpl
 
   /** Use wrapped `value` provided here for field picked using `selector`.

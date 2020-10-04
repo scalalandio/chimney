@@ -290,6 +290,165 @@ object IssuesSpec extends TestSuite {
         Data(10).patchUsing(Patch[Id](20)) ==> Data(20)
       }
     }
+
+    "fix issue #156" - {
+
+      object internal {
+        case class Event(venue: Venue)
+
+        sealed trait Venue {
+          def name: String
+        }
+
+        case class ManuallyFilled(name: String) extends Venue
+      }
+
+      object dto {
+        case class Event(venue: Venue)
+        case class Venue(name: String)
+      }
+
+      import io.scalaland.chimney.dsl._
+      val venue = internal.ManuallyFilled("Venue Name")
+      val event = internal.Event(venue)
+
+      // Case class to case class rule, with case class param accessor
+      venue.transformInto[dto.Venue] ==> dto.Venue("Venue Name")
+
+      // These two will fail to compile as target is case class, but source type is internal.Venue,
+      // thus it will try to access `def name` accessor without .enableMethodAccessors flag
+      compileError("event.venue.transformInto[dto.Venue]")
+      compileError("(venue: internal.Venue).transformInto[dto.Venue]")
+
+      // When .enableMethodAccessors turned on, both should work fine
+      event.venue.into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
+      (venue: internal.Venue).into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
+    }
+
+    "fix issue #168" - {
+
+      "objects case" - {
+        sealed trait Version1
+        final case object Instance1 extends Version1
+        sealed trait Version2
+        final case object Instance2 extends Version2
+
+        val v1: Version1 = Instance1
+        val v2: Version2 = v1
+          .into[Version2]
+          .withCoproductInstance { (_: Instance1.type) =>
+            Instance2
+          }
+          .transform
+
+        v2 ==> Instance2
+      }
+
+      "classes case" - {
+        sealed trait Version1
+        final case class Instance1(p: Int) extends Version1
+        sealed trait Version2
+        final case class Instance2(p1: Int, p2: Int) extends Version2
+
+        val v1: Version1 = Instance1(10)
+        val v2: Version2 = v1
+          .into[Version2]
+          .withCoproductInstance { (i: Instance1) =>
+            Instance2(i.p / 2, i.p / 2)
+          }
+          .transform
+
+        v2 ==> Instance2(5, 5)
+      }
+    }
+
+    "fix issue #173" - {
+      sealed trait Foo
+      case object Bar extends Foo
+      case object Baz extends Foo
+
+      sealed trait Foo2
+      case object Bar2 extends Foo2
+      case object Baz2 extends Foo2
+
+      "withCoproductInstanceF twice" - {
+        implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
+          TransformerF
+            .define[Option, Foo, Foo2]
+            .withCoproductInstanceF((_: Bar.type) => Some(Bar2))
+            .withCoproductInstanceF((_: Baz.type) => Some(Baz2))
+            .buildTransformer
+
+        (Bar: Foo).transformIntoF[Option, Foo2] ==> Some(Bar2)
+        (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
+      }
+
+      "withCoproductInstance followed by withCoproductInstanceF" - {
+        implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
+          TransformerF
+            .define[Option, Foo, Foo2]
+            .withCoproductInstance((_: Bar.type) => Bar2)
+            .withCoproductInstanceF((_: Baz.type) => Some(Baz2))
+            .buildTransformer
+
+        (Bar: Foo).transformIntoF[Option, Foo2] ==> Some(Bar2)
+        (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
+      }
+
+      "withCoproductInstanceF followed by withCoproductInstance" - {
+        implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
+          TransformerF
+            .define[Option, Foo, Foo2]
+            .withCoproductInstanceF((_: Bar.type) => Some(Bar2))
+            .withCoproductInstance((_: Baz.type) => Baz2)
+            .buildTransformer
+
+        (Bar: Foo).transformIntoF[Option, Foo2] ==> Some(Bar2)
+        (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
+      }
+    }
+
+    "fix issue #177" - {
+
+      "case 1" - {
+        case class Foo(x: Int)
+        case class Bar(x: Int)
+        case class FooW(a: Option[Foo])
+        case class BarW(a: Option[Bar])
+
+        // this should be used and shouldn't trip the unused warning
+        implicit val fooToBarTransformerF: TransformerF[Option, Foo, Bar] =
+          f => Some(Bar(f.x + 10))
+
+        FooW(Some(Foo(1))).transformIntoF[Option, BarW] ==> Some(BarW(Some(Bar(11))))
+      }
+
+      "case 2" - {
+        case class Foo(x: Int, y: String)
+
+        sealed abstract case class Bar(x: Int, y: String)
+        object Bar {
+          def make(x: Int, y: String): Bar = new Bar(x, y) {}
+        }
+
+        implicit val fooToBar: TransformerF[Option, Foo, Bar] =
+          f => Some(Bar.make(f.x, f.y))
+
+        Foo(1, "test").transformIntoF[Option, Bar] ==> Some(new Bar(1, "test") {})
+        List(Foo(1, "test")).transformIntoF[Option, List[Bar]] ==> Some(List(new Bar(1, "test") {}))
+        (1, Foo(1, "test")).transformIntoF[Option, (Int, Bar)] ==> Some((1, new Bar(1, "test") {}))
+
+        // this caused an issue - did not compile, works fine after fix
+        (1, List(Foo(1, "test"))).transformIntoF[Option, (Int, List[Bar])] ==> Some((1, List(new Bar(1, "test") {})))
+      }
+
+      "case 3" - {
+        case class Foo(x: Int, y: String)
+        case class Bar(x: Int, y: String)
+        implicit val t: TransformerF[Option, Foo, Bar] = f => Some(Bar(f.y.length, f.x.toString)) // Swapped
+        (1, List(Foo(1, "test"))).transformIntoF[Option, (Int, List[Bar])] ==> Some((1, List(Bar(4, "1"))))
+      }
+    }
   }
 }
 

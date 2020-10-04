@@ -101,6 +101,35 @@ object JavaBeansSpec extends TestSuite {
           )
       }
 
+      "not compile when method accessor is disabled" - {
+        compileError("""
+            CaseClassWithFlagMethod("100", "name")
+              .into[JavaBeanTarget]
+              .enableBeanSetters
+              .transform
+          """)
+          .check(
+            "",
+            """flag: scala.Boolean - no accessor named flag in source type io.scalaland.chimney.CaseClassWithFlagMethod
+              |
+              |There are methods in io.scalaland.chimney.CaseClassWithFlagMethod that might be used as accessors for `flag` fields in io.scalaland.chimney.JavaBeanTarget. Consider using `.enableMethodAccessors`
+              |""".stripMargin
+          )
+      }
+
+      "works if transform is configured with .enableMethodAccessors" - {
+        val expected = new JavaBeanTarget
+        expected.setId("100")
+        expected.setName("name")
+        expected.setFlag(true)
+
+        CaseClassWithFlagMethod("100", "name")
+          .into[JavaBeanTarget]
+          .enableBeanSetters
+          .enableMethodAccessors
+          .transform ==> expected
+      }
+
       "convert java bean to java bean" - {
 
         val source = new JavaBeanSourceWithFlag("200", "name", flag = false)
@@ -137,6 +166,9 @@ object JavaBeansSpec extends TestSuite {
 }
 
 case class CaseClassNoFlag(id: String, name: String)
+case class CaseClassWithFlagMethod(id: String, name: String) {
+  def flag: Boolean = true
+}
 
 case class CaseClassWithFlag(id: String, name: String, flag: Boolean)
 
