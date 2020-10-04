@@ -1,7 +1,6 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 val versions = new {
-  val scala211 = "2.11.12"
   val scala212 = "2.12.12"
   val scala213 = "2.13.3"
 }
@@ -9,9 +8,7 @@ val versions = new {
 val settings = Seq(
   version := "0.5.3",
   scalaVersion := versions.scala213,
-  crossScalaVersions :=
-    (if (scalaJSVersion.startsWith("1.")) Nil else Seq(versions.scala211)) ++
-      Seq(versions.scala212, versions.scala213),
+  crossScalaVersions := Seq(versions.scala212, versions.scala213),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
     "-encoding", "UTF-8",
@@ -33,6 +30,9 @@ val settings = Seq(
     "-Xlint:private-shadow",
     "-Xlint:stars-align",
     "-Xlint:type-parameter-shadow",
+    "-Ywarn-unused:locals",
+    "-Ywarn-macros:after",
+    "-Xfatal-warnings",
     "-language:higherKinds"
   ),
   scalacOptions ++= (
@@ -51,16 +51,6 @@ val settings = Seq(
         "-Xlint:unsound-match",
         "-Xlint:nullary-override"
       )
-    ),
-  scalacOptions ++= (
-    if (scalaVersion.value >= "2.12")
-      Seq(
-        "-Ywarn-unused:locals",
-        "-Ywarn-macros:after",
-        "-Xfatal-warnings"
-      )
-    else
-      Nil
     ),
   scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
@@ -88,7 +78,7 @@ lazy val root = project
     git.remoteRepo := "git@github.com:scalalandio/chimney.git"
   )
 
-lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val chimney = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .dependsOn(protos % "test->test")
   .settings(
@@ -101,11 +91,9 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(dependencies: _*)
-  .nativeSettings(nativeLinkStubs := true)
 
 lazy val chimneyJVM = chimney.jvm
 lazy val chimneyJS = chimney.js
-lazy val chimneyNative = chimney.native
 
 lazy val chimneyCats = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
@@ -120,12 +108,12 @@ lazy val chimneyCats = crossProject(JSPlatform, JVMPlatform)
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(dependencies: _*)
-  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % (if (scalaBinaryVersion.value == "2.11") "2.0.0" else "2.2.0") % "provided")
+  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.2.0" % "provided")
 
 lazy val chimneyCatsJVM = chimneyCats.jvm
 lazy val chimneyCatsJS = chimneyCats.js
 
-lazy val protos = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val protos = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(
     moduleName := "chimney-protos",
@@ -136,7 +124,6 @@ lazy val protos = crossProject(JSPlatform, JVMPlatform, NativePlatform)
 
 lazy val protosJVM = protos.jvm
 lazy val protosJS = protos.js
-lazy val protosNative = protos.native
 
 
 lazy val publishSettings = Seq(

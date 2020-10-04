@@ -22,7 +22,7 @@ object DslFSpec extends TestSuite {
       }
 
       "either" - {
-        Person("John", 10, 140).intoF[Either[Vector[String], +*], User].transform ==> Right(User("John", 10, 140))
+        Person("John", 10, 140).transformIntoF[Either[Vector[String], +*], User] ==> Right(User("John", 10, 140))
       }
     }
 
@@ -205,8 +205,7 @@ object DslFSpec extends TestSuite {
       val optFoo: Option[Foo] = Bar(100).transformIntoF[Option, Foo]
       optFoo.get.x ==> 100
 
-      val eitherFoo: Either[Vector[String], Foo] =
-        Bar(200).intoF[Either[Vector[String], +*], Foo].transform
+      val eitherFoo: Either[Vector[String], Foo] = Bar(200).transformIntoF[Either[Vector[String], +*], Foo]
       eitherFoo.getRight.x ==> 200
     }
 
@@ -233,8 +232,8 @@ object DslFSpec extends TestSuite {
         }
 
         "F = Either[List[String], +*]]" - {
-          Option(123).intoF[Either[List[String], +*], Option[String]].transform ==> Right(Some("123"))
-          Option.empty[Int].intoF[Either[List[String], +*], Option[String]].transform ==> Right(None)
+          Option(123).transformIntoF[Either[List[String], +*], Option[String]] ==> Right(Some("123"))
+          Option.empty[Int].transformIntoF[Either[List[String], +*], Option[String]] ==> Right(None)
         }
       }
 
@@ -252,9 +251,9 @@ object DslFSpec extends TestSuite {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
             _.parseInt.toEither("bad int")
 
-          Option("123").intoF[Either[List[String], +*], Option[Int]].transform ==> Right(Some(123))
-          Option("abc").intoF[Either[List[String], +*], Option[Int]].transform ==> Left(List("bad int"))
-          Option.empty[String].intoF[Either[List[String], +*], Option[Int]].transform ==> Right(None)
+          Option("123").transformIntoF[Either[List[String], +*], Option[Int]] ==> Right(Some(123))
+          Option("abc").transformIntoF[Either[List[String], +*], Option[Int]] ==> Left(List("bad int"))
+          Option.empty[String].transformIntoF[Either[List[String], +*], Option[Int]] ==> Right(None)
         }
       }
     }
@@ -271,8 +270,8 @@ object DslFSpec extends TestSuite {
         }
 
         "F = Either[List[String], +*]]" - {
-          10.intoF[Either[List[String], +*], Option[String]].transform ==> Right(Some("10"))
-          (null: String).intoF[Either[List[String], +*], Option[String]].transform ==> Right(None)
+          10.transformIntoF[Either[List[String], +*], Option[String]] ==> Right(Some("10"))
+          (null: String).transformIntoF[Either[List[String], +*], Option[String]] ==> Right(None)
         }
       }
 
@@ -290,9 +289,9 @@ object DslFSpec extends TestSuite {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
             _.parseInt.toEither("bad int")
 
-          "10".intoF[Either[List[String], +*], Option[Int]].transform ==> Right(Some(10))
-          (null: String).intoF[Either[List[String], +*], Option[Int]].transform ==> Right(None)
-          "x".intoF[Either[List[String], +*], Option[Int]].transform ==> Left(List("bad int"))
+          "10".transformIntoF[Either[List[String], +*], Option[Int]] ==> Right(Some(10))
+          (null: String).transformIntoF[Either[List[String], +*], Option[Int]] ==> Right(None)
+          "x".transformIntoF[Either[List[String], +*], Option[Int]] ==> Left(List("bad int"))
         }
       }
     }
@@ -356,9 +355,9 @@ object DslFSpec extends TestSuite {
         }
 
         "F = Either[List[String], +*]]" - {
-          List(123, 456).intoF[Either[List[String], +*], List[String]].transform ==> Right(List("123", "456"))
-          Vector(123, 456).intoF[Either[List[String], +*], Queue[String]].transform ==> Right(Queue("123", "456"))
-          Array.empty[Int].intoF[Either[List[String], +*], Seq[String]].transform ==> Right(Seq.empty[String])
+          List(123, 456).transformIntoF[Either[List[String], +*], List[String]] ==> Right(List("123", "456"))
+          Vector(123, 456).transformIntoF[Either[List[String], +*], Queue[String]] ==> Right(Queue("123", "456"))
+          Array.empty[Int].transformIntoF[Either[List[String], +*], Seq[String]] ==> Right(Seq.empty[String])
         }
       }
 
@@ -382,15 +381,15 @@ object DslFSpec extends TestSuite {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
             _.parseInt.toEither("bad int")
 
-          List("123", "456").intoF[Either[List[String], +*], List[Int]].transform ==> Right(List(123, 456))
-          Vector("123", "456").intoF[Either[List[String], +*], Queue[Int]].transform ==> Right(Queue(123, 456))
-          Array.empty[String].intoF[Either[List[String], +*], Seq[Int]].transform ==> Right(Seq.empty[Int])
-          Set("123", "456").intoF[Either[List[String], +*], Array[Int]].transform.getRight.sorted ==> Array(123, 456)
+          List("123", "456").transformIntoF[Either[List[String], +*], List[Int]] ==> Right(List(123, 456))
+          Vector("123", "456").transformIntoF[Either[List[String], +*], Queue[Int]] ==> Right(Queue(123, 456))
+          Array.empty[String].transformIntoF[Either[List[String], +*], Seq[Int]] ==> Right(Seq.empty[Int])
+          Set("123", "456").transformIntoF[Either[List[String], +*], Array[Int]].getRight.sorted ==> Array(123, 456)
 
-          List("abc", "456").intoF[Either[List[String], +*], List[Int]].transform ==> Left(List("bad int"))
-          Vector("123", "def").intoF[Either[List[String], +*], Queue[Int]].transform ==> Left(List("bad int"))
-          Array("abc", "def").intoF[Either[List[String], +*], Seq[Int]].transform ==> Left(List("bad int", "bad int"))
-          Set("123", "xyz").intoF[Either[List[String], +*], Array[Int]].transform ==> Left(List("bad int"))
+          List("abc", "456").transformIntoF[Either[List[String], +*], List[Int]] ==> Left(List("bad int"))
+          Vector("123", "def").transformIntoF[Either[List[String], +*], Queue[Int]] ==> Left(List("bad int"))
+          Array("abc", "def").transformIntoF[Either[List[String], +*], Seq[Int]] ==> Left(List("bad int", "bad int"))
+          Set("123", "xyz").transformIntoF[Either[List[String], +*], Array[Int]] ==> Left(List("bad int"))
         }
       }
     }
@@ -414,25 +413,25 @@ object DslFSpec extends TestSuite {
         }
 
         "F = Either[List[String], +*]]" - {
-          Map(1 -> 10, 2 -> 20).intoF[Either[List[String], +*], Map[String, String]].transform ==>
+          Map(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Map[String, String]] ==>
             Right(Map("1" -> "10", "2" -> "20"))
-          Map(1 -> 10, 2 -> 20).intoF[Either[List[String], +*], Map[String, Int]].transform ==>
+          Map(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Map[String, Int]] ==>
             Right(Map("1" -> 10, "2" -> 20))
-          Seq(1 -> 10, 2 -> 20).intoF[Either[List[String], +*], Map[String, String]].transform ==>
+          Seq(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Map[String, String]] ==>
             Right(Map("1" -> "10", "2" -> "20"))
-          ArrayBuffer(1 -> 10, 2 -> 20).intoF[Either[List[String], +*], Map[Int, String]].transform ==>
+          ArrayBuffer(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Map[Int, String]] ==>
             Right(Map(1 -> "10", 2 -> "20"))
-          Map(1 -> 10, 2 -> 20).intoF[Either[List[String], +*], List[(String, String)]].transform ==>
+          Map(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], List[(String, String)]] ==>
             Right(List("1" -> "10", "2" -> "20"))
-          Map(1 -> 10, 2 -> 20).intoF[Either[List[String], +*], Vector[(String, Int)]].transform ==>
+          Map(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Vector[(String, Int)]] ==>
             Right(Vector("1" -> 10, "2" -> 20))
-          Array(1 -> 10, 2 -> 20).intoF[Either[List[String], +*], Map[String, String]].transform ==>
+          Array(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Map[String, String]] ==>
             Right(Map("1" -> "10", "2" -> "20"))
-          Array(1 -> 10, 2 -> 20).intoF[Either[List[String], +*], Map[Int, String]].transform ==>
+          Array(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Map[Int, String]] ==>
             Right(Map(1 -> "10", 2 -> "20"))
-          Map(1 -> 10, 2 -> 20).intoF[Either[List[String], +*], Array[(String, String)]].transform.getRight ==>
+          Map(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Array[(String, String)]].getRight ==>
             Array("1" -> "10", "2" -> "20")
-          Map(1 -> 10, 2 -> 20).intoF[Either[List[String], +*], Array[(String, Int)]].transform.getRight ==>
+          Map(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Array[(String, Int)]].getRight ==>
             Array("1" -> 10, "2" -> 20)
         }
       }
@@ -471,46 +470,46 @@ object DslFSpec extends TestSuite {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
             _.parseInt.toEither("bad int")
 
-          Map("1" -> "10", "2" -> "20").intoF[Either[List[String], +*], Map[Int, Int]].transform ==>
+          Map("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Map[Int, Int]] ==>
             Right(Map(1 -> 10, 2 -> 20))
-          Map("1" -> "10", "2" -> "20").intoF[Either[List[String], +*], Map[Int, String]].transform ==>
+          Map("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Map[Int, String]] ==>
             Right(Map(1 -> "10", 2 -> "20"))
-          Seq("1" -> "10", "2" -> "20").intoF[Either[List[String], +*], Map[Int, Int]].transform ==>
+          Seq("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Map[Int, Int]] ==>
             Right(Map(1 -> 10, 2 -> 20))
-          ArrayBuffer("1" -> "10", "2" -> "20").intoF[Either[List[String], +*], Map[String, Int]].transform ==>
+          ArrayBuffer("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Map[String, Int]] ==>
             Right(Map("1" -> 10, "2" -> 20))
-          Map("1" -> "10", "2" -> "20").intoF[Either[List[String], +*], List[(Int, Int)]].transform ==>
+          Map("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], List[(Int, Int)]] ==>
             Right(List(1 -> 10, 2 -> 20))
-          Map("1" -> "10", "2" -> "20").intoF[Either[List[String], +*], Vector[(Int, String)]].transform ==>
+          Map("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Vector[(Int, String)]] ==>
             Right(Vector(1 -> "10", 2 -> "20"))
-          Array("1" -> "10", "2" -> "20").intoF[Either[List[String], +*], Map[Int, Int]].transform ==>
+          Array("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Map[Int, Int]] ==>
             Right(Map(1 -> 10, 2 -> 20))
-          Array("1" -> "10", "2" -> "20").intoF[Either[List[String], +*], Map[String, Int]].transform ==>
+          Array("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Map[String, Int]] ==>
             Right(Map("1" -> 10, "2" -> 20))
-          Map("1" -> "10", "2" -> "20").intoF[Either[List[String], +*], Array[(Int, Int)]].transform.getRight ==>
+          Map("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Array[(Int, Int)]].getRight ==>
             Array(1 -> 10, 2 -> 20)
-          Map("1" -> "10", "2" -> "20").intoF[Either[List[String], +*], Array[(Int, String)]].transform.getRight ==>
+          Map("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Array[(Int, String)]].getRight ==>
             Array(1 -> "10", 2 -> "20")
 
-          Map("1" -> "x", "y" -> "20").intoF[Either[List[String], +*], Map[Int, Int]].transform ==>
+          Map("1" -> "x", "y" -> "20").transformIntoF[Either[List[String], +*], Map[Int, Int]] ==>
             Left(List("bad int", "bad int"))
-          Map("x" -> "10", "2" -> "20").intoF[Either[List[String], +*], Map[Int, String]].transform ==>
+          Map("x" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Map[Int, String]] ==>
             Left(List("bad int"))
-          Seq("1" -> "10", "2" -> "x").intoF[Either[List[String], +*], Map[Int, Int]].transform ==>
+          Seq("1" -> "10", "2" -> "x").transformIntoF[Either[List[String], +*], Map[Int, Int]] ==>
             Left(List("bad int"))
-          ArrayBuffer("1" -> "x", "2" -> "y").intoF[Either[List[String], +*], Map[String, Int]].transform ==>
+          ArrayBuffer("1" -> "x", "2" -> "y").transformIntoF[Either[List[String], +*], Map[String, Int]] ==>
             Left(List("bad int", "bad int"))
-          Map("x" -> "10", "y" -> "z").intoF[Either[List[String], +*], ArrayBuffer[(Int, Int)]].transform ==>
+          Map("x" -> "10", "y" -> "z").transformIntoF[Either[List[String], +*], ArrayBuffer[(Int, Int)]] ==>
             Left(List("bad int", "bad int", "bad int"))
-          Map("1" -> "10", "x" -> "20").intoF[Either[List[String], +*], Vector[(Int, String)]].transform ==>
+          Map("1" -> "10", "x" -> "20").transformIntoF[Either[List[String], +*], Vector[(Int, String)]] ==>
             Left(List("bad int"))
-          Array("x" -> "y", "z" -> "v").intoF[Either[List[String], +*], Map[Int, Int]].transform ==>
+          Array("x" -> "y", "z" -> "v").transformIntoF[Either[List[String], +*], Map[Int, Int]] ==>
             Left(List("bad int", "bad int", "bad int", "bad int"))
-          Array("1" -> "x", "2" -> "y").intoF[Either[List[String], +*], Map[String, Int]].transform ==>
+          Array("1" -> "x", "2" -> "y").transformIntoF[Either[List[String], +*], Map[String, Int]] ==>
             Left(List("bad int", "bad int"))
-          Map("1" -> "10", "x" -> "20").intoF[Either[List[String], +*], Array[(Int, Int)]].transform ==>
+          Map("1" -> "10", "x" -> "20").transformIntoF[Either[List[String], +*], Array[(Int, Int)]] ==>
             Left(List("bad int"))
-          Map("x" -> "10", "y" -> "20").intoF[Either[List[String], +*], Array[(Int, String)]].transform ==>
+          Map("x" -> "10", "y" -> "20").transformIntoF[Either[List[String], +*], Array[(Int, String)]] ==>
             Left(List("bad int", "bad int"))
         }
       }
@@ -534,14 +533,14 @@ object DslFSpec extends TestSuite {
 
         "F = Either[List[String], +*]]" - {
 
-          (Left(1): Either[Int, Int]).intoF[Either[List[String], +*], Either[String, String]].transform ==>
+          (Left(1): Either[Int, Int]).transformIntoF[Either[List[String], +*], Either[String, String]] ==>
             Right(Left("1"))
-          (Right(1): Either[Int, Int]).intoF[Either[List[String], +*], Either[String, String]].transform ==>
+          (Right(1): Either[Int, Int]).transformIntoF[Either[List[String], +*], Either[String, String]] ==>
             Right(Right("1"))
-          Left(1).intoF[Either[List[String], +*], Either[String, String]].transform ==> Right(Left("1"))
-          Right(1).intoF[Either[List[String], +*], Either[String, String]].transform ==> Right(Right("1"))
-          Left(1).intoF[Either[List[String], +*], Left[String, String]].transform ==> Right(Left("1"))
-          Right(1).intoF[Either[List[String], +*], Right[String, String]].transform ==> Right(Right("1"))
+          Left(1).transformIntoF[Either[List[String], +*], Either[String, String]] ==> Right(Left("1"))
+          Right(1).transformIntoF[Either[List[String], +*], Either[String, String]] ==> Right(Right("1"))
+          Left(1).transformIntoF[Either[List[String], +*], Left[String, String]] ==> Right(Left("1"))
+          Right(1).transformIntoF[Either[List[String], +*], Right[String, String]] ==> Right(Right("1"))
         }
       }
 
@@ -569,23 +568,23 @@ object DslFSpec extends TestSuite {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
             _.parseInt.toEither("bad int")
 
-          (Left("1"): Either[String, String]).intoF[Either[List[String], +*], Either[Int, Int]].transform ==>
+          (Left("1"): Either[String, String]).transformIntoF[Either[List[String], +*], Either[Int, Int]] ==>
             Right(Left(1))
-          (Right("1"): Either[String, String]).intoF[Either[List[String], +*], Either[Int, Int]].transform ==>
+          (Right("1"): Either[String, String]).transformIntoF[Either[List[String], +*], Either[Int, Int]] ==>
             Right(Right(1))
-          Left("1").intoF[Either[List[String], +*], Either[Int, Int]].transform ==> Right(Left(1))
-          Right("1").intoF[Either[List[String], +*], Either[Int, Int]].transform ==> Right(Right(1))
-          Left("1").intoF[Either[List[String], +*], Either[Int, Int]].transform ==> Right(Left(1))
-          Right("1").intoF[Either[List[String], +*], Either[Int, Int]].transform ==> Right(Right(1))
+          Left("1").transformIntoF[Either[List[String], +*], Either[Int, Int]] ==> Right(Left(1))
+          Right("1").transformIntoF[Either[List[String], +*], Either[Int, Int]] ==> Right(Right(1))
+          Left("1").transformIntoF[Either[List[String], +*], Either[Int, Int]] ==> Right(Left(1))
+          Right("1").transformIntoF[Either[List[String], +*], Either[Int, Int]] ==> Right(Right(1))
 
-          (Left("x"): Either[String, String]).intoF[Either[List[String], +*], Either[Int, Int]].transform ==>
+          (Left("x"): Either[String, String]).transformIntoF[Either[List[String], +*], Either[Int, Int]] ==>
             Left(List("bad int"))
-          (Right("x"): Either[String, String]).intoF[Either[List[String], +*], Either[Int, Int]].transform ==>
+          (Right("x"): Either[String, String]).transformIntoF[Either[List[String], +*], Either[Int, Int]] ==>
             Left(List("bad int"))
-          Left("x").intoF[Either[List[String], +*], Either[Int, Int]].transform ==> Left(List("bad int"))
-          Right("x").intoF[Either[List[String], +*], Either[Int, Int]].transform ==> Left(List("bad int"))
-          Left("x").intoF[Either[List[String], +*], Either[Int, Int]].transform ==> Left(List("bad int"))
-          Right("x").intoF[Either[List[String], +*], Either[Int, Int]].transform ==> Left(List("bad int"))
+          Left("x").transformIntoF[Either[List[String], +*], Either[Int, Int]] ==> Left(List("bad int"))
+          Right("x").transformIntoF[Either[List[String], +*], Either[Int, Int]] ==> Left(List("bad int"))
+          Left("x").transformIntoF[Either[List[String], +*], Either[Int, Int]] ==> Left(List("bad int"))
+          Right("x").transformIntoF[Either[List[String], +*], Either[Int, Int]] ==> Left(List("bad int"))
         }
       }
 
@@ -611,18 +610,18 @@ object DslFSpec extends TestSuite {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
             _.parseInt.toEither("bad int")
 
-          (Left("1"): Either[String, Int]).intoF[Either[List[String], +*], Either[Int, String]].transform ==>
+          (Left("1"): Either[String, Int]).transformIntoF[Either[List[String], +*], Either[Int, String]] ==>
             Right(Left(1))
-          (Left("x"): Either[String, Int]).intoF[Either[List[String], +*], Either[Int, String]].transform ==>
+          (Left("x"): Either[String, Int]).transformIntoF[Either[List[String], +*], Either[Int, String]] ==>
             Left(List("bad int"))
-          (Right(100): Either[String, Int]).intoF[Either[List[String], +*], Either[Int, String]].transform ==>
+          (Right(100): Either[String, Int]).transformIntoF[Either[List[String], +*], Either[Int, String]] ==>
             Right(Right("100"))
 
-          (Left(100): Either[Int, String]).intoF[Either[List[String], +*], Either[String, Int]].transform ==>
+          (Left(100): Either[Int, String]).transformIntoF[Either[List[String], +*], Either[String, Int]] ==>
             Right(Left("100"))
-          (Right("1"): Either[Int, String]).intoF[Either[List[String], +*], Either[String, Int]].transform ==>
+          (Right("1"): Either[Int, String]).transformIntoF[Either[List[String], +*], Either[String, Int]] ==>
             Right(Right(1))
-          (Right("x"): Either[Int, String]).intoF[Either[List[String], +*], Either[String, Int]].transform ==>
+          (Right("x"): Either[Int, String]).transformIntoF[Either[List[String], +*], Either[String, Int]] ==>
             Left(List("bad int"))
         }
       }
@@ -649,23 +648,16 @@ object DslFSpec extends TestSuite {
         }
 
         "F = Either[List[String], +*]]" - {
-          // without this specific instantiation on 2.11 shortToLongPureInner is not picked correctly
-          implicit val workaround
-              : TransformerF[Either[List[String], +*], short.NumScale[Int, Nothing], long.NumScale[String]] =
-            ScalesTransformer.shortToLongPureInner[Either[List[String], +*], Int, String]
+          import ScalesTransformer.shortToLongPureInner
 
           (short.Zero: short.NumScale[Int, Nothing])
-            .intoF[Either[List[String], +*], long.NumScale[String]]
-            .transform ==> Right(long.Zero)
+            .transformIntoF[Either[List[String], +*], long.NumScale[String]] ==> Right(long.Zero)
           (short.Million(4): short.NumScale[Int, Nothing])
-            .intoF[Either[List[String], +*], long.NumScale[String]]
-            .transform ==> Right(long.Million("4"))
+            .transformIntoF[Either[List[String], +*], long.NumScale[String]] ==> Right(long.Million("4"))
           (short.Billion(2): short.NumScale[Int, Nothing])
-            .intoF[Either[List[String], +*], long.NumScale[String]]
-            .transform ==> Right(long.Milliard("2"))
+            .transformIntoF[Either[List[String], +*], long.NumScale[String]] ==> Right(long.Milliard("2"))
           (short.Trillion(100): short.NumScale[Int, Nothing])
-            .intoF[Either[List[String], +*], long.NumScale[String]]
-            .transform ==> Right(long.Billion("100"))
+            .transformIntoF[Either[List[String], +*], long.NumScale[String]] ==> Right(long.Billion("100"))
         }
       }
 
@@ -697,33 +689,23 @@ object DslFSpec extends TestSuite {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
             _.parseInt.toEither("bad int")
 
-          // without this specific instantiation on 2.11 shortToLongWrappedInner is not picked correctly
-          implicit val workaround
-              : TransformerF[Either[List[String], +*], short.NumScale[String, Nothing], long.NumScale[Int]] =
-            ScalesTransformer.shortToLongWrappedInner[Either[List[String], +*], String, Int]
+          import ScalesTransformer.shortToLongWrappedInner
 
           (short.Zero: short.NumScale[String, Nothing])
-            .intoF[Either[List[String], +*], long.NumScale[Int]]
-            .transform ==> Right(long.Zero)
+            .transformIntoF[Either[List[String], +*], long.NumScale[Int]] ==> Right(long.Zero)
           (short.Million("4"): short.NumScale[String, Nothing])
-            .intoF[Either[List[String], +*], long.NumScale[Int]]
-            .transform ==> Right(long.Million(4))
+            .transformIntoF[Either[List[String], +*], long.NumScale[Int]] ==> Right(long.Million(4))
           (short.Billion("2"): short.NumScale[String, Nothing])
-            .intoF[Either[List[String], +*], long.NumScale[Int]]
-            .transform ==> Right(long.Milliard(2))
+            .transformIntoF[Either[List[String], +*], long.NumScale[Int]] ==> Right(long.Milliard(2))
           (short.Trillion("100"): short.NumScale[String, Nothing])
-            .intoF[Either[List[String], +*], long.NumScale[Int]]
-            .transform ==> Right(long.Billion(100))
+            .transformIntoF[Either[List[String], +*], long.NumScale[Int]] ==> Right(long.Billion(100))
 
           (short.Million("x"): short.NumScale[String, Nothing])
-            .intoF[Either[List[String], +*], long.NumScale[Int]]
-            .transform ==> Left(List("bad int"))
+            .transformIntoF[Either[List[String], +*], long.NumScale[Int]] ==> Left(List("bad int"))
           (short.Billion("x"): short.NumScale[String, Nothing])
-            .intoF[Either[List[String], +*], long.NumScale[Int]]
-            .transform ==> Left(List("bad int"))
+            .transformIntoF[Either[List[String], +*], long.NumScale[Int]] ==> Left(List("bad int"))
           (short.Trillion("x"): short.NumScale[String, Nothing])
-            .intoF[Either[List[String], +*], long.NumScale[Int]]
-            .transform ==> Left(List("bad int"))
+            .transformIntoF[Either[List[String], +*], long.NumScale[Int]] ==> Left(List("bad int"))
         }
       }
     }
@@ -746,15 +728,11 @@ object DslFSpec extends TestSuite {
 
         compileError("""
           type EitherListStr[+X] = Either[List[String], X]
-          OuterIn(InnerIn("test"))
-            .intoF[EitherListStr, OuterOut]
-            .transform
+          OuterIn(InnerIn("test")).transformIntoF[EitherListStr, OuterOut]
           """)
           .check(
             "",
             "Ambiguous implicits while resolving Chimney recursive transformation",
-            "TransformerF[EitherListStr, InnerIn, InnerOut]: liftedTransformer",
-            "Transformer[InnerIn, InnerOut]: pureTransformer",
             "Please eliminate ambiguity from implicit scope or use withFieldComputed/withFieldComputedF to decide which one should be used"
           )
       }
