@@ -6,14 +6,16 @@ import _root_.cats.{Applicative, ApplicativeError}
 
 import scala.collection.compat._
 
-package object cats extends LowPriorityImplicits {
+package object cats extends CatsImplicits
+
+trait CatsImplicits extends LowPriorityImplicits {
 
   // normally, these instances are not needed, but few tests with .enableUnsafeOption fail to compile without them
   implicit def TransformerFValidatedNecSupport[E]: TransformerFSupport[ValidatedNec[E, +*]] =
-    TransformerFValidatedSupport[NonEmptyChain[E]]
+    TransformerFValidatedSupport[NonEmptyChain[E]](implicitly)
 
   implicit def TransformerFValidatedNelSupport[E]: TransformerFSupport[ValidatedNel[E, +*]] =
-    TransformerFValidatedSupport[NonEmptyList[E]]
+    TransformerFValidatedSupport[NonEmptyList[E]](implicitly)
 
   implicit def TransformerFIorNecSupport[E]: TransformerFSupport[IorNec[E, +*]] =
     TransformerFIorSupport[NonEmptyChain[E]](implicitly)
@@ -25,19 +27,17 @@ package object cats extends LowPriorityImplicits {
     TransformerFIorSupport[NonEmptySet[E]](implicitly)
 
   implicit def TransformerFErrorValidatedNecSupport[M]
-  : TransformerFErrorPathSupport[ValidatedNec[TransformationError[M], +*]] =
+      : TransformerFErrorPathSupport[ValidatedNec[TransformationError[M], +*]] =
     TransformerFValidatedErrorPathSupport[ValidatedNec[TransformationError[M], +*], NonEmptyChain, M]
 
   implicit def TransformerFErrorValidatedNelSupport[M]
-  : TransformerFErrorPathSupport[ValidatedNel[TransformationError[M], +*]] =
+      : TransformerFErrorPathSupport[ValidatedNel[TransformationError[M], +*]] =
     TransformerFValidatedErrorPathSupport[ValidatedNel[TransformationError[M], +*], NonEmptyList, M]
 
-  implicit def TransformerFErrorIorNecSupport[M]
-  : TransformerFErrorPathSupport[IorNec[TransformationError[M], +*]] =
+  implicit def TransformerFErrorIorNecSupport[M]: TransformerFErrorPathSupport[IorNec[TransformationError[M], +*]] =
     TransformerFValidatedErrorPathSupport[IorNec[TransformationError[M], +*], NonEmptyChain, M]
 
-  implicit def TransformerFErrorIorNelSupport[M]
-  : TransformerFErrorPathSupport[IorNel[TransformationError[M], +*]] =
+  implicit def TransformerFErrorIorNelSupport[M]: TransformerFErrorPathSupport[IorNel[TransformationError[M], +*]] =
     TransformerFValidatedErrorPathSupport[IorNel[TransformationError[M], +*], NonEmptyList, M]
 }
 
