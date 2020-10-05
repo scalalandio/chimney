@@ -2,15 +2,15 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.TransformerFlag._
 import io.scalaland.chimney.internal.TransformerFlags._
-import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlag, TransformerFlags}
+import io.scalaland.chimney.internal.{TransformerFlag, TransformerFlags}
 
-trait ConfigDsl[CC[_ <: TransformerCfg, _ <: TransformerFlags], C <: TransformerCfg, Flags <: TransformerFlags] {
+trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
 
-  private def enableFlag[Flag <: TransformerFlag]: CC[C, Enable[Flag, Flags]] =
-    this.asInstanceOf[CC[C, Enable[Flag, Flags]]]
+  private def enableFlag[Flag <: TransformerFlag]: UpdateFlag[Enable[Flag, Flags]] =
+    this.asInstanceOf[UpdateFlag[Enable[Flag, Flags]]]
 
-  private def disableFlag[Flag <: TransformerFlag]: CC[C, Disable[Flag, Flags]] =
-    this.asInstanceOf[CC[C, Disable[Flag, Flags]]]
+  private def disableFlag[Flag <: TransformerFlag]: UpdateFlag[Disable[Flag, Flags]] =
+    this.asInstanceOf[UpdateFlag[Disable[Flag, Flags]]]
 
   /** Enable values to be supplied from method calls. Source method must be public and have no parameter list.
     *
@@ -18,7 +18,7 @@ trait ConfigDsl[CC[_ <: TransformerCfg, _ <: TransformerFlags], C <: Transformer
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#using-method-accessors]] for more details
     */
-  def enableMethodAccessors: CC[C, Enable[MethodAccessors, Flags]] =
+  def enableMethodAccessors: UpdateFlag[Enable[MethodAccessors, Flags]] =
     enableFlag[MethodAccessors]
 
   /** Fail derivation if `From` type is missing field even if `To` has default value for it.
@@ -27,7 +27,7 @@ trait ConfigDsl[CC[_ <: TransformerCfg, _ <: TransformerFlags], C <: Transformer
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#disabling-default-values-in-generated-transformer]] for more details
     */
-  def disableDefaultValues: CC[C, Disable[DefaultValues, Flags]] =
+  def disableDefaultValues: UpdateFlag[Disable[DefaultValues, Flags]] =
     disableFlag[DefaultValues]
 
   /** Enable Java Beans naming convention (`.getName`, `.isName`) on `From`.
@@ -36,7 +36,7 @@ trait ConfigDsl[CC[_ <: TransformerCfg, _ <: TransformerFlags], C <: Transformer
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#reading-from-java-beans]] for more details
     */
-  def enableBeanGetters: CC[C, Enable[BeanGetters, Flags]] =
+  def enableBeanGetters: UpdateFlag[Enable[BeanGetters, Flags]] =
     enableFlag[BeanGetters]
 
   /** Enable Java Beans naming convention (`.setName(value)`) on `To`.
@@ -45,7 +45,7 @@ trait ConfigDsl[CC[_ <: TransformerCfg, _ <: TransformerFlags], C <: Transformer
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#writing-to-java-beans]] for more details
     */
-  def enableBeanSetters: CC[C, Enable[BeanSetters, Flags]] =
+  def enableBeanSetters: UpdateFlag[Enable[BeanSetters, Flags]] =
     enableFlag[BeanSetters]
 
   /** Sets target value of optional field to None if field is missing from source type From.
@@ -54,7 +54,7 @@ trait ConfigDsl[CC[_ <: TransformerCfg, _ <: TransformerFlags], C <: Transformer
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#default-values-for-option-fields]] for more details
     */
-  def enableOptionDefaultsToNone: CC[C, Enable[OptionDefaultsToNone, Flags]] =
+  def enableOptionDefaultsToNone: UpdateFlag[Enable[OptionDefaultsToNone, Flags]] =
     enableFlag[OptionDefaultsToNone]
 
   /** Enable unsafe call to `.get` when source type From contains field of type `Option[A]`,
@@ -66,6 +66,6 @@ trait ConfigDsl[CC[_ <: TransformerCfg, _ <: TransformerFlags], C <: Transformer
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/unsafe-options.html]] for more details
     */
-  def enableUnsafeOption: CC[C, Enable[UnsafeOption, Flags]] =
+  def enableUnsafeOption: UpdateFlag[Enable[UnsafeOption, Flags]] =
     enableFlag[UnsafeOption]
 }

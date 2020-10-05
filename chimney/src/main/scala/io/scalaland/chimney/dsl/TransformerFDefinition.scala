@@ -16,7 +16,7 @@ import scala.language.experimental.macros
 final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <: TransformerFlags](
     val overrides: Map[String, Any],
     val instances: Map[(String, String), Any]
-) extends ConfigDsl[Lambda[(`C1 <: TransformerCfg`, `F1 <: TransformerFlags`) => TransformerFDefinition[F, From, To, C1, F1]], C, Flags] {
+) extends FlagsDsl[Lambda[`F1 <: TransformerFlags` => TransformerFDefinition[F, From, To, C, F1]], Flags] {
 
   /** Use `value` provided here for field picked using `selector`.
     *

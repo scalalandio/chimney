@@ -16,7 +16,7 @@ import scala.language.experimental.macros
 final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: TransformerFlags](
     val overrides: Map[String, Any],
     val instances: Map[(String, String), Any]
-) extends ConfigDsl[Lambda[(`C1 <: TransformerCfg`, `F1 <: TransformerFlags`) => TransformerDefinition[From, To, C1, F1]], C, Flags] {
+) extends FlagsDsl[Lambda[`F1 <: TransformerFlags` => TransformerDefinition[From, To, C, F1]], Flags] {
 
   /** Lifts current transformer definition with provided type constructor `F`.
     *

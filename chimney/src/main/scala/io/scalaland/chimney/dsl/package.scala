@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.{PatcherCfg, TransformerCfg}
+import io.scalaland.chimney.internal.{PatcherCfg, TransformerCfg, TransformerFlags}
 
 import scala.language.experimental.macros
 

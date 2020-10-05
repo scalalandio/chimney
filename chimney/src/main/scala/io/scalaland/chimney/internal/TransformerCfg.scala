@@ -5,6 +5,23 @@ import io.scalaland.chimney.internal.utils.MacroUtils
 import scala.language.existentials
 import scala.reflect.macros.blackbox
 
+sealed abstract class TransformerFlag
+object TransformerFlag {
+  final class MethodAccessors extends TransformerFlag
+  final class DefaultValues extends TransformerFlag
+  final class BeanSetters extends TransformerFlag
+  final class BeanGetters extends TransformerFlag
+  final class OptionDefaultsToNone extends TransformerFlag
+  final class UnsafeOption extends TransformerFlag
+}
+
+sealed abstract class TransformerFlags
+object TransformerFlags {
+  final class Default extends TransformerFlags
+  final class Enable[F <: TransformerFlag, Flags <: TransformerFlags] extends TransformerFlags
+  final class Disable[F <: TransformerFlag, Flags <: TransformerFlags] extends TransformerFlags
+}
+
 sealed abstract class TransformerCfg
 object TransformerCfg {
   final class Empty extends TransformerCfg
