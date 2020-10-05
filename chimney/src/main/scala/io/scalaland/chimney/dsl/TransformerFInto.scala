@@ -91,7 +91,7 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg](
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
     */
-  def withCoproductInstance[Inst](f: Inst => To): TransformerInto[From, To, _ <: TransformerCfg] =
+  def withCoproductInstance[Inst](f: Inst => To): TransformerFInto[F, From, To, _ <: TransformerCfg] =
     macro TransformerFIntoWhiteboxMacros.withCoproductInstanceImpl
 
   /** Use `f` to calculate the (missing) wrapped coproduct instance when mapping one coproduct into another
