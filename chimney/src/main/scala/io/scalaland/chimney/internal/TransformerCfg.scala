@@ -6,7 +6,6 @@ import scala.language.existentials
 import scala.reflect.macros.blackbox
 
 sealed abstract class TransformerCfg
-
 object TransformerCfg {
   final class Empty extends TransformerCfg
   final class FieldConst[Name <: String, C <: TransformerCfg] extends TransformerCfg
@@ -74,15 +73,15 @@ trait TransformerConfiguration extends MacroUtils {
   object CfgTpeConstructors {
     import TransformerCfg._
 
-    val emptyT = typeOf[Empty]
-    val fieldConstT = typeOf[FieldConst[_, _]].typeConstructor
-    val fieldConstFT = typeOf[FieldConstF[_, _]].typeConstructor
-    val fieldComputedT = typeOf[FieldComputed[_, _]].typeConstructor
-    val fieldComputedFT = typeOf[FieldComputedF[_, _]].typeConstructor
-    val fieldRelabelledT = typeOf[FieldRelabelled[_, _, _]].typeConstructor
-    val coproductInstanceT = typeOf[CoproductInstance[_, _, _]].typeConstructor
-    val coproductInstanceFT = typeOf[CoproductInstanceF[_, _, _]].typeConstructor
-    val wrapperTypeT = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
+    val emptyT: Type = typeOf[Empty]
+    val fieldConstT: Type = typeOf[FieldConst[_, _]].typeConstructor
+    val fieldConstFT: Type = typeOf[FieldConstF[_, _]].typeConstructor
+    val fieldComputedT: Type = typeOf[FieldComputed[_, _]].typeConstructor
+    val fieldComputedFT: Type = typeOf[FieldComputedF[_, _]].typeConstructor
+    val fieldRelabelledT: Type = typeOf[FieldRelabelled[_, _, _]].typeConstructor
+    val coproductInstanceT: Type = typeOf[CoproductInstance[_, _, _]].typeConstructor
+    val coproductInstanceFT: Type = typeOf[CoproductInstanceF[_, _, _]].typeConstructor
+    val wrapperTypeT: Type = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
   }
 
   def captureTransformerConfig(cfgTpe: Type): TransformerConfig = {
@@ -128,4 +127,60 @@ trait TransformerConfiguration extends MacroUtils {
       // $COVERAGE-ON$
     }
   }
+
+  case class TransformerFlags(
+      methodAccessors: Boolean = false,
+      processDefaultValues: Boolean = true,
+      beanSetters: Boolean = false,
+      beanGetters: Boolean = false,
+      optionDefaultsToNone: Boolean = false,
+      unsafeOption: Boolean = false
+  ) {
+    def setFlag(flagTpe: Type, value: Boolean): TransformerFlags = {
+      flagTpe match {
+        case FlagsTpeConstructors.methodAccessorsT      => copy(methodAccessors = value)
+        case FlagsTpeConstructors.defaultValuesT        => copy(processDefaultValues = value)
+        case FlagsTpeConstructors.beanSettersT          => copy(beanSetters = value)
+        case FlagsTpeConstructors.beanGettersT          => copy(beanGetters = value)
+        case FlagsTpeConstructors.optionDefaultsToNoneT => copy(optionDefaultsToNone = value)
+        case FlagsTpeConstructors.unsafeOptionT         => copy(unsafeOption = value)
+      }
+    }
+  }
+
+  object FlagsTpeConstructors {
+    import io.scalaland.chimney.internal.TransformerFlags._
+    import io.scalaland.chimney.internal.TransformerFlag._
+
+    val defaultT: Type = typeOf[Default]
+    val enableT: Type = typeOf[Enable[_, _]].typeConstructor
+    val disableT: Type = typeOf[Disable[_, _]].typeConstructor
+
+    val methodAccessorsT: Type = typeOf[MethodAccessors]
+    val defaultValuesT: Type = typeOf[DefaultValues]
+    val beanSettersT: Type = typeOf[BeanSetters]
+    val beanGettersT: Type = typeOf[BeanGetters]
+    val optionDefaultsToNoneT: Type = typeOf[OptionDefaultsToNone]
+    val unsafeOptionT: Type = typeOf[UnsafeOption]
+  }
+
+  def captureTransformerFlags(flagsTpe: Type): TransformerFlags = {
+
+    import FlagsTpeConstructors._
+
+    if (flagsTpe =:= defaultT) {
+      TransformerFlags()
+    } else if (flagsTpe.typeConstructor =:= enableT) {
+      val List(flagT, rest) = flagsTpe.typeArgs
+      captureTransformerFlags(rest).setFlag(flagT, value = true)
+    } else if (flagsTpe.typeConstructor =:= disableT) {
+      val List(flagT, rest) = flagsTpe.typeArgs
+      captureTransformerFlags(rest).setFlag(flagT, value = false)
+    } else {
+      // $COVERAGE-OFF$
+      c.abort(c.enclosingPosition, "Bad internal transformer flags type shape!")
+      // $COVERAGE-ON$
+    }
+  }
+
 }

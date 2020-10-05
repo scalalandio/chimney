@@ -155,7 +155,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       From: Type
   )(ms: MethodSymbol): AccessorResolution = {
     val sourceName = ms.name.decodedName.toString
-    if (config.flags.enableBeanGetters) {
+    if (config.flags.beanGetters) {
       val lookupNameCapitalized = lookupName.capitalize
       if (sourceName == lookupName ||
           sourceName == s"get$lookupNameCapitalized" ||
@@ -166,7 +166,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       }
     } else {
       if (sourceName == lookupName) {
-        if (ms.isStable || wasRenamed || config.flags.enableMethodAccessors) { // isStable means or val/lazy val
+        if (ms.isStable || wasRenamed || config.flags.methodAccessors) { // isStable means or val/lazy val
           AccessorResolution.Resolved(ms, wasRenamed)
         } else {
           AccessorResolution.DefAvailable
