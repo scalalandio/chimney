@@ -9,12 +9,6 @@ sealed abstract class TransformerCfg
 
 object TransformerCfg {
   final class Empty extends TransformerCfg
-  final class DisableDefaultValues[C <: TransformerCfg] extends TransformerCfg
-  final class EnableBeanGetters[C <: TransformerCfg] extends TransformerCfg
-  final class EnableBeanSetters[C <: TransformerCfg] extends TransformerCfg
-  final class EnableOptionDefaultsToNone[C <: TransformerCfg] extends TransformerCfg
-  final class EnableUnsafeOption[C <: TransformerCfg] extends TransformerCfg
-  final class EnableMethodAccessors[C <: TransformerCfg] extends TransformerCfg
   final class FieldConst[Name <: String, C <: TransformerCfg] extends TransformerCfg
   final class FieldConstF[Name <: String, C <: TransformerCfg] extends TransformerCfg
   final class FieldComputed[Name <: String, C <: TransformerCfg] extends TransformerCfg
@@ -86,12 +80,6 @@ trait TransformerConfiguration extends MacroUtils {
     import TransformerCfg._
 
     val emptyT = typeOf[Empty]
-    val disableDefaultValuesT = typeOf[DisableDefaultValues[_]].typeConstructor
-    val enableBeanGettersT = typeOf[EnableBeanGetters[_]].typeConstructor
-    val enableBeanSettersT = typeOf[EnableBeanSetters[_]].typeConstructor
-    val enableOptionDefaultsToNone = typeOf[EnableOptionDefaultsToNone[_]].typeConstructor
-    val enableUnsafeOption = typeOf[EnableUnsafeOption[_]].typeConstructor
-    val enableMethodAccessors = typeOf[EnableMethodAccessors[_]].typeConstructor
     val fieldConstT = typeOf[FieldConst[_, _]].typeConstructor
     val fieldConstFT = typeOf[FieldConstF[_, _]].typeConstructor
     val fieldComputedT = typeOf[FieldComputed[_, _]].typeConstructor
@@ -108,18 +96,6 @@ trait TransformerConfiguration extends MacroUtils {
 
     if (cfgTpe =:= emptyT) {
       TransformerConfig()
-    } else if (cfgTpe.typeConstructor =:= disableDefaultValuesT) {
-      captureTransformerConfig(cfgTpe.typeArgs.head).copy(processDefaultValues = false)
-    } else if (cfgTpe.typeConstructor =:= enableBeanGettersT) {
-      captureTransformerConfig(cfgTpe.typeArgs.head).copy(enableBeanGetters = true)
-    } else if (cfgTpe.typeConstructor =:= enableBeanSettersT) {
-      captureTransformerConfig(cfgTpe.typeArgs.head).copy(enableBeanSetters = true)
-    } else if (cfgTpe.typeConstructor =:= enableOptionDefaultsToNone) {
-      captureTransformerConfig(cfgTpe.typeArgs.head).copy(optionDefaultsToNone = true)
-    } else if (cfgTpe.typeConstructor =:= enableUnsafeOption) {
-      captureTransformerConfig(cfgTpe.typeArgs.head).copy(enableUnsafeOption = true)
-    } else if (cfgTpe.typeConstructor =:= enableMethodAccessors) {
-      captureTransformerConfig(cfgTpe.typeArgs.head).copy(enableMethodAccessors = true)
     } else if (cfgTpe.typeConstructor =:= fieldConstT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString
