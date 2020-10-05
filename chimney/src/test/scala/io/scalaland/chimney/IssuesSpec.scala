@@ -1,5 +1,6 @@
 package io.scalaland.chimney
 
+import io.scalaland.chimney.examples.{colors1, colors2}
 import utest._
 
 object IssuesSpec extends TestSuite {
@@ -448,6 +449,32 @@ object IssuesSpec extends TestSuite {
         implicit val t: TransformerF[Option, Foo, Bar] = f => Some(Bar(f.y.length, f.x.toString)) // Swapped
         (1, List(Foo(1, "test"))).transformIntoF[Option, (Int, List[Bar])] ==> Some((1, List(Bar(4, "1"))))
       }
+    }
+
+    "fix issue #185" - {
+
+      def blackIsRed(b: colors2.Black.type): colors1.Color =
+        colors1.Red
+
+      (colors2.Black: colors2.Color)
+        .intoF[Option, colors1.Color]
+        .withCoproductInstance(blackIsRed)
+        .transform  ==> Some(colors1.Red)
+
+      (colors2.Red: colors2.Color)
+        .intoF[Option, colors1.Color]
+        .withCoproductInstance(blackIsRed)
+        .transform ==> Some(colors1.Red)
+
+      (colors2.Green: colors2.Color)
+        .intoF[Option, colors1.Color]
+        .withCoproductInstance(blackIsRed)
+        .transform ==> Some(colors1.Green)
+
+      (colors2.Blue: colors2.Color)
+        .intoF[Option, colors1.Color]
+        .withCoproductInstance(blackIsRed)
+        .transform ==> Some(colors1.Blue)
     }
   }
 }
