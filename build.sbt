@@ -60,7 +60,7 @@ val dependencies = Seq(
     "org.scala-lang.modules" %%% "scala-collection-compat" % "2.2.0",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
     "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
-    "com.lihaoyi" %%% "utest" % (if (scalaVersion.value >= "2.12") "0.7.5" else "0.6.8") % "test"
+    "com.lihaoyi" %%% "utest" % "0.7.5" % "test"
   )
 )
 
