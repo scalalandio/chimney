@@ -121,7 +121,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
 
     val fallbackTransformers = targets.flatMap { target =>
       def defaultValueFallback =
-        if (config.processDefaultValues && To.isCaseClass) {
+        if (config.flags.processDefaultValues && To.isCaseClass) {
           targetCaseClassDefaults
             .get(target.name)
             .map(defaultValueTree => target -> TransformerBodyTree(defaultValueTree, isWrapped = false))
@@ -130,7 +130,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
         }
 
       def optionNoneFallback =
-        if (config.optionDefaultsToNone && isOption(target.tpe)) {
+        if (config.flags.optionDefaultsToNone && isOption(target.tpe)) {
           Some(target -> TransformerBodyTree(q"_root_.scala.None", isWrapped = false))
         } else {
           None
@@ -155,7 +155,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       From: Type
   )(ms: MethodSymbol): AccessorResolution = {
     val sourceName = ms.name.decodedName.toString
-    if (config.enableBeanGetters) {
+    if (config.flags.enableBeanGetters) {
       val lookupNameCapitalized = lookupName.capitalize
       if (sourceName == lookupName ||
           sourceName == s"get$lookupNameCapitalized" ||
@@ -166,7 +166,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       }
     } else {
       if (sourceName == lookupName) {
-        if (ms.isStable || wasRenamed || config.enableMethodAccessors) { // isStable means or val/lazy val
+        if (ms.isStable || wasRenamed || config.flags.enableMethodAccessors) { // isStable means or val/lazy val
           AccessorResolution.Resolved(ms, wasRenamed)
         } else {
           AccessorResolution.DefAvailable

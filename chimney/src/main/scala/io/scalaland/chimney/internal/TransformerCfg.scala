@@ -36,12 +36,7 @@ trait TransformerConfiguration extends MacroUtils {
   }
 
   case class TransformerConfig(
-      processDefaultValues: Boolean = true,
-      enableBeanGetters: Boolean = false,
-      enableBeanSetters: Boolean = false,
-      optionDefaultsToNone: Boolean = false,
-      enableUnsafeOption: Boolean = false,
-      enableMethodAccessors: Boolean = false,
+      flags: TransformerFlags = TransformerFlags(),
       fieldOverrides: Map[String, FieldOverride] = Map.empty,
       coproductInstances: Set[(Symbol, Type)] = Set.empty, // pair: inst type, target type
       transformerDefinitionPrefix: Tree = EmptyTree,

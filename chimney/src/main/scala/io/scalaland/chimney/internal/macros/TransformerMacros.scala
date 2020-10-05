@@ -125,7 +125,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       expandOptions(srcPrefixTree, config)(From, To)
     } else if (isOption(To)) {
       expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
-    } else if (config.enableUnsafeOption && isOption(From)) {
+    } else if (config.flags.enableUnsafeOption && isOption(From)) {
       expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
     } else if (bothEithers(From, To)) {
       expandEithers(srcPrefixTree, config)(From, To)
@@ -135,7 +135,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       expandDestinationTuple(srcPrefixTree, config)(From, To)
     } else if (destinationCaseClass(To)) {
       expandDestinationCaseClass(srcPrefixTree, config)(From, To)
-    } else if (config.enableBeanSetters && destinationJavaBean(To)) {
+    } else if (config.flags.enableBeanSetters && destinationJavaBean(To)) {
       expandDestinationJavaBean(srcPrefixTree, config)(From, To)
     } else if (bothSealedClasses(From, To)) {
       expandSealedClasses(srcPrefixTree, config)(From, To)
