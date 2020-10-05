@@ -17,16 +17,24 @@ object ErrorPathSpec extends TestSuite {
       implicit val intParse: TransformerF[V, String, Int] =
         str => str.parseInt.fold[V[Int]](Left(List(TransformationError(s"Can't parse int from $str"))))(Right(_))
 
+      "root" - {
+        val errors = "invalid".transformIntoF[V, Int]
+
+        errors.mapLeft(_.map(_.message)) ==> Left(List("Can't parse int from invalid"))
+
+        errors.mapLeft(_.map(_.showErrorPath)) ==> Left(List(""))
+      }
+
       "case classes" - {
-        case class Foo(a: String, b: String, c: InnerFoo)
+        case class Foo(a: String, b: String, c: InnerFoo, d: String)
 
         case class InnerFoo(d: String, e: String)
 
-        case class Bar(a: Int, b: Int, c: InnerBar)
+        case class Bar(a: Int, b: Int, c: InnerBar, d: String)
 
         case class InnerBar(d: Int, e: Int)
 
-        Foo("mmm", "nnn", InnerFoo("lll", "jjj")).transformIntoF[V, Bar].mapLeft(_.map(printError)) ==>
+        Foo("mmm", "nnn", InnerFoo("lll", "jjj"), "d").transformIntoF[V, Bar].mapLeft(_.map(printError)) ==>
           Left(
             List(
               "Can't parse int from mmm on a",
@@ -78,6 +86,18 @@ object ErrorPathSpec extends TestSuite {
           .withFieldRenamed(_.map2, _.list2)
           .transform
           .mapLeft(_.map(printError)) ==> errors
+
+        val error = compileError("""Map("a" -> "b").transformIntoF[V, Map[Double, Double]]""")
+
+        error.check(
+          "",
+          "derivation from k: java.lang.String to scala.Double is not supported in Chimney!"
+        )
+
+        error.check(
+          "",
+          "derivation from v: java.lang.String to scala.Double is not supported in Chimney!"
+        )
       }
 
       "java beans" - {

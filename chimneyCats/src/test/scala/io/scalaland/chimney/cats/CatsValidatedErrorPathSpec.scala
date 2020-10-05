@@ -1,10 +1,9 @@
 package io.scalaland.chimney.cats
 
 import cats.data.{NonEmptyChain, Validated, ValidatedNec}
-import io.scalaland.chimney.{TransformationError, TransformerF}
+import io.scalaland.chimney.{TransformationError, Transformer, TransformerF}
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.utils.OptionUtils._
-
 import utest._
 
 object CatsValidatedErrorPathSpec extends TestSuite {
@@ -22,16 +21,23 @@ object CatsValidatedErrorPathSpec extends TestSuite {
             NonEmptyChain.one(TransformationError[String](s"Can't parse int from $str"))
           )
 
+      case class StringWrapper(str: String)
+
+      implicit val stringUnwrap: Transformer[StringWrapper, String] =
+        _.str
+
       "case classes" - {
-        case class Foo(a: String, b: String, c: InnerFoo)
+        case class Foo(a: String, b: String, c: InnerFoo, d: StringWrapper)
 
         case class InnerFoo(d: String, e: String)
 
-        case class Bar(a: Int, b: Int, c: InnerBar)
+        case class Bar(a: Int, b: Int, c: InnerBar, d: String)
 
         case class InnerBar(d: Int, e: Int)
 
-        Foo("mmm", "nnn", InnerFoo("lll", "jjj")).transformIntoF[V, Bar].leftMap(_.map(printError)) ==>
+        Foo("mmm", "nnn", InnerFoo("lll", "jjj"), StringWrapper("d"))
+          .transformIntoF[V, Bar]
+          .leftMap(_.map(printError)) ==>
           Validated.Invalid(
             NonEmptyChain(
               "Can't parse int from mmm on a",
@@ -82,6 +88,24 @@ object CatsValidatedErrorPathSpec extends TestSuite {
               "Can't parse int from e on map2.keys(FooKey(e)).value",
               "Can't parse int from f on map2(FooKey(e)).value"
             )
+          )
+
+        val error = compileError("""Map(FooKey("a") -> FooValue("b")).transformIntoF[V, Map[Double, Double]]""")
+
+        error.check(
+          "",
+          "derivation from k: io.scalaland.chimney.cats.CatsValidatedErrorPathSpec.FooKey to scala.Double is not supported in Chimney!"
+        )
+
+        error.check(
+          "",
+          "derivation from v: io.scalaland.chimney.cats.CatsValidatedErrorPathSpec.FooValue to scala.Double is not supported in Chimney!"
+        )
+
+        Map(StringWrapper("a") -> StringWrapper("b"), StringWrapper("c") -> StringWrapper("d"))
+          .transformIntoF[V, Map[String, String]] ==> Validated
+          .Valid(
+            Map("a" -> "b", "c" -> "d")
           )
       }
     }
