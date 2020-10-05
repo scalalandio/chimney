@@ -341,31 +341,25 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
             val wrapper = config.wrapperSupportInstance
             val WrappedToInnerT = f.applyTypeArg(ToInnerT)
 
-            val keyTransformerWrapped =
-              if (keyTransformer.isWrapped)
-                q"""$errorPathSupport.addPath[$toKeyT](
+            val keyTransformerWithPath =
+              q"""$errorPathSupport.addPath[$toKeyT](
                    ${keyTransformer.tree},
                    _root_.io.scalaland.chimney.ErrorPathNode.MapKey($fnK)
-                 )
-                """
-              else q"$wrapper.pure[$toKeyT](${keyTransformer.tree})"
+                 )"""
 
-            val valueTransformerWrapped =
-              if (valueTransformer.isWrapped)
-                q"""$errorPathSupport.addPath[$toValueT](
+            val valueTransformerWithPath =
+              q"""$errorPathSupport.addPath[$toValueT](
                     ${valueTransformer.tree},
                     _root_.io.scalaland.chimney.ErrorPathNode.MapValue($fnK)
-                 )
-               """
-              else q"$wrapper.pure[$toValueT](${valueTransformer.tree})"
+                 )"""
 
             Right(
               q"""$wrapper.traverse[$To, $WrappedToInnerT, $ToInnerT](
                   $srcPrefixTree.iterator.map[$WrappedToInnerT] {
                     case (${fnK.name}: $fromKeyT, ${fnV.name}: $fromValueT) =>
                       $wrapper.product[$toKeyT, $toValueT](
-                        $keyTransformerWrapped,
-                        $valueTransformerWrapped
+                        $keyTransformerWithPath,
+                        $valueTransformerWithPath
                       )
                   },
                   _root_.scala.Predef.identity[$WrappedToInnerT]
@@ -697,14 +691,10 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     config.wrapperErrorPathSupportInstance match {
       case Some(errorPathSupport) =>
         resolved.mapRight { bodyTree =>
-          if (bodyTree.isWrapped)
-            bodyTree.copy(tree = q"""$errorPathSupport.addPath[${target.tpe}](
+          bodyTree.copy(tree = q"""$errorPathSupport.addPath[${target.tpe}](
                  ${bodyTree.tree},
                  _root_.io.scalaland.chimney.ErrorPathNode.Accessor(${accessor.symbol.name.toString})
-               )
-             """)
-          else
-            bodyTree
+               )""")
         }
       case None => resolved
     }
