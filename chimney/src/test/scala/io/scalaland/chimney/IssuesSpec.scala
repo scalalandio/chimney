@@ -459,7 +459,7 @@ object IssuesSpec extends TestSuite {
       (colors2.Black: colors2.Color)
         .intoF[Option, colors1.Color]
         .withCoproductInstance(blackIsRed)
-        .transform  ==> Some(colors1.Red)
+        .transform ==> Some(colors1.Red)
 
       (colors2.Red: colors2.Color)
         .intoF[Option, colors1.Color]
