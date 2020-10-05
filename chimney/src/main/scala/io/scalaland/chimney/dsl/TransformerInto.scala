@@ -28,8 +28,8 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @tparam F    wrapper type constructor
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
     */
-  def lift[F[+_]]: TransformerFInto[F, From, To, WrapperType[F, C]] =
-    new TransformerFInto[F, From, To, WrapperType[F, C]](source, td.lift[F])
+  def lift[F[+_]]: TransformerFInto[F, From, To, WrapperType[F, C], Flags] =
+    new TransformerFInto[F, From, To, WrapperType[F, C], Flags](source, td.lift[F])
 
   /** Use `value` provided here for field picked using `selector`.
     *
@@ -53,7 +53,7 @@ final class TransformerInto[From, To, C <: TransformerCfg](
   def withFieldConstF[F[+_], T, U](
       selector: To => T,
       value: F[U]
-  ): TransformerFInto[F, From, To, _ <: TransformerCfg] =
+  ): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerIntoWhiteboxMacros.withFieldConstFImpl[F]
 
   /** Use `map` provided here to compute value of field picked using `selector`.
@@ -83,7 +83,7 @@ final class TransformerInto[From, To, C <: TransformerCfg](
   def withFieldComputedF[F[+_], T, U](
       selector: To => T,
       map: From => F[U]
-  ): TransformerFInto[F, From, To, _ <: TransformerCfg] =
+  ): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerIntoWhiteboxMacros.withFieldComputedFImpl[F]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
@@ -126,7 +126,7 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
     */
-  def withCoproductInstanceF[F[+_], Inst](f: Inst => F[To]): TransformerFInto[F, From, To, _ <: TransformerCfg] =
+  def withCoproductInstanceF[F[+_], Inst](f: Inst => F[To]): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerIntoWhiteboxMacros.withCoproductInstanceFImpl[F]
 
   /** Apply configured transformation in-place.
