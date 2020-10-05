@@ -235,22 +235,6 @@ trait MacroUtils extends CompanionUtils {
       }
     }
 
-    def getLeftTree: Tree = {
-      if (scala.util.Properties.versionNumberString >= "2.12") {
-        q"$t.value"
-      } else {
-        q"$t.left.get"
-      }
-    }
-
-    def getRightTree: Tree = {
-      if (scala.util.Properties.versionNumberString >= "2.12") {
-        q"$t.value"
-      } else {
-        q"$t.right.get"
-      }
-    }
-
     def callTransform(input: Tree): Tree = {
       q"$t.transform($input)"
     }

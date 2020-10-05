@@ -18,8 +18,7 @@ object CatsValidatedSpec extends TestSuite {
 
     "transform always succeeds" - {
 
-      Person("John", 10, 140).intoF[ValidatedNec[String, +*], User].transform ==> Validated.valid(User("John", 10, 140))
-      // .transformIntoF doesn't work with Scala 2.11
+      Person("John", 10, 140).transformIntoF[ValidatedNec[String, +*], User] ==> Validated.valid(User("John", 10, 140))
 
       Person("John", 10, 140).intoF[ValidatedNel[String, +*], User].transform ==> Validated.valid(User("John", 10, 140))
     }
@@ -390,10 +389,7 @@ object CatsValidatedSpec extends TestSuite {
 
         implicit val intPrinter: Transformer[Int, String] = _.toString
 
-        // without this specific instantiation on 2.11 shortToLongPureInner is not picked correctly
-        implicit val workaround
-            : TransformerF[ValidatedNec[String, +*], short.NumScale[Int, Nothing], long.NumScale[String]] =
-          ScalesTransformer.shortToLongPureInner[ValidatedNec[String, +*], Int, String]
+        import ScalesTransformer.shortToLongPureInner
 
         (short.Zero: short.NumScale[Int, Nothing])
           .intoF[ValidatedNec[String, +*], long.NumScale[String]]
@@ -414,10 +410,7 @@ object CatsValidatedSpec extends TestSuite {
         implicit val intParserValidated: TransformerF[ValidatedNec[String, +*], String, Int] =
           _.parseInt.toValidatedNec("bad int")
 
-        // without this specific instantiation on 2.11 shortToLongWrappedInner is not picked correctly
-        implicit val workaround
-            : TransformerF[ValidatedNec[String, +*], short.NumScale[String, Nothing], long.NumScale[Int]] =
-          ScalesTransformer.shortToLongWrappedInner[ValidatedNec[String, +*], String, Int]
+        import ScalesTransformer.shortToLongWrappedInner
 
         (short.Zero: short.NumScale[String, Nothing])
           .intoF[ValidatedNec[String, +*], long.NumScale[Int]]

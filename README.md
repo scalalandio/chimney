@@ -2,10 +2,9 @@
 
 ![CI build](https://github.com/scalalandio/chimney/workflows/CI%20build/badge.svg)
 [![Maven Central](https://img.shields.io/maven-central/v/io.scalaland/chimney_2.12.svg)](http://search.maven.org/#search%7Cga%7C1%7Cchimney)
-[![Javadocs](https://www.javadoc.io/badge/io.scalaland/chimney_2.11.svg?color=red&label=scaladoc)](https://www.javadoc.io/doc/io.scalaland/chimney_2.11)
+[![Javadocs](https://www.javadoc.io/badge/io.scalaland/chimney_2.13.svg?color=red&label=scaladoc)](https://www.javadoc.io/doc/io.scalaland/chimney_2.13/latest/io/scalaland/chimney/index.html)
 [![codecov.io](http://codecov.io/github/scalalandio/chimney/coverage.svg?branch=master)](http://codecov.io/github/scalalandio/chimney?branch=master)
 [![License](http://img.shields.io/:license-Apache%202-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt) [![Join the chat at https://gitter.im/scalalandio/chimney](https://badges.gitter.im/scalalandio/chimney.svg)](https://gitter.im/scalalandio/chimney?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Scala.js](https://www.scala-js.org/assets/badges/scalajs-0.6.17.svg)](https://www.scala-js.org)
 [![Scala.js](https://www.scala-js.org/assets/badges/scalajs-1.0.0.svg)](https://www.scala-js.org)
 
 Scala library for boilerplate-free data transformations.
@@ -13,7 +12,7 @@ Scala library for boilerplate-free data transformations.
 In the daily life of a strongly-typed language's programmer sometimes it
 happens we need to transform an object of one type to another object which
 contains a number of the same or similar fields in their definitions.
-      
+
 ```scala
 case class MakeCoffee(id: Int, kind: String, addict: String)
 case class CoffeeMade(id: Int, kind: String, forAddict: String, at: ZonedDateTime)
@@ -66,11 +65,11 @@ To include Chimney to your SBT project, add the following line to your `build.sb
 libraryDependencies += "io.scalaland" %% "chimney" % "0.5.3"
 ```
 
-Library is released for Scala 2.11.x, 2.12.x and 2.13.x.
+Library is released for Scala 2.12.x and 2.13.x.
 
-If you want to use it with Scala.js (or Scala Native), you need to replace `%%` with `%%%`.
+If you want to use it with Scala.js, you need to replace `%%` with `%%%`.
 Due to some [compiler bugs](https://issues.scala-lang.org/browse/SI-7046),
-it's recommended to use at least Scala 2.11.9 or 2.12.1.
+it's recommended to use at least Scala 2.12.1.
 
 ### Trying with Ammonite REPL
 

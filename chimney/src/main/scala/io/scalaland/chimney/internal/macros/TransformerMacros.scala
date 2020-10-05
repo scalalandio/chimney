@@ -272,14 +272,14 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     val fnR = Ident(freshTermName("right"))
 
     if (From <:< leftTpe && !(To <:< rightTpe)) {
-      resolveRecursiveTransformerBody(srcPrefixTree.getLeftTree, config.rec)(fromLeftT, toLeftT)
+      resolveRecursiveTransformerBody(q"$srcPrefixTree.value", config.rec)(fromLeftT, toLeftT)
         .mapRight { tbt =>
           mkTransformerBodyTree1(To, Target(fnL.name.toString, toLeftT), tbt, config) { leftArgTree =>
             q"new _root_.scala.util.Left($leftArgTree)"
           }
         }
     } else if (From <:< rightTpe && !(To <:< leftTpe)) {
-      resolveRecursiveTransformerBody(srcPrefixTree.getRightTree, config.rec)(fromRightT, toRightT)
+      resolveRecursiveTransformerBody(q"$srcPrefixTree.value", config.rec)(fromRightT, toRightT)
         .mapRight { tbt =>
           mkTransformerBodyTree1(To, Target(fnR.name.toString, toRightT), tbt, config) { rightArgTree =>
             q"new _root_.scala.util.Right($rightArgTree)"
