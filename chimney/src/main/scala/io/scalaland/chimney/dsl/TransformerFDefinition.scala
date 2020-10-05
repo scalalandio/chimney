@@ -127,7 +127,7 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     * @return [[io.scalaland.chimney.TransformerF]] type class instance
     */
   def buildTransformer(implicit tfs: TransformerFSupport[F]): TransformerF[F, From, To] =
-    macro ChimneyBlackboxMacros.buildTransformerFImpl[F, From, To, C]
+    macro ChimneyBlackboxMacros.buildTransformerFImpl[F, From, To, C, Flags]
 
   /** Used internally by macro. Please don't use in your code.
     */

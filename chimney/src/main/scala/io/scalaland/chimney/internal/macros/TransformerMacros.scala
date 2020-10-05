@@ -12,11 +12,12 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
 
   import c.universe._
 
-  def buildDefinedTransformer[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag](
+  def buildDefinedTransformer[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag](
       tfsTree: Tree = EmptyTree
   ): Tree = {
     val C = weakTypeOf[C]
-    val config = captureTransformerConfig(C).copy(
+    val Flags = weakTypeOf[Flags]
+    val config = captureTransformerConfig(C, Flags).copy(
       definitionScope = Some((weakTypeOf[From], weakTypeOf[To])),
       wrapperSupportInstance = tfsTree
     )
@@ -34,12 +35,13 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     }
   }
 
-  def expandTransform[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag](
+  def expandTransform[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag](
       tfsTree: Tree = EmptyTree
   ): Tree = {
     val C = weakTypeOf[C]
+    val Flags = weakTypeOf[Flags]
     val tiName = TermName(c.freshName("ti"))
-    val config = captureTransformerConfig(C)
+    val config = captureTransformerConfig(C, Flags)
       .copy(
         transformerDefinitionPrefix = q"$tiName.td",
         wrapperSupportInstance = tfsTree

@@ -138,7 +138,7 @@ final class TransformerInto[From, To, C <: TransformerCfg](
     * @return transformed value of type `To`
     */
   def transform: To =
-    macro ChimneyBlackboxMacros.transformImpl[From, To, C]
+    macro ChimneyBlackboxMacros.transformImpl[From, To, C, Flags]
 
   /** Used internally by macro. Please don't use in your code.
     */
