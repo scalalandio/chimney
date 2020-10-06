@@ -173,3 +173,6 @@ do that. Let's convert any ``Channel.Alpha`` to ``Color.Blue``.
 
 After providing a default, Chimney can prove the transformation
 is total and use provided function, when it's needed.
+
+Transformations between flat sealed trait hierarchies and deep trait
+hierarchies containing nested sealed traits are also available.

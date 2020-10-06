@@ -387,8 +387,8 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
         val fromCS = From.typeSymbol.classSymbolOpt.get
         val toCS = To.typeSymbol.classSymbolOpt.get
 
-        val fromInstances = fromCS.knownDirectSubclasses.toSeq.map(_.typeInSealedParent(From))
-        val toInstances = toCS.knownDirectSubclasses.toSeq.map(_.typeInSealedParent(To))
+        val fromInstances = fromCS.subclasses.map(_.typeInSealedParent(From))
+        val toInstances = toCS.subclasses.map(_.typeInSealedParent(To))
 
         val targetNamedInstances = toInstances.map(tpe => tpe.typeSymbol.name.toString -> tpe).toMap
 

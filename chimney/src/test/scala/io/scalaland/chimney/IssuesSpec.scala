@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.examples.{colors1, colors2}
+import io.scalaland.chimney.examples.{colors1, colors2, foo}
 import utest._
 
 object IssuesSpec extends TestSuite {
@@ -475,6 +475,10 @@ object IssuesSpec extends TestSuite {
         .intoF[Option, colors1.Color]
         .withCoproductInstance(blackIsRed)
         .transform ==> Some(colors1.Blue)
+    }
+
+    "fix issue #182" - {
+      foo.convert(foo.A1) ==> foo.into.A1
     }
   }
 }
