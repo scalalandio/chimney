@@ -14,3 +14,13 @@ package colors2 {
   case object Red extends Color
   case object Black extends Color
 }
+
+package colors3 {
+  sealed trait Color
+  sealed trait SimpleColor extends Color
+  sealed trait ComplexedColor extends Color
+  case object Red extends SimpleColor
+  case object Green extends SimpleColor
+  case object Blue extends SimpleColor
+  case object Black extends ComplexedColor
+}

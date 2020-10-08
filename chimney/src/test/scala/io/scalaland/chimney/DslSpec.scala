@@ -692,6 +692,18 @@ object DslSpec extends TestSuite {
             .withCoproductInstance(blackIsRed)
             .transform ==> colors1.Blue
         }
+
+        "transforming flat and deep enum" - {
+          (colors2.Red: colors2.Color).transformInto[colors3.Color] ==> colors3.Red
+          (colors2.Green: colors2.Color).transformInto[colors3.Color] ==> colors3.Green
+          (colors2.Blue: colors2.Color).transformInto[colors3.Color] ==> colors3.Blue
+          (colors2.Black: colors2.Color).transformInto[colors3.Color] ==> colors3.Black
+
+          (colors3.Red: colors3.Color).transformInto[colors2.Color] ==> colors2.Red
+          (colors3.Green: colors3.Color).transformInto[colors2.Color] ==> colors2.Green
+          (colors3.Blue: colors3.Color).transformInto[colors2.Color] ==> colors2.Blue
+          (colors3.Black: colors3.Color).transformInto[colors2.Color] ==> colors2.Black
+        }
       }
 
       "transforming non-isomorphic domains" - {
@@ -752,6 +764,24 @@ object DslSpec extends TestSuite {
           .Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4)): shapes1.Shape)
           .transformInto[shapes3.Shape] ==>
           shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0))
+      }
+
+      "transforming flat and deep domains" - {
+        (shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0)): shapes3.Shape)
+          .transformInto[shapes4.Shape] ==>
+          shapes4.Triangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0), shapes4.Point(0.0, 0.0))
+
+        (shapes3.Rectangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0)): shapes3.Shape)
+          .transformInto[shapes4.Shape] ==>
+          shapes4.Rectangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0))
+
+        (shapes4.Triangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0), shapes4.Point(0.0, 0.0)): shapes4.Shape)
+          .transformInto[shapes3.Shape] ==>
+          shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0))
+
+        (shapes4.Rectangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0)): shapes4.Shape)
+          .transformInto[shapes3.Shape] ==>
+          shapes3.Rectangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0))
       }
     }
 

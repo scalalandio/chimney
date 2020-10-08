@@ -180,6 +180,19 @@ trait MacroUtils extends CompanionUtils {
     }
   }
 
+  implicit class ClassSymbolOps(cs: ClassSymbol) {
+
+    def subclasses: List[Symbol] =
+      cs.knownDirectSubclasses.toList.flatMap { subclass =>
+        val asClass = subclass.asClass
+        if (asClass.isTrait && asClass.isSealed) {
+          asClass.subclasses
+        } else {
+          List(subclass)
+        }
+      }
+  }
+
   // $COVERAGE-OFF$
   implicit class TreeOps(t: Tree) {
 
