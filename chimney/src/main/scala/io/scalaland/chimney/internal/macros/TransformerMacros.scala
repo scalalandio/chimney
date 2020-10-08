@@ -12,14 +12,11 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
 
   import c.universe._
 
-  def buildDefinedTransformer[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag](
+  def buildDefinedTransformer[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
       tfsTree: Tree = EmptyTree
   ): Tree = {
-    val C = weakTypeOf[C]
-    val Flags = weakTypeOf[Flags]
-    val config = captureTransformerConfig(C, Flags).copy(
+    val config = readConfig[C, Flags, ScopeFlags](tfsTree).copy(
       definitionScope = Some((weakTypeOf[From], weakTypeOf[To])),
-      wrapperSupportInstance = tfsTree
     )
 
     if (!config.valueLevelAccessNeeded) {
@@ -35,17 +32,13 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     }
   }
 
-  def expandTransform[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag](
+  def expandTransform[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
       tfsTree: Tree = EmptyTree
   ): Tree = {
-    val C = weakTypeOf[C]
-    val Flags = weakTypeOf[Flags]
     val tiName = TermName(c.freshName("ti"))
-    val config = captureTransformerConfig(C, Flags)
-      .copy(
-        transformerDefinitionPrefix = q"$tiName.td",
-        wrapperSupportInstance = tfsTree
-      )
+    val config = readConfig[C, Flags, ScopeFlags](tfsTree).copy(
+      transformerDefinitionPrefix = q"$tiName.td",
+    )
 
     val derivedTransformerTree = genTransformer[From, To](config)
 
@@ -53,6 +46,20 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
        val $tiName = ${c.prefix.tree}
        ${derivedTransformerTree.callTransform(q"$tiName.source")}
     """
+  }
+
+  def readConfig[C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](wrapperSupportInstance: Tree): TransformerConfig = {
+    val C = weakTypeOf[C]
+    val Flags = weakTypeOf[Flags]
+    val ScopeFlags = weakTypeOf[ScopeFlags]
+
+    val scopedFlags = captureTransformerFlags(ScopeFlags)
+    val instanceFlags = captureTransformerFlags(Flags, scopedFlags)
+
+    captureTransformerConfig(C).copy(
+      flags = instanceFlags,
+      wrapperSupportInstance = wrapperSupportInstance,
+    )
   }
 
   def genTransformer[From: WeakTypeTag, To: WeakTypeTag](
@@ -676,7 +683,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     }
   }
 
-  def findLocalImplicitTransformer(From: Type, To: Type, wrapperType: Option[Type]): Option[Tree] = {
+  private def findLocalImplicitTransformer(From: Type, To: Type, wrapperType: Option[Type]): Option[Tree] = {
     val searchTypeTree: Tree = wrapperType match {
       case Some(f) =>
         tq"_root_.io.scalaland.chimney.TransformerF[$f, $From, $To]"
@@ -684,8 +691,19 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
         tq"_root_.io.scalaland.chimney.Transformer[$From, $To]"
     }
 
-    val tpeTree = c.typecheck(
-      tree = searchTypeTree,
+    inferImplicitTpe(searchTypeTree, macrosDisabled = false).filterNot(isDeriving)
+  }
+
+  private def findLocalTransformerConfigurationFlags: Option[TransformerFlags] = {
+    val searchType = tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[_ <: TransformerFlags]]}"
+    println(s"SEARCHING FOR $searchType")
+    inferImplicitTpe(searchType, macrosDisabled = true)
+      .map { tree => captureTransformerFlags(tree.tpe) }
+  }
+
+  private def inferImplicitTpe(tpeTree: Tree, macrosDisabled: Boolean): Option[Tree] = {
+    val typedTpeTree = c.typecheck(
+      tree = tpeTree,
       silent = true,
       mode = c.TYPEmode,
       withImplicitViewsDisabled = true,
@@ -693,12 +711,9 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     )
 
     scala.util
-      .Try(c.inferImplicitValue(tpeTree.tpe, silent = true, withMacrosDisabled = false))
+      .Try(c.inferImplicitValue(typedTpeTree.tpe, silent = true, withMacrosDisabled = false))
       .toOption
-      .filterNot { tree =>
-        tree == EmptyTree ||
-        isDeriving(tree)
-      }
+      .filterNot(_ == EmptyTree)
   }
 
   private def isDeriving(tree: Tree): Boolean = {

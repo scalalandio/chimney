@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.examples._
+import io.scalaland.chimney.internal.TransformerFlags
 import utest._
 
 object DslSpec extends TestSuite {
@@ -1011,6 +1012,23 @@ object DslSpec extends TestSuite {
 
         ClassA(Some(List(ClassAA("l")))).transformInto[ClassD] ==> ClassD(List(ClassBB("l")), "another")
       }
+    }
+
+    "support scoped transformer configuration passed implicitly" - {
+      import TransformerFlags._
+
+      implicit val transformerConfiguration: TransformerConfiguration[Disable[DefaultValues, Enable[MethodAccessors, Enable[OptionDefaultsToNone, Default]]]] =
+        TransformerConfiguration.default
+          .enableOptionDefaultsToNone
+          .enableMethodAccessors
+          .disableDefaultValues
+
+      class Source { def field1: Int = 100 }
+      case class Target(field1: Int = 200,
+                        field2: Option[String] = Some("foo"))
+
+
+      (new Source).into[Target].transform ==> Target(100, None)
     }
   }
 }

@@ -1,16 +1,15 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.TransformerFlag._
+import io.scalaland.chimney.internal.TransformerFlags
 import io.scalaland.chimney.internal.TransformerFlags._
-import io.scalaland.chimney.internal.{TransformerFlag, TransformerFlags}
 
 trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
 
-  private def enableFlag[Flag <: TransformerFlag]: UpdateFlag[Enable[Flag, Flags]] =
-    this.asInstanceOf[UpdateFlag[Enable[Flag, Flags]]]
+  private def enableFlag[F <: TransformerFlags.Flag]: UpdateFlag[Enable[F, Flags]] =
+    this.asInstanceOf[UpdateFlag[Enable[F, Flags]]]
 
-  private def disableFlag[Flag <: TransformerFlag]: UpdateFlag[Disable[Flag, Flags]] =
-    this.asInstanceOf[UpdateFlag[Disable[Flag, Flags]]]
+  private def disableFlag[F <: TransformerFlags.Flag]: UpdateFlag[Disable[F, Flags]] =
+    this.asInstanceOf[UpdateFlag[Disable[F, Flags]]]
 
   /** Enable values to be supplied from method calls. Source method must be public and have no parameter list.
     *

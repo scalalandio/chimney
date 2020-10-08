@@ -5,21 +5,19 @@ import io.scalaland.chimney.internal.utils.MacroUtils
 import scala.language.existentials
 import scala.reflect.macros.blackbox
 
-sealed abstract class TransformerFlag
-object TransformerFlag {
-  final class MethodAccessors extends TransformerFlag
-  final class DefaultValues extends TransformerFlag
-  final class BeanSetters extends TransformerFlag
-  final class BeanGetters extends TransformerFlag
-  final class OptionDefaultsToNone extends TransformerFlag
-  final class UnsafeOption extends TransformerFlag
-}
-
 sealed abstract class TransformerFlags
 object TransformerFlags {
   final class Default extends TransformerFlags
-  final class Enable[F <: TransformerFlag, Flags <: TransformerFlags] extends TransformerFlags
-  final class Disable[F <: TransformerFlag, Flags <: TransformerFlags] extends TransformerFlags
+  final class Enable[F <: Flag, Flags <: TransformerFlags] extends TransformerFlags
+  final class Disable[F <: Flag, Flags <: TransformerFlags] extends TransformerFlags
+
+  sealed abstract class Flag
+  final class MethodAccessors extends Flag
+  final class DefaultValues extends Flag
+  final class BeanSetters extends Flag
+  final class BeanGetters extends Flag
+  final class OptionDefaultsToNone extends Flag
+  final class UnsafeOption extends Flag
 }
 
 sealed abstract class TransformerCfg
@@ -87,7 +85,7 @@ trait TransformerConfiguration extends MacroUtils {
     }
   }
 
-  object CfgTpeConstructors {
+  object CfgTpes {
     import TransformerCfg._
 
     val emptyT: Type = typeOf[Empty]
@@ -101,43 +99,43 @@ trait TransformerConfiguration extends MacroUtils {
     val wrapperTypeT: Type = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
   }
 
-  def captureTransformerConfig(cfgTpe: Type, flagsTpe: Type): TransformerConfig = {
+  def captureTransformerConfig(cfgTpe: Type): TransformerConfig = {
 
-    import CfgTpeConstructors._
+    import CfgTpes._
 
     if (cfgTpe =:= emptyT) {
-      TransformerConfig(flags = captureTransformerFlags(flagsTpe))
+      TransformerConfig()
     } else if (cfgTpe.typeConstructor =:= fieldConstT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString
-      captureTransformerConfig(rest, flagsTpe).fieldOverride(fieldName, FieldOverride.Const)
+      captureTransformerConfig(rest).fieldOverride(fieldName, FieldOverride.Const)
     } else if (cfgTpe.typeConstructor =:= fieldComputedT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString
-      captureTransformerConfig(rest, flagsTpe).fieldOverride(fieldName, FieldOverride.Computed)
+      captureTransformerConfig(rest).fieldOverride(fieldName, FieldOverride.Computed)
     } else if (cfgTpe.typeConstructor =:= fieldRelabelledT) {
       val List(fieldNameFromT, fieldNameToT, rest) = cfgTpe.typeArgs
       val fieldNameFrom = fieldNameFromT.singletonString
       val fieldNameTo = fieldNameToT.singletonString
-      captureTransformerConfig(rest, flagsTpe)
+      captureTransformerConfig(rest)
         .fieldOverride(fieldNameTo, FieldOverride.RenamedFrom(fieldNameFrom))
     } else if (cfgTpe.typeConstructor =:= coproductInstanceT) {
       val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-      captureTransformerConfig(rest, flagsTpe).coproductInstance(instanceType, targetType)
+      captureTransformerConfig(rest).coproductInstance(instanceType, targetType)
     } else if (cfgTpe.typeConstructor =:= wrapperTypeT) {
       val List(f, rest) = cfgTpe.typeArgs
-      captureTransformerConfig(rest, flagsTpe).copy(wrapperType = Some(f))
+      captureTransformerConfig(rest).copy(wrapperType = Some(f))
     } else if (cfgTpe.typeConstructor =:= fieldConstFT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString
-      captureTransformerConfig(rest, flagsTpe).fieldOverride(fieldName, FieldOverride.ConstF)
+      captureTransformerConfig(rest).fieldOverride(fieldName, FieldOverride.ConstF)
     } else if (cfgTpe.typeConstructor =:= fieldComputedFT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString
-      captureTransformerConfig(rest, flagsTpe).fieldOverride(fieldName, FieldOverride.ComputedF)
+      captureTransformerConfig(rest).fieldOverride(fieldName, FieldOverride.ComputedF)
     } else if (cfgTpe.typeConstructor =:= coproductInstanceFT) {
       val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-      captureTransformerConfig(rest, flagsTpe).coproductInstanceF(instanceType, targetType)
+      captureTransformerConfig(rest).coproductInstanceF(instanceType, targetType)
     } else {
       // $COVERAGE-OFF$
       c.abort(c.enclosingPosition, "Bad internal transformer config type shape!")
@@ -154,20 +152,26 @@ trait TransformerConfiguration extends MacroUtils {
       unsafeOption: Boolean = false
   ) {
     def setFlag(flagTpe: Type, value: Boolean): TransformerFlags = {
-      flagTpe match {
-        case FlagsTpeConstructors.methodAccessorsT      => copy(methodAccessors = value)
-        case FlagsTpeConstructors.defaultValuesT        => copy(processDefaultValues = value)
-        case FlagsTpeConstructors.beanSettersT          => copy(beanSetters = value)
-        case FlagsTpeConstructors.beanGettersT          => copy(beanGetters = value)
-        case FlagsTpeConstructors.optionDefaultsToNoneT => copy(optionDefaultsToNone = value)
-        case FlagsTpeConstructors.unsafeOptionT         => copy(unsafeOption = value)
+      if (flagTpe =:= FlagsTpes.methodAccessorsT) {
+        copy(methodAccessors = value)
+      } else if (flagTpe =:= FlagsTpes.defaultValuesT) {
+        copy(processDefaultValues = value)
+      } else if (flagTpe =:= FlagsTpes.beanSettersT) {
+        copy(beanSetters = value)
+      } else if (flagTpe =:= FlagsTpes.beanGettersT) {
+        copy(beanGetters = value)
+      } else if (flagTpe =:= FlagsTpes.optionDefaultsToNoneT) {
+        copy(optionDefaultsToNone = value)
+      } else if (flagTpe =:= FlagsTpes.unsafeOptionT) {
+        copy(unsafeOption = value)
+      } else {
+        c.abort(c.enclosingPosition, s"Invalid transformer flag type: $flagTpe!")
       }
     }
   }
 
-  object FlagsTpeConstructors {
+  object FlagsTpes {
     import io.scalaland.chimney.internal.TransformerFlags._
-    import io.scalaland.chimney.internal.TransformerFlag._
 
     val defaultT: Type = typeOf[Default]
     val enableT: Type = typeOf[Enable[_, _]].typeConstructor
@@ -181,12 +185,13 @@ trait TransformerConfiguration extends MacroUtils {
     val unsafeOptionT: Type = typeOf[UnsafeOption]
   }
 
-  def captureTransformerFlags(flagsTpe: Type): TransformerFlags = {
+  def captureTransformerFlags(flagsTpe: Type,
+                              defaultFlags: TransformerFlags = TransformerFlags()): TransformerFlags = {
 
-    import FlagsTpeConstructors._
+    import FlagsTpes._
 
     if (flagsTpe =:= defaultT) {
-      TransformerFlags()
+      defaultFlags
     } else if (flagsTpe.typeConstructor =:= enableT) {
       val List(flagT, rest) = flagsTpe.typeArgs
       captureTransformerFlags(rest).setFlag(flagT, value = true)

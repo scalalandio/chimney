@@ -15,25 +15,38 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
 
   import c.universe._
 
-  def buildTransformerImpl[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag]
-      : c.Expr[chimney.Transformer[From, To]] = {
-    c.Expr[chimney.Transformer[From, To]](buildDefinedTransformer[From, To, C, Flags]())
+  def buildTransformerImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      C: WeakTypeTag,
+      Flags: WeakTypeTag,
+      ScopeFlags: WeakTypeTag
+  ](tc: c.Tree): c.Expr[chimney.Transformer[From, To]] = {
+    c.Expr[chimney.Transformer[From, To]](buildDefinedTransformer[From, To, C, Flags, ScopeFlags]())
   }
 
-  def buildTransformerFImpl[F[+_], From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag](
-      tfs: c.Expr[TransformerFSupport[F]]
+  def buildTransformerFImpl[F[+_], From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
+      tfs: c.Expr[TransformerFSupport[F]],
+      tc: c.Tree
   ): c.Expr[TransformerF[F, From, To]] = {
-    c.Expr[TransformerF[F, From, To]](buildDefinedTransformer[From, To, C, Flags](tfs.tree))
+    c.Expr[TransformerF[F, From, To]](buildDefinedTransformer[From, To, C, Flags, ScopeFlags](tfs.tree))
   }
 
-  def transformImpl[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag]: c.Expr[To] = {
-    c.Expr[To](expandTransform[From, To, C, Flags]())
+  def transformImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      C: WeakTypeTag,
+      Flags: WeakTypeTag,
+      ScopeFlags: WeakTypeTag
+  ](tc: c.Tree): c.Expr[To] = {
+    c.Expr[To](expandTransform[From, To, C, Flags, ScopeFlags]())
   }
 
-  def transformFImpl[F[+_], From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag](
-      tfs: c.Expr[TransformerFSupport[F]]
+  def transformFImpl[F[+_], From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
+      tfs: c.Expr[TransformerFSupport[F]],
+      tc: c.Tree
   ): c.Expr[F[To]] = {
-    c.Expr[F[To]](expandTransform[From, To, C, Flags](tfs.tree))
+    c.Expr[F[To]](expandTransform[From, To, C, Flags, ScopeFlags](tfs.tree))
   }
 
   def deriveTransformerImpl[From: WeakTypeTag, To: WeakTypeTag]: c.Expr[chimney.Transformer[From, To]] = {

@@ -8,7 +8,7 @@ import scala.reflect.macros.whitebox
 class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends MacroUtils with TransformerConfiguration {
 
   import c.universe._
-  import CfgTpeConstructors._
+  import CfgTpes._
 
   def withFieldConstImpl[
       From: WeakTypeTag,
