@@ -802,10 +802,7 @@ object DslFSpec extends TestSuite {
       case class Target(field1: Int = 200, field2: Option[String] = Some("foo"))
 
       implicit val transformerConfiguration = {
-        TransformerConfiguration.default
-          .enableOptionDefaultsToNone
-          .enableMethodAccessors
-          .disableDefaultValues
+        TransformerConfiguration.default.enableOptionDefaultsToNone.enableMethodAccessors.disableDefaultValues
       }
 
       "scoped config only" - {

@@ -65,7 +65,10 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     * @param map      function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
-  def withFieldComputed[T, U](selector: To => T, map: From => U): TransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
+  def withFieldComputed[T, U](
+      selector: To => T,
+      map: From => U
+  ): TransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
     macro TransformerDefinitionWhiteboxMacros.withFieldComputedImpl[From, To, T, U, C]
 
   /** Use `map` provided here to compute wrapped value of field picked using `selector`.
@@ -123,7 +126,9 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
     */
-  def withCoproductInstanceF[F[+_], Inst](f: Inst => F[To]): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
+  def withCoproductInstanceF[F[+_], Inst](
+      f: Inst => F[To]
+  ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceFImpl[F, From, To, Inst, C]
 
   /** Build Transformer using current configuration.
@@ -133,7 +138,9 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     *
     * @return [[io.scalaland.chimney.Transformer]] type class instance
     */
-  def buildTransformer[ScopeFlags <: TransformerFlags](implicit tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]): Transformer[From, To] =
+  def buildTransformer[ScopeFlags <: TransformerFlags](
+      implicit tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
+  ): Transformer[From, To] =
     macro ChimneyBlackboxMacros.buildTransformerImpl[From, To, C, Flags, ScopeFlags]
 
   /** Used internally by macro. Please don't use in your code.

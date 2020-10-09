@@ -27,7 +27,10 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
     */
-  def withFieldConst[T, U](selector: To => T, value: U): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
+  def withFieldConst[T, U](
+      selector: To => T,
+      value: U
+  ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerFDefinitionWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
 
   /** Use wrapped `value` provided here for field picked using `selector`.
@@ -39,7 +42,10 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
     */
-  def withFieldConstF[T, U](selector: To => T, value: F[U]): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
+  def withFieldConstF[T, U](
+      selector: To => T,
+      value: F[U]
+  ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerFDefinitionWhiteboxMacros.withFieldConstFImpl[From, To, T, U, C, F]
 
   /** Use `map` provided here to compute value of field picked using `selector`.
@@ -98,7 +104,9 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
     */
-  def withCoproductInstance[Inst <: From](f: Inst => To): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
+  def withCoproductInstance[Inst <: From](
+      f: Inst => To
+  ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerFDefinitionWhiteboxMacros.withCoproductInstanceImpl[From, To, Inst, C]
 
   /** Use `f` to calculate the (missing) wrapped coproduct instance when mapping one coproduct into another
@@ -126,8 +134,10 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     *
     * @return [[io.scalaland.chimney.TransformerF]] type class instance
     */
-  def buildTransformer[ScopeFlags <: TransformerFlags](implicit tfs: TransformerFSupport[F],
-                                                       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]): TransformerF[F, From, To] =
+  def buildTransformer[ScopeFlags <: TransformerFlags](
+      implicit tfs: TransformerFSupport[F],
+      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
+  ): TransformerF[F, From, To] =
     macro ChimneyBlackboxMacros.buildTransformerFImpl[F, From, To, C, Flags, ScopeFlags]
 
   /** Used internally by macro. Please don't use in your code.

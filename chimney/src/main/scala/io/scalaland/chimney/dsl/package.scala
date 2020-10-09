@@ -45,7 +45,8 @@ package object dsl {
       * @tparam To target type
       * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
       */
-    final def intoF[F[+_], To]: TransformerFInto[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
+    final def intoF[F[+_], To]
+        : TransformerFInto[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
       new TransformerFInto(source, new TransformerFDefinition(Map.empty, Map.empty))
 
     /** Performs in-place wrapped transformation of captured source value to target type.

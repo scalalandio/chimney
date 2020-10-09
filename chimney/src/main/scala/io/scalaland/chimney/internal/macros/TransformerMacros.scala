@@ -694,7 +694,8 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
   }
 
   def findLocalTransformerConfigurationFlags: Option[TransformerFlags] = {
-    val searchTypeTree = tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[_ <: io.scalaland.chimney.internal.TransformerFlags]]}"
+    val searchTypeTree =
+      tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[_ <: io.scalaland.chimney.internal.TransformerFlags]]}"
     inferImplicitTpe(searchTypeTree, macrosDisabled = true)
       .flatMap(_.tpe.typeArgs.headOption)
       .map(flagsTpe => captureTransformerFlags(flagsTpe))
