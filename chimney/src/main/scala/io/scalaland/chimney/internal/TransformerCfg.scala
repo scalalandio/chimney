@@ -165,7 +165,9 @@ trait TransformerConfiguration extends MacroUtils {
       } else if (flagTpe =:= FlagsTpes.unsafeOptionT) {
         copy(unsafeOption = value)
       } else {
+        // $COVERAGE-OFF$
         c.abort(c.enclosingPosition, s"Invalid transformer flag type: $flagTpe!")
+        // $COVERAGE-ON$
       }
     }
   }
