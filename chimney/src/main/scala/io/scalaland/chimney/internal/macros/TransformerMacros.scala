@@ -693,6 +693,13 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     }
   }
 
+  def findLocalTransformerConfigurationFlags: Option[TransformerFlags] = {
+    val searchTypeTree = tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[_ <: io.scalaland.chimney.internal.TransformerFlags]]}"
+    inferImplicitTpe(searchTypeTree, macrosDisabled = true)
+      .flatMap(_.tpe.typeArgs.headOption)
+      .map(flagsTpe => captureTransformerFlags(flagsTpe))
+  }
+
   private def findLocalImplicitTransformer(From: Type, To: Type, wrapperType: Option[Type]): Option[Tree] = {
     val searchTypeTree: Tree = wrapperType match {
       case Some(f) =>
@@ -702,13 +709,6 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     }
 
     inferImplicitTpe(searchTypeTree, macrosDisabled = false).filterNot(isDeriving)
-  }
-
-  def findLocalTransformerConfigurationFlags: Option[TransformerFlags] = {
-    val searchTypeTree = tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[_ <: io.scalaland.chimney.internal.TransformerFlags]]}"
-    inferImplicitTpe(searchTypeTree, macrosDisabled = true)
-      .flatMap(_.tpe.typeArgs.headOption)
-      .map(flagsTpe => captureTransformerFlags(flagsTpe))
   }
 
   private def inferImplicitTpe(tpeTree: Tree, macrosDisabled: Boolean): Option[Tree] = {
