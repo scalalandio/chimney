@@ -69,7 +69,7 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
   def disableBeanSetters: UpdateFlag[Disable[BeanSetters, Flags]] =
     disableFlag[BeanSetters]
 
-  /** Sets target value of optional field to None if field is missing from source type From.
+  /** Sets target value of optional field to None if field is missing from source type `From`.
     *
     * By default in such case compilation fails.
     *
@@ -78,7 +78,7 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
   def enableOptionDefaultsToNone: UpdateFlag[Enable[OptionDefaultsToNone, Flags]] =
     enableFlag[OptionDefaultsToNone]
 
-  /** Disable `None` fallback value for optional fields.
+  /** Disable `None` fallback value for optional fields in `To`.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#default-values-for-option-fields]] for more details
     */
