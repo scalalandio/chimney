@@ -120,8 +120,10 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     *
     * @return transformed value of type `F[To]`
     */
-  def transform[ScopeFlags <: TransformerFlags](implicit tfs: TransformerFSupport[F],
-                                                tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]): F[To] =
+  def transform[ScopeFlags <: TransformerFlags](
+      implicit tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags],
+      tfs: TransformerFSupport[F]
+  ): F[To] =
     macro ChimneyBlackboxMacros.transformFImpl[F, From, To, C, Flags, ScopeFlags]
 
   /** Used internally by macro. Please don't use in your code.

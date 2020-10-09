@@ -39,14 +39,21 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
       Flags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
   ](tc: c.Tree): c.Expr[To] = {
-    c.Expr[To](expandTransform[From, To, C, Flags, ScopeFlags]())
+    c.Expr[To](expandTransform[From, To, C, Flags, ScopeFlags](tc))
   }
 
-  def transformFImpl[F[+_], From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
-      tfs: c.Expr[TransformerFSupport[F]],
-      tc: c.Tree
+  def transformFImpl[
+      F[+_],
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      C: WeakTypeTag,
+      Flags: WeakTypeTag,
+      ScopeFlags: WeakTypeTag
+  ](
+      tc: c.Tree,
+      tfs: c.Expr[TransformerFSupport[F]]
   ): c.Expr[F[To]] = {
-    c.Expr[F[To]](expandTransform[From, To, C, Flags, ScopeFlags](tfs.tree))
+    c.Expr[F[To]](expandTransform[From, To, C, Flags, ScopeFlags](tc, tfs.tree))
   }
 
   def deriveTransformerImpl[From: WeakTypeTag, To: WeakTypeTag]: c.Expr[chimney.Transformer[From, To]] = {

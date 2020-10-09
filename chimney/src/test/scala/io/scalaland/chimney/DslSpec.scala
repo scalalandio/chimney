@@ -1015,9 +1015,8 @@ object DslSpec extends TestSuite {
     }
 
     "support scoped transformer configuration passed implicitly" - {
-      import TransformerFlags._
 
-      implicit val transformerConfiguration: TransformerConfiguration[Disable[DefaultValues, Enable[MethodAccessors, Enable[OptionDefaultsToNone, Default]]]] =
+      implicit val transformerConfiguration =
         TransformerConfiguration.default
           .enableOptionDefaultsToNone
           .enableMethodAccessors
