@@ -9,3 +9,4 @@ project/target
 .vscode
 project/metals.sbt
 docs/build
+.bsp
