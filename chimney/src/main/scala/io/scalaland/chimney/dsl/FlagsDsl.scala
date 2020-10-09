@@ -20,6 +20,9 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
   def enableMethodAccessors: UpdateFlag[Enable[MethodAccessors, Flags]] =
     enableFlag[MethodAccessors]
 
+  def disableMethodAccessors: UpdateFlag[Disable[MethodAccessors, Flags]] =
+    disableFlag[MethodAccessors]
+
   /** Fail derivation if `From` type is missing field even if `To` has default value for it.
     *
     * By default in such case derivation will fallback to default values.
@@ -28,6 +31,9 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
     */
   def disableDefaultValues: UpdateFlag[Disable[DefaultValues, Flags]] =
     disableFlag[DefaultValues]
+
+  def enableDefaultValues: UpdateFlag[Enable[DefaultValues, Flags]] =
+    enableFlag[DefaultValues]
 
   /** Enable Java Beans naming convention (`.getName`, `.isName`) on `From`.
     *
@@ -55,6 +61,9 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
     */
   def enableOptionDefaultsToNone: UpdateFlag[Enable[OptionDefaultsToNone, Flags]] =
     enableFlag[OptionDefaultsToNone]
+
+  def disableOptionDefaultsToNone: UpdateFlag[Disable[OptionDefaultsToNone, Flags]] =
+    disableFlag[OptionDefaultsToNone]
 
   /** Enable unsafe call to `.get` when source type From contains field of type `Option[A]`,
     * but target type To defines this fields as `A`.

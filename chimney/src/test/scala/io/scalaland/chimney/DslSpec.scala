@@ -1016,18 +1016,36 @@ object DslSpec extends TestSuite {
 
     "support scoped transformer configuration passed implicitly" - {
 
-      implicit val transformerConfiguration =
+      class Source { def field1: Int = 100 }
+      case class Target(field1: Int = 200, field2: Option[String] = Some("foo"))
+
+      implicit val transformerConfiguration = {
         TransformerConfiguration.default
           .enableOptionDefaultsToNone
           .enableMethodAccessors
           .disableDefaultValues
+      }
 
-      class Source { def field1: Int = 100 }
-      case class Target(field1: Int = 200,
-                        field2: Option[String] = Some("foo"))
+      "scoped config only" - {
 
-      (new Source).into[Target].transform ==> Target(100, None)
-      (new Source).transformInto[Target] ==> Target(100, None)
+        (new Source).transformInto[Target] ==> Target(100, None)
+        (new Source).into[Target].transform ==> Target(100, None)
+      }
+
+      "scoped config overridden by instance flag" - {
+
+        (new Source)
+          .into[Target]
+          .disableMethodAccessors
+          .enableDefaultValues
+          .transform ==> Target(200, Some("foo"))
+
+        (new Source)
+          .into[Target]
+          .enableDefaultValues
+          .disableOptionDefaultsToNone
+          .transform ==> Target(100, Some("foo"))
+      }
     }
   }
 }

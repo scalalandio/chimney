@@ -63,8 +63,8 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     val Flags = weakTypeOf[Flags]
     val ScopeFlags = weakTypeOf[ScopeFlags]
 
-    val scopedFlags = captureTransformerFlags(ScopeFlags)
-    val instanceFlags = captureTransformerFlags(Flags, scopedFlags)
+    val scopeFlags = captureTransformerFlags(ScopeFlags)
+    val instanceFlags = captureTransformerFlags(Flags, scopeFlags)
 
     captureTransformerConfig(C).copy(
       flags = instanceFlags,

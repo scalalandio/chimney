@@ -194,10 +194,10 @@ trait TransformerConfiguration extends MacroUtils {
       defaultFlags
     } else if (flagsTpe.typeConstructor =:= enableT) {
       val List(flagT, rest) = flagsTpe.typeArgs
-      captureTransformerFlags(rest).setFlag(flagT, value = true)
+      captureTransformerFlags(rest, defaultFlags).setFlag(flagT, value = true)
     } else if (flagsTpe.typeConstructor =:= disableT) {
       val List(flagT, rest) = flagsTpe.typeArgs
-      captureTransformerFlags(rest).setFlag(flagT, value = false)
+      captureTransformerFlags(rest, defaultFlags).setFlag(flagT, value = false)
     } else {
       // $COVERAGE-OFF$
       c.abort(c.enclosingPosition, "Bad internal transformer flags type shape!")
