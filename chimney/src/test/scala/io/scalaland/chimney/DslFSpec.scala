@@ -825,7 +825,6 @@ object DslFSpec extends TestSuite {
         (new Source)
           .intoF[Option, Target]
           .enableDefaultValues
-          .disableOptionDefaultsToNone
           .transform ==> Some(Target(100, Some("foo")))
       }
     }
