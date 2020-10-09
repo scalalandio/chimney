@@ -57,9 +57,13 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
   }
 
   def deriveTransformerImpl[From: WeakTypeTag, To: WeakTypeTag]: c.Expr[chimney.Transformer[From, To]] = {
+
+    val transformerFlags = findLocalTransformerConfigurationFlags.getOrElse(TransformerFlags())
+
     c.Expr[chimney.Transformer[From, To]](
       genTransformer[From, To](
         TransformerConfig(
+          flags = transformerFlags,
           definitionScope = Some((weakTypeOf[From], weakTypeOf[To]))
         )
       )

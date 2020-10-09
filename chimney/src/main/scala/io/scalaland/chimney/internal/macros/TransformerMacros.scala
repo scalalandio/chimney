@@ -704,13 +704,11 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     inferImplicitTpe(searchTypeTree, macrosDisabled = false).filterNot(isDeriving)
   }
 
-  private def findLocalTransformerConfigurationFlags: Option[TransformerFlags] = {
-    val searchType = tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[_ <: TransformerFlags]]}"
-    println(s"SEARCHING FOR $searchType")
-    inferImplicitTpe(searchType, macrosDisabled = true)
-      .map { tree =>
-        captureTransformerFlags(tree.tpe)
-      }
+  def findLocalTransformerConfigurationFlags: Option[TransformerFlags] = {
+    val searchTypeTree = tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[_ <: io.scalaland.chimney.internal.TransformerFlags]]}"
+    inferImplicitTpe(searchTypeTree, macrosDisabled = true)
+      .flatMap(_.tpe.typeArgs.headOption)
+      .map(flagsTpe => captureTransformerFlags(flagsTpe))
   }
 
   private def inferImplicitTpe(tpeTree: Tree, macrosDisabled: Boolean): Option[Tree] = {
@@ -719,11 +717,11 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       silent = true,
       mode = c.TYPEmode,
       withImplicitViewsDisabled = true,
-      withMacrosDisabled = false
+      withMacrosDisabled = macrosDisabled
     )
 
     scala.util
-      .Try(c.inferImplicitValue(typedTpeTree.tpe, silent = true, withMacrosDisabled = false))
+      .Try(c.inferImplicitValue(typedTpeTree.tpe, silent = true, withMacrosDisabled = macrosDisabled))
       .toOption
       .filterNot(_ == EmptyTree)
   }

@@ -1026,8 +1026,8 @@ object DslSpec extends TestSuite {
       case class Target(field1: Int = 200,
                         field2: Option[String] = Some("foo"))
 
-
       (new Source).into[Target].transform ==> Target(100, None)
+      (new Source).transformInto[Target] ==> Target(100, None)
     }
   }
 }
