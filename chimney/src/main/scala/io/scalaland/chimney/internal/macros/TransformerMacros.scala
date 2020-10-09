@@ -390,7 +390,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
         val fromInstances = fromCS.subclasses.map(_.typeInSealedParent(From))
         val toInstances = toCS.subclasses.map(_.typeInSealedParent(To))
 
-        val targetNamedInstances = toInstances.map(tpe => tpe.typeSymbol.name.toString -> tpe).toMap
+        val targetNamedInstances = toInstances.groupBy(_.typeSymbol.name.toString)
 
         val instanceClauses = fromInstances.map { instTpe =>
           val instName = instTpe.typeSymbol.name.toString
@@ -401,19 +401,29 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
             }
             .getOrElse {
               val instSymbol = instTpe.typeSymbol
-              targetNamedInstances.get(instName) match {
-                case Some(matchingTargetTpe)
+              targetNamedInstances.getOrElse(instName, Nil) match {
+                case List(matchingTargetTpe)
                     if (instSymbol.isModuleClass || instSymbol.isCaseClass) && matchingTargetTpe.typeSymbol.isModuleClass =>
                   val tree = mkTransformerBodyTree0(config) {
                     q"${matchingTargetTpe.typeSymbol.asClass.module}"
                   }
                   Right(cq"_: ${instSymbol.asType} => $tree")
-                case Some(matchingTargetTpe) if instSymbol.isCaseClass && matchingTargetTpe.typeSymbol.isCaseClass =>
+                case List(matchingTargetTpe) if instSymbol.isCaseClass && matchingTargetTpe.typeSymbol.isCaseClass =>
                   val fn = freshTermName(instName)
                   expandDestinationCaseClass(Ident(fn), config.rec)(instTpe, matchingTargetTpe)
                     .mapRight { innerTransformerTree =>
                       cq"$fn: $instTpe => $innerTransformerTree"
                     }
+                case _ :: _ :: _ =>
+                  Left {
+                    Seq(
+                      AmbiguousCoproductInstance(
+                        instName,
+                        From.typeSymbol.fullName,
+                        To.typeSymbol.fullName
+                      )
+                    )
+                  }
                 case _ =>
                   Left {
                     Seq(

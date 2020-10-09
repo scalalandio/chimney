@@ -783,6 +783,25 @@ object DslSpec extends TestSuite {
           .transformInto[shapes3.Shape] ==>
           shapes3.Rectangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0))
       }
+
+      "fail on ambiguous targets" - {
+
+        val error = compileError(
+          """(shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
+               .transformInto[shapes5.Shape]
+          """
+        )
+
+        error.check(
+          "",
+          "coproduct instance Triangle of io.scalaland.chimney.examples.shapes5.Shape is ambiguous",
+          "coproduct instance Rectangle of io.scalaland.chimney.examples.shapes5.Shape is ambiguous"
+        )
+
+        assert(
+          !error.msg.contains("coproduct instance Circle of io.scalaland.chimney.examples.shapes5.Shape is ambiguous")
+        )
+      }
     }
 
     "support polymorphic source/target objects and modifiers" - {
