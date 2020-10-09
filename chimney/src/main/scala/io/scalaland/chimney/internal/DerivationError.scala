@@ -33,6 +33,9 @@ final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName
 final case class CantFindCoproductInstanceTransformer(instance: String, sourceTypeName: String, targetTypeName: String)
     extends DerivationError
 
+final case class AmbiguousCoproductInstance(instance: String, sourceTypeName: String, targetTypeName: String)
+    extends DerivationError
+
 final case class IncompatibleSourceTuple(
     sourceArity: Int,
     targetArity: Int,
@@ -61,6 +64,8 @@ object DerivationError {
               s"  can't find member of value class $sourceTypeName"
             case CantFindCoproductInstanceTransformer(instance, _, _) =>
               s"  can't transform coproduct instance $instance to $targetTypeName"
+            case AmbiguousCoproductInstance(instance, _, _) =>
+              s"  coproduct instance $instance of $targetTypeName is ambiguous"
             case IncompatibleSourceTuple(sourceArity, targetArity, sourceTypeName, _) =>
               s"  source tuple $sourceTypeName is of arity $sourceArity, while target type $targetTypeName is of arity $targetArity; they need to be equal!"
             case NotSupportedDerivation(fieldName, sourceTypeName, _) =>
