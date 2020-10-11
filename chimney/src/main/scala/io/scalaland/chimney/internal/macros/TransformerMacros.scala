@@ -50,7 +50,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     val derivedTransformerTree = genTransformer[From, To](config)
 
     q"""
-       val _ = $tcTree
+       val _ = $tcTree // hack to avoid unused warnings
        val $tiName = ${c.prefix.tree}
        ${derivedTransformerTree.callTransform(q"$tiName.source")}
     """
@@ -693,12 +693,13 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     }
   }
 
-  def findLocalTransformerConfigurationFlags: Option[TransformerFlags] = {
+  def findLocalTransformerConfigurationFlags: Tree = {
     val searchTypeTree =
       tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[_ <: io.scalaland.chimney.internal.TransformerFlags]]}"
     inferImplicitTpe(searchTypeTree, macrosDisabled = true)
-      .flatMap(_.tpe.typeArgs.headOption)
-      .map(flagsTpe => captureTransformerFlags(flagsTpe))
+      .getOrElse {
+        c.abort(c.enclosingPosition, "Can't locate implicit TransformerConfiguration!")
+      }
   }
 
   private def findLocalImplicitTransformer(From: Type, To: Type, wrapperType: Option[Type]): Option[Tree] = {

@@ -206,4 +206,10 @@ trait TransformerConfiguration extends MacroUtils {
     }
   }
 
+  def captureFromTransformerConfigurationTree(transformerConfigurationTree: Tree): TransformerFlags = {
+    transformerConfigurationTree.tpe.typeArgs.headOption
+      .map(flagsTpe => captureTransformerFlags(flagsTpe))
+      .getOrElse(TransformerFlags())
+  }
+
 }

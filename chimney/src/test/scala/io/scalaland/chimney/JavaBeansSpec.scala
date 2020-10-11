@@ -162,6 +162,62 @@ object JavaBeansSpec extends TestSuite {
           .transform ==> expected
       }
     }
+
+    "scoped Java beans configuration" - {
+
+      implicit val transformerConfiguration = {
+        TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
+      }
+      val source = new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
+
+      "work without enabling flags" - {
+
+        "beans reading" - {
+          val target = source.transformInto[CaseClassWithFlag]
+          target.id ==> source.getId
+          target.name ==> source.getName
+          target.flag ==> source.isFlag
+
+          val Some(targetF) = source.transformIntoF[Option, CaseClassWithFlag]
+          targetF.id ==> source.getId
+          targetF.name ==> source.getName
+          targetF.flag ==> source.isFlag
+        }
+
+        "beans writing" - {
+          val expected = new JavaBeanTarget
+          expected.setId("100")
+          expected.setName("name")
+          expected.setFlag(true)
+
+          CaseClassWithFlag("100", "name", flag = true).transformInto[JavaBeanTarget] ==> expected
+          CaseClassWithFlag("100", "name", flag = true).transformIntoF[Option, JavaBeanTarget] ==> Some(expected)
+        }
+      }
+
+      "not work when disabled locally" - {
+
+        "beans reading" - {
+          compileError("""
+            source.into[CaseClassWithFlag].disableBeanGetters.transform
+          """)
+            .check(
+              "",
+              "Chimney can't derive transformation from io.scalaland.chimney.JavaBeanSourceWithFlag to io.scalaland.chimney.CaseClassWithFlag"
+            )
+        }
+
+        "beans writing" - {
+          compileError("""
+            CaseClassWithFlag("100", "name", flag = true).into[JavaBeanTarget].disableBeanSetters.transform
+          """)
+            .check(
+              "",
+              "Chimney can't derive transformation from io.scalaland.chimney.CaseClassWithFlag to io.scalaland.chimney.JavaBeanTarget"
+            )
+        }
+      }
+    }
   }
 }
 

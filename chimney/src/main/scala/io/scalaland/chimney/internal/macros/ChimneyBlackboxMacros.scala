@@ -57,14 +57,22 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
   }
 
   def deriveTransformerImpl[From: WeakTypeTag, To: WeakTypeTag]: c.Expr[chimney.Transformer[From, To]] = {
-    c.Expr[chimney.Transformer[From, To]](
-      genTransformer[From, To](
-        TransformerConfig(
-          flags = findLocalTransformerConfigurationFlags.getOrElse(TransformerFlags()),
-          definitionScope = Some((weakTypeOf[From], weakTypeOf[To]))
-        )
+    val tcTree = findLocalTransformerConfigurationFlags
+    val flags = captureFromTransformerConfigurationTree(tcTree)
+
+    val transformerTree = genTransformer[From, To](
+      TransformerConfig(
+        flags = flags,
+        definitionScope = Some((weakTypeOf[From], weakTypeOf[To]))
       )
     )
+
+    c.Expr[chimney.Transformer[From, To]] {
+      q"""{
+        val _ = $tcTree // hack to avoid unused warnings
+        $transformerTree
+      }"""
+    }
   }
 
   def deriveTransformerFImpl[F[+_], From: WeakTypeTag, To: WeakTypeTag](
@@ -72,16 +80,24 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
   )(
       implicit F: WeakTypeTag[F[_]]
   ): c.Expr[TransformerF[F, From, To]] = {
-    c.Expr[TransformerF[F, From, To]](
-      genTransformer[From, To](
-        TransformerConfig(
-          flags = findLocalTransformerConfigurationFlags.getOrElse(TransformerFlags()),
-          definitionScope = Some((weakTypeOf[From], weakTypeOf[To])),
-          wrapperType = Some(F.tpe),
-          wrapperSupportInstance = tfs.tree
-        )
+    val tcTree = findLocalTransformerConfigurationFlags
+    val flags = captureFromTransformerConfigurationTree(tcTree)
+
+    val transformerTree = genTransformer[From, To](
+      TransformerConfig(
+        flags = flags,
+        definitionScope = Some((weakTypeOf[From], weakTypeOf[To])),
+        wrapperType = Some(F.tpe),
+        wrapperSupportInstance = tfs.tree
       )
     )
+
+    c.Expr[chimney.TransformerF[F, From, To]] {
+      q"""{
+        val _ = $tcTree // hack to avoid unused warnings
+        $transformerTree
+      }"""
+    }
   }
 
   def patchImpl[T: WeakTypeTag, Patch: WeakTypeTag, C: WeakTypeTag]: c.Expr[T] = {
