@@ -24,14 +24,11 @@ object JavaBeansSpec extends TestSuite {
       "support automatic reading from java bean getters" - {
 
         val source = new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
-        val target = source
+        source
           .into[CaseClassWithFlag]
           .enableBeanGetters
           .transform
-
-        target.id ==> source.getId
-        target.name ==> source.getName
-        target.flag ==> source.isFlag
+          .equalsToBean(source) ==> true
       }
 
       "not compile when bean getter lookup is disabled" - {
@@ -173,15 +170,18 @@ object JavaBeansSpec extends TestSuite {
       "work without enabling flags" - {
 
         "beans reading" - {
-          val target = source.transformInto[CaseClassWithFlag]
-          target.id ==> source.getId
-          target.name ==> source.getName
-          target.flag ==> source.isFlag
+          source.transformInto[CaseClassWithFlag].equalsToBean(source) ==> true
+          source.into[CaseClassWithFlag]
+            .disableBeanSetters // not needed when reading from bean
+            .transform
+            .equalsToBean(source) ==> true
 
-          val Some(targetF) = source.transformIntoF[Option, CaseClassWithFlag]
-          targetF.id ==> source.getId
-          targetF.name ==> source.getName
-          targetF.flag ==> source.isFlag
+          source.transformIntoF[Option, CaseClassWithFlag].get.equalsToBean(source) ==> true
+          source.intoF[Option, CaseClassWithFlag]
+            .disableBeanSetters // not needed when reading from bean
+            .transform
+            .get
+            .equalsToBean(source)
         }
 
         "beans writing" - {
@@ -191,7 +191,16 @@ object JavaBeansSpec extends TestSuite {
           expected.setFlag(true)
 
           CaseClassWithFlag("100", "name", flag = true).transformInto[JavaBeanTarget] ==> expected
+          CaseClassWithFlag("100", "name", flag = true)
+            .into[JavaBeanTarget]
+            .disableBeanGetters // not needed when writing to bean
+            .transform ==> expected
+
           CaseClassWithFlag("100", "name", flag = true).transformIntoF[Option, JavaBeanTarget] ==> Some(expected)
+          CaseClassWithFlag("100", "name", flag = true)
+            .intoF[Option, JavaBeanTarget]
+            .disableBeanGetters // not needed when writing to bean
+            .transform ==> Some(expected)
         }
       }
 
@@ -226,7 +235,11 @@ case class CaseClassWithFlagMethod(id: String, name: String) {
   def flag: Boolean = true
 }
 
-case class CaseClassWithFlag(id: String, name: String, flag: Boolean)
+case class CaseClassWithFlag(id: String, name: String, flag: Boolean) {
+  def equalsToBean(jbswf: JavaBeanSourceWithFlag): Boolean = {
+    id == jbswf.getId && name == jbswf.getName && flag == jbswf.isFlag
+  }
+}
 
 class JavaBeanSource(id: String, name: String) {
   def getId: String = id
