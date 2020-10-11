@@ -171,13 +171,15 @@ object JavaBeansSpec extends TestSuite {
 
         "beans reading" - {
           source.transformInto[CaseClassWithFlag].equalsToBean(source) ==> true
-          source.into[CaseClassWithFlag]
+          source
+            .into[CaseClassWithFlag]
             .disableBeanSetters // not needed when reading from bean
             .transform
             .equalsToBean(source) ==> true
 
           source.transformIntoF[Option, CaseClassWithFlag].get.equalsToBean(source) ==> true
-          source.intoF[Option, CaseClassWithFlag]
+          source
+            .intoF[Option, CaseClassWithFlag]
             .disableBeanSetters // not needed when reading from bean
             .transform
             .get
