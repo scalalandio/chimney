@@ -2,7 +2,6 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.examples._
-import io.scalaland.chimney.internal.TransformerFlags
 import utest._
 
 object DslSpec extends TestSuite {
@@ -102,6 +101,11 @@ object DslSpec extends TestSuite {
 
           "use None when .enableOptionDefaultsToNone" - {
             SomeFoo("foo").into[Foobar].enableOptionDefaultsToNone.transform ==> Foobar("foo", None)
+          }
+
+          "not compile if .enableOptionDefaultsToNone is missing" - {
+            compileError("""SomeFoo("foo").into[Foobar].transform ==> Foobar("foo", None)""")
+              .check("", "Chimney can't derive transformation from SomeFoo to Foobar")
           }
 
           "target has default value, but default values are disabled and .enableOptionDefaultsToNone" - {
