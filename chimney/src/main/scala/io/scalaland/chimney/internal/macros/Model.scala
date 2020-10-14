@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.macros
 
 import scala.reflect.macros.blackbox
 
-trait Model extends TransformerConfiguration {
+trait Model extends TransformerConfigSupport {
 
   val c: blackbox.Context
 

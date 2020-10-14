@@ -5,7 +5,7 @@ import io.scalaland.chimney.internal.utils.{DerivationGuards, EitherUtils, Macro
 
 import scala.reflect.macros.blackbox
 
-trait TransformerMacros extends TransformerConfiguration with MappingMacros with TargetConstructorMacros {
+trait TransformerMacros extends TransformerConfigSupport with MappingMacros with TargetConstructorMacros {
   this: DerivationGuards with MacroUtils with EitherUtils =>
 
   val c: blackbox.Context

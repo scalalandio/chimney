@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.utils.MacroUtils
 
 import scala.reflect.macros.whitebox
 
-class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends MacroUtils with TransformerConfiguration {
+class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends MacroUtils with TransformerConfigSupport {
 
   import c.universe._
   import CfgTpes._

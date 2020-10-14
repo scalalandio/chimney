@@ -6,7 +6,7 @@ import io.scalaland.chimney.internal.utils.{DerivationGuards, MacroUtils}
 import scala.collection.immutable.ListMap
 import scala.reflect.macros.blackbox
 
-trait MappingMacros extends Model with TransformerConfiguration {
+trait MappingMacros extends Model with TransformerConfigSupport {
   this: DerivationGuards with MacroUtils =>
 
   val c: blackbox.Context
