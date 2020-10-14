@@ -44,7 +44,7 @@ trait PatcherMacros extends PatcherConfiguration {
       val fnObj = c.internal.reificationSupport.freshTermName("obj$")
       val fnPatch = c.internal.reificationSupport.freshTermName("patch$")
 
-      val targetMapping = patchParams.toSeq.flatMap { pParam =>
+      val targetMapping = patchParams.flatMap { pParam =>
         resolveFieldMapping(config, T, Patch, tParamsByName, fnObj, fnPatch, pParam)
       }
 
