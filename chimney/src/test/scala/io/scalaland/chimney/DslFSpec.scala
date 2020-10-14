@@ -823,6 +823,13 @@ object DslFSpec extends TestSuite {
           .intoF[Option, Target]
           .enableDefaultValues
           .transform ==> Some(Target(100, Some("foo")))
+
+        (new Source)
+          .intoF[Option, Target]
+          .disableOptionDefaultsToNone
+          .withFieldConst(_.field2, Some("abc"))
+          .transform ==> Some(Target(100, Some("abc")))
+
       }
 
       "compile error when optionDefaultsToNone were disabled locally" - {
