@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.{DerivationError, IncompatibleSourceTuple, TransformerConfiguration}
+import io.scalaland.chimney.internal.{DerivationError, IncompatibleSourceTuple}
 import io.scalaland.chimney.internal.utils.{DerivationGuards, MacroUtils}
 
 import scala.collection.immutable.ListMap

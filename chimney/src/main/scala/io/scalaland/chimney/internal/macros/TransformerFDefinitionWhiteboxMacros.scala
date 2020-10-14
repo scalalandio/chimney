@@ -1,6 +1,5 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.TransformerConfiguration
 import io.scalaland.chimney.internal.utils.MacroUtils
 
 import scala.reflect.macros.whitebox
