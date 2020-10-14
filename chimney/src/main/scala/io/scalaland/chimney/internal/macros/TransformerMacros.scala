@@ -698,7 +698,9 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[_ <: io.scalaland.chimney.internal.TransformerFlags]]}"
     inferImplicitTpe(searchTypeTree, macrosDisabled = true)
       .getOrElse {
+        // $COVERAGE-OFF$
         c.abort(c.enclosingPosition, "Can't locate implicit TransformerConfiguration!")
+        // $COVERAGE-ON$
       }
   }
 
