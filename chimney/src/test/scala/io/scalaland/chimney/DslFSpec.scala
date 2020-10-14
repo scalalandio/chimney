@@ -824,6 +824,14 @@ object DslFSpec extends TestSuite {
           .enableDefaultValues
           .transform ==> Some(Target(100, Some("foo")))
       }
+
+      "compile error when optionDefaultsToNone were disabled locally" - {
+
+        compileError("""
+          (new Source).intoF[Option, Target].disableOptionDefaultsToNone.transform
+        """)
+          .check("", "Chimney can't derive transformation from Source to Target")
+      }
     }
   }
 }
