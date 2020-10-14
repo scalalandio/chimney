@@ -138,6 +138,10 @@ object DslSpec extends TestSuite {
           "use transformer when .enableUnsafeOption" - {
             Foobar(Some(1)).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1")
           }
+
+          "use transformer when .disableUnsafeOption adn then .enableUnsafeOption" - {
+            Foobar(Some(1)).into[Foobar2].disableUnsafeOption.enableUnsafeOption.transform ==> Foobar2("1")
+          }
         }
 
         "fill the field with provided generator function" - {
