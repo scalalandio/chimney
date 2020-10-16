@@ -112,6 +112,7 @@ Contents:
    transformers/own-transformations
    transformers/java-beans
    transformers/unsafe-options
+   transformers/scoped-configuration
    transformers/lifted-transformers
    transformers/cats-integration
 

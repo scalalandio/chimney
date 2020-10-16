@@ -1,0 +1,327 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Providing scoped configuration &mdash; Chimney 0.6.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Lifted transformers" href="lifted-transformers.html" />
+    <link rel="prev" title="Unsafe options transformation" href="unsafe-options.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> Chimney
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.6.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/community.html">Community</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Transformers</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started with transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="customizing-transformers.html">Customizing transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="standard-transformers.html">Standard transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="default-values.html">Default values support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="own-transformations.html">Plugging in own transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="java-beans.html">Java beans</a></li>
+<li class="toctree-l1"><a class="reference internal" href="unsafe-options.html">Unsafe options transformation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Providing scoped configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#motivating-example">Motivating example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#overriding-scoped-configuration-locally">Overriding scoped configuration locally</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lifted-transformers.html">Lifted transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cats-integration.html">Cats integration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Patchers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/getting-started.html">Getting started with patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/redundant-fields.html">Redundant fields in patchers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Chimney</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Providing scoped configuration</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="providing-scoped-configuration">
+<span id="scoped-configuration"></span><h1>Providing scoped configuration<a class="headerlink" href="#providing-scoped-configuration" title="Permalink to this headline">¶</a></h1>
+<p>Chimney is highly configurable and has some transformer derivation rules that
+can be switched on/off on demand, for each specific transformation. However sometimes
+you may find yourself enabling (or disabling) the same flags for majority of
+transformations in your project. This is when you may consider using providing
+scoped transformer configurations.</p>
+<div class="section" id="motivating-example">
+<h2>Motivating example<a class="headerlink" href="#motivating-example" title="Permalink to this headline">¶</a></h2>
+<p>Let’s consider a following example.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Source</span> <span class="o">{</span> <span class="k">def</span> <span class="n">field1</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">}</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Target</span><span class="o">(</span><span class="n">field1</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">field2</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span>
+
+<span class="o">(</span><span class="k">new</span> <span class="nc">Source</span><span class="o">)</span>
+    <span class="o">.</span><span class="n">into</span><span class="o">[</span><span class="kt">Target</span><span class="o">]</span>
+    <span class="o">.</span><span class="n">enableMethodAccessors</span>
+    <span class="o">.</span><span class="n">enableOptionDefaultsToNone</span>
+    <span class="o">.</span><span class="n">transform</span>
+<span class="c1">// Target(100, None)</span>
+</pre></div>
+</div>
+<p>In order to make it working without providing any specific values, we must
+enable <a class="reference internal" href="customizing-transformers.html#using-method-accessors"><span class="std std-ref">method accessors</span></a> and
+<a class="reference internal" href="default-values.html#default-values-for-option-fields"><span class="std std-ref">None as Option default value</span></a>.</p>
+<p>Instead of enabling them per use-site, we can define default transformer configuration
+in implicit scope.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">implicit</span> <span class="k">val</span> <span class="n">myTransformerConfig</span> <span class="k">=</span>
+    <span class="nc">TransformerConfiguration</span><span class="o">.</span><span class="n">default</span>
+        <span class="o">.</span><span class="n">enableMethodAccessors</span>
+        <span class="o">.</span><span class="n">enableOptionDefaultsToNone</span>
+
+<span class="o">(</span><span class="k">new</span> <span class="nc">Source</span><span class="o">)</span>
+    <span class="o">.</span><span class="n">into</span><span class="o">[</span><span class="kt">Target</span><span class="o">]</span>
+    <span class="o">.</span><span class="n">transform</span>
+<span class="c1">// Target(100, None)</span>
+
+<span class="o">(</span><span class="k">new</span> <span class="nc">Source</span><span class="o">).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Target</span><span class="o">]</span>
+<span class="c1">// Target(100, None)</span>
+</pre></div>
+</div>
+<p>Then, in scope where <code class="docutils literal notranslate"><span class="pre">TransformerConfiguration</span></code> is available, Chimney is able to
+pick it up as a base configuration for transformer derivation. This way you can define
+your default transformers ruleset for your module or project.</p>
+</div>
+<div class="section" id="overriding-scoped-configuration-locally">
+<h2>Overriding scoped configuration locally<a class="headerlink" href="#overriding-scoped-configuration-locally" title="Permalink to this headline">¶</a></h2>
+<p>Use-site override of scoped configuration is still possible, as in the following examples.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">implicit</span> <span class="k">val</span> <span class="n">myTransformerConfig</span> <span class="k">=</span>
+    <span class="nc">TransformerConfiguration</span><span class="o">.</span><span class="n">default</span>
+        <span class="o">.</span><span class="n">enableMethodAccessors</span>
+        <span class="o">.</span><span class="n">enableOptionDefaultsToNone</span>
+
+<span class="o">(</span><span class="k">new</span> <span class="nc">Source</span><span class="o">)</span>
+    <span class="o">.</span><span class="n">into</span><span class="o">[</span><span class="kt">Target</span><span class="o">]</span>
+    <span class="o">.</span><span class="n">disableMethodAccessors</span>
+    <span class="o">.</span><span class="n">transform</span>
+<span class="c1">// error: Chimney can&#39;t derive transformation from Source to Target</span>
+<span class="c1">// Target</span>
+<span class="c1">//   field1: scala.Int - no accessor named field1 in source type Source</span>
+</pre></div>
+</div>
+<p>We locally disabled previously scope-enabled method accessors, which results in
+compilation error. It’s expected as the local override has priority over default,
+scoped configuration.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">implicit</span> <span class="k">val</span> <span class="n">myTransformerConfig</span> <span class="k">=</span>
+    <span class="nc">TransformerConfiguration</span><span class="o">.</span><span class="n">default</span>
+        <span class="o">.</span><span class="n">enableMethodAccessors</span>
+
+<span class="o">(</span><span class="k">new</span> <span class="nc">Source</span><span class="o">)</span>
+    <span class="o">.</span><span class="n">into</span><span class="o">[</span><span class="kt">Target</span><span class="o">]</span>
+    <span class="o">.</span><span class="n">enableOptionDefaultsToNone</span>
+    <span class="o">.</span><span class="n">transform</span>
+<span class="c1">// Target(100, None)</span>
+</pre></div>
+</div>
+<p>This way we can also enable flags partially. The final configuration is merged from
+scoped one and any (eventual) local one.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lifted-transformers.html" class="btn btn-neutral float-right" title="Lifted transformers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="unsafe-options.html" class="btn btn-neutral float-left" title="Unsafe options transformation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2017-2020, scalaland.io
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-116165806-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+
+    
+   
+
+</body>
+</html>

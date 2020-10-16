@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Cats integration &mdash; Chimney 0.5.3 documentation</title>
+  <title>Cats integration &mdash; Chimney 0.6.0 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.5.3
+                0.6.0
               </div>
             
           
@@ -100,6 +100,7 @@
 <li class="toctree-l1"><a class="reference internal" href="own-transformations.html">Plugging in own transformations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="java-beans.html">Java beans</a></li>
 <li class="toctree-l1"><a class="reference internal" href="unsafe-options.html">Unsafe options transformation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoped-configuration.html">Providing scoped configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="lifted-transformers.html">Lifted transformers</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Cats integration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#validated-support-for-lifted-transformers"><code class="docutils literal notranslate"><span class="pre">Validated</span></code> support for lifted transformers</a></li>
@@ -179,8 +180,8 @@
 <span id="id1"></span><h1>Cats integration<a class="headerlink" href="#cats-integration" title="Permalink to this headline">¶</a></h1>
 <p>Chimney provides <a class="reference external" href="https://typelevel.org/cats">Cats</a> library integration module.
 To include it to your SBT project, add the following line to your <code class="docutils literal notranslate"><span class="pre">build.sbt</span></code>:</p>
-<pre class="literal-block">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney-cats&quot; % &quot;0.5.3&quot;</pre>
-<p>The module is released for Scala 2.11.x, 2.12.x and 2.13.x and cats 2.0.0.
+<pre class="literal-block">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney-cats&quot; % &quot;0.6.0&quot;</pre>
+<p>The module is released for Scala 2.12.x and 2.13.x and cats 2.2.0.
 If you want to use it with Scala.js, you need to replace <code class="docutils literal notranslate"><span class="pre">%%</span></code> with <code class="docutils literal notranslate"><span class="pre">%%%</span></code>.</p>
 <p>The module provides package <code class="docutils literal notranslate"><span class="pre">io.scalaland.chimney.cats</span></code> with all the goodies
 described here.</p>

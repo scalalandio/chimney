@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Lifted transformers &mdash; Chimney 0.5.3 documentation</title>
+  <title>Lifted transformers &mdash; Chimney 0.6.0 documentation</title>
   
 
   
@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Cats integration" href="cats-integration.html" />
-    <link rel="prev" title="Unsafe options transformation" href="unsafe-options.html" /> 
+    <link rel="prev" title="Providing scoped configuration" href="scoped-configuration.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.5.3
+                0.6.0
               </div>
             
           
@@ -100,6 +100,7 @@
 <li class="toctree-l1"><a class="reference internal" href="own-transformations.html">Plugging in own transformations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="java-beans.html">Java beans</a></li>
 <li class="toctree-l1"><a class="reference internal" href="unsafe-options.html">Unsafe options transformation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoped-configuration.html">Providing scoped configuration</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Lifted transformers</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#lifted-dsl-operations">Lifted DSL operations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#capturing-validation-errors">Capturing validation errors</a></li>
@@ -496,7 +497,6 @@ and <code class="docutils literal notranslate"><span class="pre">Transformer[F1,
 <li><p>if only one of them was found, it’s used</p></li>
 </ul>
 </li>
-<li><p>we try to derive total <code class="docutils literal notranslate"><span class="pre">Transformer[F1,</span> <span class="pre">T1]</span></code> using library rules</p></li>
 <li><p>we try to derive lifted <code class="docutils literal notranslate"><span class="pre">TransformerF[F,</span> <span class="pre">F1,</span> <span class="pre">T1]</span></code> using library rules</p></li>
 </ol>
 </div>
@@ -513,7 +513,7 @@ and <code class="docutils literal notranslate"><span class="pre">Transformer[F1,
         <a href="cats-integration.html" class="btn btn-neutral float-right" title="Cats integration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="unsafe-options.html" class="btn btn-neutral float-left" title="Unsafe options transformation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="scoped-configuration.html" class="btn btn-neutral float-left" title="Providing scoped configuration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
