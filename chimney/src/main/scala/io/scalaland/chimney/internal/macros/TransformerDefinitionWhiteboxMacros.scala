@@ -1,14 +1,13 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.TransformerConfiguration
 import io.scalaland.chimney.internal.utils.MacroUtils
 
 import scala.reflect.macros.whitebox
 
-class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends MacroUtils with TransformerConfiguration {
+class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends MacroUtils with TransformerConfigSupport {
 
   import c.universe._
-  import CfgTpeConstructors._
+  import CfgTpes._
 
   def withFieldConstImpl[
       From: WeakTypeTag,

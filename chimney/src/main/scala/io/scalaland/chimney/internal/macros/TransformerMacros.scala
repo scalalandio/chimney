@@ -5,20 +5,24 @@ import io.scalaland.chimney.internal.utils.{DerivationGuards, EitherUtils, Macro
 
 import scala.reflect.macros.blackbox
 
-trait TransformerMacros extends TransformerConfiguration with MappingMacros with TargetConstructorMacros {
+trait TransformerMacros extends TransformerConfigSupport with MappingMacros with TargetConstructorMacros {
   this: DerivationGuards with MacroUtils with EitherUtils =>
 
   val c: blackbox.Context
 
   import c.universe._
 
-  def buildDefinedTransformer[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag](
+  def buildDefinedTransformer[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      C: WeakTypeTag,
+      Flags: WeakTypeTag,
+      ScopeFlags: WeakTypeTag
+  ](
       tfsTree: Tree = EmptyTree
   ): Tree = {
-    val C = weakTypeOf[C]
-    val config = captureTransformerConfig(C).copy(
-      definitionScope = Some((weakTypeOf[From], weakTypeOf[To])),
-      wrapperSupportInstance = tfsTree
+    val config = readConfig[C, Flags, ScopeFlags](tfsTree).copy(
+      definitionScope = Some((weakTypeOf[From], weakTypeOf[To]))
     )
 
     if (!config.valueLevelAccessNeeded) {
@@ -34,23 +38,38 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     }
   }
 
-  def expandTransform[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag](
+  def expandTransform[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
+      tcTree: Tree,
       tfsTree: Tree = EmptyTree
   ): Tree = {
-    val C = weakTypeOf[C]
     val tiName = TermName(c.freshName("ti"))
-    val config = captureTransformerConfig(C)
-      .copy(
-        transformerDefinitionPrefix = q"$tiName.td",
-        wrapperSupportInstance = tfsTree
-      )
+    val config = readConfig[C, Flags, ScopeFlags](tfsTree).copy(
+      transformerDefinitionPrefix = q"$tiName.td"
+    )
 
     val derivedTransformerTree = genTransformer[From, To](config)
 
     q"""
+       val _ = $tcTree // hack to avoid unused warnings
        val $tiName = ${c.prefix.tree}
        ${derivedTransformerTree.callTransform(q"$tiName.source")}
     """
+  }
+
+  def readConfig[C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
+      wrapperSupportInstance: Tree
+  ): TransformerConfig = {
+    val C = weakTypeOf[C]
+    val Flags = weakTypeOf[Flags]
+    val ScopeFlags = weakTypeOf[ScopeFlags]
+
+    val scopeFlags = captureTransformerFlags(ScopeFlags)
+    val instanceFlags = captureTransformerFlags(Flags, scopeFlags)
+
+    captureTransformerConfig(C).copy(
+      flags = instanceFlags,
+      wrapperSupportInstance = wrapperSupportInstance
+    )
   }
 
   def genTransformer[From: WeakTypeTag, To: WeakTypeTag](
@@ -125,7 +144,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       expandOptions(srcPrefixTree, config)(From, To)
     } else if (isOption(To)) {
       expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
-    } else if (config.enableUnsafeOption && isOption(From)) {
+    } else if (config.flags.unsafeOption && isOption(From)) {
       expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
     } else if (bothEithers(From, To)) {
       expandEithers(srcPrefixTree, config)(From, To)
@@ -135,7 +154,7 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
       expandDestinationTuple(srcPrefixTree, config)(From, To)
     } else if (destinationCaseClass(To)) {
       expandDestinationCaseClass(srcPrefixTree, config)(From, To)
-    } else if (config.enableBeanSetters && destinationJavaBean(To)) {
+    } else if (config.flags.beanSetters && destinationJavaBean(To)) {
       expandDestinationJavaBean(srcPrefixTree, config)(From, To)
     } else if (bothSealedClasses(From, To)) {
       expandSealedClasses(srcPrefixTree, config)(From, To)
@@ -674,7 +693,18 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
     }
   }
 
-  def findLocalImplicitTransformer(From: Type, To: Type, wrapperType: Option[Type]): Option[Tree] = {
+  def findLocalTransformerConfigurationFlags: Tree = {
+    val searchTypeTree =
+      tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[_ <: io.scalaland.chimney.internal.TransformerFlags]]}"
+    inferImplicitTpe(searchTypeTree, macrosDisabled = true)
+      .getOrElse {
+        // $COVERAGE-OFF$
+        c.abort(c.enclosingPosition, "Can't locate implicit TransformerConfiguration!")
+        // $COVERAGE-ON$
+      }
+  }
+
+  private def findLocalImplicitTransformer(From: Type, To: Type, wrapperType: Option[Type]): Option[Tree] = {
     val searchTypeTree: Tree = wrapperType match {
       case Some(f) =>
         tq"_root_.io.scalaland.chimney.TransformerF[$f, $From, $To]"
@@ -682,21 +712,22 @@ trait TransformerMacros extends TransformerConfiguration with MappingMacros with
         tq"_root_.io.scalaland.chimney.Transformer[$From, $To]"
     }
 
-    val tpeTree = c.typecheck(
-      tree = searchTypeTree,
+    inferImplicitTpe(searchTypeTree, macrosDisabled = false).filterNot(isDeriving)
+  }
+
+  private def inferImplicitTpe(tpeTree: Tree, macrosDisabled: Boolean): Option[Tree] = {
+    val typedTpeTree = c.typecheck(
+      tree = tpeTree,
       silent = true,
       mode = c.TYPEmode,
       withImplicitViewsDisabled = true,
-      withMacrosDisabled = false
+      withMacrosDisabled = macrosDisabled
     )
 
     scala.util
-      .Try(c.inferImplicitValue(tpeTree.tpe, silent = true, withMacrosDisabled = false))
+      .Try(c.inferImplicitValue(typedTpeTree.tpe, silent = true, withMacrosDisabled = macrosDisabled))
       .toOption
-      .filterNot { tree =>
-        tree == EmptyTree ||
-        isDeriving(tree)
-      }
+      .filterNot(_ == EmptyTree)
   }
 
   private def isDeriving(tree: Tree): Boolean = {

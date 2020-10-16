@@ -103,6 +103,11 @@ object DslSpec extends TestSuite {
             SomeFoo("foo").into[Foobar].enableOptionDefaultsToNone.transform ==> Foobar("foo", None)
           }
 
+          "not compile if .enableOptionDefaultsToNone is missing" - {
+            compileError("""SomeFoo("foo").into[Foobar].transform ==> Foobar("foo", None)""")
+              .check("", "Chimney can't derive transformation from SomeFoo to Foobar")
+          }
+
           "target has default value, but default values are disabled and .enableOptionDefaultsToNone" - {
             SomeFoo("foo").into[Foobar2].disableDefaultValues.enableOptionDefaultsToNone.transform ==>
               Foobar2("foo", None)
@@ -132,6 +137,10 @@ object DslSpec extends TestSuite {
 
           "use transformer when .enableUnsafeOption" - {
             Foobar(Some(1)).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1")
+          }
+
+          "use transformer when .disableUnsafeOption adn then .enableUnsafeOption" - {
+            Foobar(Some(1)).into[Foobar2].disableUnsafeOption.enableUnsafeOption.transform ==> Foobar2("1")
           }
         }
 
@@ -1010,6 +1019,50 @@ object DslSpec extends TestSuite {
           Transformer.define[ClassA, ClassD].withFieldConst(_.other, "another").buildTransformer
 
         ClassA(Some(List(ClassAA("l")))).transformInto[ClassD] ==> ClassD(List(ClassBB("l")), "another")
+      }
+    }
+
+    "support scoped transformer configuration passed implicitly" - {
+
+      class Source { def field1: Int = 100 }
+      case class Target(field1: Int = 200, field2: Option[String] = Some("foo"))
+
+      implicit val transformerConfiguration = {
+        TransformerConfiguration.default.enableOptionDefaultsToNone.enableMethodAccessors.disableDefaultValues
+      }
+
+      "scoped config only" - {
+
+        (new Source).transformInto[Target] ==> Target(100, None)
+        (new Source).into[Target].transform ==> Target(100, None)
+      }
+
+      "scoped config overridden by instance flag" - {
+
+        (new Source)
+          .into[Target]
+          .disableMethodAccessors
+          .enableDefaultValues
+          .transform ==> Target(200, Some("foo"))
+
+        (new Source)
+          .into[Target]
+          .enableDefaultValues
+          .transform ==> Target(100, Some("foo"))
+
+        (new Source)
+          .into[Target]
+          .disableOptionDefaultsToNone
+          .withFieldConst(_.field2, Some("abc"))
+          .transform ==> Target(100, Some("abc"))
+      }
+
+      "compile error when optionDefaultsToNone were disabled locally" - {
+
+        compileError("""
+          (new Source).into[Target].disableOptionDefaultsToNone.transform
+        """)
+          .check("", "Chimney can't derive transformation from Source to Target")
       }
     }
   }

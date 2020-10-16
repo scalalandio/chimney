@@ -1,12 +1,12 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.{DerivationError, IncompatibleSourceTuple, TransformerConfiguration}
+import io.scalaland.chimney.internal.{DerivationError, IncompatibleSourceTuple}
 import io.scalaland.chimney.internal.utils.{DerivationGuards, MacroUtils}
 
 import scala.collection.immutable.ListMap
 import scala.reflect.macros.blackbox
 
-trait MappingMacros extends Model with TransformerConfiguration {
+trait MappingMacros extends Model with TransformerConfigSupport {
   this: DerivationGuards with MacroUtils =>
 
   val c: blackbox.Context
@@ -26,8 +26,8 @@ trait MappingMacros extends Model with TransformerConfiguration {
           IncompatibleSourceTuple(
             tupleElems.size,
             targetFields.size,
-            From.typeSymbol.fullName.toString,
-            To.typeSymbol.fullName.toString
+            From.typeSymbol.fullName,
+            To.typeSymbol.fullName
           )
         )
       }
@@ -121,7 +121,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
 
     val fallbackTransformers = targets.flatMap { target =>
       def defaultValueFallback =
-        if (config.processDefaultValues && To.isCaseClass) {
+        if (config.flags.processDefaultValues && To.isCaseClass) {
           targetCaseClassDefaults
             .get(target.name)
             .map(defaultValueTree => target -> TransformerBodyTree(defaultValueTree, isWrapped = false))
@@ -130,7 +130,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
         }
 
       def optionNoneFallback =
-        if (config.optionDefaultsToNone && isOption(target.tpe)) {
+        if (config.flags.optionDefaultsToNone && isOption(target.tpe)) {
           Some(target -> TransformerBodyTree(q"_root_.scala.None", isWrapped = false))
         } else {
           None
@@ -155,7 +155,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       From: Type
   )(ms: MethodSymbol): AccessorResolution = {
     val sourceName = ms.name.decodedName.toString
-    if (config.enableBeanGetters) {
+    if (config.flags.beanGetters) {
       val lookupNameCapitalized = lookupName.capitalize
       if (sourceName == lookupName ||
           sourceName == s"get$lookupNameCapitalized" ||
@@ -166,7 +166,7 @@ trait MappingMacros extends Model with TransformerConfiguration {
       }
     } else {
       if (sourceName == lookupName) {
-        if (ms.isStable || wasRenamed || config.enableMethodAccessors) { // isStable means or val/lazy val
+        if (ms.isStable || wasRenamed || config.flags.methodAccessors) { // isStable means or val/lazy val
           AccessorResolution.Resolved(ms, wasRenamed)
         } else {
           AccessorResolution.DefAvailable
