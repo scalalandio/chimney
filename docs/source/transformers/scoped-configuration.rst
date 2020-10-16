@@ -26,7 +26,7 @@ Let's consider a following example.
         .transform
     // Target(100, None)
 
-In order to make it working without providing any own specific values, we must
+In order to make it working without providing any specific values, we must
 enable :ref:`method accessors<Using method accessors>` and
 :ref:`None as Option default value<Default values for \`\`Option\`\` fields>`.
 
