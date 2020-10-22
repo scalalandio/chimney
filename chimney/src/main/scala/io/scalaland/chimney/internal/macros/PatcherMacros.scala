@@ -1,12 +1,12 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.utils.{DerivationGuards, EitherUtils, MacroUtils}
+import io.scalaland.chimney.internal.utils.{DerivationGuards, MacroUtils}
 import io.scalaland.chimney.internal.{DerivationError, PatcherConfiguration}
 
 import scala.reflect.macros.blackbox
 
 trait PatcherMacros extends PatcherConfiguration {
-  this: TransformerMacros with DerivationGuards with MacroUtils with EitherUtils =>
+  this: TransformerMacros with DerivationGuards with MacroUtils =>
 
   val c: blackbox.Context
 
@@ -52,7 +52,7 @@ trait PatcherMacros extends PatcherConfiguration {
         val errors = targetMapping.collect { case Left(err) => err }.mkString("\n")
         c.abort(c.enclosingPosition, errors)
       } else {
-        val paramTrees = targetMapping.map(_.getRight)
+        val paramTrees = targetMapping.collect { case Right(tree) => tree }
         val patchMapping = (patchParams zip paramTrees).map { case (param, tree) => param.name -> tree }.toMap
 
         val args = tParams.map { tParam =>
@@ -97,10 +97,11 @@ trait PatcherMacros extends PatcherConfiguration {
             expandTransformerTree(patchField, TransformerConfig())(
               patchParamTpe,
               tParamTpe
-            ).mapRight { transformerTree =>
+            ).map { transformerTree =>
                 q"$transformerTree.orElse($entityField)"
               }
-              .mapLeft(DerivationError.printErrors)
+              .left
+              .map(DerivationError.printErrors)
           }
         }
       case Some(tParam) if patchParamTpe <:< tParam.resultTypeIn(T) =>
@@ -116,11 +117,11 @@ trait PatcherMacros extends PatcherConfiguration {
                 expandTransformerTree(q"$patchField.get", TransformerConfig())(
                   patchParamTpe.typeArgs.head,
                   tParam.resultTypeIn(T)
-                ).mapRight { innerTransformerTree =>
+                ).map { innerTransformerTree =>
                     q"if($patchField.isDefined) { $innerTransformerTree } else { $entityField }"
                   }
-                  .mapLeft(errors ++ _)
-                  .mapLeft(DerivationError.printErrors)
+                  .left
+                  .map(errors2 => DerivationError.printErrors(errors ++ errors2))
               } else {
                 Left(DerivationError.printErrors(errors))
               }
