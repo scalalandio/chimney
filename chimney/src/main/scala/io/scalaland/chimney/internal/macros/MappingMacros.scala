@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.{DerivationError, IncompatibleSourceTuple}
+import io.scalaland.chimney.internal.{DerivationError, IncompatibleSourceTuple, NameTransformer}
 import io.scalaland.chimney.internal.utils.{DerivationGuards, MacroUtils}
 
 import scala.collection.immutable.ListMap
@@ -154,7 +154,8 @@ trait MappingMacros extends Model with TransformerConfigSupport {
       wasRenamed: Boolean,
       From: Type
   )(ms: MethodSymbol): AccessorResolution = {
-    val sourceName = config.namingConventions._1(ms.name.decodedName.toString)
+    val nameTransformer = NameTransformer(config.flags.snakeToCamel, config.flags.camelToSnake)
+    val sourceName = nameTransformer.transformNameInto(ms.name.decodedName.toString)
     if (config.flags.beanGetters) {
       val lookupNameCapitalized = lookupName.capitalize
       if (sourceName == lookupName ||
@@ -165,7 +166,7 @@ trait MappingMacros extends Model with TransformerConfigSupport {
         AccessorResolution.NotFound
       }
     } else {
-      if (sourceName == config.namingConventions._2(lookupName)) {
+      if (sourceName == nameTransformer.transformNameFrom(lookupName)) {
         if (ms.isStable || wasRenamed || config.flags.methodAccessors) { // isStable means or val/lazy val
           AccessorResolution.Resolved(ms, wasRenamed)
         } else {
@@ -176,5 +177,4 @@ trait MappingMacros extends Model with TransformerConfigSupport {
       }
     }
   }
-
 }

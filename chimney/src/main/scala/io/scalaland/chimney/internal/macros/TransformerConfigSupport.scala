@@ -121,7 +121,9 @@ trait TransformerConfigSupport extends MacroUtils {
       beanSetters: Boolean = false,
       beanGetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,
-      unsafeOption: Boolean = false
+      unsafeOption: Boolean = false,
+      snakeToCamel: Boolean = false,
+      camelToSnake: Boolean = false
   ) {
     def setFlag(flagTpe: Type, value: Boolean): TransformerFlags = {
       if (flagTpe =:= FlagsTpes.methodAccessorsT) {
@@ -136,6 +138,10 @@ trait TransformerConfigSupport extends MacroUtils {
         copy(optionDefaultsToNone = value)
       } else if (flagTpe =:= FlagsTpes.unsafeOptionT) {
         copy(unsafeOption = value)
+      } else if (flagTpe =:= FlagsTpes.snakeToCamelT) {
+        copy(snakeToCamel = value)
+      } else if (flagTpe =:= FlagsTpes.camelToSnakeT) {
+        copy(camelToSnake = value)
       } else {
         // $COVERAGE-OFF$
         c.abort(c.enclosingPosition, s"Invalid transformer flag type: $flagTpe!")
@@ -157,6 +163,8 @@ trait TransformerConfigSupport extends MacroUtils {
     val beanGettersT: Type = typeOf[BeanGetters]
     val optionDefaultsToNoneT: Type = typeOf[OptionDefaultsToNone]
     val unsafeOptionT: Type = typeOf[UnsafeOption]
+    val snakeToCamelT: Type = typeOf[SnakeToCamel]
+    val camelToSnakeT: Type = typeOf[CamelToSnake]
   }
 
   def captureTransformerFlags(flagsTpe: Type, defaultFlags: TransformerFlags = TransformerFlags()): TransformerFlags = {
@@ -183,5 +191,4 @@ trait TransformerConfigSupport extends MacroUtils {
       .map(flagsTpe => captureTransformerFlags(flagsTpe))
       .getOrElse(TransformerFlags())
   }
-
 }

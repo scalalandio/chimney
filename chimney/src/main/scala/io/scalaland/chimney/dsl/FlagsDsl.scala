@@ -104,6 +104,12 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
   def disableUnsafeOption: UpdateFlag[Disable[UnsafeOption, Flags]] =
     disableFlag[UnsafeOption]
 
+  def enableSnakeToCamel: UpdateFlag[Enable[SnakeToCamel, Flags]] = enableFlag[SnakeToCamel]
+  def disableSnakeToCamel: UpdateFlag[Disable[SnakeToCamel, Flags]] = disableFlag[SnakeToCamel]
+
+  def enableCamelToSnake: UpdateFlag[Enable[CamelToSnake, Flags]] = enableFlag[CamelToSnake]
+  def disableCamelToSnake: UpdateFlag[Disable[CamelToSnake, Flags]] = disableFlag[CamelToSnake]
+
   private def enableFlag[F <: TransformerFlags.Flag]: UpdateFlag[Enable[F, Flags]] =
     this.asInstanceOf[UpdateFlag[Enable[F, Flags]]]
 
