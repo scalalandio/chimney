@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.{PatcherCfg, TransformerCfg}
+import io.scalaland.chimney.internal.{PatcherCfg, TransformerCfg, TransformerFlags}
 
 import scala.language.experimental.macros
 
@@ -20,8 +20,8 @@ package object dsl {
       * @tparam To target type
       * @return [[io.scalaland.chimney.dsl.TransformerInto]]
       */
-    final def into[To]: TransformerInto[From, To, TransformerCfg.Empty] =
-      new TransformerInto(source, new TransformerDefinition[From, To, TransformerCfg.Empty](Map.empty, Map.empty))
+    final def into[To]: TransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+      new TransformerInto(source, new TransformerDefinition(Map.empty, Map.empty))
 
     /** Performs in-place transformation of captured source value to target type.
       *
@@ -45,14 +45,9 @@ package object dsl {
       * @tparam To target type
       * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
       */
-    final def intoF[F[+_], To]: TransformerFInto[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty]] =
-      new TransformerFInto(
-        source,
-        new TransformerFDefinition[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty]](
-          Map.empty,
-          Map.empty
-        )
-      )
+    final def intoF[F[+_], To]
+        : TransformerFInto[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
+      new TransformerFInto(source, new TransformerFDefinition(Map.empty, Map.empty))
 
     /** Performs in-place wrapped transformation of captured source value to target type.
       *

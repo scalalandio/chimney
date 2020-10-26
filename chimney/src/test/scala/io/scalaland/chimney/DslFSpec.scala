@@ -3,7 +3,6 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.examples._
 import io.scalaland.chimney.examples.trip._
-import io.scalaland.chimney.internal.utils.EitherUtils._
 import io.scalaland.chimney.utils.EitherUtils._
 import io.scalaland.chimney.utils.OptionUtils._
 import utest._
@@ -206,7 +205,7 @@ object DslFSpec extends TestSuite {
       optFoo.get.x ==> 100
 
       val eitherFoo: Either[Vector[String], Foo] = Bar(200).transformIntoF[Either[Vector[String], +*], Foo]
-      eitherFoo.getRight.x ==> 200
+      eitherFoo.map(_.x) ==> Right(200)
     }
 
     "wrapped value classes" - {
@@ -384,7 +383,7 @@ object DslFSpec extends TestSuite {
           List("123", "456").transformIntoF[Either[List[String], +*], List[Int]] ==> Right(List(123, 456))
           Vector("123", "456").transformIntoF[Either[List[String], +*], Queue[Int]] ==> Right(Queue(123, 456))
           Array.empty[String].transformIntoF[Either[List[String], +*], Seq[Int]] ==> Right(Seq.empty[Int])
-          Set("123", "456").transformIntoF[Either[List[String], +*], Array[Int]].getRight.sorted ==> Array(123, 456)
+          Set("123", "456").transformIntoF[Either[List[String], +*], Array[Int]].toOption.get.sorted ==> Array(123, 456)
 
           List("abc", "456").transformIntoF[Either[List[String], +*], List[Int]] ==> Left(List("bad int"))
           Vector("123", "def").transformIntoF[Either[List[String], +*], Queue[Int]] ==> Left(List("bad int"))
@@ -429,9 +428,9 @@ object DslFSpec extends TestSuite {
             Right(Map("1" -> "10", "2" -> "20"))
           Array(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Map[Int, String]] ==>
             Right(Map(1 -> "10", 2 -> "20"))
-          Map(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Array[(String, String)]].getRight ==>
+          Map(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Array[(String, String)]].toOption.get ==>
             Array("1" -> "10", "2" -> "20")
-          Map(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Array[(String, Int)]].getRight ==>
+          Map(1 -> 10, 2 -> 20).transformIntoF[Either[List[String], +*], Array[(String, Int)]].toOption.get ==>
             Array("1" -> 10, "2" -> 20)
         }
       }
@@ -486,9 +485,9 @@ object DslFSpec extends TestSuite {
             Right(Map(1 -> 10, 2 -> 20))
           Array("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Map[String, Int]] ==>
             Right(Map("1" -> 10, "2" -> 20))
-          Map("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Array[(Int, Int)]].getRight ==>
+          Map("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Array[(Int, Int)]].toOption.get ==>
             Array(1 -> 10, 2 -> 20)
-          Map("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Array[(Int, String)]].getRight ==>
+          Map("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Array[(Int, String)]].toOption.get ==>
             Array(1 -> "10", 2 -> "20")
 
           Map("1" -> "x", "y" -> "20").transformIntoF[Either[List[String], +*], Map[Int, Int]] ==>
@@ -794,6 +793,51 @@ object DslFSpec extends TestSuite {
       RawData(Some("a"), Some(RawInner(None, None))).transformIntoF[F, Data] ==> Left(
         List("bad int", "Expected value, got none", "Expected value, got none")
       )
+    }
+
+    "support scoped transformer configuration passed implicitly" - {
+
+      class Source { def field1: Int = 100 }
+      case class Target(field1: Int = 200, field2: Option[String] = Some("foo"))
+
+      implicit val transformerConfiguration = {
+        TransformerConfiguration.default.enableOptionDefaultsToNone.enableMethodAccessors.disableDefaultValues
+      }
+
+      "scoped config only" - {
+
+        (new Source).transformIntoF[Option, Target] ==> Some(Target(100, None))
+        (new Source).intoF[Option, Target].transform ==> Some(Target(100, None))
+      }
+
+      "scoped config overridden by instance flag" - {
+
+        (new Source)
+          .intoF[Option, Target]
+          .disableMethodAccessors
+          .enableDefaultValues
+          .transform ==> Some(Target(200, Some("foo")))
+
+        (new Source)
+          .intoF[Option, Target]
+          .enableDefaultValues
+          .transform ==> Some(Target(100, Some("foo")))
+
+        (new Source)
+          .intoF[Option, Target]
+          .disableOptionDefaultsToNone
+          .withFieldConst(_.field2, Some("abc"))
+          .transform ==> Some(Target(100, Some("abc")))
+
+      }
+
+      "compile error when optionDefaultsToNone were disabled locally" - {
+
+        compileError("""
+          (new Source).intoF[Option, Target].disableOptionDefaultsToNone.transform
+        """)
+          .check("", "Chimney can't derive transformation from Source to Target")
+      }
     }
   }
 }

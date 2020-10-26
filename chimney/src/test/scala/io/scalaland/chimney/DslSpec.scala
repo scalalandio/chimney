@@ -103,6 +103,11 @@ object DslSpec extends TestSuite {
             SomeFoo("foo").into[Foobar].enableOptionDefaultsToNone.transform ==> Foobar("foo", None)
           }
 
+          "not compile if .enableOptionDefaultsToNone is missing" - {
+            compileError("""SomeFoo("foo").into[Foobar].transform ==> Foobar("foo", None)""")
+              .check("", "Chimney can't derive transformation from SomeFoo to Foobar")
+          }
+
           "target has default value, but default values are disabled and .enableOptionDefaultsToNone" - {
             SomeFoo("foo").into[Foobar2].disableDefaultValues.enableOptionDefaultsToNone.transform ==>
               Foobar2("foo", None)
@@ -132,6 +137,10 @@ object DslSpec extends TestSuite {
 
           "use transformer when .enableUnsafeOption" - {
             Foobar(Some(1)).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1")
+          }
+
+          "use transformer when .disableUnsafeOption adn then .enableUnsafeOption" - {
+            Foobar(Some(1)).into[Foobar2].disableUnsafeOption.enableUnsafeOption.transform ==> Foobar2("1")
           }
         }
 
@@ -692,6 +701,18 @@ object DslSpec extends TestSuite {
             .withCoproductInstance(blackIsRed)
             .transform ==> colors1.Blue
         }
+
+        "transforming flat and deep enum" - {
+          (colors2.Red: colors2.Color).transformInto[colors3.Color] ==> colors3.Red
+          (colors2.Green: colors2.Color).transformInto[colors3.Color] ==> colors3.Green
+          (colors2.Blue: colors2.Color).transformInto[colors3.Color] ==> colors3.Blue
+          (colors2.Black: colors2.Color).transformInto[colors3.Color] ==> colors3.Black
+
+          (colors3.Red: colors3.Color).transformInto[colors2.Color] ==> colors2.Red
+          (colors3.Green: colors3.Color).transformInto[colors2.Color] ==> colors2.Green
+          (colors3.Blue: colors3.Color).transformInto[colors2.Color] ==> colors2.Blue
+          (colors3.Black: colors3.Color).transformInto[colors2.Color] ==> colors2.Black
+        }
       }
 
       "transforming non-isomorphic domains" - {
@@ -752,6 +773,43 @@ object DslSpec extends TestSuite {
           .Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4)): shapes1.Shape)
           .transformInto[shapes3.Shape] ==>
           shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0))
+      }
+
+      "transforming flat and deep domains" - {
+        (shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0)): shapes3.Shape)
+          .transformInto[shapes4.Shape] ==>
+          shapes4.Triangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0), shapes4.Point(0.0, 0.0))
+
+        (shapes3.Rectangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0)): shapes3.Shape)
+          .transformInto[shapes4.Shape] ==>
+          shapes4.Rectangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0))
+
+        (shapes4.Triangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0), shapes4.Point(0.0, 0.0)): shapes4.Shape)
+          .transformInto[shapes3.Shape] ==>
+          shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0))
+
+        (shapes4.Rectangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0)): shapes4.Shape)
+          .transformInto[shapes3.Shape] ==>
+          shapes3.Rectangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0))
+      }
+
+      "fail on ambiguous targets" - {
+
+        val error = compileError(
+          """(shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
+               .transformInto[shapes5.Shape]
+          """
+        )
+
+        error.check(
+          "",
+          "coproduct instance Triangle of io.scalaland.chimney.examples.shapes5.Shape is ambiguous",
+          "coproduct instance Rectangle of io.scalaland.chimney.examples.shapes5.Shape is ambiguous"
+        )
+
+        assert(
+          !error.msg.contains("coproduct instance Circle of io.scalaland.chimney.examples.shapes5.Shape is ambiguous")
+        )
       }
     }
 
@@ -961,6 +1019,50 @@ object DslSpec extends TestSuite {
           Transformer.define[ClassA, ClassD].withFieldConst(_.other, "another").buildTransformer
 
         ClassA(Some(List(ClassAA("l")))).transformInto[ClassD] ==> ClassD(List(ClassBB("l")), "another")
+      }
+    }
+
+    "support scoped transformer configuration passed implicitly" - {
+
+      class Source { def field1: Int = 100 }
+      case class Target(field1: Int = 200, field2: Option[String] = Some("foo"))
+
+      implicit val transformerConfiguration = {
+        TransformerConfiguration.default.enableOptionDefaultsToNone.enableMethodAccessors.disableDefaultValues
+      }
+
+      "scoped config only" - {
+
+        (new Source).transformInto[Target] ==> Target(100, None)
+        (new Source).into[Target].transform ==> Target(100, None)
+      }
+
+      "scoped config overridden by instance flag" - {
+
+        (new Source)
+          .into[Target]
+          .disableMethodAccessors
+          .enableDefaultValues
+          .transform ==> Target(200, Some("foo"))
+
+        (new Source)
+          .into[Target]
+          .enableDefaultValues
+          .transform ==> Target(100, Some("foo"))
+
+        (new Source)
+          .into[Target]
+          .disableOptionDefaultsToNone
+          .withFieldConst(_.field2, Some("abc"))
+          .transform ==> Target(100, Some("abc"))
+      }
+
+      "compile error when optionDefaultsToNone were disabled locally" - {
+
+        compileError("""
+          (new Source).into[Target].disableOptionDefaultsToNone.transform
+        """)
+          .check("", "Chimney can't derive transformation from Source to Target")
       }
     }
   }

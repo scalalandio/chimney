@@ -20,9 +20,9 @@ object ErrorPathSpec extends TestSuite {
       "root" - {
         val errors = "invalid".transformIntoF[V, Int]
 
-        errors.mapLeft(_.map(_.message)) ==> Left(List("Can't parse int from invalid"))
+        errors.left.map(_.map(_.message)) ==> Left(List("Can't parse int from invalid"))
 
-        errors.mapLeft(_.map(_.showErrorPath)) ==> Left(List(""))
+        errors.left.map(_.map(_.showErrorPath)) ==> Left(List(""))
       }
 
       "case classes" - {
@@ -34,7 +34,7 @@ object ErrorPathSpec extends TestSuite {
 
         case class InnerBar(d: Int, e: Int)
 
-        Foo("mmm", "nnn", InnerFoo("lll", "jjj"), "d").transformIntoF[V, Bar].mapLeft(_.map(printError)) ==>
+        Foo("mmm", "nnn", InnerFoo("lll", "jjj"), "d").transformIntoF[V, Bar].left.map(_.map(printError)) ==>
           Left(
             List(
               "Can't parse int from mmm on a",
@@ -50,7 +50,7 @@ object ErrorPathSpec extends TestSuite {
 
         case class Bar(list: List[Int])
 
-        Foo(List("a", "b", "c")).transformIntoF[V, Bar].mapLeft(_.map(printError)) ==>
+        Foo(List("a", "b", "c")).transformIntoF[V, Bar].left.map(_.map(printError)) ==>
           Left(
             List(
               "Can't parse int from a on list(0)",
@@ -79,13 +79,14 @@ object ErrorPathSpec extends TestSuite {
           )
         )
 
-        foo.transformIntoF[V, Bar].mapLeft(_.map(printError)) ==> errors
+        foo.transformIntoF[V, Bar].left.map(_.map(printError)) ==> errors
         foo
           .intoF[V, Bar2]
           .withFieldRenamed(_.map, _.list)
           .withFieldRenamed(_.map2, _.list2)
           .transform
-          .mapLeft(_.map(printError)) ==> errors
+          .left
+          .map(_.map(printError)) ==> errors
 
         val error = compileError("""Map("a" -> "b").transformIntoF[V, Map[Double, Double]]""")
 
@@ -112,7 +113,8 @@ object ErrorPathSpec extends TestSuite {
           .intoF[V, Bar]
           .enableBeanGetters
           .transform
-          .mapLeft(_.map(printError)) ==>
+          .left
+          .map(_.map(printError)) ==>
           Left(
             List(
               "Can't parse int from a on getA",
@@ -122,7 +124,7 @@ object ErrorPathSpec extends TestSuite {
       }
 
       "tuples" - {
-        ("a", "b").transformIntoF[V, (Int, Int)].mapLeft(_.map(printError)) ==>
+        ("a", "b").transformIntoF[V, (Int, Int)].left.map(_.map(printError)) ==>
           Left(
             List(
               "Can't parse int from a on _1",

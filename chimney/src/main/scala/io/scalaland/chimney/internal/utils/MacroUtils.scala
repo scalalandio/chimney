@@ -14,6 +14,13 @@ trait MacroUtils extends CompanionUtils {
     def toSingletonTpe: ConstantType = c.internal.constantType(toNameConstant)
   }
 
+  type WTTF[F[_]] = WeakTypeTag[F[Unit]]
+
+  object WTTF {
+    def apply[F[_]: WTTF]: Type =
+      weakTypeOf[F[Unit]].typeConstructor
+  }
+
   implicit class TypeOps(t: Type) {
 
     def applyTypeArg(arg: Type): Type = {
@@ -178,6 +185,19 @@ trait MacroUtils extends CompanionUtils {
     def isParameterless: Boolean = {
       ms.paramLists.isEmpty || ms.paramLists == List(List())
     }
+  }
+
+  implicit class ClassSymbolOps(cs: ClassSymbol) {
+
+    def subclasses: List[Symbol] =
+      cs.knownDirectSubclasses.toList.flatMap { subclass =>
+        val asClass = subclass.asClass
+        if (asClass.isTrait && asClass.isSealed) {
+          asClass.subclasses
+        } else {
+          List(subclass)
+        }
+      }
   }
 
   // $COVERAGE-OFF$

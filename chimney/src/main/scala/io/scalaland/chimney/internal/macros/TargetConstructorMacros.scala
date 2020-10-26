@@ -33,8 +33,8 @@ trait TargetConstructorMacros extends Model {
       To: Type,
       wrapperType: Option[Type]
   ): Tree = {
-    val instFullName = instSymbol.fullName.toString
-    val fullTargetName = To.typeSymbol.fullName.toString
+    val instFullName = instSymbol.fullName
+    val fullTargetName = To.typeSymbol.fullName
     val finalTpe = wrapperType.map(_.applyTypeArg(To)).getOrElse(To)
     q"""
       $transformerDefinitionPrefix
