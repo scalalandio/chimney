@@ -61,13 +61,20 @@ object ErrorPathSpec extends TestSuite {
       }
 
       "map" - {
-        case class Foo(map: Map[String, String], map2: Map[String, String])
+        case class StrWrapper1(str: String)
 
-        case class Bar(map: Map[Int, Int], map2: Map[String, Int])
+        case class StrWrapper2(value: String)
+
+        implicit val strWrapper1ToStrWrapper2: Transformer[StrWrapper1, StrWrapper2] =
+          wrapper => StrWrapper2(wrapper.str)
+
+        case class Foo(map: Map[String, String], map2: Map[String, String], map3: Map[StrWrapper1, StrWrapper1])
+
+        case class Bar(map: Map[Int, Int], map2: Map[String, Int], map3: Map[StrWrapper2, StrWrapper2])
 
         case class Bar2(list: List[(Int, Int)], list2: List[(String, Int)])
 
-        val foo = Foo(Map("a" -> "b", "c" -> "d"), Map("e" -> "f"))
+        val foo = Foo(Map("a" -> "b", "c" -> "d"), Map("e" -> "f"), Map(StrWrapper1("i") -> StrWrapper1("j")))
 
         val errors = Left(
           List(
