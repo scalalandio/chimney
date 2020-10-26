@@ -68,15 +68,29 @@ object CatsValidatedErrorPathSpec extends TestSuite {
 
         case class FooValue(value: String)
 
-        case class Foo(map: Map[String, String], map2: Map[FooKey, FooValue])
+        case class Foo(map: Map[String, String], map2: Map[FooKey, FooValue], map3: Map[Foo2Key, Foo2Value])
 
-        case class Bar(map: Map[Int, Int], map2: Map[BarKey, BarValue])
+        case class Bar(map: Map[Int, Int], map2: Map[BarKey, BarValue], map3: Map[Bar2Key, Bar2Value])
 
         case class BarKey(value: Int)
 
         case class BarValue(value: Int)
 
-        Foo(Map("a" -> "b", "c" -> "d"), Map(FooKey("e") -> FooValue("f")))
+        case class Foo2Key(value: String)
+
+        case class Foo2Value(value: String)
+
+        case class Bar2Key(str: String)
+
+        case class Bar2Value(str: String)
+
+        implicit val foo2KeyToBar2Key: Transformer[Foo2Key, Bar2Key] =
+          foo => Bar2Key(foo.value)
+
+        implicit val foo2ValueToBar2Value: Transformer[Foo2Value, Bar2Value] =
+          foo => Bar2Value(foo.value)
+
+        Foo(Map("a" -> "b", "c" -> "d"), Map(FooKey("e") -> FooValue("f")), Map(Foo2Key("g") -> Foo2Value("j")))
           .transformIntoF[V, Bar]
           .leftMap(_.map(printError)) ==>
           Validated.Invalid(
