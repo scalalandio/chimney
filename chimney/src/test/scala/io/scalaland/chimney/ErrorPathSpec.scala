@@ -1,7 +1,6 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.internal.utils.EitherUtils._
 import io.scalaland.chimney.utils.OptionUtils._
 
 import utest._
@@ -138,6 +137,41 @@ object ErrorPathSpec extends TestSuite {
               "Can't parse int from b on _2"
             )
           )
+      }
+
+      "case classes with DSL" - {
+        case class Foo(inner: InnerFoo)
+        case class InnerFoo(str: String)
+
+        case class Bar(inner: InnerBar, b: Int)
+        case class InnerBar(int1: Int, int2: Int, double: Double)
+
+        implicit val innerT: TransformerF[V, InnerFoo, InnerBar] =
+          TransformerF
+            .define[V, InnerFoo, InnerBar]
+            .withFieldRenamed(_.str, _.int1)
+            .withFieldConstF(_.int2, intParse.transform("notint"))
+            .withFieldComputedF(
+              _.double,
+              foo =>
+                foo.str.parseDouble
+                  .fold[V[Double]](Left(List(TransformationError(s"Can't parse int from ${foo.str}"))))(Right(_))
+            )
+            .buildTransformer
+
+        Foo(InnerFoo("aaa"))
+          .intoF[V, Bar]
+          .withFieldConstF(_.b, intParse.transform("bbb"))
+          .transform
+          .left
+          .map(_.map(printError)) ==> Left(
+          List(
+            "Can't parse int from aaa on inner.str",
+            "Can't parse int from notint on inner",
+            "Can't parse int from aaa on inner",
+            "Can't parse int from bbb on "
+          )
+        )
       }
     }
   }

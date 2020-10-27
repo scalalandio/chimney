@@ -286,7 +286,7 @@ For using it you need to implement an instance of ``TransformerFErrorPathSupport
       def addPath[A](fa: F[A], node: ErrorPathNode): F[A]
     }
 
-There is 4 different types of of ``ErrorPathNode``:
+There are 4 different types of of ``ErrorPathNode``:
     - ``Accessor`` for case class field or java bean getter
     - ``Index`` for collection index
     - ``MapKey`` for map key
@@ -307,9 +307,7 @@ Let’s take a look at the following example:
     type V[+A] = Either[List[TransformationError[String]], A]
 
     implicit val intParse: TransformerF[V, String, Int] =
-      str => Try(str.toInt).toOption.fold[V[Int]](
-        Left(List(TransformationError(s"Can't parse int from $str")))
-      )(Right(_))
+      str => Try(str.toInt).toEither.left.map(_ => List(TransformationError(s"Can't parse int from '$str'")))
 
     // Raw domain
     case class RawData(id: String, links: List[RawLink])

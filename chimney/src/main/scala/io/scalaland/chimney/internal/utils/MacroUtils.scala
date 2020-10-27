@@ -14,11 +14,12 @@ trait MacroUtils extends CompanionUtils {
     def toSingletonTpe: ConstantType = c.internal.constantType(toNameConstant)
   }
 
-  type WTTF[F[_]] = WeakTypeTag[F[Unit]]
+  type TypeConstructorTag[F[_]] = WeakTypeTag[F[Unit]]
 
-  object WTTF {
-    def apply[F[_]: WTTF]: Type =
+  object TypeConstructorTag {
+    def apply[F[_]: TypeConstructorTag]: Type = {
       weakTypeOf[F[Unit]].typeConstructor
+    }
   }
 
   implicit class TypeOps(t: Type) {
