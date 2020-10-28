@@ -29,6 +29,7 @@ trait TransformerConfigSupport extends MacroUtils {
       definitionScope: Option[(Type, Type)] = None,
       wrapperType: Option[Type] = None,
       wrapperSupportInstance: Tree = EmptyTree,
+      wrapperErrorPathSupportInstance: Option[Tree] = None,
       coproductInstancesF: Set[(Symbol, Type)] = Set.empty // pair: inst type, target type
   ) {
 

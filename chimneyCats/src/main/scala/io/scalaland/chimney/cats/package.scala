@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import _root_.cats.data._
 import _root_.cats.kernel.Semigroup
+import _root_.cats.{Applicative, ApplicativeError}
 
 import scala.collection.compat._
 
@@ -24,10 +25,23 @@ trait CatsImplicits extends LowPriorityImplicits {
 
   implicit def TransformerFIorNesSupport[E]: TransformerFSupport[IorNes[E, +*]] =
     TransformerFIorSupport[NonEmptySet[E]](implicitly)
+
+  implicit def TransformerFErrorValidatedNecSupport[M]
+      : TransformerFErrorPathSupport[ValidatedNec[TransformationError[M], +*]] =
+    TransformerFValidatedErrorPathSupport[ValidatedNec[TransformationError[M], +*], NonEmptyChain, M]
+
+  implicit def TransformerFErrorValidatedNelSupport[M]
+      : TransformerFErrorPathSupport[ValidatedNel[TransformationError[M], +*]] =
+    TransformerFValidatedErrorPathSupport[ValidatedNel[TransformationError[M], +*], NonEmptyList, M]
+
+  implicit def TransformerFErrorIorNecSupport[M]: TransformerFErrorPathSupport[IorNec[TransformationError[M], +*]] =
+    TransformerFValidatedErrorPathSupport[IorNec[TransformationError[M], +*], NonEmptyChain, M]
+
+  implicit def TransformerFErrorIorNelSupport[M]: TransformerFErrorPathSupport[IorNel[TransformationError[M], +*]] =
+    TransformerFValidatedErrorPathSupport[IorNel[TransformationError[M], +*], NonEmptyList, M]
 }
 
 trait LowPriorityImplicits {
-
   implicit def TransformerFIorSupport[EE: Semigroup]: TransformerFSupport[Ior[EE, +*]] =
     new TransformerFSupport[Ior[EE, +*]] {
       override def pure[A](value: A): Ior[EE, A] =
@@ -91,5 +105,14 @@ trait LowPriorityImplicits {
             Validated.Valid(b.result())
         }
       }
+    }
+
+  implicit def TransformerFValidatedErrorPathSupport[F[+_], EE[_]: Applicative, M](
+      implicit applicativeError: ApplicativeError[F, EE[TransformationError[M]]]
+  ): TransformerFErrorPathSupport[F] =
+    new TransformerFErrorPathSupport[F] {
+      override def addPath[A](fa: F[A], node: ErrorPathNode): F[A] =
+        applicativeError.handleErrorWith(fa)(ee => applicativeError.raiseError(Applicative[EE].map(ee)(_.prepend(node)))
+        )
     }
 }

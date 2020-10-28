@@ -274,6 +274,112 @@ Chimney supports ``Option``, ``Either`` and ``cats.data.Validated``
 ``TransformerFSupport`` implemented for those wrapper types.
 
 
+Error path support
+--------------------------
+
+Chimney provides ability to trace errors in lifted transformers.
+For using it you need to implement an instance of ``TransformerFErrorPathSupport``
+
+.. code-block:: scala
+
+    trait TransformerFErrorPathSupport[F[+_]] {
+      def addPath[A](fa: F[A], node: ErrorPathNode): F[A]
+    }
+
+There are 4 different types of of ``ErrorPathNode``:
+    - ``Accessor`` for case class field or java bean getter
+    - ``Index`` for collection index
+    - ``MapKey`` for map key
+    - ``MapValue`` for map value
+
+In case if Chimney can resolve instance of ``TransformerFErrorPathSupport`` in scope of your
+lifted transformer, each error in transformation will contain path of nodes to error location
+
+Out of box Chimney contains instance for Either[C[TransformationError[M]], +*], where
+    - ``M`` - type of error message
+    - ``C[_]`` - collection type to store all the transformation errors (like Seq, Vector, List, etc.)
+    - ``TransformationError`` - default implementation of error containing path
+
+Let’s take a look at the following example:
+
+.. code-block:: scala
+
+    type V[+A] = Either[List[TransformationError[String]], A]
+
+    implicit val intParse: TransformerF[V, String, Int] =
+      str => Try(str.toInt).toEither.left.map(_ => List(TransformationError(s"Can't parse int from '$str'")))
+
+    // Raw domain
+    case class RawData(id: String, links: List[RawLink])
+
+    case class RawLink(id: String, mapping: Map[RawLinkKey, RawLinkValue])
+
+    case class RawLinkKey(id: String)
+
+    case class RawLinkValue(value: String)
+
+    // Domain
+    case class Data(id: Int, links: List[Link])
+
+    case class Link(id: Int, mapping: Map[LinkKey, LinkValue])
+
+    case class LinkKey(id: Int)
+
+    case class LinkValue(value: Int)
+
+    val rawData = RawData(
+      "undefined",
+      List(RawLink("null", Map(RawLinkKey("error") -> RawLinkValue("invalid"))))
+    )
+
+    // Errors output
+    rawData.transformIntoF[V, Data] == Left(
+      List(
+        TransformationError(
+          "Can't parse int from undefined",
+          List(Accessor("id"))
+        ),
+        TransformationError(
+          "Can't parse int from null",
+          List(Accessor("links"), Index(0), Accessor("id"))
+        ),
+        TransformationError(
+          "Can't parse int from error",
+          List(
+            Accessor("links"),
+            Index(0),
+            Accessor("mapping"),
+            MapKey(RawLinkKey("error")),
+            Accessor("id")
+          )
+        ),
+        TransformationError(
+          "Can't parse int from invalid",
+          List(
+            Accessor("links"),
+            Index(0),
+            Accessor("mapping"),
+            MapValue(RawLinkKey("error")),
+            Accessor("value")
+          )
+        )
+      )
+    )
+
+    // Using build in showErrorPath
+    def printError(err: TransformationError[String]): String =
+      s"${err.message} on ${err.showErrorPath}"
+
+    rawData.transformIntoF[V, Data].left.toOption.map(_.map(printError)) ==
+      Some(
+        List(
+          "Can't parse int from undefined on id",
+          "Can't parse int from null on links(0).id",
+          "Can't parse int from error on links(0).mapping.keys(RawLinkKey(error)).id",
+          "Can't parse int from invalid on links(0).mapping(RawLinkKey(error)).value"
+        )
+      )
+
 Emitted code
 ------------
 

@@ -25,11 +25,20 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
     c.Expr[chimney.Transformer[From, To]](buildDefinedTransformer[From, To, C, Flags, ScopeFlags]())
   }
 
-  def buildTransformerFImpl[F[+_], From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
+  def buildTransformerFImpl[
+      F[+_]: TypeConstructorTag,
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      C: WeakTypeTag,
+      Flags: WeakTypeTag,
+      ScopeFlags: WeakTypeTag
+  ](
       tfs: c.Expr[TransformerFSupport[F]],
       tc: c.Tree
   ): c.Expr[TransformerF[F, From, To]] = {
-    c.Expr[TransformerF[F, From, To]](buildDefinedTransformer[From, To, C, Flags, ScopeFlags](tfs.tree))
+    c.Expr[TransformerF[F, From, To]](
+      buildDefinedTransformer[From, To, C, Flags, ScopeFlags](tfs.tree, Some(TypeConstructorTag[F]))
+    )
   }
 
   def transformImpl[
@@ -43,7 +52,7 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
   }
 
   def transformFImpl[
-      F[+_],
+      F[+_]: TypeConstructorTag,
       From: WeakTypeTag,
       To: WeakTypeTag,
       C: WeakTypeTag,
@@ -53,7 +62,7 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
       tc: c.Tree,
       tfs: c.Expr[TransformerFSupport[F]]
   ): c.Expr[F[To]] = {
-    c.Expr[F[To]](expandTransform[From, To, C, Flags, ScopeFlags](tc, tfs.tree))
+    c.Expr[F[To]](expandTransform[From, To, C, Flags, ScopeFlags](tc, tfs.tree, Some(TypeConstructorTag[F])))
   }
 
   def deriveTransformerImpl[From: WeakTypeTag, To: WeakTypeTag]: c.Expr[chimney.Transformer[From, To]] = {
@@ -75,20 +84,21 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
     }
   }
 
-  def deriveTransformerFImpl[F[+_], From: WeakTypeTag, To: WeakTypeTag](
+  def deriveTransformerFImpl[F[+_]: TypeConstructorTag, From: WeakTypeTag, To: WeakTypeTag](
       tfs: c.Expr[TransformerFSupport[F]]
-  )(
-      implicit F: WeakTypeTag[F[_]]
   ): c.Expr[TransformerF[F, From, To]] = {
+
     val tcTree = findLocalTransformerConfigurationFlags
     val flags = captureFromTransformerConfigurationTree(tcTree)
+    val wrapperType = Some(TypeConstructorTag[F])
 
     val transformerTree = genTransformer[From, To](
       TransformerConfig(
         flags = flags,
         definitionScope = Some((weakTypeOf[From], weakTypeOf[To])),
-        wrapperType = Some(F.tpe),
-        wrapperSupportInstance = tfs.tree
+        wrapperType = wrapperType,
+        wrapperSupportInstance = tfs.tree,
+        wrapperErrorPathSupportInstance = findTransformerErrorPathSupport(wrapperType)
       )
     )
 
