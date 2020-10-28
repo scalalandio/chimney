@@ -115,9 +115,8 @@ trait MacroUtils extends CompanionUtils {
       classSymbolOpt
         .flatMap { classSymbol =>
           val classType = classSymbol.toType
-          val companionRef = patchedCompanionRef(c)(classType)
-          val companionSym = companionRef.symbol.asModule.info
-          val primaryFactoryMethod = companionSym.decl(TermName("apply")).alternatives.lastOption
+          val companionSym = companionSymbol(classType)
+          val primaryFactoryMethod = companionSym.asModule.info.decl(TermName("apply")).alternatives.lastOption
           primaryFactoryMethod.foreach(_.asMethod.typeSignature)
           val primaryConstructor = classSymbol.primaryConstructor
           val headParamListOpt = primaryConstructor.asMethod.typeSignature.paramLists.headOption.map(_.map(_.asTerm))
@@ -127,7 +126,7 @@ trait MacroUtils extends CompanionUtils {
               case (param, idx) =>
                 if (param.isParamWithDefault) {
                   val method = TermName("apply$default$" + (idx + 1))
-                  Some(param.name.toString -> q"$companionRef.$method")
+                  Some(param.name.toString -> q"$companionSym.$method")
                 } else {
                   None
                 }
