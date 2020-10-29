@@ -839,5 +839,34 @@ object DslFSpec extends TestSuite {
           .check("", "Chimney can't derive transformation from Source to Target")
       }
     }
+
+    "support config type-aliases" - {
+      type VTransformer[A, B] =
+        io.scalaland.chimney.TransformerF[VTransformer.F, A, B]
+
+      object VTransformer {
+        import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
+
+        type F[+A] = Either[List[String], A]
+        type DefaultCfg = TransformerCfg.WrapperType[F, TransformerCfg.Empty]
+        type Definition[From, To] =
+          TransformerFDefinition[F, From, To, DefaultCfg, TransformerFlags.Default]
+
+        def define[From, To]: Definition[From, To] =
+          io.scalaland.chimney.TransformerF.define[F, From, To]
+      }
+
+      implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
+        _.parseInt.toEither("bad int")
+
+      case class Foo(foo: String)
+
+      case class Bar(bar: Int)
+
+      implicit val fooToBar: VTransformer[Foo, Bar] =
+        VTransformer.define[Foo, Bar].withFieldRenamed(_.foo, _.bar).buildTransformer
+
+      fooToBar.transform(Foo("1")) ==> Right(Bar(1))
+    }
   }
 }

@@ -72,9 +72,11 @@ trait TransformerConfigSupport extends MacroUtils {
     val wrapperTypeT: Type = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
   }
 
-  def captureTransformerConfig(cfgTpe: Type): TransformerConfig = {
+  def captureTransformerConfig(rawCfgTpe: Type): TransformerConfig = {
 
     import CfgTpes._
+
+    val cfgTpe = rawCfgTpe.dealias
 
     if (cfgTpe =:= emptyT) {
       TransformerConfig()
