@@ -277,6 +277,11 @@ Chimney supports ``Option``, ``Either`` and ``cats.data.Validated``
 Error path support
 --------------------------
 
+.. warning::
+
+    Support for enhanced error paths is currently an experimental feature and we don't
+    guarantee it will be included in the next library versions in the same shape.
+
 Chimney provides ability to trace errors in lifted transformers.
 For using it you need to implement an instance of ``TransformerFErrorPathSupport``
 
