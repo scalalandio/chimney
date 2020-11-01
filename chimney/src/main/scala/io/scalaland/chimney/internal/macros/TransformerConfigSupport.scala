@@ -11,18 +11,18 @@ trait TransformerConfigSupport extends MacroUtils {
 
   import c.universe._
 
-  def readConfig[C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
+  def readConfig[C: WeakTypeTag, InstanceFlags: WeakTypeTag, ScopeFlags: WeakTypeTag](
       wrapperSupportInstance: Tree
   ): TransformerConfig = {
     val C = weakTypeOf[C]
-    val Flags = weakTypeOf[Flags]
+    val InstanceFlags = weakTypeOf[InstanceFlags]
     val ScopeFlags = weakTypeOf[ScopeFlags]
 
     val scopeFlags = captureTransformerFlags(ScopeFlags)
-    val instanceFlags = captureTransformerFlags(Flags, scopeFlags)
+    val combinedFlags = captureTransformerFlags(InstanceFlags, scopeFlags)
 
     captureTransformerConfig(C).copy(
-      flags = instanceFlags,
+      flags = combinedFlags,
       wrapperSupportInstance = wrapperSupportInstance
     )
   }

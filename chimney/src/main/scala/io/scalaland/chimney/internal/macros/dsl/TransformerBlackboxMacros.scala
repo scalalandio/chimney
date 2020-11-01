@@ -30,14 +30,14 @@ class TransformerBlackboxMacros(val c: blackbox.Context)
       From: WeakTypeTag,
       To: WeakTypeTag,
       C: WeakTypeTag,
-      Flags: WeakTypeTag,
+      InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
   ](
       tfs: c.Expr[TransformerFSupport[F]],
       tc: c.Tree
   ): c.Expr[TransformerF[F, From, To]] = {
     c.Expr[TransformerF[F, From, To]](
-      buildDefinedTransformer[From, To, C, Flags, ScopeFlags](tfs.tree, Some(TypeConstructorTag[F]))
+      buildDefinedTransformer[From, To, C, InstanceFlags, ScopeFlags](tfs.tree, Some(TypeConstructorTag[F]))
     )
   }
 
@@ -45,10 +45,10 @@ class TransformerBlackboxMacros(val c: blackbox.Context)
       From: WeakTypeTag,
       To: WeakTypeTag,
       C: WeakTypeTag,
-      Flags: WeakTypeTag,
+      InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
   ](tc: c.Tree): c.Expr[To] = {
-    c.Expr[To](expandTransform[From, To, C, Flags, ScopeFlags](tc))
+    c.Expr[To](expandTransform[From, To, C, InstanceFlags, ScopeFlags](tc))
   }
 
   def transformFImpl[
@@ -56,13 +56,13 @@ class TransformerBlackboxMacros(val c: blackbox.Context)
       From: WeakTypeTag,
       To: WeakTypeTag,
       C: WeakTypeTag,
-      Flags: WeakTypeTag,
+      InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
   ](
       tc: c.Tree,
       tfs: c.Expr[TransformerFSupport[F]]
   ): c.Expr[F[To]] = {
-    c.Expr[F[To]](expandTransform[From, To, C, Flags, ScopeFlags](tc, tfs.tree, Some(TypeConstructorTag[F])))
+    c.Expr[F[To]](expandTransform[From, To, C, InstanceFlags, ScopeFlags](tc, tfs.tree, Some(TypeConstructorTag[F])))
   }
 
   def deriveTransformerImpl[From: WeakTypeTag, To: WeakTypeTag]: c.Expr[chimney.Transformer[From, To]] = {
