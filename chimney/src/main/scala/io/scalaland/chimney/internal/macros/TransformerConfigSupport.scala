@@ -180,9 +180,11 @@ trait TransformerConfigSupport extends MacroUtils {
     val unsafeOptionT: Type = typeOf[UnsafeOption]
   }
 
-  def captureTransformerFlags(flagsTpe: Type, defaultFlags: TransformerFlags = TransformerFlags()): TransformerFlags = {
+  def captureTransformerFlags(rawFlagsTpe: Type, defaultFlags: TransformerFlags = TransformerFlags()): TransformerFlags = {
 
     import FlagsTpes._
+
+    val flagsTpe = rawFlagsTpe.dealias
 
     if (flagsTpe =:= defaultT) {
       defaultFlags
