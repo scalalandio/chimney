@@ -11,6 +11,22 @@ trait TransformerConfigSupport extends MacroUtils {
 
   import c.universe._
 
+  def readConfig[C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
+      wrapperSupportInstance: Tree
+  ): TransformerConfig = {
+    val C = weakTypeOf[C]
+    val Flags = weakTypeOf[Flags]
+    val ScopeFlags = weakTypeOf[ScopeFlags]
+
+    val scopeFlags = captureTransformerFlags(ScopeFlags)
+    val instanceFlags = captureTransformerFlags(Flags, scopeFlags)
+
+    captureTransformerConfig(C).copy(
+      flags = instanceFlags,
+      wrapperSupportInstance = wrapperSupportInstance
+    )
+  }
+
   sealed abstract class FieldOverride(val needValueLevelAccess: Boolean)
 
   object FieldOverride {
@@ -59,6 +75,7 @@ trait TransformerConfigSupport extends MacroUtils {
   }
 
   object CfgTpes {
+
     import io.scalaland.chimney.internal.TransformerCfg._
 
     val emptyT: Type = typeOf[Empty]
@@ -69,7 +86,7 @@ trait TransformerConfigSupport extends MacroUtils {
     val fieldRelabelledT: Type = typeOf[FieldRelabelled[_, _, _]].typeConstructor
     val coproductInstanceT: Type = typeOf[CoproductInstance[_, _, _]].typeConstructor
     val coproductInstanceFT: Type = typeOf[CoproductInstanceF[_, _, _]].typeConstructor
-    val wrapperTypeT: Type = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
+    val wrapperTypeT: Type = typeOf[WrapperType[F, _] forSome { type F[+ _] }].typeConstructor
   }
 
   def captureTransformerConfig(rawCfgTpe: Type): TransformerConfig = {
@@ -148,6 +165,7 @@ trait TransformerConfigSupport extends MacroUtils {
   }
 
   object FlagsTpes {
+
     import io.scalaland.chimney.internal.TransformerFlags._
 
     val defaultT: Type = typeOf[Default]

@@ -61,22 +61,6 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
     """
   }
 
-  def readConfig[C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
-      wrapperSupportInstance: Tree
-  ): TransformerConfig = {
-    val C = weakTypeOf[C]
-    val Flags = weakTypeOf[Flags]
-    val ScopeFlags = weakTypeOf[ScopeFlags]
-
-    val scopeFlags = captureTransformerFlags(ScopeFlags)
-    val instanceFlags = captureTransformerFlags(Flags, scopeFlags)
-
-    captureTransformerConfig(C).copy(
-      flags = instanceFlags,
-      wrapperSupportInstance = wrapperSupportInstance
-    )
-  }
-
   def genTransformer[From: WeakTypeTag, To: WeakTypeTag](
       config: TransformerConfig
   ): Tree = {
