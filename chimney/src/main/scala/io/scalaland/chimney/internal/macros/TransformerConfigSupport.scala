@@ -86,7 +86,7 @@ trait TransformerConfigSupport extends MacroUtils {
     val fieldRelabelledT: Type = typeOf[FieldRelabelled[_, _, _]].typeConstructor
     val coproductInstanceT: Type = typeOf[CoproductInstance[_, _, _]].typeConstructor
     val coproductInstanceFT: Type = typeOf[CoproductInstanceF[_, _, _]].typeConstructor
-    val wrapperTypeT: Type = typeOf[WrapperType[F, _] forSome { type F[+ _] }].typeConstructor
+    val wrapperTypeT: Type = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
   }
 
   def captureTransformerConfig(rawCfgTpe: Type): TransformerConfig = {

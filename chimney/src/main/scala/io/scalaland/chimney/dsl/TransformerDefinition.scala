@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.internal.TransformerCfg._
 import io.scalaland.chimney.internal._
-import io.scalaland.chimney.internal.macros.dsl.{ TransformerBlackboxMacros, TransformerDefinitionWhiteboxMacros }
+import io.scalaland.chimney.internal.macros.dsl.{TransformerBlackboxMacros, TransformerDefinitionWhiteboxMacros}
 
 import scala.language.experimental.macros
 

@@ -1,8 +1,8 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.TransformerFSupport
-import io.scalaland.chimney.internal.{ TransformerCfg, TransformerFlags }
-import io.scalaland.chimney.internal.macros.dsl.{ TransformerBlackboxMacros, TransformerFIntoWhiteboxMacros }
+import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.macros.dsl.{TransformerBlackboxMacros, TransformerFIntoWhiteboxMacros}
 
 import scala.language.experimental.macros
 

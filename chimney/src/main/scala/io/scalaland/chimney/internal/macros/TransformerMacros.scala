@@ -40,7 +40,13 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
     }
   }
 
-  def expandTransform[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, InstanceFlags: WeakTypeTag, ScopeFlags: WeakTypeTag](
+  def expandTransform[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      C: WeakTypeTag,
+      InstanceFlags: WeakTypeTag,
+      ScopeFlags: WeakTypeTag
+  ](
       tcTree: Tree,
       tfsTree: Tree = EmptyTree,
       wrapperType: Option[Type] = None

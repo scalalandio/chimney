@@ -296,8 +296,10 @@ trait MacroUtils extends CompanionUtils {
       q"$td.__refineTransformerDefinition($definitionRefinementFn)"
     }
 
-    def refineTransformerDefinition_Hack(definitionRefinementFn: Map[String, Tree] => Tree,
-                                         valTree: (String, Tree)): Tree = {
+    def refineTransformerDefinition_Hack(
+        definitionRefinementFn: Map[String, Tree] => Tree,
+        valTree: (String, Tree)
+    ): Tree = {
       // normally, we would like to use refineTransformerDefinition, which works well on Scala 2.11
       // in few cases on Scala 2.12+ it ends up as 'Error while emitting XXX.scala' compiler error
       // with this hack, we can work around scalac bugs

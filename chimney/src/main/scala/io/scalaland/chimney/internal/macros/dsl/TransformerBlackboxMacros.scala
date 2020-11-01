@@ -26,7 +26,7 @@ class TransformerBlackboxMacros(val c: blackbox.Context)
   }
 
   def buildTransformerFImpl[
-      F[+ _]: TypeConstructorTag,
+      F[+_]: TypeConstructorTag,
       From: WeakTypeTag,
       To: WeakTypeTag,
       C: WeakTypeTag,
@@ -52,7 +52,7 @@ class TransformerBlackboxMacros(val c: blackbox.Context)
   }
 
   def transformFImpl[
-      F[+ _]: TypeConstructorTag,
+      F[+_]: TypeConstructorTag,
       From: WeakTypeTag,
       To: WeakTypeTag,
       C: WeakTypeTag,
@@ -84,7 +84,7 @@ class TransformerBlackboxMacros(val c: blackbox.Context)
     }
   }
 
-  def deriveTransformerFImpl[F[+ _]: TypeConstructorTag, From: WeakTypeTag, To: WeakTypeTag](
+  def deriveTransformerFImpl[F[+_]: TypeConstructorTag, From: WeakTypeTag, To: WeakTypeTag](
       tfs: c.Expr[TransformerFSupport[F]]
   ): c.Expr[TransformerF[F, From, To]] = {
 
