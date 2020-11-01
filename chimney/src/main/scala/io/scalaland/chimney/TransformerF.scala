@@ -2,7 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.TransformerFDefinition
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
-import io.scalaland.chimney.internal.macros.ChimneyBlackboxMacros
+import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 
 import scala.language.experimental.macros
 
@@ -35,7 +35,7 @@ object TransformerF {
     * @return [[io.scalaland.chimney.TransformerF]] type class definition
     */
   implicit def derive[F[+_], From, To](implicit tfs: TransformerFSupport[F]): TransformerF[F, From, To] =
-    macro ChimneyBlackboxMacros.deriveTransformerFImpl[F, From, To]
+    macro TransformerBlackboxMacros.deriveTransformerFImpl[F, From, To]
 
   /** Creates an empty [[io.scalaland.chimney.dsl.TransformerFDefinition]] that
     * you can customize to derive [[io.scalaland.chimney.TransformerF]].

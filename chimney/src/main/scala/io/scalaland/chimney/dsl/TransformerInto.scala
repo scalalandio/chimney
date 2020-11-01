@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.TransformerCfg._
 import io.scalaland.chimney.internal._
-import io.scalaland.chimney.internal.macros.{ChimneyBlackboxMacros, TransformerIntoWhiteboxMacros}
+import io.scalaland.chimney.internal.macros.dsl.{TransformerBlackboxMacros, TransformerIntoWhiteboxMacros}
 
 import scala.language.experimental.macros
 
@@ -140,7 +140,7 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
   def transform[ScopeFlags <: TransformerFlags](
       implicit tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
   ): To =
-    macro ChimneyBlackboxMacros.transformImpl[From, To, C, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.transformImpl[From, To, C, Flags, ScopeFlags]
 
   /** Used internally by macro. Please don't use in your code.
     */

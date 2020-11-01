@@ -16,13 +16,13 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
       From: WeakTypeTag,
       To: WeakTypeTag,
       C: WeakTypeTag,
-      Flags: WeakTypeTag,
+      InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
   ](
       tfsTree: Tree = EmptyTree,
       wrapperType: Option[Type] = None
   ): Tree = {
-    val config = readConfig[C, Flags, ScopeFlags](tfsTree).copy(
+    val config = readConfig[C, InstanceFlags, ScopeFlags](tfsTree).copy(
       definitionScope = Some((weakTypeOf[From], weakTypeOf[To])),
       wrapperErrorPathSupportInstance = findTransformerErrorPathSupport(wrapperType)
     )
@@ -40,14 +40,20 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
     }
   }
 
-  def expandTransform[From: WeakTypeTag, To: WeakTypeTag, C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
+  def expandTransform[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      C: WeakTypeTag,
+      InstanceFlags: WeakTypeTag,
+      ScopeFlags: WeakTypeTag
+  ](
       tcTree: Tree,
       tfsTree: Tree = EmptyTree,
       wrapperType: Option[Type] = None
   ): Tree = {
     val tiName = TermName(c.freshName("ti"))
 
-    val config = readConfig[C, Flags, ScopeFlags](tfsTree).copy(
+    val config = readConfig[C, InstanceFlags, ScopeFlags](tfsTree).copy(
       transformerDefinitionPrefix = q"$tiName.td",
       wrapperErrorPathSupportInstance = findTransformerErrorPathSupport(wrapperType)
     )
@@ -59,22 +65,6 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
        val $tiName = ${c.prefix.tree}
        ${derivedTransformerTree.callTransform(q"$tiName.source")}
     """
-  }
-
-  def readConfig[C: WeakTypeTag, Flags: WeakTypeTag, ScopeFlags: WeakTypeTag](
-      wrapperSupportInstance: Tree
-  ): TransformerConfig = {
-    val C = weakTypeOf[C]
-    val Flags = weakTypeOf[Flags]
-    val ScopeFlags = weakTypeOf[ScopeFlags]
-
-    val scopeFlags = captureTransformerFlags(ScopeFlags)
-    val instanceFlags = captureTransformerFlags(Flags, scopeFlags)
-
-    captureTransformerConfig(C).copy(
-      flags = instanceFlags,
-      wrapperSupportInstance = wrapperSupportInstance
-    )
   }
 
   def genTransformer[From: WeakTypeTag, To: WeakTypeTag](
