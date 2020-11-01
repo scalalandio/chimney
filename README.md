@@ -62,7 +62,7 @@ Underneath it uses Scala macros to give you:
 To include Chimney to your SBT project, add the following line to your `build.sbt`:
 
 ```scala
-libraryDependencies += "io.scalaland" %% "chimney" % "0.6.0"
+libraryDependencies += "io.scalaland" %% "chimney" % "0.6.1"
 ```
 
 Library is released for Scala 2.12.x and 2.13.x.
