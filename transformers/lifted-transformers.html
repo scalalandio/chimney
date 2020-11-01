@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Lifted transformers &mdash; Chimney 0.6.0 documentation</title>
+  <title>Lifted transformers &mdash; Chimney 0.6.1 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.6.0
+                0.6.1
               </div>
             
           
@@ -106,6 +106,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#capturing-validation-errors">Capturing validation errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#transformerf-type-class"><code class="docutils literal notranslate"><span class="pre">TransformerF</span></code> type class</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#supporting-custom-f">Supporting custom <code class="docutils literal notranslate"><span class="pre">F[_]</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#error-path-support">Error path support</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#emitted-code">Emitted code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#deriving-lifted-transformers">Deriving lifted transformers</a></li>
 </ul>
@@ -407,6 +408,118 @@ semantics of error handling.</p>
 <p>Chimney supports <code class="docutils literal notranslate"><span class="pre">Option</span></code>, <code class="docutils literal notranslate"><span class="pre">Either</span></code> and <code class="docutils literal notranslate"><span class="pre">cats.data.Validated</span></code>
 (in <a class="reference internal" href="cats-integration.html#cats-integration"><span class="std std-ref">Cats integration</span></a>) just exactly by providing implicit instaces of
 <code class="docutils literal notranslate"><span class="pre">TransformerFSupport</span></code> implemented for those wrapper types.</p>
+</div>
+<div class="section" id="error-path-support">
+<h2>Error path support<a class="headerlink" href="#error-path-support" title="Permalink to this headline">¶</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Support for enhanced error paths is currently an experimental feature and we don’t
+guarantee it will be included in the next library versions in the same shape.</p>
+</div>
+<p>Chimney provides ability to trace errors in lifted transformers.
+For using it you need to implement an instance of <code class="docutils literal notranslate"><span class="pre">TransformerFErrorPathSupport</span></code></p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">trait</span> <span class="nc">TransformerFErrorPathSupport</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="kt">+</span><span class="k">_</span><span class="o">]]</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">addPath</span><span class="o">[</span><span class="kt">A</span><span class="o">](</span><span class="n">fa</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">A</span><span class="o">],</span> <span class="n">node</span><span class="k">:</span> <span class="kt">ErrorPathNode</span><span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">A</span><span class="o">]</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>There are 4 different types of of <code class="docutils literal notranslate"><span class="pre">ErrorPathNode</span></code>:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Accessor</span></code> for case class field or java bean getter</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Index</span></code> for collection index</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MapKey</span></code> for map key</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MapValue</span></code> for map value</p></li>
+</ul>
+</dd>
+</dl>
+<p>In case if Chimney can resolve instance of <code class="docutils literal notranslate"><span class="pre">TransformerFErrorPathSupport</span></code> in scope of your
+lifted transformer, each error in transformation will contain path of nodes to error location</p>
+<dl class="simple">
+<dt>Out of box Chimney contains instance for Either[C[TransformationError[M]], +*], where</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">M</span></code> - type of error message</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">C[_]</span></code> - collection type to store all the transformation errors (like Seq, Vector, List, etc.)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TransformationError</span></code> - default implementation of error containing path</p></li>
+</ul>
+</dd>
+</dl>
+<p>Let’s take a look at the following example:</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">type</span> <span class="kt">V</span><span class="o">[</span><span class="kt">+A</span><span class="o">]</span> <span class="k">=</span> <span class="nc">Either</span><span class="o">[</span><span class="kt">List</span><span class="o">[</span><span class="kt">TransformationError</span><span class="o">[</span><span class="kt">String</span><span class="o">]]</span><span class="p">,</span> <span class="kt">A</span><span class="o">]</span>
+
+<span class="k">implicit</span> <span class="k">val</span> <span class="n">intParse</span><span class="k">:</span> <span class="kt">TransformerF</span><span class="o">[</span><span class="kt">V</span><span class="p">,</span> <span class="kt">String</span><span class="p">,</span> <span class="kt">Int</span><span class="o">]</span> <span class="k">=</span>
+  <span class="n">str</span> <span class="k">=&gt;</span> <span class="nc">Try</span><span class="o">(</span><span class="n">str</span><span class="o">.</span><span class="n">toInt</span><span class="o">).</span><span class="n">toEither</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span> <span class="k">=&gt;</span> <span class="nc">List</span><span class="o">(</span><span class="nc">TransformationError</span><span class="o">(</span><span class="s">s&quot;Can&#39;t parse int from &#39;</span><span class="si">$str</span><span class="s">&#39;&quot;</span><span class="o">)))</span>
+
+<span class="c1">// Raw domain</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">RawData</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">links</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">RawLink</span><span class="o">])</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">RawLink</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">mapping</span><span class="k">:</span> <span class="kt">Map</span><span class="o">[</span><span class="kt">RawLinkKey</span><span class="p">,</span> <span class="kt">RawLinkValue</span><span class="o">])</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">RawLinkKey</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">RawLinkValue</span><span class="o">(</span><span class="n">value</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+
+<span class="c1">// Domain</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Data</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">links</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Link</span><span class="o">])</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Link</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">mapping</span><span class="k">:</span> <span class="kt">Map</span><span class="o">[</span><span class="kt">LinkKey</span><span class="p">,</span> <span class="kt">LinkValue</span><span class="o">])</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">LinkKey</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">LinkValue</span><span class="o">(</span><span class="n">value</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">rawData</span> <span class="k">=</span> <span class="nc">RawData</span><span class="o">(</span>
+  <span class="s">&quot;undefined&quot;</span><span class="o">,</span>
+  <span class="nc">List</span><span class="o">(</span><span class="nc">RawLink</span><span class="o">(</span><span class="s">&quot;null&quot;</span><span class="o">,</span> <span class="nc">Map</span><span class="o">(</span><span class="nc">RawLinkKey</span><span class="o">(</span><span class="s">&quot;error&quot;</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="nc">RawLinkValue</span><span class="o">(</span><span class="s">&quot;invalid&quot;</span><span class="o">))))</span>
+<span class="o">)</span>
+
+<span class="c1">// Errors output</span>
+<span class="n">rawData</span><span class="o">.</span><span class="n">transformIntoF</span><span class="o">[</span><span class="kt">V</span><span class="p">,</span> <span class="kt">Data</span><span class="o">]</span> <span class="o">==</span> <span class="nc">Left</span><span class="o">(</span>
+  <span class="nc">List</span><span class="o">(</span>
+    <span class="nc">TransformationError</span><span class="o">(</span>
+      <span class="s">&quot;Can&#39;t parse int from undefined&quot;</span><span class="o">,</span>
+      <span class="nc">List</span><span class="o">(</span><span class="nc">Accessor</span><span class="o">(</span><span class="s">&quot;id&quot;</span><span class="o">))</span>
+    <span class="o">),</span>
+    <span class="nc">TransformationError</span><span class="o">(</span>
+      <span class="s">&quot;Can&#39;t parse int from null&quot;</span><span class="o">,</span>
+      <span class="nc">List</span><span class="o">(</span><span class="nc">Accessor</span><span class="o">(</span><span class="s">&quot;links&quot;</span><span class="o">),</span> <span class="nc">Index</span><span class="o">(</span><span class="mi">0</span><span class="o">),</span> <span class="nc">Accessor</span><span class="o">(</span><span class="s">&quot;id&quot;</span><span class="o">))</span>
+    <span class="o">),</span>
+    <span class="nc">TransformationError</span><span class="o">(</span>
+      <span class="s">&quot;Can&#39;t parse int from error&quot;</span><span class="o">,</span>
+      <span class="nc">List</span><span class="o">(</span>
+        <span class="nc">Accessor</span><span class="o">(</span><span class="s">&quot;links&quot;</span><span class="o">),</span>
+        <span class="nc">Index</span><span class="o">(</span><span class="mi">0</span><span class="o">),</span>
+        <span class="nc">Accessor</span><span class="o">(</span><span class="s">&quot;mapping&quot;</span><span class="o">),</span>
+        <span class="nc">MapKey</span><span class="o">(</span><span class="nc">RawLinkKey</span><span class="o">(</span><span class="s">&quot;error&quot;</span><span class="o">)),</span>
+        <span class="nc">Accessor</span><span class="o">(</span><span class="s">&quot;id&quot;</span><span class="o">)</span>
+      <span class="o">)</span>
+    <span class="o">),</span>
+    <span class="nc">TransformationError</span><span class="o">(</span>
+      <span class="s">&quot;Can&#39;t parse int from invalid&quot;</span><span class="o">,</span>
+      <span class="nc">List</span><span class="o">(</span>
+        <span class="nc">Accessor</span><span class="o">(</span><span class="s">&quot;links&quot;</span><span class="o">),</span>
+        <span class="nc">Index</span><span class="o">(</span><span class="mi">0</span><span class="o">),</span>
+        <span class="nc">Accessor</span><span class="o">(</span><span class="s">&quot;mapping&quot;</span><span class="o">),</span>
+        <span class="nc">MapValue</span><span class="o">(</span><span class="nc">RawLinkKey</span><span class="o">(</span><span class="s">&quot;error&quot;</span><span class="o">)),</span>
+        <span class="nc">Accessor</span><span class="o">(</span><span class="s">&quot;value&quot;</span><span class="o">)</span>
+      <span class="o">)</span>
+    <span class="o">)</span>
+  <span class="o">)</span>
+<span class="o">)</span>
+
+<span class="c1">// Using build in showErrorPath</span>
+<span class="k">def</span> <span class="n">printError</span><span class="o">(</span><span class="n">err</span><span class="k">:</span> <span class="kt">TransformationError</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span>
+  <span class="s">s&quot;</span><span class="si">${</span><span class="n">err</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s"> on </span><span class="si">${</span><span class="n">err</span><span class="o">.</span><span class="n">showErrorPath</span><span class="si">}</span><span class="s">&quot;</span>
+
+<span class="n">rawData</span><span class="o">.</span><span class="n">transformIntoF</span><span class="o">[</span><span class="kt">V</span><span class="p">,</span> <span class="kt">Data</span><span class="o">].</span><span class="n">left</span><span class="o">.</span><span class="n">toOption</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">map</span><span class="o">(</span><span class="n">printError</span><span class="o">))</span> <span class="o">==</span>
+  <span class="nc">Some</span><span class="o">(</span>
+    <span class="nc">List</span><span class="o">(</span>
+      <span class="s">&quot;Can&#39;t parse int from undefined on id&quot;</span><span class="o">,</span>
+      <span class="s">&quot;Can&#39;t parse int from null on links(0).id&quot;</span><span class="o">,</span>
+      <span class="s">&quot;Can&#39;t parse int from error on links(0).mapping.keys(RawLinkKey(error)).id&quot;</span><span class="o">,</span>
+      <span class="s">&quot;Can&#39;t parse int from invalid on links(0).mapping(RawLinkKey(error)).value&quot;</span>
+    <span class="o">)</span>
+  <span class="o">)</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="emitted-code">
 <h2>Emitted code<a class="headerlink" href="#emitted-code" title="Permalink to this headline">¶</a></h2>

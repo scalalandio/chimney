@@ -203,3 +203,58 @@ and will stop accumulating when it encounters a ``Left``.  Let's look at another
 
 In this example, we see that there are no critical errors (i.e. validation's returning only ``Left``) and we see that we end up with a 
 result with warnings (``Both``).
+
+Error path support for cats-based transformers
+----------------------------------------------
+
+Chimney provides instance of ``TransformerFErrorPathSupport`` for ``F[_]``
+if there is ``ApplicativeError[F, EE[TransformationError[M]]]`` instance and
+``Applicative[E]`` instance.
+
+In particular ``ValidatedNec[TransformationError[M], +*]``, ``ValidatedNel[TransformationError[M], +*]``,
+``IorNec[TransformationError[M], +*]``, ``IorNel[TransformationError[M], +*]``
+satisfy this requirement.
+
+Let's look to example based on ``ValidatedNec[TransformationError[M], +*]``
+
+.. code-block:: scala
+
+  import io.scalaland.chimney.cats._
+  import io.scalaland.chimney.dsl._
+  import io.scalaland.chimney.{TransformationError, TransformerF}
+  import cats.data.{NonEmptyChain, Validated, ValidatedNec}
+
+  import scala.util.Try
+
+  type V[+A] = ValidatedNec[TransformationError[String], A]
+
+  def printError(err: TransformationError[String]): String =
+    s"${err.message} on ${err.showErrorPath}"
+
+  implicit val intParse: TransformerF[V, String, Int] =
+    str =>
+      Validated.fromOption(
+        Try(str.toInt).toOption,
+        NonEmptyChain.one(TransformationError(s"Can't parse int from $str"))
+      )
+
+  // Raw domain
+  case class RawClass(id: String, inner: RawInner)
+
+  case class RawInner(id: String, description: String)
+
+  // Domain
+
+  case class Class(id: Int, inner: Inner)
+
+  case class Inner(id: Int, description: String)
+
+  val raw = RawClass("null", RawInner("undefined", "description"))
+
+  raw.transformIntoF[V, Class].leftMap(_.map(printError)) ==
+    Validated.Invalid(
+      NonEmptyChain(
+        "Can't parse int from null on id",
+        "Can't parse int from undefined on inner.id"
+      )
+    )
