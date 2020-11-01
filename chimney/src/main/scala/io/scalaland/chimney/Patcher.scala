@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.macros.ChimneyBlackboxMacros
+import io.scalaland.chimney.internal.macros.dsl.PatcherBlackboxMacros
 
 import scala.language.experimental.macros
 
@@ -23,5 +23,5 @@ object Patcher {
     * @return [[io.scalaland.chimney.Patcher]] type class instance
     */
   implicit def derive[T, Patch]: Patcher[T, Patch] =
-    macro ChimneyBlackboxMacros.derivePatcherImpl[T, Patch]
+    macro PatcherBlackboxMacros.derivePatcherImpl[T, Patch]
 }

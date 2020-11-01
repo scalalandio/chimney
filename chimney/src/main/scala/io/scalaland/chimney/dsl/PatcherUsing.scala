@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.PatcherCfg
 import io.scalaland.chimney.internal.PatcherCfg.{IgnoreNoneInPatch, IgnoreRedundantPatcherFields}
-import io.scalaland.chimney.internal.macros.ChimneyBlackboxMacros
+import io.scalaland.chimney.internal.macros.dsl.PatcherBlackboxMacros
 
 import scala.language.experimental.macros
 
@@ -48,5 +48,5 @@ class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
     *
     * @return patched value
     */
-  def patch: T = macro ChimneyBlackboxMacros.patchImpl[T, P, C]
+  def patch: T = macro PatcherBlackboxMacros.patchImpl[T, P, C]
 }

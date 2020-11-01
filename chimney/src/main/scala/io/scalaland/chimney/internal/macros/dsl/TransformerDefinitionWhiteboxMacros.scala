@@ -1,10 +1,11 @@
-package io.scalaland.chimney.internal.macros
+package io.scalaland.chimney.internal.macros.dsl
 
+import io.scalaland.chimney.internal.macros.TransformerConfigSupport
 import io.scalaland.chimney.internal.utils.MacroUtils
 
 import scala.reflect.macros.whitebox
 
-class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends MacroUtils with TransformerConfigSupport {
+class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends MacroUtils with TransformerConfigSupport {
 
   import c.universe._
   import CfgTpes._
@@ -33,32 +34,8 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
     }
   }
 
-  def withFieldConstFImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
-      T: WeakTypeTag,
-      U: WeakTypeTag,
-      C: WeakTypeTag,
-      F[_]
-  ](selector: Tree, value: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
-    val fieldName = selector.extractSelectorFieldName
-
-    if (!(weakTypeOf[U] <:< weakTypeOf[T])) {
-      val FT = F.tpe.applyTypeArg(weakTypeOf[T])
-      val FU = F.tpe.applyTypeArg(weakTypeOf[U])
-      val msg =
-        s"""Type mismatch!
-           |Value passed to `withFieldConstF` is of type: $FU
-           |Type required by '$fieldName' field: $FT
-           |${weakTypeOf[U]} is not subtype of ${weakTypeOf[T]}!
-         """.stripMargin
-
-      c.abort(c.enclosingPosition, msg)
-    } else {
-      c.prefix.tree
-        .addOverride(fieldName, value)
-        .refineConfig(fieldConstFT.applyTypeArgs(fieldName.toSingletonTpe, weakTypeOf[C]))
-    }
+  def withFieldConstFImpl[F[+_]](selector: Tree, value: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
+    q"${c.prefix}.lift[$F].withFieldConstF($selector, $value)"
   }
 
   def withFieldComputedImpl[
@@ -85,33 +62,8 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
     }
   }
 
-  def withFieldComputedFImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
-      T: WeakTypeTag,
-      U: WeakTypeTag,
-      C: WeakTypeTag,
-      F[+_]
-  ](selector: Tree, map: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
-    val fieldName = selector.extractSelectorFieldName
-
-    if (!(weakTypeOf[U] <:< weakTypeOf[T])) {
-      val FT = F.tpe.applyTypeArg(weakTypeOf[T])
-      val FU = F.tpe.applyTypeArg(weakTypeOf[U])
-
-      val msg =
-        s"""Type mismatch!
-           |Function passed to `withFieldComputedF` returns type: $FU
-           |Type required by '$fieldName' field: $FT
-           |${weakTypeOf[U]} is not subtype of ${weakTypeOf[T]}!
-         """.stripMargin
-
-      c.abort(c.enclosingPosition, msg)
-    } else {
-      c.prefix.tree
-        .addOverride(fieldName, map)
-        .refineConfig(fieldComputedFT.applyTypeArgs(fieldName.toSingletonTpe, weakTypeOf[C]))
-    }
+  def withFieldComputedFImpl[F[+_]](selector: Tree, map: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
+    q"${c.prefix}.lift[$F].withFieldComputedF($selector, $map)"
   }
 
   def withFieldRenamedImpl[
@@ -156,16 +108,13 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
   }
 
   def withCoproductInstanceFImpl[
+      F[+_],
       From: WeakTypeTag,
       To: WeakTypeTag,
       Inst: WeakTypeTag,
       C: WeakTypeTag
-  ](f: Tree): Tree = {
-    val To = weakTypeOf[To]
-    val Inst = weakTypeOf[Inst]
-    c.prefix.tree
-      .addInstance(Inst.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString, f)
-      .refineConfig(coproductInstanceFT.applyTypeArgs(Inst, To, weakTypeOf[C]))
+  ](f: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
+    q"${c.prefix}.lift[$F].withCoproductInstanceF($f)"
   }
 
 }

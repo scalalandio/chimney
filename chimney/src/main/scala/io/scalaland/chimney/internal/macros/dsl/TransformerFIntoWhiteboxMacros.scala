@@ -1,4 +1,4 @@
-package io.scalaland.chimney.internal.macros
+package io.scalaland.chimney.internal.macros.dsl
 
 import io.scalaland.chimney.internal.utils.MacroUtils
 

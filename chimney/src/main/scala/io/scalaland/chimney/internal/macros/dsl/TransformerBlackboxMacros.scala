@@ -1,14 +1,14 @@
-package io.scalaland.chimney.internal.macros
+package io.scalaland.chimney.internal.macros.dsl
 
 import io.scalaland.chimney
+import io.scalaland.chimney.{TransformerF, TransformerFSupport}
+import io.scalaland.chimney.internal.macros.TransformerMacros
 import io.scalaland.chimney.internal.utils.{DerivationGuards, EitherUtils, MacroUtils}
-import io.scalaland.chimney.{Patcher, TransformerF, TransformerFSupport}
 
 import scala.reflect.macros.blackbox
 
-class ChimneyBlackboxMacros(val c: blackbox.Context)
-    extends PatcherMacros
-    with TransformerMacros
+class TransformerBlackboxMacros(val c: blackbox.Context)
+    extends TransformerMacros
     with DerivationGuards
     with MacroUtils
     with EitherUtils {
@@ -26,7 +26,7 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
   }
 
   def buildTransformerFImpl[
-      F[+_]: TypeConstructorTag,
+      F[+ _]: TypeConstructorTag,
       From: WeakTypeTag,
       To: WeakTypeTag,
       C: WeakTypeTag,
@@ -52,7 +52,7 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
   }
 
   def transformFImpl[
-      F[+_]: TypeConstructorTag,
+      F[+ _]: TypeConstructorTag,
       From: WeakTypeTag,
       To: WeakTypeTag,
       C: WeakTypeTag,
@@ -84,7 +84,7 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
     }
   }
 
-  def deriveTransformerFImpl[F[+_]: TypeConstructorTag, From: WeakTypeTag, To: WeakTypeTag](
+  def deriveTransformerFImpl[F[+ _]: TypeConstructorTag, From: WeakTypeTag, To: WeakTypeTag](
       tfs: c.Expr[TransformerFSupport[F]]
   ): c.Expr[TransformerF[F, From, To]] = {
 
@@ -108,13 +108,5 @@ class ChimneyBlackboxMacros(val c: blackbox.Context)
         $transformerTree
       }"""
     }
-  }
-
-  def patchImpl[T: WeakTypeTag, Patch: WeakTypeTag, C: WeakTypeTag]: c.Expr[T] = {
-    c.Expr[T](expandPatch[T, Patch, C])
-  }
-
-  def derivePatcherImpl[T: WeakTypeTag, Patch: WeakTypeTag]: c.Expr[Patcher[T, Patch]] = {
-    genPatcher[T, Patch](PatcherConfig())
   }
 }

@@ -1,8 +1,8 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.{TransformerF, TransformerFSupport}
+import io.scalaland.chimney.{ TransformerF, TransformerFSupport }
 import io.scalaland.chimney.internal._
-import io.scalaland.chimney.internal.macros.{ChimneyBlackboxMacros, TransformerFDefinitionWhiteboxMacros}
+import io.scalaland.chimney.internal.macros.dsl.{ TransformerBlackboxMacros, TransformerFDefinitionWhiteboxMacros }
 
 import scala.language.experimental.macros
 
@@ -138,7 +138,7 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
       implicit tfs: TransformerFSupport[F],
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
   ): TransformerF[F, From, To] =
-    macro ChimneyBlackboxMacros.buildTransformerFImpl[F, From, To, C, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.buildTransformerFImpl[F, From, To, C, Flags, ScopeFlags]
 
   /** Used internally by macro. Please don't use in your code.
     */
