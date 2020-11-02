@@ -868,5 +868,16 @@ object DslFSpec extends TestSuite {
 
       fooToBar.transform(Foo("1")) ==> Right(Bar(1))
     }
+
+    "support deriving wrapped transformer from pure" - {
+      case class Foo(str: String)
+
+      case class Bar(str: String, other: String)
+
+      implicit val fooToBar: Transformer[Foo, Bar] =
+        Transformer.define[Foo, Bar].withFieldConst(_.other, "other").buildTransformer
+
+      Foo("str").transformIntoF[Option, Bar] ==> Some(Bar("str", "other"))
+    }
   }
 }

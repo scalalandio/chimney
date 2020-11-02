@@ -75,9 +75,8 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
     val To = weakTypeOf[To]
 
     val srcName = freshTermName(From)
-    val srcPrefixTree = Ident(TermName(srcName.decodedName.toString))
 
-    expandTransformerTree(srcPrefixTree, config)(From, To) match {
+    genTransformerTree(srcName, config)(From, To) match {
 
       case Right(transformerTree) =>
         config.wrapperType match {
@@ -113,12 +112,25 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
     }
   }
 
+  def genTransformerTree(
+      srcName: TermName,
+      config: TransformerConfig
+  )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
+    val srcPrefixTree = Ident(TermName(srcName.decodedName.toString))
+
+    resolveTransformerBody(srcPrefixTree, config)(From, To).map {
+      case TransformerBodyTree(tree, false) if config.wrapperType.isDefined =>
+        q"${config.wrapperSupportInstance}.pure[$To]($tree)"
+      case TransformerBodyTree(tree, _) => tree
+    }
+  }
+
   def expandTransformerTree(
       srcPrefixTree: Tree,
       config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
 
-    resolveImplicitTransformer(srcPrefixTree, config)(From, To)
+    resolveImplicitTransformer(config)(From, To)
       .map(localImplicitTree => Right(localImplicitTree.callTransform(srcPrefixTree)))
       .getOrElse {
         deriveTransformerTree(srcPrefixTree, config)(From, To)
@@ -732,44 +744,44 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
       srcPrefixTree: Tree,
       config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[DerivationError], TransformerBodyTree] = {
+    resolveTransformerBody(srcPrefixTree, config.rec)(From, To)
+  }
 
-    val recConfig = config.rec
-    val recConfigNoWrapper = recConfig.copy(wrapperType = None)
-
+  def resolveTransformerBody(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): Either[Seq[DerivationError], TransformerBodyTree] = {
     if (config.wrapperType.isDefined) {
-      val implicitTransformerF = resolveImplicitTransformer(srcPrefixTree, recConfig)(From, To)
-      val implicitTransformer = resolveImplicitTransformer(srcPrefixTree, recConfigNoWrapper)(From, To)
+      val implicitTransformerF = resolveImplicitTransformer(config)(From, To)
+      val implicitTransformer = findLocalImplicitTransformer(From, To, None)
 
       (implicitTransformerF, implicitTransformer) match {
         case (Some(localImplicitTreeF), Some(localImplicitTree)) =>
           c.abort(
             c.enclosingPosition,
             s"""Ambiguous implicits while resolving Chimney recursive transformation:
-              |
-              |TransformerF[${config.wrapperType.get}, $From, $To]: $localImplicitTreeF
-              |Transformer[$From, $To]: $localImplicitTree
-              |
-              |Please eliminate ambiguity from implicit scope or use withFieldComputed/withFieldComputedF to decide which one should be used
-              |""".stripMargin
+               |
+               |TransformerF[${config.wrapperType.get}, $From, $To]: $localImplicitTreeF
+               |Transformer[$From, $To]: $localImplicitTree
+               |
+               |Please eliminate ambiguity from implicit scope or use withFieldComputed/withFieldComputedF to decide which one should be used
+               |""".stripMargin
           )
         case (Some(localImplicitTreeF), None) =>
           Right(TransformerBodyTree(localImplicitTreeF.callTransform(srcPrefixTree), isWrapped = true))
         case (None, Some(localImplicitTree)) =>
           Right(TransformerBodyTree(localImplicitTree.callTransform(srcPrefixTree), isWrapped = false))
         case (None, None) =>
-          deriveTransformerTree(srcPrefixTree, recConfig)(From, To)
+          deriveTransformerTree(srcPrefixTree, config)(From, To)
             .map(tree => TransformerBodyTree(tree, isWrapped = true))
       }
     } else {
-      expandTransformerTree(srcPrefixTree, recConfig)(From, To)
+      expandTransformerTree(srcPrefixTree, config)(From, To)
         .map(tree => TransformerBodyTree(tree, isWrapped = false))
     }
   }
 
-  def resolveImplicitTransformer(
-      srcPrefixTree: Tree,
-      config: TransformerConfig
-  )(From: Type, To: Type): Option[Tree] = {
+  def resolveImplicitTransformer(config: TransformerConfig)(From: Type, To: Type): Option[Tree] = {
     if (config.definitionScope.contains((From, To))) {
       None
     } else {
