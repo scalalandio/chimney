@@ -102,6 +102,8 @@ object TransformerFSupport {
 
   /** `TransformerFSupport` instance for `Either[C[E], +*]`.
     *
+    * For a short-circuiting instance see [[failfast.TransformerFEitherShortCircuitingSupport]]
+    *
     * @param ef factory for error accumulator collection
     * @tparam E error type
     * @tparam C error accumulator type constructor
