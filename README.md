@@ -7,7 +7,7 @@
 [![License](http://img.shields.io/:license-Apache%202-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt) [![Join the chat at https://gitter.im/scalalandio/chimney](https://badges.gitter.im/scalalandio/chimney.svg)](https://gitter.im/scalalandio/chimney?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Scala.js](https://www.scala-js.org/assets/badges/scalajs-1.0.0.svg)](https://www.scala-js.org)
 
-Scala library for boilerplate-free data transformations.
+Battle tested Scala library for boilerplate-free data transformations.
 
 In the daily life of a strongly-typed language's programmer sometimes it
 happens we need to transform an object of one type to another object which
