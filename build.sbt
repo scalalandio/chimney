@@ -85,7 +85,7 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform)
     name := "chimney",
     description := "Scala library for boilerplate free data rewriting",
     testFrameworks += new TestFramework("utest.runner.Framework"),
-    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.0" cross CrossVersion.full)
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.3" cross CrossVersion.full)
   )
   .settings(settings: _*)
   .settings(publishSettings: _*)
@@ -102,7 +102,7 @@ lazy val chimneyCats = crossProject(JSPlatform, JVMPlatform)
     name := "chimney-cats",
     description := "Chimney module for validated transformers support",
     testFrameworks += new TestFramework("utest.runner.Framework"),
-    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.0" cross CrossVersion.full)
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.3" cross CrossVersion.full)
   )
   .settings(settings: _*)
   .settings(publishSettings: _*)
