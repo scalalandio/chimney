@@ -879,5 +879,54 @@ object DslFSpec extends TestSuite {
 
       Foo("str").transformIntoF[Option, Bar] ==> Some(Bar("str", "other"))
     }
+
+    "prefer pure transformer" - {
+      case class StrWrapper1(str: String)
+      case class StrWrapper2(value: String)
+
+      trait Coercible[A, B] {
+        def apply(a: A): B
+      }
+
+      implicit val strWrapperCoercible: Coercible[StrWrapper1, StrWrapper2] =
+        wrapper => StrWrapper2(wrapper.str)
+
+      implicit val strWrapperOptionCoercible: Coercible[Option[StrWrapper1], Option[StrWrapper2]] =
+        _.map(strWrapperCoercible(_))
+
+      object instances extends LowPriorityInstances {
+        implicit def NewTypeT[A, B](implicit coercible: Coercible[A, B]): Transformer[A, B] =
+          coercible(_)
+      }
+
+      trait LowPriorityInstances {
+        implicit def optionUnwrap[A, B](
+            implicit underlying: TransformerF[Option, A, B]
+        ): TransformerF[Option, Option[A], B] =
+          _.flatMap(underlying.transform)
+      }
+
+      case class Foo(wrapper: Option[StrWrapper1])
+
+      case class Bar(wrapper: Option[StrWrapper2], const: String)
+
+      import instances._
+
+      val foo = Foo(Some(StrWrapper1("1")))
+
+      val bar = Bar(Some(StrWrapper2("1")), "const")
+
+      compileError("""foo.intoF[Option, Bar].withFieldConst(_.const, "const").transform ==> Some(bar)""")
+        .check("", "Ambiguous implicits")
+
+      {
+        import io.scalaland.chimney.internal.TransformerFlags._
+
+        implicit val tc: TransformerConfiguration[Enable[PreferPureTransformer, Default]] =
+          new TransformerConfiguration
+
+        foo.intoF[Option, Bar].withFieldConst(_.const, "const").transform ==> Some(bar)
+      }
+    }
   }
 }

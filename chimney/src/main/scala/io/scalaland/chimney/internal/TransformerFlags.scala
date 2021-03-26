@@ -13,4 +13,5 @@ object TransformerFlags {
   final class BeanGetters extends Flag
   final class OptionDefaultsToNone extends Flag
   final class UnsafeOption extends Flag
+  final class PreferPureTransformer extends Flag
 }

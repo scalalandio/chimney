@@ -757,16 +757,19 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
 
       (implicitTransformerF, implicitTransformer) match {
         case (Some(localImplicitTreeF), Some(localImplicitTree)) =>
-          c.abort(
-            c.enclosingPosition,
-            s"""Ambiguous implicits while resolving Chimney recursive transformation:
+          if (config.flags.preferPureTransformer)
+            Right(TransformerBodyTree(localImplicitTree.callTransform(srcPrefixTree), isWrapped = false))
+          else
+            c.abort(
+              c.enclosingPosition,
+              s"""Ambiguous implicits while resolving Chimney recursive transformation:
                |
                |TransformerF[${config.wrapperType.get}, $From, $To]: $localImplicitTreeF
                |Transformer[$From, $To]: $localImplicitTree
                |
                |Please eliminate ambiguity from implicit scope or use withFieldComputed/withFieldComputedF to decide which one should be used
                |""".stripMargin
-          )
+            )
         case (Some(localImplicitTreeF), None) =>
           Right(TransformerBodyTree(localImplicitTreeF.callTransform(srcPrefixTree), isWrapped = true))
         case (None, Some(localImplicitTree)) =>
