@@ -7,8 +7,8 @@ import scala.reflect.macros.whitebox
 
 class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends MacroUtils with TransformerConfigSupport {
 
-  import c.universe._
   import CfgTpes._
+  import c.universe._
 
   def withFieldConstImpl[
       From: WeakTypeTag,
@@ -102,9 +102,23 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macro
   ](f: Tree): Tree = {
     val To = weakTypeOf[To]
     val Inst = weakTypeOf[Inst]
+    val (instType, instSymbol) = if (Inst.typeSymbol.isJavaEnum) {
+      val Function(List(ValDef(_, _, lhs: TypeTree, _)), _) = f
+      lhs.original match {
+        // java enum value in Scala 2.13
+        case SingletonTypeTree(Literal(Constant(t: TermSymbol))) => t.typeInSealedParent(Inst) -> t
+        // java enum value in Scala 2.12
+        case SingletonTypeTree(Select(t, n)) if t.isTerm =>
+          Inst.companion.decls.filter(_.name == n).map(s => s.typeInSealedParent(Inst) -> s).head
+        case _ => Inst -> Inst.typeSymbol
+      }
+    } else {
+      Inst -> Inst.typeSymbol
+    }
+
     c.prefix.tree
-      .addInstance(Inst.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString, f)
-      .refineConfig(coproductInstanceT.applyTypeArgs(Inst, To, weakTypeOf[C]))
+      .addInstance(instSymbol.fullName.toString, To.typeSymbol.fullName.toString, f)
+      .refineConfig(coproductInstanceT.applyTypeArgs(instType, To, weakTypeOf[C]))
   }
 
   def withCoproductInstanceFImpl[

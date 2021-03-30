@@ -12,6 +12,7 @@ trait MacroUtils extends CompanionUtils {
     def toNameConstant: Constant = Constant(n.decodedName.toString)
     def toNameLiteral: Literal = Literal(toNameConstant)
     def toSingletonTpe: ConstantType = c.internal.constantType(toNameConstant)
+    def toCanonicalName: String = n.toString
   }
 
   type TypeConstructorTag[F[_]] = WeakTypeTag[F[Unit]]
@@ -100,6 +101,11 @@ trait MacroUtils extends CompanionUtils {
         // $COVERAGE-ON$
       }
     }
+
+    def coproductSymbol: Symbol = t match {
+      case c.universe.ConstantType(Constant(enumeration: TermSymbol)) => enumeration
+      case _                                                          => t.typeSymbol
+    }
   }
 
   implicit class SymbolOps(s: Symbol) {
@@ -143,11 +149,15 @@ trait MacroUtils extends CompanionUtils {
     def typeInSealedParent(parentTpe: Type): Type = {
       s.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
 
-      val sEta = s.asType.toType.etaExpand
-      sEta.finalResultType.substituteTypes(
-        sEta.baseType(parentTpe.typeSymbol).typeArgs.map(_.typeSymbol),
-        parentTpe.typeArgs
-      )
+      if (s.isJavaEnum) {
+        s.typeSignature
+      } else {
+        val sEta = s.asType.toType.etaExpand
+        sEta.finalResultType.substituteTypes(
+          sEta.baseType(parentTpe.typeSymbol).typeArgs.map(_.typeSymbol),
+          parentTpe.typeArgs
+        )
+      }
     }
   }
 

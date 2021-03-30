@@ -65,12 +65,12 @@ trait TransformerConfigSupport extends MacroUtils {
       copy(fieldOverrides = fieldOverrides + (fieldName -> fieldOverride))
     }
 
-    def coproductInstance(instanceType: Type, targetType: Type): TransformerConfig = {
-      copy(coproductInstances = coproductInstances + (instanceType.typeSymbol -> targetType))
+    def coproductInstance(instanceSymbol: Symbol, targetType: Type): TransformerConfig = {
+      copy(coproductInstances = coproductInstances + (instanceSymbol -> targetType))
     }
 
-    def coproductInstanceF(instanceType: Type, targetType: Type): TransformerConfig = {
-      copy(coproductInstancesF = coproductInstancesF + (instanceType.typeSymbol -> targetType))
+    def coproductInstanceF(instanceSymbol: Symbol, targetType: Type): TransformerConfig = {
+      copy(coproductInstancesF = coproductInstancesF + (instanceSymbol -> targetType))
     }
   }
 
@@ -113,7 +113,7 @@ trait TransformerConfigSupport extends MacroUtils {
         .fieldOverride(fieldNameTo, FieldOverride.RenamedFrom(fieldNameFrom))
     } else if (cfgTpe.typeConstructor =:= coproductInstanceT) {
       val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-      captureTransformerConfig(rest).coproductInstance(instanceType, targetType)
+      captureTransformerConfig(rest).coproductInstance(instanceType.coproductSymbol, targetType)
     } else if (cfgTpe.typeConstructor =:= wrapperTypeT) {
       val List(f, rest) = cfgTpe.typeArgs
       captureTransformerConfig(rest).copy(wrapperType = Some(f))
@@ -127,7 +127,7 @@ trait TransformerConfigSupport extends MacroUtils {
       captureTransformerConfig(rest).fieldOverride(fieldName, FieldOverride.ComputedF)
     } else if (cfgTpe.typeConstructor =:= coproductInstanceFT) {
       val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-      captureTransformerConfig(rest).coproductInstanceF(instanceType, targetType)
+      captureTransformerConfig(rest).coproductInstanceF(instanceType.coproductSymbol, targetType)
     } else {
       // $COVERAGE-OFF$
       c.abort(c.enclosingPosition, "Bad internal transformer config type shape!")
