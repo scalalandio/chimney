@@ -487,6 +487,8 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
         .groupBy(_.name.toCanonicalName)
     }
 
+  def isCC(s: Symbol): Boolean = s.isCaseClass && !s.isJavaEnum && !s.isModuleClass
+
   def expandSealedClasses(
       srcPrefixTree: Tree,
       config: TransformerConfig
@@ -513,11 +515,20 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
                 .getOrElse {
                   toInstances.getOrElse(canonicalName, Nil) match {
                     case List(matchingTargetSymbol)
-                        if (instSymbol.isModuleClass || instSymbol.isCaseClass) && matchingTargetSymbol.isModuleClass =>
-                      val tree = mkTransformerBodyTree0(config) {
-                        q"${matchingTargetSymbol.asClass.module}"
+                        if matchingTargetSymbol.isModuleClass || matchingTargetSymbol.isJavaEnum =>
+                      val targetTree = mkTransformerBodyTree0(config) {
+                        if (matchingTargetSymbol.isJavaEnum) {
+                          q"$matchingTargetSymbol"
+                        } else {
+                          q"${matchingTargetSymbol.asClass.module}"
+                        }
                       }
-                      Right(cq"_: ${instSymbol.asType} => $tree")
+                      val sourceTree = if (instSymbol.isJavaEnum) {
+                        q"$instSymbol"
+                      } else {
+                        q"$instTpe"
+                      }
+                      Right(cq"_: $sourceTree => $targetTree")
                     case List(matchingTargetSymbol) if instSymbol.isCaseClass && matchingTargetSymbol.isCaseClass =>
                       val fn = freshTermName(instName)
                       expandDestinationCaseClass(Ident(fn), config.rec)(
@@ -526,24 +537,6 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
                       ).map { innerTransformerTree =>
                         cq"$fn: $instTpe => $innerTransformerTree"
                       }
-                    case List(matchingTargetSymbol)
-                        if (instSymbol.isModuleClass || instSymbol.isCaseClass) && matchingTargetSymbol.isJavaEnum => // sealed class may be parameterized
-                      val tree = mkTransformerBodyTree0(config) {
-                        q"$matchingTargetSymbol"
-                      }
-                      Right(cq"_: $instTpe => $tree")
-                    case List(matchingTargetSymbol)
-                        if instSymbol.isJavaEnum && matchingTargetSymbol.isModuleClass => // we do not support mapping from java enum to case classes, only to objects
-                      // it is a bit too much of an effort to support java enum -> case class in general case as case class may carry properties, so we omit this by now
-                      val tree = mkTransformerBodyTree0(config) {
-                        q"${matchingTargetSymbol.asClass.module}"
-                      }
-                      Right(cq"_: $instSymbol => $tree")
-                    case List(matchingTargetSymbol) if instSymbol.isJavaEnum && matchingTargetSymbol.isJavaEnum =>
-                      val tree = mkTransformerBodyTree0(config) {
-                        q"$matchingTargetSymbol"
-                      }
-                      Right(cq"_: $instSymbol => $tree")
                     case _ :: _ :: _ =>
                       Left {
                         Seq(
