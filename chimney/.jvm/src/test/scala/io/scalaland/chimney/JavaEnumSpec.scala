@@ -11,9 +11,7 @@ object JavaEnumSpec extends TestSuite {
     "transformerF" - {
       "enum to enum" - {
         "narrow to wide" - {
-          val t: TransformerF[Option, JavaEnums.Colors3, JavaEnums.Colors6] = TransformerF
-            .define[Option, JavaEnums.Colors3, JavaEnums.Colors6]
-            .buildTransformer
+          val t = TransformerF.derive[Option, JavaEnums.Colors3, JavaEnums.Colors6]
 
           assert(t.transform(JavaEnums.Colors3.Black).contains(JavaEnums.Colors6.Black))
           assert(t.transform(JavaEnums.Colors3.Red).contains(JavaEnums.Colors6.Red))
@@ -89,7 +87,7 @@ object JavaEnumSpec extends TestSuite {
 
       "enum to sealed hierarchy" - {
         "one to one" - {
-          val t = TransformerF.define[Option, JavaEnums.Colors3, colors2.Color].buildTransformer
+          val t = TransformerF.derive[Option, JavaEnums.Colors3, colors2.Color]
 
           assert(t.transform(JavaEnums.Colors3.Black).contains(colors2.Black))
           assert(t.transform(JavaEnums.Colors3.Blue).contains(colors2.Blue))
@@ -133,8 +131,7 @@ object JavaEnumSpec extends TestSuite {
 
       "sealed hierarchy to enum" - {
         "one to one" - {
-          val t =
-            TransformerF.define[Option, colors2.Color, JavaEnums.Colors3].buildTransformer
+          val t = TransformerF.derive[Option, colors2.Color, JavaEnums.Colors3]
 
           assert(t.transform(colors2.Black).contains(JavaEnums.Colors3.Black))
           assert(t.transform(colors2.Blue).contains(JavaEnums.Colors3.Blue))
@@ -147,9 +144,7 @@ object JavaEnumSpec extends TestSuite {
     "transformer" - {
       "enum to enum" - {
         "narrow to wide" - {
-          val t = Transformer
-            .define[JavaEnums.Colors3, JavaEnums.Colors6]
-            .buildTransformer
+          val t = Transformer.derive[JavaEnums.Colors3, JavaEnums.Colors6]
 
           t.transform(JavaEnums.Colors3.Black) ==> JavaEnums.Colors6.Black
           t.transform(JavaEnums.Colors3.Blue) ==> JavaEnums.Colors6.Blue
@@ -221,7 +216,7 @@ object JavaEnumSpec extends TestSuite {
 
       "enum to sealed hierarchy" - {
         "one to one" - {
-          val t = Transformer.define[JavaEnums.Colors3, colors2.Color].buildTransformer
+          val t = Transformer.derive[JavaEnums.Colors3, colors2.Color]
 
           t.transform(JavaEnums.Colors3.Black) ==> colors2.Black
           t.transform(JavaEnums.Colors3.Blue) ==> colors2.Blue
@@ -265,8 +260,7 @@ object JavaEnumSpec extends TestSuite {
 
       "sealed hierarchy to enum" - {
         "one to one" - {
-          val t =
-            Transformer.define[colors2.Color, JavaEnums.Colors3].buildTransformer
+          val t = Transformer.derive[colors2.Color, JavaEnums.Colors3]
 
           t.transform(colors2.Black) ==> JavaEnums.Colors3.Black
           t.transform(colors2.Blue) ==> JavaEnums.Colors3.Blue
