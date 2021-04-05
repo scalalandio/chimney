@@ -6,7 +6,7 @@ public interface JavaEnums {
     }
 
     enum Colors6 {
-        Red, Yellow, Green, Teal, Blue, Marine, Black
+        Red, Yellow, Green, Teal, Blue, Magenta, Black
     }
 }
 
