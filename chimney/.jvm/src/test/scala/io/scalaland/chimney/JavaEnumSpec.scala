@@ -22,7 +22,7 @@ object JavaEnumSpec extends TestSuite {
 
       "wide to narrow auto-derivation fails" - {
         compileError(
-          "implicit val t: Transformer[JavaEnums.Colors6, JavaEnums.Colors3] = Transformer.define.buildTransformer"
+          "implicit val t: Transformer[JavaEnums.Colors6, JavaEnums.Colors3] = Transformer.derive[JavaEnums.Colors6, JavaEnums.Colors3]"
         ).check(
           "",
           "Chimney can't derive transformation",
