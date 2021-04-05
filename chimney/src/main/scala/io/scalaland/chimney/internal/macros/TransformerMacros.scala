@@ -528,7 +528,10 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
                       }
                     case List(matchingTargetSymbol)
                         if (instSymbol.isModuleClass || instSymbol.isCaseClass) && matchingTargetSymbol.isJavaEnum => // sealed class may be parameterized
-                      Right(cq"_: $instTpe => $matchingTargetSymbol")
+                      val tree = mkTransformerBodyTree0(config) {
+                        q"$matchingTargetSymbol"
+                      }
+                      Right(cq"_: $instTpe => $tree")
                     case List(matchingTargetSymbol)
                         if instSymbol.isJavaEnum && matchingTargetSymbol.isModuleClass => // we do not support mapping from java enum to case classes, only to objects
                       // it is a bit too much of an effort to support java enum -> case class in general case as case class may carry properties, so we omit this by now
@@ -537,7 +540,10 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
                       }
                       Right(cq"_: $instSymbol => $tree")
                     case List(matchingTargetSymbol) if instSymbol.isJavaEnum && matchingTargetSymbol.isJavaEnum =>
-                      Right(cq"_: $instSymbol => $matchingTargetSymbol")
+                      val tree = mkTransformerBodyTree0(config) {
+                        q"$matchingTargetSymbol"
+                      }
+                      Right(cq"_: $instSymbol => $tree")
                     case _ :: _ :: _ =>
                       Left {
                         Seq(
