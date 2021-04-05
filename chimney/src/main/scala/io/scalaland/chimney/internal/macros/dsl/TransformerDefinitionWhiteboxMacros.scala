@@ -109,7 +109,15 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macro
         case SingletonTypeTree(Literal(Constant(t: TermSymbol))) => t.typeInSealedParent(Inst) -> t
         // java enum value in Scala 2.12
         case SingletonTypeTree(Select(t, n)) if t.isTerm =>
-          Inst.companion.decls.filter(_.name == n).map(s => s.typeInSealedParent(Inst) -> s).head
+          Inst.companion.decls
+            .find(_.name == n)
+            .map(s => s.typeInSealedParent(Inst) -> s)
+            .getOrElse(
+              c.abort(
+                c.enclosingPosition,
+                s"Can't find symbol `$n` among the declarations of `${Inst.typeSymbol.fullName}`"
+              )
+            )
         case _ => Inst -> Inst.typeSymbol
       }
     } else {

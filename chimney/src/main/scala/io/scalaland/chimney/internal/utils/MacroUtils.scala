@@ -103,8 +103,8 @@ trait MacroUtils extends CompanionUtils {
     }
 
     def coproductSymbol: Symbol = t match {
-      case c.universe.ConstantType(Constant(enumeration: TermSymbol)) => enumeration
-      case _                                                          => t.typeSymbol
+      case ConstantType(Constant(enumeration: TermSymbol)) => enumeration
+      case _                                               => t.typeSymbol
     }
   }
 

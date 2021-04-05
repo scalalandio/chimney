@@ -2,7 +2,6 @@ package io.scalaland.chimney
 
 import utest._
 import io.scalaland.chimney.examples.JavaEnums
-import io.scalaland.chimney.examples.JavaEnums.Colors3
 import io.scalaland.chimney.examples._
 
 object JavaEnumSpec extends TestSuite {
@@ -24,6 +23,12 @@ object JavaEnumSpec extends TestSuite {
       "wide to narrow auto-derivation fails" - {
         compileError(
           "implicit val t: Transformer[JavaEnums.Colors6, JavaEnums.Colors3] = Transformer.define.buildTransformer"
+        ).check(
+          "",
+          "Chimney can't derive transformation",
+          "JavaEnums.Colors6.Yellow",
+          "JavaEnums.Colors6.Teal",
+          "JavaEnums.Colors6.Marine"
         )
       }
 
@@ -70,7 +75,7 @@ object JavaEnumSpec extends TestSuite {
 
     "enum to sealed hierarchy" - {
       "one to one" - {
-        val t = Transformer.define[Colors3, colors2.Color].buildTransformer
+        val t = Transformer.define[JavaEnums.Colors3, colors2.Color].buildTransformer
 
         t.transform(JavaEnums.Colors3.Black) ==> colors2.Black
         t.transform(JavaEnums.Colors3.Blue) ==> colors2.Blue
