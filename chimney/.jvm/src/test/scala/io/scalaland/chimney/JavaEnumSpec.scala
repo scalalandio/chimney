@@ -94,7 +94,11 @@ object JavaEnumSpec extends TestSuite {
 
       "wide to narrow" - {
         compileError(
-          "implicit val t: Transformer[JavaEnums.Colors3, colors1.Color] = Transformer.define.buildTransformer"
+          "implicit val t: Transformer[JavaEnums.Colors3, colors1.Color] = Transformer.derive[JavaEnums.Colors3, colors1.Color]"
+        ).check(
+          "",
+          "Chimney can't derive transformation",
+          "JavaEnums.Colors3.Black"
         )
       }
 
