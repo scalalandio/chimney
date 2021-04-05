@@ -151,9 +151,31 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
   ](f: Tree): Tree = {
     val To = weakTypeOf[To]
     val Inst = weakTypeOf[Inst]
+    val (instType, instSymbol) = if (Inst.typeSymbol.isJavaEnum) {
+      val Function(List(ValDef(_, _, lhs: TypeTree, _)), _) = f
+      lhs.original match {
+        // java enum value in Scala 2.13
+        case SingletonTypeTree(Literal(Constant(t: TermSymbol))) => t.typeInSealedParent(Inst) -> t
+        // java enum value in Scala 2.12
+        case SingletonTypeTree(Select(t, n)) if t.isTerm =>
+          Inst.companion.decls
+            .find(_.name == n)
+            .map(s => s.typeInSealedParent(Inst) -> s)
+            .getOrElse(
+              c.abort(
+                c.enclosingPosition,
+                s"Can't find symbol `$n` among the declarations of `${Inst.typeSymbol.fullName}`"
+              )
+            )
+        case _ => Inst -> Inst.typeSymbol
+      }
+    } else {
+      Inst -> Inst.typeSymbol
+    }
+
     c.prefix.tree
-      .addInstance(Inst.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString, f)
-      .refineConfig(coproductInstanceT.applyTypeArgs(Inst, To, weakTypeOf[C]))
+      .addInstance(instSymbol.fullName.toString, To.typeSymbol.fullName.toString, f)
+      .refineConfig(coproductInstanceT.applyTypeArgs(instType, To, weakTypeOf[C]))
   }
 
   def withCoproductInstanceFImpl[
@@ -164,9 +186,31 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
   ](f: Tree): Tree = {
     val To = weakTypeOf[To]
     val Inst = weakTypeOf[Inst]
+    val (instType, instSymbol) = if (Inst.typeSymbol.isJavaEnum) {
+      val Function(List(ValDef(_, _, lhs: TypeTree, _)), _) = f
+      lhs.original match {
+        // java enum value in Scala 2.13
+        case SingletonTypeTree(Literal(Constant(t: TermSymbol))) => t.typeInSealedParent(Inst) -> t
+        // java enum value in Scala 2.12
+        case SingletonTypeTree(Select(t, n)) if t.isTerm =>
+          Inst.companion.decls
+            .find(_.name == n)
+            .map(s => s.typeInSealedParent(Inst) -> s)
+            .getOrElse(
+              c.abort(
+                c.enclosingPosition,
+                s"Can't find symbol `$n` among the declarations of `${Inst.typeSymbol.fullName}`"
+              )
+            )
+        case _ => Inst -> Inst.typeSymbol
+      }
+    } else {
+      Inst -> Inst.typeSymbol
+    }
+
     c.prefix.tree
-      .addInstance(Inst.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString, f)
-      .refineConfig(coproductInstanceFT.applyTypeArgs(Inst, To, weakTypeOf[C]))
+      .addInstance(instSymbol.fullName.toString, To.typeSymbol.fullName.toString, f)
+      .refineConfig(coproductInstanceFT.applyTypeArgs(instType, To, weakTypeOf[C]))
   }
 
 }
