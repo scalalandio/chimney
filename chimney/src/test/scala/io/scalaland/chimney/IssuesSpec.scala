@@ -481,7 +481,7 @@ object IssuesSpec extends TestSuite {
       foo.convert(foo.A1) ==> foo.into.A1
     }
 
-    "fix issue #199" - {
+    "fix issue #???" - {
       sealed trait OneOf
       case class Something(intValue: Int) extends OneOf
       case class SomethingElse(stringValue: String) extends OneOf
@@ -509,6 +509,43 @@ object IssuesSpec extends TestSuite {
 
       (proto.Something(proto.SomethingMessage(42)): proto.OneOf)
         .transformIntoF[Option, OneOf] ==> Some(Something(42))
+    }
+
+    "fix issue #199" - {
+      sealed trait A
+      object A {
+        case class Foo(s: String) extends A
+        case class Bar(kvs: Map[String, Int]) extends A
+      }
+
+      sealed trait B
+      object B {
+        case class Foo(s: String) extends B
+        case class Bar(kvs: Map[String, Int]) extends B
+      }
+
+      sealed trait C
+      object C {
+        case class Foo(s: String) extends C
+        case class Bar(keys: Seq[String], values: Seq[Int]) extends C
+      }
+
+      implicit val barTransformer: Transformer[A.Bar, C] = aBar => {
+        val (keys, values) = aBar.kvs.unzip
+        C.Bar(keys = keys.toSeq, values = values.toSeq)
+      }
+
+      case class Bag[T](xs: Seq[T])
+
+      "transforming a coproduct with identical structure" - {
+        val bagA: Bag[A] = Bag(Seq(A.Foo("foo"), A.Bar(Map("bar" -> 1))))
+        bagA.transformInto[Bag[B]] ==> Bag(Seq(B.Foo("foo"), B.Bar(Map("bar" -> 1))))
+      }
+
+      "transforming a coproduct with different structure" - {
+        val bagA: Bag[A] = Bag(Seq(A.Foo("foo"), A.Bar(Map("bar" -> 1))))
+        bagA.transformInto[Bag[C]] ==> Bag(Seq(C.Foo("foo"), C.Bar(Seq("bar"), Seq(1))))
+      }
     }
   }
 }
