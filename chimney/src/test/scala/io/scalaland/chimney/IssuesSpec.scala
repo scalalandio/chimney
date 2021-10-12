@@ -481,7 +481,7 @@ object IssuesSpec extends TestSuite {
       foo.convert(foo.A1) ==> foo.into.A1
     }
 
-    "fix issue #???" - {
+    "fix issue #199" - {
       sealed trait OneOf
       case class Something(intValue: Int) extends OneOf
       case class SomethingElse(stringValue: String) extends OneOf
@@ -496,18 +496,19 @@ object IssuesSpec extends TestSuite {
         case object Empty extends OneOf
       }
 
-      implicit lazy val somethingTransformF: TransformerF[Option, proto.Something, Something] =
+      implicit val somethingTransformF: TransformerF[Option, proto.Something, OneOf] =
         _.value.transformIntoF[Option, Something]
-      implicit lazy val somethingElseTransformF: TransformerF[Option, proto.SomethingElse, SomethingElse] =
+      implicit val somethingElseTransformF: TransformerF[Option, proto.SomethingElse, OneOf] =
         _.value.transformIntoF[Option, SomethingElse]
 
-      implicit lazy val oneOfTransformF: TransformerF[Option, proto.OneOf, OneOf] =
+      implicit val oneOfTransformF: TransformerF[Option, proto.OneOf, OneOf] =
         TransformerF
           .define[Option, proto.OneOf, OneOf]
           .withCoproductInstanceF[proto.Empty.type](_ => None)
           .buildTransformer
 
-      oneOfTransformF.transform(proto.Something(proto.SomethingMessage(42))) ==> Something(42)
+      (proto.Something(proto.SomethingMessage(42)): proto.OneOf)
+        .transformIntoF[Option, OneOf] ==> Some(Something(42))
     }
   }
 }

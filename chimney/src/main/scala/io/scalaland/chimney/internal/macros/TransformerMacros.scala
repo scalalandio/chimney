@@ -495,10 +495,17 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
 
         val instanceClauses = fromInstances.map { instTpe =>
           val instName = instTpe.typeSymbol.name.toString
-
           resolveCoproductInstance(srcPrefixTree, instTpe, To, config)
             .map { instanceTree =>
               Right(cq"_: $instTpe => $instanceTree")
+            }
+            .orElse {
+              resolveImplicitTransformer(config)(instTpe, To)
+                .map { implicitTransformerTree =>
+                  val fn = freshTermName(instName)
+                  val innerTransformerTree = implicitTransformerTree.callTransform(Ident(fn))
+                  Right(cq"$fn: $instTpe => $innerTransformerTree")
+                }
             }
             .getOrElse {
               val instSymbol = instTpe.typeSymbol
