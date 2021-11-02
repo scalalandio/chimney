@@ -51,40 +51,39 @@ object DerivationError {
 
     errors
       .groupBy(e => (e.targetTypeName, e.sourceTypeName))
-      .map {
-        case ((targetTypeName, sourceTypeName), errs) =>
-          val errStrings = errs.distinct.map {
-            case MissingAccessor(fieldName, fieldTypeName, sourceTypeName, _, _) =>
-              s"  $fieldName: $fieldTypeName - no accessor named $fieldName in source type $sourceTypeName"
-            case MissingJavaBeanSetterParam(setterName, requiredTypeName, sourceTypeName, _) =>
-              s"  set${setterName.capitalize}($setterName: $requiredTypeName) - no accessor named $setterName in source type $sourceTypeName"
-            case MissingTransformer(fieldName, sourceFieldTypeName, targetFieldTypeName, sourceTypeName, _) =>
-              s"  $fieldName: $targetFieldTypeName - can't derive transformation from $fieldName: $sourceFieldTypeName in source type $sourceTypeName"
-            case CantFindValueClassMember(sourceTypeName, _) =>
-              s"  can't find member of value class $sourceTypeName"
-            case CantFindCoproductInstanceTransformer(instance, _, _) =>
-              s"  can't transform coproduct instance $instance to $targetTypeName"
-            case AmbiguousCoproductInstance(instance, _, _) =>
-              s"  coproduct instance $instance of $targetTypeName is ambiguous"
-            case IncompatibleSourceTuple(sourceArity, targetArity, sourceTypeName, _) =>
-              s"  source tuple $sourceTypeName is of arity $sourceArity, while target type $targetTypeName is of arity $targetArity; they need to be equal!"
-            case NotSupportedDerivation(fieldName, sourceTypeName, _) =>
-              s"  derivation from $fieldName: $sourceTypeName to $targetTypeName is not supported in Chimney!"
-          }
+      .map { case ((targetTypeName, sourceTypeName), errs) =>
+        val errStrings = errs.distinct.map {
+          case MissingAccessor(fieldName, fieldTypeName, sourceTypeName, _, _) =>
+            s"  $fieldName: $fieldTypeName - no accessor named $fieldName in source type $sourceTypeName"
+          case MissingJavaBeanSetterParam(setterName, requiredTypeName, sourceTypeName, _) =>
+            s"  set${setterName.capitalize}($setterName: $requiredTypeName) - no accessor named $setterName in source type $sourceTypeName"
+          case MissingTransformer(fieldName, sourceFieldTypeName, targetFieldTypeName, sourceTypeName, _) =>
+            s"  $fieldName: $targetFieldTypeName - can't derive transformation from $fieldName: $sourceFieldTypeName in source type $sourceTypeName"
+          case CantFindValueClassMember(sourceTypeName, _) =>
+            s"  can't find member of value class $sourceTypeName"
+          case CantFindCoproductInstanceTransformer(instance, _, _) =>
+            s"  can't transform coproduct instance $instance to $targetTypeName"
+          case AmbiguousCoproductInstance(instance, _, _) =>
+            s"  coproduct instance $instance of $targetTypeName is ambiguous"
+          case IncompatibleSourceTuple(sourceArity, targetArity, sourceTypeName, _) =>
+            s"  source tuple $sourceTypeName is of arity $sourceArity, while target type $targetTypeName is of arity $targetArity; they need to be equal!"
+          case NotSupportedDerivation(fieldName, sourceTypeName, _) =>
+            s"  derivation from $fieldName: $sourceTypeName to $targetTypeName is not supported in Chimney!"
+        }
 
-          val fieldsWithMethodAccessor = errors.collect {
-            case MissingAccessor(fieldName, _, _, _, true) => s"`$fieldName`"
-          }
-          val methodAccessorHint =
-            if (fieldsWithMethodAccessor.nonEmpty) {
-              val first3Fields = fieldsWithMethodAccessor.take(3).mkString(", ")
-              val otherFields = fieldsWithMethodAccessor.length - 3
-              val fields = if (otherFields > 0) s"$first3Fields and $otherFields other methods" else first3Fields
+        val fieldsWithMethodAccessor = errors.collect { case MissingAccessor(fieldName, _, _, _, true) =>
+          s"`$fieldName`"
+        }
+        val methodAccessorHint =
+          if (fieldsWithMethodAccessor.nonEmpty) {
+            val first3Fields = fieldsWithMethodAccessor.take(3).mkString(", ")
+            val otherFields = fieldsWithMethodAccessor.length - 3
+            val fields = if (otherFields > 0) s"$first3Fields and $otherFields other methods" else first3Fields
 
-              s"\nThere are methods in $sourceTypeName that might be used as accessors for $fields fields in $targetTypeName. Consider using `.enableMethodAccessors`"
-            } else ""
+            s"\nThere are methods in $sourceTypeName that might be used as accessors for $fields fields in $targetTypeName. Consider using `.enableMethodAccessors`"
+          } else ""
 
-          s"""$targetTypeName
+        s"""$targetTypeName
            |${errStrings.mkString("\n")}
            |$methodAccessorHint
            |""".stripMargin

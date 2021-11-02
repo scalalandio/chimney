@@ -9,4 +9,4 @@ package io.scalaland.chimney.examples.pb.order
 final case class Item(
     id: _root_.scala.Int = 0,
     name: _root_.scala.Predef.String = ""
-    )
+)

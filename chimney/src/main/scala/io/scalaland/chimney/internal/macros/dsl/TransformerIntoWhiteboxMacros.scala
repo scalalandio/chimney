@@ -18,8 +18,8 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils 
   def withFieldConstFImpl[F[+_]](
       selector: Tree,
       value: Tree
-  )(
-      implicit F: WeakTypeTag[F[_]]
+  )(implicit
+      F: WeakTypeTag[F[_]]
   ): Tree = {
     q"${c.prefix.tree}.lift[$F].withFieldConstF($selector, $value)"
   }
@@ -34,8 +34,8 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils 
   def withFieldComputedFImpl[F[+_]](
       selector: Tree,
       map: Tree
-  )(
-      implicit F: WeakTypeTag[F[_]]
+  )(implicit
+      F: WeakTypeTag[F[_]]
   ): Tree = {
     q"${c.prefix.tree}.lift[$F].withFieldComputedF($selector, $map)"
   }

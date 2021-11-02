@@ -28,8 +28,8 @@ package numbers {
 
     import io.scalaland.chimney.dsl._
 
-    implicit def shortToLongPureInner[F[+_]: TransformerFSupport, A, B](
-        implicit ft: Transformer[A, B]
+    implicit def shortToLongPureInner[F[+_]: TransformerFSupport, A, B](implicit
+        ft: Transformer[A, B]
     ): TransformerF[F, short.NumScale[A, Nothing], long.NumScale[B]] = {
       Transformer
         .defineF[F, short.NumScale[A, Nothing], long.NumScale[B]]
@@ -42,8 +42,8 @@ package numbers {
         .buildTransformer
     }
 
-    implicit def shortToLongWrappedInner[F[+_]: TransformerFSupport, A, B](
-        implicit ft: TransformerF[F, A, B]
+    implicit def shortToLongWrappedInner[F[+_]: TransformerFSupport, A, B](implicit
+        ft: TransformerF[F, A, B]
     ): TransformerF[F, short.NumScale[A, Nothing], long.NumScale[B]] = {
       Transformer
         .defineF[F, short.NumScale[A, Nothing], long.NumScale[B]]

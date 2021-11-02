@@ -23,8 +23,8 @@ trait TransformerFErrorPathSupport[F[+_]] {
 }
 
 object TransformerFErrorPathSupport {
-  implicit def TransformerFErrorPathEitherSupport[M, C[X] <: IterableOnce[X]](
-      implicit ef: Factory[TransformationError[M], C[TransformationError[M]]]
+  implicit def TransformerFErrorPathEitherSupport[M, C[X] <: IterableOnce[X]](implicit
+      ef: Factory[TransformationError[M], C[TransformationError[M]]]
   ): TransformerFErrorPathSupport[Either[C[TransformationError[M]], +*]] =
     new TransformerFErrorPathSupport[Either[C[TransformationError[M]], +*]] {
       def addPath[A](

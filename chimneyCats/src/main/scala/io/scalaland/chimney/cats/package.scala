@@ -92,8 +92,8 @@ trait LowPriorityImplicits {
       def map[A, B](fa: Validated[EE, A], f: A => B): Validated[EE, B] =
         fa.map(f)
 
-      def traverse[M, A, B](it: Iterator[A], f: A => Validated[EE, B])(
-          implicit fac: Factory[B, M]
+      def traverse[M, A, B](it: Iterator[A], f: A => Validated[EE, B])(implicit
+          fac: Factory[B, M]
       ): Validated[EE, M] = {
         val (valid, invalid) = it.map(f).partition(_.isValid)
         Semigroup[EE].combineAllOption(invalid.collect { case Validated.Invalid(e) => e }) match {
@@ -107,12 +107,13 @@ trait LowPriorityImplicits {
       }
     }
 
-  implicit def TransformerFValidatedErrorPathSupport[F[+_], EE[_]: Applicative, M](
-      implicit applicativeError: ApplicativeError[F, EE[TransformationError[M]]]
+  implicit def TransformerFValidatedErrorPathSupport[F[+_], EE[_]: Applicative, M](implicit
+      applicativeError: ApplicativeError[F, EE[TransformationError[M]]]
   ): TransformerFErrorPathSupport[F] =
     new TransformerFErrorPathSupport[F] {
       override def addPath[A](fa: F[A], node: ErrorPathNode): F[A] =
-        applicativeError.handleErrorWith(fa)(ee => applicativeError.raiseError(Applicative[EE].map(ee)(_.prepend(node)))
+        applicativeError.handleErrorWith(fa)(ee =>
+          applicativeError.raiseError(Applicative[EE].map(ee)(_.prepend(node)))
         )
     }
 }

@@ -134,8 +134,8 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     *
     * @return [[io.scalaland.chimney.TransformerF]] type class instance
     */
-  def buildTransformer[ScopeFlags <: TransformerFlags](
-      implicit tfs: TransformerFSupport[F],
+  def buildTransformer[ScopeFlags <: TransformerFlags](implicit
+      tfs: TransformerFSupport[F],
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
   ): TransformerF[F, From, To] =
     macro TransformerBlackboxMacros.buildTransformerFImpl[F, From, To, C, Flags, ScopeFlags]

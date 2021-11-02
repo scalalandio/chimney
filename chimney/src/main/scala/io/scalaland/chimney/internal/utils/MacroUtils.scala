@@ -122,14 +122,13 @@ trait MacroUtils extends CompanionUtils {
           val headParamListOpt = primaryConstructor.asMethod.typeSignature.paramLists.headOption.map(_.map(_.asTerm))
 
           headParamListOpt.map { headParamList =>
-            headParamList.zipWithIndex.flatMap {
-              case (param, idx) =>
-                if (param.isParamWithDefault) {
-                  val method = TermName("apply$default$" + (idx + 1))
-                  Some(param.name.toString -> q"$companionSym.$method")
-                } else {
-                  None
-                }
+            headParamList.zipWithIndex.flatMap { case (param, idx) =>
+              if (param.isParamWithDefault) {
+                val method = TermName("apply$default$" + (idx + 1))
+                Some(param.name.toString -> q"$companionSym.$method")
+              } else {
+                None
+              }
             }.toMap
           }
         }

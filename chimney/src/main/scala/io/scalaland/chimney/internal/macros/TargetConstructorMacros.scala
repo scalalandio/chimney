@@ -17,10 +17,9 @@ trait TargetConstructorMacros extends Model {
     val fn = TermName(c.freshName(classTpe.typeSymbol.name.decodedName.toString.toLowerCase))
 
     val objCreation = q"val $fn = new $classTpe"
-    val setterInvocations = argsMapping.map {
-      case (target, argTree) =>
-        val setterName = TermName("set" + target.name.capitalize)
-        q"$fn.$setterName($argTree)"
+    val setterInvocations = argsMapping.map { case (target, argTree) =>
+      val setterName = TermName("set" + target.name.capitalize)
+      q"$fn.$setterName($argTree)"
     }.toSeq
 
     q"{..${objCreation +: setterInvocations}; $fn}"
@@ -65,8 +64,8 @@ trait TargetConstructorMacros extends Model {
   )(
       mkTargetValueTree: Tree => Tree
   ): Tree = {
-    mkTransformerBodyTree(To, Seq(target), Seq(transformerBodyTree), config) {
-      case Seq(innerTree) => mkTargetValueTree(innerTree)
+    mkTransformerBodyTree(To, Seq(target), Seq(transformerBodyTree), config) { case Seq(innerTree) =>
+      mkTargetValueTree(innerTree)
     }
   }
 
@@ -104,7 +103,7 @@ trait TargetConstructorMacros extends Model {
         val patternF = bindTreesF.reduceRight[Tree]((param, tree) => pq"(..${List(param, tree)})")
 
         val patRefArgsMap = (wrappedTargets zip argNames).map { case (target, argName) => target -> q"$argName" }.toMap
-        val pureArgsMap = pureArgs.map { case (target, bt)                             => target -> bt.tree }.toMap
+        val pureArgsMap = pureArgs.map { case (target, bt) => target -> bt.tree }.toMap
         val argsMap = pureArgsMap ++ patRefArgsMap
 
         val updatedArgs = targets.map(argsMap)

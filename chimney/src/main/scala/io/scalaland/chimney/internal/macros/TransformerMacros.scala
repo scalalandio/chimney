@@ -349,7 +349,11 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
   )(From: Type, To: Type): Either[Seq[DerivationError], Tree] = {
     val ToInnerT = To.collectionInnerTpe
 
-    (config.wrapperErrorPathSupportInstance, config.wrapperType, ToInnerT.caseClassParams.map(_.resultTypeIn(ToInnerT))) match {
+    (
+      config.wrapperErrorPathSupportInstance,
+      config.wrapperType,
+      ToInnerT.caseClassParams.map(_.resultTypeIn(ToInnerT))
+    ) match {
       case (Some(errorPathSupport), Some(f), List(toKeyT, toValueT)) =>
         val List(fromKeyT, fromValueT) = From.typeArgs
 

@@ -33,9 +33,8 @@ trait MappingMacros extends Model with TransformerConfigSupport {
       }
     } else {
       Right {
-        (tupleElems zip targetFields).map {
-          case (tupleElem, targetField) =>
-            Target.fromField(targetField, To) -> AccessorResolution.Resolved(tupleElem, wasRenamed = false)
+        (tupleElems zip targetFields).map { case (tupleElem, targetField) =>
+          Target.fromField(targetField, To) -> AccessorResolution.Resolved(tupleElem, wasRenamed = false)
         }.toMap
       }
     }
@@ -157,9 +156,11 @@ trait MappingMacros extends Model with TransformerConfigSupport {
     val sourceName = ms.name.decodedName.toString
     if (config.flags.beanGetters) {
       val lookupNameCapitalized = lookupName.capitalize
-      if (sourceName == lookupName ||
-          sourceName == s"get$lookupNameCapitalized" ||
-          (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])) {
+      if (
+        sourceName == lookupName ||
+        sourceName == s"get$lookupNameCapitalized" ||
+        (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])
+      ) {
         AccessorResolution.Resolved(ms, wasRenamed = false)
       } else {
         AccessorResolution.NotFound

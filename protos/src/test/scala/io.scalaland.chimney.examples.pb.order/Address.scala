@@ -10,4 +10,4 @@ final case class Address(
     street: _root_.scala.Predef.String = "",
     zipCode: _root_.scala.Int = 0,
     city: _root_.scala.Predef.String = ""
-    )
+)
