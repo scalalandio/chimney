@@ -11,7 +11,8 @@ val settings = Seq(
   crossScalaVersions := Seq(versions.scala212, versions.scala213),
   scalacOptions ++= Seq(
     "-target:jvm-1.8",
-    "-encoding", "UTF-8",
+    "-encoding",
+    "UTF-8",
     "-unchecked",
     "-deprecation",
     "-explaintypes",
@@ -51,15 +52,15 @@ val settings = Seq(
         "-Xlint:unsound-match",
         "-Xlint:nullary-override"
       )
-    ),
-  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
+  ),
+  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
 
 val dependencies = Seq(
   libraryDependencies ++= Seq(
-    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.2",
+    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.5.0",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
-    "com.lihaoyi" %%% "utest" % "0.7.7" % "test"
+    "com.lihaoyi" %%% "utest" % "0.7.10" % "test"
   )
 )
 
@@ -124,7 +125,6 @@ lazy val protos = crossProject(JSPlatform, JVMPlatform)
 lazy val protosJVM = protos.jvm
 lazy val protosJS = protos.js
 
-
 lazy val publishSettings = Seq(
   organization := "io.scalaland",
   homepage := Some(url("https://scalaland.io")),
@@ -134,7 +134,7 @@ lazy val publishSettings = Seq(
   ),
   publishTo := sonatypePublishToBundle.value,
   publishMavenStyle := true,
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   pomIncludeRepository := { _ =>
     false
   },
@@ -155,4 +155,4 @@ lazy val publishSettings = Seq(
 )
 
 lazy val noPublishSettings =
-  Seq(skip in publish := true, publishArtifact := false)
+  Seq(skip / publish := true, publishArtifact := false)
