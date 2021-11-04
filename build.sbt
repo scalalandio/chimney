@@ -108,7 +108,7 @@ lazy val chimneyCats = crossProject(JSPlatform, JVMPlatform)
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(dependencies: _*)
-  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.4.2" % "provided")
+  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.6.1" % "provided")
 
 lazy val chimneyCatsJVM = chimneyCats.jvm
 lazy val chimneyCatsJS = chimneyCats.js
