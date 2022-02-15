@@ -27,6 +27,27 @@ object IssuesSpec extends TestSuite {
 
   val tests = Tests {
 
+    "fix issue #214" - {
+      final case class BillingRowRaw(
+                                      `Billing Zip/Postal Code`: String,
+                                      `Billing Supplier Country (text only)`: String
+                                    )
+
+      final case class BillingRow(
+                                   postalCode: String,
+                                   billingCountry: String
+                                 )
+
+      val transformer = Transformer.define[BillingRowRaw, BillingRow]
+        .withFieldRenamed(_.`Billing Zip/Postal Code`, _.postalCode)
+        .withFieldRenamed(_.`Billing Supplier Country (text only)`, _.billingCountry)
+        .buildTransformer
+
+      val expected = BillingRow("3152XX", "England")
+      val result = transformer.transform(BillingRowRaw("3152XX", "England"))
+      assert(result == expected)
+    }
+
     "fix issue #19" - {
       case class NewEntity(name: String)
       case class Entity(id: Long, name: String, isDeleted: Boolean)
