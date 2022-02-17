@@ -28,23 +28,24 @@ object IssuesSpec extends TestSuite {
   val tests = Tests {
 
     "fix issue #214" - {
-      final case class BillingRowRaw(
-                                      `Billing Zip/Postal Code`: String,
-                                      `Billing Supplier Country (text only)`: String
-                                    )
+      final case class Foo(
+                            `Billing Zip/Postal Code`: String,
+                            `Shipping Zip/Postal Code`: String,
+                            `Billing Supplier Country (text only)`: String
+                          )
 
-      final case class BillingRow(
-                                   postalCode: String,
-                                   billingCountry: String
-                                 )
+      final case class Bar(
+                            `Billing Zip/Postal Code`: String,
+                            `Shipping Zip/Postal Code`: String,
+                            `Billing Supplier Country (text only)`: String
+                          )
 
-      val transformer = Transformer.define[BillingRowRaw, BillingRow]
-        .withFieldRenamed(_.`Billing Zip/Postal Code`, _.postalCode)
-        .withFieldRenamed(_.`Billing Supplier Country (text only)`, _.billingCountry)
+      val transformer = Transformer
+        .define[Foo, Bar]
         .buildTransformer
 
-      val expected = BillingRow("3152XX", "England")
-      val result = transformer.transform(BillingRowRaw("3152XX", "England"))
+      val expected = Bar("3152XX", "3152XX", "England")
+      val result = transformer.transform(Foo("3152XX", "3152XX", "England"))
       assert(result == expected)
     }
 
