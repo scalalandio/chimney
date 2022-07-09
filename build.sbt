@@ -52,7 +52,7 @@ val settings = Seq(
         "-Xlint:nullary-override"
       )
     ),
-  scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
+  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
 
 val dependencies = Seq(
@@ -126,6 +126,7 @@ lazy val protosJS = protos.js
 
 
 lazy val publishSettings = Seq(
+
   organization := "io.scalaland",
   homepage := Some(url("https://scalaland.io")),
   licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
@@ -134,7 +135,7 @@ lazy val publishSettings = Seq(
   ),
   publishTo := sonatypePublishToBundle.value,
   publishMavenStyle := true,
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   pomIncludeRepository := { _ =>
     false
   },
@@ -155,4 +156,4 @@ lazy val publishSettings = Seq(
 )
 
 lazy val noPublishSettings =
-  Seq(skip in publish := true, publishArtifact := false)
+  Seq(publish / skip := true, publishArtifact := false)
