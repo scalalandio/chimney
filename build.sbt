@@ -1,8 +1,8 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 val versions = new {
-  val scala212 = "2.12.12"
-  val scala213 = "2.13.5"
+  val scala212 = "2.12.16"
+  val scala213 = "2.13.8"
 }
 
 val settings = Seq(
@@ -57,9 +57,9 @@ val settings = Seq(
 
 val dependencies = Seq(
   libraryDependencies ++= Seq(
-    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.2",
+    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.0",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
-    "com.lihaoyi" %%% "utest" % "0.7.7" % "test"
+    "com.lihaoyi" %%% "utest" % "0.8.0" % "test"
   )
 )
 
@@ -85,7 +85,7 @@ lazy val chimney = crossProject(JSPlatform, JVMPlatform)
     name := "chimney",
     description := "Scala library for boilerplate free data rewriting",
     testFrameworks += new TestFramework("utest.runner.Framework"),
-    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.3" cross CrossVersion.full)
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
   )
   .settings(settings: _*)
   .settings(publishSettings: _*)
@@ -102,12 +102,12 @@ lazy val chimneyCats = crossProject(JSPlatform, JVMPlatform)
     name := "chimney-cats",
     description := "Chimney module for validated transformers support",
     testFrameworks += new TestFramework("utest.runner.Framework"),
-    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.3" cross CrossVersion.full)
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
   )
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(dependencies: _*)
-  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.4.2" % "provided")
+  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.8.0" % "provided")
 
 lazy val chimneyCatsJVM = chimneyCats.jvm
 lazy val chimneyCatsJS = chimneyCats.js

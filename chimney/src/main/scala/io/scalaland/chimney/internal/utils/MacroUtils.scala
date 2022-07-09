@@ -232,15 +232,15 @@ trait MacroUtils extends CompanionUtils {
       Block(stats :+ tree, expr)
     }
 
-    def extractSelectorFieldName: Name = {
+    def extractSelectorFieldName: TermName = {
       extractSelectorFieldNameOpt.getOrElse {
         c.abort(c.enclosingPosition, "Invalid selector!")
       }
     }
 
-    def extractSelectorFieldNameOpt: Option[Name] = {
+    def extractSelectorFieldNameOpt: Option[TermName] = {
       t match {
-        case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: Name}" if vd.name == idt.name =>
+        case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: TermName}" if vd.name == idt.name =>
           Some(fieldName)
         case _ =>
           None
