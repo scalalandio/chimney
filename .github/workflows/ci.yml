@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        scala: [2.12.12, 2.13.5]
+        scala: [2.12.16, 2.13.8]
         jvm: [adopt@1.8.0-275, adopt@1.15.0-1]
       fail-fast: false
 
