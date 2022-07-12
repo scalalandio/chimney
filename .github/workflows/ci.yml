@@ -14,13 +14,13 @@ jobs:
     strategy:
       matrix:
         scala: [2.12.16, 2.13.8]
-        jvm: [adopt@1.8.0-275, adopt@1.15.0-1]
+        jvm: [adopt@1.8.0-292, openjdk@1.17.0]
       fail-fast: false
 
     steps:
       - uses: actions/checkout@v2
       - uses: coursier/cache-action@v6
-      - uses: olafurpg/setup-scala@v10
+      - uses: olafurpg/setup-scala@v11
         with:
           java-version: ${{ matrix.jvm }}
       - name: Clean, Check code formatting, compile, test, generate coverage report
