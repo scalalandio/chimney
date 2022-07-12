@@ -480,6 +480,37 @@ object IssuesSpec extends TestSuite {
     "fix issue #182" - {
       foo.convert(foo.A1) ==> foo.into.A1
     }
+
+    "fix issue #214" - {
+
+      final case class Foo(
+          `Billing Zip/Postal Code`: String,
+          `Shipping Zip/Postal Code`: String,
+          `Billing Supplier Country (text only)`: String
+      )
+
+      final case class Bar(
+          `Billing Zip/Postal Code`: String,
+          `Shipping Zip/Postal Code`: String,
+          `Billing Supplier Country (text only)`: String
+      )
+
+      val transformer = Transformer
+        .define[Foo, Bar]
+        .buildTransformer
+
+      val foo = Foo("3152XX", "3152XX", "England")
+      val expected = Bar("3152XX", "3152XX", "England")
+      val result = transformer.transform(foo)
+      assert(result == expected)
+
+      val transformerF = Transformer
+        .defineF[Either[Seq[String], +*], Foo, Bar]
+        .buildTransformer
+
+      val resultF = transformerF.transform(foo)
+      assert(resultF == Right(expected))
+    }
   }
 }
 

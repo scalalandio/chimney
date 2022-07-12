@@ -857,25 +857,5 @@ trait TransformerMacros extends TransformerConfigSupport with MappingMacros with
       )
     }
 
-  private def freshTermName(srcPrefixTree: Tree): c.universe.TermName = {
-    freshTermName(toFieldName(srcPrefixTree))
-  }
-
-  private def freshTermName(tpe: Type): c.universe.TermName = {
-    freshTermName(tpe.typeSymbol.name.decodedName.toString.toLowerCase)
-  }
-
-  private def freshTermName(prefix: String): c.universe.TermName = {
-    c.internal.reificationSupport.freshTermName(prefix.toLowerCase + "$")
-  }
-
-  private def toFieldName(srcPrefixTree: Tree): String = {
-    // undo the encoding of freshTermName
-    srcPrefixTree
-      .toString()
-      .replaceAll("\\$\\d+", "")
-      .replace("$u002E", ".")
-  }
-
   private val chimneyDocUrl = "https://scalalandio.github.io/chimney"
 }

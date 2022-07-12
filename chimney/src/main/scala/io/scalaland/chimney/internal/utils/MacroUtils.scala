@@ -8,6 +8,26 @@ trait MacroUtils extends CompanionUtils {
 
   import c.universe._
 
+  def freshTermName(srcPrefixTree: Tree): c.universe.TermName = {
+    freshTermName(toFieldName(srcPrefixTree))
+  }
+
+  def freshTermName(tpe: Type): c.universe.TermName = {
+    freshTermName(tpe.typeSymbol.name.decodedName.toString.toLowerCase)
+  }
+
+  def freshTermName(prefix: String): c.universe.TermName = {
+    c.internal.reificationSupport.freshTermName(prefix.toLowerCase + "$")
+  }
+
+  def toFieldName(srcPrefixTree: Tree): String = {
+    // undo the encoding of freshTermName
+    srcPrefixTree
+      .toString()
+      .replaceAll("\\$\\d+", "")
+      .replace("$u002E", ".")
+  }
+
   implicit class NameOps(n: Name) {
     def toNameConstant: Constant = Constant(n.decodedName.toString)
     def toNameLiteral: Literal = Literal(toNameConstant)

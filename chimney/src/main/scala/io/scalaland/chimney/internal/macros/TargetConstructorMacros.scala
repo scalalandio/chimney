@@ -95,7 +95,7 @@ trait TargetConstructorMacros extends Model {
           q"$fSupport.product($tree, $rest)"
         }
 
-        val argNames = wrappedTargets.map(target => TermName(c.freshName(target.name)))
+        val argNames = wrappedTargets.map(target => freshTermName(target.name))
         val argTypes = wrappedTargets.map(_.tpe)
         val bindTreesF = argNames.map { termName =>
           Bind(termName, Ident(termNames.WILDCARD))
