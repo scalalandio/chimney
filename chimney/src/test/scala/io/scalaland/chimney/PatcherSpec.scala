@@ -51,6 +51,28 @@ object PatcherSpec extends TestSuite {
         exampleUser.copy(phone = patch.phone)
     }
 
+    "patch with redundant fields at the beginning" - {
+
+      import TestDomain._
+
+      case class PatchWithAnotherRedundantField(address: String, phone: Phone)
+      // note address doesn't exist in User and it's at the beginning of the case class
+
+      val patch = PatchWithAnotherRedundantField("Unknown", Phone(4321L))
+
+      compileError("exampleUser.patchUsing(patch)")
+        .check(
+          "",
+          "Field named 'address' not found in target patching type io.scalaland.chimney.TestDomain.User!"
+        )
+
+      exampleUser
+        .using(patch)
+        .ignoreRedundantPatcherFields
+        .patch ==>
+        exampleUser.copy(phone = patch.phone)
+    }
+
     "support optional types in patch" - {
 
       import TestDomain._
