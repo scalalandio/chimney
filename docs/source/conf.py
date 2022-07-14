@@ -53,7 +53,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Chimney'
-copyright = u'2017-2020, scalaland.io'
+copyright = u'2017-2022, scalaland.io'
 author = u'Piotr Krzemiński, Mateusz Kubuszok'
 
 # The version info for the project you're documenting, acts as replacement for
