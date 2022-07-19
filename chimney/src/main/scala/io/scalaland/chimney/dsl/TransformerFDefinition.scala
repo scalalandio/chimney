@@ -16,7 +16,8 @@ import scala.language.experimental.macros
 final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <: TransformerFlags](
     val overrides: Map[String, Any],
     val instances: Map[(String, String), Any]
-) extends FlagsDsl[Lambda[`F1 <: TransformerFlags` => TransformerFDefinition[F, From, To, C, F1]], Flags] {
+) extends FlagsDsl[Lambda[`F1 <: TransformerFlags` => TransformerFDefinition[F, From, To, C, F1]], Flags]
+    with TransformerDefinitionCommons[Lambda[`C1 <: TransformerCfg` => TransformerFDefinition[F, From, To, C1, Flags]]] {
 
   /** Use `value` provided here for field picked using `selector`.
     *
@@ -140,18 +141,6 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
   ): TransformerF[F, From, To] =
     macro TransformerBlackboxMacros.buildTransformerFImpl[F, From, To, C, Flags, ScopeFlags]
 
-  /** Used internally by macro. Please don't use in your code.
-    */
-  def __refineConfig[C1 <: TransformerCfg]: TransformerFDefinition[F, From, To, C1, Flags] =
-    this.asInstanceOf[TransformerFDefinition[F, From, To, C1, Flags]]
-
-  /** Used internally by macro. Please don't use in your code.
-    */
-  def __addOverride(key: String, value: Any): TransformerFDefinition[F, From, To, C, Flags] =
-    new TransformerFDefinition(overrides.updated(key, value), instances)
-
-  /** Used internally by macro. Please don't use in your code.
-    */
-  def __addInstance(from: String, to: String, value: Any): TransformerFDefinition[F, From, To, C, Flags] =
-    new TransformerFDefinition(overrides, instances.updated((from, to), value))
+  override protected def updated(newOverrides: Map[String, Any], newInstances: Map[(String, String), Any]): this.type =
+    new TransformerFDefinition(newOverrides, newInstances).asInstanceOf[this.type]
 }
