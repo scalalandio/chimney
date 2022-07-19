@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.TransformerCfg
 
-trait TransformerDefinitionCommons[ChangeCfg[_ <: TransformerCfg]] {
+trait TransformerDefinitionCommons[UpdateCfg[_ <: TransformerCfg]] {
 
   val overrides: Map[String, Any]
   val instances: Map[(String, String), Any]
@@ -13,8 +13,8 @@ trait TransformerDefinitionCommons[ChangeCfg[_ <: TransformerCfg]] {
 
   /** Used internally by macro. Please don't use in your code.
     */
-  def __refineConfig[C1 <: TransformerCfg]: ChangeCfg[C1] =
-    this.asInstanceOf[ChangeCfg[C1]]
+  def __refineConfig[C1 <: TransformerCfg]: UpdateCfg[C1] =
+    this.asInstanceOf[UpdateCfg[C1]]
 
   /** Used internally by macro. Please don't use in your code.
     */
