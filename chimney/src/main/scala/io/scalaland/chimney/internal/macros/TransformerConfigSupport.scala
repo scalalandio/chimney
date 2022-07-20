@@ -78,6 +78,9 @@ trait TransformerConfigSupport extends MacroUtils {
 
     import io.scalaland.chimney.internal.TransformerCfg._
 
+    // We cannot get typeOf[HigherKind] directly, but we can get the typeOf[ExistentialType]
+    // and extract type constructor out of it.
+
     val emptyT: Type = typeOf[Empty]
     val fieldConstT: Type = typeOf[FieldConst[_, _]].typeConstructor
     val fieldConstFT: Type = typeOf[FieldConstF[_, _]].typeConstructor
