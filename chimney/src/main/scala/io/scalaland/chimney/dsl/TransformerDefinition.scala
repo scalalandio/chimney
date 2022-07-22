@@ -40,7 +40,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def withFieldConst[T, U](selector: To => T, value: U): TransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
+    macro TransformerDefinitionWhiteboxMacros.withFieldConstImpl[T, U, C]
 
   /** Use wrapped `value` provided here for field picked using `selector`.
     *
@@ -70,7 +70,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
       selector: To => T,
       map: From => U
   ): TransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withFieldComputedImpl[From, To, T, U, C]
+    macro TransformerDefinitionWhiteboxMacros.withFieldComputedImpl[T, U, C]
 
   /** Use `map` provided here to compute wrapped value of field picked using `selector`.
     *
@@ -100,7 +100,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
       selectorFrom: From => T,
       selectorTo: To => U
   ): TransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withFieldRenamedImpl[From, To, T, U, C]
+    macro TransformerDefinitionWhiteboxMacros.withFieldRenamedImpl[C]
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
     *
@@ -114,7 +114,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     */
   def withCoproductInstance[Inst](f: Inst => To): TransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[From, To, Inst, C]
+    macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[To, Inst, C]
 
   /** Use `f` to calculate the (missing) wrapped coproduct instance when mapping one coproduct into another
     *
@@ -130,7 +130,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   def withCoproductInstanceF[F[+_], Inst](
       f: Inst => F[To]
   ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceFImpl[F, From, To, Inst, C]
+    macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceFImpl[F]
 
   /** Build Transformer using current configuration.
     *

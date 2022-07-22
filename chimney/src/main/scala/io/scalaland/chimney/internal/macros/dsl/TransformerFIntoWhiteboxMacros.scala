@@ -1,10 +1,10 @@
 package io.scalaland.chimney.internal.macros.dsl
 
-import io.scalaland.chimney.internal.utils.MacroUtils
+import io.scalaland.chimney.internal.utils.DslMacroUtils
 
 import scala.reflect.macros.whitebox
 
-class TransformerFIntoWhiteboxMacros(val c: whitebox.Context) extends MacroUtils {
+class TransformerFIntoWhiteboxMacros(val c: whitebox.Context) extends DslMacroUtils {
 
   import c.universe._
 

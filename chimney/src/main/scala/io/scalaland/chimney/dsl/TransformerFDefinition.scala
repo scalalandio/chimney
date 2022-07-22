@@ -32,7 +32,7 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
       selector: To => T,
       value: U
   ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerFDefinitionWhiteboxMacros.withFieldConstImpl[From, To, T, U, C]
+    macro TransformerFDefinitionWhiteboxMacros.withFieldConstImpl[T, U, C]
 
   /** Use wrapped `value` provided here for field picked using `selector`.
     *
@@ -47,7 +47,7 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
       selector: To => T,
       value: F[U]
   ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerFDefinitionWhiteboxMacros.withFieldConstFImpl[From, To, T, U, C, F]
+    macro TransformerFDefinitionWhiteboxMacros.withFieldConstFImpl[T, U, C, F]
 
   /** Use `map` provided here to compute value of field picked using `selector`.
     *

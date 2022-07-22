@@ -1,18 +1,18 @@
 package io.scalaland.chimney.internal.macros.dsl
 
 import io.scalaland.chimney.internal.macros.TransformerConfigSupport
-import io.scalaland.chimney.internal.utils.MacroUtils
+import io.scalaland.chimney.internal.utils.DslMacroUtils
 
 import scala.reflect.macros.whitebox
 
-class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends MacroUtils with TransformerConfigSupport {
+class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context)
+    extends DslMacroUtils
+    with TransformerConfigSupport {
 
-  import c.universe._
   import CfgTpes._
+  import c.universe._
 
   def withFieldConstImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
       T: WeakTypeTag,
       U: WeakTypeTag,
       C: WeakTypeTag
@@ -28,15 +28,11 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
 
       c.abort(c.enclosingPosition, msg)
     } else {
-      c.prefix.tree
-        .addOverride(fieldName, value)
-        .refineConfig(fieldConstT.applyTypeArgs(fieldName.toSingletonTpe, weakTypeOf[C]))
+      c.prefix.tree.overrideField(fieldName, value, fieldConstT, weakTypeOf[C])
     }
   }
 
   def withFieldConstFImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
       T: WeakTypeTag,
       U: WeakTypeTag,
       C: WeakTypeTag,
@@ -56,9 +52,7 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
 
       c.abort(c.enclosingPosition, msg)
     } else {
-      c.prefix.tree
-        .addOverride(fieldName, value)
-        .refineConfig(fieldConstFT.applyTypeArgs(fieldName.toSingletonTpe, weakTypeOf[C]))
+      c.prefix.tree.overrideField(fieldName, value, fieldConstFT, weakTypeOf[C])
     }
   }
 
@@ -80,9 +74,7 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
 
       c.abort(c.enclosingPosition, msg)
     } else {
-      c.prefix.tree
-        .addOverride(fieldName, map)
-        .refineConfig(fieldComputedT.applyTypeArgs(fieldName.toSingletonTpe, weakTypeOf[C]))
+      c.prefix.tree.overrideField(fieldName, map, fieldComputedT, weakTypeOf[C])
     }
   }
 
@@ -109,9 +101,7 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
 
       c.abort(c.enclosingPosition, msg)
     } else {
-      c.prefix.tree
-        .addOverride(fieldName, map)
-        .refineConfig(fieldComputedFT.applyTypeArgs(fieldName.toSingletonTpe, weakTypeOf[C]))
+      c.prefix.tree.overrideField(fieldName, map, fieldComputedFT, weakTypeOf[C])
     }
   }
 
@@ -128,10 +118,7 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
 
     (fieldNameFromOpt, fieldNameToOpt) match {
       case (Some(fieldNameFrom), Some(fieldNameTo)) =>
-        c.prefix.tree
-          .refineConfig(
-            fieldRelabelledT.applyTypeArgs(fieldNameFrom.toSingletonTpe, fieldNameTo.toSingletonTpe, weakTypeOf[C])
-          )
+        c.prefix.tree.renameField(fieldNameFrom, fieldNameTo, weakTypeOf[C])
       case (Some(_), None) =>
         c.abort(c.enclosingPosition, s"Selector of type ${selectorTo.tpe} is not valid: $selectorTo")
       case (None, Some(_)) =>
@@ -149,11 +136,7 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
       Inst: WeakTypeTag,
       C: WeakTypeTag
   ](f: Tree): Tree = {
-    val To = weakTypeOf[To]
-    val Inst = weakTypeOf[Inst]
-    c.prefix.tree
-      .addInstance(Inst.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString, f)
-      .refineConfig(coproductInstanceT.applyTypeArgs(Inst, To, weakTypeOf[C]))
+    c.prefix.tree.overrideInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceT, weakTypeOf[C])
   }
 
   def withCoproductInstanceFImpl[
@@ -162,11 +145,7 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends Macr
       Inst: WeakTypeTag,
       C: WeakTypeTag
   ](f: Tree): Tree = {
-    val To = weakTypeOf[To]
-    val Inst = weakTypeOf[Inst]
-    c.prefix.tree
-      .addInstance(Inst.typeSymbol.fullName.toString, To.typeSymbol.fullName.toString, f)
-      .refineConfig(coproductInstanceFT.applyTypeArgs(Inst, To, weakTypeOf[C]))
+    c.prefix.tree.overrideInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceFT, weakTypeOf[C])
   }
 
 }

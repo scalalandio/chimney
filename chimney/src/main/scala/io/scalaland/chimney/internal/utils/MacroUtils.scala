@@ -281,61 +281,6 @@ trait MacroUtils extends CompanionUtils {
   }
   // $COVERAGE-ON$
 
-  implicit class TransformerDefinitionTreeOps(td: Tree) {
-
-    def accessConst(name: String, targetTpe: Type): Tree = {
-      q"""
-        $td
-          .overrides($name)
-          .asInstanceOf[$targetTpe]
-      """
-    }
-
-    def accessComputed(name: String, srcPrefixTree: Tree, fromTpe: Type, targetTpe: Type): Tree = {
-      q"""
-        $td
-          .overrides($name)
-          .asInstanceOf[$fromTpe => $targetTpe]
-          .apply($srcPrefixTree)
-      """
-    }
-
-    def addOverride(fieldName: Name, value: Tree): Tree = {
-      q"$td.__addOverride(${fieldName.toNameLiteral}, $value)"
-    }
-
-    def addInstance(fullInstName: String, fullTargetName: String, f: Tree): Tree = {
-      q"$td.__addInstance($fullInstName, $fullTargetName, $f)"
-    }
-
-    def refineConfig(cfgTpe: Type): Tree = {
-      q"$td.__refineConfig[$cfgTpe]"
-    }
-
-    def refineTransformerDefinition(definitionRefinementFn: Tree) = {
-      q"$td.__refineTransformerDefinition($definitionRefinementFn)"
-    }
-
-    def refineTransformerDefinition_Hack(
-        definitionRefinementFn: Map[String, Tree] => Tree,
-        valTree: (String, Tree)
-    ): Tree = {
-      // normally, we would like to use refineTransformerDefinition, which works well on Scala 2.11
-      // in few cases on Scala 2.12+ it ends up as 'Error while emitting XXX.scala' compiler error
-      // with this hack, we can work around scalac bugs
-
-      val (name, tree) = valTree
-      val fnTermName = TermName(c.freshName(name))
-      val fnMapTree = Map(name -> Ident(fnTermName))
-      q"""
-        {
-          val ${fnTermName} = $tree
-          $td.__refineTransformerDefinition(${definitionRefinementFn(fnMapTree)})
-        }
-      """
-    }
-  }
-
   private val primitives = Set(
     typeOf[Double],
     typeOf[Float],

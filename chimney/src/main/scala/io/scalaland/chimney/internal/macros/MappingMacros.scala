@@ -1,13 +1,12 @@
 package io.scalaland.chimney.internal.macros
 
+import io.scalaland.chimney.internal.utils.{DerivationGuards, DslMacroUtils}
 import io.scalaland.chimney.internal.{DerivationError, IncompatibleSourceTuple}
-import io.scalaland.chimney.internal.utils.{DerivationGuards, MacroUtils}
 
 import scala.collection.immutable.ListMap
 import scala.reflect.macros.blackbox
 
-trait MappingMacros extends Model with TransformerConfigSupport {
-  this: DerivationGuards with MacroUtils =>
+trait MappingMacros extends Model with DerivationGuards with DslMacroUtils with TransformerConfigSupport {
 
   val c: blackbox.Context
 
