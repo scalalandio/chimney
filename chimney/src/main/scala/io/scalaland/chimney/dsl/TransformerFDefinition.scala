@@ -31,8 +31,8 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
   def withFieldConst[T, U](
       selector: To => T,
       value: U
-  ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerFDefinitionWhiteboxMacros.withFieldConstImpl[T, U, C]
+  )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
+    macro TransformerFDefinitionWhiteboxMacros.withFieldConstImpl[C]
 
   /** Use wrapped `value` provided here for field picked using `selector`.
     *
@@ -46,8 +46,8 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
   def withFieldConstF[T, U](
       selector: To => T,
       value: F[U]
-  ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerFDefinitionWhiteboxMacros.withFieldConstFImpl[T, U, C, F]
+  )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
+    macro TransformerFDefinitionWhiteboxMacros.withFieldConstFImpl[C, F]
 
   /** Use `map` provided here to compute value of field picked using `selector`.
     *
@@ -55,14 +55,14 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
     * @param selector target field in `To`, defined like `_.name`
-    * @param map      function used to compute value of the target field
+    * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
     */
   def withFieldComputed[T, U](
       selector: To => T,
-      map: From => U
-  ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerFDefinitionWhiteboxMacros.withFieldComputedImpl[T, U, C]
+      f: From => U
+  )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
+    macro TransformerFDefinitionWhiteboxMacros.withFieldComputedImpl[C]
 
   /** Use `map` provided here to compute wrapped value of field picked using `selector`.
     *
@@ -70,14 +70,14 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
     * @param selector target field in `To`, defined like `_.name`
-    * @param map      function used to compute value of the target field
+    * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
     */
   def withFieldComputedF[T, U](
       selector: To => T,
-      map: From => F[U]
-  ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerFDefinitionWhiteboxMacros.withFieldComputedFImpl[T, U, C, F]
+      f: From => F[U]
+  )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
+    macro TransformerFDefinitionWhiteboxMacros.withFieldComputedFImpl[C, F]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
     *

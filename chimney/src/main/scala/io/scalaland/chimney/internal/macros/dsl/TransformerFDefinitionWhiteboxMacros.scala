@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.macros.dsl
 
 import io.scalaland.chimney.internal.utils.DslMacroUtils
 
+import scala.annotation.unused
 import scala.reflect.macros.whitebox
 
 class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslMacroUtils {
@@ -9,93 +10,24 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslM
   import CfgTpes._
   import c.universe._
 
-  def withFieldConstImpl[
-      T: WeakTypeTag,
-      U: WeakTypeTag,
-      C: WeakTypeTag
-  ](selector: Tree, value: Tree): Tree = {
-    val fieldName = selector.extractSelectorFieldName
-
-    if (!(weakTypeOf[U] <:< weakTypeOf[T])) {
-      val msg =
-        s"""Type mismatch!
-           |Value passed to `withFieldConst` is of type: ${weakTypeOf[U]}
-           |Type required by '$fieldName' field: ${weakTypeOf[T]}
-         """.stripMargin
-
-      c.abort(c.enclosingPosition, msg)
-    } else {
-      c.prefix.tree.overrideField(fieldName, value, fieldConstT, weakTypeOf[C])
-    }
+  def withFieldConstImpl[C: WeakTypeTag](selector: Tree, value: Tree)(@unused ev: Tree): Tree = {
+    c.prefix.tree.overrideField(selector.extractSelectorFieldName, value, fieldConstT, weakTypeOf[C])
   }
 
-  def withFieldConstFImpl[
-      T: WeakTypeTag,
-      U: WeakTypeTag,
-      C: WeakTypeTag,
-      F[_]
-  ](selector: Tree, value: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
-    val fieldName = selector.extractSelectorFieldName
-
-    if (!(weakTypeOf[U] <:< weakTypeOf[T])) {
-      val FT = F.tpe.applyTypeArg(weakTypeOf[T])
-      val FU = F.tpe.applyTypeArg(weakTypeOf[U])
-      val msg =
-        s"""Type mismatch!
-           |Value passed to `withFieldConstF` is of type: $FU
-           |Type required by '$fieldName' field: $FT
-           |${weakTypeOf[U]} is not subtype of ${weakTypeOf[T]}!
-         """.stripMargin
-
-      c.abort(c.enclosingPosition, msg)
-    } else {
-      c.prefix.tree.overrideField(fieldName, value, fieldConstFT, weakTypeOf[C])
-    }
+  def withFieldConstFImpl[C: WeakTypeTag, F[_]](selector: Tree, value: Tree)(
+      @unused ev: Tree
+  )(implicit F: WeakTypeTag[F[_]]): Tree = {
+    c.prefix.tree.overrideField(selector.extractSelectorFieldName, value, fieldConstFT, weakTypeOf[C])
   }
 
-  def withFieldComputedImpl[
-      T: WeakTypeTag,
-      U: WeakTypeTag,
-      C: WeakTypeTag
-  ](selector: Tree, map: Tree): Tree = {
-    val fieldName = selector.extractSelectorFieldName
-
-    if (!(weakTypeOf[U] <:< weakTypeOf[T])) {
-      val msg =
-        s"""Type mismatch!
-           |Function passed to `withFieldComputed` returns type: ${weakTypeOf[U]}
-           |Type required by '$fieldName' field: ${weakTypeOf[T]}
-         """.stripMargin
-
-      c.abort(c.enclosingPosition, msg)
-    } else {
-      c.prefix.tree.overrideField(fieldName, map, fieldComputedT, weakTypeOf[C])
-    }
+  def withFieldComputedImpl[C: WeakTypeTag](selector: Tree, f: Tree)(@unused ev: Tree): Tree = {
+    c.prefix.tree.overrideField(selector.extractSelectorFieldName, f, fieldComputedT, weakTypeOf[C])
   }
 
-  def withFieldComputedFImpl[
-      T: WeakTypeTag,
-      U: WeakTypeTag,
-      C: WeakTypeTag,
-      F[+_]
-  ](selector: Tree, map: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
-    val fieldName = selector.extractSelectorFieldName
-
-    if (!(weakTypeOf[U] <:< weakTypeOf[T])) {
-      val FT = F.tpe.applyTypeArg(weakTypeOf[T])
-      val FU = F.tpe.applyTypeArg(weakTypeOf[U])
-
-      val msg =
-        s"""Type mismatch!
-           |Function passed to `withFieldComputedF` returns type: $FU
-           |Type required by '$fieldName' field: $FT
-           |${weakTypeOf[U]} is not subtype of ${weakTypeOf[T]}!
-         """.stripMargin
-
-      c.abort(c.enclosingPosition, msg)
-    } else {
-      c.prefix.tree.overrideField(fieldName, map, fieldComputedFT, weakTypeOf[C])
-    }
+  def withFieldComputedFImpl[C: WeakTypeTag, F[+_]](selector: Tree, f: Tree)(
+      @unused ev: Tree
+  )(implicit F: WeakTypeTag[F[_]]): Tree = {
+    c.prefix.tree.overrideField(selector.extractSelectorFieldName, f, fieldComputedFT, weakTypeOf[C])
   }
 
   def withFieldRenamedImpl[
