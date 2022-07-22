@@ -1,8 +1,10 @@
 package io.scalaland.chimney.internal.macros
 
+import io.scalaland.chimney.internal.utils.AssertUtils
+
 import scala.reflect.macros.blackbox
 
-trait TargetConstructorMacros extends Model {
+trait TargetConstructorMacros extends Model with AssertUtils {
 
   val c: blackbox.Context
 
@@ -45,12 +47,21 @@ trait TargetConstructorMacros extends Model {
     """
   }
 
-  def mkTransformerBodyTree0(derivationTarget: DerivationTarget)(targetValueTree: Tree): Tree = {
+  /**
+    * Generate result tree for given transformer derivation target from a value tree
+    *
+    * @param derivationTarget decides about if/how the value tree is wrapped
+    * @param valueTree value tree for which we build target result tree
+    * @return potentially wrapped value tree
+    */
+  def mkTransformerBodyTree0(derivationTarget: DerivationTarget)(valueTree: Tree): Tree = {
     derivationTarget match {
       case DerivationTarget.TotalTransformer =>
-        targetValueTree
+        valueTree
+      case DerivationTarget.PartialTransformer(_) =>
+        q"_root_.io.scalaland.chimney.PartialTransformer.Result.Value($valueTree)"
       case DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _) =>
-        q"${wrapperSupportInstance}.pure($targetValueTree)"
+        q"${wrapperSupportInstance}.pure($valueTree)"
     }
   }
 
@@ -67,6 +78,17 @@ trait TargetConstructorMacros extends Model {
     }
   }
 
+  // TODO: describe
+  /**
+    *
+    *
+    * @param To
+    * @param targets
+    * @param bodyTreeArgs
+    * @param derivationTarget
+    * @param mkTargetValueTree
+    * @return
+    */
   def mkTransformerBodyTree(
       To: Type,
       targets: Seq[Target],
@@ -77,30 +99,82 @@ trait TargetConstructorMacros extends Model {
   ): Tree = {
     derivationTarget match {
       case DerivationTarget.TotalTransformer =>
+        assertOrAbort(
+          bodyTreeArgs.forall(_.isTotalTarget),
+          "All derived body trees arguments must be total in Total target derivation!"
+        )
         mkTargetValueTree(bodyTreeArgs.map(_.tree))
-      case DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _) =>
-        val (pureArgs, wrappedArgs) = (targets zip bodyTreeArgs).partition(_._2.isTotalTarget)
 
-        if (wrappedArgs.isEmpty) {
-          q"$wrapperSupportInstance.pure(${mkTargetValueTree(bodyTreeArgs.map(_.tree))})"
+      case pt: DerivationTarget.PartialTransformer =>
+        assertOrAbort(
+          bodyTreeArgs.forall(a => a.isTotalTarget || a.isPartialTarget),
+          "Only Total and Partial body tree arguments are supported in Partial target derivation!"
+        )
+
+        val (totalArgs, partialArgs) = (targets zip bodyTreeArgs).partition(_._2.isTotalTarget)
+
+        if (partialArgs.isEmpty) {
+          mkTransformerBodyTree0(pt)(mkTargetValueTree(bodyTreeArgs.map(_.tree)))
+        } else if (partialArgs.sizeIs == 1) {
+          val (target, bodyTree) = partialArgs.head
+          val fn = freshTermName(target.name)
+          val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
+          val argsMap = totalArgsMap + (target -> q"$fn")
+          val updatedArgs = targets.map(argsMap)
+
+          q"${bodyTree.tree}.map { ($fn: ${target.tpe}) => ${mkTargetValueTree(updatedArgs)} }"
+        } else {
+          val (partialTargets, partialBodyTrees) = partialArgs.unzip
+          val partialTrees = partialBodyTrees.map(_.tree)
+          val partialTreesArray = q"Array(..${partialTrees})"
+          val arrayFn = freshTermName("array")
+
+          val argIndices = partialTargets.indices
+
+          val patRefArgsMap = (partialTargets zip argIndices).map {
+            case (target, argIndex) => target -> q"$arrayFn.apply($argIndex).asInstanceOf[${target.tpe}]"
+          }.toMap
+          val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
+          val argsMap = totalArgsMap ++ patRefArgsMap
+
+          val updatedArgs = targets.map(argsMap)
+
+          q"""
+             _root_.io.scalaland.chimney.PartialTransformer.Result.sequence[Array[Any], Any](
+               ${partialTreesArray}.iterator,
+               ${pt.failFastTree}
+             ).map { ($arrayFn: Array[Any]) => ${mkTargetValueTree(updatedArgs)} }
+           """
+        }
+
+      case lt @ DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _) =>
+        assertOrAbort(
+          bodyTreeArgs.forall(a => a.isTotalTarget || a.isLiftedTarget),
+          "Only Total and Lifted body tree arguments are supported in Lifted target derivation!"
+        )
+
+        val (totalArgs, liftedArgs) = (targets zip bodyTreeArgs).partition(_._2.isTotalTarget)
+
+        if (liftedArgs.isEmpty) {
+          mkTransformerBodyTree0(lt)(mkTargetValueTree(bodyTreeArgs.map(_.tree)))
         } else {
 
-          val (wrappedTargets, wrappedBodyTrees) = wrappedArgs.unzip
-          val wrappedTrees = wrappedBodyTrees.map(_.tree)
-          val productF = wrappedTrees.reduceRight { (tree, rest) =>
+          val (liftedTargets, liftedBodyTrees) = liftedArgs.unzip
+          val liftedTrees = liftedBodyTrees.map(_.tree)
+          val productF = liftedTrees.reduceRight { (tree, rest) =>
             q"$wrapperSupportInstance.product($tree, $rest)"
           }
 
-          val argNames = wrappedTargets.map(target => freshTermName(target.name))
-          val argTypes = wrappedTargets.map(_.tpe)
+          val argNames = liftedTargets.map(target => freshTermName(target.name))
+          val argTypes = liftedTargets.map(_.tpe)
           val bindTreesF = argNames.map { termName =>
             Bind(termName, Ident(termNames.WILDCARD))
           }
           val productType = argTypes.map(tpe => tq"$tpe").reduceRight[Tree]((param, tree) => tq"($param, $tree)")
           val patternF = bindTreesF.reduceRight[Tree]((param, tree) => pq"(..${List(param, tree)})")
 
-          val patRefArgsMap = (wrappedTargets zip argNames).map { case (target, argName) => target -> q"$argName" }.toMap
-          val pureArgsMap = pureArgs.map { case (target, bt)                             => target -> bt.tree }.toMap
+          val patRefArgsMap = (liftedTargets zip argNames).map { case (target, argName) => target -> q"$argName" }.toMap
+          val pureArgsMap = totalArgs.map { case (target, bt)                           => target -> bt.tree }.toMap
           val argsMap = pureArgsMap ++ patRefArgsMap
 
           val updatedArgs = targets.map(argsMap)
