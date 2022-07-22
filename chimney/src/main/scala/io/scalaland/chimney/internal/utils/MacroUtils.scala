@@ -278,6 +278,10 @@ trait MacroUtils extends CompanionUtils {
     def callTransform(input: Tree): Tree = {
       q"$t.transform($input)"
     }
+
+    def callUnaryApply(argTree: Tree): Tree = {
+      q"$t.apply($argTree)"
+    }
   }
   // $COVERAGE-ON$
 

@@ -82,7 +82,7 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslMa
       Inst: WeakTypeTag,
       C: WeakTypeTag
   ](f: Tree): Tree = {
-    c.prefix.tree.overrideInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceT, weakTypeOf[C])
+    c.prefix.tree.overrideCoproductInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceT, weakTypeOf[C])
   }
 
   def withCoproductInstanceFImpl[F[+_]](f: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {

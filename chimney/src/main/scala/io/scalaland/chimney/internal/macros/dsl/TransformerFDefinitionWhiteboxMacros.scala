@@ -136,7 +136,7 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context)
       Inst: WeakTypeTag,
       C: WeakTypeTag
   ](f: Tree): Tree = {
-    c.prefix.tree.overrideInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceT, weakTypeOf[C])
+    c.prefix.tree.overrideCoproductInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceT, weakTypeOf[C])
   }
 
   def withCoproductInstanceFImpl[
@@ -145,7 +145,7 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context)
       Inst: WeakTypeTag,
       C: WeakTypeTag
   ](f: Tree): Tree = {
-    c.prefix.tree.overrideInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceFT, weakTypeOf[C])
+    c.prefix.tree.overrideCoproductInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceFT, weakTypeOf[C])
   }
 
 }

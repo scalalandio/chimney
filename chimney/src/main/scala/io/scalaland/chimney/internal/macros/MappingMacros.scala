@@ -77,7 +77,7 @@ trait MappingMacros extends Model with DerivationGuards with DslMacroUtils with 
         case Some(FieldOverride.Const) =>
           Some {
             target -> TransformerBodyTree(
-              config.transformerDefinitionPrefix.accessConst(target.name, target.tpe),
+              config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, target.tpe),
               isWrapped = false
             )
           }
@@ -85,14 +85,16 @@ trait MappingMacros extends Model with DerivationGuards with DslMacroUtils with 
           val fTargetTpe = config.wrapperType.get.applyTypeArg(target.tpe)
           Some {
             target -> TransformerBodyTree(
-              config.transformerDefinitionPrefix.accessConst(target.name, fTargetTpe),
+              config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, fTargetTpe),
               isWrapped = true
             )
           }
         case Some(FieldOverride.Computed) =>
           Some {
             target -> TransformerBodyTree(
-              config.transformerDefinitionPrefix.accessComputed(target.name, srcPrefixTree, From, target.tpe),
+              config.transformerDefinitionPrefix
+                .accessOverriddenComputedFunction(target.name, From, target.tpe)
+                .callUnaryApply(srcPrefixTree),
               isWrapped = false
             )
           }
@@ -100,7 +102,9 @@ trait MappingMacros extends Model with DerivationGuards with DslMacroUtils with 
           val fTargetTpe = config.wrapperType.get.applyTypeArg(target.tpe)
           Some {
             target -> TransformerBodyTree(
-              config.transformerDefinitionPrefix.accessComputed(target.name, srcPrefixTree, From, fTargetTpe),
+              config.transformerDefinitionPrefix
+                .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
+                .callUnaryApply(srcPrefixTree),
               isWrapped = true
             )
           }

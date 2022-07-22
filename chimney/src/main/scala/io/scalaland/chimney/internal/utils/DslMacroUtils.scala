@@ -13,7 +13,7 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
 
   implicit class TransformerDefinitionTreeOps(td: Tree) {
 
-    def accessConst(name: String, targetTpe: Type): Tree = {
+    def accessOverriddenConstValue(name: String, targetTpe: Type): Tree = {
       q"""
         $td
           .overrides($name)
@@ -21,12 +21,11 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
       """
     }
 
-    def accessComputed(name: String, srcPrefixTree: Tree, fromTpe: Type, targetTpe: Type): Tree = {
+    def accessOverriddenComputedFunction(name: String, fromTpe: Type, targetTpe: Type): Tree = {
       q"""
         $td
           .overrides($name)
           .asInstanceOf[$fromTpe => $targetTpe]
-          .apply($srcPrefixTree)
       """
     }
 
@@ -36,7 +35,7 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
         .refineConfig(configWrapperTC.applyTypeArgs(fieldName.toSingletonTpe, underlyingConfigTpe))
     }
 
-    def overrideInstance(
+    def overrideCoproductInstance(
         instTpe: Type,
         targetTpe: Type,
         f: Tree,
