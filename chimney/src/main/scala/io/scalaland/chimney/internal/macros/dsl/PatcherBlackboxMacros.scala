@@ -2,16 +2,10 @@ package io.scalaland.chimney.internal.macros.dsl
 
 import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.macros.{PatcherMacros, TransformerMacros}
-import io.scalaland.chimney.internal.utils.{DerivationGuards, EitherUtils, MacroUtils}
 
 import scala.reflect.macros.blackbox
 
-class PatcherBlackboxMacros(val c: blackbox.Context)
-    extends PatcherMacros
-    with TransformerMacros
-    with DerivationGuards
-    with MacroUtils
-    with EitherUtils {
+class PatcherBlackboxMacros(val c: blackbox.Context) extends PatcherMacros with TransformerMacros {
 
   import c.universe._
 

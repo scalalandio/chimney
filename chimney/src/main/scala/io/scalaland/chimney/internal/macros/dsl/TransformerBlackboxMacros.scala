@@ -1,17 +1,12 @@
 package io.scalaland.chimney.internal.macros.dsl
 
 import io.scalaland.chimney
-import io.scalaland.chimney.{TransformerF, TransformerFSupport}
 import io.scalaland.chimney.internal.macros.TransformerMacros
-import io.scalaland.chimney.internal.utils.{DerivationGuards, EitherUtils, MacroUtils}
+import io.scalaland.chimney.{TransformerF, TransformerFSupport}
 
 import scala.reflect.macros.blackbox
 
-class TransformerBlackboxMacros(val c: blackbox.Context)
-    extends TransformerMacros
-    with DerivationGuards
-    with MacroUtils
-    with EitherUtils {
+class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacros {
 
   import c.universe._
 

@@ -1,12 +1,12 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.utils.{DerivationGuards, DslMacroUtils}
-import io.scalaland.chimney.internal.{DerivationError, IncompatibleSourceTuple}
+import io.scalaland.chimney.internal.utils.{TypeTestUtils, DslMacroUtils}
+import io.scalaland.chimney.internal.{TransformerDerivationError, IncompatibleSourceTuple}
 
 import scala.collection.immutable.ListMap
 import scala.reflect.macros.blackbox
 
-trait MappingMacros extends Model with DerivationGuards with DslMacroUtils with TransformerConfigSupport {
+trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
 
   val c: blackbox.Context
 
@@ -15,7 +15,7 @@ trait MappingMacros extends Model with DerivationGuards with DslMacroUtils with 
   def resolveSourceTupleAccessors(
       From: Type,
       To: Type
-  ): Either[Seq[DerivationError], Map[Target, AccessorResolution.Resolved]] = {
+  ): Either[Seq[TransformerDerivationError], Map[Target, AccessorResolution.Resolved]] = {
     val tupleElems = From.caseClassParams
     val targetFields = To.caseClassParams
 
