@@ -61,7 +61,7 @@ object DslFSpec extends TestSuite {
             okForm
               .into[Person]
               .withFieldConst(_.height, 200.5)
-              .withFieldComputedF[Either[List[String], +*], Int, Int](_.age, _.age.parseInt.toEither("bad age"))
+              .withFieldComputedF[Either[List[String], +*], Int, Int](_.age, _.age.parseInt.toEitherList("bad age"))
               .transform ==> Right(Person("John", 10, 200.5))
           }
         }
@@ -80,8 +80,8 @@ object DslFSpec extends TestSuite {
             okForm
               .intoF[Either[List[String], +*], Person]
               .withFieldConst(_.name, "Joe")
-              .withFieldComputedF(_.height, _.height.parseDouble.toEither("bad height"))
-              .withFieldComputedF(_.age, _.age.parseInt.toEither("bad age"))
+              .withFieldComputedF(_.height, _.height.parseDouble.toEitherList("bad height"))
+              .withFieldComputedF(_.age, _.age.parseInt.toEitherList("bad age"))
               .transform ==> Right(Person("Joe", 10, 140))
           }
         }
@@ -106,8 +106,8 @@ object DslFSpec extends TestSuite {
                   if (pf.name.isEmpty) Left(List("empty name"))
                   else Right(pf.name.toUpperCase())
               )
-              .withFieldComputedF(_.age, _.age.parseInt.toEither("bad age"))
-              .withFieldComputedF(_.height, _.height.parseDouble.toEither("bad height"))
+              .withFieldComputedF(_.age, _.age.parseInt.toEitherList("bad age"))
+              .withFieldComputedF(_.height, _.height.parseDouble.toEitherList("bad height"))
               .transform ==> Right(Person("JOHN", 10, 140))
           }
         }
@@ -133,8 +133,8 @@ object DslFSpec extends TestSuite {
                 if (pf.name.isEmpty) Left(List("empty name"))
                 else Right(pf.name.toUpperCase())
             )
-            .withFieldComputedF(_.age, _.age.parseInt.toEither("bad age"))
-            .withFieldComputedF(_.height, _.age.parseDouble.toEither("bad double"))
+            .withFieldComputedF(_.age, _.age.parseInt.toEitherList("bad age"))
+            .withFieldComputedF(_.height, _.age.parseDouble.toEitherList("bad double"))
             .transform ==> Left(List("empty name", "bad age", "bad double"))
         }
       }
@@ -152,8 +152,8 @@ object DslFSpec extends TestSuite {
       implicit val personTransformerEithers: TransformerF[Either[List[String], +*], PersonForm, Person] =
         Transformer
           .defineF[Either[List[String], +*], PersonForm, Person]
-          .withFieldComputedF(_.age, _.age.parseInt.toEither("bad age"))
-          .withFieldComputedF(_.height, _.height.parseDouble.toEither("bad height"))
+          .withFieldComputedF(_.age, _.age.parseInt.toEitherList("bad age"))
+          .withFieldComputedF(_.height, _.height.parseDouble.toEitherList("bad height"))
           .buildTransformer
 
       "success" - {
@@ -171,7 +171,7 @@ object DslFSpec extends TestSuite {
         "either" - {
           okTripForm
             .intoF[Either[List[String], +*], Trip]
-            .withFieldComputedF(_.id, tf => tf.tripId.parseInt.toEither("bad id"))
+            .withFieldComputedF(_.id, tf => tf.tripId.parseInt.toEitherList("bad id"))
             .transform ==> Right(Trip(100, Vector(Person("John", 10, 140), Person("Caroline", 12, 155))))
         }
       }
@@ -190,7 +190,7 @@ object DslFSpec extends TestSuite {
         "either" - {
           badTripForm
             .intoF[Either[List[String], +*], Trip]
-            .withFieldComputedF(_.id, tf => tf.tripId.parseInt.toEither("bad id"))
+            .withFieldComputedF(_.id, tf => tf.tripId.parseInt.toEitherList("bad id"))
             .transform ==> Left(List("bad height", "bad age"))
         }
       }
@@ -248,7 +248,7 @@ object DslFSpec extends TestSuite {
 
         "F = Either[List[String], +*]]" - {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
-            _.parseInt.toEither("bad int")
+            _.parseInt.toEitherList("bad int")
 
           Option("123").transformIntoF[Either[List[String], +*], Option[Int]] ==> Right(Some(123))
           Option("abc").transformIntoF[Either[List[String], +*], Option[Int]] ==> Left(List("bad int"))
@@ -286,7 +286,7 @@ object DslFSpec extends TestSuite {
 
         "F = Either[List[String], +*]]" - {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
-            _.parseInt.toEither("bad int")
+            _.parseInt.toEitherList("bad int")
 
           "10".transformIntoF[Either[List[String], +*], Option[Int]] ==> Right(Some(10))
           (null: String).transformIntoF[Either[List[String], +*], Option[Int]] ==> Right(None)
@@ -330,7 +330,7 @@ object DslFSpec extends TestSuite {
 
         "F = Either[List[String], +*]]" - {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
-            _.parseInt.toEither("bad int")
+            _.parseInt.toEitherList("bad int")
 
           Option("10").intoF[Either[List[String], +*], Int].enableUnsafeOption.transform ==> Right(10)
           Option("x").intoF[Either[List[String], +*], Int].enableUnsafeOption.transform ==> Left(List("bad int"))
@@ -378,7 +378,7 @@ object DslFSpec extends TestSuite {
 
         "F = Either[List[String], +*]]" - {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
-            _.parseInt.toEither("bad int")
+            _.parseInt.toEitherList("bad int")
 
           List("123", "456").transformIntoF[Either[List[String], +*], List[Int]] ==> Right(List(123, 456))
           Vector("123", "456").transformIntoF[Either[List[String], +*], Queue[Int]] ==> Right(Queue(123, 456))
@@ -467,7 +467,7 @@ object DslFSpec extends TestSuite {
 
         "F = Either[List[String], +*]]" - {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
-            _.parseInt.toEither("bad int")
+            _.parseInt.toEitherList("bad int")
 
           Map("1" -> "10", "2" -> "20").transformIntoF[Either[List[String], +*], Map[Int, Int]] ==>
             Right(Map(1 -> 10, 2 -> 20))
@@ -565,7 +565,7 @@ object DslFSpec extends TestSuite {
 
         "F = Either[List[String], +*]]" - {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
-            _.parseInt.toEither("bad int")
+            _.parseInt.toEitherList("bad int")
 
           (Left("1"): Either[String, String]).transformIntoF[Either[List[String], +*], Either[Int, Int]] ==>
             Right(Left(1))
@@ -607,7 +607,7 @@ object DslFSpec extends TestSuite {
 
           implicit val intPrinter: Transformer[Int, String] = _.toString
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
-            _.parseInt.toEither("bad int")
+            _.parseInt.toEitherList("bad int")
 
           (Left("1"): Either[String, Int]).transformIntoF[Either[List[String], +*], Either[Int, String]] ==>
             Right(Left(1))
@@ -634,7 +634,7 @@ object DslFSpec extends TestSuite {
         implicit val intPrinter: Transformer[Int, String] = _.toString
 
         "F = Option" - {
-          import ScalesTransformer.shortToLongPureInner
+          import ScalesTransformerF.shortToLongPureInner
 
           (short.Zero: short.NumScale[Int, Nothing])
             .transformIntoF[Option, long.NumScale[String]] ==> Some(long.Zero)
@@ -647,7 +647,7 @@ object DslFSpec extends TestSuite {
         }
 
         "F = Either[List[String], +*]]" - {
-          import ScalesTransformer.shortToLongPureInner
+          import ScalesTransformerF.shortToLongPureInner
 
           (short.Zero: short.NumScale[Int, Nothing])
             .transformIntoF[Either[List[String], +*], long.NumScale[String]] ==> Right(long.Zero)
@@ -665,7 +665,7 @@ object DslFSpec extends TestSuite {
         "F = Option" - {
           implicit val intParserOpt: TransformerF[Option, String, Int] = _.parseInt
 
-          import ScalesTransformer.shortToLongWrappedInner
+          import ScalesTransformerF.shortToLongWrappedInner
 
           (short.Zero: short.NumScale[String, Nothing])
             .transformIntoF[Option, long.NumScale[Int]] ==> Some(long.Zero)
@@ -686,9 +686,9 @@ object DslFSpec extends TestSuite {
 
         "F = Either[List[String], +*]]" - {
           implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
-            _.parseInt.toEither("bad int")
+            _.parseInt.toEitherList("bad int")
 
-          import ScalesTransformer.shortToLongWrappedInner
+          import ScalesTransformerF.shortToLongWrappedInner
 
           (short.Zero: short.NumScale[String, Nothing])
             .transformIntoF[Either[List[String], +*], long.NumScale[Int]] ==> Right(long.Zero)
@@ -769,7 +769,7 @@ object DslFSpec extends TestSuite {
       type F[+A] = Either[List[String], A]
 
       implicit val intParserEither: TransformerF[F, String, Int] =
-        _.parseInt.toEither("bad int")
+        _.parseInt.toEitherList("bad int")
 
       implicit def optionUnwrapping[A, B](implicit underlying: TransformerF[F, A, B]): TransformerF[F, Option[A], B] = {
         case Some(value) => underlying.transform(value)
@@ -857,7 +857,7 @@ object DslFSpec extends TestSuite {
       }
 
       implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
-        _.parseInt.toEither("bad int")
+        _.parseInt.toEitherList("bad int")
 
       case class Foo(foo: String)
 
