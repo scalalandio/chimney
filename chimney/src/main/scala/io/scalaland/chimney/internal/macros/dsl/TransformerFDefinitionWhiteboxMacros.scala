@@ -54,8 +54,6 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslM
   }
 
   def withFieldComputedImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
       T: WeakTypeTag,
       U: WeakTypeTag,
       C: WeakTypeTag
@@ -76,8 +74,6 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslM
   }
 
   def withFieldComputedFImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
       T: WeakTypeTag,
       U: WeakTypeTag,
       C: WeakTypeTag,
@@ -103,10 +99,6 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslM
   }
 
   def withFieldRenamedImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
-      T: WeakTypeTag,
-      U: WeakTypeTag,
       C: WeakTypeTag
   ](selectorFrom: Tree, selectorTo: Tree): Tree = {
 
@@ -128,7 +120,6 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslM
   }
 
   def withCoproductInstanceImpl[
-      From: WeakTypeTag,
       To: WeakTypeTag,
       Inst: WeakTypeTag,
       C: WeakTypeTag
@@ -137,7 +128,6 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslM
   }
 
   def withCoproductInstanceFImpl[
-      From: WeakTypeTag,
       To: WeakTypeTag,
       Inst: WeakTypeTag,
       C: WeakTypeTag

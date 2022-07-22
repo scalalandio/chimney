@@ -62,7 +62,7 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
       selector: To => T,
       map: From => U
   ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerFDefinitionWhiteboxMacros.withFieldComputedImpl[From, To, T, U, C]
+    macro TransformerFDefinitionWhiteboxMacros.withFieldComputedImpl[T, U, C]
 
   /** Use `map` provided here to compute wrapped value of field picked using `selector`.
     *
@@ -77,7 +77,7 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
       selector: To => T,
       map: From => F[U]
   ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerFDefinitionWhiteboxMacros.withFieldComputedFImpl[From, To, T, U, C, F]
+    macro TransformerFDefinitionWhiteboxMacros.withFieldComputedFImpl[T, U, C, F]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
     *
@@ -92,7 +92,7 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
       selectorFrom: From => T,
       selectorTo: To => U
   ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerFDefinitionWhiteboxMacros.withFieldRenamedImpl[From, To, T, U, C]
+    macro TransformerFDefinitionWhiteboxMacros.withFieldRenamedImpl[C]
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
     *
@@ -108,7 +108,7 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
   def withCoproductInstance[Inst <: From](
       f: Inst => To
   ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerFDefinitionWhiteboxMacros.withCoproductInstanceImpl[From, To, Inst, C]
+    macro TransformerFDefinitionWhiteboxMacros.withCoproductInstanceImpl[To, Inst, C]
 
   /** Use `f` to calculate the (missing) wrapped coproduct instance when mapping one coproduct into another
     *
@@ -122,7 +122,7 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
     */
   def withCoproductInstanceF[Inst](f: Inst => F[To]): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
-    macro TransformerFDefinitionWhiteboxMacros.withCoproductInstanceFImpl[From, To, Inst, C]
+    macro TransformerFDefinitionWhiteboxMacros.withCoproductInstanceFImpl[To, Inst, C]
 
   /** Build TransformerF using current configuration.
     *
