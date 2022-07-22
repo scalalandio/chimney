@@ -116,3 +116,5 @@ HTML Documentation should be generated at `target/sphinx/html/index.html`.
 
 Thanks to [JProfiler (Java profiler)](https://www.ej-technologies.com/products/jprofiler/overview.html)
 for helping us develop the library and allowing us to use it during development.
+
+Thanks to [SwissBorg](https://swissborg.com) for sponsoring the development time for this project.
