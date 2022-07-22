@@ -58,7 +58,7 @@ val settings = Seq(
     "-Ywarn-unused:locals",
     "-Ywarn-unused:imports",
     "-Ywarn-macros:after",
-    "-Xfatal-warnings",
+//    "-Xfatal-warnings",
     "-language:higherKinds"
   ),
   scalacOptions ++= (

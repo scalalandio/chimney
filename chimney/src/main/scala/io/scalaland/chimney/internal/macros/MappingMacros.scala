@@ -71,15 +71,28 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
       config: TransformerConfig
   ): Map[Target, TransformerBodyTree] = {
     targets.flatMap { target =>
-      config.fieldOverrides.get(target.name) match {
-        case Some(FieldOverride.Const) =>
+      config.fieldOverrides.get(target.name).flatMap {
+        // TODO: remove duplicated code here
+        case FieldOverride.Const =>
           Some {
             target -> TransformerBodyTree(
               config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, target.tpe),
               DerivationTarget.TotalTransformer
             )
           }
-        case Some(FieldOverride.ConstF) if config.derivationTarget.isInstanceOf[DerivationTarget.LiftedTransformer] =>
+        case FieldOverride.ConstPartial if config.derivationTarget.isInstanceOf[DerivationTarget.PartialTransformer] =>
+          val fTargetTpe = config.derivationTarget.targetType(target.tpe)
+          Some {
+            target -> TransformerBodyTree(
+              q"""
+                ${config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, fTargetTpe)}.wrapErrorPaths(
+                  _root_.io.scalaland.chimney.PartialTransformer.ErrorPath.Accessor(${target.name}, _)
+                )
+              """,
+              config.derivationTarget
+            )
+          }
+        case FieldOverride.ConstF if config.derivationTarget.isInstanceOf[DerivationTarget.LiftedTransformer] =>
           val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
             target -> TransformerBodyTree(
@@ -87,7 +100,21 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
               config.derivationTarget
             )
           }
-        case Some(FieldOverride.Computed) =>
+        case FieldOverride.Computed if config.derivationTarget.isInstanceOf[DerivationTarget.PartialTransformer] =>
+          val function = config.transformerDefinitionPrefix.accessOverriddenComputedFunction(target.name, From, target.tpe)
+          val liftedFunction = q"_root_.io.scalaland.chimney.PartialTransformer.Result.fromFunction($function)"
+          Some {
+            target -> TransformerBodyTree(
+              q"""
+                ${liftedFunction.callUnaryApply(srcPrefixTree)}
+                  .wrapErrorPaths(
+                    _root_.io.scalaland.chimney.PartialTransformer.ErrorPath.Accessor(${target.name}, _)
+                  )
+              """,
+              config.derivationTarget
+            )
+          }
+        case FieldOverride.Computed =>
           Some {
             target -> TransformerBodyTree(
               config.transformerDefinitionPrefix
@@ -96,8 +123,24 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
               DerivationTarget.TotalTransformer
             )
           }
-        case Some(FieldOverride.ComputedF)
-            if config.derivationTarget.isInstanceOf[DerivationTarget.LiftedTransformer] =>
+        case FieldOverride.ComputedPartial
+            if config.derivationTarget.isInstanceOf[DerivationTarget.PartialTransformer] =>
+          val fTargetTpe = config.derivationTarget.targetType(target.tpe)
+          Some {
+            target -> TransformerBodyTree(
+              q"""
+                ${config.transformerDefinitionPrefix
+                  .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
+                  .callUnaryApply(srcPrefixTree)}
+                  .wrapErrorPaths(
+                    _root_.io.scalaland.chimney.PartialTransformer.ErrorPath.Accessor(${target.name}, _)
+                  )
+              """,
+              config.derivationTarget
+            )
+          }
+        case FieldOverride.ComputedF
+          if config.derivationTarget.isInstanceOf[DerivationTarget.LiftedTransformer] =>
           val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
             target -> TransformerBodyTree(

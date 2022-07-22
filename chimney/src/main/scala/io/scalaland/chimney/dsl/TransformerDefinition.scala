@@ -35,6 +35,10 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   def lift[F[+_]]: TransformerFDefinition[F, From, To, WrapperType[F, C], Flags] =
     new TransformerFDefinition[F, From, To, WrapperType[F, C], Flags](overrides, instances)
 
+  // TODO: scaladoc
+  def partial: PartialTransformerDefinition[From, To, C, Flags] =
+    new PartialTransformerDefinition[From, To, C, Flags](overrides, instances)
+
   /** Use `value` provided here for field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
