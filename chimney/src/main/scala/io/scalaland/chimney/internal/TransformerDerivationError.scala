@@ -28,7 +28,8 @@ final case class MissingTransformer(
     targetTypeName: String
 ) extends TransformerDerivationError
 
-final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName: String) extends TransformerDerivationError
+final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName: String)
+    extends TransformerDerivationError
 
 final case class CantFindCoproductInstanceTransformer(instance: String, sourceTypeName: String, targetTypeName: String)
     extends TransformerDerivationError
