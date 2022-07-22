@@ -271,6 +271,10 @@ trait MacroUtils extends CompanionUtils {
       q"$t.transform($input)"
     }
 
+    def callPartialTransform(input: Tree, failFastFlag: Tree): Tree = {
+      q"$t.transform($input, $failFastFlag)"
+    }
+
     def callUnaryApply(argTree: Tree): Tree = {
       q"$t.apply($argTree)"
     }
