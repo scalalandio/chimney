@@ -29,9 +29,9 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
       """
     }
 
-    def overrideField(fieldName: Name, valueTree: Tree, configWrapperTC: Type, underlyingConfigTpe: Type): Tree = {
+    def overrideField(fieldName: Name, overrideTree: Tree, configWrapperTC: Type, underlyingConfigTpe: Type): Tree = {
       c.prefix.tree
-        .addOverride(fieldName, valueTree)
+        .addOverride(fieldName, overrideTree)
         .refineConfig(configWrapperTC.applyTypeArgs(fieldName.toSingletonTpe, underlyingConfigTpe))
     }
 
@@ -77,8 +77,8 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
       q"$td.__refineTransformerDefinition($definitionRefinementFn)"
     }
 
-    def addOverride(fieldName: Name, value: Tree): Tree = {
-      q"$td.__addOverride(${fieldName.toNameLiteral}, $value)"
+    def addOverride(fieldName: Name, overrideTree: Tree): Tree = {
+      q"$td.__addOverride(${fieldName.toNameLiteral}, $overrideTree)"
     }
 
     def addInstance(fullInstName: String, fullTargetName: String, f: Tree): Tree = {
@@ -88,6 +88,5 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
     def refineConfig(cfgTpe: Type): Tree = {
       q"$td.__refineConfig[$cfgTpe]"
     }
-
   }
 }
