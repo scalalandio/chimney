@@ -1,11 +1,11 @@
 package io.scalaland.chimney.internal.macros.dsl
 
-import io.scalaland.chimney.internal.utils.{DslMacroUtils, TypeTestUtils}
+import io.scalaland.chimney.internal.utils.DslMacroUtils
 
 import scala.annotation.unused
 import scala.reflect.macros.whitebox
 
-class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslMacroUtils with TypeTestUtils {
+class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslMacroUtils {
 
   import CfgTpes._
   import c.universe._
