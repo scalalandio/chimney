@@ -389,7 +389,7 @@ object CatsValidatedSpec extends TestSuite {
 
         implicit val intPrinter: Transformer[Int, String] = _.toString
 
-        import ScalesTransformer.shortToLongPureInner
+        import ScalesTransformerF.shortToLongPureInner
 
         (short.Zero: short.NumScale[Int, Nothing])
           .intoF[ValidatedNec[String, +*], long.NumScale[String]]
@@ -410,7 +410,7 @@ object CatsValidatedSpec extends TestSuite {
         implicit val intParserValidated: TransformerF[ValidatedNec[String, +*], String, Int] =
           _.parseInt.toValidatedNec("bad int")
 
-        import ScalesTransformer.shortToLongWrappedInner
+        import ScalesTransformerF.shortToLongWrappedInner
 
         (short.Zero: short.NumScale[String, Nothing])
           .intoF[ValidatedNec[String, +*], long.NumScale[Int]]

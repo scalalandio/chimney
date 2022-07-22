@@ -2,6 +2,8 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.internal.{PatcherCfg, TransformerCfg, TransformerFlags}
 
+import scala.util.Try
+
 /** Main object to import in order to use Chimney's features
   */
 package object dsl {
@@ -35,6 +37,47 @@ package object dsl {
       transformer.transform(source)
   }
 
+  /** Provides partial transformer operations on values of any type.
+    *
+    * @param source wrapped source value
+    * @tparam From type of source value
+    */
+  implicit class PartialTransformerOps[From](private val source: From) extends AnyVal {
+
+    /** Allows to customize partial transformer generation to your target type.
+      *
+      * @tparam To target success type
+      * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+      */
+    final def intoPartial[To]: PartialTransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+      new PartialTransformerInto(source, new PartialTransformerDefinition(Map.empty, Map.empty))
+
+    /** Performs in-place partial transformation of captured source value to target type.
+      *
+      * If you want to customize transformer behavior, consider using
+      * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartially]] method.
+      *
+      * @see [[io.scalaland.chimney.PartialTransformer#derive]] for default implicit instance
+      * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
+      * @tparam To result target type of partial transformation
+      * @return partial transformation result value of target type `To`
+      */
+    final def transformIntoPartial[To](
+        implicit transformer: PartialTransformer[From, To]
+    ): PartialTransformer.Result[To] =
+      transformIntoPartial(failFast = false)
+
+    final def transformIntoPartial[To](failFast: Boolean)(
+        implicit transformer: PartialTransformer[From, To]
+    ): PartialTransformer.Result[To] =
+      transformer.transform(source, failFast)
+  }
+
+  /** Provides lifted transformer operations on values of any type.
+    *
+    * @param source wrapped source value
+    * @tparam From type of source value
+    */
   implicit class TransformerFOps[From](private val source: From) extends AnyVal {
 
     /** Allows to customize wrapped transformer generation to your target type.
@@ -47,7 +90,7 @@ package object dsl {
         : TransformerFInto[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
       new TransformerFInto(source, new TransformerFDefinition(Map.empty, Map.empty))
 
-    /** Performs in-place wrapped transformation of captured source value to target type.
+    /** Performs in-place lifted transformation of captured source value to target type.
       *
       * If you want to customize transformer behavior, consider using
       * [[io.scalaland.chimney.dsl.TransformerFOps#intoF]] method.
@@ -109,5 +152,35 @@ package object dsl {
       obj.patchUsing(patch)
       // $COVERAGE-ON$
     }
+  }
+
+  implicit class OptionPartialTransformerOps[T](private val option: Option[T]) extends AnyVal {
+    def toPartialTransformerResult: PartialTransformer.Result[T] =
+      PartialTransformer.Result.fromOption(option)
+    def toPartialTransformerResultOrErrors(ifEmpty: => PartialTransformer.Result.Errors): PartialTransformer.Result[T] =
+      PartialTransformer.Result.fromOptionOrErrors(option, ifEmpty)
+    def toPartialTransformerResultOrError(ifEmpty: => PartialTransformer.Error): PartialTransformer.Result[T] =
+      PartialTransformer.Result.fromOptionOrError(option, ifEmpty)
+    def toPartialTransformerResultOrString(ifEmpty: => String): PartialTransformer.Result[T] =
+      PartialTransformer.Result.fromOptionOrString(option, ifEmpty)
+    def toPartialTransformerResultOrStrings(ifEmpty: => Seq[String]): PartialTransformer.Result[T] =
+      PartialTransformer.Result.fromOptionOrStrings(option, ifEmpty)
+    def toPartialTransformerResultOrThrowable(ifEmpty: => Throwable): PartialTransformer.Result[T] =
+      PartialTransformer.Result.fromOptionOrThrowable(option, ifEmpty)
+  }
+
+  implicit class EitherStringPartialTransformerOps[T](private val either: Either[String, T]) extends AnyVal {
+    def toPartialTransformerResult: PartialTransformer.Result[T] =
+      PartialTransformer.Result.fromEitherString(either)
+  }
+
+  implicit class EitherStringsPartialTransformerOps[T](private val either: Either[Seq[String], T]) extends AnyVal {
+    def toPartialTransformerResult: PartialTransformer.Result[T] =
+      PartialTransformer.Result.fromEitherStrings(either)
+  }
+
+  implicit class TryPartialTransformerOps[T](private val `try`: Try[T]) extends AnyVal {
+    def toPartialTransformerResult: PartialTransformer.Result[T] =
+      PartialTransformer.Result.fromTry(`try`)
   }
 }
