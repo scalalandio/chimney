@@ -74,14 +74,14 @@ object DslSpec extends TestSuite {
                   .withFieldConst(_.z._1, 0.0)
                   .transform
                 """)
-              .check("", "Invalid selector!")
+              .check("", "Invalid selector expression")
 
             compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldConst(_.y + "abc", "pi")
                   .transform
                 """)
-              .check("", "Invalid selector!")
+              .check("", "Invalid selector expression")
 
             compileError("""
                 val haveY = HaveY("")
@@ -90,7 +90,7 @@ object DslSpec extends TestSuite {
                   .withFieldConst(cc => haveY.y, "pi")
                   .transform
                 """)
-              .check("", "Invalid selector!")
+              .check("", "Invalid selector expression")
           }
         }
 
@@ -169,14 +169,14 @@ object DslSpec extends TestSuite {
                   .withFieldComputed(_.z._1, _.z._1 * 10.0)
                   .transform
                 """)
-              .check("", "Invalid selector!")
+              .check("", "Invalid selector expression")
 
             compileError("""Bar(3, (3.14, 3.14))
                   .into[Foo]
                   .withFieldComputed(_.y + "abc", _.x.toString)
                   .transform
                 """)
-              .check("", "Invalid selector!")
+              .check("", "Invalid selector expression")
 
             compileError("""
                 val haveY = HaveY("")
@@ -185,7 +185,7 @@ object DslSpec extends TestSuite {
                   .withFieldComputed(cc => haveY.y, _.x.toString)
                   .transform
                 """)
-              .check("", "Invalid selector!")
+              .check("", "Invalid selector expression")
           }
         }
       }
@@ -349,7 +349,7 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(_.y + "abc", _.z)
               .transform
           """)
-          .check("", "Selector of type Foo => String is not valid")
+          .check("", "Invalid selector expression")
 
         compileError("""
             val haveY = HaveY("")
@@ -358,7 +358,7 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(cc => haveY.y, _.z)
               .transform
           """)
-          .check("", "Selector of type Foo => String is not valid")
+          .check("", "Invalid selector expression")
 
         compileError("""
             Foo(10, "something")
@@ -366,7 +366,7 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(_.y, _.z + "abc")
               .transform
           """)
-          .check("", "Selector of type Bar => String is not valid")
+          .check("", "Invalid selector expression")
 
         compileError("""
             val haveZ = HaveZ("")
@@ -375,7 +375,7 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(_.y, cc => haveZ.z)
               .transform
           """)
-          .check("", "Selector of type Bar => String is not valid")
+          .check("", "Invalid selector expression")
 
         compileError("""
             Foo(10, "something")
@@ -383,7 +383,7 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(_.y + "abc", _.z + "abc")
               .transform
           """)
-          .check("", "Selector of type Bar => String is not valid")
+          .check("", "Invalid selector expression")
 
         compileError("""
             val haveY = HaveY("")
@@ -393,7 +393,7 @@ object DslSpec extends TestSuite {
               .withFieldRenamed(cc => haveY.y, cc => haveZ.z)
               .transform
           """)
-          .check("", "Selector of type Foo => String is not valid")
+          .check("", "Invalid selector expression")
       }
 
       "not compile if relabelled - a wrong way" - {
