@@ -11,7 +11,7 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslMa
   import c.universe._
 
   def withFieldConstImpl[C: WeakTypeTag](selector: Tree, value: Tree)(@unused ev: Tree): Tree = {
-    c.prefix.tree.overrideField(selector.extractSelectorFieldName, value, fieldConstT, weakTypeOf[C])
+    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, value, fieldConstT)
   }
 
   def withFieldConstFImpl[F[+_]](selector: Tree, value: Tree)(@unused ev: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
@@ -19,8 +19,7 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslMa
   }
 
   def withFieldComputedImpl[C: WeakTypeTag](selector: Tree, f: Tree)(@unused ev: Tree): Tree = {
-    val fieldName = selector.extractSelectorFieldName
-    c.prefix.tree.overrideField(fieldName, f, fieldComputedT, weakTypeOf[C])
+    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, f, fieldComputedT)
   }
 
   def withFieldComputedFImpl[F[+_]](selector: Tree, f: Tree)(@unused ev: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
@@ -29,11 +28,11 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslMa
 
   def withFieldRenamedImpl[C: WeakTypeTag](selectorFrom: Tree, selectorTo: Tree): Tree = {
     val (fieldNameFrom, fieldNameTo) = (selectorFrom, selectorTo).extractSelectorsOrAbort
-    c.prefix.tree.renameField(fieldNameFrom, fieldNameTo, weakTypeOf[C])
+    c.prefix.tree.renameField[C](fieldNameFrom, fieldNameTo)
   }
 
   def withCoproductInstanceImpl[To: WeakTypeTag, Inst: WeakTypeTag, C: WeakTypeTag](f: Tree): Tree = {
-    c.prefix.tree.overrideCoproductInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceT, weakTypeOf[C])
+    c.prefix.tree.overrideCoproductInstance[C](weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceT)
   }
 
   def withCoproductInstanceFImpl[F[+_]](f: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {

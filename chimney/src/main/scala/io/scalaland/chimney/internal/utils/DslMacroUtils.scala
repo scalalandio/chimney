@@ -29,28 +29,27 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
       """
     }
 
-    def overrideField(fieldName: Name, overrideTree: Tree, configWrapperTC: Type, underlyingConfigTpe: Type): Tree = {
+    def overrideField[C: WeakTypeTag](fieldName: Name, overrideTree: Tree, configWrapperTC: Type): Tree = {
       c.prefix.tree
         .addOverride(fieldName, overrideTree)
-        .refineConfig(configWrapperTC.applyTypeArgs(fieldName.toSingletonTpe, underlyingConfigTpe))
+        .refineConfig(configWrapperTC.applyTypeArgs(fieldName.toSingletonTpe, weakTypeOf[C]))
     }
 
-    def overrideCoproductInstance(
+    def overrideCoproductInstance[C: WeakTypeTag](
         instTpe: Type,
         targetTpe: Type,
         f: Tree,
-        configWrapperTC: Type,
-        underlyingConfigTpe: Type
+        configWrapperTC: Type
     ): Tree = {
       c.prefix.tree
         .addInstance(instTpe.typeSymbol.fullName, targetTpe.typeSymbol.fullName, f)
-        .refineConfig(configWrapperTC.applyTypeArgs(instTpe, targetTpe, underlyingConfigTpe))
+        .refineConfig(configWrapperTC.applyTypeArgs(instTpe, targetTpe, weakTypeOf[C]))
     }
 
-    def renameField(fromName: TermName, toName: TermName, underlyingConfigTpe: Type): Tree = {
+    def renameField[C: WeakTypeTag](fromName: TermName, toName: TermName): Tree = {
       c.prefix.tree
         .refineConfig(
-          fieldRelabelledT.applyTypeArgs(fromName.toSingletonTpe, toName.toSingletonTpe, underlyingConfigTpe)
+          fieldRelabelledT.applyTypeArgs(fromName.toSingletonTpe, toName.toSingletonTpe, weakTypeOf[C])
         )
     }
 
