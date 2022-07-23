@@ -30,26 +30,16 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslM
     c.prefix.tree.overrideField(selector.extractSelectorFieldName, f, fieldComputedFT, weakTypeOf[C])
   }
 
-  def withFieldRenamedImpl[
-      C: WeakTypeTag
-  ](selectorFrom: Tree, selectorTo: Tree): Tree = {
+  def withFieldRenamedImpl[C: WeakTypeTag](selectorFrom: Tree, selectorTo: Tree): Tree = {
     val (fieldNameFrom, fieldNameTo) = (selectorFrom, selectorTo).extractSelectorsOrAbort
     c.prefix.tree.renameField(fieldNameFrom, fieldNameTo, weakTypeOf[C])
   }
 
-  def withCoproductInstanceImpl[
-      To: WeakTypeTag,
-      Inst: WeakTypeTag,
-      C: WeakTypeTag
-  ](f: Tree): Tree = {
+  def withCoproductInstanceImpl[To: WeakTypeTag, Inst: WeakTypeTag, C: WeakTypeTag](f: Tree): Tree = {
     c.prefix.tree.overrideCoproductInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceT, weakTypeOf[C])
   }
 
-  def withCoproductInstanceFImpl[
-      To: WeakTypeTag,
-      Inst: WeakTypeTag,
-      C: WeakTypeTag
-  ](f: Tree): Tree = {
+  def withCoproductInstanceFImpl[To: WeakTypeTag, Inst: WeakTypeTag, C: WeakTypeTag](f: Tree): Tree = {
     c.prefix.tree.overrideCoproductInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceFT, weakTypeOf[C])
   }
 

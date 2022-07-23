@@ -32,11 +32,7 @@ class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslMa
     c.prefix.tree.renameField(fieldNameFrom, fieldNameTo, weakTypeOf[C])
   }
 
-  def withCoproductInstanceImpl[
-      To: WeakTypeTag,
-      Inst: WeakTypeTag,
-      C: WeakTypeTag
-  ](f: Tree): Tree = {
+  def withCoproductInstanceImpl[To: WeakTypeTag, Inst: WeakTypeTag, C: WeakTypeTag](f: Tree): Tree = {
     c.prefix.tree.overrideCoproductInstance(weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceT, weakTypeOf[C])
   }
 
