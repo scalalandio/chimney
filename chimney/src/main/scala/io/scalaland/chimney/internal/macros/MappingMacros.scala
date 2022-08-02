@@ -57,9 +57,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
           fromGetters
             .map(lookupAccessor(config, lookupName, wasRenamed, From))
             .find(_ != AccessorResolution.NotFound)
-            .headOption
             .getOrElse(AccessorResolution.NotFound)
-
         }
       }
 
