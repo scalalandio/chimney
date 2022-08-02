@@ -31,11 +31,11 @@ trait TargetConstructorMacros extends Model {
       srcPrefixTree: Tree,
       instSymbol: Symbol,
       To: Type,
-      wrapperType: Option[Type]
+      derivationTarget: DerivationTarget
   ): Tree = {
     val instFullName = instSymbol.fullName
     val fullTargetName = To.typeSymbol.fullName
-    val finalTpe = wrapperType.map(_.applyTypeArg(To)).getOrElse(To)
+    val finalTpe = derivationTarget.targetType(To)
     q"""
       $transformerDefinitionPrefix
         .instances(($instFullName, $fullTargetName))
@@ -45,15 +45,12 @@ trait TargetConstructorMacros extends Model {
     """
   }
 
-  def mkTransformerBodyTree0(
-      config: TransformerConfig
-  )(
-      targetValueTree: Tree
-  ): Tree = {
-    if (config.wrapperType.isEmpty) {
-      targetValueTree
-    } else {
-      q"${config.wrapperSupportInstance}.pure($targetValueTree)"
+  def mkTransformerBodyTree0(derivationTarget: DerivationTarget)(targetValueTree: Tree): Tree = {
+    derivationTarget match {
+      case DerivationTarget.TotalTransformer =>
+        targetValueTree
+      case DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _) =>
+        q"${wrapperSupportInstance}.pure($targetValueTree)"
     }
   }
 
@@ -61,11 +58,11 @@ trait TargetConstructorMacros extends Model {
       To: Type,
       target: Target,
       transformerBodyTree: TransformerBodyTree,
-      config: TransformerConfig
+      derivationTarget: DerivationTarget
   )(
       mkTargetValueTree: Tree => Tree
   ): Tree = {
-    mkTransformerBodyTree(To, Seq(target), Seq(transformerBodyTree), config) {
+    mkTransformerBodyTree(To, Seq(target), Seq(transformerBodyTree), derivationTarget) {
       case Seq(innerTree) => mkTargetValueTree(innerTree)
     }
   }
@@ -74,48 +71,47 @@ trait TargetConstructorMacros extends Model {
       To: Type,
       targets: Seq[Target],
       bodyTreeArgs: Seq[TransformerBodyTree],
-      config: TransformerConfig
+      derivationTarget: DerivationTarget
   )(
       mkTargetValueTree: Seq[Tree] => Tree
   ): Tree = {
-    if (config.wrapperType.isEmpty) {
-      mkTargetValueTree(bodyTreeArgs.map(_.tree))
-    } else {
-      val fSupport = config.wrapperSupportInstance
+    derivationTarget match {
+      case DerivationTarget.TotalTransformer =>
+        mkTargetValueTree(bodyTreeArgs.map(_.tree))
+      case DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _) =>
+        val (pureArgs, wrappedArgs) = (targets zip bodyTreeArgs).partition(_._2.isTotalTarget)
 
-      val (wrappedArgs, pureArgs) = (targets zip bodyTreeArgs).partition(_._2.isWrapped)
+        if (wrappedArgs.isEmpty) {
+          q"$wrapperSupportInstance.pure(${mkTargetValueTree(bodyTreeArgs.map(_.tree))})"
+        } else {
 
-      if (wrappedArgs.isEmpty) {
-        q"$fSupport.pure(${mkTargetValueTree(bodyTreeArgs.map(_.tree))})"
-      } else {
+          val (wrappedTargets, wrappedBodyTrees) = wrappedArgs.unzip
+          val wrappedTrees = wrappedBodyTrees.map(_.tree)
+          val productF = wrappedTrees.reduceRight { (tree, rest) =>
+            q"$wrapperSupportInstance.product($tree, $rest)"
+          }
 
-        val (wrappedTargets, wrappedBodyTrees) = wrappedArgs.unzip
-        val wrappedTrees = wrappedBodyTrees.map(_.tree)
-        val productF = wrappedTrees.reduceRight { (tree, rest) =>
-          q"$fSupport.product($tree, $rest)"
+          val argNames = wrappedTargets.map(target => freshTermName(target.name))
+          val argTypes = wrappedTargets.map(_.tpe)
+          val bindTreesF = argNames.map { termName =>
+            Bind(termName, Ident(termNames.WILDCARD))
+          }
+          val productType = argTypes.map(tpe => tq"$tpe").reduceRight[Tree]((param, tree) => tq"($param, $tree)")
+          val patternF = bindTreesF.reduceRight[Tree]((param, tree) => pq"(..${List(param, tree)})")
+
+          val patRefArgsMap = (wrappedTargets zip argNames).map { case (target, argName) => target -> q"$argName" }.toMap
+          val pureArgsMap = pureArgs.map { case (target, bt)                             => target -> bt.tree }.toMap
+          val argsMap = pureArgsMap ++ patRefArgsMap
+
+          val updatedArgs = targets.map(argsMap)
+
+          q"""
+            $wrapperSupportInstance.map[$productType, $To](
+              $productF,
+              { case $patternF => ${mkTargetValueTree(updatedArgs)} }
+            )
+          """
         }
-
-        val argNames = wrappedTargets.map(target => freshTermName(target.name))
-        val argTypes = wrappedTargets.map(_.tpe)
-        val bindTreesF = argNames.map { termName =>
-          Bind(termName, Ident(termNames.WILDCARD))
-        }
-        val productType = argTypes.map(tpe => tq"$tpe").reduceRight[Tree]((param, tree) => tq"($param, $tree)")
-        val patternF = bindTreesF.reduceRight[Tree]((param, tree) => pq"(..${List(param, tree)})")
-
-        val patRefArgsMap = (wrappedTargets zip argNames).map { case (target, argName) => target -> q"$argName" }.toMap
-        val pureArgsMap = pureArgs.map { case (target, bt)                             => target -> bt.tree }.toMap
-        val argsMap = pureArgsMap ++ patRefArgsMap
-
-        val updatedArgs = targets.map(argsMap)
-
-        q"""
-          $fSupport.map[$productType, $To](
-            $productF,
-            { case $patternF => ${mkTargetValueTree(updatedArgs)} }
-          )
-        """
-      }
     }
   }
 }
