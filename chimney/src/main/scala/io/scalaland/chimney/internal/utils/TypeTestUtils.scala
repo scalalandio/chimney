@@ -2,8 +2,7 @@ package io.scalaland.chimney.internal.utils
 
 import scala.reflect.macros.blackbox
 
-trait DerivationGuards {
-  this: MacroUtils =>
+trait TypeTestUtils extends MacroUtils {
 
   val c: blackbox.Context
 

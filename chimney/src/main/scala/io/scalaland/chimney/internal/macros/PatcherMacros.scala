@@ -1,12 +1,10 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.utils.{DerivationGuards, MacroUtils}
-import io.scalaland.chimney.internal.{DerivationError, PatcherConfiguration}
+import io.scalaland.chimney.internal.{TransformerDerivationError, PatcherConfiguration}
 
 import scala.reflect.macros.blackbox
 
-trait PatcherMacros extends PatcherConfiguration {
-  this: TransformerMacros with DerivationGuards with MacroUtils =>
+trait PatcherMacros extends PatcherConfiguration with TransformerMacros {
 
   val c: blackbox.Context
 
@@ -100,7 +98,7 @@ trait PatcherMacros extends PatcherConfiguration {
                 pParam.name -> q"$transformerTree.orElse($entityField)"
               }
               .left
-              .map(DerivationError.printErrors)
+              .map(TransformerDerivationError.printErrors)
           }
         }
       case Some(tParam) if patchParamTpe <:< tParam.resultTypeIn(T) =>
@@ -123,9 +121,9 @@ trait PatcherMacros extends PatcherConfiguration {
                     pParam.name -> q"if($patchField.isDefined) { $innerTransformerTree } else { $entityField }"
                   }
                   .left
-                  .map(errors2 => DerivationError.printErrors(errors ++ errors2))
+                  .map(errors2 => TransformerDerivationError.printErrors(errors ++ errors2))
               } else {
-                Left(DerivationError.printErrors(errors))
+                Left(TransformerDerivationError.printErrors(errors))
               }
             }
         )

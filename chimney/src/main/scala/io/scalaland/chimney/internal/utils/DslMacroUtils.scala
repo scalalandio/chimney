@@ -13,7 +13,7 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
 
   implicit class TransformerDefinitionTreeOps(td: Tree) {
 
-    def accessConst(name: String, targetTpe: Type): Tree = {
+    def accessOverriddenConstValue(name: String, targetTpe: Type): Tree = {
       q"""
         $td
           .overrides($name)
@@ -21,37 +21,35 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
       """
     }
 
-    def accessComputed(name: String, srcPrefixTree: Tree, fromTpe: Type, targetTpe: Type): Tree = {
+    def accessOverriddenComputedFunction(name: String, fromTpe: Type, targetTpe: Type): Tree = {
       q"""
         $td
           .overrides($name)
           .asInstanceOf[$fromTpe => $targetTpe]
-          .apply($srcPrefixTree)
       """
     }
 
-    def overrideField(fieldName: Name, valueTree: Tree, configWrapperTC: Type, underlyingConfigTpe: Type): Tree = {
+    def overrideField[C: WeakTypeTag](fieldName: Name, overrideTree: Tree, configWrapperTC: Type): Tree = {
       c.prefix.tree
-        .addOverride(fieldName, valueTree)
-        .refineConfig(configWrapperTC.applyTypeArgs(fieldName.toSingletonTpe, underlyingConfigTpe))
+        .addOverride(fieldName, overrideTree)
+        .refineConfig(configWrapperTC.applyTypeArgs(fieldName.toSingletonTpe, weakTypeOf[C]))
     }
 
-    def overrideInstance(
+    def overrideCoproductInstance[C: WeakTypeTag](
         instTpe: Type,
         targetTpe: Type,
         f: Tree,
-        configWrapperTC: Type,
-        underlyingConfigTpe: Type
+        configWrapperTC: Type
     ): Tree = {
       c.prefix.tree
         .addInstance(instTpe.typeSymbol.fullName, targetTpe.typeSymbol.fullName, f)
-        .refineConfig(configWrapperTC.applyTypeArgs(instTpe, targetTpe, underlyingConfigTpe))
+        .refineConfig(configWrapperTC.applyTypeArgs(instTpe, targetTpe, weakTypeOf[C]))
     }
 
-    def renameField(fromName: TermName, toName: TermName, underlyingConfigTpe: Type): Tree = {
+    def renameField[C: WeakTypeTag](fromName: TermName, toName: TermName): Tree = {
       c.prefix.tree
         .refineConfig(
-          fieldRelabelledT.applyTypeArgs(fromName.toSingletonTpe, toName.toSingletonTpe, underlyingConfigTpe)
+          fieldRelabelledT.applyTypeArgs(fromName.toSingletonTpe, toName.toSingletonTpe, weakTypeOf[C])
         )
     }
 
@@ -78,8 +76,8 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
       q"$td.__refineTransformerDefinition($definitionRefinementFn)"
     }
 
-    def addOverride(fieldName: Name, value: Tree): Tree = {
-      q"$td.__addOverride(${fieldName.toNameLiteral}, $value)"
+    def addOverride(fieldName: Name, overrideTree: Tree): Tree = {
+      q"$td.__addOverride(${fieldName.toNameLiteral}, $overrideTree)"
     }
 
     def addInstance(fullInstName: String, fullTargetName: String, f: Tree): Tree = {
@@ -89,6 +87,5 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
     def refineConfig(cfgTpe: Type): Tree = {
       q"$td.__refineConfig[$cfgTpe]"
     }
-
   }
 }
