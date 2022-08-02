@@ -865,8 +865,8 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       Seq(
         NotSupportedTransformerDerivation(
           toFieldName(srcPrefixTree),
-          fromTpe.typeSymbol.fullName.toString,
-          toTpe.typeSymbol.fullName.toString
+          fromTpe.typeSymbol.fullName,
+          toTpe.typeSymbol.fullName
         )
       )
     }
