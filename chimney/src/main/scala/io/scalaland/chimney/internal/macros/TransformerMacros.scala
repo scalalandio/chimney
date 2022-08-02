@@ -823,10 +823,6 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
     inferImplicitTpe(searchTypeTree, macrosDisabled = false).filterNot(isDeriving)
   }
 
-  def findTransformerErrorPathSupportOpt(wrapperType: Option[Type]): Option[Tree] = {
-    wrapperType.flatMap(findTransformerErrorPathSupport)
-  }
-
   def findTransformerErrorPathSupport(wrapperType: Type): Option[Tree] = {
     inferImplicitTpe(tq"_root_.io.scalaland.chimney.TransformerFErrorPathSupport[$wrapperType]", macrosDisabled = true)
   }
