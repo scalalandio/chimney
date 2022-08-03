@@ -7,6 +7,7 @@ object fixtures {
   case class Simple(a: Int, b: Double, c: String, d: Option[String])
   case class SimpleOutput(a: Int, b: Double, c: String, d: Option[String])
 
+  // format: off
   case class Long(
     a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int, j: Int,
     k: Int, l: Int, m: Int, n: Int, o: Int, p: Int, q: Int, r: Int, s: Int, t: Int,
@@ -179,17 +180,19 @@ object fixtures {
       sample.cm, sample.cn, sample.co, sample.cp, sample.cq, sample.cr, sample.cs, sample.ct, sample.cu, sample.cv
     )
 
+  // format: on
+
   final def color2Channel(color: Color): Channel = color match {
-    case Color.Blue => Channel.Blue
+    case Color.Blue  => Channel.Blue
     case Color.Green => Channel.Green
-    case Color.Red => Channel.Red
+    case Color.Red   => Channel.Red
   }
 
   final def channel2Color(channel: Channel): Color = channel match {
     case Channel.Alpha => Color.Blue
-    case Channel.Blue => Color.Blue
+    case Channel.Blue  => Color.Blue
     case Channel.Green => Color.Green
-    case Channel.Red => Color.Red
+    case Channel.Red   => Color.Red
   }
 
   final def plainToRich(person: plain.Person): rich.Person =
