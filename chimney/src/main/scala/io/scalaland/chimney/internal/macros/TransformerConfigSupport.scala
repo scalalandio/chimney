@@ -2,7 +2,6 @@ package io.scalaland.chimney.internal.macros
 
 import io.scalaland.chimney.internal.utils.MacroUtils
 
-import scala.language.existentials
 import scala.reflect.macros.blackbox
 
 trait TransformerConfigSupport extends MacroUtils {
@@ -11,20 +10,11 @@ trait TransformerConfigSupport extends MacroUtils {
 
   import c.universe._
 
-  def readConfig[C: WeakTypeTag, InstanceFlags: WeakTypeTag, ScopeFlags: WeakTypeTag](
-      wrapperSupportInstance: Tree
-  ): TransformerConfig = {
-    val C = weakTypeOf[C]
-    val InstanceFlags = weakTypeOf[InstanceFlags]
-    val ScopeFlags = weakTypeOf[ScopeFlags]
+  def readConfig[C: WeakTypeTag, InstanceFlags: WeakTypeTag, ScopeFlags: WeakTypeTag]: TransformerConfig = {
+    val scopeFlags = captureTransformerFlags(weakTypeOf[ScopeFlags])
+    val combinedFlags = captureTransformerFlags(weakTypeOf[InstanceFlags], scopeFlags)
 
-    val scopeFlags = captureTransformerFlags(ScopeFlags)
-    val combinedFlags = captureTransformerFlags(InstanceFlags, scopeFlags)
-
-    captureTransformerConfig(C).copy(
-      flags = combinedFlags,
-      wrapperSupportInstance = wrapperSupportInstance
-    )
+    captureTransformerConfig(weakTypeOf[C]).copy(flags = combinedFlags)
   }
 
   sealed abstract class FieldOverride(val needValueLevelAccess: Boolean)
@@ -37,17 +27,43 @@ trait TransformerConfigSupport extends MacroUtils {
     case class RenamedFrom(sourceName: String) extends FieldOverride(false)
   }
 
+  sealed trait DerivationTarget {
+    def targetType(toTpe: Type): Type
+  }
+  object DerivationTarget {
+    // derivation target instance of `Transformer[A, B]`
+    case object TotalTransformer extends DerivationTarget {
+      def targetType(toTpe: Type): Type = toTpe
+
+    }
+    // derivation target instace of `TransformerF[F, A, B]`, where F is wrapper type
+    case class LiftedTransformer(
+        wrapperType: Type,
+        wrapperSupportInstance: Tree = EmptyTree,
+        wrapperErrorPathSupportInstance: Option[Tree] = None
+    ) extends DerivationTarget {
+      def targetType(toTpe: Type): Type = wrapperType.applyTypeArg(toTpe)
+    }
+  }
+
   case class TransformerConfig(
+      derivationTarget: DerivationTarget = DerivationTarget.TotalTransformer,
       flags: TransformerFlags = TransformerFlags(),
       fieldOverrides: Map[String, FieldOverride] = Map.empty,
       coproductInstances: Set[(Symbol, Type)] = Set.empty, // pair: inst type, target type
       transformerDefinitionPrefix: Tree = EmptyTree,
       definitionScope: Option[(Type, Type)] = None,
-      wrapperType: Option[Type] = None,
-      wrapperSupportInstance: Tree = EmptyTree,
-      wrapperErrorPathSupportInstance: Option[Tree] = None,
       coproductInstancesF: Set[(Symbol, Type)] = Set.empty // pair: inst type, target type
   ) {
+
+    def withDerivationTarget(derivationTarget: DerivationTarget): TransformerConfig = {
+      copy(derivationTarget = derivationTarget)
+    }
+
+    def withTransformerDefinitionPrefix(tdPrefix: Tree): TransformerConfig =
+      copy(transformerDefinitionPrefix = tdPrefix)
+    def withDefinitionScope(fromTpe: Type, toTpe: Type): TransformerConfig =
+      copy(definitionScope = Some((fromTpe, toTpe)))
 
     def rec: TransformerConfig =
       copy(
@@ -92,6 +108,25 @@ trait TransformerConfigSupport extends MacroUtils {
     val wrapperTypeT: Type = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
   }
 
+  def extractWrapperType(rawCfgTpe: Type): Type = {
+    import CfgTpes._
+    val cfgTpe = rawCfgTpe.dealias
+    if (cfgTpe =:= emptyT) {
+      // $COVERAGE-OFF$
+      c.abort(c.enclosingPosition, "Expected WrapperType passed to transformer configuration!")
+      // $COVERAGE-ON$
+    } else if (cfgTpe.typeConstructor =:= wrapperTypeT) {
+      val List(f, _) = cfgTpe.typeArgs
+      f
+    } else if (cfgTpe.typeArgs.nonEmpty) {
+      extractWrapperType(cfgTpe.typeArgs.last)
+    } else {
+      // $COVERAGE-OFF$
+      c.abort(c.enclosingPosition, "Bad internal transformer config type shape!")
+      // $COVERAGE-ON$
+    }
+  }
+
   def captureTransformerConfig(rawCfgTpe: Type): TransformerConfig = {
 
     import CfgTpes._
@@ -117,9 +152,8 @@ trait TransformerConfigSupport extends MacroUtils {
     } else if (cfgTpe.typeConstructor =:= coproductInstanceT) {
       val List(instanceType, targetType, rest) = cfgTpe.typeArgs
       captureTransformerConfig(rest).coproductInstance(instanceType, targetType)
-    } else if (cfgTpe.typeConstructor =:= wrapperTypeT) {
-      val List(f, rest) = cfgTpe.typeArgs
-      captureTransformerConfig(rest).copy(wrapperType = Some(f))
+    } else if (cfgTpe.typeConstructor =:= wrapperTypeT) { // extracted already at higher level by extractWrapperType
+      captureTransformerConfig(cfgTpe.typeArgs.last)
     } else if (cfgTpe.typeConstructor =:= fieldConstFT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString

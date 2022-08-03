@@ -264,7 +264,6 @@ object IssuesSpec extends TestSuite {
     }
 
     "fix issue #149" - {
-      import language.higherKinds
 
       "example 1" - {
         case class EntryId(id: Int)

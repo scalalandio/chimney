@@ -57,9 +57,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
           fromGetters
             .map(lookupAccessor(config, lookupName, wasRenamed, From))
             .find(_ != AccessorResolution.NotFound)
-            .headOption
             .getOrElse(AccessorResolution.NotFound)
-
         }
       }
 
@@ -78,15 +76,15 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
           Some {
             target -> TransformerBodyTree(
               config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, target.tpe),
-              isWrapped = false
+              DerivationTarget.TotalTransformer
             )
           }
-        case Some(FieldOverride.ConstF) if config.wrapperType.isDefined =>
-          val fTargetTpe = config.wrapperType.get.applyTypeArg(target.tpe)
+        case Some(FieldOverride.ConstF) if config.derivationTarget.isInstanceOf[DerivationTarget.LiftedTransformer] =>
+          val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
             target -> TransformerBodyTree(
               config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, fTargetTpe),
-              isWrapped = true
+              config.derivationTarget
             )
           }
         case Some(FieldOverride.Computed) =>
@@ -95,17 +93,18 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
               config.transformerDefinitionPrefix
                 .accessOverriddenComputedFunction(target.name, From, target.tpe)
                 .callUnaryApply(srcPrefixTree),
-              isWrapped = false
+              DerivationTarget.TotalTransformer
             )
           }
-        case Some(FieldOverride.ComputedF) if config.wrapperType.isDefined =>
-          val fTargetTpe = config.wrapperType.get.applyTypeArg(target.tpe)
+        case Some(FieldOverride.ComputedF)
+            if config.derivationTarget.isInstanceOf[DerivationTarget.LiftedTransformer] =>
+          val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
             target -> TransformerBodyTree(
               config.transformerDefinitionPrefix
                 .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
                 .callUnaryApply(srcPrefixTree),
-              isWrapped = true
+              config.derivationTarget
             )
           }
         case _ =>
@@ -127,21 +126,21 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
         if (config.flags.processDefaultValues && To.isCaseClass) {
           targetCaseClassDefaults
             .get(target.name)
-            .map(defaultValueTree => target -> TransformerBodyTree(defaultValueTree, isWrapped = false))
+            .map(defaultValueTree => target -> TransformerBodyTree(defaultValueTree, DerivationTarget.TotalTransformer))
         } else {
           None
         }
 
       def optionNoneFallback =
         if (config.flags.optionDefaultsToNone && isOption(target.tpe)) {
-          Some(target -> TransformerBodyTree(q"_root_.scala.None", isWrapped = false))
+          Some(target -> TransformerBodyTree(q"_root_.scala.None", DerivationTarget.TotalTransformer))
         } else {
           None
         }
 
       def unitFallback =
         if (isUnit(target.tpe)) {
-          Some(target -> TransformerBodyTree(q"()", isWrapped = false))
+          Some(target -> TransformerBodyTree(q"()", DerivationTarget.TotalTransformer))
         } else {
           None
         }

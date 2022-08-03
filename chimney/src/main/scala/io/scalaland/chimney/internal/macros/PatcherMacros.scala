@@ -12,7 +12,7 @@ trait PatcherMacros extends PatcherConfiguration with TransformerMacros {
 
   def expandPatch[T: WeakTypeTag, Patch: WeakTypeTag, C: WeakTypeTag]: Tree = {
     val C = weakTypeOf[C]
-    val piName = TermName(c.freshName("pi"))
+    val piName = freshTermName("pi")
     val config = capturePatcherConfig(C)
 
     val derivedPatcherTree = genPatcher[T, Patch](config).tree
