@@ -42,10 +42,12 @@ class ContainerTransformBenchmark extends CommonBenchmarkSettings {
   def mapTransformChimney: Map[String, SimpleOutput] = mapOfStrings2Simples.transformInto[Map[String, SimpleOutput]]
 
   @Benchmark
-  def mapTransformByHand: Map[String, SimpleOutput] = mapOfStrings2Simples.iterator.map(t => (t._1, doSimpleByHand(t._2))).toMap
+  def mapTransformByHand: Map[String, SimpleOutput] =
+    mapOfStrings2Simples.iterator.map(t => (t._1, doSimpleByHand(t._2))).toMap
 
   @Benchmark
-  def eitherTransformChimney: Either[String, SimpleOutput] = eitherOfStringOrSimple.transformInto[Either[String, SimpleOutput]]
+  def eitherTransformChimney: Either[String, SimpleOutput] =
+    eitherOfStringOrSimple.transformInto[Either[String, SimpleOutput]]
 
   @Benchmark
   def eitherTransformByHand: Either[String, SimpleOutput] = eitherOfStringOrSimple.map(doSimpleByHand)

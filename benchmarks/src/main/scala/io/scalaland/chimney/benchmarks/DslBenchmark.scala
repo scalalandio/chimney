@@ -8,7 +8,8 @@ class DslBenchmark extends CommonBenchmarkSettings {
   import fixtures._
 
   private val longRenameT: Transformer[Long, LongRenamedOutput] =
-    Transformer.define[Long, LongRenamedOutput]
+    Transformer
+      .define[Long, LongRenamedOutput]
       .withFieldRenamed(_.a, _.a$)
       .withFieldRenamed(_.b, _.b$)
       .withFieldRenamed(_.c, _.c$)
@@ -34,7 +35,8 @@ class DslBenchmark extends CommonBenchmarkSettings {
       .buildTransformer
 
   private val longComputeT: Transformer[Long, LongOutput] =
-    Transformer.define[Long, LongOutput]
+    Transformer
+      .define[Long, LongOutput]
       .withFieldComputed(_.a, _.a * 2)
       .withFieldComputed(_.b, _.b * 2)
       .withFieldComputed(_.c, _.c * 2)
@@ -60,7 +62,8 @@ class DslBenchmark extends CommonBenchmarkSettings {
       .buildTransformer
 
   private val longConstT: Transformer[Long, LongOutput] =
-    Transformer.define[Long, LongOutput]
+    Transformer
+      .define[Long, LongOutput]
       .withFieldConst(_.a, 834)
       .withFieldConst(_.b, 834)
       .withFieldConst(_.c, 834)
@@ -89,7 +92,8 @@ class DslBenchmark extends CommonBenchmarkSettings {
 
   @Benchmark
   def longWithRenamesChimneyWithDsl: LongRenamedOutput =
-    longSample.into[LongRenamedOutput]
+    longSample
+      .into[LongRenamedOutput]
       .withFieldRenamed(_.a, _.a$)
       .withFieldRenamed(_.b, _.b$)
       .withFieldRenamed(_.c, _.c$)
@@ -122,7 +126,8 @@ class DslBenchmark extends CommonBenchmarkSettings {
 
   @Benchmark
   def longWithComputeChimneyWithDsl: LongOutput =
-    longSample.into[LongOutput]
+    longSample
+      .into[LongOutput]
       .withFieldComputed(_.a, _.a * 2)
       .withFieldComputed(_.b, _.b * 2)
       .withFieldComputed(_.c, _.c * 2)
@@ -155,7 +160,8 @@ class DslBenchmark extends CommonBenchmarkSettings {
 
   @Benchmark
   def longWithConstChimneyWithDsl: LongOutput =
-    longSample.into[LongOutput]
+    longSample
+      .into[LongOutput]
       .withFieldConst(_.a, 834)
       .withFieldConst(_.b, 834)
       .withFieldConst(_.c, 834)

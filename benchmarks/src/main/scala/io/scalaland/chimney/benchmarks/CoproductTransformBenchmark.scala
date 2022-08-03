@@ -10,7 +10,12 @@ class CoproductTransformBenchmark extends CommonBenchmarkSettings {
   import fixtures._
 
   private val color2ChannelT = Transformer.derive[Color, Channel]
-  private val channel2ColorT = Transformer.define[Channel, Color].withCoproductInstance { (_: Channel.Alpha.type) => Color.Blue }.buildTransformer
+  private val channel2ColorT = Transformer
+    .define[Channel, Color]
+    .withCoproductInstance { (_: Channel.Alpha.type) =>
+      Color.Blue
+    }
+    .buildTransformer
 
   var color: Color = Color.Red
 
@@ -28,7 +33,9 @@ class CoproductTransformBenchmark extends CommonBenchmarkSettings {
     color
       .transformInto[Channel]
       .into[Color]
-      .withCoproductInstance { (_: Channel.Alpha.type) => Color.Blue }
+      .withCoproductInstance { (_: Channel.Alpha.type) =>
+        Color.Blue
+      }
       .transform
 
   @Benchmark
