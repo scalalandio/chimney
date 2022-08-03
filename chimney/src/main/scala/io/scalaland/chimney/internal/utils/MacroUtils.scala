@@ -34,14 +34,6 @@ trait MacroUtils extends CompanionUtils {
     def toSingletonTpe: ConstantType = c.internal.constantType(toNameConstant)
   }
 
-  type TypeConstructorTag[F[_]] = WeakTypeTag[F[Unit]]
-
-  object TypeConstructorTag {
-    def apply[F[_]: TypeConstructorTag]: Type = {
-      weakTypeOf[F[Unit]].typeConstructor
-    }
-  }
-
   implicit class TypeOps(t: Type) {
 
     def applyTypeArg(arg: Type): Type = {

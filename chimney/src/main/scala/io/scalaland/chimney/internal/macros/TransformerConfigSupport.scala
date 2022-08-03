@@ -57,14 +57,8 @@ trait TransformerConfigSupport extends MacroUtils {
       coproductInstancesF: Set[(Symbol, Type)] = Set.empty // pair: inst type, target type
   ) {
 
-    def withDerivationTarget(newDerivationTarget: DerivationTarget): TransformerConfig = {
-      // TODO: explain this hack
-      val finalDerivationTarget = (derivationTarget, newDerivationTarget) match {
-        case (oldLifted: DerivationTarget.LiftedTransformer, newLifted: DerivationTarget.LiftedTransformer) =>
-          newLifted.copy(wrapperType = oldLifted.wrapperType)
-        case _ => newDerivationTarget
-      }
-      copy(derivationTarget = finalDerivationTarget)
+    def withDerivationTarget(derivationTarget: DerivationTarget): TransformerConfig = {
+      copy(derivationTarget = derivationTarget)
     }
 
     def withTransformerDefinitionPrefix(tdPrefix: Tree): TransformerConfig =
@@ -115,6 +109,25 @@ trait TransformerConfigSupport extends MacroUtils {
     val wrapperTypeT: Type = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
   }
 
+  def extractWrapperType(rawCfgTpe: Type): Type = {
+    import CfgTpes._
+    val cfgTpe = rawCfgTpe.dealias
+    if (cfgTpe =:= emptyT) {
+      // $COVERAGE-OFF$
+      c.abort(c.enclosingPosition, "Expected WrapperType passed to transformer configuration!")
+      // $COVERAGE-ON$
+    } else if (cfgTpe.typeConstructor =:= wrapperTypeT) {
+      val List(f, _) = cfgTpe.typeArgs
+      f
+    } else if (cfgTpe.typeArgs.nonEmpty) {
+      extractWrapperType(cfgTpe.typeArgs.last)
+    } else {
+      // $COVERAGE-OFF$
+      c.abort(c.enclosingPosition, "Bad internal transformer config type shape!")
+      // $COVERAGE-ON$
+    }
+  }
+
   def captureTransformerConfig(rawCfgTpe: Type): TransformerConfig = {
 
     import CfgTpes._
@@ -140,11 +153,8 @@ trait TransformerConfigSupport extends MacroUtils {
     } else if (cfgTpe.typeConstructor =:= coproductInstanceT) {
       val List(instanceType, targetType, rest) = cfgTpe.typeArgs
       captureTransformerConfig(rest).coproductInstance(instanceType, targetType)
-    } else if (cfgTpe.typeConstructor =:= wrapperTypeT) {
-      val List(f, rest) = cfgTpe.typeArgs
-      captureTransformerConfig(rest).withDerivationTarget(
-        DerivationTarget.LiftedTransformer(wrapperType = f)
-      )
+    } else if (cfgTpe.typeConstructor =:= wrapperTypeT) { // extracted already at higher level by extractWrapperType
+      captureTransformerConfig(cfgTpe.typeArgs.last)
     } else if (cfgTpe.typeConstructor =:= fieldConstFT) {
       val List(fieldNameT, rest) = cfgTpe.typeArgs
       val fieldName = fieldNameT.singletonString
