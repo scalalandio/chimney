@@ -124,6 +124,18 @@ lazy val protos = crossProject(JSPlatform, JVMPlatform)
 lazy val protosJVM = protos.jvm
 lazy val protosJS = protos.js
 
+lazy val benchmarks = project
+  .in(file("benchmarks"))
+  .settings(settings: _*)
+  .settings(
+    moduleName := "chimney-benchmarks",
+    name := "chimney-benchmarks",
+    description := "Chimney benchmarking harness",
+    testFrameworks += new TestFramework("utest.runner.Framework"),
+  )
+  .dependsOn(chimney.jvm % "test->test;compile->compile")
+  .enablePlugins(JmhPlugin)
+
 
 lazy val publishSettings = Seq(
 
