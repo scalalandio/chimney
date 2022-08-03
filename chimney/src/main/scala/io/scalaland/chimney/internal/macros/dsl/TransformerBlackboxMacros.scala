@@ -48,8 +48,8 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       C: WeakTypeTag,
       InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
-  ](tc: c.Tree): c.Expr[To] = {
-    c.Expr[To](expandTransform[From, To, C, InstanceFlags, ScopeFlags](tc, DerivationTarget.TotalTransformer))
+  ](@unused tc: c.Tree): c.Expr[To] = {
+    c.Expr[To](expandTransform[From, To, C, InstanceFlags, ScopeFlags](DerivationTarget.TotalTransformer))
   }
 
   def transformFImpl[
@@ -66,7 +66,7 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
     val wrapperType = extractWrapperType(weakTypeOf[C])
     val derivationTarget =
       DerivationTarget.LiftedTransformer(wrapperType, tfs.tree, findTransformerErrorPathSupport(wrapperType))
-    c.Expr[F[To]](expandTransform[From, To, C, InstanceFlags, ScopeFlags](tc, derivationTarget))
+    c.Expr[F[To]](expandTransform[From, To, C, InstanceFlags, ScopeFlags](derivationTarget))
   }
 
   def deriveTransformerImpl[From: WeakTypeTag, To: WeakTypeTag]: c.Expr[chimney.Transformer[From, To]] = {

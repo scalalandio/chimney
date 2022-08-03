@@ -42,7 +42,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       C: WeakTypeTag,
       InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
-  ](@unused tcTree: Tree, derivationTarget: DerivationTarget): Tree = {
+  ](derivationTarget: DerivationTarget): Tree = {
     val tiName = freshTermName("ti")
 
     val config = readConfig[C, InstanceFlags, ScopeFlags]
