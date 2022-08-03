@@ -31,6 +31,7 @@ val settings = Seq(
     "-Xlint:stars-align",
     "-Xlint:type-parameter-shadow",
     "-Ywarn-unused:locals",
+    "-Ywarn-unused:imports",
     "-Ywarn-macros:after",
     "-Xfatal-warnings",
     "-language:higherKinds"

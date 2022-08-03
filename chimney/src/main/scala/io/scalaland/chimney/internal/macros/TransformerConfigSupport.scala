@@ -2,7 +2,6 @@ package io.scalaland.chimney.internal.macros
 
 import io.scalaland.chimney.internal.utils.MacroUtils
 
-import scala.language.existentials
 import scala.reflect.macros.blackbox
 
 trait TransformerConfigSupport extends MacroUtils {

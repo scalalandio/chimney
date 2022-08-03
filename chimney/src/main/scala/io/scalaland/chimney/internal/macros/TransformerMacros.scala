@@ -3,7 +3,6 @@ package io.scalaland.chimney.internal.macros
 import io.scalaland.chimney.internal._
 import io.scalaland.chimney.internal.utils.EitherUtils
 
-import scala.annotation.unused
 import scala.reflect.macros.blackbox
 
 trait TransformerMacros extends MappingMacros with TargetConstructorMacros with EitherUtils {

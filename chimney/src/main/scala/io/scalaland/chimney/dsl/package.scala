@@ -2,8 +2,6 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.internal.{PatcherCfg, TransformerCfg, TransformerFlags}
 
-import scala.language.experimental.macros
-
 /** Main object to import in order to use Chimney's features
   */
 package object dsl {
