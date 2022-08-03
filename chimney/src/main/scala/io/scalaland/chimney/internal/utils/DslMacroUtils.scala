@@ -62,7 +62,7 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
       // with this hack, we can work around scalac bugs
 
       val (name, tree) = valTree
-      val fnTermName = TermName(c.freshName(name))
+      val fnTermName = freshTermName(name)
       val fnMapTree = Map(name -> Ident(fnTermName))
       q"""
         {

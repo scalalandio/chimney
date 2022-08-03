@@ -14,7 +14,7 @@ trait TargetConstructorMacros extends Model {
 
   def mkNewJavaBean(classTpe: Type, argsMapping: Iterable[(Target, Tree)]): Tree = {
 
-    val fn = TermName(c.freshName(classTpe.typeSymbol.name.decodedName.toString.toLowerCase))
+    val fn = freshTermName(classTpe)
 
     val objCreation = q"val $fn = new $classTpe"
     val setterInvocations = argsMapping.map {

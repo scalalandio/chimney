@@ -25,8 +25,8 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
     if (!config.valueLevelAccessNeeded) {
       genTransformer[From, To](config)
     } else {
-      val tdName = TermName(c.freshName("td"))
-      val derivedTransformer = genTransformer[From, To](config.copy(transformerDefinitionPrefix = q"$tdName"))
+      val tdName = freshTermName("td")
+      val derivedTransformer = genTransformer[From, To](config.withTransformerDefinitionPrefix(q"$tdName"))
 
       q"""
         val $tdName = ${c.prefix.tree}
@@ -42,7 +42,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
   ](tcTree: Tree, derivationTarget: DerivationTarget): Tree = {
-    val tiName = TermName(c.freshName("ti"))
+    val tiName = freshTermName("ti")
 
     val config = readConfig[C, InstanceFlags, ScopeFlags]
       .withTransformerDefinitionPrefix(q"$tiName.td")
