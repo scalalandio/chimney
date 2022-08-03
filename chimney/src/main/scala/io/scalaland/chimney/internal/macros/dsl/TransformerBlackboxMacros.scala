@@ -4,6 +4,7 @@ import io.scalaland.chimney
 import io.scalaland.chimney.internal.macros.TransformerMacros
 import io.scalaland.chimney.{TransformerF, TransformerFSupport}
 
+import scala.annotation.unused
 import scala.reflect.macros.blackbox
 
 class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacros {
@@ -16,7 +17,7 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       C: WeakTypeTag,
       Flags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
-  ](tc: c.Tree): c.Expr[chimney.Transformer[From, To]] = {
+  ](@unused tc: c.Tree): c.Expr[chimney.Transformer[From, To]] = {
     c.Expr[chimney.Transformer[From, To]](
       buildDefinedTransformer[From, To, C, Flags, ScopeFlags](DerivationTarget.TotalTransformer)
     )
@@ -31,7 +32,7 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       ScopeFlags: WeakTypeTag
   ](
       tfs: c.Expr[TransformerFSupport[F]],
-      tc: c.Tree
+      @unused tc: c.Tree
   ): c.Expr[TransformerF[F, From, To]] = {
     val wrapperType = extractWrapperType(weakTypeOf[C])
     val derivationTarget =
@@ -59,7 +60,7 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
   ](
-      tc: c.Tree,
+      @unused tc: c.Tree,
       tfs: c.Expr[TransformerFSupport[F]]
   ): c.Expr[F[To]] = {
     val wrapperType = extractWrapperType(weakTypeOf[C])

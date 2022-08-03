@@ -3,6 +3,7 @@ package io.scalaland.chimney.internal.macros
 import io.scalaland.chimney.internal._
 import io.scalaland.chimney.internal.utils.EitherUtils
 
+import scala.annotation.unused
 import scala.reflect.macros.blackbox
 
 trait TransformerMacros extends MappingMacros with TargetConstructorMacros with EitherUtils {
@@ -41,7 +42,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       C: WeakTypeTag,
       InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
-  ](tcTree: Tree, derivationTarget: DerivationTarget): Tree = {
+  ](@unused tcTree: Tree, derivationTarget: DerivationTarget): Tree = {
     val tiName = freshTermName("ti")
 
     val config = readConfig[C, InstanceFlags, ScopeFlags]
@@ -51,7 +52,6 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
     val derivedTransformerTree = genTransformer[From, To](config)
 
     q"""
-       val _ = $tcTree // hack to avoid unused warnings
        val $tiName = ${c.prefix.tree}
        ${derivedTransformerTree.callTransform(q"$tiName.source")}
     """
