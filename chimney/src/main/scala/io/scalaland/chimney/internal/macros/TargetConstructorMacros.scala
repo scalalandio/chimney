@@ -2,11 +2,11 @@ package io.scalaland.chimney.internal.macros
 
 import io.scalaland.chimney.internal.utils.AssertUtils
 
+import io.scalaland.chimney.internal.utils.DslMacroUtils
+
 import scala.reflect.macros.blackbox
 
-import scala.collection.compat._
-
-trait TargetConstructorMacros extends Model with AssertUtils with GenTrees {
+trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils with GenTrees {
 
   val c: blackbox.Context
 
@@ -33,16 +33,13 @@ trait TargetConstructorMacros extends Model with AssertUtils with GenTrees {
   def mkCoproductInstance(
       transformerDefinitionPrefix: Tree,
       srcPrefixTree: Tree,
-      instSymbol: Symbol,
       To: Type,
+      runtimeDataIndex: Int,
       derivationTarget: DerivationTarget
   ): Tree = {
-    val instFullName = instSymbol.fullName
-    val fullTargetName = To.typeSymbol.fullName
     val finalTpe = derivationTarget.targetType(To)
     q"""
-      $transformerDefinitionPrefix
-        .instances(($instFullName, $fullTargetName))
+      ${transformerDefinitionPrefix.accessRuntimeData(runtimeDataIndex)}
         .asInstanceOf[Any => $finalTpe]
         .apply($srcPrefixTree)
         .asInstanceOf[$finalTpe]

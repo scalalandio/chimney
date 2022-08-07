@@ -71,31 +71,31 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
       config: TransformerConfig
   ): Map[Target, TransformerBodyTree] = {
     targets.flatMap { target =>
-      config.fieldOverrides.get(target.name).flatMap {
+      config.fieldOverrides.get(target.name) match {
 
-        case FieldOverride.Const =>
+        case Some(FieldOverride.Const(runtimeDataIdx)) =>
           Some {
             target -> TransformerBodyTree(
-              config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, target.tpe),
+              config.transformerDefinitionPrefix.accessOverriddenConstValue(runtimeDataIdx, target.tpe),
               DerivationTarget.TotalTransformer
             )
           }
 
-        case FieldOverride.ConstPartial if config.derivationTarget.isPartial =>
+        case Some(FieldOverride.ConstPartial(runtimeDataIdx)) if config.derivationTarget.isPartial =>
           val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
             target -> TransformerBodyTree(
               q"""
-                ${config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, fTargetTpe)}
+                ${config.transformerDefinitionPrefix.accessOverriddenConstValue(runtimeDataIdx, fTargetTpe)}
                   .prependErrorPath(${Trees.PathElement.accessor(target.name)})
               """,
               config.derivationTarget
             )
           }
 
-        case FieldOverride.Computed if config.derivationTarget.isPartial =>
+        case Some(FieldOverride.Computed(runtimeDataIdx)) if config.derivationTarget.isPartial =>
           val function =
-            config.transformerDefinitionPrefix.accessOverriddenComputedFunction(target.name, From, target.tpe)
+            config.transformerDefinitionPrefix.accessOverriddenComputedFunction(runtimeDataIdx, From, target.tpe)
           val liftedFunction = Trees.PartialResult.fromFunction(function)
           Some {
             target -> TransformerBodyTree(
@@ -107,23 +107,23 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
             )
           }
 
-        case FieldOverride.Computed =>
+        case Some(FieldOverride.Computed(runtimeDataIdx)) =>
           Some {
             target -> TransformerBodyTree(
               config.transformerDefinitionPrefix
-                .accessOverriddenComputedFunction(target.name, From, target.tpe)
+                .accessOverriddenComputedFunction(runtimeDataIdx, From, target.tpe)
                 .callUnaryApply(srcPrefixTree),
               DerivationTarget.TotalTransformer
             )
           }
 
-        case FieldOverride.ComputedPartial if config.derivationTarget.isPartial =>
+        case Some(FieldOverride.ComputedPartial(runtimeDataIdx)) if config.derivationTarget.isPartial =>
           val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
             target -> TransformerBodyTree(
               q"""
                 ${config.transformerDefinitionPrefix
-                .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
+                .accessOverriddenComputedFunction(runtimeDataIdx, From, fTargetTpe)
                 .callUnaryApply(srcPrefixTree)}
                   .prependErrorPath(${Trees.PathElement.accessor(target.name)})
               """,
@@ -133,21 +133,21 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
 
         // following cases (lifted ConstF/ComputedF) to be removed soon
 
-        case FieldOverride.ConstF if config.derivationTarget.isLifted =>
+        case Some(FieldOverride.ConstF(runtimeDataIdx)) if config.derivationTarget.isLifted =>
           val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
             target -> TransformerBodyTree(
-              config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, fTargetTpe),
+              config.transformerDefinitionPrefix.accessOverriddenConstValue(runtimeDataIdx, fTargetTpe),
               config.derivationTarget
             )
           }
 
-        case FieldOverride.ComputedF if config.derivationTarget.isLifted =>
+        case Some(FieldOverride.ComputedF(runtimeDataIdx)) if config.derivationTarget.isLifted =>
           val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
             target -> TransformerBodyTree(
               config.transformerDefinitionPrefix
-                .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
+                .accessOverriddenComputedFunction(runtimeDataIdx, From, fTargetTpe)
                 .callUnaryApply(srcPrefixTree),
               config.derivationTarget
             )
