@@ -27,7 +27,7 @@ package object dsl {
       * @since 0.1.0
       */
     final def into[To]: TransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
-      new TransformerInto(source, new TransformerDefinition(Map.empty, Map.empty))
+      new TransformerInto(source, new TransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore))
 
     /** Performs in-place transformation of captured source value to target type.
       *
@@ -123,7 +123,7 @@ package object dsl {
     @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
     final def intoF[F[+_], To]
         : TransformerFInto[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
-      new TransformerFInto(source, new TransformerFDefinition(Map.empty, Map.empty))
+      new TransformerFInto(source, new TransformerFDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore))
 
     /** Performs in-place lifted transformation of captured source value to target type.
       *
