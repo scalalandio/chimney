@@ -114,8 +114,11 @@ object DslSpec extends TestSuite {
           }
 
           "not use None as default when other default value is set" - {
-            SomeFoo("foo").into[Foobar2].transform ==> Foobar2("foo", Some(42))
-            SomeFoo("foo").into[Foobar2].enableOptionDefaultsToNone.transform ==> Foobar2("foo", Some(42))
+            SomeFoo("foo").into[Foobar2].enableDefaultValues.transform ==> Foobar2("foo", Some(42))
+            SomeFoo("foo").into[Foobar2].enableDefaultValues.enableOptionDefaultsToNone.transform ==> Foobar2(
+              "foo",
+              Some(42)
+            )
           }
 
           "not compile if default value is missing and no .enableOptionDefaultsToNone" - {
@@ -199,6 +202,7 @@ object DslSpec extends TestSuite {
       case class Baahr(x: Int, y: Bar)
 
       "use default parameter value" - {
+        implicit val cfg = TransformerConfiguration.default.enableDefaultValues
 
         "field does not exists - the source" - {
           Foo(10).transformInto[Bar] ==> Bar(10, 30L)
