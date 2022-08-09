@@ -174,7 +174,7 @@ trait TransformerConfigSupport extends MacroUtils {
 
   case class TransformerFlags(
       methodAccessors: Boolean = false,
-      processDefaultValues: Boolean = true,
+      processDefaultValues: Boolean = false,
       beanSetters: Boolean = false,
       beanGetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,

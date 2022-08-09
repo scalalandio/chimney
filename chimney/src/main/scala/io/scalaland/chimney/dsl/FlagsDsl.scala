@@ -23,16 +23,16 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
 
   /** Enable fallback to default case class values in `To` type.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#disabling-default-values-in-generated-transformer]] for more details
+    * By default in such case derivation will fail. By enabling this flag, derivation will fallback to default value.
+    *
+    * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#enabling-default-values-in-generated-transformer]] for more details
     */
   def enableDefaultValues: UpdateFlag[Enable[DefaultValues, Flags]] =
     enableFlag[DefaultValues]
 
   /** Fail derivation if `From` type is missing field even if `To` has default value for it.
     *
-    * By default in such case derivation will fallback to default values.
-    *
-    * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#disabling-default-values-in-generated-transformer]] for more details
+    * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#enabling-default-values-in-generated-transformer]] for more details
     */
   def disableDefaultValues: UpdateFlag[Disable[DefaultValues, Flags]] =
     disableFlag[DefaultValues]

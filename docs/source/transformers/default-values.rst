@@ -30,17 +30,17 @@ Providing the value manually has always a priority over the default.
   // Butterfly(5, "Steve", "yellow")
 
 
-Disabling default values in generated transformer
+Enabling default values in generated transformer
 -------------------------------------------------
 
-Using ``.disableDefaultValues`` operation it's possible to disable
-lookup for default values and require them always to be passed explicitly.
+Using ``.enableDefaultValues`` operation it's possible to enable
+lookup for default values and fallback to default when there is no transformer
+or config setting the value for field.
 
 .. code-block:: scala
 
   val steve = stevie
     .into[Butterfly]
-    .disableDefaultValues
     .transform
   // error: Chimney can't derive transformation from Catterpillar to Butterfly
   //
@@ -52,6 +52,11 @@ lookup for default values and require them always to be passed explicitly.
   //            .transform
   //            ^
 
+  // this one will succeed
+  val steve = stevie
+    .into[Butterfly]
+    .enableDefaultValues
+    .transform
 
 Default values for ``Option`` fields
 ------------------------------------
