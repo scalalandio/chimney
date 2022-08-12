@@ -82,7 +82,7 @@ object TransformerDerivationError {
               val otherFields = fieldsWithMethodAccessor.length - 3
               val fields = if (otherFields > 0) s"$first3Fields and $otherFields other methods" else first3Fields
 
-              s"\nThere are methods in $sourceTypeName that might be used as accessors for $fields fields in $targetTypeName. Consider using `.enableMethodAccessors`"
+              s"\nThere are methods in $sourceTypeName that might be used as accessors for $fields fields in $targetTypeName. Consider using `.enableMethodAccessors`."
             } else ""
 
           s"""$targetTypeName

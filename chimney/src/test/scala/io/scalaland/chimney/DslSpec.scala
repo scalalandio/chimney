@@ -639,7 +639,7 @@ object DslSpec extends TestSuite {
           "method3: java.lang.String - no accessor named method3 in source type io.scalaland.chimney.DslSpec.Foobar",
           "method4: java.lang.String - no accessor named method4 in source type io.scalaland.chimney.DslSpec.Foobar",
           "method5: java.lang.String - no accessor named method5 in source type io.scalaland.chimney.DslSpec.Foobar",
-          "There are methods in io.scalaland.chimney.DslSpec.Foobar that might be used as accessors for `method1`, `method2`, `method3` and 2 other methods fields in io.scalaland.chimney.DslSpec.Foobar5. Consider using `.enableMethodAccessors`"
+          "There are methods in io.scalaland.chimney.DslSpec.Foobar that might be used as accessors for `method1`, `method2`, `method3` and 2 other methods fields in io.scalaland.chimney.DslSpec.Foobar5. Consider using `.enableMethodAccessors`."
         )
       }
 
