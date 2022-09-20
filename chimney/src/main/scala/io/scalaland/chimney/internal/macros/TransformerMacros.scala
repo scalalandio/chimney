@@ -257,7 +257,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       srcPrefixTree: Tree,
       config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[TransformerDerivationError], Tree] = {
-    if (From <:< noneTpe || config.derivationTarget.isInstanceOf[DerivationTarget.PartialTransformer]) {
+    if (From <:< noneTpe || config.derivationTarget.isPartial) {
       notSupportedDerivation(srcPrefixTree, From, To)
     } else {
       val fromInnerT = From.typeArgs.head
