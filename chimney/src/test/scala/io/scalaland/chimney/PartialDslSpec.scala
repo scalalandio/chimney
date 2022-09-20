@@ -705,8 +705,52 @@ object PartialDslSpec extends TestSuite {
 //
 //    // TODO: "implicit conflict resolution" - {}
 //
-//    // TODO: "support scoped transformer configuration passed implicitly" - {}
-//
+
+    "support scoped transformer configuration passed implicitly" - {
+
+      class Source { def field1: Int = 100 }
+      case class Target(field1: Int = 200, field2: Option[String] = Some("foo"))
+
+      implicit val transformerConfiguration = {
+        TransformerConfiguration.default.enableOptionDefaultsToNone.enableMethodAccessors.disableDefaultValues
+      }
+
+      "scoped config only" - {
+
+        (new Source).transformIntoPartial[Target].asOption ==> Some(Target(100, None))
+        (new Source).intoPartial[Target].transform.asOption ==> Some(Target(100, None))
+      }
+
+      "scoped config overridden by instance flag" - {
+
+        (new Source)
+          .intoPartial[Target]
+          .disableMethodAccessors
+          .enableDefaultValues
+          .transform.asOption ==> Some(Target(200, Some("foo")))
+
+        (new Source)
+          .intoPartial[Target]
+          .enableDefaultValues
+          .transform.asOption ==> Some(Target(100, Some("foo")))
+
+        (new Source)
+          .intoPartial[Target]
+          .disableOptionDefaultsToNone
+          .withFieldConst(_.field2, Some("abc"))
+          .transform.asOption ==> Some(Target(100, Some("abc")))
+      }
+
+      "compile error when optionDefaultsToNone were disabled locally" - {
+
+        compileError(
+          """
+          (new Source).intoPartial[Target].disableOptionDefaultsToNone.transform
+        """)
+          .check("", "Chimney can't derive transformation from Source to Target")
+      }
+    }
+
     "support deriving partial transformer from pure" - {
       case class Foo(str: String)
 
