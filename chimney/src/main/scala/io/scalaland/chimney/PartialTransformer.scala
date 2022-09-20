@@ -107,7 +107,7 @@ object PartialTransformer {
       if (pf.isDefinedAt(u)) {
         Result.fromCatching(pf(u))
       } else {
-        Errors.single(Error.ofNotDefinedAt(u)) // TODO?
+        Errors.single(Error.ofNotDefinedAt(u))
       }
     }
 
