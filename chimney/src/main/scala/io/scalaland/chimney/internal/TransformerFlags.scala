@@ -1,5 +1,7 @@
 package io.scalaland.chimney.internal
 
+import io.scalaland.chimney.dsl.ImplicitTransformerPreference
+
 sealed abstract class TransformerFlags
 object TransformerFlags {
   final class Default extends TransformerFlags
@@ -13,4 +15,5 @@ object TransformerFlags {
   final class BeanGetters extends Flag
   final class OptionDefaultsToNone extends Flag
   final class UnsafeOption extends Flag
+  final class ImplicitConflictResolution[R <: ImplicitTransformerPreference] extends Flag
 }
