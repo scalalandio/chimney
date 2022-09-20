@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.macros
 
+import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, PreferPartialTransformer, PreferTotalTransformer}
 import io.scalaland.chimney.{PartialTransformer => PartialTransformerTpe}
 import io.scalaland.chimney.internal.utils.MacroUtils
 
@@ -214,9 +215,10 @@ trait TransformerConfigSupport extends MacroUtils {
       beanSetters: Boolean = false,
       beanGetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,
-      unsafeOption: Boolean = false
+      unsafeOption: Boolean = false,
+      implicitConflictResolution: Option[ImplicitTransformerPreference] = None
   ) {
-    def setFlag(flagTpe: Type, value: Boolean): TransformerFlags = {
+    def setBoolFlag(flagTpe: Type, value: Boolean): TransformerFlags = {
       if (flagTpe =:= FlagsTpes.methodAccessorsT) {
         copy(methodAccessors = value)
       } else if (flagTpe =:= FlagsTpes.defaultValuesT) {
@@ -235,6 +237,10 @@ trait TransformerConfigSupport extends MacroUtils {
         // $COVERAGE-ON$
       }
     }
+
+    def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags = {
+      copy(implicitConflictResolution = preference)
+    }
   }
 
   object FlagsTpes {
@@ -251,6 +257,7 @@ trait TransformerConfigSupport extends MacroUtils {
     val beanGettersT: Type = typeOf[BeanGetters]
     val optionDefaultsToNoneT: Type = typeOf[OptionDefaultsToNone]
     val unsafeOptionT: Type = typeOf[UnsafeOption]
+    val implicitConflictResolutionT: Type = typeOf[ImplicitConflictResolution[_]].typeConstructor
   }
 
   def captureTransformerFlags(
@@ -266,10 +273,29 @@ trait TransformerConfigSupport extends MacroUtils {
       defaultFlags
     } else if (flagsTpe.typeConstructor =:= enableT) {
       val List(flagT, rest) = flagsTpe.typeArgs
-      captureTransformerFlags(rest, defaultFlags).setFlag(flagT, value = true)
+
+      if(flagT.typeConstructor =:= implicitConflictResolutionT) {
+        val preferenceT = flagT.typeArgs.head
+        if(preferenceT =:= typeOf[PreferTotalTransformer.type]) {
+          captureTransformerFlags(rest, defaultFlags).setImplicitConflictResolution(Some(PreferTotalTransformer))
+        } else if (preferenceT =:= typeOf[PreferPartialTransformer.type]) {
+          captureTransformerFlags(rest, defaultFlags).setImplicitConflictResolution(Some(PreferPartialTransformer))
+        } else {
+          // $COVERAGE-OFF$
+          c.abort(c.enclosingPosition, "Invalid implicit conflict resolution preference type!!")
+          // $COVERAGE-ON$
+        }
+      } else {
+        captureTransformerFlags(rest, defaultFlags).setBoolFlag(flagT, value = true)
+      }
     } else if (flagsTpe.typeConstructor =:= disableT) {
       val List(flagT, rest) = flagsTpe.typeArgs
-      captureTransformerFlags(rest, defaultFlags).setFlag(flagT, value = false)
+
+      if (flagT.typeConstructor =:= implicitConflictResolutionT) {
+        captureTransformerFlags(rest, defaultFlags).setImplicitConflictResolution(None)
+      } else {
+        captureTransformerFlags(rest, defaultFlags).setBoolFlag(flagT, value = false)
+      }
     } else {
       // $COVERAGE-OFF$
       c.abort(c.enclosingPosition, "Bad internal transformer flags type shape!")

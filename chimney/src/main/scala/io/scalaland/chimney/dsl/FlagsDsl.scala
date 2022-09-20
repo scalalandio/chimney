@@ -3,6 +3,8 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.internal.TransformerFlags
 import io.scalaland.chimney.internal.TransformerFlags._
 
+import scala.annotation.unused
+
 trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
 
   /** Enable values to be supplied from method calls. Source method must be public and have no parameter list.
@@ -103,6 +105,21 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
     */
   def disableUnsafeOption: UpdateFlag[Disable[UnsafeOption, Flags]] =
     disableFlag[UnsafeOption]
+
+  /** Enable conflict resolution when both `Transformer` and `PartialTransformer` are available in the implicit scope.
+    *
+    * @param preference parameter specifying which implicit transformer to pick in case of conflict
+    * @see TODO documentation link
+    */
+  def enableImplicitConflictResolution[P <: ImplicitTransformerPreference](@unused preference: P): UpdateFlag[Enable[ImplicitConflictResolution[P], Flags]] =
+    enableFlag[ImplicitConflictResolution[P]]
+
+  /** Disable any implicit conflict resolution preference that was set previously.
+    *
+    * @see TODO documentation link
+    */
+  def disableImplicitConflictResolution: UpdateFlag[Disable[ImplicitConflictResolution[_], Flags]] =
+    disableFlag[ImplicitConflictResolution[_]]
 
   private def enableFlag[F <: TransformerFlags.Flag]: UpdateFlag[Enable[F, Flags]] =
     this.asInstanceOf[UpdateFlag[Enable[F, Flags]]]
