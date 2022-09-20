@@ -35,7 +35,13 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   def lift[F[+_]]: TransformerFDefinition[F, From, To, WrapperType[F, C], Flags] =
     new TransformerFDefinition[F, From, To, WrapperType[F, C], Flags](overrides, instances)
 
-  // TODO: scaladoc
+  /** Lifts current transformer definition as `PartialTransformer` definition
+    *
+    * It keeps all the configuration, provided missing values, renames,
+    * coproduct instances etc.
+    *
+    * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    */
   def partial: PartialTransformerDefinition[From, To, C, Flags] =
     new PartialTransformerDefinition[From, To, C, Flags](overrides, instances)
 
