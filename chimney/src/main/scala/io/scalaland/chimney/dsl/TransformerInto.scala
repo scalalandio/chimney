@@ -31,6 +31,16 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
   def lift[F[+_]]: TransformerFInto[F, From, To, WrapperType[F, C], Flags] =
     new TransformerFInto[F, From, To, WrapperType[F, C], Flags](source, td.lift[F])
 
+  /** Lifts current transformation as partial transformation.
+    *
+    * It keeps all the configuration, provided missing values, renames,
+    * coproduct instances etc.
+    *
+    * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    */
+  def partial: PartialTransformerInto[From, To, C, Flags] =
+    new PartialTransformerInto[From, To, C, Flags](source, td.partial)
+
   /** Use `value` provided here for field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
