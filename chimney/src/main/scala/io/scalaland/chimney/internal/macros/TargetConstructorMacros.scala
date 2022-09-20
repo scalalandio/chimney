@@ -80,15 +80,17 @@ trait TargetConstructorMacros extends Model with AssertUtils {
     }
   }
 
-  // TODO: describe
-  /**
+  /** Constructs tree body that constructs target `To` type (possibly wrapped depending on derivation target)
+    * composing it from collection of value trees, using provided construction method.
+    * It makes sure that depending on derivation target of input trees / output type, all the necessary
+    * values are properly wrapped, unwrapped or composed, making sure the produced code will type-check and satisfy
+    * any required semantic invariants.
     *
-    *
-    * @param To
-    * @param targets
-    * @param bodyTreeArgs
-    * @param derivationTarget
-    * @param mkTargetValueTree
+    * @param To target transformation result type
+    * @param targets description of target parameters required to construct the `To` type
+    * @param bodyTreeArgs derived input argument trees
+    * @param derivationTarget desired type of resulting transformer
+    * @param mkTargetValueTree constructor method that composes final tree out of unwrapped value trees
     * @return
     */
   def mkTransformerBodyTree(
@@ -99,6 +101,8 @@ trait TargetConstructorMacros extends Model with AssertUtils {
   )(
       mkTargetValueTree: Seq[Tree] => Tree
   ): Tree = {
+    assert(targets.size == bodyTreeArgs.size, "targets arity must correspond to the argument trees arity")
+
     derivationTarget match {
       case DerivationTarget.TotalTransformer =>
         assertOrAbort(
