@@ -1,0 +1,7 @@
+package io.scalaland.chimney.dsl
+
+sealed abstract class ImplicitTransformerPreference
+
+case object PreferTotalTransformer extends ImplicitTransformerPreference
+
+case object PreferPartialTransformer extends ImplicitTransformerPreference

@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.macros
 
+import io.scalaland.chimney.dsl.{PreferPartialTransformer, PreferTotalTransformer}
 import io.scalaland.chimney.internal._
 import io.scalaland.chimney.internal.utils.EitherUtils
 
@@ -921,18 +922,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
         val implicitTransformer = findLocalImplicitTransformer(From, To, DerivationTarget.TotalTransformer)
 
         (implicitPartialTransformer, implicitTransformer) match {
-          case (Some(localImplicitTreePartial), Some(localImplicitTree)) =>
-            // TODO: manage ambiguity with DSL flag
-            c.abort(
-              c.enclosingPosition,
-              s"""Ambiguous implicits while resolving Chimney recursive transformation:
-                 |
-                 |PartialTransformer[$From, $To]: $localImplicitTreePartial
-                 |Transformer[$From, $To]: $localImplicitTree
-                 |
-                 |Please eliminate ambiguity from implicit scope or use withFieldComputed/withFieldComputedF to decide which one should be used
-                 |""".stripMargin
-            )
+
           case (Some(localImplicitTreePartial), None) =>
             Right(
               TransformerBodyTree(
@@ -940,6 +930,15 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                 config.derivationTarget
               )
             )
+
+          case (Some(localImplicitTreePartial), Some(_)) if config.flags.implicitConflictResolution.contains(PreferPartialTransformer) =>
+            Right(
+              TransformerBodyTree(
+                localImplicitTreePartial.callPartialTransform(srcPrefixTree, pt.failFastTree),
+                config.derivationTarget
+              )
+            )
+
           case (None, Some(localImplicitTree)) =>
             Right(
               TransformerBodyTree(
@@ -947,6 +946,28 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                 DerivationTarget.TotalTransformer
               )
             )
+
+          case (Some(_), Some(localImplicitTree)) if config.flags.implicitConflictResolution.contains(PreferTotalTransformer) =>
+
+            Right(
+              TransformerBodyTree(
+                localImplicitTree.callTransform(srcPrefixTree),
+                DerivationTarget.TotalTransformer
+              )
+            )
+
+          case (Some(localImplicitTreePartial), Some(localImplicitTree)) =>
+            c.abort(
+              c.enclosingPosition,
+              s"""Ambiguous implicits while resolving Chimney recursive transformation:
+                 |
+                 |PartialTransformer[$From, $To]: $localImplicitTreePartial
+                 |Transformer[$From, $To]: $localImplicitTree
+                 |
+                 |Please eliminate ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used
+                 |""".stripMargin
+            )
+
           case (None, None) =>
             deriveTransformerTree(srcPrefixTree, config)(From, To)
               .map(tree => TransformerBodyTree(tree, config.derivationTarget))
