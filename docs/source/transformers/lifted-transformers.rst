@@ -3,6 +3,12 @@
 Lifted transformers
 ===================
 
+.. warning::
+
+  This feature is deprecated and most likely will be removed soon.
+  Consider using :ref:`partial-transformers` instead.
+
+
 While Chimney transformers wrap total functions of type ``From => To``, they don't
 really support partial transformations, where depending on the input value, transformation
 may `succeed` or `fail`.
