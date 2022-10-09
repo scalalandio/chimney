@@ -1,6 +1,11 @@
 Unsafe options transformation
 =============================
 
+.. warning::
+
+  This feature is deprecated and most likely will be removed soon.
+  Consider using :ref:`partial-transformers` instead.
+
 Chimney supports opt-in unsafe transformation from ``Option[T]`` to
 ``T`` if enabled explicitly with ``.enableUnsafeOption``.
 
@@ -9,7 +14,6 @@ Chimney supports opt-in unsafe transformation from ``Option[T]`` to
   Transforming ``None`` into a concrete value will lead to ``NoSuchElementException``
   at runtime, so use it at your own risk.
 
-  Since version 0.5.0 there is available better, safe alternative: :ref:`lifted-transformers`.
 
 Proto3 motivational example
 ---------------------------
