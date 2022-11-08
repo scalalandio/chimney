@@ -3,7 +3,6 @@ package io.scalaland.chimney.benchmarks
 import org.openjdk.jmh.annotations.{Setup, Benchmark, Level}
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.Transformer
-import scala.annotation.switch
 
 class CoproductTransformBenchmark extends CommonBenchmarkSettings {
 

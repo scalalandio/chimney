@@ -128,6 +128,7 @@ lazy val protosJS = protos.js
 lazy val benchmarks = project
   .in(file("benchmarks"))
   .settings(settings: _*)
+  .settings(noPublishSettings: _*)
   .settings(
     moduleName := "chimney-benchmarks",
     name := "chimney-benchmarks",
@@ -137,9 +138,7 @@ lazy val benchmarks = project
   .dependsOn(chimney.jvm % "test->test;compile->compile")
   .enablePlugins(JmhPlugin)
 
-
 lazy val publishSettings = Seq(
-
   organization := "io.scalaland",
   homepage := Some(url("https://scalaland.io")),
   licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
