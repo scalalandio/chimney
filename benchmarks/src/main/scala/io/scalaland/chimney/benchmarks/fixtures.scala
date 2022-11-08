@@ -1,7 +1,5 @@
 package io.scalaland.chimney.benchmarks
 
-import io.scalaland.chimney._
-
 object fixtures {
 
   case class Simple(a: Int, b: Double, c: String, d: Option[String])
