@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal
 
-sealed trait DerivationError extends Product with Serializable {
+sealed trait TransformerDerivationError extends Product with Serializable {
   def sourceTypeName: String
   def targetTypeName: String
 }
@@ -11,14 +11,14 @@ final case class MissingAccessor(
     sourceTypeName: String,
     targetTypeName: String,
     defAvailable: Boolean = false
-) extends DerivationError
+) extends TransformerDerivationError
 
 final case class MissingJavaBeanSetterParam(
     setterName: String,
     requiredTypeName: String,
     sourceTypeName: String,
     targetTypeName: String
-) extends DerivationError
+) extends TransformerDerivationError
 
 final case class MissingTransformer(
     fieldName: String,
@@ -26,28 +26,29 @@ final case class MissingTransformer(
     targetFieldTypeName: String,
     sourceTypeName: String,
     targetTypeName: String
-) extends DerivationError
+) extends TransformerDerivationError
 
-final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName: String) extends DerivationError
+final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName: String)
+    extends TransformerDerivationError
 
 final case class CantFindCoproductInstanceTransformer(instance: String, sourceTypeName: String, targetTypeName: String)
-    extends DerivationError
+    extends TransformerDerivationError
 
 final case class AmbiguousCoproductInstance(instance: String, sourceTypeName: String, targetTypeName: String)
-    extends DerivationError
+    extends TransformerDerivationError
 
 final case class IncompatibleSourceTuple(
     sourceArity: Int,
     targetArity: Int,
     sourceTypeName: String,
     targetTypeName: String
-) extends DerivationError
+) extends TransformerDerivationError
 
-final case class NotSupportedDerivation(fieldName: String, sourceTypeName: String, targetTypeName: String)
-    extends DerivationError
+final case class NotSupportedTransformerDerivation(fieldName: String, sourceTypeName: String, targetTypeName: String)
+    extends TransformerDerivationError
 
-object DerivationError {
-  def printErrors(errors: Seq[DerivationError]): String = {
+object TransformerDerivationError {
+  def printErrors(errors: Seq[TransformerDerivationError]): String = {
 
     errors
       .groupBy(e => (e.targetTypeName, e.sourceTypeName))
@@ -68,7 +69,7 @@ object DerivationError {
               s"  coproduct instance $instance of $targetTypeName is ambiguous"
             case IncompatibleSourceTuple(sourceArity, targetArity, sourceTypeName, _) =>
               s"  source tuple $sourceTypeName is of arity $sourceArity, while target type $targetTypeName is of arity $targetArity; they need to be equal!"
-            case NotSupportedDerivation(fieldName, sourceTypeName, _) =>
+            case NotSupportedTransformerDerivation(fieldName, sourceTypeName, _) =>
               s"  derivation from $fieldName: $sourceTypeName to $targetTypeName is not supported in Chimney!"
           }
 
@@ -81,7 +82,7 @@ object DerivationError {
               val otherFields = fieldsWithMethodAccessor.length - 3
               val fields = if (otherFields > 0) s"$first3Fields and $otherFields other methods" else first3Fields
 
-              s"\nThere are methods in $sourceTypeName that might be used as accessors for $fields fields in $targetTypeName. Consider using `.enableMethodAccessors`"
+              s"\nThere are methods in $sourceTypeName that might be used as accessors for $fields fields in $targetTypeName. Consider using `.enableMethodAccessors`."
             } else ""
 
           s"""$targetTypeName

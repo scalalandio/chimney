@@ -17,7 +17,10 @@ trait Model extends TransformerConfigSupport {
       Target(ms.canonicalName, ms.resultTypeIn(site))
   }
 
-  case class TransformerBodyTree(tree: Tree, isWrapped: Boolean)
+  case class TransformerBodyTree(tree: Tree, target: DerivationTarget) {
+    def isTotalTarget: Boolean = target == DerivationTarget.TotalTransformer
+    def isLiftedTarget: Boolean = target.isInstanceOf[DerivationTarget.LiftedTransformer]
+  }
 
   sealed trait AccessorResolution extends Product with Serializable {
     def isResolved: Boolean

@@ -34,14 +34,6 @@ trait MacroUtils extends CompanionUtils {
     def toSingletonTpe: ConstantType = c.internal.constantType(toNameConstant)
   }
 
-  type TypeConstructorTag[F[_]] = WeakTypeTag[F[Unit]]
-
-  object TypeConstructorTag {
-    def apply[F[_]: TypeConstructorTag]: Type = {
-      weakTypeOf[F[Unit]].typeConstructor
-    }
-  }
-
   implicit class TypeOps(t: Type) {
 
     def applyTypeArg(arg: Type): Type = {
@@ -254,7 +246,7 @@ trait MacroUtils extends CompanionUtils {
 
     def extractSelectorFieldName: TermName = {
       extractSelectorFieldNameOpt.getOrElse {
-        c.abort(c.enclosingPosition, "Invalid selector!")
+        c.abort(c.enclosingPosition, invalidSelectorErrorMessage(t))
       }
     }
 
@@ -278,7 +270,35 @@ trait MacroUtils extends CompanionUtils {
     def callTransform(input: Tree): Tree = {
       q"$t.transform($input)"
     }
+
+    def callUnaryApply(argTree: Tree): Tree = {
+      q"$t.apply($argTree)"
+    }
   }
+
+  implicit class PairTreeOps(pair: (Tree, Tree)) {
+    def extractSelectorsOrAbort: (TermName, TermName) = {
+      val (selectorTree1, selectorTree2) = pair
+
+      (selectorTree1.extractSelectorFieldNameOpt, selectorTree2.extractSelectorFieldNameOpt) match {
+        case (Some(fieldName1), Some(fieldName2)) =>
+          (fieldName1, fieldName2)
+        case (None, Some(_)) =>
+          c.abort(c.enclosingPosition, invalidSelectorErrorMessage(selectorTree1))
+        case (Some(_), None) =>
+          c.abort(c.enclosingPosition, invalidSelectorErrorMessage(selectorTree2))
+        case (None, None) =>
+          val err1 = invalidSelectorErrorMessage(selectorTree1)
+          val err2 = invalidSelectorErrorMessage(selectorTree2)
+          c.abort(c.enclosingPosition, s"Invalid selectors:\n$err1\n$err2")
+      }
+    }
+  }
+
+  private def invalidSelectorErrorMessage(selectorTree: Tree): String = {
+    s"Invalid selector expression: $selectorTree"
+  }
+
   // $COVERAGE-ON$
 
   private val primitives = Set(

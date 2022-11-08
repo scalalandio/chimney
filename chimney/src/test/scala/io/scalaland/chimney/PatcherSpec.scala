@@ -144,6 +144,22 @@ object PatcherSpec extends TestSuite {
         .ignoreNoneInPatch
         .patch ==> exampleUserWithOptionalField
     }
+
+    "patcher with underlying transformation" - {
+      case class Obj(x: String)
+      case class Patch(x: Int)
+
+      "successful" - {
+        implicit val intToStrTransformer: Transformer[Int, String] = _.toString
+        Obj("").patchUsing(Patch(100)) ==> Obj("100")
+      }
+
+      "failed" - {
+        // without implicit Transformer[Int, String], it doesn't compile
+        compileError("""Obj("").patchUsing(Patch(100))""")
+          .check("", "not supported")
+      }
+    }
   }
 
 }

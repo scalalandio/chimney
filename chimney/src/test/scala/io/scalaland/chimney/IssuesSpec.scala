@@ -91,7 +91,7 @@ object IssuesSpec extends TestSuite {
             .into[Foo2]
             .withFieldConst(_.x, "xyz")
           """)
-          .check("", "Value passed to `withFieldConst` is of type: String")
+          .check("", "Cannot prove that String <:< Int")
       }
 
       "fix for `withFieldComputed`" - {
@@ -101,7 +101,7 @@ object IssuesSpec extends TestSuite {
             .into[Foo2]
             .withFieldComputed(_.x, _ => "xyz")
         """)
-          .check("", "Function passed to `withFieldComputed` returns type: String")
+          .check("", "Cannot prove that String <:< Int")
       }
 
       "fix for `withFieldRenamed`" - {
@@ -264,7 +264,6 @@ object IssuesSpec extends TestSuite {
     }
 
     "fix issue #149" - {
-      import language.higherKinds
 
       "example 1" - {
         case class EntryId(id: Int)

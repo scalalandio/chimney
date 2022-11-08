@@ -1,12 +1,12 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.utils.{DerivationGuards, DslMacroUtils}
-import io.scalaland.chimney.internal.{DerivationError, IncompatibleSourceTuple}
+import io.scalaland.chimney.internal.utils.{TypeTestUtils, DslMacroUtils}
+import io.scalaland.chimney.internal.{TransformerDerivationError, IncompatibleSourceTuple}
 
 import scala.collection.immutable.ListMap
 import scala.reflect.macros.blackbox
 
-trait MappingMacros extends Model with DerivationGuards with DslMacroUtils with TransformerConfigSupport {
+trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
 
   val c: blackbox.Context
 
@@ -15,7 +15,7 @@ trait MappingMacros extends Model with DerivationGuards with DslMacroUtils with 
   def resolveSourceTupleAccessors(
       From: Type,
       To: Type
-  ): Either[Seq[DerivationError], Map[Target, AccessorResolution.Resolved]] = {
+  ): Either[Seq[TransformerDerivationError], Map[Target, AccessorResolution.Resolved]] = {
     val tupleElems = From.caseClassParams
     val targetFields = To.caseClassParams
 
@@ -57,9 +57,7 @@ trait MappingMacros extends Model with DerivationGuards with DslMacroUtils with 
           fromGetters
             .map(lookupAccessor(config, lookupName, wasRenamed, From))
             .find(_ != AccessorResolution.NotFound)
-            .headOption
             .getOrElse(AccessorResolution.NotFound)
-
         }
       }
 
@@ -77,31 +75,36 @@ trait MappingMacros extends Model with DerivationGuards with DslMacroUtils with 
         case Some(FieldOverride.Const) =>
           Some {
             target -> TransformerBodyTree(
-              config.transformerDefinitionPrefix.accessConst(target.name, target.tpe),
-              isWrapped = false
+              config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, target.tpe),
+              DerivationTarget.TotalTransformer
             )
           }
-        case Some(FieldOverride.ConstF) if config.wrapperType.isDefined =>
-          val fTargetTpe = config.wrapperType.get.applyTypeArg(target.tpe)
+        case Some(FieldOverride.ConstF) if config.derivationTarget.isInstanceOf[DerivationTarget.LiftedTransformer] =>
+          val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
             target -> TransformerBodyTree(
-              config.transformerDefinitionPrefix.accessConst(target.name, fTargetTpe),
-              isWrapped = true
+              config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, fTargetTpe),
+              config.derivationTarget
             )
           }
         case Some(FieldOverride.Computed) =>
           Some {
             target -> TransformerBodyTree(
-              config.transformerDefinitionPrefix.accessComputed(target.name, srcPrefixTree, From, target.tpe),
-              isWrapped = false
+              config.transformerDefinitionPrefix
+                .accessOverriddenComputedFunction(target.name, From, target.tpe)
+                .callUnaryApply(srcPrefixTree),
+              DerivationTarget.TotalTransformer
             )
           }
-        case Some(FieldOverride.ComputedF) if config.wrapperType.isDefined =>
-          val fTargetTpe = config.wrapperType.get.applyTypeArg(target.tpe)
+        case Some(FieldOverride.ComputedF)
+            if config.derivationTarget.isInstanceOf[DerivationTarget.LiftedTransformer] =>
+          val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
             target -> TransformerBodyTree(
-              config.transformerDefinitionPrefix.accessComputed(target.name, srcPrefixTree, From, fTargetTpe),
-              isWrapped = true
+              config.transformerDefinitionPrefix
+                .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
+                .callUnaryApply(srcPrefixTree),
+              config.derivationTarget
             )
           }
         case _ =>
@@ -123,21 +126,21 @@ trait MappingMacros extends Model with DerivationGuards with DslMacroUtils with 
         if (config.flags.processDefaultValues && To.isCaseClass) {
           targetCaseClassDefaults
             .get(target.name)
-            .map(defaultValueTree => target -> TransformerBodyTree(defaultValueTree, isWrapped = false))
+            .map(defaultValueTree => target -> TransformerBodyTree(defaultValueTree, DerivationTarget.TotalTransformer))
         } else {
           None
         }
 
       def optionNoneFallback =
         if (config.flags.optionDefaultsToNone && isOption(target.tpe)) {
-          Some(target -> TransformerBodyTree(q"_root_.scala.None", isWrapped = false))
+          Some(target -> TransformerBodyTree(q"_root_.scala.None", DerivationTarget.TotalTransformer))
         } else {
           None
         }
 
       def unitFallback =
         if (isUnit(target.tpe)) {
-          Some(target -> TransformerBodyTree(q"()", isWrapped = false))
+          Some(target -> TransformerBodyTree(q"()", DerivationTarget.TotalTransformer))
         } else {
           None
         }

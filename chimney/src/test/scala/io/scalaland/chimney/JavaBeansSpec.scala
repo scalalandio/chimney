@@ -107,10 +107,11 @@ object JavaBeansSpec extends TestSuite {
           """)
           .check(
             "",
-            """flag: scala.Boolean - no accessor named flag in source type io.scalaland.chimney.CaseClassWithFlagMethod
-              |
-              |There are methods in io.scalaland.chimney.CaseClassWithFlagMethod that might be used as accessors for `flag` fields in io.scalaland.chimney.JavaBeanTarget. Consider using `.enableMethodAccessors`
-              |""".stripMargin
+            "Chimney can't derive transformation from io.scalaland.chimney.CaseClassWithFlagMethod to io.scalaland.chimney.JavaBeanTarget",
+            "io.scalaland.chimney.JavaBeanTarget",
+            "flag: scala.Boolean - no accessor named flag in source type io.scalaland.chimney.CaseClassWithFlagMethod",
+            "There are methods in io.scalaland.chimney.CaseClassWithFlagMethod that might be used as accessors for `flag` fields in io.scalaland.chimney.JavaBeanTarget. Consider using `.enableMethodAccessors`.",
+            "Consult https://scalalandio.github.io/chimney for usage examples."
           )
       }
 
