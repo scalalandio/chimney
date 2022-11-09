@@ -39,7 +39,7 @@ of such boilerplate, especially when:
   approach is to separate model schemas of different bounded contexts
 - we use code-generation tools like Protocol Buffers that generate primitive
   types like ``Int`` or ``String``, while you'd prefer to use value objects
-  in you domain-level code to improve type-safety and readability
+  in your domain-level code to improve type-safety and readability
 
 Chimney provides a compact DSL with which you can define transformation
 rules and transform your objects with as little boilerplate as possible.
@@ -124,4 +124,10 @@ Contents:
    patchers/getting-started
    patchers/redundant-fields
    patchers/options-handling
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Benchmarks
+
+   Benchmarks <_static/benchmarks.html#http://>
 
