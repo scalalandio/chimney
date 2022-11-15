@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Run benchmarks
-        run: "sbt 'benchmarks/Jmh/run -rf json -rff ${{ github.sha }}.json'"
+        run: "sbt 'benchmarks/Jmh/run -rf json -rff ${{ github.sha }}.json'" # TODO LB maybe select Scala version until matrix is supported?
 
       - name: Fetch benchmarks metadata
         run: curl https://raw.githubusercontent.com/scalalandio/chimney-benchmark-results/main/meta.json -o meta.json
