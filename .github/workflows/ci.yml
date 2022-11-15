@@ -28,3 +28,43 @@ jobs:
       - uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  benchmark:
+    needs: build
+    runs-on: 'chimney-benchmarks-runner'
+    concurrency: 'benchmark'
+    if: >
+      github.event_name == 'push' || 
+      (github.event.action == 'labeled' && github.event.label.name == 'benchmark') || 
+      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'benchmark'))
+    environment: 'benchmark'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Run benchmarks
+        run: "sbt 'benchmarks/Jmh/run -rf json -rff ${{ github.sha }}.json'"
+
+      - name: Fetch benchmarks metadata
+        run: curl https://raw.githubusercontent.com/scalalandio/chimney-benchmark-results/main/meta.json -o meta.json
+
+      - name: Get nope.js
+        uses: actions/setup-node@v3
+
+      - name: Process current benchmarks results
+        run: node process-benchmarks.mjs "$GITHUB_CONTEXT" "$(git describe --tags --always)"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+
+      - name: Save benchmark results
+        run: |
+          mkdir -p ./results
+          mv meta.json ./results
+          mv ${{ github.sha }}.json ./results
+          echo "${{ github.sha }}" > ./results/sha
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v2
+        with:
+          name: benchmark-results
+          path: results

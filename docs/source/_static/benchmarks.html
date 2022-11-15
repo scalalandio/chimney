@@ -52,19 +52,28 @@
                 </ul>
             </div>
             <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-                <p class="caption" role="heading"><span class="caption-text">Comparison benchmarks</span></p>
-                <ul id="benchmarks-menu">
+                <p class="caption" role="heading"><span class="caption-text">Benchmarks</span></p>
+                <ul>
+                    <li class="toctree-l1" id="master-branch-holder">
+                        <a id="master-benchmarks" class="reference internal">Master branch benchmarks</a>
+                        <ul id="master-benchmarks-menu">
 
+                        </ul>
+                    </li>
+                    <li class="toctree-l1" id="pr-benchmarks-holder">
+                        <a id="pr-benchmarks" class="reference internal">Pull request benchmarks</a>
+                        <ul id="pr-benchmarks-menu">
+
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
+
     <iframe id="benchmarks-window" class="wy-nav-content-wrap benchmarks-content"></iframe>
 </div>
 <script>
-    jQuery(function () {
-        SphinxRtdTheme.Navigation.enable(true);
-    });
 
     function sliding(l, xs, i = 0, out = []) {
         return i > xs.length - l ? out : sliding(l, xs, i + 1, [...out, xs.slice(i, i + l)])
@@ -72,48 +81,73 @@
 
     // this is the benchmark loading part!
     (function() {
-        // TODO LB change props
-        const org = 'lbialy'
-        const repo = 'chimney-test'
+        const org = 'scalalandio'
+        const repo = 'chimney-benchmark-results'
         const branch = 'main'
 
         const $iframe = $('#benchmarks-window')
-        const $menu = $('#benchmarks-menu')
+        const $masterBranchHolder = $('#master-branch-holder')
+        const $masterBranchMenu = $('#master-benchmarks-menu')
+        const $prBenchmarksHolder = $('#pr-benchmarks-holder')
+        const $prBenchmarksMenu = $('#pr-benchmarks-menu')
+        const $master = $('#master-benchmarks')
+        const $pr = $('#pr-benchmarks')
 
-        const benchmarkResultRE = /\d{8}-([0-9a-fA-F]{7})\.json/
+        // I'm so sorry
+        $master.click(ev => {
+            ev.preventDefault()
+            $prBenchmarksHolder.removeClass('current')
+            $masterBranchHolder.addClass('current')
+        })
 
-        const addNavEntry = (name, onClick) => {
-            const el = $(`<li class="toctree-l1"><a class="reference internal">${name}</a></li>`)
+        $pr.click(ev => {
+            ev.preventDefault()
+            $masterBranchHolder.removeClass('current')
+            $prBenchmarksHolder.addClass('current')
+        })
+
+        const addEntry = ($where, name, onClick) => {
+            const el = $(`<li class="toctree-l2"><a class="reference internal">${name}</a></li>`)
             el.click(onClick)
-            $menu.append(el)
+            el.click(ev => {
+                ev.preventDefault()
+                $('.toctree-l2.current').removeClass('current')
+                el.addClass('current')
+            })
+            $where.append(el)
         }
-        const dataUrl = (org, repo, branch, filename) => `https://raw.githubusercontent.com/${org}/${repo}/${branch}/${filename}`
-        const queryUrl = (org, repo, branch) => `https://api.github.com/repos/${org}/${repo}/git/trees/${branch}`
-        const iframeUrl = (urls) => `https://jmh.morethan.io/?sources=${urls.join(',')}`
 
-        const fetchResults = (org, repo, branch) => fetch(queryUrl(org, repo, branch)).then(response => response.json())
+        const dataUrl = (org, repo, branch, filename) => `https://raw.githubusercontent.com/${org}/${repo}/${branch}/${filename}`
+        const iframeUrl = (urls, topBar) => `https://jmh.morethan.io/?sources=${urls.join(',')}&topBar=${topBar}`
+
+        const fetchResults = (org, repo, branch) => fetch(dataUrl(org, repo, branch, 'meta.json')).then(response => response.json())
+
+        const selectResults = (results, type) =>
+            results
+                .filter(result => result.event === type)
+                .sort((prev, next) => new Date(next.timestamp).getTime() - new Date(prev.timestamp).getTime())
 
         fetchResults(org, repo, branch)
             .then(resultsJson => {
-                const benchmarkResultFileNames =
-                    resultsJson.tree
-                        .map(_ => _.path) // this assumes results are in root repo dir
-                        .filter(_ => benchmarkResultRE.test(_))
-                        .reverse() // newest first
+                const prResults = selectResults(resultsJson, 'pull_request')
+                const masterPushResults = selectResults(resultsJson, 'push')
 
-                let firstGroup = true
+                const masterHeadCommit = masterPushResults[0]
 
-                sliding(3, benchmarkResultFileNames) // how many commits are being compared
+                let firstGroup = true // just to set initial view to the latest master commits comparison
+
+                sliding(3, masterPushResults) // how many master branch commits are being compared
                     .forEach(group => {
-                        const hashes = group.map(fileName => fileName.match(benchmarkResultRE)[1])
+                        const hashes = group.map(res => res.sha.substring(0, 7))
                         const first = hashes[0]
                         const last = hashes[group.length - 1]
 
                         const navBenchmarkName = `${first} .. ${last}`
 
-                        const iframeSrc = iframeUrl(group.map(fileName => dataUrl(org, repo, branch, fileName)))
+                        const title = `Master branch commits from ${first} to ${last}`
+                        const iframeSrc = iframeUrl(group.map(res => dataUrl(org, repo, branch, res.file)), title)
 
-                        addNavEntry(navBenchmarkName, ev => {
+                        addEntry($masterBranchMenu, navBenchmarkName, ev => {
                             ev.preventDefault()
                             $iframe.attr('src', iframeSrc)
                         })
@@ -123,6 +157,17 @@
                             firstGroup = false
                         }
                     })
+
+                prResults.forEach(prResult => {
+                    const navBenchmarkName = `PR ${prResult.prNumber} vs HEAD master`
+                    const urls = [prResult.file, masterHeadCommit.file].map(file => dataUrl(org, repo, branch, file))
+                    const title = `PR ${prResult.prNumber} (${prResult.prTitle}) vs HEAD master commit (${masterHeadCommit.sha.substring(0, 7)})`
+                    const iframeSrc = iframeUrl(urls, title)
+                    addEntry($prBenchmarksMenu, navBenchmarkName, ev => {
+                        ev.preventDefault()
+                        $iframe.attr('src', iframeSrc)
+                    })
+                })
             })
     })()
 </script>

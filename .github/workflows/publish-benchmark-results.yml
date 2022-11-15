@@ -1,0 +1,72 @@
+name: Publish benchmark results
+
+on:
+  workflow_run:
+    workflows: ["CI build"]
+    types:
+      - completed
+
+jobs:
+  push-to-data-repo:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Download benchmark results from workflow artifacts
+        uses: actions/github-script@v6.3.3
+        id: download-results
+        with:
+          result-encoding: string
+          script: |
+            var artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: ${{github.event.workflow_run.id }},
+            });
+            if (artifacts.data.artifacts.length === 0) {
+              return 'stop';
+            } 
+            var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "benchmark-results"
+            })[0];
+            var download = await github.rest.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            var fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/benchmark-results.zip', Buffer.from(download.data));
+            return 'continue';
+
+      - run: unzip benchmark-results.zip
+        if: ${{ steps.download-results.outputs.result == 'continue' }}
+
+      - name: Set SHA env variable
+        run: |
+          SHA=$(cat sha)
+          echo "SHA=$SHA" >> $GITHUB_ENV
+        if: ${{ steps.download-results.outputs.result == 'continue' }}
+
+      - name: Push benchmark file
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.RESULTS_REPO_RW_TOKEN }}
+        with:
+          source_file: '${{ env.SHA }}.json'
+          destination_repo: 'lbialy/chimney-test-data'
+          user_email: 'lukasz.marcin.bialy@gmail.com'
+          user_name: 'Łukasz Biały'
+          commit_message: 'Benchmarks for ${{ github.sha }} added.'
+        if: ${{ steps.download-results.outputs.result == 'continue' }}
+
+      - name: Push meta file
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.RESULTS_REPO_RW_TOKEN }}
+        with:
+          source_file: 'meta.json'
+          destination_repo: 'lbialy/chimney-test-data'
+          user_email: 'lukasz.marcin.bialy@gmail.com'
+          user_name: 'Łukasz Biały'
+          commit_message: 'Meta update for ${{ github.sha }}'
+        if: ${{ steps.download-results.outputs.result == 'continue' }}
