@@ -53,7 +53,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.RESULTS_REPO_RW_TOKEN }}
         with:
           source_file: '${{ env.SHA }}.json'
-          destination_repo: 'lbialy/chimney-test-data'
+          destination_repo: 'scalalandio/chimney-benchmark-results'
           user_email: 'lukasz.marcin.bialy@gmail.com'
           user_name: 'Łukasz Biały'
           commit_message: 'Benchmarks for ${{ github.sha }} added.'
@@ -65,7 +65,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.RESULTS_REPO_RW_TOKEN }}
         with:
           source_file: 'meta.json'
-          destination_repo: 'lbialy/chimney-test-data'
+          destination_repo: 'scalalandio/chimney-benchmark-results'
           user_email: 'lukasz.marcin.bialy@gmail.com'
           user_name: 'Łukasz Biały'
           commit_message: 'Meta update for ${{ github.sha }}'
