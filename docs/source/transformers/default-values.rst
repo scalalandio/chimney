@@ -1,14 +1,15 @@
 Default values support
 ======================
 
-Chimney respects case classes' default values as a possible target
+Chimney allows case classes' default values as a possible target
 field value source.
 
-Automatic value provision
--------------------------
+Enabling default values in generated transformer
+------------------------------------------------
 
-Field's default value is automatically used as a target value when constructing
-target object.
+Field's default value can be enabled as a target value when constructing
+target object. The support for them has to be explicitly enabled to avoid
+accidents.
 
 .. code-block:: scala
 
@@ -17,31 +18,7 @@ target object.
 
   val stevie = Catterpillar(5, "Steve")
 
-  val steve = stevie.transformInto[Butterfly]
-  // Butterfly(5, "Steve", "purple")
-
-Providing the value manually has always a priority over the default.
-
-.. code-block:: scala
-
-  val steve = stevie.into[Butterfly]
-    .withFieldConst(_.wingsColor, "yellow")
-    .transform
-  // Butterfly(5, "Steve", "yellow")
-
-
-Enabling default values in generated transformer
--------------------------------------------------
-
-Using ``.enableDefaultValues`` operation it's possible to enable
-lookup for default values and fallback to default when there is no transformer
-or config setting the value for field.
-
-.. code-block:: scala
-
-  val steve = stevie
-    .into[Butterfly]
-    .transform
+  //val steve = stevie.transformInto[Butterfly] // fails with
   // error: Chimney can't derive transformation from Catterpillar to Butterfly
   //
   // Butterfly
@@ -51,12 +28,19 @@ or config setting the value for field.
   //
   //            .transform
   //            ^
+  val steve = stevie.into[Butterfly].enableDefaultValues.transform
+  // Butterfly(5, "Steve", "purple")
 
-  // this one will succeed
-  val steve = stevie
-    .into[Butterfly]
+Providing the value manually has always a priority over the default.
+
+.. code-block:: scala
+
+  val steve = stevie.into[Butterfly]
     .enableDefaultValues
+    .withFieldConst(_.wingsColor, "yellow")
     .transform
+  // Butterfly(5, "Steve", "yellow")
+
 
 Default values for ``Option`` fields
 ------------------------------------
