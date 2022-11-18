@@ -66,6 +66,8 @@ jobs:
 
       - name: Get nope.js
         uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
       - name: Process current benchmarks results
         run: node .github/scripts/process-benchmarks.mjs "$GITHUB_CONTEXT" "$(git describe --tags --always)"
