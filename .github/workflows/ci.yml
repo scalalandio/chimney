@@ -31,7 +31,7 @@ jobs:
 
   benchmark:
     needs: build
-    runs-on: 'chimney-benchmarks-runner'
+    runs-on: benchmarks
     concurrency: 'benchmark'
     if: >
       github.event_name == 'push' || 
