@@ -5,11 +5,13 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+    types: ['opened', 'reopened', 'labeled', 'synchronize']
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.action != 'labeled' # run for 'opened', 'reopened' and 'synchronize'
 
     strategy:
       matrix:
@@ -31,14 +33,21 @@ jobs:
 
   benchmark:
     needs: build
-    runs-on: benchmarks
+#    runs-on: benchmarks
     concurrency: 'benchmark'
-    if: >
-      github.event_name == 'push' || 
-      (github.event.action == 'labeled' && github.event.label.name == 'benchmark') || 
-      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'benchmark'))
+#    if: >
+#      github.event_name == 'push' ||
+#      (github.event.action == 'labeled' && github.event.label.name == 'benchmark') ||
+#      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'benchmark'))
     environment: 'benchmark'
     steps:
+      - name: Debug
+        run: |
+          echo "event_name==push:${{ github.event_name == 'push' }}"
+          echo "action==labeled:${{github.event.action == 'labeled'}}"
+          echo "label.name==benchmark:${{github.event.label.name == 'benchmark'}}"
+          echo "action==synchronize:${{github.event.action == 'synchronize'}}"
+          echo "contains(labels, 'benchmark'):${{contains(github.event.pull_request.labels.*.name, 'benchmark')}}"
       - name: Checkout
         uses: actions/checkout@v1
 
