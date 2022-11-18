@@ -54,8 +54,8 @@ jobs:
         with:
           source_file: '${{ env.SHA }}.json'
           destination_repo: 'scalalandio/chimney-benchmark-results'
-          user_email: 'lukasz.marcin.bialy@gmail.com'
-          user_name: 'Łukasz Biały'
+          user_email: 'mateusz.kubuszok@gmail.com'
+          user_name: 'Mateusz Kubuszok'
           commit_message: 'Benchmarks for ${{ github.sha }} added.'
         if: ${{ steps.download-results.outputs.result == 'continue' }}
 
@@ -66,7 +66,7 @@ jobs:
         with:
           source_file: 'meta.json'
           destination_repo: 'scalalandio/chimney-benchmark-results'
-          user_email: 'lukasz.marcin.bialy@gmail.com'
-          user_name: 'Łukasz Biały'
+          user_email: 'mateusz.kubuszok@gmail.com'
+          user_name: 'Mateusz Kubuszok'
           commit_message: 'Meta update for ${{ github.sha }}'
         if: ${{ steps.download-results.outputs.result == 'continue' }}
