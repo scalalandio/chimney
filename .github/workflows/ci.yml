@@ -33,6 +33,7 @@ jobs:
 
   benchmark:
     needs: build
+    runs-on: ubuntu-latest
 #    runs-on: benchmarks
     concurrency: 'benchmark'
 #    if: >
