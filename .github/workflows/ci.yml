@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
 
     steps:
-      - run: |
+      - run: | # TODO uncomment
           echo "BUILD SUCCESSFUL BY ACCLAMATION"
 #      - uses: actions/checkout@v2
 #      - uses: coursier/cache-action@v6
@@ -68,7 +68,7 @@ jobs:
         uses: actions/setup-node@v3
 
       - name: Process current benchmarks results
-        run: node process-benchmarks.mjs "$GITHUB_CONTEXT" "$(git describe --tags --always)"
+        run: node .github/scripts/process-benchmarks.mjs "$GITHUB_CONTEXT" "$(git describe --tags --always)"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
 
