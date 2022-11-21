@@ -41,8 +41,8 @@ if (githubContext.event_name === 'pull_request') {
         const { label, pull_request } = event
 
         const entry = {
-            file: `${githubContext.sha}.json`,
-            sha: githubContext.sha,
+            file: `${pull_request.head.sha}.json`,
+            sha: pull_request.head.sha,
             event: event_name,
             describe: gitDescribe,
             ref,
@@ -66,8 +66,8 @@ if (githubContext.event_name === 'pull_request') {
         const { pull_request } = event
 
         const entry = {
-            file: `${githubContext.sha}.json`,
-            sha: githubContext.sha,
+            file: `${pull_request.head.sha}.json`,
+            sha: pull_request.head.sha,
             event: event_name,
             describe: gitDescribe,
             ref,
