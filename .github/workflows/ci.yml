@@ -23,6 +23,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: coursier/cache-action@v6
       - uses: coursier/setup-action@v1
+        with:
+          jvm: {{ matrix.jvm }}
       - name: Clean, Check code formatting, compile, test, generate coverage report
         run: sbt ++${{ matrix.scala }} clean scalafmtCheck test:scalafmtCheck compile chimneyJS/test coverage chimneyJVM/test chimneyJVM/coverageReport
       - uses: codecov/codecov-action@v3
