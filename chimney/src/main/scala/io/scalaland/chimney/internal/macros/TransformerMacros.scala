@@ -459,7 +459,6 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
 
         (keyTransformerE, valueTransformerE) match {
           case (Right(keyTransformer), Right(valueTransformer)) =>
-
             val keyTransformerWithPath =
               keyTransformer.target match {
                 case _: DerivationTarget.PartialTransformer =>
@@ -488,8 +487,8 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                   c.abort(c.enclosingPosition, "Not supported for lifted transformers!")
               }
 
-             Right(
-               q"""
+            Right(
+              q"""
                  _root_.io.scalaland.chimney.PartialTransformer.Result.traverse[$To, ($fromKeyT, $fromValueT), ($toKeyT, $toValueT)](
                    $srcPrefixTree.iterator,
                    { case (${fnK.name}: $fromKeyT, ${fnV.name}: $fromValueT) =>
