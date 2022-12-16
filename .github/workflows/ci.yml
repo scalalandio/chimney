@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        scala: [2.12.16, 2.13.8]
+        scala: [2.12.17, 2.13.10]
         jvm: ['adopt:1.8.0-292', 'adoptium:1.17.0.5']
       fail-fast: false
 
@@ -50,7 +50,7 @@ jobs:
           java-version: openjdk@1.17.0 # TODO LB java version from matrix
 
       - name: Run benchmarks
-        run: sbt "++2.13.8 benchmarks/Jmh/run -rf json -rff $(pwd)/${{ github.sha }}.json" # TODO LB scala version from matrix
+        run: sbt "++2.13.10 benchmarks/Jmh/run -rf json -rff $(pwd)/${{ github.sha }}.json" # TODO LB scala version from matrix
 
       - name: Fetch benchmarks metadata
         run: curl https://raw.githubusercontent.com/scalalandio/chimney-benchmark-results/main/meta.json -o meta.json
