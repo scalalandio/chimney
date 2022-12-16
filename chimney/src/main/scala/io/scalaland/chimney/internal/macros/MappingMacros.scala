@@ -85,7 +85,8 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
           Some {
             target -> TransformerBodyTree(
               q"""
-                ${config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, fTargetTpe)}.wrapErrorPaths(
+                ${config.transformerDefinitionPrefix
+                .accessOverriddenConstValue(target.name, fTargetTpe)}.wrapErrorPaths(
                   _root_.io.scalaland.chimney.PartialTransformer.ErrorPath.Accessor(${target.name}, _)
                 )
               """,
@@ -101,7 +102,8 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
             )
           }
         case FieldOverride.Computed if config.derivationTarget.isInstanceOf[DerivationTarget.PartialTransformer] =>
-          val function = config.transformerDefinitionPrefix.accessOverriddenComputedFunction(target.name, From, target.tpe)
+          val function =
+            config.transformerDefinitionPrefix.accessOverriddenComputedFunction(target.name, From, target.tpe)
           val liftedFunction = q"_root_.io.scalaland.chimney.PartialTransformer.Result.fromFunction($function)"
           Some {
             target -> TransformerBodyTree(
@@ -130,8 +132,8 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
             target -> TransformerBodyTree(
               q"""
                 ${config.transformerDefinitionPrefix
-                  .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
-                  .callUnaryApply(srcPrefixTree)}
+                .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
+                .callUnaryApply(srcPrefixTree)}
                   .wrapErrorPaths(
                     _root_.io.scalaland.chimney.PartialTransformer.ErrorPath.Accessor(${target.name}, _)
                   )
@@ -139,8 +141,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
               config.derivationTarget
             )
           }
-        case FieldOverride.ComputedF
-          if config.derivationTarget.isInstanceOf[DerivationTarget.LiftedTransformer] =>
+        case FieldOverride.ComputedF if config.derivationTarget.isInstanceOf[DerivationTarget.LiftedTransformer] =>
           val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
             target -> TransformerBodyTree(
