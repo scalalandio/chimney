@@ -7,6 +7,11 @@ field value source.
 Enabling default values in generated transformer
 ------------------------------------------------
 
+.. warning::
+
+  Before 0.7.0 default values was enabled by default. Due to feedback it was
+  changed to disabled by default for safety.
+
 Field's default value can be enabled as a target value when constructing
 target object. The support for them has to be explicitly enabled to avoid
 accidents.
