@@ -130,7 +130,18 @@ trait TargetConstructorMacros extends Model with AssertUtils {
 
           if (partialArgs.sizeIs <= 22) {
 
+            val localDefNames = partialTrees.map(_ => freshTermName("t"))
+            val localTreeDefs = (localDefNames zip partialTrees).map { case (n, t) => q"def $n = { $t }" }
+
+            val succFFValIdents = partialArgs.map(_ => freshTermName("vff"))
+            val succFFFqs = (succFFValIdents zip localDefNames).map { case (vId, lt) => fq"$vId <- { $lt }" }
+            val succValFFTrees = succFFValIdents.map(vId => q"$vId")
+            val patRefArgsMapFF = (partialTargets zip succValFFTrees).toMap
+            val argsMapFF = totalArgsMap ++ patRefArgsMapFF
+            val updatedArgsFF = targets.map(argsMapFF)
+
             val succValIdents = partialArgs.map(_ => freshTermName("v"))
+            val localTreeRefs = localDefNames.map { lt => q"$lt" }
             val succValPats = succValIdents.map(vId => pq"_root_.io.scalaland.chimney.PartialTransformer.Result.Value($vId)")
             val allSuccPat = pq"(..${succValPats})"
             val succValTrees = succValIdents.map(vId => q"$vId")
@@ -141,19 +152,20 @@ trait TargetConstructorMacros extends Model with AssertUtils {
             val errIdents = partialArgs.map(_ => freshTermName("err"))
             val errPats = errIdents.map(errId => pq"$errId")
             val errPat = pq"(..${errPats})"
-            val allErrTrees = errIdents.map(errId => q"$errId.errors").reduce[Tree] { (t1, t2) =>
-              q"$t1.++($t2)"
-            }
+            val allErrTrees = errIdents.map(errId => q"$errId.errors").reduce[Tree] { (t1, t2) => q"$t1 ++ $t2" }
 
             q"""
-              if(${pt.failFastTree}) {
-                ???
-              } else {
-                (..${partialTrees}) match {
-                  case $allSuccPat =>
-                    _root_.io.scalaland.chimney.PartialTransformer.Result.Value(${mkTargetValueTree(updatedArgs)})
-                  case $errPat =>
-                    _root_.io.scalaland.chimney.PartialTransformer.Result.Errors($allErrTrees)
+              {
+                ..$localTreeDefs
+                if(${pt.failFastTree}) {
+                  for (..$succFFFqs) yield { ${mkTargetValueTree(updatedArgsFF)} }
+                } else {
+                  (..${localTreeRefs}) match {
+                    case $allSuccPat =>
+                      _root_.io.scalaland.chimney.PartialTransformer.Result.Value(${mkTargetValueTree(updatedArgs)})
+                    case $errPat =>
+                      _root_.io.scalaland.chimney.PartialTransformer.Result.Errors($allErrTrees)
+                  }
                 }
               }
             """
