@@ -5,6 +5,7 @@ import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
 
 import scala.collection.compat.Factory
+import scala.collection.mutable
 import scala.language.experimental.macros
 import scala.util.{Failure, Success, Try}
 
@@ -176,38 +177,40 @@ object PartialTransformer {
         implicit fac: Factory[B, M]
     ): Result[M] = {
       val bs = fac.newBuilder
+//      println(s"${it.getClass}: ${it.knownSize}")
+      bs.sizeHint(it)
+      var eb: mutable.ReusableBuilder[Error, Vector[Error]] = null
+
       if (failFast) {
-        var errors: Vector[Error] = null
-        while (errors == null && it.hasNext) {
+        while (eb == null && it.hasNext) {
           f(it.next()) match {
             case Value(value) => bs += value
-            case Errors(ee)   => errors = ee.toVector
+            case Errors(ee)   =>
+              eb = Vector.newBuilder[Error] // TODO: avoid builder
+              eb ++= ee
           }
         }
-        if (errors == null) Result.Value(bs.result()) else Result.Errors(errors)
       } else {
-        val eb = Vector.newBuilder[Error]
-        var hasErr = false
-
         while (it.hasNext) {
           f(it.next()) match {
             case Errors(ee) =>
-              eb ++= ee
-              if (!hasErr) {
-                hasErr = true
+              if (eb == null) {
                 bs.clear()
+                eb = Vector.newBuilder[Error]
               }
+              eb ++= ee
             case Value(b) =>
-              if (!hasErr) {
+              if (eb == null) {
                 bs += b
               }
           }
         }
-        if (!hasErr) Result.Value(bs.result()) else Result.Errors(eb.result())
       }
+      if (eb == null) Result.Value(bs.result()) else Result.Errors(eb.result())
     }
 
-    final def sequence[M, A](it: Iterator[Result[A]], failFast: Boolean)(implicit fac: Factory[A, M]): Result[M] = {
+    final def sequence[M, A](it: Iterator[Result[A]], failFast: Boolean)
+                            (implicit fac: Factory[A, M]): Result[M] = {
       traverse(it, identity[Result[A]], failFast)
     }
 

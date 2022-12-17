@@ -58,15 +58,15 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
   def validateTransformPartialHappyChimney: PartialTransformer.Result[SimpleOutput] =
     transformerPartial.transform(simple)
 
-  @Benchmark
-  def validateTransformFHappyChimneyWithDsl: M[SimpleOutput] =
-    simple
-      .intoF[M, SimpleOutput]
-      .withFieldComputedF(_.a, s => happy.validateA(s.a).left.map(_.map(TransformationError(_))))
-      .withFieldComputedF(_.b, s => happy.validateB(s.b).left.map(_.map(TransformationError(_))))
-      .withFieldComputedF(_.c, s => happy.validateC(s.c).left.map(_.map(TransformationError(_))))
-      .withFieldComputedF(_.d, s => happy.validateD(s.d).left.map(_.map(TransformationError(_))))
-      .transform
+//  @Benchmark
+//  def validateTransformFHappyChimneyWithDsl: M[SimpleOutput] =
+//    simple
+//      .intoF[M, SimpleOutput]
+//      .withFieldComputedF(_.a, s => happy.validateA(s.a).left.map(_.map(TransformationError(_))))
+//      .withFieldComputedF(_.b, s => happy.validateB(s.b).left.map(_.map(TransformationError(_))))
+//      .withFieldComputedF(_.c, s => happy.validateC(s.c).left.map(_.map(TransformationError(_))))
+//      .withFieldComputedF(_.d, s => happy.validateD(s.d).left.map(_.map(TransformationError(_))))
+//      .transform
 
 //  @Benchmark
 //  def validateTransformPartialHappyChimneyWithDsl: PartialTransformer.Result[SimpleOutput] =
@@ -108,33 +108,33 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
 //      happy.validateD(_).left.map(_.map(TransformationError(_)))
 //    )
 
-  @Benchmark
-  def validateTransformFUnhappyChimney: M[SimpleOutput] =
-    transformerFUnhappy.transform(simple)
+//  @Benchmark
+//  def validateTransformFUnhappyChimney: M[SimpleOutput] =
+//    transformerFUnhappy.transform(simple)
 
-  @Benchmark
-  def validateTransformPartialUnhappyChimney: PartialTransformer.Result[SimpleOutput] =
-    transformerPartialUnhappy.transform(simple)
-
-  @Benchmark
-  def validateTransformFUnhappyChimneyWithDsl: M[SimpleOutput] =
-    simple
-      .intoF[M, SimpleOutput]
-      .withFieldComputedF(_.a, s => unhappy.validateA(s.a).left.map(_.map(TransformationError(_))))
-      .withFieldComputedF(_.b, s => unhappy.validateB(s.b).left.map(_.map(TransformationError(_))))
-      .withFieldComputedF(_.c, s => unhappy.validateC(s.c).left.map(_.map(TransformationError(_))))
-      .withFieldComputedF(_.d, s => unhappy.validateD(s.d).left.map(_.map(TransformationError(_))))
-      .transform
-
-  @Benchmark
-  def validateTransformPartialUnhappyChimneyWithDsl: PartialTransformer.Result[SimpleOutput] =
-    simple
-      .intoPartial[SimpleOutput]
-      .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialTransformerResult)
-      .withFieldComputedPartial(_.b, s => unhappy.validateB(s.b).toPartialTransformerResult)
-      .withFieldComputedPartial(_.c, s => unhappy.validateC(s.c).toPartialTransformerResult)
-      .withFieldComputedPartial(_.d, s => unhappy.validateD(s.d).toPartialTransformerResult)
-      .transform
+//  @Benchmark
+//  def validateTransformPartialUnhappyChimney: PartialTransformer.Result[SimpleOutput] =
+//    transformerPartialUnhappy.transform(simple)
+//
+//  @Benchmark
+//  def validateTransformFUnhappyChimneyWithDsl: M[SimpleOutput] =
+//    simple
+//      .intoF[M, SimpleOutput]
+//      .withFieldComputedF(_.a, s => unhappy.validateA(s.a).left.map(_.map(TransformationError(_))))
+//      .withFieldComputedF(_.b, s => unhappy.validateB(s.b).left.map(_.map(TransformationError(_))))
+//      .withFieldComputedF(_.c, s => unhappy.validateC(s.c).left.map(_.map(TransformationError(_))))
+//      .withFieldComputedF(_.d, s => unhappy.validateD(s.d).left.map(_.map(TransformationError(_))))
+//      .transform
+//
+//  @Benchmark
+//  def validateTransformPartialUnhappyChimneyWithDsl: PartialTransformer.Result[SimpleOutput] =
+//    simple
+//      .intoPartial[SimpleOutput]
+//      .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialTransformerResult)
+//      .withFieldComputedPartial(_.b, s => unhappy.validateB(s.b).toPartialTransformerResult)
+//      .withFieldComputedPartial(_.c, s => unhappy.validateC(s.c).toPartialTransformerResult)
+//      .withFieldComputedPartial(_.d, s => unhappy.validateD(s.d).toPartialTransformerResult)
+//      .transform
 
 //  @Benchmark
 //  def validateTransformFUnhappyByHandFlatMap: M[SimpleOutput] =
