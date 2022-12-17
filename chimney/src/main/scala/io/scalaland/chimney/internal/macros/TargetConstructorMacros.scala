@@ -134,13 +134,13 @@ trait TargetConstructorMacros extends Model with AssertUtils {
             val localTreeDefs = (localDefNames zip partialTrees).map { case (n, t) => q"def $n = { $t }" }
 
             val succFFValIdents = partialArgs.map(_ => freshTermName("vff"))
-            val succFFFqs = (succFFValIdents zip localDefNames).map { case (vId, lt) => fq"$vId <- { $lt }" }
+            val succFFFqs = (succFFValIdents zip localDefNames).map { case (vId, lt) => fq"$vId <- $lt" }
             val succValFFTrees = succFFValIdents.map(vId => q"$vId")
             val patRefArgsMapFF = (partialTargets zip succValFFTrees).toMap
             val argsMapFF = totalArgsMap ++ patRefArgsMapFF
             val updatedArgsFF = targets.map(argsMapFF)
 
-            val succValIdents = partialArgs.map(_ => freshTermName("v"))
+            val succValIdents = partialTrees.map(_ => freshTermName("v"))
             val localTreeRefs = localDefNames.map { lt => q"$lt" }
             val succValPats = succValIdents.map(vId => pq"_root_.io.scalaland.chimney.PartialTransformer.Result.Value($vId)")
             val allSuccPat = pq"(..${succValPats})"
@@ -149,7 +149,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
             val argsMap = totalArgsMap ++ patRefArgsMap
             val updatedArgs = targets.map(argsMap)
 
-            val errIdents = partialArgs.map(_ => freshTermName("err"))
+            val errIdents = partialTrees.map(_ => freshTermName("err"))
             val errPats = errIdents.map(errId => pq"$errId")
             val errPat = pq"(..${errPats})"
             val allErrTrees = errIdents.map(errId => q"$errId.errors").reduce[Tree] { (t1, t2) => q"$t1 ++ $t2" }
@@ -158,7 +158,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
               {
                 ..$localTreeDefs
                 if(${pt.failFastTree}) {
-                  for (..$succFFFqs) yield { ${mkTargetValueTree(updatedArgsFF)} }
+                  for (..$succFFFqs) yield ${mkTargetValueTree(updatedArgsFF)}
                 } else {
                   (..${localTreeRefs}) match {
                     case $allSuccPat =>
