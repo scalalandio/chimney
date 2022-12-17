@@ -56,6 +56,10 @@ object PartialTransformer {
     new PartialTransformerDefinition(Map.empty, Map.empty)
 
   sealed trait Result[+T] {
+    final def hasErrors: Boolean = this match {
+      case _: Result.Value[_] => false
+      case _ => true
+    }
     final def errors: Iterable[Error] = this match {
       case _: Result.Value[_]     => Iterable.empty
       case Result.Errors(_errors) => _errors
@@ -85,17 +89,14 @@ object PartialTransformer {
       }
     }
     final def wrapErrorPaths(pathWrapper: ErrorPath => ErrorPath): this.type = this match {
-//    def wrapErrorPaths(pathWrapper: ErrorPath => ErrorPath): Result[T] = this match {
       case _: Result.Value[_]    => this
       case Result.Errors(errors) => Result.Errors(errors.map(_.wrapErrorPath(pathWrapper))).asInstanceOf[this.type]
     }
   }
   object Result {
-    final case class Value[T](value: T) extends Result[T] {
-//      final def errors: Iterable[Error] = Iterable.empty
-    }
+    final case class Value[T](value: T) extends Result[T]
     final case class Errors(_errors: Iterable[Error]) extends Result[Nothing] {
-      final def asErrorPathMessageStrings: Iterable[(String, String)] = {
+      def asErrorPathMessageStrings: Iterable[(String, String)] = {
         errors.map(_.asErrorPathMessageString)
       }
     }
@@ -177,7 +178,6 @@ object PartialTransformer {
         implicit fac: Factory[B, M]
     ): Result[M] = {
       val bs = fac.newBuilder
-//      println(s"${it.getClass}: ${it.knownSize}")
       bs.sizeHint(it)
       var eb: mutable.ReusableBuilder[Error, Vector[Error]] = null
 
@@ -237,8 +237,8 @@ object PartialTransformer {
   }
 
   final case class Error(message: ErrorMessage, path: ErrorPath = ErrorPath.Empty) {
-    final def asErrorPathMessageString: (String, String) = (path.asString, message.asString)
-    final def wrapErrorPath(pathWrapper: ErrorPath => ErrorPath): Error = {
+    def asErrorPathMessageString: (String, String) = (path.asString, message.asString)
+    def wrapErrorPath(pathWrapper: ErrorPath => ErrorPath): Error = {
       copy(path = pathWrapper(path))
     }
   }
