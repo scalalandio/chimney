@@ -56,10 +56,6 @@ object PartialTransformer {
     new PartialTransformerDefinition(Map.empty, Map.empty)
 
   sealed trait Result[+T] {
-    final def hasErrors: Boolean = this match {
-      case _: Result.Value[_] => false
-      case _ => true
-    }
     final def errors: Iterable[Error] = this match {
       case _: Result.Value[_]     => Iterable.empty
       case Result.Errors(_errors) => _errors
@@ -76,17 +72,13 @@ object PartialTransformer {
       case _: Result.Value[_]    => Iterable.empty
       case errors: Result.Errors => errors.asErrorPathMessageStrings
     }
-    final def map[U](f: T => U): Result[U] = {
-      this match {
-        case Result.Value(value) => Result.Value(f(value))
-        case _: Result.Errors    => this.asInstanceOf[Result[U]]
-      }
+    final def map[U](f: T => U): Result[U] = this match {
+      case Result.Value(value) => Result.Value(f(value))
+      case _: Result.Errors    => this.asInstanceOf[Result[U]]
     }
-    final def flatMap[U](f: T => Result[U]): Result[U] = {
-      this match {
-        case Result.Value(value) => f(value)
-        case _: Result.Errors    => this.asInstanceOf[Result[U]]
-      }
+    final def flatMap[U](f: T => Result[U]): Result[U] = this match {
+      case Result.Value(value) => f(value)
+      case _: Result.Errors    => this.asInstanceOf[Result[U]]
     }
     final def wrapErrorPaths(pathWrapper: ErrorPath => ErrorPath): this.type = this match {
       case _: Result.Value[_]    => this
@@ -152,8 +144,8 @@ object PartialTransformer {
       case _           => fromErrorThrowable(ifEmpty)
     }
     final def fromEither[T](value: Either[Errors, T]): Result[T] = value match {
-      case Left(Errors(errors)) => fromErrors(errors)
       case Right(value)         => fromValue(value)
+      case Left(Errors(errors)) => fromErrors(errors)
     }
     final def fromEitherString[T](value: Either[String, T]): Result[T] = {
       fromEither(value.left.map(Errors.fromString))
@@ -162,8 +154,8 @@ object PartialTransformer {
       fromEither(value.left.map(errs => Errors.fromStrings(errs)))
     }
     final def fromTry[T](value: Try[T]): Result[T] = value match {
-      case Failure(throwable) => fromErrorThrowable(throwable)
       case Success(value)     => fromValue(value)
+      case Failure(throwable) => fromErrorThrowable(throwable)
     }
     final def fromCatching[T](value: => T): Result[T] = {
       try {
@@ -185,7 +177,7 @@ object PartialTransformer {
         while (eb == null && it.hasNext) {
           f(it.next()) match {
             case Value(value) => bs += value
-            case Errors(ee)   =>
+            case Errors(ee) =>
               eb = Vector.newBuilder[Error] // TODO: avoid builder
               eb ++= ee
           }
@@ -209,8 +201,7 @@ object PartialTransformer {
       if (eb == null) Result.Value(bs.result()) else Result.Errors(eb.result())
     }
 
-    final def sequence[M, A](it: Iterator[Result[A]], failFast: Boolean)
-                            (implicit fac: Factory[A, M]): Result[M] = {
+    final def sequence[M, A](it: Iterator[Result[A]], failFast: Boolean)(implicit fac: Factory[A, M]): Result[M] = {
       traverse(it, identity[Result[A]], failFast)
     }
 
