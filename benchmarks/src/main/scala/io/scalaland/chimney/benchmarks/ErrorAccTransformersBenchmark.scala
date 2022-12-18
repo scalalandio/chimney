@@ -4,9 +4,7 @@ import org.openjdk.jmh.annotations.Benchmark
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.{PartialTransformer, TransformationError, TransformerF}
 
-import scala.collection.mutable.ListBuffer
-
-class TransformerBenchmark extends CommonBenchmarkSettings {
+class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   import fixtures._
   import samples.validation._
 
@@ -51,15 +49,15 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
       .buildTransformer
 
   @Benchmark
-  def validateTransformFHappyChimney: M[SimpleOutput] =
+  def happyLiftedTransformer: M[SimpleOutput] =
     transformerF.transform(simple)
 
   @Benchmark
-  def validateTransformPartialHappyChimney: PartialTransformer.Result[SimpleOutput] =
+  def happyPartialTransformer: PartialTransformer.Result[SimpleOutput] =
     transformerPartial.transform(simple)
 
   @Benchmark
-  def validateTransformFHappyChimneyWithDsl: M[SimpleOutput] =
+  def happyLiftedTransformerInlineDsl: M[SimpleOutput] =
     simple
       .intoF[M, SimpleOutput]
       .withFieldComputedF(_.a, s => happy.validateA(s.a).left.map(_.map(TransformationError(_))))
@@ -69,7 +67,7 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def validateTransformPartialHappyChimneyWithDsl: PartialTransformer.Result[SimpleOutput] =
+  def happyPartialTransformerInlineDsl: PartialTransformer.Result[SimpleOutput] =
     simple
       .intoPartial[SimpleOutput]
       .withFieldComputedPartial(_.a, s => happy.validateA(s.a).toPartialTransformerResult)
@@ -79,8 +77,8 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def validateTransformFHappyByHandFlatMap: M[SimpleOutput] =
-    validateByHandHappyFlatMap(
+  def happyByHandErrorAccEitherSwap: M[SimpleOutput] =
+    byHandErrorAccEitherSwap(
       simple,
       happy.validateA(_).left.map(_.map(TransformationError(_))),
       happy.validateB(_).left.map(_.map(TransformationError(_))),
@@ -89,8 +87,8 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
     )
 
   @Benchmark
-  def validateTransformFHappyByHandErrorsSwap: M[SimpleOutput] =
-    validateByHandHandleErrors(
+  def happyByHandErrorAccCrazyNesting: M[SimpleOutput] =
+    byHandErrorAccCrazyNesting(
       simple,
       happy.validateA(_).left.map(_.map(TransformationError(_))),
       happy.validateB(_).left.map(_.map(TransformationError(_))),
@@ -99,25 +97,15 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
     )
 
   @Benchmark
-  def validateTransformFHappyByHandErrorsPatMat: M[SimpleOutput] =
-    validateDontDoThisAtHomeKids(
-      simple,
-      happy.validateA(_).left.map(_.map(TransformationError(_))),
-      happy.validateB(_).left.map(_.map(TransformationError(_))),
-      happy.validateC(_).left.map(_.map(TransformationError(_))),
-      happy.validateD(_).left.map(_.map(TransformationError(_)))
-    )
-
-  @Benchmark
-  def validateTransformFUnhappyChimney: M[SimpleOutput] =
+  def unhappyLiftedTransformer: M[SimpleOutput] =
     transformerFUnhappy.transform(simple)
 
   @Benchmark
-  def validateTransformPartialUnhappyChimney: PartialTransformer.Result[SimpleOutput] =
+  def unhappyPartialTransformer: PartialTransformer.Result[SimpleOutput] =
     transformerPartialUnhappy.transform(simple)
 
   @Benchmark
-  def validateTransformFUnhappyChimneyWithDsl: M[SimpleOutput] =
+  def unhappyLiftedTransformerInlineDsl: M[SimpleOutput] =
     simple
       .intoF[M, SimpleOutput]
       .withFieldComputedF(_.a, s => unhappy.validateA(s.a).left.map(_.map(TransformationError(_))))
@@ -127,7 +115,7 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def validateTransformPartialUnhappyChimneyWithDsl: PartialTransformer.Result[SimpleOutput] =
+  def unhappyPartialTransformerInlineDsl: PartialTransformer.Result[SimpleOutput] =
     simple
       .intoPartial[SimpleOutput]
       .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialTransformerResult)
@@ -137,8 +125,8 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def validateTransformFUnhappyByHandFlatMap: M[SimpleOutput] =
-    validateByHandHappyFlatMap(
+  def unhappyByHandErrorAccEitherSwap: M[SimpleOutput] =
+    byHandErrorAccEitherSwap(
       simple,
       unhappy.validateA(_).left.map(_.map(TransformationError(_))),
       unhappy.validateB(_).left.map(_.map(TransformationError(_))),
@@ -147,8 +135,8 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
     )
 
   @Benchmark
-  def validateTransformFUnhappyByHandErrorsSwap: M[SimpleOutput] =
-    validateByHandHandleErrors(
+  def unhappyByHandErrorAccCrazyNesting: M[SimpleOutput] =
+    byHandErrorAccCrazyNesting(
       simple,
       unhappy.validateA(_).left.map(_.map(TransformationError(_))),
       unhappy.validateB(_).left.map(_.map(TransformationError(_))),
@@ -156,31 +144,7 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
       unhappy.validateD(_).left.map(_.map(TransformationError(_)))
     )
 
-  @Benchmark
-  def validateTransformFUnhappyByHandErrorsPatMat: M[SimpleOutput] =
-    validateDontDoThisAtHomeKids(
-      simple,
-      unhappy.validateA(_).left.map(_.map(TransformationError(_))),
-      unhappy.validateB(_).left.map(_.map(TransformationError(_))),
-      unhappy.validateC(_).left.map(_.map(TransformationError(_))),
-      unhappy.validateD(_).left.map(_.map(TransformationError(_)))
-    )
-
-  private def validateByHandHappyFlatMap(
-      simple: Simple,
-      fa: Int => M[Int],
-      fb: Double => M[Double],
-      fc: String => M[String],
-      fd: Option[String] => M[Option[String]]
-  ): M[SimpleOutput] =
-    for {
-      valA <- fa(simple.a)
-      valB <- fb(simple.b)
-      valC <- fc(simple.c)
-      valD <- fd(simple.d)
-    } yield SimpleOutput(valA, valB, valC, valD)
-
-  private def validateByHandHandleErrors(
+  private def byHandErrorAccEitherSwap(
       simple: Simple,
       fa: Int => M[Int],
       fb: Double => M[Double],
@@ -192,17 +156,19 @@ class TransformerBenchmark extends CommonBenchmarkSettings {
     val valC = fc(simple.c)
     val valD = fd(simple.d)
 
-    val errs = ListBuffer.empty[TransformationError[String]]
-    if (valA.isLeft) errs ++= valA.swap.getOrElse(Nil)
-    if (valB.isLeft) errs ++= valB.swap.getOrElse(Nil)
-    if (valC.isLeft) errs ++= valC.swap.getOrElse(Nil)
-    if (valD.isLeft) errs ++= valD.swap.getOrElse(Nil)
-
-    if (errs.isEmpty) Right(SimpleOutput(valA.toOption.get, valB.toOption.get, valC.toOption.get, valD.toOption.get))
-    else Left(errs.toVector)
+    if(valA.isRight && valB.isRight && valC.isRight && valD.isRight) {
+      Right(SimpleOutput(valA.toOption.get, valB.toOption.get, valC.toOption.get, valD.toOption.get))
+    } else {
+      val errsB = Vector.newBuilder[TransformationError[String]]
+      errsB ++= valA.swap.getOrElse(Vector.empty)
+      errsB ++= valB.swap.getOrElse(Vector.empty)
+      errsB ++= valC.swap.getOrElse(Vector.empty)
+      errsB ++= valD.swap.getOrElse(Vector.empty)
+      Left(errsB.result())
+    }
   }
 
-  private def validateDontDoThisAtHomeKids(
+  private def byHandErrorAccCrazyNesting(
       simple: Simple,
       fa: Int => M[Int],
       fb: Double => M[Double],
