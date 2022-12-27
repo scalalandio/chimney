@@ -115,7 +115,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
 
         if (partialArgs.isEmpty) {
           mkTransformerBodyTree0(pt)(mkTargetValueTree(bodyTreeArgs.map(_.tree)))
-        } else if (partialArgs.sizeIs == 1) {
+        } else if (partialArgs.size == 1) {
           val (target, bodyTree) = partialArgs.head
           val fn = freshTermName(target.name)
           val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
@@ -128,7 +128,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
           val partialTrees = partialBodyTrees.map(_.tree)
           val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
 
-          if (partialArgs.sizeIs <= 22) { // tuple-based encoding, type info preserved
+          if (partialArgs.size <= 22) { // tuple-based encoding, type info preserved
 
             val localDefNames = partialTrees.map(_ => freshTermName("t"))
             val localTreeDefs = (localDefNames zip partialTrees).map { case (n, t) => q"def $n = { $t }" }
