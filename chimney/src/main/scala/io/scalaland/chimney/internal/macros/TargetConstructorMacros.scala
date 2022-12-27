@@ -4,6 +4,8 @@ import io.scalaland.chimney.internal.utils.AssertUtils
 
 import scala.reflect.macros.blackbox
 
+import scala.collection.compat._
+
 trait TargetConstructorMacros extends Model with AssertUtils {
 
   val c: blackbox.Context
@@ -115,7 +117,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
 
         if (partialArgs.isEmpty) {
           mkTransformerBodyTree0(pt)(mkTargetValueTree(bodyTreeArgs.map(_.tree)))
-        } else if (partialArgs.size == 1) {
+        } else if (partialArgs.sizeCompare(1) == 0) {
           val (target, bodyTree) = partialArgs.head
           val fn = freshTermName(target.name)
           val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
@@ -128,7 +130,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
           val partialTrees = partialBodyTrees.map(_.tree)
           val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
 
-          if (partialArgs.size <= 22) { // tuple-based encoding, type info preserved
+          if (partialArgs.sizeCompare(22) <= 0) { // tuple-based encoding, type info preserved
 
             val localDefNames = partialTrees.map(_ => freshTermName("t"))
             val localTreeDefs = (localDefNames zip partialTrees).map { case (n, t) => q"final def $n = { $t }" }
