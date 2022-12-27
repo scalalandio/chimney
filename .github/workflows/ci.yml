@@ -53,7 +53,7 @@ jobs:
           apps: sbt
 
       - name: Run benchmarks
-        run: sbt "++2.13.10 benchmarks/Jmh/run -wi 5 -i 20 -rf json -rff $(pwd)/${{ github.sha }}.json" # TODO LB scala version from matrix
+        run: sbt "++2.13.10 benchmarks/Jmh/run -wi 5 -i 20 -r 3s -rf json -rff $(pwd)/${{ github.sha }}.json" # TODO LB scala version from matrix
 
       - name: Fetch benchmarks metadata
         run: curl https://raw.githubusercontent.com/scalalandio/chimney-benchmark-results/main/meta.json -o meta.json
