@@ -138,7 +138,7 @@ lazy val benchmarks = project
     description := "Chimney benchmarking harness",
     testFrameworks += new TestFramework("utest.runner.Framework"),
   )
-  .dependsOn(chimney.jvm % "test->test;compile->compile")
+  .dependsOn(chimney.jvm)
   .enablePlugins(JmhPlugin)
 
 lazy val publishSettings = Seq(

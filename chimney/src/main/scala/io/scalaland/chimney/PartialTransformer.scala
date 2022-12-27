@@ -5,6 +5,7 @@ import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
 
 import scala.collection.compat.Factory
+import scala.collection.mutable
 import scala.language.experimental.macros
 import scala.util.{Failure, Success, Try}
 
@@ -19,10 +20,10 @@ trait PartialTransformer[From, To] { self =>
 
   def transform(src: From, failFast: Boolean): PartialTransformer.Result[To]
 
-  def transform(src: From): PartialTransformer.Result[To] =
+  final def transform(src: From): PartialTransformer.Result[To] =
     transform(src, failFast = false)
 
-  def transformFailFast(src: From): PartialTransformer.Result[To] =
+  final def transformFailFast(src: From): PartialTransformer.Result[To] =
     transform(src, failFast = true)
 }
 
@@ -55,58 +56,53 @@ object PartialTransformer {
     new PartialTransformerDefinition(Map.empty, Map.empty)
 
   sealed trait Result[+T] {
-    def errors: Iterable[Error]
-
-    def asOption: Option[T] = this match {
+    final def errors: Iterable[Error] = this match {
+      case _: Result.Value[_]     => Iterable.empty
+      case Result.Errors(_errors) => _errors
+    }
+    final def asOption: Option[T] = this match {
       case Result.Value(value) => Some(value)
       case Result.Errors(_)    => None
     }
-    def asEither: Either[Result.Errors, T] = this match {
-      case Result.Value(value)       => Right(value)
-      case errors @ Result.Errors(_) => Left(errors)
+    final def asEither: Either[Result.Errors, T] = this match {
+      case Result.Value(value)   => Right(value)
+      case errors: Result.Errors => Left(errors)
     }
-    def asErrorPathMessagesStrings: Iterable[(String, String)] = this match {
-      case Result.Value(_)       => Iterable.empty
+    final def asErrorPathMessagesStrings: Iterable[(String, String)] = this match {
+      case _: Result.Value[_]    => Iterable.empty
       case errors: Result.Errors => errors.asErrorPathMessageStrings
     }
-    def map[U](f: T => U): Result[U] = {
-      this match {
-        case Result.Value(value) => Result.Value(f(value))
-        case errs: Result.Errors => errs
-      }
+    final def map[U](f: T => U): Result[U] = this match {
+      case Result.Value(value) => Result.Value(f(value))
+      case _: Result.Errors    => this.asInstanceOf[Result[U]]
     }
-    def flatMap[U](f: T => Result[U]): Result[U] = {
-      this match {
-        case Result.Value(value) => f(value)
-        case errs: Result.Errors => errs
-      }
+    final def flatMap[U](f: T => Result[U]): Result[U] = this match {
+      case Result.Value(value) => f(value)
+      case _: Result.Errors    => this.asInstanceOf[Result[U]]
     }
-    def wrapErrorPaths(pathWrapper: ErrorPath => ErrorPath): this.type = this match {
-//    def wrapErrorPaths(pathWrapper: ErrorPath => ErrorPath): Result[T] = this match {
-      case Result.Value(_)       => this
+    final def wrapErrorPaths(pathWrapper: ErrorPath => ErrorPath): this.type = this match {
+      case _: Result.Value[_]    => this
       case Result.Errors(errors) => Result.Errors(errors.map(_.wrapErrorPath(pathWrapper))).asInstanceOf[this.type]
     }
   }
   object Result {
-    case class Value[T](value: T) extends Result[T] {
-      def errors: Iterable[Error] = Iterable.empty
-    }
-    case class Errors(errors: Iterable[Error]) extends Result[Nothing] {
+    final case class Value[T](value: T) extends Result[T]
+    final case class Errors(_errors: Iterable[Error]) extends Result[Nothing] {
       def asErrorPathMessageStrings: Iterable[(String, String)] = {
         errors.map(_.asErrorPathMessageString)
       }
     }
     object Errors {
-      def single(error: Error): Errors = Errors(Iterable(error))
-      def fromString(message: String): Errors = single(Error.ofString(message))
-      def fromStrings(messages: Iterable[String]): Errors = Errors(messages.map(Error.ofString))
+      final def single(error: Error): Errors = Errors(Iterable(error))
+      final def fromString(message: String): Errors = single(Error.ofString(message))
+      final def fromStrings(messages: Iterable[String]): Errors = Errors(messages.map(Error.ofString))
     }
 
-    def fromFunction[U, T](f: U => T): U => Result[T] = { u =>
+    final def fromFunction[U, T](f: U => T): U => Result[T] = { u =>
       Result.fromCatching(f(u))
     }
 
-    def fromPartialFunction[U, T](pf: PartialFunction[U, T]): U => Result[T] = { u =>
+    final def fromPartialFunction[U, T](pf: PartialFunction[U, T]): U => Result[T] = { u =>
       if (pf.isDefinedAt(u)) {
         Result.fromCatching(pf(u))
       } else {
@@ -114,54 +110,54 @@ object PartialTransformer {
       }
     }
 
-    def fromValue[T](value: T): Result[T] = Value(value)
-    def fromEmpty[T]: Result[T] = Errors.single(Error.ofEmptyValue)
-    def fromError[T](error: Error): Result[T] = Errors.single(error)
-    def fromErrors[T](errors: Iterable[Error]): Result[T] = Errors(errors)
-    def fromErrorString[T](message: String): Result[T] = Errors.fromString(message)
-    def fromErrorStrings[T](messages: Iterable[String]): Result[T] = Errors.fromStrings(messages)
-    def fromErrorNotDefinedAt[T](value: Any): Result[T] = Errors.single(Error.ofNotDefinedAt(value))
-    def fromErrorThrowable[T](throwable: Throwable): Result[T] = Errors.single(Error.ofThrowable(throwable))
+    final def fromValue[T](value: T): Result[T] = Value(value)
+    final def fromEmpty[T]: Result[T] = Errors.single(Error.ofEmptyValue)
+    final def fromError[T](error: Error): Result[T] = Errors.single(error)
+    final def fromErrors[T](errors: Iterable[Error]): Result[T] = Errors(errors)
+    final def fromErrorString[T](message: String): Result[T] = Errors.fromString(message)
+    final def fromErrorStrings[T](messages: Iterable[String]): Result[T] = Errors.fromStrings(messages)
+    final def fromErrorNotDefinedAt[T](value: Any): Result[T] = Errors.single(Error.ofNotDefinedAt(value))
+    final def fromErrorThrowable[T](throwable: Throwable): Result[T] = Errors.single(Error.ofThrowable(throwable))
 
-    def fromOption[T](value: Option[T]): Result[T] = value match {
+    final def fromOption[T](value: Option[T]): Result[T] = value match {
       case Some(value) => fromValue(value)
-      case None        => fromEmpty[T]
+      case _           => fromEmpty[T]
     }
-    def fromOptionOrErrors[T](value: Option[T], ifEmpty: => Errors): Result[T] = value match {
+    final def fromOptionOrErrors[T](value: Option[T], ifEmpty: => Errors): Result[T] = value match {
       case Some(value) => fromValue(value)
-      case None        => fromErrors(ifEmpty.errors)
+      case _           => fromErrors(ifEmpty.errors)
     }
-    def fromOptionOrError[T](value: Option[T], ifEmpty: => Error): Result[T] = value match {
+    final def fromOptionOrError[T](value: Option[T], ifEmpty: => Error): Result[T] = value match {
       case Some(value) => fromValue(value)
-      case None        => fromError(ifEmpty)
+      case _           => fromError(ifEmpty)
     }
-    def fromOptionOrString[T](value: Option[T], ifEmpty: => String): Result[T] = value match {
+    final def fromOptionOrString[T](value: Option[T], ifEmpty: => String): Result[T] = value match {
       case Some(value) => fromValue(value)
-      case None        => fromErrorString(ifEmpty)
+      case _           => fromErrorString(ifEmpty)
     }
-    def fromOptionOrStrings[T](value: Option[T], ifEmpty: => Iterable[String]): Result[T] = value match {
+    final def fromOptionOrStrings[T](value: Option[T], ifEmpty: => Iterable[String]): Result[T] = value match {
       case Some(value) => fromValue(value)
-      case None        => fromErrorStrings(ifEmpty)
+      case _           => fromErrorStrings(ifEmpty)
     }
-    def fromOptionOrThrowable[T](value: Option[T], ifEmpty: => Throwable): Result[T] = value match {
+    final def fromOptionOrThrowable[T](value: Option[T], ifEmpty: => Throwable): Result[T] = value match {
       case Some(value) => fromValue(value)
-      case None        => fromErrorThrowable(ifEmpty)
+      case _           => fromErrorThrowable(ifEmpty)
     }
-    def fromEither[T](value: Either[Errors, T]): Result[T] = value match {
-      case Left(Errors(errors)) => fromErrors(errors)
+    final def fromEither[T](value: Either[Errors, T]): Result[T] = value match {
       case Right(value)         => fromValue(value)
+      case Left(Errors(errors)) => fromErrors(errors)
     }
-    def fromEitherString[T](value: Either[String, T]): Result[T] = {
+    final def fromEitherString[T](value: Either[String, T]): Result[T] = {
       fromEither(value.left.map(Errors.fromString))
     }
-    def fromEitherStrings[T](value: Either[Iterable[String], T]): Result[T] = {
+    final def fromEitherStrings[T](value: Either[Iterable[String], T]): Result[T] = {
       fromEither(value.left.map(errs => Errors.fromStrings(errs)))
     }
-    def fromTry[T](value: Try[T]): Result[T] = value match {
-      case Failure(throwable) => fromErrorThrowable(throwable)
+    final def fromTry[T](value: Try[T]): Result[T] = value match {
       case Success(value)     => fromValue(value)
+      case Failure(throwable) => fromErrorThrowable(throwable)
     }
-    def fromCatching[T](value: => T): Result[T] = {
+    final def fromCatching[T](value: => T): Result[T] = {
       try {
         fromValue(value)
       } catch {
@@ -170,36 +166,47 @@ object PartialTransformer {
     }
     // extensions can provide more integrations, i.e. for Validated, Ior, etc.
 
-    def traverse[M, A, B](it: Iterator[A], f: A => Result[B], failFast: Boolean)(
+    final def traverse[M, A, B](it: Iterator[A], f: A => Result[B], failFast: Boolean)(
         implicit fac: Factory[B, M]
     ): Result[M] = {
-      val b = fac.newBuilder
+      val bs = fac.newBuilder
+      bs.sizeHint(it)
+
       if (failFast) {
-        var errors: Vector[Error] = null
+        var errors: Errors = null
         while (errors == null && it.hasNext) {
           f(it.next()) match {
-            case Value(value) => b += value
-            case Errors(ee)   => errors = ee.toVector
+            case Value(value) => bs += value
+            case e@Errors(_) =>
+              errors = e
           }
         }
-        if (errors == null) Result.Value(b.result()) else Result.Errors(errors)
+        if (errors == null) Result.Value(bs.result()) else errors
       } else {
-        var allErrors: Vector[Error] = Vector.empty
+        var eb: mutable.ReusableBuilder[Error, Vector[Error]] = null
         while (it.hasNext) {
           f(it.next()) match {
-            case Value(value) => b += value
-            case Errors(ee)   => allErrors ++= ee
+            case Errors(ee) =>
+              if (eb == null) {
+                bs.clear()
+                eb = Vector.newBuilder[Error]
+              }
+              eb ++= ee
+            case Value(b) =>
+              if (eb == null) {
+                bs += b
+              }
           }
         }
-        if (allErrors.isEmpty) Result.Value(b.result()) else Result.Errors(allErrors)
+        if (eb == null) Result.Value(bs.result()) else Result.Errors(eb.result())
       }
     }
 
-    def sequence[M, A](it: Iterator[Result[A]], failFast: Boolean)(implicit fac: Factory[A, M]): Result[M] = {
+    final def sequence[M, A](it: Iterator[Result[A]], failFast: Boolean)(implicit fac: Factory[A, M]): Result[M] = {
       traverse(it, identity[Result[A]], failFast)
     }
 
-    def map2[A, B, C](resultA: Result[A], resultB: => Result[B], failFast: Boolean, f: (A, B) => C): Result[C] = {
+    final def map2[A, B, C](resultA: Result[A], resultB: => Result[B], failFast: Boolean, f: (A, B) => C): Result[C] = {
       if (failFast) {
         resultA match {
           case Value(a) =>
@@ -217,29 +224,29 @@ object PartialTransformer {
       }
     }
 
-    def product[A, B](res1: Result[A], res2: => Result[B], failFast: Boolean): Result[(A, B)] =
+    final def product[A, B](res1: Result[A], res2: => Result[B], failFast: Boolean): Result[(A, B)] =
       map2(res1, res2, failFast, (x: A, y: B) => (x, y))
   }
 
-  case class Error(message: ErrorMessage, path: ErrorPath = ErrorPath.Empty) {
+  final case class Error(message: ErrorMessage, path: ErrorPath = ErrorPath.Empty) {
     def asErrorPathMessageString: (String, String) = (path.asString, message.asString)
     def wrapErrorPath(pathWrapper: ErrorPath => ErrorPath): Error = {
       copy(path = pathWrapper(path))
     }
   }
   object Error {
-    def ofEmptyValue: Error =
+    final def ofEmptyValue: Error =
       Error(ErrorMessage.EmptyValue)
-    def ofNotDefinedAt(value: Any): Error =
+    final def ofNotDefinedAt(value: Any): Error =
       Error(ErrorMessage.NotDefinedAt(value))
-    def ofString(message: String): Error =
+    final def ofString(message: String): Error =
       Error(ErrorMessage.StringMessage(message))
-    def ofThrowable(throwable: Throwable): Error =
+    final def ofThrowable(throwable: Throwable): Error =
       Error(ErrorMessage.ThrowableMessage(throwable))
   }
 
   sealed trait ErrorMessage {
-    def asString: String = this match {
+    final def asString: String = this match {
       case ErrorMessage.EmptyValue                  => "empty value"
       case ErrorMessage.NotDefinedAt(value)         => s"not defined at $value"
       case ErrorMessage.StringMessage(message)      => message
@@ -248,13 +255,13 @@ object PartialTransformer {
   }
   object ErrorMessage {
     case object EmptyValue extends ErrorMessage
-    case class NotDefinedAt(value: Any) extends ErrorMessage
-    case class StringMessage(message: String) extends ErrorMessage
-    case class ThrowableMessage(throwable: Throwable) extends ErrorMessage
+    final case class NotDefinedAt(value: Any) extends ErrorMessage
+    final case class StringMessage(message: String) extends ErrorMessage
+    final case class ThrowableMessage(throwable: Throwable) extends ErrorMessage
   }
 
   sealed trait ErrorPath {
-    def asString: String = this match {
+    final def asString: String = this match {
       case ErrorPath.Empty                                  => ""
       case ErrorPath.Accessor(name, ErrorPath.Empty)        => s"$name"
       case ErrorPath.Accessor(name, idx: ErrorPath.Index)   => s"$name${idx.asString}"
@@ -269,10 +276,10 @@ object PartialTransformer {
   }
   object ErrorPath {
     case object Empty extends ErrorPath
-    case class Accessor(name: String, nested: ErrorPath) extends ErrorPath
-    case class Index(index: Int, nested: ErrorPath) extends ErrorPath
-    case class MapValue(key: Any, nested: ErrorPath) extends ErrorPath
-    case class MapKey(key: Any, nested: ErrorPath) extends ErrorPath
+    final case class Accessor(name: String, nested: ErrorPath) extends ErrorPath
+    final case class Index(index: Int, nested: ErrorPath) extends ErrorPath
+    final case class MapValue(key: Any, nested: ErrorPath) extends ErrorPath
+    final case class MapKey(key: Any, nested: ErrorPath) extends ErrorPath
   }
 
 }
