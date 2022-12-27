@@ -608,7 +608,7 @@ object PartialDslSpec extends TestSuite {
         result.asOption ==> None
         result.asErrorPathMessagesStrings ==> Iterable(
           "(1)" -> "empty value",
-          "keys(y)" -> "empty value",
+          "keys(y)" -> "empty value"
         )
 
         "wrapped in case class" - {
@@ -620,7 +620,7 @@ object PartialDslSpec extends TestSuite {
           result.asOption ==> None
           result.asErrorPathMessagesStrings ==> Iterable(
             "map(1)" -> "empty value",
-            "map.keys(y)" -> "empty value",
+            "map.keys(y)" -> "empty value"
           )
         }
       }
