@@ -171,18 +171,19 @@ object PartialTransformer {
     ): Result[M] = {
       val bs = fac.newBuilder
       bs.sizeHint(it)
-      var eb: mutable.ReusableBuilder[Error, Vector[Error]] = null
 
       if (failFast) {
-        while (eb == null && it.hasNext) {
+        var errors: Errors = null
+        while (errors == null && it.hasNext) {
           f(it.next()) match {
             case Value(value) => bs += value
-            case Errors(ee) =>
-              eb = Vector.newBuilder[Error] // TODO: avoid builder
-              eb ++= ee
+            case e@Errors(_) =>
+              errors = e
           }
         }
+        if (errors == null) Result.Value(bs.result()) else errors
       } else {
+        var eb: mutable.ReusableBuilder[Error, Vector[Error]] = null
         while (it.hasNext) {
           f(it.next()) match {
             case Errors(ee) =>
@@ -197,8 +198,8 @@ object PartialTransformer {
               }
           }
         }
+        if (eb == null) Result.Value(bs.result()) else Result.Errors(eb.result())
       }
-      if (eb == null) Result.Value(bs.result()) else Result.Errors(eb.result())
     }
 
     final def sequence[M, A](it: Iterator[Result[A]], failFast: Boolean)(implicit fac: Factory[A, M]): Result[M] = {
