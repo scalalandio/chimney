@@ -4,7 +4,7 @@ import io.scalaland.chimney.dsl.PartialTransformerDefinition
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
 
-import scala.collection.compat.Factory
+import scala.collection.compat._
 import scala.collection.mutable
 import scala.language.experimental.macros
 import scala.util.{Failure, Success, Try}
@@ -170,7 +170,8 @@ object PartialTransformer {
         implicit fac: Factory[B, M]
     ): Result[M] = {
       val bs = fac.newBuilder
-      bs.sizeHint(it)
+      // possible to call only on 2.13+
+      // bs.sizeHint(it)
 
       if (failFast) {
         var errors: Errors = null
@@ -182,13 +183,13 @@ object PartialTransformer {
         }
         if (errors == null) Result.Value(bs.result()) else errors
       } else {
-        var eb: mutable.ReusableBuilder[Error, Vector[Error]] = null
+        var eb: mutable.Builder[Error, Vector[Error]] = null
         while (it.hasNext) {
           f(it.next()) match {
             case Errors(ee) =>
               if (eb == null) {
                 bs.clear()
-                eb = Vector.newBuilder[Error]
+                eb = implicitly[Factory[Error, Vector[Error]]].newBuilder
               }
               eb ++= ee
             case Value(b) =>
