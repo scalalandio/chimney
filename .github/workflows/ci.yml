@@ -59,10 +59,14 @@ jobs:
 
       - name: Run benchmarks
 <<<<<<< HEAD
+<<<<<<< HEAD
         run: sbt "++2.13.10 benchmarks/Jmh/run -rf json -rff $(pwd)/$(git describe --tags --always).json" # TODO LB scala version from matrix
 =======
         run: sbt "++2.13.10 benchmarks/Jmh/run -wi 5 -i 20 -rf json -rff $(pwd)/${{ github.sha }}.json" # TODO LB scala version from matrix
 >>>>>>> 1953828 (run 20 benchmark iterations)
+=======
+        run: sbt "++2.13.10 benchmarks/Jmh/run -wi 5 -i 20 -r 3s -rf json -rff $(pwd)/${{ github.sha }}.json" # TODO LB scala version from matrix
+>>>>>>> ea3ccb4 (benchmarks: increase time of measurement iteration to 3s)
 
       - name: Fetch benchmarks metadata
         run: curl https://raw.githubusercontent.com/scalalandio/chimney-benchmark-results/main/meta.json -o meta.json
