@@ -131,7 +131,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
           if (partialArgs.size <= 22) { // tuple-based encoding, type info preserved
 
             val localDefNames = partialTrees.map(_ => freshTermName("t"))
-            val localTreeDefs = (localDefNames zip partialTrees).map { case (n, t) => q"def $n = { $t }" }
+            val localTreeDefs = (localDefNames zip partialTrees).map { case (n, t) => q"final def $n = { $t }" }
 
             val succFFValIdents = partialArgs.map(_ => freshTermName("vff"))
             val succFFFqs = (succFFValIdents zip localDefNames).map { case (vId, lt) => fq"$vId <- $lt" }
