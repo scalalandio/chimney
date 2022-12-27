@@ -55,9 +55,9 @@ object PartialTransformer {
     new PartialTransformerDefinition(Map.empty, Map.empty)
 
   sealed trait Result[+T] {
-    final def errors: Iterable[Error] = this match {
-      case _: Result.Value[_]     => Iterable.empty
-      case Result.Errors(_errors) => _errors
+    final def errors: ErrorsCollection = this match {
+      case _: Result.Value[_]              => ErrorsCollection.empty
+      case Result.Errors(errorsCollection) => errorsCollection
     }
     final def asOption: Option[T] = this match {
       case Result.Value(value) => Some(value)
@@ -80,20 +80,21 @@ object PartialTransformer {
       case _: Result.Errors    => this.asInstanceOf[Result[U]]
     }
     final def wrapErrorPaths(pathWrapper: ErrorPath => ErrorPath): this.type = this match {
-      case _: Result.Value[_]    => this
-      case Result.Errors(errors) => Result.Errors(errors.map(_.wrapErrorPath(pathWrapper))).asInstanceOf[this.type]
+      case _: Result.Value[_] => this
+      case Result.Errors(ec)  => Result.Errors(ec.mapErrors(_.wrapErrorPath(pathWrapper))).asInstanceOf[this.type]
     }
   }
   object Result {
     final case class Value[T](value: T) extends Result[T]
-    final case class Errors(private val _errors: Iterable[Error]) extends Result[Nothing] {
-      def asErrorPathMessageStrings: Iterable[(String, String)] = {
-        errors.map(_.asErrorPathMessageString)
-      }
+    final case class Errors(private val ec: ErrorsCollection) extends Result[Nothing] {
+      def this(errors: Iterable[Error]) = this(ErrorsCollection.fromIterable(errors))
+      def this(error: Error) = this(ErrorsCollection.fromSingle(error))
+      def asErrorPathMessageStrings: Iterable[(String, String)] = ec.map(_.asErrorPathMessageString)
     }
     object Errors {
-      final def single(error: Error): Errors = Errors(ErrorsCollection.fromSingle(error))
-      final def fromString(message: String): Errors = single(Error.ofString(message))
+      final def apply(errors: Iterable[Error]): Errors = new Errors(errors)
+      final def single(error: Error): Errors = new Errors(error)
+      final def fromString(message: String): Errors = new Errors(Error.ofString(message))
       final def fromStrings(messages: Iterable[String]): Errors = Errors(messages.map(Error.ofString))
     }
 
@@ -186,7 +187,7 @@ object PartialTransformer {
         while (it.hasNext) {
           f(it.next()) match {
             case Value(value) => bs += value
-            case Errors(ee)   => allErrors ++= ErrorsCollection.fromIterable(ee)
+            case Errors(ee)   => allErrors ++= ee
           }
         }
         if (allErrors.isEmpty) Result.Value(bs.result()) else Result.Errors(allErrors)
