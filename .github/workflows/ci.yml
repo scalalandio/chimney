@@ -45,7 +45,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - uses: coursier/cache-action@v6
+# skip coursier cache as it takes 4m+ on self-hosted runner to download/upload cache
+#      - uses: coursier/cache-action@v6
       - uses: coursier/setup-action@v1.3.0
         with:
           jvm: 'adoptium:1.17.0.5' # TODO LB java version from matrix
