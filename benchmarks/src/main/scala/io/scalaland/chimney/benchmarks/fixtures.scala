@@ -100,6 +100,7 @@ object fixtures {
         def validateB(b: Double): Either[Vector[String], Double] = Right(b)
         def validateC(c: String): Either[Vector[String], String] = Right(c)
         def validateD(d: Option[String]): Either[Vector[String], Option[String]] = Right(d)
+        def squareInt(a: Int): Either[Vector[String], Int] = Right(a * a)
       }
 
       object unhappy {
@@ -107,6 +108,7 @@ object fixtures {
         def validateB(b: Double): Either[Vector[String], Double] = Right(b)
         def validateC(c: String): Either[Vector[String], String] = Left(Vector("c not pretty"))
         def validateD(d: Option[String]): Either[Vector[String], Option[String]] = Left(Vector("I don't like this d"))
+        def squareIntWhenOdd(a: Int): Either[Vector[String], Int] = if(a % 2 == 1) Right(a * a) else Left(Vector(s"$a is not an odd number"))
       }
     }
   }
