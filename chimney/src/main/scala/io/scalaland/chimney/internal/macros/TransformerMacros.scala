@@ -90,7 +90,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
           case DerivationTarget.TotalTransformer =>
             q"""
                new _root_.io.scalaland.chimney.Transformer[$From, $To] {
-                 def transform($srcName: $From): $To = {
+                 final def transform($srcName: $From): $To = {
                    $transformerTree
                  }
                }
@@ -98,7 +98,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
           case pt: DerivationTarget.PartialTransformer =>
             q"""
                new _root_.io.scalaland.chimney.PartialTransformer[$From, $To] {
-                 def transform($srcName: $From, ${pt.failFastTermName}: Boolean): ${pt.targetType(To)} = {
+                 final def transform($srcName: $From, ${pt.failFastTermName}: Boolean): ${pt.targetType(To)} = {
                    $transformerTree
                  }
                }
@@ -106,7 +106,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
           case DerivationTarget.LiftedTransformer(f, _, _) =>
             q"""
                new _root_.io.scalaland.chimney.TransformerF[$f, $From, $To] {
-                 def transform($srcName: $From): ${f.applyTypeArg(To)} = {
+                 final def transform($srcName: $From): ${f.applyTypeArg(To)} = {
                    $transformerTree
                  }
                }
