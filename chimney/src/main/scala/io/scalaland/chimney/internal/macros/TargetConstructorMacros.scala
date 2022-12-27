@@ -141,8 +141,11 @@ trait TargetConstructorMacros extends Model with AssertUtils {
             val updatedArgsFF = targets.map(argsMapFF)
 
             val succValIdents = partialTrees.map(_ => freshTermName("v"))
-            val localTreeRefs = localDefNames.map { lt => q"$lt" }
-            val succValPats = succValIdents.map(vId => pq"_root_.io.scalaland.chimney.PartialTransformer.Result.Value($vId)")
+            val localTreeRefs = localDefNames.map { lt =>
+              q"$lt"
+            }
+            val succValPats =
+              succValIdents.map(vId => pq"_root_.io.scalaland.chimney.PartialTransformer.Result.Value($vId)")
             val allSuccPat = pq"(..${succValPats})"
             val succValTrees = succValIdents.map(vId => q"$vId")
             val patRefArgsMap = (partialTargets zip succValTrees).toMap
@@ -152,7 +155,9 @@ trait TargetConstructorMacros extends Model with AssertUtils {
             val errIdents = partialTrees.map(_ => freshTermName("err"))
             val errPats = errIdents.map(errId => pq"$errId")
             val errPat = pq"(..${errPats})"
-            val allErrTrees = errIdents.map(errId => q"$errId.errors").reduce[Tree] { (t1, t2) => q"$t1 ++ $t2" }
+            val allErrTrees = errIdents.map(errId => q"$errId.errors").reduce[Tree] { (t1, t2) =>
+              q"$t1 ++ $t2"
+            }
 
             q"""
               {
