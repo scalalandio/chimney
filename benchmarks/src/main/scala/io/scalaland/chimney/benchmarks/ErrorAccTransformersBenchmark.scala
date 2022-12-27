@@ -124,6 +124,29 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   def longUnhappyPartialTransformer: PartialTransformer.Result[LongOutput] =
     longTransformerPartialUnhappy.transform(samples.longSample)
 
+  @Benchmark
+  def nestedLongHappyLiftedTransformer: M[Vector[LongOutput]] = {
+    implicit val ltl: TransformerF[M, Long, LongOutput] = longTransformerLifted
+    samples.longNestedSample.transformIntoF[M, Vector[LongOutput]]
+  }
+
+  @Benchmark
+  def nestedLongHappyPartialTransformer: PartialTransformer.Result[Vector[LongOutput]] = {
+    implicit val ltp: PartialTransformer[Long, LongOutput] = longTransformerPartial
+    samples.longNestedSample.transformIntoPartial[Vector[LongOutput]]
+  }
+
+  @Benchmark
+  def nestedLongUnhappyLiftedTransformer: M[Vector[LongOutput]] = {
+    implicit val ltlu: TransformerF[M, Long, LongOutput] = longTransformerLiftedUnhappy
+    samples.longNestedSample.transformIntoF[M, Vector[LongOutput]]
+  }
+
+  @Benchmark
+  def nestedLongUnhappyPartialTransformer: PartialTransformer.Result[Vector[LongOutput]] = {
+    implicit val ltpu: PartialTransformer[Long, LongOutput] = longTransformerPartialUnhappy
+    samples.longNestedSample.transformIntoPartial[Vector[LongOutput]]
+  }
 
   private final val simpleTransformerLifted: TransformerF[M, Simple, SimpleOutput] =
     TransformerF
