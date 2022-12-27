@@ -291,7 +291,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
               q"$srcPrefixTree.map(($fn: $fromInnerT) => $innerTree)"
             }
 
-          case TransformerBodyTree(innerTree, pt@DerivationTarget.PartialTransformer(_)) =>
+          case TransformerBodyTree(innerTree, pt @ DerivationTarget.PartialTransformer(_)) =>
             q"""
               $srcPrefixTree.fold[${pt.targetType(To)}](
                 _root_.io.scalaland.chimney.PartialTransformer.Result.fromValue(Option.empty[$toInnerT])

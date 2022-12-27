@@ -176,9 +176,8 @@ object PartialTransformer {
         var errors: Errors = null
         while (errors == null && it.hasNext) {
           f(it.next()) match {
-            case Value(value) => bs += value
-            case e@Errors(_) =>
-              errors = e
+            case Value(value)  => bs += value
+            case e @ Errors(_) => errors = e
           }
         }
         if (errors == null) Result.Value(bs.result()) else errors
