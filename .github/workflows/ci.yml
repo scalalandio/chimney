@@ -49,7 +49,7 @@ jobs:
         with:
           fetch-depth: 0
 
-# coursier parallel fetch is faster than cache download on our runner
+# coursier parallel fetch is faster than cache download+upload on our custom runner machine
 #      - uses: coursier/cache-action@v6
 
       - uses: coursier/setup-action@v1.3.0
