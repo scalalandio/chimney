@@ -128,7 +128,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
           val partialTrees = partialBodyTrees.map(_.tree)
           val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
 
-          if (partialArgs.sizeIs <= 22) {
+          if (partialArgs.sizeIs <= 22) { // tuple-based encoding, type info preserved
 
             val localDefNames = partialTrees.map(_ => freshTermName("t"))
             val localTreeDefs = (localDefNames zip partialTrees).map { case (n, t) => q"def $n = { $t }" }
@@ -169,7 +169,8 @@ trait TargetConstructorMacros extends Model with AssertUtils {
                 }
               }
             """
-          } else {
+          } else { // Array[Any] + sequence, type info lost
+            // should be possible to optimize with nested tuples
             val partialTreesArray = q"Array(..${partialTrees})"
             val arrayFn = freshTermName("array")
             val argIndices = partialTargets.indices
