@@ -18,6 +18,15 @@ sealed abstract class ErrorsCollection extends Iterable[PartialTransformer.Error
     }
   }
 
+  final def mapErrors(f: PartialTransformer.Error => PartialTransformer.Error): ErrorsCollection = {
+    this match {
+      case _: ErrorsCollection.Empty.type => this
+      case ErrorsCollection.Single(error) => ErrorsCollection.Single(f(error))
+      case ErrorsCollection.Wrap(errors)  => ErrorsCollection.Wrap(errors.map(f))
+      case _: ErrorsCollection.Merge      => ErrorsCollection.Wrap(iterator.map(f).toVector)
+    }
+  }
+
   final def ++(other: ErrorsCollection): ErrorsCollection = {
     if (other.isEmpty) this
     else if (this.isEmpty) other
