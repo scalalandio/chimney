@@ -87,7 +87,7 @@ object PartialTransformer {
   }
   object Result {
     final case class Value[T](value: T) extends Result[T]
-    final case class Errors(_errors: Iterable[Error]) extends Result[Nothing] {
+    final case class Errors(private val _errors: Iterable[Error]) extends Result[Nothing] {
       def asErrorPathMessageStrings: Iterable[(String, String)] = {
         errors.map(_.asErrorPathMessageString)
       }
