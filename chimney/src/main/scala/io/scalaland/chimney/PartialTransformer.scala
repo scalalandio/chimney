@@ -2,10 +2,9 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.PartialTransformerDefinition
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
-import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.{ErrorsCollection, TransformerCfg, TransformerFlags}
 
 import scala.collection.compat._
-import scala.collection.mutable
 import scala.language.experimental.macros
 import scala.util.{Failure, Success, Try}
 
@@ -93,7 +92,7 @@ object PartialTransformer {
       }
     }
     object Errors {
-      final def single(error: Error): Errors = Errors(Iterable(error))
+      final def single(error: Error): Errors = Errors(ErrorsCollection.fromSingle(error))
       final def fromString(message: String): Errors = single(Error.ofString(message))
       final def fromStrings(messages: Iterable[String]): Errors = Errors(messages.map(Error.ofString))
     }
@@ -177,28 +176,20 @@ object PartialTransformer {
         var errors: Errors = null
         while (errors == null && it.hasNext) {
           f(it.next()) match {
-            case Value(value)  => bs += value
-            case e @ Errors(_) => errors = e
+            case Value(value) => bs += value
+            case e: Errors    => errors = e
           }
         }
         if (errors == null) Result.Value(bs.result()) else errors
       } else {
-        var eb: mutable.Builder[Error, Vector[Error]] = null
+        var allErrors: ErrorsCollection = ErrorsCollection.empty
         while (it.hasNext) {
           f(it.next()) match {
-            case Errors(ee) =>
-              if (eb == null) {
-                bs.clear()
-                eb = implicitly[Factory[Error, Vector[Error]]].newBuilder
-              }
-              eb ++= ee
-            case Value(b) =>
-              if (eb == null) {
-                bs += b
-              }
+            case Value(value) => bs += value
+            case Errors(ee)   => allErrors ++= ErrorsCollection.fromIterable(ee)
           }
         }
-        if (eb == null) Result.Value(bs.result()) else Result.Errors(eb.result())
+        if (allErrors.isEmpty) Result.Value(bs.result()) else Result.Errors(allErrors)
       }
     }
 
