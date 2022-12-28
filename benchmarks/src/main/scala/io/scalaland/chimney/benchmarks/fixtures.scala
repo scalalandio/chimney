@@ -1,6 +1,6 @@
 package io.scalaland.chimney.benchmarks
 
-import io.scalaland.chimney.TransformationError
+import io.scalaland.chimney.{ErrorPathNode, TransformationError}
 
 object fixtures {
 
@@ -228,10 +228,10 @@ object fixtures {
       Right(SimpleOutput(valA.toOption.get, valB.toOption.get, valC.toOption.get, valD.toOption.get))
     } else {
       val errsB = Vector.newBuilder[TransformationError[String]]
-      errsB ++= valA.swap.getOrElse(Vector.empty)
-      errsB ++= valB.swap.getOrElse(Vector.empty)
-      errsB ++= valC.swap.getOrElse(Vector.empty)
-      errsB ++= valD.swap.getOrElse(Vector.empty)
+      errsB ++= valA.swap.getOrElse(Vector.empty).map(_.prepend(ErrorPathNode.Accessor("a")))
+      errsB ++= valB.swap.getOrElse(Vector.empty).map(_.prepend(ErrorPathNode.Accessor("b")))
+      errsB ++= valC.swap.getOrElse(Vector.empty).map(_.prepend(ErrorPathNode.Accessor("c")))
+      errsB ++= valD.swap.getOrElse(Vector.empty).map(_.prepend(ErrorPathNode.Accessor("d")))
       Left(errsB.result())
     }
   }
@@ -250,26 +250,43 @@ object fixtures {
             fc(simple.c) match {
               case Right(c) =>
                 fd(simple.d) match {
-                  case Right(d)         => Right(SimpleOutput(a, b, c, d))
-                  case retVal @ Left(_) => retVal.asInstanceOf[M[SimpleOutput]]
+                  case Right(d)    => Right(SimpleOutput(a, b, c, d))
+                  case Left(errs4) => Left(errs4.map(_.prepend(ErrorPathNode.Accessor("d"))))
                 }
               case Left(errs3) =>
                 fd(simple.d) match {
-                  case Right(_)    => Left(errs3)
-                  case Left(errs4) => Left(errs3 ++ errs4)
+                  case Right(_) => Left(errs3.map(_.prepend(ErrorPathNode.Accessor("c"))))
+                  case Left(errs4) =>
+                    Left(
+                      errs3.map(_.prepend(ErrorPathNode.Accessor("c"))) ++
+                        errs4.map(_.prepend(ErrorPathNode.Accessor("d")))
+                    )
                 }
             }
           case Left(errs2) =>
             fc(simple.c) match {
               case Right(_) =>
                 fd(simple.d) match {
-                  case Right(_)    => Left(errs2)
-                  case Left(errs4) => Left(errs2 ++ errs4)
+                  case Right(_) => Left(errs2.map(_.prepend(ErrorPathNode.Accessor("b"))))
+                  case Left(errs4) =>
+                    Left(
+                      errs2.map(_.prepend(ErrorPathNode.Accessor("b"))) ++
+                        errs4.map(_.prepend(ErrorPathNode.Accessor("d")))
+                    )
                 }
               case Left(errs3) =>
                 fd(simple.d) match {
-                  case Right(_)    => Left(errs2 ++ errs3)
-                  case Left(errs4) => Left(errs2 ++ errs3 ++ errs4)
+                  case Right(_) =>
+                    Left(
+                      errs2.map(_.prepend(ErrorPathNode.Accessor("b"))) ++
+                        errs3.map(_.prepend(ErrorPathNode.Accessor("c")))
+                    )
+                  case Left(errs4) =>
+                    Left(
+                      errs2.map(_.prepend(ErrorPathNode.Accessor("b"))) ++
+                        errs3.map(_.prepend(ErrorPathNode.Accessor("c"))) ++
+                        errs4.map(_.prepend(ErrorPathNode.Accessor("d")))
+                    )
                 }
             }
         }
@@ -279,26 +296,55 @@ object fixtures {
             fc(simple.c) match {
               case Right(_) =>
                 fd(simple.d) match {
-                  case Right(_)    => Left(errs1)
-                  case Left(errs4) => Left(errs1 ++ errs4)
+                  case Right(_) => Left(errs1.map(_.prepend(ErrorPathNode.Accessor("a"))))
+                  case Left(errs4) =>
+                    Left(
+                      errs1.map(_.prepend(ErrorPathNode.Accessor("a"))) ++
+                        errs4.map(_.prepend(ErrorPathNode.Accessor("d")))
+                    )
                 }
               case Left(errs3) =>
                 fd(simple.d) match {
-                  case Right(_)    => Left(errs3)
-                  case Left(errs4) => Left(errs1 ++ errs3 ++ errs4)
+                  case Right(_) => Left(errs3.map(_.prepend(ErrorPathNode.Accessor("c"))))
+                  case Left(errs4) =>
+                    Left(
+                      errs1.map(_.prepend(ErrorPathNode.Accessor("a"))) ++
+                        errs3.map(_.prepend(ErrorPathNode.Accessor("c"))) ++
+                        errs4.map(_.prepend(ErrorPathNode.Accessor("d")))
+                    )
                 }
             }
           case Left(errs2) =>
             fc(simple.c) match {
               case Right(_) =>
                 fd(simple.d) match {
-                  case Right(_)    => Left(errs1 ++ errs2)
-                  case Left(errs4) => Left(errs1 ++ errs2 ++ errs4)
+                  case Right(_) =>
+                    Left(
+                      errs1.map(_.prepend(ErrorPathNode.Accessor("a"))) ++
+                        errs2.map(_.prepend(ErrorPathNode.Accessor("b")))
+                    )
+                  case Left(errs4) =>
+                    Left(
+                      errs1.map(_.prepend(ErrorPathNode.Accessor("a"))) ++
+                        errs2.map(_.prepend(ErrorPathNode.Accessor("b"))) ++
+                        errs4.map(_.prepend(ErrorPathNode.Accessor("d")))
+                    )
                 }
               case Left(errs3) =>
                 fd(simple.d) match {
-                  case Right(_)    => Left(errs1 ++ errs2 ++ errs3)
-                  case Left(errs4) => Left(errs1 ++ errs2 ++ errs3 ++ errs4)
+                  case Right(_) =>
+                    Left(
+                      errs1.map(_.prepend(ErrorPathNode.Accessor("a"))) ++
+                        errs2.map(_.prepend(ErrorPathNode.Accessor("b"))) ++
+                        errs3.map(_.prepend(ErrorPathNode.Accessor("c")))
+                    )
+                  case Left(errs4) =>
+                    Left(
+                      errs1.map(_.prepend(ErrorPathNode.Accessor("a"))) ++
+                        errs2.map(_.prepend(ErrorPathNode.Accessor("b"))) ++
+                        errs3.map(_.prepend(ErrorPathNode.Accessor("c"))) ++
+                        errs4.map(_.prepend(ErrorPathNode.Accessor("d")))
+                    )
                 }
             }
         }
