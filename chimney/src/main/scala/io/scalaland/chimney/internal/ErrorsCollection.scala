@@ -1,9 +1,14 @@
 package io.scalaland.chimney.internal
 
 import io.scalaland.chimney.PartialTransformer
+
 import scala.collection.compat._
 
 sealed abstract class ErrorsCollection extends Iterable[PartialTransformer.Error] {
+
+  final def prependPath(pathElement: PartialTransformer.PathElement): ErrorsCollection = {
+    ErrorsCollection.WrapPath(this, pathElement)
+  }
 
   override final def isEmpty: Boolean = {
     this.isInstanceOf[ErrorsCollection.Empty.type]
@@ -15,15 +20,7 @@ sealed abstract class ErrorsCollection extends Iterable[PartialTransformer.Error
       case ErrorsCollection.Single(error)      => Iterator.single(error)
       case ErrorsCollection.Wrap(errors)       => errors.iterator
       case ErrorsCollection.Merge(left, right) => left.iterator ++ right.iterator
-    }
-  }
-
-  final def mapErrors(f: PartialTransformer.Error => PartialTransformer.Error): ErrorsCollection = {
-    this match {
-      case _: ErrorsCollection.Empty.type => this
-      case ErrorsCollection.Single(error) => ErrorsCollection.Single(f(error))
-      case ErrorsCollection.Wrap(errors)  => ErrorsCollection.Wrap(errors.map(f))
-      case _: ErrorsCollection.Merge      => ErrorsCollection.Wrap(iterator.map(f).toVector)
+      case ErrorsCollection.WrapPath(ec, pe)   => ec.iterator.map(_.prependErrorPath(pe))
     }
   }
 
@@ -56,8 +53,9 @@ object ErrorsCollection {
     }
   }
 
-  private case object Empty extends ErrorsCollection
+  private final case object Empty extends ErrorsCollection
   private final case class Single(error: PartialTransformer.Error) extends ErrorsCollection
   private final case class Wrap(errors: Iterable[PartialTransformer.Error]) extends ErrorsCollection
   private final case class Merge(left: ErrorsCollection, right: ErrorsCollection) extends ErrorsCollection
+  private final case class WrapPath(ec: ErrorsCollection, pe: PartialTransformer.PathElement) extends ErrorsCollection
 }

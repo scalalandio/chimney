@@ -85,10 +85,10 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
           Some {
             target -> TransformerBodyTree(
               q"""
-                ${config.transformerDefinitionPrefix
-                .accessOverriddenConstValue(target.name, fTargetTpe)}.wrapErrorPaths(
-                  _root_.io.scalaland.chimney.PartialTransformer.ErrorPath.Accessor(${target.name}, _)
-                )
+                ${config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, fTargetTpe)}
+                  .prependErrorPath(
+                    _root_.io.scalaland.chimney.PartialTransformer.PathElement.Accessor(${target.name})
+                  )
               """,
               config.derivationTarget
             )
@@ -109,8 +109,8 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
             target -> TransformerBodyTree(
               q"""
                 ${liftedFunction.callUnaryApply(srcPrefixTree)}
-                  .wrapErrorPaths(
-                    _root_.io.scalaland.chimney.PartialTransformer.ErrorPath.Accessor(${target.name}, _)
+                  .prependErrorPath(
+                    _root_.io.scalaland.chimney.PartialTransformer.PathElement.Accessor(${target.name})
                   )
               """,
               config.derivationTarget
@@ -132,10 +132,10 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
             target -> TransformerBodyTree(
               q"""
                 ${config.transformerDefinitionPrefix
-                .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
-                .callUnaryApply(srcPrefixTree)}
-                  .wrapErrorPaths(
-                    _root_.io.scalaland.chimney.PartialTransformer.ErrorPath.Accessor(${target.name}, _)
+                  .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
+                  .callUnaryApply(srcPrefixTree)}
+                  .prependErrorPath(
+                    _root_.io.scalaland.chimney.PartialTransformer.PathElement.Accessor(${target.name})
                   )
               """,
               config.derivationTarget
