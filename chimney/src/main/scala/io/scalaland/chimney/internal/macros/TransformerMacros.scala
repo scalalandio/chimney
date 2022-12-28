@@ -931,7 +931,8 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
               )
             )
 
-          case (Some(localImplicitTreePartial), Some(_)) if config.flags.implicitConflictResolution.contains(PreferPartialTransformer) =>
+          case (Some(localImplicitTreePartial), Some(_))
+              if config.flags.implicitConflictResolution.contains(PreferPartialTransformer) =>
             Right(
               TransformerBodyTree(
                 localImplicitTreePartial.callPartialTransform(srcPrefixTree, pt.failFastTree),
@@ -947,8 +948,8 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
               )
             )
 
-          case (Some(_), Some(localImplicitTree)) if config.flags.implicitConflictResolution.contains(PreferTotalTransformer) =>
-
+          case (Some(_), Some(localImplicitTree))
+              if config.flags.implicitConflictResolution.contains(PreferTotalTransformer) =>
             Right(
               TransformerBodyTree(
                 localImplicitTree.callTransform(srcPrefixTree),
