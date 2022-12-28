@@ -724,24 +724,26 @@ object PartialDslSpec extends TestSuite {
           .intoPartial[Target]
           .disableMethodAccessors
           .enableDefaultValues
-          .transform.asOption ==> Some(Target(200, Some("foo")))
+          .transform
+          .asOption ==> Some(Target(200, Some("foo")))
 
         (new Source)
           .intoPartial[Target]
           .enableDefaultValues
-          .transform.asOption ==> Some(Target(100, Some("foo")))
+          .transform
+          .asOption ==> Some(Target(100, Some("foo")))
 
         (new Source)
           .intoPartial[Target]
           .disableOptionDefaultsToNone
           .withFieldConst(_.field2, Some("abc"))
-          .transform.asOption ==> Some(Target(100, Some("abc")))
+          .transform
+          .asOption ==> Some(Target(100, Some("abc")))
       }
 
       "compile error when optionDefaultsToNone were disabled locally" - {
 
-        compileError(
-          """
+        compileError("""
           (new Source).intoPartial[Target].disableOptionDefaultsToNone.transform
         """)
           .check("", "Chimney can't derive transformation from Source to Target")
@@ -756,9 +758,7 @@ object PartialDslSpec extends TestSuite {
       implicit val totalInner: Transformer[String, Int] = _.toInt
 
       implicit val partialInner: PartialTransformer[String, Int] =
-        PartialTransformer[String, Int](str =>
-          PartialTransformer.Result.fromCatching(str.toInt).map(_ * 2)
-        )
+        PartialTransformer[String, Int](str => PartialTransformer.Result.fromCatching(str.toInt).map(_ * 2))
 
       "ambiguous error when not resolved" - {
 
@@ -777,7 +777,8 @@ object PartialDslSpec extends TestSuite {
           Foo("100")
             .intoPartial[Bar]
             .enableImplicitConflictResolution(PreferTotalTransformer)
-            .transform.asOption ==> Some(Bar(100))
+            .transform
+            .asOption ==> Some(Bar(100))
         }
 
         "using scoped configuration" - {
@@ -793,7 +794,7 @@ object PartialDslSpec extends TestSuite {
                 .transform
             """).check(
               "",
-              "Ambiguous implicits while resolving Chimney recursive transformation",
+              "Ambiguous implicits while resolving Chimney recursive transformation"
             )
           }
         }
@@ -804,7 +805,8 @@ object PartialDslSpec extends TestSuite {
           Foo("100")
             .intoPartial[Bar]
             .enableImplicitConflictResolution(PreferPartialTransformer)
-            .transform.asOption ==> Some(Bar(200))
+            .transform
+            .asOption ==> Some(Bar(200))
         }
 
         "using scoped configuration" - {
@@ -820,41 +822,44 @@ object PartialDslSpec extends TestSuite {
                 .transform
             """).check(
               "",
-              "Ambiguous implicits while resolving Chimney recursive transformation",
+              "Ambiguous implicits while resolving Chimney recursive transformation"
             )
           }
         }
       }
 
       "resolve conflict explicitly using .withFieldComputed" - {
-        Foo("100").intoPartial[Bar]
+        Foo("100")
+          .intoPartial[Bar]
           .withFieldComputed(_.value, v => totalInner.transform(v.value))
           .transform
           .asOption ==> Some(Bar(100))
       }
 
       "resolve conflict explicitly using .withFieldComputedPartial" - {
-        Foo("100").intoPartial[Bar]
+        Foo("100")
+          .intoPartial[Bar]
           .withFieldComputedPartial(_.value, v => partialInner.transform(v.value))
           .transform
           .asOption ==> Some(Bar(200))
       }
 
       "resolve conflict explicitly prioritizing: last wins" - {
-        Foo("100").intoPartial[Bar]
+        Foo("100")
+          .intoPartial[Bar]
           .withFieldComputed(_.value, v => totalInner.transform(v.value))
           .withFieldComputedPartial(_.value, v => partialInner.transform(v.value))
           .transform
           .asOption ==> Some(Bar(200))
 
-        Foo("100").intoPartial[Bar]
+        Foo("100")
+          .intoPartial[Bar]
           .withFieldComputedPartial(_.value, v => partialInner.transform(v.value))
           .withFieldComputed(_.value, v => totalInner.transform(v.value))
           .transform
           .asOption ==> Some(Bar(100))
       }
     }
-
 
     "support deriving partial transformer from pure" - {
       case class Foo(str: String)

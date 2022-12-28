@@ -141,7 +141,9 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     * @param preference parameter specifying which implicit transformer to pick in case of conflict
     * @see TODO documentation link
     */
-  def enableImplicitConflictResolution[P <: ImplicitTransformerPreference](@unused preference: P): UpdateFlag[Enable[ImplicitConflictResolution[P], Flags]] =
+  def enableImplicitConflictResolution[P <: ImplicitTransformerPreference](
+      @unused preference: P
+  ): UpdateFlag[Enable[ImplicitConflictResolution[P], Flags]] =
     enableFlag[ImplicitConflictResolution[P]]
 
   /** Disable any implicit conflict resolution preference that was set previously.
