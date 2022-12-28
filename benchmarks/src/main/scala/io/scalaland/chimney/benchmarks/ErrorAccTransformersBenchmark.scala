@@ -2,7 +2,7 @@ package io.scalaland.chimney.benchmarks
 
 import org.openjdk.jmh.annotations.Benchmark
 import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.{PartialTransformer, TransformationError, TransformerF}
+import io.scalaland.chimney.{ErrorPathNode, PartialTransformer, TransformationError, TransformerF}
 
 class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   import fixtures._
@@ -41,23 +41,23 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def simpleHappyByHandErrorAccEitherSwap: M[SimpleOutput] =
+  def simpleHappyByHandEitherSwap: M[SimpleOutput] =
     simpleByHandErrorAccEitherSwap(
       simple,
-      happy.validateA(_).left.map(_.map(TransformationError(_))),
-      happy.validateB(_).left.map(_.map(TransformationError(_))),
-      happy.validateC(_).left.map(_.map(TransformationError(_))),
-      happy.validateD(_).left.map(_.map(TransformationError(_)))
+      happy.validateA(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("a")))),
+      happy.validateB(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("b")))),
+      happy.validateC(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("c")))),
+      happy.validateD(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("d"))))
     )
 
   @Benchmark
-  def simpleHappyByHandErrorAccCrazyNesting: M[SimpleOutput] =
+  def simpleHappyByHandCrazyNesting: M[SimpleOutput] =
     simpleByHandErrorAccCrazyNesting(
       simple,
-      happy.validateA(_).left.map(_.map(TransformationError(_))),
-      happy.validateB(_).left.map(_.map(TransformationError(_))),
-      happy.validateC(_).left.map(_.map(TransformationError(_))),
-      happy.validateD(_).left.map(_.map(TransformationError(_)))
+      happy.validateA(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("a")))),
+      happy.validateB(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("b")))),
+      happy.validateC(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("c")))),
+      happy.validateD(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("d"))))
     )
 
   @Benchmark
@@ -89,23 +89,23 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def simpleUnhappyByHandErrorAccEitherSwap: M[SimpleOutput] =
+  def simpleUnhappyByHandEitherSwap: M[SimpleOutput] =
     simpleByHandErrorAccEitherSwap(
       simple,
-      unhappy.validateA(_).left.map(_.map(TransformationError(_))),
-      unhappy.validateB(_).left.map(_.map(TransformationError(_))),
-      unhappy.validateC(_).left.map(_.map(TransformationError(_))),
-      unhappy.validateD(_).left.map(_.map(TransformationError(_)))
+      unhappy.validateA(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("a")))),
+      unhappy.validateB(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("b")))),
+      unhappy.validateC(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("c")))),
+      unhappy.validateD(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("d"))))
     )
 
   @Benchmark
-  def simpleUnhappyByHandErrorAccCrazyNesting: M[SimpleOutput] =
+  def simpleUnhappyByHandCrazyNesting: M[SimpleOutput] =
     simpleByHandErrorAccCrazyNesting(
       simple,
-      unhappy.validateA(_).left.map(_.map(TransformationError(_))),
-      unhappy.validateB(_).left.map(_.map(TransformationError(_))),
-      unhappy.validateC(_).left.map(_.map(TransformationError(_))),
-      unhappy.validateD(_).left.map(_.map(TransformationError(_)))
+      unhappy.validateA(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("a")))),
+      unhappy.validateB(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("b")))),
+      unhappy.validateC(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("c")))),
+      unhappy.validateD(_).left.map(_.map(TransformationError(_).prepend(ErrorPathNode.Accessor("d"))))
     )
 
   @Benchmark
