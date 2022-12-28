@@ -122,6 +122,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * @since 0.3.3
     */
+  @deprecated("Unsafe options are deprecated. Consider using PartialTransformer.", since = "0.7.0")
   def enableUnsafeOption: UpdateFlag[Enable[UnsafeOption, Flags]] =
     enableFlag[UnsafeOption]
 
@@ -131,6 +132,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * @since 0.6.0
     */
+  @deprecated("Unsafe options are deprecated. Consider using PartialTransformer.", since = "0.7.0")
   def disableUnsafeOption: UpdateFlag[Disable[UnsafeOption, Flags]] =
     disableFlag[UnsafeOption]
 
