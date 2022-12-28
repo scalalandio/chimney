@@ -73,6 +73,7 @@ object Transformer {
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
   def defineF[F[+_], From, To]
       : TransformerFDefinition[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
     TransformerF.define[F, From, To]
