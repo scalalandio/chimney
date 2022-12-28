@@ -21,12 +21,14 @@ import scala.language.experimental.macros
   *
   * @since 0.5.0
   */
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
 trait TransformerF[F[+_], From, To] {
 
   /** @since 0.5.0 */
   def transform(src: From): F[To]
 }
 
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
 object TransformerF {
 
   /** Provides [[io.scalaland.chimney.TransformerF]] derived with the default settings.
