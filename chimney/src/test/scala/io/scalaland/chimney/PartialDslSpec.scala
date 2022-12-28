@@ -87,7 +87,7 @@ object PartialDslSpec extends TestSuite {
         result.asEither ==> Left(
           PartialTransformer.Result.Errors
             .single(PartialTransformer.Error.ofEmptyValue)
-            .wrapErrorPaths(PartialTransformer.ErrorPath.Accessor("height", _))
+            .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
         )
         result.asErrorPathMessagesStrings ==> Iterable(
           "height" -> "empty value"
@@ -107,7 +107,7 @@ object PartialDslSpec extends TestSuite {
         result.asEither ==> Left(
           PartialTransformer.Result.Errors
             .single(PartialTransformer.Error.ofNotDefinedAt(person))
-            .wrapErrorPaths(PartialTransformer.ErrorPath.Accessor("height", _))
+            .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
         )
         result.asErrorPathMessagesStrings ==> Iterable(
           "height" -> s"not defined at $person"
@@ -129,7 +129,7 @@ object PartialDslSpec extends TestSuite {
                 PartialTransformer.Error.ofString("def")
               )
             )
-            .wrapErrorPaths(PartialTransformer.ErrorPath.Accessor("height", _))
+            .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
         )
         result.asErrorPathMessagesStrings ==> Iterable(
           "height" -> "abc",
@@ -150,7 +150,7 @@ object PartialDslSpec extends TestSuite {
             .single(
               PartialTransformer.Error.ofThrowable(MyException)
             )
-            .wrapErrorPaths(PartialTransformer.ErrorPath.Accessor("height", _))
+            .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
         )
         result.asErrorPathMessagesStrings ==> Iterable(
           "height" -> "my exception"
@@ -251,17 +251,17 @@ object PartialDslSpec extends TestSuite {
             Iterable(
               PartialTransformer.Error
                 .ofString("bad trip id")
-                .wrapErrorPath(PartialTransformer.ErrorPath.Accessor("id", _)),
+                .prependErrorPath(PartialTransformer.PathElement.Accessor("id")),
               PartialTransformer.Error
                 .ofString("bad height value")
-                .wrapErrorPath(PartialTransformer.ErrorPath.Accessor("height", _))
-                .wrapErrorPath(PartialTransformer.ErrorPath.Index(0, _))
-                .wrapErrorPath(PartialTransformer.ErrorPath.Accessor("people", _)),
+                .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
+                .prependErrorPath(PartialTransformer.PathElement.Index(0))
+                .prependErrorPath(PartialTransformer.PathElement.Accessor("people")),
               PartialTransformer.Error
                 .ofString("bad age value")
-                .wrapErrorPath(PartialTransformer.ErrorPath.Accessor("age", _))
-                .wrapErrorPath(PartialTransformer.ErrorPath.Index(1, _))
-                .wrapErrorPath(PartialTransformer.ErrorPath.Accessor("people", _))
+                .prependErrorPath(PartialTransformer.PathElement.Accessor("age"))
+                .prependErrorPath(PartialTransformer.PathElement.Index(1))
+                .prependErrorPath(PartialTransformer.PathElement.Accessor("people"))
             )
           )
         )
@@ -699,7 +699,7 @@ object PartialDslSpec extends TestSuite {
               PartialTransformer.Error.ofString("Bad name")
             )
           )
-          .wrapErrorPaths(PartialTransformer.ErrorPath.Accessor("name", _))
+          .prependErrorPath(PartialTransformer.PathElement.Accessor("name"))
       )
     }
 //
