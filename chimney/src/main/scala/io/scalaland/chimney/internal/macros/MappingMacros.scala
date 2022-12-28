@@ -132,8 +132,8 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
             target -> TransformerBodyTree(
               q"""
                 ${config.transformerDefinitionPrefix
-                  .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
-                  .callUnaryApply(srcPrefixTree)}
+                .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
+                .callUnaryApply(srcPrefixTree)}
                   .prependErrorPath(
                     _root_.io.scalaland.chimney.PartialTransformer.PathElement.Accessor(${target.name})
                   )
