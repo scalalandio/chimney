@@ -756,7 +756,9 @@ object PartialDslSpec extends TestSuite {
       implicit val totalInner: Transformer[String, Int] = _.toInt
 
       implicit val partialInner: PartialTransformer[String, Int] =
-        PartialTransformer[String, Int](_.toIntOption.toPartialTransformerResult.map(_ * 2))
+        PartialTransformer[String, Int](str =>
+          PartialTransformer.Result.fromCatching(str.toInt).map(_ * 2)
+        )
 
       "ambiguous error when not resolved" - {
 
