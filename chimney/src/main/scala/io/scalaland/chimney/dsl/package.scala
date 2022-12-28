@@ -86,6 +86,7 @@ package object dsl {
       * @tparam To target type
       * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
       */
+    @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
     final def intoF[F[+_], To]
         : TransformerFInto[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
       new TransformerFInto(source, new TransformerFDefinition(Map.empty, Map.empty))
@@ -100,6 +101,7 @@ package object dsl {
       * @tparam To target type
       * @return transformed wrapped target value of type `F[To]`
       */
+    @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
     final def transformIntoF[F[+_], To](implicit transformer: TransformerF[F, From, To]): F[To] =
       transformer.transform(source)
   }
