@@ -96,6 +96,7 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/unsafe-options.html]] for more details
     */
+  @deprecated("Unsafe options are deprecated. Consider using PartialTransformer.", since = "0.7.0")
   def enableUnsafeOption: UpdateFlag[Enable[UnsafeOption, Flags]] =
     enableFlag[UnsafeOption]
 
@@ -103,6 +104,7 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/unsafe-options.html]] for more details
     */
+  @deprecated("Unsafe options are deprecated. Consider using PartialTransformer.", since = "0.7.0")
   def disableUnsafeOption: UpdateFlag[Disable[UnsafeOption, Flags]] =
     disableFlag[UnsafeOption]
 
