@@ -274,9 +274,9 @@ trait TransformerConfigSupport extends MacroUtils {
     } else if (flagsTpe.typeConstructor =:= enableT) {
       val List(flagT, rest) = flagsTpe.typeArgs
 
-      if(flagT.typeConstructor =:= implicitConflictResolutionT) {
+      if (flagT.typeConstructor =:= implicitConflictResolutionT) {
         val preferenceT = flagT.typeArgs.head
-        if(preferenceT =:= typeOf[PreferTotalTransformer.type]) {
+        if (preferenceT =:= typeOf[PreferTotalTransformer.type]) {
           captureTransformerFlags(rest, defaultFlags).setImplicitConflictResolution(Some(PreferTotalTransformer))
         } else if (preferenceT =:= typeOf[PreferPartialTransformer.type]) {
           captureTransformerFlags(rest, defaultFlags).setImplicitConflictResolution(Some(PreferPartialTransformer))
