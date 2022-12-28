@@ -79,9 +79,9 @@ object PartialTransformer {
       case Result.Value(value) => f(value)
       case _: Result.Errors    => this.asInstanceOf[Result[U]]
     }
-    final def wrapErrorPaths(pathWrapper: ErrorPath => ErrorPath): this.type = this match {
+    final def prependErrorPath(pathElement: => PathElement): this.type = this match {
       case _: Result.Value[_] => this
-      case Result.Errors(ec)  => Result.Errors(ec.mapErrors(_.wrapErrorPath(pathWrapper))).asInstanceOf[this.type]
+      case e: Result.Errors   => e.prependPath(pathElement).asInstanceOf[this.type]
     }
   }
   object Result {
@@ -89,6 +89,7 @@ object PartialTransformer {
     final case class Errors(private val ec: ErrorsCollection) extends Result[Nothing] {
       def this(errors: Iterable[Error]) = this(ErrorsCollection.fromIterable(errors))
       def this(error: Error) = this(ErrorsCollection.fromSingle(error))
+      def prependPath(pathElement: PathElement): Errors = Errors(ec.prependPath(pathElement))
       def asErrorPathMessageStrings: Iterable[(String, String)] = ec.map(_.asErrorPathMessageString)
     }
     object Errors {
@@ -222,9 +223,7 @@ object PartialTransformer {
 
   final case class Error(message: ErrorMessage, path: ErrorPath = ErrorPath.Empty) {
     def asErrorPathMessageString: (String, String) = (path.asString, message.asString)
-    def wrapErrorPath(pathWrapper: ErrorPath => ErrorPath): Error = {
-      copy(path = pathWrapper(path))
-    }
+    def prependErrorPath(pathElement: PathElement): Error = Error(message, path.prepend(pathElement))
   }
   object Error {
     final def ofEmptyValue: Error =
@@ -246,32 +245,47 @@ object PartialTransformer {
     }
   }
   object ErrorMessage {
-    case object EmptyValue extends ErrorMessage
+    final case object EmptyValue extends ErrorMessage
     final case class NotDefinedAt(value: Any) extends ErrorMessage
     final case class StringMessage(message: String) extends ErrorMessage
     final case class ThrowableMessage(throwable: Throwable) extends ErrorMessage
   }
 
-  sealed trait ErrorPath {
-    final def asString: String = this match {
-      case ErrorPath.Empty                                  => ""
-      case ErrorPath.Accessor(name, ErrorPath.Empty)        => s"$name"
-      case ErrorPath.Accessor(name, idx: ErrorPath.Index)   => s"$name${idx.asString}"
-      case ErrorPath.Accessor(name, mv: ErrorPath.MapValue) => s"$name${mv.asString}"
-      case ErrorPath.Accessor(name, nested)                 => s"$name.${nested.asString}"
-      case ErrorPath.Index(index, nested)                   => s"($index).${nested.asString}"
-      case ErrorPath.MapValue(key, ErrorPath.Empty)         => s"($key)"
-      case ErrorPath.MapValue(key, nested)                  => s"($key).${nested.asString}"
-      case ErrorPath.MapKey(key, ErrorPath.Empty)           => s"keys($key)"
-      case ErrorPath.MapKey(key, nested)                    => s"keys($key).${nested.asString}"
+  final case class ErrorPath(private val elems: List[PathElement]) extends AnyVal {
+    def prepend(pathElement: PathElement): ErrorPath = ErrorPath(pathElement :: elems)
+    def asString: String = {
+      if (elems.isEmpty) ""
+      else {
+        val sb = new StringBuilder
+        val it = elems.iterator
+        while (it.hasNext) {
+          val curr = it.next()
+          if (sb.nonEmpty && PathElement.shouldPrependWithDot(curr)) {
+            sb += '.'
+          }
+          sb ++= curr.asString
+        }
+        sb.result()
+      }
     }
   }
   object ErrorPath {
-    case object Empty extends ErrorPath
-    final case class Accessor(name: String, nested: ErrorPath) extends ErrorPath
-    final case class Index(index: Int, nested: ErrorPath) extends ErrorPath
-    final case class MapValue(key: Any, nested: ErrorPath) extends ErrorPath
-    final case class MapKey(key: Any, nested: ErrorPath) extends ErrorPath
+    final val Empty: ErrorPath = ErrorPath(Nil)
+  }
+
+  sealed trait PathElement { def asString: String }
+  object PathElement {
+    final case class Accessor(name: String) extends PathElement { override def asString: String = name }
+    final case class Index(index: Int) extends PathElement { override def asString: String = s"($index)" }
+    final case class MapValue(key: Any) extends PathElement { override def asString: String = s"($key)" }
+    final case class MapKey(key: Any) extends PathElement { override def asString: String = s"keys($key)" }
+
+    final def shouldPrependWithDot(pe: PathElement): Boolean = pe match {
+      case _: Accessor => true
+      case _: Index    => false
+      case _: MapValue => false
+      case _: MapKey   => true
+    }
   }
 
 }
