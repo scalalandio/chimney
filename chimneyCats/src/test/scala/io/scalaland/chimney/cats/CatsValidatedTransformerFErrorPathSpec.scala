@@ -6,7 +6,7 @@ import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.utils.OptionUtils._
 import utest._
 
-object CatsValidatedErrorPathSpec extends TestSuite {
+object CatsValidatedTransformerFErrorPathSpec extends TestSuite {
   val tests = Tests {
     "path of error should capture for" - {
       type V[+A] = ValidatedNec[TransformationError[String], A]
@@ -108,12 +108,12 @@ object CatsValidatedErrorPathSpec extends TestSuite {
 
         error.check(
           "",
-          "derivation from k: io.scalaland.chimney.cats.CatsValidatedErrorPathSpec.FooKey to scala.Double is not supported in Chimney!"
+          "derivation from k: io.scalaland.chimney.cats.CatsValidatedTransformerFErrorPathSpec.FooKey to scala.Double is not supported in Chimney!"
         )
 
         error.check(
           "",
-          "derivation from v: io.scalaland.chimney.cats.CatsValidatedErrorPathSpec.FooValue to scala.Double is not supported in Chimney!"
+          "derivation from v: io.scalaland.chimney.cats.CatsValidatedTransformerFErrorPathSpec.FooValue to scala.Double is not supported in Chimney!"
         )
 
         Map(StringWrapper("a") -> StringWrapper("b"), StringWrapper("c") -> StringWrapper("d"))
