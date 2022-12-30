@@ -1,4 +1,3 @@
 package io.scalaland.chimney
 
-
 package object cats extends CatsTransformerFImplicits
