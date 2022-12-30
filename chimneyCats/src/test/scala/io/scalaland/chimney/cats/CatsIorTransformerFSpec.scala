@@ -6,7 +6,7 @@ import utest._
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.utils.OptionUtils._
 
-object CatsIorSpec extends TestSuite {
+object CatsIorTransformerFSpec extends TestSuite {
   val tests: Tests = Tests {
     "transform always becomes a Right" - {
       Person("John", 10, 140).intoF[IorNec[String, +*], User].transform ==> Ior.right(User("John", 10, 140))
