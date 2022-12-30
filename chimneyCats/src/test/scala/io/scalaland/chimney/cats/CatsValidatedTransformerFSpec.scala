@@ -12,7 +12,7 @@ import utest._
 import scala.collection.immutable.Queue
 import scala.collection.mutable.ArrayBuffer
 
-object CatsValidatedSpec extends TestSuite {
+object CatsValidatedTransformerFSpec extends TestSuite {
 
   val tests = Tests {
 
