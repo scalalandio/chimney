@@ -45,6 +45,8 @@ object CatsValidatedPartialTransformerSpec extends TestSuite {
       result.asValidatedList ==> Validated.invalid(List(expectedErr1, expectedErr2))
       result.asValidatedChain ==> Validated.invalid(Chain(expectedErr1, expectedErr2))
     }
+
+    // TODO: add test cases for all .toPartialTransformerResult on Validated (Nel, Nec) x (String, Error) and Validated(Errors)
   }
 
 }
