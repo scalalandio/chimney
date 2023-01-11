@@ -97,6 +97,7 @@ object PartialTransformer {
       final def single(error: Error): Errors = new Errors(error)
       final def fromString(message: String): Errors = new Errors(Error.ofString(message))
       final def fromStrings(messages: Iterable[String]): Errors = Errors(messages.map(Error.ofString))
+      final def merge(errors1: Errors, errors2: Errors): Errors = Errors(errors1.ec ++ errors2.ec)
     }
 
     final def fromFunction[U, T](f: U => T): U => Result[T] = { u =>
@@ -126,7 +127,7 @@ object PartialTransformer {
     }
     final def fromOptionOrErrors[T](value: Option[T], ifEmpty: => Errors): Result[T] = value match {
       case Some(value) => fromValue(value)
-      case _           => fromErrors(ifEmpty.errors)
+      case _           => ifEmpty
     }
     final def fromOptionOrError[T](value: Option[T], ifEmpty: => Error): Result[T] = value match {
       case Some(value) => fromValue(value)
@@ -146,7 +147,7 @@ object PartialTransformer {
     }
     final def fromEither[T](value: Either[Errors, T]): Result[T] = value match {
       case Right(value)         => fromValue(value)
-      case Left(Errors(errors)) => fromErrors(errors)
+      case Left(errors: Errors) => errors
     }
     final def fromEitherString[T](value: Either[String, T]): Result[T] = {
       fromEither(value.left.map(Errors.fromString))

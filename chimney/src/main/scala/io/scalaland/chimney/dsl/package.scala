@@ -165,8 +165,8 @@ package object dsl {
       PartialTransformer.Result.fromOptionOrError(option, ifEmpty)
     def toPartialTransformerResultOrString(ifEmpty: => String): PartialTransformer.Result[T] =
       PartialTransformer.Result.fromOptionOrString(option, ifEmpty)
-    def toPartialTransformerResultOrStrings(ifEmpty: => Seq[String]): PartialTransformer.Result[T] =
-      PartialTransformer.Result.fromOptionOrStrings(option, ifEmpty)
+//    def toPartialTransformerResultOrStrings(ifEmpty: => Seq[String]): PartialTransformer.Result[T] =
+//      PartialTransformer.Result.fromOptionOrStrings(option, ifEmpty)
     def toPartialTransformerResultOrThrowable(ifEmpty: => Throwable): PartialTransformer.Result[T] =
       PartialTransformer.Result.fromOptionOrThrowable(option, ifEmpty)
   }
