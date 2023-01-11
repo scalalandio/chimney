@@ -87,6 +87,7 @@ object PartialTransformer {
   object Result {
     final case class Value[T](value: T) extends Result[T]
     final case class Errors(private val ec: ErrorsCollection) extends Result[Nothing] {
+      def errors: ErrorsCollection = ec
       def prependPath(pathElement: PathElement): Errors = Errors(ec.prependPath(pathElement))
       def asErrorPathMessageStrings: Iterable[(String, String)] = ec.map(_.asErrorPathMessageString)
     }
