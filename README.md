@@ -1,11 +1,18 @@
 # Chimney <img src="chimney.png" alt="Chimney logo" width="64" />
 
 ![CI build](https://github.com/scalalandio/chimney/workflows/CI%20build/badge.svg)
-[![Maven Central](https://img.shields.io/maven-central/v/io.scalaland/chimney_2.12.svg)](http://search.maven.org/#search%7Cga%7C1%7Cchimney)
-[![Javadocs](https://www.javadoc.io/badge/io.scalaland/chimney_2.13.svg?color=red&label=scaladoc)](https://www.javadoc.io/doc/io.scalaland/chimney_2.13/latest/io/scalaland/chimney/index.html)
 [![codecov.io](http://codecov.io/github/scalalandio/chimney/coverage.svg?branch=master)](http://codecov.io/github/scalalandio/chimney?branch=master)
 [![License](http://img.shields.io/:license-Apache%202-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt) [![Join the chat at https://gitter.im/scalalandio/chimney](https://badges.gitter.im/scalalandio/chimney.svg)](https://gitter.im/scalalandio/chimney?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Scala.js](https://www.scala-js.org/assets/badges/scalajs-1.0.0.svg)](https://www.scala-js.org)
+
+[![Chimney JVM versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=jvm)](https://search.maven.org/artifact/io.scalaland/chimney_2.13) <br>
+[![Chimney Scala.js 1.x versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=sjs1)](https://search.maven.org/artifact/io.scalaland/chimney_sjs1_2.13) <br>
+[![Chimney Scala.js 0.6 versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=sjs0.6)](https://search.maven.org/artifact/io.scalaland/chimney_sjs0.6_2.13) <br>
+[![Chimney Scala Native 0.3 versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=native0.3)](https://search.maven.org/artifact/io.scalaland/chimney_native0.3_2.11) <br>  
+
+[Documentation](https://scalalandio.github.io/chimney/)
+[![Scaladoc 2.11](https://javadoc.io/badge2/io.scalaland/chimney_2.11/scaladoc%202.11.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.11)
+[![Scaladoc 2.12](https://javadoc.io/badge2/io.scalaland/chimney_2.12/scaladoc%202.12.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.12)
+[![Scaladoc 2.13](https://javadoc.io/badge2/io.scalaland/chimney_2.13/scaladoc%202.13.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.13)
 
 Battle tested Scala library for boilerplate-free data transformations.
 
@@ -62,10 +69,10 @@ Underneath it uses Scala macros to give you:
 To include Chimney to your SBT project, add the following line to your `build.sbt`:
 
 ```scala
-libraryDependencies += "io.scalaland" %% "chimney" % "0.6.2"
+libraryDependencies += "io.scalaland" %% "chimney" % chimneyVersion
 ```
 
-Library is released for Scala 2.12.x and 2.13.x.
+Library is currently supported for Scala 2.12.x and 2.13.x.
 
 If you want to use it with Scala.js, you need to replace `%%` with `%%%`.
 Due to some [compiler bugs](https://issues.scala-lang.org/browse/SI-7046),
@@ -92,6 +99,41 @@ defined class Bar
 
 @ Foo("abc", 10).transformInto[Bar] 
 res2: Bar = Bar("abc", 10, true)
+```
+
+## Trying with Scala CLI
+
+If you are using Scala CLI you cam try out Chimney by adding it with "using" clause:
+```scala
+//> using scala "2.13.10"
+//> using lib "io.scalaland::chimney:0.6.2"
+import io.scalaland.chimney.dsl._
+
+case class Foo(x: String, y: Int)
+case class Bar(x: String, y: Int, z: Boolean = true)
+
+object Main extends App {
+  println(Foo("abc", 10).transformInto[Bar])
+}
+```
+
+or run the Ammonite REPL:
+
+```
+scala-cli repl --ammonite --scala "2.13.10" --dependency "io.scalaland::chimney:0.6.2"
+Loading...
+Welcome to the Ammonite Repl 2.5.5-17-df243e14 (Scala 2.13.10 Java 17.0.1)
+@ case class Foo(x: String, y: Int)
+defined class Foo
+
+@ case class Bar(x: String, y: Int, z: Boolean = true)
+defined class Bar
+
+@ import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.dsl._
+
+@ Foo("abc", 10).transformInto[Bar]
+res3: Bar = Bar(x = "abc", y = 10, z = true)
 ```
 
 ## Documentation
