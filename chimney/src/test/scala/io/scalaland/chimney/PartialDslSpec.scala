@@ -117,17 +117,15 @@ object PartialDslSpec extends TestSuite {
       "custom string errors" - {
         val result = Person("John", 10, 140)
           .intoPartial[User]
-          .withFieldConstPartial(_.height, PartialTransformer.Result.fromErrorStrings(Seq("abc", "def")))
+          .withFieldConstPartial(_.height, PartialTransformer.Result.fromErrorStrings("abc", "def"))
           .transform
 
         result.asOption ==> None
         result.asEither == Left(
           PartialTransformer.Result
             .Errors(
-              Iterable(
-                PartialTransformer.Error.ofString("abc"),
-                PartialTransformer.Error.ofString("def")
-              )
+              PartialTransformer.Error.ofString("abc"),
+              PartialTransformer.Error.ofString("def")
             )
             .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
         )
@@ -248,21 +246,19 @@ object PartialDslSpec extends TestSuite {
         result.asOption ==> None
         result.asEither ==> Left(
           PartialTransformer.Result.Errors(
-            Iterable(
-              PartialTransformer.Error
-                .ofString("bad trip id")
-                .prependErrorPath(PartialTransformer.PathElement.Accessor("id")),
-              PartialTransformer.Error
-                .ofString("bad height value")
-                .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
-                .prependErrorPath(PartialTransformer.PathElement.Index(0))
-                .prependErrorPath(PartialTransformer.PathElement.Accessor("people")),
-              PartialTransformer.Error
-                .ofString("bad age value")
-                .prependErrorPath(PartialTransformer.PathElement.Accessor("age"))
-                .prependErrorPath(PartialTransformer.PathElement.Index(1))
-                .prependErrorPath(PartialTransformer.PathElement.Accessor("people"))
-            )
+            PartialTransformer.Error
+              .ofString("bad trip id")
+              .prependErrorPath(PartialTransformer.PathElement.Accessor("id")),
+            PartialTransformer.Error
+              .ofString("bad height value")
+              .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
+              .prependErrorPath(PartialTransformer.PathElement.Index(0))
+              .prependErrorPath(PartialTransformer.PathElement.Accessor("people")),
+            PartialTransformer.Error
+              .ofString("bad age value")
+              .prependErrorPath(PartialTransformer.PathElement.Accessor("age"))
+              .prependErrorPath(PartialTransformer.PathElement.Index(1))
+              .prependErrorPath(PartialTransformer.PathElement.Accessor("people"))
           )
         )
         result.asErrorPathMessagesStrings ==> Iterable(
@@ -441,7 +437,7 @@ object PartialDslSpec extends TestSuite {
     "safe option unwrapping" - {
       implicit val intParserEither: PartialTransformer[String, Int] =
         PartialTransformer(
-          _.parseInt.toEitherList("bad int").toPartialTransformerResult
+          _.parseInt.toEither("bad int").toPartialTransformerResult
         )
 
       implicit def optionUnwrapping[A, B](
@@ -684,7 +680,8 @@ object PartialDslSpec extends TestSuite {
         .withFieldConstPartial(
           _.name,
           PartialTransformer.Result.fromErrors(
-            Seq(PartialTransformer.Error.ofEmptyValue, PartialTransformer.Error.ofString("Bad name"))
+            PartialTransformer.Error.ofEmptyValue,
+            PartialTransformer.Error.ofString("Bad name")
           )
         )
         .withFieldConstPartial(_.height, PartialTransformer.Result.fromErrorString("Bad height"))
@@ -694,10 +691,8 @@ object PartialDslSpec extends TestSuite {
       result.asEither ==> Left(
         PartialTransformer.Result
           .Errors(
-            Iterable(
-              PartialTransformer.Error.ofEmptyValue,
-              PartialTransformer.Error.ofString("Bad name")
-            )
+            PartialTransformer.Error.ofEmptyValue,
+            PartialTransformer.Error.ofString("Bad name")
           )
           .prependErrorPath(PartialTransformer.PathElement.Accessor("name"))
       )

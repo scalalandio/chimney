@@ -129,6 +129,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
           val updatedArgs = targets.map(argsMap)
 
           q"${bodyTree.tree}.map { ($fn: ${target.tpe}) => ${mkTargetValueTree(updatedArgs)} }"
+        // TODO: call map2 for 2-arg partial args
         } else {
           val (partialTargets, partialBodyTrees) = partialArgs.unzip
           val partialTrees = partialBodyTrees.map(_.tree)
@@ -161,8 +162,20 @@ trait TargetConstructorMacros extends Model with AssertUtils {
             val errIdents = partialTrees.map(_ => freshTermName("err"))
             val errPats = errIdents.map(errId => pq"$errId")
             val errPat = pq"(..${errPats})"
-            val allErrTrees = errIdents.map(errId => q"$errId.errors").reduce[Tree] { (t1, t2) =>
-              q"$t1 ++ $t2"
+
+            val allErrorsIdent = freshTermName("allErrors")
+            val allErrIfTrees = errIdents.map { errId =>
+              val localErrsIdent = freshTermName("localErrs")
+              q"""
+                if ($errId.isInstanceOf[_root_.io.scalaland.chimney.PartialTransformer.Result.Errors]) {
+                  val $localErrsIdent = $errId.asInstanceOf[_root_.io.scalaland.chimney.PartialTransformer.Result.Errors]
+                  if ($allErrorsIdent == null) {
+                    $allErrorsIdent = $localErrsIdent
+                  } else {
+                    $allErrorsIdent = _root_.io.scalaland.chimney.PartialTransformer.Result.Errors.merge($allErrorsIdent, $localErrsIdent)
+                  }
+                }
+               """
             }
 
             q"""
@@ -174,8 +187,10 @@ trait TargetConstructorMacros extends Model with AssertUtils {
                   (..${localTreeRefs}) match {
                     case $allSuccPat =>
                       _root_.io.scalaland.chimney.PartialTransformer.Result.Value(${mkTargetValueTree(updatedArgs)})
-                    case $errPat =>
-                      _root_.io.scalaland.chimney.PartialTransformer.Result.Errors($allErrTrees)
+                    case $errPat => // (r1, r2, .., rk)
+                      var $allErrorsIdent: _root_.io.scalaland.chimney.PartialTransformer.Result.Errors = null
+                      ..$allErrIfTrees
+                      $allErrorsIdent
                   }
                 }
               }

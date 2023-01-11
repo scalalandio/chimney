@@ -176,11 +176,11 @@ package object dsl {
       PartialTransformer.Result.fromEitherString(either)
   }
 
-  implicit final class EitherStringsPartialTransformerOps[T](private val either: Either[Iterable[String], T])
-      extends AnyVal {
-    def toPartialTransformerResult: PartialTransformer.Result[T] =
-      PartialTransformer.Result.fromEitherStrings(either)
-  }
+//  implicit final class EitherStringsPartialTransformerOps[T](private val either: Either[Iterable[String], T])
+//      extends AnyVal {
+//    def toPartialTransformerResult: PartialTransformer.Result[T] =
+//      PartialTransformer.Result.fromEitherStrings(either)
+//  }
 
   implicit final class TryPartialTransformerOps[T](private val `try`: Try[T]) extends AnyVal {
     def toPartialTransformerResult: PartialTransformer.Result[T] =
