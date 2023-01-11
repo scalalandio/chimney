@@ -11,8 +11,12 @@ import scala.language.experimental.macros
   *
   * @tparam From type of input value
   * @tparam To   type of output value
+  *
+  * @since 0.1.0
   */
 trait Transformer[From, To] {
+
+  /** @since 0.1.0 */
   def transform(src: From): To
 }
 
@@ -25,6 +29,8 @@ object Transformer {
     * @tparam From type of input value
     * @tparam To type of output value
     * @return [[io.scalaland.chimney.Transformer]] type class definition
+    *
+    * @since 0.2.0
     */
   implicit def derive[From, To]: Transformer[From, To] =
     macro TransformerBlackboxMacros.deriveTransformerImpl[From, To]
@@ -37,6 +43,8 @@ object Transformer {
     * @tparam From type of input value
     * @tparam To type of output value
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]] with defaults
+    *
+    * @since 0.4.0
     */
   def define[From, To]: TransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new TransformerDefinition(Map.empty, Map.empty)
@@ -50,6 +58,8 @@ object Transformer {
     * @tparam From type of input value
     * @tparam To   type of output value
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]] with defaults
+    *
+    * @since 0.5.0
     */
   def defineF[F[+_], From, To]
       : TransformerFDefinition[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =

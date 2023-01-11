@@ -6,42 +6,55 @@ import _root_.cats.{Applicative, ApplicativeError}
 
 import scala.collection.compat._
 
+/** @since 0.5.0 */
 package object cats extends CatsImplicits
 
+/** @since 0.5.0 */
 trait CatsImplicits extends LowPriorityImplicits {
 
   // normally, these instances are not needed, but few tests with .enableUnsafeOption fail to compile without them
+  /** @since 0.5.0 */
   implicit def TransformerFValidatedNecSupport[E]: TransformerFSupport[ValidatedNec[E, +*]] =
     TransformerFValidatedSupport[NonEmptyChain[E]](implicitly)
 
+  /** @since 0.5.0 */
   implicit def TransformerFValidatedNelSupport[E]: TransformerFSupport[ValidatedNel[E, +*]] =
     TransformerFValidatedSupport[NonEmptyList[E]](implicitly)
 
+  /** @since 0.5.3 */
   implicit def TransformerFIorNecSupport[E]: TransformerFSupport[IorNec[E, +*]] =
     TransformerFIorSupport[NonEmptyChain[E]](implicitly)
 
+  /** @since 0.5.3 */
   implicit def TransformerFIorNelSupport[E]: TransformerFSupport[IorNel[E, +*]] =
     TransformerFIorSupport[NonEmptyList[E]](implicitly)
 
+  /** @since 0.5.3 */
   implicit def TransformerFIorNesSupport[E]: TransformerFSupport[IorNes[E, +*]] =
     TransformerFIorSupport[NonEmptySet[E]](implicitly)
 
+  /** @since 0.6.1 */
   implicit def TransformerFErrorValidatedNecSupport[M]
       : TransformerFErrorPathSupport[ValidatedNec[TransformationError[M], +*]] =
     TransformerFValidatedErrorPathSupport[ValidatedNec[TransformationError[M], +*], NonEmptyChain, M]
 
+  /** @since 0.6.1 */
   implicit def TransformerFErrorValidatedNelSupport[M]
       : TransformerFErrorPathSupport[ValidatedNel[TransformationError[M], +*]] =
     TransformerFValidatedErrorPathSupport[ValidatedNel[TransformationError[M], +*], NonEmptyList, M]
 
+  /** @since 0.6.1 */
   implicit def TransformerFErrorIorNecSupport[M]: TransformerFErrorPathSupport[IorNec[TransformationError[M], +*]] =
     TransformerFValidatedErrorPathSupport[IorNec[TransformationError[M], +*], NonEmptyChain, M]
 
+  /** @since 0.6.1 */
   implicit def TransformerFErrorIorNelSupport[M]: TransformerFErrorPathSupport[IorNel[TransformationError[M], +*]] =
     TransformerFValidatedErrorPathSupport[IorNel[TransformationError[M], +*], NonEmptyList, M]
 }
 
 trait LowPriorityImplicits {
+
+  /** @since 0.5.3 */
   implicit def TransformerFIorSupport[EE: Semigroup]: TransformerFSupport[Ior[EE, +*]] =
     new TransformerFSupport[Ior[EE, +*]] {
       override def pure[A](value: A): Ior[EE, A] =
@@ -81,6 +94,7 @@ trait LowPriorityImplicits {
       }
     }
 
+  /** @since 0.5.0 */
   implicit def TransformerFValidatedSupport[EE: Semigroup]: TransformerFSupport[Validated[EE, +*]] =
     new TransformerFSupport[Validated[EE, +*]] {
       def pure[A](value: A): Validated[EE, A] =
@@ -107,6 +121,7 @@ trait LowPriorityImplicits {
       }
     }
 
+  /** @since 0.6.1 */
   implicit def TransformerFValidatedErrorPathSupport[F[+_], EE[_]: Applicative, M](
       implicit applicativeError: ApplicativeError[F, EE[TransformationError[M]]]
   ): TransformerFErrorPathSupport[F] =

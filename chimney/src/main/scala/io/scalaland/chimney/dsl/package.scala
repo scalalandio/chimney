@@ -3,6 +3,8 @@ package io.scalaland.chimney
 import io.scalaland.chimney.internal.{PatcherCfg, TransformerCfg, TransformerFlags}
 
 /** Main object to import in order to use Chimney's features
+  *
+  * @since 0.1.0
   */
 package object dsl {
 
@@ -10,6 +12,8 @@ package object dsl {
     *
     * @param source wrapped source value
     * @tparam From type of source value
+    *
+    * @since 0.4.0
     */
   implicit class TransformerOps[From](private val source: From) extends AnyVal {
 
@@ -17,6 +21,8 @@ package object dsl {
       *
       * @tparam To target type
       * @return [[io.scalaland.chimney.dsl.TransformerInto]]
+      *
+      * @since 0.1.0
       */
     final def into[To]: TransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
       new TransformerInto(source, new TransformerDefinition(Map.empty, Map.empty))
@@ -30,11 +36,20 @@ package object dsl {
       * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
       * @tparam To target type
       * @return transformed value of target type `To`
+      *
+      * @since 0.1.0
       */
     final def transformInto[To](implicit transformer: Transformer[From, To]): To =
       transformer.transform(source)
   }
 
+  /** Provides lifted transformer operations on values of any type.
+    *
+    * @param source wrapped source value
+    * @tparam From type of source value
+    *
+    * @since 0.5.0
+    */
   implicit class TransformerFOps[From](private val source: From) extends AnyVal {
 
     /** Allows to customize wrapped transformer generation to your target type.
@@ -42,6 +57,8 @@ package object dsl {
       * @tparam F  wrapper type constructor
       * @tparam To target type
       * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
+      *
+      * @since 0.5.0
       */
     final def intoF[F[+_], To]
         : TransformerFInto[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
@@ -56,6 +73,8 @@ package object dsl {
       * @param transformer implicit instance of [[io.scalaland.chimney.TransformerF]] type class
       * @tparam To target type
       * @return transformed wrapped target value of type `F[To]`
+      *
+      * @since 0.5.0
       */
     final def transformIntoF[F[+_], To](implicit transformer: TransformerF[F, From, To]): F[To] =
       transformer.transform(source)
@@ -65,6 +84,8 @@ package object dsl {
     *
     * @param obj wrapped object to patch
     * @tparam T type of object to patch
+    *
+    * @since 0.1.3
     */
   implicit class PatcherOps[T](private val obj: T) extends AnyVal {
 
@@ -73,6 +94,8 @@ package object dsl {
       * @param patch patch object value
       * @tparam P type of patch object
       * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
+      *
+      * @since 0.4.0
       */
     final def using[P](patch: P): PatcherUsing[T, P, PatcherCfg.Empty] =
       new PatcherUsing[T, P, PatcherCfg.Empty](obj, patch)
@@ -87,6 +110,8 @@ package object dsl {
       * @param patcher implicit instance of [[io.scalaland.chimney.Patcher]] type class
       * @tparam P type of patch object
       * @return patched value
+      *
+      * @since 0.4.0
       */
     final def patchUsing[P](patch: P)(implicit patcher: Patcher[T, P]): T =
       patcher.patch(obj, patch)
@@ -102,6 +127,8 @@ package object dsl {
       * @param patcher implicit instance of [[io.scalaland.chimney.Patcher]] type class
       * @tparam P type of patch object
       * @return patched value
+      *
+      * @since 0.1.3
       */
     @deprecated("please use .patchUsing", "0.4.0")
     final def patchWith[P](patch: P)(implicit patcher: Patcher[T, P]): T = {

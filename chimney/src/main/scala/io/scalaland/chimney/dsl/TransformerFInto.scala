@@ -6,6 +6,19 @@ import io.scalaland.chimney.internal.macros.dsl.{TransformerBlackboxMacros, Tran
 
 import scala.language.experimental.macros
 
+/** Provides DSL for configuring [[io.scalaland.chimney.TransformerF]]'s
+  * generation and using the result to transform value at the same time
+  *
+  * @param  source object to transform
+  * @param  td     transformer definition
+  * @tparam F      wrapper type constructor
+  * @tparam From   type of input value
+  * @tparam To     type of output value
+  * @tparam C      type-level encoded config
+  * @tparam Flags  type-level encoded flags
+  *
+  * @since 0.5.0
+  */
 final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,
     val td: TransformerFDefinition[F, From, To, C, Flags]
@@ -19,6 +32,8 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
+    *
+    * @since 0.5.0
     */
   def withFieldConst[T, U](selector: To => T, value: U)(
       implicit ev: U <:< T
@@ -33,6 +48,8 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
+    *
+    * @since 0.5.0
     */
   def withFieldConstF[T, U](selector: To => T, value: F[U])(
       implicit ev: U <:< T
@@ -47,6 +64,8 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
+    *
+    * @since 0.5.0
     */
   def withFieldComputed[T, U](
       selector: To => T,
@@ -62,6 +81,8 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
+    *
+    * @since 0.5.0
     */
   def withFieldComputedF[T, U](
       selector: To => T,
@@ -77,6 +98,8 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     * @param selectorFrom source field in `From`, defined like `_.originalName`
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
+    *
+    * @since 0.5.0
     */
   def withFieldRenamed[T, U](
       selectorFrom: From => T,
@@ -94,6 +117,8 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
+    *
+    * @since 0.5.0
     */
   def withCoproductInstance[Inst](f: Inst => To): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerFIntoWhiteboxMacros.withCoproductInstanceImpl
@@ -108,6 +133,8 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
+    *
+    *  @since 0.5.0
     */
   def withCoproductInstanceF[Inst](f: Inst => F[To]): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerFIntoWhiteboxMacros.withCoproductInstanceFImpl
@@ -123,6 +150,8 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     * When transformation can't be derived, it results with compilation error.
     *
     * @return transformed value of type `F[To]`
+    *
+    * @since 0.5.0
     */
   def transform[ScopeFlags <: TransformerFlags](
       implicit tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags],

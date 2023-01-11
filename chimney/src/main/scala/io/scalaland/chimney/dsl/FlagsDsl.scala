@@ -3,6 +3,10 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.internal.TransformerFlags
 import io.scalaland.chimney.internal.TransformerFlags._
 
+/** Type-level representation of derivation flags which can be enabled/disabled for a specific transformation or globally.
+  *
+  * @since 0.6.0
+  */
 trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
 
   /** Enable values to be supplied from method calls. Source method must be public and have no parameter list.
@@ -10,6 +14,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
     * By default this is disabled because method calls may perform side effects (e.g. mutations)
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#using-method-accessors]] for more details
+    *
+    * @since 0.6.0
     */
   def enableMethodAccessors: UpdateFlag[Enable[MethodAccessors, Flags]] =
     enableFlag[MethodAccessors]
@@ -17,6 +23,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
   /** Disable method accessors lookup that was previously enabled by `enableMethodAccessors`
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#using-method-accessors]] for more details
+    *
+    * @since 0.5.0
     */
   def disableMethodAccessors: UpdateFlag[Disable[MethodAccessors, Flags]] =
     disableFlag[MethodAccessors]
@@ -26,6 +34,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
     * By default in such case derivation will fail. By enabling this flag, derivation will fallback to default value.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#enabling-default-values-in-generated-transformer]] for more details
+    *
+    * @since 0.6.0
     */
   def enableDefaultValues: UpdateFlag[Enable[DefaultValues, Flags]] =
     enableFlag[DefaultValues]
@@ -33,6 +43,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
   /** Fail derivation if `From` type is missing field even if `To` has default value for it.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#enabling-default-values-in-generated-transformer]] for more details
+    *
+    * @since 0.1.9
     */
   def disableDefaultValues: UpdateFlag[Disable[DefaultValues, Flags]] =
     disableFlag[DefaultValues]
@@ -42,6 +54,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
     * By default only Scala conversions (`.name`) are allowed.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#reading-from-java-beans]] for more details
+    *
+    * @since 0.2.1
     */
   def enableBeanGetters: UpdateFlag[Enable[BeanGetters, Flags]] =
     enableFlag[BeanGetters]
@@ -49,6 +63,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
   /** Disable Java Beans naming convention (`.getName`, `.isName`) on `From`.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#reading-from-java-beans]] for more details
+    *
+    * @since 0.6.0
     */
   def disableBeanGetters: UpdateFlag[Disable[BeanGetters, Flags]] =
     disableFlag[BeanGetters]
@@ -58,6 +74,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
     * By default only Scala conversions (`.copy(name = value)`) are allowed.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#writing-to-java-beans]] for more details
+    *
+    * @since 0.2.1
     */
   def enableBeanSetters: UpdateFlag[Enable[BeanSetters, Flags]] =
     enableFlag[BeanSetters]
@@ -65,6 +83,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
   /** Disable Java Beans naming convention (`.setName(value)`) on `To`.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#writing-to-java-beans]] for more details
+    *
+    * @since 0.6.0
     */
   def disableBeanSetters: UpdateFlag[Disable[BeanSetters, Flags]] =
     disableFlag[BeanSetters]
@@ -74,6 +94,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
     * By default in such case compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#default-values-for-option-fields]] for more details
+    *
+    * @since 0.2.1
     */
   def enableOptionDefaultsToNone: UpdateFlag[Enable[OptionDefaultsToNone, Flags]] =
     enableFlag[OptionDefaultsToNone]
@@ -81,6 +103,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
   /** Disable `None` fallback value for optional fields in `To`.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#default-values-for-option-fields]] for more details
+    *
+    * @since 0.6.0
     */
   def disableOptionDefaultsToNone: UpdateFlag[Disable[OptionDefaultsToNone, Flags]] =
     disableFlag[OptionDefaultsToNone]
@@ -93,6 +117,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
     * By default in such case compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/unsafe-options.html]] for more details
+    *
+    * @since 0.3.3
     */
   def enableUnsafeOption: UpdateFlag[Enable[UnsafeOption, Flags]] =
     enableFlag[UnsafeOption]
@@ -100,6 +126,8 @@ trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
   /** Disable unsafe value extraction from optional fields in `From` type.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/unsafe-options.html]] for more details
+    *
+    * @since 0.6.0
     */
   def disableUnsafeOption: UpdateFlag[Disable[UnsafeOption, Flags]] =
     disableFlag[UnsafeOption]

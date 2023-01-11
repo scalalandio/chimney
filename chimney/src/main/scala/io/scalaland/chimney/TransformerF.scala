@@ -18,8 +18,12 @@ import scala.language.experimental.macros
   * @tparam F    wrapper type constructor
   * @tparam From type of input value
   * @tparam To   type of output value
+  *
+  * @since 0.5.0
   */
 trait TransformerF[F[+_], From, To] {
+
+  /** @since 0.5.0 */
   def transform(src: From): F[To]
 }
 
@@ -33,6 +37,8 @@ object TransformerF {
     * @tparam From type of input value
     * @tparam To   type of output value
     * @return [[io.scalaland.chimney.TransformerF]] type class definition
+    *
+    * @since 0.5.0
     */
   implicit def derive[F[+_], From, To](implicit tfs: TransformerFSupport[F]): TransformerF[F, From, To] =
     macro TransformerBlackboxMacros.deriveTransformerFImpl[F, From, To]
@@ -41,11 +47,12 @@ object TransformerF {
     * you can customize to derive [[io.scalaland.chimney.TransformerF]].
     *
     * @see [[io.scalaland.chimney.dsl.TransformerFDefinition]] for available settings
-    *
     * @tparam F    wrapper type constructor
     * @tparam From type of input value
     * @tparam To   type of output value
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]] with defaults
+    *
+    * @since 0.5.0
     */
   def define[F[+_], From, To]
       : TransformerFDefinition[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
