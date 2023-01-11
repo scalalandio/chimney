@@ -52,7 +52,7 @@ trait CatsImplicits extends LowPriorityImplicits {
     TransformerFValidatedErrorPathSupport[IorNel[TransformationError[M], +*], NonEmptyList, M]
 }
 
-trait LowPriorityImplicits {
+private[chimney] trait LowPriorityImplicits {
 
   /** @since 0.5.3 */
   implicit def TransformerFIorSupport[EE: Semigroup]: TransformerFSupport[Ior[EE, +*]] =

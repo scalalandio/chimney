@@ -7,7 +7,7 @@ import io.scalaland.chimney.internal.TransformerFlags._
   *
   * @since 0.6.0
   */
-trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
+private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
 
   /** Enable values to be supplied from method calls. Source method must be public and have no parameter list.
     *

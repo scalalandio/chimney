@@ -101,9 +101,9 @@ defined class Bar
 res2: Bar = Bar("abc", 10, true)
 ```
 
-## Trying with Scala CLI
+### Trying with Scala CLI
 
-If you are using Scala CLI you cam try out Chimney by adding it with "using" clause:
+If you are using Scala CLI you can try out Chimney by adding it with "using" clause:
 ```scala
 //> using scala "2.13.10"
 //> using lib "io.scalaland::chimney:0.6.2"

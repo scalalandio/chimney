@@ -171,5 +171,4 @@ object TransformerFSupport {
       if (!hasErr) Right(bs.result()) else Left(eb.result())
     }
   }
-
 }
