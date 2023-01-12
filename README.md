@@ -88,17 +88,18 @@ of Chimney. It drops you immediately into a REPL session.
 ```
 curl -s https://raw.githubusercontent.com/scalalandio/chimney/master/try-chimney.sh | bash
 Loading...
-Welcome to the Ammonite Repl 1.1.0
-(Scala 2.12.4 Java 1.8.0_152)
-If you like Ammonite, please support our development at www.patreon.com/lihaoyi
-@ case class Foo(x: String, y: Int) 
+Welcome to the Ammonite Repl 2.2.0 (Scala 2.13.10 Java 17.0.1)
+@ case class Foo(x: String, y: Int, z: Boolean = true)
 defined class Foo
 
-@ case class Bar(x: String, y: Int, z: Boolean = true) 
+@ case class Bar(x: String, y: Int)
 defined class Bar
 
-@ Foo("abc", 10).transformInto[Bar] 
-res2: Bar = Bar("abc", 10, true)
+@ Foo("abc", 10).transformInto[Bar]
+res2: Bar = Bar("abc", 10)
+
+@ Bar("abc", 10).into[Foo].enableDefaultValues.transform
+res3: Foo = Foo("abc", 10, true)
 ```
 
 ### Trying with Scala CLI
@@ -109,11 +110,12 @@ If you are using Scala CLI you can try out Chimney by adding it with "using" cla
 //> using lib "io.scalaland::chimney:0.6.2"
 import io.scalaland.chimney.dsl._
 
-case class Foo(x: String, y: Int)
-case class Bar(x: String, y: Int, z: Boolean = true)
+case class Foo(x: String, y: Int, z: Boolean = true)
+case class Bar(x: String, y: Int)
 
 object Main extends App {
   println(Foo("abc", 10).transformInto[Bar])
+  println(Bar("abc", 10).into[Foo].enableDefaultValues.transform)
 }
 ```
 
@@ -123,17 +125,20 @@ or run the Ammonite REPL:
 scala-cli repl --ammonite --scala "2.13.10" --dependency "io.scalaland::chimney:0.6.2"
 Loading...
 Welcome to the Ammonite Repl 2.5.5-17-df243e14 (Scala 2.13.10 Java 17.0.1)
-@ case class Foo(x: String, y: Int)
+@ case class Foo(x: String, y: Int, z: Boolean = true)
 defined class Foo
 
-@ case class Bar(x: String, y: Int, z: Boolean = true)
+@ case class Bar(x: String, y: Int)
 defined class Bar
 
 @ import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.dsl._
 
 @ Foo("abc", 10).transformInto[Bar]
-res3: Bar = Bar(x = "abc", y = 10, z = true)
+res3: Bar = Bar(x = "abc", y = 10)
+
+@ Bar("abc", 10).into[Foo].enableDefaultValues.transform
+res4: Foo = Foo(x = "abc", y = 10, z = true)
 ```
 
 ## Documentation
