@@ -13,11 +13,6 @@ sealed abstract class ErrorsCollection extends Iterable[PartialTransformer.Error
 
   override final def isEmpty: Boolean = false
 
-  final def uncons: (PartialTransformer.Error, Iterable[PartialTransformer.Error]) = {
-    val it = iterator
-    (it.next(), it.toSeq)
-  }
-
   override final def iterator: Iterator[PartialTransformer.Error] = {
     this match {
       case ErrorsCollection.Single(error)      => Iterator.single(error)
