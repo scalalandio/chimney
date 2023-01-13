@@ -55,10 +55,6 @@ object PartialTransformer {
     new PartialTransformerDefinition(Map.empty, Map.empty)
 
   sealed trait Result[+T] {
-//    final def errors: ErrorsCollection = this match {
-//      case _: Result.Value[_]              => ErrorsCollection.empty
-//      case Result.Errors(errorsCollection) => errorsCollection
-//    }
     final def asOption: Option[T] = this match {
       case Result.Value(value) => Some(value)
       case Result.Errors(_)    => None
