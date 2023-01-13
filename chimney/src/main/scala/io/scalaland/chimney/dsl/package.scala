@@ -193,8 +193,6 @@ package object dsl {
       PartialTransformer.Result.fromOptionOrError(option, ifEmpty)
     def toPartialTransformerResultOrString(ifEmpty: => String): PartialTransformer.Result[T] =
       PartialTransformer.Result.fromOptionOrString(option, ifEmpty)
-    def toPartialTransformerResultOrStrings(ifEmpty: => Seq[String]): PartialTransformer.Result[T] =
-      PartialTransformer.Result.fromOptionOrStrings(option, ifEmpty)
     def toPartialTransformerResultOrThrowable(ifEmpty: => Throwable): PartialTransformer.Result[T] =
       PartialTransformer.Result.fromOptionOrThrowable(option, ifEmpty)
   }
@@ -202,12 +200,6 @@ package object dsl {
   implicit final class EitherStringPartialTransformerOps[T](private val either: Either[String, T]) extends AnyVal {
     def toPartialTransformerResult: PartialTransformer.Result[T] =
       PartialTransformer.Result.fromEitherString(either)
-  }
-
-  implicit final class EitherStringsPartialTransformerOps[T](private val either: Either[Iterable[String], T])
-      extends AnyVal {
-    def toPartialTransformerResult: PartialTransformer.Result[T] =
-      PartialTransformer.Result.fromEitherStrings(either)
   }
 
   implicit final class TryPartialTransformerOps[T](private val `try`: Try[T]) extends AnyVal {
