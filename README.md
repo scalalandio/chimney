@@ -84,9 +84,9 @@ Library is currently supported for Scala 2.12.x and 2.13.x on JVM, SJS 1.x, SN 0
 Due to some [compiler bugs](https://issues.scala-lang.org/browse/SI-7046),
 it's recommended to use at least Scala 2.12.1.
 
-### Trying with Scala CLI
+### Trying out with Scala CLI/Ammonite
 
-If you are using Scala CLI you can try out Chimney by adding it with "using" clause:
+If you are using Scala CLI you can try out Chimney by adding it with `using` clause:
 ```scala
 //> using scala "2.13.10"
 //> using lib "io.scalaland::chimney:0.6.2"
