@@ -116,7 +116,6 @@ object PartialTransformer {
     final def fromEmpty[T]: Result[T] = Errors.single(Error.ofEmptyValue)
     final def fromError[T](error: Error): Result[T] = Errors.single(error)
     final def fromErrors[T](error: Error, errors: Error*): Result[T] = Errors(error, errors : _*)
-//    final def fromErrors[T](errors: Iterable[Error]): Result[T] = Errors(errors)
     final def fromErrorString[T](message: String): Result[T] = Errors.fromString(message)
     final def fromErrorStrings[T](message: String, messages: String*): Result[T] = Errors.fromStrings(message, messages : _*)
     final def fromErrorNotDefinedAt[T](value: Any): Result[T] = Errors.single(Error.ofNotDefinedAt(value))
@@ -138,10 +137,6 @@ object PartialTransformer {
       case Some(value) => fromValue(value)
       case _           => fromErrorString(ifEmpty)
     }
-//    final def fromOptionOrStrings[T](value: Option[T], ifEmpty: => Iterable[String]): Result[T] = value match {
-//      case Some(value) => fromValue(value)
-//      case _           => fromErrorStrings(ifEmpty)
-//    }
     final def fromOptionOrThrowable[T](value: Option[T], ifEmpty: => Throwable): Result[T] = value match {
       case Some(value) => fromValue(value)
       case _           => fromErrorThrowable(ifEmpty)
@@ -153,9 +148,6 @@ object PartialTransformer {
     final def fromEitherString[T](value: Either[String, T]): Result[T] = {
       fromEither(value.left.map(Errors.fromString))
     }
-//    final def fromEitherStrings[T](value: Either[Iterable[String], T]): Result[T] = {
-//      fromEither(value.left.map(errs => Errors.fromStrings(errs)))
-//    }
     final def fromTry[T](value: Try[T]): Result[T] = value match {
       case Success(value)     => fromValue(value)
       case Failure(throwable) => fromErrorThrowable(throwable)
