@@ -260,3 +260,8 @@ lazy val benchmarks = projectMatrix
   .settings(settings: _*)
   .settings(noPublishSettings: _*)
   .dependsOn(chimney)
+
+//when having memory/GC-related errors during build, uncommenting this may be useful:
+Global / concurrentRestrictions := Seq(
+  Tags.limit(Tags.Compile, 2) // only 2 compilations at once
+)
