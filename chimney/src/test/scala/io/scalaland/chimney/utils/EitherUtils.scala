@@ -13,7 +13,7 @@ object EitherUtils {
     def toEitherList(err: => String): Either[List[String], T] = {
       opt match {
         case Some(value) => Right(value)
-        case None => Left(List(err))
+        case None        => Left(List(err))
       }
     }
   }
