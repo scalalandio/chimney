@@ -255,9 +255,8 @@ lazy val benchmarks = projectMatrix
     name := "chimney-benchmarks",
     description := "Chimney benchmarking harness"
   )
-  .dependsOn(chimney.jvm)
   .enablePlugins(JmhPlugin)
   .disablePlugins(WelcomePlugin)
   .settings(settings: _*)
   .settings(noPublishSettings: _*)
-  .dependsOn(chimney % "test->test;compile->compile")
+  .dependsOn(chimney)
