@@ -12,6 +12,8 @@ import scala.collection.compat._
   * @see [[TransformerFSupport.TransformerFEitherErrorAccumulatingSupport]] for implementation for `Either`
   *
   * @tparam F wrapper type constructor
+  *
+  * @since 0.5.0
   */
 trait TransformerFSupport[F[+_]] {
 
@@ -20,6 +22,8 @@ trait TransformerFSupport[F[+_]] {
     * @param value value to wrap
     * @tparam A type of value
     * @return wrapped value
+    *
+    * @since 0.5.0
     */
   def pure[A](value: A): F[A]
 
@@ -33,6 +37,8 @@ trait TransformerFSupport[F[+_]] {
     * @tparam A type of first value
     * @tparam B type of second value
     * @return wrapped pair of values
+    *
+    * @since 0.5.0
     */
   def product[A, B](fa: F[A], fb: => F[B]): F[(A, B)]
 
@@ -43,6 +49,8 @@ trait TransformerFSupport[F[+_]] {
     * @tparam A type of wrapped value
     * @tparam B result type of provided function `f`
     * @return wrapped result of function `f` applied to un
+    *
+    * @since 0.5.0
     */
   def map[A, B](fa: F[A], f: A => B): F[B]
 
@@ -62,15 +70,20 @@ trait TransformerFSupport[F[+_]] {
     * @tparam A  type of elements being iterated
     * @tparam B  target element type of function `f`
     * @return wrapped collection of type `F[M]`
+    *
+    * @since 0.5.0
     */
   def traverse[M, A, B](it: Iterator[A], f: A => F[B])(
       implicit fac: Factory[B, M]
   ): F[M]
 }
 
+/** @since 0.5.0 */
 object TransformerFSupport {
 
   /** `TransformerFSupport` instance for `Option`
+    *
+    * @since 0.5.0
     */
   implicit def TransformerFOptionSupport: TransformerFSupport[Option] =
     new TransformerFSupport[Option] {
@@ -105,6 +118,8 @@ object TransformerFSupport {
     * @param ef factory for error accumulator collection
     * @tparam E error type
     * @tparam C error accumulator type constructor
+    *
+    * @since 0.5.0
     */
   implicit def TransformerFEitherErrorAccumulatingSupport[E, C[X] <: IterableOnce[X]](
       implicit ef: Factory[E, C[E]]
@@ -156,5 +171,4 @@ object TransformerFSupport {
       if (!hasErr) Right(bs.result()) else Left(eb.result())
     }
   }
-
 }

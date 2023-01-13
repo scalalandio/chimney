@@ -9,6 +9,8 @@ import scala.collection.compat._
   * @see [[TransformerFErrorPathSupport.TransformerFErrorPathEitherSupport]] for implementation for `Either[C[TransformationError], +*]`
   *
   * @tparam F wrapper type constructor
+  *
+  * @since 0.6.1
   */
 trait TransformerFErrorPathSupport[F[+_]] {
 
@@ -18,11 +20,16 @@ trait TransformerFErrorPathSupport[F[+_]] {
     * @param node previous node of path
     * @tparam A type of value
     * @return wrapped value with added node in errors
+    *
+    * @since 0.6.1
     */
   def addPath[A](fa: F[A], node: ErrorPathNode): F[A]
 }
 
+/** @since 0.6.1 */
 object TransformerFErrorPathSupport {
+
+  /** @since 0.6.1 */
   implicit def TransformerFErrorPathEitherSupport[M, C[X] <: IterableOnce[X]](
       implicit ef: Factory[TransformationError[M], C[TransformationError[M]]]
   ): TransformerFErrorPathSupport[Either[C[TransformationError[M]], +*]] =

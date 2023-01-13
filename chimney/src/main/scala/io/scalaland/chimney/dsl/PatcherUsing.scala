@@ -14,6 +14,8 @@ import scala.language.experimental.macros
   * @tparam T type of object to apply patch to
   * @tparam P type of patch object
   * @tparam C type-level encoded configuration of patcher
+  *
+  * @since 0.4.0
   */
 class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
 
@@ -26,6 +28,8 @@ class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
     *
     * @see [[https://scalalandio.github.io/chimney/patchers/options-handling.html]] for more details
     * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *
+    * @since 0.4.0
     */
   def ignoreNoneInPatch: PatcherUsing[T, P, IgnoreNoneInPatch[C]] =
     this.asInstanceOf[PatcherUsing[T, P, IgnoreNoneInPatch[C]]]
@@ -40,6 +44,8 @@ class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
     *
     * @see [[https://scalalandio.github.io/chimney/patchers/redundant-fields.html]] for more details
     * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *
+    * @since 0.4.0
     */
   def ignoreRedundantPatcherFields: PatcherUsing[T, P, IgnoreRedundantPatcherFields[C]] =
     this.asInstanceOf[PatcherUsing[T, P, IgnoreRedundantPatcherFields[C]]]
@@ -47,6 +53,8 @@ class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
   /** Applies configured patching in-place
     *
     * @return patched value
+    *
+    * @since 0.4.0
     */
   def patch: T = macro PatcherBlackboxMacros.patchImpl[T, P, C]
 }

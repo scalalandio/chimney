@@ -4,11 +4,16 @@ package io.scalaland.chimney
   * @tparam M         type of error message
   * @param  message   error message value
   * @param  errorPath error location
+  *
+  * @since 0.6.1
   */
-case class TransformationError[M](message: M, errorPath: List[ErrorPathNode] = Nil) {
+final case class TransformationError[M](message: M, errorPath: List[ErrorPathNode] = Nil) {
+
+  /** @since 0.6.1 */
   def prepend(node: ErrorPathNode): TransformationError[M] =
     TransformationError[M](message, node :: errorPath)
 
+  /** @since 0.6.1 */
   def showErrorPath: String =
     errorPath match {
       case head :: tail =>

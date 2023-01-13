@@ -5,7 +5,7 @@ import cats.data.{NonEmptyChain, NonEmptyList, Validated, ValidatedNec, Validate
 
 object ValidatedUtils {
 
-  implicit class OptionOps[T](val opt: Option[T]) extends AnyVal {
+  implicit class OptionOps[T](private val opt: Option[T]) extends AnyVal {
 
     def toValidated[EE[_]: InvariantMonoidal](err: => String): Validated[EE[String], T] = {
       opt match {
@@ -21,7 +21,7 @@ object ValidatedUtils {
       toValidated[NonEmptyList](err)(implicitly)
   }
 
-  implicit class ValidatedOps[+E, +A](val validated: Validated[E, A]) extends AnyVal {
+  implicit class ValidatedOps[+E, +A](private val validated: Validated[E, A]) extends AnyVal {
 
     def getValid: A = {
       validated.valueOr(_ => throw new NoSuchElementException)
