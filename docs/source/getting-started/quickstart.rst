@@ -22,7 +22,7 @@ SN 0.4. Other versions should be considered EOL.
   it's recommended to use at least Scala 2.12.1.
 
 Using Scala CLI/Ammonite
---------------
+------------------------
 
 If you are using Scala CLI you can try out Chimney by adding it with `using` clause:
 
