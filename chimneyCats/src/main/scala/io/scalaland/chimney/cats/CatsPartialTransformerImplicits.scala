@@ -2,8 +2,8 @@ package io.scalaland.chimney.cats
 
 import _root_.cats.data._
 import _root_.cats.kernel._
-import io.scalaland.chimney._
 import _root_.cats.Semigroupal
+import io.scalaland.chimney._
 
 import scala.collection.compat._
 import language.implicitConversions
