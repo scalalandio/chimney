@@ -140,6 +140,8 @@ val ciCommand = (scalaSuffix: String) =>
     s"chimney$scalaSuffix/test",
     s"chimneyCats$scalaSuffix/test",
     s"chimney$scalaSuffix/coverageReport",
+    s"chimneyCats$scalaSuffix/coverageReport",
+    "coverageAggregate",
     "coverageOff",
     s"chimneyJS$scalaSuffix/test",
     s"chimneyCatsJS$scalaSuffix/test",
@@ -183,15 +185,12 @@ lazy val root = project
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
-  .someVariations(
-    versions.scalas,
-    versions.platforms
-  )(only1VersionInIDE: _*)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE: _*)
   .disablePlugins(WelcomePlugin)
   .settings(
     moduleName := "chimney",
     name := "chimney",
-    description := "Scala library for boilerplate free data rewriting"
+    description := "Scala library for boilerplate-free data rewriting"
   )
   .settings(settings: _*)
   .settings(publishSettings: _*)
@@ -200,15 +199,12 @@ lazy val chimney = projectMatrix
 
 lazy val chimneyCats = projectMatrix
   .in(file("chimneyCats"))
-  .someVariations(
-    versions.scalas,
-    versions.platforms
-  )(only1VersionInIDE: _*)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE: _*)
   .disablePlugins(WelcomePlugin)
   .settings(
     moduleName := "chimney-cats",
     name := "chimney-cats",
-    description := "Chimney module for validated transformers support"
+    description := "Integrations with selected Cats data types and type classes"
   )
   .settings(settings: _*)
   .settings(publishSettings: _*)
@@ -218,10 +214,7 @@ lazy val chimneyCats = projectMatrix
 
 lazy val protos = projectMatrix
   .in(file("protos"))
-  .someVariations(
-    versions.scalas,
-    versions.platforms
-  )(only1VersionInIDE: _*)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE: _*)
   .disablePlugins(WelcomePlugin)
   .settings(
     moduleName := "chimney-protos",
@@ -233,10 +226,7 @@ lazy val protos = projectMatrix
 
 lazy val benchmarks = projectMatrix
   .in(file("benchmarks"))
-  .someVariations(
-    versions.scalas,
-    List(VirtualAxis.jvm) // only makes sense for JVM
-  )(only1VersionInIDE: _*)
+  .someVariations(versions.scalas, List(VirtualAxis.jvm))(only1VersionInIDE: _*) // only makes sense for JVM
   .settings(
     moduleName := "chimney-benchmarks",
     name := "chimney-benchmarks",
