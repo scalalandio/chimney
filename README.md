@@ -1,13 +1,10 @@
 # Chimney <img src="chimney.png" alt="Chimney logo" width="64" />
 
+[![chimney Scala version support](https://index.scala-lang.org/scalalandio/chimney/chimney/latest.svg)](https://index.scala-lang.org/scalalandio/chimney/chimney)
+
 ![CI build](https://github.com/scalalandio/chimney/workflows/CI%20build/badge.svg)
 [![codecov.io](http://codecov.io/github/scalalandio/chimney/coverage.svg?branch=master)](http://codecov.io/github/scalalandio/chimney?branch=master)
 [![License](http://img.shields.io/:license-Apache%202-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt) [![Join the chat at https://gitter.im/scalalandio/chimney](https://badges.gitter.im/scalalandio/chimney.svg)](https://gitter.im/scalalandio/chimney?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-[![Chimney JVM versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=jvm)](https://search.maven.org/artifact/io.scalaland/chimney_2.13) <br>
-[![Chimney Scala.js 1.x versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=sjs1)](https://search.maven.org/artifact/io.scalaland/chimney_sjs1_2.13) <br>
-[![Chimney Scala.js 0.6 versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=sjs0.6)](https://search.maven.org/artifact/io.scalaland/chimney_sjs0.6_2.13) <br>
-[![Chimney Scala Native 0.3 versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=native0.3)](https://search.maven.org/artifact/io.scalaland/chimney_native0.3_2.11) <br>  
 
 [![Build docs](https://github.com/scalalandio/chimney/workflows/Build%20docs/badge.svg)](https://scalalandio.github.io/chimney/)
 [![Scaladoc 2.11](https://javadoc.io/badge2/io.scalaland/chimney_2.11/scaladoc%202.11.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.11)
@@ -60,7 +57,7 @@ val event = command.into[CoffeeMade]
 
 Underneath it uses Scala macros to give you:
 - type-safety at compile-time
-- fast generated code, almost equivalent to hand-written version
+- fast generated code, almost equivalent to handwritten version
 - excellent error messages
 - minimal overhead on compilation time
 
@@ -69,38 +66,23 @@ Underneath it uses Scala macros to give you:
 To include Chimney to your SBT project, add the following line to your `build.sbt`:
 
 ```scala
+// if you use Scala on JVM-only
 libraryDependencies += "io.scalaland" %% "chimney" % chimneyVersion
+// if you cross-compile to Scala.js and/or Scala Native
+libraryDependencies += "io.scalaland" %%% "chimney" % chimneyVersion
 ```
 
-Library is currently supported for Scala 2.12.x and 2.13.x (JVM, SJS 1.x, SN 0.4).
+where the latest versions available on Maven for each platform are
 
-If you want to use it with Scala.js, you need to replace `%%` with `%%%`.
+[![Chimney JVM versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=jvm)](https://search.maven.org/artifact/io.scalaland/chimney_2.13) <br>
+[![Chimney Scala.js 1.x versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=sjs1)](https://search.maven.org/artifact/io.scalaland/chimney_sjs1_2.13) <br>
+[![Chimney Scala.js 0.6 versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=sjs0.6)](https://search.maven.org/artifact/io.scalaland/chimney_sjs0.6_2.13) <br>
+[![Chimney Scala Native 0.3 versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=native0.3)](https://search.maven.org/artifact/io.scalaland/chimney_native0.3_2.11) <br>
+
+Library is currently supported for Scala 2.12.x and 2.13.x on JVM, SJS 1.x, SN 0.4. Other versions should be considered EOL.
+
 Due to some [compiler bugs](https://issues.scala-lang.org/browse/SI-7046),
 it's recommended to use at least Scala 2.12.1.
-
-### Trying with Ammonite REPL
-
-The quickest way to try out Chimney is to use a script that downloads
-[coursier](https://github.com/alexarchambault/coursier) and uses it to fetch
-[Ammonite](https://github.com/lihaoyi/Ammonite) REPL with the latest version
-of Chimney. It drops you immediately into a REPL session.
-
-```
-curl -s https://raw.githubusercontent.com/scalalandio/chimney/master/try-chimney.sh | bash
-Loading...
-Welcome to the Ammonite Repl 2.2.0 (Scala 2.13.10 Java 17.0.1)
-@ case class Foo(x: String, y: Int, z: Boolean = true)
-defined class Foo
-
-@ case class Bar(x: String, y: Int)
-defined class Bar
-
-@ Foo("abc", 10).transformInto[Bar]
-res2: Bar = Bar("abc", 10)
-
-@ Bar("abc", 10).into[Foo].enableDefaultValues.transform
-res3: Foo = Foo("abc", 10, true)
-```
 
 ### Trying with Scala CLI
 
@@ -139,6 +121,15 @@ res3: Bar = Bar(x = "abc", y = 10)
 
 @ Bar("abc", 10).into[Foo].enableDefaultValues.transform
 res4: Foo = Foo(x = "abc", y = 10, z = true)
+```
+
+If you don't have Scala CLI installed you can use this quick script that downloads
+[coursier](https://github.com/alexarchambault/coursier) and uses it to fetch
+[Ammonite](https://github.com/lihaoyi/Ammonite) REPL with the latest version
+of Chimney. It drops you immediately into a REPL session.
+
+```
+curl -s https://raw.githubusercontent.com/scalalandio/chimney/master/try-chimney.sh | bash
 ```
 
 ## Documentation
