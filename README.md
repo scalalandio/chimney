@@ -72,7 +72,7 @@ To include Chimney to your SBT project, add the following line to your `build.sb
 libraryDependencies += "io.scalaland" %% "chimney" % chimneyVersion
 ```
 
-Library is currently supported for Scala 2.12.x and 2.13.x.
+Library is currently supported for Scala 2.12.x and 2.13.x (JVM, SJS 1.x, SN 0.4).
 
 If you want to use it with Scala.js, you need to replace `%%` with `%%%`.
 Due to some [compiler bugs](https://issues.scala-lang.org/browse/SI-7046),
