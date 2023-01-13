@@ -129,7 +129,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
           val updatedArgs = targets.map(argsMap)
 
           q"${bodyTree.tree}.map { ($fn: ${target.tpe}) => ${mkTargetValueTree(updatedArgs)} }"
-        // TODO: call map2 for 2-arg partial args
+          // TODO: call map2 for 2-arg partial args
         } else {
           val (partialTargets, partialBodyTrees) = partialArgs.unzip
           val partialTrees = partialBodyTrees.map(_.tree)

@@ -89,13 +89,13 @@ object PartialTransformer {
     }
     object Errors {
       final def apply(error: Error, errors: Error*): Errors =
-        apply(ErrorsCollection.from(error, errors : _*))
+        apply(ErrorsCollection.from(error, errors: _*))
       final def single(error: Error): Errors =
         apply(ErrorsCollection.fromSingle(error))
       final def fromString(message: String): Errors =
         single(Error.ofString(message))
       final def fromStrings(message: String, messages: String*): Errors =
-        apply(Error.ofString(message), messages.map(Error.ofString) : _*)
+        apply(Error.ofString(message), messages.map(Error.ofString): _*)
       final def merge(errors1: Errors, errors2: Errors): Errors =
         apply(errors1.ec ++ errors2.ec)
     }
@@ -115,9 +115,10 @@ object PartialTransformer {
     final def fromValue[T](value: T): Result[T] = Value(value)
     final def fromEmpty[T]: Result[T] = Errors.single(Error.ofEmptyValue)
     final def fromError[T](error: Error): Result[T] = Errors.single(error)
-    final def fromErrors[T](error: Error, errors: Error*): Result[T] = Errors(error, errors : _*)
+    final def fromErrors[T](error: Error, errors: Error*): Result[T] = Errors(error, errors: _*)
     final def fromErrorString[T](message: String): Result[T] = Errors.fromString(message)
-    final def fromErrorStrings[T](message: String, messages: String*): Result[T] = Errors.fromStrings(message, messages : _*)
+    final def fromErrorStrings[T](message: String, messages: String*): Result[T] =
+      Errors.fromStrings(message, messages: _*)
     final def fromErrorNotDefinedAt[T](value: Any): Result[T] = Errors.single(Error.ofNotDefinedAt(value))
     final def fromErrorThrowable[T](throwable: Throwable): Result[T] = Errors.single(Error.ofThrowable(throwable))
 
@@ -207,10 +208,10 @@ object PartialTransformer {
         }
       } else {
         (resultA, resultB) match {
-          case (Value(a), Value(b)) => Value(f(a, b))
+          case (Value(a), Value(b))           => Value(f(a, b))
           case (Errors(errs1), Errors(errs2)) => Errors(errs1 ++ errs2)
-          case (errs1: Errors, _: Value[_]) => errs1
-          case (_: Value[_], errs2: Errors) => errs2
+          case (errs1: Errors, _: Value[_])   => errs1
+          case (_: Value[_], errs2: Errors)   => errs2
         }
       }
     }
