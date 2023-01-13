@@ -103,19 +103,19 @@ object fixtures {
       }
 
       object happy {
-        def validateA(a: Int): Either[Vector[String], Int] = Right(a)
-        def validateB(b: Double): Either[Vector[String], Double] = Right(b)
-        def validateC(c: String): Either[Vector[String], String] = Right(c)
-        def validateD(d: Option[String]): Either[Vector[String], Option[String]] = Right(d)
-        def squareInt(a: Int): Either[Vector[String], Int] = Right(a * a)
+        def validateA(a: Int): Either[String, Int] = Right(a)
+        def validateB(b: Double): Either[String, Double] = Right(b)
+        def validateC(c: String): Either[String, String] = Right(c)
+        def validateD(d: Option[String]): Either[String, Option[String]] = Right(d)
+        def squareInt(a: Int): Either[String, Int] = Right(a * a)
       }
 
       object unhappy {
-        def validateA(a: Int): Either[Vector[String], Int] = Left(Vector("a not nice"))
-        def validateB(b: Double): Either[Vector[String], Double] = Right(b)
-        def validateC(c: String): Either[Vector[String], String] = Left(Vector("c not pretty"))
-        def validateD(d: Option[String]): Either[Vector[String], Option[String]] = Left(Vector("I don't like this d"))
-        def squareIntWhenOdd(a: Int): Either[Vector[String], Int] = if(a % 2 == 1) Right(a * a) else Left(Vector(s"$a is not an odd number"))
+        def validateA(a: Int): Either[String, Int] = Left("a not nice")
+        def validateB(b: Double): Either[String, Double] = Right(b)
+        def validateC(c: String): Either[String, String] = Left("c not pretty")
+        def validateD(d: Option[String]): Either[String, Option[String]] = Left("I don't like this d")
+        def squareIntWhenOdd(a: Int): Either[String, Int] = if(a % 2 == 1) Right(a * a) else Left(s"$a is not an odd number")
       }
     }
   }
