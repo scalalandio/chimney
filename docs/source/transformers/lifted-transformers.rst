@@ -1,7 +1,7 @@
 .. _lifted-transformers:
 
-Lifted transformers
-===================
+Lifted transformers ``(deprecated)``
+====================================
 
 .. warning::
 

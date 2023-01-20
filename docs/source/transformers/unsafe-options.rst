@@ -1,5 +1,5 @@
-Unsafe options transformation
-=============================
+Unsafe options ``(deprecated)``
+===============================
 
 .. warning::
 

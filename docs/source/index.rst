@@ -110,12 +110,24 @@ Contents:
    transformers/standard-transformers
    transformers/default-values
    transformers/own-transformations
+   transformers/scoped-configuration
    transformers/java-beans
    transformers/unsafe-options
-   transformers/scoped-configuration
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Partial Transformers
+
+   transformers/partial-transformers
+.. cats
+.. migration
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Lifted Transformers
+
    transformers/lifted-transformers
    transformers/cats-integration
-
 
 .. toctree::
    :maxdepth: 2
