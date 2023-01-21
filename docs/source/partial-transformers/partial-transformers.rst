@@ -46,18 +46,6 @@ Built-in error path support
 Short-circuit semantics
 -----------------------
 
-Migrating from lifted transformers
-----------------------------------
-
-Note on performance of generated code
--------------------------------------
-
-
-Integration with Cats library
--------------------------------------
-
-
-
-
-
+Performance notes
+-----------------
 
