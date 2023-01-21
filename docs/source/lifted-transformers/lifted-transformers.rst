@@ -276,7 +276,7 @@ implementation of these methods should be obvious. Yet it gives some choice abou
 semantics of error handling.
 
 Chimney supports ``Option``, ``Either`` and ``cats.data.Validated``
-(in :ref:`cats-integration`) just exactly by providing implicit instaces of
+(in :ref:`lifted-cats-integration`) just exactly by providing implicit instaces of
 ``TransformerFSupport`` implemented for those wrapper types.
 
 

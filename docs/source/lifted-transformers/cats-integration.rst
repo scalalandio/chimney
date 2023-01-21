@@ -1,4 +1,4 @@
-.. _cats-integration:
+.. _lifted-cats-integration:
 
 Cats integration
 ================
