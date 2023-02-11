@@ -141,5 +141,5 @@ Contents:
    :maxdepth: 1
    :caption: Benchmarks
 
-   Benchmarks <_static/benchmarks.html#http://>
+   benchmarks
 
