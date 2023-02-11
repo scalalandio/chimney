@@ -505,22 +505,22 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
   def expandIterableOrArray(
       srcPrefixTree: Tree,
       config: TransformerConfig
-    )(From: Type, To: Type): Either[Seq[TransformerDerivationError], Tree] = {
+  )(From: Type, To: Type): Either[Seq[TransformerDerivationError], Tree] = {
 
-      val FromInnerT = From.collectionInnerTpe
-      val ToInnerT = To.collectionInnerTpe
+    val FromInnerT = From.collectionInnerTpe
+    val ToInnerT = To.collectionInnerTpe
 
-      val fn = Ident(freshTermName(srcPrefixTree))
+    val fn = Ident(freshTermName(srcPrefixTree))
 
-      resolveRecursiveTransformerBody(fn, config.rec)(FromInnerT, ToInnerT)
-        .map {
-          case TransformerBodyTree(
-              innerTransformerTree,
-              DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, Some(wrapperErrorPathSupportInstance))
-              ) =>
-            val idx = Ident(freshTermName("idx"))
+    resolveRecursiveTransformerBody(fn, config.rec)(FromInnerT, ToInnerT)
+      .map {
+        case TransformerBodyTree(
+            innerTransformerTree,
+            DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, Some(wrapperErrorPathSupportInstance))
+            ) =>
+          val idx = Ident(freshTermName("idx"))
 
-            q"""${wrapperSupportInstance}.traverse[$To, ($FromInnerT, _root_.scala.Int), $ToInnerT](
+          q"""${wrapperSupportInstance}.traverse[$To, ($FromInnerT, _root_.scala.Int), $ToInnerT](
               $srcPrefixTree.iterator.zipWithIndex,
               { case (${fn.name}: $FromInnerT, ${idx.name}: _root_.scala.Int) =>
                 ${wrapperErrorPathSupportInstance}.addPath[$ToInnerT](
@@ -530,55 +530,55 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
               }
             )
             """
-          case TransformerBodyTree(
-              innerTransformerTree,
-              DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, None)
-              ) =>
-            q"""
+        case TransformerBodyTree(
+            innerTransformerTree,
+            DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, None)
+            ) =>
+          q"""
               ${wrapperSupportInstance}.traverse[$To, $FromInnerT, $ToInnerT](
                 $srcPrefixTree.iterator,
                 ($fn: $FromInnerT) => $innerTransformerTree
               )
             """
-          case TransformerBodyTree(innerTransformerTree, pt @ DerivationTarget.PartialTransformer(_)) =>
-            val idx = Ident(freshTermName("idx"))
+        case TransformerBodyTree(innerTransformerTree, pt @ DerivationTarget.PartialTransformer(_)) =>
+          val idx = Ident(freshTermName("idx"))
 
-            Trees.PartialResult.traverse(
-              tq"$To",
-              tq"($FromInnerT, ${Trees.intTpe})",
-              tq"$ToInnerT",
-              q"$srcPrefixTree.iterator.zipWithIndex",
-              q"""{ case (${fn.name}: $FromInnerT, ${idx.name}: ${Trees.intTpe}) =>
+          Trees.PartialResult.traverse(
+            tq"$To",
+            tq"($FromInnerT, ${Trees.intTpe})",
+            tq"$ToInnerT",
+            q"$srcPrefixTree.iterator.zipWithIndex",
+            q"""{ case (${fn.name}: $FromInnerT, ${idx.name}: ${Trees.intTpe}) =>
                 $innerTransformerTree.prependErrorPath(${Trees.PathElement.index(idx)})
               }""",
-              pt.failFastTree
-            )
+            pt.failFastTree
+          )
 
-          case TransformerBodyTree(innerTransformerTree, DerivationTarget.TotalTransformer) =>
-            def isTransformationIdentity = fn == innerTransformerTree
-            def sameCollectionTypes = From.typeConstructor =:= To.typeConstructor
+        case TransformerBodyTree(innerTransformerTree, DerivationTarget.TotalTransformer) =>
+          def isTransformationIdentity = fn == innerTransformerTree
+          def sameCollectionTypes = From.typeConstructor =:= To.typeConstructor
 
-            val transformedCollectionTree: Tree = (isTransformationIdentity, sameCollectionTypes) match {
-              case (true, true) =>
-                // identity transformation, same collection types
-                srcPrefixTree
+          val transformedCollectionTree: Tree = (isTransformationIdentity, sameCollectionTypes) match {
+            case (true, true) =>
+              // identity transformation, same collection types
+              srcPrefixTree
 
-              case (true, false) =>
-                // identity transformation, different collection types
-                srcPrefixTree.convertCollection(To, ToInnerT)
+            case (true, false) =>
+              // identity transformation, different collection types
+              srcPrefixTree.convertCollection(To, ToInnerT)
 
-              case (false, true) =>
-                // non-trivial transformation, same collection types
-                q"$srcPrefixTree.map(($fn: $FromInnerT) => $innerTransformerTree)"
+            case (false, true) =>
+              // non-trivial transformation, same collection types
+              q"$srcPrefixTree.map(($fn: $FromInnerT) => $innerTransformerTree)"
 
-              case (false, false) =>
-                q"$srcPrefixTree.iterator.map(($fn: $FromInnerT) => $innerTransformerTree)"
-                  .convertCollection(To, ToInnerT)
-            }
+            case (false, false) =>
+              q"$srcPrefixTree.iterator.map(($fn: $FromInnerT) => $innerTransformerTree)"
+                .convertCollection(To, ToInnerT)
+          }
 
-            mkTransformerBodyTree0(config.derivationTarget)(transformedCollectionTree)
-        }
-    }
+          mkTransformerBodyTree0(config.derivationTarget)(transformedCollectionTree)
+      }
+  }
 
   def expandSealedClasses(
       srcPrefixTree: Tree,

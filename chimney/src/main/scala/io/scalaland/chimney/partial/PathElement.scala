@@ -23,8 +23,8 @@ object PathElement {
 
   final def shouldPrependWithDot(pe: PathElement): Boolean = pe match {
     case _: Accessor => true
-    case _: Index => false
+    case _: Index    => false
     case _: MapValue => false
-    case _: MapKey => true
+    case _: MapKey   => true
   }
 }

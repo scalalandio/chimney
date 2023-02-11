@@ -25,7 +25,6 @@ trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
       tq"_root_.scala.Array[$inTpe]"
     }
 
-
     object Option {
       val none: Tree = q"_root_.scala.None"
       def tpe(t: Type): Tree = {

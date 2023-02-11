@@ -2,9 +2,9 @@ package io.scalaland.chimney.partial
 
 sealed trait ErrorMessage {
   final def asString: String = this match {
-    case ErrorMessage.EmptyValue => "empty value"
-    case ErrorMessage.NotDefinedAt(value) => s"not defined at $value"
-    case ErrorMessage.StringMessage(message) => message
+    case ErrorMessage.EmptyValue                  => "empty value"
+    case ErrorMessage.NotDefinedAt(value)         => s"not defined at $value"
+    case ErrorMessage.StringMessage(message)      => message
     case ErrorMessage.ThrowableMessage(throwable) => throwable.getMessage
   }
 }
