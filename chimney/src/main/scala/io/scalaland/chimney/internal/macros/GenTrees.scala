@@ -62,6 +62,12 @@ trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
       }
     }
 
+    object Patcher {
+      def tpe(T: Type, Patch: Type): Tree = {
+        tq"_root_.io.scalaland.chimney.Patcher[$T, $Patch]"
+      }
+    }
+
     object PartialResult {
 
       def value(valTree: Tree): Tree = {
