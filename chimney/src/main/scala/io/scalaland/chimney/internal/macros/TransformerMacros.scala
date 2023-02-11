@@ -140,7 +140,6 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
             q"${wrapperSupportInstance}.pure[$To]($tree)"
           case (DerivationTarget.PartialTransformer(_), DerivationTarget.TotalTransformer) =>
             Trees.PartialResult.value(tree)
-//            q"_root_.io.scalaland.chimney.PartialTransformer.Result.Value[$To]($tree)"
           case _ =>
             tree
         }
@@ -467,7 +466,6 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                   q"${keyTransformer.tree}.prependErrorPath(${Trees.PathElement.mapKey(fnK)})"
                 case DerivationTarget.TotalTransformer =>
                   Trees.PartialResult.value(keyTransformer.tree)
-//                  q"_root_.io.scalaland.chimney.PartialTransformer.Result.Value[$toKeyT](${keyTransformer.tree})"
                 case _: DerivationTarget.LiftedTransformer =>
                   c.abort(c.enclosingPosition, "Not supported for lifted transformers!")
               }
@@ -478,7 +476,6 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                   q"${valueTransformer.tree}.prependErrorPath(${Trees.PathElement.mapValue(fnK)})"
                 case DerivationTarget.TotalTransformer =>
                   Trees.PartialResult.value(valueTransformer.tree)
-                //                  q"_root_.io.scalaland.chimney.PartialTransformer.Result.Value[$toValueT](${valueTransformer.tree})"
                 case _: DerivationTarget.LiftedTransformer =>
                   c.abort(c.enclosingPosition, "Not supported for lifted transformers!")
               }
