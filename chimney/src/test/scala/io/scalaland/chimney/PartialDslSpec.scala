@@ -41,7 +41,7 @@ object PartialDslSpec extends TestSuite {
       "field partial const override" - {
         val result = Person("John", 10, 140)
           .intoPartial[User]
-          .withFieldConstPartial(_.age, PartialTransformer.Result.fromValue(20))
+          .withFieldConstPartial(_.age, partial.Result.fromValue(20))
           .transform
         val expected = User("John", 20, 140)
 
@@ -65,7 +65,7 @@ object PartialDslSpec extends TestSuite {
       "field compute partial" - {
         val result = Person("John", 10, 140)
           .intoPartial[User]
-          .withFieldComputedPartial(_.age, p => PartialTransformer.Result.fromValue(p.age * 3))
+          .withFieldComputedPartial(_.age, p => partial.Result.fromValue(p.age * 3))
           .transform
         val expected = User("John", 30, 140)
 
@@ -80,14 +80,14 @@ object PartialDslSpec extends TestSuite {
       "empty value" - {
         val result = Person("John", 10, 140)
           .intoPartial[User]
-          .withFieldConstPartial(_.height, PartialTransformer.Result.fromEmpty)
+          .withFieldConstPartial(_.height, partial.Result.fromEmpty)
           .transform
 
         result.asOption ==> None
         result.asEither ==> Left(
-          PartialTransformer.Result.Errors
-            .single(PartialTransformer.Error.ofEmptyValue)
-            .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
+          partial.Result.Errors
+            .single(partial.Error.ofEmptyValue)
+            .prependErrorPath(partial.PathElement.Accessor("height"))
         )
         result.asErrorPathMessagesStrings ==> Iterable(
           "height" -> "empty value"
@@ -98,16 +98,16 @@ object PartialDslSpec extends TestSuite {
         val person = Person("John", 10, 140)
         val result = person
           .intoPartial[User]
-          .withFieldComputedPartial(_.height, PartialTransformer.Result.fromPartialFunction {
+          .withFieldComputedPartial(_.height, partial.Result.fromPartialFunction {
             case Person(_, age, _) if age > 18 => 2.0 * age
           })
           .transform
 
         result.asOption ==> None
         result.asEither ==> Left(
-          PartialTransformer.Result.Errors
-            .single(PartialTransformer.Error.ofNotDefinedAt(person))
-            .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
+          partial.Result.Errors
+            .single(partial.Error.ofNotDefinedAt(person))
+            .prependErrorPath(partial.PathElement.Accessor("height"))
         )
         result.asErrorPathMessagesStrings ==> Iterable(
           "height" -> s"not defined at $person"
@@ -117,17 +117,17 @@ object PartialDslSpec extends TestSuite {
       "custom string errors" - {
         val result = Person("John", 10, 140)
           .intoPartial[User]
-          .withFieldConstPartial(_.height, PartialTransformer.Result.fromErrorStrings("abc", "def"))
+          .withFieldConstPartial(_.height, partial.Result.fromErrorStrings("abc", "def"))
           .transform
 
         result.asOption ==> None
         result.asEither == Left(
-          PartialTransformer.Result
+          partial.Result
             .Errors(
-              PartialTransformer.Error.ofString("abc"),
-              PartialTransformer.Error.ofString("def")
+              partial.Error.ofString("abc"),
+              partial.Error.ofString("def")
             )
-            .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
+            .prependErrorPath(partial.PathElement.Accessor("height"))
         )
         result.asErrorPathMessagesStrings ==> Iterable(
           "height" -> "abc",
@@ -139,16 +139,16 @@ object PartialDslSpec extends TestSuite {
         case object MyException extends Exception("my exception")
         val result = Person("John", 10, 140)
           .intoPartial[User]
-          .withFieldConstPartial(_.height, PartialTransformer.Result.fromErrorThrowable(MyException))
+          .withFieldConstPartial(_.height, partial.Result.fromErrorThrowable(MyException))
           .transform
 
         result.asOption ==> None
         result.asEither == Left(
-          PartialTransformer.Result.Errors
+          partial.Result.Errors
             .single(
-              PartialTransformer.Error.ofThrowable(MyException)
+              partial.Error.ofThrowable(MyException)
             )
-            .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
+            .prependErrorPath(partial.PathElement.Accessor("height"))
         )
         result.asErrorPathMessagesStrings ==> Iterable(
           "height" -> "my exception"
@@ -167,13 +167,13 @@ object PartialDslSpec extends TestSuite {
           .withFieldComputedPartial(
             _.name,
             pf =>
-              if (pf.name.isEmpty) PartialTransformer.Result.fromEmpty
-              else PartialTransformer.Result.fromValue(pf.name.toUpperCase())
+              if (pf.name.isEmpty) partial.Result.fromEmpty
+              else partial.Result.fromValue(pf.name.toUpperCase())
           )
           .withFieldComputed(_.age, _.age.toInt) // must catch exceptions
           .withFieldComputedPartial(
             _.height,
-            pf => PartialTransformer.Result.fromOption(pf.height.parseDouble)
+            pf => partial.Result.fromOption(pf.height.parseDouble)
           )
           .transform
 
@@ -190,13 +190,13 @@ object PartialDslSpec extends TestSuite {
           .withFieldComputedPartial(
             _.name,
             pf =>
-              if (pf.name.isEmpty) PartialTransformer.Result.fromEmpty
-              else PartialTransformer.Result.fromValue(pf.name.toUpperCase())
+              if (pf.name.isEmpty) partial.Result.fromEmpty
+              else partial.Result.fromValue(pf.name.toUpperCase())
           )
           .withFieldComputed(_.age, _.age.toInt) // must catch exceptions
           .withFieldComputedPartial(
             _.height,
-            pf => PartialTransformer.Result.fromOption(pf.height.parseDouble)
+            pf => partial.Result.fromOption(pf.height.parseDouble)
           )
           .transform
 
@@ -245,20 +245,20 @@ object PartialDslSpec extends TestSuite {
 
         result.asOption ==> None
         result.asEither ==> Left(
-          PartialTransformer.Result.Errors(
-            PartialTransformer.Error
+          partial.Result.Errors(
+            partial.Error
               .ofString("bad trip id")
-              .prependErrorPath(PartialTransformer.PathElement.Accessor("id")),
-            PartialTransformer.Error
+              .prependErrorPath(partial.PathElement.Accessor("id")),
+            partial.Error
               .ofString("bad height value")
-              .prependErrorPath(PartialTransformer.PathElement.Accessor("height"))
-              .prependErrorPath(PartialTransformer.PathElement.Index(0))
-              .prependErrorPath(PartialTransformer.PathElement.Accessor("people")),
-            PartialTransformer.Error
+              .prependErrorPath(partial.PathElement.Accessor("height"))
+              .prependErrorPath(partial.PathElement.Index(0))
+              .prependErrorPath(partial.PathElement.Accessor("people")),
+            partial.Error
               .ofString("bad age value")
-              .prependErrorPath(PartialTransformer.PathElement.Accessor("age"))
-              .prependErrorPath(PartialTransformer.PathElement.Index(1))
-              .prependErrorPath(PartialTransformer.PathElement.Accessor("people"))
+              .prependErrorPath(partial.PathElement.Accessor("age"))
+              .prependErrorPath(partial.PathElement.Index(1))
+              .prependErrorPath(partial.PathElement.Accessor("people"))
           )
         )
         result.asErrorPathMessagesStrings ==> Iterable(
@@ -366,7 +366,7 @@ object PartialDslSpec extends TestSuite {
 
             result.asOption ==> None
             result.asEither ==> Left(
-              PartialTransformer.Result.Errors.fromString("bad int")
+              partial.Result.Errors.fromString("bad int")
             )
             result.asErrorPathMessagesStrings ==> Iterable(
               "" -> "bad int"
@@ -396,7 +396,7 @@ object PartialDslSpec extends TestSuite {
 
             result.asOption ==> None
             result.asEither ==> Left(
-              PartialTransformer.Result.Errors.fromString("bad int")
+              partial.Result.Errors.fromString("bad int")
             )
             result.asErrorPathMessagesStrings ==> Iterable(
               "" -> "bad int"
@@ -444,7 +444,7 @@ object PartialDslSpec extends TestSuite {
           implicit underlying: PartialTransformer[A, B]
       ): PartialTransformer[Option[A], B] = PartialTransformer {
         case Some(value) => underlying.transform(value)
-        case None        => PartialTransformer.Result.fromErrorString("Expected a value, got none")
+        case None        => partial.Result.fromErrorString("Expected a value, got none")
       }
 
       // Raw domain
@@ -679,22 +679,22 @@ object PartialDslSpec extends TestSuite {
         .intoPartial[User]
         .withFieldConstPartial(
           _.name,
-          PartialTransformer.Result.fromErrors(
-            PartialTransformer.Error.ofEmptyValue,
-            PartialTransformer.Error.ofString("Bad name")
+          partial.Result.fromErrors(
+            partial.Error.ofEmptyValue,
+            partial.Error.ofString("Bad name")
           )
         )
-        .withFieldConstPartial(_.height, PartialTransformer.Result.fromErrorString("Bad height"))
+        .withFieldConstPartial(_.height, partial.Result.fromErrorString("Bad height"))
         .transformFailFast
 
       result.asOption ==> None
       result.asEither ==> Left(
-        PartialTransformer.Result
+        partial.Result
           .Errors(
-            PartialTransformer.Error.ofEmptyValue,
-            PartialTransformer.Error.ofString("Bad name")
+            partial.Error.ofEmptyValue,
+            partial.Error.ofString("Bad name")
           )
-          .prependErrorPath(PartialTransformer.PathElement.Accessor("name"))
+          .prependErrorPath(partial.PathElement.Accessor("name"))
       )
     }
 
@@ -753,7 +753,7 @@ object PartialDslSpec extends TestSuite {
       implicit val totalInner: Transformer[String, Int] = _.toInt
 
       implicit val partialInner: PartialTransformer[String, Int] =
-        PartialTransformer[String, Int](str => PartialTransformer.Result.fromCatching(str.toInt).map(_ * 2))
+        PartialTransformer[String, Int](str => partial.Result.fromCatching(str.toInt).map(_ * 2))
 
       "ambiguous error when not resolved" - {
 

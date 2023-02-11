@@ -6,7 +6,7 @@ import io.scalaland.chimney.internal.{TransformerDerivationError, IncompatibleSo
 import scala.collection.immutable.ListMap
 import scala.reflect.macros.blackbox
 
-trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
+trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with GenTrees {
 
   val c: blackbox.Context
 
@@ -87,9 +87,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
             target -> TransformerBodyTree(
               q"""
                 ${config.transformerDefinitionPrefix.accessOverriddenConstValue(target.name, fTargetTpe)}
-                  .prependErrorPath(
-                    _root_.io.scalaland.chimney.PartialTransformer.PathElement.Accessor(${target.name})
-                  )
+                  .prependErrorPath(${Trees.PathElement.accessor(target.name)})
               """,
               config.derivationTarget
             )
@@ -98,14 +96,12 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
         case FieldOverride.Computed if config.derivationTarget.isPartial =>
           val function =
             config.transformerDefinitionPrefix.accessOverriddenComputedFunction(target.name, From, target.tpe)
-          val liftedFunction = q"_root_.io.scalaland.chimney.PartialTransformer.Result.fromFunction($function)"
+          val liftedFunction = Trees.PartialResult.fromFunction(function)
           Some {
             target -> TransformerBodyTree(
               q"""
                 ${liftedFunction.callUnaryApply(srcPrefixTree)}
-                  .prependErrorPath(
-                    _root_.io.scalaland.chimney.PartialTransformer.PathElement.Accessor(${target.name})
-                  )
+                  .prependErrorPath(${Trees.PathElement.accessor(target.name)})
               """,
               config.derivationTarget
             )
@@ -129,9 +125,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
                 ${config.transformerDefinitionPrefix
                 .accessOverriddenComputedFunction(target.name, From, fTargetTpe)
                 .callUnaryApply(srcPrefixTree)}
-                  .prependErrorPath(
-                    _root_.io.scalaland.chimney.PartialTransformer.PathElement.Accessor(${target.name})
-                  )
+                  .prependErrorPath(${Trees.PathElement.accessor(target.name)})
               """,
               config.derivationTarget
             )
@@ -185,14 +179,14 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils {
 
       def optionNoneFallback =
         if (config.flags.optionDefaultsToNone && isOption(target.tpe)) {
-          Some(target -> TransformerBodyTree(q"_root_.scala.None", DerivationTarget.TotalTransformer))
+          Some(target -> TransformerBodyTree(Trees.Option.none, DerivationTarget.TotalTransformer))
         } else {
           None
         }
 
       def unitFallback =
         if (isUnit(target.tpe)) {
-          Some(target -> TransformerBodyTree(q"()", DerivationTarget.TotalTransformer))
+          Some(target -> TransformerBodyTree(Trees.unit, DerivationTarget.TotalTransformer))
         } else {
           None
         }
