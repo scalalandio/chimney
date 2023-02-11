@@ -11,9 +11,20 @@ trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
   import c.universe._
 
   object Trees {
+    val any: Tree = tq"_root_.scala.Any"
+    val arrayAny: Tree = arrayTpe(any)
     val unit: Tree = q"()"
 
     val intTpe: Tree = tq"_root_.scala.Int"
+
+    def array(args: Seq[Tree]): Tree = {
+      q"_root_.scala.Array(..${args})"
+    }
+
+    def arrayTpe(inTpe: Tree): Tree = {
+      tq"_root_.scala.Array[$inTpe]"
+    }
+
 
     object Option {
       val none: Tree = q"_root_.scala.None"
@@ -38,10 +49,6 @@ trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
       def right(value: Tree): Tree = {
         q"new _root_.scala.util.Right($value)"
       }
-    }
-
-    def array(args: Seq[Tree]): Tree = {
-      q"_root.scala.Array(..${args})"
     }
 
     object Transformer {

@@ -207,12 +207,12 @@ trait TargetConstructorMacros extends Model with AssertUtils with GenTrees {
 
             q"""
                ${Trees.PartialResult.sequence(
-              tq"Array[Any]",
-              tq"Any",
+              Trees.arrayAny,
+              Trees.any,
               q"${partialTreesArray}.iterator",
               pt.failFastTree
             )}
-               .map { ($arrayFn: Array[Any]) => ${mkTargetValueTree(updatedArgs)} }
+               .map { ($arrayFn: ${Trees.arrayAny}) => ${mkTargetValueTree(updatedArgs)} }
              """
           }
         }
