@@ -148,7 +148,8 @@ val ciCommand = (scalaSuffix: String) =>
     s"chimneyJS$scalaSuffix/test",
     s"chimneyCatsJS$scalaSuffix/test",
     s"chimneyNative$scalaSuffix/test",
-    s"chimneyCatsNative$scalaSuffix/test"
+    s"chimneyCatsNative$scalaSuffix/test",
+    "benchmarks/compile"
   ).mkString(";")
 
 // modules
