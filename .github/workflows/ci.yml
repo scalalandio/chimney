@@ -49,7 +49,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: coursier/cache-action@v6
+# coursier parallel fetch is faster than cache download on our runner
+#      - uses: coursier/cache-action@v6
+
       - uses: coursier/setup-action@v1.3.0
         with:
           jvm: 'adoptium:1.17.0.5' # TODO LB java version from matrix
