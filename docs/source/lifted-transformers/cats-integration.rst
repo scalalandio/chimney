@@ -1,7 +1,7 @@
 .. _lifted-cats-integration:
 
-Cats integration
-================
+Cats integration ``(deprecated)``
+=================================
 
 Chimney provides `Cats <https://typelevel.org/cats>`_ library integration module.
 To include it to your SBT project, add the following line to your ``build.sbt``:

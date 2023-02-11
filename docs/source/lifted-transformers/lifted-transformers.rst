@@ -73,7 +73,7 @@ Similar to ``withFieldConst``, ``withFieldComputed``, ``withCoproductInstance`` 
 there are lifted counterparts available:
 
 - ``withFieldConstF``
-- ``withFieldComputed``
+- ``withFieldComputedF``
 - ``withCoproductInstanceF``
 
 Analogously to :ref:`transformer-definition-dsl` for ``Transformer``, we can define above transformation
