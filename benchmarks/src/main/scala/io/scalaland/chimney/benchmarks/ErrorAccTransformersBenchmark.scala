@@ -3,6 +3,7 @@ package io.scalaland.chimney.benchmarks
 import org.openjdk.jmh.annotations.Benchmark
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.{ErrorPathNode, PartialTransformer, TransformationError, TransformerF}
+import io.scalaland.chimney.partial
 
 class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   import fixtures._
@@ -17,7 +18,7 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
     simpleTransformerLifted.transform(simple)
 
   @Benchmark
-  def simpleHappyPartialTransformer: PartialTransformer.Result[SimpleOutput] =
+  def simpleHappyPartialTransformer: partial.Result[SimpleOutput] =
     simpleTransformerPartial.transform(simple)
 
   @Benchmark
@@ -31,7 +32,7 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def simpleHappyInlineDslPartialTransformer: PartialTransformer.Result[SimpleOutput] =
+  def simpleHappyInlineDslPartialTransformer: partial.Result[SimpleOutput] =
     simple
       .intoPartial[SimpleOutput]
       .withFieldComputedPartial(_.a, s => happy.validateA(s.a).toPartialTransformerResult)
@@ -65,7 +66,7 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
     simpleTransformerLiftedUnhappy.transform(simple)
 
   @Benchmark
-  def simpleUnhappyPartialTransformer: PartialTransformer.Result[SimpleOutput] =
+  def simpleUnhappyPartialTransformer: partial.Result[SimpleOutput] =
     simpleTransformerPartialUnhappy.transform(simple)
 
   @Benchmark
@@ -79,7 +80,7 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def simpleUnhappyInlineDslPartialTransformer: PartialTransformer.Result[SimpleOutput] =
+  def simpleUnhappyInlineDslPartialTransformer: partial.Result[SimpleOutput] =
     simple
       .intoPartial[SimpleOutput]
       .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialTransformerResult)
@@ -113,7 +114,7 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
     longTransformerLifted.transform(samples.longSample)
 
   @Benchmark
-  def longHappyPartialTransformer: PartialTransformer.Result[LongOutput] =
+  def longHappyPartialTransformer: partial.Result[LongOutput] =
     longTransformerPartial.transform(samples.longSample)
 
   @Benchmark
@@ -121,7 +122,7 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
     longTransformerLiftedUnhappy.transform(samples.longSample)
 
   @Benchmark
-  def longUnhappyPartialTransformer: PartialTransformer.Result[LongOutput] =
+  def longUnhappyPartialTransformer: partial.Result[LongOutput] =
     longTransformerPartialUnhappy.transform(samples.longSample)
 
   @Benchmark
@@ -131,7 +132,7 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   }
 
   @Benchmark
-  def nestedLongHappyPartialTransformer: PartialTransformer.Result[Vector[LongOutput]] = {
+  def nestedLongHappyPartialTransformer: partial.Result[Vector[LongOutput]] = {
     implicit val ltp: PartialTransformer[Long, LongOutput] = longTransformerPartial
     samples.longNestedSample.transformIntoPartial[Vector[LongOutput]]
   }
@@ -143,7 +144,7 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   }
 
   @Benchmark
-  def nestedLongUnhappyPartialTransformer: PartialTransformer.Result[Vector[LongOutput]] = {
+  def nestedLongUnhappyPartialTransformer: partial.Result[Vector[LongOutput]] = {
     implicit val ltpu: PartialTransformer[Long, LongOutput] = longTransformerPartialUnhappy
     samples.longNestedSample.transformIntoPartial[Vector[LongOutput]]
   }
