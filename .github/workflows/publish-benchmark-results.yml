@@ -41,10 +41,10 @@ jobs:
       - run: unzip benchmark-results.zip
         if: ${{ steps.download-results.outputs.result == 'continue' }}
 
-      - name: Set SHA env variable
+      - name: Set VERSION env variable
         run: |
-          SHA=$(cat sha)
-          echo "SHA=$SHA" >> $GITHUB_ENV
+          VERSION=$(cat version)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
         if: ${{ steps.download-results.outputs.result == 'continue' }}
 
       - name: Push benchmark file
@@ -52,11 +52,11 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.RESULTS_REPO_RW_TOKEN }}
         with:
-          source_file: '${{ env.SHA }}.json'
+          source_file: '${{ env.VERSION }}.json'
           destination_repo: 'scalalandio/chimney-benchmark-results'
           user_email: 'mateusz.kubuszok@gmail.com'
           user_name: 'Mateusz Kubuszok'
-          commit_message: 'Benchmarks for ${{ github.sha }} added.'
+          commit_message: 'Benchmarks for ${{ env.VERSION }} added.'
         if: ${{ steps.download-results.outputs.result == 'continue' }}
 
       - name: Push meta file
@@ -68,5 +68,5 @@ jobs:
           destination_repo: 'scalalandio/chimney-benchmark-results'
           user_email: 'mateusz.kubuszok@gmail.com'
           user_name: 'Mateusz Kubuszok'
-          commit_message: 'Meta update for ${{ github.sha }}'
+          commit_message: 'Meta update for ${{ env.VERSION }}'
         if: ${{ steps.download-results.outputs.result == 'continue' }}

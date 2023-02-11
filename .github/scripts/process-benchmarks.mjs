@@ -16,7 +16,7 @@ if (githubContext.event_name === 'push') {
     const { head_commit, compare } = event
 
     const entry = {
-        file: `${githubContext.sha}.json`,
+        file: `${gitDescribe}.json`,
         sha: event.after,
         event: event_name,
         describe: gitDescribe,
@@ -41,7 +41,7 @@ if (githubContext.event_name === 'pull_request') {
         const { label, pull_request } = event
 
         const entry = {
-            file: `${pull_request.head.sha}.json`,
+            file: `${gitDescribe}.json`,
             sha: pull_request.head.sha,
             event: event_name,
             describe: gitDescribe,
@@ -66,7 +66,7 @@ if (githubContext.event_name === 'pull_request') {
         const { pull_request } = event
 
         const entry = {
-            file: `${pull_request.head.sha}.json`,
+            file: `${gitDescribe}.json`,
             sha: pull_request.head.sha,
             event: event_name,
             describe: gitDescribe,
