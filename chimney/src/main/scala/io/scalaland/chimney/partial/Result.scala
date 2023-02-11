@@ -178,7 +178,7 @@ object Result {
     traverse(it, identity[Result[A]], failFast)
   }
 
-  final def map2[A, B, C](resultA: Result[A], resultB: => Result[B], failFast: Boolean, f: (A, B) => C): Result[C] = {
+  final def map2[A, B, C](resultA: Result[A], resultB: => Result[B], f: (A, B) => C, failFast: Boolean): Result[C] = {
     if (failFast) {
       resultA match {
         case Value(a) =>
@@ -199,5 +199,5 @@ object Result {
   }
 
   final def product[A, B](res1: Result[A], res2: => Result[B], failFast: Boolean): Result[(A, B)] =
-    map2(res1, res2, failFast, (x: A, y: B) => (x, y))
+    map2(res1, res2, (x: A, y: B) => (x, y), failFast)
 }
