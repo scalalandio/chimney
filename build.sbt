@@ -5,8 +5,6 @@ import commandmatrix.extra._
 ThisProject / versionScheme := Some("early-semver")
 
 val versions = new {
-  val chimney = "0.6.2"
-
   val scala212 = "2.12.17"
   val scala213 = "2.13.10"
 
@@ -33,7 +31,8 @@ val only1VersionInIDE =
     }
 
 val settings = Seq(
-  version := versions.chimney,
+  git.useGitDescribe := true,
+  git.uncommittedSignifier := None,
   scalacOptions ++= Seq(
     "-encoding",
     "UTF-8",
@@ -153,7 +152,7 @@ val ciCommand = (scalaSuffix: String) =>
 
 lazy val root = project
   .in(file("."))
-  .enablePlugins(SphinxPlugin, GhpagesPlugin)
+  .enablePlugins(SphinxPlugin, GhpagesPlugin, GitVersioning, GitBranchPrompt)
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(noPublishSettings: _*)
@@ -166,7 +165,7 @@ lazy val root = project
     Sphinx / sourceDirectory := file("docs") / "source",
     git.remoteRepo := "git@github.com:scalalandio/chimney.git",
     logo :=
-      s"""Chimney ${versions.chimney} build for (${versions.scala212}, ${versions.scala213}) x (Scala JVM, Scala.js $scalaJSVersion, Scala Native $nativeVersion)
+      s"""Chimney ${(ThisBuild / version).value} build for (${versions.scala212}, ${versions.scala213}) x (Scala JVM, Scala.js $scalaJSVersion, Scala Native $nativeVersion)
          |
          |This build uses sbt-projectmatrix with sbt-commandmatrix helper:
          | - Scala JVM adds no suffix to a project name seen in build.sbt
