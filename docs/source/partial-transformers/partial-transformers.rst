@@ -198,3 +198,13 @@ Now we received only the first error, as requested.
 Performance notes
 -----------------
 
+Partial transformers were implemented with the high performance and low computation overhead in mind.
+There are several optimizations in place to make them as performant as possible.
+
+Our partial transformer composition encoding is optimized to use flat data structures, producing low amount of
+garbage and use lazy memory allocation.
+
+There is a custom, `chain <https://github.com/non/chain>`_\-like data structure optimized for gathering
+partial transformer errors, supporting fast append/merge and special support of error paths annotations.
+
+Check our :ref:`benchmarks` suite for more detailed comparison.
