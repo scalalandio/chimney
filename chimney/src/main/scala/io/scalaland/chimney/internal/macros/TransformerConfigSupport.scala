@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.macros
 
 import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, PreferPartialTransformer, PreferTotalTransformer}
-import io.scalaland.chimney.{PartialTransformer => PartialTransformerTpe}
+import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.utils.MacroUtils
 
 import scala.reflect.macros.blackbox
@@ -47,7 +47,7 @@ trait TransformerConfigSupport extends MacroUtils {
     case class PartialTransformer(failFastTermName: TermName = freshTermName("failFast")) extends DerivationTarget {
       def failFastTree: Tree = q"$failFastTermName"
       def targetType(toTpe: Type): Type =
-        typeOf[PartialTransformerTpe.Result[_]].typeConstructor.applyTypeArg(toTpe)
+        typeOf[partial.Result[_]].typeConstructor.applyTypeArg(toTpe)
       def isLifted = false
       def isPartial = true
     }

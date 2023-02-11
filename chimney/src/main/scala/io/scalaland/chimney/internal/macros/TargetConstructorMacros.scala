@@ -6,7 +6,7 @@ import scala.reflect.macros.blackbox
 
 import scala.collection.compat._
 
-trait TargetConstructorMacros extends Model with AssertUtils {
+trait TargetConstructorMacros extends Model with AssertUtils with GenTrees {
 
   val c: blackbox.Context
 
@@ -61,7 +61,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
       case DerivationTarget.TotalTransformer =>
         valueTree
       case DerivationTarget.PartialTransformer(_) =>
-        q"_root_.io.scalaland.chimney.PartialTransformer.Result.Value($valueTree)"
+        Trees.PartialResult.value(valueTree)
       case DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _) =>
         q"${wrapperSupportInstance}.pure($valueTree)"
     }
@@ -151,8 +151,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
             val localTreeRefs = localDefNames.map { lt =>
               q"$lt"
             }
-            val succValPats =
-              succValIdents.map(vId => pq"_root_.io.scalaland.chimney.PartialTransformer.Result.Value($vId)")
+            val succValPats = succValIdents.map(vId => Trees.PartialResult.patValue(vId))
             val allSuccPat = pq"(..${succValPats})"
             val succValTrees = succValIdents.map(vId => q"$vId")
             val patRefArgsMap = (partialTargets zip succValTrees).toMap
@@ -167,12 +166,12 @@ trait TargetConstructorMacros extends Model with AssertUtils {
             val allErrIfTrees = errIdents.map { errId =>
               val localErrsIdent = freshTermName("localErrs")
               q"""
-                if ($errId.isInstanceOf[_root_.io.scalaland.chimney.PartialTransformer.Result.Errors]) {
-                  val $localErrsIdent = $errId.asInstanceOf[_root_.io.scalaland.chimney.PartialTransformer.Result.Errors]
+                if ($errId.isInstanceOf[${Trees.PartialErrors.tpe}]) {
+                  val $localErrsIdent = $errId.asInstanceOf[${Trees.PartialErrors.tpe}]
                   if ($allErrorsIdent == null) {
                     $allErrorsIdent = $localErrsIdent
                   } else {
-                    $allErrorsIdent = _root_.io.scalaland.chimney.PartialTransformer.Result.Errors.merge($allErrorsIdent, $localErrsIdent)
+                    $allErrorsIdent = ${Trees.PartialErrors.merge(allErrorsIdent, localErrsIdent)}
                   }
                 }
                """
@@ -186,9 +185,9 @@ trait TargetConstructorMacros extends Model with AssertUtils {
                 } else {
                   (..${localTreeRefs}) match {
                     case $allSuccPat =>
-                      _root_.io.scalaland.chimney.PartialTransformer.Result.Value(${mkTargetValueTree(updatedArgs)})
+                      ${Trees.PartialResult.value(mkTargetValueTree(updatedArgs))}
                     case $errPat => // (r1, r2, .., rk)
-                      var $allErrorsIdent: _root_.io.scalaland.chimney.PartialTransformer.Result.Errors = null
+                      var $allErrorsIdent: ${Trees.PartialErrors.tpe} = null
                       ..$allErrIfTrees
                       $allErrorsIdent
                   }
@@ -197,7 +196,7 @@ trait TargetConstructorMacros extends Model with AssertUtils {
             """
           } else { // Array[Any] + sequence, type info lost
             // should be possible to optimize with nested tuples
-            val partialTreesArray = q"Array(..${partialTrees})"
+            val partialTreesArray = Trees.array(partialTrees)
             val arrayFn = freshTermName("array")
             val argIndices = partialTargets.indices
             val patRefArgsMap = (partialTargets zip argIndices).map {
@@ -207,10 +206,13 @@ trait TargetConstructorMacros extends Model with AssertUtils {
             val updatedArgs = targets.map(argsMap)
 
             q"""
-               _root_.io.scalaland.chimney.PartialTransformer.Result.sequence[Array[Any], Any](
-                 ${partialTreesArray}.iterator,
-                 ${pt.failFastTree}
-               ).map { ($arrayFn: Array[Any]) => ${mkTargetValueTree(updatedArgs)} }
+               ${Trees.PartialResult.sequence(
+              tq"Array[Any]",
+              tq"Any",
+              q"${partialTreesArray}.iterator",
+              pt.failFastTree
+            )}
+               .map { ($arrayFn: Array[Any]) => ${mkTargetValueTree(updatedArgs)} }
              """
           }
         }

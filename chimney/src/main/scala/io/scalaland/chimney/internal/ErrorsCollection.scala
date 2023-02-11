@@ -1,19 +1,19 @@
 package io.scalaland.chimney.internal
 
-import io.scalaland.chimney.PartialTransformer
+import io.scalaland.chimney.partial
 
 import scala.collection.compat._
 import scala.util.hashing.MurmurHash3
 
-sealed abstract class ErrorsCollection extends Iterable[PartialTransformer.Error] {
+sealed abstract class ErrorsCollection extends Iterable[partial.Error] {
 
-  final def prependPath(pathElement: PartialTransformer.PathElement): ErrorsCollection = {
+  final def prependPath(pathElement: partial.PathElement): ErrorsCollection = {
     ErrorsCollection.WrapPath(this, pathElement)
   }
 
   override final def isEmpty: Boolean = false
 
-  override final def iterator: Iterator[PartialTransformer.Error] = {
+  override final def iterator: Iterator[partial.Error] = {
     this match {
       case ErrorsCollection.Single(error)      => Iterator.single(error)
       case ErrorsCollection.Wrap(errors)       => errors.iterator
@@ -41,9 +41,9 @@ sealed abstract class ErrorsCollection extends Iterable[PartialTransformer.Error
 
 object ErrorsCollection {
 
-  final def fromSingle(error: PartialTransformer.Error): ErrorsCollection = Single(error)
+  final def fromSingle(error: partial.Error): ErrorsCollection = Single(error)
 
-  final def from(head: PartialTransformer.Error, tail: PartialTransformer.Error*): ErrorsCollection = {
+  final def from(head: partial.Error, tail: partial.Error*): ErrorsCollection = {
     if (tail.isEmpty) Single(head)
     else if (tail.sizeIs == 1) Merge(Single(head), Single(tail.head))
     else Merge(Single(head), Wrap(tail))
@@ -53,9 +53,9 @@ object ErrorsCollection {
     ec1 ++ ec2
   }
 
-  private final case class Single private (error: PartialTransformer.Error) extends ErrorsCollection
-  private final case class Wrap private (errors: Iterable[PartialTransformer.Error]) extends ErrorsCollection
+  private final case class Single private (error: partial.Error) extends ErrorsCollection
+  private final case class Wrap private (errors: Iterable[partial.Error]) extends ErrorsCollection
   private final case class Merge private (left: ErrorsCollection, right: ErrorsCollection) extends ErrorsCollection
-  private final case class WrapPath private (ec: ErrorsCollection, pe: PartialTransformer.PathElement)
+  private final case class WrapPath private (ec: ErrorsCollection, pe: partial.PathElement)
       extends ErrorsCollection
 }

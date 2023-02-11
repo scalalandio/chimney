@@ -5,8 +5,8 @@ import _root_.cats.syntax.validated._
 import _root_.cats.syntax.semigroup._
 import _root_.cats.syntax.semigroupal._
 import cats.Semigroupal
-import io.scalaland.chimney.PartialTransformer
-import io.scalaland.chimney.PartialTransformer.{Error, PathElement}
+import io.scalaland.chimney.partial
+import io.scalaland.chimney.partial.{Error, PathElement}
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.examples.trip._
 import utest._
@@ -17,43 +17,43 @@ object CatsValidatedPartialTransformerSpec extends TestSuite {
 
     "partial transformer errors semigroup instance" - {
 
-      val e1 = PartialTransformer.Result.Errors.fromString("test1")
-      val e2 = PartialTransformer.Result.Errors.fromString("test2")
+      val e1 = partial.Result.Errors.fromString("test1")
+      val e2 = partial.Result.Errors.fromString("test2")
 
-      e1.combine(e2) ==> PartialTransformer.Result.Errors.fromStrings("test1", "test2")
+      e1.combine(e2) ==> partial.Result.Errors.fromStrings("test1", "test2")
     }
 
     "partial transformer result semigroupal instance" - {
 
       "success" - {
-        PartialTransformer.Result
+        partial.Result
           .fromValue(1)
-          .product(PartialTransformer.Result.fromValue("abc")) ==>
-          PartialTransformer.Result.fromValue((1, "abc"))
+          .product(partial.Result.fromValue("abc")) ==>
+          partial.Result.fromValue((1, "abc"))
       }
 
       "failure" - {
-        Semigroupal[PartialTransformer.Result].product(
-          PartialTransformer.Result.fromValue(1),
-          PartialTransformer.Result.fromErrorString("abc")
+        Semigroupal[partial.Result].product(
+          partial.Result.fromValue(1),
+          partial.Result.fromErrorString("abc")
         ) ==>
-          PartialTransformer.Result.fromErrorString("abc")
+          partial.Result.fromErrorString("abc")
 
-        Semigroupal[PartialTransformer.Result].product(
-          PartialTransformer.Result.fromErrorString("abc"),
-          PartialTransformer.Result.fromValue(1)
+        Semigroupal[partial.Result].product(
+          partial.Result.fromErrorString("abc"),
+          partial.Result.fromValue(1)
         ) ==>
-          PartialTransformer.Result.fromErrorString("abc")
+          partial.Result.fromErrorString("abc")
 
-        Semigroupal[PartialTransformer.Result].product(
-          PartialTransformer.Result.fromErrorString("abc"),
-          PartialTransformer.Result.fromErrorString("def")
+        Semigroupal[partial.Result].product(
+          partial.Result.fromErrorString("abc"),
+          partial.Result.fromErrorString("def")
         ) ==>
-          PartialTransformer.Result.fromErrorStrings("abc", "def")
+          partial.Result.fromErrorStrings("abc", "def")
       }
     }
 
-    "conversion between Validated and PartialTransformer.Result" - {
+    "conversion between Validated and partial.Result" - {
 
       "transform always succeeds" - {
 
@@ -85,7 +85,7 @@ object CatsValidatedPartialTransformerSpec extends TestSuite {
           val expectedErr3 = Error.ofString("def").prependErrorPath(PathElement.Accessor("height"))
 
           result.asValidated ==> Validated.invalid(
-            PartialTransformer.Result.fromErrors(expectedErr1, expectedErr2, expectedErr3)
+            partial.Result.fromErrors(expectedErr1, expectedErr2, expectedErr3)
           )
           result.asValidatedNel ==> Validated.invalid(NonEmptyList.of(expectedErr1, expectedErr2, expectedErr3))
           result.asValidatedNec ==> Validated.invalid(NonEmptyChain.of(expectedErr1, expectedErr2, expectedErr3))
@@ -103,13 +103,13 @@ object CatsValidatedPartialTransformerSpec extends TestSuite {
             .intoPartial[User]
             .withFieldConstPartial(
               _.name,
-              NonEmptyChain.of(PartialTransformer.Error.ofThrowable(ex1)).invalid.toPartialTransformerResult
+              NonEmptyChain.of(Error.ofThrowable(ex1)).invalid.toPartialTransformerResult
             )
             .withFieldConstPartial(_.age, Validated.valid(15).toPartialTransformerResult)
             .withFieldConstPartial(
               _.height,
               NonEmptyList
-                .of(PartialTransformer.Error.ofThrowable(ex2), PartialTransformer.Error.ofThrowable(ex3))
+                .of(Error.ofThrowable(ex2), Error.ofThrowable(ex3))
                 .invalid
                 .toPartialTransformerResult
             )
@@ -120,7 +120,7 @@ object CatsValidatedPartialTransformerSpec extends TestSuite {
           val expectedErr3 = Error.ofThrowable(ex3).prependErrorPath(PathElement.Accessor("height"))
 
           result.asValidated ==> Validated.invalid(
-            PartialTransformer.Result.fromErrors(expectedErr1, expectedErr2, expectedErr3)
+            partial.Result.fromErrors(expectedErr1, expectedErr2, expectedErr3)
           )
           result.asValidatedNel ==> Validated.invalid(NonEmptyList.of(expectedErr1, expectedErr2, expectedErr3))
           result.asValidatedNec ==> Validated.invalid(NonEmptyChain.of(expectedErr1, expectedErr2, expectedErr3))
