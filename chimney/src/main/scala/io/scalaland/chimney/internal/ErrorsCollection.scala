@@ -56,6 +56,5 @@ object ErrorsCollection {
   private final case class Single private (error: partial.Error) extends ErrorsCollection
   private final case class Wrap private (errors: Iterable[partial.Error]) extends ErrorsCollection
   private final case class Merge private (left: ErrorsCollection, right: ErrorsCollection) extends ErrorsCollection
-  private final case class WrapPath private (ec: ErrorsCollection, pe: partial.PathElement)
-      extends ErrorsCollection
+  private final case class WrapPath private (ec: ErrorsCollection, pe: partial.PathElement) extends ErrorsCollection
 }
