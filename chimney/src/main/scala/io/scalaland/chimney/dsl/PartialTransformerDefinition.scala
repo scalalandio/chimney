@@ -1,6 +1,6 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.PartialTransformer
+import io.scalaland.chimney.{PartialTransformer, partial}
 import io.scalaland.chimney.internal._
 import io.scalaland.chimney.internal.macros.dsl.{PartialTransformerDefinitionWhiteboxMacros, TransformerBlackboxMacros}
 
@@ -25,7 +25,7 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
   ): PartialTransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
     macro PartialTransformerDefinitionWhiteboxMacros.withFieldConstImpl[C]
 
-  def withFieldConstPartial[T, U](selector: To => T, value: PartialTransformer.Result[U])(
+  def withFieldConstPartial[T, U](selector: To => T, value: partial.Result[U])(
       implicit ev: U <:< T
   ): PartialTransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
     macro PartialTransformerDefinitionWhiteboxMacros.withFieldConstPartialImpl[C]
@@ -37,7 +37,7 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
 
   def withFieldComputedPartial[T, U](
       selector: To => T,
-      map: From => PartialTransformer.Result[U]
+      map: From => partial.Result[U]
   )(implicit ev: U <:< T): PartialTransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
     macro PartialTransformerDefinitionWhiteboxMacros.withFieldComputedPartialImpl[C]
 
@@ -51,7 +51,7 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
     macro PartialTransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[To, Inst, C]
 
   def withCoproductInstancePartial[Inst](
-      f: Inst => PartialTransformer.Result[To]
+      f: Inst => partial.Result[To]
   ): PartialTransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
     macro PartialTransformerDefinitionWhiteboxMacros.withCoproductInstancePartialImpl[To, Inst, C]
 

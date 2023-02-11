@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.{TransformerDerivationError, PatcherConfigu
 
 import scala.reflect.macros.blackbox
 
-trait PatcherMacros extends PatcherConfiguration with TransformerMacros {
+trait PatcherMacros extends PatcherConfiguration with TransformerMacros with GenTrees {
 
   val c: blackbox.Context
 
@@ -57,7 +57,7 @@ trait PatcherMacros extends PatcherConfiguration with TransformerMacros {
         }
 
         val resultTree = q"""
-           new _root_.io.scalaland.chimney.Patcher[$T, $Patch] {
+           new ${Trees.Patcher.tpe(T, Patch)} {
              def patch($fnObj: $T, $fnPatch: $Patch): $T = {
                new $T(..$args)
              }

@@ -1,6 +1,6 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.PartialTransformer
+import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal._
 import io.scalaland.chimney.internal.macros.dsl.{PartialTransformerIntoWhiteboxMacros, TransformerBlackboxMacros}
 
@@ -27,7 +27,7 @@ final class PartialTransformerInto[From, To, C <: TransformerCfg, Flags <: Trans
 
   def withFieldConstPartial[T, U](
       selector: To => T,
-      value: PartialTransformer.Result[U]
+      value: partial.Result[U]
   )(implicit ev: U <:< T): PartialTransformerInto[From, To, _ <: TransformerCfg, Flags] =
     macro PartialTransformerIntoWhiteboxMacros.withFieldConstPartialImpl
 
@@ -39,7 +39,7 @@ final class PartialTransformerInto[From, To, C <: TransformerCfg, Flags <: Trans
 
   def withFieldComputedPartial[T, U](
       selector: To => T,
-      f: From => PartialTransformer.Result[U]
+      f: From => partial.Result[U]
   )(implicit ev: U <:< T): PartialTransformerInto[From, To, _ <: TransformerCfg, Flags] =
     macro PartialTransformerIntoWhiteboxMacros.withFieldComputedPartialImpl
 
@@ -53,18 +53,18 @@ final class PartialTransformerInto[From, To, C <: TransformerCfg, Flags <: Trans
     macro PartialTransformerIntoWhiteboxMacros.withCoproductInstanceImpl
 
   def withCoproductInstancePartial[Inst](
-      f: Inst => PartialTransformer.Result[To]
+      f: Inst => partial.Result[To]
   ): PartialTransformerInto[From, To, _ <: TransformerCfg, Flags] =
     macro PartialTransformerIntoWhiteboxMacros.withCoproductInstancePartialImpl
 
   def transform[ScopeFlags <: TransformerFlags](
       implicit tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
-  ): PartialTransformer.Result[To] =
+  ): partial.Result[To] =
     macro TransformerBlackboxMacros.partialTransformNoFailFastImpl[From, To, C, Flags, ScopeFlags]
 
   def transformFailFast[ScopeFlags <: TransformerFlags](
       implicit tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
-  ): PartialTransformer.Result[To] =
+  ): partial.Result[To] =
     macro TransformerBlackboxMacros.partialTransformFailFastImpl[From, To, C, Flags, ScopeFlags]
 
   /** Used internally by macro. Please don't use in your code.

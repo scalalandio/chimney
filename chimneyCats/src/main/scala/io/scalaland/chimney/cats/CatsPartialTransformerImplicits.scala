@@ -10,27 +10,27 @@ import language.implicitConversions
 
 trait CatsPartialTransformerImplicits extends CatsPartialTransformerLowPriorityImplicits1 {
 
-  implicit final val monoidPartialTransformerResultErrors: Semigroup[PartialTransformer.Result.Errors] = {
-    Semigroup.instance(PartialTransformer.Result.Errors.merge)
+  implicit final val monoidPartialTransformerResultErrors: Semigroup[partial.Result.Errors] = {
+    Semigroup.instance(partial.Result.Errors.merge)
   }
 
-  implicit final val semigroupalPartialTransformerResult: Semigroupal[PartialTransformer.Result] = {
-    new Semigroupal[PartialTransformer.Result] {
+  implicit final val semigroupalPartialTransformerResult: Semigroupal[partial.Result] = {
+    new Semigroupal[partial.Result] {
       override def product[A, B](
-          fa: PartialTransformer.Result[A],
-          fb: PartialTransformer.Result[B]
-      ): PartialTransformer.Result[(A, B)] = {
-        PartialTransformer.Result.product(fa, fb, failFast = false)
+          fa: partial.Result[A],
+          fb: partial.Result[B]
+      ): partial.Result[(A, B)] = {
+        partial.Result.product(fa, fb, failFast = false)
       }
     }
   }
 
   implicit final def catsPartialTransformerResultOps[T](
-      ptr: PartialTransformer.Result[T]
+      ptr: partial.Result[T]
   ): CatsPartialTransformerResultOps[T] =
     new CatsPartialTransformerResultOps(ptr)
 
-  implicit final def catsValidatedPartialTransformerOps[E <: PartialTransformer.Result.Errors, T](
+  implicit final def catsValidatedPartialTransformerOps[E <: partial.Result.Errors, T](
       validated: Validated[E, T]
   ): CatsValidatedPartialTransformerOps[E, T] =
     new CatsValidatedPartialTransformerOps(validated)
@@ -38,7 +38,7 @@ trait CatsPartialTransformerImplicits extends CatsPartialTransformerLowPriorityI
 
 private[cats] trait CatsPartialTransformerLowPriorityImplicits1 {
 
-  implicit final def catsValidatedNelErrorPartialTransformerOps[E <: PartialTransformer.Error, T](
+  implicit final def catsValidatedNelErrorPartialTransformerOps[E <: partial.Error, T](
       validated: ValidatedNel[E, T]
   ): CatsValidatedNelErrorPartialTransformerOps[E, T] =
     new CatsValidatedNelErrorPartialTransformerOps(validated)
@@ -48,7 +48,7 @@ private[cats] trait CatsPartialTransformerLowPriorityImplicits1 {
   ): CatsValidatedNelStringPartialTransformerOps[E, T] =
     new CatsValidatedNelStringPartialTransformerOps(validated)
 
-  implicit final def catsValidatedNecErrorPartialTransformerOps[E <: PartialTransformer.Error, T](
+  implicit final def catsValidatedNecErrorPartialTransformerOps[E <: partial.Error, T](
       validated: ValidatedNec[E, T]
   ): CatsValidatedNecErrorPartialTransformerOps[E, T] =
     new CatsValidatedNecErrorPartialTransformerOps(validated)
@@ -60,73 +60,73 @@ private[cats] trait CatsPartialTransformerLowPriorityImplicits1 {
 
 }
 
-final class CatsPartialTransformerResultOps[T](private val ptr: PartialTransformer.Result[T]) extends AnyVal {
+final class CatsPartialTransformerResultOps[T](private val ptr: partial.Result[T]) extends AnyVal {
 
-  def asValidated: Validated[PartialTransformer.Result.Errors, T] = {
+  def asValidated: Validated[partial.Result.Errors, T] = {
     Validated.fromEither(ptr.asEither)
   }
 
-  def asValidatedList: Validated[List[PartialTransformer.Error], T] = {
+  def asValidatedList: Validated[List[partial.Error], T] = {
     ptr.asValidated.leftMap(_.errors.toList)
   }
 
-  def asValidatedChain: Validated[Chain[PartialTransformer.Error], T] = {
+  def asValidatedChain: Validated[Chain[partial.Error], T] = {
     ptr.asValidated.leftMap(errs => Chain.fromIterableOnce(errs.errors))
   }
 
-  def asValidatedNel: ValidatedNel[PartialTransformer.Error, T] = {
+  def asValidatedNel: ValidatedNel[partial.Error, T] = {
     ptr.asValidated.leftMap { errs =>
       // errors collection is non-empty by design
       NonEmptyList.fromListUnsafe(errs.errors.iterator.toList)
     }
   }
 
-  def asValidatedNec: ValidatedNec[PartialTransformer.Error, T] = {
+  def asValidatedNec: ValidatedNec[partial.Error, T] = {
     ptr.asValidatedNel.leftMap(NonEmptyChain.fromNonEmptyList)
   }
 
 }
 
-final class CatsValidatedPartialTransformerOps[E <: PartialTransformer.Result.Errors, T](
+final class CatsValidatedPartialTransformerOps[E <: partial.Result.Errors, T](
     private val validated: Validated[E, T]
 ) extends AnyVal {
-  def toPartialTransformerResult: PartialTransformer.Result[T] = {
-    PartialTransformer.Result.fromEither(validated.toEither)
+  def toPartialTransformerResult: partial.Result[T] = {
+    partial.Result.fromEither(validated.toEither)
   }
 }
 
-final class CatsValidatedNelErrorPartialTransformerOps[E <: PartialTransformer.Error, T](
+final class CatsValidatedNelErrorPartialTransformerOps[E <: partial.Error, T](
     private val validated: ValidatedNel[E, T]
 ) extends AnyVal {
-  def toPartialTransformerResult: PartialTransformer.Result[T] = {
-    validated.leftMap(errs => PartialTransformer.Result.Errors(errs.head, errs.tail: _*)).toPartialTransformerResult
+  def toPartialTransformerResult: partial.Result[T] = {
+    validated.leftMap(errs => partial.Result.Errors(errs.head, errs.tail: _*)).toPartialTransformerResult
   }
 }
 
 final class CatsValidatedNelStringPartialTransformerOps[E <: String, T](private val validated: ValidatedNel[E, T])
     extends AnyVal {
-  def toPartialTransformerResult: PartialTransformer.Result[T] = {
+  def toPartialTransformerResult: partial.Result[T] = {
     validated
-      .leftMap(errs => PartialTransformer.Result.Errors.fromStrings(errs.head, errs.tail: _*))
+      .leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail: _*))
       .toPartialTransformerResult
   }
 }
 
-final class CatsValidatedNecErrorPartialTransformerOps[E <: PartialTransformer.Error, T](
+final class CatsValidatedNecErrorPartialTransformerOps[E <: partial.Error, T](
     private val validated: ValidatedNec[E, T]
 ) extends AnyVal {
-  def toPartialTransformerResult: PartialTransformer.Result[T] = {
+  def toPartialTransformerResult: partial.Result[T] = {
     validated
-      .leftMap(errs => PartialTransformer.Result.Errors(errs.head, errs.tail.toList: _*))
+      .leftMap(errs => partial.Result.Errors(errs.head, errs.tail.toList: _*))
       .toPartialTransformerResult
   }
 }
 
 final class CatsValidatedNecStringPartialTransformerOps[E <: String, T](private val validated: ValidatedNec[E, T])
     extends AnyVal {
-  def toPartialTransformerResult: PartialTransformer.Result[T] = {
+  def toPartialTransformerResult: partial.Result[T] = {
     validated
-      .leftMap(errs => PartialTransformer.Result.Errors.fromStrings(errs.head, errs.tail.toList: _*))
+      .leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail.toList: _*))
       .toPartialTransformerResult
   }
 }
