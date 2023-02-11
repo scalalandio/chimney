@@ -23,7 +23,7 @@ object PartialDslSpec extends TestSuite {
 
         result.asOption ==> Some(expected)
         result.asEither ==> Right(expected)
-        result.asErrorPathMessagesStrings ==> Seq.empty
+        result.asErrorPathMessageStrings ==> Seq.empty
       }
 
       "field const override" - {
@@ -35,7 +35,7 @@ object PartialDslSpec extends TestSuite {
 
         result.asOption ==> Some(expected)
         result.asEither ==> Right(expected)
-        result.asErrorPathMessagesStrings ==> Seq.empty
+        result.asErrorPathMessageStrings ==> Seq.empty
       }
 
       "field partial const override" - {
@@ -47,7 +47,7 @@ object PartialDslSpec extends TestSuite {
 
         result.asOption ==> Some(expected)
         result.asEither ==> Right(expected)
-        result.asErrorPathMessagesStrings ==> Seq.empty
+        result.asErrorPathMessageStrings ==> Seq.empty
       }
 
       "field compute" - {
@@ -59,7 +59,7 @@ object PartialDslSpec extends TestSuite {
 
         result.asOption ==> Some(expected)
         result.asEither ==> Right(expected)
-        result.asErrorPathMessagesStrings ==> Seq.empty
+        result.asErrorPathMessageStrings ==> Seq.empty
       }
 
       "field compute partial" - {
@@ -71,7 +71,7 @@ object PartialDslSpec extends TestSuite {
 
         result.asOption ==> Some(expected)
         result.asEither ==> Right(expected)
-        result.asErrorPathMessagesStrings ==> Seq.empty
+        result.asErrorPathMessageStrings ==> Seq.empty
       }
     }
 
@@ -89,7 +89,7 @@ object PartialDslSpec extends TestSuite {
             .single(partial.Error.ofEmptyValue)
             .prependErrorPath(partial.PathElement.Accessor("height"))
         )
-        result.asErrorPathMessagesStrings ==> Iterable(
+        result.asErrorPathMessageStrings ==> Iterable(
           "height" -> "empty value"
         )
       }
@@ -109,7 +109,7 @@ object PartialDslSpec extends TestSuite {
             .single(partial.Error.ofNotDefinedAt(person))
             .prependErrorPath(partial.PathElement.Accessor("height"))
         )
-        result.asErrorPathMessagesStrings ==> Iterable(
+        result.asErrorPathMessageStrings ==> Iterable(
           "height" -> s"not defined at $person"
         )
       }
@@ -129,7 +129,7 @@ object PartialDslSpec extends TestSuite {
             )
             .prependErrorPath(partial.PathElement.Accessor("height"))
         )
-        result.asErrorPathMessagesStrings ==> Iterable(
+        result.asErrorPathMessageStrings ==> Iterable(
           "height" -> "abc",
           "height" -> "def"
         )
@@ -150,7 +150,7 @@ object PartialDslSpec extends TestSuite {
             )
             .prependErrorPath(partial.PathElement.Accessor("height"))
         )
-        result.asErrorPathMessagesStrings ==> Iterable(
+        result.asErrorPathMessageStrings ==> Iterable(
           "height" -> "my exception"
         )
       }
@@ -179,7 +179,7 @@ object PartialDslSpec extends TestSuite {
 
         result.asOption ==> Some(expected)
         result.asEither ==> Right(expected)
-        result.asErrorPathMessagesStrings ==> Iterable.empty
+        result.asErrorPathMessageStrings ==> Iterable.empty
       }
 
       "failure with error handling" - {
@@ -201,7 +201,7 @@ object PartialDslSpec extends TestSuite {
           .transform
 
         result.asOption ==> None
-        result.asErrorPathMessagesStrings ==> Iterable(
+        result.asErrorPathMessageStrings ==> Iterable(
           "name" -> "empty value",
           "age" -> "For input string: \"foo\"",
           "height" -> "empty value"
@@ -261,7 +261,7 @@ object PartialDslSpec extends TestSuite {
               .prependErrorPath(partial.PathElement.Accessor("people"))
           )
         )
-        result.asErrorPathMessagesStrings ==> Iterable(
+        result.asErrorPathMessageStrings ==> Iterable(
           "id" -> "bad trip id",
           "people(0).height" -> "bad height value",
           "people(1).age" -> "bad age value"
@@ -277,7 +277,7 @@ object PartialDslSpec extends TestSuite {
 
       result.asOption.map(_.x) ==> Some(100)
       result.asEither.map(_.x) ==> Right(100)
-      result.asErrorPathMessagesStrings ==> Iterable.empty
+      result.asErrorPathMessageStrings ==> Iterable.empty
     }
 
     "partial value class transform" - {
@@ -287,7 +287,7 @@ object PartialDslSpec extends TestSuite {
 
         result.asOption ==> Some("abc@def.com")
         result.asEither ==> Right("abc@def.com")
-        result.asErrorPathMessagesStrings ==> Iterable.empty
+        result.asErrorPathMessageStrings ==> Iterable.empty
       }
 
       "to value class" - {
@@ -296,7 +296,7 @@ object PartialDslSpec extends TestSuite {
 
         result.asOption ==> Some(addressbook.Email("abc@def.com"))
         result.asEither ==> Right(addressbook.Email("abc@def.com"))
-        result.asErrorPathMessagesStrings ==> Iterable.empty
+        result.asErrorPathMessageStrings ==> Iterable.empty
       }
     }
 
@@ -313,7 +313,7 @@ object PartialDslSpec extends TestSuite {
 
             result.asOption ==> Some(Some("123"))
             result.asEither ==> Right(Some("123"))
-            result.asErrorPathMessagesStrings ==> Iterable.empty
+            result.asErrorPathMessageStrings ==> Iterable.empty
           }
 
           "empty option" - {
@@ -321,7 +321,7 @@ object PartialDslSpec extends TestSuite {
 
             result.asOption ==> Some(None)
             result.asEither ==> Right(None)
-            result.asErrorPathMessagesStrings ==> Iterable.empty
+            result.asErrorPathMessageStrings ==> Iterable.empty
           }
         }
 
@@ -332,7 +332,7 @@ object PartialDslSpec extends TestSuite {
 
             result.asOption ==> Some(Some("10"))
             result.asEither ==> Right(Some("10"))
-            result.asErrorPathMessagesStrings ==> Iterable.empty
+            result.asErrorPathMessageStrings ==> Iterable.empty
           }
 
           "null case" - {
@@ -342,7 +342,7 @@ object PartialDslSpec extends TestSuite {
 
             result.asOption ==> Some(None)
             result.asEither ==> Right(None)
-            result.asErrorPathMessagesStrings ==> Iterable.empty
+            result.asErrorPathMessageStrings ==> Iterable.empty
           }
         }
       }
@@ -358,7 +358,7 @@ object PartialDslSpec extends TestSuite {
 
             result.asOption ==> Some(Some(123))
             result.asEither ==> Right(Some(123))
-            result.asErrorPathMessagesStrings ==> Iterable.empty
+            result.asErrorPathMessageStrings ==> Iterable.empty
           }
 
           "failure case" - {
@@ -368,7 +368,7 @@ object PartialDslSpec extends TestSuite {
             result.asEither ==> Left(
               partial.Result.Errors.fromString("bad int")
             )
-            result.asErrorPathMessagesStrings ==> Iterable(
+            result.asErrorPathMessageStrings ==> Iterable(
               "" -> "bad int"
             )
           }
@@ -378,7 +378,7 @@ object PartialDslSpec extends TestSuite {
 
             result.asOption ==> Some(None)
             result.asEither ==> Right(None)
-            result.asErrorPathMessagesStrings ==> Seq.empty
+            result.asErrorPathMessageStrings ==> Seq.empty
           }
         }
 
@@ -388,7 +388,7 @@ object PartialDslSpec extends TestSuite {
 
             result.asOption ==> Some(Some(123))
             result.asEither ==> Right(Some(123))
-            result.asErrorPathMessagesStrings ==> Iterable.empty
+            result.asErrorPathMessageStrings ==> Iterable.empty
           }
 
           "failure case" - {
@@ -398,7 +398,7 @@ object PartialDslSpec extends TestSuite {
             result.asEither ==> Left(
               partial.Result.Errors.fromString("bad int")
             )
-            result.asErrorPathMessagesStrings ==> Iterable(
+            result.asErrorPathMessageStrings ==> Iterable(
               "" -> "bad int"
             )
           }
@@ -408,7 +408,7 @@ object PartialDslSpec extends TestSuite {
 
             result.asOption ==> Some(None)
             result.asEither ==> Right(None)
-            result.asErrorPathMessagesStrings ==> Iterable.empty
+            result.asErrorPathMessageStrings ==> Iterable.empty
           }
         }
       }
@@ -465,7 +465,7 @@ object PartialDslSpec extends TestSuite {
 
       RawData(Some("a"), Some(RawInner(None, None)))
         .transformIntoPartial[Data]
-        .asErrorPathMessagesStrings ==> Iterable(
+        .asErrorPathMessageStrings ==> Iterable(
         "id" -> "bad int",
         "inner.id" -> "Expected a value, got none",
         "inner.str" -> "Expected a value, got none"
@@ -602,7 +602,7 @@ object PartialDslSpec extends TestSuite {
         val result = Map("1" -> "x", "y" -> "20").transformIntoPartial[Map[Int, Int]]
 
         result.asOption ==> None
-        result.asErrorPathMessagesStrings ==> Iterable(
+        result.asErrorPathMessageStrings ==> Iterable(
           "(1)" -> "empty value",
           "keys(y)" -> "empty value"
         )
@@ -614,7 +614,7 @@ object PartialDslSpec extends TestSuite {
           val result = EnvelopeStr(Map("1" -> "x", "y" -> "20")).transformIntoPartial[EnvelopeInt]
 
           result.asOption ==> None
-          result.asErrorPathMessagesStrings ==> Iterable(
+          result.asErrorPathMessageStrings ==> Iterable(
             "map(1)" -> "empty value",
             "map.keys(y)" -> "empty value"
           )
@@ -871,7 +871,7 @@ object PartialDslSpec extends TestSuite {
 
       result.asOption ==> Some(Bar("str", "other"))
       result.asEither ==> Right(Bar("str", "other"))
-      result.asErrorPathMessagesStrings ==> Seq.empty
+      result.asErrorPathMessageStrings ==> Seq.empty
     }
   }
 }

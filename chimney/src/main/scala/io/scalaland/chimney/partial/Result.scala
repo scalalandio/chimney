@@ -16,10 +16,10 @@ sealed trait Result[+T] {
     case errors: Result.Errors => Left(errors)
   }
 
-  final def asErrorPathMessagesStrings: Iterable[(String, String)] = this match {
-    case _: Result.Value[_]    => Iterable.empty
-    case errors: Result.Errors => errors.asErrorPathMessageStrings
-  }
+  def asErrorPathMessages: Iterable[(String, ErrorMessage)]
+
+  final def asErrorPathMessageStrings: Iterable[(String, String)] =
+    this.asErrorPathMessages.map { case (path, message) => (path, message.asString) }
 
   final def map[U](f: T => U): Result[U] = this match {
     case Result.Value(value) => Result.Value(f(value))
@@ -38,14 +38,16 @@ sealed trait Result[+T] {
 }
 
 object Result {
-  final case class Value[T](value: T) extends Result[T]
+  final case class Value[T](value: T) extends Result[T] {
+    def asErrorPathMessages: Iterable[(String, ErrorMessage)] = Iterable.empty
+  }
 
   final case class Errors(private val ec: ErrorsCollection) extends Result[Nothing] {
     def errors: ErrorsCollection = ec
 
     def prependPath(pathElement: PathElement): Errors = Errors(ec.prependPath(pathElement))
 
-    def asErrorPathMessageStrings: Iterable[(String, String)] = ec.map(_.asErrorPathMessageString)
+    def asErrorPathMessages: Iterable[(String, ErrorMessage)] = ec.map(_.asErrorPathMessage)
   }
 
   object Errors {

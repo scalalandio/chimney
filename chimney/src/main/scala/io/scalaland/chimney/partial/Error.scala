@@ -1,7 +1,8 @@
 package io.scalaland.chimney.partial
 
 final case class Error(message: ErrorMessage, path: ErrorPath = ErrorPath.Empty) {
-  def asErrorPathMessageString: (String, String) = (path.asString, message.asString)
+
+  def asErrorPathMessage: (String, ErrorMessage) = (path.asString, message)
 
   def prependErrorPath(pathElement: PathElement): Error = Error(message, path.prepend(pathElement))
 }
