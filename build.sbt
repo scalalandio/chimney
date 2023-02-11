@@ -197,6 +197,11 @@ lazy val root = project
         "ci-2_13",
         ciCommand(""),
         "Checks formatting, run tests and compute core library coverage for Scala 2.13"
+      ),
+      sbtwelcome.UsefulTask(
+        "runBenchmarks",
+        "benchmarks/Jmh/run",
+        "Run JMH benchmarks suite"
       )
     )
   )
