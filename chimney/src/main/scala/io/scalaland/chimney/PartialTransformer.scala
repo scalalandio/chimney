@@ -13,7 +13,7 @@ import scala.language.experimental.macros
   * @tparam From type of input value
   * @tparam To   type of output value
   */
-trait PartialTransformer[From, To] { self =>
+trait PartialTransformer[From, To] {
 
   def transform(src: From, failFast: Boolean): partial.Result[To]
 
