@@ -142,10 +142,12 @@ we use ``PartialTransformer.define`` (or equivalently ``Transformer.definePartia
 
 .. code-block:: scala
 
+  import io.scalaland.chimney._
+
   implicit val transformer: PartialTransformer[RegistrationForm, RegisteredUser] =
     PartialTransformer.define[RegistrationForm, RegisteredUser]
       .withFieldComputed(_.passwordHash, form => hashpw(form.password))
-      .withFieldComputedPartial(_.age, form => partial.Result.fromOption(form.age.toIntOption))
+      .withFieldComputedPartial(_.age, form => partial.Result.fromCatching(form.age.toInt))
       .buildTransformer
 
 Such an instance may be later picked up and used by other partial transformations.
@@ -156,13 +158,42 @@ In the following example it's used for transforming array of registration forms 
   Array(okForm, badForm).transformIntoPartial[List[RegisteredUser]]
   // ...: partial.Result[List[RegisteredUser]]
 
-Partial transformer result
---------------------------
-
-
+You can expect that basic functionality of chimney's ``Transformer`` either works in the similar
+fashion in ``PartialTransformer``\s, or have some counterparty methods in the API
+(usually with the `Partial` prefix or suffix in the name).
 
 Short-circuit semantics
 -----------------------
+
+By default, partial transformers work in the error-accumulating mode, meaning that given the first
+error, they progress the computation to capture all the possible errors that might happen later.
+
+.. code-block:: scala
+
+  Array(badForm, okForm, badForm.copy(age = null))
+    .transformIntoPartial[List[RegisteredUser]]
+    .asErrorPathMessageStrings
+  // List(
+  //   ("(0).age", "For input string: \"not a number\""),
+  //   ("(2).age", "Cannot parse null string")
+  // )
+
+
+Sometimes error accumulation might be not what we want, especially when errors are heavy to compute
+and we just want to have quick feedback if the transformation passes or not. In such cases we would like to
+fail fast, as the first error appears. We can easily switch to such a behavior.
+
+.. code-block:: scala
+
+  Array(badForm, okForm, badForm.copy(age = null))
+    .intoPartial[List[RegisteredUser]]
+    .transformFailFast
+    .asErrorPathMessageStrings
+  // List(
+  //   ("(0).age", "For input string: \"not a number\""),
+  // )
+
+Now we received only the first error, as requested.
 
 Performance notes
 -----------------
