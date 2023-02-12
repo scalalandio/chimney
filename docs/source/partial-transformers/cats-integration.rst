@@ -37,3 +37,62 @@ Cats integration module contains the following stuff:
 
 * integration with ``Validated`` data type
 
+Example
+-------
+
+Let's have a look at how to integrate :ref:`partial-transformers` with cats ``Validated``.
+
+.. code-block:: scala
+
+  case class RegistrationForm(email: String,
+                              username: String,
+                              password: String,
+                              age: String)
+
+  case class RegisteredUser(email: String,
+                            username: String,
+                            passwordHash: String,
+                            age: Int)
+
+  import io.scalaland.chimney._
+  import io.scalaland.chimney.dsl._
+  import io.scalaland.chimney.partial
+  import io.scalaland.chimney.cats._
+  import cats.data._
+
+  def validateEmail(form: RegistrationForm): ValidatedNec[String, String] = {
+    if(form.email.contains('@')) {
+      Validated.valid(form.email)
+    } else {
+      Validated.invalid(NonEmptyChain(s"${form.username}'s email: does not contain '@' character"))
+    }
+  }
+
+  def validateAge(form: RegistrationForm): ValidatedNec[String, Int] = form.age.toIntOption match {
+    case Some(value) if value >= 18 => Validated.valid(value)
+    case Some(value) => Validated.invalid(NonEmptyChain(s"${form.username}'s age: must have at least 18 years"))
+    case None => Validated.invalid(NonEmptyChain(s"${form.username}'s age: invalid number"))
+  }
+
+  implicit val partialTransformer: PartialTransformer[RegistrationForm, RegisteredUser] =
+    PartialTransformer
+      .define[RegistrationForm, RegisteredUser]
+      .withFieldComputedPartial(_.email, form => validateEmail(form).toPartialResult)
+      .withFieldComputed(_.passwordHash, form => hashpw(form.password))
+      .withFieldComputedPartial(_.age, form => validateAge(form).toPartialResult)
+      .buildTransformer
+
+  val okForm = RegistrationForm("john@example.com", "John", "s3cr3t", "40")
+  okForm.transformIntoPartial[RegisteredUser].asValidatedNec
+  // Valid(RegisteredUser(email = "john@example.com", username = "John", passwordHash = "...", age = 40))
+
+  Array(
+    RegistrationForm("john_example.com", "John", "s3cr3t", "10"),
+    RegistrationForm("alice@example.com", "Alice", "s3cr3t", "19"),
+    RegistrationForm("bob@example.com", "Bob", "s3cr3t", "21.5")
+  ).transformIntoPartial[Array[RegisteredUser]].asValidatedNel
+  // Invalid(NonEmptyList(
+  //   Error(StringMessage("John's email: does not contain '@' character"), ErrorPath(List(Index(0), Accessor("email")))),
+  //   Error(StringMessage("John's age: must have at least 18 years"), ErrorPath(List(Index(0), Accessor("age")))),
+  //   Error(StringMessage("Bob's age: invalid number"), ErrorPath(List(Index(2), Accessor("age"))))
+  // ))
