@@ -7,7 +7,7 @@ object PatcherSpec extends TestSuite {
 
   val tests = Tests {
 
-    "patch simple objects" - {
+    test("patch simple objects") {
 
       case class Foo(a: Int, b: String, c: Double)
       case class Bar(c: Double, a: Int)
@@ -19,7 +19,7 @@ object PatcherSpec extends TestSuite {
         Foo(10, "", 10.0)
     }
 
-    "patch objects with value classes in patch" - {
+    test("patch objects with value classes in patch") {
 
       import TestDomain._
 
@@ -29,7 +29,7 @@ object PatcherSpec extends TestSuite {
         User(10, Email("xyz@def.com"), Phone(123123123L))
     }
 
-    "patch with redundant fields" - {
+    test("patch with redundant fields") {
 
       import TestDomain._
 
@@ -51,7 +51,7 @@ object PatcherSpec extends TestSuite {
         exampleUser.copy(phone = patch.phone)
     }
 
-    "patch with redundant fields at the beginning" - {
+    test("patch with redundant fields at the beginning") {
 
       import TestDomain._
 
@@ -73,7 +73,7 @@ object PatcherSpec extends TestSuite {
         exampleUser.copy(phone = patch.phone)
     }
 
-    "support optional types in patch" - {
+    test("support optional types in patch") {
 
       import TestDomain._
 
@@ -85,7 +85,7 @@ object PatcherSpec extends TestSuite {
         User(10, Email("updated@example.com"), Phone(1234567890L))
     }
 
-    "support mixed optional and regular types" - {
+    test("support mixed optional and regular types") {
 
       import TestDomain._
 
@@ -96,7 +96,7 @@ object PatcherSpec extends TestSuite {
         User(10, Email("updated@example.com"), Phone(1234567890L))
     }
 
-    "optional fields in the patched object overwritten by None" - {
+    test("optional fields in the patched object overwritten by None") {
 
       import TestDomain._
 
@@ -107,7 +107,7 @@ object PatcherSpec extends TestSuite {
         UserWithOptionalField(10, Email("updated@example.com"), None)
     }
 
-    "fields of type Option[T] in the patched object not overwritten by None of type Option[Option[T]]" - {
+    test("fields of type Option[T] in the patched object not overwritten by None of type Option[Option[T]]") {
 
       import TestDomain._
 
@@ -120,7 +120,7 @@ object PatcherSpec extends TestSuite {
         UserWithOptionalField(10, Email("updated@example.com"), Some(Phone(1234567890L)))
     }
 
-    "allow ignoring nones in patches" - {
+    test("allow ignoring nones in patches") {
 
       import TestDomain._
 
@@ -145,16 +145,16 @@ object PatcherSpec extends TestSuite {
         .patch ==> exampleUserWithOptionalField
     }
 
-    "patcher with underlying transformation" - {
+    test("patcher with underlying transformation") {
       case class Obj(x: String)
       case class Patch(x: Int)
 
-      "successful" - {
+      test("successful") {
         implicit val intToStrTransformer: Transformer[Int, String] = _.toString
         Obj("").patchUsing(Patch(100)) ==> Obj("100")
       }
 
-      "failed" - {
+      test("failed") {
         // without implicit Transformer[Int, String], it doesn't compile
         compileError("""Obj("").patchUsing(Patch(100))""")
           .check("", "not supported")
