@@ -35,10 +35,10 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   def simpleHappyInlineDslPartialTransformer: partial.Result[SimpleOutput] =
     simple
       .intoPartial[SimpleOutput]
-      .withFieldComputedPartial(_.a, s => happy.validateA(s.a).toPartialTransformerResult)
-      .withFieldComputedPartial(_.b, s => happy.validateB(s.b).toPartialTransformerResult)
-      .withFieldComputedPartial(_.c, s => happy.validateC(s.c).toPartialTransformerResult)
-      .withFieldComputedPartial(_.d, s => happy.validateD(s.d).toPartialTransformerResult)
+      .withFieldComputedPartial(_.a, s => happy.validateA(s.a).toPartialResult)
+      .withFieldComputedPartial(_.b, s => happy.validateB(s.b).toPartialResult)
+      .withFieldComputedPartial(_.c, s => happy.validateC(s.c).toPartialResult)
+      .withFieldComputedPartial(_.d, s => happy.validateD(s.d).toPartialResult)
       .transform
 
   @Benchmark
@@ -83,10 +83,10 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   def simpleUnhappyInlineDslPartialTransformer: partial.Result[SimpleOutput] =
     simple
       .intoPartial[SimpleOutput]
-      .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialTransformerResult)
-      .withFieldComputedPartial(_.b, s => unhappy.validateB(s.b).toPartialTransformerResult)
-      .withFieldComputedPartial(_.c, s => unhappy.validateC(s.c).toPartialTransformerResult)
-      .withFieldComputedPartial(_.d, s => unhappy.validateD(s.d).toPartialTransformerResult)
+      .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialResult)
+      .withFieldComputedPartial(_.b, s => unhappy.validateB(s.b).toPartialResult)
+      .withFieldComputedPartial(_.c, s => unhappy.validateC(s.c).toPartialResult)
+      .withFieldComputedPartial(_.d, s => unhappy.validateD(s.d).toPartialResult)
       .transform
 
   @Benchmark
@@ -161,10 +161,10 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   private final val simpleTransformerPartial: PartialTransformer[Simple, SimpleOutput] =
     PartialTransformer
       .define[Simple, SimpleOutput]
-      .withFieldComputedPartial(_.a, s => happy.validateA(s.a).toPartialTransformerResult)
-      .withFieldComputedPartial(_.b, s => happy.validateB(s.b).toPartialTransformerResult)
-      .withFieldComputedPartial(_.c, s => happy.validateC(s.c).toPartialTransformerResult)
-      .withFieldComputedPartial(_.d, s => happy.validateD(s.d).toPartialTransformerResult)
+      .withFieldComputedPartial(_.a, s => happy.validateA(s.a).toPartialResult)
+      .withFieldComputedPartial(_.b, s => happy.validateB(s.b).toPartialResult)
+      .withFieldComputedPartial(_.c, s => happy.validateC(s.c).toPartialResult)
+      .withFieldComputedPartial(_.d, s => happy.validateD(s.d).toPartialResult)
       .buildTransformer
 
   private final val simpleTransformerLiftedUnhappy: TransformerF[M, Simple, SimpleOutput] =
@@ -179,10 +179,10 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   private final val simpleTransformerPartialUnhappy: PartialTransformer[Simple, SimpleOutput] =
     PartialTransformer
       .define[Simple, SimpleOutput]
-      .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialTransformerResult)
-      .withFieldComputedPartial(_.b, s => unhappy.validateB(s.b).toPartialTransformerResult)
-      .withFieldComputedPartial(_.c, s => unhappy.validateC(s.c).toPartialTransformerResult)
-      .withFieldComputedPartial(_.d, s => unhappy.validateD(s.d).toPartialTransformerResult)
+      .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialResult)
+      .withFieldComputedPartial(_.b, s => unhappy.validateB(s.b).toPartialResult)
+      .withFieldComputedPartial(_.c, s => unhappy.validateC(s.c).toPartialResult)
+      .withFieldComputedPartial(_.d, s => unhappy.validateD(s.d).toPartialResult)
       .buildTransformer
 
   private final val longTransformerLifted: TransformerF[M, Long, LongOutput] =
@@ -215,28 +215,28 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   private final val longTransformerPartial: PartialTransformer[Long, LongOutput] =
     PartialTransformer
       .define[Long, LongOutput]
-      .withFieldComputedPartial(_.a, s => happy.squareInt(s.a).toPartialTransformerResult)
-      .withFieldComputedPartial(_.b, s => happy.squareInt(s.b).toPartialTransformerResult)
-      .withFieldComputedPartial(_.c, s => happy.squareInt(s.c).toPartialTransformerResult)
-      .withFieldComputedPartial(_.d, s => happy.squareInt(s.d).toPartialTransformerResult)
-      .withFieldComputedPartial(_.e, s => happy.squareInt(s.e).toPartialTransformerResult)
-      .withFieldComputedPartial(_.f, s => happy.squareInt(s.f).toPartialTransformerResult)
-      .withFieldComputedPartial(_.g, s => happy.squareInt(s.g).toPartialTransformerResult)
-      .withFieldComputedPartial(_.h, s => happy.squareInt(s.h).toPartialTransformerResult)
-      .withFieldComputedPartial(_.i, s => happy.squareInt(s.i).toPartialTransformerResult)
-      .withFieldComputedPartial(_.j, s => happy.squareInt(s.j).toPartialTransformerResult)
-      .withFieldComputedPartial(_.k, s => happy.squareInt(s.k).toPartialTransformerResult)
-      .withFieldComputedPartial(_.l, s => happy.squareInt(s.l).toPartialTransformerResult)
-      .withFieldComputedPartial(_.m, s => happy.squareInt(s.m).toPartialTransformerResult)
-      .withFieldComputedPartial(_.n, s => happy.squareInt(s.n).toPartialTransformerResult)
-      .withFieldComputedPartial(_.o, s => happy.squareInt(s.o).toPartialTransformerResult)
-      .withFieldComputedPartial(_.p, s => happy.squareInt(s.p).toPartialTransformerResult)
-      .withFieldComputedPartial(_.q, s => happy.squareInt(s.q).toPartialTransformerResult)
-      .withFieldComputedPartial(_.r, s => happy.squareInt(s.r).toPartialTransformerResult)
-      .withFieldComputedPartial(_.s, s => happy.squareInt(s.s).toPartialTransformerResult)
-      .withFieldComputedPartial(_.t, s => happy.squareInt(s.t).toPartialTransformerResult)
-      .withFieldComputedPartial(_.u, s => happy.squareInt(s.u).toPartialTransformerResult)
-      .withFieldComputedPartial(_.v, s => happy.squareInt(s.v).toPartialTransformerResult)
+      .withFieldComputedPartial(_.a, s => happy.squareInt(s.a).toPartialResult)
+      .withFieldComputedPartial(_.b, s => happy.squareInt(s.b).toPartialResult)
+      .withFieldComputedPartial(_.c, s => happy.squareInt(s.c).toPartialResult)
+      .withFieldComputedPartial(_.d, s => happy.squareInt(s.d).toPartialResult)
+      .withFieldComputedPartial(_.e, s => happy.squareInt(s.e).toPartialResult)
+      .withFieldComputedPartial(_.f, s => happy.squareInt(s.f).toPartialResult)
+      .withFieldComputedPartial(_.g, s => happy.squareInt(s.g).toPartialResult)
+      .withFieldComputedPartial(_.h, s => happy.squareInt(s.h).toPartialResult)
+      .withFieldComputedPartial(_.i, s => happy.squareInt(s.i).toPartialResult)
+      .withFieldComputedPartial(_.j, s => happy.squareInt(s.j).toPartialResult)
+      .withFieldComputedPartial(_.k, s => happy.squareInt(s.k).toPartialResult)
+      .withFieldComputedPartial(_.l, s => happy.squareInt(s.l).toPartialResult)
+      .withFieldComputedPartial(_.m, s => happy.squareInt(s.m).toPartialResult)
+      .withFieldComputedPartial(_.n, s => happy.squareInt(s.n).toPartialResult)
+      .withFieldComputedPartial(_.o, s => happy.squareInt(s.o).toPartialResult)
+      .withFieldComputedPartial(_.p, s => happy.squareInt(s.p).toPartialResult)
+      .withFieldComputedPartial(_.q, s => happy.squareInt(s.q).toPartialResult)
+      .withFieldComputedPartial(_.r, s => happy.squareInt(s.r).toPartialResult)
+      .withFieldComputedPartial(_.s, s => happy.squareInt(s.s).toPartialResult)
+      .withFieldComputedPartial(_.t, s => happy.squareInt(s.t).toPartialResult)
+      .withFieldComputedPartial(_.u, s => happy.squareInt(s.u).toPartialResult)
+      .withFieldComputedPartial(_.v, s => happy.squareInt(s.v).toPartialResult)
       .buildTransformer
 
   private final val longTransformerLiftedUnhappy: TransformerF[M, Long, LongOutput] =
@@ -269,28 +269,28 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
   private final val longTransformerPartialUnhappy: PartialTransformer[Long, LongOutput] =
     PartialTransformer
       .define[Long, LongOutput]
-      .withFieldComputedPartial(_.a, s => unhappy.squareIntWhenOdd(s.a).toPartialTransformerResult)
-      .withFieldComputedPartial(_.b, s => unhappy.squareIntWhenOdd(s.b).toPartialTransformerResult)
-      .withFieldComputedPartial(_.c, s => unhappy.squareIntWhenOdd(s.c).toPartialTransformerResult)
-      .withFieldComputedPartial(_.d, s => unhappy.squareIntWhenOdd(s.d).toPartialTransformerResult)
-      .withFieldComputedPartial(_.e, s => unhappy.squareIntWhenOdd(s.e).toPartialTransformerResult)
-      .withFieldComputedPartial(_.f, s => unhappy.squareIntWhenOdd(s.f).toPartialTransformerResult)
-      .withFieldComputedPartial(_.g, s => unhappy.squareIntWhenOdd(s.g).toPartialTransformerResult)
-      .withFieldComputedPartial(_.h, s => unhappy.squareIntWhenOdd(s.h).toPartialTransformerResult)
-      .withFieldComputedPartial(_.i, s => unhappy.squareIntWhenOdd(s.i).toPartialTransformerResult)
-      .withFieldComputedPartial(_.j, s => unhappy.squareIntWhenOdd(s.j).toPartialTransformerResult)
-      .withFieldComputedPartial(_.k, s => unhappy.squareIntWhenOdd(s.k).toPartialTransformerResult)
-      .withFieldComputedPartial(_.l, s => unhappy.squareIntWhenOdd(s.l).toPartialTransformerResult)
-      .withFieldComputedPartial(_.m, s => unhappy.squareIntWhenOdd(s.m).toPartialTransformerResult)
-      .withFieldComputedPartial(_.n, s => unhappy.squareIntWhenOdd(s.n).toPartialTransformerResult)
-      .withFieldComputedPartial(_.o, s => unhappy.squareIntWhenOdd(s.o).toPartialTransformerResult)
-      .withFieldComputedPartial(_.p, s => unhappy.squareIntWhenOdd(s.p).toPartialTransformerResult)
-      .withFieldComputedPartial(_.q, s => unhappy.squareIntWhenOdd(s.q).toPartialTransformerResult)
-      .withFieldComputedPartial(_.r, s => unhappy.squareIntWhenOdd(s.r).toPartialTransformerResult)
-      .withFieldComputedPartial(_.s, s => unhappy.squareIntWhenOdd(s.s).toPartialTransformerResult)
-      .withFieldComputedPartial(_.t, s => unhappy.squareIntWhenOdd(s.t).toPartialTransformerResult)
-      .withFieldComputedPartial(_.u, s => unhappy.squareIntWhenOdd(s.u).toPartialTransformerResult)
-      .withFieldComputedPartial(_.v, s => unhappy.squareIntWhenOdd(s.v).toPartialTransformerResult)
+      .withFieldComputedPartial(_.a, s => unhappy.squareIntWhenOdd(s.a).toPartialResult)
+      .withFieldComputedPartial(_.b, s => unhappy.squareIntWhenOdd(s.b).toPartialResult)
+      .withFieldComputedPartial(_.c, s => unhappy.squareIntWhenOdd(s.c).toPartialResult)
+      .withFieldComputedPartial(_.d, s => unhappy.squareIntWhenOdd(s.d).toPartialResult)
+      .withFieldComputedPartial(_.e, s => unhappy.squareIntWhenOdd(s.e).toPartialResult)
+      .withFieldComputedPartial(_.f, s => unhappy.squareIntWhenOdd(s.f).toPartialResult)
+      .withFieldComputedPartial(_.g, s => unhappy.squareIntWhenOdd(s.g).toPartialResult)
+      .withFieldComputedPartial(_.h, s => unhappy.squareIntWhenOdd(s.h).toPartialResult)
+      .withFieldComputedPartial(_.i, s => unhappy.squareIntWhenOdd(s.i).toPartialResult)
+      .withFieldComputedPartial(_.j, s => unhappy.squareIntWhenOdd(s.j).toPartialResult)
+      .withFieldComputedPartial(_.k, s => unhappy.squareIntWhenOdd(s.k).toPartialResult)
+      .withFieldComputedPartial(_.l, s => unhappy.squareIntWhenOdd(s.l).toPartialResult)
+      .withFieldComputedPartial(_.m, s => unhappy.squareIntWhenOdd(s.m).toPartialResult)
+      .withFieldComputedPartial(_.n, s => unhappy.squareIntWhenOdd(s.n).toPartialResult)
+      .withFieldComputedPartial(_.o, s => unhappy.squareIntWhenOdd(s.o).toPartialResult)
+      .withFieldComputedPartial(_.p, s => unhappy.squareIntWhenOdd(s.p).toPartialResult)
+      .withFieldComputedPartial(_.q, s => unhappy.squareIntWhenOdd(s.q).toPartialResult)
+      .withFieldComputedPartial(_.r, s => unhappy.squareIntWhenOdd(s.r).toPartialResult)
+      .withFieldComputedPartial(_.s, s => unhappy.squareIntWhenOdd(s.s).toPartialResult)
+      .withFieldComputedPartial(_.t, s => unhappy.squareIntWhenOdd(s.t).toPartialResult)
+      .withFieldComputedPartial(_.u, s => unhappy.squareIntWhenOdd(s.u).toPartialResult)
+      .withFieldComputedPartial(_.v, s => unhappy.squareIntWhenOdd(s.v).toPartialResult)
       .buildTransformer
 
 }

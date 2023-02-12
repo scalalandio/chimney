@@ -214,10 +214,10 @@ object PartialDslSpec extends TestSuite {
       implicit val personPartialTransformer: PartialTransformer[PersonForm, Person] =
         Transformer
           .definePartial[PersonForm, Person]
-          .withFieldComputedPartial(_.age, _.age.parseInt.toPartialTransformerResultOrString("bad age value"))
+          .withFieldComputedPartial(_.age, _.age.parseInt.toPartialResultOrString("bad age value"))
           .withFieldComputedPartial(
             _.height,
-            _.height.parseDouble.toPartialTransformerResultOrString("bad height value")
+            _.height.parseDouble.toPartialResultOrString("bad height value")
           )
           .buildTransformer
 
@@ -227,7 +227,7 @@ object PartialDslSpec extends TestSuite {
 
         val result = okTripForm
           .intoPartial[Trip]
-          .withFieldComputedPartial(_.id, _.tripId.parseInt.toPartialTransformerResultOrString("bad trip id"))
+          .withFieldComputedPartial(_.id, _.tripId.parseInt.toPartialResultOrString("bad trip id"))
           .transform
 
         result.asOption ==> Some(Trip(100, Vector(Person("John", 10, 140), Person("Caroline", 12, 155))))
@@ -240,7 +240,7 @@ object PartialDslSpec extends TestSuite {
 
         val result = badTripForm
           .intoPartial[Trip]
-          .withFieldComputedPartial(_.id, _.tripId.parseInt.toPartialTransformerResultOrString("bad trip id"))
+          .withFieldComputedPartial(_.id, _.tripId.parseInt.toPartialResultOrString("bad trip id"))
           .transform
 
         result.asOption ==> None
@@ -350,7 +350,7 @@ object PartialDslSpec extends TestSuite {
       "partial inner transform" - {
 
         implicit val intPartialParser: PartialTransformer[String, Int] =
-          PartialTransformer(_.parseInt.toPartialTransformerResultOrString("bad int"))
+          PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
 
         "Option[T] to Option[U]" - {
           "success case" - {
@@ -421,7 +421,7 @@ object PartialDslSpec extends TestSuite {
         @unused implicit val intPrinter: Transformer[Int, String] = _.toString
 
         @unused implicit val intPartialParser: PartialTransformer[String, Int] =
-          PartialTransformer(_.parseInt.toPartialTransformerResultOrString("bad int"))
+          PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
 
         compileError("Option(10).intoPartial[String].enableUnsafeOption.transform")
           .check("", "not supported")
@@ -437,7 +437,7 @@ object PartialDslSpec extends TestSuite {
     "safe option unwrapping" - {
       implicit val intParserEither: PartialTransformer[String, Int] =
         PartialTransformer(
-          _.parseInt.toEither("bad int").toPartialTransformerResult
+          _.parseInt.toEither("bad int").toPartialResult
         )
 
       implicit def optionUnwrapping[A, B](
@@ -487,7 +487,7 @@ object PartialDslSpec extends TestSuite {
 
       "partial inner transform" - {
         implicit val intParserOpt: PartialTransformer[String, Int] =
-          PartialTransformer(_.parseInt.toPartialTransformerResult)
+          PartialTransformer(_.parseInt.toPartialResult)
 
         (Left("1"): Either[String, String]).transformIntoPartial[Either[Int, Int]].asOption ==> Some(Left(1))
         (Right("1"): Either[String, String]).transformIntoPartial[Either[Int, Int]].asOption ==> Some(Right(1))
@@ -517,7 +517,7 @@ object PartialDslSpec extends TestSuite {
 
       "partial inner transform" - {
         implicit val intParserOpt: PartialTransformer[String, Int] =
-          PartialTransformer(_.parseInt.toPartialTransformerResult)
+          PartialTransformer(_.parseInt.toPartialResult)
 
         List("123", "456").transformIntoPartial[List[Int]].asOption ==> Some(List(123, 456))
         Vector("123", "456").transformIntoPartial[Queue[Int]].asOption ==> Some(Queue(123, 456))
@@ -561,7 +561,7 @@ object PartialDslSpec extends TestSuite {
 
       "partial inner transform" - {
         implicit val intParserOpt: PartialTransformer[String, Int] =
-          PartialTransformer(_.parseInt.toPartialTransformerResult)
+          PartialTransformer(_.parseInt.toPartialResult)
 
         Map("1" -> "10", "2" -> "20").transformIntoPartial[Map[Int, Int]].asOption ==> Some(Map(1 -> 10, 2 -> 20))
         Map("1" -> "10", "2" -> "20").transformIntoPartial[Map[Int, String]].asOption ==> Some(
@@ -597,7 +597,7 @@ object PartialDslSpec extends TestSuite {
 
       "transform with error paths support" - {
         implicit val intParserOpt: PartialTransformer[String, Int] =
-          PartialTransformer(_.parseInt.toPartialTransformerResult)
+          PartialTransformer(_.parseInt.toPartialResult)
 
         val result = Map("1" -> "x", "y" -> "20").transformIntoPartial[Map[Int, Int]]
 
@@ -645,7 +645,7 @@ object PartialDslSpec extends TestSuite {
 
       "partial inner transform" - {
         implicit val intParserOpt: PartialTransformer[String, Int] =
-          PartialTransformer(_.parseInt.toPartialTransformerResult)
+          PartialTransformer(_.parseInt.toPartialResult)
         import ScalesPartialTransformer.shortToLongPartialInner
 
         (short.Zero: short.NumScale[String, Nothing])
