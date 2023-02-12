@@ -3,7 +3,8 @@
 Cats integration ``(deprecated)``
 =================================
 
-Chimney provides `Cats <https://typelevel.org/cats>`_ library integration module.
+Chimney provides `Cats <https://typelevel.org/cats>`_ library integration module
+for lifted transformers.
 To include it to your SBT project, add the following line to your ``build.sbt``:
 
 .. parsed-literal::
