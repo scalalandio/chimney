@@ -205,6 +205,6 @@ Our partial transformer composition encoding is optimized to use flat data struc
 garbage and use lazy memory allocation.
 
 There is a custom, `chain <https://github.com/non/chain>`_\-like data structure optimized for gathering
-partial transformer errors, supporting fast append/merge and special support of error paths annotations.
+partial transformer errors, supporting fast append/merge and having a special treatment of error paths annotations.
 
 Check our :ref:`benchmarks` suite for more detailed comparison.
