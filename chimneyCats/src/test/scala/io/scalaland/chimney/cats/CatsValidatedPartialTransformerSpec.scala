@@ -75,9 +75,9 @@ object CatsValidatedPartialTransformerSpec extends TestSuite {
         "string errors" - {
           val result = Person("John", 10, 140)
             .intoPartial[User]
-            .withFieldConstPartial(_.name, NonEmptyChain.of("foo").invalid.toPartialTransformerResult)
-            .withFieldConstPartial(_.age, Validated.valid(15).toPartialTransformerResult)
-            .withFieldConstPartial(_.height, NonEmptyList.of("abc", "def").invalid.toPartialTransformerResult)
+            .withFieldConstPartial(_.name, NonEmptyChain.of("foo").invalid.toPartialResult)
+            .withFieldConstPartial(_.age, Validated.valid(15).toPartialResult)
+            .withFieldConstPartial(_.height, NonEmptyList.of("abc", "def").invalid.toPartialResult)
             .transform
 
           val expectedErr1 = Error.ofString("foo").prependErrorPath(PathElement.Accessor("name"))
@@ -103,15 +103,15 @@ object CatsValidatedPartialTransformerSpec extends TestSuite {
             .intoPartial[User]
             .withFieldConstPartial(
               _.name,
-              NonEmptyChain.of(Error.ofThrowable(ex1)).invalid.toPartialTransformerResult
+              NonEmptyChain.of(Error.ofThrowable(ex1)).invalid.toPartialResult
             )
-            .withFieldConstPartial(_.age, Validated.valid(15).toPartialTransformerResult)
+            .withFieldConstPartial(_.age, Validated.valid(15).toPartialResult)
             .withFieldConstPartial(
               _.height,
               NonEmptyList
                 .of(Error.ofThrowable(ex2), Error.ofThrowable(ex3))
                 .invalid
-                .toPartialTransformerResult
+                .toPartialResult
             )
             .transform
 

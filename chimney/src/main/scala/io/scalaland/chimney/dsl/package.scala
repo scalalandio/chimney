@@ -185,25 +185,25 @@ package object dsl {
   }
 
   implicit class OptionPartialTransformerOps[T](private val option: Option[T]) extends AnyVal {
-    def toPartialTransformerResult: partial.Result[T] =
+    def toPartialResult: partial.Result[T] =
       partial.Result.fromOption(option)
-    def toPartialTransformerResultOrErrors(ifEmpty: => partial.Result.Errors): partial.Result[T] =
+    def toPartialResultOrErrors(ifEmpty: => partial.Result.Errors): partial.Result[T] =
       partial.Result.fromOptionOrErrors(option, ifEmpty)
-    def toPartialTransformerResultOrError(ifEmpty: => partial.Error): partial.Result[T] =
+    def toPartialResultOrError(ifEmpty: => partial.Error): partial.Result[T] =
       partial.Result.fromOptionOrError(option, ifEmpty)
-    def toPartialTransformerResultOrString(ifEmpty: => String): partial.Result[T] =
+    def toPartialResultOrString(ifEmpty: => String): partial.Result[T] =
       partial.Result.fromOptionOrString(option, ifEmpty)
-    def toPartialTransformerResultOrThrowable(ifEmpty: => Throwable): partial.Result[T] =
+    def toPartialResultOrThrowable(ifEmpty: => Throwable): partial.Result[T] =
       partial.Result.fromOptionOrThrowable(option, ifEmpty)
   }
 
   implicit final class EitherStringPartialTransformerOps[T](private val either: Either[String, T]) extends AnyVal {
-    def toPartialTransformerResult: partial.Result[T] =
+    def toPartialResult: partial.Result[T] =
       partial.Result.fromEitherString(either)
   }
 
   implicit final class TryPartialTransformerOps[T](private val `try`: Try[T]) extends AnyVal {
-    def toPartialTransformerResult: partial.Result[T] =
+    def toPartialResult: partial.Result[T] =
       partial.Result.fromTry(`try`)
   }
 }
