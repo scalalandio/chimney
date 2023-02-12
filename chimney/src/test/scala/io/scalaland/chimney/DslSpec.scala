@@ -428,6 +428,13 @@ object DslSpec extends TestSuite {
         UserDTO("100", "abc").transformInto[User] ==>
           User("100", UserName("abc"))
       }
+
+      "transforming value class to a value class" - {
+
+        UserName("Batman").transformInto[UserNameAlias] ==> UserNameAlias("Batman")
+        User("100", UserName("abc")).transformInto[UserAlias] ==>
+          UserAlias("100", UserNameAlias("abc"))
+      }
     }
 
     "support common data types" - {
@@ -1089,10 +1096,13 @@ object VCDomain1 {
 
   case class UserName(value: String) extends AnyVal
 
+  case class UserNameAlias(value: String) extends AnyVal
+
   case class UserDTO(id: String, name: String)
 
   case class User(id: String, name: UserName)
 
+  case class UserAlias(id: String, name: UserNameAlias)
 }
 
 object Poly {

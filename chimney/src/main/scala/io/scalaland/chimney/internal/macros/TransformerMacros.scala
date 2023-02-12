@@ -140,6 +140,8 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       expandValueClassToType(srcPrefixTree, config)(From, To)
     } else if (fromTypeToValueClass(From, To)) {
       expandTypeToValueClass(srcPrefixTree, config)(From, To)
+    } else if (fromValueClassToValueClass(From, To)) {
+      expandValueClassToValueClass(srcPrefixTree, config)(From, To)
     } else if (bothOptions(From, To)) {
       expandOptions(srcPrefixTree, config)(From, To)
     } else if (isOption(To)) {
@@ -212,6 +214,30 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
         q"new $To($srcPrefixTree)"
       }
     }
+  }
+
+  def expandValueClassToValueClass(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(
+      From: Type,
+      To: Type
+  ): Either[Seq[TransformerDerivationError], Tree] = {
+    From.valueClassMember
+      .map { fromMember =>
+        Right {
+          mkTransformerBodyTree0(config.derivationTarget) {
+            q"new $To($srcPrefixTree.${fromMember.name})"
+          }
+        }
+      }
+      .getOrElse {
+        // $COVERAGE-OFF$
+        Left {
+          Seq(CantFindValueClassMember(From.typeSymbol.name.toString, To.typeSymbol.name.toString))
+        }
+        // $COVERAGE-ON$
+      }
   }
 
   def expandTargetWrappedInOption(
