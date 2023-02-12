@@ -96,3 +96,11 @@ Let's have a look at how to integrate :ref:`partial-transformers` with cats ``Va
   //   Error(StringMessage("John's age: must have at least 18 years"), ErrorPath(List(Index(0), Accessor("age")))),
   //   Error(StringMessage("Bob's age: invalid number"), ErrorPath(List(Index(2), Accessor("age"))))
   // ))
+
+
+Form validation logic is implemented in terms of ``Validated`` data type. You can easily convert
+it to a ``partial.Result`` required by ``withFieldComputedPartial`` by just using ``.toPartialResult``
+which is available after importing the cats integration utilities (``import io.scalaland.chimney.cats._``).
+
+Result of the partial transformation is then converted to ``ValidatedNel`` or ``ValidatedNec`` using either
+``.asValidatedNel`` or ``.asValidatedNec`` extension method call.
