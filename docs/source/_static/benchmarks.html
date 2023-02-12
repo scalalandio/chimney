@@ -133,19 +133,16 @@
 
                 let firstGroup = true // just to set initial view to the latest master commits comparison
 
-                sliding(8, masterPushResults) // how many master branch commits are being compared
+                sliding(9, masterPushResults) // how many master branch commits are being compared
                     .forEach(group => {
                         const hashes = group.map(res => res.sha.substring(0, 7))
-                        console.log(hashes)
                         const first = hashes[0]
                         const last = hashes[group.length - 1]
 
                         const navBenchmarkName = `${first} .. ${last}`
 
                         const title = `Master branch commits from ${first} to ${last}`
-                        console.log(title)
                         const iframeSrc = iframeUrl(group.map(res => dataUrl(org, repo, branch, res.file)), title)
-                        console.log(iframeSrc)
 
                         addEntry($masterBranchMenu, navBenchmarkName, ev => {
                             ev.preventDefault()
