@@ -6,16 +6,17 @@ import _root_.cats.syntax.semigroup._
 import _root_.cats.syntax.semigroupal._
 import cats.Semigroupal
 import io.scalaland.chimney.partial
+import io.scalaland.chimney.PartialTransformer
 import io.scalaland.chimney.partial.{Error, PathElement}
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.examples.trip._
 import utest._
 
-object CatsValidatedPartialTransformerSpec extends TestSuite {
+object PartialTransformerToCatsDataConversionSpec extends TestSuite {
 
   val tests = Tests {
 
-    "partial transformer errors semigroup instance" - {
+    test("conversion from partial.Result to Validated") {
 
       val e1 = partial.Result.Errors.fromString("test1")
       val e2 = partial.Result.Errors.fromString("test2")
@@ -55,8 +56,7 @@ object CatsValidatedPartialTransformerSpec extends TestSuite {
 
     "conversion between Validated and partial.Result" - {
 
-      "transform always succeeds" - {
-
+      test("successful Result should convert to Valid") {
         Person("John", 10, 140).transformIntoPartial[User].asValidated ==> Validated.valid(User("John", 10, 140))
         Person("John", 10, 140).transformIntoPartial[User].asValidatedNel ==> Validated.validNel(User("John", 10, 140))
         Person("John", 10, 140).transformIntoPartial[User].asValidatedNec ==> Validated.validNec(User("John", 10, 140))
@@ -70,9 +70,9 @@ object CatsValidatedPartialTransformerSpec extends TestSuite {
         Person("John", 10, 140).intoPartial[User].transform.asValidatedChain ==> Validated.valid(User("John", 10, 140))
       }
 
-      "transform always fails" - {
+      test("failed Result should convert to Invalid") {
 
-        "string errors" - {
+        test("String errors") {
           val result = Person("John", 10, 140)
             .intoPartial[User]
             .withFieldConstPartial(_.name, NonEmptyChain.of("foo").invalid.toPartialResult)
@@ -93,7 +93,7 @@ object CatsValidatedPartialTransformerSpec extends TestSuite {
           result.asValidatedChain ==> Validated.invalid(Chain(expectedErr1, expectedErr2, expectedErr3))
         }
 
-        "throwable errors" - {
+        test("Throwable errors") {
 
           val ex1 = new RuntimeException("foo")
           val ex2 = new RuntimeException("abc")
@@ -130,5 +130,4 @@ object CatsValidatedPartialTransformerSpec extends TestSuite {
       }
     }
   }
-
 }

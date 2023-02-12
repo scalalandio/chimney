@@ -27,7 +27,7 @@ object IssuesSpec extends TestSuite {
 
   val tests = Tests {
 
-    "fix issue #19" - {
+    test("fix issue #19") {
       case class NewEntity(name: String)
       case class Entity(id: Long, name: String, isDeleted: Boolean)
 
@@ -39,7 +39,7 @@ object IssuesSpec extends TestSuite {
         Entity(0, "name", isDeleted = false)
     }
 
-    "fix issue #21" - {
+    test("fix issue #21") {
       import tag._
       sealed trait Test
 
@@ -50,7 +50,7 @@ object IssuesSpec extends TestSuite {
         EntityWithTag2(tag[Test]("name"))
     }
 
-    "fix issue #40" - {
+    test("fix issue #40") {
 
       case class One(text: Option[String])
       case class Two(text: Option[String])
@@ -59,13 +59,13 @@ object IssuesSpec extends TestSuite {
       One(Some("abc")).transformInto[Two] ==> Two(Some("abc"))
     }
 
-    "fix issue #44" - {
+    test("fix issue #44") {
 
       implicit val vcTransformer: Transformer[VC, String] = _ => "abc"
       VC("test").transformInto[String] ==> "abc"
     }
 
-    "fix issue #46" - {
+    test("fix issue #46") {
       case class X(a: Int)
       case class Y(a: Int, b: Option[String])
 
@@ -78,13 +78,13 @@ object IssuesSpec extends TestSuite {
       X(5).into[Y2].withFieldConst(_.b, "a" :: Nil).transform ==> Y2(5, List("a"))
     }
 
-    "fix issue #66" - {
+    test("fix issue #66") {
 
       case class Foo1(y: String)
       case class Foo2(y: String, x: Int)
       case class Foo3(x: Int)
 
-      "fix for `withFieldConst`" - {
+      test("fix for `withFieldConst`") {
 
         compileError("""
           Foo1("test")
@@ -94,7 +94,7 @@ object IssuesSpec extends TestSuite {
           .check("", "Cannot prove that String <:< Int")
       }
 
-      "fix for `withFieldComputed`" - {
+      test("fix for `withFieldComputed`") {
 
         compileError("""
           Foo1("test")
@@ -104,7 +104,7 @@ object IssuesSpec extends TestSuite {
           .check("", "Cannot prove that String <:< Int")
       }
 
-      "fix for `withFieldRenamed`" - {
+      test("fix for `withFieldRenamed`") {
 
         assert(
           Foo1("test")
@@ -114,7 +114,7 @@ object IssuesSpec extends TestSuite {
       }
     }
 
-    "fix issue #94" - {
+    test("fix issue #94") {
 
       case class Foo1(x: Int)
       case class Foo2(x: Option[Int])
@@ -122,7 +122,7 @@ object IssuesSpec extends TestSuite {
       Foo1(5).transformInto[Foo2] ==> Foo2(Some(5))
     }
 
-    "fix issue #101" - {
+    test("fix issue #101") {
 
       case class Foo(`a.b`: String)
       case class Bar(b: String)
@@ -132,11 +132,11 @@ object IssuesSpec extends TestSuite {
       Foo("a").into[Bar].withFieldRenamed(_.`a.b`, _.b).transform
     }
 
-    "fix issue #105" - {
+    test("fix issue #105") {
 
       case class Foo(a: String, b: Int, c: Int)
 
-      "fix 'wrong forward definition' when defining implicit val transformer" - {
+      test("fix 'wrong forward definition' when defining implicit val transformer") {
         case class Bar(a: String, b: Int, x: Long)
 
         implicit val fooBarTransformer: Transformer[Foo, Bar] =
@@ -148,7 +148,7 @@ object IssuesSpec extends TestSuite {
         Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1, 6)
       }
 
-      "fix stack overflow when defining implicit def transformer" - {
+      test("fix stack overflow when defining implicit def transformer") {
         case class Bar(a: String, b: Int, x: Long)
 
         implicit def fooBarTransformer: Transformer[Foo, Bar] =
@@ -160,7 +160,7 @@ object IssuesSpec extends TestSuite {
         Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1, 6)
       }
 
-      "fix stack overflow when defining implicit val transformer wrapped in object" - {
+      test("fix stack overflow when defining implicit val transformer wrapped in object") {
         case class Bar(a: String, b: Int, x: Long)
 
         object TransformerInstances {
@@ -177,7 +177,7 @@ object IssuesSpec extends TestSuite {
         Foo("a", 1, 3).transformInto[Bar](fooBarTransformer) ==> Bar("a", 1, 6)
       }
 
-      "fix 'wrong forward reference' when assigning .derive to local transformer instance" - {
+      test("fix 'wrong forward reference' when assigning .derive to local transformer instance") {
         case class Bar(a: String, b: Int)
 
         implicit val fooBarTransformer: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
@@ -185,7 +185,7 @@ object IssuesSpec extends TestSuite {
         Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1)
       }
 
-      "fix stack overflow when assigning .derive to local transformer instance wrapped in object" - {
+      test("fix stack overflow when assigning .derive to local transformer instance wrapped in object") {
         case class Bar(a: String, b: Int)
 
         object TransformerInstances {
@@ -200,11 +200,11 @@ object IssuesSpec extends TestSuite {
       }
     }
 
-    "fix issue #108" - {
+    test("fix issue #108") {
       Issue108.result ==> Issue108.expected
     }
 
-    "fix issue #113" - {
+    test("fix issue #113") {
       case class Bar1(i: Int)
       case class Bar2(i: String)
       case class Bar3(i: Option[Int])
@@ -227,7 +227,7 @@ object IssuesSpec extends TestSuite {
       Bar3(Option(1)).into[Bar2].enableUnsafeOption.transform ==> Bar2("1")
     }
 
-    "fix issue #121" - {
+    test("fix issue #121") {
       case class FooNested(num: Option[Int])
       case class Foo(maybeString: Option[Set[String]], nested: FooNested)
 
@@ -242,7 +242,7 @@ object IssuesSpec extends TestSuite {
         )
     }
 
-    "fix issue #125" - {
+    test("fix issue #125") {
       case class Strings(elems: Set[String])
       case class Lengths(elems: Seq[Int])
 
@@ -255,7 +255,7 @@ object IssuesSpec extends TestSuite {
       lengths.elems.size ==> 3
     }
 
-    "fix issue #139" - {
+    test("fix issue #139") {
       case class WithoutOption(i: Int)
       case class WithOption(i: Option[Int])
 
@@ -263,9 +263,9 @@ object IssuesSpec extends TestSuite {
       Transformer.define[WithOption, WithoutOption].enableUnsafeOption.buildTransformer
     }
 
-    "fix issue #149" - {
+    test("fix issue #149") {
 
-      "example 1" - {
+      test("example 1") {
         case class EntryId(id: Int)
         case class EntryT[Id](id: Id)
         case class Patch(id: EntryId)
@@ -273,14 +273,14 @@ object IssuesSpec extends TestSuite {
         EntryT(EntryId(10)).patchUsing(Patch(EntryId(20))) ==> EntryT(EntryId(20))
       }
 
-      "example 2" - {
+      test("example 2") {
         case class Data[F[_]](name: F[String])
         case class Real(name: String)
 
         Real("abc").patchUsing(Data(Option("xyz"))) ==> Real("xyz")
       }
 
-      "example 3" - {
+      test("example 3") {
         case class Data(x: Int)
         case class Patch[F[_]](x: F[Int])
         type Id[X] = X
@@ -291,7 +291,7 @@ object IssuesSpec extends TestSuite {
       }
     }
 
-    "fix issue #156" - {
+    test("fix issue #156") {
 
       object internal {
         case class Event(venue: Venue)
@@ -325,9 +325,9 @@ object IssuesSpec extends TestSuite {
       (venue: internal.Venue).into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
     }
 
-    "fix issue #168" - {
+    test("fix issue #168") {
 
-      "objects case" - {
+      test("objects case") {
         sealed trait Version1
         final case object Instance1 extends Version1
         sealed trait Version2
@@ -344,7 +344,7 @@ object IssuesSpec extends TestSuite {
         v2 ==> Instance2
       }
 
-      "classes case" - {
+      test("classes case") {
         sealed trait Version1
         final case class Instance1(p: Int) extends Version1
         sealed trait Version2
@@ -362,7 +362,7 @@ object IssuesSpec extends TestSuite {
       }
     }
 
-    "fix issue #173" - {
+    test("fix issue #173") {
       sealed trait Foo
       case object Bar extends Foo
       case object Baz extends Foo
@@ -371,7 +371,7 @@ object IssuesSpec extends TestSuite {
       case object Bar2 extends Foo2
       case object Baz2 extends Foo2
 
-      "withCoproductInstanceF twice" - {
+      test("withCoproductInstanceF twice") {
         implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
           TransformerF
             .define[Option, Foo, Foo2]
@@ -383,7 +383,7 @@ object IssuesSpec extends TestSuite {
         (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
       }
 
-      "withCoproductInstance followed by withCoproductInstanceF" - {
+      test("withCoproductInstance followed by withCoproductInstanceF") {
         implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
           TransformerF
             .define[Option, Foo, Foo2]
@@ -395,7 +395,7 @@ object IssuesSpec extends TestSuite {
         (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
       }
 
-      "withCoproductInstanceF followed by withCoproductInstance" - {
+      test("withCoproductInstanceF followed by withCoproductInstance") {
         implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
           TransformerF
             .define[Option, Foo, Foo2]
@@ -408,9 +408,9 @@ object IssuesSpec extends TestSuite {
       }
     }
 
-    "fix issue #177" - {
+    test("fix issue #177") {
 
-      "case 1" - {
+      test("case 1") {
         case class Foo(x: Int)
         case class Bar(x: Int)
         case class FooW(a: Option[Foo])
@@ -423,7 +423,7 @@ object IssuesSpec extends TestSuite {
         FooW(Some(Foo(1))).transformIntoF[Option, BarW] ==> Some(BarW(Some(Bar(11))))
       }
 
-      "case 2" - {
+      test("case 2") {
         case class Foo(x: Int, y: String)
 
         sealed abstract case class Bar(x: Int, y: String)
@@ -442,7 +442,7 @@ object IssuesSpec extends TestSuite {
         (1, List(Foo(1, "test"))).transformIntoF[Option, (Int, List[Bar])] ==> Some((1, List(new Bar(1, "test") {})))
       }
 
-      "case 3" - {
+      test("case 3") {
         case class Foo(x: Int, y: String)
         case class Bar(x: Int, y: String)
         implicit val t: TransformerF[Option, Foo, Bar] = f => Some(Bar(f.y.length, f.x.toString)) // Swapped
@@ -450,7 +450,7 @@ object IssuesSpec extends TestSuite {
       }
     }
 
-    "fix issue #185" - {
+    test("fix issue #185") {
 
       def blackIsRed(b: colors2.Black.type): colors1.Color =
         colors1.Red
@@ -476,11 +476,11 @@ object IssuesSpec extends TestSuite {
         .transform ==> Some(colors1.Blue)
     }
 
-    "fix issue #182" - {
+    test("fix issue #182") {
       foo.convert(foo.A1) ==> foo.into.A1
     }
 
-    "fix issue #214" - {
+    test("fix issue #214") {
 
       final case class Foo(
           `Billing Zip/Postal Code`: String,
