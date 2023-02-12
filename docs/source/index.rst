@@ -119,8 +119,8 @@ Contents:
    :caption: Partial Transformers
 
    partial-transformers/partial-transformers
-   partial-transformers/cats-integration
    partial-transformers/migrating-from-lifted
+   partial-transformers/cats-integration
 
 .. toctree::
    :maxdepth: 2

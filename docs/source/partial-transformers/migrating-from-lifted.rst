@@ -46,8 +46,53 @@ Let's have a look at type signatures of both lifted and partial transformers.
   boolean parameter, while in lifted transformers it was barely possible (only by providing supporting type class
   that had such a fixed behavior)
 
-- Error path support was quite difficult to use in lifted transformers (it required providing another type class
-  for your errors collection type), while in partial transformers it is a built-in feature
+- Error path support in lifted transformers required providing another type class instance
+  (``TransformerFErrorPathSupport``) for your errors collection type,
+  while in partial transformers it is a built-in feature
 
-- In lifted transformers types had a tendency to complicate quickly in a use-site; in partial transformers
-  they are conceptually simple, even when using advanced features
+Migrating your code
+-------------------
+
+In order to migrate your code from lifted transformers to partial transformers, you may take the following steps.
+
+#. Replace all the occurrences of ``TransformerF`` type with ``PartialTransformer`` and remove the first type argument
+   (``F[_]``) which is not used for partial transformers.
+
+#. For your transformations find corresponding DSL methods. Their name usually differ on suffix, for example:
+
+    * replace ``withFieldConstF`` with ``withFieldConstPartial``
+
+    * replace ``withFieldComputedF`` with ``withFieldComputedPartial``
+
+    * etc.
+
+#. Adjust the types passed to the customization methods. In lifted transformers they were expecting values of
+   your custom type ``F[T]``, while in partial transformers they work with ``partial.Result[T]``. See the
+   ``partial.Result`` companion object for ways of constructing `success` and `failure` instances, for example:
+
+    * ``Result.fromValue``
+
+    * ``Result.fromOption``
+
+    * ``Result.fromEither``
+
+    * ``Result.fromTry``
+
+    * and so on...
+
+#. Resulting type of a call to ``.transform`` is also a ``partial.Result[T]``. If you don't want to work with
+   ``partial.Result`` directly, figure out ways how to convert it to other, more familiar data structures.
+   Some of the ways may include:
+
+    * ``result.asOption``
+
+    * ``result.asEither``
+
+    * ``result.asErrorPathMessages``
+
+    * other data structures using :ref:`partial-cats-integration`
+
+.. TODO: provide github links to the paragraph below
+
+See also our test suites for lifted transformers and partial transformers to get an idea how similar behavior
+might be implemented using both features.
