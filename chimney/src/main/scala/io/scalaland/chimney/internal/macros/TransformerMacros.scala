@@ -170,7 +170,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       expandTypeToValueClass(srcPrefixTree, config)(From, To)
     } else if (bothOptions(From, To)) {
       expandOptions(srcPrefixTree, config)(From, To)
-    } else if (isOption(To)) {
+    } else if (isOption(To) && !To.typeArgs.headOption.exists(_.isSealedClass)) {
       expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
     } else if (config.flags.unsafeOption && isOption(From)) {
       expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
@@ -584,78 +584,83 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       srcPrefixTree: Tree,
       config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[TransformerDerivationError], Tree] = {
-
-    resolveCoproductInstance(srcPrefixTree, From, To, config)
-      .map { instanceTree =>
-        Right(instanceTree)
+    if (isOption(To)) {
+      expandSealedClasses(srcPrefixTree, config)(From, To.typeArgs.head).map { inner =>
+        q"_root_.scala.Option($inner)"
       }
-      .getOrElse {
-        val fromCS = From.typeSymbol.classSymbolOpt.get
-        val toCS = To.typeSymbol.classSymbolOpt.get
+    } else {
+      resolveCoproductInstance(srcPrefixTree, From, To, config)
+        .map { instanceTree =>
+          Right(instanceTree)
+        }
+        .getOrElse {
+          val fromCS = From.typeSymbol.classSymbolOpt.get
+          val toCS = To.typeSymbol.classSymbolOpt.get
 
-        val fromInstances = fromCS.subclasses.map(_.typeInSealedParent(From))
-        val toInstances = toCS.subclasses.map(_.typeInSealedParent(To))
+          val fromInstances = fromCS.subclasses.map(_.typeInSealedParent(From))
+          val toInstances = toCS.subclasses.map(_.typeInSealedParent(To))
 
-        val targetNamedInstances = toInstances.groupBy(_.typeSymbol.name.toString)
+          val targetNamedInstances = toInstances.groupBy(_.typeSymbol.name.toString)
 
-        val instanceClauses = fromInstances.map { instTpe =>
-          val instName = instTpe.typeSymbol.name.toString
+          val instanceClauses = fromInstances.map { instTpe =>
+            val instName = instTpe.typeSymbol.name.toString
 
-          resolveCoproductInstance(srcPrefixTree, instTpe, To, config)
-            .map { instanceTree =>
-              Right(cq"_: $instTpe => $instanceTree")
-            }
-            .getOrElse {
-              val instSymbol = instTpe.typeSymbol
-              targetNamedInstances.getOrElse(instName, Nil) match {
-                case List(matchingTargetTpe)
-                    if (instSymbol.isModuleClass || instSymbol.isCaseClass) && matchingTargetTpe.typeSymbol.isModuleClass =>
-                  val tree = mkTransformerBodyTree0(config.derivationTarget) {
-                    q"${matchingTargetTpe.typeSymbol.asClass.module}"
-                  }
-                  Right(cq"_: ${instSymbol.asType} => $tree")
-                case List(matchingTargetTpe) if instSymbol.isCaseClass && matchingTargetTpe.typeSymbol.isCaseClass =>
-                  val fn = freshTermName(instName)
-                  expandDestinationCaseClass(Ident(fn), config.rec)(instTpe, matchingTargetTpe)
-                    .map { innerTransformerTree =>
-                      cq"$fn: $instTpe => $innerTransformerTree"
-                    }
-                case _ :: _ :: _ =>
-                  Left {
-                    Seq(
-                      AmbiguousCoproductInstance(
-                        instName,
-                        From.typeSymbol.fullName,
-                        To.typeSymbol.fullName
-                      )
-                    )
-                  }
-                case _ =>
-                  Left {
-                    Seq(
-                      CantFindCoproductInstanceTransformer(
-                        instSymbol.fullName,
-                        From.typeSymbol.fullName,
-                        To.typeSymbol.fullName
-                      )
-                    )
-                  }
+            resolveCoproductInstance(srcPrefixTree, instTpe, To, config)
+              .map { instanceTree =>
+
+                Right(cq"_: $instTpe => $instanceTree")
               }
+              .getOrElse {
+                val instSymbol = instTpe.typeSymbol
+                targetNamedInstances.getOrElse(instName, Nil) match {
+                  case List(matchingTargetTpe)
+                    if (instSymbol.isModuleClass || instSymbol.isCaseClass) && matchingTargetTpe.typeSymbol.isModuleClass =>
+                    val tree = mkTransformerBodyTree0(config.derivationTarget) {
+                      q"${matchingTargetTpe.typeSymbol.asClass.module}"
+                    }
+                    Right(cq"_: ${instSymbol.asType} => $tree")
+                  case List(matchingTargetTpe) if instSymbol.isCaseClass && matchingTargetTpe.typeSymbol.isCaseClass =>
+                    val fn = freshTermName(instName)
+                    expandDestinationCaseClass(Ident(fn), config.rec)(instTpe, matchingTargetTpe)
+                      .map { innerTransformerTree =>
+                        cq"$fn: $instTpe => $innerTransformerTree"
+                      }
+                  case _ :: _ :: _ =>
+                    Left {
+                      Seq(
+                        AmbiguousCoproductInstance(
+                          instName,
+                          From.typeSymbol.fullName,
+                          To.typeSymbol.fullName
+                        )
+                      )
+                    }
+                  case _ =>
+                    Left {
+                      Seq(
+                        CantFindCoproductInstanceTransformer(
+                          instSymbol.fullName,
+                          From.typeSymbol.fullName,
+                          To.typeSymbol.fullName
+                        )
+                      )
+                    }
+                }
+              }
+          }
+
+          if (instanceClauses.forall(_.isRight)) {
+            val clauses = instanceClauses.collect { case Right(clause) => clause }
+            Right {
+              q"$srcPrefixTree match { case ..$clauses }"
             }
-        }
-
-        if (instanceClauses.forall(_.isRight)) {
-          val clauses = instanceClauses.collect { case Right(clause) => clause }
-          Right {
-            q"$srcPrefixTree match { case ..$clauses }"
-          }
-        } else {
-          Left {
-            instanceClauses.collect { case Left(derivationErrors) => derivationErrors }.flatten
+          } else {
+            Left {
+              instanceClauses.collect { case Left(derivationErrors) => derivationErrors }.flatten
+            }
           }
         }
-      }
-
+    }
   }
 
   def resolveCoproductInstance(

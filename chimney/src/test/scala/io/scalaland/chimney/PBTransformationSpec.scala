@@ -11,14 +11,14 @@ object PBTransformationSpec extends TestSuite {
 
   val tests = Tests {
 
-    "transform value classes between their primitive representations" - {
+    test("transform value classes between their primitive representations") {
 
       addressbook.PersonName("John").transformInto[String] ==> "John"
       addressbook.PersonId(5).transformInto[Int] ==> 5
       addressbook.Email("john@example.com").transformInto[String] ==> "john@example.com"
     }
 
-    "not compile if target type is wrong for value class" - {
+    test("not compile if target type is wrong for value class") {
 
       compileError(""" addressbook.PersonName("John").transformInto[Int] """)
         .check(
@@ -36,7 +36,7 @@ object PBTransformationSpec extends TestSuite {
         .check("", "Chimney can't derive transformation from io.scalaland.chimney.examples.addressbook.Email to Float")
     }
 
-    "transform enum represented as sealed trait hierarchy" - {
+    test("transform enum represented as sealed trait hierarchy") {
 
       (addressbook.MOBILE: addressbook.PhoneType)
         .transformInto[pb.addressbook.PhoneType] ==>
@@ -51,9 +51,9 @@ object PBTransformationSpec extends TestSuite {
         pb.addressbook.PhoneType.WORK
     }
 
-    "transform bigger case classes" - {
+    test("transform bigger case classes") {
 
-      "PhoneNumber" - {
+      test("PhoneNumber") {
 
         addressbook
           .PhoneNumber("1234567", addressbook.HOME)
@@ -61,7 +61,7 @@ object PBTransformationSpec extends TestSuite {
           pb.addressbook.PhoneNumber("1234567", pb.addressbook.PhoneType.HOME)
       }
 
-      "Person" - {
+      test("Person") {
 
         addressbook
           .Person(
@@ -87,7 +87,7 @@ object PBTransformationSpec extends TestSuite {
           )
       }
 
-      "AddressBook" - {
+      test("AddressBook") {
 
         addressbook
           .AddressBook(
@@ -133,7 +133,7 @@ object PBTransformationSpec extends TestSuite {
           )
       }
 
-      "Order" - {
+      test("Order") {
         val domainOrder =
           order.Order(
             List(order.OrderLine(order.Item(123, "foo"), 3), order.OrderLine(order.Item(321, "bar"), 1)),
@@ -150,6 +150,28 @@ object PBTransformationSpec extends TestSuite {
         pbOrder.into[order.Order].enableUnsafeOption.transform ==> domainOrder
       }
     }
-  }
 
+    test("transformer sealed traits generated from oneof") {
+
+      "CustomerStatus (oneof sealed_value)" - {
+        val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered
+        val pbStatus: pb.order.CustomerStatus = pb.order.CustomerRegistered()
+        domainStatus.into[pb.order.CustomerStatus].transform ==> pbStatus
+        /* TODO: this requires some fixing as this would unblock us from providing better support for Protobufs
+        pbStatus
+          .into[Option[order.CustomerStatus]]
+          .withCoproductInstance[pb.order.CustomerStatus.Empty.type](_ => None)
+          .withCoproductInstance[pb.order.CustomerStatus.NonEmpty](_.transformInto[Option[order.CustomerStatus]])
+          .transform ==> Option(domainStatus)
+        */
+      }
+
+      test("PaymentStatus (oneof sealed_value_optional)") {
+        val domainStatus: Option[order.PaymentStatus] = Option(order.PaymentStatus.PaymentRequested)
+        val pbStatus: Option[pb.order.PaymentStatus] = Option(pb.order.PaymentRequested())
+        domainStatus.into[Option[pb.order.PaymentStatus]].transform ==> pbStatus
+        pbStatus.into[Option[order.PaymentStatus]].transform ==> domainStatus
+      }
+    }
+  }
 }

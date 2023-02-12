@@ -2,30 +2,66 @@ syntax = "proto3";
 
 package io.scalaland.chimney.examples.pb;
 
+import "scalapb/scalapb.proto";
+
+option (scalapb.options) = {
+  preserve_unknown_fields: false
+};
+
 message Item {
-    int32 id = 1;
-    string name = 2;
+  int32 id = 1;
+  string name = 2;
 }
 
 message OrderLine {
-    Item item = 1;
-    int32 quantity = 2;
+  Item item = 1;
+  int32 quantity = 2;
 }
 
 message Address {
-    string street = 1;
-    int32 zip_code = 2;
-    string city = 3;
+  string street = 1;
+  int32 zip_code = 2;
+  string city = 3;
 }
 
 message Customer {
-    int32 id = 1;
-    string first_name = 2;
-    string last_name = 3;
-    Address address = 4;
+  int32 id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  Address address = 4;
 }
 
 message Order {
-    repeated OrderLine lines = 1;
-    Customer customer = 2;
+  repeated OrderLine lines = 1;
+  Customer customer = 2;
 }
+
+message CustomerStatus {
+  oneof sealed_value {
+    CustomerRegistered registered = 1;
+    CustomerOneTime oneTime = 2;
+  }
+}
+
+message CustomerRegistered {}
+
+message CustomerOneTime {}
+
+message PaymentStatus {
+  oneof sealed_value_optional {
+    PaymentRequested requested = 1;
+    PaymentCreated created = 2;
+    PaymentSucceeded succeeded = 3;
+    PaymentFailed failed = 4;
+  }
+}
+
+message PaymentRequested {}
+
+message PaymentCreated {
+  string external_id = 1;
+}
+
+message PaymentSucceeded {}
+
+message PaymentFailed {}

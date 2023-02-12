@@ -1,29 +1,27 @@
 package io.scalaland.chimney.cats
 
-import cats.data.{NonEmptyChain, Validated, ValidatedNec, ValidatedNel}
+import cats.data.{NonEmptyChain, Validated, ValidatedNec}
+import io.scalaland.chimney.{Transformer, TransformerF}
 import io.scalaland.chimney.cats.utils.ValidatedUtils._
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.examples._
 import io.scalaland.chimney.examples.trip._
 import io.scalaland.chimney.utils.OptionUtils._
-import io.scalaland.chimney.{Transformer, TransformerF}
 import utest._
 
 import scala.collection.immutable.Queue
 import scala.collection.mutable.ArrayBuffer
 
-object CatsValidatedTransformerFSpec extends TestSuite {
+object LiftedTransformerValidatedNecInstanceSpec extends TestSuite {
 
   val tests = Tests {
 
-    "transform always succeeds" - {
+    test("default transformation always becomes a Validated.Valid") {
 
       Person("John", 10, 140).transformIntoF[ValidatedNec[String, +*], User] ==> Validated.valid(User("John", 10, 140))
-
-      Person("John", 10, 140).intoF[ValidatedNel[String, +*], User].transform ==> Validated.valid(User("John", 10, 140))
     }
 
-    "transform always fails" - {
+    test("transformation becomes an Validated.Invalid if any component was converted to an Validated.Invalid") {
 
       Person("John", 10, 140)
         .intoF[ValidatedNec[String, +*], User]
@@ -31,12 +29,12 @@ object CatsValidatedTransformerFSpec extends TestSuite {
         .transform ==> Validated.invalid(NonEmptyChain("abc", "def"))
     }
 
-    "simple transform with validation" - {
+    test("transformation with field validated with .withFieldComputedF") {
 
-      "success" - {
+      test("combines validation results") {
         val okForm = PersonForm("John", "10", "140")
 
-        "1-arg" - {
+        test("with 1 argument validation to Validated.Valid should return Validated.Valid") {
 
           okForm
             .into[Person]
@@ -45,7 +43,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
             .transform ==> Validated.valid(Person("John", 10, 200.5))
         }
 
-        "2-arg" - {
+        test("with 2 arguments validation to Validated.Invalid should accumulates errors in Validated.Invalid") {
           okForm
             .intoF[ValidatedNec[String, +*], Person]
             .withFieldComputedF(_.height, _.height.parseDouble.toValidatedNec("bad height"))
@@ -53,7 +51,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
             .transform ==> Validated.valid(Person("John", 10, 140))
         }
 
-        "3-arg" - {
+        test("with 3 argument validation to Validated.Invalid and Ior.Both should accumulate errors to the first Validated.Invalid") {
 
           okForm
             .intoF[ValidatedNec[String, +*], Person]
@@ -69,7 +67,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
         }
       }
 
-      "failure with error handling" - {
+      test("failure with error handling") {
         val badForm = PersonForm("", "foo", "bar")
 
         badForm
@@ -87,7 +85,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
       }
     }
 
-    "recursive transform with nested validation" - {
+    test("recursive transform with nested validation") {
 
       implicit val personTransformerEithers: TransformerF[ValidatedNec[String, +*], PersonForm, Person] =
         Transformer
@@ -96,7 +94,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
           .withFieldComputedF(_.height, _.height.parseDouble.toValidatedNec("bad height"))
           .buildTransformer
 
-      "success" - {
+      test("success") {
 
         val okTripForm = TripForm("100", List(PersonForm("John", "10", "140"), PersonForm("Caroline", "12", "155")))
 
@@ -106,7 +104,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
           .transform ==> Validated.valid(Trip(100, Vector(Person("John", 10, 140), Person("Caroline", 12, 155))))
       }
 
-      "failure with error handling" - {
+      test("failure with error handling") {
 
         val badTripForm = TripForm("100", List(PersonForm("John", "10", "foo"), PersonForm("Caroline", "bar", "155")))
 
@@ -117,7 +115,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
       }
     }
 
-    "wrapped subtype transformation" - {
+    test("wrapped subtype transformation") {
 
       class Foo(val x: Int)
       case class Bar(override val x: Int) extends Foo(x)
@@ -126,22 +124,22 @@ object CatsValidatedTransformerFSpec extends TestSuite {
       optFoo.getValid.x ==> 100
     }
 
-    "wrapped value classes" - {
+    test("wrapped value classes") {
 
-      "from value class" - {
+      test("from value class") {
         addressbook.Email("abc@def.com").intoF[ValidatedNec[String, +*], String].transform ==>
           Validated.valid("abc@def.com")
       }
 
-      "to value class" - {
+      test("to value class") {
         "abc@def.com".intoF[ValidatedNec[String, +*], addressbook.Email].transform ==>
           Validated.valid(addressbook.Email("abc@def.com"))
       }
     }
 
-    "wrapped options" - {
+    test("wrapped options") {
 
-      "pure inner transformer" - {
+      test("pure inner transformer") {
 
         implicit val intPrinter: Transformer[Int, String] = _.toString
 
@@ -149,7 +147,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
         Option.empty[Int].intoF[ValidatedNec[String, +*], Option[String]].transform ==> Validated.valid(None)
       }
 
-      "wrapped inner transformer" - {
+      test("wrapped inner transformer") {
 
         implicit val intParserValidated: TransformerF[ValidatedNec[String, +*], String, Int] =
           _.parseInt.toValidatedNec("bad int")
@@ -160,9 +158,9 @@ object CatsValidatedTransformerFSpec extends TestSuite {
       }
     }
 
-    "wrapped T to Option[T]" - {
+    test("wrapped T to Option[T]") {
 
-      "pure inner transformer" - {
+      test("pure inner transformer") {
 
         implicit val intPrinter: Transformer[Int, String] = _.toString
 
@@ -170,7 +168,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
         (null: String).intoF[ValidatedNec[String, +*], Option[String]].transform ==> Validated.valid(None)
       }
 
-      "wrapped inner transformer" - {
+      test("wrapped inner transformer") {
 
         implicit val intParserValidated: TransformerF[ValidatedNec[String, +*], String, Int] =
           _.parseInt.toValidatedNec("bad int")
@@ -181,21 +179,18 @@ object CatsValidatedTransformerFSpec extends TestSuite {
       }
     }
 
-    "wrapped .enableUnsafeOption" - {
+    test("wrapped .enableUnsafeOption") {
 
-      "pure inner transformer" - {
+      test("pure inner transformer") {
         implicit val intPrinter: Transformer[Int, String] = _.toString
 
         Option(10).intoF[ValidatedNec[String, +*], String].enableUnsafeOption.transform ==> Validated.valid("10")
         intercept[NoSuchElementException] {
           Option.empty[Int].intoF[ValidatedNec[String, +*], String].enableUnsafeOption.transform
         }
-        intercept[NoSuchElementException] {
-          Option.empty[Int].intoF[ValidatedNel[String, +*], String].enableUnsafeOption.transform
-        }
       }
 
-      "wrapped inner transformer" - {
+      test("wrapped inner transformer") {
         implicit val intParserValidated: TransformerF[ValidatedNec[String, +*], String, Int] =
           _.parseInt.toValidatedNec("bad int")
 
@@ -205,17 +200,12 @@ object CatsValidatedTransformerFSpec extends TestSuite {
         intercept[NoSuchElementException] {
           Option.empty[String].intoF[ValidatedNec[String, +*], Int].enableUnsafeOption.transform
         }
-        intercept[NoSuchElementException] {
-          implicit val intParserValidatedNel: TransformerF[ValidatedNel[String, +*], String, Int] =
-            _.parseInt.toValidatedNel("bad int")
-          Option.empty[String].intoF[ValidatedNel[String, +*], Int].enableUnsafeOption.transform
-        }
       }
     }
 
-    "wrapped iterables or arrays" - {
+    test("wrapped iterables or arrays") {
 
-      "pure inner transformer" - {
+      test("pure inner transformer") {
 
         implicit val intPrinter: Transformer[Int, String] = _.toString
 
@@ -226,7 +216,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
         Array.empty[Int].intoF[ValidatedNec[String, +*], Seq[String]].transform ==> Validated.valid(Seq.empty[String])
       }
 
-      "wrapped inner transformer" - {
+      test("wrapped inner transformer") {
 
         implicit val intParserValidated: TransformerF[ValidatedNec[String, +*], String, Int] =
           _.parseInt.toValidatedNec("bad int")
@@ -244,8 +234,9 @@ object CatsValidatedTransformerFSpec extends TestSuite {
       }
     }
 
-    "wrapped maps" - {
-      "pure inner transformer" - {
+    test("wrapped maps") {
+
+      test("pure inner transformer") {
 
         implicit val intPrinter: Transformer[Int, String] = _.toString
 
@@ -271,7 +262,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
           Array("1" -> 10, "2" -> 20)
       }
 
-      "wrapped inner transformer" - {
+      test("wrapped inner transformer") {
 
         implicit val intParserValidated: TransformerF[ValidatedNec[String, +*], String, Int] =
           _.parseInt.toValidatedNec("bad int")
@@ -320,9 +311,9 @@ object CatsValidatedTransformerFSpec extends TestSuite {
       }
     }
 
-    "wrapped eithers" - {
+    test("wrapped eithers") {
 
-      "pure inner transformer" - {
+      test("pure inner transformer") {
 
         implicit val intPrinter: Transformer[Int, String] = _.toString
 
@@ -336,7 +327,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
         Right(1).intoF[ValidatedNec[String, +*], Right[String, String]].transform ==> Validated.valid(Right("1"))
       }
 
-      "wrapped inner transformer" - {
+      test("wrapped inner transformer") {
 
         implicit val intParserValidated: TransformerF[ValidatedNec[String, +*], String, Int] =
           _.parseInt.toValidatedNec("bad int")
@@ -360,7 +351,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
         Right("x").intoF[ValidatedNec[String, +*], Either[Int, Int]].transform ==> Validated.invalidNec("bad int")
       }
 
-      "mixed inner transformer" - {
+      test("mixed inner transformer") {
 
         implicit val intPrinter: Transformer[Int, String] = _.toString
         implicit val intParserValidated: TransformerF[ValidatedNec[String, +*], String, Int] =
@@ -382,10 +373,10 @@ object CatsValidatedTransformerFSpec extends TestSuite {
       }
     }
 
-    "wrapped sealed families" - {
+    test("wrapped sealed families") {
       import numbers._
 
-      "pure inner transformer" - {
+      test("pure inner transformer") {
 
         implicit val intPrinter: Transformer[Int, String] = _.toString
 
@@ -405,7 +396,7 @@ object CatsValidatedTransformerFSpec extends TestSuite {
           .transform ==> Validated.valid(long.Billion("100"))
       }
 
-      "wrapped inner transformer" - {
+      test("wrapped inner transformer") {
 
         implicit val intParserValidated: TransformerF[ValidatedNec[String, +*], String, Int] =
           _.parseInt.toValidatedNec("bad int")
@@ -437,5 +428,4 @@ object CatsValidatedTransformerFSpec extends TestSuite {
       }
     }
   }
-
 }
