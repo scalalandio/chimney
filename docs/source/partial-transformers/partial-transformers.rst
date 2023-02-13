@@ -97,6 +97,8 @@ So far we were receiving `EmptyValue` error, as we just provided ``Option[Int]``
 
 .. code-block:: scala
 
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
     import scala.util.{Try, Success, Failure}
 
     val resultBad2 = badForm
@@ -143,6 +145,8 @@ we use ``PartialTransformer.define`` (or equivalently ``Transformer.definePartia
 .. code-block:: scala
 
   import io.scalaland.chimney._
+  import io.scalaland.chimney.dsl._
+  import io.scalaland.chimney.partial
 
   implicit val transformer: PartialTransformer[RegistrationForm, RegisteredUser] =
     PartialTransformer.define[RegistrationForm, RegisteredUser]

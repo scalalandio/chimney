@@ -5,7 +5,8 @@ Migrating from Lifted Transformers
 
 Chimney's :ref:`lifted-transformers` were historically first experimental attempt
 to express transformations that may potentially fail. Despite their great expressiveness, they were
-lacking several basic features and had few design flaws that didn't make them attractive for wider usage.
+lacking several basic features and had a few design flaws that make them unattractive/difficult
+for wider adoption.
 
 .. important::
 
@@ -18,6 +19,8 @@ Design differences
 Let's have a look at type signatures of both lifted and partial transformers.
 
 .. code-block:: scala
+
+    package io.scalaland.chimney
 
     // lifted transformer
     trait TransformerF[F[+_], From, To] {
@@ -94,5 +97,6 @@ In order to migrate your code from lifted transformers to partial transformers, 
 
 .. TODO: provide github links to the paragraph below
 
-See also our test suites for lifted transformers and partial transformers to get an idea how similar behavior
-might be implemented using both features.
+See also our `test suites <https://github.com/scalalandio/chimney/tree/master/chimney/src/test/scala/io/scalaland/chimney>`_
+for lifted transformers and partial transformers to get an idea how similar behavior might be implemented
+using both features.
