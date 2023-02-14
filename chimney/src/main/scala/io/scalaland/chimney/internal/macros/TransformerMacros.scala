@@ -607,14 +607,13 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
 
             resolveCoproductInstance(srcPrefixTree, instTpe, To, config)
               .map { instanceTree =>
-
                 Right(cq"_: $instTpe => $instanceTree")
               }
               .getOrElse {
                 val instSymbol = instTpe.typeSymbol
                 targetNamedInstances.getOrElse(instName, Nil) match {
                   case List(matchingTargetTpe)
-                    if (instSymbol.isModuleClass || instSymbol.isCaseClass) && matchingTargetTpe.typeSymbol.isModuleClass =>
+                      if (instSymbol.isModuleClass || instSymbol.isCaseClass) && matchingTargetTpe.typeSymbol.isModuleClass =>
                     val tree = mkTransformerBodyTree0(config.derivationTarget) {
                       q"${matchingTargetTpe.typeSymbol.asClass.module}"
                     }
