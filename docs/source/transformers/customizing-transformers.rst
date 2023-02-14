@@ -11,7 +11,7 @@ Let's add a field to our ``Butterfly`` case class.
   case class Butterfly(size: Int, name: String, wingsColor: String)
 
 Now, when trying to perform the same transformation as
-in :ref:`Getting started with transformers`, we get compile-time error.
+in :ref:`transformers/getting-started:Getting started with transformers`, we get compile-time error.
 This is naturally expected, as we don't have any data source for
 new ``wingsColor`` field.
 

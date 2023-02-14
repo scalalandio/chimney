@@ -15,8 +15,8 @@ to your ``build.sbt``:
   libraryDependencies += "io.scalaland" %%% "chimney" % "|version|"
 
 
-Library is currently supported for Scala 2.12.x and 2.13.x on JVM, SJS 1.x,
-SN 0.4. Other versions should be considered EOL.
+Library is currently supported for Scala 2.12.x and 2.13.x on JVM, ScalaJS 1.x,
+Scala Native 0.4.
 
 .. warning:: Due to some `compiler bugs <https://issues.scala-lang.org/browse/SI-7046>`_,
   it's recommended to use at least Scala 2.12.1.

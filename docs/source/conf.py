@@ -35,6 +35,8 @@ extensions = [
     'sphinx.ext.autosectionlabel'
 ]
 
+autosectionlabel_prefix_document = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -53,7 +55,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Chimney'
-copyright = u'2017-2022, scalaland.io'
+copyright = u'2017-2023, scalaland.io'
 author = u'Piotr Krzemiński, Mateusz Kubuszok'
 
 # The version info for the project you're documenting, acts as replacement for

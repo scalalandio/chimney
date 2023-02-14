@@ -1,7 +1,7 @@
 .. _lifted-transformers:
 
-Lifted transformers
-===================
+Lifted Transformers ``(deprecated)``
+====================================
 
 .. warning::
 
@@ -73,7 +73,7 @@ Similar to ``withFieldConst``, ``withFieldComputed``, ``withCoproductInstance`` 
 there are lifted counterparts available:
 
 - ``withFieldConstF``
-- ``withFieldComputed``
+- ``withFieldComputedF``
 - ``withCoproductInstanceF``
 
 Analogously to :ref:`transformer-definition-dsl` for ``Transformer``, we can define above transformation
@@ -276,7 +276,7 @@ implementation of these methods should be obvious. Yet it gives some choice abou
 semantics of error handling.
 
 Chimney supports ``Option``, ``Either`` and ``cats.data.Validated``
-(in :ref:`cats-integration`) just exactly by providing implicit instaces of
+(in :ref:`lifted-cats-integration`) just exactly by providing implicit instaces of
 ``TransformerFSupport`` implemented for those wrapper types.
 
 

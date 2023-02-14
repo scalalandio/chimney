@@ -55,7 +55,7 @@ rules and transform your objects with as little boilerplate as possible.
   // CoffeeMade(24, "Espresso", "Piotr", "2020-02-03T20:26:59.659647+07:00[Asia/Bangkok]")
 
 
-Read :ref:`Getting started with transformers` to learn more about
+Read :ref:`transformers/getting-started:Getting started with transformers` to learn more about
 Chimney's transformers.
 
 Patching
@@ -77,7 +77,7 @@ fields with values taken from other (*patch*) object.
   user.patchUsing(updateForm)
   // User(10, "xyz@example.com", "Broadway", 123123123L)
 
-Read :ref:`Getting started with patchers` to learn more about
+Read :ref:`patchers/getting-started:Getting started with patchers` to learn more about
 Chimney's patchers.
 
 Chimney's features
@@ -110,12 +110,24 @@ Contents:
    transformers/standard-transformers
    transformers/default-values
    transformers/own-transformations
+   transformers/scoped-configuration
    transformers/java-beans
    transformers/unsafe-options
-   transformers/scoped-configuration
-   transformers/lifted-transformers
-   transformers/cats-integration
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Partial Transformers
+
+   partial-transformers/partial-transformers
+   partial-transformers/migrating-from-lifted
+   partial-transformers/cats-integration
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Lifted Transformers
+
+   lifted-transformers/lifted-transformers
+   lifted-transformers/cats-integration
 
 .. toctree::
    :maxdepth: 2
@@ -129,5 +141,5 @@ Contents:
    :maxdepth: 1
    :caption: Benchmarks
 
-   Benchmarks <_static/benchmarks.html#http://>
+   benchmarks
 

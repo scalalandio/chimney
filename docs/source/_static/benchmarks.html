@@ -4,7 +4,7 @@
     <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chimney benchmarks!</title>
+    <title>Chimney JMH benchmarks!</title>
     <link rel="stylesheet" href="pygments.css" type="text/css" />
     <link rel="stylesheet" href="css/theme.css" type="text/css" />
     <!--[if lt IE 9]>
@@ -34,9 +34,6 @@
         <div class="wy-side-scroll">
             <div class="wy-side-nav-search" >
                 <a href="#" class="icon icon-home">Chimney</a>
-                <div class="version">
-                    benchmarks
-                </div>
                 <div role="search">
                     <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
                         <input type="text" name="q" placeholder="Search docs" />
@@ -136,7 +133,7 @@
 
                 let firstGroup = true // just to set initial view to the latest master commits comparison
 
-                sliding(3, masterPushResults) // how many master branch commits are being compared
+                sliding(9, masterPushResults) // how many master branch commits are being compared
                     .forEach(group => {
                         const hashes = group.map(res => res.sha.substring(0, 7))
                         const first = hashes[0]
