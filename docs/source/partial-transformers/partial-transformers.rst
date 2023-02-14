@@ -40,7 +40,7 @@ or return an error, when the value is not valid integer. This is not possible us
     //   RegisteredUser("john@example.com", "John", "...", 40)
     // )
 
-Partial transformation computes into special result type ``partial.Result``. There are few methods that are
+Partial transformation returns a special result type ``partial.Result``. There are few methods that are
 useful to convert such a result to more familiar types.
 
 .. code-block:: scala
