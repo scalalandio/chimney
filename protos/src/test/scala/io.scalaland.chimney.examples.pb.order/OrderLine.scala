@@ -9,4 +9,4 @@ package io.scalaland.chimney.examples.pb.order
 final case class OrderLine(
     item: _root_.scala.Option[io.scalaland.chimney.examples.pb.order.Item] = _root_.scala.None,
     quantity: _root_.scala.Int = 0
-    )
+)

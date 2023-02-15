@@ -906,8 +906,7 @@ object PartialTransformerProductSpec extends TestSuite {
 
       test("compile error when optionDefaultsToNone were disabled locally") {
 
-        compileError(
-          """
+        compileError("""
           (new Source).intoPartial[Target].disableOptionDefaultsToNone.transform
         """)
           .check("", "Chimney can't derive transformation from Source to Target")
@@ -952,8 +951,7 @@ object PartialTransformerProductSpec extends TestSuite {
           Foo("100").transformIntoPartial[Bar].asOption ==> Some(Bar(100))
 
           test("disabled again shoult not compile") {
-            compileError(
-              """
+            compileError("""
                Foo("100").intoPartial[Bar]
                 .disableImplicitConflictResolution
                 .transform
@@ -981,8 +979,7 @@ object PartialTransformerProductSpec extends TestSuite {
           Foo("100").transformIntoPartial[Bar].asOption ==> Some(Bar(200))
 
           test("disabled again shoult not compile") {
-            compileError(
-              """
+            compileError("""
               Foo("100").intoPartial[Bar]
                 .disableImplicitConflictResolution
                 .transform

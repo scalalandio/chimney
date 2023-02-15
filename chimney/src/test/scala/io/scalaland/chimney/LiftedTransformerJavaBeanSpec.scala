@@ -648,7 +648,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
             .intoF[Option, JavaBeanTarget]
             .enableBeanGetters
             .enableBeanSetters
-            .transform  ==> Some(expected)
+            .transform ==> Some(expected)
 
           locally {
             implicit val config = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters

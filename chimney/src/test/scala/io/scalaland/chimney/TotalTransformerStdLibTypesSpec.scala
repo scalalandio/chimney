@@ -8,7 +8,6 @@ object TotalTransformerStdLibTypesSpec extends TestSuite {
 
   val tests = Tests {
 
-
     test("not support converting non-Unit field to Unit field if there is no implicit converter allowing that") {
       case class Buzz(value: String)
       case class ConflictingFooBuzz(value: Unit)

@@ -12,7 +12,6 @@ object LiftedTransformerSdtLibTypesSpec extends TestSuite {
 
   val tests = Tests {
 
-
     test("not support converting non-Unit field to Unit field if there is no implicit converter allowing that") {
       case class Buzz(value: String)
       case class ConflictingFooBuzz(value: Unit)
@@ -664,27 +663,27 @@ object LiftedTransformerSdtLibTypesSpec extends TestSuite {
 
         test("when F = Option") {
           compileError("""Source(Some(1)).intoF[Option, Target].transform ==> Some(Target("1"))""").check(
-              "",
-              "Chimney can't derive transformation from Source to Target",
-              "java.lang.String",
-              "derivation from source.x: scala.Option to java.lang.String is not supported in Chimney!",
-              "io.scalaland.chimney.LiftedTransformerSdtLibTypesSpec.Target",
-              "x: java.lang.String - can't derive transformation from x: scala.Option in source type io.scalaland.chimney.LiftedTransformerSdtLibTypesSpec.Source",
-              "Consult https://scalalandio.github.io/chimney for usage examples."
-            )
+            "",
+            "Chimney can't derive transformation from Source to Target",
+            "java.lang.String",
+            "derivation from source.x: scala.Option to java.lang.String is not supported in Chimney!",
+            "io.scalaland.chimney.LiftedTransformerSdtLibTypesSpec.Target",
+            "x: java.lang.String - can't derive transformation from x: scala.Option in source type io.scalaland.chimney.LiftedTransformerSdtLibTypesSpec.Source",
+            "Consult https://scalalandio.github.io/chimney for usage examples."
+          )
         }
 
         test("when F = Either[List[String], +*]") {
           type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           compileError("""Source(Some(1)).intoF[EitherList, Target].transform ==> Right(Target("1"))""").check(
-              "",
-              "Chimney can't derive transformation from Source to Target",
-              "java.lang.String",
-              "derivation from source.x: scala.Option to java.lang.String is not supported in Chimney!",
-              "io.scalaland.chimney.LiftedTransformerSdtLibTypesSpec.Target",
-              "x: java.lang.String - can't derive transformation from x: scala.Option in source type io.scalaland.chimney.LiftedTransformerSdtLibTypesSpec.Source",
-              "Consult https://scalalandio.github.io/chimney for usage examples."
-            )
+            "",
+            "Chimney can't derive transformation from Source to Target",
+            "java.lang.String",
+            "derivation from source.x: scala.Option to java.lang.String is not supported in Chimney!",
+            "io.scalaland.chimney.LiftedTransformerSdtLibTypesSpec.Target",
+            "x: java.lang.String - can't derive transformation from x: scala.Option in source type io.scalaland.chimney.LiftedTransformerSdtLibTypesSpec.Source",
+            "Consult https://scalalandio.github.io/chimney for usage examples."
+          )
         }
       }
 

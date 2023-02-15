@@ -341,7 +341,11 @@ object PartialTransformerSdtLibTypesSpec extends TestSuite {
         .asErrorPathMessageStrings ==> Iterable("(0)._2" -> "empty value", "(1)._2" -> "empty value")
       Map("x" -> "10", "y" -> "z")
         .transformIntoPartial[List[(Int, Int)]]
-        .asErrorPathMessageStrings ==> Iterable("keys(x)" -> "empty value", "keys(y)" -> "empty value", "(y)" -> "empty value")
+        .asErrorPathMessageStrings ==> Iterable(
+        "keys(x)" -> "empty value",
+        "keys(y)" -> "empty value",
+        "(y)" -> "empty value"
+      )
 
       ArrayBuffer("1" -> "x", "2" -> "y")
         .transformIntoPartial[Map[String, Int]](failFast = true)

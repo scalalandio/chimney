@@ -9,8 +9,10 @@ package io.scalaland.chimney.examples.pb.addressbook
   *   Unique ID number for this person.
   */
 @SerialVersionUID(0L)
-final case class Person(name: _root_.scala.Predef.String = "",
-                        id: _root_.scala.Int = 0,
-                        email: _root_.scala.Predef.String = "",
-                        phones: _root_.scala.collection.Seq[io.scalaland.chimney.examples.pb.addressbook.PhoneNumber] =
-                          _root_.scala.collection.Seq.empty)
+final case class Person(
+    name: _root_.scala.Predef.String = "",
+    id: _root_.scala.Int = 0,
+    email: _root_.scala.Predef.String = "",
+    phones: _root_.scala.collection.Seq[io.scalaland.chimney.examples.pb.addressbook.PhoneNumber] =
+      _root_.scala.collection.Seq.empty
+)

@@ -163,7 +163,7 @@ object PBTransformationSpec extends TestSuite {
           .withCoproductInstance[pb.order.CustomerStatus.Empty.type](_ => None)
           .withCoproductInstance[pb.order.CustomerStatus.NonEmpty](_.transformInto[Option[order.CustomerStatus]])
           .transform ==> Option(domainStatus)
-        */
+       */
       }
 
       test("PaymentStatus (oneof sealed_value_optional)") {

@@ -1268,8 +1268,7 @@ object LiftedTransformerProductSpec extends TestSuite {
 
       test("fail compilation if there is unresolved conflict") {
 
-        compileError(
-          """
+        compileError("""
           type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           OuterIn(InnerIn("test")).transformIntoF[EitherList, OuterOut]
           """)
@@ -1349,8 +1348,7 @@ object LiftedTransformerProductSpec extends TestSuite {
 
       test("compile error when optionDefaultsToNone were disabled locally") {
 
-        compileError(
-          """
+        compileError("""
           (new Source).intoF[Option, Target].disableOptionDefaultsToNone.transform
         """)
           .check("", "Chimney can't derive transformation from Source to Target")
