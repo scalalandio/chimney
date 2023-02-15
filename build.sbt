@@ -1,5 +1,8 @@
 import commandmatrix.extra._
 
+lazy val isCI = sys.env.get("CI").contains("true")
+ThisBuild / scalafmtOnCompile := !isCI
+
 // versions
 
 ThisProject / versionScheme := Some("early-semver")
