@@ -51,7 +51,9 @@ object LiftedTransformerValidatedNelInstanceSpec extends TestSuite {
             .transform ==> Validated.valid(Person("John", 10, 140))
         }
 
-        test("with 3 argument validation to Validated.Invalid and Ior.Both should accumulate errors to the first Validated.Invalid") {
+        test(
+          "with 3 argument validation to Validated.Invalid and Ior.Both should accumulate errors to the first Validated.Invalid"
+        ) {
 
           okForm
             .intoF[ValidatedNel[String, +*], Person]

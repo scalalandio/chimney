@@ -1,7 +1,18 @@
 package io.scalaland.chimney.cats.utils
 
 import cats.InvariantMonoidal
-import cats.data.{Ior, IorNec, IorNel, IorNes, NonEmptyChain, NonEmptyList, NonEmptySet, Validated, ValidatedNec, ValidatedNel}
+import cats.data.{
+  Ior,
+  IorNec,
+  IorNel,
+  IorNes,
+  NonEmptyChain,
+  NonEmptyList,
+  NonEmptySet,
+  Validated,
+  ValidatedNec,
+  ValidatedNel
+}
 
 object ValidatedUtils {
 
@@ -20,10 +31,10 @@ object ValidatedUtils {
     def toValidatedNel(err: => String): ValidatedNel[String, T] =
       toValidated[NonEmptyList](err)(implicitly)
 
-    def toIor[EE[_] : InvariantMonoidal](err: => String): Ior[EE[String], T] = {
+    def toIor[EE[_]: InvariantMonoidal](err: => String): Ior[EE[String], T] = {
       opt match {
         case Some(value) => Ior.Right(value)
-        case None => Ior.Left(InvariantMonoidal[EE].point(err))
+        case None        => Ior.Left(InvariantMonoidal[EE].point(err))
       }
     }
 
@@ -36,7 +47,7 @@ object ValidatedUtils {
     def toIorNes(err: => String): IorNes[String, T] =
       opt match {
         case Some(value) => Ior.Right(value)
-        case None => Ior.Left(NonEmptySet.one(err))
+        case None        => Ior.Left(NonEmptySet.one(err))
       }
   }
 

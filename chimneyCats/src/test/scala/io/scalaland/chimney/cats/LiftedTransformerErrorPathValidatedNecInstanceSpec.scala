@@ -109,7 +109,7 @@ object LiftedTransformerErrorPathValidatedNecInstanceSpec extends TestSuite {
 
         error.check(
           "",
-          "derivation from v: io.scalaland.chimney.cats.LiftedTransformerErrorPathValidatedNecInstanceSpec.FooValue to scala.Double is not supported in Chimney!",
+          "derivation from v: io.scalaland.chimney.cats.LiftedTransformerErrorPathValidatedNecInstanceSpec.FooValue to scala.Double is not supported in Chimney!"
         )
 
         error.check(
