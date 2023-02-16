@@ -22,14 +22,25 @@ trait PartialTransformer[From, To] {
     * @param src source value
     * @param failFast should fail as early as the first set of errors appear
     *
-    * @since 0.7.0 */
+    * @since 0.7.0
+    */
   def transform(src: From, failFast: Boolean): partial.Result[To]
 
-  /** @since 0.7.0 */
+  /** Run transformation using provided value as a source in error accumulation mode.
+    *
+    * @param src source value
+    *
+    * @since 0.7.0
+    */
   final def transform(src: From): partial.Result[To] =
     transform(src, failFast = false)
 
-  /** @since 0.7.0 */
+  /** Run transformation using provided value as a source in short-circuit (fail fast) mode.
+    *
+    * @param src source value
+    *
+    * @since 0.7.0
+    */
   final def transformFailFast(src: From): partial.Result[To] =
     transform(src, failFast = true)
 }

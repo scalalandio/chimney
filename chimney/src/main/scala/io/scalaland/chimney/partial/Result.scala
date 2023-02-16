@@ -1,36 +1,89 @@
 package io.scalaland.chimney.partial
 
-import io.scalaland.chimney.internal.ErrorsCollection
+import io.scalaland.chimney.internal.NonEmptyErrorsChain
 
 import scala.collection.compat._
 import scala.util.{Failure, Success, Try}
 
+/** Data type representing either successfully computed value or collection of path-annotated errors.
+  *
+  * @tparam T type of success value
+  *
+  * @since 0.7.0
+  */
 sealed trait Result[+T] {
+
+  /** Converts a partial result to an optional value.
+    *
+    * @return `Some` when has a success value, `None` when has errors
+    *
+    * @since 0.7.0
+    */
   final def asOption: Option[T] = this match {
     case Result.Value(value) => Some(value)
     case Result.Errors(_)    => None
   }
 
+  /** Converts a partial result to an `Either`.
+    *
+    * @return `Right` when has a success value, `Left` when has errors
+    *
+    * @since 0.7.0
+    */
   final def asEither: Either[Result.Errors, T] = this match {
     case Result.Value(value)   => Right(value)
     case errors: Result.Errors => Left(errors)
   }
 
+  /** Returns (possibly empty) collection of tuples with conventional string representation of path
+    * and errors message.
+    *
+    * @since 0.7.0
+    */
   def asErrorPathMessages: Iterable[(String, ErrorMessage)]
 
+  /** Returns (possibly empty) collection of tuples with conventional string representation of path
+    * and string representation of error message.
+    *
+    * @since 0.7.0
+    */
   final def asErrorPathMessageStrings: Iterable[(String, String)] =
     this.asErrorPathMessages.map { case (path, message) => (path, message.asString) }
 
+  /** Builds a new result by applying a function to a success value.
+    *
+    * @param f the function to apply to a success value
+    * @tparam U the element type of the returned result
+    * @return a new result built from applying a function to a success value
+    *
+    * @since 0.7.0
+    */
   final def map[U](f: T => U): Result[U] = this match {
     case Result.Value(value) => Result.Value(f(value))
     case _: Result.Errors    => this.asInstanceOf[Result[U]]
   }
 
+  /** Builds a new result by applying a function to a success value and using result returned by that that function.
+    *
+    * @param f the function to apply to a success value
+    * @tparam U the element type of the returned result
+    * @return a new result built from applying a function to a success value
+    *         and using the result returned by that function
+    *
+    * @since 0.7.0
+    */
   final def flatMap[U](f: T => Result[U]): Result[U] = this match {
     case Result.Value(value) => f(value)
     case _: Result.Errors    => this.asInstanceOf[Result[U]]
   }
 
+  /** Prepends a path element to all errors represented by this result.
+    *
+    * @param pathElement path element to be prepended
+    * @return a result with path element prepended to all errors
+    *
+    * @since 0.7.0
+    */
   final def prependErrorPath(pathElement: => PathElement): this.type = this match {
     case _: Result.Value[_] => this
     case e: Result.Errors   => e.prependPath(pathElement).asInstanceOf[this.type]
@@ -38,24 +91,38 @@ sealed trait Result[+T] {
 }
 
 object Result {
+
+  /** Success value case representation
+    *
+    * @param value value of type `T`
+    * @tparam T type of success value
+    *
+    * @since 0.7.0
+    */
   final case class Value[T](value: T) extends Result[T] {
+
     def asErrorPathMessages: Iterable[(String, ErrorMessage)] = Iterable.empty
   }
 
-  final case class Errors(private val ec: ErrorsCollection) extends Result[Nothing] {
-    def errors: ErrorsCollection = ec
+  /** Errors case representation
+    *
+    * @param errors non-empty collection of path-annotated errors
+    *
+    * @since 0.7.0
+    * */
+  final case class Errors(errors: NonEmptyErrorsChain) extends Result[Nothing] {
 
-    def prependPath(pathElement: PathElement): Errors = Errors(ec.prependPath(pathElement))
+    def prependPath(pathElement: PathElement): Errors = Errors(errors.prependPath(pathElement))
 
-    def asErrorPathMessages: Iterable[(String, ErrorMessage)] = ec.map(_.asErrorPathMessage)
+    def asErrorPathMessages: Iterable[(String, ErrorMessage)] = errors.map(_.asErrorPathMessage)
   }
 
   object Errors {
     final def apply(error: Error, errors: Error*): Errors =
-      apply(ErrorsCollection.from(error, errors: _*))
+      apply(NonEmptyErrorsChain.from(error, errors: _*))
 
     final def single(error: Error): Errors =
-      apply(ErrorsCollection.fromSingle(error))
+      apply(NonEmptyErrorsChain.from(error))
 
     final def fromString(message: String): Errors =
       single(Error.ofString(message))
@@ -64,7 +131,7 @@ object Result {
       apply(Error.ofString(message), messages.map(Error.ofString): _*)
 
     final def merge(errors1: Errors, errors2: Errors): Errors =
-      apply(errors1.ec ++ errors2.ec)
+      apply(errors1.errors ++ errors2.errors)
   }
 
   final def fromFunction[U, T](f: U => T): U => Result[T] = { u =>
@@ -142,7 +209,6 @@ object Result {
       case t: Throwable => fromErrorThrowable(t)
     }
   }
-  // extensions can provide more integrations, i.e. for Validated, Ior, etc.
 
   final def traverse[M, A, B](it: Iterator[A], f: A => Result[B], failFast: Boolean)(
       implicit fac: Factory[B, M]
@@ -161,7 +227,7 @@ object Result {
       }
       if (errors == null) Result.Value(bs.result()) else errors
     } else {
-      var allErrors: ErrorsCollection = null
+      var allErrors: NonEmptyErrorsChain = null
       while (it.hasNext) {
         f(it.next()) match {
           case Value(value) => bs += value
