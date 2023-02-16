@@ -488,7 +488,7 @@ object PartialResultSpec extends TestSuite {
           partial.Result.fromValue(10),
           partial.Result.fromEmpty[Int],
           partial.Result.fromErrorString[Int]("something bad happened"),
-//          partial.Result.fromErrorNotDefinedAt[Int](()),
+          partial.Result.fromErrorNotDefinedAt[Int](0),
           partial.Result.fromErrorThrowable[Int](Err("error just happened"))
         ),
         failFast = false
@@ -496,7 +496,7 @@ object PartialResultSpec extends TestSuite {
       result.asErrorPathMessageStrings ==> Iterable(
         "" -> "empty value",
         "" -> "something bad happened",
-//        "" -> "not defined at ()", // TODO: not defined at undefined in scalajs
+        "" -> "not defined at 0",
         "" -> "error just happened"
       )
     }
