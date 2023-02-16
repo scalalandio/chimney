@@ -16,7 +16,11 @@ import scala.language.experimental.macros
   */
 trait Transformer[From, To] {
 
-  /** @since 0.1.0 */
+  /** Run transformation using provided value as a source.
+    *
+    * @param src source value
+    *
+    * @since 0.1.0 */
   def transform(src: From): To
 }
 
@@ -28,7 +32,7 @@ object Transformer {
     *
     * @tparam From type of input value
     * @tparam To type of output value
-    * @return [[io.scalaland.chimney.Transformer]] type class definition
+    * @return [[io.scalaland.chimney.Transformer]] type class instance
     *
     * @since 0.2.0
     */

@@ -8,26 +8,49 @@ import scala.language.experimental.macros
 
 /** Type class expressing partial transformation between
   * source type `From` and target type `To`, with the ability
-  * of reporting transformation error
+  * of reporting path-annotated transformation error(s).
   *
   * @tparam From type of input value
   * @tparam To   type of output value
+  *
+  * @since 0.7.0
   */
 trait PartialTransformer[From, To] {
 
+  /** Run transformation using provided value as a source.
+    *
+    * @param src source value
+    * @param failFast should fail as early as the first set of errors appear
+    *
+    * @since 0.7.0 */
   def transform(src: From, failFast: Boolean): partial.Result[To]
 
+  /** @since 0.7.0 */
   final def transform(src: From): partial.Result[To] =
     transform(src, failFast = false)
 
+  /** @since 0.7.0 */
   final def transformFailFast(src: From): partial.Result[To] =
     transform(src, failFast = true)
 }
 
 object PartialTransformer {
 
+  /** Construct ad-hoc instance of partial transformer from transforming function.
+    *
+    * @param f transforming function
+    * @tparam A type of input value
+    * @tparam B type of output value
+    * @return [[io.scalaland.chimney.PartialTransformer]] type class instance
+    */
   def apply[A, B](f: A => partial.Result[B]): PartialTransformer[A, B] =
-    (src: A, _: Boolean) => f(src)
+    (src: A, _: Boolean) => {
+      try {
+        f(src)
+      } catch {
+        case why: Throwable => partial.Result.fromErrorThrowable(why)
+      }
+    }
 
   /** Provides [[io.scalaland.chimney.PartialTransformer]] derived with the default settings.
     *
