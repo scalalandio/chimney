@@ -55,7 +55,6 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
     NonEmptyErrorsChain.Merge(this, other)
   }
 
-  // TODO: write some tests for making sure that equals/hashCode contract is satisfied
   override final def equals(obj: Any): Boolean = {
     obj match {
       case xs: NonEmptyErrorsChain => xs.iterator.sameElements(this.iterator)
