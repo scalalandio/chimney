@@ -21,12 +21,12 @@ class PartialTransformerDefinitionWhiteboxMacros(val c: whitebox.Context)
     c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, value, fieldConstPartialT)
   }
 
-  def withFieldComputedImpl[C: WeakTypeTag](selector: Tree, map: Tree)(@unused ev: Tree): Tree = {
-    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, map, fieldComputedT)
+  def withFieldComputedImpl[C: WeakTypeTag](selector: Tree, f: Tree)(@unused ev: Tree): Tree = {
+    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, f, fieldComputedT)
   }
 
-  def withFieldComputedPartialImpl[C: WeakTypeTag](selector: Tree, map: Tree)(@unused ev: Tree): Tree = {
-    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, map, fieldComputedPartialT)
+  def withFieldComputedPartialImpl[C: WeakTypeTag](selector: Tree, f: Tree)(@unused ev: Tree): Tree = {
+    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, f, fieldComputedPartialT)
   }
 
   def withFieldRenamedImpl[C: WeakTypeTag](selectorFrom: Tree, selectorTo: Tree): Tree = {
