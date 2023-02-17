@@ -4,6 +4,7 @@ import io.scalaland.chimney.{TransformerF, TransformerFSupport}
 import io.scalaland.chimney.internal._
 import io.scalaland.chimney.internal.macros.dsl.{TransformerBlackboxMacros, TransformerFDefinitionWhiteboxMacros}
 
+import scala.annotation.unused
 import scala.language.experimental.macros
 
 /** Allows customization of [[io.scalaland.chimney.TransformerF]] derivation
@@ -16,6 +17,7 @@ import scala.language.experimental.macros
   *
   * @since 0.5.0
   */
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
 final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <: TransformerFlags](
     val overrides: Map[String, Any],
     val instances: Map[(String, String), Any]
@@ -56,7 +58,7 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
   )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerFDefinitionWhiteboxMacros.withFieldConstFImpl[C, F]
 
-  /** Use `map` provided here to compute value of field picked using `selector`.
+  /** Use function `f` to compute value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
@@ -73,7 +75,7 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
   )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerFDefinitionWhiteboxMacros.withFieldComputedImpl[C]
 
-  /** Use `map` provided here to compute wrapped value of field picked using `selector`.
+  /** Use `f` provided here to compute wrapped value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *

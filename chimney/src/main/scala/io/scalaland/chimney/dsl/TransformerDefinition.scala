@@ -45,9 +45,9 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   def partial: PartialTransformerDefinition[From, To, C, Flags] =
     new PartialTransformerDefinition[From, To, C, Flags](overrides, instances)
 
-  /** Use `value` provided here for field picked using `selector`.
+  /** Use provided value `value` for field picked using `selector`.
     *
-    * By default if `From` is missing field picked by `selector` compilation fails.
+    * By default if `From` is missing field picked by `selector`, compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
     * @param selector target field in `To`, defined like `_.name`
@@ -72,13 +72,14 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
   def withFieldConstF[F[+_], T, U](
       selector: To => T,
       value: F[U]
   )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerDefinitionWhiteboxMacros.withFieldConstFImpl[F]
 
-  /** Use `map` provided here to compute value of field picked using `selector`.
+  /** Use function `f` to compute value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
@@ -95,7 +96,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   )(implicit ev: U <:< T): TransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
     macro TransformerDefinitionWhiteboxMacros.withFieldComputedImpl[C]
 
-  /** Use `map` provided here to compute wrapped value of field picked using `selector`.
+  /** Use function `f` to compute wrapped value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
@@ -106,6 +107,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
   def withFieldComputedF[F[+_], T, U](
       selector: To => T,
       f: From => F[U]
@@ -158,6 +160,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
   def withCoproductInstanceF[F[+_], Inst](
       f: Inst => F[To]
   ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =

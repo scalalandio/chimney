@@ -76,7 +76,7 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
   )(implicit ev: U <:< T): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerIntoWhiteboxMacros.withFieldConstFImpl[F]
 
-  /** Use `map` provided here to compute value of field picked using `selector`.
+  /** Use function `f` to compute value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
@@ -93,7 +93,7 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
   )(implicit ev: U <:< T): TransformerInto[From, To, _ <: TransformerCfg, Flags] =
     macro TransformerIntoWhiteboxMacros.withFieldComputedImpl
 
-  /** Use `map` provided here to compute wrapped value of field picked using `selector`.
+  /** Use `f` provided here to compute wrapped value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *

@@ -15,6 +15,7 @@ import scala.collection.compat._
   *
   * @since 0.5.0
   */
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
 trait TransformerFSupport[F[+_]] {
 
   /** Wrap a value into the type constructor `F`.
@@ -79,6 +80,7 @@ trait TransformerFSupport[F[+_]] {
 }
 
 /** @since 0.5.0 */
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
 object TransformerFSupport {
 
   /** `TransformerFSupport` instance for `Option`

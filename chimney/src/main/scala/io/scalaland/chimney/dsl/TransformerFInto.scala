@@ -19,6 +19,7 @@ import scala.language.experimental.macros
   *
   * @since 0.5.0
   */
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
 final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,
     val td: TransformerFDefinition[F, From, To, C, Flags]
@@ -56,7 +57,7 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
   ): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerFIntoWhiteboxMacros.withFieldConstFImpl
 
-  /** Use `map` provided here to compute value of field picked using `selector`.
+  /** Use function `f` to compute value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
@@ -73,7 +74,7 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
   )(implicit ev: U <:< T): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerFIntoWhiteboxMacros.withFieldComputedImpl
 
-  /** Use `map` provided here to compute wrapped value of field picked using `selector`.
+  /** Use function `f` to compute wrapped value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
