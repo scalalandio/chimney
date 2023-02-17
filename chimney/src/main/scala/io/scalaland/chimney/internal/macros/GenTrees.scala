@@ -88,6 +88,10 @@ trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
         q"_root_.io.scalaland.chimney.partial.Result.fromFunction($f)"
       }
 
+      def map2(aTpe: Type, bTpe: Type, cTpe: Type, res1: Tree, res2: Tree, f: Tree, failFast: Tree): Tree = {
+        q"_root_.io.scalaland.chimney.partial.Result.map2[$aTpe, $bTpe, $cTpe]($res1, $res2, $f, $failFast)"
+      }
+
       def product(aTpe: Type, bTpe: Type, res1: Tree, res2: Tree, failFast: Tree): Tree = {
         q"_root_.io.scalaland.chimney.partial.Result.product[$aTpe, $bTpe]($res1, $res2, $failFast)"
       }

@@ -129,7 +129,26 @@ trait TargetConstructorMacros extends Model with AssertUtils with GenTrees {
           val updatedArgs = targets.map(argsMap)
 
           q"${bodyTree.tree}.map { ($fn: ${target.tpe}) => ${mkTargetValueTree(updatedArgs)} }"
-          // TODO: call map2 for 2-arg partial args
+        } else if (partialArgs.sizeCompare(2) == 0) {
+          val (target0, bodyTree0) = partialArgs.head
+          val (target1, bodyTree1) = partialArgs.last
+          val fn0 = freshTermName(target0.name)
+          val fn1 = freshTermName(target1.name)
+
+          val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
+          val argsMap = totalArgsMap + (target0 -> q"$fn0") + (target1 -> q"$fn1")
+          val updatedArgs = targets.map(argsMap)
+
+          Trees.PartialResult
+            .map2(
+              target0.tpe,
+              target1.tpe,
+              To,
+              bodyTree0.tree,
+              bodyTree1.tree,
+              q"{ case ($fn0: ${target0.tpe}, $fn1: ${target1.tpe}) => ${mkTargetValueTree(updatedArgs)} }",
+              pt.failFastTree
+            )
         } else {
           val (partialTargets, partialBodyTrees) = partialArgs.unzip
           val partialTrees = partialBodyTrees.map(_.tree)
