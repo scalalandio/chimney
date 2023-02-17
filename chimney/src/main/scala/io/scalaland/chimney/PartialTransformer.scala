@@ -53,6 +53,8 @@ object PartialTransformer {
     * @tparam A type of input value
     * @tparam B type of output value
     * @return [[io.scalaland.chimney.PartialTransformer]] type class instance
+    *
+    * @since 0.7.0
     */
   def apply[A, B](f: A => partial.Result[B]): PartialTransformer[A, B] =
     (src: A, _: Boolean) => {
@@ -70,7 +72,9 @@ object PartialTransformer {
     * @tparam From type of input value
     * @tparam To type of output value
     * @return [[io.scalaland.chimney.PartialTransformer]] type class definition
-    */
+    *
+    * @since 0.7.0
+    * */
   implicit def derive[From, To]: PartialTransformer[From, To] =
     macro TransformerBlackboxMacros.derivePartialTransformerImpl[From, To]
 
@@ -82,7 +86,9 @@ object PartialTransformer {
     * @tparam From type of input value
     * @tparam To type of output value
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] with defaults
-    */
+    *
+    * @since 0.7.0
+    * */
   def define[From, To]: PartialTransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new PartialTransformerDefinition(Map.empty, Map.empty)
 
