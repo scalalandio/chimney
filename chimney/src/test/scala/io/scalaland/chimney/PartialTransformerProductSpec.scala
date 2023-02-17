@@ -950,7 +950,7 @@ object PartialTransformerProductSpec extends TestSuite {
 
           Foo("100").transformIntoPartial[Bar].asOption ==> Some(Bar(100))
 
-          test("disabled again shoult not compile") {
+          test("disabled again should not compile") {
             compileError("""
                Foo("100").intoPartial[Bar]
                 .disableImplicitConflictResolution
