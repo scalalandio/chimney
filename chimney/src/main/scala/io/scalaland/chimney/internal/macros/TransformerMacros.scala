@@ -416,7 +416,9 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                 case DerivationTarget.TotalTransformer =>
                   q"${wrapperSupportInstance}.pure[$toKeyT](${keyTransformer.tree})"
                 case _: DerivationTarget.PartialTransformer =>
+                  // $COVERAGE-OFF$
                   c.abort(c.enclosingPosition, "Not supported for partial transformers!")
+                  // $COVERAGE-ON$
               }
 
             val valueTransformerWithPath =
@@ -429,7 +431,9 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                 case DerivationTarget.TotalTransformer =>
                   q"${wrapperSupportInstance}.pure[$toValueT](${valueTransformer.tree})"
                 case _: DerivationTarget.PartialTransformer =>
+                  // $COVERAGE-OFF$
                   c.abort(c.enclosingPosition, "Not supported for partial transformers!")
+                  // $COVERAGE-ON$
               }
 
             Right(
@@ -467,7 +471,9 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                 case DerivationTarget.TotalTransformer =>
                   Trees.PartialResult.value(keyTransformer.tree)
                 case _: DerivationTarget.LiftedTransformer =>
+                  // $COVERAGE-OFF$
                   c.abort(c.enclosingPosition, "Not supported for lifted transformers!")
+                  // $COVERAGE-ON$
               }
 
             val valueTransformerWithPath =
@@ -477,7 +483,9 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                 case DerivationTarget.TotalTransformer =>
                   Trees.PartialResult.value(valueTransformer.tree)
                 case _: DerivationTarget.LiftedTransformer =>
+                  // $COVERAGE-OFF$
                   c.abort(c.enclosingPosition, "Not supported for lifted transformers!")
+                  // $COVERAGE-ON$
               }
 
             Right(
