@@ -415,10 +415,11 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                    )"""
                 case DerivationTarget.TotalTransformer =>
                   q"${wrapperSupportInstance}.pure[$toKeyT](${keyTransformer.tree})"
-                case _: DerivationTarget.PartialTransformer =>
+                case _: DerivationTarget.PartialTransformer => {
                   // $COVERAGE-OFF$
                   c.abort(c.enclosingPosition, "Not supported for partial transformers!")
                   // $COVERAGE-ON$
+                }
               }
 
             val valueTransformerWithPath =
@@ -430,10 +431,11 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                    )"""
                 case DerivationTarget.TotalTransformer =>
                   q"${wrapperSupportInstance}.pure[$toValueT](${valueTransformer.tree})"
-                case _: DerivationTarget.PartialTransformer =>
+                case _: DerivationTarget.PartialTransformer => {
                   // $COVERAGE-OFF$
                   c.abort(c.enclosingPosition, "Not supported for partial transformers!")
                   // $COVERAGE-ON$
+                }
               }
 
             Right(
@@ -470,10 +472,11 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                   q"${keyTransformer.tree}.prependErrorPath(${Trees.PathElement.mapKey(fnK)})"
                 case DerivationTarget.TotalTransformer =>
                   Trees.PartialResult.value(keyTransformer.tree)
-                case _: DerivationTarget.LiftedTransformer =>
+                case _: DerivationTarget.LiftedTransformer => {
                   // $COVERAGE-OFF$
                   c.abort(c.enclosingPosition, "Not supported for lifted transformers!")
                   // $COVERAGE-ON$
+                }
               }
 
             val valueTransformerWithPath =
@@ -482,10 +485,11 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                   q"${valueTransformer.tree}.prependErrorPath(${Trees.PathElement.mapValue(fnK)})"
                 case DerivationTarget.TotalTransformer =>
                   Trees.PartialResult.value(valueTransformer.tree)
-                case _: DerivationTarget.LiftedTransformer =>
+                case _: DerivationTarget.LiftedTransformer => {
                   // $COVERAGE-OFF$
                   c.abort(c.enclosingPosition, "Not supported for lifted transformers!")
                   // $COVERAGE-ON$
+                }
               }
 
             Right(
