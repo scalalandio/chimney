@@ -12,7 +12,7 @@ sealed abstract class ImplicitTransformerPreference
   */
 case object PreferTotalTransformer extends ImplicitTransformerPreference
 
-/** Tell the derivation to prefer total transformers.
+/** Tell the derivation to prefer partial transformers.
   *
   * @since 0.7.0
   */
