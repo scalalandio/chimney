@@ -24,7 +24,15 @@ import scala.language.experimental.macros
 @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
 trait TransformerF[F[+_], From, To] {
 
-  /** @since 0.5.0 */
+  /** Transforms value with some effect F.
+    *
+    * Should be a referentially transparent function.
+    *
+    * @param src source value
+    * @return transformed value wrapped in F
+    *
+    * @since 0.5.0
+    */
   def transform(src: From): F[To]
 }
 

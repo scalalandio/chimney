@@ -19,8 +19,10 @@ trait Transformer[From, To] {
   /** Run transformation using provided value as a source.
     *
     * @param src source value
+    * @return     transformed value
     *
-    * @since 0.1.0 */
+    * @since 0.1.0
+    */
   def transform(src: From): To
 }
 

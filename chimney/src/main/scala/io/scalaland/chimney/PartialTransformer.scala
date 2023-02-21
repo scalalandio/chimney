@@ -21,6 +21,7 @@ trait PartialTransformer[From, To] {
     *
     * @param src source value
     * @param failFast should fail as early as the first set of errors appear
+    * @return result of transformation
     *
     * @since 0.7.0
     */
@@ -29,6 +30,7 @@ trait PartialTransformer[From, To] {
   /** Run transformation using provided value as a source in error accumulation mode.
     *
     * @param src source value
+    * @return result of transformation
     *
     * @since 0.7.0
     */
@@ -38,6 +40,7 @@ trait PartialTransformer[From, To] {
   /** Run transformation using provided value as a source in short-circuit (fail fast) mode.
     *
     * @param src source value
+    * @return result of transformation
     *
     * @since 0.7.0
     */
@@ -50,14 +53,14 @@ object PartialTransformer {
   /** Construct ad-hoc instance of partial transformer from transforming function.
     *
     * @param f transforming function
-    * @tparam A type of input value
-    * @tparam B type of output value
+    * @tparam From type of input value
+    * @tparam To type of output value
     * @return [[io.scalaland.chimney.PartialTransformer]] type class instance
     *
     * @since 0.7.0
     */
-  def apply[A, B](f: A => partial.Result[B]): PartialTransformer[A, B] =
-    (src: A, _: Boolean) => {
+  def apply[From, To](f: From => partial.Result[To]): PartialTransformer[From, To] =
+    (src: From, _: Boolean) => {
       try {
         f(src)
       } catch {
@@ -74,7 +77,7 @@ object PartialTransformer {
     * @return [[io.scalaland.chimney.PartialTransformer]] type class definition
     *
     * @since 0.7.0
-    * */
+    */
   implicit def derive[From, To]: PartialTransformer[From, To] =
     macro TransformerBlackboxMacros.derivePartialTransformerImpl[From, To]
 
@@ -82,14 +85,12 @@ object PartialTransformer {
     * you can customize to derive [[io.scalaland.chimney.PartialTransformer]].
     *
     * @see [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] for available settings
-    *
     * @tparam From type of input value
     * @tparam To type of output value
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] with defaults
     *
     * @since 0.7.0
-    * */
+    */
   def define[From, To]: PartialTransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new PartialTransformerDefinition(Map.empty, Map.empty)
-
 }
