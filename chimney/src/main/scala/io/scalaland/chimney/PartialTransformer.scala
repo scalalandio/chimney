@@ -50,13 +50,12 @@ trait PartialTransformer[From, To] {
 
 object PartialTransformer {
 
-  /** Construct ad-hoc instance of partial transformer from transforming function.
+  /** Construct ad-hoc instance of partial transformer from transforming function returning partial result.
     *
-    * @param f transforming function
+    * @param f transforming function returning partial result
     * @tparam From type of input value
-    * @tparam To type of output value
+    * @tparam To   type of output value
     * @return [[io.scalaland.chimney.PartialTransformer]] type class instance
-    *
     * @since 0.7.0
     */
   def apply[From, To](f: From => partial.Result[To]): PartialTransformer[From, To] =
@@ -67,6 +66,34 @@ object PartialTransformer {
         case why: Throwable => partial.Result.fromErrorThrowable(why)
       }
     }
+
+  /** Construct ad-hoc instance of partial transformer from transforming function returning target value.
+    *
+    * @param f transforming function returning target value
+    * @tparam From type of input value
+    * @tparam To   type of output value
+    * @return [[io.scalaland.chimney.PartialTransformer]] type class instance
+    * @since 0.7.0
+    */
+  def fromFunction[From, To](f: From => To): PartialTransformer[From, To] =
+    (src: From, _: Boolean) => {
+      try {
+        partial.Result.fromValue(f(src))
+      } catch {
+        case why: Throwable => partial.Result.fromErrorThrowable(why)
+      }
+    }
+
+  /** Lifts total transformer to partial transformer
+    *
+    * @param t instance of total transformer
+    * @tparam From type of input value
+    * @tparam To   type of output value
+    * @return [[io.scalaland.chimney.PartialTransformer]] type class instance
+    * @since 0.7.0
+    */
+  def liftTotal[From, To](t: Transformer[From, To]): PartialTransformer[From, To] =
+    fromFunction[From, To](t.transform)
 
   /** Provides [[io.scalaland.chimney.PartialTransformer]] derived with the default settings.
     *
