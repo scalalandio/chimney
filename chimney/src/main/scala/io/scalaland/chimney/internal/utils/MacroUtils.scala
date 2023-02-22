@@ -48,13 +48,13 @@ trait MacroUtils extends CompanionUtils {
 
     def applyTypeArgs(args: Type*): Type = {
       val ee = t.etaExpand
+      // $COVERAGE-OFF$
       if (ee.typeParams.size != args.size) {
-        // $COVERAGE-OFF$
         val een = ee.typeParams.size
         val argsn = args.size
         c.abort(c.enclosingPosition, s"Type $ee has different arity ($een) than applied to applyTypeArgs ($argsn)!")
-        // $COVERAGE-ON$
       }
+      // $COVERAGE-ON$
       ee.finalResultType.substituteTypes(ee.typeParams, args.toList)
     }
 
@@ -117,7 +117,12 @@ trait MacroUtils extends CompanionUtils {
   implicit class SymbolOps(s: Symbol) {
 
     def classSymbolOpt: Option[ClassSymbol] =
-      if (s.isClass) Some(s.asClass) else None
+      if (s.isClass) Some(s.asClass)
+      else {
+        // $COVERAGE-OFF$
+        None
+        // $COVERAGE-ON$
+      }
 
     def isCaseClass: Boolean =
       classSymbolOpt.exists(_.isCaseClass)
