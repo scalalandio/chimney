@@ -36,20 +36,25 @@ trait TransformerConfigSupport extends MacroUtils {
     def isPartial: Boolean
     def isLifted: Boolean
   }
+
   object DerivationTarget {
     // derivation target instance of `Transformer[A, B]`
     case object TotalTransformer extends DerivationTarget {
       def targetType(toTpe: Type): Type = toTpe
+      // $COVERAGE-OFF$
       def isLifted = false
       def isPartial = false
+      // $COVERAGE-ON$
     }
     // derivation target instance of `PartialTransformer[A, B]`
     case class PartialTransformer(failFastTermName: TermName = freshTermName("failFast")) extends DerivationTarget {
       def failFastTree: Tree = q"$failFastTermName"
       def targetType(toTpe: Type): Type =
         typeOf[partial.Result[_]].typeConstructor.applyTypeArg(toTpe)
+      // $COVERAGE-OFF$
       def isLifted = false
       def isPartial = true
+      // $COVERAGE-ON$
     }
     // derivation target instace of `TransformerF[F, A, B]`, where F is wrapper type
     case class LiftedTransformer(
@@ -58,8 +63,10 @@ trait TransformerConfigSupport extends MacroUtils {
         wrapperErrorPathSupportInstance: Option[Tree] = None
     ) extends DerivationTarget {
       def targetType(toTpe: Type): Type = wrapperType.applyTypeArg(toTpe)
+      // $COVERAGE-OFF$
       def isLifted = true
       def isPartial = false
+      // $COVERAGE-ON$
     }
   }
 
