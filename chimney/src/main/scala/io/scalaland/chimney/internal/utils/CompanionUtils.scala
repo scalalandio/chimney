@@ -21,8 +21,10 @@ trait CompanionUtils {
         .dropWhile { case (x, y) => x == y }
         .takeWhile(_._1 != NoSymbol)
         .map(_._1.name.toTermName)
+      // $COVERAGE-OFF$
       if (path.isEmpty) c.abort(c.enclosingPosition, s"Cannot find a companion for $tpe")
       else c.typecheck(path.foldLeft[Tree](Ident(path.next()))(Select(_, _)), silent = true).symbol
+      // $COVERAGE-ON$
     }
   }
 }
