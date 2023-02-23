@@ -214,7 +214,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                 $srcPrefixTree
                   .map(($fn: ${From.typeArgs.head}) => $liftedTree)
                   .getOrElse(${Trees.PartialResult.empty})
-             """.debug
+             """
           }
       }
     } else {
