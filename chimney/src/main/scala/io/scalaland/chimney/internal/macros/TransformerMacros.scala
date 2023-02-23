@@ -170,7 +170,18 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       expandTypeToValueClass(srcPrefixTree, config)(From, To)
     } else if (bothOptions(From, To)) {
       expandOptions(srcPrefixTree, config)(From, To)
-    } else if (isOption(To) && !To.typeArgs.headOption.exists(_.isSealedClass)) {
+    } else if (config.derivationTarget.isPartial
+               && !config.flags.unsafeOption
+               && isOption(From)
+               && !isOption(To)
+               && From.typeArgs.sizeIs == 1
+               && resolveRecursiveTransformerBody(srcPrefixTree, config.rec)(From.typeArgs.head, To).isRight) { // TODO: extract magic to TypeTestUtils
+      val fn = Ident(freshTermName("value"))
+      resolveRecursiveTransformerBody(q"$fn", config.rec)(From.typeArgs.head, To).map { tbt =>
+        val liftedTree = if (tbt.isTotalTarget) mkTransformerBodyTree0(config.derivationTarget)(tbt.tree) else tbt.tree
+        q"$srcPrefixTree.map(($fn: ${From.typeArgs.head}) => $liftedTree).getOrElse(${Trees.PartialResult.empty})".debug
+      }
+    } else if (isOption(To) && !To.typeArgs.headOption.exists(_.isSealedClass)) { // TODO: check for None?
       expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
     } else if (config.flags.unsafeOption && isOption(From)) {
       expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
