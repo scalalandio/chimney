@@ -87,11 +87,15 @@ object NonEmptyErrorsChainSpec extends TestSuite {
 
       errors1.equals(errors3) ==> false
       errors3.equals(errors1) ==> false
-      // hash codes might be equal or not
+      // hash codes may differ
 
       errors2.equals(errors3) ==> false
       errors3.equals(errors2) ==> false
-      // hash codes might be equal or not
+      // hash codes may differ
+
+      // keep symmetry
+      errors1.equals(List(err(1), err(2), err(3))) ==> false
+      List(err(1), err(2), err(3)).equals(errors1) ==> false
     }
   }
 }
