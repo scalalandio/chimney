@@ -76,6 +76,10 @@ trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
 
     object PartialResult {
 
+      def empty: Tree = {
+        q"_root_.io.scalaland.chimney.partial.Result.fromEmpty"
+      }
+
       def value(valTree: Tree): Tree = {
         q"_root_.io.scalaland.chimney.partial.Result.Value($valTree)"
       }

@@ -162,36 +162,64 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       srcPrefixTree: Tree,
       config: TransformerConfig
   )(From: Type, To: Type): Either[Seq[TransformerDerivationError], Tree] = {
-    if (isSubtype(From, To)) {
-      expandSubtypes(srcPrefixTree, config)
-    } else if (fromValueClassToType(From, To)) {
-      expandValueClassToType(srcPrefixTree, config)(From, To)
-    } else if (fromTypeToValueClass(From, To)) {
-      expandTypeToValueClass(srcPrefixTree, config)(From, To)
-    } else if (bothOptions(From, To)) {
-      expandOptions(srcPrefixTree, config)(From, To)
-    } else if (isOption(To) && !To.typeArgs.headOption.exists(_.isSealedClass)) {
-      expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
-    } else if (config.flags.unsafeOption && isOption(From)) {
-      expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
-    } else if (bothEithers(From, To)) {
-      expandEithers(srcPrefixTree, config)(From, To)
-    } else if (isMap(From)) {
-      expandFromMap(srcPrefixTree, config)(From, To)
-    } else if (bothOfIterableOrArray(From, To)) {
-      expandIterableOrArray(srcPrefixTree, config)(From, To)
-    } else if (isTuple(To)) {
-      expandDestinationTuple(srcPrefixTree, config)(From, To)
-    } else if (destinationCaseClass(To)) {
-      expandDestinationCaseClass(srcPrefixTree, config)(From, To)
-    } else if (config.flags.beanSetters && destinationJavaBean(To)) {
-      expandDestinationJavaBean(srcPrefixTree, config)(From, To)
-    } else if (bothSealedClasses(From, To)) {
-      expandSealedClasses(srcPrefixTree, config)(From, To)
-    } else {
-      notSupportedDerivation(srcPrefixTree, From, To)
-    }
 
+    expandPartialFromOptionToNonOption(srcPrefixTree, config)(From, To)
+      .getOrElse {
+        if (isSubtype(From, To)) {
+          expandSubtypes(srcPrefixTree, config)
+        } else if (fromValueClassToType(From, To)) {
+          expandValueClassToType(srcPrefixTree, config)(From, To)
+        } else if (fromTypeToValueClass(From, To)) {
+          expandTypeToValueClass(srcPrefixTree, config)(From, To)
+        } else if (bothOptions(From, To)) {
+          expandOptions(srcPrefixTree, config)(From, To)
+        } else if (isOption(To) && !To.typeArgs.headOption.exists(_.isSealedClass)) { // TODO: check for None?
+          expandTargetWrappedInOption(srcPrefixTree, config)(From, To)
+        } else if (config.flags.unsafeOption && isOption(From)) {
+          expandSourceWrappedInOption(srcPrefixTree, config)(From, To)
+        } else if (bothEithers(From, To)) {
+          expandEithers(srcPrefixTree, config)(From, To)
+        } else if (isMap(From)) {
+          expandFromMap(srcPrefixTree, config)(From, To)
+        } else if (bothOfIterableOrArray(From, To)) {
+          expandIterableOrArray(srcPrefixTree, config)(From, To)
+        } else if (isTuple(To)) {
+          expandDestinationTuple(srcPrefixTree, config)(From, To)
+        } else if (destinationCaseClass(To)) {
+          expandDestinationCaseClass(srcPrefixTree, config)(From, To)
+        } else if (config.flags.beanSetters && destinationJavaBean(To)) {
+          expandDestinationJavaBean(srcPrefixTree, config)(From, To)
+        } else if (bothSealedClasses(From, To)) {
+          expandSealedClasses(srcPrefixTree, config)(From, To)
+        } else {
+          notSupportedDerivation(srcPrefixTree, From, To)
+        }
+      }
+  }
+
+  def expandPartialFromOptionToNonOption(
+      srcPrefixTree: Tree,
+      config: TransformerConfig
+  )(From: Type, To: Type): Option[Either[Seq[TransformerDerivationError], Tree]] = {
+    if (config.derivationTarget.isPartial && !config.flags.unsafeOption && fromOptionToNonOption(From, To)) {
+      Some {
+        val fn = Ident(freshTermName("value"))
+        resolveRecursiveTransformerBody(q"$fn", config.rec)(From.typeArgs.head, To)
+          .map { tbt =>
+            val liftedTree =
+              if (tbt.isPartialTarget) tbt.tree
+              else mkTransformerBodyTree0(config.derivationTarget)(tbt.tree)
+
+            q"""
+                $srcPrefixTree
+                  .map(($fn: ${From.typeArgs.head}) => $liftedTree)
+                  .getOrElse(${Trees.PartialResult.empty})
+             """
+          }
+      }
+    } else {
+      None
+    }
   }
 
   def expandSubtypes(

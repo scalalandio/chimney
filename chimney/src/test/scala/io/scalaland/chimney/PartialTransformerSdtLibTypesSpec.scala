@@ -151,6 +151,57 @@ object PartialTransformerSdtLibTypesSpec extends TestSuite {
       }
     }
 
+    test("transform from Option-type into non-Option-type, using Total Transformer for inner type transformation") {
+
+      implicit val intPrinter: Transformer[Int, String] = _.toString
+
+      test("when option is non-empty") {
+        val result = Option(10).transformIntoPartial[String]
+
+        result.asOption ==> Some("10")
+        result.asEither ==> Right("10")
+        result.asErrorPathMessageStrings ==> Iterable.empty
+      }
+
+      test("when option is empty") {
+        val result = Option.empty[Int].transformIntoPartial[String]
+
+        result.asOption ==> None
+        result.asEither ==> Left(partial.Result.fromEmpty)
+        result.asErrorPathMessageStrings ==> Iterable(("", "empty value"))
+      }
+    }
+
+    test("transform from Option-type into non-Option-type, using Partial Transformer for inner type transformation") {
+
+      implicit val intPartialParser: PartialTransformer[String, Int] =
+        PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
+
+      test("when option is non-empty and inner is success") {
+        val result = Option("10").transformIntoPartial[Int]
+
+        result.asOption ==> Some(10)
+        result.asEither ==> Right(10)
+        result.asErrorPathMessageStrings ==> Iterable.empty
+      }
+
+      test("when option is non-empty and inner is failure") {
+        val result = Some("abc").transformIntoPartial[Int]
+
+        result.asOption ==> None
+        result.asEither ==> Left(partial.Result.fromErrorString("bad int"))
+        result.asErrorPathMessageStrings ==> Iterable("" -> "bad int")
+      }
+
+      test("when option is empty") {
+        val result = (None: Option[String]).transformIntoPartial[Int]
+
+        result.asOption ==> None
+        result.asEither ==> Left(partial.Result.fromEmpty)
+        result.asErrorPathMessageStrings ==> Iterable(("", "empty value"))
+      }
+    }
+
     test("transform from Either-type into Either-type, using Total Transformer for inner types transformation") {
       implicit val intPrinter: Transformer[Int, String] = _.toString
 
