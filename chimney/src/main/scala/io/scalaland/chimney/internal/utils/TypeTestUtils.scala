@@ -37,7 +37,7 @@ trait TypeTestUtils extends MacroUtils {
   }
 
   def fromOptionToNonOption(from: Type, to: Type): Boolean = {
-    isOption(from) && !isOption(to) && from.typeArgs.sizeCompare(1) == 0
+    isOption(from) && !isOption(to) && from.typeArgs.size == 1
   }
 
   def isTuple(to: Type): Boolean =
