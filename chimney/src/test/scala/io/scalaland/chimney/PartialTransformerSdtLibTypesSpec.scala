@@ -186,7 +186,7 @@ object PartialTransformerSdtLibTypesSpec extends TestSuite {
       }
 
       test("when option is non-empty and inner is failure") {
-        val result = Option("abc").transformIntoPartial[Int]
+        val result = Some("abc").transformIntoPartial[Int]
 
         result.asOption ==> None
         result.asEither ==> Left(partial.Result.fromErrorString("bad int"))
@@ -194,7 +194,7 @@ object PartialTransformerSdtLibTypesSpec extends TestSuite {
       }
 
       test("when option is empty") {
-        val result = Option.empty[String].transformIntoPartial[Int]
+        val result = (None: Option[String]).transformIntoPartial[Int]
 
         result.asOption ==> None
         result.asEither ==> Left(partial.Result.fromEmpty)
