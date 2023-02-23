@@ -185,9 +185,18 @@ object PartialTransformerProductSpec extends TestSuite {
         result3.asOption ==> Some(expected2)
         result3.asEither ==> Right(expected2)
         result3.asErrorPathMessageStrings ==> Iterable.empty
-      }
 
-      // TODO: failed values
+        val result4 = Person("John", 10, 140)
+          .intoPartial[User]
+          .withFieldConstPartial(_.age, partial.Result.fromEmpty)
+          .transform
+
+        result4.asOption ==> None
+        result4.asEither.isLeft ==> true
+        result4.asErrorPathMessageStrings ==> Iterable(
+          "age" -> "empty value"
+        )
+      }
     }
 
     test("setting .withFieldComputed(_.field, source => value)") {
@@ -246,6 +255,17 @@ object PartialTransformerProductSpec extends TestSuite {
         result3.asOption ==> Some(expected2)
         result3.asEither ==> Right(expected2)
         result3.asErrorPathMessageStrings ==> Iterable.empty
+
+        val result4 = Person("John", 10, 140)
+          .intoPartial[User]
+          .withFieldComputedPartial(_.age, _ => partial.Result.fromEmpty)
+          .transform
+
+        result4.asOption ==> None
+        result4.asEither.isLeft ==> true
+        result4.asErrorPathMessageStrings ==> Iterable(
+          "age" -> "empty value"
+        )
       }
     }
 
