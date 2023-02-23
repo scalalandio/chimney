@@ -153,12 +153,24 @@ object PartialResultSpec extends TestSuite {
     test("fromEitherString") {
       partial.Result.fromEitherString(Right(1)) ==> partial.Result.fromValue(1)
       partial.Result.fromEitherString(Left("foo")) ==> partial.Result.fromErrorString("foo")
+
+      test("with dsl") {
+        import io.scalaland.chimney.dsl._
+        Right(1).toPartialResult ==> partial.Result.fromValue(1)
+        Left("foo").toPartialResult ==> partial.Result.fromErrorString("foo")
+      }
     }
 
     test("fromTry") {
       val exception = new NoSuchElementException()
       partial.Result.fromTry(Try(1)) ==> partial.Result.fromValue(1)
       partial.Result.fromTry(Try(throw exception)) ==> partial.Result.fromErrorThrowable(exception)
+
+      test("with dsl") {
+        import io.scalaland.chimney.dsl._
+        Try(1).toPartialResult ==> partial.Result.fromValue(1)
+        Try(throw exception).toPartialResult ==> partial.Result.fromErrorThrowable(exception)
+      }
     }
 
     test("fromCatching") {
