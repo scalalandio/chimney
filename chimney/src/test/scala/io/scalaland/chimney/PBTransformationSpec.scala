@@ -134,20 +134,56 @@ object PBTransformationSpec extends TestSuite {
       }
 
       test("Order") {
-        val domainOrder =
-          order.Order(
-            List(order.OrderLine(order.Item(123, "foo"), 3), order.OrderLine(order.Item(321, "bar"), 1)),
-            order.Customer(123, "John", "Beer", order.Address("street", 1137, "city"))
+        test("success case") {
+          val domainOrder =
+            order.Order(
+              List(order.OrderLine(order.Item(123, "foo"), 3), order.OrderLine(order.Item(321, "bar"), 1)),
+              order.Customer(123, "John", "Beer", order.Address("street", 1137, "city"))
+            )
+          val pbOrder = pb.order.Order(
+            Seq(
+              pb.order.OrderLine(Option(pb.order.Item(123, "foo")), 3),
+              pb.order.OrderLine(Option(pb.order.Item(321, "bar")), 1)
+            ),
+            Option(pb.order.Customer(123, "John", "Beer", Option(pb.order.Address("street", 1137, "city"))))
           )
-        val pbOrder = pb.order.Order(
-          Seq(
-            pb.order.OrderLine(Option(pb.order.Item(123, "foo")), 3),
-            pb.order.OrderLine(Option(pb.order.Item(321, "bar")), 1)
-          ),
-          Option(pb.order.Customer(123, "John", "Beer", Option(pb.order.Address("street", 1137, "city"))))
-        )
-        domainOrder.into[pb.order.Order].enableUnsafeOption.transform ==> pbOrder
-        pbOrder.into[order.Order].enableUnsafeOption.transform ==> domainOrder
+
+          domainOrder.into[pb.order.Order].transform ==> pbOrder
+
+          test("using unsafe options") {
+            pbOrder.into[order.Order].enableUnsafeOption.transform ==> domainOrder
+          }
+
+          test("using partial transformers") {
+            pbOrder.into[order.Order].partial.transform ==> partial.Result.fromValue(domainOrder)
+          }
+        }
+
+        test("failure case") {
+          val pbFailureOrder = pb.order.Order(
+            Seq(
+              pb.order.OrderLine(Option(pb.order.Item(123, "foo")), 3),
+              pb.order.OrderLine(None, 1)
+            ),
+            Option(pb.order.Customer(123, "John", "Beer", None))
+          )
+
+          test("using unsafe options") {
+            intercept[NoSuchElementException] {
+              pbFailureOrder.into[order.Order].enableUnsafeOption.transform
+            }
+          }
+
+          test("using partial transformers") {
+            val result = pbFailureOrder.into[order.Order].partial.transform
+
+            result.asOption ==> None
+            result.asErrorPathMessageStrings ==> Iterable(
+              "lines(1).item" -> "empty value",
+              "customer.address" -> "empty value"
+            )
+          }
+        }
       }
     }
 
