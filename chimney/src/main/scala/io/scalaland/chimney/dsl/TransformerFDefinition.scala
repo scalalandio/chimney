@@ -4,7 +4,6 @@ import io.scalaland.chimney.{TransformerF, TransformerFSupport}
 import io.scalaland.chimney.internal._
 import io.scalaland.chimney.internal.macros.dsl.{TransformerBlackboxMacros, TransformerFDefinitionWhiteboxMacros}
 
-import scala.annotation.unused
 import scala.language.experimental.macros
 
 /** Allows customization of [[io.scalaland.chimney.TransformerF]] derivation
