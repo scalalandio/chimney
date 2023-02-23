@@ -36,6 +36,10 @@ trait TypeTestUtils extends MacroUtils {
     iterableOrArray(from) && iterableOrArray(to)
   }
 
+  def fromOptionToNonOption(from: Type, to: Type): Boolean = {
+    isOption(from) && !isOption(to) && from.typeArgs.sizeIs == 1
+  }
+
   def isTuple(to: Type): Boolean =
     Seq(
       typeOf[Tuple1[_]],
