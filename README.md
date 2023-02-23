@@ -152,7 +152,7 @@ HTML Documentation should be generated at `target/sphinx/html/index.html`.
 Alternatively use Docker:
 
 ```bash
-docker run --rm -v ./docs:/docs sphinxdoc/sphinx:3.2.1 bash -c "pip install sphinx-rtd-theme && make html"
+docker run --rm -v "$PWD/docs:/docs" sphinxdoc/sphinx:3.2.1 bash -c "pip install sphinx-rtd-theme && make html"
 ```
 
 ## Thanks

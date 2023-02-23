@@ -69,29 +69,70 @@ some values can be converted?
   case class ApiUser(name: String, ageInput: String, email: Option[String])
   case class User(name: String, age: Int, email: String)
 
-  ApiUser("John", "21") // ??
-  ApiUser("Ted", "eighteen") // ??
+  ApiUser("John", "21", Some("john@example.com")) // ??
+  ApiUser("Ted", "eighteen", None) // ??
 
-What to do with the rest of them? Return null? Throw exception? Chimney provides safer
+What to do with the rest of them? Return ``null``? Throw ``Exception``? Chimney provides safer
 alternative:
+
+.. code-block:: scala
 
   import io.scalaland.chimney._
   import io.scalaland.chimney.dsl._
+  import io.scalaland.chimney.partial._
 
-  val result1 = ApiUser("John", "21", Some("john@example.com")).intoPartial[User]
-    .withFieldComputedPartial(_.age, api => partial.Result.fromCatching(api.ageInput.toInt))
+  val success = ApiUser("John", "21", Some("john@example.com")).intoPartial[User]
+    .withFieldComputedPartial(_.age, api => Result.fromCatching(api.ageInput.toInt))
     .transform
-  result1.asOption // Some(User("name", 21, "john@example.com"))
-  result2.asEither // Right(User("name", 21, "john@example.com"))
-
-  val result2 = ApiUser("Ted", "eighteen", None).intoPartial[User]
-    .withFieldComputedPartial(_.age, api => partial.Result.fromCatching(api.ageInput.toInt))
+ val failure = ApiUser("Ted", "eighteen", None).intoPartial[User]
+    .withFieldComputedPartial(_.age, api => Result.fromCatching(api.ageInput.toInt))
     .transform
-  result2.asOption // None
-  result2.asErrorMessageStrings // List("age" -> "For input string: \"eighteen\"", "email" -> "empty value")
 
 Partial transformers allow you to conditionally transform some elements of your data, and if they fail, provide you
 with information which element failed and how.
+
+You can discard errors and just see if conversion succeeded...
+
+.. code-block:: scala
+
+  success.asOption
+  // Some(User("name", 21, "john@example.com"))
+  failure.asOption
+  // None
+
+...or check if there are some errors with a human readable summary...
+
+.. code-block:: scala
+
+  success.asErrorMessageStrings
+  // Iterable()
+  failure.asErrorMessageStrings
+  // Iterable("age" -> "For input string: \"eighteen\"", "email" -> "empty value")
+
+...or, finally, you can preserve all information and decide yourself what to do with errors
+
+.. code-block:: scala
+
+  success.asEither
+  // Right(User("name", 21, "john@example.com"))
+  failure.asEither
+  // Left(Result.Errors(
+  //   Error
+  //     .fromThrowable(new NumberFormatException("For input string: \"eighteen\""))
+  //     .prependErrorPath(Path.Accessor("age")),
+  //   Error
+  //     .fromEmptyValue
+  //     .prependErrorPath(Path.Accessor("email"))
+  // ))
+  failure.asErrorPathMessages
+  // Iterable(
+  //   "age" -> ErrorMessage.ThrowableMessage(
+  //      new NumberFormatException("For input string: \"eighteen\"")
+  //   ),
+  //   "email" -> ErrorMessage.EmptyValue
+  // )
+
+because each ``Error`` and ``ErrorMessage`` is a case class that you can pattern-match or convert to ``String``.
 
 Read :ref:`partial-transformers/partial-transformers:Partial transformers` to learn more about
 Chimney's partial transformers.

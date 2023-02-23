@@ -166,8 +166,8 @@ You can expect that basic functionality of chimney's ``Transformer`` either work
 fashion in ``PartialTransformer``\s, or have some counterparty methods in the API
 (usually with the `Partial` prefix or suffix in the name).
 
-Preferring total or partial transformers for inner value transformation
------------------------------------------------------------------------
+Preferring total or partial transformer
+---------------------------------------
 
 Under normal circumstances when fields or sealed hierarchy subtypes should be converted, Chimney should be able
 to generate code on its own. If it cannot you could provide it with derivation settings or implicit transformer handling
@@ -192,6 +192,8 @@ But which implicit should be taken in this situation?
 
 To avoid the ambiguity, Chimney would fail the derivation in such case and expect you to tell it, which transformer it
 should prefer: total or partial:
+
+.. code-block:: scala
 
   import io.scalaland.chimney._
   import io.scalaland.chimney.dsl._
