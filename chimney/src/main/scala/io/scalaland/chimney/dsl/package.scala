@@ -202,26 +202,6 @@ package object dsl {
     def toPartialResult: partial.Result[T] =
       partial.Result.fromOption(option)
 
-    /** Converts Option to Result, using provided Errors if None.
-      *
-      * @param ifEmpty lazy failed result for [[scala.None]]
-      * @return successful result if [[scala.Some]], provided failed result if [[scala.None]]
-      *
-      * @since 0.7.0
-      */
-    def toPartialResultOrErrors(ifEmpty: => partial.Result.Errors): partial.Result[T] =
-      partial.Result.fromOptionOrErrors(option, ifEmpty)
-
-    /** Converts Option to Result, using provided Error if None.
-      *
-      * @param ifEmpty lazy error for [[scala.None]]
-      * @return successful result if [[scala.Some]], failed result with provided error if [[scala.None]]
-      *
-      * @since 0.7.0
-      */
-    def toPartialResultOrError(ifEmpty: => partial.Error): partial.Result[T] =
-      partial.Result.fromOptionOrError(option, ifEmpty)
-
     /** Converts Option to Result, using provided error message if None.
       *
       * @param ifEmpty lazy error message for [[scala.None]]
@@ -231,16 +211,6 @@ package object dsl {
       */
     def toPartialResultOrString(ifEmpty: => String): partial.Result[T] =
       partial.Result.fromOptionOrString(option, ifEmpty)
-
-    /** Converts Option to Result, using provided Throwable if None.
-      *
-      * @param ifEmpty lazy error for [[scala.None]]
-      * @return successful result if [[scala.Some]], failed result with provided Throwable if [[scala.None]]
-      *
-      * @since 0.7.0
-      */
-    def toPartialResultOrThrowable(ifEmpty: => Throwable): partial.Result[T] =
-      partial.Result.fromOptionOrThrowable(option, ifEmpty)
   }
 
   /** Lifts [[scala.Either]] into [[io.scalaland.chimney.partial.Result]].

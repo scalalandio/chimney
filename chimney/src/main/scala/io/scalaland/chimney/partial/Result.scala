@@ -305,27 +305,12 @@ object Result {
     case _           => fromEmpty[T]
   }
 
-  /** Converts Option to Result, using provided Errors if None.
-    *
-    * @tparam T type of successful result
-    * @param value Option to convert
-    * @param ifEmpty lazy failed result for [[scala.None]]
-    * @return successful result if [[scala.Some]], provided failed result if [[scala.None]]
-    *
-    * @since 0.7.0
-    */
-  final def fromOptionOrErrors[T](value: Option[T], ifEmpty: => Errors): Result[T] = value match {
-    case Some(value) => fromValue(value)
-    case _           => ifEmpty
-  }
-
   /** Converts Option to Result, using provided Error if None.
     *
     * @tparam T type of successful result
     * @param value   Option to convert
     * @param ifEmpty lazy error for [[scala.None]]
     * @return successful result if [[scala.Some]], failed result with provided error if [[scala.None]]
-    *
     * @since 0.7.0
     */
   final def fromOptionOrError[T](value: Option[T], ifEmpty: => Error): Result[T] = value match {

@@ -2,6 +2,8 @@ package io.scalaland.chimney
 
 import utest._
 
+import scala.util.Try
+
 object PartialResultSpec extends TestSuite {
 
   val tests = Tests {
@@ -76,6 +78,273 @@ object PartialResultSpec extends TestSuite {
       result3.asOption ==> None
       result3.asEither.isLeft ==> true
       result3.asErrorPathMessageStrings ==> Iterable("" -> """For input string: "error1"""")
+    }
+
+    test("fromFunction") {
+      partial.Result.fromFunction[Int, Int](_ * 2).apply(3) ==> partial.Result.fromValue(6)
+    }
+
+    test("fromPartialFunction") {
+      val f = partial.Result.fromPartialFunction[Int, Int] {
+        case n if n > 0 => n * 2
+      }
+
+      f.apply(3) ==> partial.Result.fromValue(6)
+      f.apply(0) ==> partial.Result.fromErrorNotDefinedAt(0)
+    }
+
+    test("fromError") {
+      val err = partial.Error.ofEmptyValue
+      partial.Result.fromError(err) ==> partial.Result.Errors(err)
+    }
+
+    test("fromErrors") {
+      val err1 = partial.Error.ofEmptyValue
+      val err2 = partial.Error.ofString("foo")
+      val err3 = partial.Error.ofEmptyValue
+      partial.Result.fromErrors(err1, err2, err3) ==> partial.Result.Errors(err1, err2, err3)
+    }
+
+    test("fromErrorString") {
+      partial.Result.fromErrorString("foo") ==> partial.Result.Errors(partial.Error.ofString("foo"))
+    }
+
+    test("fromErrorStrings") {
+      partial.Result.fromErrorStrings("foo1", "foo2") ==> partial.Result.Errors(
+        partial.Error.ofString("foo1"),
+        partial.Error.ofString("foo2")
+      )
+    }
+
+    test("fromErrorNotDefinedAt") {
+      partial.Result.fromErrorNotDefinedAt(100) ==> partial.Result.Errors(partial.Error.ofNotDefinedAt(100))
+    }
+
+    test("fromOption") {
+      partial.Result.fromOption(Some(1)) ==> partial.Result.fromValue(1)
+      partial.Result.fromOption(None) ==> partial.Result.fromEmpty
+    }
+
+    test("fromOptionOrError") {
+      partial.Result.fromOptionOrError(Some(1), partial.Error.ofString("empty")) ==> partial.Result.fromValue(1)
+      partial.Result.fromOptionOrError(None, partial.Error.ofString("empty")) ==> partial.Result.fromErrorString(
+        "empty"
+      )
+    }
+
+    test("fromOptionOrString") {
+      partial.Result.fromOptionOrString(Some(1), "empty") ==> partial.Result.fromValue(1)
+      partial.Result.fromOptionOrString(None, "empty") ==> partial.Result.fromErrorString("empty")
+    }
+
+    test("fromOptionOrThrowable") {
+      val exception = new NoSuchElementException()
+      partial.Result.fromOptionOrThrowable(Some(1), exception) ==> partial.Result.fromValue(1)
+      partial.Result.fromOptionOrThrowable(None, exception) ==> partial.Result.fromErrorThrowable(exception)
+    }
+
+    test("fromEither") {
+      partial.Result.fromEither(Right(1)) ==> partial.Result.fromValue(1)
+      partial.Result.fromEither(
+        Left(partial.Result.Errors.single(partial.Error.ofString("foo")))
+      ) ==> partial.Result.fromErrorString("foo")
+    }
+
+    test("fromEitherString") {
+      partial.Result.fromEitherString(Right(1)) ==> partial.Result.fromValue(1)
+      partial.Result.fromEitherString(Left("foo")) ==> partial.Result.fromErrorString("foo")
+    }
+
+    test("fromTry") {
+      val exception = new NoSuchElementException()
+      partial.Result.fromTry(Try(1)) ==> partial.Result.fromValue(1)
+      partial.Result.fromTry(Try(throw exception)) ==> partial.Result.fromErrorThrowable(exception)
+    }
+
+    test("fromCatching") {
+      val exception = new NoSuchElementException()
+      partial.Result.fromCatching(1) ==> partial.Result.fromValue(1)
+      partial.Result.fromCatching(throw exception) ==> partial.Result.fromErrorThrowable(exception)
+    }
+
+    test(
+      "traverse with failFast = false preserves parallel semantics (both branches are executed even if one of them fails)"
+    ) {
+      var operations = 0
+      val result = partial.Result.traverse[List[Int], String, Int](
+        Iterator("1", "2", "3", "4"),
+        s => {
+          operations += 1
+          partial.Result.fromCatching(s.toInt)
+        },
+        failFast = false
+      )
+      operations ==> 4
+      result.asOption ==> Some(List(1, 2, 3, 4))
+      result.asEither ==> Right(List(1, 2, 3, 4))
+      result.asErrorPathMessageStrings ==> Iterable()
+
+      var operations2 = 0
+      val result2 = partial.Result.traverse[List[Int], String, Int](
+        Iterator("a", "b", "c", "d"),
+        s => {
+          operations2 += 1
+          partial.Result.fromCatching(s.toInt)
+        },
+        failFast = false
+      )
+      operations2 ==> 4
+      result2.asOption ==> None
+      result2.asEither.isLeft ==> true
+      result2.asErrorPathMessageStrings ==> Iterable(
+        "" -> """For input string: "a"""",
+        "" -> """For input string: "b"""",
+        "" -> """For input string: "c"""",
+        "" -> """For input string: "d""""
+      )
+    }
+
+    test(
+      "traverse with failFast = false preserves sequential semantics (first error interrupts)"
+    ) {
+      var operations = 0
+      val result = partial.Result.traverse[List[Int], String, Int](
+        Iterator("1", "2", "3", "4"),
+        s => {
+          operations += 1
+          partial.Result.fromCatching(s.toInt)
+        },
+        failFast = true
+      )
+      operations ==> 4
+      result.asOption ==> Some(List(1, 2, 3, 4))
+      result.asEither ==> Right(List(1, 2, 3, 4))
+      result.asErrorPathMessageStrings ==> Iterable()
+
+      var operations2 = 0
+      val result2 = partial.Result.traverse[List[Int], String, Int](
+        Iterator("a", "b", "c", "d"),
+        s => {
+          operations2 += 1
+          partial.Result.fromCatching(s.toInt)
+        },
+        failFast = true
+      )
+      operations2 ==> 1
+      result2.asOption ==> None
+      result2.asEither.isLeft ==> true
+      result2.asErrorPathMessageStrings ==> Iterable(
+        "" -> """For input string: "a""""
+      )
+    }
+
+    test(
+      "sequence with failFast = false preserves parallel semantics (both branches are executed even if one of them fails)"
+    ) {
+      var operations = 0
+      val result = partial.Result.sequence[List[Int], Int](
+        Iterator("1", "2", "3", "4").map { s =>
+          operations += 1
+          partial.Result.fromCatching(s.toInt)
+        },
+        failFast = false
+      )
+      operations ==> 4
+      result.asOption ==> Some(List(1, 2, 3, 4))
+      result.asEither ==> Right(List(1, 2, 3, 4))
+      result.asErrorPathMessageStrings ==> Iterable()
+
+      var operations2 = 0
+      val result2 = partial.Result.sequence[List[Int], Int](
+        Iterator("a", "b", "c", "d").map { s =>
+          operations2 += 1
+          partial.Result.fromCatching(s.toInt)
+        },
+        failFast = false
+      )
+      operations2 ==> 4
+      result2.asOption ==> None
+      result2.asEither.isLeft ==> true
+      result2.asErrorPathMessageStrings ==> Iterable(
+        "" -> """For input string: "a"""",
+        "" -> """For input string: "b"""",
+        "" -> """For input string: "c"""",
+        "" -> """For input string: "d""""
+      )
+    }
+
+    test(
+      "sequence with failFast = false preserves sequential semantics (first error interrupts)"
+    ) {
+      var operations = 0
+      val result = partial.Result.sequence[List[Int], Int](
+        Iterator("1", "2", "3", "4").map { s =>
+          operations += 1
+          partial.Result.fromCatching(s.toInt)
+        },
+        failFast = true
+      )
+      operations ==> 4
+      result.asOption ==> Some(List(1, 2, 3, 4))
+      result.asEither ==> Right(List(1, 2, 3, 4))
+      result.asErrorPathMessageStrings ==> Iterable()
+
+      var operations2 = 0
+      val result2 = partial.Result.sequence[List[Int], Int](
+        Iterator("a", "b", "c", "d").map { s =>
+          operations2 += 1
+          partial.Result.fromCatching(s.toInt)
+        },
+        failFast = true
+      )
+      operations2 ==> 1
+      result2.asOption ==> None
+      result2.asEither.isLeft ==> true
+      result2.asErrorPathMessageStrings ==> Iterable(
+        "" -> """For input string: "a""""
+      )
+    }
+
+    test("asErrorPathMessageStrings should convert PathElements and Errors to Strings") {
+      case class Err(msg: String) extends Throwable(msg)
+
+      val result = partial.Result.sequence[List[Int], Int](
+        Iterator(
+          partial.Result.fromValue(10),
+          partial.Result.fromEmpty[Int],
+          partial.Result.fromErrorString[Int]("something bad happened"),
+          partial.Result.fromErrorNotDefinedAt[Int](0),
+          partial.Result.fromErrorThrowable[Int](Err("error just happened"))
+        ),
+        failFast = false
+      )
+      result.asErrorPathMessageStrings ==> Iterable(
+        "" -> "empty value",
+        "" -> "something bad happened",
+        "" -> "not defined at 0",
+        "" -> "error just happened"
+      )
+    }
+
+    test("asErrorPathMessages should convert PathElements to Strings") {
+      case class Err(msg: String) extends Throwable(msg)
+
+      val result = partial.Result.sequence[List[Int], Int](
+        Iterator(
+          partial.Result.fromValue(10),
+          partial.Result.fromEmpty[Int],
+          partial.Result.fromErrorString[Int]("something bad happened"),
+          partial.Result.fromErrorNotDefinedAt[Int](()),
+          partial.Result.fromErrorThrowable[Int](Err("error just happened"))
+        ),
+        failFast = false
+      )
+      result.asErrorPathMessages ==> Iterable(
+        "" -> partial.ErrorMessage.EmptyValue,
+        "" -> partial.ErrorMessage.StringMessage("something bad happened"),
+        "" -> partial.ErrorMessage.NotDefinedAt(()),
+        "" -> partial.ErrorMessage.ThrowableMessage(Err("error just happened"))
+      )
     }
 
     test(
@@ -374,186 +643,6 @@ object PartialResultSpec extends TestSuite {
       result3.asOption ==> None
       result3.asEither.isLeft ==> true
       result3.asErrorPathMessageStrings ==> Iterable("" -> """For input string: "error"""")
-    }
-
-    test(
-      "traverse with failFast = false preserves parallel semantics (both branches are executed even if one of them fails)"
-    ) {
-      var operations = 0
-      val result = partial.Result.traverse[List[Int], String, Int](
-        Iterator("1", "2", "3", "4"),
-        s => {
-          operations += 1
-          partial.Result.fromCatching(s.toInt)
-        },
-        failFast = false
-      )
-      operations ==> 4
-      result.asOption ==> Some(List(1, 2, 3, 4))
-      result.asEither ==> Right(List(1, 2, 3, 4))
-      result.asErrorPathMessageStrings ==> Iterable()
-
-      var operations2 = 0
-      val result2 = partial.Result.traverse[List[Int], String, Int](
-        Iterator("a", "b", "c", "d"),
-        s => {
-          operations2 += 1
-          partial.Result.fromCatching(s.toInt)
-        },
-        failFast = false
-      )
-      operations2 ==> 4
-      result2.asOption ==> None
-      result2.asEither.isLeft ==> true
-      result2.asErrorPathMessageStrings ==> Iterable(
-        "" -> """For input string: "a"""",
-        "" -> """For input string: "b"""",
-        "" -> """For input string: "c"""",
-        "" -> """For input string: "d""""
-      )
-    }
-
-    test(
-      "traverse with failFast = false preserves sequential semantics (first error interrupts)"
-    ) {
-      var operations = 0
-      val result = partial.Result.traverse[List[Int], String, Int](
-        Iterator("1", "2", "3", "4"),
-        s => {
-          operations += 1
-          partial.Result.fromCatching(s.toInt)
-        },
-        failFast = true
-      )
-      operations ==> 4
-      result.asOption ==> Some(List(1, 2, 3, 4))
-      result.asEither ==> Right(List(1, 2, 3, 4))
-      result.asErrorPathMessageStrings ==> Iterable()
-
-      var operations2 = 0
-      val result2 = partial.Result.traverse[List[Int], String, Int](
-        Iterator("a", "b", "c", "d"),
-        s => {
-          operations2 += 1
-          partial.Result.fromCatching(s.toInt)
-        },
-        failFast = true
-      )
-      operations2 ==> 1
-      result2.asOption ==> None
-      result2.asEither.isLeft ==> true
-      result2.asErrorPathMessageStrings ==> Iterable(
-        "" -> """For input string: "a""""
-      )
-    }
-
-    test(
-      "sequence with failFast = false preserves parallel semantics (both branches are executed even if one of them fails)"
-    ) {
-      var operations = 0
-      val result = partial.Result.sequence[List[Int], Int](
-        Iterator("1", "2", "3", "4").map { s =>
-          operations += 1
-          partial.Result.fromCatching(s.toInt)
-        },
-        failFast = false
-      )
-      operations ==> 4
-      result.asOption ==> Some(List(1, 2, 3, 4))
-      result.asEither ==> Right(List(1, 2, 3, 4))
-      result.asErrorPathMessageStrings ==> Iterable()
-
-      var operations2 = 0
-      val result2 = partial.Result.sequence[List[Int], Int](
-        Iterator("a", "b", "c", "d").map { s =>
-          operations2 += 1
-          partial.Result.fromCatching(s.toInt)
-        },
-        failFast = false
-      )
-      operations2 ==> 4
-      result2.asOption ==> None
-      result2.asEither.isLeft ==> true
-      result2.asErrorPathMessageStrings ==> Iterable(
-        "" -> """For input string: "a"""",
-        "" -> """For input string: "b"""",
-        "" -> """For input string: "c"""",
-        "" -> """For input string: "d""""
-      )
-    }
-
-    test(
-      "sequence with failFast = false preserves sequential semantics (first error interrupts)"
-    ) {
-      var operations = 0
-      val result = partial.Result.sequence[List[Int], Int](
-        Iterator("1", "2", "3", "4").map { s =>
-          operations += 1
-          partial.Result.fromCatching(s.toInt)
-        },
-        failFast = true
-      )
-      operations ==> 4
-      result.asOption ==> Some(List(1, 2, 3, 4))
-      result.asEither ==> Right(List(1, 2, 3, 4))
-      result.asErrorPathMessageStrings ==> Iterable()
-
-      var operations2 = 0
-      val result2 = partial.Result.sequence[List[Int], Int](
-        Iterator("a", "b", "c", "d").map { s =>
-          operations2 += 1
-          partial.Result.fromCatching(s.toInt)
-        },
-        failFast = true
-      )
-      operations2 ==> 1
-      result2.asOption ==> None
-      result2.asEither.isLeft ==> true
-      result2.asErrorPathMessageStrings ==> Iterable(
-        "" -> """For input string: "a""""
-      )
-    }
-
-    test("asErrorPathMessageStrings should convert PathElements and Errors to Strings") {
-      case class Err(msg: String) extends Throwable(msg)
-
-      val result = partial.Result.sequence[List[Int], Int](
-        Iterator(
-          partial.Result.fromValue(10),
-          partial.Result.fromEmpty[Int],
-          partial.Result.fromErrorString[Int]("something bad happened"),
-          partial.Result.fromErrorNotDefinedAt[Int](0),
-          partial.Result.fromErrorThrowable[Int](Err("error just happened"))
-        ),
-        failFast = false
-      )
-      result.asErrorPathMessageStrings ==> Iterable(
-        "" -> "empty value",
-        "" -> "something bad happened",
-        "" -> "not defined at 0",
-        "" -> "error just happened"
-      )
-    }
-
-    test("asErrorPathMessages should convert PathElements to Strings") {
-      case class Err(msg: String) extends Throwable(msg)
-
-      val result = partial.Result.sequence[List[Int], Int](
-        Iterator(
-          partial.Result.fromValue(10),
-          partial.Result.fromEmpty[Int],
-          partial.Result.fromErrorString[Int]("something bad happened"),
-          partial.Result.fromErrorNotDefinedAt[Int](()),
-          partial.Result.fromErrorThrowable[Int](Err("error just happened"))
-        ),
-        failFast = false
-      )
-      result.asErrorPathMessages ==> Iterable(
-        "" -> partial.ErrorMessage.EmptyValue,
-        "" -> partial.ErrorMessage.StringMessage("something bad happened"),
-        "" -> partial.ErrorMessage.NotDefinedAt(()),
-        "" -> partial.ErrorMessage.ThrowableMessage(Err("error just happened"))
-      )
     }
   }
 }
