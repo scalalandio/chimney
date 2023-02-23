@@ -55,8 +55,46 @@ rules and transform your objects with as little boilerplate as possible.
   // CoffeeMade(24, "Espresso", "Piotr", "2020-02-03T20:26:59.659647+07:00[Asia/Bangkok]")
 
 
-Read :ref:`transformers/getting-started:Getting started with transformers` to learn more about
+Read :ref:`partial-transformers/getting-started:Getting started with transformers` to learn more about
 Chimney's transformers.
+
+Partial transformers
+--------------------
+
+Examples so far described situation when every value of one type can be converted into another type. But what when only
+some values can be converted?
+
+.. code-block:: scala
+
+  case class ApiUser(name: String, ageInput: String, email: Option[String])
+  case class User(name: String, age: Int, email: String)
+
+  ApiUser("John", "21") // ??
+  ApiUser("Ted", "eighteen") // ??
+
+What to do with the rest of them? Return null? Throw exception? Chimney provides safer
+alternative:
+
+  import io.scalaland.chimney._
+  import io.scalaland.chimney.dsl._
+
+  val result1 = ApiUser("John", "21", Some("john@example.com")).intoPartial[User]
+    .withFieldComputedPartial(_.age, api => partial.Result.fromCatching(api.ageInput.toInt))
+    .transform
+  result1.asOption // Some(User("name", 21, "john@example.com"))
+  result2.asEither // Right(User("name", 21, "john@example.com"))
+
+  val result2 = ApiUser("Ted", "eighteen", None).intoPartial[User]
+    .withFieldComputedPartial(_.age, api => partial.Result.fromCatching(api.ageInput.toInt))
+    .transform
+  result2.asOption // None
+  result2.asErrorMessageStrings // List("age" -> "For input string: \"eighteen\"", "email" -> "empty value")
+
+Partial transformers allow you to conditionally transform some elements of your data, and if they fail, provide you
+with information which element failed and how.
+
+Read :ref:`partial-transformers/partial-transformers:Partial transformers` to learn more about
+Chimney's partial transformers.
 
 Patching
 --------
