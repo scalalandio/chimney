@@ -15,7 +15,7 @@ object PartialResultSpec extends TestSuite {
 
     test("asEither") {
       partial.Result.fromValue(1).asEither ==> Right(1)
-      partial.Result.fromEmpty.asEither ==> Left(partial.Result.Errors(partial.Error.ofEmptyValue))
+      partial.Result.fromEmpty.asEither ==> Left(partial.Result.Errors(partial.Error.fromEmptyValue))
     }
 
     test("asErrorPathMessages") {
@@ -94,30 +94,30 @@ object PartialResultSpec extends TestSuite {
     }
 
     test("fromError") {
-      val err = partial.Error.ofEmptyValue
+      val err = partial.Error.fromEmptyValue
       partial.Result.fromError(err) ==> partial.Result.Errors(err)
     }
 
     test("fromErrors") {
-      val err1 = partial.Error.ofEmptyValue
-      val err2 = partial.Error.ofString("foo")
-      val err3 = partial.Error.ofEmptyValue
+      val err1 = partial.Error.fromEmptyValue
+      val err2 = partial.Error.fromString("foo")
+      val err3 = partial.Error.fromEmptyValue
       partial.Result.fromErrors(err1, err2, err3) ==> partial.Result.Errors(err1, err2, err3)
     }
 
     test("fromErrorString") {
-      partial.Result.fromErrorString("foo") ==> partial.Result.Errors(partial.Error.ofString("foo"))
+      partial.Result.fromErrorString("foo") ==> partial.Result.Errors(partial.Error.fromString("foo"))
     }
 
     test("fromErrorStrings") {
       partial.Result.fromErrorStrings("foo1", "foo2") ==> partial.Result.Errors(
-        partial.Error.ofString("foo1"),
-        partial.Error.ofString("foo2")
+        partial.Error.fromString("foo1"),
+        partial.Error.fromString("foo2")
       )
     }
 
     test("fromErrorNotDefinedAt") {
-      partial.Result.fromErrorNotDefinedAt(100) ==> partial.Result.Errors(partial.Error.ofNotDefinedAt(100))
+      partial.Result.fromErrorNotDefinedAt(100) ==> partial.Result.Errors(partial.Error.fromNotDefinedAt(100))
     }
 
     test("fromOption") {
@@ -126,8 +126,8 @@ object PartialResultSpec extends TestSuite {
     }
 
     test("fromOptionOrError") {
-      partial.Result.fromOptionOrError(Some(1), partial.Error.ofString("empty")) ==> partial.Result.fromValue(1)
-      partial.Result.fromOptionOrError(None, partial.Error.ofString("empty")) ==> partial.Result.fromErrorString(
+      partial.Result.fromOptionOrError(Some(1), partial.Error.fromString("empty")) ==> partial.Result.fromValue(1)
+      partial.Result.fromOptionOrError(None, partial.Error.fromString("empty")) ==> partial.Result.fromErrorString(
         "empty"
       )
     }
@@ -146,7 +146,7 @@ object PartialResultSpec extends TestSuite {
     test("fromEither") {
       partial.Result.fromEither(Right(1)) ==> partial.Result.fromValue(1)
       partial.Result.fromEither(
-        Left(partial.Result.Errors.single(partial.Error.ofString("foo")))
+        Left(partial.Result.Errors.single(partial.Error.fromString("foo")))
       ) ==> partial.Result.fromErrorString("foo")
     }
 

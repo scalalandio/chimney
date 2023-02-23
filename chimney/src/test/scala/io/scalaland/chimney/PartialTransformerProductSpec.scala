@@ -475,7 +475,7 @@ object PartialTransformerProductSpec extends TestSuite {
         result.asErrorPathMessageStrings ==> Iterable.empty
 
         val expected2 = partial.Result.Errors.single(
-          partial.Error.ofEmptyValue.prependErrorPath(partial.PathElement.Accessor("age"))
+          partial.Error.fromEmptyValue.prependErrorPath(partial.PathElement.Accessor("age"))
         )
         val result2 = User(1, "Kuba", None)
           .intoPartial[UserPLStrict]
@@ -697,7 +697,7 @@ object PartialTransformerProductSpec extends TestSuite {
         result.asOption ==> None
         result.asEither ==> Left(
           partial.Result.Errors
-            .single(partial.Error.ofEmptyValue)
+            .single(partial.Error.fromEmptyValue)
             .prependErrorPath(partial.PathElement.Accessor("height"))
         )
         result.asErrorPathMessageStrings ==> Iterable(
@@ -717,7 +717,7 @@ object PartialTransformerProductSpec extends TestSuite {
         result.asOption ==> None
         result.asEither ==> Left(
           partial.Result.Errors
-            .single(partial.Error.ofNotDefinedAt(person))
+            .single(partial.Error.fromNotDefinedAt(person))
             .prependErrorPath(partial.PathElement.Accessor("height"))
         )
         result.asErrorPathMessageStrings ==> Iterable(
@@ -735,8 +735,8 @@ object PartialTransformerProductSpec extends TestSuite {
         result.asEither == Left(
           partial.Result
             .Errors(
-              partial.Error.ofString("abc"),
-              partial.Error.ofString("def")
+              partial.Error.fromString("abc"),
+              partial.Error.fromString("def")
             )
             .prependErrorPath(partial.PathElement.Accessor("height"))
         )
@@ -757,7 +757,7 @@ object PartialTransformerProductSpec extends TestSuite {
         result.asEither == Left(
           partial.Result.Errors
             .single(
-              partial.Error.ofThrowable(MyException)
+              partial.Error.fromThrowable(MyException)
             )
             .prependErrorPath(partial.PathElement.Accessor("height"))
         )
@@ -862,15 +862,15 @@ object PartialTransformerProductSpec extends TestSuite {
         result.asEither ==> Left(
           partial.Result.Errors(
             partial.Error
-              .ofString("bad trip id")
+              .fromString("bad trip id")
               .prependErrorPath(partial.PathElement.Accessor("id")),
             partial.Error
-              .ofString("bad height value")
+              .fromString("bad height value")
               .prependErrorPath(partial.PathElement.Accessor("height"))
               .prependErrorPath(partial.PathElement.Index(0))
               .prependErrorPath(partial.PathElement.Accessor("people")),
             partial.Error
-              .ofString("bad age value")
+              .fromString("bad age value")
               .prependErrorPath(partial.PathElement.Accessor("age"))
               .prependErrorPath(partial.PathElement.Index(1))
               .prependErrorPath(partial.PathElement.Accessor("people"))

@@ -80,9 +80,9 @@ object PartialTransformerToCatsDataConversionSpec extends TestSuite {
             .withFieldConstPartial(_.height, NonEmptyList.of("abc", "def").invalid.toPartialResult)
             .transform
 
-          val expectedErr1 = Error.ofString("foo").prependErrorPath(PathElement.Accessor("name"))
-          val expectedErr2 = Error.ofString("abc").prependErrorPath(PathElement.Accessor("height"))
-          val expectedErr3 = Error.ofString("def").prependErrorPath(PathElement.Accessor("height"))
+          val expectedErr1 = Error.fromString("foo").prependErrorPath(PathElement.Accessor("name"))
+          val expectedErr2 = Error.fromString("abc").prependErrorPath(PathElement.Accessor("height"))
+          val expectedErr3 = Error.fromString("def").prependErrorPath(PathElement.Accessor("height"))
 
           result.asValidated ==> Validated.invalid(
             partial.Result.fromErrors(expectedErr1, expectedErr2, expectedErr3)
@@ -103,21 +103,21 @@ object PartialTransformerToCatsDataConversionSpec extends TestSuite {
             .intoPartial[User]
             .withFieldConstPartial(
               _.name,
-              NonEmptyChain.of(Error.ofThrowable(ex1)).invalid.toPartialResult
+              NonEmptyChain.of(Error.fromThrowable(ex1)).invalid.toPartialResult
             )
             .withFieldConstPartial(_.age, Validated.valid(15).toPartialResult)
             .withFieldConstPartial(
               _.height,
               NonEmptyList
-                .of(Error.ofThrowable(ex2), Error.ofThrowable(ex3))
+                .of(Error.fromThrowable(ex2), Error.fromThrowable(ex3))
                 .invalid
                 .toPartialResult
             )
             .transform
 
-          val expectedErr1 = Error.ofThrowable(ex1).prependErrorPath(PathElement.Accessor("name"))
-          val expectedErr2 = Error.ofThrowable(ex2).prependErrorPath(PathElement.Accessor("height"))
-          val expectedErr3 = Error.ofThrowable(ex3).prependErrorPath(PathElement.Accessor("height"))
+          val expectedErr1 = Error.fromThrowable(ex1).prependErrorPath(PathElement.Accessor("name"))
+          val expectedErr2 = Error.fromThrowable(ex2).prependErrorPath(PathElement.Accessor("height"))
+          val expectedErr3 = Error.fromThrowable(ex3).prependErrorPath(PathElement.Accessor("height"))
 
           result.asValidated ==> Validated.invalid(
             partial.Result.fromErrors(expectedErr1, expectedErr2, expectedErr3)

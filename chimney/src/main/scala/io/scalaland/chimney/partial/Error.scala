@@ -31,7 +31,7 @@ object Error {
     *
     * @since 0.7.0
     */
-  final def ofEmptyValue: Error =
+  final def fromEmptyValue: Error =
     Error(ErrorMessage.EmptyValue)
 
   /** Partial function not defined at given argument error with an empty path
@@ -40,7 +40,7 @@ object Error {
     *
     * @since 0.7.0
     */
-  final def ofNotDefinedAt(arg: Any): Error =
+  final def fromNotDefinedAt(arg: Any): Error =
     Error(ErrorMessage.NotDefinedAt(arg))
 
   /** Custom string error with an empty path
@@ -49,7 +49,7 @@ object Error {
     *
     * @since 0.7.0
     */
-  final def ofString(message: String): Error =
+  final def fromString(message: String): Error =
     Error(ErrorMessage.StringMessage(message))
 
   /** Throwable error with an empty path
@@ -58,6 +58,6 @@ object Error {
     *
     * @since 0.7.0
     */
-  final def ofThrowable(throwable: Throwable): Error =
+  final def fromThrowable(throwable: Throwable): Error =
     Error(ErrorMessage.ThrowableMessage(throwable))
 }

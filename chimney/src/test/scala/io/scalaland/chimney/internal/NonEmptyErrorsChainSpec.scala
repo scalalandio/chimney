@@ -7,7 +7,7 @@ object NonEmptyErrorsChainSpec extends TestSuite {
 
   val tests = Tests {
 
-    def err(i: Int): partial.Error = partial.Error.ofString(s"err$i")
+    def err(i: Int): partial.Error = partial.Error.fromString(s"err$i")
 
     test("NonEmptyErrorsChainSpec.isEmpty") {
       NonEmptyErrorsChain

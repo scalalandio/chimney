@@ -155,7 +155,7 @@ object Result {
       * @since 0.7.0
       */
     final def fromString(message: String): Errors =
-      single(Error.ofString(message))
+      single(Error.fromString(message))
 
     /** Creates failed result from one error message or more.
       *
@@ -166,7 +166,7 @@ object Result {
       * @since 0.7.0
       */
     final def fromStrings(message: String, messages: String*): Errors =
-      apply(Error.ofString(message), messages.map(Error.ofString): _*)
+      apply(Error.fromString(message), messages.map(Error.fromString): _*)
 
     /** Creates new failed result containing all errors of 2 existing failed results.
       *
@@ -206,7 +206,7 @@ object Result {
     if (pf.isDefinedAt(u)) {
       Result.fromCatching(pf(u))
     } else {
-      Errors.single(Error.ofNotDefinedAt(u))
+      Errors.single(Error.fromNotDefinedAt(u))
     }
   }
 
@@ -227,7 +227,7 @@ object Result {
     *
     * @since 0.7.0
     */
-  final def fromEmpty[T]: Result[T] = Errors.single(Error.ofEmptyValue)
+  final def fromEmpty[T]: Result[T] = Errors.single(Error.fromEmptyValue)
 
   /** Creates failed result from a single error.
     *
@@ -280,7 +280,7 @@ object Result {
     *
     * @since 0.7.0
     */
-  final def fromErrorNotDefinedAt[T](value: Any): Result[T] = Errors.single(Error.ofNotDefinedAt(value))
+  final def fromErrorNotDefinedAt[T](value: Any): Result[T] = Errors.single(Error.fromNotDefinedAt(value))
 
   /** Creates failed result from Exception that was caught.
     *
@@ -290,7 +290,7 @@ object Result {
     *
     * @since 0.7.0
     */
-  final def fromErrorThrowable[T](throwable: Throwable): Result[T] = Errors.single(Error.ofThrowable(throwable))
+  final def fromErrorThrowable[T](throwable: Throwable): Result[T] = Errors.single(Error.fromThrowable(throwable))
 
   /** Converts Option to Result, using EmptyValue error if None.
     *
