@@ -6,6 +6,40 @@ object PartialResultSpec extends TestSuite {
 
   val tests = Tests {
 
+    test("asOption") {
+      partial.Result.fromValue(1).asOption ==> Some(1)
+      partial.Result.fromEmpty.asOption ==> None
+    }
+
+    test("asEither") {
+      partial.Result.fromValue(1).asEither ==> Right(1)
+      partial.Result.fromEmpty.asEither ==> Left(partial.Result.Errors(partial.Error.ofEmptyValue))
+    }
+
+    test("asErrorPathMessages") {
+      partial.Result.fromValue(1).asErrorPathMessages ==> Iterable.empty
+      partial.Result.fromEmpty.asErrorPathMessages ==> Iterable("" -> partial.ErrorMessage.EmptyValue)
+      partial.Result.fromErrorString("test").asErrorPathMessages ==> Iterable(
+        "" -> partial.ErrorMessage.StringMessage("test")
+      )
+      val exception = new NoSuchElementException()
+      partial.Result.fromErrorThrowable(exception).asErrorPathMessages ==> Iterable(
+        "" -> partial.ErrorMessage.ThrowableMessage(exception)
+      )
+      partial.Result.fromErrorNotDefinedAt(100).asErrorPathMessages ==> Iterable(
+        "" -> partial.ErrorMessage.NotDefinedAt(100)
+      )
+    }
+
+    test("asErrorPathMessageStrings") {
+      partial.Result.fromValue(1).asErrorPathMessageStrings ==> Iterable.empty
+      partial.Result.fromEmpty.asErrorPathMessageStrings ==> Iterable("" -> "empty value")
+      partial.Result.fromErrorString("test").asErrorPathMessageStrings ==> Iterable("" -> "test")
+      val exception = new NoSuchElementException("test")
+      partial.Result.fromErrorThrowable(exception).asErrorPathMessageStrings ==> Iterable("" -> "test")
+      partial.Result.fromErrorNotDefinedAt(100).asErrorPathMessageStrings ==> Iterable("" -> "not defined at 100")
+    }
+
     test("map only modifies successful result") {
       case class Err(msg: String) extends Throwable(msg)
 
@@ -521,6 +555,5 @@ object PartialResultSpec extends TestSuite {
         "" -> partial.ErrorMessage.ThrowableMessage(Err("error just happened"))
       )
     }
-    // TODO: test conversions asErrorPathMessages and asErrorPathMessageStrings for all results types
   }
 }
