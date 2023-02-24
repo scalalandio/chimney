@@ -6,8 +6,8 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.5")
 // cross-compile
 addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.9.0")
 addSbtPlugin("com.indoorvivants" % "sbt-commandmatrix" % "0.0.5")
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.12.0")
-addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.9")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.13.0")
+addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.10")
 // publishing
 addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.4.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
