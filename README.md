@@ -34,14 +34,14 @@ val event = CoffeeMade(id = command.id,
 
 While the example stays lean, in real-life code we usually end up with tons
 of such boilerplate, especially when:
-- we maintain typed schema and want to migrate between multiple schema versions
-- we apply practices like DDD (Domain-Driven-Design) where suggested
-  approach is to separate model schemas of different bounded contexts
-- we use code-generation tools like Protocol Buffers that generate primitive
-  types like `Int` or `String`, while you'd prefer to
-  use value objects in you domain-level code to improve type-safety
-  and readability  
 
+- we keep separate models of different layers in the system
+- we apply practices like DDD (Domain-Driven-Design) where suggested
+  approach is to separate models of different bounded contexts
+- we use code-generation tools like Protocol Buffers that generate primitive
+  types like `Int` or `String`, while you'd prefer to use value objects in your
+  domain-level code to improve type-safety and readability
+- we maintain typed, versioned schemas and want to migrate between multiple schema versions
 
 Chimney provides a compact DSL with which you can define transformation
 rules and transform your objects with as little boilerplate as possible.
@@ -53,43 +53,38 @@ val event = command.into[CoffeeMade]
   .withFieldComputed(_.at, _ => ZonedDateTime.now)
   .withFieldRenamed(_.addict, _.forAddict)
   .transform
+  // CoffeeMade(24, "Espresso", "Piotr", "2020-02-03T20:26:59.659647+07:00[Europe/Warsaw]")
 ```
 
-Examples so far described situation when every value of one type can be converted into another type. But what when only
-some values can be converted?
+For computations that may potentially fail, Chimney provides partial transformers.
 
 ```scala
-case class UserForm(name: String, ageInput: String, email: Option[String])
-case class User(name: String, age: Int, email: String)
-
-UserForm("John", "21", Some("john@example.com")) // ??
-UserForm("Ted", "eighteen", None) // ??
-```
-
-What to do with the rest of them? Return ``null``? Throw ``Exception``? Chimney provides safer
-alternative:
-
-```scala
-import io.scalaland.chimney._
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.partial._
 
-UserForm("John", "21", Some("john@example.com")).intoPartial[User]
+case class UserForm(name: String, ageInput: String, email: Option[String])
+case class User(name: String, age: Int, email: String)
+
+UserForm("John", "21", Some("john@example.com"))
+  .intoPartial[User]
   .withFieldComputedPartial(_.age, form => Result.fromCatching(form.ageInput.toInt))
   .transform
-  .asOption
-// Some(User("name", 21, "john@example.com"))
-UserForm("Ted", "eighteen", None).intoPartial[User]
+  .asOption  // Some(User("name", 21, "john@example.com"))
+
+val result = UserForm("Ted", "eighteen", None)
+  .intoPartial[User]
   .withFieldComputedPartial(_.age, form => Result.fromCatching(form.ageInput.toInt))
   .transform
-  .asErrorMessageStrings
+  
+result.asOption // None
+result.asErrorMessageStrings 
 // Iterable("age" -> "For input string: \"eighteen\"", "email" -> "empty value")
 ```
 
-Underneath it uses Scala macros to give you:
+The library uses Scala macros underneath, to give you:
 - type-safety at compile-time
-- fast generated code, almost equivalent to handwritten version
-- excellent error messages
+- efficient generated code, almost equivalent to hand-written version
+- excellent compilation error messages
 - minimal overhead on compilation time
 
 ## Getting started

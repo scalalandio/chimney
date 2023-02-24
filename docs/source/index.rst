@@ -34,12 +34,13 @@ Usual approach is to just rewrite fields one by one
 While the example stays short, in real-life code we usually end up with tons
 of such boilerplate, especially when:
 
-- we maintain typed schema and want to migrate between multiple schema versions
+- we keep separate models of different layers in the system
 - we apply practices like DDD (Domain-Driven-Design) where suggested
   approach is to separate model schemas of different bounded contexts
 - we use code-generation tools like Protocol Buffers that generate primitive
   types like ``Int`` or ``String``, while you'd prefer to use value objects
   in your domain-level code to improve type-safety and readability
+- we maintain typed, versioned schemas and want to migrate between multiple schema versions
 
 Chimney provides a compact DSL with which you can define transformation
 rules and transform your objects with as little boilerplate as possible.
@@ -52,55 +53,38 @@ rules and transform your objects with as little boilerplate as possible.
     .withFieldComputed(_.at, _ => ZonedDateTime.now)
     .withFieldRenamed(_.addict, _.forAddict)
     .transform
-  // CoffeeMade(24, "Espresso", "Piotr", "2020-02-03T20:26:59.659647+07:00[Asia/Bangkok]")
+  // CoffeeMade(24, "Espresso", "Piotr", "2020-02-03T20:26:59.659647+07:00[Europe/Warsaw]")
 
 
-Read :ref:`partial-transformers/getting-started:Getting started with transformers` to learn more about
+Read :ref:`transformers/getting-started:Getting started with transformers` to learn more about
 Chimney's transformers.
 
 Partial transformers
 --------------------
 
-Examples so far described situation when every value of one type can be converted into another type. But what when only
-some values can be converted?
+For computations that may potentially fail, Chimney provides partial transformers.
 
 .. code-block:: scala
+
+  import io.scalaland.chimney.dsl._
+  import io.scalaland.chimney.partial._
 
   case class UserForm(name: String, ageInput: String, email: Option[String])
   case class User(name: String, age: Int, email: String)
 
-  UserForm("John", "21", Some("john@example.com")) // ??
-  UserForm("Ted", "eighteen", None) // ??
-
-What to do with the rest of them? Return ``null``? Throw ``Exception``? Chimney provides safer
-alternative:
-
-.. code-block:: scala
-
-  import io.scalaland.chimney._
-  import io.scalaland.chimney.dsl._
-  import io.scalaland.chimney.partial._
-
-  val success = UserForm("John", "21", Some("john@example.com")).intoPartial[User]
+  UserForm("John", "21", Some("john@example.com"))
+    .intoPartial[User]
     .withFieldComputedPartial(_.age, form => Result.fromCatching(form.ageInput.toInt))
     .transform
- val failure = UserForm("Ted", "eighteen", None).intoPartial[User]
+    .asOption  // Some(User("name", 21, "john@example.com"))
+
+  val result = UserForm("Ted", "eighteen", None)
+    .intoPartial[User]
     .withFieldComputedPartial(_.age, form => Result.fromCatching(form.ageInput.toInt))
     .transform
 
-Partial transformers allow you to conditionally transform some elements of your data, and if they fail, provide you
-with information which element failed and how.
-
-.. code-block:: scala
-
-  success.asOption
-  // Some(User("name", 21, "john@example.com"))
-  failure.asOption
-  // None
-
-  success.asErrorMessageStrings
-  // Iterable()
-  failure.asErrorMessageStrings
+  result.asOption // None
+  result.asErrorMessageStrings
   // Iterable("age" -> "For input string: \"eighteen\"", "email" -> "empty value")
 
 Read :ref:`partial-transformers/partial-transformers:Partial transformers` to learn more about
