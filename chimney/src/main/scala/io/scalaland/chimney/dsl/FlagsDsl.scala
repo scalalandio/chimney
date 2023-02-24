@@ -140,7 +140,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * @param preference parameter specifying which implicit transformer to pick in case of conflict
     *
-    * @see [[https://scalalandio.github.io/chimney/partial-transformers/partial-transformers.html#preferring-total-or-partial-transformer]] for more details
+    * @see [[https://scalalandio.github.io/chimney/partial-transformers/total-vs-partial-conflicts.html]] for more details
     *
     * @since 0.7.0
     */
@@ -151,7 +151,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Disable any implicit conflict resolution preference that was set previously.
     *
-    * @see [[https://scalalandio.github.io/chimney/partial-transformers/partial-transformers.html#preferring-total-or-partial-transformer]] for more details
+    * @see [[https://scalalandio.github.io/chimney/partial-transformers/total-vs-partial-conflicts.html]] for more details
     *
     * @since 0.7.0
     */
