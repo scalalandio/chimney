@@ -103,6 +103,7 @@ where the latest versions available on Maven for each platform are
 [![Chimney JVM versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=jvm)](https://search.maven.org/artifact/io.scalaland/chimney_2.13) <br>
 [![Chimney Scala.js 1.x versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=sjs1)](https://search.maven.org/artifact/io.scalaland/chimney_sjs1_2.13) <br>
 [![Chimney Scala.js 0.6 versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=sjs0.6)](https://search.maven.org/artifact/io.scalaland/chimney_sjs0.6_2.13) <br>
+[![Chimney Scala Native 0.4 versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=native0.4)](https://search.maven.org/artifact/io.scalaland/chimney_native0.4_2.13) <br>
 [![Chimney Scala Native 0.3 versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=native0.3)](https://search.maven.org/artifact/io.scalaland/chimney_native0.3_2.11) <br>
 
 Library is currently supported for Scala 2.12.x and 2.13.x on JVM, SJS 1.x, SN 0.4. Other versions should be considered EOL.
@@ -115,7 +116,7 @@ it's recommended to use at least Scala 2.12.1.
 If you are using Scala CLI you can try out Chimney by adding it with `using` clause:
 ```scala
 //> using scala "2.13.10"
-//> using lib "io.scalaland::chimney:0.6.2"
+//> using dep "io.scalaland::chimney:0.7.0"
 import io.scalaland.chimney.dsl._
 
 case class Foo(x: String, y: Int, z: Boolean = true)
@@ -129,10 +130,10 @@ object Main extends App {
 
 or run the Ammonite REPL:
 
-```
-scala-cli repl --ammonite --scala "2.13.10" --dependency "io.scalaland::chimney:0.6.2"
+```scala
+scala-cli --power repl --ammonite --scala "2.13.10" --dependency "io.scalaland::chimney:0.7.0"
 Loading...
-Welcome to the Ammonite Repl 2.5.5-17-df243e14 (Scala 2.13.10 Java 17.0.1)
+Welcome to the Ammonite Repl 2.5.6-1-f8bff243 (Scala 2.13.10 Java 17.0.1)
 @ case class Foo(x: String, y: Int, z: Boolean = true)
 defined class Foo
 
