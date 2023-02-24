@@ -8,6 +8,8 @@ import scala.collection.compat._
   * we need these few operations to be implemented for specific `F`
   * wrapper type.
   *
+  * @deprecated migration described at [[https://scalalandio.github.io/chimney/partial-transformers/migrating-from-lifted.html]]
+  *
   * @see [[TransformerFSupport.TransformerFOptionSupport]] for implementation for `Option`
   * @see [[TransformerFSupport.TransformerFEitherErrorAccumulatingSupport]] for implementation for `Either`
   *

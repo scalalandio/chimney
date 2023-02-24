@@ -6,6 +6,8 @@ import scala.collection.compat._
   *
   * If you implement it, you will be able to get path of each error in transformation.
   *
+  * @deprecated migration described at [[https://scalalandio.github.io/chimney/partial-transformers/migrating-from-lifted.html]]
+  *
   * @see [[TransformerFErrorPathSupport.TransformerFErrorPathEitherSupport]] for implementation for `Either[C[TransformationError], +*]`
   *
   * @tparam F wrapper type constructor
