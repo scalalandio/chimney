@@ -5,6 +5,7 @@ import io.scalaland.chimney.internal.utils.AssertUtils
 import io.scalaland.chimney.internal.utils.DslMacroUtils
 
 import scala.reflect.macros.blackbox
+import scala.collection.compat._
 
 trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils with GenTrees {
 
@@ -118,7 +119,7 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
 
         if (partialArgs.isEmpty) {
           mkTransformerBodyTree0(pt)(mkTargetValueTree(bodyTreeArgs.map(_.tree)))
-        } else if (partialArgs.sizeCompare(1) == 0) {
+        } else if (partialArgs.sizeIs == 1) {
           val (target, bodyTree) = partialArgs.head
           val fn = freshTermName(target.name)
           val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
@@ -126,7 +127,7 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
           val updatedArgs = targets.map(argsMap)
 
           q"${bodyTree.tree}.map { ($fn: ${target.tpe}) => ${mkTargetValueTree(updatedArgs)} }"
-        } else if (partialArgs.sizeCompare(2) == 0) {
+        } else if (partialArgs.sizeIs == 2) {
           val (target0, bodyTree0) = partialArgs.head
           val (target1, bodyTree1) = partialArgs.last
           val fn0 = freshTermName(target0.name)
@@ -151,7 +152,7 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
           val partialTrees = partialBodyTrees.map(_.tree)
           val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
 
-          if (partialArgs.sizeCompare(22) <= 0) { // tuple-based encoding, type info preserved
+          if (partialArgs.sizeIs <= 22) { // tuple-based encoding, type info preserved
 
             val localDefNames = partialTrees.map(_ => freshTermName("t"))
             val localTreeDefs = (localDefNames zip partialTrees).map { case (n, t) => q"final def $n = { $t }" }

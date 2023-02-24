@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.utils
 
 import scala.reflect.macros.blackbox
+import scala.collection.compat._
 
 trait TypeTestUtils extends MacroUtils {
 
@@ -37,7 +38,7 @@ trait TypeTestUtils extends MacroUtils {
   }
 
   def fromOptionToNonOption(from: Type, to: Type): Boolean = {
-    isOption(from) && !isOption(to) && from.typeArgs.size == 1
+    isOption(from) && !isOption(to) && from.typeArgs.sizeIs == 1
   }
 
   def isTuple(to: Type): Boolean =
