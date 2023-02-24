@@ -328,7 +328,11 @@ trait TransformerConfigSupport extends MacroUtils {
   def captureFromTransformerConfigurationTree(transformerConfigurationTree: Tree): TransformerFlags = {
     transformerConfigurationTree.tpe.typeArgs.headOption
       .map(flagsTpe => captureTransformerFlags(flagsTpe))
-      .getOrElse(TransformerFlags())
+      .getOrElse {
+        // $COVERAGE-OFF$
+        c.abort(c.enclosingPosition, "Impossible case: TransformerConfiguration without type parameter!")
+        // $COVERAGE-ON$
+      }
   }
 
 }

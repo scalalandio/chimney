@@ -30,7 +30,6 @@ trait MacroUtils extends CompanionUtils {
 
   implicit class NameOps(n: Name) {
     def toNameConstant: Constant = Constant(n.decodedName.toString)
-    def toNameLiteral: Literal = Literal(toNameConstant)
     def toSingletonTpe: ConstantType = c.internal.constantType(toNameConstant)
   }
 
