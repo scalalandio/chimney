@@ -59,8 +59,8 @@ sealed trait Result[+T] {
 
   /** Builds a new result by applying a function to a success value.
     *
-    * @param f the function to apply to a success value
     * @tparam U the element type of the returned result
+    * @param f the function to apply to a success value
     * @return a new result built from applying a function to a success value
     *
     * @since 0.7.0
@@ -72,8 +72,8 @@ sealed trait Result[+T] {
 
   /** Builds a new result by applying a function to a success value and using result returned by that that function.
     *
-    * @param f the function to apply to a success value
     * @tparam U the element type of the returned result
+    * @param f the function to apply to a success value
     * @return a new result built from applying a function to a success value
     *         and using the result returned by that function
     *
@@ -101,8 +101,8 @@ object Result {
 
   /** Success value case representation
     *
-    * @param value value of type `T`
     * @tparam T type of success value
+    * @param value value of type `T`
     *
     * @since 0.7.0
     */

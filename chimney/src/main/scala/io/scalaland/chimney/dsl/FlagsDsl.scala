@@ -139,7 +139,10 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
   /** Enable conflict resolution when both `Transformer` and `PartialTransformer` are available in the implicit scope.
     *
     * @param preference parameter specifying which implicit transformer to pick in case of conflict
-    * @see TODO documentation link
+    *
+    * @see [[https://scalalandio.github.io/chimney/partial-transformers/total-vs-partial-conflicts.html]] for more details
+    *
+    * @since 0.7.0
     */
   def enableImplicitConflictResolution[P <: ImplicitTransformerPreference](
       @unused preference: P
@@ -148,7 +151,9 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Disable any implicit conflict resolution preference that was set previously.
     *
-    * @see TODO documentation link
+    * @see [[https://scalalandio.github.io/chimney/partial-transformers/total-vs-partial-conflicts.html]] for more details
+    *
+    * @since 0.7.0
     */
   def disableImplicitConflictResolution: UpdateFlag[Disable[ImplicitConflictResolution[_], Flags]] =
     disableFlag[ImplicitConflictResolution[_]]
