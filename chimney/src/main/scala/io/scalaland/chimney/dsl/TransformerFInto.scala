@@ -9,6 +9,8 @@ import scala.language.experimental.macros
 /** Provides DSL for configuring [[io.scalaland.chimney.TransformerF]]'s
   * generation and using the result to transform value at the same time
   *
+  * @deprecated migration described at [[https://scalalandio.github.io/chimney/partial-transformers/migrating-from-lifted.html]]
+  *
   * @tparam F      wrapper type constructor
   * @tparam From   type of input value
   * @tparam To     type of output value
@@ -19,7 +21,7 @@ import scala.language.experimental.macros
   *
   * @since 0.5.0
   */
-@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
 final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,
     val td: TransformerFDefinition[F, From, To, C, Flags]

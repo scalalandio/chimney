@@ -32,6 +32,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def lift[F[+_]]: TransformerFDefinition[F, From, To, WrapperType[F, C], Flags] =
     new TransformerFDefinition[F, From, To, WrapperType[F, C], Flags](overrides, instances)
 
@@ -77,7 +78,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     *
     * @since 0.5.0
     */
-  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def withFieldConstF[F[+_], T, U](
       selector: To => T,
       value: F[U]
@@ -118,7 +119,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     *
     * @since 0.5.0
     */
-  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def withFieldComputedF[F[+_], T, U](
       selector: To => T,
       f: From => F[U]
@@ -178,7 +179,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     *
     * @since 0.5.0
     */
-  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def withCoproductInstanceF[F[+_], Inst](
       f: Inst => F[To]
   ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
