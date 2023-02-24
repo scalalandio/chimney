@@ -33,7 +33,7 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
     *
     * @since 0.5.0
     */
-  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def lift[F[+_]]: TransformerFInto[F, From, To, WrapperType[F, C], Flags] =
     new TransformerFInto[F, From, To, WrapperType[F, C], Flags](source, td.lift[F])
 
@@ -76,6 +76,7 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def withFieldConstF[F[+_], T, U](
       selector: To => T,
       value: F[U]
@@ -116,6 +117,7 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def withFieldComputedF[F[+_], T, U](
       selector: To => T,
       f: From => F[U]
@@ -173,6 +175,7 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def withCoproductInstanceF[F[+_], Inst](f: Inst => F[To]): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerIntoWhiteboxMacros.withCoproductInstanceFImpl[F]
 

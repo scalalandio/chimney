@@ -12,7 +12,7 @@ import scala.collection.compat._
   *
   * @since 0.6.1
   */
-@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
 trait TransformerFErrorPathSupport[F[+_]] {
 
   /** Prepend node of path to each error in wrapped value.
@@ -28,7 +28,7 @@ trait TransformerFErrorPathSupport[F[+_]] {
 }
 
 /** @since 0.6.1 */
-@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
 object TransformerFErrorPathSupport {
 
   /** @since 0.6.1 */

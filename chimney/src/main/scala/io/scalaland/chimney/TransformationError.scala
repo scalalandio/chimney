@@ -7,7 +7,7 @@ package io.scalaland.chimney
   *
   * @since 0.6.1
   */
-@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
 final case class TransformationError[M](message: M, errorPath: List[ErrorPathNode] = Nil) {
 
   /** @since 0.6.1 */

@@ -182,6 +182,7 @@ final class PartialTransformerInto[From, To, C <: TransformerCfg, Flags <: Trans
     * When transformation can't be derived, it results with compilation error.
     *
     * @return partial transformation result of type `partial.Result[To]`
+    *
     * @since 0.7.0
     */
   def transformFailFast[ScopeFlags <: TransformerFlags](

@@ -120,7 +120,7 @@ package object dsl {
       *
       * @since 0.5.0
       */
-    @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
+    @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
     final def intoF[F[+_], To]
         : TransformerFInto[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
       new TransformerFInto(source, new TransformerFDefinition(Map.empty, Map.empty))
@@ -138,7 +138,7 @@ package object dsl {
       *
       * @since 0.5.0
       */
-    @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "0.7.0")
+    @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
     final def transformIntoF[F[+_], To](implicit transformer: TransformerF[F, From, To]): F[To] =
       transformer.transform(source)
   }
