@@ -1,5 +1,7 @@
 package io.scalaland.chimney.benchmarks
 
+import io.scalaland.chimney.TransformationError
+
 object fixtures {
 
   case class Simple(a: Int, b: Double, c: String, d: Option[String])
@@ -58,6 +60,13 @@ object fixtures {
       11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
       21, 22
     )
+    final val longNestedSample = Array.tabulate(200) { i =>
+      Long(
+        i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7, i + 8, i + 9, i + 10,
+        i + 11, i + 12, i + 13, i + 14, i + 15, i + 16, i + 17, i + 18, i + 19, i + 20,
+        i + 21, i + 22
+      )
+    }
     final val veryLongSample = VeryLong(
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
       11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
@@ -94,17 +103,19 @@ object fixtures {
       }
 
       object happy {
-        def validateA(a: Int): Either[Vector[String], Int] = Right(a)
-        def validateB(b: Double): Either[Vector[String], Double] = Right(b)
-        def validateC(c: String): Either[Vector[String], String] = Right(c)
-        def validateD(d: Option[String]): Either[Vector[String], Option[String]] = Right(d)
+        def validateA(a: Int): Either[String, Int] = Right(a)
+        def validateB(b: Double): Either[String, Double] = Right(b)
+        def validateC(c: String): Either[String, String] = Right(c)
+        def validateD(d: Option[String]): Either[String, Option[String]] = Right(d)
+        def squareInt(a: Int): Either[String, Int] = Right(a * a)
       }
 
       object unhappy {
-        def validateA(a: Int): Either[Vector[String], Int] = Left(Vector("a not nice"))
-        def validateB(b: Double): Either[Vector[String], Double] = Right(b)
-        def validateC(c: String): Either[Vector[String], String] = Left(Vector("c not pretty"))
-        def validateD(d: Option[String]): Either[Vector[String], Option[String]] = Left(Vector("I don't like this d"))
+        def validateA(a: Int): Either[String, Int] = Left("a not nice")
+        def validateB(b: Double): Either[String, Double] = Right(b)
+        def validateC(c: String): Either[String, String] = Left("c not pretty")
+        def validateD(d: Option[String]): Either[String, Option[String]] = Left("I don't like this d")
+        def squareIntWhenOdd(a: Int): Either[String, Int] = if(a % 2 == 1) Right(a * a) else Left(s"$a is not an odd number")
       }
     }
   }
@@ -199,4 +210,98 @@ object fixtures {
   final def richToPlain(person: rich.Person): plain.Person =
     plain.Person(person.personId.id, person.personName.name, person.age)
 
+  type M[+A] = Either[Vector[TransformationError[String]], A]
+
+  final def simpleByHandErrorAccEitherSwap(
+      simple: Simple,
+      fa: Int => M[Int],
+      fb: Double => M[Double],
+      fc: String => M[String],
+      fd: Option[String] => M[Option[String]]
+  ): M[SimpleOutput] = {
+    val valA = fa(simple.a)
+    val valB = fb(simple.b)
+    val valC = fc(simple.c)
+    val valD = fd(simple.d)
+
+    if (valA.isRight && valB.isRight && valC.isRight && valD.isRight) {
+      Right(SimpleOutput(valA.toOption.get, valB.toOption.get, valC.toOption.get, valD.toOption.get))
+    } else {
+      val errsB = Vector.newBuilder[TransformationError[String]]
+      errsB ++= valA.swap.getOrElse(Vector.empty)
+      errsB ++= valB.swap.getOrElse(Vector.empty)
+      errsB ++= valC.swap.getOrElse(Vector.empty)
+      errsB ++= valD.swap.getOrElse(Vector.empty)
+      Left(errsB.result())
+    }
+  }
+
+  final def simpleByHandErrorAccCrazyNesting(
+      simple: Simple,
+      fa: Int => M[Int],
+      fb: Double => M[Double],
+      fc: String => M[String],
+      fd: Option[String] => M[Option[String]]
+  ): M[SimpleOutput] = {
+    fa(simple.a) match {
+      case Right(a) =>
+        fb(simple.b) match {
+          case Right(b) =>
+            fc(simple.c) match {
+              case Right(c) =>
+                fd(simple.d) match {
+                  case Right(d)         => Right(SimpleOutput(a, b, c, d))
+                  case retVal @ Left(_) => retVal.asInstanceOf[M[SimpleOutput]]
+                }
+              case Left(errs3) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs3)
+                  case Left(errs4) => Left(errs3 ++ errs4)
+                }
+            }
+          case Left(errs2) =>
+            fc(simple.c) match {
+              case Right(_) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs2)
+                  case Left(errs4) => Left(errs2 ++ errs4)
+                }
+              case Left(errs3) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs2 ++ errs3)
+                  case Left(errs4) => Left(errs2 ++ errs3 ++ errs4)
+                }
+            }
+        }
+      case Left(errs1) =>
+        fb(simple.b) match {
+          case Right(_) =>
+            fc(simple.c) match {
+              case Right(_) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs1)
+                  case Left(errs4) => Left(errs1 ++ errs4)
+                }
+              case Left(errs3) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs3)
+                  case Left(errs4) => Left(errs1 ++ errs3 ++ errs4)
+                }
+            }
+          case Left(errs2) =>
+            fc(simple.c) match {
+              case Right(_) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs1 ++ errs2)
+                  case Left(errs4) => Left(errs1 ++ errs2 ++ errs4)
+                }
+              case Left(errs3) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs1 ++ errs2 ++ errs3)
+                  case Left(errs4) => Left(errs1 ++ errs2 ++ errs3 ++ errs4)
+                }
+            }
+        }
+    }
+  }
 }

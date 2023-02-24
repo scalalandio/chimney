@@ -3,6 +3,8 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.internal.TransformerFlags
 import io.scalaland.chimney.internal.TransformerFlags._
 
+import scala.annotation.unused
+
 /** Type-level representation of derivation flags which can be enabled/disabled for a specific transformation or globally.
   *
   * @since 0.6.0
@@ -120,6 +122,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * @since 0.3.3
     */
+  @deprecated("Unsafe options are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def enableUnsafeOption: UpdateFlag[Enable[UnsafeOption, Flags]] =
     enableFlag[UnsafeOption]
 
@@ -129,8 +132,31 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * @since 0.6.0
     */
+  @deprecated("Unsafe options are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def disableUnsafeOption: UpdateFlag[Disable[UnsafeOption, Flags]] =
     disableFlag[UnsafeOption]
+
+  /** Enable conflict resolution when both `Transformer` and `PartialTransformer` are available in the implicit scope.
+    *
+    * @param preference parameter specifying which implicit transformer to pick in case of conflict
+    *
+    * @see [[https://scalalandio.github.io/chimney/partial-transformers/total-vs-partial-conflicts.html]] for more details
+    *
+    * @since 0.7.0
+    */
+  def enableImplicitConflictResolution[P <: ImplicitTransformerPreference](
+      @unused preference: P
+  ): UpdateFlag[Enable[ImplicitConflictResolution[P], Flags]] =
+    enableFlag[ImplicitConflictResolution[P]]
+
+  /** Disable any implicit conflict resolution preference that was set previously.
+    *
+    * @see [[https://scalalandio.github.io/chimney/partial-transformers/total-vs-partial-conflicts.html]] for more details
+    *
+    * @since 0.7.0
+    */
+  def disableImplicitConflictResolution: UpdateFlag[Disable[ImplicitConflictResolution[_], Flags]] =
+    disableFlag[ImplicitConflictResolution[_]]
 
   private def enableFlag[F <: TransformerFlags.Flag]: UpdateFlag[Enable[F, Flags]] =
     this.asInstanceOf[UpdateFlag[Enable[F, Flags]]]

@@ -13,7 +13,14 @@ import scala.language.experimental.macros
   */
 trait Patcher[T, Patch] {
 
-  /** @since 0.1.3 */
+  /** Modifies a copy of one object using values from another object.
+    *
+    * @param obj object to modify
+    * @param patch object with modified values
+    * @return patched copy
+    *
+    * @since 0.1.3
+    */
   def patch(obj: T, patch: Patch): T
 }
 

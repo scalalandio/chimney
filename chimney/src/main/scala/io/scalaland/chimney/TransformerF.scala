@@ -13,6 +13,8 @@ import scala.language.experimental.macros
   * Useful for validated transformations, where result
   * type is wrapped in Option, Either, Validated, etc...
   *
+  * @deprecated migration described at [[https://scalalandio.github.io/chimney/partial-transformers/migrating-from-lifted.html]]
+  *
   * @see [[io.scalaland.chimney.TransformerFSupport]]
   *
   * @tparam F    wrapper type constructor
@@ -21,12 +23,22 @@ import scala.language.experimental.macros
   *
   * @since 0.5.0
   */
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
 trait TransformerF[F[+_], From, To] {
 
-  /** @since 0.5.0 */
+  /** Transforms value with some effect F.
+    *
+    * Should be a referentially transparent function.
+    *
+    * @param src source value
+    * @return transformed value wrapped in F
+    *
+    * @since 0.5.0
+    */
   def transform(src: From): F[To]
 }
 
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
 object TransformerF {
 
   /** Provides [[io.scalaland.chimney.TransformerF]] derived with the default settings.
@@ -47,6 +59,7 @@ object TransformerF {
     * you can customize to derive [[io.scalaland.chimney.TransformerF]].
     *
     * @see [[io.scalaland.chimney.dsl.TransformerFDefinition]] for available settings
+    *
     * @tparam F    wrapper type constructor
     * @tparam From type of input value
     * @tparam To   type of output value

@@ -1,7 +1,7 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
-import io.scalaland.chimney.dsl.{TransformerDefinition, TransformerFDefinition}
+import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinition, TransformerFDefinition}
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 
 import scala.language.experimental.macros
@@ -16,7 +16,13 @@ import scala.language.experimental.macros
   */
 trait Transformer[From, To] {
 
-  /** @since 0.1.0 */
+  /** Run transformation using provided value as a source.
+    *
+    * @param src source value
+    * @return     transformed value
+    *
+    * @since 0.1.0
+    */
   def transform(src: From): To
 }
 
@@ -28,7 +34,7 @@ object Transformer {
     *
     * @tparam From type of input value
     * @tparam To type of output value
-    * @return [[io.scalaland.chimney.Transformer]] type class definition
+    * @return [[io.scalaland.chimney.Transformer]] type class instance
     *
     * @since 0.2.0
     */
@@ -49,6 +55,20 @@ object Transformer {
   def define[From, To]: TransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new TransformerDefinition(Map.empty, Map.empty)
 
+  /** Creates an empty [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] that
+    * you can customize to derive [[io.scalaland.chimney.PartialTransformer]].
+    *
+    * @see [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] for available settings
+    *
+    * @tparam From type of input value
+    * @tparam To type of output value
+    * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] with defaults
+    *
+    * @since 0.7.0
+    */
+  def definePartial[From, To]: PartialTransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+    new PartialTransformerDefinition(Map.empty, Map.empty)
+
   /** Creates an empty [[io.scalaland.chimney.dsl.TransformerFDefinition]] that
     * you can customize to derive [[io.scalaland.chimney.TransformerF]].
     *
@@ -61,6 +81,7 @@ object Transformer {
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def defineF[F[+_], From, To]
       : TransformerFDefinition[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
     TransformerF.define[F, From, To]

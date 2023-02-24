@@ -9,11 +9,12 @@ import scala.language.experimental.macros
 /** Provides DSL for configuring [[io.scalaland.chimney.Transformer]]'s
   * generation and using the result to transform value at the same time
   *
-  * @param  source object to transform
-  * @param  td     transformer definition
   * @tparam From   type of input value
   * @tparam To     type of output value
   * @tparam C      type-level encoded config
+  * @tparam Flags  type-level encoded flags
+  * @param  source object to transform
+  * @param  td     transformer definition
   *
   * @since 0.1.0
   */
@@ -32,14 +33,26 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def lift[F[+_]]: TransformerFInto[F, From, To, WrapperType[F, C], Flags] =
     new TransformerFInto[F, From, To, WrapperType[F, C], Flags](source, td.lift[F])
+
+  /** Lifts current transformation as partial transformation.
+    *
+    * It keeps all the configuration, provided missing values, renames,
+    * coproduct instances etc.
+    *
+    * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    */
+  def partial: PartialTransformerInto[From, To, C, Flags] =
+    new PartialTransformerInto[From, To, C, Flags](source, td.partial)
 
   /** Use `value` provided here for field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     *
     * @since 0.1.5
@@ -54,23 +67,30 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
+    * @tparam T type of target field
+    * @tparam U type of provided value
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def withFieldConstF[F[+_], T, U](
       selector: To => T,
       value: F[U]
   )(implicit ev: U <:< T): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerIntoWhiteboxMacros.withFieldConstFImpl[F]
 
-  /** Use `map` provided here to compute value of field picked using `selector`.
+  /** Use function `f` to compute value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
+    * @tparam T type of target field
+    * @tparam U type of computed value
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
@@ -83,17 +103,21 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
   )(implicit ev: U <:< T): TransformerInto[From, To, _ <: TransformerCfg, Flags] =
     macro TransformerIntoWhiteboxMacros.withFieldComputedImpl
 
-  /** Use `map` provided here to compute wrapped value of field picked using `selector`.
+  /** Use `f` provided here to compute wrapped value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
+    * @tparam T type of target field
+    * @tparam U type of computed value
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def withFieldComputedF[F[+_], T, U](
       selector: To => T,
       f: From => F[U]
@@ -105,6 +129,9 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#fields-renaming]] for more details
+    *
+    * @tparam T type of source field
+    * @tparam U type of target field
     * @param selectorFrom source field in `From`, defined like `_.originalName`
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
@@ -125,7 +152,8 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
     * it will fail.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
-    * @param f function to calculate values of components that cannot be mapped automatically
+    *
+    * @tparam Inst type of coproduct instance@param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     *
     * @since 0.1.2
@@ -141,11 +169,13 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
     * it fails compilation unless provided replacement with this operation.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
-    * @param f function to calculate values of components that cannot be mapped automatically
+    *
+    * @tparam Inst type of coproduct instance@param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
     *
     * @since 0.5.0
     */
+  @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def withCoproductInstanceF[F[+_], Inst](f: Inst => F[To]): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerIntoWhiteboxMacros.withCoproductInstanceFImpl[F]
 

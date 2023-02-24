@@ -35,6 +35,8 @@ extensions = [
     'sphinx.ext.autosectionlabel'
 ]
 
+autosectionlabel_prefix_document = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -53,7 +55,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Chimney'
-copyright = u'2017-2022, scalaland.io'
+copyright = u'2017-2023, scalaland.io'
 author = u'Piotr Krzemiński, Mateusz Kubuszok'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -70,7 +72,7 @@ release = u'0.6.2'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

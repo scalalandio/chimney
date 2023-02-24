@@ -4,9 +4,11 @@ import io.scalaland.chimney.internal.TransformerFlags
 
 /** Type-level set of derivation flags that can be shared between derivations through implicit scope.
   *
+  * @tparam Flags type-level encoded flags
+  *
   * @since 0.6.0
   */
-class TransformerConfiguration[Flags <: TransformerFlags]
+final class TransformerConfiguration[Flags <: TransformerFlags]
     extends FlagsDsl[Lambda[`F1 <: TransformerFlags` => TransformerConfiguration[F1]], Flags]
 
 /** @since 0.6.0 */

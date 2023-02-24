@@ -60,7 +60,7 @@ val settings = Seq(
     "-Ywarn-unused:locals",
     "-Ywarn-unused:imports",
     "-Ywarn-macros:after",
-    "-Xfatal-warnings",
+//    "-Xfatal-warnings",
     "-language:higherKinds"
   ),
   scalacOptions ++= (
@@ -148,7 +148,8 @@ val ciCommand = (scalaSuffix: String) =>
     s"chimneyJS$scalaSuffix/test",
     s"chimneyCatsJS$scalaSuffix/test",
     s"chimneyNative$scalaSuffix/test",
-    s"chimneyCatsNative$scalaSuffix/test"
+    s"chimneyCatsNative$scalaSuffix/test",
+    "benchmarks/compile"
   ).mkString(";")
 
 // modules
@@ -196,6 +197,11 @@ lazy val root = project
         "ci-2_13",
         ciCommand(""),
         "Checks formatting, run tests and compute core library coverage for Scala 2.13"
+      ),
+      sbtwelcome.UsefulTask(
+        "runBenchmarks",
+        "benchmarks/Jmh/run",
+        "Run JMH benchmarks suite"
       )
     )
   )
@@ -259,4 +265,9 @@ lazy val benchmarks = projectMatrix
   .disablePlugins(WelcomePlugin)
   .settings(settings: _*)
   .settings(noPublishSettings: _*)
-  .dependsOn(chimney % "test->test;compile->compile")
+  .dependsOn(chimney)
+
+//when having memory/GC-related errors during build, uncommenting this may be useful:
+Global / concurrentRestrictions := Seq(
+  Tags.limit(Tags.Compile, 2) // only 2 compilations at once
+)

@@ -1,5 +1,7 @@
 package io.scalaland.chimney.internal.macros
 
+import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, PreferPartialTransformer, PreferTotalTransformer}
+import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.utils.MacroUtils
 
 import scala.reflect.macros.blackbox
@@ -21,20 +23,38 @@ trait TransformerConfigSupport extends MacroUtils {
 
   object FieldOverride {
     case object Const extends FieldOverride(true)
+    case object ConstPartial extends FieldOverride(true)
     case object ConstF extends FieldOverride(true)
     case object Computed extends FieldOverride(true)
+    case object ComputedPartial extends FieldOverride(true)
     case object ComputedF extends FieldOverride(true)
     case class RenamedFrom(sourceName: String) extends FieldOverride(false)
   }
 
   sealed trait DerivationTarget {
     def targetType(toTpe: Type): Type
+    def isPartial: Boolean
+    def isLifted: Boolean
   }
+
   object DerivationTarget {
     // derivation target instance of `Transformer[A, B]`
     case object TotalTransformer extends DerivationTarget {
       def targetType(toTpe: Type): Type = toTpe
-
+      // $COVERAGE-OFF$
+      def isLifted = false
+      def isPartial = false
+      // $COVERAGE-ON$
+    }
+    // derivation target instance of `PartialTransformer[A, B]`
+    case class PartialTransformer(failFastTermName: TermName = freshTermName("failFast")) extends DerivationTarget {
+      def failFastTree: Tree = q"$failFastTermName"
+      def targetType(toTpe: Type): Type =
+        typeOf[partial.Result[_]].typeConstructor.applyTypeArg(toTpe)
+      // $COVERAGE-OFF$
+      def isLifted = false
+      def isPartial = true
+      // $COVERAGE-ON$
     }
     // derivation target instace of `TransformerF[F, A, B]`, where F is wrapper type
     case class LiftedTransformer(
@@ -43,6 +63,10 @@ trait TransformerConfigSupport extends MacroUtils {
         wrapperErrorPathSupportInstance: Option[Tree] = None
     ) extends DerivationTarget {
       def targetType(toTpe: Type): Type = wrapperType.applyTypeArg(toTpe)
+      // $COVERAGE-OFF$
+      def isLifted = true
+      def isPartial = false
+      // $COVERAGE-ON$
     }
   }
 
@@ -53,7 +77,8 @@ trait TransformerConfigSupport extends MacroUtils {
       coproductInstances: Set[(Symbol, Type)] = Set.empty, // pair: inst type, target type
       transformerDefinitionPrefix: Tree = EmptyTree,
       definitionScope: Option[(Type, Type)] = None,
-      coproductInstancesF: Set[(Symbol, Type)] = Set.empty // pair: inst type, target type
+      coproductInstancesF: Set[(Symbol, Type)] = Set.empty, // pair: inst type, target type
+      coproductInstancesPartial: Set[(Symbol, Type)] = Set.empty // pair: inst type, target type
   ) {
 
     def withDerivationTarget(derivationTarget: DerivationTarget): TransformerConfig = {
@@ -74,7 +99,8 @@ trait TransformerConfigSupport extends MacroUtils {
     def valueLevelAccessNeeded: Boolean = {
       fieldOverrides.exists { case (_, fo) => fo.needValueLevelAccess } ||
       coproductInstances.nonEmpty ||
-      coproductInstancesF.nonEmpty
+      coproductInstancesF.nonEmpty ||
+      coproductInstancesPartial.nonEmpty
     }
 
     def fieldOverride(fieldName: String, fieldOverride: FieldOverride): TransformerConfig = {
@@ -88,6 +114,10 @@ trait TransformerConfigSupport extends MacroUtils {
     def coproductInstanceF(instanceType: Type, targetType: Type): TransformerConfig = {
       copy(coproductInstancesF = coproductInstancesF + (instanceType.typeSymbol -> targetType))
     }
+
+    def coproductInstancePartial(instanceType: Type, targetType: Type): TransformerConfig = {
+      copy(coproductInstancesPartial = coproductInstancesPartial + (instanceType.typeSymbol -> targetType))
+    }
   }
 
   object CfgTpes {
@@ -99,11 +129,14 @@ trait TransformerConfigSupport extends MacroUtils {
 
     val emptyT: Type = typeOf[Empty]
     val fieldConstT: Type = typeOf[FieldConst[_, _]].typeConstructor
+    val fieldConstPartialT: Type = typeOf[FieldConstPartial[_, _]].typeConstructor
     val fieldConstFT: Type = typeOf[FieldConstF[_, _]].typeConstructor
     val fieldComputedT: Type = typeOf[FieldComputed[_, _]].typeConstructor
+    val fieldComputedPartialT: Type = typeOf[FieldComputedPartial[_, _]].typeConstructor
     val fieldComputedFT: Type = typeOf[FieldComputedF[_, _]].typeConstructor
     val fieldRelabelledT: Type = typeOf[FieldRelabelled[_, _, _]].typeConstructor
     val coproductInstanceT: Type = typeOf[CoproductInstance[_, _, _]].typeConstructor
+    val coproductInstancePartialT: Type = typeOf[CoproductInstancePartial[_, _, _]].typeConstructor
     val coproductInstanceFT: Type = typeOf[CoproductInstanceF[_, _, _]].typeConstructor
     val wrapperTypeT: Type = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
   }
@@ -165,6 +198,17 @@ trait TransformerConfigSupport extends MacroUtils {
     } else if (cfgTpe.typeConstructor =:= coproductInstanceFT) {
       val List(instanceType, targetType, rest) = cfgTpe.typeArgs
       captureTransformerConfig(rest).coproductInstanceF(instanceType, targetType)
+    } else if (cfgTpe.typeConstructor =:= fieldConstPartialT) {
+      val List(fieldNameT, rest) = cfgTpe.typeArgs
+      val fieldName = fieldNameT.singletonString
+      captureTransformerConfig(rest).fieldOverride(fieldName, FieldOverride.ConstPartial)
+    } else if (cfgTpe.typeConstructor =:= fieldComputedPartialT) {
+      val List(fieldNameT, rest) = cfgTpe.typeArgs
+      val fieldName = fieldNameT.singletonString
+      captureTransformerConfig(rest).fieldOverride(fieldName, FieldOverride.ComputedPartial)
+    } else if (cfgTpe.typeConstructor =:= coproductInstancePartialT) {
+      val List(instanceType, targetType, rest) = cfgTpe.typeArgs
+      captureTransformerConfig(rest).coproductInstancePartial(instanceType, targetType)
     } else {
       // $COVERAGE-OFF$
       c.abort(c.enclosingPosition, "Bad internal transformer config type shape!")
@@ -178,9 +222,10 @@ trait TransformerConfigSupport extends MacroUtils {
       beanSetters: Boolean = false,
       beanGetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,
-      unsafeOption: Boolean = false
+      unsafeOption: Boolean = false,
+      implicitConflictResolution: Option[ImplicitTransformerPreference] = None
   ) {
-    def setFlag(flagTpe: Type, value: Boolean): TransformerFlags = {
+    def setBoolFlag(flagTpe: Type, value: Boolean): TransformerFlags = {
       if (flagTpe =:= FlagsTpes.methodAccessorsT) {
         copy(methodAccessors = value)
       } else if (flagTpe =:= FlagsTpes.defaultValuesT) {
@@ -199,6 +244,10 @@ trait TransformerConfigSupport extends MacroUtils {
         // $COVERAGE-ON$
       }
     }
+
+    def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags = {
+      copy(implicitConflictResolution = preference)
+    }
   }
 
   object FlagsTpes {
@@ -215,6 +264,7 @@ trait TransformerConfigSupport extends MacroUtils {
     val beanGettersT: Type = typeOf[BeanGetters]
     val optionDefaultsToNoneT: Type = typeOf[OptionDefaultsToNone]
     val unsafeOptionT: Type = typeOf[UnsafeOption]
+    val implicitConflictResolutionT: Type = typeOf[ImplicitConflictResolution[_]].typeConstructor
   }
 
   def captureTransformerFlags(
@@ -230,10 +280,29 @@ trait TransformerConfigSupport extends MacroUtils {
       defaultFlags
     } else if (flagsTpe.typeConstructor =:= enableT) {
       val List(flagT, rest) = flagsTpe.typeArgs
-      captureTransformerFlags(rest, defaultFlags).setFlag(flagT, value = true)
+
+      if (flagT.typeConstructor =:= implicitConflictResolutionT) {
+        val preferenceT = flagT.typeArgs.head
+        if (preferenceT =:= typeOf[PreferTotalTransformer.type]) {
+          captureTransformerFlags(rest, defaultFlags).setImplicitConflictResolution(Some(PreferTotalTransformer))
+        } else if (preferenceT =:= typeOf[PreferPartialTransformer.type]) {
+          captureTransformerFlags(rest, defaultFlags).setImplicitConflictResolution(Some(PreferPartialTransformer))
+        } else {
+          // $COVERAGE-OFF$
+          c.abort(c.enclosingPosition, "Invalid implicit conflict resolution preference type!!")
+          // $COVERAGE-ON$
+        }
+      } else {
+        captureTransformerFlags(rest, defaultFlags).setBoolFlag(flagT, value = true)
+      }
     } else if (flagsTpe.typeConstructor =:= disableT) {
       val List(flagT, rest) = flagsTpe.typeArgs
-      captureTransformerFlags(rest, defaultFlags).setFlag(flagT, value = false)
+
+      if (flagT.typeConstructor =:= implicitConflictResolutionT) {
+        captureTransformerFlags(rest, defaultFlags).setImplicitConflictResolution(None)
+      } else {
+        captureTransformerFlags(rest, defaultFlags).setBoolFlag(flagT, value = false)
+      }
     } else {
       // $COVERAGE-OFF$
       c.abort(c.enclosingPosition, "Bad internal transformer flags type shape!")

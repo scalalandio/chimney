@@ -1,15 +1,16 @@
 package io.scalaland.chimney.cats
 
-import cats.data.{NonEmptyChain, Validated, ValidatedNec}
+import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import io.scalaland.chimney.{TransformationError, Transformer, TransformerF}
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.utils.OptionUtils._
 import utest._
 
-object CatsValidatedErrorPathSpec extends TestSuite {
+object LiftedTransformerErrorPathValidatedNelInstanceSpec extends TestSuite {
+
   val tests = Tests {
-    "path of error should capture for" - {
-      type V[+A] = ValidatedNec[TransformationError[String], A]
+    test("path of error should capture for") {
+      type V[+A] = ValidatedNel[TransformationError[String], A]
 
       def printError(err: TransformationError[String]): String =
         s"${err.message} on ${err.showErrorPath}"
@@ -18,7 +19,7 @@ object CatsValidatedErrorPathSpec extends TestSuite {
         str =>
           Validated.fromOption(
             str.parseInt,
-            NonEmptyChain.one(TransformationError[String](s"Can't parse int from $str"))
+            NonEmptyList.one(TransformationError[String](s"Can't parse int from $str"))
           )
 
       case class StringWrapper(str: String)
@@ -26,7 +27,7 @@ object CatsValidatedErrorPathSpec extends TestSuite {
       implicit val stringUnwrap: Transformer[StringWrapper, String] =
         _.str
 
-      "case classes" - {
+      test("case classes") {
         case class Foo(a: String, b: String, c: InnerFoo, d: StringWrapper)
 
         case class InnerFoo(d: String, e: String)
@@ -39,7 +40,7 @@ object CatsValidatedErrorPathSpec extends TestSuite {
           .transformIntoF[V, Bar]
           .leftMap(_.map(printError)) ==>
           Validated.Invalid(
-            NonEmptyChain(
+            NonEmptyList.of(
               "Can't parse int from mmm on a",
               "Can't parse int from nnn on b",
               "Can't parse int from lll on c.d",
@@ -48,14 +49,14 @@ object CatsValidatedErrorPathSpec extends TestSuite {
           )
       }
 
-      "list" - {
+      test("list") {
         case class Foo(list: List[String])
 
         case class Bar(list: List[Int])
 
         Foo(List("a", "b", "c")).transformIntoF[V, Bar].leftMap(_.map(printError)) ==>
           Validated.Invalid(
-            NonEmptyChain(
+            NonEmptyList.of(
               "Can't parse int from a on list(0)",
               "Can't parse int from b on list(1)",
               "Can't parse int from c on list(2)"
@@ -63,7 +64,7 @@ object CatsValidatedErrorPathSpec extends TestSuite {
           )
       }
 
-      "map" - {
+      test("map") {
         case class FooKey(value: String)
 
         case class FooValue(value: String)
@@ -94,7 +95,7 @@ object CatsValidatedErrorPathSpec extends TestSuite {
           .transformIntoF[V, Bar]
           .leftMap(_.map(printError)) ==>
           Validated.Invalid(
-            NonEmptyChain(
+            NonEmptyList.of(
               "Can't parse int from a on map.keys(a)",
               "Can't parse int from b on map(a)",
               "Can't parse int from c on map.keys(c)",
@@ -108,12 +109,12 @@ object CatsValidatedErrorPathSpec extends TestSuite {
 
         error.check(
           "",
-          "derivation from k: io.scalaland.chimney.cats.CatsValidatedErrorPathSpec.FooKey to scala.Double is not supported in Chimney!"
+          "derivation from k: io.scalaland.chimney.cats.LiftedTransformerErrorPathValidatedNelInstanceSpec.FooKey to scala.Double is not supported in Chimney!"
         )
 
         error.check(
           "",
-          "derivation from v: io.scalaland.chimney.cats.CatsValidatedErrorPathSpec.FooValue to scala.Double is not supported in Chimney!"
+          "derivation from v: io.scalaland.chimney.cats.LiftedTransformerErrorPathValidatedNelInstanceSpec.FooValue to scala.Double is not supported in Chimney!"
         )
 
         Map(StringWrapper("a") -> StringWrapper("b"), StringWrapper("c") -> StringWrapper("d"))

@@ -11,4 +11,4 @@ final case class Customer(
     firstName: _root_.scala.Predef.String = "",
     lastName: _root_.scala.Predef.String = "",
     address: _root_.scala.Option[io.scalaland.chimney.examples.pb.order.Address] = _root_.scala.None
-    )
+)

@@ -6,6 +6,8 @@
 package io.scalaland.chimney.examples.pb.addressbook
 
 @SerialVersionUID(0L)
-final case class PhoneNumber(number: _root_.scala.Predef.String = "",
-                             `type`: io.scalaland.chimney.examples.pb.addressbook.PhoneType =
-                               io.scalaland.chimney.examples.pb.addressbook.PhoneType.MOBILE)
+final case class PhoneNumber(
+    number: _root_.scala.Predef.String = "",
+    `type`: io.scalaland.chimney.examples.pb.addressbook.PhoneType =
+      io.scalaland.chimney.examples.pb.addressbook.PhoneType.MOBILE
+)

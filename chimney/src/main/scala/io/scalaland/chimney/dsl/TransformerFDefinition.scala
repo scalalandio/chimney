@@ -8,6 +8,8 @@ import scala.language.experimental.macros
 
 /** Allows customization of [[io.scalaland.chimney.TransformerF]] derivation
   *
+  * @deprecated migration described at [[https://scalalandio.github.io/chimney/partial-transformers/migrating-from-lifted.html]]
+  *
   * @tparam F     wrapper type constructor
   * @tparam From  type of input value
   * @tparam To    type of output value
@@ -16,6 +18,7 @@ import scala.language.experimental.macros
   *
   * @since 0.5.0
   */
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
 final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <: TransformerFlags](
     val overrides: Map[String, Any],
     val instances: Map[(String, String), Any]
@@ -27,10 +30,12 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
+    * @tparam T type of target field
+    * @tparam U type of provided value
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
-    *
     * @since 0.5.0
     */
   def withFieldConst[T, U](
@@ -44,6 +49,9 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
+    * @tparam T type of target field
+    * @tparam U type of provided value
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
@@ -56,11 +64,14 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
   )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerFDefinitionWhiteboxMacros.withFieldConstFImpl[C, F]
 
-  /** Use `map` provided here to compute value of field picked using `selector`.
+  /** Use function `f` to compute value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
+    * @tparam T type of target field
+    * @tparam U type of computed value
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
@@ -73,11 +84,14 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
   )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
     macro TransformerFDefinitionWhiteboxMacros.withFieldComputedImpl[C]
 
-  /** Use `map` provided here to compute wrapped value of field picked using `selector`.
+  /** Use `f` provided here to compute wrapped value of field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
+    * @tparam T type of target field
+    * @tparam U type of computed value
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
@@ -95,6 +109,9 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#fields-renaming]] for more details
+    *
+    * @tparam T type of source field
+    * @tparam U type of target field
     * @param selectorFrom source field in `From`, defined like `_.originalName`
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
@@ -115,6 +132,8 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     * it fails compilation unless provided replacement with this operation.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
+    *
+    * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
     *
@@ -133,6 +152,8 @@ final class TransformerFDefinition[F[+_], From, To, C <: TransformerCfg, Flags <
     * it fails compilation unless provided replacement with this operation.
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
+    *
+    * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerFDefinition]]
     *

@@ -6,6 +6,7 @@ package io.scalaland.chimney
   *
   * @since 0.6.1
   */
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
 sealed trait ErrorPathNode {
 
   /** @since 0.6.1 */
@@ -16,6 +17,7 @@ sealed trait ErrorPathNode {
 }
 
 /** @since 0.6.1 */
+@deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
 object ErrorPathNode {
 
   /** @since 0.6.1 */
