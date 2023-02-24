@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.TransformerCfg
 
-private[dsl] object TransformerDefinitionCommons {
+object TransformerDefinitionCommons {
   type RuntimeDataStore = Vector[Any]
   def emptyRuntimeDataStore: RuntimeDataStore = Vector.empty[Any]
 }

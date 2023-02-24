@@ -43,7 +43,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     */
   def partial: PartialTransformerDefinition[From, To, C, Flags] =
-    new PartialTransformerDefinition[From, To, C, Flags](overrides, instances)
+    new PartialTransformerDefinition[From, To, C, Flags](runtimeData)
 
   /** Use provided value `value` for field picked using `selector`.
     *

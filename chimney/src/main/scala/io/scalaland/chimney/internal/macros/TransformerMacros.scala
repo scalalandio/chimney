@@ -710,7 +710,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
   ): Option[Tree] = {
     val pureRuntimeDataIdxOpt = config.coproductInstanceOverrides.get((From.typeSymbol, To))
     val liftedRuntimeDataIdxOpt = config.coproductInstanceFOverrides.get((From.typeSymbol, To))
-    val partialRuntimeDataIdxOpt = config.coproductInstacePartialOverrides.get((From.typeSymbol, To))
+    val partialRuntimeDataIdxOpt = config.coproductInstancesPartialOverrides.get((From.typeSymbol, To))
 
     (config.derivationTarget, pureRuntimeDataIdxOpt, partialRuntimeDataIdxOpt, liftedRuntimeDataIdxOpt) match {
       case (liftedTarget: DerivationTarget.LiftedTransformer, _, _, Some(runtimeDataIdxLifted)) =>

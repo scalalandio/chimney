@@ -63,7 +63,10 @@ package object dsl {
       * @since 0.7.0
       */
     final def intoPartial[To]: PartialTransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
-      new PartialTransformerInto(source, new PartialTransformerDefinition(Map.empty, Map.empty))
+      new PartialTransformerInto(
+        source,
+        new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
+      )
 
     /** Performs in-place partial transformation of captured source value to target type.
       *

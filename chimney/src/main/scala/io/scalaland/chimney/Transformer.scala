@@ -1,7 +1,12 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
-import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinition, TransformerDefinitionCommons, TransformerFDefinition}
+import io.scalaland.chimney.dsl.{
+  PartialTransformerDefinition,
+  TransformerDefinition,
+  TransformerDefinitionCommons,
+  TransformerFDefinition
+}
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 
 import scala.language.experimental.macros
