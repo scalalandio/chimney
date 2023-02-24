@@ -708,37 +708,41 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       To: Type,
       config: TransformerConfig
   ): Option[Tree] = {
-    config.derivationTarget match {
-      case DerivationTarget.LiftedTransformer(_, _, _) if config.coproductInstancesF.contains((From.typeSymbol, To)) =>
+    val pureRuntimeDataIdxOpt = config.coproductInstanceOverrides.get((From.typeSymbol, To))
+    val liftedRuntimeDataIdxOpt = config.coproductInstanceFOverrides.get((From.typeSymbol, To))
+    val partialRuntimeDataIdxOpt = config.coproductInstancesPartialOverrides.get((From.typeSymbol, To))
+
+    (config.derivationTarget, pureRuntimeDataIdxOpt, partialRuntimeDataIdxOpt, liftedRuntimeDataIdxOpt) match {
+      case (liftedTarget: DerivationTarget.LiftedTransformer, _, _, Some(runtimeDataIdxLifted)) =>
         Some(
           mkCoproductInstance(
             config.transformerDefinitionPrefix,
             srcPrefixTree,
-            From.typeSymbol,
             To,
-            config.derivationTarget
+            runtimeDataIdxLifted,
+            liftedTarget
           )
         )
 
-      case DerivationTarget.PartialTransformer(_) if config.coproductInstancesPartial.contains((From.typeSymbol, To)) =>
+      case (partialTarget: DerivationTarget.PartialTransformer, _, Some(runtimeDataIdxPartial), _) =>
         Some(
           mkCoproductInstance(
             config.transformerDefinitionPrefix,
             srcPrefixTree,
-            From.typeSymbol,
             To,
-            config.derivationTarget
+            runtimeDataIdxPartial,
+            partialTarget
           )
         )
 
-      case _ if config.coproductInstances.contains((From.typeSymbol, To)) =>
+      case (_, Some(runtimeDataIdxPure), _, _) =>
         Some(
           mkTransformerBodyTree0(config.derivationTarget) {
             mkCoproductInstance(
               config.transformerDefinitionPrefix,
               srcPrefixTree,
-              From.typeSymbol,
               To,
+              runtimeDataIdxPure,
               DerivationTarget.TotalTransformer
             )
           }

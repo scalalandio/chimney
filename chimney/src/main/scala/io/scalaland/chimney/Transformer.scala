@@ -1,7 +1,12 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
-import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinition, TransformerFDefinition}
+import io.scalaland.chimney.dsl.{
+  PartialTransformerDefinition,
+  TransformerDefinition,
+  TransformerDefinitionCommons,
+  TransformerFDefinition
+}
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 
 import scala.language.experimental.macros
@@ -53,7 +58,7 @@ object Transformer {
     * @since 0.4.0
     */
   def define[From, To]: TransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
-    new TransformerDefinition(Map.empty, Map.empty)
+    new TransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 
   /** Creates an empty [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] that
     * you can customize to derive [[io.scalaland.chimney.PartialTransformer]].
@@ -67,7 +72,7 @@ object Transformer {
     * @since 0.7.0
     */
   def definePartial[From, To]: PartialTransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
-    new PartialTransformerDefinition(Map.empty, Map.empty)
+    new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 
   /** Creates an empty [[io.scalaland.chimney.dsl.TransformerFDefinition]] that
     * you can customize to derive [[io.scalaland.chimney.TransformerF]].

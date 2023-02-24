@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl.PartialTransformerDefinition
+import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinitionCommons}
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
 
@@ -123,5 +123,5 @@ object PartialTransformer {
     * @since 0.7.0
     */
   def define[From, To]: PartialTransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
-    new PartialTransformerDefinition(Map.empty, Map.empty)
+    new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 }

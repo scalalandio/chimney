@@ -16,8 +16,7 @@ import scala.language.experimental.macros
   * @since 0.7.0
   */
 final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <: TransformerFlags](
-    val overrides: Map[String, Any],
-    val instances: Map[(String, String), Any]
+    val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
 ) extends FlagsDsl[Lambda[`F1 <: TransformerFlags` => PartialTransformerDefinition[From, To, C, F1]], Flags]
     with TransformerDefinitionCommons[
       Lambda[`C1 <: TransformerCfg` => PartialTransformerDefinition[From, To, C1, Flags]]
@@ -167,6 +166,6 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
   ): PartialTransformer[From, To] =
     macro TransformerBlackboxMacros.buildPartialTransformerImpl[From, To, C, Flags, ScopeFlags]
 
-  override protected def updated(newOverrides: Map[String, Any], newInstances: Map[(String, String), Any]): this.type =
-    new PartialTransformerDefinition(newOverrides, newInstances).asInstanceOf[this.type]
+  override protected def __updateRuntimeData(newRuntimeData: TransformerDefinitionCommons.RuntimeDataStore): this.type =
+    new PartialTransformerDefinition(newRuntimeData).asInstanceOf[this.type]
 }
