@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Unsafe options transformation &mdash; Chimney 0.6.2 documentation</title>
+  <title>Unsafe options (deprecated) &mdash; Chimney 0.7.0 documentation</title>
   
 
   
@@ -36,7 +36,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Providing scoped configuration" href="scoped-configuration.html" />
+    <link rel="next" title="Partial transformers" href="../partial-transformers/partial-transformers.html" />
     <link rel="prev" title="Java beans" href="java-beans.html" /> 
 </head>
 
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.6.2
+                0.7.0
               </div>
             
           
@@ -98,21 +98,35 @@
 <li class="toctree-l1"><a class="reference internal" href="standard-transformers.html">Standard transformers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="default-values.html">Default values support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="own-transformations.html">Plugging in own transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoped-configuration.html">Providing scoped configuration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="java-beans.html">Java beans</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Unsafe options transformation</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Unsafe options <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#proto3-motivational-example">Proto3 motivational example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enabling-unsafe-option-extraction">Enabling unsafe option extraction</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="scoped-configuration.html">Providing scoped configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="lifted-transformers.html">Lifted transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cats-integration.html">Cats integration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Partial Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/partial-transformers.html">Partial transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/migrating-from-lifted.html">Migrating from Lifted Transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/total-vs-partial-conflicts.html">Total vs partial conflicts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/cats-integration.html">Cats integration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Lifted Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../lifted-transformers/lifted-transformers.html">Lifted Transformers <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lifted-transformers/cats-integration.html">Cats integration <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
 </ul>
 <p class="caption"><span class="caption-text">Patchers</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/getting-started.html">Getting started with patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/redundant-fields.html">Redundant fields in patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Benchmarks</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../benchmarks.html">Benchmarks</a></li>
 </ul>
 
             
@@ -159,7 +173,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Unsafe options transformation</li>
+      <li>Unsafe options <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -176,15 +190,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="unsafe-options-transformation">
-<h1>Unsafe options transformation<a class="headerlink" href="#unsafe-options-transformation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="unsafe-options-deprecated">
+<h1>Unsafe options <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code><a class="headerlink" href="#unsafe-options-deprecated" title="Permalink to this headline">¶</a></h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This feature is deprecated and most likely will be removed soon.
+Consider using <a class="reference internal" href="../partial-transformers/partial-transformers.html#partial-transformers"><span class="std std-ref">Partial transformers</span></a> instead.</p>
+</div>
 <p>Chimney supports opt-in unsafe transformation from <code class="docutils literal notranslate"><span class="pre">Option[T]</span></code> to
 <code class="docutils literal notranslate"><span class="pre">T</span></code> if enabled explicitly with <code class="docutils literal notranslate"><span class="pre">.enableUnsafeOption</span></code>.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Transforming <code class="docutils literal notranslate"><span class="pre">None</span></code> into a concrete value will lead to <code class="docutils literal notranslate"><span class="pre">NoSuchElementException</span></code>
 at runtime, so use it at your own risk.</p>
-<p>Since version 0.5.0 there is available better, safe alternative: <a class="reference internal" href="lifted-transformers.html#lifted-transformers"><span class="std std-ref">Lifted transformers</span></a>.</p>
 </div>
 <div class="section" id="proto3-motivational-example">
 <h2>Proto3 motivational example<a class="headerlink" href="#proto3-motivational-example" title="Permalink to this headline">¶</a></h2>
@@ -258,7 +276,7 @@ using <code class="docutils literal notranslate"><span class="pre">.enableUnsafe
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="scoped-configuration.html" class="btn btn-neutral float-right" title="Providing scoped configuration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="../partial-transformers/partial-transformers.html" class="btn btn-neutral float-right" title="Partial transformers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="java-beans.html" class="btn btn-neutral float-left" title="Java beans" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -271,7 +289,7 @@ using <code class="docutils literal notranslate"><span class="pre">.enableUnsafe
   <div role="contentinfo">
     <p>
         
-        &copy; Copyright 2017-2022, scalaland.io
+        &copy; Copyright 2017-2023, scalaland.io
 
     </p>
   </div>

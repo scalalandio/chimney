@@ -27,8 +27,8 @@ Let's consider a following example.
     // Target(100, None)
 
 In order to make it working without providing any specific values, we must
-enable :ref:`method accessors<Using method accessors>` and
-:ref:`None as Option default value<Default values for \`\`Option\`\` fields>`.
+enable :ref:`method accessors<transformers/customizing-transformers:Using method accessors>` and
+:ref:`None as Option default value<transformers/default-values:Default values for \`\`Option\`\` fields>`.
 
 Instead of enabling them per use-site, we can define default transformer configuration
 in implicit scope.

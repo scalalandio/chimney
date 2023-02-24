@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Java beans &mdash; Chimney 0.6.2 documentation</title>
+  <title>Java beans &mdash; Chimney 0.7.0 documentation</title>
   
 
   
@@ -36,8 +36,8 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Unsafe options transformation" href="unsafe-options.html" />
-    <link rel="prev" title="Plugging in own transformations" href="own-transformations.html" /> 
+    <link rel="next" title="Unsafe options (deprecated)" href="unsafe-options.html" />
+    <link rel="prev" title="Providing scoped configuration" href="scoped-configuration.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.6.2
+                0.7.0
               </div>
             
           
@@ -98,22 +98,36 @@
 <li class="toctree-l1"><a class="reference internal" href="standard-transformers.html">Standard transformers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="default-values.html">Default values support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="own-transformations.html">Plugging in own transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scoped-configuration.html">Providing scoped configuration</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Java beans</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#reading-from-java-beans">Reading from Java beans</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#writing-to-java-beans">Writing to Java beans</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#current-limitations">Current limitations</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="unsafe-options.html">Unsafe options transformation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scoped-configuration.html">Providing scoped configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="lifted-transformers.html">Lifted transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cats-integration.html">Cats integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="unsafe-options.html">Unsafe options <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
+</ul>
+<p class="caption"><span class="caption-text">Partial Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/partial-transformers.html">Partial transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/migrating-from-lifted.html">Migrating from Lifted Transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/total-vs-partial-conflicts.html">Total vs partial conflicts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/cats-integration.html">Cats integration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Lifted Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../lifted-transformers/lifted-transformers.html">Lifted Transformers <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lifted-transformers/cats-integration.html">Cats integration <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
 </ul>
 <p class="caption"><span class="caption-text">Patchers</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/getting-started.html">Getting started with patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/redundant-fields.html">Redundant fields in patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Benchmarks</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../benchmarks.html">Benchmarks</a></li>
 </ul>
 
             
@@ -270,10 +284,10 @@ for missing setters.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="unsafe-options.html" class="btn btn-neutral float-right" title="Unsafe options transformation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="unsafe-options.html" class="btn btn-neutral float-right" title="Unsafe options (deprecated)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="own-transformations.html" class="btn btn-neutral float-left" title="Plugging in own transformations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="scoped-configuration.html" class="btn btn-neutral float-left" title="Providing scoped configuration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -283,7 +297,7 @@ for missing setters.</p>
   <div role="contentinfo">
     <p>
         
-        &copy; Copyright 2017-2022, scalaland.io
+        &copy; Copyright 2017-2023, scalaland.io
 
     </p>
   </div>

@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Lifted transformers &mdash; Chimney 0.6.2 documentation</title>
+  <title>Lifted Transformers (deprecated) &mdash; Chimney 0.7.0 documentation</title>
   
 
   
@@ -36,8 +36,8 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Cats integration" href="cats-integration.html" />
-    <link rel="prev" title="Providing scoped configuration" href="scoped-configuration.html" /> 
+    <link rel="next" title="Cats integration (deprecated)" href="cats-integration.html" />
+    <link rel="prev" title="Cats integration" href="../partial-transformers/cats-integration.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.6.2
+                0.7.0
               </div>
             
           
@@ -92,16 +92,26 @@
 <li class="toctree-l1"><a class="reference internal" href="../getting-started/community.html">Community</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/getting-started.html">Getting started with transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/customizing-transformers.html">Customizing transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/standard-transformers.html">Standard transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/default-values.html">Default values support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/own-transformations.html">Plugging in own transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/scoped-configuration.html">Providing scoped configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/java-beans.html">Java beans</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/unsafe-options.html">Unsafe options <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
+</ul>
+<p class="caption"><span class="caption-text">Partial Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/partial-transformers.html">Partial transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/migrating-from-lifted.html">Migrating from Lifted Transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/total-vs-partial-conflicts.html">Total vs partial conflicts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/cats-integration.html">Cats integration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Lifted Transformers</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started with transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="customizing-transformers.html">Customizing transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="standard-transformers.html">Standard transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="default-values.html">Default values support</a></li>
-<li class="toctree-l1"><a class="reference internal" href="own-transformations.html">Plugging in own transformations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="java-beans.html">Java beans</a></li>
-<li class="toctree-l1"><a class="reference internal" href="unsafe-options.html">Unsafe options transformation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scoped-configuration.html">Providing scoped configuration</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Lifted transformers</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Lifted Transformers <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#lifted-dsl-operations">Lifted DSL operations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#capturing-validation-errors">Capturing validation errors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#transformerf-type-class"><code class="docutils literal notranslate"><span class="pre">TransformerF</span></code> type class</a></li>
@@ -111,13 +121,17 @@
 <li class="toctree-l2"><a class="reference internal" href="#deriving-lifted-transformers">Deriving lifted transformers</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="cats-integration.html">Cats integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cats-integration.html">Cats integration <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
 </ul>
 <p class="caption"><span class="caption-text">Patchers</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/getting-started.html">Getting started with patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/redundant-fields.html">Redundant fields in patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Benchmarks</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../benchmarks.html">Benchmarks</a></li>
 </ul>
 
             
@@ -164,7 +178,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Lifted transformers</li>
+      <li>Lifted Transformers <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -181,8 +195,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="lifted-transformers">
-<span id="id1"></span><h1>Lifted transformers<a class="headerlink" href="#lifted-transformers" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="lifted-transformers-deprecated">
+<span id="lifted-transformers"></span><h1>Lifted Transformers <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code><a class="headerlink" href="#lifted-transformers-deprecated" title="Permalink to this headline">¶</a></h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This feature is deprecated and most likely will be removed soon.
+Consider using <a class="reference internal" href="../partial-transformers/partial-transformers.html#partial-transformers"><span class="std std-ref">Partial transformers</span></a> instead.</p>
+</div>
 <p>While Chimney transformers wrap total functions of type <code class="docutils literal notranslate"><span class="pre">From</span> <span class="pre">=&gt;</span> <span class="pre">To</span></code>, they don’t
 really support partial transformations, where depending on the input value, transformation
 may <cite>succeed</cite> or <cite>fail</cite>.</p>
@@ -238,10 +257,10 @@ in this case.</p></li>
 there are lifted counterparts available:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">withFieldConstF</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">withFieldComputed</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">withFieldComputedF</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">withCoproductInstanceF</span></code></p></li>
 </ul>
-<p>Analogously to <a class="reference internal" href="own-transformations.html#transformer-definition-dsl"><span class="std std-ref">Transformer definition DSL</span></a> for <code class="docutils literal notranslate"><span class="pre">Transformer</span></code>, we can define above transformation
+<p>Analogously to <a class="reference internal" href="../transformers/own-transformations.html#transformer-definition-dsl"><span class="std std-ref">Transformer definition DSL</span></a> for <code class="docutils literal notranslate"><span class="pre">Transformer</span></code>, we can define above transformation
 as implicit <code class="docutils literal notranslate"><span class="pre">TransformerF[Option,</span> <span class="pre">RegistrationForm,</span> <span class="pre">RegisteredUser]</span></code>. In order to do this,
 we use <code class="docutils literal notranslate"><span class="pre">TransformerF.define</span></code> (or equivalently <code class="docutils literal notranslate"><span class="pre">Transformer.defineF</span></code>).</p>
 <div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">implicit</span> <span class="k">val</span> <span class="n">transformer</span><span class="k">:</span> <span class="kt">TransformerF</span><span class="o">[</span><span class="kt">Option</span><span class="p">,</span> <span class="kt">RegistrationForm</span><span class="p">,</span> <span class="kt">RegisteredUser</span><span class="o">]</span> <span class="k">=</span>
@@ -262,7 +281,7 @@ forms into list of registered users.</p>
 (because not all of array elements were valid forms, according to the defined lifted transformer).</p>
 </div>
 <div class="section" id="capturing-validation-errors">
-<span id="id2"></span><h2>Capturing validation errors<a class="headerlink" href="#capturing-validation-errors" title="Permalink to this headline">¶</a></h2>
+<span id="id1"></span><h2>Capturing validation errors<a class="headerlink" href="#capturing-validation-errors" title="Permalink to this headline">¶</a></h2>
 <p>Usually, when partial transformation failed, we would like to know <cite>why</cite> it failed.
 Thus, we must use different wrapper type than <code class="docutils literal notranslate"><span class="pre">Option</span></code> that allows to capture error information.</p>
 <p>Chimney supports out of the box <code class="docutils literal notranslate"><span class="pre">Either[C[E],</span> <span class="pre">+*]</span></code>, as the wrapper type, where</p>
@@ -355,8 +374,8 @@ error channel.</p>
 interested in <a class="reference internal" href="cats-integration.html#cats-validated"><span class="std std-ref">Validated support for lifted transformers</span></a>.</p>
 </div>
 <div class="section" id="transformerf-type-class">
-<span id="id3"></span><h2><code class="docutils literal notranslate"><span class="pre">TransformerF</span></code> type class<a class="headerlink" href="#transformerf-type-class" title="Permalink to this headline">¶</a></h2>
-<p>Similar to the <a class="reference internal" href="own-transformations.html#transformer-typeclass"><span class="std std-ref">Transformer type class</span></a>, Chimney defines a <code class="docutils literal notranslate"><span class="pre">TransformerF</span></code> type class,
+<span id="id2"></span><h2><code class="docutils literal notranslate"><span class="pre">TransformerF</span></code> type class<a class="headerlink" href="#transformerf-type-class" title="Permalink to this headline">¶</a></h2>
+<p>Similar to the <a class="reference internal" href="../transformers/own-transformations.html#transformer-typeclass"><span class="std std-ref">Transformer type class</span></a>, Chimney defines a <code class="docutils literal notranslate"><span class="pre">TransformerF</span></code> type class,
 which allows to express partial (<cite>lifted</cite>, <cite>wrapped</cite>) transformation of type <code class="docutils literal notranslate"><span class="pre">From</span> <span class="pre">=&gt;</span> <span class="pre">F[To]</span></code>.</p>
 <div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">trait</span> <span class="nc">TransformerF</span><span class="o">[</span><span class="kt">F</span><span class="o">[</span><span class="kt">+</span><span class="k">_</span><span class="o">]</span><span class="p">,</span> <span class="kt">From</span><span class="p">,</span> <span class="kt">To</span><span class="o">]</span> <span class="o">{</span>
   <span class="k">def</span> <span class="n">transform</span><span class="o">(</span><span class="n">src</span><span class="k">:</span> <span class="kt">From</span><span class="o">)</span><span class="k">:</span> <span class="kt">F</span><span class="o">[</span><span class="kt">To</span><span class="o">]</span>
@@ -370,9 +389,9 @@ is also supported for lifted transformers. This especially means:</p>
 before deriving as instance by a macro (read more about it in <a class="reference internal" href="#deriving-transformerf"><span class="std std-ref">Deriving lifted transformers</span></a>)</p></li>
 <li><p>all the <code class="docutils literal notranslate"><span class="pre">enable</span></code>/<code class="docutils literal notranslate"><span class="pre">disable</span></code> flags are respected by lifted transformers</p></li>
 <li><p>you can customize lifted transformers using any operation described in
-<a class="reference internal" href="customizing-transformers.html#customizing-transformers"><span class="std std-ref">Customizing transformers</span></a> which works as well for total transformers,
+<a class="reference internal" href="../transformers/customizing-transformers.html#customizing-transformers"><span class="std std-ref">Customizing transformers</span></a> which works as well for total transformers,
 as for lifted ones</p></li>
-<li><p>all the <a class="reference internal" href="standard-transformers.html#standard-transformers"><span class="std std-ref">Standard transformers</span></a> rules are provided for lifted transformers too</p></li>
+<li><p>all the <a class="reference internal" href="../transformers/standard-transformers.html#standard-transformers"><span class="std std-ref">Standard transformers</span></a> rules are provided for lifted transformers too</p></li>
 <li><p>derivation for case classes, tuples, Java beans are supported too</p></li>
 </ul>
 <div class="admonition note">
@@ -406,7 +425,7 @@ an instance of <code class="docutils literal notranslate"><span class="pre">Tran
 implementation of these methods should be obvious. Yet it gives some choice about
 semantics of error handling.</p>
 <p>Chimney supports <code class="docutils literal notranslate"><span class="pre">Option</span></code>, <code class="docutils literal notranslate"><span class="pre">Either</span></code> and <code class="docutils literal notranslate"><span class="pre">cats.data.Validated</span></code>
-(in <a class="reference internal" href="cats-integration.html#cats-integration"><span class="std std-ref">Cats integration</span></a>) just exactly by providing implicit instaces of
+(in <a class="reference internal" href="cats-integration.html#lifted-cats-integration"><span class="std std-ref">Cats integration (deprecated)</span></a>) just exactly by providing implicit instaces of
 <code class="docutils literal notranslate"><span class="pre">TransformerFSupport</span></code> implemented for those wrapper types.</p>
 </div>
 <div class="section" id="error-path-support">
@@ -623,10 +642,10 @@ and <code class="docutils literal notranslate"><span class="pre">Transformer[F1,
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="cats-integration.html" class="btn btn-neutral float-right" title="Cats integration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="cats-integration.html" class="btn btn-neutral float-right" title="Cats integration (deprecated)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="scoped-configuration.html" class="btn btn-neutral float-left" title="Providing scoped configuration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../partial-transformers/cats-integration.html" class="btn btn-neutral float-left" title="Cats integration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -636,7 +655,7 @@ and <code class="docutils literal notranslate"><span class="pre">Transformer[F1,
   <div role="contentinfo">
     <p>
         
-        &copy; Copyright 2017-2022, scalaland.io
+        &copy; Copyright 2017-2023, scalaland.io
 
     </p>
   </div>

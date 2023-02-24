@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Cats integration &mdash; Chimney 0.6.2 documentation</title>
+  <title>Cats integration (deprecated) &mdash; Chimney 0.7.0 documentation</title>
   
 
   
@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Getting started with patchers" href="../patchers/getting-started.html" />
-    <link rel="prev" title="Lifted transformers" href="lifted-transformers.html" /> 
+    <link rel="prev" title="Lifted Transformers (deprecated)" href="lifted-transformers.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.6.2
+                0.7.0
               </div>
             
           
@@ -92,17 +92,27 @@
 <li class="toctree-l1"><a class="reference internal" href="../getting-started/community.html">Community</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/getting-started.html">Getting started with transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/customizing-transformers.html">Customizing transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/standard-transformers.html">Standard transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/default-values.html">Default values support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/own-transformations.html">Plugging in own transformations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/scoped-configuration.html">Providing scoped configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/java-beans.html">Java beans</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/unsafe-options.html">Unsafe options <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
+</ul>
+<p class="caption"><span class="caption-text">Partial Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/partial-transformers.html">Partial transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/migrating-from-lifted.html">Migrating from Lifted Transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/total-vs-partial-conflicts.html">Total vs partial conflicts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/cats-integration.html">Cats integration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Lifted Transformers</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started with transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="customizing-transformers.html">Customizing transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="standard-transformers.html">Standard transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="default-values.html">Default values support</a></li>
-<li class="toctree-l1"><a class="reference internal" href="own-transformations.html">Plugging in own transformations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="java-beans.html">Java beans</a></li>
-<li class="toctree-l1"><a class="reference internal" href="unsafe-options.html">Unsafe options transformation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="scoped-configuration.html">Providing scoped configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="lifted-transformers.html">Lifted transformers</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Cats integration</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="lifted-transformers.html">Lifted Transformers <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Cats integration <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#validated-support-for-lifted-transformers"><code class="docutils literal notranslate"><span class="pre">Validated</span></code> support for lifted transformers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#ior-support-for-lifted-transformers"><code class="docutils literal notranslate"><span class="pre">Ior</span></code> support for lifted transformers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#error-path-support-for-cats-based-transformers">Error path support for cats-based transformers</a></li>
@@ -114,6 +124,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../patchers/getting-started.html">Getting started with patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/redundant-fields.html">Redundant fields in patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Benchmarks</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../benchmarks.html">Benchmarks</a></li>
 </ul>
 
             
@@ -160,7 +174,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>Cats integration</li>
+      <li>Cats integration <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -177,11 +191,12 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="cats-integration">
-<span id="id1"></span><h1>Cats integration<a class="headerlink" href="#cats-integration" title="Permalink to this headline">¶</a></h1>
-<p>Chimney provides <a class="reference external" href="https://typelevel.org/cats">Cats</a> library integration module.
+  <div class="section" id="cats-integration-deprecated">
+<span id="lifted-cats-integration"></span><h1>Cats integration <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code><a class="headerlink" href="#cats-integration-deprecated" title="Permalink to this headline">¶</a></h1>
+<p>Chimney provides <a class="reference external" href="https://typelevel.org/cats">Cats</a> library integration module
+for lifted transformers.
 To include it to your SBT project, add the following line to your <code class="docutils literal notranslate"><span class="pre">build.sbt</span></code>:</p>
-<pre class="literal-block">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney-cats&quot; % &quot;0.6.2&quot;</pre>
+<pre class="literal-block">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney-cats&quot; % &quot;0.7.0&quot;</pre>
 <p>The module is released for Scala 2.12.x and 2.13.x and cats 2.2.0.
 If you want to use it with Scala.js, you need to replace <code class="docutils literal notranslate"><span class="pre">%%</span></code> with <code class="docutils literal notranslate"><span class="pre">%%%</span></code>.</p>
 <p>The module provides package <code class="docutils literal notranslate"><span class="pre">io.scalaland.chimney.cats</span></code> with all the goodies
@@ -421,7 +436,7 @@ satisfy this requirement.</p>
         <a href="../patchers/getting-started.html" class="btn btn-neutral float-right" title="Getting started with patchers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="lifted-transformers.html" class="btn btn-neutral float-left" title="Lifted transformers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="lifted-transformers.html" class="btn btn-neutral float-left" title="Lifted Transformers (deprecated)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -431,7 +446,7 @@ satisfy this requirement.</p>
   <div role="contentinfo">
     <p>
         
-        &copy; Copyright 2017-2022, scalaland.io
+        &copy; Copyright 2017-2023, scalaland.io
 
     </p>
   </div>

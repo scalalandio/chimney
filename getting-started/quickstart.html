@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Quickstart &mdash; Chimney 0.6.2 documentation</title>
+  <title>Quickstart &mdash; Chimney 0.7.0 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.6.2
+                0.7.0
               </div>
             
           
@@ -90,7 +90,7 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#using-sbt">Using SBT</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#using-ammonite">Using Ammonite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-scala-cli-ammonite">Using Scala CLI/Ammonite</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="community.html">Community</a></li>
@@ -102,17 +102,31 @@
 <li class="toctree-l1"><a class="reference internal" href="../transformers/standard-transformers.html">Standard transformers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../transformers/default-values.html">Default values support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../transformers/own-transformations.html">Plugging in own transformations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../transformers/java-beans.html">Java beans</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../transformers/unsafe-options.html">Unsafe options transformation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../transformers/scoped-configuration.html">Providing scoped configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../transformers/lifted-transformers.html">Lifted transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../transformers/cats-integration.html">Cats integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/java-beans.html">Java beans</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../transformers/unsafe-options.html">Unsafe options <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
+</ul>
+<p class="caption"><span class="caption-text">Partial Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/partial-transformers.html">Partial transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/migrating-from-lifted.html">Migrating from Lifted Transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/total-vs-partial-conflicts.html">Total vs partial conflicts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../partial-transformers/cats-integration.html">Cats integration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Lifted Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../lifted-transformers/lifted-transformers.html">Lifted Transformers <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lifted-transformers/cats-integration.html">Cats integration <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
 </ul>
 <p class="caption"><span class="caption-text">Patchers</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/getting-started.html">Getting started with patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/redundant-fields.html">Redundant fields in patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Benchmarks</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../benchmarks.html">Benchmarks</a></li>
 </ul>
 
             
@@ -182,33 +196,59 @@
 <h2>Using SBT<a class="headerlink" href="#using-sbt" title="Permalink to this headline">¶</a></h2>
 <p>To include Chimney to your SBT project, add the following line
 to your <code class="docutils literal notranslate"><span class="pre">build.sbt</span></code>:</p>
-<pre class="literal-block">libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.6.2&quot;</pre>
-<p>Library is released for Scala 2.12.x and 2.13.x. If you want to
-use it with Scala.js, you need to replace <code class="docutils literal notranslate"><span class="pre">%%</span></code> with <code class="docutils literal notranslate"><span class="pre">%%%</span></code>.</p>
+<pre class="literal-block">// if you use Scala on JVM-only
+libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.7.0&quot;
+// if you cross-compile to Scala.js and/or Scala Native
+libraryDependencies += &quot;io.scalaland&quot; %%% &quot;chimney&quot; % &quot;0.7.0&quot;</pre>
+<p>Library is currently supported for Scala 2.12.x and 2.13.x on JVM, ScalaJS 1.x,
+Scala Native 0.4.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Due to some <a class="reference external" href="https://issues.scala-lang.org/browse/SI-7046">compiler bugs</a>,
 it’s recommended to use at least Scala 2.12.1.</p>
 </div>
 </div>
-<div class="section" id="using-ammonite">
-<h2>Using Ammonite<a class="headerlink" href="#using-ammonite" title="Permalink to this headline">¶</a></h2>
-<p>The quickest way to try out Chimney is to use a script that downloads
+<div class="section" id="using-scala-cli-ammonite">
+<h2>Using Scala CLI/Ammonite<a class="headerlink" href="#using-scala-cli-ammonite" title="Permalink to this headline">¶</a></h2>
+<p>If you are using Scala CLI you can try out Chimney by adding it with <cite>using</cite> clause:</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="c1">//&gt; using scala &quot;2.13.10&quot;</span>
+<span class="c1">//&gt; using lib &quot;io.scalaland::chimney:0.7.0&quot;</span>
+<span class="k">import</span> <span class="nn">io.scalaland.chimney.dsl._</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Foo</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">y</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">z</span><span class="k">:</span> <span class="kt">Boolean</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">Bar</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">y</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+
+<span class="k">object</span> <span class="nc">Main</span> <span class="k">extends</span> <span class="nc">App</span> <span class="o">{</span>
+  <span class="n">println</span><span class="o">(</span><span class="nc">Foo</span><span class="o">(</span><span class="s">&quot;abc&quot;</span><span class="o">,</span> <span class="mi">10</span><span class="o">).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Bar</span><span class="o">])</span>
+  <span class="n">println</span><span class="o">(</span><span class="nc">Bar</span><span class="o">(</span><span class="s">&quot;abc&quot;</span><span class="o">,</span> <span class="mi">10</span><span class="o">).</span><span class="n">into</span><span class="o">[</span><span class="kt">Foo</span><span class="o">].</span><span class="n">enableDefaultValues</span><span class="o">.</span><span class="n">transform</span><span class="o">)</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>or run the Ammonite REPL:</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="n">scala</span><span class="o">-</span><span class="n">cli</span> <span class="n">repl</span> <span class="o">--</span><span class="n">ammonite</span> <span class="o">--</span><span class="n">scala</span> <span class="s">&quot;2.13.10&quot;</span> <span class="o">--</span><span class="n">dependency</span> <span class="s">&quot;io.scalaland::chimney:0.7.0&quot;</span>
+<span class="nc">Loading</span><span class="o">...</span>
+<span class="nc">Welcome</span> <span class="n">to</span> <span class="n">the</span> <span class="nc">Ammonite</span> <span class="nc">Repl</span> <span class="mf">2.5</span><span class="o">.</span><span class="mi">6</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">f8bff243</span> <span class="o">(</span><span class="nc">Scala</span> <span class="mf">2.13</span><span class="o">.</span><span class="mi">10</span> <span class="nc">Java</span> <span class="mf">17.0</span><span class="o">.</span><span class="mi">1</span><span class="o">)</span>
+<span class="k">@</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Foo</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">y</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">z</span><span class="k">:</span> <span class="kt">Boolean</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
+<span class="n">defined</span> <span class="k">class</span> <span class="nc">Foo</span>
+
+<span class="k">@</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Bar</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">y</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+<span class="n">defined</span> <span class="k">class</span> <span class="nc">Bar</span>
+
+<span class="k">@</span> <span class="k">import</span> <span class="nn">io.scalaland.chimney.dsl._</span>
+<span class="k">import</span> <span class="nn">io.scalaland.chimney.dsl._</span>
+
+<span class="k">@</span> <span class="nc">Foo</span><span class="o">(</span><span class="s">&quot;abc&quot;</span><span class="o">,</span> <span class="mi">10</span><span class="o">).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Bar</span><span class="o">]</span>
+<span class="n">res3</span><span class="k">:</span> <span class="kt">Bar</span> <span class="o">=</span> <span class="nc">Bar</span><span class="o">(</span><span class="n">x</span> <span class="k">=</span> <span class="s">&quot;abc&quot;</span><span class="o">,</span> <span class="n">y</span> <span class="k">=</span> <span class="mi">10</span><span class="o">)</span>
+
+<span class="k">@</span> <span class="nc">Bar</span><span class="o">(</span><span class="s">&quot;abc&quot;</span><span class="o">,</span> <span class="mi">10</span><span class="o">).</span><span class="n">into</span><span class="o">[</span><span class="kt">Foo</span><span class="o">].</span><span class="n">enableDefaultValues</span><span class="o">.</span><span class="n">transform</span>
+<span class="n">res4</span><span class="k">:</span> <span class="kt">Foo</span> <span class="o">=</span> <span class="nc">Foo</span><span class="o">(</span><span class="n">x</span> <span class="k">=</span> <span class="s">&quot;abc&quot;</span><span class="o">,</span> <span class="n">y</span> <span class="k">=</span> <span class="mi">10</span><span class="o">,</span> <span class="n">z</span> <span class="k">=</span> <span class="kc">true</span><span class="o">)</span>
+</pre></div>
+</div>
+<p>If you don’t have Scala CLI installed you can use this quick script that downloads
 <a class="reference external" href="https://github.com/alexarchambault/coursier">coursier</a> and use it
 to fetch <a class="reference external" href="https://github.com/lihaoyi/Ammonite">Ammonite REPL</a> with the
 latest version of Chimney. It drops you immediately into a REPL session.</p>
 <div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="o">-</span><span class="n">s</span> <span class="n">https</span><span class="o">://</span><span class="n">raw</span><span class="o">.</span><span class="n">githubusercontent</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">scalalandio</span><span class="o">/</span><span class="n">chimney</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="k">try</span><span class="o">-</span><span class="n">chimney</span><span class="o">.</span><span class="n">sh</span> <span class="o">|</span> <span class="n">bash</span>
-<span class="nc">Loading</span><span class="o">...</span>
-<span class="nc">Welcome</span> <span class="n">to</span> <span class="n">the</span> <span class="nc">Ammonite</span> <span class="nc">Repl</span> <span class="mf">2.0</span><span class="o">.</span><span class="mi">4</span> <span class="o">(</span><span class="nc">Scala</span> <span class="mf">2.13</span><span class="o">.</span><span class="mi">1</span> <span class="nc">Java</span> <span class="mf">1.8</span><span class="o">.</span><span class="mi">0</span><span class="n">_192</span><span class="o">)</span>
-
-<span class="o">@@</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Foo</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">y</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
-<span class="n">defined</span> <span class="k">class</span> <span class="nc">Foo</span>
-
-<span class="o">@@</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Bar</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">y</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">z</span><span class="k">:</span> <span class="kt">Boolean</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
-<span class="n">defined</span> <span class="k">class</span> <span class="nc">Bar</span>
-
-<span class="o">@@</span> <span class="nc">Foo</span><span class="o">(</span><span class="s">&quot;abc&quot;</span><span class="o">,</span> <span class="mi">10</span><span class="o">).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Bar</span><span class="o">]</span>
-<span class="n">res2</span><span class="k">:</span> <span class="kt">Bar</span> <span class="o">=</span> <span class="nc">Bar</span><span class="o">(</span><span class="s">&quot;abc&quot;</span><span class="o">,</span> <span class="mi">10</span><span class="o">,</span> <span class="kc">true</span><span class="o">)</span>
 </pre></div>
 </div>
 </div>
@@ -235,7 +275,7 @@ latest version of Chimney. It drops you immediately into a REPL session.</p>
   <div role="contentinfo">
     <p>
         
-        &copy; Copyright 2017-2022, scalaland.io
+        &copy; Copyright 2017-2023, scalaland.io
 
     </p>
   </div>

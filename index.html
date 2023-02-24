@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Welcome to Chimney’s documentation! &mdash; Chimney 0.6.2 documentation</title>
+  <title>Welcome to Chimney’s documentation! &mdash; Chimney 0.7.0 documentation</title>
   
 
   
@@ -60,7 +60,7 @@
             
             
               <div class="version">
-                0.6.2
+                0.7.0
               </div>
             
           
@@ -97,17 +97,31 @@
 <li class="toctree-l1"><a class="reference internal" href="transformers/standard-transformers.html">Standard transformers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="transformers/default-values.html">Default values support</a></li>
 <li class="toctree-l1"><a class="reference internal" href="transformers/own-transformations.html">Plugging in own transformations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="transformers/java-beans.html">Java beans</a></li>
-<li class="toctree-l1"><a class="reference internal" href="transformers/unsafe-options.html">Unsafe options transformation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="transformers/scoped-configuration.html">Providing scoped configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="transformers/lifted-transformers.html">Lifted transformers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="transformers/cats-integration.html">Cats integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/java-beans.html">Java beans</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/unsafe-options.html">Unsafe options <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
+</ul>
+<p class="caption"><span class="caption-text">Partial Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="partial-transformers/partial-transformers.html">Partial transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="partial-transformers/migrating-from-lifted.html">Migrating from Lifted Transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="partial-transformers/total-vs-partial-conflicts.html">Total vs partial conflicts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="partial-transformers/cats-integration.html">Cats integration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Lifted Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="lifted-transformers/lifted-transformers.html">Lifted Transformers <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="lifted-transformers/cats-integration.html">Cats integration <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
 </ul>
 <p class="caption"><span class="caption-text">Patchers</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="patchers/getting-started.html">Getting started with patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="patchers/redundant-fields.html">Redundant fields in patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="patchers/options-handling.html">Handling optional fields</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Benchmarks</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="benchmarks.html">Benchmarks</a></li>
 </ul>
 
             
@@ -199,12 +213,13 @@ contains a number of the same or similar fields in their definitions.</p>
 <p>While the example stays short, in real-life code we usually end up with tons
 of such boilerplate, especially when:</p>
 <ul class="simple">
-<li><p>we maintain typed schema and want to migrate between multiple schema versions</p></li>
+<li><p>we keep separate models of different layers in the system</p></li>
 <li><p>we apply practices like DDD (Domain-Driven-Design) where suggested
 approach is to separate model schemas of different bounded contexts</p></li>
 <li><p>we use code-generation tools like Protocol Buffers that generate primitive
 types like <code class="docutils literal notranslate"><span class="pre">Int</span></code> or <code class="docutils literal notranslate"><span class="pre">String</span></code>, while you’d prefer to use value objects
-in you domain-level code to improve type-safety and readability</p></li>
+in your domain-level code to improve type-safety and readability</p></li>
+<li><p>we maintain typed, versioned schemas and want to migrate between multiple schema versions</p></li>
 </ul>
 <p>Chimney provides a compact DSL with which you can define transformation
 rules and transform your objects with as little boilerplate as possible.</p>
@@ -214,11 +229,39 @@ rules and transform your objects with as little boilerplate as possible.</p>
   <span class="o">.</span><span class="n">withFieldComputed</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">at</span><span class="o">,</span> <span class="k">_</span> <span class="k">=&gt;</span> <span class="nc">ZonedDateTime</span><span class="o">.</span><span class="n">now</span><span class="o">)</span>
   <span class="o">.</span><span class="n">withFieldRenamed</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">addict</span><span class="o">,</span> <span class="k">_</span><span class="o">.</span><span class="n">forAddict</span><span class="o">)</span>
   <span class="o">.</span><span class="n">transform</span>
-<span class="c1">// CoffeeMade(24, &quot;Espresso&quot;, &quot;Piotr&quot;, &quot;2020-02-03T20:26:59.659647+07:00[Asia/Bangkok]&quot;)</span>
+<span class="c1">// CoffeeMade(24, &quot;Espresso&quot;, &quot;Piotr&quot;, &quot;2020-02-03T20:26:59.659647+07:00[Europe/Warsaw]&quot;)</span>
 </pre></div>
 </div>
 <p>Read <a class="reference internal" href="transformers/getting-started.html#getting-started-with-transformers"><span class="std std-ref">Getting started with transformers</span></a> to learn more about
 Chimney’s transformers.</p>
+</div>
+<div class="section" id="partial-transformers">
+<h2>Partial transformers<a class="headerlink" href="#partial-transformers" title="Permalink to this headline">¶</a></h2>
+<p>For computations that may potentially fail, Chimney provides partial transformers.</p>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="nn">io.scalaland.chimney.dsl._</span>
+<span class="k">import</span> <span class="nn">io.scalaland.chimney.partial._</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">UserForm</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">ageInput</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">email</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span>
+<span class="k">case</span> <span class="k">class</span> <span class="nc">User</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">age</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+
+<span class="nc">UserForm</span><span class="o">(</span><span class="s">&quot;John&quot;</span><span class="o">,</span> <span class="s">&quot;21&quot;</span><span class="o">,</span> <span class="nc">Some</span><span class="o">(</span><span class="s">&quot;john@example.com&quot;</span><span class="o">))</span>
+  <span class="o">.</span><span class="n">intoPartial</span><span class="o">[</span><span class="kt">User</span><span class="o">]</span>
+  <span class="o">.</span><span class="n">withFieldComputedPartial</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">age</span><span class="o">,</span> <span class="n">form</span> <span class="k">=&gt;</span> <span class="nc">Result</span><span class="o">.</span><span class="n">fromCatching</span><span class="o">(</span><span class="n">form</span><span class="o">.</span><span class="n">ageInput</span><span class="o">.</span><span class="n">toInt</span><span class="o">))</span>
+  <span class="o">.</span><span class="n">transform</span>
+  <span class="o">.</span><span class="n">asOption</span>  <span class="c1">// Some(User(&quot;name&quot;, 21, &quot;john@example.com&quot;))</span>
+
+<span class="k">val</span> <span class="n">result</span> <span class="k">=</span> <span class="nc">UserForm</span><span class="o">(</span><span class="s">&quot;Ted&quot;</span><span class="o">,</span> <span class="s">&quot;eighteen&quot;</span><span class="o">,</span> <span class="nc">None</span><span class="o">)</span>
+  <span class="o">.</span><span class="n">intoPartial</span><span class="o">[</span><span class="kt">User</span><span class="o">]</span>
+  <span class="o">.</span><span class="n">withFieldComputedPartial</span><span class="o">(</span><span class="k">_</span><span class="o">.</span><span class="n">age</span><span class="o">,</span> <span class="n">form</span> <span class="k">=&gt;</span> <span class="nc">Result</span><span class="o">.</span><span class="n">fromCatching</span><span class="o">(</span><span class="n">form</span><span class="o">.</span><span class="n">ageInput</span><span class="o">.</span><span class="n">toInt</span><span class="o">))</span>
+  <span class="o">.</span><span class="n">transform</span>
+
+<span class="n">result</span><span class="o">.</span><span class="n">asOption</span> <span class="c1">// None</span>
+<span class="n">result</span><span class="o">.</span><span class="n">asErrorMessageStrings</span>
+<span class="c1">// Iterable(&quot;age&quot; -&gt; &quot;For input string: \&quot;eighteen\&quot;&quot;, &quot;email&quot; -&gt; &quot;empty value&quot;)</span>
+</pre></div>
+</div>
+<p>Read <a class="reference internal" href="partial-transformers/partial-transformers.html#partial-transformers"><span class="std std-ref">Partial transformers</span></a> to learn more about
+Chimney’s partial transformers.</p>
 </div>
 <div class="section" id="patching">
 <h2>Patching<a class="headerlink" href="#patching" title="Permalink to this headline">¶</a></h2>
@@ -258,7 +301,7 @@ Chimney’s patchers.</p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="getting-started/quickstart.html">Quickstart</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="getting-started/quickstart.html#using-sbt">Using SBT</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting-started/quickstart.html#using-ammonite">Using Ammonite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started/quickstart.html#using-scala-cli-ammonite">Using Scala CLI/Ammonite</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="getting-started/community.html">Community</a></li>
@@ -290,8 +333,7 @@ Chimney’s patchers.</p>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="transformers/default-values.html">Default values support</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="transformers/default-values.html#automatic-value-provision">Automatic value provision</a></li>
-<li class="toctree-l2"><a class="reference internal" href="transformers/default-values.html#disabling-default-values-in-generated-transformer">Disabling default values in generated transformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/default-values.html#enabling-default-values-in-generated-transformer">Enabling default values in generated transformer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="transformers/default-values.html#default-values-for-option-fields">Default values for <code class="docutils literal notranslate"><span class="pre">Option</span></code> fields</a></li>
 <li class="toctree-l2"><a class="reference internal" href="transformers/default-values.html#default-values-for-unit-fields">Default values for <code class="docutils literal notranslate"><span class="pre">Unit</span></code> fields</a></li>
 </ul>
@@ -302,36 +344,65 @@ Chimney’s patchers.</p>
 <li class="toctree-l2"><a class="reference internal" href="transformers/own-transformations.html#recursive-data-types-support">Recursive data types support</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="transformers/scoped-configuration.html">Providing scoped configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="transformers/scoped-configuration.html#motivating-example">Motivating example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transformers/scoped-configuration.html#overriding-scoped-configuration-locally">Overriding scoped configuration locally</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="transformers/java-beans.html">Java beans</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="transformers/java-beans.html#reading-from-java-beans">Reading from Java beans</a></li>
 <li class="toctree-l2"><a class="reference internal" href="transformers/java-beans.html#writing-to-java-beans">Writing to Java beans</a></li>
 <li class="toctree-l2"><a class="reference internal" href="transformers/java-beans.html#current-limitations">Current limitations</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="transformers/unsafe-options.html">Unsafe options transformation</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="transformers/unsafe-options.html">Unsafe options <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="transformers/unsafe-options.html#proto3-motivational-example">Proto3 motivational example</a></li>
 <li class="toctree-l2"><a class="reference internal" href="transformers/unsafe-options.html#enabling-unsafe-option-extraction">Enabling unsafe option extraction</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="transformers/scoped-configuration.html">Providing scoped configuration</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="transformers/scoped-configuration.html#motivating-example">Motivating example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="transformers/scoped-configuration.html#overriding-scoped-configuration-locally">Overriding scoped configuration locally</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Partial Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="partial-transformers/partial-transformers.html">Partial transformers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="partial-transformers/partial-transformers.html#capturing-errors">Capturing errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="partial-transformers/partial-transformers.html#custom-error-messages">Custom error messages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="partial-transformers/partial-transformers.html#partial-transformers-operations">Partial transformers operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="partial-transformers/partial-transformers.html#short-circuit-semantics">Short-circuit semantics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="partial-transformers/partial-transformers.html#performance-notes">Performance notes</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="transformers/lifted-transformers.html">Lifted transformers</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="transformers/lifted-transformers.html#lifted-dsl-operations">Lifted DSL operations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="transformers/lifted-transformers.html#capturing-validation-errors">Capturing validation errors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="transformers/lifted-transformers.html#transformerf-type-class"><code class="docutils literal notranslate"><span class="pre">TransformerF</span></code> type class</a></li>
-<li class="toctree-l2"><a class="reference internal" href="transformers/lifted-transformers.html#supporting-custom-f">Supporting custom <code class="docutils literal notranslate"><span class="pre">F[_]</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="transformers/lifted-transformers.html#error-path-support">Error path support</a></li>
-<li class="toctree-l2"><a class="reference internal" href="transformers/lifted-transformers.html#emitted-code">Emitted code</a></li>
-<li class="toctree-l2"><a class="reference internal" href="transformers/lifted-transformers.html#deriving-lifted-transformers">Deriving lifted transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="partial-transformers/migrating-from-lifted.html">Migrating from Lifted Transformers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="partial-transformers/migrating-from-lifted.html#design-differences">Design differences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="partial-transformers/migrating-from-lifted.html#migrating-your-code">Migrating your code</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="transformers/cats-integration.html">Cats integration</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="transformers/cats-integration.html#validated-support-for-lifted-transformers"><code class="docutils literal notranslate"><span class="pre">Validated</span></code> support for lifted transformers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="transformers/cats-integration.html#ior-support-for-lifted-transformers"><code class="docutils literal notranslate"><span class="pre">Ior</span></code> support for lifted transformers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="transformers/cats-integration.html#error-path-support-for-cats-based-transformers">Error path support for cats-based transformers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="partial-transformers/total-vs-partial-conflicts.html">Total vs partial conflicts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="partial-transformers/cats-integration.html">Cats integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="partial-transformers/cats-integration.html#contents">Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="partial-transformers/cats-integration.html#example">Example</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Lifted Transformers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="lifted-transformers/lifted-transformers.html">Lifted Transformers <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lifted-transformers/lifted-transformers.html#lifted-dsl-operations">Lifted DSL operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifted-transformers/lifted-transformers.html#capturing-validation-errors">Capturing validation errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifted-transformers/lifted-transformers.html#transformerf-type-class"><code class="docutils literal notranslate"><span class="pre">TransformerF</span></code> type class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifted-transformers/lifted-transformers.html#supporting-custom-f">Supporting custom <code class="docutils literal notranslate"><span class="pre">F[_]</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifted-transformers/lifted-transformers.html#error-path-support">Error path support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifted-transformers/lifted-transformers.html#emitted-code">Emitted code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifted-transformers/lifted-transformers.html#deriving-lifted-transformers">Deriving lifted transformers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lifted-transformers/cats-integration.html">Cats integration <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lifted-transformers/cats-integration.html#validated-support-for-lifted-transformers"><code class="docutils literal notranslate"><span class="pre">Validated</span></code> support for lifted transformers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifted-transformers/cats-integration.html#ior-support-for-lifted-transformers"><code class="docutils literal notranslate"><span class="pre">Ior</span></code> support for lifted transformers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifted-transformers/cats-integration.html#error-path-support-for-cats-based-transformers">Error path support for cats-based transformers</a></li>
 </ul>
 </li>
 </ul>
@@ -345,6 +416,12 @@ Chimney’s patchers.</p>
 <li class="toctree-l2"><a class="reference internal" href="patchers/options-handling.html#option-t-on-both-sides"><code class="docutils literal notranslate"><span class="pre">Option[T]</span></code> on both sides</a></li>
 </ul>
 </li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Benchmarks</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="benchmarks.html">Benchmarks</a></li>
 </ul>
 </div>
 </div>
@@ -368,7 +445,7 @@ Chimney’s patchers.</p>
   <div role="contentinfo">
     <p>
         
-        &copy; Copyright 2017-2022, scalaland.io
+        &copy; Copyright 2017-2023, scalaland.io
 
     </p>
   </div>

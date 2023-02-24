@@ -1,14 +1,20 @@
 Default values support
 ======================
 
-Chimney respects case classes' default values as a possible target
+Chimney allows case classes' default values as a possible target
 field value source.
 
-Automatic value provision
--------------------------
+Enabling default values in generated transformer
+------------------------------------------------
 
-Field's default value is automatically used as a target value when constructing
-target object.
+.. warning::
+
+  Prior to version 0.7.0 fallback to default values was automatically enabled
+  and required explicit disabling.
+
+Field's default value can be enabled as a target value when constructing
+target object. The support for them has to be explicitly enabled to avoid
+accidents.
 
 .. code-block:: scala
 
@@ -17,31 +23,7 @@ target object.
 
   val stevie = Catterpillar(5, "Steve")
 
-  val steve = stevie.transformInto[Butterfly]
-  // Butterfly(5, "Steve", "purple")
-
-Providing the value manually has always a priority over the default.
-
-.. code-block:: scala
-
-  val steve = stevie.into[Butterfly]
-    .withFieldConst(_.wingsColor, "yellow")
-    .transform
-  // Butterfly(5, "Steve", "yellow")
-
-
-Disabling default values in generated transformer
--------------------------------------------------
-
-Using ``.disableDefaultValues`` operation it's possible to disable
-lookup for default values and require them always to be passed explicitly.
-
-.. code-block:: scala
-
-  val steve = stevie
-    .into[Butterfly]
-    .disableDefaultValues
-    .transform
+  //val steve = stevie.transformInto[Butterfly] // fails with
   // error: Chimney can't derive transformation from Catterpillar to Butterfly
   //
   // Butterfly
@@ -51,6 +33,18 @@ lookup for default values and require them always to be passed explicitly.
   //
   //            .transform
   //            ^
+  val steve = stevie.into[Butterfly].enableDefaultValues.transform
+  // Butterfly(5, "Steve", "purple")
+
+Providing the value manually has always a priority over the default.
+
+.. code-block:: scala
+
+  val steve = stevie.into[Butterfly]
+    .enableDefaultValues
+    .withFieldConst(_.wingsColor, "yellow")
+    .transform
+  // Butterfly(5, "Steve", "yellow")
 
 
 Default values for ``Option`` fields
