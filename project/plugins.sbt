@@ -11,7 +11,7 @@ addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.10")
 // publishing
 addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.4.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.3")
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.13")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.17")
 // benchmarks
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.3")
 // disabling projects in IDE
