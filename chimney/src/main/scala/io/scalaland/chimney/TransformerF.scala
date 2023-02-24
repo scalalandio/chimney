@@ -57,6 +57,7 @@ object TransformerF {
     * you can customize to derive [[io.scalaland.chimney.TransformerF]].
     *
     * @see [[io.scalaland.chimney.dsl.TransformerFDefinition]] for available settings
+    *
     * @tparam F    wrapper type constructor
     * @tparam From type of input value
     * @tparam To   type of output value

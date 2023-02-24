@@ -9,15 +9,15 @@ import scala.language.experimental.macros
 /** Provides operations to customize patcher logic for specific
   * object value and patch value.
   *
-  * @param obj object to patch
-  * @param objPatch patch object
   * @tparam T type of object to apply patch to
   * @tparam P type of patch object
   * @tparam C type-level encoded configuration of patcher
+  * @param obj object to patch
+  * @param objPatch patch object
   *
   * @since 0.4.0
   */
-class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
+final class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
 
   /** In case when both object to patch and patch value contain field
     * of type `Option[T]`, this option allows to treat `None` value in
@@ -27,6 +27,7 @@ class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
     * the value of such field on patching.
     *
     * @see [[https://scalalandio.github.io/chimney/patchers/options-handling.html]] for more details
+    *
     * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
     * @since 0.4.0
@@ -43,6 +44,7 @@ class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
     * typos.
     *
     * @see [[https://scalalandio.github.io/chimney/patchers/redundant-fields.html]] for more details
+    *
     * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
     * @since 0.4.0

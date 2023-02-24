@@ -27,10 +27,13 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
     *
     * By default if `From` is missing field picked by `selector`, compilation fails.
     *
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
+    * @tparam T type of target field
+    * @tparam U type of provided value
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
-    *
     * @since 0.7.0
     */
   def withFieldConst[T, U](selector: To => T, value: U)(
@@ -42,10 +45,13 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
     *
     * By default if `From` is missing field picked by `selector`, compilation fails.
     *
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
+    * @tparam T type of target field
+    * @tparam U type of computed value
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
-    *
     * @since 0.7.0
     */
   def withFieldConstPartial[T, U](selector: To => T, value: partial.Result[U])(
@@ -57,10 +63,13 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
+    * @tparam T type of target field
+    * @tparam U type of computed value
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
-    *
     * @since 0.7.0
     */
   def withFieldComputed[T, U](selector: To => T, f: From => U)(
@@ -72,10 +81,13 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    *
+    * @tparam T type of target field
+    * @tparam U type of computed value
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
-    *
     * @since 0.7.0
     */
   def withFieldComputedPartial[T, U](
@@ -88,10 +100,13 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
     *
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#fields-renaming]] for more details
+    *
+    * @tparam T type of source field
+    * @tparam U type of target field
     * @param selectorFrom source field in `From`, defined like `_.originalName`
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
-    *
     * @since 0.7.0
     */
   def withFieldRenamed[T, U](
@@ -107,6 +122,9 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
     *
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
+    *
+    * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
@@ -122,8 +140,12 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
     *
+    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
+    *
+    * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *
     * @since 0.7.0
     */
   def withCoproductInstancePartial[Inst](

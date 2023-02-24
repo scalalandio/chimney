@@ -20,8 +20,8 @@ trait TransformerFSupport[F[+_]] {
 
   /** Wrap a value into the type constructor `F`.
     *
-    * @param value value to wrap
     * @tparam A type of value
+    * @param value value to wrap
     * @return wrapped value
     *
     * @since 0.5.0
@@ -33,10 +33,10 @@ trait TransformerFSupport[F[+_]] {
     * This method allows to decide on error handling semantics for
     * given type `F`.
     *
-    * @param fa first wrapped value
-    * @param fb second wrapped value
     * @tparam A type of first value
     * @tparam B type of second value
+    * @param fa first wrapped value
+    * @param fb second wrapped value
     * @return wrapped pair of values
     *
     * @since 0.5.0
@@ -45,10 +45,10 @@ trait TransformerFSupport[F[+_]] {
 
   /** Transform wrapped value with given function.
     *
-    * @param fa wrapped value
-    * @param f function
     * @tparam A type of wrapped value
     * @tparam B result type of provided function `f`
+    * @param fa wrapped value
+    * @param f function
     * @return wrapped result of function `f` applied to un
     *
     * @since 0.5.0
@@ -63,13 +63,13 @@ trait TransformerFSupport[F[+_]] {
     * This method allows to decide on error handling semantics for given type `F`, when transforming
     * between collections.
     *
-    * @param it  iterator of elements of type `A`
-    * @param f   function to apply to elements of type `A`, returning `F[B]`
-    * @param fac factory for collection type `M`
     * @tparam M  type of collection where transformed elements are stored; note that this is not
     *            a type constructor, but a type with applied argument, so it can be List[B], Map[K, V], etc.
     * @tparam A  type of elements being iterated
     * @tparam B  target element type of function `f`
+    * @param it  iterator of elements of type `A`
+    * @param f   function to apply to elements of type `A`, returning `F[B]`
+    * @param fac factory for collection type `M`
     * @return wrapped collection of type `F[M]`
     *
     * @since 0.5.0
@@ -117,9 +117,9 @@ object TransformerFSupport {
 
   /** `TransformerFSupport` instance for `Either[C[E], +*]`.
     *
-    * @param ef factory for error accumulator collection
     * @tparam E error type
     * @tparam C error accumulator type constructor
+    * @param ef factory for error accumulator collection
     *
     * @since 0.5.0
     */

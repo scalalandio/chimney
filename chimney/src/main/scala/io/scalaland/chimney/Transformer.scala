@@ -63,6 +63,8 @@ object Transformer {
     * @tparam From type of input value
     * @tparam To type of output value
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] with defaults
+    *
+    * @since 0.7.0
     */
   def definePartial[From, To]: PartialTransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new PartialTransformerDefinition(Map.empty, Map.empty)
