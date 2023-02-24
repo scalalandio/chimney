@@ -91,9 +91,9 @@ val settings = Seq(
 
 val dependencies = Seq(
   libraryDependencies ++= Seq(
-    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.8.0",
+    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
-    "com.lihaoyi" %%% "utest" % "0.8.0" % "test"
+    "com.lihaoyi" %%% "utest" % "0.8.1" % "test"
   ),
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
 )
@@ -238,7 +238,7 @@ lazy val chimneyCats = projectMatrix
   .settings(settings: _*)
   .settings(publishSettings: _*)
   .settings(dependencies: _*)
-  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.8.0" % "provided")
+  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.9.0" % "provided")
   .dependsOn(chimney % "test->test;compile->compile")
 
 lazy val protos = projectMatrix
