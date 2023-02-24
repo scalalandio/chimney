@@ -55,6 +55,37 @@ val event = command.into[CoffeeMade]
   .transform
 ```
 
+Examples so far described situation when every value of one type can be converted into another type. But what when only
+some values can be converted?
+
+```scala
+case class UserForm(name: String, ageInput: String, email: Option[String])
+case class User(name: String, age: Int, email: String)
+
+UserForm("John", "21", Some("john@example.com")) // ??
+UserForm("Ted", "eighteen", None) // ??
+```
+
+What to do with the rest of them? Return ``null``? Throw ``Exception``? Chimney provides safer
+alternative:
+
+```scala
+import io.scalaland.chimney._
+import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.partial._
+
+UserForm("John", "21", Some("john@example.com")).intoPartial[User]
+  .withFieldComputedPartial(_.age, form => Result.fromCatching(form.ageInput.toInt))
+  .transform
+  .asOption
+// Some(User("name", 21, "john@example.com"))
+UserForm("Ted", "eighteen", None).intoPartial[User]
+  .withFieldComputedPartial(_.age, form => Result.fromCatching(form.ageInput.toInt))
+  .transform
+  .asErrorMessageStrings
+// Iterable("age" -> "For input string: \"eighteen\"", "email" -> "empty value")
+```
+
 Underneath it uses Scala macros to give you:
 - type-safety at compile-time
 - fast generated code, almost equivalent to handwritten version
