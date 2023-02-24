@@ -69,12 +69,21 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
 
 object NonEmptyErrorsChain {
 
+  /** Creates a singleton errors collection from an error.
+    *
+    * @param error error
+    * @return instance of [[NonEmptyErrorsChain]]
+    * @since 0.7.0
+    */
+  final def single(error: partial.Error): NonEmptyErrorsChain = {
+    Single(error)
+  }
+
   /** Creates errors collection from head and tail.
     *
     * @param head error
     * @param tail errors
     * @return instance of [[NonEmptyErrorsChain]]
-    *
     * @since 0.7.0
     */
   final def from(head: partial.Error, tail: partial.Error*): NonEmptyErrorsChain = {

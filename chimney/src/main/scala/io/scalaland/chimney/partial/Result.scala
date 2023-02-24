@@ -145,7 +145,7 @@ object Result {
       * @since 0.7.0
       */
     final def single(error: Error): Errors =
-      apply(NonEmptyErrorsChain.from(error))
+      apply(NonEmptyErrorsChain.single(error))
 
     /** Creates failed result from an error message.
       *
