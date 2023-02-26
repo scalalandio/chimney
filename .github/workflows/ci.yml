@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         scala: ["2_12", "2_13"]
-        jvm: ['adopt:1.8.0-292', 'adoptium:1.19.0.2']
+        jvm: ['adopt:1.8.0-292', 'temurin:1.19.0.2']
       fail-fast: false
 
     steps:
@@ -54,7 +54,7 @@ jobs:
 
       - uses: coursier/setup-action@v1.3.0
         with:
-          jvm: 'adoptium:1.19.0.2' # TODO LB java version from matrix
+          jvm: 'temurin:1.19.0.2' # TODO LB java version from matrix
           apps: sbt
 
       - name: Run benchmarks
