@@ -1,39 +1,72 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
   <title>Standard transformers &mdash; Chimney 0.7.0 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
-    <script src="../_static/js/theme.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Default values support" href="default-values.html" />
     <link rel="prev" title="Customizing transformers" href="customizing-transformers.html" /> 
 </head>
 
-<body class="wy-body-for-nav"> 
+<body class="wy-body-for-nav">
+
+   
   <div class="wy-grid-for-nav">
+    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../index.html" class="icon icon-home"> Chimney
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> Chimney
+          
+
+          
           </a>
+
+          
+            
+            
               <div class="version">
                 0.7.0
               </div>
+            
+          
+
+          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -41,13 +74,24 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../getting-started/quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../getting-started/community.html">Community</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Transformers</span></p>
+<p class="caption"><span class="caption-text">Transformers</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started with transformers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="customizing-transformers.html">Customizing transformers</a></li>
@@ -67,221 +111,285 @@
 <li class="toctree-l1"><a class="reference internal" href="java-beans.html">Java beans</a></li>
 <li class="toctree-l1"><a class="reference internal" href="unsafe-options.html">Unsafe options <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Partial Transformers</span></p>
+<p class="caption"><span class="caption-text">Partial Transformers</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../partial-transformers/partial-transformers.html">Partial transformers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../partial-transformers/migrating-from-lifted.html">Migrating from Lifted Transformers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../partial-transformers/total-vs-partial-conflicts.html">Total vs partial conflicts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../partial-transformers/cats-integration.html">Cats integration</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Lifted Transformers</span></p>
+<p class="caption"><span class="caption-text">Lifted Transformers</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../lifted-transformers/lifted-transformers.html">Lifted Transformers <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lifted-transformers/cats-integration.html">Cats integration <code class="docutils literal notranslate"><span class="pre">(deprecated)</span></code></a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Patchers</span></p>
+<p class="caption"><span class="caption-text">Patchers</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/getting-started.html">Getting started with patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/redundant-fields.html">Redundant fields in patchers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../patchers/options-handling.html">Handling optional fields</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Benchmarks</span></p>
+<p class="caption"><span class="caption-text">Benchmarks</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../benchmarks.html">Benchmarks</a></li>
 </ul>
 
+            
+          
         </div>
+        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../index.html">Chimney</a>
+        
       </nav>
 
+
       <div class="wy-nav-content">
+        
         <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-      <li><a href="../index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active">Standard transformers</li>
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Standard transformers</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
+        
+            
+        
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-             
-  <section id="standard-transformers">
-<span id="id1"></span><h1>Standard transformers<a class="headerlink" href="#standard-transformers" title="Permalink to this heading"></a></h1>
+            
+  <div class="section" id="standard-transformers">
+<span id="id1"></span><h1>Standard transformers<a class="headerlink" href="#standard-transformers" title="Permalink to this headline">¶</a></h1>
 <p>Chimney provides several out of the box transformer generation
 rules, which can be applied in any nested context.</p>
-<section id="identity-transformation">
-<h2>Identity transformation<a class="headerlink" href="#identity-transformation" title="Permalink to this heading"></a></h2>
+<div class="section" id="identity-transformation">
+<h2>Identity transformation<a class="headerlink" href="#identity-transformation" title="Permalink to this headline">¶</a></h2>
 <p>Given any type <code class="docutils literal notranslate"><span class="pre">T</span></code>, Chimney is able to derive identity
 transformer: <code class="docutils literal notranslate"><span class="pre">Transformer[T,</span> <span class="pre">T]</span></code>.</p>
-<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="mi">1234</span><span class="p">.</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Int</span><span class="p">]</span><span class="w"> </span><span class="c1">// 1234: Int</span>
-<span class="kc">true</span><span class="p">.</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Bool</span><span class="p">]</span><span class="w"> </span><span class="c1">// true: Bool</span>
-<span class="mf">3.14159</span><span class="p">.</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Double</span><span class="p">]</span><span class="w"> </span><span class="c1">// 3.14159: Double</span>
-<span class="s">&quot;test&quot;</span><span class="p">.</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">String</span><span class="p">]</span><span class="w"> </span><span class="c1">// test: String</span>
-<span class="nc">Butterfly</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Steve&quot;</span><span class="p">).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Butterfly</span><span class="p">]</span><span class="w"> </span><span class="c1">// Butterfly(3, Steve): Butterfly</span>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="mf">1234.</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="c1">// 1234: Int</span>
+<span class="kc">true</span><span class="o">.</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Bool</span><span class="o">]</span> <span class="c1">// true: Bool</span>
+<span class="mf">3.14159</span><span class="o">.</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Double</span><span class="o">]</span> <span class="c1">// 3.14159: Double</span>
+<span class="s">&quot;test&quot;</span><span class="o">.</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="c1">// test: String</span>
+<span class="nc">Butterfly</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span> <span class="s">&quot;Steve&quot;</span><span class="o">).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Butterfly</span><span class="o">]</span> <span class="c1">// Butterfly(3, Steve): Butterfly</span>
 </pre></div>
 </div>
-</section>
-<section id="supertype-transformation">
-<h2>Supertype transformation<a class="headerlink" href="#supertype-transformation" title="Permalink to this heading"></a></h2>
+</div>
+<div class="section" id="supertype-transformation">
+<h2>Supertype transformation<a class="headerlink" href="#supertype-transformation" title="Permalink to this headline">¶</a></h2>
 <p>Given any types <code class="docutils literal notranslate"><span class="pre">T</span></code> and <code class="docutils literal notranslate"><span class="pre">U</span></code> such that <code class="docutils literal notranslate"><span class="pre">T</span> <span class="pre">&lt;:</span> <span class="pre">U</span></code>
 (<code class="docutils literal notranslate"><span class="pre">T</span></code> is subtype of <code class="docutils literal notranslate"><span class="pre">U</span></code>), Chimney is able to derive supertype
 transformer: <code class="docutils literal notranslate"><span class="pre">Transformer[T,</span> <span class="pre">U]</span></code>.</p>
-<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Vehicle</span><span class="p">(</span><span class="kd">val</span><span class="w"> </span><span class="n">maxSpeed</span><span class="p">:</span><span class="w"> </span><span class="nc">Double</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Car</span><span class="p">(</span><span class="n">maxSpeed</span><span class="p">:</span><span class="w"> </span><span class="nc">Double</span><span class="p">,</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">seats</span><span class="p">:</span><span class="w"> </span><span class="nc">Int</span><span class="p">)</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nc">Vehicle</span><span class="p">(</span><span class="n">maxSpeed</span><span class="p">)</span>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Vehicle</span><span class="o">(</span><span class="k">val</span> <span class="n">maxSpeed</span><span class="k">:</span> <span class="kt">Double</span><span class="o">)</span>
+<span class="k">class</span> <span class="nc">Car</span><span class="o">(</span><span class="n">maxSpeed</span><span class="k">:</span> <span class="kt">Double</span><span class="o">,</span> <span class="k">val</span> <span class="n">seats</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Vehicle</span><span class="o">(</span><span class="n">maxSpeed</span><span class="o">)</span>
 
-<span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="nc">Car</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">)).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Vehicle</span><span class="p">]</span>
+<span class="o">(</span><span class="k">new</span> <span class="nc">Car</span><span class="o">(</span><span class="mi">180</span><span class="o">,</span> <span class="mi">5</span><span class="o">)).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Vehicle</span><span class="o">]</span>
 <span class="c1">// Vehicle(180.0)</span>
 </pre></div>
 </div>
-</section>
-<section id="value-classes">
-<h2>Value classes<a class="headerlink" href="#value-classes" title="Permalink to this heading"></a></h2>
+</div>
+<div class="section" id="value-classes">
+<h2>Value classes<a class="headerlink" href="#value-classes" title="Permalink to this headline">¶</a></h2>
 <p>As nowadays value classes tends to be relatively widely pervasive, Chimney handles
 them in a special way, supporting automatic value class field extraction and wrapping.</p>
-<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">object</span><span class="w"> </span><span class="nc">rich</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">PersonId</span><span class="p">(</span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nc">Int</span><span class="p">)</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nc">AnyVal</span>
-<span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">PersonName</span><span class="p">(</span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">)</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nc">AnyVal</span>
-<span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">Person</span><span class="p">(</span><span class="n">personId</span><span class="p">:</span><span class="w"> </span><span class="nc">PersonId</span><span class="p">,</span><span class="w"> </span><span class="n">personName</span><span class="p">:</span><span class="w"> </span><span class="nc">PersonName</span><span class="p">,</span><span class="w"> </span><span class="n">age</span><span class="p">:</span><span class="w"> </span><span class="nc">Int</span><span class="p">)</span>
-<span class="p">}</span>
-<span class="k">object</span><span class="w"> </span><span class="nc">plain</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">Person</span><span class="p">(</span><span class="n">personId</span><span class="p">:</span><span class="w"> </span><span class="nc">Int</span><span class="p">,</span><span class="w"> </span><span class="n">personName</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="n">age</span><span class="p">:</span><span class="w"> </span><span class="nc">Int</span><span class="p">)</span>
-<span class="p">}</span>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="k">object</span> <span class="nc">rich</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="k">class</span> <span class="nc">PersonId</span><span class="o">(</span><span class="n">id</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">AnyVal</span>
+  <span class="k">case</span> <span class="k">class</span> <span class="nc">PersonName</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">AnyVal</span>
+  <span class="k">case</span> <span class="k">class</span> <span class="nc">Person</span><span class="o">(</span><span class="n">personId</span><span class="k">:</span> <span class="kt">PersonId</span><span class="o">,</span> <span class="n">personName</span><span class="k">:</span> <span class="kt">PersonName</span><span class="o">,</span> <span class="n">age</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+<span class="o">}</span>
+<span class="k">object</span> <span class="nc">plain</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="k">class</span> <span class="nc">Person</span><span class="o">(</span><span class="n">personId</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">personName</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">age</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+<span class="o">}</span>
 
-<span class="kd">val</span><span class="w"> </span><span class="n">richPerson</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rich</span><span class="p">.</span><span class="nc">Person</span><span class="p">(</span><span class="nc">PersonId</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span><span class="w"> </span><span class="nc">PersonName</span><span class="p">(</span><span class="s">&quot;Bill&quot;</span><span class="p">),</span><span class="w"> </span><span class="mi">30</span><span class="p">)</span>
-<span class="kd">val</span><span class="w"> </span><span class="n">plainPerson</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">richPerson</span><span class="p">.</span><span class="n">transformInto</span><span class="p">[</span><span class="n">plain</span><span class="p">.</span><span class="nc">Person</span><span class="p">]</span>
+<span class="k">val</span> <span class="n">richPerson</span> <span class="k">=</span> <span class="n">rich</span><span class="o">.</span><span class="nc">Person</span><span class="o">(</span><span class="nc">PersonId</span><span class="o">(</span><span class="mi">10</span><span class="o">),</span> <span class="nc">PersonName</span><span class="o">(</span><span class="s">&quot;Bill&quot;</span><span class="o">),</span> <span class="mi">30</span><span class="o">)</span>
+<span class="k">val</span> <span class="n">plainPerson</span> <span class="k">=</span> <span class="n">richPerson</span><span class="o">.</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">plain.Person</span><span class="o">]</span>
 <span class="c1">// plain.Person(10, &quot;Bill&quot;, 30)</span>
-<span class="kd">val</span><span class="w"> </span><span class="n">richPerson2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">plainPerson</span><span class="p">.</span><span class="n">transformInto</span><span class="p">[</span><span class="n">rich</span><span class="p">.</span><span class="nc">Person</span><span class="p">]</span>
+<span class="k">val</span> <span class="n">richPerson2</span> <span class="k">=</span> <span class="n">plainPerson</span><span class="o">.</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">rich.Person</span><span class="o">]</span>
 <span class="c1">// rich.Person(PersonId(10), PersonName(&quot;Bill&quot;), 30)</span>
 </pre></div>
 </div>
-</section>
-<section id="options">
-<h2>Options<a class="headerlink" href="#options" title="Permalink to this heading"></a></h2>
+</div>
+<div class="section" id="options">
+<h2>Options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h2>
 <p>Given any types <code class="docutils literal notranslate"><span class="pre">T</span></code>, <code class="docutils literal notranslate"><span class="pre">U</span></code> such that there exists Chimney
 transformer between them (<code class="docutils literal notranslate"><span class="pre">Transformer[T,</span> <span class="pre">U]</span></code>), Chimney is able
 to derive <code class="docutils literal notranslate"><span class="pre">Transformer[Option[T],</span> <span class="pre">Option[U]]</span></code>.</p>
-<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="nc">Some</span><span class="p">(</span><span class="mi">1234</span><span class="p">).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Option</span><span class="p">[</span><span class="nc">Int</span><span class="p">]]</span>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="nc">Some</span><span class="o">(</span><span class="mi">1234</span><span class="o">).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">]]</span>
 <span class="c1">// Some(1234): Option[Int]</span>
-<span class="nc">Option</span><span class="p">.</span><span class="n">empty</span><span class="p">[</span><span class="nc">Int</span><span class="p">].</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Option</span><span class="p">[</span><span class="nc">Int</span><span class="p">]]</span>
+<span class="nc">Option</span><span class="o">.</span><span class="n">empty</span><span class="o">[</span><span class="kt">Int</span><span class="o">].</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">]]</span>
 <span class="c1">// None: Option[Int]</span>
 
-<span class="nc">Some</span><span class="p">(</span><span class="s">&quot;test&quot;</span><span class="p">).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Option</span><span class="p">[</span><span class="nc">String</span><span class="p">]]</span>
+<span class="nc">Some</span><span class="o">(</span><span class="s">&quot;test&quot;</span><span class="o">).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">String</span><span class="o">]]</span>
 <span class="c1">// Some(test): Option[String]</span>
-<span class="nc">Option</span><span class="p">.</span><span class="n">empty</span><span class="p">[</span><span class="nc">String</span><span class="p">].</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Option</span><span class="p">[</span><span class="nc">String</span><span class="p">]]</span>
+<span class="nc">Option</span><span class="o">.</span><span class="n">empty</span><span class="o">[</span><span class="kt">String</span><span class="o">].</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">String</span><span class="o">]]</span>
 <span class="c1">// None: Option[String]</span>
 
-<span class="nc">Some</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="nc">Car</span><span class="p">(</span><span class="mi">180</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">)).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Option</span><span class="p">[</span><span class="nc">Vehicle</span><span class="p">])</span>
+<span class="nc">Some</span><span class="o">(</span><span class="k">new</span> <span class="nc">Car</span><span class="o">(</span><span class="mi">180</span><span class="o">,</span> <span class="mi">5</span><span class="o">)).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">Vehicle</span><span class="o">])</span>
 <span class="c1">// Some(Vehicle(180.0)): Option[Vehicle]</span>
-<span class="nc">Option</span><span class="p">.</span><span class="n">empty</span><span class="p">[</span><span class="nc">Car</span><span class="p">].</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Option</span><span class="p">[</span><span class="nc">Vehicle</span><span class="p">])</span>
+<span class="nc">Option</span><span class="o">.</span><span class="n">empty</span><span class="o">[</span><span class="kt">Car</span><span class="o">].</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">Vehicle</span><span class="o">])</span>
 <span class="c1">// None: Option[Vehicle]</span>
 
-<span class="nc">Some</span><span class="p">(</span><span class="n">rich</span><span class="p">.</span><span class="nc">Person</span><span class="p">(</span><span class="nc">PersonId</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span><span class="w"> </span><span class="nc">PersonName</span><span class="p">(</span><span class="s">&quot;Bill&quot;</span><span class="p">),</span><span class="w"> </span><span class="mi">30</span><span class="p">)).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Option</span><span class="p">[</span><span class="n">plain</span><span class="p">.</span><span class="nc">Person</span><span class="p">])</span>
+<span class="nc">Some</span><span class="o">(</span><span class="n">rich</span><span class="o">.</span><span class="nc">Person</span><span class="o">(</span><span class="nc">PersonId</span><span class="o">(</span><span class="mi">10</span><span class="o">),</span> <span class="nc">PersonName</span><span class="o">(</span><span class="s">&quot;Bill&quot;</span><span class="o">),</span> <span class="mi">30</span><span class="o">)).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">plain.Person</span><span class="o">])</span>
 <span class="c1">// Some(plain.Person(10, &quot;Bill&quot;, 30)): Option[plain.Person]</span>
-<span class="nc">Option</span><span class="p">.</span><span class="n">empty</span><span class="p">[</span><span class="n">rich</span><span class="p">.</span><span class="nc">Person</span><span class="p">].</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Option</span><span class="p">[</span><span class="n">plain</span><span class="p">.</span><span class="nc">Person</span><span class="p">])</span>
+<span class="nc">Option</span><span class="o">.</span><span class="n">empty</span><span class="o">[</span><span class="kt">rich.Person</span><span class="o">].</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Option</span><span class="o">[</span><span class="kt">plain.Person</span><span class="o">])</span>
 <span class="c1">// None: Option[plain.Person]</span>
 </pre></div>
 </div>
-</section>
-<section id="collections">
-<h2>Collections<a class="headerlink" href="#collections" title="Permalink to this heading"></a></h2>
+</div>
+<div class="section" id="collections">
+<h2>Collections<a class="headerlink" href="#collections" title="Permalink to this headline">¶</a></h2>
 <p>Given any collection types <code class="docutils literal notranslate"><span class="pre">C1[_]</span></code> and <code class="docutils literal notranslate"><span class="pre">C2[_]</span></code>, and types <code class="docutils literal notranslate"><span class="pre">T</span></code>, <code class="docutils literal notranslate"><span class="pre">U</span></code>
 such that there exists Chimney transformer between them (<code class="docutils literal notranslate"><span class="pre">Transformer[T,</span> <span class="pre">U]</span></code>),
 Chimney is able to derive <code class="docutils literal notranslate"><span class="pre">Transformer[C1[T],</span> <span class="pre">C2[U]]</span></code>.</p>
-<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="nc">List</span><span class="p">(</span><span class="mi">123</span><span class="p">,</span><span class="w"> </span><span class="mi">456</span><span class="p">).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Array</span><span class="p">[</span><span class="nc">Int</span><span class="p">]]</span>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="nc">List</span><span class="o">(</span><span class="mi">123</span><span class="o">,</span> <span class="mi">456</span><span class="o">).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Array</span><span class="o">[</span><span class="kt">Int</span><span class="o">]]</span>
 <span class="c1">// Array(123, 456)</span>
 
-<span class="nc">Seq</span><span class="p">(</span><span class="s">&quot;foo&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;bar&quot;</span><span class="p">).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Vector</span><span class="p">[</span><span class="nc">String</span><span class="p">]]</span>
+<span class="nc">Seq</span><span class="o">(</span><span class="s">&quot;foo&quot;</span><span class="o">,</span> <span class="s">&quot;bar&quot;</span><span class="o">).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Vector</span><span class="o">[</span><span class="kt">String</span><span class="o">]]</span>
 <span class="c1">// Vector(foo, bar)</span>
 
-<span class="nc">Vector</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="nc">Car</span><span class="p">(</span><span class="mi">160</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">),</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nc">Car</span><span class="p">(</span><span class="mi">220</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">)).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">List</span><span class="p">[</span><span class="nc">Vehicle</span><span class="p">]]</span>
+<span class="nc">Vector</span><span class="o">(</span><span class="k">new</span> <span class="nc">Car</span><span class="o">(</span><span class="mi">160</span><span class="o">,</span> <span class="mi">4</span><span class="o">),</span> <span class="k">new</span> <span class="nc">Car</span><span class="o">(</span><span class="mi">220</span><span class="o">,</span> <span class="mi">5</span><span class="o">)).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">List</span><span class="o">[</span><span class="kt">Vehicle</span><span class="o">]]</span>
 <span class="c1">// List(Vehicle(160), Vehicle(220))</span>
 </pre></div>
 </div>
 <p>Note that <code class="docutils literal notranslate"><span class="pre">C1</span></code>, <code class="docutils literal notranslate"><span class="pre">C2</span></code> may be different collection types like <code class="docutils literal notranslate"><span class="pre">List</span></code>, <code class="docutils literal notranslate"><span class="pre">Vector</span></code>,
 <code class="docutils literal notranslate"><span class="pre">Seq</span></code>, <code class="docutils literal notranslate"><span class="pre">Array</span></code>, etc.</p>
-</section>
-<section id="maps">
-<h2>Maps<a class="headerlink" href="#maps" title="Permalink to this heading"></a></h2>
+</div>
+<div class="section" id="maps">
+<h2>Maps<a class="headerlink" href="#maps" title="Permalink to this headline">¶</a></h2>
 <p>Given any collection types <code class="docutils literal notranslate"><span class="pre">K1</span></code>, <code class="docutils literal notranslate"><span class="pre">K2</span></code>, <code class="docutils literal notranslate"><span class="pre">V1</span></code>, <code class="docutils literal notranslate"><span class="pre">V2</span></code> such that there
 exist transformers <code class="docutils literal notranslate"><span class="pre">Transformer[K1,</span> <span class="pre">K2]</span></code> and <code class="docutils literal notranslate"><span class="pre">Transformer[V1,</span> <span class="pre">V2]</span></code>,
 Chimney is able to derive <code class="docutils literal notranslate"><span class="pre">Transformer[Map[K1,</span> <span class="pre">V1],</span> <span class="pre">Map[K2,</span> <span class="pre">V2]]</span></code>.</p>
-<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="nc">Map</span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s">&quot;Alice&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s">&quot;Bob&quot;</span><span class="p">).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Map</span><span class="p">[</span><span class="nc">Int</span><span class="p">,</span><span class="w"> </span><span class="nc">PersonName</span><span class="p">]]</span>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="nc">Map</span><span class="o">(</span><span class="mi">1</span> <span class="o">-&gt;</span> <span class="s">&quot;Alice&quot;</span><span class="o">,</span> <span class="mi">2</span> <span class="o">-&gt;</span> <span class="s">&quot;Bob&quot;</span><span class="o">).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Map</span><span class="o">[</span><span class="kt">Int</span><span class="p">,</span> <span class="kt">PersonName</span><span class="o">]]</span>
 <span class="c1">// Map(1 -&gt; PersonName(Alice), 2 -&gt; PersonName(Bob))</span>
 
-<span class="nc">Map</span><span class="p">(</span><span class="nc">PersonId</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nc">Car</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">),</span><span class="w"> </span><span class="nc">PersonId</span><span class="p">(</span><span class="mi">22</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nc">Car</span><span class="p">(</span><span class="mi">170</span><span class="p">,</span><span class="w"> </span><span class="mi">4</span><span class="p">)).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Map</span><span class="p">[</span><span class="nc">Int</span><span class="p">,</span><span class="w"> </span><span class="nc">Vehicle</span><span class="p">]]</span>
+<span class="nc">Map</span><span class="o">(</span><span class="nc">PersonId</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="k">new</span> <span class="nc">Car</span><span class="o">(</span><span class="mi">200</span><span class="o">,</span> <span class="mi">5</span><span class="o">),</span> <span class="nc">PersonId</span><span class="o">(</span><span class="mi">22</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="k">new</span> <span class="nc">Car</span><span class="o">(</span><span class="mi">170</span><span class="o">,</span> <span class="mi">4</span><span class="o">)).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Map</span><span class="o">[</span><span class="kt">Int</span><span class="p">,</span> <span class="kt">Vehicle</span><span class="o">]]</span>
 <span class="c1">// Map(10 -&gt; Vehicle(200), 22 -&gt; Vehicle(170))</span>
 </pre></div>
 </div>
-</section>
-<section id="either">
-<h2>Either<a class="headerlink" href="#either" title="Permalink to this heading"></a></h2>
+</div>
+<div class="section" id="either">
+<h2>Either<a class="headerlink" href="#either" title="Permalink to this headline">¶</a></h2>
 <p>Given any collection types <code class="docutils literal notranslate"><span class="pre">L1</span></code>, <code class="docutils literal notranslate"><span class="pre">L2</span></code>, <code class="docutils literal notranslate"><span class="pre">R1</span></code>, <code class="docutils literal notranslate"><span class="pre">R2</span></code> such that there
 exist transformers <code class="docutils literal notranslate"><span class="pre">Transformer[L1,</span> <span class="pre">L2]</span></code> and <code class="docutils literal notranslate"><span class="pre">Transformer[R1,</span> <span class="pre">R2]</span></code>,
 Chimney is able to derive <code class="docutils literal notranslate"><span class="pre">Transformer[Either[L1,</span> <span class="pre">R1],</span> <span class="pre">Either[L2,</span> <span class="pre">R2]]</span></code>.</p>
-<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nc">Right</span><span class="p">(</span><span class="s">&quot;Batman&quot;</span><span class="p">):</span><span class="w"> </span><span class="nc">Either</span><span class="p">[</span><span class="nc">Int</span><span class="p">,</span><span class="w"> </span><span class="nc">String</span><span class="p">]).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Either</span><span class="p">[</span><span class="nc">PersonId</span><span class="p">,</span><span class="w"> </span><span class="nc">PersonName</span><span class="p">]]</span>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="o">(</span><span class="nc">Right</span><span class="o">(</span><span class="s">&quot;Batman&quot;</span><span class="o">)</span><span class="k">:</span> <span class="kt">Either</span><span class="o">[</span><span class="kt">Int</span><span class="p">,</span> <span class="kt">String</span><span class="o">]).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Either</span><span class="o">[</span><span class="kt">PersonId</span><span class="p">,</span> <span class="kt">PersonName</span><span class="o">]]</span>
 <span class="c1">// Right(PersonName(Batman)): Either[PersonId, PersonName]</span>
 
-<span class="p">(</span><span class="nc">Left</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span><span class="w"> </span><span class="nc">Either</span><span class="p">[</span><span class="nc">Int</span><span class="p">,</span><span class="w"> </span><span class="nc">String</span><span class="p">]).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Either</span><span class="p">[</span><span class="nc">PersonId</span><span class="p">,</span><span class="w"> </span><span class="nc">PersonName</span><span class="p">]]</span>
+<span class="o">(</span><span class="nc">Left</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span><span class="k">:</span> <span class="kt">Either</span><span class="o">[</span><span class="kt">Int</span><span class="p">,</span> <span class="kt">String</span><span class="o">]).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Either</span><span class="o">[</span><span class="kt">PersonId</span><span class="p">,</span> <span class="kt">PersonName</span><span class="o">]]</span>
 <span class="c1">// Left(PersonId(10)): Either[PersonId, PersonName]</span>
 
-<span class="p">(</span><span class="nc">Right</span><span class="p">(</span><span class="nc">Array</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">20</span><span class="p">)):</span><span class="w"> </span><span class="nc">Either</span><span class="p">[</span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="nc">Array</span><span class="p">[</span><span class="nc">Int</span><span class="p">]]).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Either</span><span class="p">[</span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="nc">List</span><span class="p">[</span><span class="nc">Int</span><span class="p">]]]</span>
+<span class="o">(</span><span class="nc">Right</span><span class="o">(</span><span class="nc">Array</span><span class="o">(</span><span class="mi">10</span><span class="o">,</span> <span class="mi">20</span><span class="o">))</span><span class="k">:</span> <span class="kt">Either</span><span class="o">[</span><span class="kt">String</span><span class="p">,</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">Int</span><span class="o">]]).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Either</span><span class="o">[</span><span class="kt">String</span><span class="p">,</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Int</span><span class="o">]]]</span>
 <span class="c1">// Right(List(10, 20)): Either[String, List[Int]]</span>
 
-<span class="p">(</span><span class="nc">Left</span><span class="p">(</span><span class="s">&quot;test&quot;</span><span class="p">):</span><span class="w"> </span><span class="nc">Either</span><span class="p">[</span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="nc">Array</span><span class="p">[</span><span class="nc">Int</span><span class="p">]]).</span><span class="n">transformInto</span><span class="p">[</span><span class="nc">Either</span><span class="p">[</span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="nc">List</span><span class="p">[</span><span class="nc">Int</span><span class="p">]]]</span>
+<span class="o">(</span><span class="nc">Left</span><span class="o">(</span><span class="s">&quot;test&quot;</span><span class="o">)</span><span class="k">:</span> <span class="kt">Either</span><span class="o">[</span><span class="kt">String</span><span class="p">,</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">Int</span><span class="o">]]).</span><span class="n">transformInto</span><span class="o">[</span><span class="kt">Either</span><span class="o">[</span><span class="kt">String</span><span class="p">,</span> <span class="kt">List</span><span class="o">[</span><span class="kt">Int</span><span class="o">]]]</span>
 <span class="c1">// Left(test): Either[String, List[Int]]</span>
 </pre></div>
 </div>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>
+           
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="customizing-transformers.html" class="btn btn-neutral float-left" title="Customizing transformers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="default-values.html" class="btn btn-neutral float-right" title="Default values support" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="default-values.html" class="btn btn-neutral float-right" title="Default values support" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="customizing-transformers.html" class="btn btn-neutral float-left" title="Customizing transformers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
+  
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2017-2023, scalaland.io.</p>
-  </div>
+    <p>
+        
+        &copy; Copyright 2017-2023, scalaland.io
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
+
     </section>
+
   </div>
-  <script>
+  
+
+  <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
   </script>
-    <!-- Theme Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-116165806-1"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
 
-      gtag('config', 'UA-116165806-1', {
-          'anonymize_ip': false,
-      });
-    </script> 
+  
+  
+    
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-116165806-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+
+    
+   
 
 </body>
 </html>
