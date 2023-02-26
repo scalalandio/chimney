@@ -53,7 +53,7 @@ rules and transform your objects with as little boilerplate as possible.
     .withFieldComputed(_.at, _ => ZonedDateTime.now)
     .withFieldRenamed(_.addict, _.forAddict)
     .transform
-  // CoffeeMade(24, "Espresso", "Piotr", "2020-02-03T20:26:59.659647+07:00[Europe/Warsaw]")
+  // CoffeeMade(24, "Espresso", "Piotr", "2020-02-03T20:26:59.659647+07:00[Asia/Bangkok]")
 
 
 Read :ref:`transformers/getting-started:Getting started with transformers` to learn more about
