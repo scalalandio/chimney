@@ -51,6 +51,9 @@
             <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
                 <p class="caption" role="heading"><span class="caption-text">Benchmarks</span></p>
                 <ul>
+                    <li class="toctree-l1" id="latest-builds-holder">
+                        <a id="latest-benchmarks" class="reference internal">Latest master build benchmarks</a>
+                    </li>
                     <li class="toctree-l1" id="master-branch-holder">
                         <a id="master-benchmarks" class="reference internal">Master branch benchmarks</a>
                         <ul id="master-benchmarks-menu">
@@ -83,22 +86,33 @@
         const branch = 'main'
 
         const $iframe = $('#benchmarks-window')
+        const $latestBuildsHolder = $('#latest-builds-holder')
         const $masterBranchHolder = $('#master-branch-holder')
         const $masterBranchMenu = $('#master-benchmarks-menu')
         const $prBenchmarksHolder = $('#pr-benchmarks-holder')
         const $prBenchmarksMenu = $('#pr-benchmarks-menu')
+        const $latest = $('#latest-benchmarks')
         const $master = $('#master-benchmarks')
         const $pr = $('#pr-benchmarks')
 
         // I'm so sorry
+        $latest.click(ev => {
+            ev.preventDefault()
+            $prBenchmarksHolder.removeClass('current')
+            $masterBranchHolder.removeClass('current')
+            $latestBuildsHolder.addClass('current')
+        })
+
         $master.click(ev => {
             ev.preventDefault()
+            $latestBuildsHolder.removeClass('current')
             $prBenchmarksHolder.removeClass('current')
             $masterBranchHolder.addClass('current')
         })
 
         $pr.click(ev => {
             ev.preventDefault()
+            $latestBuildsHolder.removeClass('current')
             $masterBranchHolder.removeClass('current')
             $prBenchmarksHolder.addClass('current')
         })
@@ -126,39 +140,43 @@
 
         fetchResults(org, repo, branch)
             .then(resultsJson => {
-                const prResults = selectResults(resultsJson, 'pull_request')
-                const masterPushResults = selectResults(resultsJson, 'push').reverse();
+                const prResults = selectResults(resultsJson, 'pull_request').slice(0, 8)
+                const masterPushResults = selectResults(resultsJson, 'push').slice(0, 8)
 
-                const masterHeadCommit = masterPushResults[masterPushResults.length - 1];
+                const masterHeadCommit = masterPushResults[0]
 
-                let firstGroup = true // just to set initial view to the latest master commits comparison
+                const latestResults = [...masterPushResults]
+                latestResults.reverse();
+                const latestResultsTitle = `The latest master branch builds from ${latestResults[0].describe} to ${latestResults[latestResults.length - 1].describe}`
+                const latestResultsIframeSrc = iframeUrl(latestResults.map(res => dataUrl(org, repo, branch, res.file)), latestResultsTitle)
 
-                sliding(9, masterPushResults) // how many master branch commits are being compared
+                $latest.click(ev => {
+                  ev.preventDefault();
+                  $iframe.attr('src', latestResultsIframeSrc)
+                });
+                $iframe.attr('src', latestResultsIframeSrc)
+
+                sliding(2, masterPushResults) // how many master branch commits are being compared
                     .forEach(group => {
-                        const hashes = group.map(res => res.sha.substring(0, 7))
-                        const first = hashes[0]
-                        const last = hashes[group.length - 1]
+                        const thisGroup = [...group]
+                        thisGroup.reverse()
+                        const first = thisGroup[0]
+                        const last = thisGroup[1]
 
-                        const navBenchmarkName = `${first} .. ${last}`
-
-                        const title = `Master branch commits from ${first} to ${last}`
-                        const iframeSrc = iframeUrl(group.map(res => dataUrl(org, repo, branch, res.file)), title)
+                        const navBenchmarkName = `${first.describe} vs. ${last.describe}`
+                        const title = `Master branch commits from ${first.describe} to ${last.describe}`
+                        const iframeSrc = iframeUrl(thisGroup.map(res => dataUrl(org, repo, branch, res.file)), title)
 
                         addEntry($masterBranchMenu, navBenchmarkName, ev => {
                             ev.preventDefault()
                             $iframe.attr('src', iframeSrc)
                         })
-
-                        if (firstGroup) {
-                            $iframe.attr('src', iframeSrc)
-                            firstGroup = false
-                        }
                     })
 
                 prResults.forEach(prResult => {
-                    const navBenchmarkName = `PR ${prResult.prNumber} vs HEAD master`
+                    const navBenchmarkName = `HEAD master vs. PR ${prResult.prNumber}`
                     const urls = [masterHeadCommit.file, prResult.file].map(file => dataUrl(org, repo, branch, file))
-                    const title = `PR ${prResult.prNumber} (${prResult.prTitle}) vs HEAD master commit (${masterHeadCommit.sha.substring(0, 7)})`
+                    const title = `HEAD master commit (${masterHeadCommit.sha.substring(0, 7)}) vs. PR ${prResult.prNumber} (${prResult.prTitle})`
                     const iframeSrc = iframeUrl(urls, title)
                     addEntry($prBenchmarksMenu, navBenchmarkName, ev => {
                         ev.preventDefault()
