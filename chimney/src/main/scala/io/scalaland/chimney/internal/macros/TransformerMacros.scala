@@ -30,7 +30,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       val derivedTransformer = genTransformer[From, To](config.withTransformerDefinitionPrefix(q"$tdName"))
 
       q"""
-        val $tdName = ${c.prefix.tree}
+        final val $tdName = ${c.prefix.tree}
         $derivedTransformer
       """
     }
@@ -71,7 +71,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
     val derivedTransformerTree = genTransformer[From, To](config)
 
     q"""
-       val $tiName = ${c.prefix.tree}
+       final val $tiName = ${c.prefix.tree}
        ${callTransform(derivedTransformerTree, q"$tiName.source")}
     """
   }
