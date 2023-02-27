@@ -75,10 +75,12 @@ jobs:
 
       - name: Save benchmark results
         run: |
-          mkdir -p ./results
+          mkdir -p ./results/${{ github.event_name }}/${{ github.sha }}
           mv meta.json ./results
-          mv $(git describe --tags --always).json ./results
+          mv $(git describe --tags --always).json ./results/${{ github.event_name }}/${{ github.sha }}
           echo "$(git describe --tags --always)" > ./results/version
+          echo "${{ github.sha }}" > ./results/sha
+          echo "${{ github.event_name }}" > ./results/event
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v2

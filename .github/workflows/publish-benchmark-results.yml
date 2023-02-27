@@ -45,6 +45,10 @@ jobs:
         run: |
           VERSION=$(cat version)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          B_SHA=$(cat sha)
+          echo "B_SHA=B_SHA" >> $GITHUB_ENV
+          B_EVENT=$(cat event)
+          echo "B_EVENT=B_EVENT" >> $GITHUB_ENV
         if: ${{ steps.download-results.outputs.result == 'continue' }}
 
       - name: Push benchmark file
@@ -52,7 +56,8 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.RESULTS_REPO_RW_TOKEN }}
         with:
-          source_file: '${{ env.VERSION }}.json'
+          source_file: '${{ env.B_EVENT }}/${{ env.B_SHA }}/${{ env.VERSION }}.json'
+          destination_folder: '${{ env.B_EVENT }}/${{ env.B_SHA }}'
           destination_repo: 'scalalandio/chimney-benchmark-results'
           user_email: 'mateusz.kubuszok@gmail.com'
           user_name: 'Mateusz Kubuszok'

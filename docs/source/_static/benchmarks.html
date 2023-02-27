@@ -129,6 +129,7 @@
         }
 
         const dataUrl = (org, repo, branch, filename) => `https://raw.githubusercontent.com/${org}/${repo}/${branch}/${filename}`
+        const resultFilePath = (res) => `${res.event}/${res.sha}/${res.file}`
         const iframeUrl = (urls, topBar) => `https://jmh.morethan.io/?sources=${urls.join(',')}&topBar=${topBar}`
 
         const fetchResults = (org, repo, branch) => fetch(dataUrl(org, repo, branch, 'meta.json')).then(response => response.json())
@@ -140,15 +141,15 @@
 
         fetchResults(org, repo, branch)
             .then(resultsJson => {
-                const prResults = selectResults(resultsJson, 'pull_request').slice(0, 8)
-                const masterPushResults = selectResults(resultsJson, 'push').slice(0, 8)
+                const prResults = selectResults(resultsJson, 'pull_request').slice(0, 10)
+                const masterPushResults = selectResults(resultsJson, 'push').slice(0, 10)
 
                 const masterHeadCommit = masterPushResults[0]
 
                 const latestResults = [...masterPushResults]
                 latestResults.reverse();
                 const latestResultsTitle = `The latest master branch builds from ${latestResults[0].describe} to ${latestResults[latestResults.length - 1].describe}`
-                const latestResultsIframeSrc = iframeUrl(latestResults.map(res => dataUrl(org, repo, branch, res.file)), latestResultsTitle)
+                const latestResultsIframeSrc = iframeUrl(latestResults.map(res => dataUrl(org, repo, branch, resultFilePath(res))), latestResultsTitle)
 
                 $latest.click(ev => {
                   ev.preventDefault();
@@ -165,7 +166,7 @@
 
                         const navBenchmarkName = `${first.describe} vs. ${last.describe}`
                         const title = `Master branch commits from ${first.describe} to ${last.describe}`
-                        const iframeSrc = iframeUrl(thisGroup.map(res => dataUrl(org, repo, branch, res.file)), title)
+                        const iframeSrc = iframeUrl(thisGroup.map(res => dataUrl(org, repo, branch, resultFilePath(res))), title)
 
                         addEntry($masterBranchMenu, navBenchmarkName, ev => {
                             ev.preventDefault()
@@ -175,7 +176,7 @@
 
                 prResults.forEach(prResult => {
                     const navBenchmarkName = `HEAD master vs. PR ${prResult.prNumber}`
-                    const urls = [masterHeadCommit.file, prResult.file].map(file => dataUrl(org, repo, branch, file))
+                    const urls = [masterHeadCommit, prResult].map(res => dataUrl(org, repo, branch, resultFilePath(res)))
                     const title = `HEAD master commit (${masterHeadCommit.sha.substring(0, 7)}) vs. PR ${prResult.prNumber} (${prResult.prTitle})`
                     const iframeSrc = iframeUrl(urls, title)
                     addEntry($prBenchmarksMenu, navBenchmarkName, ev => {
