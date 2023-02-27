@@ -26,6 +26,9 @@ A clear and concise description of what you expected to happen.
 **Actual behavior**
 A description showing what happened: ideally a copy of compiler error, example of wrong value generated, stack trace and message of thrown exception.
 
+**Which Chimney version do you use**
+Version you used for confirming bug with a snippet.
+
 **Which platform do you use**
 - [ ] JVM
 - [ ] Scala.js
