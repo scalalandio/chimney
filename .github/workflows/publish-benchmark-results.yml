@@ -41,14 +41,14 @@ jobs:
       - run: unzip benchmark-results.zip
         if: ${{ steps.download-results.outputs.result == 'continue' }}
 
-      - name: Set VERSION env variable
+      - name: Set VERSION/B_SHA/B_EVENT env variable
         run: |
           VERSION=$(cat version)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           B_SHA=$(cat sha)
-          echo "B_SHA=B_SHA" >> $GITHUB_ENV
+          echo "B_SHA=$B_SHA" >> $GITHUB_ENV
           B_EVENT=$(cat event)
-          echo "B_EVENT=B_EVENT" >> $GITHUB_ENV
+          echo "B_EVENT=$B_EVENT" >> $GITHUB_ENV
         if: ${{ steps.download-results.outputs.result == 'continue' }}
 
       - name: Push benchmark file
