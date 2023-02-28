@@ -16,6 +16,7 @@ jobs:
     strategy:
       matrix:
         scala: ["2_12", "2_13"]
+        platform: ["jvm", "js", "native"]
         jvm: ['adopt:1.8.0-292', 'temurin:1.19.0.2']
       fail-fast: false
 
@@ -29,7 +30,7 @@ jobs:
           jvm: ${{ matrix.jvm }}
           apps: sbt
       - name: Clean, Check code formatting, compile, test, generate coverage report
-        run: sbt ci-${{ matrix.scala }}
+        run: sbt ci-${{ matrix.platform }}-${{ matrix.scala }}
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

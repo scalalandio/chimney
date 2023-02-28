@@ -130,27 +130,28 @@ val publishSettings = Seq(
 val noPublishSettings =
   Seq(publish / skip := true, publishArtifact := false)
 
-val ciCommand = (scalaSuffix: String) =>
-  Iterable(
-    "clean",
-    "scalafmtCheck",
-    "Test/scalafmtCheck",
-    s"chimneyCats$scalaSuffix/compile",
-    s"chimneyCatsJS$scalaSuffix/compile",
-    s"chimneyCatsNative$scalaSuffix/compile",
-    "coverage",
-    s"chimney$scalaSuffix/test",
-    s"chimneyCats$scalaSuffix/test",
-    s"chimney$scalaSuffix/coverageReport",
-    s"chimneyCats$scalaSuffix/coverageReport",
-    "coverageAggregate",
-    "coverageOff",
-    s"chimneyJS$scalaSuffix/test",
-    s"chimneyCatsJS$scalaSuffix/test",
-    s"chimneyNative$scalaSuffix/test",
-    s"chimneyCatsNative$scalaSuffix/test",
-    "benchmarks/compile"
-  ).mkString(";")
+val ciCommand = (platform: String, scalaSuffix: String) => {
+  val clean = Seq("clean")
+  def withCoverage(tasks: String*): Seq[String] = "coverage" +: tasks :+ "coverageAggregate" :+ "coverageOff"
+
+  val tasks = platform match {
+    case "JVM" => // JVM
+      clean ++ Seq("scalafmtCheck", "Test/scalafmtCheck") ++
+        Seq(s"chimney$scalaSuffix/compile", s"chimneyCats$scalaSuffix/compile") ++
+        withCoverage(
+          s"chimney$scalaSuffix/test",
+          s"chimneyCats$scalaSuffix/test",
+          s"chimney$scalaSuffix/coverageReport",
+          s"chimneyCats$scalaSuffix/coverageReport"
+        ) ++ Seq("benchmarks/compile")
+    case "JS" =>
+      clean ++ Seq(s"chimneyJS$scalaSuffix/test", s"chimneyCatsJS$scalaSuffix/test")
+    case "Native" =>
+      clean ++ Seq(s"chimneyNative$scalaSuffix/test", s"chimneyCatsNative$scalaSuffix/test")
+  }
+
+  tasks.mkString(";")
+}
 
 // modules
 
@@ -188,21 +189,14 @@ lazy val root = project
       ),
       sbtwelcome.UsefulTask("stageRelease", "publishSigned", "Stage all versions for publishing"),
       sbtwelcome.UsefulTask("publishRelease", "sonatypeBundleRelease", "Publish all artifacts staged for release"),
-      sbtwelcome.UsefulTask(
-        "ci-2_12",
-        ciCommand("2_12"),
-        "Checks formatting, run tests and compute core library coverage for Scala 2.12"
-      ),
-      sbtwelcome.UsefulTask(
-        "ci-2_13",
-        ciCommand(""),
-        "Checks formatting, run tests and compute core library coverage for Scala 2.13"
-      ),
-      sbtwelcome.UsefulTask(
-        "runBenchmarks",
-        "benchmarks/Jmh/run",
-        "Run JMH benchmarks suite"
-      )
+      sbtwelcome.UsefulTask("runBenchmarks", "benchmarks/Jmh/run", "Run JMH benchmarks suite"),
+      sbtwelcome.UsefulTask("ci-jvm-2_13", ciCommand("JVM", ""), "CI pipeline for Scala 2.13 on JVM"),
+      sbtwelcome.UsefulTask("ci-jvm-2_12", ciCommand("JVM", "2_12"), "CI pipeline for Scala 2.12 on JVM"),
+      sbtwelcome.UsefulTask("ci-js-2_13", ciCommand("JS", ""), "CI pipeline for Scala 2.13 on Scala JS"),
+      sbtwelcome.UsefulTask("ci-js-2_12", ciCommand("JS", "2_12"), "CI pipeline for Scala 2.12 on Scala JS"),
+      sbtwelcome.UsefulTask("ci-native-2_13", ciCommand("Native", ""), "CI pipeline for Scala 2.13 on Scala Native"),
+      sbtwelcome
+        .UsefulTask("ci-native-2_12", ciCommand("Native", "2_12"), "CI pipeline for Scala 2.12 on Scala Native")
     )
   )
 
