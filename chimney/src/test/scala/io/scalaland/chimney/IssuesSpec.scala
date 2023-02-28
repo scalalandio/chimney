@@ -510,6 +510,131 @@ object IssuesSpec extends TestSuite {
       val resultF = transformerF.transform(foo)
       assert(resultF == Right(expected))
     }
+
+    test("fix issue #212") {
+      sealed trait OneOf
+      case class Something(intValue: Int) extends OneOf
+      case class SomethingElse(stringValue: String) extends OneOf
+
+      object proto {
+        case class SomethingMessage(intValue: Int)
+        case class SomethingElseMessage(stringValue: String)
+
+        sealed trait OneOf
+
+        case class Something(value: SomethingMessage) extends OneOf
+        case class SomethingElse(value: SomethingElseMessage) extends OneOf
+
+        case object Empty extends OneOf
+      }
+
+      test("lifted transformers") {
+
+        implicit val somethingTransformF: TransformerF[Option, proto.Something, OneOf] =
+          _.value.transformIntoF[Option, Something]
+        implicit val somethingElseTransformF: TransformerF[Option, proto.SomethingElse, OneOf] =
+          _.value.transformIntoF[Option, SomethingElse]
+
+        implicit val oneOfTransformF: TransformerF[Option, proto.OneOf, OneOf] =
+          TransformerF
+            .define[Option, proto.OneOf, OneOf]
+            .withCoproductInstanceF[proto.Empty.type](_ => None)
+            .buildTransformer
+
+        (proto.Something(proto.SomethingMessage(42)): proto.OneOf)
+          .transformIntoF[Option, OneOf] ==> Some(Something(42))
+      }
+
+      test("partial transformers") {
+        implicit val somethingPartialTransformer: PartialTransformer[proto.Something, OneOf] =
+          PartialTransformer(_.value.transformIntoPartial[Something])
+        implicit val somethingElsePartialTransformer: PartialTransformer[proto.SomethingElse, OneOf] =
+          PartialTransformer(_.value.transformIntoPartial[SomethingElse])
+
+        implicit val oneOfPartialTransformer: PartialTransformer[proto.OneOf, OneOf] =
+          PartialTransformer
+            .define[proto.OneOf, OneOf]
+            .withCoproductInstancePartial[proto.Empty.type](_ => partial.Result.fromErrorString("proto.OneOf.Empty"))
+            .buildTransformer
+
+        (proto.Something(proto.SomethingMessage(42)): proto.OneOf)
+          .transformIntoPartial[OneOf]
+          .asOption ==> Some(Something(42))
+
+        val failedResult = (proto.Empty: proto.OneOf).transformIntoPartial[OneOf]
+
+        failedResult.asOption ==> None
+        failedResult.asErrorPathMessageStrings ==> Iterable("" -> "proto.OneOf.Empty")
+      }
+    }
+
+    test("fix issue #199") {
+      import Issue199._
+
+      test("basic sanity check") {
+        A.Foo("foo").transformInto[B.Foo] ==> B.Foo("foo")
+        A.Foo("foo").transformInto[C.Foo] ==> C.Foo("foo")
+        A.Bar(Map("bar" -> 1)).transformInto[B.Bar] ==> B.Bar(Map("bar" -> 1))
+      }
+
+      test("with A.Bar to C.Bar transformer") {
+        implicit val aBarToCBar: Transformer[A.Bar, C.Bar] = Issue199.barToBarTransformer
+
+        A.Bar(Map("bar" -> 1)).transformInto[C.Bar] ==> C.Bar(Seq("bar"), Seq(1)) // implicit
+        (A.Bar(Map("bar" -> 1)): A).transformInto[C] ==> C.Bar(Seq("bar"), Seq(1)) // derived, using implicit
+
+        test("transforming a coproduct with identical structure") {
+          val bagA: Bag[A] = Bag(Seq(A.Foo("foo"), A.Bar(Map("bar" -> 1))))
+          bagA.transformInto[Bag[B]] ==> Bag(Seq(B.Foo("foo"), B.Bar(Map("bar" -> 1))))
+        }
+
+        test("transforming a coproduct with different structure") {
+          val bagA: Bag[A] = Bag(Seq(A.Foo("foo"), A.Bar(Map("bar" -> 1))))
+          bagA.transformInto[Bag[C]] ==> Bag(Seq(C.Foo("foo"), C.Bar(Seq("bar"), Seq(1))))
+        }
+      }
+
+      test("with A.Bar to C transformer") {
+        implicit val aBarToC: Transformer[A.Bar, C] = Issue199.barToCTransformer
+
+        A.Bar(Map("bar" -> 1)).transformInto[C] ==> C.Bar(Seq("bar"), Seq(1)) // implicit
+        (A.Bar(Map("bar" -> 1)): A).transformInto[C] ==> C.Bar(Seq("bar"), Seq(1)) // derived, using implicit
+
+        test("transforming a coproduct with identical structure") {
+          val bagA: Bag[A] = Bag(Seq(A.Foo("foo"), A.Bar(Map("bar" -> 1))))
+          bagA.transformInto[Bag[B]] ==> Bag(Seq(B.Foo("foo"), B.Bar(Map("bar" -> 1))))
+        }
+
+        test("transforming a coproduct with different structure") {
+          val bagA: Bag[A] = Bag(Seq(A.Foo("foo"), A.Bar(Map("bar" -> 1))))
+          bagA.transformInto[Bag[C]] ==> Bag(Seq(C.Foo("foo"), C.Bar(Seq("bar"), Seq(1))))
+        }
+      }
+    }
+
+    test("fix issue #210") {
+      import Issue210._
+
+      (B.Foo: B).transformInto[A] ==> A.Foo
+      (B.Bar: B).transformInto[A] ==> A.Bar
+
+      // make sure the other way around is fine with partial transformers
+      (A.Foo: A)
+        .intoPartial[B]
+        .withCoproductInstancePartial[A.Unrecognized](_ => partial.Result.fromEmpty)
+        .transform
+        .asOption ==> Some(B.Foo)
+      (A.Bar: A)
+        .intoPartial[B]
+        .withCoproductInstancePartial[A.Unrecognized](_ => partial.Result.fromEmpty)
+        .transform
+        .asOption ==> Some(B.Bar)
+      (A.Unrecognized(100): A)
+        .intoPartial[B]
+        .withCoproductInstancePartial[A.Unrecognized](_ => partial.Result.fromEmpty)
+        .transform
+        .asOption ==> None
+    }
   }
 }
 
@@ -523,5 +648,54 @@ object tag {
 
   class Tagger[U] {
     def apply[T](t: T): T @@ U = t.asInstanceOf[T @@ U]
+  }
+}
+
+object Issue199 {
+
+  sealed trait A
+  object A {
+    case class Foo(s: String) extends A
+    case class Bar(kvs: Map[String, Int]) extends A
+  }
+
+  sealed trait B
+  object B {
+    case class Foo(s: String) extends B
+    case class Bar(kvs: Map[String, Int]) extends B
+  }
+
+  sealed trait C
+  object C {
+    case class Foo(s: String) extends C
+    case class Bar(keys: Seq[String], values: Seq[Int]) extends C
+  }
+
+  val barToBarTransformer: Transformer[A.Bar, C.Bar] = aBar => {
+    val (keys, values) = aBar.kvs.unzip
+    C.Bar(keys = keys.toSeq, values = values.toSeq)
+  }
+
+  val barToCTransformer: Transformer[A.Bar, C] = aBar => {
+    val (keys, values) = aBar.kvs.unzip
+    C.Bar(keys = keys.toSeq, values = values.toSeq)
+  }
+
+  case class Bag[T](xs: Seq[T])
+}
+
+object Issue210 {
+  sealed abstract class A(val value: Int)
+  object A {
+    sealed trait Recognized extends A
+    case object Foo extends A(0) with A.Recognized
+    case object Bar extends A(1) with A.Recognized
+    final case class Unrecognized(unrecognizedValue: Int) extends A(unrecognizedValue)
+  }
+
+  sealed trait B
+  object B {
+    case object Foo extends B
+    case object Bar extends B
   }
 }
