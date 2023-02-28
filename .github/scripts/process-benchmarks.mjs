@@ -3,6 +3,7 @@ import { promises as fs } from 'node:fs'
 import { inspect } from 'node:util'
 
 const metaFileName = 'meta.json'
+const shaFileName = 'sha'
 const triggerLabel = 'benchmark'
 
 const githubContext = JSON.parse(argv[2])
@@ -30,6 +31,7 @@ if (githubContext.event_name === 'push') {
     metadata.push(entry)
 
     await fs.writeFile(metaFileName, JSON.stringify(metadata, null, 2))
+    await fs.writeFile(shaFileName, entry.sha)
 
     console.log('added entry to metadata:', inspect(entry, {showHidden: false, depth: null, colors: true}))
 }
@@ -58,6 +60,7 @@ if (githubContext.event_name === 'pull_request') {
         metadata.push(entry)
 
         await fs.writeFile(metaFileName, JSON.stringify(metadata, null, 2))
+        await fs.writeFile(shaFileName, entry.sha)
 
         console.log('added entry to metadata:', inspect(entry, {showHidden: false, depth: null, colors: true}))
     }
@@ -82,6 +85,7 @@ if (githubContext.event_name === 'pull_request') {
         metadata.push(entry)
 
         await fs.writeFile(metaFileName, JSON.stringify(metadata, null, 2))
+        await fs.writeFile(shaFileName, entry.sha)
 
         console.log('added entry to metadata:', inspect(entry, {showHidden: false, depth: null, colors: true}))
     }
