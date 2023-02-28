@@ -193,13 +193,13 @@ object PBTransformationSpec extends TestSuite {
         val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered
         val pbStatus: pb.order.CustomerStatus = pb.order.CustomerRegistered()
         domainStatus.into[pb.order.CustomerStatus].transform ==> pbStatus
-        /* TODO: this requires some fixing as this would unblock us from providing better support for Protobufs
+
         pbStatus
-          .into[Option[order.CustomerStatus]]
-          .withCoproductInstance[pb.order.CustomerStatus.Empty.type](_ => None)
-          .withCoproductInstance[pb.order.CustomerStatus.NonEmpty](_.transformInto[Option[order.CustomerStatus]])
-          .transform ==> Option(domainStatus)
-       */
+          .intoPartial[order.CustomerStatus]
+          .withCoproductInstancePartial[pb.order.CustomerStatus.Empty.type](_ => partial.Result.fromEmpty)
+          .withCoproductInstance[pb.order.CustomerStatus.NonEmpty](_.transformInto[order.CustomerStatus])
+          .transform
+          .asOption ==> Some(domainStatus)
       }
 
       test("PaymentStatus (oneof sealed_value_optional)") {
