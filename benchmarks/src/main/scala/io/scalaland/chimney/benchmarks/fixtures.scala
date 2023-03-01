@@ -57,6 +57,11 @@ object fixtures {
 
   object samples {
     final val simpleSample = Simple(23, 23d, "23", None)
+    final val simpleSampleArray: Array[Simple] = Array.fill(100)(samples.simpleSample)
+    final val simpleSampleVector: Vector[Simple] = Vector.fill(100)(samples.simpleSample)
+    final val simpleSampleMapOfStrings: Map[String, Simple] = (1 to 100).map(i => i.toString -> samples.simpleSample).toMap
+    final val simpleSampleRight: Either[String, Simple] = Right(samples.simpleSample)
+
     final val largeSample = Large(
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
       11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
