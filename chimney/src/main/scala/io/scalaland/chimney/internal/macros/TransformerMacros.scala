@@ -637,8 +637,9 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
           val fromCS = From.typeSymbol.classSymbolOpt.get
           val toCS = To.typeSymbol.classSymbolOpt.get
 
-          val fromInstances = fromCS.subclasses.map(_.typeInSealedParent(From))
-          val toInstances = toCS.subclasses.map(_.typeInSealedParent(To))
+          // calling .distinct here as `knownDirectSubclasses` returns duplicates for multiply-inherited types
+          val fromInstances = fromCS.subclasses.map(_.typeInSealedParent(From)).distinct
+          val toInstances = toCS.subclasses.map(_.typeInSealedParent(To)).distinct
 
           val targetNamedInstances = toInstances.groupBy(_.typeSymbol.name.toString)
 
@@ -649,21 +650,27 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
               .map { instanceTree =>
                 Right(cq"_: $instTpe => $instanceTree")
               }
+              .orElse {
+                resolveImplicitTransformer(config)(instTpe, To)
+                  .map { implicitTransformerTree =>
+                    val fn = freshTermName(instName)
+                    Right(cq"$fn: $instTpe => ${implicitTransformerTree.callTransform(Ident(fn))}")
+                  }
+              }
               .getOrElse {
                 val instSymbol = instTpe.typeSymbol
+
+                def fail: Left[Seq[CantFindCoproductInstanceTransformer], Tree] = Left {
+                  Seq(
+                    CantFindCoproductInstanceTransformer(
+                      instSymbol.fullName,
+                      From.typeSymbol.fullName,
+                      To.typeSymbol.fullName
+                    )
+                  )
+                }
+
                 targetNamedInstances.getOrElse(instName, Nil) match {
-                  case List(matchingTargetTpe)
-                      if (instSymbol.isModuleClass || instSymbol.isCaseClass) && matchingTargetTpe.typeSymbol.isModuleClass =>
-                    val tree = mkTransformerBodyTree0(config.derivationTarget) {
-                      q"${matchingTargetTpe.typeSymbol.asClass.module}"
-                    }
-                    Right(cq"_: ${instSymbol.asType} => $tree")
-                  case List(matchingTargetTpe) if instSymbol.isCaseClass && matchingTargetTpe.typeSymbol.isCaseClass =>
-                    val fn = freshTermName(instName)
-                    expandDestinationCaseClass(Ident(fn), config.rec)(instTpe, matchingTargetTpe)
-                      .map { innerTransformerTree =>
-                        cq"$fn: $instTpe => $innerTransformerTree"
-                      }
                   case _ :: _ :: _ =>
                     Left {
                       Seq(
@@ -674,16 +681,32 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                         )
                       )
                     }
+                  case List(matchingTargetTpe) =>
+                    resolveImplicitTransformer(config)(instTpe, matchingTargetTpe)
+                      .map { implicitTransformerTree =>
+                        val fn = freshTermName(instName)
+                        Right(cq"$fn: $instTpe => ${implicitTransformerTree.callTransform(Ident(fn))}")
+                      }
+                      .getOrElse {
+                        if (matchingTargetTpe.typeSymbol.isModuleClass && (instSymbol.isModuleClass || instSymbol.isCaseClass)) {
+                          val objTree = q"${matchingTargetTpe.typeSymbol.asClass.module}"
+                          Right(
+                            cq"_: ${instSymbol.asType} => ${mkTransformerBodyTree0(config.derivationTarget)(objTree)}"
+                          )
+                        } else if (matchingTargetTpe.typeSymbol.isCaseClass && instSymbol.isCaseClass) {
+                          val fn = freshTermName(instName)
+                          expandDestinationCaseClass(Ident(fn), config.rec)(instTpe, matchingTargetTpe)
+                            .map { innerTransformerTree =>
+                              cq"$fn: $instTpe => $innerTransformerTree"
+                            }
+                        } else {
+                          // $COVERAGE-OFF$
+                          fail
+                          // $COVERAGE-ON$
+                        }
+                      }
                   case _ =>
-                    Left {
-                      Seq(
-                        CantFindCoproductInstanceTransformer(
-                          instSymbol.fullName,
-                          From.typeSymbol.fullName,
-                          To.typeSymbol.fullName
-                        )
-                      )
-                    }
+                    fail
                 }
               }
           }
