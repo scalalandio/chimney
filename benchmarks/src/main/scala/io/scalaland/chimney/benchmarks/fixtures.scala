@@ -8,23 +8,24 @@ object fixtures {
   case class SimpleOutput(a: Int, b: Double, c: String, d: Option[String])
 
   // format: off
-  case class Long(
+  case class Large(
     a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int, j: Int,
     k: Int, l: Int, m: Int, n: Int, o: Int, p: Int, q: Int, r: Int, s: Int, t: Int,
     u: Int, v: Int
   )
-  case class LongOutput(
+
+  case class LargeOutput(
     a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int, j: Int,
     k: Int, l: Int, m: Int, n: Int, o: Int, p: Int, q: Int, r: Int, s: Int, t: Int,
     u: Int, v: Int
   )
-  case class LongRenamedOutput(
+  case class LargeRenamedOutput(
     a$: Int, b$: Int, c$: Int, d$: Int, e$: Int, f$: Int, g$: Int, h$: Int, i$: Int, j$: Int,
     k$: Int, l$: Int, m$: Int, n$: Int, o$: Int, p$: Int, q$: Int, r$: Int, s$: Int, t$: Int,
     u$: Int, v$: Int
   )
 
-  case class VeryLong(
+  case class Huge(
     a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int, j: Int,
     k: Int, l: Int, m: Int, n: Int, o: Int, p: Int, q: Int, r: Int, s: Int, t: Int,
     u: Int, v: Int, w: Int, x: Int, y: Int, z: Int, aa: Int, ab: Int, ac: Int, ad: Int,
@@ -36,7 +37,8 @@ object fixtures {
     cc: Int, cd: Int, ce: Int, cf: Int, cg: Int, ch: Int, ci: Int, cj: Int, ck: Int, cl: Int,
     cm: Int, cn: Int, co: Int, cp: Int, cq: Int, cr: Int, cs: Int, ct: Int, cu: Int, cv: Int
   )
-  case class VeryLongOutput(
+
+  case class HugeOutput(
     a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int, j: Int,
     k: Int, l: Int, m: Int, n: Int, o: Int, p: Int, q: Int, r: Int, s: Int, t: Int,
     u: Int, v: Int, w: Int, x: Int, y: Int, z: Int, aa: Int, ab: Int, ac: Int, ad: Int,
@@ -55,19 +57,19 @@ object fixtures {
 
   object samples {
     final val simpleSample = Simple(23, 23d, "23", None)
-    final val longSample = Long(
+    final val largeSample = Large(
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
       11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
       21, 22
     )
-    final val longNestedSample = Array.tabulate(200) { i =>
-      Long(
+    final val largeNestedSample = Array.tabulate(200) { i =>
+      Large(
         i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7, i + 8, i + 9, i + 10,
         i + 11, i + 12, i + 13, i + 14, i + 15, i + 16, i + 17, i + 18, i + 19, i + 20,
         i + 21, i + 22
       )
     }
-    final val veryLongSample = VeryLong(
+    final val hugeSample = Huge(
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
       11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
       21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
@@ -147,36 +149,36 @@ object fixtures {
   final def doSimpleByHand(sample: Simple): SimpleOutput =
     new SimpleOutput(sample.a, sample.b, sample.c, sample.d)
 
-  final def doLongByHand(sample: Long): LongOutput =
-    new LongOutput(
+  final def doLargeByHand(sample: Large): LargeOutput =
+    new LargeOutput(
       sample.a, sample.b, sample.c, sample.d, sample.e, sample.f, sample.g, sample.h, sample.i, sample.j,
       sample.k, sample.l, sample.m, sample.n, sample.o, sample.p, sample.q, sample.r, sample.s, sample.t,
       sample.u, sample.v
     )
 
-  final def doLongRenameByHand(sample: Long): LongRenamedOutput =
-    new LongRenamedOutput(
+  final def doLargeRenameByHand(sample: Large): LargeRenamedOutput =
+    new LargeRenamedOutput(
       sample.a, sample.b, sample.c, sample.d, sample.e, sample.f, sample.g, sample.h, sample.i, sample.j,
       sample.k, sample.l, sample.m, sample.n, sample.o, sample.p, sample.q, sample.r, sample.s, sample.t,
       sample.u, sample.v
     )
 
-  final def doLongByHandComputed(sample: Long): LongOutput =
-    new LongOutput(
+  final def doLargeByHandComputed(sample: Large): LargeOutput =
+    new LargeOutput(
       sample.a * 2, sample.b * 2, sample.c * 2, sample.d * 2, sample.e * 2, sample.f * 2, sample.g * 2, sample.h * 2, sample.i * 2, sample.j * 2,
       sample.k * 2, sample.l * 2, sample.m * 2, sample.n * 2, sample.o * 2, sample.p * 2, sample.q * 2, sample.r * 2, sample.s * 2, sample.t * 2,
       sample.u * 2, sample.v * 2
     )
 
-  final def doLongByHandConst(sample: Long): LongOutput =
-    new LongOutput(
+  final def doLargeByHandConst(sample: Large): LargeOutput =
+    new LargeOutput(
       834, 834, 834, 834, 834, 834, 834, 834, 834, 834,
       834, 834, 834, 834, 834, 834, 834, 834, 834, 834,
       834, 834
     )
 
-  final def doVeryLongByHand(sample: VeryLong): VeryLongOutput =
-    VeryLongOutput(
+  final def doHugeByHand(sample: Huge): HugeOutput =
+    new HugeOutput(
       sample.a, sample.b, sample.c, sample.d, sample.e, sample.f, sample.g, sample.h, sample.i, sample.j,
       sample.k, sample.l, sample.m, sample.n, sample.o, sample.p, sample.q, sample.r, sample.s, sample.t,
       sample.u, sample.v, sample.w, sample.x, sample.y, sample.z, sample.aa, sample.ab, sample.ac, sample.ad,

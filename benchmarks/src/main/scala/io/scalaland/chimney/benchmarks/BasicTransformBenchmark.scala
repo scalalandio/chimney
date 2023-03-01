@@ -7,8 +7,8 @@ class BasicTransformBenchmark extends CommonBenchmarkSettings {
   import fixtures._
 
   var simpleSample: Simple = samples.simpleSample
-  var longSample: Long = samples.longSample
-  var veryLongSample: VeryLong = samples.veryLongSample
+  var longSample: Large = samples.largeSample
+  var veryLongSample: Huge = samples.hugeSample
 
   @Benchmark
   def simpleChimney(): SimpleOutput =
@@ -19,19 +19,19 @@ class BasicTransformBenchmark extends CommonBenchmarkSettings {
     doSimpleByHand(simpleSample)
 
   @Benchmark
-  def longChimney(): LongOutput =
-    longSample.transformInto[LongOutput]
+  def longChimney(): LargeOutput =
+    longSample.transformInto[LargeOutput]
 
   @Benchmark
-  def longByHand(): LongOutput =
-    doLongByHand(longSample)
+  def longByHand(): LargeOutput =
+    doLargeByHand(longSample)
 
   @Benchmark
-  def veryLongChimney(): VeryLongOutput =
-    veryLongSample.transformInto[VeryLongOutput]
+  def veryLongChimney(): HugeOutput =
+    veryLongSample.transformInto[HugeOutput]
 
   @Benchmark
-  def veryLongByHand(): VeryLongOutput =
-    doVeryLongByHand(veryLongSample)
+  def veryLongByHand(): HugeOutput =
+    doHugeByHand(veryLongSample)
 
 }

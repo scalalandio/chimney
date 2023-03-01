@@ -110,43 +110,43 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
     )
 
   @Benchmark
-  def longHappyLiftedTransformer: M[LongOutput] =
-    longTransformerLifted.transform(samples.longSample)
+  def longHappyLiftedTransformer: M[LargeOutput] =
+    longTransformerLifted.transform(samples.largeSample)
 
   @Benchmark
-  def longHappyPartialTransformer: partial.Result[LongOutput] =
-    longTransformerPartial.transform(samples.longSample)
+  def longHappyPartialTransformer: partial.Result[LargeOutput] =
+    longTransformerPartial.transform(samples.largeSample)
 
   @Benchmark
-  def longUnhappyLiftedTransformer: M[LongOutput] =
-    longTransformerLiftedUnhappy.transform(samples.longSample)
+  def longUnhappyLiftedTransformer: M[LargeOutput] =
+    longTransformerLiftedUnhappy.transform(samples.largeSample)
 
   @Benchmark
-  def longUnhappyPartialTransformer: partial.Result[LongOutput] =
-    longTransformerPartialUnhappy.transform(samples.longSample)
+  def longUnhappyPartialTransformer: partial.Result[LargeOutput] =
+    longTransformerPartialUnhappy.transform(samples.largeSample)
 
   @Benchmark
-  def nestedLongHappyLiftedTransformer: M[Vector[LongOutput]] = {
-    implicit val ltl: TransformerF[M, Long, LongOutput] = longTransformerLifted
-    samples.longNestedSample.transformIntoF[M, Vector[LongOutput]]
+  def nestedLongHappyLiftedTransformer: M[Vector[LargeOutput]] = {
+    implicit val ltl: TransformerF[M, Large, LargeOutput] = longTransformerLifted
+    samples.largeNestedSample.transformIntoF[M, Vector[LargeOutput]]
   }
 
   @Benchmark
-  def nestedLongHappyPartialTransformer: partial.Result[Vector[LongOutput]] = {
-    implicit val ltp: PartialTransformer[Long, LongOutput] = longTransformerPartial
-    samples.longNestedSample.transformIntoPartial[Vector[LongOutput]]
+  def nestedLongHappyPartialTransformer: partial.Result[Vector[LargeOutput]] = {
+    implicit val ltp: PartialTransformer[Large, LargeOutput] = longTransformerPartial
+    samples.largeNestedSample.transformIntoPartial[Vector[LargeOutput]]
   }
 
   @Benchmark
-  def nestedLongUnhappyLiftedTransformer: M[Vector[LongOutput]] = {
-    implicit val ltlu: TransformerF[M, Long, LongOutput] = longTransformerLiftedUnhappy
-    samples.longNestedSample.transformIntoF[M, Vector[LongOutput]]
+  def nestedLongUnhappyLiftedTransformer: M[Vector[LargeOutput]] = {
+    implicit val ltlu: TransformerF[M, Large, LargeOutput] = longTransformerLiftedUnhappy
+    samples.largeNestedSample.transformIntoF[M, Vector[LargeOutput]]
   }
 
   @Benchmark
-  def nestedLongUnhappyPartialTransformer: partial.Result[Vector[LongOutput]] = {
-    implicit val ltpu: PartialTransformer[Long, LongOutput] = longTransformerPartialUnhappy
-    samples.longNestedSample.transformIntoPartial[Vector[LongOutput]]
+  def nestedLongUnhappyPartialTransformer: partial.Result[Vector[LargeOutput]] = {
+    implicit val ltpu: PartialTransformer[Large, LargeOutput] = longTransformerPartialUnhappy
+    samples.largeNestedSample.transformIntoPartial[Vector[LargeOutput]]
   }
 
   private final val simpleTransformerLifted: TransformerF[M, Simple, SimpleOutput] =
@@ -185,9 +185,9 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
       .withFieldComputedPartial(_.d, s => unhappy.validateD(s.d).toPartialResult)
       .buildTransformer
 
-  private final val longTransformerLifted: TransformerF[M, Long, LongOutput] =
+  private final val longTransformerLifted: TransformerF[M, Large, LargeOutput] =
     TransformerF
-      .define[M, Long, LongOutput]
+      .define[M, Large, LargeOutput]
       .withFieldComputedF(_.a, s => happy.squareInt(s.a).left.map(s => Vector(TransformationError(s))))
       .withFieldComputedF(_.b, s => happy.squareInt(s.b).left.map(s => Vector(TransformationError(s))))
       .withFieldComputedF(_.c, s => happy.squareInt(s.c).left.map(s => Vector(TransformationError(s))))
@@ -212,9 +212,9 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
       .withFieldComputedF(_.v, s => happy.squareInt(s.v).left.map(s => Vector(TransformationError(s))))
       .buildTransformer
 
-  private final val longTransformerPartial: PartialTransformer[Long, LongOutput] =
+  private final val longTransformerPartial: PartialTransformer[Large, LargeOutput] =
     PartialTransformer
-      .define[Long, LongOutput]
+      .define[Large, LargeOutput]
       .withFieldComputedPartial(_.a, s => happy.squareInt(s.a).toPartialResult)
       .withFieldComputedPartial(_.b, s => happy.squareInt(s.b).toPartialResult)
       .withFieldComputedPartial(_.c, s => happy.squareInt(s.c).toPartialResult)
@@ -239,9 +239,9 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
       .withFieldComputedPartial(_.v, s => happy.squareInt(s.v).toPartialResult)
       .buildTransformer
 
-  private final val longTransformerLiftedUnhappy: TransformerF[M, Long, LongOutput] =
+  private final val longTransformerLiftedUnhappy: TransformerF[M, Large, LargeOutput] =
     TransformerF
-      .define[M, Long, LongOutput]
+      .define[M, Large, LargeOutput]
       .withFieldComputedF(_.a, s => unhappy.squareIntWhenOdd(s.a).left.map(s => Vector(TransformationError(s))))
       .withFieldComputedF(_.b, s => unhappy.squareIntWhenOdd(s.b).left.map(s => Vector(TransformationError(s))))
       .withFieldComputedF(_.c, s => unhappy.squareIntWhenOdd(s.c).left.map(s => Vector(TransformationError(s))))
@@ -266,9 +266,9 @@ class ErrorAccTransformersBenchmark extends CommonBenchmarkSettings {
       .withFieldComputedF(_.v, s => unhappy.squareIntWhenOdd(s.v).left.map(s => Vector(TransformationError(s))))
       .buildTransformer
 
-  private final val longTransformerPartialUnhappy: PartialTransformer[Long, LongOutput] =
+  private final val longTransformerPartialUnhappy: PartialTransformer[Large, LargeOutput] =
     PartialTransformer
-      .define[Long, LongOutput]
+      .define[Large, LargeOutput]
       .withFieldComputedPartial(_.a, s => unhappy.squareIntWhenOdd(s.a).toPartialResult)
       .withFieldComputedPartial(_.b, s => unhappy.squareIntWhenOdd(s.b).toPartialResult)
       .withFieldComputedPartial(_.c, s => unhappy.squareIntWhenOdd(s.c).toPartialResult)

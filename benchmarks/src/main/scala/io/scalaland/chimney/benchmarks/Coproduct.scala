@@ -4,7 +4,7 @@ import org.openjdk.jmh.annotations.{Setup, Benchmark, Level}
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.Transformer
 
-class CoproductTransformBenchmark extends CommonBenchmarkSettings {
+class Coproduct extends CommonBenchmarkSettings {
 
   import fixtures._
 
