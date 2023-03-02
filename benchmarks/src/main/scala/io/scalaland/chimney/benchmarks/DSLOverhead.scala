@@ -8,7 +8,7 @@ class DSLOverhead extends CommonBenchmarkSettings {
   import fixtures._
 
   @Benchmark
-  def largeRenameInto: LargeRenamedOutput =
+  def largeRenameChimneyInto: LargeRenamedOutput =
     samples.largeSample
       .into[LargeRenamedOutput]
       .withFieldRenamed(_.a, _.a$)
@@ -36,12 +36,13 @@ class DSLOverhead extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def largeRenameTransform: LargeRenamedOutput = renameLargeTransformer.transform(samples.largeSample)
+  def largeRenameChimneyDefined: LargeRenamedOutput = renameLargeTransformer.transform(samples.largeSample)
 
   @Benchmark
   def largeRenameByHand: LargeRenamedOutput = doLargeRenameByHand(samples.largeSample)
+
   @Benchmark
-  def largeComputeInto: LargeOutput =
+  def largeComputeChimneyInto: LargeOutput =
     samples.largeSample
       .into[LargeOutput]
       .withFieldComputed(_.a, _.a * 2)
@@ -69,12 +70,13 @@ class DSLOverhead extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def largeComputeTransform: LargeOutput = computeLargeTransformer.transform(samples.largeSample)
+  def largeComputeChimneyDefined: LargeOutput = computeLargeTransformer.transform(samples.largeSample)
 
   @Benchmark
   def largeComputeByHand: LargeOutput = doLargeByHandComputed(samples.largeSample)
+
   @Benchmark
-  def largeConstInto: LargeOutput =
+  def largeConstChimneyInto: LargeOutput =
     samples.largeSample
       .into[LargeOutput]
       .withFieldConst(_.a, 834)
@@ -102,12 +104,12 @@ class DSLOverhead extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def largeConstTransformer: LargeOutput = constLargeTransformer.transform(samples.largeSample)
+  def largeConstChimneyDefined: LargeOutput = constLargeTransformer.transform(samples.largeSample)
 
   @Benchmark
   def largeConstByHand: LargeOutput = doLargeByHandConst(samples.largeSample)
 
-  private val renameLargeTransformer: Transformer[Large, LargeRenamedOutput] =
+  private final val renameLargeTransformer: Transformer[Large, LargeRenamedOutput] =
     Transformer
       .define[Large, LargeRenamedOutput]
       .withFieldRenamed(_.a, _.a$)
@@ -134,7 +136,7 @@ class DSLOverhead extends CommonBenchmarkSettings {
       .withFieldRenamed(_.v, _.v$)
       .buildTransformer
 
-  private val computeLargeTransformer: Transformer[Large, LargeOutput] =
+  private final val computeLargeTransformer: Transformer[Large, LargeOutput] =
     Transformer
       .define[Large, LargeOutput]
       .withFieldComputed(_.a, _.a * 2)
@@ -161,7 +163,7 @@ class DSLOverhead extends CommonBenchmarkSettings {
       .withFieldComputed(_.v, _.v * 2)
       .buildTransformer
 
-  private val constLargeTransformer: Transformer[Large, LargeOutput] =
+  private final val constLargeTransformer: Transformer[Large, LargeOutput] =
     Transformer
       .define[Large, LargeOutput]
       .withFieldConst(_.a, 834)

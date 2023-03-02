@@ -7,10 +7,10 @@ class BasicLarge extends CommonBenchmarkSettings {
   import fixtures._
 
   @Benchmark
-  def largeChimney(): LargeOutput =
+  def largeChimneyInto: LargeOutput =
     samples.largeSample.transformInto[LargeOutput]
 
   @Benchmark
-  def largeByHand(): LargeOutput =
+  def largeByHand: LargeOutput =
     doLargeByHand(samples.largeSample)
 }

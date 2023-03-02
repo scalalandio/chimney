@@ -7,10 +7,10 @@ class BasicSimple extends CommonBenchmarkSettings {
   import fixtures._
 
   @Benchmark
-  def simpleChimney(): SimpleOutput =
+  def simpleChimneyInto: SimpleOutput =
     samples.simpleSample.transformInto[SimpleOutput]
 
   @Benchmark
-  def simpleByHand(): SimpleOutput =
+  def simpleByHand: SimpleOutput =
     doSimpleByHand(samples.simpleSample)
 }

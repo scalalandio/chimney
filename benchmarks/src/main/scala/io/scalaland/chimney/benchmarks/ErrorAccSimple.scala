@@ -11,15 +11,15 @@ class ErrorAccSimple extends CommonBenchmarkSettings {
   type M[+A] = Either[Vector[TransformationError[String]], A]
 
   @Benchmark
-  def simpleHappyLiftedTransformer: M[SimpleOutput] =
+  def simpleHappyChimneyDefinedLifted: M[SimpleOutput] =
     transformers.simpleTransformerLiftedHappy.transform(samples.simpleSample)
 
   @Benchmark
-  def simpleHappyPartialTransformer: partial.Result[SimpleOutput] =
+  def simpleHappyChimneyDefinedPartial: partial.Result[SimpleOutput] =
     transformers.simpleTransformerPartialHappy.transform(samples.simpleSample)
 
   @Benchmark
-  def simpleHappyInlineDslLiftedTransformer: M[SimpleOutput] =
+  def simpleHappyChimneyIntoLifted: M[SimpleOutput] =
     samples.simpleSample
       .intoF[M, SimpleOutput]
       .withFieldComputedF(_.a, s => happy.validateA(s.a).left.map(s => Vector(TransformationError(s))))
@@ -29,7 +29,7 @@ class ErrorAccSimple extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def simpleHappyInlineDslPartialTransformer: partial.Result[SimpleOutput] =
+  def simpleHappyChimneyIntoPartial: partial.Result[SimpleOutput] =
     samples.simpleSample
       .intoPartial[SimpleOutput]
       .withFieldComputedPartial(_.a, s => happy.validateA(s.a).toPartialResult)
@@ -59,15 +59,15 @@ class ErrorAccSimple extends CommonBenchmarkSettings {
     )
 
   @Benchmark
-  def simpleUnhappyLiftedTransformer: M[SimpleOutput] =
+  def simpleUnhappyChimneyDefinedLifted: M[SimpleOutput] =
     transformers.simpleTransformerLiftedUnhappy.transform(samples.simpleSample)
 
   @Benchmark
-  def simpleUnhappyPartialTransformer: partial.Result[SimpleOutput] =
+  def simpleUnhappyChimneyDefinedPartial: partial.Result[SimpleOutput] =
     transformers.simpleTransformerPartialUnhappy.transform(samples.simpleSample)
 
   @Benchmark
-  def simpleUnhappyInlineDslLiftedTransformer: M[SimpleOutput] =
+  def simpleUnhappyChimneyIntoLifted: M[SimpleOutput] =
     samples.simpleSample
       .intoF[M, SimpleOutput]
       .withFieldComputedF(_.a, s => unhappy.validateA(s.a).left.map(s => Vector(TransformationError(s))))
@@ -77,7 +77,7 @@ class ErrorAccSimple extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def simpleUnhappyInlineDslPartialTransformer: partial.Result[SimpleOutput] =
+  def simpleUnhappyChimneyIntoPartial: partial.Result[SimpleOutput] =
     samples.simpleSample
       .intoPartial[SimpleOutput]
       .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialResult)

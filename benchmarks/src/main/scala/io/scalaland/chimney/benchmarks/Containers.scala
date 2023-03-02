@@ -8,19 +8,19 @@ class Containers extends CommonBenchmarkSettings {
   import fixtures._
 
   @Benchmark
-  def arrayTransformChimney: Array[SimpleOutput] = samples.simpleSampleArray.transformInto[Array[SimpleOutput]]
+  def arrayTransformChimneyInto: Array[SimpleOutput] = samples.simpleSampleArray.transformInto[Array[SimpleOutput]]
 
   @Benchmark
   def arrayTransformByHand: Array[SimpleOutput] = samples.simpleSampleArray.map(doSimpleByHand)
 
   @Benchmark
-  def vectorTransformChimney: Vector[SimpleOutput] = samples.simpleSampleVector.transformInto[Vector[SimpleOutput]]
+  def vectorTransformChimneyInto: Vector[SimpleOutput] = samples.simpleSampleVector.transformInto[Vector[SimpleOutput]]
 
   @Benchmark
   def vectorTransformByHand: Vector[SimpleOutput] = samples.simpleSampleVector.map(doSimpleByHand)
 
   @Benchmark
-  def mapTransformChimney: Map[String, SimpleOutput] =
+  def mapTransformChimneyInto: Map[String, SimpleOutput] =
     samples.simpleSampleMapOfStrings.transformInto[Map[String, SimpleOutput]]
 
   @Benchmark
