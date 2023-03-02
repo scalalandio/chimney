@@ -1,6 +1,7 @@
 package io.scalaland.chimney.benchmarks
 
-import io.scalaland.chimney.TransformationError
+import io.scalaland.chimney.dsl._
+import io.scalaland.chimney._
 
 object fixtures {
 
@@ -8,23 +9,24 @@ object fixtures {
   case class SimpleOutput(a: Int, b: Double, c: String, d: Option[String])
 
   // format: off
-  case class Long(
+  case class Large(
     a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int, j: Int,
     k: Int, l: Int, m: Int, n: Int, o: Int, p: Int, q: Int, r: Int, s: Int, t: Int,
     u: Int, v: Int
   )
-  case class LongOutput(
+
+  case class LargeOutput(
     a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int, j: Int,
     k: Int, l: Int, m: Int, n: Int, o: Int, p: Int, q: Int, r: Int, s: Int, t: Int,
     u: Int, v: Int
   )
-  case class LongRenamedOutput(
+  case class LargeRenamedOutput(
     a$: Int, b$: Int, c$: Int, d$: Int, e$: Int, f$: Int, g$: Int, h$: Int, i$: Int, j$: Int,
     k$: Int, l$: Int, m$: Int, n$: Int, o$: Int, p$: Int, q$: Int, r$: Int, s$: Int, t$: Int,
     u$: Int, v$: Int
   )
 
-  case class VeryLong(
+  case class Huge(
     a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int, j: Int,
     k: Int, l: Int, m: Int, n: Int, o: Int, p: Int, q: Int, r: Int, s: Int, t: Int,
     u: Int, v: Int, w: Int, x: Int, y: Int, z: Int, aa: Int, ab: Int, ac: Int, ad: Int,
@@ -36,7 +38,8 @@ object fixtures {
     cc: Int, cd: Int, ce: Int, cf: Int, cg: Int, ch: Int, ci: Int, cj: Int, ck: Int, cl: Int,
     cm: Int, cn: Int, co: Int, cp: Int, cq: Int, cr: Int, cs: Int, ct: Int, cu: Int, cv: Int
   )
-  case class VeryLongOutput(
+
+  case class HugeOutput(
     a: Int, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int, j: Int,
     k: Int, l: Int, m: Int, n: Int, o: Int, p: Int, q: Int, r: Int, s: Int, t: Int,
     u: Int, v: Int, w: Int, x: Int, y: Int, z: Int, aa: Int, ab: Int, ac: Int, ad: Int,
@@ -55,19 +58,24 @@ object fixtures {
 
   object samples {
     final val simpleSample = Simple(23, 23d, "23", None)
-    final val longSample = Long(
+    final val simpleSampleArray: Array[Simple] = Array.fill(100)(samples.simpleSample)
+    final val simpleSampleVector: Vector[Simple] = Vector.fill(100)(samples.simpleSample)
+    final val simpleSampleMapOfStrings: Map[String, Simple] = (1 to 100).map(i => i.toString -> samples.simpleSample).toMap
+    final val simpleSampleRight: Either[String, Simple] = Right(samples.simpleSample)
+
+    final val largeSample = Large(
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
       11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
       21, 22
     )
-    final val longNestedSample = Array.tabulate(200) { i =>
-      Long(
+    final val largeNestedSample = Array.tabulate(200) { i =>
+      Large(
         i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7, i + 8, i + 9, i + 10,
         i + 11, i + 12, i + 13, i + 14, i + 15, i + 16, i + 17, i + 18, i + 19, i + 20,
         i + 21, i + 22
       )
     }
-    final val veryLongSample = VeryLong(
+    final val hugeSample = Huge(
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
       11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
       21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
@@ -147,36 +155,36 @@ object fixtures {
   final def doSimpleByHand(sample: Simple): SimpleOutput =
     new SimpleOutput(sample.a, sample.b, sample.c, sample.d)
 
-  final def doLongByHand(sample: Long): LongOutput =
-    new LongOutput(
+  final def doLargeByHand(sample: Large): LargeOutput =
+    new LargeOutput(
       sample.a, sample.b, sample.c, sample.d, sample.e, sample.f, sample.g, sample.h, sample.i, sample.j,
       sample.k, sample.l, sample.m, sample.n, sample.o, sample.p, sample.q, sample.r, sample.s, sample.t,
       sample.u, sample.v
     )
 
-  final def doLongRenameByHand(sample: Long): LongRenamedOutput =
-    new LongRenamedOutput(
+  final def doLargeRenameByHand(sample: Large): LargeRenamedOutput =
+    new LargeRenamedOutput(
       sample.a, sample.b, sample.c, sample.d, sample.e, sample.f, sample.g, sample.h, sample.i, sample.j,
       sample.k, sample.l, sample.m, sample.n, sample.o, sample.p, sample.q, sample.r, sample.s, sample.t,
       sample.u, sample.v
     )
 
-  final def doLongByHandComputed(sample: Long): LongOutput =
-    new LongOutput(
+  final def doLargeByHandComputed(sample: Large): LargeOutput =
+    new LargeOutput(
       sample.a * 2, sample.b * 2, sample.c * 2, sample.d * 2, sample.e * 2, sample.f * 2, sample.g * 2, sample.h * 2, sample.i * 2, sample.j * 2,
       sample.k * 2, sample.l * 2, sample.m * 2, sample.n * 2, sample.o * 2, sample.p * 2, sample.q * 2, sample.r * 2, sample.s * 2, sample.t * 2,
       sample.u * 2, sample.v * 2
     )
 
-  final def doLongByHandConst(sample: Long): LongOutput =
-    new LongOutput(
+  final def doLargeByHandConst(sample: Large): LargeOutput =
+    new LargeOutput(
       834, 834, 834, 834, 834, 834, 834, 834, 834, 834,
       834, 834, 834, 834, 834, 834, 834, 834, 834, 834,
       834, 834
     )
 
-  final def doVeryLongByHand(sample: VeryLong): VeryLongOutput =
-    VeryLongOutput(
+  final def doHugeByHand(sample: Huge): HugeOutput =
+    new HugeOutput(
       sample.a, sample.b, sample.c, sample.d, sample.e, sample.f, sample.g, sample.h, sample.i, sample.j,
       sample.k, sample.l, sample.m, sample.n, sample.o, sample.p, sample.q, sample.r, sample.s, sample.t,
       sample.u, sample.v, sample.w, sample.x, sample.y, sample.z, sample.aa, sample.ab, sample.ac, sample.ad,
@@ -302,6 +310,169 @@ object fixtures {
                 }
             }
         }
+    }
+  }
+
+  object transformers {
+
+    final val simpleTransformerLiftedHappy: TransformerF[M, Simple, SimpleOutput] = {
+      import samples.validation._
+      TransformerF
+        .define[M, Simple, SimpleOutput]
+        .withFieldComputedF(_.a, s => happy.validateA(s.a).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.b, s => happy.validateB(s.b).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.c, s => happy.validateC(s.c).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.d, s => happy.validateD(s.d).left.map(s => Vector(TransformationError(s))))
+        .buildTransformer
+    }
+
+    final val simpleTransformerPartialHappy: PartialTransformer[Simple, SimpleOutput] = {
+      import samples.validation._
+      PartialTransformer
+        .define[Simple, SimpleOutput]
+        .withFieldComputedPartial(_.a, s => happy.validateA(s.a).toPartialResult)
+        .withFieldComputedPartial(_.b, s => happy.validateB(s.b).toPartialResult)
+        .withFieldComputedPartial(_.c, s => happy.validateC(s.c).toPartialResult)
+        .withFieldComputedPartial(_.d, s => happy.validateD(s.d).toPartialResult)
+        .buildTransformer
+    }
+
+    final val simpleTransformerLiftedUnhappy: TransformerF[M, Simple, SimpleOutput] = {
+      import samples.validation._
+      TransformerF
+        .define[M, Simple, SimpleOutput]
+        .withFieldComputedF(_.a, s => unhappy.validateA(s.a).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.b, s => unhappy.validateB(s.b).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.c, s => unhappy.validateC(s.c).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.d, s => unhappy.validateD(s.d).left.map(s => Vector(TransformationError(s))))
+        .buildTransformer
+    }
+
+    final val simpleTransformerPartialUnhappy: PartialTransformer[Simple, SimpleOutput] = {
+      import samples.validation._
+      PartialTransformer
+        .define[Simple, SimpleOutput]
+        .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialResult)
+        .withFieldComputedPartial(_.b, s => unhappy.validateB(s.b).toPartialResult)
+        .withFieldComputedPartial(_.c, s => unhappy.validateC(s.c).toPartialResult)
+        .withFieldComputedPartial(_.d, s => unhappy.validateD(s.d).toPartialResult)
+        .buildTransformer
+    }
+
+    final val largeTransformerLiftedHappy: TransformerF[M, Large, LargeOutput] = {
+      import samples.validation._
+      TransformerF
+        .define[M, Large, LargeOutput]
+        .withFieldComputedF(_.a, s => happy.squareInt(s.a).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.b, s => happy.squareInt(s.b).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.c, s => happy.squareInt(s.c).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.d, s => happy.squareInt(s.d).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.e, s => happy.squareInt(s.e).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.f, s => happy.squareInt(s.f).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.g, s => happy.squareInt(s.g).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.h, s => happy.squareInt(s.h).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.i, s => happy.squareInt(s.i).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.j, s => happy.squareInt(s.j).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.k, s => happy.squareInt(s.k).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.l, s => happy.squareInt(s.l).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.m, s => happy.squareInt(s.m).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.n, s => happy.squareInt(s.n).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.o, s => happy.squareInt(s.o).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.p, s => happy.squareInt(s.p).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.q, s => happy.squareInt(s.q).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.r, s => happy.squareInt(s.r).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.s, s => happy.squareInt(s.s).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.t, s => happy.squareInt(s.t).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.u, s => happy.squareInt(s.u).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.v, s => happy.squareInt(s.v).left.map(s => Vector(TransformationError(s))))
+        .buildTransformer
+    }
+
+    final val largeTransformerPartialHappy: PartialTransformer[Large, LargeOutput] = {
+      import samples.validation._
+      PartialTransformer
+        .define[Large, LargeOutput]
+        .withFieldComputedPartial(_.a, s => happy.squareInt(s.a).toPartialResult)
+        .withFieldComputedPartial(_.b, s => happy.squareInt(s.b).toPartialResult)
+        .withFieldComputedPartial(_.c, s => happy.squareInt(s.c).toPartialResult)
+        .withFieldComputedPartial(_.d, s => happy.squareInt(s.d).toPartialResult)
+        .withFieldComputedPartial(_.e, s => happy.squareInt(s.e).toPartialResult)
+        .withFieldComputedPartial(_.f, s => happy.squareInt(s.f).toPartialResult)
+        .withFieldComputedPartial(_.g, s => happy.squareInt(s.g).toPartialResult)
+        .withFieldComputedPartial(_.h, s => happy.squareInt(s.h).toPartialResult)
+        .withFieldComputedPartial(_.i, s => happy.squareInt(s.i).toPartialResult)
+        .withFieldComputedPartial(_.j, s => happy.squareInt(s.j).toPartialResult)
+        .withFieldComputedPartial(_.k, s => happy.squareInt(s.k).toPartialResult)
+        .withFieldComputedPartial(_.l, s => happy.squareInt(s.l).toPartialResult)
+        .withFieldComputedPartial(_.m, s => happy.squareInt(s.m).toPartialResult)
+        .withFieldComputedPartial(_.n, s => happy.squareInt(s.n).toPartialResult)
+        .withFieldComputedPartial(_.o, s => happy.squareInt(s.o).toPartialResult)
+        .withFieldComputedPartial(_.p, s => happy.squareInt(s.p).toPartialResult)
+        .withFieldComputedPartial(_.q, s => happy.squareInt(s.q).toPartialResult)
+        .withFieldComputedPartial(_.r, s => happy.squareInt(s.r).toPartialResult)
+        .withFieldComputedPartial(_.s, s => happy.squareInt(s.s).toPartialResult)
+        .withFieldComputedPartial(_.t, s => happy.squareInt(s.t).toPartialResult)
+        .withFieldComputedPartial(_.u, s => happy.squareInt(s.u).toPartialResult)
+        .withFieldComputedPartial(_.v, s => happy.squareInt(s.v).toPartialResult)
+        .buildTransformer
+    }
+
+    final val largeTransformerLiftedUnhappy: TransformerF[M, Large, LargeOutput] = {
+      import samples.validation._
+      TransformerF
+        .define[M, Large, LargeOutput]
+        .withFieldComputedF(_.a, s => unhappy.squareIntWhenOdd(s.a).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.b, s => unhappy.squareIntWhenOdd(s.b).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.c, s => unhappy.squareIntWhenOdd(s.c).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.d, s => unhappy.squareIntWhenOdd(s.d).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.e, s => unhappy.squareIntWhenOdd(s.e).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.f, s => unhappy.squareIntWhenOdd(s.f).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.g, s => unhappy.squareIntWhenOdd(s.g).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.h, s => unhappy.squareIntWhenOdd(s.h).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.i, s => unhappy.squareIntWhenOdd(s.i).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.j, s => unhappy.squareIntWhenOdd(s.j).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.k, s => unhappy.squareIntWhenOdd(s.k).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.l, s => unhappy.squareIntWhenOdd(s.l).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.m, s => unhappy.squareIntWhenOdd(s.m).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.n, s => unhappy.squareIntWhenOdd(s.n).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.o, s => unhappy.squareIntWhenOdd(s.o).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.p, s => unhappy.squareIntWhenOdd(s.p).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.q, s => unhappy.squareIntWhenOdd(s.q).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.r, s => unhappy.squareIntWhenOdd(s.r).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.s, s => unhappy.squareIntWhenOdd(s.s).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.t, s => unhappy.squareIntWhenOdd(s.t).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.u, s => unhappy.squareIntWhenOdd(s.u).left.map(s => Vector(TransformationError(s))))
+        .withFieldComputedF(_.v, s => unhappy.squareIntWhenOdd(s.v).left.map(s => Vector(TransformationError(s))))
+        .buildTransformer
+    }
+
+    final val largeTransformerPartialUnhappy: PartialTransformer[Large, LargeOutput] = {
+      import samples.validation._
+      PartialTransformer
+        .define[Large, LargeOutput]
+        .withFieldComputedPartial(_.a, s => unhappy.squareIntWhenOdd(s.a).toPartialResult)
+        .withFieldComputedPartial(_.b, s => unhappy.squareIntWhenOdd(s.b).toPartialResult)
+        .withFieldComputedPartial(_.c, s => unhappy.squareIntWhenOdd(s.c).toPartialResult)
+        .withFieldComputedPartial(_.d, s => unhappy.squareIntWhenOdd(s.d).toPartialResult)
+        .withFieldComputedPartial(_.e, s => unhappy.squareIntWhenOdd(s.e).toPartialResult)
+        .withFieldComputedPartial(_.f, s => unhappy.squareIntWhenOdd(s.f).toPartialResult)
+        .withFieldComputedPartial(_.g, s => unhappy.squareIntWhenOdd(s.g).toPartialResult)
+        .withFieldComputedPartial(_.h, s => unhappy.squareIntWhenOdd(s.h).toPartialResult)
+        .withFieldComputedPartial(_.i, s => unhappy.squareIntWhenOdd(s.i).toPartialResult)
+        .withFieldComputedPartial(_.j, s => unhappy.squareIntWhenOdd(s.j).toPartialResult)
+        .withFieldComputedPartial(_.k, s => unhappy.squareIntWhenOdd(s.k).toPartialResult)
+        .withFieldComputedPartial(_.l, s => unhappy.squareIntWhenOdd(s.l).toPartialResult)
+        .withFieldComputedPartial(_.m, s => unhappy.squareIntWhenOdd(s.m).toPartialResult)
+        .withFieldComputedPartial(_.n, s => unhappy.squareIntWhenOdd(s.n).toPartialResult)
+        .withFieldComputedPartial(_.o, s => unhappy.squareIntWhenOdd(s.o).toPartialResult)
+        .withFieldComputedPartial(_.p, s => unhappy.squareIntWhenOdd(s.p).toPartialResult)
+        .withFieldComputedPartial(_.q, s => unhappy.squareIntWhenOdd(s.q).toPartialResult)
+        .withFieldComputedPartial(_.r, s => unhappy.squareIntWhenOdd(s.r).toPartialResult)
+        .withFieldComputedPartial(_.s, s => unhappy.squareIntWhenOdd(s.s).toPartialResult)
+        .withFieldComputedPartial(_.t, s => unhappy.squareIntWhenOdd(s.t).toPartialResult)
+        .withFieldComputedPartial(_.u, s => unhappy.squareIntWhenOdd(s.u).toPartialResult)
+        .withFieldComputedPartial(_.v, s => unhappy.squareIntWhenOdd(s.v).toPartialResult)
+        .buildTransformer
     }
   }
 }

@@ -4,7 +4,7 @@ import org.openjdk.jmh.annotations.{Setup, Benchmark, Level}
 import io.scalaland.chimney.dsl._
 import io.scalaland.chimney.Transformer
 
-class CoproductTransformBenchmark extends CommonBenchmarkSettings {
+class Coproduct extends CommonBenchmarkSettings {
 
   import fixtures._
 
@@ -28,7 +28,7 @@ class CoproductTransformBenchmark extends CommonBenchmarkSettings {
   }
 
   @Benchmark
-  def coproductIsomorphismChimneyWithDsl: Color =
+  def coproductIsomorphismChimneyInto: Color =
     color
       .transformInto[Channel]
       .into[Color]
@@ -38,7 +38,7 @@ class CoproductTransformBenchmark extends CommonBenchmarkSettings {
       .transform
 
   @Benchmark
-  def coproductIsomorphismChimney: Color = channel2ColorT.transform(color2ChannelT.transform(color))
+  def coproductIsomorphismChimneyDefined: Color = channel2ColorT.transform(color2ChannelT.transform(color))
 
   @Benchmark
   def coproductIsomorphismByHand: Color = channel2Color(color2Channel(color))
