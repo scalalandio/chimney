@@ -5,8 +5,6 @@ ThisBuild / scalafmtOnCompile := !isCI
 
 // versions
 
-ThisProject / versionScheme := Some("early-semver")
-
 val versions = new {
   val scala212 = "2.12.17"
   val scala213 = "2.13.10"
@@ -97,6 +95,8 @@ val dependencies = Seq(
   ),
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
 )
+
+val versionSchemeSettings = Seq(versionScheme := Some("early-semver"))
 
 val publishSettings = Seq(
   organization := "io.scalaland",
@@ -216,6 +216,7 @@ lazy val chimney = projectMatrix
     }
   )
   .settings(settings: _*)
+  .settings(versionSchemeSettings: _*)
   .settings(publishSettings: _*)
   .settings(dependencies: _*)
   .dependsOn(protos % "test->test")
@@ -230,6 +231,7 @@ lazy val chimneyCats = projectMatrix
     description := "Integrations with selected Cats data types and type classes"
   )
   .settings(settings: _*)
+  .settings(versionSchemeSettings: _*)
   .settings(publishSettings: _*)
   .settings(dependencies: _*)
   .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.9.0" % "provided")
