@@ -1,7 +1,6 @@
 package io.scalaland.chimney.internal
 
 import scala.annotation.tailrec
-import scala.collection.immutable.ListSet
 
 trait Results {
 
@@ -15,18 +14,25 @@ trait Results {
     def mergeErrors(error1: Error, error2: Error): Error
   }
 
-  final class LogEntry(thunk: => String) {
-    lazy val msg: String = thunk
+  final class LogEntry(val nesting: Int, thunk: => String) {
+    lazy val message: String = thunk
   }
 
   final case class Context(
-      cfg: DerivationConfig,
-      logs: ListSet[LogEntry]
+      config: DerivationConfig,
+      logNesting: Int,
+      logs: Vector[LogEntry]
   ) {
 
-    def appendLog(msg: => String): Context = copy(logs = logs + new LogEntry(msg))
+    def appendLog(msg: => String): Context = copy(logs = logs :+ new LogEntry(logNesting, msg))
+    def increaseLogNesting: Context = copy(logNesting = logNesting + 1)
+    def decreaseLogNesting: Context = copy(logNesting = logNesting - 1)
 
-    def merge(ctx: Context): Context = Context(cfg = cfg, logs = logs ++ ctx.logs)
+    def merge(ctx: Context): Context = Context(
+      config = config, // TODO? configs should be the same - consider logging warning if differ
+      logNesting = logNesting, // TODO? log nesting should be the same - consider logging warning if differ
+      logs = (logs ++ ctx.logs).distinct
+    )
   }
 
   sealed trait Result[+A] {
@@ -81,6 +87,7 @@ trait Results {
     final def void: Result[Unit] = as(())
 
     final def >>[B](result: => Result[B]): Result[B] = flatMap(_ => result)
+    final def <<[B](result: => Result[B]): Result[A] = flatMap(a => result.as(a))
   }
 
   object Result {
@@ -99,15 +106,18 @@ trait Results {
     def fail[A](error: Error): Result[A] = Pure(Left(error))
 
     def context: Result[Context] = UpdateContext(identity)
-    def config: Result[DerivationConfig] = context.map(_.cfg)
+    def config: Result[DerivationConfig] = context.map(_.config)
     def log(msg: String): Result[Unit] = UpdateContext(_.appendLog(msg)).void
 
     val unit: Result[Unit] = Pure(Right(()))
 
+    def nestLogs[A](result: Result[A]): Result[A] =
+      UpdateContext(_.increaseLogNesting) >> result << UpdateContext(_.decreaseLogNesting)
+
     // here be dragons
 
-    def eval[A](config: DerivationConfig, result: Result[A]): (Context, Value[A]) =
-      Stack.loop(Context(config, ListSet.empty), Right(()), result +: Stack.returns)
+    final def unsafeRun[A](config: DerivationConfig, result: Result[A]): (Context, Result.Value[A]) =
+      Stack.eval(config, result)
 
     /** Trampoline utility.
       *
@@ -174,7 +184,7 @@ trait Results {
       private final case class AndThen[I, M, O](next: I => Result[M], fail: Error => Result[M], tail: Stack[M, O])
           extends Stack[I, O]
 
-      def returns[O]: Stack[O, O] = Returns(implicitly[O <:< O])
+      private def returns[O]: Stack[O, O] = Returns(implicitly[O <:< O])
 
       private def catchUpdate(context: Context, update: Context => Context): (Context, Value[Context]) =
         try {
@@ -183,15 +193,21 @@ trait Results {
         } catch {
           case err: Throwable => context -> Left[Error, Context](Error.fromException(err))
         }
-      private def catchResult[A](thunk: => Result[A]): Result[A] =
+      private def catchResult[A](thunk: => Result[A]): Result[A] = {
         try {
           thunk
         } catch {
           case err: Throwable => Pure(Left(Error.fromException(err)))
         }
+      }
+      private val ignored: Value[Unit] = Right(())
 
       @tailrec
-      def loop[I, O](context: Context, current: Value[I], stack: Stack[I, O]): (Context, Value[O]) = stack match {
+      private def loop[I, O](
+          context: Context,
+          current: Value[I],
+          stack: Stack[I, O]
+      ): (Context, Value[O]) = stack match {
         case Returns(ev) =>
           context -> current.map(ev)
         case AndThen(onSuccess, onFailure, tail) =>
@@ -199,7 +215,7 @@ trait Results {
             case Left(error) =>
               catchResult(onFailure(error)) match {
                 case Pure(value) => loop(context, value, tail)
-                case result      => loop(context, Right(()), result +: tail)
+                case result      => loop(context, ignored, result +: tail)
               }
             case Right(value) =>
               catchResult(onSuccess(value)) match {
@@ -207,13 +223,16 @@ trait Results {
                   loop(context, newValue, tail)
                 case TransformWith(newResult, onSuccess2, onFailure2) =>
                   val rewritten = newResult +: AndThen(onSuccess2, onFailure2, tail)
-                  loop(context, Right(()), rewritten)
+                  loop(context, ignored, rewritten)
                 case UpdateContext(update) =>
-                  val (newContext: Context, newValue: Value[Context]) = catchUpdate(context, update)
+                  val (newContext, newValue) = catchUpdate(context, update)
                   loop(newContext, newValue, tail)
               }
           }
       }
+
+      def eval[A](config: DerivationConfig, result: Result[A]): (Context, Value[A]) =
+        loop(Context(config, 0, Vector.empty), Right(()), result +: returns)
     }
   }
 }
