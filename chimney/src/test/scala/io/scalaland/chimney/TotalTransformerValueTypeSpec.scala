@@ -17,5 +17,12 @@ object TotalTransformerValueTypeSpec extends TestSuite {
       "Batman".transformInto[UserName] ==> UserName("Batman")
       UserDTO("100", "abc").transformInto[User] ==> User("100", UserName("abc"))
     }
+
+    test("transforming value class to a value class") {
+
+      UserName("Batman").transformInto[UserNameAlias] ==> UserNameAlias("Batman")
+      User("100", UserName("abc")).transformInto[UserAlias] ==>
+        UserAlias("100", UserNameAlias("abc"))
+    }
   }
 }
