@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal
 
 import scala.annotation.tailrec
+import scala.collection.compat._
 
 trait Results {
 
@@ -14,10 +15,18 @@ trait Results {
     def mergeErrors(error1: Error, error2: Error): Error
   }
 
+  /** Lazily evaluated log entry */
   final class LogEntry(val nesting: Int, thunk: => String) {
     lazy val message: String = thunk
   }
 
+  /** Contains everything we would like to access in our computations without resorting to globals.
+    *
+    * Possible usages:
+    * - access to config
+    * - appending logs and diagnostics
+    * - storing cache for intermediate results
+    */
   final case class Context(
       config: DerivationConfig,
       logNesting: Int,
@@ -35,9 +44,22 @@ trait Results {
     )
   }
 
+  /** Representations of a ongoing computation.
+    *
+    * Features:
+    * - stack-safe
+    * - handles errors
+    * - catches exceptions
+    * - provides sequential and parallel combinators
+    * - threads context through computations
+    *
+    * Intended to simplify how we express our logic during the derivation without long types and boilerplate.
+    */
   sealed trait Result[+A] {
 
     import Result._
+
+    // monadic operations with sequential semantics (the first fail breaks the circuit)
 
     final def transformWith[B](onSuccess: A => Result[B])(onFailure: Error => Result[B]): Result[B] =
       TransformWith(this, onSuccess, onFailure)
@@ -51,7 +73,17 @@ trait Results {
     final def recoverWith[A1 >: A](f: Error => Result[A1]): Result[A1] = transformWith[A1](pure)(f(_))
     final def recover[A1 >: A](f: Error => A1): Result[A1] = recoverWith(f andThen pure)
 
-    final def parMap2[B, C](result: Result[B])(f: (A, B) => C): Result[C] = context.flatMap { originalContext =>
+    final def map2[B, C](result: => Result[B])(f: (A, B) => C): Result[C] = flatMap(a => result.map(f(a, _)))
+
+    final def as[B](value: B): Result[B] = map(_ => value)
+    final def void: Result[Unit] = as(())
+
+    final def >>[B](result: => Result[B]): Result[B] = flatMap(_ => result)
+    final def <<[B](result: => Result[B]): Result[A] = flatMap(a => result.as(a))
+
+    // applicative operations with parallel semantics (both branches are evaluated and then their results aggregated)
+
+    final def parMap2[B, C](result: => Result[B])(f: (A, B) => C): Result[C] = context.flatMap { originalContext =>
       var contextA: Context = originalContext
       val rewindContext = UpdateContext(ctx => { contextA = ctx; ctx }).flatMap(_ => result)
       val mergeContexts = UpdateContext(contextB => contextA.merge(contextB))
@@ -70,7 +102,9 @@ trait Results {
         }
       }
     }
-    final def parTuple[B](result: Result[B]): Result[(A, B)] = parMap2(result)(_ -> _)
+    final def parTuple[B](result: => Result[B]): Result[(A, B)] = parMap2(result)(_ -> _)
+
+    // evaluated until first success, if none succeed errors aggregate
 
     final def orElse[A1 >: A](result: => Result[A1]): Result[A1] = context.flatMap { context1 =>
       recoverWith { error =>
@@ -82,12 +116,6 @@ trait Results {
         }
       }
     }
-
-    final def as[B](value: B): Result[B] = map(_ => value)
-    final def void: Result[Unit] = as(())
-
-    final def >>[B](result: => Result[B]): Result[B] = flatMap(_ => result)
-    final def <<[B](result: => Result[B]): Result[A] = flatMap(a => result.as(a))
   }
 
   object Result {
@@ -108,11 +136,39 @@ trait Results {
     def context: Result[Context] = UpdateContext(identity)
     def config: Result[DerivationConfig] = context.map(_.config)
     def log(msg: String): Result[Unit] = UpdateContext(_.appendLog(msg)).void
+    def nestLogs[A](result: Result[A]): Result[A] =
+      UpdateContext(_.increaseLogNesting) >> result << UpdateContext(_.decreaseLogNesting)
 
     val unit: Result[Unit] = Pure(Right(()))
 
-    def nestLogs[A](result: Result[A]): Result[A] =
-      UpdateContext(_.increaseLogNesting) >> result << UpdateContext(_.decreaseLogNesting)
+    type FactoryOf[Coll[+_], O] = Factory[O, Coll[O]]
+
+    // monadic operations with sequential semantics (the first fail breaks the circuit)
+
+    def traverse[C[+A] <: IterableOnce[A], I, O: FactoryOf[C, *]](coll: C[I])(f: I => Result[O]): Result[C[O]] =
+      coll
+        .foldLeft(pure(implicitly[FactoryOf[C, O]].newBuilder)) { (br, i) =>
+          br.map2(f(i))(_ += _)
+        }
+        .map(_.result())
+    def sequence[C[+A] <: IterableOnce[A], B: FactoryOf[C, *]](coll: C[Result[B]]): Result[C[B]] =
+      traverse(coll)(identity)
+
+    // applicative operations with parallel semantics (both branches are evaluated and then their results aggregated)
+
+    def parTraverse[C[+A] <: IterableOnce[A], I, O: FactoryOf[C, *]](coll: C[I])(f: I => Result[O]): Result[C[O]] =
+      coll
+        .foldLeft(pure(implicitly[FactoryOf[C, O]].newBuilder)) { (br, i) =>
+          br.parMap2(f(i))(_ += _)
+        }
+        .map(_.result())
+    def parSequence[C[+A] <: IterableOnce[A], B: FactoryOf[C, *]](coll: C[Result[B]]): Result[C[B]] =
+      parTraverse(coll)(identity)
+
+    // evaluated until first success, if none succeed errors aggregate
+
+    def firstOf[A](head: Result[A], tail: Result[A]*): Result[A] =
+      tail.foldLeft(head)(_.orElse(_))
 
     // here be dragons
 
