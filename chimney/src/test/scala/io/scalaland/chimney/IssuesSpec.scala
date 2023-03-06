@@ -635,6 +635,60 @@ object IssuesSpec extends TestSuite {
         .transform
         .asOption ==> None
     }
+
+    test("fix issue #209") {
+
+      case class RawData(id: String)
+      case class Data(id: Int)
+
+      implicit val alwaysFailingPT: PartialTransformer[String, Int] = {
+        PartialTransformer(_ => partial.Result.fromErrorString("always fails"))
+      }
+
+      RawData("any").transformIntoPartial[Data].asErrorPathMessageStrings ==> Iterable(
+        "id" -> "always fails"
+      )
+
+      test("withFieldComputedPartial") {
+        val result = RawData("any")
+          .intoPartial[Data]
+          .withFieldComputedPartial(_.id, _.id.transformIntoPartial[Int])
+          .transform
+
+        result.asErrorPathMessageStrings ==> Iterable(
+          "id" -> "always fails"
+        )
+
+        val definedPT = PartialTransformer
+          .define[RawData, Data]
+          .withFieldComputedPartial(_.id, _.id.transformIntoPartial[Int])
+          .buildTransformer
+
+        definedPT.transform(RawData("any")).asErrorPathMessageStrings ==> Iterable(
+          "id" -> "always fails"
+        )
+      }
+
+      test("withFieldConstPartial") {
+        val result = RawData("any")
+          .intoPartial[Data]
+          .withFieldConstPartial(_.id, partial.Result.fromErrorString("always fails"))
+          .transform
+
+        result.asErrorPathMessageStrings ==> Iterable(
+          "id" -> "always fails"
+        )
+
+        val definedPT = PartialTransformer
+          .define[RawData, Data]
+          .withFieldConstPartial(_.id, partial.Result.fromErrorString("always fails"))
+          .buildTransformer
+
+        definedPT.transform(RawData("any")).asErrorPathMessageStrings ==> Iterable(
+          "id" -> "always fails"
+        )
+      }
+    }
   }
 }
 
