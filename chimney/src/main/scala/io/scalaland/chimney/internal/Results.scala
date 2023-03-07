@@ -29,15 +29,15 @@ trait Results {
     */
   final case class Context(
       config: DerivationConfig,
-      logNesting: Int,
-      logs: Vector[LogEntry]
+      logNesting: Int = 0,
+      logs: Vector[LogEntry] = Vector.empty
   ) {
 
     def appendLog(msg: => String): Context = copy(logs = logs :+ new LogEntry(logNesting, msg))
     def increaseLogNesting: Context = copy(logNesting = logNesting + 1)
     def decreaseLogNesting: Context = copy(logNesting = logNesting - 1)
 
-    def merge(ctx: Context): Context = Context(
+    def merge(ctx: Context): Context = copy(
       config = config, // TODO? configs should be the same - consider logging warning if differ
       logNesting = logNesting, // TODO? log nesting should be the same - consider logging warning if differ
       logs = (logs ++ ctx.logs).distinct
@@ -120,7 +120,7 @@ trait Results {
 
   object Result {
 
-    type Value[O] = Error Either O
+    type Value[O] = Either[Error, O]
 
     private final case class Pure[A](value: Value[A]) extends Result[A]
     private final case class TransformWith[A, B](result: Result[A], next: A => Result[B], fail: Error => Result[B])
@@ -172,123 +172,106 @@ trait Results {
 
     // here be dragons
 
-    final def unsafeRun[A](config: DerivationConfig, result: Result[A]): (Context, Result.Value[A]) =
-      Stack.eval(config, result)
+    final def unsafeRun[A](context: Context, result: Result[A]): (Context, Value[A]) = Stack.eval(context, result)
 
     /** Trampoline utility.
       *
       * all chain of monadic operations can be though of as something like:
       *
       *  {{{
-      *  A => F[B] >=> B => F[C] >=> C => F[D] >=> D => F[E] >=> ...
+      *  A => F[B] andThen B => F[C] andThen C => F[D] andThen D => F[E] andThen ...
       *  }}}
       *
       * where operations would be grouped together like e.g.
       *
       *  {{{
       *  A => F[B]
-      *  >=>
+      *  andThen
       *  (
       *    (
       *      B => F[C]
-      *      >=>
+      *      andThen
       *      C => F[D]
       *    )
-      *    >=>
+      *    andThen
       *    D => F[E]
       *  )
       *  ...
       *  }}}
       *
-      * Stack is used to rewrite this chain of operations so that the head will change from
+      * Monadic laws guarantee us that only global order of operations is important, not how we group it inside
+      * parenthesis, so we can rearrange them for our convenience.
+      *
+      * `Stack` is used exactly for that, to rewrite this chain of operations so that the head will change from e.g.
       *
       * {{{
       * (
       *   A => F[B]
-      *   >=>
+      *   andThen
       *   B => F[C]
       * )
-      * >=>
+      * andThen
       * C > F[D]
       * ...
       * }}}
       *
       * to
       *
-      *
       * {{{
       * A => F[B]
-      * >=>
+      * andThen
       * (
       *   B => F[C]
-      *   >=>
+      *   andThen
       *   C => F[D])
       * )
       * ...
       * }}}
       *
       * which would make it possible to evaluate the function at the head. By rewriting until evaluation is possible,
-      * and then evaluating in a `loop`, we are able to execute the whole Result with stack safety.
+      * and then evaluating in a `loop`, we are able to execute the whole `Result` with stack safety.
       */
-    private sealed trait Stack[I, O] {
-
-      final def +:(r: Result[I]): Stack[Unit, O] = Stack.AndThen[Unit, I, O]((_: Unit) => r, fail[I](_), this)
-    }
+    private sealed trait Stack[-I, O]
     private object Stack {
 
-      private final case class Returns[I, O](ev: I <:< O) extends Stack[I, O]
-      private final case class AndThen[I, M, O](next: I => Result[M], fail: Error => Result[M], tail: Stack[M, O])
+      private object Ignored
+      private val ignore = Right(Ignored)
+
+      private final case class Rewrite[I, M, O](result: Result[M], tail: Stack[M, O])(implicit ev: I =:= Ignored.type)
           extends Stack[I, O]
-
-      private def returns[O]: Stack[O, O] = Returns(implicitly[O <:< O])
-
-      private def catchUpdate(context: Context, update: Context => Context): (Context, Value[Context]) =
-        try {
-          val newContext = update(context)
-          newContext -> Right[Error, Context](newContext)
-        } catch {
-          case err: Throwable => context -> Left[Error, Context](Error.fromException(err))
-        }
-      private def catchResult[A](thunk: => Result[A]): Result[A] = {
-        try {
-          thunk
-        } catch {
-          case err: Throwable => Pure(Left(Error.fromException(err)))
-        }
-      }
-      private val ignored: Value[Unit] = Right(())
+      private final case class Advance[I, M, O](next: I => Result[M], fail: Error => Result[M], tail: Stack[M, O])
+          extends Stack[I, O]
+      private final case class Return[I, O](cast: I <:< O) extends Stack[I, O]
 
       @tailrec
-      private def loop[I, O](
-          context: Context,
-          current: Value[I],
-          stack: Stack[I, O]
-      ): (Context, Value[O]) = stack match {
-        case Returns(ev) =>
-          context -> current.map(ev)
-        case AndThen(onSuccess, onFailure, tail) =>
-          current match {
-            case Left(error) =>
-              catchResult(onFailure(error)) match {
-                case Pure(value) => loop(context, value, tail)
-                case result      => loop(context, ignored, result +: tail)
-              }
-            case Right(value) =>
-              catchResult(onSuccess(value)) match {
-                case Pure(newValue) =>
-                  loop(context, newValue, tail)
-                case TransformWith(newResult, onSuccess2, onFailure2) =>
-                  val rewritten = newResult +: AndThen(onSuccess2, onFailure2, tail)
-                  loop(context, ignored, rewritten)
-                case UpdateContext(update) =>
-                  val (newContext, newValue) = catchUpdate(context, update)
-                  loop(newContext, newValue, tail)
+      private def loop[I, O](context: Context, current: Value[I], s: Stack[I, O]): (Context, Value[O]) = s match {
+        case Rewrite(Pure(next), stack) =>
+          loop(context, next, stack)
+        case Rewrite(TransformWith(result, onSuccess, onFailure), stack) =>
+          loop(context, ignore, Rewrite(result, Advance(onSuccess, onFailure, stack)))
+        case Rewrite(UpdateContext(update), stack) =>
+          val (newContext, next) = current match {
+            case Left(error) => context -> Left(error)
+            case Right(_) =>
+              try {
+                val newContext = update(context)
+                newContext -> Right(newContext)
+              } catch {
+                case error: Throwable => context -> Left(Error.fromException(error))
               }
           }
+          loop(newContext, next, stack)
+        case Advance(onSuccess, onFailure, stack) =>
+          val result =
+            try current.fold(onFailure, onSuccess)
+            catch { case err: Throwable => fail(Error.fromException(err)) }
+          loop(context, ignore, Rewrite(result, stack))
+        case Return(cast) =>
+          context -> current.map(cast)
       }
 
-      def eval[A](config: DerivationConfig, result: Result[A]): (Context, Value[A]) =
-        loop(Context(config, 0, Vector.empty), Right(()), result +: returns)
+      def eval[A](context: Context, result: Result[A]): (Context, Value[A]) =
+        loop(context, ignore, Rewrite(result, Return(implicitly[A <:< A])))
     }
   }
 }
