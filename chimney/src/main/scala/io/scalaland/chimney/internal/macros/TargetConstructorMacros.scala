@@ -60,8 +60,6 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
         valueTree
       case DerivationTarget.PartialTransformer(_) =>
         Trees.PartialResult.value(valueTree)
-      case DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _) =>
-        q"${wrapperSupportInstance}.pure($valueTree)"
     }
   }
 
@@ -213,48 +211,6 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
               }"""
 
           DerivedTree(tree, pt)
-        }
-
-      case lt @ DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _) =>
-        assertOrAbort(
-          bodyTreeArgs.forall(a => a.isTotalTarget || a.isLiftedTarget),
-          "Only Total and Lifted body tree arguments are supported in Lifted target derivation!"
-        )
-
-        val (totalArgs, liftedArgs) = (targets zip bodyTreeArgs).partition(_._2.isTotalTarget)
-
-        if (liftedArgs.isEmpty) {
-          DerivedTree.fromTotalTree(mkTargetValueTree(bodyTreeArgs.map(_.tree)))
-        } else {
-
-          val (liftedTargets, liftedBodyTrees) = liftedArgs.unzip
-          val liftedTrees = liftedBodyTrees.map(_.tree)
-          val productF = liftedTrees.reduceRight { (tree, rest) =>
-            q"$wrapperSupportInstance.product($tree, $rest)"
-          }
-
-          val argNames = liftedTargets.map(target => freshTermName(target.name))
-          val argTypes = liftedTargets.map(_.tpe)
-          val bindTreesF = argNames.map { termName =>
-            Bind(termName, Ident(termNames.WILDCARD))
-          }
-          val productType = argTypes.map(tpe => tq"$tpe").reduceRight[Tree]((param, tree) => tq"($param, $tree)")
-          val patternF = bindTreesF.reduceRight[Tree]((param, tree) => pq"(..${List(param, tree)})")
-
-          val patRefArgsMap = (liftedTargets zip argNames).map { case (target, argName) => target -> q"$argName" }.toMap
-          val pureArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
-          val argsMap = pureArgsMap ++ patRefArgsMap
-
-          val updatedArgs = targets.map(argsMap)
-
-          val tree = q"""
-            $wrapperSupportInstance.map[$productType, $To](
-              $productF,
-              { case $patternF => ${mkTargetValueTree(updatedArgs)} }
-            )
-          """
-
-          DerivedTree(tree, lt)
         }
     }
   }

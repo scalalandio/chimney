@@ -106,46 +106,6 @@ package object dsl {
       transformer.transform(source, failFast)
   }
 
-  /** Provides lifted transformer operations on values of any type.
-    *
-    * @param source wrapped source value
-    * @tparam From type of source value
-    *
-    * @since 0.5.0
-    */
-  implicit class TransformerFOps[From](private val source: From) extends AnyVal {
-
-    /** Allows to customize wrapped transformer generation to your target type.
-      *
-      * @tparam F  wrapper type constructor
-      * @tparam To target type
-      * @return [[io.scalaland.chimney.dsl.TransformerFInto]]
-      *
-      * @since 0.5.0
-      */
-    @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
-    final def intoF[F[+_], To]
-        : TransformerFInto[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
-      new TransformerFInto(source, new TransformerFDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore))
-
-    /** Performs in-place lifted transformation of captured source value to target type.
-      *
-      * If you want to customize transformer behavior, consider using
-      * [[io.scalaland.chimney.dsl.TransformerFOps#intoF]] method.
-      *
-      * @see [[io.scalaland.chimney.TransformerF#derive]] for default implicit instance
-      *
-      * @param transformer implicit instance of [[io.scalaland.chimney.TransformerF]] type class
-      * @tparam To target type
-      * @return transformed wrapped target value of type `F[To]`
-      *
-      * @since 0.5.0
-      */
-    @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
-    final def transformIntoF[F[+_], To](implicit transformer: TransformerF[F, From, To]): F[To] =
-      transformer.transform(source)
-  }
-
   /** Provides patcher operations on values of any type
     *
     * @param obj wrapped object to patch
