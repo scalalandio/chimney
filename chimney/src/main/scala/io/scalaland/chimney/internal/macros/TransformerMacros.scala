@@ -1048,7 +1048,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
   def findLocalTransformerConfigurationFlags: Tree = {
     val searchTypeTree =
       tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]]}"
-    inferImplicitTpe(searchTypeTree, macrosDisabled = true)
+    inferImplicitTpe(searchTypeTree, macrosDisabled = false)
       .getOrElse {
         // $COVERAGE-OFF$
         c.abort(c.enclosingPosition, "Can't locate implicit TransformerConfiguration!")
@@ -1070,7 +1070,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
   }
 
   def findTransformerErrorPathSupport(wrapperType: Type): Option[Tree] = {
-    inferImplicitTpe(tq"_root_.io.scalaland.chimney.TransformerFErrorPathSupport[$wrapperType]", macrosDisabled = true)
+    inferImplicitTpe(tq"_root_.io.scalaland.chimney.TransformerFErrorPathSupport[$wrapperType]", macrosDisabled = false)
   }
 
   private def inferImplicitTpe(tpeTree: Tree, macrosDisabled: Boolean): Option[Tree] = {
