@@ -1,7 +1,7 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import utest._
+import io.scalaland.chimney.dsl.*
+import utest.*
 
 object PatcherSpec extends TestSuite {
 
@@ -21,7 +21,7 @@ object PatcherSpec extends TestSuite {
 
     test("patch objects with value classes in patch") {
 
-      import TestDomain._
+      import TestDomain.*
 
       val update = UpdateDetails("xyz@def.com", 123123123L)
 
@@ -31,7 +31,7 @@ object PatcherSpec extends TestSuite {
 
     test("patch with redundant fields") {
 
-      import TestDomain._
+      import TestDomain.*
 
       case class PatchWithRedundantField(phone: Phone, address: String)
       // note address doesn't exist in User
@@ -53,7 +53,7 @@ object PatcherSpec extends TestSuite {
 
     test("patch with redundant fields at the beginning") {
 
-      import TestDomain._
+      import TestDomain.*
 
       case class PatchWithAnotherRedundantField(address: String, phone: Phone)
       // note address doesn't exist in User and it's at the beginning of the case class
@@ -75,7 +75,7 @@ object PatcherSpec extends TestSuite {
 
     test("support optional types in patch") {
 
-      import TestDomain._
+      import TestDomain.*
 
       case class UserPatch(email: Option[String], phone: Option[Phone])
 
@@ -87,7 +87,7 @@ object PatcherSpec extends TestSuite {
 
     test("support mixed optional and regular types") {
 
-      import TestDomain._
+      import TestDomain.*
 
       case class UserPatch(email: String, phone: Option[Phone])
       val update = UserPatch(email = "updated@example.com", phone = None)
@@ -98,7 +98,7 @@ object PatcherSpec extends TestSuite {
 
     test("optional fields in the patched object overwritten by None") {
 
-      import TestDomain._
+      import TestDomain.*
 
       case class UserPatch(email: String, phone: Option[Phone])
       val update = UserPatch(email = "updated@example.com", phone = None)
@@ -109,7 +109,7 @@ object PatcherSpec extends TestSuite {
 
     test("fields of type Option[T] in the patched object not overwritten by None of type Option[Option[T]]") {
 
-      import TestDomain._
+      import TestDomain.*
 
       case class UserWithOptional(id: Int, email: Email, phone: Option[Phone])
 
@@ -122,7 +122,7 @@ object PatcherSpec extends TestSuite {
 
     test("allow ignoring nones in patches") {
 
-      import TestDomain._
+      import TestDomain.*
 
       case class Foo(x: Option[Int])
       case class PhonePatch(phone: Option[Phone])

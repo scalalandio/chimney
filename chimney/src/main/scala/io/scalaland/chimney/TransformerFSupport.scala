@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import scala.collection.compat._
+import scala.collection.compat.*
 
 /** Type class supporting lifted transformers.
   *
@@ -76,8 +76,8 @@ trait TransformerFSupport[F[+_]] {
     *
     * @since 0.5.0
     */
-  def traverse[M, A, B](it: Iterator[A], f: A => F[B])(
-      implicit fac: Factory[B, M]
+  def traverse[M, A, B](it: Iterator[A], f: A => F[B])(implicit
+      fac: Factory[B, M]
   ): F[M]
 }
 
@@ -102,8 +102,8 @@ object TransformerFSupport {
         fa.map(f)
       }
 
-      def traverse[M, A, B](it: Iterator[A], f: A => Option[B])(
-          implicit fac: Factory[B, M]
+      def traverse[M, A, B](it: Iterator[A], f: A => Option[B])(implicit
+          fac: Factory[B, M]
       ): Option[M] = {
         val b = fac.newBuilder
         var wasNone = false
@@ -125,8 +125,8 @@ object TransformerFSupport {
     *
     * @since 0.5.0
     */
-  implicit def TransformerFEitherErrorAccumulatingSupport[E, C[X] <: IterableOnce[X]](
-      implicit ef: Factory[E, C[E]]
+  implicit def TransformerFEitherErrorAccumulatingSupport[E, C[X] <: IterableOnce[X]](implicit
+      ef: Factory[E, C[E]]
   ): TransformerFSupport[Either[C[E], +*]] = new TransformerFSupport[Either[C[E], +*]] {
 
     def pure[A](value: A): Either[C[E], A] = Right(value)
@@ -150,8 +150,8 @@ object TransformerFSupport {
       }
     }
 
-    def traverse[M, A, B](it: Iterator[A], f: A => Either[C[E], B])(
-        implicit fac: Factory[B, M]
+    def traverse[M, A, B](it: Iterator[A], f: A => Either[C[E], B])(implicit
+        fac: Factory[B, M]
     ): Either[C[E], M] = {
       val bs = fac.newBuilder
       val eb = ef.newBuilder

@@ -7,9 +7,9 @@ import scala.reflect.macros.blackbox
 trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
 
   val c: blackbox.Context
-  import CfgTpes._
+  import CfgTpes.*
 
-  import c.universe._
+  import c.universe.*
 
   implicit class TransformerDefinitionTreeOps(td: Tree) {
 

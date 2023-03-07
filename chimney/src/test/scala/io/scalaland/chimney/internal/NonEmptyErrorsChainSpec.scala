@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal
 
 import io.scalaland.chimney.partial
-import utest._
+import utest.*
 
 object NonEmptyErrorsChainSpec extends TestSuite {
 

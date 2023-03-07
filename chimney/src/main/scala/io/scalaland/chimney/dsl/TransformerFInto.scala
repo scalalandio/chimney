@@ -41,9 +41,9 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     *
     * @since 0.5.0
     */
-  def withFieldConst[T, U](selector: To => T, value: U)(
-      implicit ev: U <:< T
-  ): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
+  def withFieldConst[T, U](selector: To => T, value: U)(implicit
+      ev: U <:< T
+  ): TransformerFInto[F, From, To, ? <: TransformerCfg, Flags] =
     macro TransformerFIntoWhiteboxMacros.withFieldConstImpl
 
   /** Use wrapped `value` provided here for field picked using `selector`.
@@ -60,9 +60,9 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     *
     * @since 0.5.0
     */
-  def withFieldConstF[T, U](selector: To => T, value: F[U])(
-      implicit ev: U <:< T
-  ): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
+  def withFieldConstF[T, U](selector: To => T, value: F[U])(implicit
+      ev: U <:< T
+  ): TransformerFInto[F, From, To, ? <: TransformerCfg, Flags] =
     macro TransformerFIntoWhiteboxMacros.withFieldConstFImpl
 
   /** Use function `f` to compute value of field picked using `selector`.
@@ -82,7 +82,7 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
   def withFieldComputed[T, U](
       selector: To => T,
       f: From => U
-  )(implicit ev: U <:< T): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
+  )(implicit ev: U <:< T): TransformerFInto[F, From, To, ? <: TransformerCfg, Flags] =
     macro TransformerFIntoWhiteboxMacros.withFieldComputedImpl
 
   /** Use function `f` to compute wrapped value of field picked using `selector`.
@@ -102,7 +102,7 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
   def withFieldComputedF[T, U](
       selector: To => T,
       f: From => F[U]
-  )(implicit ev: U <:< T): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
+  )(implicit ev: U <:< T): TransformerFInto[F, From, To, ? <: TransformerCfg, Flags] =
     macro TransformerFIntoWhiteboxMacros.withFieldComputedFImpl
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
@@ -122,7 +122,7 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
   def withFieldRenamed[T, U](
       selectorFrom: From => T,
       selectorTo: To => U
-  ): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
+  ): TransformerFInto[F, From, To, ? <: TransformerCfg, Flags] =
     macro TransformerFIntoWhiteboxMacros.withFieldRenamedImpl
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
@@ -139,7 +139,7 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     *
     * @since 0.5.0
     */
-  def withCoproductInstance[Inst](f: Inst => To): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
+  def withCoproductInstance[Inst](f: Inst => To): TransformerFInto[F, From, To, ? <: TransformerCfg, Flags] =
     macro TransformerFIntoWhiteboxMacros.withCoproductInstanceImpl
 
   /** Use `f` to calculate the (missing) wrapped coproduct instance when mapping one coproduct into another
@@ -156,7 +156,7 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     *
     *  @since 0.5.0
     */
-  def withCoproductInstanceF[Inst](f: Inst => F[To]): TransformerFInto[F, From, To, _ <: TransformerCfg, Flags] =
+  def withCoproductInstanceF[Inst](f: Inst => F[To]): TransformerFInto[F, From, To, ? <: TransformerCfg, Flags] =
     macro TransformerFIntoWhiteboxMacros.withCoproductInstanceFImpl
 
   /** Apply configured wrapped transformation in-place.
@@ -173,8 +173,8 @@ final class TransformerFInto[F[+_], From, To, C <: TransformerCfg, Flags <: Tran
     *
     * @since 0.5.0
     */
-  def transform[ScopeFlags <: TransformerFlags](
-      implicit tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags],
+  def transform[ScopeFlags <: TransformerFlags](implicit
+      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags],
       tfs: TransformerFSupport[F]
   ): F[To] =
     macro TransformerBlackboxMacros.transformFImpl[F, From, To, C, Flags, ScopeFlags]

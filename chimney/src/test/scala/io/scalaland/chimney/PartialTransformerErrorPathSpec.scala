@@ -1,8 +1,8 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.utils.OptionUtils.StringOps
-import utest._
+import utest.*
 
 object PartialTransformerErrorPathSpec extends TestSuite {
 

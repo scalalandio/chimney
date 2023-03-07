@@ -59,16 +59,18 @@ val settings = Seq(
     "-Ywarn-unused:imports",
     "-Ywarn-macros:after",
 //    "-Xfatal-warnings",
-    "-language:higherKinds"
+    "-language:higherKinds",
+    "-Xsource:3"
   ),
   scalacOptions ++= (
     if (scalaVersion.value >= "2.13")
       Seq(
         "-release",
         "8",
-        "-Wunused:patvars"
+        "-Wunused:patvars",
+        "-Ytasty-reader"
       )
-    else
+    else // 2.12
       Seq(
         "-target:jvm-1.8",
         "-Xfuture",
@@ -83,6 +85,14 @@ val settings = Seq(
         "-Xlint:nullary-override"
       )
   ),
+//  scalacOptions ++= {
+//    CrossVersion.partialVersion(scalaVersion.value) match {
+//      // dla 2.12 będzie podobnie co do 2.13 ale jeszcze nie wiem jak
+//      case Some((2, 13)) => Seq("-deprecation", "-feature", "-Xsource:3", "-Ytasty-reader", "-P:kind-projector:underscore-placeholders")
+//      case Some((3, 2)) => Seq("-explain", "-rewrite", "-source", "3.2-migration", "-Ykind-projector:underscores")
+//      case _ => Seq.empty
+//    }
+//  },
   Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
   testFrameworks += new TestFramework("utest.runner.Framework")
 )

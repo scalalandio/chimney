@@ -7,8 +7,8 @@ import scala.reflect.macros.whitebox
 
 class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslMacroUtils {
 
-  import CfgTpes._
-  import c.universe._
+  import CfgTpes.*
+  import c.universe.*
 
   def withFieldConstImpl[C: WeakTypeTag](selector: Tree, value: Tree)(@unused ev: Tree): Tree = {
     c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, value, fieldConstT)
@@ -16,7 +16,7 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslM
 
   def withFieldConstFImpl[C: WeakTypeTag, F[_]](selector: Tree, value: Tree)(
       @unused ev: Tree
-  )(implicit F: WeakTypeTag[F[_]]): Tree = {
+  )(implicit F: WeakTypeTag[F[?]]): Tree = {
     c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, value, fieldConstFT)
   }
 
@@ -26,7 +26,7 @@ class TransformerFDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslM
 
   def withFieldComputedFImpl[C: WeakTypeTag, F[+_]](selector: Tree, f: Tree)(
       @unused ev: Tree
-  )(implicit F: WeakTypeTag[F[_]]): Tree = {
+  )(implicit F: WeakTypeTag[F[?]]): Tree = {
     c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, f, fieldComputedFT)
   }
 

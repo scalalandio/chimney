@@ -1,9 +1,9 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.utils.EitherUtils._
-import io.scalaland.chimney.utils.OptionUtils._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.utils.EitherUtils.*
+import io.scalaland.chimney.utils.OptionUtils.*
+import utest.*
 
 import scala.collection.immutable.Queue
 import scala.collection.mutable.ArrayBuffer

@@ -1,13 +1,13 @@
 package io.scalaland.chimney
 
-import utest._
+import utest.*
 import io.scalaland.chimney.examples.addressbook
 import io.scalaland.chimney.examples.order
 import io.scalaland.chimney.examples.pb
 
 object PBTransformationSpec extends TestSuite {
 
-  import dsl._
+  import dsl.*
 
   val tests = Tests {
 

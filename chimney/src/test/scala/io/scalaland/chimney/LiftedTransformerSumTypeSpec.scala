@@ -1,10 +1,10 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples._
-import io.scalaland.chimney.utils.EitherUtils._
-import io.scalaland.chimney.utils.OptionUtils._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.*
+import io.scalaland.chimney.utils.EitherUtils.*
+import io.scalaland.chimney.utils.OptionUtils.*
+import utest.*
 
 object LiftedTransformerSumTypeSpec extends TestSuite {
 
@@ -71,7 +71,7 @@ object LiftedTransformerSumTypeSpec extends TestSuite {
           .transformIntoF[Option, shapes3.Shape] ==>
           Some(shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0)))
 
-        import numbers._, ScalesTransformerF.shortToLongPureInner
+        import numbers.*, ScalesTransformerF.shortToLongPureInner
 
         (short.Zero: short.NumScale[Int, Nothing])
           .transformIntoF[Option, long.NumScale[String]] ==> Some(long.Zero)
@@ -91,7 +91,7 @@ object LiftedTransformerSumTypeSpec extends TestSuite {
           .transformIntoF[Either[List[String], +*], shapes3.Shape] ==>
           Right(shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0)))
 
-        import numbers._, ScalesTransformerF.shortToLongPureInner
+        import numbers.*, ScalesTransformerF.shortToLongPureInner
 
         (short.Zero: short.NumScale[Int, Nothing])
           .transformIntoF[Either[List[String], +*], long.NumScale[String]] ==> Right(long.Zero)
@@ -119,7 +119,7 @@ object LiftedTransformerSumTypeSpec extends TestSuite {
           Some(shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0)))
 
         implicit val intParserOpt: TransformerF[Option, String, Int] = _.parseInt
-        import numbers._, ScalesTransformerF.shortToLongWrappedInner
+        import numbers.*, ScalesTransformerF.shortToLongWrappedInner
 
         (short.Zero: short.NumScale[String, Nothing])
           .transformIntoF[Option, long.NumScale[Int]] ==> Some(long.Zero)
@@ -148,7 +148,7 @@ object LiftedTransformerSumTypeSpec extends TestSuite {
 
         implicit val intParserEither: TransformerF[Either[List[String], +*], String, Int] =
           _.parseInt.toEitherList("bad int")
-        import numbers._, ScalesTransformerF.shortToLongWrappedInner
+        import numbers.*, ScalesTransformerF.shortToLongWrappedInner
 
         (short.Zero: short.NumScale[String, Nothing])
           .transformIntoF[Either[List[String], +*], long.NumScale[Int]] ==> Right(long.Zero)

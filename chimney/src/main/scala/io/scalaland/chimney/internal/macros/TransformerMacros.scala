@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.macros
 
 import io.scalaland.chimney.dsl.{PreferPartialTransformer, PreferTotalTransformer}
-import io.scalaland.chimney.internal._
+import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.utils.EitherUtils
 
 import scala.reflect.macros.blackbox
@@ -10,7 +10,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
 
   val c: blackbox.Context
 
-  import c.universe._
+  import c.universe.*
 
   def buildDefinedTransformer[
       From: WeakTypeTag,
@@ -133,16 +133,15 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
   )(From: Type, To: Type): Either[Seq[TransformerDerivationError], Tree] = {
     val srcPrefixTree = Ident(TermName(srcName.decodedName.toString))
 
-    resolveTransformerBody(srcPrefixTree, config)(From, To).map {
-      case TransformerBodyTree(tree, derivedTarget) =>
-        (config.derivationTarget, derivedTarget) match {
-          case (DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _), DerivationTarget.TotalTransformer) =>
-            q"${wrapperSupportInstance}.pure[$To]($tree)"
-          case (DerivationTarget.PartialTransformer(_), DerivationTarget.TotalTransformer) =>
-            Trees.PartialResult.value(tree)
-          case _ =>
-            tree
-        }
+    resolveTransformerBody(srcPrefixTree, config)(From, To).map { case TransformerBodyTree(tree, derivedTarget) =>
+      (config.derivationTarget, derivedTarget) match {
+        case (DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _), DerivationTarget.TotalTransformer) =>
+          q"${wrapperSupportInstance}.pure[$To]($tree)"
+        case (DerivationTarget.PartialTransformer(_), DerivationTarget.TotalTransformer) =>
+          Trees.PartialResult.value(tree)
+        case _ =>
+          tree
+      }
     }
   }
 
@@ -330,8 +329,8 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
             """
 
           case TransformerBodyTree(
-              innerTree,
-              DerivationTarget.LiftedTransformer(wrapperType, wrapperSupportInstance, _)
+                innerTree,
+                DerivationTarget.LiftedTransformer(wrapperType, wrapperSupportInstance, _)
               ) =>
             q"""
               $srcPrefixTree.fold[${wrapperType.applyTypeArg(To)}](
@@ -415,12 +414,12 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
 
     (config.derivationTarget, ToInnerT.caseClassParams.map(_.resultTypeIn(ToInnerT))) match {
       case (
-          DerivationTarget.LiftedTransformer(
-            wrapperType,
-            wrapperSupportInstance,
-            Some(wrapperErrorPathSupportInstance)
-          ),
-          List(toKeyT, toValueT)
+            DerivationTarget.LiftedTransformer(
+              wrapperType,
+              wrapperSupportInstance,
+              Some(wrapperErrorPathSupportInstance)
+            ),
+            List(toKeyT, toValueT)
           ) =>
         val List(fromKeyT, fromValueT) = From.typeArgs
 
@@ -528,7 +527,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                 q"$srcPrefixTree.iterator",
                 q"""{ case (${fnK.name}: $fromKeyT, ${fnV.name}: $fromValueT) =>
                     ${Trees.PartialResult
-                  .product(toKeyT, toValueT, keyTransformerWithPath, valueTransformerWithPath, pt.failFastTree)}
+                    .product(toKeyT, toValueT, keyTransformerWithPath, valueTransformerWithPath, pt.failFastTree)}
                  }""",
                 pt.failFastTree
               )
@@ -555,8 +554,8 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
     resolveRecursiveTransformerBody(fn, config.rec)(FromInnerT, ToInnerT)
       .map {
         case TransformerBodyTree(
-            innerTransformerTree,
-            DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, Some(wrapperErrorPathSupportInstance))
+              innerTransformerTree,
+              DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, Some(wrapperErrorPathSupportInstance))
             ) =>
           val idx = Ident(freshTermName("idx"))
 
@@ -571,8 +570,8 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
             )
             """
         case TransformerBodyTree(
-            innerTransformerTree,
-            DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, None)
+              innerTransformerTree,
+              DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, None)
             ) =>
           q"""
               ${wrapperSupportInstance}.traverse[$To, $FromInnerT, $ToInnerT](
@@ -688,7 +687,9 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                         Right(cq"$fn: $instTpe => ${implicitTransformerTree.callTransform(Ident(fn))}")
                       }
                       .getOrElse {
-                        if (matchingTargetTpe.typeSymbol.isModuleClass && (instSymbol.isModuleClass || instSymbol.isCaseClass)) {
+                        if (
+                          matchingTargetTpe.typeSymbol.isModuleClass && (instSymbol.isModuleClass || instSymbol.isCaseClass)
+                        ) {
                           val objTree = q"${matchingTargetTpe.typeSymbol.asClass.module}"
                           Right(
                             cq"_: ${instSymbol.asType} => ${mkTransformerBodyTree0(config.derivationTarget)(objTree)}"
@@ -1046,7 +1047,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
 
   def findLocalTransformerConfigurationFlags: Tree = {
     val searchTypeTree =
-      tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[_ <: io.scalaland.chimney.internal.TransformerFlags]]}"
+      tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]]}"
     inferImplicitTpe(searchTypeTree, macrosDisabled = true)
       .getOrElse {
         // $COVERAGE-OFF$
@@ -1092,7 +1093,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       case TypeApply(Select(qualifier, name), _) =>
         (qualifier.tpe =:= weakTypeOf[io.scalaland.chimney.Transformer.type] ||
           qualifier.tpe =:= weakTypeOf[io.scalaland.chimney.PartialTransformer.type]) &&
-          name.toString == "derive"
+        name.toString == "derive"
       case Apply(TypeApply(Select(qualifier, name), _), _) =>
         qualifier.tpe =:= weakTypeOf[io.scalaland.chimney.TransformerF.type] && name.toString == "derive"
       case _ =>

@@ -1,6 +1,6 @@
 package io.scalaland.chimney.examples.products
 
-import io.scalaland.chimney._
+import io.scalaland.chimney.*
 
 object Domain1 {
 

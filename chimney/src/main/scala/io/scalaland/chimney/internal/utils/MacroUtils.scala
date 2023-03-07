@@ -6,7 +6,7 @@ trait MacroUtils extends CompanionUtils {
 
   val c: blackbox.Context
 
-  import c.universe._
+  import c.universe.*
 
   def freshTermName(srcPrefixTree: Tree): c.universe.TermName = {
     freshTermName(toFieldName(srcPrefixTree))
@@ -138,14 +138,13 @@ trait MacroUtils extends CompanionUtils {
           val headParamListOpt = primaryConstructor.asMethod.typeSignature.paramLists.headOption.map(_.map(_.asTerm))
 
           headParamListOpt.map { headParamList =>
-            headParamList.zipWithIndex.flatMap {
-              case (param, idx) =>
-                if (param.isParamWithDefault) {
-                  val method = TermName("apply$default$" + (idx + 1))
-                  Some(param.name.toString -> q"$companionSym.$method")
-                } else {
-                  None
-                }
+            headParamList.zipWithIndex.flatMap { case (param, idx) =>
+              if (param.isParamWithDefault) {
+                val method = TermName("apply$default$" + (idx + 1))
+                Some(param.name.toString -> q"$companionSym.$method")
+              } else {
+                None
+              }
             }.toMap
           }
         }
@@ -264,7 +263,7 @@ trait MacroUtils extends CompanionUtils {
     }
 
     def convertCollection(TargetTpe: Type, InnerTpe: Type): Tree = {
-      if (TargetTpe <:< typeOf[scala.collection.Map[_, _]] && scala.util.Properties.versionNumberString < "2.13") {
+      if (TargetTpe <:< typeOf[scala.collection.Map[?, ?]] && scala.util.Properties.versionNumberString < "2.13") {
         q"$t.toMap"
       } else {
         q"$t.to(_root_.scala.Predef.implicitly[_root_.scala.collection.compat.Factory[$InnerTpe, $TargetTpe]])"

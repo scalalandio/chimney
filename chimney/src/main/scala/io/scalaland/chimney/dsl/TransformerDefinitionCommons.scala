@@ -9,7 +9,7 @@ object TransformerDefinitionCommons {
 
 private[dsl] trait TransformerDefinitionCommons[UpdateCfg[_ <: TransformerCfg]] {
 
-  import TransformerDefinitionCommons._
+  import TransformerDefinitionCommons.*
 
   /** runtime storage for values and functions that transformer definition is customized with */
   val runtimeData: RuntimeDataStore

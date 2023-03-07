@@ -9,7 +9,7 @@ import scala.reflect.macros.blackbox
 
 class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacros {
 
-  import c.universe._
+  import c.universe.*
 
   def buildTransformerImpl[
       From: WeakTypeTag,

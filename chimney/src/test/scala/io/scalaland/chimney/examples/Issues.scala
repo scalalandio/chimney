@@ -1,7 +1,7 @@
 package io.scalaland.chimney.examples
 
 object foo {
-  import io.scalaland.chimney.dsl._
+  import io.scalaland.chimney.dsl.*
 
   sealed trait A extends Product with Serializable
   sealed trait AA extends A

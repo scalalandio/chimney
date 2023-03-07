@@ -1,15 +1,15 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.*
+import utest.*
 
 object LiftedTransformerImplicitResolutionSpec {
 
   val tests = Tests {
 
     test("transform using implicit Total Transformer for whole transformation when available") {
-      import products.Domain1._
+      import products.Domain1.*
 
       test("when F = Option") {
         implicit def instance: Transformer[UserName, String] = userNameToStringTransformer
@@ -27,7 +27,7 @@ object LiftedTransformerImplicitResolutionSpec {
     }
 
     test("transform using implicit Lifted Transformer for whole transformation when available") {
-      import products.Domain1._
+      import products.Domain1.*
 
       test("when F = Option") {
         implicit def instance: TransformerF[Option, UserName, String] = userNameToStringLiftedTransformer(Option(_))
@@ -46,7 +46,7 @@ object LiftedTransformerImplicitResolutionSpec {
     }
 
     test("transform using implicit Total Transformer for nested field when available") {
-      import products.Domain1._
+      import products.Domain1.*
 
       implicit def instance: Transformer[UserName, String] = userNameToStringTransformer
 
@@ -66,7 +66,7 @@ object LiftedTransformerImplicitResolutionSpec {
     }
 
     test("transform using implicit Lifted Transformer for nested field when available") {
-      import products.Domain1._
+      import products.Domain1.*
 
       test("when F = Option") {
         implicit def instance: TransformerF[Option, UserName, String] = userNameToStringLiftedTransformer(Option(_))

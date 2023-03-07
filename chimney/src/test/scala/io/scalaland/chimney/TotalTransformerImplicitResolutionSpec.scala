@@ -1,15 +1,15 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.*
+import utest.*
 
 object TotalTransformerImplicitResolutionSpec extends TestSuite {
 
   val tests = Tests {
 
     test("transform using implicit Total Transformer for whole transformation when available") {
-      import products.Domain1._
+      import products.Domain1.*
 
       implicit def instance: Transformer[UserName, String] = userNameToStringTransformer
 
@@ -18,7 +18,7 @@ object TotalTransformerImplicitResolutionSpec extends TestSuite {
     }
 
     test("transform using implicit Total Transformer for nested field when available") {
-      import products.Domain1._
+      import products.Domain1.*
 
       implicit def instance: Transformer[UserName, String] = userNameToStringTransformer
 
@@ -27,7 +27,7 @@ object TotalTransformerImplicitResolutionSpec extends TestSuite {
     }
 
     test("transform case classes with the same fields' number, names and types without modifiers") {
-      import trip._
+      import trip.*
 
       Person("John", 10, 140).into[User].transform ==> User("John", 10, 140)
       Person("John", 10, 140).transformInto[User] ==> User("John", 10, 140)

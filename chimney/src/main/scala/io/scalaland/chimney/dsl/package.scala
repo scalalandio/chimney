@@ -81,8 +81,8 @@ package object dsl {
       *
       * @since 0.7.0
       */
-    final def transformIntoPartial[To](
-        implicit transformer: PartialTransformer[From, To]
+    final def transformIntoPartial[To](implicit
+        transformer: PartialTransformer[From, To]
     ): partial.Result[To] =
       transformIntoPartial(failFast = false)
 
@@ -100,8 +100,8 @@ package object dsl {
       *
       * @since 0.7.0
       */
-    final def transformIntoPartial[To](failFast: Boolean)(
-        implicit transformer: PartialTransformer[From, To]
+    final def transformIntoPartial[To](failFast: Boolean)(implicit
+        transformer: PartialTransformer[From, To]
     ): partial.Result[To] =
       transformer.transform(source, failFast)
   }

@@ -1,11 +1,11 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.examples.{colors1, colors2, foo}
-import utest._
+import utest.*
 
 object IssuesSpec extends TestSuite {
 
-  import dsl._
+  import dsl.*
 
   // Compilation fails when moved inside the Tests block
   object Issue108 {
@@ -40,7 +40,7 @@ object IssuesSpec extends TestSuite {
     }
 
     test("fix issue #21") {
-      import tag._
+      import tag.*
       sealed trait Test
 
       case class EntityWithTag1(id: Long, name: String @@ Test)
@@ -127,7 +127,7 @@ object IssuesSpec extends TestSuite {
       case class Foo(`a.b`: String)
       case class Bar(b: String)
 
-      import io.scalaland.chimney.dsl._
+      import io.scalaland.chimney.dsl.*
 
       Foo("a").into[Bar].withFieldRenamed(_.`a.b`, _.b).transform
     }
@@ -171,7 +171,7 @@ object IssuesSpec extends TestSuite {
               .buildTransformer
         }
 
-        import TransformerInstances._
+        import TransformerInstances.*
 
         Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1, 6)
         Foo("a", 1, 3).transformInto[Bar](fooBarTransformer) ==> Bar("a", 1, 6)
@@ -193,7 +193,7 @@ object IssuesSpec extends TestSuite {
             Transformer.derive[Foo, Bar]
         }
 
-        import TransformerInstances._
+        import TransformerInstances.*
 
         Foo("a", 1, 3).transformInto[Bar] ==> Bar("a", 1)
         Foo("a", 1, 3).transformInto[Bar](fooBarTransformer) ==> Bar("a", 1)
@@ -308,7 +308,7 @@ object IssuesSpec extends TestSuite {
         case class Venue(name: String)
       }
 
-      import io.scalaland.chimney.dsl._
+      import io.scalaland.chimney.dsl.*
       val venue = internal.ManuallyFilled("Venue Name")
       val event = internal.Event(venue)
 
@@ -569,7 +569,7 @@ object IssuesSpec extends TestSuite {
     }
 
     test("fix issue #199") {
-      import Issue199._
+      import Issue199.*
 
       test("basic sanity check") {
         A.Foo("foo").transformInto[B.Foo] ==> B.Foo("foo")
@@ -613,7 +613,7 @@ object IssuesSpec extends TestSuite {
     }
 
     test("fix issue #210") {
-      import Issue210._
+      import Issue210.*
 
       (B.Foo: B).transformInto[A] ==> A.Foo
       (B.Bar: B).transformInto[A] ==> A.Bar

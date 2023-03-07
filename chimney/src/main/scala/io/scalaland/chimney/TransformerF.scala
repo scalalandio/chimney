@@ -67,8 +67,10 @@ object TransformerF {
     *
     * @since 0.5.0
     */
-  def define[F[+_], From, To]
-      : TransformerFDefinition[F, From, To, TransformerCfg.WrapperType[F, TransformerCfg.Empty], TransformerFlags.Default] =
+  def define[F[+_], From, To]: TransformerFDefinition[F, From, To, TransformerCfg.WrapperType[
+    F,
+    TransformerCfg.Empty,
+  ], TransformerFlags.Default] =
     new TransformerFDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 
 }

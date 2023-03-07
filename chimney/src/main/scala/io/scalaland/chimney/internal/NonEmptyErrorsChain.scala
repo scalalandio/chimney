@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal
 
 import io.scalaland.chimney.partial
 
-import scala.collection.compat._
+import scala.collection.compat.*
 import scala.util.hashing.MurmurHash3
 
 /** Specialized chain-like data structure for efficient representation of path-annotated errors,
@@ -29,13 +29,13 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
     *
     * @since 0.7.0
     */
-  override final def isEmpty: Boolean = false
+  final override def isEmpty: Boolean = false
 
   /** Errors iterator.
     *
     * @since 0.7.0
     */
-  override final def iterator: Iterator[partial.Error] = {
+  final override def iterator: Iterator[partial.Error] = {
     this match {
       case NonEmptyErrorsChain.Single(error)                 => Iterator.single(error)
       case NonEmptyErrorsChain.Wrap(errors)                  => errors.iterator
@@ -55,14 +55,14 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
     NonEmptyErrorsChain.Merge(this, other)
   }
 
-  override final def equals(obj: Any): Boolean = {
+  final override def equals(obj: Any): Boolean = {
     obj match {
       case xs: NonEmptyErrorsChain => xs.iterator.sameElements(this.iterator)
       case _                       => false
     }
   }
 
-  override final def hashCode(): Int = {
+  final override def hashCode(): Int = {
     MurmurHash3.orderedHash(iterator)
   }
 }
@@ -92,10 +92,9 @@ object NonEmptyErrorsChain {
     else Merge(Single(head), Wrap(tail))
   }
 
-  private final case class Single private (error: partial.Error) extends NonEmptyErrorsChain
-  private final case class Wrap private (errors: Iterable[partial.Error]) extends NonEmptyErrorsChain
-  private final case class Merge private (errors1: NonEmptyErrorsChain, errors2: NonEmptyErrorsChain)
-      extends NonEmptyErrorsChain
-  private final case class WrapPath private (errors: NonEmptyErrorsChain, pathElement: partial.PathElement)
+  final private case class Single(error: partial.Error) extends NonEmptyErrorsChain
+  final private case class Wrap(errors: Iterable[partial.Error]) extends NonEmptyErrorsChain
+  final private case class Merge(errors1: NonEmptyErrorsChain, errors2: NonEmptyErrorsChain) extends NonEmptyErrorsChain
+  final private case class WrapPath(errors: NonEmptyErrorsChain, pathElement: partial.PathElement)
       extends NonEmptyErrorsChain
 }

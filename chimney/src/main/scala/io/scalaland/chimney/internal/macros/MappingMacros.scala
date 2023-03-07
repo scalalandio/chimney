@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.utils.{TypeTestUtils, DslMacroUtils}
-import io.scalaland.chimney.internal.{TransformerDerivationError, IncompatibleSourceTuple}
+import io.scalaland.chimney.internal.utils.{DslMacroUtils, TypeTestUtils}
+import io.scalaland.chimney.internal.{IncompatibleSourceTuple, TransformerDerivationError}
 
 import scala.collection.immutable.ListMap
 import scala.reflect.macros.blackbox
@@ -10,7 +10,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
 
   val c: blackbox.Context
 
-  import c.universe._
+  import c.universe.*
 
   def resolveSourceTupleAccessors(
       From: Type,
@@ -32,9 +32,8 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
       }
     } else {
       Right {
-        (tupleElems zip targetFields).map {
-          case (tupleElem, targetField) =>
-            Target.fromField(targetField, To) -> AccessorResolution.Resolved(tupleElem, wasRenamed = false)
+        (tupleElems zip targetFields).map { case (tupleElem, targetField) =>
+          Target.fromField(targetField, To) -> AccessorResolution.Resolved(tupleElem, wasRenamed = false)
         }.toMap
       }
     }
@@ -61,7 +60,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
         }
       }
 
-    ListMap(accessorsMapping.toSeq: _*)
+    ListMap(accessorsMapping.toSeq*)
   }
 
   def resolveOverrides(
@@ -123,8 +122,8 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
             target -> TransformerBodyTree(
               q"""
                 ${config.transformerDefinitionPrefix
-                .accessOverriddenComputedFunction(runtimeDataIdx, From, fTargetTpe)
-                .callUnaryApply(srcPrefixTree)}
+                  .accessOverriddenComputedFunction(runtimeDataIdx, From, fTargetTpe)
+                  .callUnaryApply(srcPrefixTree)}
                   .prependErrorPath(${Trees.PathElement.accessor(target.name)})
               """,
               config.derivationTarget
@@ -193,7 +192,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
 
       defaultValueFallback orElse optionNoneFallback orElse unitFallback
     }
-    ListMap(fallbackTransformers.toSeq: _*)
+    ListMap(fallbackTransformers.toSeq*)
   }
 
   def lookupAccessor(
@@ -205,9 +204,11 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
     val sourceName = ms.name.decodedName.toString
     if (config.flags.beanGetters) {
       val lookupNameCapitalized = lookupName.capitalize
-      if (sourceName == lookupName ||
-          sourceName == s"get$lookupNameCapitalized" ||
-          (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])) {
+      if (
+        sourceName == lookupName ||
+        sourceName == s"get$lookupNameCapitalized" ||
+        (sourceName == s"is$lookupNameCapitalized" && ms.resultTypeIn(From) == typeOf[Boolean])
+      ) {
         AccessorResolution.Resolved(ms, wasRenamed = false)
       } else {
         AccessorResolution.NotFound

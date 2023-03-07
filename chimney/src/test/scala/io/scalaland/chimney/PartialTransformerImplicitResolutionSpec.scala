@@ -1,15 +1,15 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.*
+import utest.*
 
 object PartialTransformerImplicitResolutionSpec extends TestSuite {
 
   val tests = Tests {
 
     test("transform using implicit Total Transformer for whole transformation when available") {
-      import products.Domain1._
+      import products.Domain1.*
       implicit def instance: Transformer[UserName, String] = userNameToStringTransformer
 
       val expected = "BatmanT"
@@ -26,7 +26,7 @@ object PartialTransformerImplicitResolutionSpec extends TestSuite {
     }
 
     test("transform using implicit Partial Transformer for whole transformation when available") {
-      import products.Domain1._
+      import products.Domain1.*
       implicit def instance: PartialTransformer[UserName, String] = userNameToStringPartialTransformer
 
       val result = UserName("Batman").intoPartial[String].transform
@@ -41,7 +41,7 @@ object PartialTransformerImplicitResolutionSpec extends TestSuite {
     }
 
     test("transform using implicit Total Transformer for nested field when available") {
-      import products.Domain1._
+      import products.Domain1.*
       implicit def instance: Transformer[UserName, String] = userNameToStringTransformer
 
       val expected = UserDTO("123", "BatmanT")
@@ -58,7 +58,7 @@ object PartialTransformerImplicitResolutionSpec extends TestSuite {
     }
 
     test("transform using implicit Partial Transformer for nested field when available") {
-      import products.Domain1._
+      import products.Domain1.*
       implicit def instance: PartialTransformer[UserName, String] = userNameToStringPartialTransformer
 
       val expected = UserDTO("123", "BatmanT")
