@@ -1,12 +1,12 @@
 package io.scalaland.chimney.benchmarks
 
 import org.openjdk.jmh.annotations.Benchmark
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.*
 import io.scalaland.chimney.partial
 
 class ErrorAccNestedLarge extends CommonBenchmarkSettings {
-  import fixtures._
+  import fixtures.*
 
   type M[+A] = Either[Vector[TransformationError[String]], A]
 

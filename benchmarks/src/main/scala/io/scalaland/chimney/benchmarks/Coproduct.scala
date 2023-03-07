@@ -1,12 +1,12 @@
 package io.scalaland.chimney.benchmarks
 
-import org.openjdk.jmh.annotations.{Setup, Benchmark, Level}
-import io.scalaland.chimney.dsl._
+import org.openjdk.jmh.annotations.{Benchmark, Level, Setup}
+import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.Transformer
 
 class Coproduct extends CommonBenchmarkSettings {
 
-  import fixtures._
+  import fixtures.*
 
   private val color2ChannelT = Transformer.derive[Color, Channel]
   private val channel2ColorT = Transformer

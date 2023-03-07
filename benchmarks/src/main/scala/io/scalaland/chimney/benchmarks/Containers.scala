@@ -1,11 +1,11 @@
 package io.scalaland.chimney.benchmarks
 
 import org.openjdk.jmh.annotations.Benchmark
-import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.dsl.*
 
 class Containers extends CommonBenchmarkSettings {
 
-  import fixtures._
+  import fixtures.*
 
   @Benchmark
   def arrayTransformChimneyInto: Array[SimpleOutput] = samples.simpleSampleArray.transformInto[Array[SimpleOutput]]
