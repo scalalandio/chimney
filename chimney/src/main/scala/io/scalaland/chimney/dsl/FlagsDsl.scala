@@ -111,31 +111,6 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
   def disableOptionDefaultsToNone: UpdateFlag[Disable[OptionDefaultsToNone, Flags]] =
     disableFlag[OptionDefaultsToNone]
 
-  /** Enable unsafe call to `.get` when source type From contains field of type `Option[A]`,
-    * but target type To defines this fields as `A`.
-    *
-    * It's unsafe as code generated this way may throw at runtime.
-    *
-    * By default in such case compilation fails.
-    *
-    * @see [[https://scalalandio.github.io/chimney/transformers/unsafe-options.html]] for more details
-    *
-    * @since 0.3.3
-    */
-  @deprecated("Unsafe options are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
-  def enableUnsafeOption: UpdateFlag[Enable[UnsafeOption, Flags]] =
-    enableFlag[UnsafeOption]
-
-  /** Disable unsafe value extraction from optional fields in `From` type.
-    *
-    * @see [[https://scalalandio.github.io/chimney/transformers/unsafe-options.html]] for more details
-    *
-    * @since 0.6.0
-    */
-  @deprecated("Unsafe options are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
-  def disableUnsafeOption: UpdateFlag[Disable[UnsafeOption, Flags]] =
-    disableFlag[UnsafeOption]
-
   /** Enable conflict resolution when both `Transformer` and `PartialTransformer` are available in the implicit scope.
     *
     * @param preference parameter specifying which implicit transformer to pick in case of conflict

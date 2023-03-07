@@ -171,7 +171,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       config: TransformerConfig
   )(From: Type, To: Type): Option[Either[Seq[TransformerDerivationError], DerivedTree]] = {
     Option.when(
-      config.derivationTarget.isPartial && !config.flags.unsafeOption && fromOptionToNonOption(From, To)
+      config.derivationTarget.isPartial && fromOptionToNonOption(From, To)
     ) {
       val fn = Ident(freshTermName("value"))
       resolveRecursiveTransformerBody(config.withSrcPrefixTree(q"$fn"))(From.typeArgs.head, To)
@@ -294,26 +294,6 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
         transformerBodyTree,
         config.derivationTarget
       )(innerTree => q"new $To($innerTree)")
-    }
-  }
-
-  def expandSourceWrappedInOption(
-      config: TransformerConfig
-  )(From: Type, To: Type): Option[Either[Seq[TransformerDerivationError], DerivedTree]] = {
-    Option.when(config.flags.unsafeOption && isOption(From)) {
-      if (From <:< noneTpe || config.derivationTarget.isPartial) {
-        notSupportedDerivation(config.srcPrefixTree, From, To)
-      } else {
-        val fromInnerT = From.typeArgs.head
-        val innerSrcPrefix = q"${config.srcPrefixTree}.get"
-        resolveRecursiveTransformerBody(config.withSrcPrefixTree(innerSrcPrefix))(fromInnerT, To)
-          .map { innerTransformerBody =>
-            val fn = freshTermName(innerSrcPrefix).toString
-            mkTransformerBodyTree1(To, Target(fn, To), innerTransformerBody, config.derivationTarget) { tree =>
-              q"($tree)"
-            }
-          }
-      }
     }
   }
 
