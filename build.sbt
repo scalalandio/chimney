@@ -1,4 +1,4 @@
-import commandmatrix.extra._
+import commandmatrix.extra.*
 
 lazy val isCI = sys.env.get("CI").contains("true")
 ThisBuild / scalafmtOnCompile := !isCI
@@ -62,37 +62,26 @@ val settings = Seq(
     "-language:higherKinds",
     "-Xsource:3"
   ),
-  scalacOptions ++= (
-    if (scalaVersion.value >= "2.13")
-      Seq(
-        "-release",
-        "8",
-        "-Wunused:patvars",
-        "-Ytasty-reader"
-      )
-    else // 2.12
-      Seq(
-        "-target:jvm-1.8",
-        "-Xfuture",
-        "-Xexperimental",
-        "-Yno-adapted-args",
-        "-Ywarn-inaccessible",
-        "-Ywarn-infer-any",
-        "-Ywarn-nullary-override",
-        "-Ywarn-nullary-unit",
-        "-Xlint:by-name-right-associative",
-        "-Xlint:unsound-match",
-        "-Xlint:nullary-override"
-      )
-  ),
-//  scalacOptions ++= {
-//    CrossVersion.partialVersion(scalaVersion.value) match {
-//      // dla 2.12 będzie podobnie co do 2.13 ale jeszcze nie wiem jak
-//      case Some((2, 13)) => Seq("-deprecation", "-feature", "-Xsource:3", "-Ytasty-reader", "-P:kind-projector:underscore-placeholders")
-//      case Some((3, 2)) => Seq("-explain", "-rewrite", "-source", "3.2-migration", "-Ykind-projector:underscores")
-//      case _ => Seq.empty
-//    }
-//  },
+  scalacOptions ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13)) => Seq("-release", "8", "-Wunused:patvars", "-Ytasty-reader")
+      case Some((2, 12)) =>
+        Seq(
+          "-target:jvm-1.8",
+          "-Xfuture",
+          "-Xexperimental",
+          "-Yno-adapted-args",
+          "-Ywarn-inaccessible",
+          "-Ywarn-infer-any",
+          "-Ywarn-nullary-override",
+          "-Ywarn-nullary-unit",
+          "-Xlint:by-name-right-associative",
+          "-Xlint:unsound-match",
+          "-Xlint:nullary-override"
+        )
+      case _ => Seq.empty
+    }
+  },
   Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
   testFrameworks += new TestFramework("utest.runner.Framework")
 )
@@ -168,10 +157,10 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
 lazy val root = project
   .in(file("."))
   .enablePlugins(SphinxPlugin, GhpagesPlugin, GitVersioning, GitBranchPrompt)
-  .settings(settings: _*)
-  .settings(publishSettings: _*)
-  .settings(noPublishSettings: _*)
-  .aggregate(chimney.projectRefs ++ chimneyCats.projectRefs: _*)
+  .settings(settings)
+  .settings(publishSettings)
+  .settings(noPublishSettings)
+  .aggregate((chimney.projectRefs ++ chimneyCats.projectRefs)*)
   .settings(
     moduleName := "chimney-build",
     name := "chimney-build",
@@ -212,7 +201,7 @@ lazy val root = project
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE: _*)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
   .disablePlugins(WelcomePlugin)
   .settings(
     moduleName := "chimney",
@@ -225,43 +214,43 @@ lazy val chimney = projectMatrix
       }
     }
   )
-  .settings(settings: _*)
-  .settings(versionSchemeSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(dependencies: _*)
+  .settings(settings*)
+  .settings(versionSchemeSettings*)
+  .settings(publishSettings*)
+  .settings(dependencies*)
   .dependsOn(protos % "test->test")
 
 lazy val chimneyCats = projectMatrix
   .in(file("chimneyCats"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE: _*)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
   .disablePlugins(WelcomePlugin)
   .settings(
     moduleName := "chimney-cats",
     name := "chimney-cats",
     description := "Integrations with selected Cats data types and type classes"
   )
-  .settings(settings: _*)
-  .settings(versionSchemeSettings: _*)
-  .settings(publishSettings: _*)
-  .settings(dependencies: _*)
+  .settings(settings*)
+  .settings(versionSchemeSettings*)
+  .settings(publishSettings*)
+  .settings(dependencies*)
   .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.9.0" % "provided")
   .dependsOn(chimney % "test->test;compile->compile")
 
 lazy val protos = projectMatrix
   .in(file("protos"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE: _*)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
   .disablePlugins(WelcomePlugin)
   .settings(
     moduleName := "chimney-protos",
     name := "chimney-protos",
     description := "Protobufs used for conversion testing"
   )
-  .settings(settings: _*)
-  .settings(noPublishSettings: _*)
+  .settings(settings*)
+  .settings(noPublishSettings*)
 
 lazy val benchmarks = projectMatrix
   .in(file("benchmarks"))
-  .someVariations(versions.scalas, List(VirtualAxis.jvm))(only1VersionInIDE: _*) // only makes sense for JVM
+  .someVariations(versions.scalas, List(VirtualAxis.jvm))(only1VersionInIDE*) // only makes sense for JVM
   .settings(
     moduleName := "chimney-benchmarks",
     name := "chimney-benchmarks",
@@ -269,8 +258,8 @@ lazy val benchmarks = projectMatrix
   )
   .enablePlugins(JmhPlugin)
   .disablePlugins(WelcomePlugin)
-  .settings(settings: _*)
-  .settings(noPublishSettings: _*)
+  .settings(settings*)
+  .settings(noPublishSettings*)
   .dependsOn(chimney)
 
 //when having memory/GC-related errors during build, uncommenting this may be useful:
