@@ -62,12 +62,6 @@ trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
       }
     }
 
-    object LiftedTransformer {
-      def tpe(F: Type, From: Type, To: Type): Tree = {
-        tq"_root_.io.scalaland.chimney.TransformerF[$F, $From, $To]"
-      }
-    }
-
     object Patcher {
       def tpe(T: Type, Patch: Type): Tree = {
         tq"_root_.io.scalaland.chimney.Patcher[$T, $Patch]"

@@ -129,28 +129,6 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
             )
           }
 
-        // following cases (lifted ConstF/ComputedF) to be removed soon
-
-        case Some(FieldOverride.ConstF(runtimeDataIdx)) if config.derivationTarget.isLifted =>
-          val fTargetTpe = config.derivationTarget.targetType(target.tpe)
-          Some {
-            target -> DerivedTree(
-              config.transformerDefinitionPrefix.accessOverriddenConstValue(runtimeDataIdx, fTargetTpe),
-              config.derivationTarget
-            )
-          }
-
-        case Some(FieldOverride.ComputedF(runtimeDataIdx)) if config.derivationTarget.isLifted =>
-          val fTargetTpe = config.derivationTarget.targetType(target.tpe)
-          Some {
-            target -> DerivedTree(
-              config.transformerDefinitionPrefix
-                .accessOverriddenComputedFunction(runtimeDataIdx, From, fTargetTpe)
-                .callUnaryApply(config.srcPrefixTree),
-              config.derivationTarget
-            )
-          }
-
         case _ =>
           None
       }

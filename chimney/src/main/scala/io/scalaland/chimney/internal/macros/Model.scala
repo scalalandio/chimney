@@ -20,7 +20,6 @@ trait Model extends TransformerConfigSupport {
   case class DerivedTree(tree: Tree, target: DerivationTarget) {
     def isTotalTarget: Boolean = target == DerivationTarget.TotalTransformer
     def isPartialTarget: Boolean = target.isInstanceOf[DerivationTarget.PartialTransformer]
-    def isLiftedTarget: Boolean = target.isInstanceOf[DerivationTarget.LiftedTransformer]
 
     def mapTree(f: Tree => Tree): DerivedTree = copy(tree = f(tree))
   }
