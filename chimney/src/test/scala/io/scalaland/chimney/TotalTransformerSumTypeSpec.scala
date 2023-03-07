@@ -1,8 +1,8 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.*
+import utest.*
 
 object TotalTransformerSumTypeSpec extends TestSuite {
 

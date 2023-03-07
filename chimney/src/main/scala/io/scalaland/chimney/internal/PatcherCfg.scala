@@ -14,7 +14,7 @@ trait PatcherConfiguration {
 
   val c: blackbox.Context
 
-  import c.universe._
+  import c.universe.*
 
   case class PatcherConfig(
       ignoreNoneInPatch: Boolean = false,
@@ -23,11 +23,11 @@ trait PatcherConfiguration {
 
   def capturePatcherConfig(cfgTpe: Type, config: PatcherConfig = PatcherConfig()): PatcherConfig = {
 
-    import PatcherCfg._
+    import PatcherCfg.*
 
     val emptyT = typeOf[Empty]
-    val ignoreRedundantPatcherFields = typeOf[IgnoreRedundantPatcherFields[_]].typeConstructor
-    val ignoreNoneInPatch = typeOf[IgnoreNoneInPatch[_]].typeConstructor
+    val ignoreRedundantPatcherFields = typeOf[IgnoreRedundantPatcherFields[?]].typeConstructor
+    val ignoreNoneInPatch = typeOf[IgnoreNoneInPatch[?]].typeConstructor
 
     if (cfgTpe =:= emptyT) {
       config

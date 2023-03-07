@@ -1,7 +1,7 @@
 package io.scalaland.chimney.benchmarks
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.*
 
 object fixtures {
 
@@ -316,7 +316,7 @@ object fixtures {
   object transformers {
 
     final val simpleTransformerLiftedHappy: TransformerF[M, Simple, SimpleOutput] = {
-      import samples.validation._
+      import samples.validation.*
       TransformerF
         .define[M, Simple, SimpleOutput]
         .withFieldComputedF(_.a, s => happy.validateA(s.a).left.map(s => Vector(TransformationError(s))))
@@ -327,7 +327,7 @@ object fixtures {
     }
 
     final val simpleTransformerPartialHappy: PartialTransformer[Simple, SimpleOutput] = {
-      import samples.validation._
+      import samples.validation.*
       PartialTransformer
         .define[Simple, SimpleOutput]
         .withFieldComputedPartial(_.a, s => happy.validateA(s.a).toPartialResult)
@@ -338,7 +338,7 @@ object fixtures {
     }
 
     final val simpleTransformerLiftedUnhappy: TransformerF[M, Simple, SimpleOutput] = {
-      import samples.validation._
+      import samples.validation.*
       TransformerF
         .define[M, Simple, SimpleOutput]
         .withFieldComputedF(_.a, s => unhappy.validateA(s.a).left.map(s => Vector(TransformationError(s))))
@@ -349,7 +349,7 @@ object fixtures {
     }
 
     final val simpleTransformerPartialUnhappy: PartialTransformer[Simple, SimpleOutput] = {
-      import samples.validation._
+      import samples.validation.*
       PartialTransformer
         .define[Simple, SimpleOutput]
         .withFieldComputedPartial(_.a, s => unhappy.validateA(s.a).toPartialResult)
@@ -360,7 +360,7 @@ object fixtures {
     }
 
     final val largeTransformerLiftedHappy: TransformerF[M, Large, LargeOutput] = {
-      import samples.validation._
+      import samples.validation.*
       TransformerF
         .define[M, Large, LargeOutput]
         .withFieldComputedF(_.a, s => happy.squareInt(s.a).left.map(s => Vector(TransformationError(s))))
@@ -389,7 +389,7 @@ object fixtures {
     }
 
     final val largeTransformerPartialHappy: PartialTransformer[Large, LargeOutput] = {
-      import samples.validation._
+      import samples.validation.*
       PartialTransformer
         .define[Large, LargeOutput]
         .withFieldComputedPartial(_.a, s => happy.squareInt(s.a).toPartialResult)
@@ -418,7 +418,7 @@ object fixtures {
     }
 
     final val largeTransformerLiftedUnhappy: TransformerF[M, Large, LargeOutput] = {
-      import samples.validation._
+      import samples.validation.*
       TransformerF
         .define[M, Large, LargeOutput]
         .withFieldComputedF(_.a, s => unhappy.squareIntWhenOdd(s.a).left.map(s => Vector(TransformationError(s))))
@@ -447,7 +447,7 @@ object fixtures {
     }
 
     final val largeTransformerPartialUnhappy: PartialTransformer[Large, LargeOutput] = {
-      import samples.validation._
+      import samples.validation.*
       PartialTransformer
         .define[Large, LargeOutput]
         .withFieldComputedPartial(_.a, s => unhappy.squareIntWhenOdd(s.a).toPartialResult)

@@ -7,7 +7,7 @@ import scala.reflect.macros.whitebox
 
 class PartialTransformerIntoWhiteboxMacros(val c: whitebox.Context) extends DslMacroUtils {
 
-  import c.universe._
+  import c.universe.*
 
   def withFieldConstImpl(selector: Tree, value: Tree)(@unused ev: Tree): Tree = {
     c.prefix.tree.refineTransformerDefinition_Hack(

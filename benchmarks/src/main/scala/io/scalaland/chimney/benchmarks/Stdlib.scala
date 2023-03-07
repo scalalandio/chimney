@@ -1,11 +1,11 @@
 package io.scalaland.chimney.benchmarks
 
-import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.dsl.*
 import org.openjdk.jmh.annotations.Benchmark
 
 class Stdlib extends CommonBenchmarkSettings {
 
-  import fixtures._
+  import fixtures.*
 
   @Benchmark
   def valueClassTransformChimney: rich.Person =

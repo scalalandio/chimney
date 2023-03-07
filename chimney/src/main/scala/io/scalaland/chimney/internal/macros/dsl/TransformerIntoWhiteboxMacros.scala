@@ -7,7 +7,7 @@ import scala.reflect.macros.whitebox
 
 class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends DslMacroUtils {
 
-  import c.universe._
+  import c.universe.*
 
   def withFieldConstImpl(selector: Tree, value: Tree)(@unused ev: Tree): Tree = {
     c.prefix.tree.refineTransformerDefinition_Hack(
@@ -16,7 +16,7 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends DslMacroUti
     )
   }
 
-  def withFieldConstFImpl[F[+_]](selector: Tree, value: Tree)(@unused ev: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
+  def withFieldConstFImpl[F[+_]](selector: Tree, value: Tree)(@unused ev: Tree)(implicit F: WeakTypeTag[F[?]]): Tree = {
     q"${c.prefix.tree}.lift[$F].withFieldConstF($selector, $value)"
   }
 
@@ -27,7 +27,7 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends DslMacroUti
     )
   }
 
-  def withFieldComputedFImpl[F[+_]](selector: Tree, f: Tree)(@unused ev: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
+  def withFieldComputedFImpl[F[+_]](selector: Tree, f: Tree)(@unused ev: Tree)(implicit F: WeakTypeTag[F[?]]): Tree = {
     q"${c.prefix.tree}.lift[$F].withFieldComputedF($selector, $f)"
   }
 
@@ -42,7 +42,7 @@ class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends DslMacroUti
     )
   }
 
-  def withCoproductInstanceFImpl[F[+_]](f: Tree)(implicit F: WeakTypeTag[F[_]]): Tree = {
+  def withCoproductInstanceFImpl[F[+_]](f: Tree)(implicit F: WeakTypeTag[F[?]]): Tree = {
     q"${c.prefix.tree}.lift[$F].withCoproductInstanceF($f)"
   }
 }

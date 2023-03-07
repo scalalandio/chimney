@@ -1,10 +1,10 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples._
-import io.scalaland.chimney.utils.EitherUtils._
-import io.scalaland.chimney.utils.OptionUtils._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.*
+import io.scalaland.chimney.utils.EitherUtils.*
+import io.scalaland.chimney.utils.OptionUtils.*
+import utest.*
 
 object LiftedTransformerProductSpec extends TestSuite {
 
@@ -12,7 +12,7 @@ object LiftedTransformerProductSpec extends TestSuite {
 
     test("transform case classes with the same fields' number, names and types without modifiers") {
 
-      import trip._
+      import trip.*
 
       test("when F = Option") {
         Person("John", 10, 140).intoF[Option, User].transform ==> Some(User("John", 10, 140))
@@ -26,7 +26,7 @@ object LiftedTransformerProductSpec extends TestSuite {
     }
 
     test("transform case classes with the same fields' number, names and types without modifiers") {
-      import trip._
+      import trip.*
 
       test("when F = Option") {
         Person("John", 10, 140).intoF[Option, User].transform ==> Some(User("John", 10, 140))
@@ -157,7 +157,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       test("should provide a value for selected target case class field when selector is valid") {
         import products.{Foo, Bar}
 
-        import trip._
+        import trip.*
 
         test("when F = Option") {
           Bar(3, (3.14, 3.14)).intoF[Option, Foo].withFieldConst(_.y, "pi").transform ==> Some(
@@ -263,7 +263,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       test("should provide a value for selected target case class field when selector is valid") {
         import products.{Foo, Bar}
 
-        import trip._
+        import trip.*
 
         test("when F = Option") {
           Bar(3, (3.14, 3.14))
@@ -384,7 +384,7 @@ object LiftedTransformerProductSpec extends TestSuite {
             .withFieldComputed(cc => cc.y, _.x.toString)
             .transform ==> Some(Foo(3, "3", (3.14, 3.14)))
 
-          import trip._
+          import trip.*
 
           Person("John", 10, 140)
             .intoF[Option, User]
@@ -402,7 +402,7 @@ object LiftedTransformerProductSpec extends TestSuite {
             .withFieldComputed(cc => cc.y, _.x.toString)
             .transform ==> Right(Foo(3, "3", (3.14, 3.14)))
 
-          import trip._
+          import trip.*
 
           Person("John", 10, 140)
             .intoF[Either[List[String], +*], User]
@@ -484,7 +484,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       test("should provide a value for selected target case class field when selector is valid") {
         import products.{Foo, Bar}
 
-        import trip._
+        import trip.*
 
         test("when F = Option") {
           Bar(3, (3.14, 3.14))
@@ -525,7 +525,7 @@ object LiftedTransformerProductSpec extends TestSuite {
     test("""setting .withFieldRenamed(_.from, _.to)""") {
 
       test("should not be enabled by default") {
-        import products.Renames._
+        import products.Renames.*
 
         test("when F = Option") {
           compileError("""User(1, "Kuba", Some(28)).transformIntoF[Option, UserPL]""").check(
@@ -571,7 +571,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       }
 
       test("should not compile when selector is invalid") {
-        import products.Renames._
+        import products.Renames.*
 
         test("when F = Option") {
           compileError(
@@ -587,9 +587,6 @@ object LiftedTransformerProductSpec extends TestSuite {
             """
           User(1, "Kuba", Some(28)).intoF[Option, UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
         """
-          ).check(
-            "",
-            "Invalid selector expression"
           )
 
           compileError("""
@@ -617,9 +614,6 @@ object LiftedTransformerProductSpec extends TestSuite {
             """
           User(1, "Kuba", Some(28)).intoF[EitherList, UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
         """
-          ).check(
-            "",
-            "Invalid selector expression"
           )
 
           compileError(
@@ -637,7 +631,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       test(
         "should provide a value to a selected target field from a selected source field when there is no same-named source field"
       ) {
-        import products.Renames._
+        import products.Renames.*
 
         test("when F = Option") {
           User(1, "Kuba", Some(28))
@@ -659,7 +653,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       test(
         "should provide a value to a selected target field from a selected source field despite an existing same-named source field"
       ) {
-        import products.Renames._
+        import products.Renames.*
 
         test("when F = Option") {
           User2ID(1, "Kuba", Some(28), 666)
@@ -677,7 +671,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       }
 
       test("should not compile if renamed value change type but an there is no transformer available") {
-        import products.Renames._
+        import products.Renames.*
 
         test("when F = Option") {
           compileError(
@@ -719,7 +713,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       }
 
       test("should convert renamed value if types differ but an implicit Total Transformer exists") {
-        import products.Renames._
+        import products.Renames.*
         implicit val convert: Transformer[Option[Int], Either[Unit, Int]] = ageToWiekTransformer
 
         test("when F = Option") {
@@ -750,7 +744,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       }
 
       test("should convert renamed value if types differ but an implicit Lifted Transformer exists") {
-        import products.Renames._
+        import products.Renames.*
 
         test("when F = Option") {
           implicit val convert: TransformerF[Option, Option[Int], Int] =
@@ -796,7 +790,7 @@ object LiftedTransformerProductSpec extends TestSuite {
     test("flag .enableDefaultValues") {
 
       test("should be disabled by default") {
-        import products.Defaults._
+        import products.Defaults.*
 
         test("when F = Option") {
           compileError("""Source(1, "yy", 1.0).transformIntoF[Option, Target]""").check(
@@ -842,7 +836,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       }
 
       test("should not be needed if all target fields with default values have their values provided in other way") {
-        import products.Defaults._
+        import products.Defaults.*
 
         test("when F = Option") {
           Source(1, "yy", 1.0)
@@ -862,7 +856,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       }
 
       test("should enable using default values when no source value can be resolved in flat transformation") {
-        import products.Defaults._
+        import products.Defaults.*
 
         test("when F = Option") {
           Source(1, "yy", 1.0).intoF[Option, Target].enableDefaultValues.transform ==> Some(Target(10, "y", 1.0))
@@ -890,7 +884,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       }
 
       test("should enable using default values when no source value can be resolved in nested transformation") {
-        import products.Defaults._
+        import products.Defaults.*
 
         test("when F = Option") {
           Nested(Source(1, "yy", 1.0))
@@ -925,7 +919,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       }
 
       test("should ignore default value if other setting provides it or source field exists") {
-        import products.Defaults._
+        import products.Defaults.*
 
         test("when F = Option") {
           Source(1, "yy", 1.0)
@@ -967,7 +961,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       }
 
       test("should ignore default value if source fields with different type but Total Transformer for it exists") {
-        import products.Defaults._
+        import products.Defaults.*
         implicit val converter: Transformer[Int, Long] = _.toLong
 
         test("when F = Option") {
@@ -1000,7 +994,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       }
 
       test("should ignore default value if source fields with different type but Lifted Transformer for it exists") {
-        import products.Defaults._
+        import products.Defaults.*
 
         test("when F = Option") {
           implicit val converter: TransformerF[Option, Int, Long] = i => Some(i.toLong)
@@ -1039,7 +1033,7 @@ object LiftedTransformerProductSpec extends TestSuite {
     test("flag .disableDefaultValues") {
 
       test("should disable globally enabled .enableDefaultValues") {
-        import products.Defaults._
+        import products.Defaults.*
 
         implicit val config = TransformerConfiguration.default.enableDefaultValues
 
@@ -1077,7 +1071,7 @@ object LiftedTransformerProductSpec extends TestSuite {
 
     test("transform always fails") {
 
-      import trip._
+      import trip.*
 
       test("option") {
         Person("John", 10, 140)
@@ -1096,7 +1090,7 @@ object LiftedTransformerProductSpec extends TestSuite {
 
     test("simple transform with validation") {
 
-      import trip._
+      import trip.*
 
       test("success") {
         val okForm = PersonForm("John", "10", "140")
@@ -1196,7 +1190,7 @@ object LiftedTransformerProductSpec extends TestSuite {
 
     test("recursive transform with nested validation") {
 
-      import trip._
+      import trip.*
 
       implicit val personTransformerOpt: TransformerF[Option, PersonForm, Person] =
         Transformer

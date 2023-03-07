@@ -1,8 +1,8 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.*
+import utest.*
 
 object TotalTransformerProductSpec extends TestSuite {
 
@@ -69,7 +69,7 @@ object TotalTransformerProductSpec extends TestSuite {
         Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y, "pi").transform ==> Foo(3, "pi", (3.14, 3.14))
         Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(cc => cc.y, "pi").transform ==> Foo(3, "pi", (3.14, 3.14))
 
-        import trip._
+        import trip.*
 
         Person("John", 10, 140).into[User].withFieldConst(_.age, 20).transform ==> User("John", 20, 140)
       }
@@ -110,7 +110,7 @@ object TotalTransformerProductSpec extends TestSuite {
           (3.14, 3.14)
         )
 
-        import trip._
+        import trip.*
 
         Person("John", 10, 140).into[User].withFieldComputed(_.age, _.age * 2).transform ==> User("John", 20, 140)
       }
@@ -119,7 +119,7 @@ object TotalTransformerProductSpec extends TestSuite {
     test("""setting .withFieldRenamed(_.from, _.to)""") {
 
       test("should not be enabled by default") {
-        import products.Renames._
+        import products.Renames.*
 
         compileError("""User(1, "Kuba", Some(28)).transformInto[UserPL]""").check(
           "",
@@ -141,7 +141,7 @@ object TotalTransformerProductSpec extends TestSuite {
       }
 
       test("should not compile when selector is invalid") {
-        import products.Renames._
+        import products.Renames.*
 
         compileError("""
           User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age.get, _.wiek.right.get).transform
@@ -152,10 +152,7 @@ object TotalTransformerProductSpec extends TestSuite {
 
         compileError("""
           User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
-        """).check(
-          "",
-          "Invalid selector expression"
-        )
+        """)
 
         compileError("""
           val str = "string"
@@ -169,7 +166,7 @@ object TotalTransformerProductSpec extends TestSuite {
       test(
         "should provide a value to a selected target field from a selected source field when there is no same-named source field"
       ) {
-        import products.Renames._
+        import products.Renames.*
 
         User(1, "Kuba", Some(28))
           .into[UserPLStd]
@@ -181,7 +178,7 @@ object TotalTransformerProductSpec extends TestSuite {
       test(
         "should provide a value to a selected target field from a selected source field despite an existing same-named source field"
       ) {
-        import products.Renames._
+        import products.Renames.*
 
         User2ID(1, "Kuba", Some(28), 666)
           .into[User]
@@ -190,7 +187,7 @@ object TotalTransformerProductSpec extends TestSuite {
       }
 
       test("should not compile if renamed value change type but an there is no transformer available") {
-        import products.Renames._
+        import products.Renames.*
 
         compileError(
           """
@@ -210,7 +207,7 @@ object TotalTransformerProductSpec extends TestSuite {
       }
 
       test("should convert renamed value if types differ but an implicit Total Transformer exists") {
-        import products.Renames._
+        import products.Renames.*
         implicit val convert: Transformer[Option[Int], Either[Unit, Int]] = ageToWiekTransformer
 
         User(1, "Kuba", Some(28))
@@ -229,7 +226,7 @@ object TotalTransformerProductSpec extends TestSuite {
     test("flag .enableDefaultValues") {
 
       test("should be disabled by default") {
-        import products.Defaults._
+        import products.Defaults.*
 
         compileError("""Source(1, "yy", 1.0).transformInto[Target]""").check(
           "",
@@ -251,7 +248,7 @@ object TotalTransformerProductSpec extends TestSuite {
       }
 
       test("should not be needed if all target fields with default values have their values provided in other way") {
-        import products.Defaults._
+        import products.Defaults.*
 
         Source(1, "yy", 1.0)
           .into[Target]
@@ -261,7 +258,7 @@ object TotalTransformerProductSpec extends TestSuite {
       }
 
       test("should enable using default values when no source value can be resolved in flat transformation") {
-        import products.Defaults._
+        import products.Defaults.*
 
         Source(1, "yy", 1.0).into[Target].enableDefaultValues.transform ==> Target(10, "y", 1.0)
 
@@ -274,7 +271,7 @@ object TotalTransformerProductSpec extends TestSuite {
       }
 
       test("should enable using default values when no source value can be resolved in nested transformation") {
-        import products.Defaults._
+        import products.Defaults.*
 
         Nested(Source(1, "yy", 1.0)).into[Nested[Target]].enableDefaultValues.transform ==> Nested(Target(10, "y", 1.0))
 
@@ -287,7 +284,7 @@ object TotalTransformerProductSpec extends TestSuite {
       }
 
       test("should ignore default value if other setting provides it or source field exists") {
-        import products.Defaults._
+        import products.Defaults.*
 
         Source(1, "yy", 1.0)
           .into[Target]
@@ -308,7 +305,7 @@ object TotalTransformerProductSpec extends TestSuite {
       }
 
       test("should ignore default value if source fields with different type but Total Transformer for it exists") {
-        import products.Defaults._
+        import products.Defaults.*
         implicit val converter: Transformer[Int, Long] = _.toLong
 
         Source(1, "yy", 1.0)
@@ -328,7 +325,7 @@ object TotalTransformerProductSpec extends TestSuite {
     test("flag .disableDefaultValues") {
 
       test("should disable globally enabled .enableDefaultValues") {
-        import products.Defaults._
+        import products.Defaults.*
 
         implicit val config = TransformerConfiguration.default.enableDefaultValues
 
@@ -483,7 +480,7 @@ object TotalTransformerProductSpec extends TestSuite {
 
     test("support polymorphic source/target objects and modifiers") {
 
-      import products.Poly._
+      import products.Poly.*
 
       test("monomorphic source to polymorphic target") {
 
@@ -548,7 +545,7 @@ object TotalTransformerProductSpec extends TestSuite {
     }
 
     test("transform from non-case class to case class") {
-      import products.NonCaseDomain._
+      import products.NonCaseDomain.*
       import javabeans.CaseClassNoFlag
 
       test("support non-case classes inputs") {

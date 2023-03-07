@@ -5,7 +5,7 @@ import _root_.cats.kernel.Semigroup
 import _root_.cats.Applicative
 import io.scalaland.chimney.partial
 
-import scala.collection.compat._
+import scala.collection.compat.*
 import language.implicitConversions
 
 /** @since 0.7.0 */
@@ -19,10 +19,10 @@ trait CatsPartialTransformerImplicits extends CatsPartialTransformerLowPriorityI
   /** @since 0.7.0 */
   implicit final val applicativePartialResult: Applicative[partial.Result] =
     new Applicative[partial.Result] {
-      override final def pure[A](x: A): partial.Result[A] =
+      final override def pure[A](x: A): partial.Result[A] =
         partial.Result.fromValue(x)
 
-      override final def ap[A, B](ff: partial.Result[A => B])(fa: partial.Result[A]): partial.Result[B] =
+      final override def ap[A, B](ff: partial.Result[A => B])(fa: partial.Result[A]): partial.Result[B] =
         partial.Result.map2[A => B, A, B](ff, fa, { case (f, a) => f(a) }, failFast = false)
     }
 
@@ -110,7 +110,7 @@ final class CatsValidatedNelErrorPartialTransformerOps[E <: partial.Error, T](
 
   /** @since 0.7.0 */
   def toPartialResult: partial.Result[T] =
-    validated.leftMap(errs => partial.Result.Errors(errs.head, errs.tail: _*)).toPartialResult
+    validated.leftMap(errs => partial.Result.Errors(errs.head, errs.tail*)).toPartialResult
 }
 
 /** @since 0.7.0 */
@@ -120,7 +120,7 @@ final class CatsValidatedNelStringPartialTransformerOps[E <: String, T](private 
   /** @since 0.7.0 */
   def toPartialResult: partial.Result[T] =
     validated
-      .leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail: _*))
+      .leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail*))
       .toPartialResult
 }
 
@@ -132,7 +132,7 @@ final class CatsValidatedNecErrorPartialTransformerOps[E <: partial.Error, T](
   /** @since 0.7.0 */
   def toPartialResult: partial.Result[T] =
     validated
-      .leftMap(errs => partial.Result.Errors(errs.head, errs.tail.toList: _*))
+      .leftMap(errs => partial.Result.Errors(errs.head, errs.tail.toList*))
       .toPartialResult
 }
 
@@ -143,6 +143,6 @@ final class CatsValidatedNecStringPartialTransformerOps[E <: String, T](private 
   /** @since 0.7.0 */
   def toPartialResult: partial.Result[T] =
     validated
-      .leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail.toList: _*))
+      .leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail.toList*))
       .toPartialResult
 }

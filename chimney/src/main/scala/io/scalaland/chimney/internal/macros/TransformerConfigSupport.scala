@@ -10,7 +10,7 @@ trait TransformerConfigSupport extends MacroUtils {
 
   val c: blackbox.Context
 
-  import c.universe._
+  import c.universe.*
 
   def readConfig[C: WeakTypeTag, InstanceFlags: WeakTypeTag, ScopeFlags: WeakTypeTag]: TransformerConfig = {
     val scopeFlags = captureTransformerFlags(weakTypeOf[ScopeFlags])
@@ -50,7 +50,7 @@ trait TransformerConfigSupport extends MacroUtils {
     case class PartialTransformer(failFastTermName: TermName = freshTermName("failFast")) extends DerivationTarget {
       def failFastTree: Tree = q"$failFastTermName"
       def targetType(toTpe: Type): Type =
-        typeOf[partial.Result[_]].typeConstructor.applyTypeArg(toTpe)
+        typeOf[partial.Result[?]].typeConstructor.applyTypeArg(toTpe)
       // $COVERAGE-OFF$
       def isLifted = false
       def isPartial = true
@@ -108,47 +108,50 @@ trait TransformerConfigSupport extends MacroUtils {
     }
 
     def coproductInstance(instanceType: Type, targetType: Type, runtimeDataIdx: Int): TransformerConfig = {
-      copy(coproductInstanceOverrides = coproductInstanceOverrides + ((instanceType.typeSymbol, targetType) -> runtimeDataIdx)
+      copy(coproductInstanceOverrides =
+        coproductInstanceOverrides + ((instanceType.typeSymbol, targetType) -> runtimeDataIdx)
       )
     }
 
     def coproductInstanceF(instanceType: Type, targetType: Type, runtimeDataIdx: Int): TransformerConfig = {
-      copy(coproductInstanceFOverrides = coproductInstanceFOverrides + ((instanceType.typeSymbol, targetType) -> runtimeDataIdx)
+      copy(coproductInstanceFOverrides =
+        coproductInstanceFOverrides + ((instanceType.typeSymbol, targetType) -> runtimeDataIdx)
       )
     }
 
     def coproductInstancePartial(instanceType: Type, targetType: Type, runtimeDataIdx: Int): TransformerConfig = {
-      copy(coproductInstancesPartialOverrides = coproductInstancesPartialOverrides + ((
-        instanceType.typeSymbol,
-        targetType
-      ) -> runtimeDataIdx)
+      copy(coproductInstancesPartialOverrides =
+        coproductInstancesPartialOverrides + ((
+          instanceType.typeSymbol,
+          targetType
+        ) -> runtimeDataIdx)
       )
     }
   }
 
   object CfgTpes {
 
-    import io.scalaland.chimney.internal.TransformerCfg._
+    import io.scalaland.chimney.internal.TransformerCfg.*
 
     // We cannot get typeOf[HigherKind] directly, but we can get the typeOf[ExistentialType]
     // and extract type constructor out of it.
 
     val emptyT: Type = typeOf[Empty]
-    val fieldConstT: Type = typeOf[FieldConst[_, _]].typeConstructor
-    val fieldConstPartialT: Type = typeOf[FieldConstPartial[_, _]].typeConstructor
-    val fieldConstFT: Type = typeOf[FieldConstF[_, _]].typeConstructor
-    val fieldComputedT: Type = typeOf[FieldComputed[_, _]].typeConstructor
-    val fieldComputedPartialT: Type = typeOf[FieldComputedPartial[_, _]].typeConstructor
-    val fieldComputedFT: Type = typeOf[FieldComputedF[_, _]].typeConstructor
-    val fieldRelabelledT: Type = typeOf[FieldRelabelled[_, _, _]].typeConstructor
-    val coproductInstanceT: Type = typeOf[CoproductInstance[_, _, _]].typeConstructor
-    val coproductInstancePartialT: Type = typeOf[CoproductInstancePartial[_, _, _]].typeConstructor
-    val coproductInstanceFT: Type = typeOf[CoproductInstanceF[_, _, _]].typeConstructor
-    val wrapperTypeT: Type = typeOf[WrapperType[F, _] forSome { type F[+_] }].typeConstructor
+    val fieldConstT: Type = typeOf[FieldConst[?, ?]].typeConstructor
+    val fieldConstPartialT: Type = typeOf[FieldConstPartial[?, ?]].typeConstructor
+    val fieldConstFT: Type = typeOf[FieldConstF[?, ?]].typeConstructor
+    val fieldComputedT: Type = typeOf[FieldComputed[?, ?]].typeConstructor
+    val fieldComputedPartialT: Type = typeOf[FieldComputedPartial[?, ?]].typeConstructor
+    val fieldComputedFT: Type = typeOf[FieldComputedF[?, ?]].typeConstructor
+    val fieldRelabelledT: Type = typeOf[FieldRelabelled[?, ?, ?]].typeConstructor
+    val coproductInstanceT: Type = typeOf[CoproductInstance[?, ?, ?]].typeConstructor
+    val coproductInstancePartialT: Type = typeOf[CoproductInstancePartial[?, ?, ?]].typeConstructor
+    val coproductInstanceFT: Type = typeOf[CoproductInstanceF[?, ?, ?]].typeConstructor
+    val wrapperTypeT: Type = typeOf[WrapperType[F, ?] forSome { type F[+_] }].typeConstructor
   }
 
   def extractWrapperType(rawCfgTpe: Type): Type = {
-    import CfgTpes._
+    import CfgTpes.*
     val cfgTpe = rawCfgTpe.dealias
     if (cfgTpe =:= emptyT) {
       // $COVERAGE-OFF$
@@ -168,7 +171,7 @@ trait TransformerConfigSupport extends MacroUtils {
 
   private def captureTransformerConfig(rawCfgTpe: Type, runtimeDataIdx: Int): TransformerConfig = {
 
-    import CfgTpes._
+    import CfgTpes.*
 
     val cfgTpe = rawCfgTpe.dealias
 
@@ -267,11 +270,11 @@ trait TransformerConfigSupport extends MacroUtils {
 
   object FlagsTpes {
 
-    import io.scalaland.chimney.internal.TransformerFlags._
+    import io.scalaland.chimney.internal.TransformerFlags.*
 
     val defaultT: Type = typeOf[Default]
-    val enableT: Type = typeOf[Enable[_, _]].typeConstructor
-    val disableT: Type = typeOf[Disable[_, _]].typeConstructor
+    val enableT: Type = typeOf[Enable[?, ?]].typeConstructor
+    val disableT: Type = typeOf[Disable[?, ?]].typeConstructor
 
     val methodAccessorsT: Type = typeOf[MethodAccessors]
     val defaultValuesT: Type = typeOf[DefaultValues]
@@ -279,7 +282,7 @@ trait TransformerConfigSupport extends MacroUtils {
     val beanGettersT: Type = typeOf[BeanGetters]
     val optionDefaultsToNoneT: Type = typeOf[OptionDefaultsToNone]
     val unsafeOptionT: Type = typeOf[UnsafeOption]
-    val implicitConflictResolutionT: Type = typeOf[ImplicitConflictResolution[_]].typeConstructor
+    val implicitConflictResolutionT: Type = typeOf[ImplicitConflictResolution[?]].typeConstructor
   }
 
   def captureTransformerFlags(
@@ -287,7 +290,7 @@ trait TransformerConfigSupport extends MacroUtils {
       defaultFlags: TransformerFlags = TransformerFlags()
   ): TransformerFlags = {
 
-    import FlagsTpes._
+    import FlagsTpes.*
 
     val flagsTpe = rawFlagsTpe.dealias
 

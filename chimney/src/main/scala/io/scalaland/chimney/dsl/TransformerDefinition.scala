@@ -1,8 +1,8 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Transformer
-import io.scalaland.chimney.internal.TransformerCfg._
-import io.scalaland.chimney.internal._
+import io.scalaland.chimney.internal.TransformerCfg.*
+import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.macros.dsl.{TransformerBlackboxMacros, TransformerDefinitionWhiteboxMacros}
 
 import scala.language.experimental.macros
@@ -58,9 +58,9 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     * @since 0.4.0
     */
-  def withFieldConst[T, U](selector: To => T, value: U)(
-      implicit ev: U <:< T
-  ): TransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
+  def withFieldConst[T, U](selector: To => T, value: U)(implicit
+      ev: U <:< T
+  ): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     macro TransformerDefinitionWhiteboxMacros.withFieldConstImpl[C]
 
   /** Use wrapped `value` provided here for field picked using `selector`.
@@ -81,7 +81,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   def withFieldConstF[F[+_], T, U](
       selector: To => T,
       value: F[U]
-  )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
+  )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, ? <: TransformerCfg, Flags] =
     macro TransformerDefinitionWhiteboxMacros.withFieldConstFImpl[F]
 
   /** Use function `f` to compute value of field picked using `selector`.
@@ -101,7 +101,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   def withFieldComputed[T, U](
       selector: To => T,
       f: From => U
-  )(implicit ev: U <:< T): TransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
+  )(implicit ev: U <:< T): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     macro TransformerDefinitionWhiteboxMacros.withFieldComputedImpl[C]
 
   /** Use function `f` to compute wrapped value of field picked using `selector`.
@@ -122,7 +122,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   def withFieldComputedF[F[+_], T, U](
       selector: To => T,
       f: From => F[U]
-  )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
+  )(implicit ev: U <:< T): TransformerFDefinition[F, From, To, ? <: TransformerCfg, Flags] =
     macro TransformerDefinitionWhiteboxMacros.withFieldComputedFImpl[F]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
@@ -142,7 +142,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   def withFieldRenamed[T, U](
       selectorFrom: From => T,
       selectorTo: To => U
-  ): TransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
+  ): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     macro TransformerDefinitionWhiteboxMacros.withFieldRenamedImpl[C]
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
@@ -160,7 +160,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     *
     * @since 0.4.0
     */
-  def withCoproductInstance[Inst](f: Inst => To): TransformerDefinition[From, To, _ <: TransformerCfg, Flags] =
+  def withCoproductInstance[Inst](f: Inst => To): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[To, Inst, C]
 
   /** Use `f` to calculate the (missing) wrapped coproduct instance when mapping one coproduct into another
@@ -181,7 +181,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   @deprecated("Lifted transformers are deprecated. Consider using PartialTransformer.", since = "Chimney 0.7.0")
   def withCoproductInstanceF[F[+_], Inst](
       f: Inst => F[To]
-  ): TransformerFDefinition[F, From, To, _ <: TransformerCfg, Flags] =
+  ): TransformerFDefinition[F, From, To, ? <: TransformerCfg, Flags] =
     macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceFImpl[F]
 
   /** Build Transformer using current configuration.
@@ -193,8 +193,8 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     *
     * @since 0.4.0
     */
-  def buildTransformer[ScopeFlags <: TransformerFlags](
-      implicit tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
+  def buildTransformer[ScopeFlags <: TransformerFlags](implicit
+      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
   ): Transformer[From, To] =
     macro TransformerBlackboxMacros.buildTransformerImpl[From, To, C, Flags, ScopeFlags]
 

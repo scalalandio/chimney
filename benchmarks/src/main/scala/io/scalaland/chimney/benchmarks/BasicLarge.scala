@@ -1,10 +1,10 @@
 package io.scalaland.chimney.benchmarks
 
 import org.openjdk.jmh.annotations.Benchmark
-import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.dsl.*
 
 class BasicLarge extends CommonBenchmarkSettings {
-  import fixtures._
+  import fixtures.*
 
   @Benchmark
   def largeChimneyInto: LargeOutput =

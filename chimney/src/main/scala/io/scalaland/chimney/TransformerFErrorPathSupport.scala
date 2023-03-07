@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import scala.collection.compat._
+import scala.collection.compat.*
 
 /** Type class adding support or error path for lifted transformers.
   *
@@ -34,8 +34,8 @@ trait TransformerFErrorPathSupport[F[+_]] {
 object TransformerFErrorPathSupport {
 
   /** @since 0.6.1 */
-  implicit def TransformerFErrorPathEitherSupport[M, C[X] <: IterableOnce[X]](
-      implicit ef: Factory[TransformationError[M], C[TransformationError[M]]]
+  implicit def TransformerFErrorPathEitherSupport[M, C[X] <: IterableOnce[X]](implicit
+      ef: Factory[TransformationError[M], C[TransformationError[M]]]
   ): TransformerFErrorPathSupport[Either[C[TransformationError[M]], +*]] =
     new TransformerFErrorPathSupport[Either[C[TransformationError[M]], +*]] {
       def addPath[A](

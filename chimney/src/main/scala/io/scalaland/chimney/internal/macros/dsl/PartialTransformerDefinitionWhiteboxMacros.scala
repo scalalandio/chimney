@@ -10,8 +10,8 @@ class PartialTransformerDefinitionWhiteboxMacros(val c: whitebox.Context)
     extends DslMacroUtils
     with TransformerConfigSupport {
 
-  import CfgTpes._
-  import c.universe._
+  import CfgTpes.*
+  import c.universe.*
 
   def withFieldConstImpl[C: WeakTypeTag](selector: Tree, value: Tree)(@unused ev: Tree): Tree = {
     c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, value, fieldConstT)

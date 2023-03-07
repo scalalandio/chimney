@@ -5,13 +5,13 @@ import io.scalaland.chimney.internal.utils.AssertUtils
 import io.scalaland.chimney.internal.utils.DslMacroUtils
 
 import scala.reflect.macros.blackbox
-import scala.collection.compat._
+import scala.collection.compat.*
 
 trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils with GenTrees {
 
   val c: blackbox.Context
 
-  import c.universe._
+  import c.universe.*
 
   def mkNewClass(classTpe: Type, args: Iterable[Tree]): Tree = {
     q"new $classTpe(..$args)"
@@ -22,10 +22,9 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
     val fn = freshTermName(classTpe)
 
     val objCreation = q"val $fn = new $classTpe"
-    val setterInvocations = argsMapping.map {
-      case (target, argTree) =>
-        val setterName = TermName("set" + target.name.capitalize)
-        q"$fn.$setterName($argTree)"
+    val setterInvocations = argsMapping.map { case (target, argTree) =>
+      val setterName = TermName("set" + target.name.capitalize)
+      q"$fn.$setterName($argTree)"
     }.toSeq
 
     q"{..${objCreation +: setterInvocations}; $fn}"
@@ -73,8 +72,8 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
   )(
       mkTargetValueTree: Tree => Tree
   ): Tree = {
-    mkTransformerBodyTree(To, Seq(target), Seq(transformerBodyTree), derivationTarget) {
-      case Seq(innerTree) => mkTargetValueTree(innerTree)
+    mkTransformerBodyTree(To, Seq(target), Seq(transformerBodyTree), derivationTarget) { case Seq(innerTree) =>
+      mkTargetValueTree(innerTree)
     }
   }
 
@@ -216,19 +215,19 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
             val partialTreesArray = Trees.array(partialTrees)
             val arrayFn = freshTermName("array")
             val argIndices = partialTargets.indices
-            val patRefArgsMap = (partialTargets zip argIndices).map {
-              case (target, argIndex) => target -> q"$arrayFn.apply($argIndex).asInstanceOf[${target.tpe}]"
+            val patRefArgsMap = (partialTargets zip argIndices).map { case (target, argIndex) =>
+              target -> q"$arrayFn.apply($argIndex).asInstanceOf[${target.tpe}]"
             }.toMap
             val argsMap = totalArgsMap ++ patRefArgsMap
             val updatedArgs = targets.map(argsMap)
 
             q"""
                ${Trees.PartialResult.sequence(
-              Trees.arrayAny,
-              Trees.any,
-              q"${partialTreesArray}.iterator",
-              pt.failFastTree
-            )}
+                Trees.arrayAny,
+                Trees.any,
+                q"${partialTreesArray}.iterator",
+                pt.failFastTree
+              )}
                .map { ($arrayFn: ${Trees.arrayAny}) => ${mkTargetValueTree(updatedArgs)} }
              """
           }
@@ -261,7 +260,7 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
           val patternF = bindTreesF.reduceRight[Tree]((param, tree) => pq"(..${List(param, tree)})")
 
           val patRefArgsMap = (liftedTargets zip argNames).map { case (target, argName) => target -> q"$argName" }.toMap
-          val pureArgsMap = totalArgs.map { case (target, bt)                           => target -> bt.tree }.toMap
+          val pureArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
           val argsMap = pureArgsMap ++ patRefArgsMap
 
           val updatedArgs = targets.map(argsMap)

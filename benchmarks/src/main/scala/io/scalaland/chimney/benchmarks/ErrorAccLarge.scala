@@ -1,10 +1,10 @@
 package io.scalaland.chimney.benchmarks
 
-import io.scalaland.chimney.{TransformationError, partial}
+import io.scalaland.chimney.{partial, TransformationError}
 import org.openjdk.jmh.annotations.Benchmark
 
 class ErrorAccLarge extends CommonBenchmarkSettings {
-  import fixtures._
+  import fixtures.*
 
   type M[+A] = Either[Vector[TransformationError[String]], A]
 

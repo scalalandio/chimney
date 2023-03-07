@@ -1,16 +1,16 @@
 package io.scalaland.chimney.cats
 
 import _root_.cats.data.{Chain, NonEmptyChain, NonEmptyList, Validated}
-import _root_.cats.syntax.validated._
-import _root_.cats.syntax.semigroup._
-import _root_.cats.syntax.semigroupal._
+import _root_.cats.syntax.validated.*
+import _root_.cats.syntax.semigroup.*
+import _root_.cats.syntax.semigroupal.*
 import cats.Semigroupal
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.PartialTransformer
 import io.scalaland.chimney.partial.{Error, PathElement}
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples.trip._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.trip.*
+import utest.*
 
 object PartialTransformerToCatsDataConversionSpec extends TestSuite {
 

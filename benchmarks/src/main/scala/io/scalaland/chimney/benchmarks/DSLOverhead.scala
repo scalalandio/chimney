@@ -1,11 +1,11 @@
 package io.scalaland.chimney.benchmarks
 
 import org.openjdk.jmh.annotations.Benchmark
-import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.Transformer
 
 class DSLOverhead extends CommonBenchmarkSettings {
-  import fixtures._
+  import fixtures.*
 
   @Benchmark
   def largeRenameChimneyInto: LargeRenamedOutput =
@@ -109,7 +109,7 @@ class DSLOverhead extends CommonBenchmarkSettings {
   @Benchmark
   def largeConstByHand: LargeOutput = doLargeByHandConst(samples.largeSample)
 
-  private final val renameLargeTransformer: Transformer[Large, LargeRenamedOutput] =
+  final private val renameLargeTransformer: Transformer[Large, LargeRenamedOutput] =
     Transformer
       .define[Large, LargeRenamedOutput]
       .withFieldRenamed(_.a, _.a$)
@@ -136,7 +136,7 @@ class DSLOverhead extends CommonBenchmarkSettings {
       .withFieldRenamed(_.v, _.v$)
       .buildTransformer
 
-  private final val computeLargeTransformer: Transformer[Large, LargeOutput] =
+  final private val computeLargeTransformer: Transformer[Large, LargeOutput] =
     Transformer
       .define[Large, LargeOutput]
       .withFieldComputed(_.a, _.a * 2)
@@ -163,7 +163,7 @@ class DSLOverhead extends CommonBenchmarkSettings {
       .withFieldComputed(_.v, _.v * 2)
       .buildTransformer
 
-  private final val constLargeTransformer: Transformer[Large, LargeOutput] =
+  final private val constLargeTransformer: Transformer[Large, LargeOutput] =
     Transformer
       .define[Large, LargeOutput]
       .withFieldConst(_.a, 834)

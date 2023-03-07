@@ -1,9 +1,9 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples.trip._
-import io.scalaland.chimney.utils.OptionUtils._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.trip.*
+import io.scalaland.chimney.utils.OptionUtils.*
+import utest.*
 
 import scala.annotation.unused
 import scala.collection.immutable.Queue

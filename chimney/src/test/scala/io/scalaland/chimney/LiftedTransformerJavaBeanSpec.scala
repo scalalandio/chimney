@@ -1,8 +1,8 @@
 package io.scalaland.chimney
 
-import utest._
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples.javabeans._
+import utest.*
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.javabeans.*
 
 object LiftedTransformerJavaBeanSpec extends TestSuite {
 
@@ -536,7 +536,9 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
 
     test("""flag .enableMethodAccessors""") {
 
-      test("should enable reading from def methods other than case class vals and cooperate with writing to Java Beans") {
+      test(
+        "should enable reading from def methods other than case class vals and cooperate with writing to Java Beans"
+      ) {
 
         val expected = new JavaBeanTarget
         expected.setId("100")

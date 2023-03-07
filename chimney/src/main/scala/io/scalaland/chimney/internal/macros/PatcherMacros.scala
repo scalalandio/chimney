@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.{TransformerDerivationError, PatcherConfiguration}
+import io.scalaland.chimney.internal.{PatcherConfiguration, TransformerDerivationError}
 
 import scala.reflect.macros.blackbox
 
@@ -8,7 +8,7 @@ trait PatcherMacros extends PatcherConfiguration with TransformerMacros with Gen
 
   val c: blackbox.Context
 
-  import c.universe._
+  import c.universe.*
 
   def expandPatch[T: WeakTypeTag, Patch: WeakTypeTag, C: WeakTypeTag]: Tree = {
     val C = weakTypeOf[C]
@@ -95,9 +95,8 @@ trait PatcherMacros extends PatcherConfiguration with TransformerMacros with Gen
               patchParamTpe,
               tParamTpe
             ).map { transformerTree =>
-                pParam.name -> q"$transformerTree.orElse($entityField)"
-              }
-              .left
+              pParam.name -> q"$transformerTree.orElse($entityField)"
+            }.left
               .map(TransformerDerivationError.printErrors)
           }
         }
@@ -109,18 +108,16 @@ trait PatcherMacros extends PatcherConfiguration with TransformerMacros with Gen
             patchParamTpe,
             tParam.resultTypeIn(T)
           ).map { transformerTree =>
-              pParam.name -> transformerTree
-            }
-            .left
+            pParam.name -> transformerTree
+          }.left
             .flatMap { errors =>
               if (isOption(patchParamTpe)) {
                 expandTransformerTree(q"$patchField.get", TransformerConfig())(
                   patchParamTpe.typeArgs.head,
                   tParam.resultTypeIn(T)
                 ).map { innerTransformerTree =>
-                    pParam.name -> q"if($patchField.isDefined) { $innerTransformerTree } else { $entityField }"
-                  }
-                  .left
+                  pParam.name -> q"if($patchField.isDefined) { $innerTransformerTree } else { $entityField }"
+                }.left
                   .map(errors2 => TransformerDerivationError.printErrors(errors ++ errors2))
               } else {
                 Left(TransformerDerivationError.printErrors(errors))

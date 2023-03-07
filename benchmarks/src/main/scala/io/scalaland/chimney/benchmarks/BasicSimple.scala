@@ -1,10 +1,10 @@
 package io.scalaland.chimney.benchmarks
 
-import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.dsl.*
 import org.openjdk.jmh.annotations.Benchmark
 
 class BasicSimple extends CommonBenchmarkSettings {
-  import fixtures._
+  import fixtures.*
 
   @Benchmark
   def simpleChimneyInto: SimpleOutput =

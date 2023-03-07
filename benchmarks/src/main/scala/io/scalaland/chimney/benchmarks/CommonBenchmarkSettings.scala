@@ -1,7 +1,7 @@
 package io.scalaland.chimney.benchmarks
 
 import java.util.concurrent.TimeUnit
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 
 // this code is ~stolen~ inspired by jsoniter-scala's benchmarks by Andriy Plokhotnyuk
 // kudos and thanks, Andriy!

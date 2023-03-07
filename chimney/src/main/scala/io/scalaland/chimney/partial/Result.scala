@@ -2,7 +2,7 @@ package io.scalaland.chimney.partial
 
 import io.scalaland.chimney.internal.NonEmptyErrorsChain
 
-import scala.collection.compat._
+import scala.collection.compat.*
 import scala.util.{Failure, Success, Try}
 
 /** Data type representing either successfully computed value or collection of path-annotated errors.
@@ -92,7 +92,7 @@ sealed trait Result[+T] {
     * @since 0.7.0
     */
   final def prependErrorPath(pathElement: => PathElement): this.type = this match {
-    case _: Result.Value[_] => this
+    case _: Result.Value[?] => this
     case e: Result.Errors   => e.prependPath(pathElement).asInstanceOf[this.type]
   }
 }
@@ -135,7 +135,7 @@ object Result {
       * @since 0.7.0
       */
     final def apply(error: Error, errors: Error*): Errors =
-      apply(NonEmptyErrorsChain.from(error, errors: _*))
+      apply(NonEmptyErrorsChain.from(error, errors*))
 
     /** Creates failed result from a single error.
       *
@@ -166,7 +166,7 @@ object Result {
       * @since 0.7.0
       */
     final def fromStrings(message: String, messages: String*): Errors =
-      apply(Error.fromString(message), messages.map(Error.fromString): _*)
+      apply(Error.fromString(message), messages.map(Error.fromString)*)
 
     /** Creates new failed result containing all errors of 2 existing failed results.
       *
@@ -248,7 +248,7 @@ object Result {
     *
     * @since 0.7.0
     */
-  final def fromErrors[T](error: Error, errors: Error*): Result[T] = Errors(error, errors: _*)
+  final def fromErrors[T](error: Error, errors: Error*): Result[T] = Errors(error, errors*)
 
   /** Creates failed result from an error message.
     *
@@ -270,7 +270,7 @@ object Result {
     * @since 0.7.0
     */
   final def fromErrorStrings[T](message: String, messages: String*): Result[T] =
-    Errors.fromStrings(message, messages: _*)
+    Errors.fromStrings(message, messages*)
 
   /** Creates failed result from argument for which PartialFunction was not defined.
     *
@@ -414,8 +414,8 @@ object Result {
     *
     * @since 0.7.0
     */
-  final def traverse[M, A, B](it: Iterator[A], f: A => Result[B], failFast: Boolean)(
-      implicit fac: Factory[B, M]
+  final def traverse[M, A, B](it: Iterator[A], f: A => Result[B], failFast: Boolean)(implicit
+      fac: Factory[B, M]
   ): Result[M] = {
     val bs = fac.newBuilder
     // possible to call only on 2.13+
@@ -489,8 +489,8 @@ object Result {
       (resultA, resultB) match {
         case (Value(a), Value(b))           => Value(f(a, b))
         case (Errors(errs1), Errors(errs2)) => Errors(errs1 ++ errs2)
-        case (errs1: Errors, _: Value[_])   => errs1
-        case (_: Value[_], errs2: Errors)   => errs2
+        case (errs1: Errors, _: Value[?])   => errs1
+        case (_: Value[?], errs2: Errors)   => errs2
       }
     }
 

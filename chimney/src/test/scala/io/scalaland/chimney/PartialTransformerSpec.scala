@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import utest._
+import utest.*
 
 object PartialTransformerSpec extends TestSuite {
 

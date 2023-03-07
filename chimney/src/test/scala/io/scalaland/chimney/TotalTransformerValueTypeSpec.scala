@@ -1,8 +1,8 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples.valuetypes._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.valuetypes.*
+import utest.*
 
 object TotalTransformerValueTypeSpec extends TestSuite {
 

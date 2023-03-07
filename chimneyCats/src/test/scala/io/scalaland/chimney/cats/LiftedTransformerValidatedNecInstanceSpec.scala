@@ -2,12 +2,12 @@ package io.scalaland.chimney.cats
 
 import cats.data.{NonEmptyChain, Validated, ValidatedNec}
 import io.scalaland.chimney.{Transformer, TransformerF}
-import io.scalaland.chimney.cats.utils.ValidatedUtils._
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples._
-import io.scalaland.chimney.examples.trip._
-import io.scalaland.chimney.utils.OptionUtils._
-import utest._
+import io.scalaland.chimney.cats.utils.ValidatedUtils.*
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.*
+import io.scalaland.chimney.examples.trip.*
+import io.scalaland.chimney.utils.OptionUtils.*
+import utest.*
 
 import scala.collection.immutable.Queue
 import scala.collection.mutable.ArrayBuffer
@@ -376,7 +376,7 @@ object LiftedTransformerValidatedNecInstanceSpec extends TestSuite {
     }
 
     test("wrapped sealed families") {
-      import numbers._
+      import numbers.*
 
       test("pure inner transformer") {
 

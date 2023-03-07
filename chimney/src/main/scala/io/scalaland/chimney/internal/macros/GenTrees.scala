@@ -8,7 +8,7 @@ trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
 
   val c: blackbox.Context
 
-  import c.universe._
+  import c.universe.*
 
   object Trees {
     val any: Tree = tq"_root_.scala.Any"

@@ -1,9 +1,9 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.examples._
-import io.scalaland.chimney.utils.OptionUtils._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.examples.*
+import io.scalaland.chimney.utils.OptionUtils.*
+import utest.*
 
 object PartialTransformerSumTypeSpec extends TestSuite {
 
@@ -46,7 +46,7 @@ object PartialTransformerSumTypeSpec extends TestSuite {
         Some(shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0)))
 
       implicit val intToStringTransformer: Transformer[Int, String] = (_: Int).toString
-      import numbers._, ScalesPartialTransformer.shortToLongTotalInner
+      import numbers.*, ScalesPartialTransformer.shortToLongTotalInner
 
       (short.Zero: short.NumScale[Int, Nothing])
         .transformIntoPartial[long.NumScale[String]]
@@ -79,7 +79,7 @@ object PartialTransformerSumTypeSpec extends TestSuite {
 
       implicit val intParserOpt: PartialTransformer[String, Int] =
         PartialTransformer(_.parseInt.toPartialResult)
-      import numbers._, ScalesPartialTransformer.shortToLongPartialInner
+      import numbers.*, ScalesPartialTransformer.shortToLongPartialInner
 
       (short.Zero: short.NumScale[String, Nothing])
         .transformIntoPartial[long.NumScale[Int]]

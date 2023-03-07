@@ -1,12 +1,12 @@
 package io.scalaland.chimney.benchmarks
 
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.*
 import org.openjdk.jmh.annotations.Benchmark
 
 class ErrorAccSimple extends CommonBenchmarkSettings {
-  import fixtures._
-  import samples.validation._
+  import fixtures.*
+  import samples.validation.*
 
   type M[+A] = Either[Vector[TransformationError[String]], A]
 

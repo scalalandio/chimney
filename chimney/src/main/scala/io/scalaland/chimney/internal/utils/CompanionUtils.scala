@@ -6,8 +6,8 @@ trait CompanionUtils {
 
   val c: blackbox.Context
 
-  import c.internal._
-  import c.universe._
+  import c.internal.*
+  import c.universe.*
 
   // Borrowed from jsoniter-scala: https://github.com/plokhotnyuk/jsoniter-scala/blob/b14dbe51d3ae6752e5a9f90f1f3caf5bceb5e4b0/jsoniter-scala-macros/shared/src/main/scala/com/github/plokhotnyuk/jsoniter_scala/macros/JsonCodecMaker.scala#L462
   def companionSymbol(tpe: Type): Symbol = {

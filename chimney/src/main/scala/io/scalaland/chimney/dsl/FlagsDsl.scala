@@ -1,7 +1,7 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.TransformerFlags
-import io.scalaland.chimney.internal.TransformerFlags._
+import io.scalaland.chimney.internal.TransformerFlags.*
 
 import scala.annotation.unused
 
@@ -155,8 +155,8 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * @since 0.7.0
     */
-  def disableImplicitConflictResolution: UpdateFlag[Disable[ImplicitConflictResolution[_], Flags]] =
-    disableFlag[ImplicitConflictResolution[_]]
+  def disableImplicitConflictResolution: UpdateFlag[Disable[ImplicitConflictResolution[?], Flags]] =
+    disableFlag[ImplicitConflictResolution[?]]
 
   private def enableFlag[F <: TransformerFlags.Flag]: UpdateFlag[Enable[F, Flags]] =
     this.asInstanceOf[UpdateFlag[Enable[F, Flags]]]
