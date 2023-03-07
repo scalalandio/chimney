@@ -689,6 +689,25 @@ object IssuesSpec extends TestSuite {
         )
       }
     }
+
+    test("fix issue #228") {
+      import Issue228.*
+
+      implicit val sourceToTarget = PartialTransformer
+        .define[Source, Target]
+        .withCoproductInstancePartial[Source.Empty.type](_ => partial.Result.fromErrorString("Error"))
+        .buildTransformer
+
+      (Source.Value1(100): Source).transformIntoPartial[Target].asEither ==> Right(Target.Value1(100))
+
+      (Source.Empty: Source)
+        .transformIntoPartial[Target]
+        .asEither
+        .left
+        .map(_.errors.iterator.map(_.message.asString).mkString) ==> Left(
+        "Error"
+      )
+    }
   }
 }
 
@@ -751,5 +770,18 @@ object Issue210 {
   object B {
     case object Foo extends B
     case object Bar extends B
+  }
+}
+
+object Issue228 {
+  sealed trait Source
+  object Source {
+    case class Value1(v: Int) extends Source
+    case object Empty extends Source
+  }
+
+  sealed trait Target
+  object Target {
+    case class Value1(v: Int) extends Target
   }
 }
