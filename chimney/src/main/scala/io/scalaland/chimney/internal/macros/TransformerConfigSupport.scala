@@ -179,7 +179,6 @@ trait TransformerConfigSupport extends MacroUtils {
       beanSetters: Boolean = false,
       beanGetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,
-      unsafeOption: Boolean = false,
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None
   ) {
     def setBoolFlag(flagTpe: Type, value: Boolean): TransformerFlags = {
@@ -193,8 +192,6 @@ trait TransformerConfigSupport extends MacroUtils {
         copy(beanGetters = value)
       } else if (flagTpe =:= FlagsTpes.optionDefaultsToNoneT) {
         copy(optionDefaultsToNone = value)
-      } else if (flagTpe =:= FlagsTpes.unsafeOptionT) {
-        copy(unsafeOption = value)
       } else {
         // $COVERAGE-OFF$
         c.abort(c.enclosingPosition, s"Invalid transformer flag type: $flagTpe!")
@@ -220,7 +217,6 @@ trait TransformerConfigSupport extends MacroUtils {
     val beanSettersT: Type = typeOf[BeanSetters]
     val beanGettersT: Type = typeOf[BeanGetters]
     val optionDefaultsToNoneT: Type = typeOf[OptionDefaultsToNone]
-    val unsafeOptionT: Type = typeOf[UnsafeOption]
     val implicitConflictResolutionT: Type = typeOf[ImplicitConflictResolution[?]].typeConstructor
   }
 
