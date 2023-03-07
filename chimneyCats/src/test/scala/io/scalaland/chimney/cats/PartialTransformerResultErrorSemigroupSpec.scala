@@ -1,8 +1,8 @@
 package io.scalaland.chimney.cats
 
-import _root_.cats.syntax.semigroup._
-import io.scalaland.chimney.{PartialTransformer, partial}
-import utest._
+import _root_.cats.syntax.semigroup.*
+import io.scalaland.chimney.{partial, PartialTransformer}
+import utest.*
 
 object PartialTransformerResultErrorSemigroupSpec extends TestSuite {
 

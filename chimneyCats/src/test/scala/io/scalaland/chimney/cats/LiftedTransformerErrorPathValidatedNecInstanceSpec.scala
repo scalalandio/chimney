@@ -2,9 +2,9 @@ package io.scalaland.chimney.cats
 
 import cats.data.{NonEmptyChain, Validated, ValidatedNec}
 import io.scalaland.chimney.{TransformationError, Transformer, TransformerF}
-import io.scalaland.chimney.dsl._
-import io.scalaland.chimney.utils.OptionUtils._
-import utest._
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.utils.OptionUtils.*
+import utest.*
 
 object LiftedTransformerErrorPathValidatedNecInstanceSpec extends TestSuite {
 
