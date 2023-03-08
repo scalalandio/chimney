@@ -218,113 +218,7 @@ object fixtures {
   final def richToPlain(person: rich.Person): plain.Person =
     plain.Person(person.personId.id, person.personName.name, person.age)
 
-  type M[+A] = Either[Vector[TransformationError[String]], A]
-
-  final def simpleByHandErrorAccEitherSwap(
-      simple: Simple,
-      fa: Int => M[Int],
-      fb: Double => M[Double],
-      fc: String => M[String],
-      fd: Option[String] => M[Option[String]]
-  ): M[SimpleOutput] = {
-    val valA = fa(simple.a)
-    val valB = fb(simple.b)
-    val valC = fc(simple.c)
-    val valD = fd(simple.d)
-
-    if (valA.isRight && valB.isRight && valC.isRight && valD.isRight) {
-      Right(SimpleOutput(valA.toOption.get, valB.toOption.get, valC.toOption.get, valD.toOption.get))
-    } else {
-      val errsB = Vector.newBuilder[TransformationError[String]]
-      errsB ++= valA.swap.getOrElse(Vector.empty)
-      errsB ++= valB.swap.getOrElse(Vector.empty)
-      errsB ++= valC.swap.getOrElse(Vector.empty)
-      errsB ++= valD.swap.getOrElse(Vector.empty)
-      Left(errsB.result())
-    }
-  }
-
-  final def simpleByHandErrorAccCrazyNesting(
-      simple: Simple,
-      fa: Int => M[Int],
-      fb: Double => M[Double],
-      fc: String => M[String],
-      fd: Option[String] => M[Option[String]]
-  ): M[SimpleOutput] = {
-    fa(simple.a) match {
-      case Right(a) =>
-        fb(simple.b) match {
-          case Right(b) =>
-            fc(simple.c) match {
-              case Right(c) =>
-                fd(simple.d) match {
-                  case Right(d)         => Right(SimpleOutput(a, b, c, d))
-                  case retVal @ Left(_) => retVal.asInstanceOf[M[SimpleOutput]]
-                }
-              case Left(errs3) =>
-                fd(simple.d) match {
-                  case Right(_)    => Left(errs3)
-                  case Left(errs4) => Left(errs3 ++ errs4)
-                }
-            }
-          case Left(errs2) =>
-            fc(simple.c) match {
-              case Right(_) =>
-                fd(simple.d) match {
-                  case Right(_)    => Left(errs2)
-                  case Left(errs4) => Left(errs2 ++ errs4)
-                }
-              case Left(errs3) =>
-                fd(simple.d) match {
-                  case Right(_)    => Left(errs2 ++ errs3)
-                  case Left(errs4) => Left(errs2 ++ errs3 ++ errs4)
-                }
-            }
-        }
-      case Left(errs1) =>
-        fb(simple.b) match {
-          case Right(_) =>
-            fc(simple.c) match {
-              case Right(_) =>
-                fd(simple.d) match {
-                  case Right(_)    => Left(errs1)
-                  case Left(errs4) => Left(errs1 ++ errs4)
-                }
-              case Left(errs3) =>
-                fd(simple.d) match {
-                  case Right(_)    => Left(errs3)
-                  case Left(errs4) => Left(errs1 ++ errs3 ++ errs4)
-                }
-            }
-          case Left(errs2) =>
-            fc(simple.c) match {
-              case Right(_) =>
-                fd(simple.d) match {
-                  case Right(_)    => Left(errs1 ++ errs2)
-                  case Left(errs4) => Left(errs1 ++ errs2 ++ errs4)
-                }
-              case Left(errs3) =>
-                fd(simple.d) match {
-                  case Right(_)    => Left(errs1 ++ errs2 ++ errs3)
-                  case Left(errs4) => Left(errs1 ++ errs2 ++ errs3 ++ errs4)
-                }
-            }
-        }
-    }
-  }
-
   object transformers {
-
-    final val simpleTransformerLiftedHappy: TransformerF[M, Simple, SimpleOutput] = {
-      import samples.validation.*
-      TransformerF
-        .define[M, Simple, SimpleOutput]
-        .withFieldComputedF(_.a, s => happy.validateA(s.a).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.b, s => happy.validateB(s.b).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.c, s => happy.validateC(s.c).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.d, s => happy.validateD(s.d).left.map(s => Vector(TransformationError(s))))
-        .buildTransformer
-    }
 
     final val simpleTransformerPartialHappy: PartialTransformer[Simple, SimpleOutput] = {
       import samples.validation.*
@@ -337,17 +231,6 @@ object fixtures {
         .buildTransformer
     }
 
-    final val simpleTransformerLiftedUnhappy: TransformerF[M, Simple, SimpleOutput] = {
-      import samples.validation.*
-      TransformerF
-        .define[M, Simple, SimpleOutput]
-        .withFieldComputedF(_.a, s => unhappy.validateA(s.a).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.b, s => unhappy.validateB(s.b).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.c, s => unhappy.validateC(s.c).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.d, s => unhappy.validateD(s.d).left.map(s => Vector(TransformationError(s))))
-        .buildTransformer
-    }
-
     final val simpleTransformerPartialUnhappy: PartialTransformer[Simple, SimpleOutput] = {
       import samples.validation.*
       PartialTransformer
@@ -356,35 +239,6 @@ object fixtures {
         .withFieldComputedPartial(_.b, s => unhappy.validateB(s.b).toPartialResult)
         .withFieldComputedPartial(_.c, s => unhappy.validateC(s.c).toPartialResult)
         .withFieldComputedPartial(_.d, s => unhappy.validateD(s.d).toPartialResult)
-        .buildTransformer
-    }
-
-    final val largeTransformerLiftedHappy: TransformerF[M, Large, LargeOutput] = {
-      import samples.validation.*
-      TransformerF
-        .define[M, Large, LargeOutput]
-        .withFieldComputedF(_.a, s => happy.squareInt(s.a).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.b, s => happy.squareInt(s.b).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.c, s => happy.squareInt(s.c).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.d, s => happy.squareInt(s.d).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.e, s => happy.squareInt(s.e).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.f, s => happy.squareInt(s.f).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.g, s => happy.squareInt(s.g).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.h, s => happy.squareInt(s.h).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.i, s => happy.squareInt(s.i).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.j, s => happy.squareInt(s.j).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.k, s => happy.squareInt(s.k).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.l, s => happy.squareInt(s.l).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.m, s => happy.squareInt(s.m).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.n, s => happy.squareInt(s.n).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.o, s => happy.squareInt(s.o).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.p, s => happy.squareInt(s.p).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.q, s => happy.squareInt(s.q).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.r, s => happy.squareInt(s.r).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.s, s => happy.squareInt(s.s).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.t, s => happy.squareInt(s.t).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.u, s => happy.squareInt(s.u).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.v, s => happy.squareInt(s.v).left.map(s => Vector(TransformationError(s))))
         .buildTransformer
     }
 
@@ -414,35 +268,6 @@ object fixtures {
         .withFieldComputedPartial(_.t, s => happy.squareInt(s.t).toPartialResult)
         .withFieldComputedPartial(_.u, s => happy.squareInt(s.u).toPartialResult)
         .withFieldComputedPartial(_.v, s => happy.squareInt(s.v).toPartialResult)
-        .buildTransformer
-    }
-
-    final val largeTransformerLiftedUnhappy: TransformerF[M, Large, LargeOutput] = {
-      import samples.validation.*
-      TransformerF
-        .define[M, Large, LargeOutput]
-        .withFieldComputedF(_.a, s => unhappy.squareIntWhenOdd(s.a).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.b, s => unhappy.squareIntWhenOdd(s.b).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.c, s => unhappy.squareIntWhenOdd(s.c).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.d, s => unhappy.squareIntWhenOdd(s.d).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.e, s => unhappy.squareIntWhenOdd(s.e).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.f, s => unhappy.squareIntWhenOdd(s.f).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.g, s => unhappy.squareIntWhenOdd(s.g).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.h, s => unhappy.squareIntWhenOdd(s.h).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.i, s => unhappy.squareIntWhenOdd(s.i).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.j, s => unhappy.squareIntWhenOdd(s.j).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.k, s => unhappy.squareIntWhenOdd(s.k).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.l, s => unhappy.squareIntWhenOdd(s.l).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.m, s => unhappy.squareIntWhenOdd(s.m).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.n, s => unhappy.squareIntWhenOdd(s.n).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.o, s => unhappy.squareIntWhenOdd(s.o).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.p, s => unhappy.squareIntWhenOdd(s.p).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.q, s => unhappy.squareIntWhenOdd(s.q).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.r, s => unhappy.squareIntWhenOdd(s.r).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.s, s => unhappy.squareIntWhenOdd(s.s).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.t, s => unhappy.squareIntWhenOdd(s.t).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.u, s => unhappy.squareIntWhenOdd(s.u).left.map(s => Vector(TransformationError(s))))
-        .withFieldComputedF(_.v, s => unhappy.squareIntWhenOdd(s.v).left.map(s => Vector(TransformationError(s))))
         .buildTransformer
     }
 
