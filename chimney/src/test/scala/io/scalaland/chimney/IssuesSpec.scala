@@ -211,7 +211,6 @@ object IssuesSpec extends TestSuite {
 
       case class Baz1(b: Bar1)
       case class Baz2(b: Option[Bar1])
-      case class Baz3(b: Bar2)
       case class Baz4(b: Option[Bar2])
 
       implicit val intToString: Transformer[Int, String] = _.toString
@@ -533,24 +532,6 @@ object IssuesSpec extends TestSuite {
         case class SomethingElse(value: SomethingElseMessage) extends OneOf
 
         case object Empty extends OneOf
-      }
-
-      test("lifted transformers") {
-
-        implicit val somethingTransformPartial: PartialTransformer[proto.Something, OneOf] =
-          (p, _) => p.value.transformIntoPartial[Something]
-        implicit val somethingElseTransformPartial: PartialTransformer[proto.SomethingElse, OneOf] =
-          (p, _) => p.value.transformIntoPartial[SomethingElse]
-
-        implicit val oneOfTransformPartial: PartialTransformer[proto.OneOf, OneOf] =
-          PartialTransformer
-            .define[proto.OneOf, OneOf]
-            .withCoproductInstancePartial[proto.Empty.type](_ => partial.Result.fromEmpty)
-            .buildTransformer
-
-        (proto.Something(proto.SomethingMessage(42)): proto.OneOf)
-          .transformIntoPartial[OneOf]
-          .asOption ==> Some(Something(42))
       }
 
       test("partial transformers") {
