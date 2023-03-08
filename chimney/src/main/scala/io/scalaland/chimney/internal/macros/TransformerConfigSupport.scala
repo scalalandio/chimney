@@ -39,7 +39,6 @@ trait TransformerConfigSupport extends MacroUtils {
     case object TotalTransformer extends DerivationTarget {
       def targetType(toTpe: Type): Type = toTpe
       // $COVERAGE-OFF$
-      def isLifted = false
       def isPartial = false
       // $COVERAGE-ON$
     }
@@ -49,7 +48,6 @@ trait TransformerConfigSupport extends MacroUtils {
       def targetType(toTpe: Type): Type =
         typeOf[partial.Result[?]].typeConstructor.applyTypeArg(toTpe)
       // $COVERAGE-OFF$
-      def isLifted = false
       def isPartial = true
       // $COVERAGE-ON$
     }
