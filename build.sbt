@@ -213,7 +213,7 @@ lazy val root = project
     Sphinx / sourceDirectory := file("docs") / "source",
     git.remoteRepo := "git@github.com:scalalandio/chimney.git",
     logo :=
-      s"""Chimney ${(ThisBuild / version).value} build for (${versions.scala212}, ${versions.scala213}) x (Scala JVM, Scala.js $scalaJSVersion, Scala Native $nativeVersion)
+      s"""Chimney ${(ThisBuild / version).value} build for (${versions.scala212}, ${versions.scala213}, ${versions.scala3}) x (Scala JVM, Scala.js $scalaJSVersion, Scala Native $nativeVersion)
          |
          |This build uses sbt-projectmatrix with sbt-commandmatrix helper:
          | - Scala JVM adds no suffix to a project name seen in build.sbt
