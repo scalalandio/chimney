@@ -218,6 +218,101 @@ object fixtures {
   final def richToPlain(person: rich.Person): plain.Person =
     plain.Person(person.personId.id, person.personName.name, person.age)
 
+  type M[+A] = Either[Vector[partial.Error], A]
+
+  final def simpleByHandErrorAccEitherSwap(
+      simple: Simple,
+      fa: Int => M[Int],
+      fb: Double => M[Double],
+      fc: String => M[String],
+      fd: Option[String] => M[Option[String]]
+  ): M[SimpleOutput] = {
+    val valA = fa(simple.a)
+    val valB = fb(simple.b)
+    val valC = fc(simple.c)
+    val valD = fd(simple.d)
+
+    if (valA.isRight && valB.isRight && valC.isRight && valD.isRight) {
+      Right(SimpleOutput(valA.toOption.get, valB.toOption.get, valC.toOption.get, valD.toOption.get))
+    } else {
+      val errsB = Vector.newBuilder[partial.Error]
+      errsB ++= valA.swap.getOrElse(Vector.empty)
+      errsB ++= valB.swap.getOrElse(Vector.empty)
+      errsB ++= valC.swap.getOrElse(Vector.empty)
+      errsB ++= valD.swap.getOrElse(Vector.empty)
+      Left(errsB.result())
+    }
+  }
+
+  final def simpleByHandErrorAccCrazyNesting(
+      simple: Simple,
+      fa: Int => M[Int],
+      fb: Double => M[Double],
+      fc: String => M[String],
+      fd: Option[String] => M[Option[String]]
+  ): M[SimpleOutput] = {
+    fa(simple.a) match {
+      case Right(a) =>
+        fb(simple.b) match {
+          case Right(b) =>
+            fc(simple.c) match {
+              case Right(c) =>
+                fd(simple.d) match {
+                  case Right(d)         => Right(SimpleOutput(a, b, c, d))
+                  case retVal @ Left(_) => retVal.asInstanceOf[M[SimpleOutput]]
+                }
+              case Left(errs3) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs3)
+                  case Left(errs4) => Left(errs3 ++ errs4)
+                }
+            }
+          case Left(errs2) =>
+            fc(simple.c) match {
+              case Right(_) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs2)
+                  case Left(errs4) => Left(errs2 ++ errs4)
+                }
+              case Left(errs3) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs2 ++ errs3)
+                  case Left(errs4) => Left(errs2 ++ errs3 ++ errs4)
+                }
+            }
+        }
+      case Left(errs1) =>
+        fb(simple.b) match {
+          case Right(_) =>
+            fc(simple.c) match {
+              case Right(_) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs1)
+                  case Left(errs4) => Left(errs1 ++ errs4)
+                }
+              case Left(errs3) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs3)
+                  case Left(errs4) => Left(errs1 ++ errs3 ++ errs4)
+                }
+            }
+          case Left(errs2) =>
+            fc(simple.c) match {
+              case Right(_) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs1 ++ errs2)
+                  case Left(errs4) => Left(errs1 ++ errs2 ++ errs4)
+                }
+              case Left(errs3) =>
+                fd(simple.d) match {
+                  case Right(_)    => Left(errs1 ++ errs2 ++ errs3)
+                  case Left(errs4) => Left(errs1 ++ errs2 ++ errs3 ++ errs4)
+                }
+            }
+        }
+    }
+  }
+
   object transformers {
 
     final val simpleTransformerPartialHappy: PartialTransformer[Simple, SimpleOutput] = {
