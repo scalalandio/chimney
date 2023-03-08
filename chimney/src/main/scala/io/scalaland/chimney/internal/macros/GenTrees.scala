@@ -124,12 +124,8 @@ trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
         q"_root_.io.scalaland.chimney.partial.Result.Errors.merge($t1, $t2)"
       }
 
-      def mergeNullable(t1: Tree, t2: Tree): Tree = {
-        q"_root_.io.scalaland.chimney.partial.Result.Errors.mergeNullable($t1, $t2)"
-      }
-
       def mergeResultNullable(t1: Tree, t2: Tree): Tree = {
-        q"_root_.io.scalaland.chimney.partial.Result.Errors.mergeResultNullable($t1, $t2)"
+        q"_root_.io.scalaland.chimney.partial.Result.Errors.__mergeResultNullable($t1, $t2)"
       }
     }
 
