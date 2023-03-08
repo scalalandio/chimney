@@ -183,7 +183,7 @@ object Result {
       */
     final def __mergeResultNullable[T](errorsNullable: Errors, result: Result[T]): Errors = {
       result match {
-        case Value(_)       => errorsNullable
+        case _: Value[?]    => errorsNullable
         case errors: Errors => if (errorsNullable == null) errors else merge(errorsNullable, errors)
       }
     }
