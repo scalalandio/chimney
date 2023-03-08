@@ -9,5 +9,6 @@ case class User(id: String, name: UserName)
 case class UserAlias(id: String, name: UserNameAlias)
 
 case class UserWithUserName(id: UserName)
+case class UserWithName(id: String)
 case class UserWithUserId(id: UserId)
 case class UserWithId(id: Int)

@@ -17,8 +17,8 @@ trait TypeTestUtils extends MacroUtils {
     from.isValueClass && !to.isValueClass
   }
 
-  def fromTypeToValueClass(from: Type, to: Type): Boolean = {
-    to.isValueClass && to.valueClassMember.exists(_.returnType =:= from)
+  def toValueClass(from: Type, to: Type): Boolean = {
+    to.isValueClass && !from.isValueClass
   }
 
   def bothValueClasses(from: Type, to: Type): Boolean = {

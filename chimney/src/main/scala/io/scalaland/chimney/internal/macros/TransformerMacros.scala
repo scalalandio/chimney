@@ -171,7 +171,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
           expandValueClassToValueClass(srcPrefixTree, config)(From, To)
         } else if (fromValueClass(From, To)) {
           expandValueClassToType(srcPrefixTree, config)(From, To)
-        } else if (fromTypeToValueClass(From, To)) {
+        } else if (toValueClass(From, To)) {
           expandTypeToValueClass(srcPrefixTree, config)(From, To)
         } else if (bothOptions(From, To)) {
           expandOptions(srcPrefixTree, config)(From, To)
@@ -263,11 +263,18 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       From: Type,
       To: Type
   ): Either[Seq[TransformerDerivationError], Tree] = {
-    Right {
-      mkTransformerBodyTree0(config.derivationTarget) {
-        q"new $To($srcPrefixTree)"
-      }
-    }
+    val toValueClassMember = To.valueClassMember.toRight(
+      Seq(CantFindValueClassMember(To.typeSymbol.name.toString, From.typeSymbol.name.toString))
+    )
+
+    for {
+      toValueClassMemberType <- toValueClassMember.map(_.returnType)
+      transformerBodyTree <- resolveRecursiveTransformerBody(srcPrefixTree, config)(
+        From,
+        toValueClassMemberType
+      )
+      toCreationTree = q"new $To(${transformerBodyTree.tree})"
+    } yield mkTransformerBodyTree0(transformerBodyTree.target)(toCreationTree)
   }
 
   def expandTargetWrappedInOption(

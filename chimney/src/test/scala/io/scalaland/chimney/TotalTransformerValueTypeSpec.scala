@@ -36,6 +36,17 @@ object TotalTransformerValueTypeSpec extends TestSuite {
       UserWithUserName(UserName(abc)).transformInto[UserWithId] ==> UserWithId(abc.length)
     }
 
+    test("transform from a value(type: 'T') into a value class(member type: 'S') if 'T'=>'S' exists") {
+      implicit val transformer = new Transformer[String, Int] {
+        override def transform(src: String): Int = src.length
+      }
+
+      val batman = "Batman"
+      val abc = "abc"
+      batman.transformInto[UserId] ==> UserId(batman.length)
+      UserWithName(abc).transformInto[UserWithUserId] ==> UserWithUserId(UserId(abc.length))
+    }
+
     test("transforming value class(member type: `S`) to value class(member type: 'T') if 'T'=>'S' exists") {
       implicit val transformer = new Transformer[String, Int] {
         override def transform(src: String): Int = src.length
