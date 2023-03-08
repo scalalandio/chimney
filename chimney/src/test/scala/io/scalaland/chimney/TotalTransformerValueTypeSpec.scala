@@ -18,11 +18,23 @@ object TotalTransformerValueTypeSpec extends TestSuite {
       UserDTO("100", "abc").transformInto[User] ==> User("100", UserName("abc"))
     }
 
-    test("transforming value class to a value class") {
+    test("transforming value class(member type: 'T') to a value class(member type: 'T')") {
 
       UserName("Batman").transformInto[UserNameAlias] ==> UserNameAlias("Batman")
       User("100", UserName("abc")).transformInto[UserAlias] ==>
         UserAlias("100", UserNameAlias("abc"))
+    }
+
+    test("transforming value class(member type: `S`) to value class(member type: 'T') if 'T'=>'S' transformer exists") {
+      implicit val transformer = new Transformer[String, Int] {
+        override def transform(src: String): Int = src.length
+      }
+
+      val batman = "Batman"
+      val abc = "abc"
+      UserName(batman).transformInto[UserId] ==> UserId(batman.length)
+      UserWithName(UserName(abc)).transformInto[UserWithId] ==> UserWithId(UserId(abc.length))
+
     }
   }
 }

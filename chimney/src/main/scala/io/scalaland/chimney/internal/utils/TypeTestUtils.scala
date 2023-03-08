@@ -21,14 +21,8 @@ trait TypeTestUtils extends MacroUtils {
     to.isValueClass && to.valueClassMember.exists(_.returnType =:= from)
   }
 
-  def fromValueClassToValueClass(from: Type, to: Type): Boolean = {
-    from.isValueClass &&
-    to.isValueClass && {
-      for {
-        fromValueMember <- from.valueClassMember
-        toValueMember <- to.valueClassMember
-      } yield fromValueMember.returnType =:= toValueMember.returnType
-    }.contains(true)
+  def bothValueClasses(from: Type, to: Type): Boolean = {
+    from.isValueClass && to.isValueClass
   }
 
   def isOption(t: Type): Boolean = {
