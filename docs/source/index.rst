@@ -144,7 +144,6 @@ Contents:
    transformers/own-transformations
    transformers/scoped-configuration
    transformers/java-beans
-   transformers/unsafe-options
 
 .. toctree::
    :maxdepth: 2
@@ -154,13 +153,6 @@ Contents:
    partial-transformers/migrating-from-lifted
    partial-transformers/total-vs-partial-conflicts
    partial-transformers/cats-integration
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Lifted Transformers
-
-   lifted-transformers/lifted-transformers
-   lifted-transformers/cats-integration
 
 .. toctree::
    :maxdepth: 2
