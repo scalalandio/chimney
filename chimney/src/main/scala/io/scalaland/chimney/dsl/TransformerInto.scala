@@ -1,6 +1,5 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.TransformerCfg.*
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.macros.dsl.{TransformerBlackboxMacros, TransformerIntoWhiteboxMacros}
 
