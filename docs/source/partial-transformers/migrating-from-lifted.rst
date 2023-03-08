@@ -3,7 +3,7 @@
 Migrating from Lifted Transformers
 ==================================
 
-Chimney's :ref:`lifted-transformers` were historically the first experimental attempt
+Chimney's Lifted Transformers were historically the first experimental attempt
 to express transformations that may potentially fail. Despite their great expressiveness, they were
 lacking several basic features and had a few design flaws that make them unattractive/difficult
 for wider adoption.
