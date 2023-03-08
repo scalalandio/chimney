@@ -2,9 +2,9 @@ name: CI build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, scala-3 ] # TODO: remove scala-3 before merging to master
   pull_request:
-    branches: [ master ]
+    branches: [ master, scala-3 ] # TODO: remove scala-3 before merging to master
     types: ['opened', 'reopened', 'labeled', 'synchronize']
 
 jobs:
