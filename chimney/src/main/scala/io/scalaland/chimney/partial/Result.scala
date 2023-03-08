@@ -178,6 +178,31 @@ object Result {
       */
     final def merge(errors1: Errors, errors2: Errors): Errors =
       apply(errors1.errors ++ errors2.errors)
+
+    /** Merges errors with potentially nullable first argument
+      *
+      * @param errorsNullable failed result which errors should appear in the beginning, potentially nullable
+      * @param errors failed result which errors should appear in the end
+      * @return result aggregating errors from both results, potentially nullable
+      * @since 0.7.0
+      */
+    final def mergeNullable(errorsNullable: Errors, errors: Errors): Errors = {
+      if (errorsNullable == null) errors else merge(errorsNullable, errors)
+    }
+
+    /** Merges potentially nullable errors with eventual errors coming from passed result
+      *
+      * @param errorsNullable failed result which errors should appear in the beginning, potentially nullable
+      * @param result result which eventuall erors should appear in the end
+      * @return result aggregating errors from both results, potentially nullable
+      * @since 0.7.0
+      */
+    final def mergeResultNullable[T](errorsNullable: Errors, result: Result[T]): Errors = {
+      result match {
+        case Value(_)       => errorsNullable
+        case errors: Errors => mergeNullable(errorsNullable, errors)
+      }
+    }
   }
 
   /** Converts a function that throws Exceptions into function that returns Result.

@@ -76,12 +76,20 @@ trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
 
     object PartialResult {
 
+      def tpe(innerTpe: Type): Tree = {
+        tq"_root_.io.scalaland.chimney.partial.Result[$innerTpe]"
+      }
+
       def empty: Tree = {
         q"_root_.io.scalaland.chimney.partial.Result.fromEmpty"
       }
 
       def value(valTree: Tree): Tree = {
         q"_root_.io.scalaland.chimney.partial.Result.Value($valTree)"
+      }
+
+      def valueTpe(innerTpe: Type): Tree = {
+        tq"_root_.io.scalaland.chimney.partial.Result.Value[$innerTpe]"
       }
 
       def patValue(termName: TermName): Tree = {
@@ -112,8 +120,16 @@ trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
     object PartialErrors {
       val tpe: Tree = tq"_root_.io.scalaland.chimney.partial.Result.Errors"
 
-      def merge(tn1: TermName, tn2: TermName): Tree = {
-        q"_root_.io.scalaland.chimney.partial.Result.Errors.merge($tn1, $tn2)"
+      def merge(t1: Tree, t2: Tree): Tree = {
+        q"_root_.io.scalaland.chimney.partial.Result.Errors.merge($t1, $t2)"
+      }
+
+      def mergeNullable(t1: Tree, t2: Tree): Tree = {
+        q"_root_.io.scalaland.chimney.partial.Result.Errors.mergeNullable($t1, $t2)"
+      }
+
+      def mergeResultNullable(t1: Tree, t2: Tree): Tree = {
+        q"_root_.io.scalaland.chimney.partial.Result.Errors.mergeResultNullable($t1, $t2)"
       }
     }
 
