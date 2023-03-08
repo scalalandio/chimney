@@ -8,9 +8,10 @@ ThisBuild / scalafmtOnCompile := !isCI
 val versions = new {
   val scala212 = "2.12.17"
   val scala213 = "2.13.10"
+  val scala3 = "3.2.2"
 
   // Which versions should be cross-compiled for publishing
-  val scalas = List(scala212, scala213)
+  val scalas = List(scala212, scala213, scala3)
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Which version should be used in IntelliJ
@@ -34,51 +35,89 @@ val only1VersionInIDE =
 val settings = Seq(
   git.useGitDescribe := true,
   git.uncommittedSignifier := None,
-  scalacOptions ++= Seq(
-    "-encoding",
-    "UTF-8",
-    "-unchecked",
-    "-deprecation",
-    "-explaintypes",
-    "-feature",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    "-Xlint:adapted-args",
-    "-Xlint:delayedinit-select",
-    "-Xlint:doc-detached",
-    "-Xlint:inaccessible",
-    "-Xlint:infer-any",
-    "-Xlint:nullary-unit",
-    "-Xlint:option-implicit",
-    "-Xlint:package-object-classes",
-    "-Xlint:poly-implicit-overload",
-    "-Xlint:private-shadow",
-    "-Xlint:stars-align",
-    "-Xlint:type-parameter-shadow",
-    "-Ywarn-unused:locals",
-    "-Ywarn-unused:imports",
-    "-Ywarn-macros:after",
-//    "-Xfatal-warnings",
-    "-language:higherKinds",
-    "-Xsource:3"
-  ),
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, _)) =>
+        Seq(
+          "-explain",
+          "-rewrite",
+          "-source",
+          "3.2-migration"
+        )
       case Some((2, 13)) =>
-        Seq("-release", "8", "-Wunused:patvars", "-Ytasty-reader", "-Wconf:origin=scala.collection.compat.*:s")
+        Seq(
+          // format: off
+          "-encoding", "UTF-8",
+          "-release", "8",
+          // format: on
+          "-unchecked",
+          "-deprecation",
+          "-explaintypes",
+          "-feature",
+          "-language:higherKinds",
+          "-Wunused:patvars",
+          // "-Xfatal-warnings",
+          "-Xlint:adapted-args",
+          "-Xlint:delayedinit-select",
+          "-Xlint:doc-detached",
+          "-Xlint:inaccessible",
+          "-Xlint:infer-any",
+          "-Xlint:nullary-unit",
+          "-Xlint:option-implicit",
+          "-Xlint:package-object-classes",
+          "-Xlint:poly-implicit-overload",
+          "-Xlint:private-shadow",
+          "-Xlint:stars-align",
+          "-Xlint:type-parameter-shadow",
+          "-Xsource:3",
+          "-Ywarn-dead-code",
+          "-Ywarn-numeric-widen",
+          "-Ywarn-unused:locals",
+          "-Ywarn-unused:imports",
+          "-Ywarn-macros:after",
+          "-Ytasty-reader",
+          "-Wconf:origin=scala.collection.compat.*:s"
+        )
       case Some((2, 12)) =>
         Seq(
+          // format: off
+          "-encoding", "UTF-8",
           "-target:jvm-1.8",
-          "-Xfuture",
+          // format: on
+          "-unchecked",
+          "-deprecation",
+          "-explaintypes",
+          "-feature",
+          "-language:higherKinds",
           "-Xexperimental",
+          // "-Xfatal-warnings",
+          "-Xfuture",
+          "-Xlint:adapted-args",
+          "-Xlint:by-name-right-associative",
+          "-Xlint:delayedinit-select",
+          "-Xlint:doc-detached",
+          "-Xlint:inaccessible",
+          "-Xlint:infer-any",
+          "-Xlint:nullary-override",
+          "-Xlint:nullary-unit",
+          "-Xlint:option-implicit",
+          "-Xlint:package-object-classes",
+          "-Xlint:poly-implicit-overload",
+          "-Xlint:private-shadow",
+          "-Xlint:stars-align",
+          "-Xlint:type-parameter-shadow",
+          "-Xlint:unsound-match",
+          "-Xsource:3",
           "-Yno-adapted-args",
+          "-Ywarn-dead-code",
           "-Ywarn-inaccessible",
           "-Ywarn-infer-any",
+          "-Ywarn-numeric-widen",
+          "-Ywarn-unused:locals",
+          "-Ywarn-unused:imports",
+          "-Ywarn-macros:after",
           "-Ywarn-nullary-override",
-          "-Ywarn-nullary-unit",
-          "-Xlint:by-name-right-associative",
-          "-Xlint:unsound-match",
-          "-Xlint:nullary-override"
+          "-Ywarn-nullary-unit"
         )
       case _ => Seq.empty
     }
@@ -178,6 +217,7 @@ lazy val root = project
          | - Scala Native adds the "Native" suffix to a project name seen in build.sbt
          | - Scala 2.12 adds the suffix "2_12" to a project name seen in build.sbt
          | - Scala 2.13 adds no suffix to a project name seen in build.sbt
+         | - Scala 2.13 adds the suffix "3" to a project name seen in build.sbt
          |
          |When working with IntelliJ, edit "val ideScala = ..." and "val idePlatform = ..." within "val versions" in build.sbt to control which Scala version you're currently working with.""".stripMargin,
     usefulTasks := Seq(
@@ -190,13 +230,15 @@ lazy val root = project
       sbtwelcome.UsefulTask("stageRelease", "publishSigned", "Stage all versions for publishing"),
       sbtwelcome.UsefulTask("publishRelease", "sonatypeBundleRelease", "Publish all artifacts staged for release"),
       sbtwelcome.UsefulTask("runBenchmarks", "benchmarks/Jmh/run", "Run JMH benchmarks suite"),
+      sbtwelcome.UsefulTask("ci-jvm-3", ciCommand("JVM", "3"), "CI pipeline for Scala 3 on JVM"),
       sbtwelcome.UsefulTask("ci-jvm-2_13", ciCommand("JVM", ""), "CI pipeline for Scala 2.13 on JVM"),
       sbtwelcome.UsefulTask("ci-jvm-2_12", ciCommand("JVM", "2_12"), "CI pipeline for Scala 2.12 on JVM"),
+      sbtwelcome.UsefulTask("ci-js-3", ciCommand("JS", "3"), "CI pipeline for Scala 3 on Scala JS"),
       sbtwelcome.UsefulTask("ci-js-2_13", ciCommand("JS", ""), "CI pipeline for Scala 2.13 on Scala JS"),
       sbtwelcome.UsefulTask("ci-js-2_12", ciCommand("JS", "2_12"), "CI pipeline for Scala 2.12 on Scala JS"),
+      sbtwelcome.UsefulTask("ci-native-3", ciCommand("Native", "3"), "CI pipeline for Scala 3 on Scala Native"),
       sbtwelcome.UsefulTask("ci-native-2_13", ciCommand("Native", ""), "CI pipeline for Scala 2.13 on Scala Native"),
-      sbtwelcome
-        .UsefulTask("ci-native-2_12", ciCommand("Native", "2_12"), "CI pipeline for Scala 2.12 on Scala Native")
+      sbtwelcome.UsefulTask("ci-native-2_12", ciCommand("Native", "2_12"), "CI pipeline for Scala 2.12 on Scala Native")
     )
   )
 
