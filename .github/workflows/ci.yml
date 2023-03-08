@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        scala: ["2_12", "2_13"]
+        scala: ["2_12", "2_13", "3"]
         platform: ["jvm", "js", "native"]
         jvm: ['adopt:1.8.0-292', 'temurin:1.19.0.2']
       fail-fast: false
