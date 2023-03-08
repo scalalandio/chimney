@@ -503,58 +503,5 @@ object PartialTransformerStdLibTypesSpec extends TestSuite {
         )
       }
     }
-
-    test("flag .enableUnsafeOption") {
-
-      case class Source(x: Option[Int])
-      case class Target(x: String)
-
-      test("should not supported for any case") {
-
-        @unused implicit val intPrinter: Transformer[Int, String] = _.toString
-
-        @unused implicit val intPartialParser: PartialTransformer[String, Int] =
-          PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
-
-        compileError("Option(10).intoPartial[String].enableUnsafeOption.transform").check(
-          "",
-          "Chimney can't derive transformation from Option[Int] to String",
-          "java.lang.String",
-          "derivation from option: scala.Option to java.lang.String is not supported in Chimney!",
-          "Consult https://scalalandio.github.io/chimney for usage examples."
-        )
-        compileError("Option.empty[Int].intoPartial[String].enableUnsafeOption.transform").check(
-          "",
-          "Chimney can't derive transformation from Option[Int] to String",
-          "java.lang.String",
-          "derivation from option: scala.Option to java.lang.String is not supported in Chimney!",
-          "Consult https://scalalandio.github.io/chimney for usage examples."
-        )
-        compileError("""Option("x").intoPartial[Int].enableUnsafeOption.transform""").check(
-          "",
-          "Chimney can't derive transformation from Option[String] to Int",
-          "scala.Int",
-          "derivation from option: scala.Option to scala.Int is not supported in Chimney!",
-          "Consult https://scalalandio.github.io/chimney for usage examples."
-        )
-        compileError("""Option.empty[String].intoPartial[Int].enableUnsafeOption.transform""").check(
-          "",
-          "Chimney can't derive transformation from Option[String] to Int",
-          "scala.Int",
-          "derivation from option: scala.Option to scala.Int is not supported in Chimney!",
-          "Consult https://scalalandio.github.io/chimney for usage examples."
-        )
-      }
-
-      test("should be replaceable by explicitly provided Partial Transformer from Option") {
-        implicit val optIntPrinter: PartialTransformer[Option[Int], String] =
-          (i, _) => partial.Result.fromOption(i).map(_ * 2).map(_.toString)
-
-        Option(10).transformIntoPartial[String].asOption ==> Some("20")
-        Source(Some(10)).transformIntoPartial[Target].asOption ==> Some(Target("20"))
-        Option.empty[Int].transformIntoPartial[String].asOption ==> None
-        Source(None).transformIntoPartial[Target].asOption ==> None
-      }
-    }
   }
 }

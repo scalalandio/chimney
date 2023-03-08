@@ -10,8 +10,6 @@ object Domain1 {
     (userName: UserName) => userName.value + "T"
   val userNameToStringPartialTransformer: PartialTransformer[UserName, String] =
     (userName: UserName, _) => partial.Result.fromValue(userName.value + "T")
-  def userNameToStringLiftedTransformer[F[+_]](wrap: Any => F[Any]): TransformerF[F, UserName, String] =
-    (userName: UserName) => wrap(userName.value + "T").asInstanceOf[F[String]]
 
   case class UserDTO(id: String, name: String)
   case class User(id: String, name: UserName)
