@@ -150,10 +150,6 @@ object PBTransformationSpec extends TestSuite {
 
           domainOrder.into[pb.order.Order].transform ==> pbOrder
 
-          test("using unsafe options") {
-            pbOrder.into[order.Order].enableUnsafeOption.transform ==> domainOrder
-          }
-
           test("using partial transformers") {
             pbOrder.into[order.Order].partial.transform ==> partial.Result.fromValue(domainOrder)
           }
@@ -167,12 +163,6 @@ object PBTransformationSpec extends TestSuite {
             ),
             Option(pb.order.Customer(123, "John", "Beer", None))
           )
-
-          test("using unsafe options") {
-            intercept[NoSuchElementException] {
-              pbFailureOrder.into[order.Order].enableUnsafeOption.transform
-            }
-          }
 
           test("using partial transformers") {
             val result = pbFailureOrder.into[order.Order].partial.transform

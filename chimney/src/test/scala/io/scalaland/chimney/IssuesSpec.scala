@@ -204,7 +204,7 @@ object IssuesSpec extends TestSuite {
       Issue108.result ==> Issue108.expected
     }
 
-    test("fix issue #113") {
+    test("fix issue #113 (rewritten to partials)") {
       case class Bar1(i: Int)
       case class Bar2(i: String)
       case class Bar3(i: Option[Int])
@@ -217,14 +217,14 @@ object IssuesSpec extends TestSuite {
       implicit val intToString: Transformer[Int, String] = _.toString
 
       1.transformInto[String] ==> "1"
-      Option(1).into[Int].enableUnsafeOption.transform ==> 1
-      Option(1).into[String].enableUnsafeOption.transform ==> "1"
+      Option(1).into[Int].partial.transform.asOption ==> Some(1)
+      Option(1).into[String].partial.transform.asOption ==> Some("1")
       Bar1(1).transformInto[Bar2] ==> Bar2("1")
-      Option(Bar1(1)).into[Bar1].enableUnsafeOption.transform ==> Bar1(1)
-      Baz2(Option(Bar1(1))).into[Baz1].enableUnsafeOption.transform ==> Baz1(Bar1(1))
-      Option(Bar1(1)).into[Bar2].enableUnsafeOption.transform ==> Bar2("1")
-      Baz2(Option(Bar1(1))).into[Baz4].enableUnsafeOption.transform ==> Baz4(Option(Bar2("1")))
-      Bar3(Option(1)).into[Bar2].enableUnsafeOption.transform ==> Bar2("1")
+      Option(Bar1(1)).into[Bar1].partial.transform.asOption ==> Some(Bar1(1))
+      Baz2(Option(Bar1(1))).into[Baz1].partial.transform.asOption ==> Some(Baz1(Bar1(1)))
+      Option(Bar1(1)).into[Bar2].partial.transform.asOption ==> Some(Bar2("1"))
+      Baz2(Option(Bar1(1))).into[Baz4].partial.transform.asOption ==> Some(Baz4(Option(Bar2("1"))))
+      Bar3(Option(1)).into[Bar2].partial.transform.asOption ==> Some(Bar2("1"))
     }
 
     test("fix issue #121") {
@@ -255,12 +255,12 @@ object IssuesSpec extends TestSuite {
       lengths.elems.size ==> 3
     }
 
-    test("fix issue #139") {
+    test("fix issue #139 (rewritten as partial)") {
       case class WithoutOption(i: Int)
       case class WithOption(i: Option[Int])
 
       // this should compile without warning
-      Transformer.define[WithOption, WithoutOption].enableUnsafeOption.buildTransformer
+      Transformer.define[WithOption, WithoutOption].partial.buildTransformer
     }
 
     test("fix issue #149") {
@@ -362,7 +362,7 @@ object IssuesSpec extends TestSuite {
       }
     }
 
-    test("fix issue #173") {
+    test("fix issue #173 (rewritten as partial)") {
       sealed trait Foo
       case object Bar extends Foo
       case object Baz extends Foo
@@ -371,44 +371,44 @@ object IssuesSpec extends TestSuite {
       case object Bar2 extends Foo2
       case object Baz2 extends Foo2
 
-      test("withCoproductInstanceF twice") {
-        implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
-          TransformerF
-            .define[Option, Foo, Foo2]
-            .withCoproductInstanceF((_: Bar.type) => Some(Bar2))
-            .withCoproductInstanceF((_: Baz.type) => Some(Baz2))
+      test("withCoproductInstancePartial twice") {
+        implicit val fooFoo2PartialTransformer: PartialTransformer[Foo, Foo2] =
+          PartialTransformer
+            .define[Foo, Foo2]
+            .withCoproductInstancePartial((_: Bar.type) => partial.Result.fromValue(Bar2))
+            .withCoproductInstancePartial((_: Baz.type) => partial.Result.fromValue(Baz2))
             .buildTransformer
 
-        (Bar: Foo).transformIntoF[Option, Foo2] ==> Some(Bar2)
-        (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
+        (Bar: Foo).transformIntoPartial[Foo2].asOption ==> Some(Bar2)
+        (Baz: Foo).transformIntoPartial[Foo2].asOption ==> Some(Baz2)
       }
 
-      test("withCoproductInstance followed by withCoproductInstanceF") {
-        implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
-          TransformerF
-            .define[Option, Foo, Foo2]
+      test("withCoproductInstance followed by withCoproductInstancePartial") {
+        implicit val fooFoo2PartialTransformer: PartialTransformer[Foo, Foo2] =
+          PartialTransformer
+            .define[Foo, Foo2]
             .withCoproductInstance((_: Bar.type) => Bar2)
-            .withCoproductInstanceF((_: Baz.type) => Some(Baz2))
+            .withCoproductInstancePartial((_: Baz.type) => partial.Result.fromValue(Baz2))
             .buildTransformer
 
-        (Bar: Foo).transformIntoF[Option, Foo2] ==> Some(Bar2)
-        (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
+        (Bar: Foo).transformIntoPartial[Foo2].asOption ==> Some(Bar2)
+        (Baz: Foo).transformIntoPartial[Foo2].asOption ==> Some(Baz2)
       }
 
-      test("withCoproductInstanceF followed by withCoproductInstance") {
-        implicit val fooFoo2TransformerF: TransformerF[Option, Foo, Foo2] =
-          TransformerF
-            .define[Option, Foo, Foo2]
-            .withCoproductInstanceF((_: Bar.type) => Some(Bar2))
+      test("withCoproductInstancePartial followed by withCoproductInstance") {
+        implicit val fooFoo2PartialTransformer: PartialTransformer[Foo, Foo2] =
+          PartialTransformer
+            .define[Foo, Foo2]
+            .withCoproductInstancePartial((_: Bar.type) => partial.Result.fromValue(Bar2))
             .withCoproductInstance((_: Baz.type) => Baz2)
             .buildTransformer
 
-        (Bar: Foo).transformIntoF[Option, Foo2] ==> Some(Bar2)
-        (Baz: Foo).transformIntoF[Option, Foo2] ==> Some(Baz2)
+        (Bar: Foo).transformIntoPartial[Foo2].asOption ==> Some(Bar2)
+        (Baz: Foo).transformIntoPartial[Foo2].asOption ==> Some(Baz2)
       }
     }
 
-    test("fix issue #177") {
+    test("fix issue #177 (rewritten as partial)") {
 
       test("case 1") {
         case class Foo(x: Int)
@@ -417,10 +417,10 @@ object IssuesSpec extends TestSuite {
         case class BarW(a: Option[Bar])
 
         // this should be used and shouldn't trip the unused warning
-        implicit val fooToBarTransformerF: TransformerF[Option, Foo, Bar] =
-          f => Some(Bar(f.x + 10))
+        implicit val fooToBarPartialTransformer: PartialTransformer[Foo, Bar] =
+          (f, _) => partial.Result.fromValue(Bar(f.x + 10))
 
-        FooW(Some(Foo(1))).transformIntoF[Option, BarW] ==> Some(BarW(Some(Bar(11))))
+        FooW(Some(Foo(1))).transformIntoPartial[BarW].asOption ==> Some(BarW(Some(Bar(11))))
       }
 
       test("case 2") {
@@ -431,49 +431,56 @@ object IssuesSpec extends TestSuite {
           def make(x: Int, y: String): Bar = new Bar(x, y) {}
         }
 
-        implicit val fooToBar: TransformerF[Option, Foo, Bar] =
-          f => Some(Bar.make(f.x, f.y))
+        implicit val fooToBar: PartialTransformer[Foo, Bar] =
+          (f, _) => partial.Result.fromValue(Bar.make(f.x, f.y))
 
-        Foo(1, "test").transformIntoF[Option, Bar] ==> Some(new Bar(1, "test") {})
-        List(Foo(1, "test")).transformIntoF[Option, List[Bar]] ==> Some(List(new Bar(1, "test") {}))
-        (1, Foo(1, "test")).transformIntoF[Option, (Int, Bar)] ==> Some((1, new Bar(1, "test") {}))
+        Foo(1, "test").transformIntoPartial[Bar].asOption ==> Some(new Bar(1, "test") {})
+        List(Foo(1, "test")).transformIntoPartial[List[Bar]].asOption ==> Some(List(new Bar(1, "test") {}))
+        (1, Foo(1, "test")).transformIntoPartial[(Int, Bar)].asOption ==> Some((1, new Bar(1, "test") {}))
 
         // this caused an issue - did not compile, works fine after fix
-        (1, List(Foo(1, "test"))).transformIntoF[Option, (Int, List[Bar])] ==> Some((1, List(new Bar(1, "test") {})))
+        (1, List(Foo(1, "test"))).transformIntoPartial[(Int, List[Bar])].asOption ==> Some(
+          (1, List(new Bar(1, "test") {}))
+        )
       }
 
       test("case 3") {
         case class Foo(x: Int, y: String)
         case class Bar(x: Int, y: String)
-        implicit val t: TransformerF[Option, Foo, Bar] = f => Some(Bar(f.y.length, f.x.toString)) // Swapped
-        (1, List(Foo(1, "test"))).transformIntoF[Option, (Int, List[Bar])] ==> Some((1, List(Bar(4, "1"))))
+        implicit val t: PartialTransformer[Foo, Bar] =
+          (f, _) => partial.Result.fromValue(Bar(f.y.length, f.x.toString)) // Swapped
+        (1, List(Foo(1, "test"))).transformIntoPartial[(Int, List[Bar])].asOption ==> Some((1, List(Bar(4, "1"))))
       }
     }
 
-    test("fix issue #185") {
+    test("fix issue #185 (rewritten as partial)") {
 
       def blackIsRed(b: colors2.Black.type): colors1.Color =
         colors1.Red
 
       (colors2.Black: colors2.Color)
-        .intoF[Option, colors1.Color]
+        .intoPartial[colors1.Color]
         .withCoproductInstance(blackIsRed)
-        .transform ==> Some(colors1.Red)
+        .transform
+        .asOption ==> Some(colors1.Red)
 
       (colors2.Red: colors2.Color)
-        .intoF[Option, colors1.Color]
+        .intoPartial[colors1.Color]
         .withCoproductInstance(blackIsRed)
-        .transform ==> Some(colors1.Red)
+        .transform
+        .asOption ==> Some(colors1.Red)
 
       (colors2.Green: colors2.Color)
-        .intoF[Option, colors1.Color]
+        .intoPartial[colors1.Color]
         .withCoproductInstance(blackIsRed)
-        .transform ==> Some(colors1.Green)
+        .transform
+        .asOption ==> Some(colors1.Green)
 
       (colors2.Blue: colors2.Color)
-        .intoF[Option, colors1.Color]
+        .intoPartial[colors1.Color]
         .withCoproductInstance(blackIsRed)
-        .transform ==> Some(colors1.Blue)
+        .transform
+        .asOption ==> Some(colors1.Blue)
     }
 
     test("fix issue #182") {
@@ -503,12 +510,12 @@ object IssuesSpec extends TestSuite {
       val result = transformer.transform(foo)
       assert(result == expected)
 
-      val transformerF = Transformer
-        .defineF[Either[Seq[String], +*], Foo, Bar]
+      val partialTransformer = Transformer
+        .definePartial[Foo, Bar]
         .buildTransformer
 
-      val resultF = transformerF.transform(foo)
-      assert(resultF == Right(expected))
+      val partialResult = partialTransformer.transform(foo).asEither
+      assert(partialResult == Right(expected))
     }
 
     test("fix issue #212") {
@@ -530,19 +537,20 @@ object IssuesSpec extends TestSuite {
 
       test("lifted transformers") {
 
-        implicit val somethingTransformF: TransformerF[Option, proto.Something, OneOf] =
-          _.value.transformIntoF[Option, Something]
-        implicit val somethingElseTransformF: TransformerF[Option, proto.SomethingElse, OneOf] =
-          _.value.transformIntoF[Option, SomethingElse]
+        implicit val somethingTransformPartial: PartialTransformer[proto.Something, OneOf] =
+          (p, _) => p.value.transformIntoPartial[Something]
+        implicit val somethingElseTransformPartial: PartialTransformer[proto.SomethingElse, OneOf] =
+          (p, _) => p.value.transformIntoPartial[SomethingElse]
 
-        implicit val oneOfTransformF: TransformerF[Option, proto.OneOf, OneOf] =
-          TransformerF
-            .define[Option, proto.OneOf, OneOf]
-            .withCoproductInstanceF[proto.Empty.type](_ => None)
+        implicit val oneOfTransformPartial: PartialTransformer[proto.OneOf, OneOf] =
+          PartialTransformer
+            .define[proto.OneOf, OneOf]
+            .withCoproductInstancePartial[proto.Empty.type](_ => partial.Result.fromEmpty)
             .buildTransformer
 
         (proto.Something(proto.SomethingMessage(42)): proto.OneOf)
-          .transformIntoF[Option, OneOf] ==> Some(Something(42))
+          .transformIntoPartial[OneOf]
+          .asOption ==> Some(Something(42))
       }
 
       test("partial transformers") {

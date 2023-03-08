@@ -175,48 +175,6 @@ object TotalTransformerStdLibTypesSpec extends TestSuite {
         )
       }
     }
-
-    test("flag .enableUnsafeOption") {
-
-      case class Source(x: Option[Int])
-      case class Target(x: String)
-
-      implicit val intPrinter: Transformer[Int, String] = _.toString
-
-      test(
-        "should be turned off by default and not allow transforming Option[T] to S without explicitly existing converter"
-      ) {
-        compileError("""Source(Some(1)).into[Target].transform""").check(
-          "",
-          "Chimney can't derive transformation from Source to Target",
-          "java.lang.String",
-          "derivation from source.x: scala.Option to java.lang.String is not supported in Chimney!",
-          "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Target",
-          "x: java.lang.String - can't derive transformation from x: scala.Option in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source",
-          "Consult https://scalalandio.github.io/chimney for usage examples."
-        )
-      }
-
-      test("use .get to extract Option source when enabled") {
-        Option(10).into[String].enableUnsafeOption.transform ==> "10"
-        Source(Some(10)).into[Target].enableUnsafeOption.transform ==> Target("10")
-        intercept[NoSuchElementException] {
-          Option.empty[Int].into[String].enableUnsafeOption.transform
-        }
-        intercept[NoSuchElementException] {
-          Source(None).into[Target].enableUnsafeOption.transform
-        }
-      }
-
-      test("should be ignored if implicit (presumably safe) Transformer from Option exists") {
-        implicit val optIntPrinter: Transformer[Option[Int], String] = _.map(_ * 2).fold("empty")(_.toString)
-
-        Option(10).into[String].enableUnsafeOption.transform ==> "20"
-        Source(Some(10)).into[Target].enableUnsafeOption.transform ==> Target("20")
-        Option.empty[Int].into[String].enableUnsafeOption.transform ==> "empty"
-        Source(None).into[Target].enableUnsafeOption.transform ==> Target("empty")
-      }
-    }
   }
 
   case class Foo(value: String)

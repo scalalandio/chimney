@@ -2,7 +2,7 @@ package io.scalaland.chimney.examples
 
 package numbers {
 
-  import io.scalaland.chimney.{PartialTransformer, Transformer, TransformerF, TransformerFSupport}
+  import io.scalaland.chimney.{PartialTransformer, Transformer}
 
   // following https://en.wikipedia.org/wiki/Names_of_large_numbers
 
@@ -22,39 +22,6 @@ package numbers {
     case class Billion[T](count: T) extends NumScale[T] // 10^12
     case class Billiard[T](count: T) extends NumScale[T] // 10^15
     case class Trillion[T](count: T) extends NumScale[T] // 10^18
-  }
-
-  object ScalesTransformerF {
-
-    import io.scalaland.chimney.dsl.*
-
-    implicit def shortToLongPureInner[F[+_]: TransformerFSupport, A, B](implicit
-        ft: Transformer[A, B]
-    ): TransformerF[F, short.NumScale[A, Nothing], long.NumScale[B]] = {
-      Transformer
-        .defineF[F, short.NumScale[A, Nothing], long.NumScale[B]]
-        .withCoproductInstanceF { billion: short.Billion[A] =>
-          billion.transformIntoF[F, long.Milliard[B]]
-        }
-        .withCoproductInstanceF { trillion: short.Trillion[A] =>
-          trillion.transformIntoF[F, long.Billion[B]]
-        }
-        .buildTransformer
-    }
-
-    implicit def shortToLongWrappedInner[F[+_]: TransformerFSupport, A, B](implicit
-        ft: TransformerF[F, A, B]
-    ): TransformerF[F, short.NumScale[A, Nothing], long.NumScale[B]] = {
-      Transformer
-        .defineF[F, short.NumScale[A, Nothing], long.NumScale[B]]
-        .withCoproductInstanceF { billion: short.Billion[A] =>
-          billion.transformIntoF[F, long.Milliard[B]]
-        }
-        .withCoproductInstanceF { trillion: short.Trillion[A] =>
-          trillion.transformIntoF[F, long.Billion[B]]
-        }
-        .buildTransformer
-    }
   }
 
   object ScalesPartialTransformer {

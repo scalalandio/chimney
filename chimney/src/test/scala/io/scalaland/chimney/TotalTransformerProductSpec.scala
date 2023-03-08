@@ -348,54 +348,6 @@ object TotalTransformerProductSpec extends TestSuite {
 
     // TODO: refactor tests below
 
-    test("support with .enableUnsafeOption") {
-      implicit val stringToIntTransformer: Transformer[Int, String] = _.toString
-
-      test("use implicit transformer") {
-        case class Foobar(x: Option[Int])
-        case class Foobar2(x: String)
-
-        case class NestedFoobar(foobar: Option[Foobar])
-        case class NestedFoobar2(foobar: Foobar2)
-
-        Foobar(Some(1)).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1")
-        NestedFoobar(Some(Foobar(Some(1)))).into[NestedFoobar2].enableUnsafeOption.transform ==> NestedFoobar2(
-          Foobar2("1")
-        )
-      }
-
-      test("preserve option to option mapping") {
-        case class Foobar(x: Option[Int], y: Option[String])
-        case class Foobar2(x: String, y: Option[String])
-
-        Foobar(Some(1), Some("foobar")).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1", Some("foobar"))
-        Foobar(Some(1), None).into[Foobar2].enableUnsafeOption.transform ==> Foobar2("1", None)
-      }
-
-      test("transforming None leads to NoSuchElementException") {
-        case class Foobar(x: Option[Int])
-        case class Foobar2(x: String)
-
-        intercept[NoSuchElementException] {
-          Foobar(None).into[Foobar2].enableUnsafeOption.transform
-        }
-      }
-
-      test("transforming fixed None type does not compile") {
-        compileError("""None.into[String].enableUnsafeOption.transform""")
-          .check("", "derivation from none: scala.None to java.lang.String is not supported in Chimney!")
-
-        case class Foobar(x: None.type)
-        case class Foobar2(x: String)
-
-        compileError("""Foobar(None).into[Foobar2].enableUnsafeOption.transform""")
-          .check(
-            "",
-            "x: java.lang.String - can't derive transformation from x: scala.None in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar"
-          )
-      }
-    }
-
     test("support using method calls to fill values from target type") {
       case class Foobar(param: String) {
         val valField: String = "valField"
