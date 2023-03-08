@@ -169,7 +169,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
           expandSubtypes(srcPrefixTree, config)
         } else if (bothValueClasses(From, To)) {
           expandValueClassToValueClass(srcPrefixTree, config)(From, To)
-        } else if (fromValueClassToType(From, To)) {
+        } else if (fromValueClass(From, To)) {
           expandValueClassToType(srcPrefixTree, config)(From, To)
         } else if (fromTypeToValueClass(From, To)) {
           expandTypeToValueClass(srcPrefixTree, config)(From, To)
@@ -241,21 +241,19 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       To: Type
   ): Either[Seq[TransformerDerivationError], Tree] = {
 
-    From.valueClassMember
-      .map { member =>
-        Right {
-          mkTransformerBodyTree0(config.derivationTarget) {
-            q"$srcPrefixTree.${member.name}"
-          }
-        }
-      }
-      .getOrElse {
-        // $COVERAGE-OFF$
-        Left {
-          Seq(CantFindValueClassMember(From.typeSymbol.name.toString, To.typeSymbol.name.toString))
-        }
-        // $COVERAGE-ON$
-      }
+    val fromValueClassMember = From.valueClassMember.toRight(
+      Seq(CantFindValueClassMember(From.typeSymbol.name.toString, To.typeSymbol.name.toString))
+    )
+
+    for {
+      fromValueClassMember <- fromValueClassMember
+      fromValueClassMemberType = fromValueClassMember.returnType
+      fromMemberAccessTree = q"$srcPrefixTree.${fromValueClassMember.name}"
+      transformerBodyTree <- resolveRecursiveTransformerBody(fromMemberAccessTree, config)(
+        fromValueClassMemberType,
+        To
+      )
+    } yield mkTransformerBodyTree0(transformerBodyTree.target)(transformerBodyTree.tree)
   }
 
   def expandTypeToValueClass(

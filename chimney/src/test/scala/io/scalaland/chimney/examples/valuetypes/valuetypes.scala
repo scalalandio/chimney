@@ -8,5 +8,6 @@ case class UserDTO(id: String, name: String)
 case class User(id: String, name: UserName)
 case class UserAlias(id: String, name: UserNameAlias)
 
-case class UserWithName(id: UserName)
-case class UserWithId(id: UserId)
+case class UserWithUserName(id: UserName)
+case class UserWithUserId(id: UserId)
+case class UserWithId(id: Int)
