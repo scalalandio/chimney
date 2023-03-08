@@ -17,6 +17,6 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.4")
 // disabling projects in IDE
 addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.1.0")
 //
-addSbtPlugin("com.github.reibitto" % "sbt-welcome" % "0.2.2")
+addSbtPlugin("com.github.reibitto" % "sbt-welcome" % "0.3.1")
 
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
