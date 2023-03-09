@@ -156,9 +156,6 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
             q"final def $dn: ${Trees.PartialResult.tpe(target.tpe)} = { ${tbt.tree} }"
           }
           val localValNames = partialTargets.map(t => freshTermName(s"rv_${t.name}"))
-          val localTreeVals = (localValNames zip localDefNames).map { case (rv, rd) =>
-            q"final val $rv = $rd"
-          }
 
           // short circuit branch (fail fast)
           val succFFValIdents = partialTargets.map(t => freshTermName(s"rvff_${t.name}"))
@@ -176,8 +173,11 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
           val argsMap = totalArgsMap ++ patRefArgsMap
           val updatedArgs = targets.map(argsMap)
           val allErrorsIdent = freshTermName("allErrors")
-          val errorsCaptureTrees = localValNames.map { resultVal =>
-            q"""$allErrorsIdent = ${Trees.PartialErrors.mergeResultNullable(q"$allErrorsIdent", q"$resultVal")}"""
+          val errorsCaptureTrees = (localValNames zip localDefNames).flatMap { case (rv, rd) =>
+            Seq(
+              q"final val $rv = $rd",
+              q"""$allErrorsIdent = ${Trees.PartialErrors.mergeResultNullable(q"$allErrorsIdent", q"$rv")}"""
+            )
           }
 
           q"""{
@@ -185,7 +185,6 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
                 if(${pt.failFastTree}) {
                   for (..$succFFFqs) yield ${mkTargetValueTree(updatedArgsFF)}
                 } else {
-                  ..$localTreeVals
                   var $allErrorsIdent: ${Trees.PartialErrors.tpe} = null
                   ..$errorsCaptureTrees
                   if ($allErrorsIdent == null) {
