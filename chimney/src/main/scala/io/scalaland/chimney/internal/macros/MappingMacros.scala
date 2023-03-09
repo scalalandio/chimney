@@ -64,7 +64,6 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
   }
 
   def resolveOverrides(
-      srcPrefixTree: Tree,
       From: Type,
       targets: Iterable[Target],
       config: TransformerConfig
@@ -99,7 +98,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
           Some {
             target -> TransformerBodyTree(
               q"""
-                ${liftedFunction.callUnaryApply(srcPrefixTree)}
+                ${liftedFunction.callUnaryApply(config.srcPrefixTree)}
                   .prependErrorPath(${Trees.PathElement.accessor(target.name)})
               """,
               config.derivationTarget
@@ -111,7 +110,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
             target -> TransformerBodyTree(
               config.transformerDefinitionPrefix
                 .accessOverriddenComputedFunction(runtimeDataIdx, From, target.tpe)
-                .callUnaryApply(srcPrefixTree),
+                .callUnaryApply(config.srcPrefixTree),
               DerivationTarget.TotalTransformer
             )
           }
@@ -123,7 +122,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
               q"""
                 ${config.transformerDefinitionPrefix
                   .accessOverriddenComputedFunction(runtimeDataIdx, From, fTargetTpe)
-                  .callUnaryApply(srcPrefixTree)}
+                  .callUnaryApply(config.srcPrefixTree)}
                   .prependErrorPath(${Trees.PathElement.accessor(target.name)})
               """,
               config.derivationTarget
@@ -147,7 +146,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
             target -> TransformerBodyTree(
               config.transformerDefinitionPrefix
                 .accessOverriddenComputedFunction(runtimeDataIdx, From, fTargetTpe)
-                .callUnaryApply(srcPrefixTree),
+                .callUnaryApply(config.srcPrefixTree),
               config.derivationTarget
             )
           }

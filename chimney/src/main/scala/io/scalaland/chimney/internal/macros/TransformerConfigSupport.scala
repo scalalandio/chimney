@@ -70,7 +70,8 @@ trait TransformerConfigSupport extends MacroUtils {
     }
   }
 
-  case class TransformerConfig(
+  case class TransformerConfig( // TODO: rename to TransformerContext
+      srcPrefixTree: Tree = EmptyTree,
       derivationTarget: DerivationTarget = DerivationTarget.TotalTransformer,
       flags: TransformerFlags = TransformerFlags(),
       fieldOverrides: Map[String, FieldOverride] = Map.empty,
@@ -81,10 +82,10 @@ trait TransformerConfigSupport extends MacroUtils {
       definitionScope: Option[(Type, Type)] = None
   ) {
 
-    def withDerivationTarget(derivationTarget: DerivationTarget): TransformerConfig = {
+    def withSrcPrefixTree(srcPrefixTree: Tree): TransformerConfig =
+      copy(srcPrefixTree = srcPrefixTree)
+    def withDerivationTarget(derivationTarget: DerivationTarget): TransformerConfig =
       copy(derivationTarget = derivationTarget)
-    }
-
     def withTransformerDefinitionPrefix(tdPrefix: Tree): TransformerConfig =
       copy(transformerDefinitionPrefix = tdPrefix)
     def withDefinitionScope(fromTpe: Type, toTpe: Type): TransformerConfig =
