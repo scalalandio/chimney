@@ -178,6 +178,15 @@ object Result {
       */
     final def merge(errors1: Errors, errors2: Errors): Errors =
       apply(errors1.errors ++ errors2.errors)
+
+    /** Used internally by macro. Please don't use in your code.
+      */
+    final def __mergeResultNullable[T](errorsNullable: Errors, result: Result[T]): Errors = {
+      result match {
+        case _: Value[?]    => errorsNullable
+        case errors: Errors => if (errorsNullable == null) errors else merge(errorsNullable, errors)
+      }
+    }
   }
 
   /** Converts a function that throws Exceptions into function that returns Result.

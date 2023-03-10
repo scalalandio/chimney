@@ -147,90 +147,53 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
               pt.failFastTree
             )
         } else {
-          val (partialTargets, partialBodyTrees) = partialArgs.unzip
-          val partialTrees = partialBodyTrees.map(_.tree)
           val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
 
-          if (partialArgs.sizeIs <= 22) { // tuple-based encoding, type info preserved
+          val partialTargets = partialArgs.map(_._1)
 
-            val localDefNames = partialTrees.map(_ => freshTermName("t"))
-            val localTreeDefs = (localDefNames zip partialTrees).map { case (n, t) => q"final def $n = { $t }" }
+          val localDefNames = partialTargets.map(t => freshTermName(s"rd_${t.name}"))
+          val localTreeDefs = (localDefNames zip partialArgs).map { case (dn, (target, tbt)) =>
+            q"final def $dn: ${Trees.PartialResult.tpe(target.tpe)} = { ${tbt.tree} }"
+          }
+          val localValNames = partialTargets.map(t => freshTermName(s"rv_${t.name}"))
 
-            val succFFValIdents = partialArgs.map(_ => freshTermName("vff"))
-            val succFFFqs = (succFFValIdents zip localDefNames).map { case (vId, lt) => fq"$vId <- $lt" }
-            val succValFFTrees = succFFValIdents.map(vId => q"$vId")
-            val patRefArgsMapFF = (partialTargets zip succValFFTrees).toMap
-            val argsMapFF = totalArgsMap ++ patRefArgsMapFF
-            val updatedArgsFF = targets.map(argsMapFF)
+          // short circuit branch (fail fast)
+          val succFFValIdents = partialTargets.map(t => freshTermName(s"rvff_${t.name}"))
+          val succFFFqs = (succFFValIdents zip localDefNames).map { case (rvff, rd) => fq"$rvff <- $rd" }
+          val succValFFTrees = succFFValIdents.map(rvff => q"$rvff")
+          val patRefArgsMapFF = (partialTargets zip succValFFTrees).toMap
+          val argsMapFF = totalArgsMap ++ patRefArgsMapFF
+          val updatedArgsFF = targets.map(argsMapFF)
 
-            val succValIdents = partialTrees.map(_ => freshTermName("v"))
-            val localTreeRefs = localDefNames.map { lt =>
-              q"$lt"
-            }
-            val succValPats = succValIdents.map(vId => Trees.PartialResult.patValue(vId))
-            val allSuccPat = pq"(..${succValPats})"
-            val succValTrees = succValIdents.map(vId => q"$vId")
-            val patRefArgsMap = (partialTargets zip succValTrees).toMap
-            val argsMap = totalArgsMap ++ patRefArgsMap
-            val updatedArgs = targets.map(argsMap)
+          // long circuit branch (errors accumulation)
+          val succValTrees = (localValNames zip partialTargets).map { case (rv, target) =>
+            q"$rv.asInstanceOf[${Trees.PartialResult.valueTpe(target.tpe)}].value"
+          }
+          val patRefArgsMap = (partialTargets zip succValTrees).toMap
+          val argsMap = totalArgsMap ++ patRefArgsMap
+          val updatedArgs = targets.map(argsMap)
+          val allErrorsIdent = freshTermName("allErrors")
+          val errorsCaptureTrees = (localValNames zip localDefNames).flatMap { case (rv, rd) =>
+            Seq(
+              q"final val $rv = $rd",
+              q"""$allErrorsIdent = ${Trees.PartialErrors.mergeResultNullable(q"$allErrorsIdent", q"$rv")}"""
+            )
+          }
 
-            val errIdents = partialTrees.map(_ => freshTermName("err"))
-            val errPats = errIdents.map(errId => pq"$errId")
-            val errPat = pq"(..${errPats})"
-
-            val allErrorsIdent = freshTermName("allErrors")
-            val allErrIfTrees = errIdents.map { errId =>
-              val localErrsIdent = freshTermName("localErrs")
-              q"""
-                if ($errId.isInstanceOf[${Trees.PartialErrors.tpe}]) {
-                  val $localErrsIdent = $errId.asInstanceOf[${Trees.PartialErrors.tpe}]
-                  if ($allErrorsIdent == null) {
-                    $allErrorsIdent = $localErrsIdent
-                  } else {
-                    $allErrorsIdent = ${Trees.PartialErrors.merge(allErrorsIdent, localErrsIdent)}
-                  }
-                }
-               """
-            }
-
-            q"""
-              {
+          q"""{
                 ..$localTreeDefs
                 if(${pt.failFastTree}) {
                   for (..$succFFFqs) yield ${mkTargetValueTree(updatedArgsFF)}
                 } else {
-                  (..${localTreeRefs}) match {
-                    case $allSuccPat =>
-                      ${Trees.PartialResult.value(mkTargetValueTree(updatedArgs))}
-                    case $errPat => // (r1, r2, .., rk)
-                      var $allErrorsIdent: ${Trees.PartialErrors.tpe} = null
-                      ..$allErrIfTrees
-                      $allErrorsIdent
+                  var $allErrorsIdent: ${Trees.PartialErrors.tpe} = null
+                  ..$errorsCaptureTrees
+                  if ($allErrorsIdent == null) {
+                    ${Trees.PartialResult.value(mkTargetValueTree(updatedArgs))}
+                  } else {
+                    $allErrorsIdent
                   }
                 }
-              }
-            """
-          } else { // Array[Any] + sequence, type info lost
-            // should be possible to optimize with nested tuples
-            val partialTreesArray = Trees.array(partialTrees)
-            val arrayFn = freshTermName("array")
-            val argIndices = partialTargets.indices
-            val patRefArgsMap = (partialTargets zip argIndices).map { case (target, argIndex) =>
-              target -> q"$arrayFn.apply($argIndex).asInstanceOf[${target.tpe}]"
-            }.toMap
-            val argsMap = totalArgsMap ++ patRefArgsMap
-            val updatedArgs = targets.map(argsMap)
-
-            q"""
-               ${Trees.PartialResult.sequence(
-                Trees.arrayAny,
-                Trees.any,
-                q"${partialTreesArray}.iterator",
-                pt.failFastTree
-              )}
-               .map { ($arrayFn: ${Trees.arrayAny}) => ${mkTargetValueTree(updatedArgs)} }
-             """
-          }
+              }"""
         }
 
       case lt @ DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _) =>
