@@ -253,7 +253,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
         fromValueClassMemberType,
         To
       )
-    } yield mkTransformerBodyTree0(transformerBodyTree.target)(transformerBodyTree.tree)
+    } yield transformerBodyTree.tree
   }
 
   def expandTypeToValueClass(
@@ -268,13 +268,18 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
     )
 
     for {
+      toValueClassMethodSymbol <- toValueClassMember
       toValueClassMemberType <- toValueClassMember.map(_.returnType)
       transformerBodyTree <- resolveRecursiveTransformerBody(srcPrefixTree, config)(
         From,
         toValueClassMemberType
       )
-      toCreationTree = q"new $To(${transformerBodyTree.tree})"
-    } yield mkTransformerBodyTree0(transformerBodyTree.target)(toCreationTree)
+    } yield mkTransformerBodyTree1(
+      To,
+      Target.fromField(toValueClassMethodSymbol, toValueClassMemberType),
+      transformerBodyTree,
+      config.derivationTarget
+    )(innerTree => q"new $To($innerTree)")
   }
 
   def expandTargetWrappedInOption(
@@ -306,16 +311,21 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
     )
 
     for {
-      fromValueClassMember <- fromValueClassMember
-      fromValueClassMemberType = fromValueClassMember.returnType
+      fromValueClassMemberSymbol <- fromValueClassMember
+      fromValueClassMemberType = fromValueClassMemberSymbol.returnType
+      toValueClassMethodSymbol <- toValueClassMember
       toValueClassMemberType <- toValueClassMember.map(_.returnType)
-      fromMemberAccessTree = q"$srcPrefixTree.${fromValueClassMember.name}"
+      fromMemberAccessTree = q"$srcPrefixTree.${fromValueClassMemberSymbol.name}"
       transformerBodyTree <- resolveRecursiveTransformerBody(fromMemberAccessTree, config)(
         fromValueClassMemberType,
         toValueClassMemberType
       )
-      toCreationTree = q"new $To(${transformerBodyTree.tree})"
-    } yield mkTransformerBodyTree0(transformerBodyTree.target)(toCreationTree)
+    } yield mkTransformerBodyTree1(
+      To,
+      Target.fromField(toValueClassMethodSymbol, toValueClassMemberType),
+      transformerBodyTree,
+      config.derivationTarget
+    )(innerTree => q"new $To($innerTree)")
   }
 
   def expandSourceWrappedInOption(
