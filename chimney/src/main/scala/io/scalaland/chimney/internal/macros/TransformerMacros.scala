@@ -242,7 +242,9 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
   ): Either[Seq[TransformerDerivationError], Tree] = {
 
     val fromValueClassMember = From.valueClassMember.toRight(
+      // $COVERAGE-OFF$
       Seq(CantFindValueClassMember(From.typeSymbol.name.toString, To.typeSymbol.name.toString))
+      // $COVERAGE-ON$
     )
 
     for {
@@ -264,7 +266,9 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       To: Type
   ): Either[Seq[TransformerDerivationError], Tree] = {
     val toValueClassMember = To.valueClassMember.toRight(
+      // $COVERAGE-OFF$
       Seq(CantFindValueClassMember(To.typeSymbol.name.toString, From.typeSymbol.name.toString))
+      // $COVERAGE-ON$
     )
 
     for {
@@ -303,11 +307,15 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
   ): Either[Seq[TransformerDerivationError], Tree] = {
 
     val fromValueClassMember = From.valueClassMember.toRight(
+      // $COVERAGE-OFF$
       Seq(CantFindValueClassMember(From.typeSymbol.name.toString, To.typeSymbol.name.toString))
+      // $COVERAGE-ON$
     )
 
     val toValueClassMember = To.valueClassMember.toRight(
+      // $COVERAGE-OFF$
       Seq(CantFindValueClassMember(To.typeSymbol.name.toString, From.typeSymbol.name.toString))
+      // $COVERAGE-ON$
     )
 
     for {
