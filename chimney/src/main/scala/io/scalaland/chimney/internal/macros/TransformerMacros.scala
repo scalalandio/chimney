@@ -413,23 +413,23 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
           val keyTransformerE = resolveRecursiveTransformerBody(config.withSrcPrefixTree(fnK))(fromKeyT, toKeyT)
           val valueTransformerE = resolveRecursiveTransformerBody(config.withSrcPrefixTree(fnV))(fromValueT, toValueT)
 
-        (keyTransformerE, valueTransformerE) match {
-          case (Right(keyTransformer), Right(valueTransformer)) =>
-            val keyTransformerWithPath =
-              keyTransformer.target match {
-                case _: DerivationTarget.PartialTransformer =>
-                  q"${keyTransformer.tree}.prependErrorPath(${Trees.PathElement.mapKey(fnK)})"
-                case DerivationTarget.TotalTransformer =>
-                  Trees.PartialResult.value(keyTransformer.tree)
-              }
+          (keyTransformerE, valueTransformerE) match {
+            case (Right(keyTransformer), Right(valueTransformer)) =>
+              val keyTransformerWithPath =
+                keyTransformer.target match {
+                  case _: DerivationTarget.PartialTransformer =>
+                    q"${keyTransformer.tree}.prependErrorPath(${Trees.PathElement.mapKey(fnK)})"
+                  case DerivationTarget.TotalTransformer =>
+                    Trees.PartialResult.value(keyTransformer.tree)
+                }
 
-            val valueTransformerWithPath =
-              valueTransformer.target match {
-                case _: DerivationTarget.PartialTransformer =>
-                  q"${valueTransformer.tree}.prependErrorPath(${Trees.PathElement.mapValue(fnK)})"
-                case DerivationTarget.TotalTransformer =>
-                  Trees.PartialResult.value(valueTransformer.tree)
-              }
+              val valueTransformerWithPath =
+                valueTransformer.target match {
+                  case _: DerivationTarget.PartialTransformer =>
+                    q"${valueTransformer.tree}.prependErrorPath(${Trees.PathElement.mapValue(fnK)})"
+                  case DerivationTarget.TotalTransformer =>
+                    Trees.PartialResult.value(valueTransformer.tree)
+                }
 
               val tree = Trees.PartialResult.traverse(
                 tq"$To",
