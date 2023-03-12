@@ -314,7 +314,7 @@ lazy val protos = projectMatrix
 
 lazy val benchmarks = projectMatrix
   .in(file("benchmarks"))
-  .someVariations(versions.scalas, List(VirtualAxis.jvm))(only1VersionInIDE*) // only makes sense for JVM
+  .someVariations(List(versions.scala213), List(VirtualAxis.jvm))(only1VersionInIDE*) // only makes sense for JVM
   .settings(
     moduleName := "chimney-benchmarks",
     name := "chimney-benchmarks",
