@@ -1,7 +1,6 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.examples.*
 import utest.*
 
 object TotalTransformerStdLibTypesSpec extends TestSuite {

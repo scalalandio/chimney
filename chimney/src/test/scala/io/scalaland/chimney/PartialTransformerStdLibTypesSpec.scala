@@ -1,7 +1,6 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.examples.trip.*
 import io.scalaland.chimney.utils.OptionUtils.*
 import utest.*
 
@@ -9,7 +8,7 @@ import scala.annotation.unused
 import scala.collection.immutable.Queue
 import scala.collection.mutable.ArrayBuffer
 
-object PartialTransformerSdtLibTypesSpec extends TestSuite {
+object PartialTransformerStdLibTypesSpec extends TestSuite {
 
   val tests = Tests {
 
@@ -20,8 +19,8 @@ object PartialTransformerSdtLibTypesSpec extends TestSuite {
       compileError("""Buzz("a").transformIntoPartial[ConflictingFooBuzz]""").check(
         "",
         "Chimney can't derive transformation from Buzz to ConflictingFooBuzz",
-        "io.scalaland.chimney.PartialTransformerSdtLibTypesSpec.ConflictingFooBuzz",
-        "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.PartialTransformerSdtLibTypesSpec.Buzz",
+        "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.ConflictingFooBuzz",
+        "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Buzz",
         "scala.Unit",
         "derivation from buzz.value: java.lang.String to scala.Unit is not supported in Chimney!",
         "Consult https://scalalandio.github.io/chimney for usage examples."
@@ -464,8 +463,8 @@ object PartialTransformerSdtLibTypesSpec extends TestSuite {
         compileError("""Source("foo").intoPartial[TargetWithOption].transform.asOption""").check(
           "",
           "Chimney can't derive transformation from Source to TargetWithOption",
-          "io.scalaland.chimney.PartialTransformerSdtLibTypesSpec.TargetWithOption",
-          "y: scala.Option - no accessor named y in source type io.scalaland.chimney.PartialTransformerSdtLibTypesSpec.Source",
+          "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
+          "y: scala.Option - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
           "Consult https://scalalandio.github.io/chimney for usage examples."
         )
       }
@@ -509,8 +508,6 @@ object PartialTransformerSdtLibTypesSpec extends TestSuite {
 
       case class Source(x: Option[Int])
       case class Target(x: String)
-
-      implicit val intPrinter: Transformer[Int, String] = _.toString
 
       test("should not supported for any case") {
 

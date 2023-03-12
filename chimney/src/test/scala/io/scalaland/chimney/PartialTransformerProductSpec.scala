@@ -2,7 +2,6 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.examples.*
-import io.scalaland.chimney.utils.EitherUtils.*
 import io.scalaland.chimney.utils.OptionUtils.*
 import utest.*
 
