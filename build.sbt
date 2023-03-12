@@ -133,10 +133,17 @@ val settings = Seq(
 val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0",
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
     "com.lihaoyi" %%% "utest" % "0.8.1" % "test",
   ),
-  addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
+  libraryDependencies ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, _)) => Seq(
+        "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
+        compilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
+      )
+      case _ => Seq.empty
+    }
+  },
 )
 
 val versionSchemeSettings = Seq(versionScheme := Some("early-semver"))
