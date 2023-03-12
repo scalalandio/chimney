@@ -5,6 +5,7 @@ import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.utils.EitherUtils
 
 import scala.reflect.macros.blackbox
+import scala.collection.compat.*
 
 trait TransformerMacros extends MappingMacros with TargetConstructorMacros with EitherUtils {
 
