@@ -999,7 +999,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
           case (None, None) =>
             deriveTransformerTree(config)(From, To)
         }
-      case pt @ DerivationTarget.PartialTransformer(_) =>
+      case _: DerivationTarget.PartialTransformer =>
         val implicitPartialTransformer = resolveImplicitTransformer(config)(From, To)
         val implicitTransformer = findLocalImplicitTransformer(From, To, DerivationTarget.TotalTransformer)
 

@@ -12,8 +12,6 @@ object PartialTransformerImplicitResolutionSpec extends TestSuite {
       import products.Domain1.*
       implicit def instance: Transformer[UserName, String] = userNameToStringTransformer
 
-      val expected = "BatmanT"
-
       val result = UserName("Batman").intoPartial[String].transform
       result.asOption ==> Some("BatmanT")
       result.asEither ==> Right("BatmanT")

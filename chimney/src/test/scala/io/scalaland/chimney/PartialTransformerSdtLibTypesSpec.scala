@@ -1,7 +1,6 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.examples.trip.*
 import io.scalaland.chimney.utils.OptionUtils.*
 import utest.*
 
@@ -509,8 +508,6 @@ object PartialTransformerSdtLibTypesSpec extends TestSuite {
 
       case class Source(x: Option[Int])
       case class Target(x: String)
-
-      implicit val intPrinter: Transformer[Int, String] = _.toString
 
       test("should not supported for any case") {
 

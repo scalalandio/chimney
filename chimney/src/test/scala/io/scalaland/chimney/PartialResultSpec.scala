@@ -507,9 +507,9 @@ object PartialResultSpec extends TestSuite {
         failFast = true
       )
       operations4 ==> 1
-      result3.asOption ==> None
-      result3.asEither.isLeft ==> true
-      result3.asErrorPathMessageStrings ==> Iterable("" -> """For input string: "error"""")
+      result4.asOption ==> None
+      result4.asEither.isLeft ==> true
+      result4.asErrorPathMessageStrings ==> Iterable("" -> """For input string: "error"""")
     }
 
     test(
@@ -652,9 +652,9 @@ object PartialResultSpec extends TestSuite {
         failFast = true
       )
       operations4 ==> 1
-      result3.asOption ==> None
-      result3.asEither.isLeft ==> true
-      result3.asErrorPathMessageStrings ==> Iterable("" -> """For input string: "error"""")
+      result4.asOption ==> None
+      result4.asEither.isLeft ==> true
+      result4.asErrorPathMessageStrings ==> Iterable("" -> """For input string: "error"""")
     }
   }
 }
