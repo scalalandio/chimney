@@ -24,7 +24,7 @@ object ErrorMessage {
     *
     * @since 0.7.0
     */
-  final case object EmptyValue extends ErrorMessage
+  case object EmptyValue extends ErrorMessage
 
   /** Represents partial function is not defined for specific argument error
     *
