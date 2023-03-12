@@ -67,13 +67,13 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
       From: Type,
       targets: Iterable[Target],
       config: TransformerConfig
-  ): Map[Target, TransformerBodyTree] = {
+  ): Map[Target, DerivedTree] = {
     targets.flatMap { target =>
       config.fieldOverrides.get(target.name) match {
 
         case Some(FieldOverride.Const(runtimeDataIdx)) =>
           Some {
-            target -> TransformerBodyTree(
+            target -> DerivedTree(
               config.transformerDefinitionPrefix.accessOverriddenConstValue(runtimeDataIdx, target.tpe),
               DerivationTarget.TotalTransformer
             )
@@ -82,7 +82,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
         case Some(FieldOverride.ConstPartial(runtimeDataIdx)) if config.derivationTarget.isPartial =>
           val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
-            target -> TransformerBodyTree(
+            target -> DerivedTree(
               q"""
                 ${config.transformerDefinitionPrefix.accessOverriddenConstValue(runtimeDataIdx, fTargetTpe)}
                   .prependErrorPath(${Trees.PathElement.accessor(target.name)})
@@ -96,7 +96,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
             config.transformerDefinitionPrefix.accessOverriddenComputedFunction(runtimeDataIdx, From, target.tpe)
           val liftedFunction = Trees.PartialResult.fromFunction(function)
           Some {
-            target -> TransformerBodyTree(
+            target -> DerivedTree(
               q"""
                 ${liftedFunction.callUnaryApply(config.srcPrefixTree)}
                   .prependErrorPath(${Trees.PathElement.accessor(target.name)})
@@ -107,7 +107,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
 
         case Some(FieldOverride.Computed(runtimeDataIdx)) =>
           Some {
-            target -> TransformerBodyTree(
+            target -> DerivedTree(
               config.transformerDefinitionPrefix
                 .accessOverriddenComputedFunction(runtimeDataIdx, From, target.tpe)
                 .callUnaryApply(config.srcPrefixTree),
@@ -118,7 +118,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
         case Some(FieldOverride.ComputedPartial(runtimeDataIdx)) if config.derivationTarget.isPartial =>
           val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
-            target -> TransformerBodyTree(
+            target -> DerivedTree(
               q"""
                 ${config.transformerDefinitionPrefix
                   .accessOverriddenComputedFunction(runtimeDataIdx, From, fTargetTpe)
@@ -134,7 +134,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
         case Some(FieldOverride.ConstF(runtimeDataIdx)) if config.derivationTarget.isLifted =>
           val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
-            target -> TransformerBodyTree(
+            target -> DerivedTree(
               config.transformerDefinitionPrefix.accessOverriddenConstValue(runtimeDataIdx, fTargetTpe),
               config.derivationTarget
             )
@@ -143,7 +143,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
         case Some(FieldOverride.ComputedF(runtimeDataIdx)) if config.derivationTarget.isLifted =>
           val fTargetTpe = config.derivationTarget.targetType(target.tpe)
           Some {
-            target -> TransformerBodyTree(
+            target -> DerivedTree(
               config.transformerDefinitionPrefix
                 .accessOverriddenComputedFunction(runtimeDataIdx, From, fTargetTpe)
                 .callUnaryApply(config.srcPrefixTree),
@@ -161,7 +161,7 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
       targets: Iterable[Target],
       To: Type,
       config: TransformerConfig
-  ): Map[Target, TransformerBodyTree] = {
+  ): Map[Target, DerivedTree] = {
 
     lazy val targetCaseClassDefaults = To.typeSymbol.asClass.caseClassDefaults
 
@@ -170,21 +170,21 @@ trait MappingMacros extends Model with TypeTestUtils with DslMacroUtils with Gen
         if (config.flags.processDefaultValues && To.isCaseClass) {
           targetCaseClassDefaults
             .get(target.name)
-            .map(defaultValueTree => target -> TransformerBodyTree(defaultValueTree, DerivationTarget.TotalTransformer))
+            .map(defaultValueTree => target -> DerivedTree(defaultValueTree, DerivationTarget.TotalTransformer))
         } else {
           None
         }
 
       def optionNoneFallback =
         if (config.flags.optionDefaultsToNone && isOption(target.tpe)) {
-          Some(target -> TransformerBodyTree(Trees.Option.none, DerivationTarget.TotalTransformer))
+          Some(target -> DerivedTree(Trees.Option.none, DerivationTarget.TotalTransformer))
         } else {
           None
         }
 
       def unitFallback =
         if (isUnit(target.tpe)) {
-          Some(target -> TransformerBodyTree(Trees.unit, DerivationTarget.TotalTransformer))
+          Some(target -> DerivedTree(Trees.unit, DerivationTarget.TotalTransformer))
         } else {
           None
         }

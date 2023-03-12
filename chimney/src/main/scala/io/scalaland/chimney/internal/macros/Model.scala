@@ -17,10 +17,25 @@ trait Model extends TransformerConfigSupport {
       Target(ms.canonicalName, ms.resultTypeIn(site))
   }
 
-  case class TransformerBodyTree(tree: Tree, target: DerivationTarget) {
+  case class DerivedTree(tree: Tree, target: DerivationTarget) {
     def isTotalTarget: Boolean = target == DerivationTarget.TotalTransformer
     def isPartialTarget: Boolean = target.isInstanceOf[DerivationTarget.PartialTransformer]
     def isLiftedTarget: Boolean = target.isInstanceOf[DerivationTarget.LiftedTransformer]
+
+    def mapTree(f: Tree => Tree): DerivedTree = copy(tree = f(tree))
+  }
+  object DerivedTree {
+    def fromTotalTree(tree: Tree): DerivedTree = DerivedTree(tree, DerivationTarget.TotalTransformer)
+  }
+
+  case class InstanceClause(matchName: Option[TermName], matchTpe: Type, body: DerivedTree) {
+    def toPatMatClauseTree: Tree = {
+      matchName match {
+        case Some(name) => cq"$name: $matchTpe => ${body.tree}"
+        case None       => cq"_: $matchTpe => ${body.tree}"
+      }
+    }
+    def mapBody(f: DerivedTree => DerivedTree): InstanceClause = copy(body = f(body))
   }
 
   sealed trait AccessorResolution extends Product with Serializable {

@@ -36,14 +36,15 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
       To: Type,
       runtimeDataIndex: Int,
       derivationTarget: DerivationTarget
-  ): Tree = {
+  ): DerivedTree = {
     val finalTpe = derivationTarget.targetType(To)
-    q"""
+    val tree = q"""
       ${transformerDefinitionPrefix.accessRuntimeData(runtimeDataIndex)}
         .asInstanceOf[Any => $finalTpe]
         .apply($srcPrefixTree)
         .asInstanceOf[$finalTpe]
     """
+    DerivedTree(tree, derivationTarget)
   }
 
   /**
@@ -64,14 +65,29 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
     }
   }
 
+  // TODO: docs
+  def mkDerivedBodyTree(derivationTarget: DerivationTarget)(derivedTree: DerivedTree): DerivedTree = {
+    if (derivedTree.target == derivationTarget) {
+      derivedTree // do nothing if targets match
+    } else if (derivedTree.isTotalTarget) {
+      derivedTree.mapTree(mkTransformerBodyTree0(derivationTarget)(_)) // we can always lift total tree
+    } else {
+      c.abort(
+        c.enclosingPosition,
+        s"Unsupported lifting requested: from ${derivedTree.target} to $derivationTarget (tree: ${derivedTree.tree})"
+      )
+    }
+  }
+
+  // TODO: docs
   def mkTransformerBodyTree1(
       To: Type,
       target: Target,
-      transformerBodyTree: TransformerBodyTree,
+      transformerBodyTree: DerivedTree,
       derivationTarget: DerivationTarget
   )(
       mkTargetValueTree: Tree => Tree
-  ): Tree = {
+  ): DerivedTree = {
     mkTransformerBodyTree(To, Seq(target), Seq(transformerBodyTree), derivationTarget) { case Seq(innerTree) =>
       mkTargetValueTree(innerTree)
     }
@@ -93,11 +109,11 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
   def mkTransformerBodyTree(
       To: Type,
       targets: Seq[Target],
-      bodyTreeArgs: Seq[TransformerBodyTree],
+      bodyTreeArgs: Seq[DerivedTree],
       derivationTarget: DerivationTarget
   )(
       mkTargetValueTree: Seq[Tree] => Tree
-  ): Tree = {
+  ): DerivedTree = {
     assert(targets.size == bodyTreeArgs.size, "targets arity must correspond to the argument trees arity")
 
     derivationTarget match {
@@ -106,7 +122,7 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
           bodyTreeArgs.forall(_.isTotalTarget),
           "All derived body trees arguments must be total in Total target derivation!"
         )
-        mkTargetValueTree(bodyTreeArgs.map(_.tree))
+        DerivedTree.fromTotalTree(mkTargetValueTree(bodyTreeArgs.map(_.tree)))
 
       case pt: DerivationTarget.PartialTransformer =>
         assertOrAbort(
@@ -117,7 +133,7 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
         val (totalArgs, partialArgs) = (targets zip bodyTreeArgs).partition(_._2.isTotalTarget)
 
         if (partialArgs.isEmpty) {
-          mkTransformerBodyTree0(pt)(mkTargetValueTree(bodyTreeArgs.map(_.tree)))
+          DerivedTree.fromTotalTree(mkTargetValueTree(bodyTreeArgs.map(_.tree)))
         } else if (partialArgs.sizeIs == 1) {
           val (target, bodyTree) = partialArgs.head
           val fn = freshTermName(target.name)
@@ -125,7 +141,7 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
           val argsMap = totalArgsMap + (target -> q"$fn")
           val updatedArgs = targets.map(argsMap)
 
-          q"${bodyTree.tree}.map { ($fn: ${target.tpe}) => ${mkTargetValueTree(updatedArgs)} }"
+          DerivedTree(q"${bodyTree.tree}.map { ($fn: ${target.tpe}) => ${mkTargetValueTree(updatedArgs)} }", pt)
         } else if (partialArgs.sizeIs == 2) {
           val (target0, bodyTree0) = partialArgs.head
           val (target1, bodyTree1) = partialArgs.last
@@ -136,7 +152,7 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
           val argsMap = totalArgsMap + (target0 -> q"$fn0") + (target1 -> q"$fn1")
           val updatedArgs = targets.map(argsMap)
 
-          Trees.PartialResult
+          val tree = Trees.PartialResult
             .map2(
               target0.tpe,
               target1.tpe,
@@ -146,6 +162,7 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
               q"{ case ($fn0: ${target0.tpe}, $fn1: ${target1.tpe}) => ${mkTargetValueTree(updatedArgs)} }",
               pt.failFastTree
             )
+          DerivedTree(tree, pt)
         } else {
           val totalArgsMap = totalArgs.map { case (target, bt) => target -> bt.tree }.toMap
 
@@ -180,7 +197,7 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
             )
           }
 
-          q"""{
+          val tree = q"""{
                 ..$localTreeDefs
                 if(${pt.failFastTree}) {
                   for (..$succFFFqs) yield ${mkTargetValueTree(updatedArgsFF)}
@@ -194,6 +211,8 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
                   }
                 }
               }"""
+
+          DerivedTree(tree, pt)
         }
 
       case lt @ DerivationTarget.LiftedTransformer(_, wrapperSupportInstance, _) =>
@@ -205,7 +224,7 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
         val (totalArgs, liftedArgs) = (targets zip bodyTreeArgs).partition(_._2.isTotalTarget)
 
         if (liftedArgs.isEmpty) {
-          mkTransformerBodyTree0(lt)(mkTargetValueTree(bodyTreeArgs.map(_.tree)))
+          DerivedTree.fromTotalTree(mkTargetValueTree(bodyTreeArgs.map(_.tree)))
         } else {
 
           val (liftedTargets, liftedBodyTrees) = liftedArgs.unzip
@@ -228,13 +247,66 @@ trait TargetConstructorMacros extends Model with DslMacroUtils with AssertUtils 
 
           val updatedArgs = targets.map(argsMap)
 
-          q"""
+          val tree = q"""
             $wrapperSupportInstance.map[$productType, $To](
               $productF,
               { case $patternF => ${mkTargetValueTree(updatedArgs)} }
             )
           """
+
+          DerivedTree(tree, lt)
         }
+    }
+  }
+
+  /** Composition code for coproduct pattern match, that creates resulting tree.
+    */
+  def mkCoproductPatternMatch(
+      srcPrefixTree: Tree,
+      clauses: Seq[InstanceClause],
+      derivationTarget: DerivationTarget
+  ): DerivedTree = {
+    if (clauses.forall(_.body.isTotalTarget)) {
+      val clausesTrees = clauses.map(_.toPatMatClauseTree)
+      DerivedTree.fromTotalTree(
+        q"${srcPrefixTree} match { case ..$clausesTrees }"
+      )
+    } else {
+      val liftedClauses = clauses.map(_.mapBody(mkDerivedBodyTree(derivationTarget)))
+      val liftedClausesTrees = liftedClauses.map(_.toPatMatClauseTree)
+      DerivedTree(q"${srcPrefixTree} match { case ..$liftedClausesTrees }", derivationTarget)
+    }
+  }
+
+  def mkEitherFold(
+      srcPrefixTree: Tree,
+      targetTpe: Type,
+      clauseLeft: InstanceClause,
+      clauseRight: InstanceClause,
+      derivationTarget: DerivationTarget
+  ): DerivedTree = {
+    if (clauseLeft.body.isTotalTarget && clauseRight.body.isTotalTarget) {
+      DerivedTree.fromTotalTree(
+        q"""
+              ${srcPrefixTree}.fold[$targetTpe](
+                (${clauseLeft.matchName.get}: ${clauseLeft.matchTpe}) => ${clauseLeft.body.tree},
+                (${clauseRight.matchName.get}: ${clauseRight.matchTpe}) => ${clauseRight.body.tree},
+              )
+              """
+      )
+    } else {
+      val tree = q"""
+        ${srcPrefixTree}.fold[${derivationTarget.targetType(targetTpe)}](
+          (${clauseLeft.matchName.get}: ${clauseLeft.matchTpe}) => ${mkDerivedBodyTree(derivationTarget)(
+          clauseLeft.body
+        ).tree},
+          (${clauseRight.matchName.get}: ${clauseRight.matchTpe}) => ${mkDerivedBodyTree(derivationTarget)(
+          clauseRight.body
+        ).tree},
+        )
+      """
+
+      DerivedTree(tree, derivationTarget)
     }
   }
 }
