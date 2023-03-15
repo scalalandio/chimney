@@ -10,20 +10,16 @@ private[compiletime] trait DerivationGatewayPlatform extends DerivationGateway {
 
   import c.universe.{internal as _, Transformer as _, *}
 
+  private implicit def typeFromWeak[T: WeakTypeTag]: Type[T] = typeImpl.fromWeak
+
   def deriveTotalTransformerImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,
       Cfg <: internal.TransformerCfg: WeakTypeTag,
       InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
       SharedFlags <: internal.TransformerFlags: WeakTypeTag
-  ](@unused tc: c.Tree): Expr[Transformer[From, To]] = {
-    implicit val From: Type[From] = typeImpl.fromWeak[From]
-    implicit val To: Type[To] = typeImpl.fromWeak[To]
-    implicit val Cfg: Type[Cfg] = typeImpl.fromWeak[Cfg]
-    implicit val InstanceFlags: Type[InstanceFlags] = typeImpl.fromWeak[InstanceFlags]
-    implicit val SharedFlags: Type[SharedFlags] = typeImpl.fromWeak[SharedFlags]
+  ](@unused tc: c.Tree): Expr[Transformer[From, To]] =
     deriveTotalTransformerUnsafe[From, To, Cfg, InstanceFlags, SharedFlags]
-  }
 
   def derivePartialTransformerImpl[
       From: WeakTypeTag,
@@ -31,12 +27,6 @@ private[compiletime] trait DerivationGatewayPlatform extends DerivationGateway {
       Cfg <: internal.TransformerCfg: WeakTypeTag,
       InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
       SharedFlags <: internal.TransformerFlags: WeakTypeTag
-  ](@unused tc: c.Tree): Expr[PartialTransformer[From, To]] = {
-    implicit val From: Type[From] = typeImpl.fromWeak[From]
-    implicit val To: Type[To] = typeImpl.fromWeak[To]
-    implicit val Cfg: Type[Cfg] = typeImpl.fromWeak[Cfg]
-    implicit val InstanceFlags: Type[InstanceFlags] = typeImpl.fromWeak[InstanceFlags]
-    implicit val SharedFlags: Type[SharedFlags] = typeImpl.fromWeak[SharedFlags]
+  ](@unused tc: c.Tree): Expr[PartialTransformer[From, To]] =
     derivePartialTransformerUnsafe[From, To, Cfg, InstanceFlags, SharedFlags]
-  }
 }

@@ -16,10 +16,10 @@ private[compiletime] trait DefinitionsPlatform
   import DefinitionsPlatform.*
   import c.universe.{internal as _, Transformer as _, *}
 
-  type Tagged[U] = { type Tag = U }
-  type @@[T, U] = T & Tagged[U]
+  protected type Tagged[U] = { type Tag = U }
+  protected type @@[T, U] = T & Tagged[U]
 
-  final override type Type[T] = c.Type @@ T
+  final override protected type Type[T] = c.Type @@ T
   protected object typeImpl extends TypeDefinitionsImpl {
     def fromUntyped[T](untyped: c.Type): Type[T] = untyped.asInstanceOf[Type[T]]
     def fromWeak[T: WeakTypeTag]: Type[T] = fromUntyped(weakTypeOf[T])
