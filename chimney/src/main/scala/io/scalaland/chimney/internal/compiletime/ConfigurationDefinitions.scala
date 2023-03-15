@@ -8,9 +8,7 @@ import scala.annotation.nowarn
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait ConfigurationDefinitions { this: Definitions =>
 
-  sealed abstract protected class FieldOverride(val needValueLevelAccess: Boolean)
-      extends Product
-      with Serializable
+  sealed abstract protected class FieldOverride(val needValueLevelAccess: Boolean) extends Product with Serializable
   protected object FieldOverride {
     final case class Const(runtimeDataIdx: Int) extends FieldOverride(true)
     final case class ConstPartial(runtimeDataIdx: Int) extends FieldOverride(true)

@@ -10,7 +10,7 @@ private[compiletime] trait DerivationGatewayPlatform extends DerivationGateway {
 
   import c.universe.{internal as _, Transformer as _, *}
 
-  private implicit def typeFromWeak[T: WeakTypeTag]: Type[T] = typeImpl.fromWeak
+  implicit private def typeFromWeak[T: WeakTypeTag]: Type[T] = typeImpl.fromWeak
 
   def deriveTotalTransformerImpl[
       From: WeakTypeTag,
