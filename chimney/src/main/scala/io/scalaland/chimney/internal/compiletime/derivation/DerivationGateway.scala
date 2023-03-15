@@ -9,8 +9,7 @@ import io.scalaland.chimney.partial
 private[compiletime] trait DerivationGateway { this: Definitions & DerivationDefinitions =>
 
   /** Intended for: being called from *Unsafe method to return final Expr; recursive derivation */
-  final protected def deriveTotalTransformer[From: Type, To: Type]
-      : DerivationResult[Expr[Transformer[From, To]]] =
+  final protected def deriveTotalTransformer[From: Type, To: Type]: DerivationResult[Expr[Transformer[From, To]]] =
     instantiateTotalTransformer[From, To] { (src: Expr[From]) =>
       deriveTransformerBody[From, To](DerivedExpr.emptyTotal(src))
         .map(_.toEither)
@@ -20,7 +19,7 @@ private[compiletime] trait DerivationGateway { this: Definitions & DerivationDef
         }
     }
 
-  /** Intended for: being called platform-specific code which returns Expr directly to splicing site */
+  /** Intended for: being called from platform-specific code which returns Expr directly to splicing site */
   final protected def deriveTotalTransformerUnsafe[
       From: Type,
       To: Type,
@@ -44,7 +43,7 @@ private[compiletime] trait DerivationGateway { this: Definitions & DerivationDef
         }
     }
 
-  /** Intended for: being called platform-specific code which returns Expr directly to splicing site */
+  /** Intended for: being called from platform-specific code which returns Expr directly to splicing site */
   final protected def derivePartialTransformerUnsafe[
       From: Type,
       To: Type,
