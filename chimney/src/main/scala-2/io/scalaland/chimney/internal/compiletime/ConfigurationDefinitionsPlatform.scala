@@ -30,8 +30,8 @@ private[compiletime] trait ConfigurationDefinitionsPlatform extends Configuratio
     extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
   }
 
-  protected[this] type FlagHead <: internal.TransformerFlags.Flag
-  protected[this] type FlagTail <: internal.TransformerFlags
+  protected type FlagHead <: internal.TransformerFlags.Flag
+  protected type FlagTail <: internal.TransformerFlags
   private val enableTC = typeOf[internal.TransformerFlags.Enable[?, ?]].typeConstructor
   private val disableTC = typeOf[internal.TransformerFlags.Disable[?, ?]].typeConstructor
   private val implicitConflictResolutionTC =
@@ -84,7 +84,7 @@ private[compiletime] trait ConfigurationDefinitionsPlatform extends Configuratio
     }
   }
 
-  protected[this] type CfgTail <: internal.TransformerCfg
+  protected type CfgTail <: internal.TransformerCfg
   private val emptyT = typeOf[internal.TransformerCfg.Empty]
   private val fieldConstTC = typeOf[internal.TransformerCfg.FieldConst[?, ?]].typeConstructor
   private val fieldConstPartialTC = typeOf[internal.TransformerCfg.FieldConstPartial[?, ?]].typeConstructor
