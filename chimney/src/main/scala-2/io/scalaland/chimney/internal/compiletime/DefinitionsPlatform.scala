@@ -66,7 +66,7 @@ private[compiletime] trait DefinitionsPlatform
       fromWeak[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
     override def TransformerFlagsDefault: Type[internal.TransformerFlags.Default] =
-      fromUntyped(c.typeOf[internal.TransformerFlags.Default])
+      fromWeak[internal.TransformerFlags.Default]
     // def TransformerFlagsEnable[]: Type[internal.TransformerFlags.Default]
     override def TransformerFlagsDefaultValues: Type[internal.TransformerFlags.DefaultValues] =
       fromWeak[internal.TransformerFlags.DefaultValues]
@@ -166,7 +166,7 @@ private[compiletime] trait DefinitionsPlatform
     override def PathElementMapValue(key: Expr[Any]): Expr[partial.PathElement.MapValue] =
       c.Expr(q"_root_.io.scalaland.chimney.partial.PathElement.MapValue($key)")
 
-    override def AsInstanceOf[T, S: Type](expr: Expr[T]): c.Expr[S] = c.Expr(q"${expr}.asInstanceOf[${Type[S]}]")
+    override def AsInstanceOf[T: Type, S: Type](expr: Expr[T]): Expr[S] = c.Expr(q"${expr}.asInstanceOf[${Type[S]}]")
   }
 
   implicit class UntypedTypeOps(private val tpe: c.Type) {

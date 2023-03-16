@@ -168,7 +168,7 @@ private[compiletime] trait Definitions extends ConfigurationDefinitions with Res
       }
     }
   }
-  implicit class ExprOps[T](private val expr: Expr[T]) {
+  implicit class ExprOps[T: Type](private val expr: Expr[T]) {
 
     def asInstanceOf[S: Type]: Expr[S] = exprImpl.AsInstanceOf[T, S](expr)
   }
@@ -263,6 +263,6 @@ private[compiletime] trait Definitions extends ConfigurationDefinitions with Res
     def PathElementMapKey(index: Expr[Any]): Expr[partial.PathElement.MapKey]
     def PathElementMapValue(index: Expr[Any]): Expr[partial.PathElement.MapValue]
 
-    def AsInstanceOf[T, S: Type](expr: Expr[T]): Expr[S]
+    def AsInstanceOf[T: Type, S: Type](expr: Expr[T]): Expr[S]
   }
 }
