@@ -42,7 +42,8 @@ val settings = Seq(
           "-explain",
           "-rewrite",
           "-source",
-          "3.2-migration"
+          "3.2-migration",
+          "-Ykind-projector:underscores"
         )
       case Some((2, 13)) =>
         Seq(
