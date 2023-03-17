@@ -4,6 +4,8 @@ import utest.*
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.examples.javabeans.*
 
+import scala.annotation.unused
+
 object TotalTransformerJavaBeansSpec extends TestSuite {
 
   val tests = Tests {
@@ -78,7 +80,7 @@ object TotalTransformerJavaBeansSpec extends TestSuite {
           .check("", "Chimney can't derive transformation from MistypedSource to MistypedTarget")
 
         locally {
-          implicit val config = TransformerConfiguration.default.enableBeanGetters
+          @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
           compileError("""
                case class MistypedTarget(flag: Int)
@@ -95,7 +97,7 @@ object TotalTransformerJavaBeansSpec extends TestSuite {
     test("""flag .disableBeanGetters""") {
 
       test("should disable globally enabled .enableBeanGetters") {
-        implicit val config = TransformerConfiguration.default.enableBeanGetters
+        @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
         compileError(
           """
@@ -148,7 +150,7 @@ object TotalTransformerJavaBeansSpec extends TestSuite {
           )
 
         locally {
-          implicit val config = TransformerConfiguration.default.enableBeanSetters
+          @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
           compileError("""
               CaseClassNoFlag("100", "name")
@@ -179,7 +181,7 @@ object TotalTransformerJavaBeansSpec extends TestSuite {
           )
 
         locally {
-          implicit val config = TransformerConfiguration.default.enableBeanSetters
+          @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
           compileError("""
               CaseClassWithFlagMethod("100", "name")
@@ -219,7 +221,7 @@ object TotalTransformerJavaBeansSpec extends TestSuite {
     test("""flag .disableBeanSetters""") {
 
       test("should disable globally enabled .enableBeanSetters") {
-        implicit val config = TransformerConfiguration.default.enableBeanSetters
+        @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
         compileError("""
             CaseClassWithFlag("100", "name", flag = true)
@@ -267,7 +269,7 @@ object TotalTransformerJavaBeansSpec extends TestSuite {
     test("""flag .enableMethodAccessors""") {
 
       test("should disable globally enabled .MethodAccessors") {
-        implicit val config = TransformerConfiguration.default.enableMethodAccessors
+        @unused implicit val config = TransformerConfiguration.default.enableMethodAccessors
 
         compileError("""
             CaseClassWithFlagMethod("100", "name")

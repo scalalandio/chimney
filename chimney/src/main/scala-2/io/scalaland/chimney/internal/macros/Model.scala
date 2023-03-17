@@ -30,8 +30,11 @@ trait Model extends TransformerConfigSupport {
   case class InstanceClause(matchName: Option[TermName], matchTpe: Type, body: DerivedTree) {
     def toPatMatClauseTree: Tree = {
       matchName match {
-        case Some(name) => cq"$name: $matchTpe => ${body.tree}"
-        case None       => cq"_: $matchTpe => ${body.tree}"
+        case Some(name) =>
+          // in general pat var name is not tracked whether it was used in body tree
+          // introducing synthetic val _ helps avoid reporting unused warnings in macro-generated code
+          cq"$name: $matchTpe => { val _ = $name; ${body.tree} }"
+        case None => cq"_: $matchTpe => ${body.tree}"
       }
     }
     def mapBody(f: DerivedTree => DerivedTree): InstanceClause = copy(body = f(body))
