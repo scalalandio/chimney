@@ -6,6 +6,8 @@ import io.scalaland.chimney.utils.EitherUtils.*
 import io.scalaland.chimney.utils.OptionUtils.*
 import utest.*
 
+import scala.annotation.nowarn
+
 object LiftedTransformerProductSpec extends TestSuite {
 
   val tests = Tests {
@@ -63,7 +65,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       }
 
       test("when F = Either[List[String], +*]") {
-        type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+        @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
         compileError("Bar(3, (3.14, 3.14)).transformIntoF[EitherList, Foo]").check(
           "",
@@ -135,7 +137,7 @@ object LiftedTransformerProductSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
           compileError(
             """
@@ -227,7 +229,7 @@ object LiftedTransformerProductSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
           compileError(
             """
@@ -338,7 +340,7 @@ object LiftedTransformerProductSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
           compileError(
             """
@@ -448,7 +450,7 @@ object LiftedTransformerProductSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
           compileError(
             """
@@ -548,7 +550,7 @@ object LiftedTransformerProductSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
           compileError("""User(1, "Kuba", Some(28)).transformIntoF[EitherList, UserPL]""").check(
             "",
@@ -599,7 +601,7 @@ object LiftedTransformerProductSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
           compileError(
             """
@@ -692,7 +694,7 @@ object LiftedTransformerProductSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
           compileError(
             """
@@ -813,7 +815,7 @@ object LiftedTransformerProductSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
           compileError("""Source(1, "yy", 1.0).transformIntoF[EitherList, Target]""").check(
             "",
@@ -1049,7 +1051,7 @@ object LiftedTransformerProductSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
           compileError("""Source(1, "yy", 1.0).intoF[EitherList, Target].disableDefaultValues.transform""").check(
             "",

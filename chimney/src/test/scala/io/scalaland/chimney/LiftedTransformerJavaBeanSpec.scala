@@ -4,6 +4,8 @@ import utest.*
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.examples.javabeans.*
 
+import scala.annotation.nowarn
+
 object LiftedTransformerJavaBeanSpec extends TestSuite {
 
   val tests = Tests {
@@ -25,7 +27,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
       }
 
       test("when F = Either[List[String], +*]") {
-        type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+        @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
         compileError(
           """new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).intoF[EitherList, CaseClassWithFlag].transform"""
         ).check(
@@ -53,7 +55,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
       }
 
       test("when F = Either[List[String], +*]") {
-        type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+        @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
         compileError("""CaseClassWithFlag("100", "name", flag = true).intoF[EitherList, JavaBeanTarget].transform""")
           .check(
             "",
@@ -172,7 +174,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           compileError("""
              case class MistypedTarget(flag: Int)
              class MistypedSource(private var flag: Int) {
@@ -221,7 +223,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           implicit val config = TransformerConfiguration.default.enableBeanGetters
 
           compileError(
@@ -261,7 +263,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           implicit val config = TransformerConfiguration.default.enableBeanGetters
 
           compileError(
@@ -349,7 +351,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           compileError("""
             CaseClassNoFlag("100", "name")
               .intoF[EitherList, JavaBeanTarget]
@@ -415,7 +417,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           compileError("""
             CaseClassWithFlagMethod("100", "name")
               .intoF[EitherList, JavaBeanTarget]
@@ -514,7 +516,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           implicit val config = TransformerConfiguration.default.enableBeanSetters
 
           compileError("""
@@ -606,7 +608,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           implicit val config = TransformerConfiguration.default.enableMethodAccessors
 
           compileError("""
@@ -660,7 +662,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
           // need to enable both setters and getters; only one of them is not enough for this use case!
           compileError("source.intoF[EitherList, JavaBeanTarget].transform")

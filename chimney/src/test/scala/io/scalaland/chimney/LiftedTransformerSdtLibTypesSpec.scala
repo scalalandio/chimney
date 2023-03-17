@@ -5,6 +5,7 @@ import io.scalaland.chimney.utils.EitherUtils.*
 import io.scalaland.chimney.utils.OptionUtils.*
 import utest.*
 
+import scala.annotation.nowarn
 import scala.collection.immutable.Queue
 import scala.collection.mutable.ArrayBuffer
 
@@ -30,7 +31,7 @@ object LiftedTransformerSdtLibTypesSpec extends TestSuite {
       }
 
       test("when F = Either[List[String], +*]") {
-        type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+        @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
 
         compileError("""Buzz("a").transformIntoF[EitherList, ConflictingFooBuzz]""").check(
           "",
@@ -559,7 +560,7 @@ object LiftedTransformerSdtLibTypesSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           compileError(
             """Source("foo").intoF[EitherList, TargetWithOption].transform ==> Right(TargetWithOption("foo", None))"""
           ).check(
@@ -674,7 +675,7 @@ object LiftedTransformerSdtLibTypesSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           compileError("""Source(Some(1)).intoF[EitherList, Target].transform ==> Right(Target("1"))""").check(
             "",
             "Chimney can't derive transformation from Source to Target",
