@@ -4,7 +4,6 @@ import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.utils.OptionUtils.*
 import utest.*
 
-import scala.annotation.unused
 import scala.collection.immutable.Queue
 import scala.collection.mutable.ArrayBuffer
 

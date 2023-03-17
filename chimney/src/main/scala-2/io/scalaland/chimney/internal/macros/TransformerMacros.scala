@@ -72,11 +72,11 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
     val derivedTransformerTree = genTransformer[From, To](config)
 
     q"""
-       {
-         val _ = $tcTree // hack to avoid unused warnings
-         val $tiName = ${c.prefix.tree}
-         ${callTransform(derivedTransformerTree, q"$tiName.source")}
-       }
+     {
+       val _ = $tcTree // hack to avoid unused warnings
+       val $tiName = ${c.prefix.tree}
+       ${callTransform(derivedTransformerTree, q"$tiName.source")}
+     }
     """
   }
 
