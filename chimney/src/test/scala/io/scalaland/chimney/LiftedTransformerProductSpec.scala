@@ -6,7 +6,7 @@ import io.scalaland.chimney.utils.EitherUtils.*
 import io.scalaland.chimney.utils.OptionUtils.*
 import utest.*
 
-import scala.annotation.nowarn
+import scala.annotation.{nowarn, unused}
 
 object LiftedTransformerProductSpec extends TestSuite {
 
@@ -1037,7 +1037,7 @@ object LiftedTransformerProductSpec extends TestSuite {
       test("should disable globally enabled .enableDefaultValues") {
         import products.Defaults.*
 
-        implicit val config = TransformerConfiguration.default.enableDefaultValues
+        @unused implicit val config = TransformerConfiguration.default.enableDefaultValues
 
         test("when F = Option") {
           compileError("""Source(1, "yy", 1.0).intoF[Option, Target].disableDefaultValues.transform""").check(

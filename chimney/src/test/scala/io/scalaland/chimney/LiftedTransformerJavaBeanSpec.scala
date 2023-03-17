@@ -4,7 +4,7 @@ import utest.*
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.examples.javabeans.*
 
-import scala.annotation.nowarn
+import scala.annotation.{nowarn, unused}
 
 object LiftedTransformerJavaBeanSpec extends TestSuite {
 
@@ -160,7 +160,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
             .check("", "Chimney can't derive transformation from MistypedSource to MistypedTarget")
 
           locally {
-            implicit val config = TransformerConfiguration.default.enableBeanGetters
+            @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
             compileError("""
                case class MistypedTarget(flag: Int)
@@ -185,7 +185,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
             .check("", "Chimney can't derive transformation from MistypedSource to MistypedTarget")
 
           locally {
-            implicit val config = TransformerConfiguration.default.enableBeanGetters
+            @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
             compileError("""
                case class MistypedTarget(flag: Int)
@@ -205,7 +205,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
       test("should disable globally enabled .enableBeanGetters") {
 
         test("when F = Option") {
-          implicit val config = TransformerConfiguration.default.enableBeanGetters
+          @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
           compileError(
             """
@@ -224,7 +224,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
 
         test("when F = Either[List[String], +*]") {
           @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
-          implicit val config = TransformerConfiguration.default.enableBeanGetters
+          @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
           compileError(
             """
@@ -245,7 +245,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
       test("should disable globally enabled .enableBeanGetters") {
 
         test("when F = Option") {
-          implicit val config = TransformerConfiguration.default.enableBeanGetters
+          @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
           compileError(
             """
@@ -264,7 +264,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
 
         test("when F = Either[List[String], +*]") {
           @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
-          implicit val config = TransformerConfiguration.default.enableBeanGetters
+          @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
           compileError(
             """
@@ -336,7 +336,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
             )
 
           locally {
-            implicit val config = TransformerConfiguration.default.enableBeanSetters
+            @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
             compileError("""
               CaseClassNoFlag("100", "name")
@@ -364,7 +364,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
             )
 
           locally {
-            implicit val config = TransformerConfiguration.default.enableBeanSetters
+            @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
             compileError("""
               CaseClassNoFlag("100", "name")
@@ -398,7 +398,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
             )
 
           locally {
-            implicit val config = TransformerConfiguration.default.enableBeanSetters
+            @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
             compileError("""
               CaseClassWithFlagMethod("100", "name")
@@ -434,7 +434,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
             )
 
           locally {
-            implicit val config = TransformerConfiguration.default.enableBeanSetters
+            @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
             compileError("""
               CaseClassWithFlagMethod("100", "name")
@@ -498,7 +498,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
       test("should disable globally enabled .enableBeanSetters") {
 
         test("when F = Option") {
-          implicit val config = TransformerConfiguration.default.enableBeanSetters
+          @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
           compileError("""
             CaseClassWithFlag("100", "name", flag = true)
@@ -517,7 +517,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
 
         test("when F = Either[List[String], +*]") {
           @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
-          implicit val config = TransformerConfiguration.default.enableBeanSetters
+          @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
           compileError("""
             CaseClassWithFlag("100", "name", flag = true)
@@ -588,7 +588,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
       test("should disable globally enabled .MethodAccessors") {
 
         test("when F = Option") {
-          implicit val config = TransformerConfiguration.default.enableMethodAccessors
+          @unused implicit val config = TransformerConfiguration.default.enableMethodAccessors
 
           compileError("""
             CaseClassWithFlagMethod("100", "name")
@@ -609,7 +609,7 @@ object LiftedTransformerJavaBeanSpec extends TestSuite {
 
         test("when F = Either[List[String], +*]") {
           @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
-          implicit val config = TransformerConfiguration.default.enableMethodAccessors
+          @unused implicit val config = TransformerConfiguration.default.enableMethodAccessors
 
           compileError("""
             CaseClassWithFlagMethod("100", "name")
