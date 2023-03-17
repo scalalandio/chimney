@@ -60,9 +60,9 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       C: WeakTypeTag,
       InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
-  ](@unused tc: c.Tree): c.Expr[To] = {
+  ](tc: c.Tree): c.Expr[To] = {
     c.Expr[To](
-      expandTransform[From, To, C, InstanceFlags, ScopeFlags](DerivationTarget.TotalTransformer) {
+      expandTransform[From, To, C, InstanceFlags, ScopeFlags](DerivationTarget.TotalTransformer, tc) {
         (derivedTransformer, srcField) =>
           derivedTransformer.callTransform(srcField)
       }
@@ -75,9 +75,9 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       C: WeakTypeTag,
       InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
-  ](@unused tc: c.Tree): c.Expr[To] = {
+  ](tc: c.Tree): c.Expr[To] = {
     c.Expr[To](
-      expandTransform[From, To, C, InstanceFlags, ScopeFlags](DerivationTarget.PartialTransformer()) {
+      expandTransform[From, To, C, InstanceFlags, ScopeFlags](DerivationTarget.PartialTransformer(), tc) {
         (derivedTransformer, srcField) =>
           derivedTransformer.callPartialTransform(srcField, q"false")
       }
@@ -90,9 +90,9 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       C: WeakTypeTag,
       InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
-  ](@unused tc: c.Tree): c.Expr[To] = {
+  ](tc: c.Tree): c.Expr[To] = {
     c.Expr[To](
-      expandTransform[From, To, C, InstanceFlags, ScopeFlags](DerivationTarget.PartialTransformer()) {
+      expandTransform[From, To, C, InstanceFlags, ScopeFlags](DerivationTarget.PartialTransformer(), tc) {
         (derivedTransformer, srcField) =>
           derivedTransformer.callPartialTransform(srcField, q"true")
       }
@@ -107,14 +107,14 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       InstanceFlags: WeakTypeTag,
       ScopeFlags: WeakTypeTag
   ](
-      @unused tc: c.Tree,
+      tc: c.Tree,
       tfs: c.Expr[TransformerFSupport[F]]
   ): c.Expr[F[To]] = {
     val wrapperType = extractWrapperType(weakTypeOf[C])
     val derivationTarget =
       DerivationTarget.LiftedTransformer(wrapperType, tfs.tree, findTransformerErrorPathSupport(wrapperType))
     c.Expr[F[To]](
-      expandTransform[From, To, C, InstanceFlags, ScopeFlags](derivationTarget) { (derivedTransformer, srcField) =>
+      expandTransform[From, To, C, InstanceFlags, ScopeFlags](derivationTarget, tc) { (derivedTransformer, srcField) =>
         derivedTransformer.callTransform(srcField)
       }
     )
