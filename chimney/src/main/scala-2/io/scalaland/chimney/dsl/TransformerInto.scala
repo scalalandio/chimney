@@ -10,17 +10,17 @@ import scala.language.experimental.macros
   *
   * @tparam From   type of input value
   * @tparam To     type of output value
-  * @tparam C      type-level encoded config
+  * @tparam Cfg    type-level encoded config
   * @tparam Flags  type-level encoded flags
   * @param  source object to transform
   * @param  td     transformer definition
   *
   * @since 0.1.0
   */
-final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerFlags](
+final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,
-    val td: TransformerDefinition[From, To, C, Flags]
-) extends FlagsDsl[Lambda[`F1 <: TransformerFlags` => TransformerInto[From, To, C, F1]], Flags] {
+    val td: TransformerDefinition[From, To, Cfg, Flags]
+) extends FlagsDsl[Lambda[`Flags1 <: TransformerFlags` => TransformerInto[From, To, Cfg, Flags1]], Flags] {
 
   /** Lifts current transformation as partial transformation.
     *
@@ -29,8 +29,8 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
     *
     * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
     */
-  def partial: PartialTransformerInto[From, To, C, Flags] =
-    new PartialTransformerInto[From, To, C, Flags](source, td.partial)
+  def partial: PartialTransformerInto[From, To, Cfg, Flags] =
+    new PartialTransformerInto[From, To, Cfg, Flags](source, td.partial)
 
   /** Use `value` provided here for field picked using `selector`.
     *
@@ -117,12 +117,12 @@ final class TransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerF
   def transform[ScopeFlags <: TransformerFlags](implicit
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
   ): To =
-    macro TransformerBlackboxMacros.transformImpl[From, To, C, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.transformImpl[From, To, Cfg, Flags, ScopeFlags]
 
   /** Used internally by macro. Please don't use in your code.
     */
-  def __refineTransformerDefinition[C1 <: TransformerCfg](
-      f: TransformerDefinition[From, To, C, Flags] => TransformerDefinition[From, To, C1, Flags]
-  ): TransformerInto[From, To, C1, Flags] =
-    new TransformerInto[From, To, C1, Flags](source, f(td))
+  def __refineTransformerDefinition[Cfg1 <: TransformerCfg](
+      f: TransformerDefinition[From, To, Cfg, Flags] => TransformerDefinition[From, To, Cfg1, Flags]
+  ): TransformerInto[From, To, Cfg1, Flags] =
+    new TransformerInto[From, To, Cfg1, Flags](source, f(td))
 }

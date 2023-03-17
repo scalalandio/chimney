@@ -11,17 +11,17 @@ import scala.language.experimental.macros
   *
   * @tparam From   type of input value
   * @tparam To     type of output value
-  * @tparam C      type-level encoded config
+  * @tparam Cfg    type-level encoded config
   * @tparam Flags  type-level encoded flags
   * @param  source object to transform
   * @param  td     transformer definition
   *
   * @since 0.7.0
   */
-final class PartialTransformerInto[From, To, C <: TransformerCfg, Flags <: TransformerFlags](
+final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,
-    val td: PartialTransformerDefinition[From, To, C, Flags]
-) extends FlagsDsl[Lambda[`F1 <: TransformerFlags` => PartialTransformerInto[From, To, C, F1]], Flags] {
+    val td: PartialTransformerDefinition[From, To, Cfg, Flags]
+) extends FlagsDsl[Lambda[`Flags1 <: TransformerFlags` => PartialTransformerInto[From, To, Cfg, Flags1]], Flags] {
 
   /** Use provided `value` for field picked using `selector`.
     *
@@ -173,7 +173,7 @@ final class PartialTransformerInto[From, To, C <: TransformerCfg, Flags <: Trans
   def transform[ScopeFlags <: TransformerFlags](implicit
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
   ): partial.Result[To] =
-    macro TransformerBlackboxMacros.partialTransformNoFailFastImpl[From, To, C, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.partialTransformNoFailFastImpl[From, To, Cfg, Flags, ScopeFlags]
 
   /** Apply configured partial transformation in-place in a short-circuit (fail fast) mode.
     *
@@ -188,12 +188,12 @@ final class PartialTransformerInto[From, To, C <: TransformerCfg, Flags <: Trans
   def transformFailFast[ScopeFlags <: TransformerFlags](implicit
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
   ): partial.Result[To] =
-    macro TransformerBlackboxMacros.partialTransformFailFastImpl[From, To, C, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.partialTransformFailFastImpl[From, To, Cfg, Flags, ScopeFlags]
 
   /** Used internally by macro. Please don't use in your code.
     */
-  def __refineTransformerDefinition[C1 <: TransformerCfg](
-      f: PartialTransformerDefinition[From, To, C, Flags] => PartialTransformerDefinition[From, To, C1, Flags]
-  ): PartialTransformerInto[From, To, C1, Flags] =
-    new PartialTransformerInto[From, To, C1, Flags](source, f(td))
+  def __refineTransformerDefinition[Cfg1 <: TransformerCfg](
+      f: PartialTransformerDefinition[From, To, Cfg, Flags] => PartialTransformerDefinition[From, To, Cfg1, Flags]
+  ): PartialTransformerInto[From, To, Cfg1, Flags] =
+    new PartialTransformerInto[From, To, Cfg1, Flags](source, f(td))
 }

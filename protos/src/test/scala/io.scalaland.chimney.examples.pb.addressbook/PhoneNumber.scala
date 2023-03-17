@@ -3,11 +3,11 @@
 //
 // Protofile syntax: PROTO3
 
-package io.scalaland.chimney.examples.pb.addressbook
+package io.scalaland.chimney.fixtures.pb.addressbook
 
 @SerialVersionUID(0L)
 final case class PhoneNumber(
     number: _root_.scala.Predef.String = "",
-    `type`: io.scalaland.chimney.examples.pb.addressbook.PhoneType =
-      io.scalaland.chimney.examples.pb.addressbook.PhoneType.MOBILE
+    `type`: io.scalaland.chimney.fixtures.pb.addressbook.PhoneType =
+      io.scalaland.chimney.fixtures.pb.addressbook.PhoneType.MOBILE
 )

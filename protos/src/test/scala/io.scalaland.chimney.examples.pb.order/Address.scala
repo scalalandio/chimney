@@ -3,7 +3,7 @@
 //
 // Protofile syntax: PROTO3
 
-package io.scalaland.chimney.examples.pb.order
+package io.scalaland.chimney.fixtures.pb.order
 
 @SerialVersionUID(0L)
 final case class Address(

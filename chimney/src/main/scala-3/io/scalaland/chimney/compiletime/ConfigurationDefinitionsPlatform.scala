@@ -16,7 +16,7 @@ private[compiletime] trait ConfigurationDefinitionsPlatform extends Configuratio
     extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
   }
 
-  private def extractTransformerFlags[Flag <: internal.TransformerFlags: Type](
+  private def extractTransformerFlags[Flags <: internal.TransformerFlags: Type](
       defaultFlags: TransformerFlags
   ): TransformerFlags = ???
 

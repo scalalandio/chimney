@@ -9,15 +9,15 @@ import scala.language.experimental.macros
 /** Provides operations to customize patcher logic for specific
   * object value and patch value.
   *
-  * @tparam T type of object to apply patch to
-  * @tparam P type of patch object
-  * @tparam C type-level encoded configuration of patcher
-  * @param obj object to patch
+  * @tparam T       type of object to apply patch to
+  * @tparam P       type of patch object
+  * @tparam Cfg     type-level encoded configuration of patcher
+  * @param obj      object to patch
   * @param objPatch patch object
   *
   * @since 0.4.0
   */
-final class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
+final class PatcherUsing[T, P, Cfg <: PatcherCfg](val obj: T, val objPatch: P) {
 
   /** In case when both object to patch and patch value contain field
     * of type `Option[T]`, this option allows to treat `None` value in
@@ -32,8 +32,8 @@ final class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
     *
     * @since 0.4.0
     */
-  def ignoreNoneInPatch: PatcherUsing[T, P, IgnoreNoneInPatch[C]] =
-    this.asInstanceOf[PatcherUsing[T, P, IgnoreNoneInPatch[C]]]
+  def ignoreNoneInPatch: PatcherUsing[T, P, IgnoreNoneInPatch[Cfg]] =
+    this.asInstanceOf[PatcherUsing[T, P, IgnoreNoneInPatch[Cfg]]]
 
   /** In case that patch object contains a redundant field (i.e. field that
     * is not present in patched object type), this option enables ignoring
@@ -49,8 +49,8 @@ final class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
     *
     * @since 0.4.0
     */
-  def ignoreRedundantPatcherFields: PatcherUsing[T, P, IgnoreRedundantPatcherFields[C]] =
-    this.asInstanceOf[PatcherUsing[T, P, IgnoreRedundantPatcherFields[C]]]
+  def ignoreRedundantPatcherFields: PatcherUsing[T, P, IgnoreRedundantPatcherFields[Cfg]] =
+    this.asInstanceOf[PatcherUsing[T, P, IgnoreRedundantPatcherFields[Cfg]]]
 
   /** Applies configured patching in-place
     *
@@ -58,5 +58,5 @@ final class PatcherUsing[T, P, C <: PatcherCfg](val obj: T, val objPatch: P) {
     *
     * @since 0.4.0
     */
-  def patch: T = macro PatcherBlackboxMacros.patchImpl[T, P, C]
+  def patch: T = macro PatcherBlackboxMacros.patchImpl[T, P, Cfg]
 }

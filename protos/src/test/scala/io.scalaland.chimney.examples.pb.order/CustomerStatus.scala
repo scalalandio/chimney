@@ -3,20 +3,20 @@
 //
 // Protofile syntax: PROTO3
 
-package io.scalaland.chimney.examples.pb.order
+package io.scalaland.chimney.fixtures.pb.order
 
 sealed trait CustomerStatus
 
 object CustomerStatus {
-  case object Empty extends io.scalaland.chimney.examples.pb.order.CustomerStatus
+  case object Empty extends io.scalaland.chimney.fixtures.pb.order.CustomerStatus
 
-  sealed trait NonEmpty extends io.scalaland.chimney.examples.pb.order.CustomerStatus
+  sealed trait NonEmpty extends io.scalaland.chimney.fixtures.pb.order.CustomerStatus
 }
 
 @SerialVersionUID(0L)
 final case class CustomerRegistered(
-) extends io.scalaland.chimney.examples.pb.order.CustomerStatus.NonEmpty
+) extends io.scalaland.chimney.fixtures.pb.order.CustomerStatus.NonEmpty
 
 @SerialVersionUID(0L)
 final case class CustomerOneTime(
-) extends io.scalaland.chimney.examples.pb.order.CustomerStatus.NonEmpty
+) extends io.scalaland.chimney.fixtures.pb.order.CustomerStatus.NonEmpty

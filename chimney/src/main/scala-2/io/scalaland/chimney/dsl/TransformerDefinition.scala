@@ -10,15 +10,17 @@ import scala.language.experimental.macros
   *
   * @tparam From  type of input value
   * @tparam To    type of output value
-  * @tparam C     type-level encoded config
+  * @tparam Cfg     type-level encoded config
   * @tparam Flags type-level encoded flags
   *
   * @since 0.4.0
   */
-final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: TransformerFlags](
+final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
-) extends FlagsDsl[Lambda[`F1 <: TransformerFlags` => TransformerDefinition[From, To, C, F1]], Flags]
-    with TransformerDefinitionCommons[Lambda[`C1 <: TransformerCfg` => TransformerDefinition[From, To, C1, Flags]]] {
+) extends FlagsDsl[Lambda[`Flags1 <: TransformerFlags` => TransformerDefinition[From, To, Cfg, Flags1]], Flags]
+    with TransformerDefinitionCommons[
+      Lambda[`Cfg1 <: TransformerCfg` => TransformerDefinition[From, To, Cfg1, Flags]]
+    ] {
 
   /** Lifts current transformer definition as `PartialTransformer` definition
     *
@@ -27,8 +29,8 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     *
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     */
-  def partial: PartialTransformerDefinition[From, To, C, Flags] =
-    new PartialTransformerDefinition[From, To, C, Flags](runtimeData)
+  def partial: PartialTransformerDefinition[From, To, Cfg, Flags] =
+    new PartialTransformerDefinition[From, To, Cfg, Flags](runtimeData)
 
   /** Use provided value `value` for field picked using `selector`.
     *
@@ -46,7 +48,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   def withFieldConst[T, U](selector: To => T, value: U)(implicit
       ev: U <:< T
   ): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withFieldConstImpl[C]
+    macro TransformerDefinitionWhiteboxMacros.withFieldConstImpl[Cfg]
 
   /** Use function `f` to compute value of field picked using `selector`.
     *
@@ -66,7 +68,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
       selector: To => T,
       f: From => U
   )(implicit ev: U <:< T): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withFieldComputedImpl[C]
+    macro TransformerDefinitionWhiteboxMacros.withFieldComputedImpl[Cfg]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
     *
@@ -86,7 +88,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
       selectorFrom: From => T,
       selectorTo: To => U
   ): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withFieldRenamedImpl[C]
+    macro TransformerDefinitionWhiteboxMacros.withFieldRenamedImpl[Cfg]
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
     *
@@ -104,7 +106,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
     * @since 0.4.0
     */
   def withCoproductInstance[Inst](f: Inst => To): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[To, Inst, C]
+    macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[To, Inst, Cfg]
 
   /** Build Transformer using current configuration.
     *
@@ -118,7 +120,7 @@ final class TransformerDefinition[From, To, C <: TransformerCfg, Flags <: Transf
   def buildTransformer[ScopeFlags <: TransformerFlags](implicit
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
   ): Transformer[From, To] =
-    macro TransformerBlackboxMacros.buildTransformerImpl[From, To, C, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.buildTransformerImpl[From, To, Cfg, Flags, ScopeFlags]
 
   override protected def __updateRuntimeData(newRuntimeData: TransformerDefinitionCommons.RuntimeDataStore): this.type =
     new TransformerDefinition(newRuntimeData).asInstanceOf[this.type]

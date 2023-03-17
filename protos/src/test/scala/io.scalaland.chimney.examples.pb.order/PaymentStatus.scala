@@ -3,23 +3,23 @@
 //
 // Protofile syntax: PROTO3
 
-package io.scalaland.chimney.examples.pb.order
+package io.scalaland.chimney.fixtures.pb.order
 
 sealed trait PaymentStatus
 
 @SerialVersionUID(0L)
 final case class PaymentRequested(
-) extends io.scalaland.chimney.examples.pb.order.PaymentStatus
+) extends io.scalaland.chimney.fixtures.pb.order.PaymentStatus
 
 @SerialVersionUID(0L)
 final case class PaymentCreated(
     externalId: _root_.scala.Predef.String = ""
-) extends io.scalaland.chimney.examples.pb.order.PaymentStatus
+) extends io.scalaland.chimney.fixtures.pb.order.PaymentStatus
 
 @SerialVersionUID(0L)
 final case class PaymentSucceeded(
-) extends io.scalaland.chimney.examples.pb.order.PaymentStatus
+) extends io.scalaland.chimney.fixtures.pb.order.PaymentStatus
 
 @SerialVersionUID(0L)
 final case class PaymentFailed(
-) extends io.scalaland.chimney.examples.pb.order.PaymentStatus
+) extends io.scalaland.chimney.fixtures.pb.order.PaymentStatus
