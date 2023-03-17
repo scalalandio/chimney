@@ -5,7 +5,6 @@ import _root_.cats.kernel.Semigroup
 import _root_.cats.Applicative
 import io.scalaland.chimney.partial
 
-import scala.collection.compat.*
 import language.implicitConversions
 
 /** @since 0.7.0 */

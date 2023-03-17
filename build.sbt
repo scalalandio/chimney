@@ -58,14 +58,15 @@ val settings = Seq(
     "-Ywarn-unused:locals",
     "-Ywarn-unused:imports",
     "-Ywarn-macros:after",
-//    "-Xfatal-warnings",
     "-language:higherKinds",
-    "-Xsource:3"
+    "-Xsource:3",
+    "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s",
+    "-Wconf:src=io/scalaland/chimney/cats/package.scala:s" // silence package object inheritance deprecation
   ),
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 13)) =>
-        Seq("-release", "8", "-Wunused:patvars", "-Ytasty-reader", "-Wconf:origin=scala.collection.compat.*:s")
+        Seq("-release", "8", "-Wunused:patvars", "-Ytasty-reader", "-Wconf:origin=scala.collection.compat.*:s", "-Xfatal-warnings")
       case Some((2, 12)) =>
         Seq(
           "-target:jvm-1.8",

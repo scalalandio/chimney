@@ -6,6 +6,8 @@ import io.scalaland.chimney.utils.EitherUtils.*
 import io.scalaland.chimney.utils.OptionUtils.*
 import utest.*
 
+import scala.annotation.nowarn
+
 object LiftedTransformerSumTypeSpec extends TestSuite {
 
   val tests = Tests {
@@ -220,7 +222,7 @@ object LiftedTransformerSumTypeSpec extends TestSuite {
         }
 
         test("when F = Either[List[String], +*]") {
-          type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
+          @nowarn type EitherList[+A] = Either[List[String], A] // String parsing macro cannot accept +* as type
           compileError("""(colors2.Black: colors2.Color).transformIntoF[EitherList, colors1.Color]""").check(
             "",
             "Chimney can't derive transformation from io.scalaland.chimney.examples.colors2.Color to io.scalaland.chimney.examples.colors1.Color",

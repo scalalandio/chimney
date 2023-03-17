@@ -6,7 +6,6 @@ import _root_.cats.syntax.semigroup.*
 import _root_.cats.syntax.semigroupal.*
 import cats.Semigroupal
 import io.scalaland.chimney.partial
-import io.scalaland.chimney.PartialTransformer
 import io.scalaland.chimney.partial.{Error, PathElement}
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.examples.trip.*

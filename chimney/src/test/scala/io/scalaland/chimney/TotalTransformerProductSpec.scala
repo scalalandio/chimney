@@ -4,6 +4,8 @@ import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.examples.*
 import utest.*
 
+import scala.annotation.unused
+
 object TotalTransformerProductSpec extends TestSuite {
 
   val tests = Tests {
@@ -327,7 +329,7 @@ object TotalTransformerProductSpec extends TestSuite {
       test("should disable globally enabled .enableDefaultValues") {
         import products.Defaults.*
 
-        implicit val config = TransformerConfiguration.default.enableDefaultValues
+        @unused implicit val config = TransformerConfiguration.default.enableDefaultValues
 
         compileError("""Source(1, "yy", 1.0).into[Target].disableDefaultValues.transform""").check(
           "",

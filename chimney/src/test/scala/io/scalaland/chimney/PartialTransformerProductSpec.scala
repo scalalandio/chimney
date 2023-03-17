@@ -5,6 +5,8 @@ import io.scalaland.chimney.examples.*
 import io.scalaland.chimney.utils.OptionUtils.*
 import utest.*
 
+import scala.annotation.unused
+
 object PartialTransformerProductSpec extends TestSuite {
 
   val tests = Tests {
@@ -661,7 +663,7 @@ object PartialTransformerProductSpec extends TestSuite {
       test("should disable globally enabled .enableDefaultValues") {
         import products.Defaults.*
 
-        implicit val config = TransformerConfiguration.default.enableDefaultValues
+        @unused implicit val config = TransformerConfiguration.default.enableDefaultValues
 
         compileError("""Source(1, "yy", 1.0).intoPartial[Target].disableDefaultValues.transform""").check(
           "",
