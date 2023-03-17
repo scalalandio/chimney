@@ -66,7 +66,7 @@ val settings = Seq(
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 13)) =>
-        Seq("-release", "8", "-Wunused:patvars", "-Ytasty-reader", "-Wconf:origin=scala.collection.compat.*:s")
+        Seq("-release", "8", "-Wunused:patvars", "-Ytasty-reader", "-Wconf:origin=scala.collection.compat.*:s", "-Xfatal-warnings")
       case Some((2, 12)) =>
         Seq(
           "-target:jvm-1.8",
