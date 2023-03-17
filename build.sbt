@@ -56,7 +56,7 @@ val settings = Seq(
           "-feature",
           "-language:higherKinds",
           "-Wunused:patvars",
-          // "-Xfatal-warnings",
+          "-Xfatal-warnings",
           "-Xlint:adapted-args",
           "-Xlint:delayedinit-select",
           "-Xlint:doc-detached",
@@ -76,7 +76,8 @@ val settings = Seq(
           "-Ywarn-unused:imports",
           "-Ywarn-macros:after",
           "-Ytasty-reader",
-          "-Wconf:origin=scala.collection.compat.*:s"
+          "-Wconf:origin=scala.collection.compat.*:s",
+          "-Wconf:src=io/scalaland/chimney/cats/package.scala:s" // silence package object inheritance deprecation
         )
       case Some((2, 12)) =>
         Seq(
@@ -90,7 +91,6 @@ val settings = Seq(
           "-feature",
           "-language:higherKinds",
           "-Xexperimental",
-          // "-Xfatal-warnings",
           "-Xfuture",
           "-Xlint:adapted-args",
           "-Xlint:by-name-right-associative",
