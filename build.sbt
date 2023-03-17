@@ -60,7 +60,8 @@ val settings = Seq(
     "-Ywarn-macros:after",
 //    "-Xfatal-warnings",
     "-language:higherKinds",
-    "-Xsource:3"
+    "-Xsource:3",
+    "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s"
   ),
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
