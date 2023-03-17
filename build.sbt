@@ -58,10 +58,10 @@ val settings = Seq(
     "-Ywarn-unused:locals",
     "-Ywarn-unused:imports",
     "-Ywarn-macros:after",
-//    "-Xfatal-warnings",
     "-language:higherKinds",
     "-Xsource:3",
-    "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s"
+    "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s",
+    "-Wconf:src=io/scalaland/chimney/cats/package.scala:s" // silence package object inheritance deprecation
   ),
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
