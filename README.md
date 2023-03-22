@@ -116,7 +116,7 @@ it's recommended to use at least Scala 2.12.1.
 If you are using Scala CLI you can try out Chimney by adding it with `using` clause:
 ```scala
 //> using scala "2.13.10"
-//> using dep "io.scalaland::chimney:0.7.1"
+//> using dep "io.scalaland::chimney:0.7.2"
 import io.scalaland.chimney.dsl._
 
 case class Foo(x: String, y: Int, z: Boolean = true)
@@ -131,7 +131,7 @@ object Main extends App {
 or run the Ammonite REPL:
 
 ```scala
-scala-cli --power repl --ammonite --scala "2.13.10" --dependency "io.scalaland::chimney:0.7.1"
+scala-cli --power repl --ammonite --scala "2.13.10" --dependency "io.scalaland::chimney:0.7.2"
 Loading...
 Welcome to the Ammonite Repl 2.5.6-1-f8bff243 (Scala 2.13.10 Java 17.0.1)
 @ case class Foo(x: String, y: Int, z: Boolean = true)
