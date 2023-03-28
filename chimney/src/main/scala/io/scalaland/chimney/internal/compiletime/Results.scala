@@ -7,6 +7,27 @@ import scala.util.control.NonFatal
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Results { this: Definitions =>
 
+  sealed protected trait Log extends Product with Serializable
+  protected object Log {
+
+    /** Single log entry with lazy evaluation (some messages can be expensive to create) */
+    final case class Entry(msg: () => String) extends Log {
+      lazy val message: String = msg()
+    }
+    object Entry {
+      def defer(msg: => String): Entry = new Entry(msg = () => msg)
+    }
+
+    /** Collection of logs (single or nested) */
+    final case class Journal(logs: Vector[Log]) {
+
+      def append(msg: => String): Journal = copy(logs = logs :+ Entry.defer(msg))
+    }
+
+    /** Contains a collection of logs computed in a named, nested scope */
+    final case class Scope(scopeName: String, journal: Journal) extends Log
+  }
+
   sealed protected trait DerivationError extends Product with Serializable
   protected object DerivationError {
 
@@ -20,7 +41,7 @@ private[compiletime] trait Results { this: Definitions =>
     def ++(errors: DerivationErrors): DerivationErrors =
       DerivationErrors(head, tail ++ Vector(errors.head) ++ errors.tail)
 
-    def prettyPrint: String = toString // TODO
+    def prettyPrint: String = toString // TODO: convert errors to some pretty printed String
   }
   protected object DerivationErrors {
 
@@ -47,19 +68,35 @@ private[compiletime] trait Results { this: Definitions =>
 
     import DerivationResult.*
 
+    private def updateState(update: State => State): DerivationResult[A] = this match {
+      case Success(value, state)            => Success(value, update(state))
+      case Failure(derivationErrors, state) => Failure(derivationErrors, update(state))
+    }
+
     // monadic operations with sequential semantics (the first fail breaks the circuit)
 
     final def transformWith[B](
         onSuccess: A => DerivationResult[B]
     )(
         onFailure: DerivationErrors => DerivationResult[B]
-    ): DerivationResult[B] = try {
-      this match {
-        case Success(value)            => onSuccess(value)
-        case Failure(derivationErrors) => onFailure(derivationErrors)
-      }
-    } catch {
-      case NonFatal(err) => DerivationResult.fromException(err)
+    ): DerivationResult[B] = {
+      var state: State = null.asInstanceOf[State]
+
+      val result =
+        try {
+          this match {
+            case Success(value, s) =>
+              state = s
+              onSuccess(value)
+            case Failure(derivationErrors, s) =>
+              state = s
+              onFailure(derivationErrors)
+          }
+        } catch {
+          case NonFatal(err) => DerivationResult.fromException(err)
+        }
+
+      result.updateState(_.appendedTo(state))
     }
 
     final def flatMap[B](f: A => DerivationResult[B]): DerivationResult[B] = transformWith(f)(fail)
@@ -99,27 +136,49 @@ private[compiletime] trait Results { this: Definitions =>
       }
     }
 
-    // conversion
+    // logging
 
-    final def toEither: Either[DerivationErrors, A] = this match {
-      case Success(value)            => Right(value)
-      case Failure(derivationErrors) => Left(derivationErrors)
+    final def log(msg: => String): DerivationResult[A] = updateState(_.log(msg))
+
+    final def namedScope[B](scopeName: String)(f: A => DerivationResult[B]): DerivationResult[B] = flatMap { a =>
+      f(a).updateState(_.nestScope(scopeName))
     }
 
-    final def unsafeGet: A = this match {
-      case Success(value)            => value
-      case Failure(derivationErrors) => reportError(derivationErrors.prettyPrint)
+    // conversion
+
+    final def toEither: (State, Either[DerivationErrors, A]) = this match {
+      case Success(value, state)            => state -> Right(value)
+      case Failure(derivationErrors, state) => state -> Left(derivationErrors)
+    }
+
+    final def unsafeGet: (State, A) = this match {
+      case Success(value, state)        => state -> value
+      case Failure(derivationErrors, _) => reportError(derivationErrors.prettyPrint) // TODO: print state?
     }
   }
   protected object DerivationResult {
 
-    final private case class Success[A](value: A) extends DerivationResult[A]
-    final private case class Failure(derivationErrors: DerivationErrors) extends DerivationResult[Nothing]
+    final case class State(
+        journal: Log.Journal = Log.Journal(logs = Vector.empty)
+    ) {
+
+      private[DerivationResult] def log(msg: => String): State = copy(journal = journal.append(msg))
+
+      private[DerivationResult] def nestScope(scopeName: String): State =
+        copy(journal = Log.Journal(Vector(Log.Scope(scopeName = scopeName, journal = journal))))
+
+      private[DerivationResult] def appendedTo(previousState: State): State = State(
+        journal = Log.Journal(logs = previousState.journal.logs ++ this.journal.logs)
+      )
+    }
+
+    final private case class Success[A](value: A, state: State) extends DerivationResult[A]
+    final private case class Failure(derivationErrors: DerivationErrors, state: State) extends DerivationResult[Nothing]
 
     def apply[A](thunk: => A): DerivationResult[A] = unit.map(_ => thunk)
 
-    def pure[A](value: A): DerivationResult[A] = Success(value)
-    def fail[A](error: DerivationErrors): DerivationResult[A] = Failure(error)
+    def pure[A](value: A): DerivationResult[A] = Success(value, State())
+    def fail[A](error: DerivationErrors): DerivationResult[A] = Failure(error, State())
 
     val unit: DerivationResult[Unit] = pure(())
 
@@ -162,6 +221,12 @@ private[compiletime] trait Results { this: Definitions =>
 
     def firstOf[A](head: DerivationResult[A], tail: DerivationResult[A]*): DerivationResult[A] =
       tail.foldLeft(head)(_.orElse(_))
+
+    // logging
+
+    def log(msg: => String): DerivationResult[Unit] = unit.log(msg)
+
+    def namedScope[A](name: String)(ra: => DerivationResult[A]): DerivationResult[A] = unit.namedScope(name)(_ => ra)
   }
 
   protected def reportError(errors: String): Nothing

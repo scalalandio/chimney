@@ -24,7 +24,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation & Legacy =>
   ]: Expr[Transformer[From, To]] =
     deriveTotalTransformer[From, To](
       configurationsImpl.readTransformerConfig[From, To, Cfg, InstanceFlags, SharedFlags]
-    ).unsafeGet
+    ).unsafeGet._2 // TODO: consider where diagnostics from State (_1) should be printed if requested to
 
   /** Intended for: being called from *Unsafe method to return final Expr; recursive derivation */
   final protected def derivePartialTransformer[From: Type, To: Type](
@@ -44,7 +44,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation & Legacy =>
   ]: Expr[PartialTransformer[From, To]] =
     derivePartialTransformer[From, To](
       configurationsImpl.readTransformerConfig[From, To, Cfg, InstanceFlags, SharedFlags]
-    ).unsafeGet
+    ).unsafeGet._2 // TODO: consider where diagnostics from State (_1) should be printed if requested to
 
   // TODO
   private def deriveTransformerBody[From, To](implicit

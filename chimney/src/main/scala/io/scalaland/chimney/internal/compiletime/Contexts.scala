@@ -8,18 +8,10 @@ import scala.annotation.nowarn
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
-  /** Lazily evaluated log entry */
-  final protected class LogEntry(val nesting: Int, thunk: => String) {
-    lazy val message: String = thunk
-  }
-
   sealed protected trait Context {
 
     type Target
     type Typeclass
-
-    def logs: Vector[LogEntry]
-    def appendLog(msg: => String): this.type
   }
 
   protected object Context {
@@ -35,16 +27,11 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         From: Type[From],
         To: Type[To],
         src: Expr[From],
-        config: TransformerConfig[From, To],
-        logs: Vector[LogEntry],
-        logNesting: Int
+        config: TransformerConfig[From, To]
     ) extends ForTransformer[From, To] {
 
       final type Target = To
       final type Typeclass = Transformer[From, To]
-
-      override def appendLog(msg: => String): this.type =
-        copy(logs = logs :+ new LogEntry(nesting = logNesting, thunk = msg)).asInstanceOf[this.type]
     }
     object ForTotal {
 
@@ -53,9 +40,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
           From = implicitly[Type[From]],
           To = implicitly[Type[To]],
           src = src,
-          config = config,
-          logs = Vector.empty,
-          logNesting = 0
+          config = config
         )
     }
 
@@ -64,16 +49,11 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         To: Type[To],
         src: Expr[From],
         failFast: Expr[Boolean],
-        config: TransformerConfig[From, To],
-        logs: Vector[LogEntry],
-        logNesting: Int
+        config: TransformerConfig[From, To]
     ) extends ForTransformer[From, To] {
 
       final type Target = partial.Result[To]
       final type Typeclass = PartialTransformer[From, To]
-
-      override def appendLog(msg: => String): this.type =
-        copy(logs = logs :+ new LogEntry(nesting = logNesting, thunk = msg)).asInstanceOf[this.type]
     }
     object ForPartial {
 
@@ -86,9 +66,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         To = implicitly[Type[To]],
         src = src,
         failFast = failFast,
-        config = config,
-        logs = Vector.empty,
-        logNesting = 0
+        config = config
       )
     }
 
@@ -96,16 +74,11 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         T: Type[T],
         Patch: Type[Patch],
         obj: Expr[T],
-        patch: Expr[Patch],
-        logs: Vector[LogEntry],
-        logNesting: Int
+        patch: Expr[Patch]
     ) extends Context {
 
       final type Target = T
       final type Typeclass = Patcher[T, Patch]
-
-      override def appendLog(msg: => String): this.type =
-        copy(logs = logs :+ new LogEntry(nesting = logNesting, thunk = msg)).asInstanceOf[this.type]
     }
     object ForPatcher {
 
@@ -113,9 +86,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         T = implicitly[Type[T]],
         Patch = implicitly[Type[Patch]],
         obj = obj,
-        patch = patch,
-        logs = Vector.empty,
-        logNesting = 0
+        patch = patch
       )
     }
   }
