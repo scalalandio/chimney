@@ -24,6 +24,12 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       .withDefinitionScope(weakTypeOf[From], weakTypeOf[To])
       .withDerivationTarget(derivationTarget)
 
+    buildDefinedTransformerFromConfig[From, To](config)
+  }
+
+  def buildDefinedTransformerFromConfig[From: WeakTypeTag, To: WeakTypeTag](
+      config: TransformerConfig
+  ): Tree = {
     if (!config.valueLevelAccessNeeded) {
       genTransformer[From, To](config)
     } else {

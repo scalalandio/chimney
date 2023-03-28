@@ -5,8 +5,8 @@ import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
 import scala.annotation.unused
 
-private[compiletime] trait DerivationGatewayPlatform extends DerivationGateway {
-  this: DefinitionsPlatform & DerivationDefinitionsPlatform =>
+private[compiletime] trait GatewayPlatform extends Gateway {
+  this: DefinitionsPlatform & DerivationPlatform & LegacyPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
 
