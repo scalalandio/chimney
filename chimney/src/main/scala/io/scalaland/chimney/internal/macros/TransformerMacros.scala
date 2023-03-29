@@ -158,13 +158,13 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
   )(From: Type, To: Type): Either[Seq[TransformerDerivationError], DerivedTree] = {
 
     expandSubtypes(config)(From, To)
-      .orElse(expandValueClassToValueClass(config)(From, To))
-      .orElse(expandValueClassToType(config)(From, To))
-      .orElse(expandTypeToValueClass(config)(From, To))
       .orElse(expandOptions(config)(From, To))
       .orElse(expandPartialFromOptionToNonOption(config)(From, To))
       .orElse(expandTargetWrappedInOption(config)(From, To))
       .orElse(expandSourceWrappedInOption(config)(From, To))
+      .orElse(expandValueClassToValueClass(config)(From, To))
+      .orElse(expandValueClassToType(config)(From, To))
+      .orElse(expandTypeToValueClass(config)(From, To))
       .orElse(expandEithers(config)(From, To))
       .orElse(expandFromMap(config)(From, To))
       .orElse(expandIterableOrArray(config)(From, To))
@@ -220,7 +220,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
 
       for {
         fromValueClassMember <- fromValueClassMember
-        fromValueClassMemberType = fromValueClassMember.returnType
+        fromValueClassMemberType = fromValueClassMember.resultTypeIn(From)
         fromMemberAccessTree = q"${config.srcPrefixTree}.${fromValueClassMember.name}"
         derivedTree <- resolveRecursiveTransformerBody(config.withSrcPrefixTree(fromMemberAccessTree))(
           fromValueClassMemberType,
@@ -242,7 +242,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
 
       for {
         toValueClassMethodSymbol <- toValueClassMember
-        toValueClassMemberType <- toValueClassMember.map(_.returnType)
+        toValueClassMemberType <- toValueClassMember.map(_.resultTypeIn(To))
         transformerBodyTree <- resolveRecursiveTransformerBody(config)(From, toValueClassMemberType)
       } yield mkTransformerBodyTree1(
         To,
@@ -288,9 +288,9 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
 
       for {
         fromValueClassMemberSymbol <- fromValueClassMember
-        fromValueClassMemberType = fromValueClassMemberSymbol.returnType
+        fromValueClassMemberType = fromValueClassMemberSymbol.resultTypeIn(From)
         toValueClassMethodSymbol <- toValueClassMember
-        toValueClassMemberType <- toValueClassMember.map(_.returnType)
+        toValueClassMemberType <- toValueClassMember.map(_.resultTypeIn(To))
         fromMemberAccessTree = q"${config.srcPrefixTree}.${fromValueClassMemberSymbol.name}"
         transformerBodyTree <- resolveRecursiveTransformerBody(config.withSrcPrefixTree(fromMemberAccessTree))(
           fromValueClassMemberType,

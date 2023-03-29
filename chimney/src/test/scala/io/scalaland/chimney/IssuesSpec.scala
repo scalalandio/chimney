@@ -708,6 +708,14 @@ object IssuesSpec extends TestSuite {
         "Error"
       )
     }
+
+    test("fix issue #291") {
+      import eu.timepit.refined.types.string.NonEmptyString
+      import Issue291.*
+
+      val foo = Bar(NonEmptyString.unsafeFrom("barToFoo")).transformInto[Foo]
+      foo.address.get.value ==> "barToFoo"
+    }
   }
 }
 
@@ -784,4 +792,10 @@ object Issue228 {
   object Target {
     case class Value1(v: Int) extends Target
   }
+}
+
+object Issue291 {
+  import eu.timepit.refined.types.string.NonEmptyString
+  case class Bar(address: NonEmptyString)
+  case class Foo(address: Option[NonEmptyString])
 }
