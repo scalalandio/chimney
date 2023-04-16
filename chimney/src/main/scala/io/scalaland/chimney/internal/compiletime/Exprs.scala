@@ -2,6 +2,9 @@ package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.partial
 
+import scala.annotation.nowarn
+
+@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Exprs { this: Definitions =>
 
   /** Platform-specific expression representation (c.universe.Expr[A] in 2, quotes.Expr[A] in 3 */
@@ -86,6 +89,13 @@ private[compiletime] trait Exprs { this: Definitions =>
   implicit class ExprOps[T: Type](private val expr: Expr[T]) {
 
     def asInstanceOf[S: Type]: Expr[S] = exprImpl.AsInstanceOf[T, S](expr)
+  }
+
+  sealed protected trait DerivedExpr[A]
+  protected object DerivedExpr {
+
+    final case class TotalExpr[A](expr: Expr[A]) extends DerivedExpr[A]
+    final case class PartialExpr[A](expr: Expr[partial.Result[A]]) extends DerivedExpr[A]
   }
 
   protected def exprImpl: ExprDefinitionsImpl

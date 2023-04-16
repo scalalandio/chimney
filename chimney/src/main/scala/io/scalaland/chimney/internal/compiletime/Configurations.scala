@@ -116,6 +116,7 @@ private[compiletime] trait Configurations { this: Definitions =>
       flags: TransformerFlags = TransformerFlags(),
       fieldOverrides: Map[String, FieldOverride[From, ?]] = Map.empty,
       coproductOverride: Vector[CoproductOverride[From, ? <: From, To]] = Vector.empty,
+      preventResolutionForTypes: Option[(ComputedType, ComputedType)] = None,
       legacy: TransformerConfig.LegacyData = TransformerConfig.LegacyData() // TODO: temporary
   )
   object TransformerConfig {
@@ -126,7 +127,8 @@ private[compiletime] trait Configurations { this: Definitions =>
         coproductInstanceOverridesLegacy: Map[(ComputedType, ComputedType), Int] = Map.empty,
         coproductInstancesPartialOverridesLegacy: Map[(ComputedType, ComputedType), Int] = Map.empty,
         transformerDefinitionPrefix: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
-          null.asInstanceOf[Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore]]
+          null.asInstanceOf[Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore]],
+        definitionScope: Option[(ComputedType, ComputedType)] = None
     )
   }
 
