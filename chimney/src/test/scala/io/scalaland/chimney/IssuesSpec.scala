@@ -710,10 +710,9 @@ object IssuesSpec extends TestSuite {
     }
 
     test("fix issue #291") {
-      import eu.timepit.refined.types.string.NonEmptyString
       import Issue291.*
 
-      val foo = Bar(NonEmptyString.unsafeFrom("barToFoo")).transformInto[Foo]
+      val foo = Bar(new GenericValueClass("barToFoo")).transformInto[Foo]
       foo.address.get.value ==> "barToFoo"
     }
   }
@@ -795,7 +794,8 @@ object Issue228 {
 }
 
 object Issue291 {
-  import eu.timepit.refined.types.string.NonEmptyString
-  case class Bar(address: NonEmptyString)
-  case class Foo(address: Option[NonEmptyString])
+  final class GenericValueClass[T](val value: T) extends AnyVal
+
+  case class Bar(address: GenericValueClass[String])
+  case class Foo(address: Option[GenericValueClass[String]])
 }

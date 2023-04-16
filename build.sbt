@@ -93,7 +93,6 @@ val dependencies = Seq(
     "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
     "com.lihaoyi" %%% "utest" % "0.8.1" % "test",
-    "eu.timepit" %%% "refined" % "0.10.3" % "test",
   ),
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
 )
