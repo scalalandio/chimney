@@ -708,6 +708,13 @@ object IssuesSpec extends TestSuite {
         "Error"
       )
     }
+
+    test("fix issue #291") {
+      import Issue291.*
+
+      val foo = Bar(new GenericValueClass("barToFoo")).transformInto[Foo]
+      foo.address.get.value ==> "barToFoo"
+    }
   }
 }
 
@@ -784,4 +791,11 @@ object Issue228 {
   object Target {
     case class Value1(v: Int) extends Target
   }
+}
+
+object Issue291 {
+  final class GenericValueClass[T](val value: T) extends AnyVal
+
+  case class Bar(address: GenericValueClass[String])
+  case class Foo(address: Option[GenericValueClass[String]])
 }
