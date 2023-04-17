@@ -11,14 +11,14 @@ private[compiletime] trait ChimneyExprs { this: Exprs & Types =>
   trait ChimneyExprModule { this: ChimneyExpr.type =>
 
     val PartialResult: PartialResultModule
-    trait PartialResultModule {
-      this: PartialResult.type =>
+    trait PartialResultModule { this: PartialResult.type =>
+
       def Value[T: Type](value: Expr[T]): Expr[partial.Result.Value[T]]
 
       val Errors: ErrorsModule
 
-      trait ErrorsModule {
-        this: Errors.type =>
+      trait ErrorsModule { this: Errors.type =>
+
         def merge(
             errors1: Expr[partial.Result.Errors],
             errors2: Expr[partial.Result.Errors]

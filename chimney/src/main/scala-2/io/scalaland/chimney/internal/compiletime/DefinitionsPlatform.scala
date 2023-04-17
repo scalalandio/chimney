@@ -7,6 +7,7 @@ private[compiletime] trait DefinitionsPlatform
     with TypesPlatform
     with ChimneyTypesPlatform
     with ExprsPlatform
+    with ChimneyExprsPlatform
     with ConfigurationsPlatform
     with ResultsPlatform {
 
