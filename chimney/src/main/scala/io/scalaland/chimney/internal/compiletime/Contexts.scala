@@ -8,37 +8,42 @@ import scala.annotation.nowarn
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
-  sealed protected trait Context {
+  sealed protected trait TransformerContext[From, To] extends Trace with Product with Serializable {
+    val From: Type[From]
+    val To: Type[To]
+    val src: Expr[From]
+
+    val config: TransformerConfig[From, To]
 
     type Target
-    type Typeclass
+    val Target: Type[Target]
+    type TypeClass
+    val TypeClass: Type[TypeClass]
+
+    // TODO: platform specific way of printing Types
+    override def sourceTypeName: String = From.toString
+    override def targetTypeName: String = To.toString
   }
-
-  protected object Context {
-    sealed trait ForTransformer[From, To] extends Context {
-      val From: Type[From]
-      val To: Type[To]
-      val src: Expr[From]
-
-      val config: TransformerConfig[From, To]
-    }
+  protected object TransformerContext {
 
     final case class ForTotal[From, To](
         From: Type[From],
         To: Type[To],
         src: Expr[From],
         config: TransformerConfig[From, To]
-    ) extends ForTransformer[From, To] {
+    ) extends TransformerContext[From, To] {
 
       final type Target = To
-      final type Typeclass = Transformer[From, To]
+      val Target = To
+      final type TypeClass = Transformer[From, To]
+      val TypeClass = ChimneyType.Transformer(From, To)
     }
     object ForTotal {
 
       def create[From: Type, To: Type](src: Expr[From], config: TransformerConfig[From, To]): ForTotal[From, To] =
         ForTotal(
-          From = implicitly[Type[From]],
-          To = implicitly[Type[To]],
+          From = Type[From],
+          To = Type[To],
           src = src,
           config = config
         )
@@ -50,10 +55,12 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         src: Expr[From],
         failFast: Expr[Boolean],
         config: TransformerConfig[From, To]
-    ) extends ForTransformer[From, To] {
+    ) extends TransformerContext[From, To] {
 
       final type Target = partial.Result[To]
-      final type Typeclass = PartialTransformer[From, To]
+      val Target = ChimneyType.PartialResult(To)
+      final type TypeClass = PartialTransformer[From, To]
+      val TypeClass = ChimneyType.PartialTransformer(From, To)
     }
     object ForPartial {
 
@@ -62,42 +69,42 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
           failFast: Expr[Boolean],
           config: TransformerConfig[From, To]
       ): ForPartial[From, To] = ForPartial(
-        From = implicitly[Type[From]],
-        To = implicitly[Type[To]],
+        From = Type[From],
+        To = Type[To],
         src = src,
         failFast = failFast,
         config = config
       )
     }
-
-    final case class ForPatcher[T, Patch](
-        T: Type[T],
-        Patch: Type[Patch],
-        obj: Expr[T],
-        patch: Expr[Patch]
-    ) extends Context {
-
-      final type Target = T
-      final type Typeclass = Patcher[T, Patch]
-    }
-    object ForPatcher {
-
-      def create[T: Type, Patch: Type](obj: Expr[T], patch: Expr[Patch]): ForPatcher[T, Patch] = ForPatcher(
-        T = implicitly[Type[T]],
-        Patch = implicitly[Type[Patch]],
-        obj = obj,
-        patch = patch
-      )
-    }
   }
 
-  import Context.*
+  final case class PatcherContext[T, Patch](
+      T: Type[T],
+      Patch: Type[Patch],
+      obj: Expr[T],
+      patch: Expr[Patch]
+  ) {
+
+    final type Target = T
+    val Target = T
+    final type TypeClass = Patcher[T, Patch]
+    val TypeClass = ChimneyType.Patcher(T, Patch)
+  }
+  object PatcherContext {
+
+    def create[T: Type, Patch: Type](obj: Expr[T], patch: Expr[Patch]): PatcherContext[T, Patch] = PatcherContext(
+      T = Type[T],
+      Patch = Type[Patch],
+      obj = obj,
+      patch = patch
+    )
+  }
 
   // unpacks Types from Contexts
-  implicit final protected def ctx2FromType[From, To](implicit ctx: ForTransformer[From, To]): Type[From] = ctx.From
-  implicit final protected def ctx2ToType[From, To](implicit ctx: ForTransformer[From, To]): Type[To] = ctx.To
-  implicit final protected def ctx2TType[T, Patch](implicit ctx: ForPatcher[T, Patch]): Type[T] = ctx.T
-  implicit final protected def ctx2PatchType[T, Patch](implicit ctx: ForPatcher[T, Patch]): Type[Patch] = ctx.Patch
+  implicit final protected def ctx2FromType[From, To](implicit ctx: TransformerContext[From, To]): Type[From] = ctx.From
+  implicit final protected def ctx2ToType[From, To](implicit ctx: TransformerContext[From, To]): Type[To] = ctx.To
+  implicit final protected def ctx2TType[T, Patch](implicit ctx: PatcherContext[T, Patch]): Type[T] = ctx.T
+  implicit final protected def ctx2PatchType[T, Patch](implicit ctx: PatcherContext[T, Patch]): Type[Patch] = ctx.Patch
 
-  // for unpacking Exprs from Context, import ctx.* should be enogh
+  // for unpacking Exprs from Context, import ctx.* should be enough
 }

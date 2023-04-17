@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal
 
+// TODO: move to compiletime once all rules are migrated and old macros removed
 sealed trait TransformerDerivationError extends Product with Serializable {
   def sourceTypeName: String
   def targetTypeName: String
@@ -47,6 +48,12 @@ final case class IncompatibleSourceTuple(
 final case class NotSupportedTransformerDerivation(fieldName: String, sourceTypeName: String, targetTypeName: String)
     extends TransformerDerivationError
 
+final case class MacroException(exception: Throwable, sourceTypeName: String, targetTypeName: String)
+    extends TransformerDerivationError
+
+final case class NotYetImplemented(what: String, sourceTypeName: String, targetTypeName: String)
+    extends TransformerDerivationError
+
 object TransformerDerivationError {
   def printErrors(errors: Seq[TransformerDerivationError]): String = {
 
@@ -70,6 +77,11 @@ object TransformerDerivationError {
             s"  source tuple $sourceTypeName is of arity $sourceArity, while target type $targetTypeName is of arity $targetArity; they need to be equal!"
           case NotSupportedTransformerDerivation(fieldName, sourceTypeName, _) =>
             s"  derivation from $fieldName: $sourceTypeName to $targetTypeName is not supported in Chimney!"
+          case MacroException(exception, _, _) =>
+            val stackTrace = exception.getStackTrace.view.map(ste => s"  \t$ste").mkString("\n")
+            s"  macro expansion thrown exception!: ${exception.getMessage}:\n$stackTrace"
+          case NotYetImplemented(what, _, _) =>
+            s"  derivation failed because functionality $what is not yet implemented!"
         }
 
         val fieldsWithMethodAccessor = errors.collect { case MissingAccessor(fieldName, _, _, _, true) =>
