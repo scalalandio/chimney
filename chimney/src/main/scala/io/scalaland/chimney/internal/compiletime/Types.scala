@@ -6,7 +6,7 @@ private[compiletime] trait Types {
   protected type Type[T]
 
   val Type: TypeModule
-  trait TypeModule {
+  trait TypeModule { this: Type.type =>
     def apply[T](implicit T: Type[T]): Type[T] = T
 
     val Any: Type[Any]
@@ -14,10 +14,9 @@ private[compiletime] trait Types {
     val Unit: Type[Unit]
 
     def Function1[From: Type, To: Type]: Type[From => To]
-    def Array[T: Type]: Type[Array[T]]
 
     val Array: ArrayModule
-    trait ArrayModule {
+    trait ArrayModule { this: Array.type =>
       def apply[T: Type]: Type[Array[T]]
       val Any: Type[Array[Any]] = apply(Type.Any)
     }
@@ -26,12 +25,13 @@ private[compiletime] trait Types {
     def Either[L: Type, R: Type]: Type[Either[L, R]]
 
     def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean
+    def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean
   }
 
   implicit class TypeOps[T](private val tpe: Type[T]) {
 
     final def <:<[S](another: Type[S]): Boolean = Type.isSubtypeOf(tpe, another)
-    final def =:=[S](another: Type[S]): Boolean = tpe <:< another && another <:< tpe
+    final def =:=[S](another: Type[S]): Boolean = Type.isSameAs(tpe, another)
   }
 
   /** Used to erase the type of Type, while providing the utilities to still make it useful */
