@@ -2,14 +2,13 @@ package io.scalaland.chimney.internal.compiletime
 
 private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatform =>
 
-  import DefinitionsPlatform.*
   import c.universe.{internal as _, Transformer as _, *}
 
   protected type Tagged[U] = { type Tag = U }
   protected type @@[T, U] = T & Tagged[U]
 
   final override protected type Type[T] = c.Type @@ T
-  private object typeUtils {
+  protected object typeUtils {
     def fromUntyped[T](untyped: c.Type): Type[T] = untyped.asInstanceOf[Type[T]]
     def fromWeak[T: WeakTypeTag]: Type[T] = fromUntyped(weakTypeOf[T])
     def fromWeakTC[Unswapped: WeakTypeTag, T](args: c.Type*): Type[T] = fromUntyped {
@@ -22,6 +21,11 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       }
       // $COVERAGE-ON$
       ee.finalResultType.substituteTypes(ee.typeParams, args.toList)
+    }
+
+    object fromWeakConversion {
+      // convert WeakTypeTag[T] to Type[T] automatically
+      implicit def typeFromWeak[T: WeakTypeTag]: Type[T] = typeUtils.fromWeak
     }
   }
 
@@ -37,7 +41,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       def apply[T: Type]: Type[Array[T]] = fromWeakTC[Array[?], Array[T]](Type[T])
     }
 
-    def Option[T: Type]: Type[Option[T]] = fromWeakTC[Option[Arbitrary], Option[T]](Type[T])
+    def Option[T: Type]: Type[Option[T]] = fromWeakTC[Option[?], Option[T]](Type[T])
 
     def Either[L: Type, R: Type]: Type[Either[L, R]] = fromWeakTC[Either[?, ?], Either[L, R]](Type[L], Type[R])
 

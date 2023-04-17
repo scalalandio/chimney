@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.*
+import io.scalaland.chimney.dsl.ImplicitTransformerPreference
 
 private[compiletime] trait ChimneyTypes { this: Types =>
 
@@ -12,7 +13,7 @@ private[compiletime] trait ChimneyTypes { this: Types =>
     def Patcher[T: Type, Patch: Type]: Type[Patcher[T, Patch]]
 
     val PartialResult: PartialResultModule
-    trait PartialResultModule {
+    trait PartialResultModule { this: PartialResult.type =>
       def apply[T: Type]: Type[partial.Result[T]]
 
       def Value[T: Type]: Type[partial.Result.Value[T]]
@@ -23,19 +24,24 @@ private[compiletime] trait ChimneyTypes { this: Types =>
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
     val TransformerFlags: TransformerFlagsModule
-    trait TransformerFlagsModule {
-      val Default: Type[internal.TransformerFlags]
-      def Enable[F: Type, Flags: Type]: Type[internal.TransformerFlags]
-      def Disable[F: Type, Flags: Type]: Type[internal.TransformerFlags]
+    trait TransformerFlagsModule { this: TransformerFlags.type =>
+      import internal.TransformerFlags.Flag
+
+      val Default: Type[internal.TransformerFlags.Default]
+      def Enable[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
+          : Type[internal.TransformerFlags.Enable[F, Flags]]
+      def Disable[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
+          : Type[internal.TransformerFlags.Disable[F, Flags]]
 
       val Flags: FlagsModule
-      trait FlagsModule {
-        val DefaultValues: Type[internal.TransformerFlags]
-        val BeanGetters: Type[internal.TransformerFlags]
-        val BeanSetters: Type[internal.TransformerFlags]
-        val MethodAccessors: Type[internal.TransformerFlags]
-        val OptionDefaultsToNone: Type[internal.TransformerFlags]
-        def ImplicitConflictResolution[R: Type]: Type[internal.TransformerFlags]
+      trait FlagsModule { this: Flags.type =>
+        val DefaultValues: Type[internal.TransformerFlags.DefaultValues]
+        val BeanGetters: Type[internal.TransformerFlags.BeanGetters]
+        val BeanSetters: Type[internal.TransformerFlags.BeanSetters]
+        val MethodAccessors: Type[internal.TransformerFlags.MethodAccessors]
+        val OptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone]
+        def ImplicitConflictResolution[R <: ImplicitTransformerPreference: Type]
+            : Type[internal.TransformerFlags.ImplicitConflictResolution[R]]
       }
     }
   }
