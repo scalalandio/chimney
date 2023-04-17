@@ -1,78 +1,28 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.dsl as dsls
-import io.scalaland.chimney.internal
-import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
-
 import scala.quoted
 
 private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatform =>
 
   final override type Expr[A] = quoted.Expr[A]
-  protected object exprImpl extends ExprDefinitionsImpl {
 
-    override def Unit: Expr[Unit] = '{ () }
-
-    override def Array[A: Type](args: Expr[A]*): Expr[Array[A]] =
+  object Expr extends ExprModule {
+    val Unit: Expr[Unit] = '{ () }
+    def Array[A: Type](args: Expr[A]*): Expr[Array[A]] =
       '{ scala.Array.apply[A](${ quoted.Varargs(args.toSeq) }*)(???) } // TODO: classTag?
 
-    override def Option[A: Type](value: Expr[A]): Expr[Option[A]] = '{ scala.Option(${ value }) }
-    override def OptionEmpty[A: Type]: Expr[Option[A]] = '{ scala.Option.empty[A] }
-    override def OptionApply[A: Type]: Expr[A => Option[A]] = '{ scala.Option.apply[A](_) }
-    override def None: Expr[scala.None.type] = '{ scala.None }
+    object Option extends OptionModule {
+      def apply[A: Type](a: Expr[A]): Expr[Option[A]] = '{ scala.Option(${ a }) }
+      def empty[A: Type]: Expr[Option[A]] = '{ scala.Option.empty[A] }
+      def apply[A: Type]: Expr[A => Option[A]] = '{ scala.Option.apply[A](_) }
+      val None: Expr[scala.None.type] = '{ scala.None }
+    }
 
-    override def Left[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]] = '{ scala.Left[L, R](${ value }) }
-    override def Right[L: Type, R: Type](value: Expr[R]): Expr[Right[L, R]] = '{ scala.Right[L, R](${ value }) }
+    object Either extends EitherModule {
+      def Left[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]] = '{ scala.Left[L, R](${ value }) }
+      def Right[L: Type, R: Type](value: Expr[R]): Expr[Right[L, R]] = '{ scala.Right[L, R](${ value }) }
+    }
 
-    override def PartialResultValue[T: Type](value: Expr[T]): Expr[partial.Result.Value[T]] =
-      '{ partial.Result.Value[T](${ value }) }
-
-    override def PartialResultErrorsMerge(
-        errors1: Expr[partial.Result.Errors],
-        errors2: Expr[partial.Result.Errors]
-    ): Expr[partial.Result.Errors] = '{ partial.Result.Errors.merge(${ errors1 }, ${ errors2 }) }
-
-    override def PartialResultErrorsMergeResultNullable[T: Type](
-        errorsNullable: Expr[partial.Result.Errors],
-        result: Expr[partial.Result[T]]
-    ): Expr[partial.Result.Errors] =
-      '{ partial.Result.Errors.__mergeResultNullable[T](${ errorsNullable }, ${ result }) }
-    override def PartialResultEmpty[T: Type]: Expr[partial.Result[T]] =
-      '{ partial.Result.fromEmpty[T] }
-    override def PartialResultFunction[S: Type, T: Type](f: Expr[S => T]): Expr[S => partial.Result[T]] =
-      '{ partial.Result.fromFunction[S, T](${ f }) }
-    // TODO: summon factory?
-    override def PartialResultTraverse[M: Type, A: Type, B: Type](
-        it: Expr[Iterator[A]],
-        f: Expr[A => partial.Result[B]],
-        failFast: Expr[Boolean]
-    ): Expr[partial.Result[M]] = '{ partial.Result.traverse[M, A, B](${ it }, ${ f }, ${ failFast })(???) }
-    // TODO: summon factory?
-    override def PartialResultSequence[M: Type, A: Type](
-        it: Expr[Iterator[partial.Result[A]]],
-        failFast: Expr[Boolean]
-    ): Expr[partial.Result[M]] = '{ partial.Result.sequence[M, A](${ it }, ${ failFast })(???) }
-    override def PartialResultMap2[A: Type, B: Type, C: Type](
-        fa: Expr[partial.Result[A]],
-        fb: Expr[partial.Result[B]],
-        f: Expr[(A, B) => C],
-        failFast: Expr[Boolean]
-    ): Expr[partial.Result[C]] = '{ partial.Result.map2[A, B, C](${ fa }, ${ fb }, ${ f }, ${ failFast }) }
-    override def PartialResultProduct[A: Type, B: Type](
-        fa: Expr[partial.Result[A]],
-        fb: Expr[partial.Result[B]],
-        failFast: Expr[Boolean]
-    ): Expr[partial.Result[(A, B)]] = '{ partial.Result.product[A, B](${ fa }, ${ fb }, ${ failFast }) }
-
-    override def PathElementAccessor(targetName: Expr[String]): Expr[partial.PathElement.Accessor] =
-      '{ partial.PathElement.Accessor(${ targetName }) }
-    override def PathElementIndex(index: Expr[Int]): Expr[partial.PathElement.Index] =
-      '{ partial.PathElement.Index(${ index }) }
-    override def PathElementMapKey(key: Expr[Any]): Expr[partial.PathElement.MapKey] =
-      '{ partial.PathElement.MapKey(${ key }) }
-    override def PathElementMapValue(key: Expr[Any]): Expr[partial.PathElement.MapValue] =
-      '{ partial.PathElement.MapValue(${ key }) }
-
-    override def AsInstanceOf[T: Type, S: Type](expr: Expr[T]): Expr[S] = '{ ${ expr }.asInstanceOf[S] }
+    def asInstanceOf[T: Type, U: Type](expr: Expr[T]): Expr[U] = '{ ${ expr }.asInstanceOf[U] }
   }
 }

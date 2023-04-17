@@ -5,7 +5,7 @@ import io.scalaland.chimney.partial
 import scala.annotation.nowarn
 
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-private[compiletime] trait ChimneyExprs { this: Exprs & Types =>
+private[compiletime] trait ChimneyExprs { this: Definitions =>
 
   val ChimneyExpr: ChimneyExprModule
   trait ChimneyExprModule { this: ChimneyExpr.type =>
