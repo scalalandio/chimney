@@ -4,6 +4,7 @@ import io.scalaland.chimney.dsl.ImplicitTransformerPreference
 import io.scalaland.chimney.internal
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.dsl as dsls
+import io.scalaland.chimney.internal.TransformerCfg
 
 import scala.annotation.nowarn
 
@@ -32,9 +33,7 @@ private[compiletime] trait Configurations { this: Definitions =>
         copy(optionDefaultsToNone = value)
       } else {
         // $COVERAGE-OFF$
-        // TODO
-        /// c.abort(c.enclosingPosition, s"Invalid transformer flag type: $flagTpe!")
-        ???
+        reportError(s"Invalid transformer flag type: ${Type[Flag]}!")
         // $COVERAGE-ON$
       }
 
@@ -121,13 +120,15 @@ private[compiletime] trait Configurations { this: Definitions =>
   )
   object TransformerConfig {
 
+    type UpdateCfg[_ <: TransformerCfg]
+
     // TODO: for creating TransformerConfig for old macros in Scala 2 until everything is migrated
     final case class LegacyData(
         fieldOverrideLegacy: Map[String, FieldOverride.RuntimeConfiguration] = Map.empty,
         coproductInstanceOverridesLegacy: Map[(ComputedType, ComputedType), Int] = Map.empty,
         coproductInstancesPartialOverridesLegacy: Map[(ComputedType, ComputedType), Int] = Map.empty,
-        transformerDefinitionPrefix: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
-          null.asInstanceOf[Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore]],
+        transformerDefinitionPrefix: Expr[dsls.TransformerDefinitionCommons[UpdateCfg]] =
+          null.asInstanceOf[Expr[dsls.TransformerDefinitionCommons[UpdateCfg]]],
         definitionScope: Option[(ComputedType, ComputedType)] = None
     )
   }
