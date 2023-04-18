@@ -4,6 +4,7 @@ import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal
 import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
 
+import scala.collection.compat.Factory
 import scala.quoted
 
 private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: DefinitionsPlatform =>
@@ -38,13 +39,15 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
           f: Expr[A => partial.Result[B]],
           failFast: Expr[Boolean]
       ): Expr[partial.Result[M]] =
-        '{ partial.Result.traverse[M, A, B](${ it }, ${ f }, ${ failFast })(???) } // TODO: summon factory?
+        '{
+          partial.Result.traverse[M, A, B](${ it }, ${ f }, ${ failFast })(${ quoted.Expr.summon[Factory[B, M]].get })
+        }
 
       def sequence[M: Type, A: Type](
           it: Expr[Iterator[partial.Result[A]]],
           failFast: Expr[Boolean]
       ): Expr[partial.Result[M]] =
-        '{ partial.Result.sequence[M, A](${ it }, ${ failFast })(???) } // TODO: summon factory?
+        '{ partial.Result.sequence[M, A](${ it }, ${ failFast })(${ quoted.Expr.summon[Factory[A, M]].get }) }
 
       def map2[A: Type, B: Type, C: Type](
           fa: Expr[partial.Result[A]],

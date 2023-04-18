@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
 import scala.quoted
+import scala.reflect.ClassTag
 
 private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatform =>
 
@@ -9,7 +10,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
   object Expr extends ExprModule {
     val Unit: Expr[Unit] = '{ () }
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]] =
-      '{ scala.Array.apply[A](${ quoted.Varargs(args.toSeq) }*)(???) } // TODO: classTag?
+      '{ scala.Array.apply[A](${ quoted.Varargs(args.toSeq) }*)(${ quoted.Expr.summon[ClassTag[A]].get }) }
 
     object Option extends OptionModule {
       def apply[A: Type](a: Expr[A]): Expr[Option[A]] = '{ scala.Option(${ a }) }
