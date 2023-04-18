@@ -49,13 +49,13 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean = S.=:=(T)
   }
 
-//  implicit class UntypedTypeOps(private val tpe: c.Type) {
-//
-//    /** Assumes that this `tpe` is String singleton type and extracts its value */
-//    def asStringSingletonType: String = tpe
-//      .asInstanceOf[scala.reflect.internal.Types#UniqueConstantType]
-//      .value
-//      .value
-//      .asInstanceOf[String]
-//  }
+  implicit class UntypedTypeOps(private val tpe: c.Type) {
+
+    /** Assumes that this `tpe` is String singleton type and extracts its value */
+    def asStringSingletonType: String = tpe
+      .asInstanceOf[scala.reflect.internal.Types#UniqueConstantType]
+      .value
+      .value
+      .asInstanceOf[String]
+  }
 }
