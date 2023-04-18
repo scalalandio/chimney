@@ -2,16 +2,19 @@ package io.scalaland.chimney.internal.compiletime.derivation
 
 import io.scalaland.chimney.{PartialTransformer, Transformer}
 import io.scalaland.chimney.internal
-import io.scalaland.chimney.internal.compiletime.Definitions
+import io.scalaland.chimney.internal.compiletime.{Definitions, DerivationResult}
 
+import scala.annotation.nowarn
+
+@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Gateway { this: Definitions & Derivation & Legacy =>
 
-  /** Intended for: being called from *Unsafe method to return final Expr; recursive derivation */
+  /** Intended for: being called from *Unsafe method to return final Expr */
   final protected def deriveTotalTransformer[From: Type, To: Type](
       config: TransformerConfig[From, To]
   ): DerivationResult[Expr[Transformer[From, To]]] =
     instantiateTotalTransformer[From, To] { (src: Expr[From]) =>
-      deriveTransformerBody(Context.ForTotal.create[From, To](src = src, config))
+      deriveTransformerTargetExpr(TransformerContext.ForTotal.create[From, To](src, config))
     }
 
   /** Intended for: being called from platform-specific code which returns Expr directly to splicing site */
@@ -26,12 +29,12 @@ private[compiletime] trait Gateway { this: Definitions & Derivation & Legacy =>
       configurationsImpl.readTransformerConfig[From, To, Cfg, InstanceFlags, SharedFlags]
     ).unsafeGet._2 // TODO: consider where diagnostics from State (_1) should be printed if requested to
 
-  /** Intended for: being called from *Unsafe method to return final Expr; recursive derivation */
+  /** Intended for: being called from *Unsafe method to return final Expr */
   final protected def derivePartialTransformer[From: Type, To: Type](
       config: TransformerConfig[From, To]
   ): DerivationResult[Expr[PartialTransformer[From, To]]] =
     instantiatePartialTransformer[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
-      deriveTransformerBody(Context.ForPartial.create[From, To](src = src, failFast = failFast, config))
+      deriveTransformerTargetExpr(TransformerContext.ForPartial.create[From, To](src, failFast, config))
     }
 
   /** Intended for: being called from platform-specific code which returns Expr directly to splicing site */
@@ -46,9 +49,29 @@ private[compiletime] trait Gateway { this: Definitions & Derivation & Legacy =>
       configurationsImpl.readTransformerConfig[From, To, Cfg, InstanceFlags, SharedFlags]
     ).unsafeGet._2 // TODO: consider where diagnostics from State (_1) should be printed if requested to
 
-  // TODO
-  private def deriveTransformerBody[From, To](implicit
-      ctx: Context.ForTransformer[From, To]
-  ): DerivationResult[Expr[ctx.Target]] =
-    DerivationResult.notYetImplemented("Actual derivation")
+  /** Adapts DerivedExpr[To] to expected type of transformation */
+  private def deriveTransformerTargetExpr[From, To](implicit
+      ctx: TransformerContext[From, To]
+  ): DerivationResult[Expr[ctx.Target]] = {
+    // pattern match on DerivedExpr and convert to whatever is needed
+    deriveTransformationResultExpr[From, To]
+      .flatMap {
+        case DerivedExpr.TotalExpr(expr) =>
+          ctx match {
+            case TransformerContext.ForTotal(_, _, _, _) => DerivationResult.pure(expr)
+            case TransformerContext.ForPartial(_, _, _, _, _) =>
+              DerivationResult.pure(ChimneyExpr.PartialResult.Value(expr))
+          }
+        case DerivedExpr.PartialExpr(expr) =>
+          ctx match {
+            case TransformerContext.ForTotal(_, _, _, _) =>
+              DerivationResult.fromException(
+                new AssertionError("Derived partial.Result expression where total Transformer excepts direct value")
+              )
+            case TransformerContext.ForPartial(_, _, _, _, _) =>
+              DerivationResult.pure(expr)
+          }
+      }
+      .asInstanceOf[DerivationResult[Expr[ctx.Target]]]
+  }
 }

@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal
 
+// TODO: move to compiletime once all rules are migrated and old macros removed
 sealed trait TransformerDerivationError extends Product with Serializable {
   def sourceTypeName: String
   def targetTypeName: String
@@ -49,7 +50,6 @@ final case class NotSupportedTransformerDerivation(fieldName: String, sourceType
 
 object TransformerDerivationError {
   def printErrors(errors: Seq[TransformerDerivationError]): String = {
-
     errors
       .groupBy(e => (e.targetTypeName, e.sourceTypeName))
       .map { case ((targetTypeName, sourceTypeName), errs) =>
