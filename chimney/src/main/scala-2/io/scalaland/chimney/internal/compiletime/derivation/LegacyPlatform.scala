@@ -5,7 +5,9 @@ import io.scalaland.chimney.internal.compiletime.{
   ConfigurationsPlatform,
   Contexts,
   DefinitionsPlatform,
-  DerivationError
+  DerivationError,
+  DerivationErrors,
+  DerivationResult
 }
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 

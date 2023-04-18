@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation
 
-import io.scalaland.chimney.internal.compiletime.Definitions
+import io.scalaland.chimney.internal.compiletime.{Definitions, DerivationResult}
 import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
 
 import scala.annotation.nowarn

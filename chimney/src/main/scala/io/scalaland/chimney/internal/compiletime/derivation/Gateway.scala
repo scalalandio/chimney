@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation
 
 import io.scalaland.chimney.{PartialTransformer, Transformer}
 import io.scalaland.chimney.internal
-import io.scalaland.chimney.internal.compiletime.Definitions
+import io.scalaland.chimney.internal.compiletime.{Definitions, DerivationResult}
 
 import scala.annotation.nowarn
 

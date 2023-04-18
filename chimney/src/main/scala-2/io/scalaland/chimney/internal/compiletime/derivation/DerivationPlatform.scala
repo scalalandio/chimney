@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation
 
 import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
-import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
+import io.scalaland.chimney.internal.compiletime.{DefinitionsPlatform, DerivationResult}
 
 private[derivation] trait DerivationPlatform extends Derivation with Legacy { this: DefinitionsPlatform =>
 

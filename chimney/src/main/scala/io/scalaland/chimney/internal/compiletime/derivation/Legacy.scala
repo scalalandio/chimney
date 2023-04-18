@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation
 
-import io.scalaland.chimney.internal.compiletime.{Configurations, Contexts, Definitions}
+import io.scalaland.chimney.internal.compiletime.{Configurations, Contexts, Definitions, DerivationResult}
 
 // this is a temporary workaround
 private[compiletime] trait Legacy { this: Definitions & Configurations & Contexts =>
