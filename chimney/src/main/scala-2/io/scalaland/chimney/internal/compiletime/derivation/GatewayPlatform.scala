@@ -10,7 +10,7 @@ private[compiletime] trait GatewayPlatform extends Gateway {
 
   import c.universe.{internal as _, Transformer as _, *}
 
-  implicit private def typeFromWeak[T: WeakTypeTag]: Type[T] = typeImpl.fromWeak
+  import typeUtils.fromWeakConversion.*
 
   def deriveTotalTransformerImpl[
       From: WeakTypeTag,

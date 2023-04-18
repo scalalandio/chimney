@@ -9,8 +9,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
 
   protected object configurationsImpl extends ConfigurationDefinitionsImpl {
 
-    // convert WeakTypeTag[T] to Type[T] automatically
-    implicit private def fromWeak[T: WeakTypeTag]: Type[T] = typeImpl.fromWeak[T]
+    import typeUtils.fromWeakConversion.*
 
     def extractRuntimeConfiguration[From: Type, ToField: Type](
         runtimeConfiguration: FieldOverride.RuntimeConfiguration,
@@ -50,20 +49,20 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
     ): TransformerFlags = {
       val flags = Type[Flag].dealias
 
-      if (flags =:= Type.TransformerFlags.Default) {
+      if (flags =:= ChimneyType.TransformerFlags.Default) {
         defaultFlags
       } else if (flags.typeConstructor =:= enableTC) {
         val List(h, t) = flags.typeArgs
-        implicit val Flag: Type[FlagHead] = typeImpl.fromUntyped(h)
-        implicit val Tail: Type[FlagTail] = typeImpl.fromUntyped(t)
+        implicit val Flag: Type[FlagHead] = typeUtils.fromUntyped(h)
+        implicit val Tail: Type[FlagTail] = typeUtils.fromUntyped(t)
 
         if (Flag.typeConstructor =:= implicitConflictResolutionTC) {
           val preference = Flag.typeArgs.head
-          if (preference =:= Type.PreferTotalTransformer) {
+          if (preference =:= ChimneyType.PreferTotalTransformer) {
             extractTransformerFlags[FlagTail](defaultFlags).setImplicitConflictResolution(
               Some(dsls.PreferTotalTransformer)
             )
-          } else if (preference =:= Type.PreferPartialTransformer) {
+          } else if (preference =:= ChimneyType.PreferPartialTransformer) {
             extractTransformerFlags[FlagTail](defaultFlags).setImplicitConflictResolution(
               Some(dsls.PreferPartialTransformer)
             )
@@ -77,8 +76,8 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
         }
       } else if (flags.typeConstructor =:= disableTC) {
         val List(h, t) = flags.typeArgs
-        implicit val Flag: Type[FlagHead] = typeImpl.fromUntyped(h)
-        implicit val Tail: Type[FlagTail] = typeImpl.fromUntyped(t)
+        implicit val Flag: Type[FlagHead] = typeUtils.fromUntyped(h)
+        implicit val Tail: Type[FlagTail] = typeUtils.fromUntyped(t)
 
         if (flags.typeConstructor =:= implicitConflictResolutionTC) {
           extractTransformerFlags[FlagTail](defaultFlags).setImplicitConflictResolution(None)

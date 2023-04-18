@@ -9,6 +9,8 @@ import scala.quoted
 private[compiletime] trait DefinitionsPlatform(using val quotes: quoted.Quotes)
     extends Definitions
     with TypesPlatform
+    with ChimneyTypesPlatform
     with ExprsPlatform
+    with ChimneyExprsPlatform
     with ConfigurationsPlatform
     with ResultsPlatform

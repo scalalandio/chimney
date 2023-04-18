@@ -20,15 +20,15 @@ private[compiletime] trait Configurations { this: Definitions =>
   ) {
 
     def setBoolFlag[Flag <: internal.TransformerFlags.Flag: Type](value: Boolean): TransformerFlags =
-      if (Type[Flag] =:= Type.TransformerFlags.Flags.DefaultValues) {
+      if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.DefaultValues) {
         copy(processDefaultValues = value)
-      } else if (Type[Flag] =:= Type.TransformerFlags.Flags.BeanSetters) {
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.BeanSetters) {
         copy(beanSetters = value)
-      } else if (Type[Flag] =:= Type.TransformerFlags.Flags.BeanGetters) {
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.BeanGetters) {
         copy(beanGetters = value)
-      } else if (Type[Flag] =:= Type.TransformerFlags.Flags.MethodAccessors) {
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.MethodAccessors) {
         copy(methodAccessors = value)
-      } else if (Type[Flag] =:= Type.TransformerFlags.Flags.OptionDefaultsToNone) {
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.OptionDefaultsToNone) {
         copy(optionDefaultsToNone = value)
       } else {
         // $COVERAGE-OFF$

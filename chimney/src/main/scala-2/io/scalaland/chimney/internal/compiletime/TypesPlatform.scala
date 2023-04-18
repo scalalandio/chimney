@@ -1,19 +1,14 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.dsl as dsls
-import io.scalaland.chimney.internal
-import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
-
 private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatform =>
 
-  import DefinitionsPlatform.*
   import c.universe.{internal as _, Transformer as _, *}
 
   protected type Tagged[U] = { type Tag = U }
   protected type @@[T, U] = T & Tagged[U]
 
   final override protected type Type[T] = c.Type @@ T
-  protected object typeImpl extends TypeDefinitionsImpl {
+  protected object typeUtils {
     def fromUntyped[T](untyped: c.Type): Type[T] = untyped.asInstanceOf[Type[T]]
     def fromWeak[T: WeakTypeTag]: Type[T] = fromUntyped(weakTypeOf[T])
     def fromWeakTC[Unswapped: WeakTypeTag, T](args: c.Type*): Type[T] = fromUntyped {
@@ -28,54 +23,27 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       ee.finalResultType.substituteTypes(ee.typeParams, args.toList)
     }
 
-    override val Any: Type[Any] = fromWeak[Any]
-    override val Int: Type[Int] = fromWeak[Int]
-    override val Unit: Type[Unit] = fromWeak[Unit]
+    object fromWeakConversion {
+      // convert WeakTypeTag[T] to Type[T] automatically
+      implicit def typeFromWeak[T: WeakTypeTag]: Type[T] = typeUtils.fromWeak
+    }
+  }
 
-    override def Function1[From: Type, To: Type]: Type[From => To] =
-      fromWeakTC[Any => Any, From => To](Type[From], Type[To])
-    override def Array[T: Type]: Type[Array[T]] = fromWeakTC[Array[Arbitrary], Array[T]](Type[T])
-    override def Option[T: Type]: Type[Option[T]] = fromWeakTC[Option[Arbitrary], Option[T]](Type[T])
-    override def Either[L: Type, R: Type]: Type[Either[L, R]] =
-      fromWeakTC[Either[Arbitrary, Arbitrary2], Either[L, R]](Type[L], Type[R])
+  object Type extends TypeModule {
+    import typeUtils.*
+    val Any: Type[Any] = fromWeak[Any]
+    val Int: Type[Int] = fromWeak[Int]
+    val Unit: Type[Unit] = fromWeak[Unit]
 
-    override def Transformer[From: Type, To: Type]: Type[Transformer[From, To]] =
-      fromWeakTC[Transformer[Arbitrary, Arbitrary2], Transformer[From, To]](Type[From], Type[To])
-    override def PartialTransformer[From: Type, To: Type]: Type[PartialTransformer[From, To]] =
-      fromWeakTC[PartialTransformer[Arbitrary, Arbitrary2], PartialTransformer[From, To]](Type[From], Type[To])
-    override def Patcher[T: Type, Patch: Type]: Type[Patcher[T, Patch]] =
-      fromWeakTC[Patcher[Arbitrary, Arbitrary2], Patcher[T, Patch]](Type[T], Type[Patch])
+    def Function1[From: Type, To: Type]: Type[From => To] = fromWeakTC[? => ?, From => To](Type[From], Type[To])
 
-    override def PartialResult[T: Type]: Type[partial.Result[T]] =
-      fromWeakTC[partial.Result[Arbitrary], partial.Result[T]](Type[T])
-    override def PartialResultValue[T: Type]: Type[partial.Result.Value[T]] =
-      fromWeakTC[partial.Result.Value[Arbitrary], partial.Result.Value[T]](Type[T])
-    override def PartialResultErrors: Type[partial.Result.Errors] =
-      fromWeak[partial.Result.Errors]
+    object Array extends ArrayModule {
+      def apply[T: Type]: Type[Array[T]] = fromWeakTC[Array[?], Array[T]](Type[T])
+    }
 
-    override def PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type] =
-      fromWeak[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
-    override def PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
-      fromWeak[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
+    def Option[T: Type]: Type[Option[T]] = fromWeakTC[Option[?], Option[T]](Type[T])
 
-    override def TransformerFlagsDefault: Type[internal.TransformerFlags.Default] =
-      fromWeak[internal.TransformerFlags.Default]
-    // def TransformerFlagsEnable[]: Type[internal.TransformerFlags.Default]
-    override def TransformerFlagsDefaultValues: Type[internal.TransformerFlags.DefaultValues] =
-      fromWeak[internal.TransformerFlags.DefaultValues]
-    override def TransformerFlagsBeanGetters: Type[internal.TransformerFlags.BeanGetters] =
-      fromWeak[internal.TransformerFlags.BeanGetters]
-    override def TransformerFlagsBeanSetters: Type[internal.TransformerFlags.BeanSetters] =
-      fromWeak[internal.TransformerFlags.BeanSetters]
-    override def TransformerFlagsMethodAccessors: Type[internal.TransformerFlags.MethodAccessors] =
-      fromWeak[internal.TransformerFlags.MethodAccessors]
-    override def TransformerFlagsOptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone] =
-      fromWeak[internal.TransformerFlags.OptionDefaultsToNone]
-    override def TransformerFlagsImplicitConflictResolution[R <: dsls.ImplicitTransformerPreference: Type]
-        : Type[internal.TransformerFlags.ImplicitConflictResolution[R]] = fromWeakTC[
-      internal.TransformerFlags.ImplicitConflictResolution[io.scalaland.chimney.dsl.PreferTotalTransformer.type],
-      internal.TransformerFlags.ImplicitConflictResolution[R],
-    ](Type[R])
+    def Either[L: Type, R: Type]: Type[Either[L, R]] = fromWeakTC[Either[?, ?], Either[L, R]](Type[L], Type[R])
 
     def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean = S.<:<(T)
     def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean = S.=:=(T)
