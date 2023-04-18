@@ -65,28 +65,5 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
 
       }
     }
-
   }
-//    override def TransformerFlagsDefault: Type[internal.TransformerFlags.Default] =
-//      quoted.Type.of[internal.TransformerFlags.Default]
-//    // def TransformerFlagsEnable[]: Type[internal.TransformerFlags.Default]
-//    override def TransformerFlagsDefaultValues: Type[internal.TransformerFlags.DefaultValues] =
-//      quoted.Type.of[internal.TransformerFlags.DefaultValues]
-//    override def TransformerFlagsBeanGetters: Type[internal.TransformerFlags.BeanGetters] =
-//      quoted.Type.of[internal.TransformerFlags.BeanGetters]
-//    override def TransformerFlagsBeanSetters: Type[internal.TransformerFlags.BeanSetters] =
-//      quoted.Type.of[internal.TransformerFlags.BeanSetters]
-//    override def TransformerFlagsMethodAccessors: Type[internal.TransformerFlags.MethodAccessors] =
-//      quoted.Type.of[internal.TransformerFlags.MethodAccessors]
-//    override def TransformerFlagsOptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone] =
-//      quoted.Type.of[internal.TransformerFlags.OptionDefaultsToNone]
-//    override def TransformerFlagsImplicitConflictResolution[R <: dsls.ImplicitTransformerPreference: Type]
-//        : Type[internal.TransformerFlags.ImplicitConflictResolution[R]] = fromTC[
-//      [R0 <: dsls.ImplicitTransformerPreference] =>> internal.TransformerFlags.ImplicitConflictResolution[R0],
-//      internal.TransformerFlags.ImplicitConflictResolution[R],
-//    ](Type[R])
-//
-//    def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean = S.<:<(T)
-//    def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean = S.=:=(T)
-//  }
 }
