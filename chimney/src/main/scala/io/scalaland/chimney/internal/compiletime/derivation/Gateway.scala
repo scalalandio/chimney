@@ -54,22 +54,24 @@ private[compiletime] trait Gateway { this: Definitions & Derivation & Legacy =>
       ctx: TransformerContext[From, To]
   ): DerivationResult[Expr[ctx.Target]] = {
     // pattern match on DerivedExpr and convert to whatever is needed
-    deriveTransformationResultExpr[From, To].flatMap {
-      case DerivedExpr.TotalExpr(expr) =>
-        ctx match {
-          case TransformerContext.ForTotal(_, _, _, _) => DerivationResult.pure(expr)
-          case TransformerContext.ForPartial(_, _, _, _, _) =>
-            DerivationResult.pure(ChimneyExpr.PartialResult.Value(expr))
-        }
-      case DerivedExpr.PartialExpr(expr) =>
-        ctx match {
-          case TransformerContext.ForTotal(_, _, _, _) =>
-            DerivationResult.fromException(
-              new AssertionError("Derived partial.Result expression where total Transformer excepts direct value")
-            )
-          case TransformerContext.ForPartial(_, _, _, _, _) => DerivationResult.pure(expr)
-        }
-    }
-    DerivationResult.notYetImplemented("Actual derivation")
+    deriveTransformationResultExpr[From, To]
+      .flatMap {
+        case DerivedExpr.TotalExpr(expr) =>
+          ctx match {
+            case TransformerContext.ForTotal(_, _, _, _) => DerivationResult.pure(expr)
+            case TransformerContext.ForPartial(_, _, _, _, _) =>
+              DerivationResult.pure(ChimneyExpr.PartialResult.Value(expr))
+          }
+        case DerivedExpr.PartialExpr(expr) =>
+          ctx match {
+            case TransformerContext.ForTotal(_, _, _, _) =>
+              DerivationResult.fromException(
+                new AssertionError("Derived partial.Result expression where total Transformer excepts direct value")
+              )
+            case TransformerContext.ForPartial(_, _, _, _, _) =>
+              DerivationResult.pure(expr)
+          }
+      }
+      .asInstanceOf[DerivationResult[Expr[ctx.Target]]]
   }
 }
