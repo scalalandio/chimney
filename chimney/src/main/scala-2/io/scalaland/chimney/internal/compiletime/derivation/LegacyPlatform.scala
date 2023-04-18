@@ -1,7 +1,12 @@
 package io.scalaland.chimney.internal.compiletime.derivation
 
 import io.scalaland.chimney.internal.TransformerDerivationError
-import io.scalaland.chimney.internal.compiletime.{ConfigurationsPlatform, Contexts, DefinitionsPlatform}
+import io.scalaland.chimney.internal.compiletime.{
+  ConfigurationsPlatform,
+  Contexts,
+  DefinitionsPlatform,
+  DerivationError
+}
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 
 private[compiletime] trait LegacyPlatform extends Legacy {
@@ -24,7 +29,12 @@ private[compiletime] trait LegacyPlatform extends Legacy {
         derivedTree: Either[Seq[TransformerDerivationError], oldMacros.DerivedTree]
     )(implicit ctx: TransformerContext[From, To]): DerivationResult[DerivedExpr[To]] = derivedTree match {
       case Left(oldErrors) =>
-        DerivationResult.fail(DerivationErrors(oldErrors.head, oldErrors.tail.toSeq*))
+        DerivationResult.fail(
+          DerivationErrors(
+            DerivationError.TransformerError(oldErrors.head),
+            oldErrors.tail.map(DerivationError.TransformerError).toSeq*
+          )
+        )
       case Right(oldMacros.DerivedTree(tree, _: oldMacros.DerivationTarget.TotalTransformer.type)) =>
         DerivationResult.pure(DerivedExpr.TotalExpr(c.Expr[To](tree.asInstanceOf[c.Tree])(c.WeakTypeTag(Type[To]))))
       case Right(oldMacros.DerivedTree(tree, _: oldMacros.DerivationTarget.PartialTransformer)) =>
