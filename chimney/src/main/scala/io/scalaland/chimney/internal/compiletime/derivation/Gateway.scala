@@ -14,7 +14,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation & Legacy =>
       config: TransformerConfig[From, To]
   ): DerivationResult[Expr[Transformer[From, To]]] =
     instantiateTotalTransformer[From, To] { (src: Expr[From]) =>
-      deriveTransformerTargetExpr(TransformerContext.ForTotal.create[From, To](src = src, config))
+      deriveTransformerTargetExpr(TransformerContext.ForTotal.create[From, To](src, config))
     }
 
   /** Intended for: being called from platform-specific code which returns Expr directly to splicing site */
@@ -34,9 +34,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation & Legacy =>
       config: TransformerConfig[From, To]
   ): DerivationResult[Expr[PartialTransformer[From, To]]] =
     instantiatePartialTransformer[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
-      deriveTransformerTargetExpr(
-        TransformerContext.ForPartial.create[From, To](src = src, failFast = failFast, config)
-      )
+      deriveTransformerTargetExpr(TransformerContext.ForPartial.create[From, To](src, failFast, config))
     }
 
   /** Intended for: being called from platform-specific code which returns Expr directly to splicing site */
