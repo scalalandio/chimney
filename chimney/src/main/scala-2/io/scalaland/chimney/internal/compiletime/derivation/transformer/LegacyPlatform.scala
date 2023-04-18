@@ -1,14 +1,7 @@
-package io.scalaland.chimney.internal.compiletime.derivation
+package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.TransformerDerivationError
-import io.scalaland.chimney.internal.compiletime.{
-  ConfigurationsPlatform,
-  Contexts,
-  DefinitionsPlatform,
-  DerivationError,
-  DerivationErrors,
-  DerivationResult
-}
+import io.scalaland.chimney.internal.compiletime.*
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 
 private[compiletime] trait LegacyPlatform extends Legacy {
