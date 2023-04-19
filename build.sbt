@@ -15,7 +15,7 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Which version should be used in IntelliJ
-  val ideScala = scala213
+  val ideScala = scala3
   val idePlatform = VirtualAxis.jvm
 }
 
@@ -41,8 +41,9 @@ val settings = Seq(
         Seq(
           "-explain",
           "-rewrite",
-          "-source",
-          "3.2-migration",
+          // format: off
+          "-source", "3.2-migration",
+          // format: on
           "-Ykind-projector:underscores"
         )
       case Some((2, 13)) =>

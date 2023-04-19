@@ -3,10 +3,10 @@
 //
 // Protofile syntax: PROTO3
 
-package io.scalaland.chimney.examples.pb.addressbook
+package io.scalaland.chimney.fixtures.pb.addressbook
 
 @SerialVersionUID(0L)
 final case class AddressBook(
-    people: _root_.scala.collection.Seq[io.scalaland.chimney.examples.pb.addressbook.Person] =
+    people: _root_.scala.collection.Seq[io.scalaland.chimney.fixtures.pb.addressbook.Person] =
       _root_.scala.collection.Seq.empty
 )

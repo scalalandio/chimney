@@ -2,14 +2,6 @@ package io.scalaland.chimney.internal
 
 import scala.reflect.macros.blackbox
 
-sealed abstract class PatcherCfg
-
-object PatcherCfg {
-  final class Empty extends PatcherCfg
-  final class IgnoreRedundantPatcherFields[C <: PatcherCfg] extends PatcherCfg
-  final class IgnoreNoneInPatch[C <: PatcherCfg] extends PatcherCfg
-}
-
 trait PatcherConfiguration {
 
   val c: blackbox.Context

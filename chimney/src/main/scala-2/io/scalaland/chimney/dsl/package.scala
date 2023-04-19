@@ -142,28 +142,6 @@ package object dsl {
       */
     final def patchUsing[P](patch: P)(implicit patcher: Patcher[T, P]): T =
       patcher.patch(obj, patch)
-
-    /** Performs in-place patching of wrapped object with provided value.
-      *
-      * If you want to customize patching behavior, consider using
-      * [[io.scalaland.chimney.dsl.PatcherOps#using using]] method.
-      *
-      * @deprecated use [[io.scalaland.chimney.dsl.PatcherOps#patchUsing patchUsing]] instead
-      * @see [[io.scalaland.chimney.Patcher#derive]] for default implicit instance
-      *
-      * @tparam P type of patch object
-      * @param patch patch object value
-      * @param patcher implicit instance of [[io.scalaland.chimney.Patcher]] type class
-      * @return patched value
-      *
-      * @since 0.1.3
-      */
-    @deprecated("please use .patchUsing", "0.4.0")
-    final def patchWith[P](patch: P)(implicit patcher: Patcher[T, P]): T = {
-      // $COVERAGE-OFF$
-      obj.patchUsing(patch)
-      // $COVERAGE-ON$
-    }
   }
 
   /** Lifts [[scala.Option]] into [[io.scalaland.chimney.partial.Result]].

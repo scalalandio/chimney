@@ -10,16 +10,16 @@ import scala.language.experimental.macros
   *
   * @tparam From  type of input value
   * @tparam To    type of output value
-  * @tparam C     type-level encoded config
+  * @tparam Cfg   type-level encoded config
   * @tparam Flags type-level encoded flags
   *
   * @since 0.7.0
   */
-final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <: TransformerFlags](
+final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
-) extends FlagsDsl[Lambda[`F1 <: TransformerFlags` => PartialTransformerDefinition[From, To, C, F1]], Flags]
+) extends FlagsDsl[Lambda[`Flags1 <: TransformerFlags` => PartialTransformerDefinition[From, To, Cfg, Flags1]], Flags]
     with TransformerDefinitionCommons[
-      Lambda[`C1 <: TransformerCfg` => PartialTransformerDefinition[From, To, C1, Flags]],
+      Lambda[`Cfg1 <: TransformerCfg` => PartialTransformerDefinition[From, To, Cfg1, Flags]],
     ] {
 
   /** Use provided `value` for field picked using `selector`.
@@ -38,7 +38,7 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
   def withFieldConst[T, U](selector: To => T, value: U)(implicit
       ev: U <:< T
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withFieldConstImpl[C]
+    macro PartialTransformerDefinitionWhiteboxMacros.withFieldConstImpl[Cfg]
 
   /** Use provided partial result `value` for field picked using `selector`.
     *
@@ -56,7 +56,7 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
   def withFieldConstPartial[T, U](selector: To => T, value: partial.Result[U])(implicit
       ev: U <:< T
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withFieldConstPartialImpl[C]
+    macro PartialTransformerDefinitionWhiteboxMacros.withFieldConstPartialImpl[Cfg]
 
   /** Use function `f` to compute value of field picked using `selector`.
     *
@@ -74,7 +74,7 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
   def withFieldComputed[T, U](selector: To => T, f: From => U)(implicit
       ev: U <:< T
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withFieldComputedImpl[C]
+    macro PartialTransformerDefinitionWhiteboxMacros.withFieldComputedImpl[Cfg]
 
   /** Use function `f` to compute partial result for field picked using `selector`.
     *
@@ -93,7 +93,7 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
       selector: To => T,
       f: From => partial.Result[U]
   )(implicit ev: U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withFieldComputedPartialImpl[C]
+    macro PartialTransformerDefinitionWhiteboxMacros.withFieldComputedPartialImpl[Cfg]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
     *
@@ -112,7 +112,7 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
       selectorFrom: From => T,
       selectorTo: To => U
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withFieldRenamedImpl[C]
+    macro PartialTransformerDefinitionWhiteboxMacros.withFieldRenamedImpl[Cfg]
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
     *
@@ -130,7 +130,7 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
     * @since 0.7.0
     */
   def withCoproductInstance[Inst](f: Inst => To): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[To, Inst, C]
+    macro PartialTransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[To, Inst, Cfg]
 
   /** Use `f` to calculate the (missing) coproduct instance partial result when mapping one coproduct into another.
     *
@@ -150,7 +150,7 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
   def withCoproductInstancePartial[Inst](
       f: Inst => partial.Result[To]
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withCoproductInstancePartialImpl[To, Inst, C]
+    macro PartialTransformerDefinitionWhiteboxMacros.withCoproductInstancePartialImpl[To, Inst, Cfg]
 
   /** Build Partial Transformer using current configuration.
     *
@@ -164,7 +164,7 @@ final class PartialTransformerDefinition[From, To, C <: TransformerCfg, Flags <:
   def buildTransformer[ScopeFlags <: TransformerFlags](implicit
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
   ): PartialTransformer[From, To] =
-    macro TransformerBlackboxMacros.buildPartialTransformerImpl[From, To, C, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.buildPartialTransformerImpl[From, To, Cfg, Flags, ScopeFlags]
 
   override protected def __updateRuntimeData(newRuntimeData: TransformerDefinitionCommons.RuntimeDataStore): this.type =
     new PartialTransformerDefinition(newRuntimeData).asInstanceOf[this.type]

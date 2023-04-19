@@ -3,7 +3,7 @@
 //
 // Protofile syntax: PROTO3
 
-package io.scalaland.chimney.examples.pb.addressbook
+package io.scalaland.chimney.fixtures.pb.addressbook
 
 sealed trait PhoneType {
   type EnumType = PhoneType
