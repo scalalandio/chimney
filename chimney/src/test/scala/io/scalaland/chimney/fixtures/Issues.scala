@@ -157,3 +157,10 @@ object Issue228 {
     case class Value1(v: Int) extends Target
   }
 }
+
+object Issue291 {
+  final class GenericValueClass[T](val value: T) extends AnyVal
+
+  case class Bar(address: GenericValueClass[String])
+  case class Foo(address: Option[GenericValueClass[String]])
+}

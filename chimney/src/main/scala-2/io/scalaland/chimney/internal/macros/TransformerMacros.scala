@@ -159,7 +159,6 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       .orElse(expandOptions(config)(From, To))
       .orElse(expandPartialFromOptionToNonOption(config)(From, To))
       .orElse(expandTargetWrappedInOption(config)(From, To))
-      .orElse(expandSourceWrappedInOption(config)(From, To))
       .orElse(expandValueClassToValueClass(config)(From, To))
       .orElse(expandValueClassToType(config)(From, To))
       .orElse(expandTypeToValueClass(config)(From, To))
