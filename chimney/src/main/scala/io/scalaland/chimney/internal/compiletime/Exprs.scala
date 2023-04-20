@@ -28,6 +28,8 @@ private[compiletime] trait Exprs { this: Definitions =>
     }
 
     def asInstanceOf[T: Type, U: Type](expr: Expr[T]): Expr[U]
+
+    def prettyPrint[T: Type](expr: Expr[T]): String
   }
 
   implicit class ExprOps[T: Type](private val expr: Expr[T]) {

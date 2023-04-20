@@ -47,6 +47,8 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean = S.<:<(T)
     def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean = S.=:=(T)
+
+    def prettyPrint[T: Type]: String = Type[T].toString
   }
 
   implicit class UntypedTypeOps(private val tpe: c.Type) {

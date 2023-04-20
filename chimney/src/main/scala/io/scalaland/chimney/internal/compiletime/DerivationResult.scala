@@ -1,7 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.internal.TransformerDerivationError
-import io.scalaland.chimney.internal.compiletime.DerivationError.TransformerError
 
 import scala.collection.compat.*
 import scala.util.control.NonFatal

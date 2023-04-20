@@ -39,9 +39,16 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     object Array extends ArrayModule {
       def apply[T: Type]: Type[Array[T]] = fromTC[Array[*], Array[T]](Type[T])
     }
+
     def Option[T: Type]: Type[Option[T]] = fromTC[Option[*], Option[T]](Type[T])
     def Either[L: Type, R: Type]: Type[Either[L, R]] = fromTC[Either[*, *], Either[L, R]](Type[L], Type[R])
+
     def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean = S.<:<(T)
     def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean = S.=:=(T)
+
+    def prettyPrint[T: Type]: String = {
+      val repr = TypeRepr.of[T]
+      scala.util.Try(repr.dealias.show(using Printer.TypeReprAnsiCode)).getOrElse(repr.toString)
+    }
   }
 }

@@ -26,6 +26,8 @@ private[compiletime] trait Types {
 
     def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean
     def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean
+
+    def prettyPrint[T: Type]: String
   }
 
   implicit class TypeOps[T](private val tpe: Type[T]) {
