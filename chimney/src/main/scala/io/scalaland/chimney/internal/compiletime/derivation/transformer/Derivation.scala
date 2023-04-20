@@ -6,7 +6,7 @@ import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
 import scala.annotation.nowarn
 
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-private[derivation] trait Derivation { this: Definitions & Legacy =>
+private[derivation] trait Derivation { this: Definitions =>
 
   /** Intended use case: recursive derivation */
   final protected def deriveTransformationResultExpr[From, To](implicit

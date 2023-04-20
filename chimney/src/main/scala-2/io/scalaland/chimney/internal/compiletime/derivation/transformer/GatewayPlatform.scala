@@ -6,7 +6,7 @@ import io.scalaland.chimney.{internal, PartialTransformer, Transformer}
 import scala.annotation.unused
 
 private[compiletime] trait GatewayPlatform extends Gateway {
-  this: DefinitionsPlatform & DerivationPlatform & LegacyPlatform =>
+  this: DefinitionsPlatform & DerivationPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
   import typeUtils.fromWeakConversion.*

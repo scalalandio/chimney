@@ -6,7 +6,7 @@ import io.scalaland.chimney.{internal, PartialTransformer, Transformer}
 import scala.annotation.nowarn
 
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-private[compiletime] trait Gateway { this: Definitions & Derivation & Legacy =>
+private[compiletime] trait Gateway { this: Definitions & Derivation =>
 
   /** Intended for: being called from *Unsafe method to return final Expr */
   final protected def deriveTotalTransformer[From: Type, To: Type](

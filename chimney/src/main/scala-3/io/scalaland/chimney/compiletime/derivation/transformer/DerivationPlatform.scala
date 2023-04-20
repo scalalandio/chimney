@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 import io.scalaland.chimney.internal.compiletime.{DefinitionsPlatform, DerivationResult}
 import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
 
-private[derivation] trait DerivationPlatform extends Derivation with Legacy { this: DefinitionsPlatform =>
+private[derivation] trait DerivationPlatform extends Derivation { this: DefinitionsPlatform =>
 
   override protected def instantiateTotalTransformer[From: Type, To: Type](
       f: Expr[From] => DerivationResult[Expr[To]]
