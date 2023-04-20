@@ -9,6 +9,10 @@ private[compiletime] trait Results { this: Definitions =>
       case (_, Left(derivationErrors)) => reportError(derivationErrors.prettyPrint)
     }
   }
+  implicit class DerivationResultModule(derivationResult: DerivationResult.type) {
+
+
+  }
 
   protected def reportError(errors: String): Nothing
 }

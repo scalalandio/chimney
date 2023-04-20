@@ -1,5 +1,8 @@
 package io.scalaland.chimney.internal.compiletime
 
+import io.scalaland.chimney.internal.TransformerDerivationError
+import io.scalaland.chimney.internal.compiletime.DerivationError.TransformerError
+
 import scala.collection.compat.*
 import scala.util.control.NonFatal
 
@@ -74,9 +77,7 @@ sealed private[compiletime] trait DerivationResult[+A] {
 
   // applicative operations with parallel semantics (both branches are evaluated and then their results aggregated)
 
-  final def parMap2[B, C](
-      result: DerivationResult[B]
-  )(f: (A, B) => C): DerivationResult[C] = transformWith { a =>
+  final def parMap2[B, C](result: DerivationResult[B])(f: (A, B) => C): DerivationResult[C] = transformWith { a =>
     result.map(b => f(a, b))
   } { errors =>
     result.transformWith(_ => fail(errors))(errors2 => fail(errors ++ errors2))
@@ -98,9 +99,7 @@ sealed private[compiletime] trait DerivationResult[+A] {
 
   final def log(msg: => String): DerivationResult[A] = updateState(_.log(msg))
 
-  final def namedScope[B](
-      scopeName: String
-  )(f: A => DerivationResult[B]): DerivationResult[B] = flatMap { a =>
+  final def namedScope[B](scopeName: String)(f: A => DerivationResult[B]): DerivationResult[B] = flatMap { a =>
     f(a).updateState(_.nestScope(scopeName))
   }
 
@@ -126,22 +125,20 @@ private[compiletime] object DerivationResult {
   }
 
   final private case class Success[A](value: A, state: State) extends DerivationResult[A]
-
   final private case class Failure(derivationErrors: DerivationErrors, state: State) extends DerivationResult[Nothing]
 
   def apply[A](thunk: => A): DerivationResult[A] = unit.map(_ => thunk)
-
   def pure[A](value: A): DerivationResult[A] = Success(value, State())
-
   def fail[A](error: DerivationErrors): DerivationResult[A] = Failure(error, State())
 
   val unit: DerivationResult[Unit] = pure(())
 
   def fromException[T](error: Throwable): DerivationResult[T] =
     fail(DerivationErrors(DerivationError.MacroException(error)))
-
   def notYetImplemented[T](what: String): DerivationResult[T] =
     fail(DerivationErrors(DerivationError.NotYetImplemented(what)))
+  def transformerError[T](transformerDerivationError: TransformerDerivationError): DerivationResult[T] =
+    fail(DerivationErrors(DerivationError.TransformerError(transformerDerivationError)))
 
   type FactoryOf[Coll[+_], O] = Factory[O, Coll[O]]
 
