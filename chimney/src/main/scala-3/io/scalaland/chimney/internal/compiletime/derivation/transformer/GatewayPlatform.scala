@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.compiletime.{DefinitionsPlatform, DerivationResult}
-import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
+import io.scalaland.chimney.{internal, partial, PartialTransformer, Transformer}
 
 private[derivation] trait GatewayPlatform extends Gateway { this: DefinitionsPlatform & DerivationPlatform =>
 

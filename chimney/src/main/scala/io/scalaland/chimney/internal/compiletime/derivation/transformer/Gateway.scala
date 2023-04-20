@@ -8,8 +8,22 @@ import scala.annotation.nowarn
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Gateway { this: Definitions & Derivation =>
 
-  /** Intended for: being called from platform-specific code which returns Expr directly to splicing site */
-  final protected def deriveTotalTransformerUnsafe[
+  // Intended for: being called from platform-specific code which returns Expr directly to splicing site
+
+  final def deriveTotalTransformationResult[
+      From: Type,
+      To: Type,
+      Cfg <: internal.TransformerCfg: Type,
+      InstanceFlags <: internal.TransformerFlags: Type,
+      SharedFlags <: internal.TransformerFlags: Type
+  ](src: Expr[From]): Expr[To] = deriveTransformationResult(
+    TransformerContext.ForTotal.create[From, To](
+      src,
+      configurationsImpl.readTransformerConfig[From, To, Cfg, InstanceFlags, SharedFlags]
+    )
+  ).unsafeGet._2
+
+  final def deriveTotalTransformer[
       From: Type,
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
@@ -17,16 +31,25 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       SharedFlags <: internal.TransformerFlags: Type
   ]: Expr[Transformer[From, To]] =
     instantiateTotalTransformer[From, To] { (src: Expr[From]) =>
-      deriveTransformerTargetExpr(
-        TransformerContext.ForTotal.create[From, To](
-          src,
-          configurationsImpl.readTransformerConfig[From, To, Cfg, InstanceFlags, SharedFlags]
-        )
-      ).unsafeGet._2
+      deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](src)
     }
 
-  /** Intended for: being called from platform-specific code which returns Expr directly to splicing site */
-  final protected def derivePartialTransformerUnsafe[
+  final def derivePartialTransformationResult[
+      From: Type,
+      To: Type,
+      Cfg <: internal.TransformerCfg: Type,
+      InstanceFlags <: internal.TransformerFlags: Type,
+      SharedFlags <: internal.TransformerFlags: Type
+  ](src: Expr[From], failFast: Expr[Boolean]): Expr[partial.Result[To]] =
+    deriveTransformationResult(
+      TransformerContext.ForPartial.create[From, To](
+        src,
+        failFast,
+        configurationsImpl.readTransformerConfig[From, To, Cfg, InstanceFlags, SharedFlags]
+      )
+    ).unsafeGet._2
+
+  final def derivePartialTransformer[
       From: Type,
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
@@ -34,17 +57,11 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       SharedFlags <: internal.TransformerFlags: Type
   ]: Expr[PartialTransformer[From, To]] =
     instantiatePartialTransformer[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
-      deriveTransformerTargetExpr(
-        TransformerContext.ForPartial.create[From, To](
-          src,
-          failFast,
-          configurationsImpl.readTransformerConfig[From, To, Cfg, InstanceFlags, SharedFlags]
-        )
-      ).unsafeGet._2
+      derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](src, failFast)
     }
 
   /** Adapts DerivedExpr[To] to expected type of transformation */
-  private def deriveTransformerTargetExpr[From, To](implicit
+  private def deriveTransformationResult[From, To](implicit
       ctx: TransformerContext[From, To]
   ): DerivationResult[Expr[ctx.Target]] =
     // pattern match on DerivedExpr and convert to whatever is needed

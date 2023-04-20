@@ -11,7 +11,18 @@ private[compiletime] trait GatewayPlatform extends Gateway {
   import c.universe.{internal as _, Transformer as _, *}
   import typeUtils.fromWeakConversion.*
 
-  // converts WeakTypeTags into our internal Types
+  // Intended to be called directly from macro splicing site; converts WeakTypeTags into our internal Types
+
+  final def deriveTotalTransformationResultImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: internal.TransformerCfg: WeakTypeTag,
+      InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
+      SharedFlags <: internal.TransformerFlags: WeakTypeTag
+  ](@unused tc: c.Tree): Expr[To] =
+    deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
+      c.Expr[From](q"${c.prefix}.source")
+    )
 
   final def deriveTotalTransformerImpl[
       From: WeakTypeTag,
@@ -20,7 +31,31 @@ private[compiletime] trait GatewayPlatform extends Gateway {
       InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
       SharedFlags <: internal.TransformerFlags: WeakTypeTag
   ](@unused tc: c.Tree): Expr[Transformer[From, To]] =
-    deriveTotalTransformerUnsafe[From, To, Cfg, InstanceFlags, SharedFlags]
+    deriveTotalTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
+
+  final def derivePartialTransformationResultFullImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: internal.TransformerCfg: WeakTypeTag,
+      InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
+      SharedFlags <: internal.TransformerFlags: WeakTypeTag
+  ](@unused tc: c.Tree): Expr[partial.Result[To]] =
+    derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
+      c.Expr[From](q"${c.prefix}.source"),
+      c.Expr[Boolean](q"false")
+    )
+
+  final def derivePartialTransformationResultFailFastImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: internal.TransformerCfg: WeakTypeTag,
+      InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
+      SharedFlags <: internal.TransformerFlags: WeakTypeTag
+  ](@unused tc: c.Tree): Expr[partial.Result[To]] =
+    derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
+      c.Expr[From](q"${c.prefix}.source"),
+      c.Expr[Boolean](q"true")
+    )
 
   final def derivePartialTransformerImpl[
       From: WeakTypeTag,
@@ -29,7 +64,7 @@ private[compiletime] trait GatewayPlatform extends Gateway {
       InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
       SharedFlags <: internal.TransformerFlags: WeakTypeTag
   ](@unused tc: c.Tree): Expr[PartialTransformer[From, To]] =
-    derivePartialTransformerUnsafe[From, To, Cfg, InstanceFlags, SharedFlags]
+    derivePartialTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
 
   override protected def instantiateTotalTransformer[From: Type, To: Type](
       toExpr: Expr[From] => Expr[To]

@@ -10,7 +10,7 @@ private[derivation] trait Derivation { this: Definitions =>
   /** Intended use case: recursive derivation */
   final protected def deriveTransformationResultExpr[From, To](implicit
       ctx: TransformerContext[From, To]
-  ): DerivationResult[DerivedExpr[To]] = Rule[From, To](rulesAvailableForPlatform)
+  ): DerivationResult[DerivedExpr[To]] = Rule[From, To](rulesAvailableForPlatform*)
 
   abstract protected class Rule {
 
@@ -21,7 +21,7 @@ private[derivation] trait Derivation { this: Definitions =>
   protected object Rule {
 
     def apply[From, To](
-        rules: Seq[Rule]
+        rules: Rule*
     )(implicit ctx: TransformerContext[From, To]): DerivationResult[DerivedExpr[To]] =
       rules.find(_.isApplicableTo(ctx)) match {
         case Some(rule) => rule[From, To]
