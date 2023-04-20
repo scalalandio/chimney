@@ -182,4 +182,28 @@ private[compiletime] object DerivationResult {
 
   def namedScope[A](name: String)(ra: => DerivationResult[A]): DerivationResult[A] =
     unit.namedScope(name)(_ => ra)
+
+  sealed trait Scoped {
+    private[compiletime] def returns[A](result: DerivationResult[A]): A
+  }
+  def direct[A](f: Scoped => A): DerivationResult[A] = {
+    case class Wrapper(errors: DerivationErrors, state: State) extends Throwable
+    var state0: State = null
+    val scoped = new Scoped {
+      override def returns[B](result: DerivationResult[B]): B = result match {
+        case Success(value, state) =>
+          state0 = state
+          value
+        case Failure(derivationErrors, state) =>
+          throw Wrapper(derivationErrors, state)
+      }
+    }
+
+    try {
+      val a = f(scoped)
+      Success(a, state0)
+    } catch {
+      case Wrapper(errors, scope) => Failure(errors, scope)
+    }
+  }
 }
