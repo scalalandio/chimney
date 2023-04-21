@@ -1,4 +1,4 @@
-package io.scalaland.chimney.compiletime.dsl
+package io.scalaland.chimney.internal.compiletime.dsl
 
 import scala.quoted.*
 
@@ -71,5 +71,4 @@ object FieldNameUtils {
   private def invalidSelectorErrorMessage[T](selectorExpr: Expr[T])(using Quotes): String = {
     s"Invalid selector expression: ${selectorExpr.show}"
   }
-
 }

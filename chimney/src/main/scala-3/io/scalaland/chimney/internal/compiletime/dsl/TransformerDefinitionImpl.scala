@@ -1,8 +1,8 @@
-package io.scalaland.chimney.compiletime.dsl
+package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.Transformer
-import io.scalaland.chimney.compiletime.dsl.FieldNameUtils
 import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.internal.compiletime.dsl.FieldNameUtils
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
 
 import scala.quoted.*
