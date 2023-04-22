@@ -78,5 +78,13 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
       def MapValue(key: Expr[Any]): Expr[partial.PathElement.MapValue] =
         '{ partial.PathElement.MapValue(${ key }) }
     }
+
+    object RuntimeDataStore extends RuntimeDataStoreModule {
+
+      def extractAt(
+          tdc: Expr[TransformerDefinitionCommons[*[? <: TransformerCfg]]],
+          index: Int
+      ): Expr[Any] = '{ ${ tdc }.runtimeData($(index)) }
+    }
   }
 }
