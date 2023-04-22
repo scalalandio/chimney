@@ -1,7 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
-import io.scalaland.chimney.internal.TransformerCfg
 import io.scalaland.chimney.partial
 
 private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: DefinitionsPlatform =>
@@ -83,9 +82,9 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
     object RuntimeDataStore extends RuntimeDataStoreModule {
 
       def extractAt(
-          tdc: Expr[TransformerDefinitionCommons[*[? <: TransformerCfg]]],
+          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
           index: Int
-      ): Expr[Any] = c.Expr(q"$tdc.runtimeData($index)")
+      ): Expr[Any] = c.Expr(q"$runtimeDataStore($index)")
     }
   }
 }

@@ -58,7 +58,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
 
     private def extractTransformerConfig[From: Type, To: Type, Cfg <: internal.TransformerCfg: Type](
         runtimeDataIdx: Int
-    ): TransformerConfig[From, To] =
-      ???
+    ): TransformerConfig[From, To] = ???
+//      TransformerConfig[From, To]()
   }
 }

@@ -1,7 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
-import io.scalaland.chimney.internal.TransformerCfg
 import io.scalaland.chimney.partial
 
 import scala.annotation.nowarn
@@ -73,7 +72,7 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
     trait RuntimeDataStoreModule { this: RuntimeDataStore.type =>
 
       def extractAt(
-          tdc: Expr[TransformerDefinitionCommons[*[? <: TransformerCfg]]],
+          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
           index: Int
       ): Expr[Any]
     }

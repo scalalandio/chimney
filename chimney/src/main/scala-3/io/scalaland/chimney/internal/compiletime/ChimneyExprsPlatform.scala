@@ -1,7 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.dsl as dsls
-import io.scalaland.chimney.internal
+import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
 
 import scala.collection.compat.Factory
@@ -82,9 +81,11 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
     object RuntimeDataStore extends RuntimeDataStoreModule {
 
       def extractAt(
-          tdc: Expr[TransformerDefinitionCommons[*[? <: TransformerCfg]]],
+          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
           index: Int
-      ): Expr[Any] = '{ ${ tdc }.runtimeData($(index)) }
+      ): Expr[Any] = {
+        '{ ${ runtimeDataStore }.apply(${ quoted.Expr(index) }) }
+      }
     }
   }
 }
