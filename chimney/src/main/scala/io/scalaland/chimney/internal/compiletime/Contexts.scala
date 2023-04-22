@@ -13,7 +13,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
     val To: Type[To]
     val src: Expr[From]
 
-    val config: TransformerConfig[From, To]
+    val config: TransformerConfig
 
     type Target
     val Target: Type[Target]
@@ -26,7 +26,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         From: Type[From],
         To: Type[To],
         src: Expr[From],
-        config: TransformerConfig[From, To]
+        config: TransformerConfig
     ) extends TransformerContext[From, To] {
 
       final type Target = To
@@ -36,7 +36,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
     }
     object ForTotal {
 
-      def create[From: Type, To: Type](src: Expr[From], config: TransformerConfig[From, To]): ForTotal[From, To] =
+      def create[From: Type, To: Type](src: Expr[From], config: TransformerConfig): ForTotal[From, To] =
         ForTotal(
           From = Type[From],
           To = Type[To],
@@ -50,7 +50,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         To: Type[To],
         src: Expr[From],
         failFast: Expr[Boolean],
-        config: TransformerConfig[From, To]
+        config: TransformerConfig
     ) extends TransformerContext[From, To] {
 
       final type Target = partial.Result[To]
@@ -63,7 +63,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       def create[From: Type, To: Type](
           src: Expr[From],
           failFast: Expr[Boolean],
-          config: TransformerConfig[From, To]
+          config: TransformerConfig
       ): ForPartial[From, To] = ForPartial(
         From = Type[From],
         To = Type[To],

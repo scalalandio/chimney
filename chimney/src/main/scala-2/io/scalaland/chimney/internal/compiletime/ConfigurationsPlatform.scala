@@ -9,31 +9,16 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
 
   protected object configurationsImpl extends ConfigurationDefinitionsImpl {
 
-    import typeUtils.fromWeakConversion.*
-
-    def extractRuntimeConfiguration[From: Type, ToField: Type](
-        runtimeConfiguration: FieldOverride.RuntimeConfiguration,
-        runtimeDataStore: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore]
-    ): FieldOverride.ValueSource[From, ToField] = ???
-
-    final def readTransformerConfigPlatform[
-        From: WeakTypeTag,
-        To: WeakTypeTag,
-        Cfg <: internal.TransformerCfg: WeakTypeTag,
-        InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
-        ScopeFlags <: internal.TransformerFlags: WeakTypeTag
-    ]: TransformerConfig[From, To] = readTransformerConfig[From, To, Cfg, InstanceFlags, ScopeFlags]
-
     final override def readTransformerConfig[
         From: Type,
         To: Type,
         Cfg <: internal.TransformerCfg: Type,
         InstanceFlags <: internal.TransformerFlags: Type,
         SharedFlags <: internal.TransformerFlags: Type
-    ]: TransformerConfig[From, To] = {
+    ]: TransformerConfig = {
       val sharedFlags = extractTransformerFlags[SharedFlags](TransformerFlags())
       val allFlags = extractTransformerFlags[InstanceFlags](sharedFlags)
-      extractTransformerConfig[From, To, Cfg](runtimeDataIdx = 0).copy[From, To](flags = allFlags)
+      extractTransformerConfig[From, To, Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
     }
 
     protected type FlagHead <: internal.TransformerFlags.Flag
@@ -106,7 +91,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
     // TODO: this coule be tailrec
     private def extractTransformerConfig[From: Type, To: Type, Cfg <: internal.TransformerCfg: Type](
         runtimeDataIdx: Int
-    ): TransformerConfig[From, To] = {
+    ): TransformerConfig = {
       /*
       val cfgTpe = Type[Cfg].dealias
 

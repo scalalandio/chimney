@@ -47,26 +47,26 @@ private[compiletime] trait DerivationWithLegacyMacros {
           optionDefaultsToNone = ctx.config.flags.optionDefaultsToNone,
           implicitConflictResolution = ctx.config.flags.implicitConflictResolution
         ),
-        fieldOverrides = ctx.config.legacy.fieldOverrideLegacy.map {
-          case (key, FieldOverride.RuntimeConfiguration.Const(valueOf)) =>
-            key -> oldMacros.FieldOverride.Const(valueOf)
-          case (key, FieldOverride.RuntimeConfiguration.Computed(valueOf)) =>
-            key -> oldMacros.FieldOverride.Computed(valueOf)
-          case (key, FieldOverride.RuntimeConfiguration.ConstPartial(valueOf)) =>
-            key -> oldMacros.FieldOverride.ConstPartial(valueOf)
-          case (key, FieldOverride.RuntimeConfiguration.ComputedPartial(valueOf)) =>
-            key -> oldMacros.FieldOverride.ComputedPartial(valueOf)
-          case (key, FieldOverride.RuntimeConfiguration.RenamedFrom(valueOf)) =>
-            key -> oldMacros.FieldOverride.RenamedFrom(valueOf)
+        fieldOverrides = ctx.config.fieldOverrides.map {
+          case (key, RuntimeFieldOverride.Const(idx)) =>
+            key -> oldMacros.FieldOverride.Const(idx)
+          case (key, RuntimeFieldOverride.Computed(idx)) =>
+            key -> oldMacros.FieldOverride.Computed(idx)
+          case (key, RuntimeFieldOverride.ConstPartial(idx)) =>
+            key -> oldMacros.FieldOverride.ConstPartial(idx)
+          case (key, RuntimeFieldOverride.ComputedPartial(idx)) =>
+            key -> oldMacros.FieldOverride.ComputedPartial(idx)
+          case (key, RuntimeFieldOverride.RenamedFrom(name)) =>
+            key -> oldMacros.FieldOverride.RenamedFrom(name)
         },
         coproductInstanceOverrides =
-          ctx.config.legacy.coproductInstanceOverridesLegacy.map { case ((type1, type2), int) =>
-            ((type1.Type.typeSymbol.asInstanceOf[oldMacros.c.Symbol], type2.Type.asInstanceOf[oldMacros.c.Type]), int)
+          ctx.config.coproductOverride.collect { case ((ct1, ct2), RuntimeCoproductOverride.CoproductInstance(idx)) =>
+            (ct1.Type.typeSymbol.asInstanceOf[oldMacros.c.Symbol], ct2.Type.asInstanceOf[oldMacros.c.Type]) -> idx
           },
-        coproductInstancesPartialOverrides =
-          ctx.config.legacy.coproductInstancesPartialOverridesLegacy.map { case ((type1, type2), int) =>
-            ((type1.Type.typeSymbol.asInstanceOf[oldMacros.c.Symbol], type2.Type.asInstanceOf[oldMacros.c.Type]), int)
-          },
+        coproductInstancesPartialOverrides = ctx.config.coproductOverride.collect {
+          case ((ct1, ct2), RuntimeCoproductOverride.CoproductInstancePartial(idx)) =>
+            (ct1.Type.typeSymbol.asInstanceOf[oldMacros.c.Symbol], ct2.Type.asInstanceOf[oldMacros.c.Type]) -> idx
+        },
         transformerDefinitionPrefix = ctx.config.legacy.transformerDefinitionPrefix.tree.asInstanceOf[oldMacros.c.Tree],
         definitionScope = ctx.config.legacy.definitionScope.asInstanceOf[Option[(oldMacros.c.Type, oldMacros.c.Type)]]
       )

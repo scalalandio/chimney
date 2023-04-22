@@ -10,18 +10,13 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
 
   protected object configurationsImpl extends ConfigurationDefinitionsImpl {
 
-    final override def extractRuntimeConfiguration[From: Type, ToField: Type](
-        runtimeConfiguration: FieldOverride.RuntimeConfiguration,
-        runtimeDataStore: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore]
-    ): FieldOverride.ValueSource[From, ToField] = ???
-
     final override def readTransformerConfig[
         From: Type,
         To: Type,
         Cfg <: internal.TransformerCfg: Type,
         InstanceFlags <: internal.TransformerFlags: Type,
         SharedFlags <: internal.TransformerFlags: Type
-    ]: TransformerConfig[From, To] = {
+    ]: TransformerConfig = {
       val sharedFlags = extractTransformerFlags[SharedFlags](TransformerFlags())
       val allFlags = extractTransformerFlags[InstanceFlags](sharedFlags)
       extractTransformerConfig[From, To, Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
@@ -58,7 +53,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
 
     private def extractTransformerConfig[From: Type, To: Type, Cfg <: internal.TransformerCfg: Type](
         runtimeDataIdx: Int
-    ): TransformerConfig[From, To] = ???
-//      TransformerConfig[From, To]()
+    ): TransformerConfig =
+      TransformerConfig()
   }
 }
