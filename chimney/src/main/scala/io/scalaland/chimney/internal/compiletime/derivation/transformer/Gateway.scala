@@ -21,7 +21,22 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       src,
       configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, SharedFlags]
     )
-  ).unsafeGet._2
+  ).toEither.fold(
+    derivationErrors => {
+      val lines = derivationErrors.prettyPrint
+
+      val richLines =
+        s"""Chimney can't derive transformation from ${Type[From]} to ${Type[To]}
+           |
+           |$lines
+           |Consult $chimneyDocUrl for usage examples.
+           |
+           |""".stripMargin
+
+      reportError(richLines)
+    },
+    identity
+  )
 
   final def deriveTotalTransformer[
       From: Type,
@@ -40,14 +55,14 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       Cfg <: internal.TransformerCfg: Type,
       InstanceFlags <: internal.TransformerFlags: Type,
       SharedFlags <: internal.TransformerFlags: Type
-  ](src: Expr[From], failFast: Expr[Boolean]): Expr[partial.Result[To]] =
-    deriveTransformationResult(
-      TransformerContext.ForPartial.create[From, To](
-        src,
-        failFast,
-        configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, SharedFlags]
-      )
-    ).unsafeGet._2
+  ](src: Expr[From], failFast: Expr[Boolean]): Expr[partial.Result[To]] = ???
+//    deriveTransformationResult(
+//      TransformerContext.ForPartial.create[From, To](
+//        src,
+//        failFast,
+//        configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, SharedFlags]
+//      )
+//    ).unsafeGet._2
 
   final def derivePartialTransformer[
       From: Type,
@@ -92,4 +107,6 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
   protected def instantiatePartialTransformer[From: Type, To: Type](
       toExpr: (Expr[From], Expr[Boolean]) => Expr[partial.Result[To]]
   ): Expr[PartialTransformer[From, To]]
+
+  private val chimneyDocUrl = "https://scalalandio.github.io/chimney"
 }

@@ -18,6 +18,8 @@ sealed private[compiletime] trait DerivationResult[+A] {
 
   import DerivationResult.*
 
+  def state: State
+
   private def updateState(update: State => State): DerivationResult[A] = this match {
     case Success(value, state)            => Success(value, update(state))
     case Failure(derivationErrors, state) => Failure(derivationErrors, update(state))
@@ -104,9 +106,9 @@ sealed private[compiletime] trait DerivationResult[+A] {
 
   // conversion
 
-  final def toEither: (State, Either[DerivationErrors, A]) = this match {
-    case Success(value, state)            => state -> Right(value)
-    case Failure(derivationErrors, state) => state -> Left(derivationErrors)
+  final def toEither: Either[DerivationErrors, A] = this match {
+    case Success(value, _)            => Right(value)
+    case Failure(derivationErrors, _) => Left(derivationErrors)
   }
 }
 private[compiletime] object DerivationResult {

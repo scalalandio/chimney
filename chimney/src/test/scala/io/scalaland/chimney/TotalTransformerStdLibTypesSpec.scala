@@ -11,6 +11,8 @@ object TotalTransformerStdLibTypesSpec extends TestSuite {
       case class Buzz(value: String)
       case class ConflictingFooBuzz(value: Unit)
 
+//      Buzz("a").transformInto[ConflictingFooBuzz]
+
       compileError("""Buzz("a").transformInto[ConflictingFooBuzz]""").check(
         "",
         "Chimney can't derive transformation from Buzz to ConflictingFooBuzz",
