@@ -100,8 +100,6 @@ private[compiletime] trait Configurations { this: Definitions =>
   protected trait ConfigurationDefinitionsImpl {
 
     def readTransformerConfig[
-        From: Type,
-        To: Type,
         Cfg <: internal.TransformerCfg: Type,
         InstanceFlags <: internal.TransformerFlags: Type,
         SharedFlags <: internal.TransformerFlags: Type

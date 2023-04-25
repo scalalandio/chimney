@@ -19,7 +19,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
   ](src: Expr[From]): Expr[To] = deriveTransformationResult(
     TransformerContext.ForTotal.create[From, To](
       src,
-      configurationsImpl.readTransformerConfig[From, To, Cfg, InstanceFlags, SharedFlags]
+      configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, SharedFlags]
     )
   ).unsafeGet._2
 
@@ -45,7 +45,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       TransformerContext.ForPartial.create[From, To](
         src,
         failFast,
-        configurationsImpl.readTransformerConfig[From, To, Cfg, InstanceFlags, SharedFlags]
+        configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, SharedFlags]
       )
     ).unsafeGet._2
 
