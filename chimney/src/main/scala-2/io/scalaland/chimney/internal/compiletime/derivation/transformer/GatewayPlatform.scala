@@ -5,7 +5,7 @@ import io.scalaland.chimney.{internal, partial, PartialTransformer, Transformer}
 
 import scala.annotation.unused
 
-private[compiletime] trait GatewayPlatform extends Gateway {
+trait GatewayPlatform extends Gateway {
   this: DefinitionsPlatform & DerivationPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
@@ -24,14 +24,14 @@ private[compiletime] trait GatewayPlatform extends Gateway {
       c.Expr[From](q"${c.prefix}.source")
     )
 
-  final def deriveTotalTransformerImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
-      Cfg <: internal.TransformerCfg: WeakTypeTag,
-      InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
-      SharedFlags <: internal.TransformerFlags: WeakTypeTag
-  ](@unused tc: c.Tree): Expr[Transformer[From, To]] =
-    deriveTotalTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
+//  final def deriveTotalTransformerImpl[
+//    From: WeakTypeTag,
+//    To: WeakTypeTag,
+//    Cfg <: internal.TransformerCfg : WeakTypeTag,
+//    InstanceFlags <: internal.TransformerFlags : WeakTypeTag,
+//    SharedFlags <: internal.TransformerFlags : WeakTypeTag
+//  ](@unused tc: c.Tree): Expr[Transformer[From, To]] =
+//    deriveTotalTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
 
   final def derivePartialTransformationResultFullImpl[
       From: WeakTypeTag,
@@ -73,7 +73,7 @@ private[compiletime] trait GatewayPlatform extends Gateway {
     val srcExpr: Expr[From] = c.Expr[From](q"${TermName(src)}")
     c.Expr[Transformer[From, To]](
       q"""new _root_.io.scalaland.chimney.Transformer[${Type[From]}, ${Type[To]}] {
-        def transform($src: ${Type[From]}): ${Type[To]} = {
+        def transform(${TermName(src)}: ${Type[From]}): ${Type[To]} = {
           ${toExpr(srcExpr)}
         }
       }"""
@@ -89,7 +89,10 @@ private[compiletime] trait GatewayPlatform extends Gateway {
     val failFastExpr: Expr[Boolean] = c.Expr[Boolean](q"${TermName(failFast)}")
     c.Expr[PartialTransformer[From, To]](
       q"""new _root_.io.scalaland.chimney.PartialTransformer[${Type[From]}, ${Type[To]}] {
-          def transform($src: ${Type[From]}, $failFast): _root_.io.scalaland.chimney.partial.Result[${Type[To]}] = {
+          def transform(
+            ${TermName(src)}: ${Type[From]},
+            ${TermName(failFast)}: ${Type[Boolean]}
+          ): _root_.io.scalaland.chimney.partial.Result[${Type[To]}] = {
             ${toExpr(srcExpr, failFastExpr)}
           }
         }"""

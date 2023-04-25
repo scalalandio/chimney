@@ -67,7 +67,10 @@ private[compiletime] trait DerivationWithLegacyMacros {
           case ((ct1, ct2), RuntimeCoproductOverride.CoproductInstancePartial(idx)) =>
             (ct1.Type.typeSymbol.asInstanceOf[oldMacros.c.Symbol], ct2.Type.asInstanceOf[oldMacros.c.Type]) -> idx
         },
-        transformerDefinitionPrefix = ctx.config.legacy.transformerDefinitionPrefix.tree.asInstanceOf[oldMacros.c.Tree],
+        transformerDefinitionPrefix = Option(ctx.config.legacy.transformerDefinitionPrefix)
+          .map(_.tree)
+          .getOrElse(oldMacros.c.universe.EmptyTree)
+          .asInstanceOf[oldMacros.c.Tree],
         definitionScope = ctx.config.legacy.definitionScope.asInstanceOf[Option[(oldMacros.c.Type, oldMacros.c.Type)]]
       )
     }

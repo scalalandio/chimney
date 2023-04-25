@@ -41,7 +41,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
           From = Type[From],
           To = Type[To],
           src = src,
-          config = config
+          config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
         )
     }
 
@@ -69,7 +69,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         To = Type[To],
         src = src,
         failFast = failFast,
-        config = config
+        config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
       )
     }
   }

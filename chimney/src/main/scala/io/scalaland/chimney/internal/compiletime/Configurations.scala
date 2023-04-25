@@ -82,6 +82,9 @@ private[compiletime] trait Configurations { this: Definitions =>
       copy(coproductOverrides = coproductOverrides + ((instanceType, targetType) -> coproductOverride))
     }
 
+    def withDefinitionScope(defScope: (ComputedType, ComputedType)): TransformerConfig = {
+      copy(preventResolutionForTypes = Some(defScope), legacy = legacy.copy(definitionScope = Some(defScope)))
+    }
   }
 
   object TransformerConfig {

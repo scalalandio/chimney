@@ -16,7 +16,7 @@ object Macro {
       InstanceFlags <: internal.TransformerFlags: Type,
       SharedFlags <: internal.TransformerFlags: Type
   ](src: Expr[From])(using quotes: Quotes): Expr[To] =
-    new Macro(quotes).deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](src)
+    new NewTransformerMacros(quotes).deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](src)
 
   final def deriveTotalTransformer[
       From: Type,
@@ -25,7 +25,7 @@ object Macro {
       InstanceFlags <: internal.TransformerFlags: Type,
       SharedFlags <: internal.TransformerFlags: Type
   ](using quotes: Quotes): Expr[Transformer[From, To]] =
-    new Macro(quotes).deriveTotalTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
+    new NewTransformerMacros(quotes).deriveTotalTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
 
   final def derivePartialTransformationFullResult[
       From: Type,
@@ -34,7 +34,10 @@ object Macro {
       InstanceFlags <: internal.TransformerFlags: Type,
       SharedFlags <: internal.TransformerFlags: Type
   ](src: Expr[From])(using quotes: Quotes): Expr[partial.Result[To]] =
-    new Macro(quotes).derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](src, '{ false })
+    new NewTransformerMacros(quotes).derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
+      src,
+      '{ false }
+    )
 
   final def derivePartialTransformationFailFastResult[
       From: Type,
@@ -43,7 +46,10 @@ object Macro {
       InstanceFlags <: internal.TransformerFlags: Type,
       SharedFlags <: internal.TransformerFlags: Type
   ](src: Expr[From])(using quotes: Quotes): Expr[partial.Result[To]] =
-    new Macro(quotes).derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](src, '{ true })
+    new NewTransformerMacros(quotes).derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
+      src,
+      '{ true }
+    )
 
   final def derivePartialTransformer[
       From: Type,
@@ -52,5 +58,5 @@ object Macro {
       InstanceFlags <: internal.TransformerFlags: Type,
       SharedFlags <: internal.TransformerFlags: Type
   ](using quotes: Quotes): Expr[PartialTransformer[From, To]] =
-    new Macro(quotes).derivePartialTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
+    new NewTransformerMacros(quotes).derivePartialTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
 }
