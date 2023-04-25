@@ -103,6 +103,6 @@ private[compiletime] trait Configurations { this: Definitions =>
         Cfg <: internal.TransformerCfg: Type,
         InstanceFlags <: internal.TransformerFlags: Type,
         SharedFlags <: internal.TransformerFlags: Type
-    ]: TransformerConfig = TransformerConfig()
+    ]: TransformerConfig
   }
 }

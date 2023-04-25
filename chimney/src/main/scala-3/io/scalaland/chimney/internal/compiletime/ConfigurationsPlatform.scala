@@ -11,15 +11,13 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
   protected object configurationsImpl extends ConfigurationDefinitionsImpl {
 
     final override def readTransformerConfig[
-        From: Type,
-        To: Type,
         Cfg <: internal.TransformerCfg: Type,
         InstanceFlags <: internal.TransformerFlags: Type,
         SharedFlags <: internal.TransformerFlags: Type
     ]: TransformerConfig = {
       val sharedFlags = extractTransformerFlags[SharedFlags](TransformerFlags())
       val allFlags = extractTransformerFlags[InstanceFlags](sharedFlags)
-      extractTransformerConfig[From, To, Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
+      extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
     }
 
     private def extractTransformerFlags[Flag <: internal.TransformerFlags: Type](
@@ -51,9 +49,52 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
       }
     }
 
-    private def extractTransformerConfig[From: Type, To: Type, Cfg <: internal.TransformerCfg: Type](
+    private def extractTransformerConfig[Cfg <: internal.TransformerCfg: Type](
         runtimeDataIdx: Int
-    ): TransformerConfig =
-      TransformerConfig()
+    ): TransformerConfig = {
+      val cfgTpe = TypeRepr.of[Cfg].dealias
+
+      cfgTpe.asType match {
+        case '[internal.TransformerCfg.Empty] =>
+          TransformerConfig()
+        case '[internal.TransformerCfg.FieldConst[fieldNameT, cfgTailT]] =>
+          extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
+            .addFieldOverride(Type[fieldNameT].asStringSingletonType, RuntimeFieldOverride.Const(runtimeDataIdx))
+        case '[internal.TransformerCfg.FieldComputed[fieldNameT, cfgTailT]] =>
+          extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
+            .addFieldOverride(Type[fieldNameT].asStringSingletonType, RuntimeFieldOverride.Computed(runtimeDataIdx))
+        case '[internal.TransformerCfg.FieldConstPartial[fieldNameT, cfgTailT]] =>
+          extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
+            .addFieldOverride(Type[fieldNameT].asStringSingletonType, RuntimeFieldOverride.ConstPartial(runtimeDataIdx))
+        case '[internal.TransformerCfg.FieldComputedPartial[fieldNameT, cfgTailT]] =>
+          extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
+            .addFieldOverride(
+              Type[fieldNameT].asStringSingletonType,
+              RuntimeFieldOverride.ComputedPartial(runtimeDataIdx)
+            )
+        case '[internal.TransformerCfg.FieldRelabelled[fieldNameFromT, fieldNameToT, cfgTailT]] =>
+          extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
+            .addFieldOverride(
+              Type[fieldNameFromT].asStringSingletonType,
+              RuntimeFieldOverride.RenamedFrom(Type[fieldNameToT].asStringSingletonType)
+            )
+        case '[internal.TransformerCfg.CoproductInstance[instanceT, targetT, cfgTailT]] =>
+          extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
+            .addCoproductInstance(
+              ComputedType(Type[instanceT]),
+              ComputedType(Type[targetT]),
+              RuntimeCoproductOverride.CoproductInstance(runtimeDataIdx)
+            )
+        case '[internal.TransformerCfg.CoproductInstancePartial[instanceT, targetT, cfgTailT]] =>
+          extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
+            .addCoproductInstance(
+              ComputedType(Type[instanceT]),
+              ComputedType(Type[targetT]),
+              RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
+            )
+        case _ =>
+          reportError("Bad internal transformer config type shape!")
+      }
+    }
   }
 }

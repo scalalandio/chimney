@@ -51,4 +51,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       scala.util.Try(repr.dealias.show(using Printer.TypeReprAnsiCode)).getOrElse(repr.toString)
     }
   }
+
+  implicit class UntypedTypeOps[T](private val tpe: Type[T]) {
+
+    /** Assumes that this `tpe` is String singleton type and extracts its value */
+    def asStringSingletonType: String = ???
+  }
 }
