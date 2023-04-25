@@ -60,10 +60,10 @@ private[compiletime] trait DerivationWithLegacyMacros {
             key -> oldMacros.FieldOverride.RenamedFrom(name)
         },
         coproductInstanceOverrides =
-          ctx.config.coproductOverride.collect { case ((ct1, ct2), RuntimeCoproductOverride.CoproductInstance(idx)) =>
+          ctx.config.coproductOverrides.collect { case ((ct1, ct2), RuntimeCoproductOverride.CoproductInstance(idx)) =>
             (ct1.Type.typeSymbol.asInstanceOf[oldMacros.c.Symbol], ct2.Type.asInstanceOf[oldMacros.c.Type]) -> idx
           },
-        coproductInstancesPartialOverrides = ctx.config.coproductOverride.collect {
+        coproductInstancesPartialOverrides = ctx.config.coproductOverrides.collect {
           case ((ct1, ct2), RuntimeCoproductOverride.CoproductInstancePartial(idx)) =>
             (ct1.Type.typeSymbol.asInstanceOf[oldMacros.c.Symbol], ct2.Type.asInstanceOf[oldMacros.c.Type]) -> idx
         },

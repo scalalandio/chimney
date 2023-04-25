@@ -58,10 +58,32 @@ private[compiletime] trait Configurations { this: Definitions =>
   final protected case class TransformerConfig(
       flags: TransformerFlags = TransformerFlags(),
       fieldOverrides: Map[String, RuntimeFieldOverride] = Map.empty,
-      coproductOverride: Map[(ComputedType, ComputedType), RuntimeCoproductOverride] = Map.empty,
+      coproductOverrides: Map[(ComputedType, ComputedType), RuntimeCoproductOverride] = Map.empty,
       preventResolutionForTypes: Option[(ComputedType, ComputedType)] = None,
       legacy: TransformerConfig.LegacyData = TransformerConfig.LegacyData() // TODO: temporary
-  )
+  ) {
+
+    def prepareForRecursiveCall: TransformerConfig =
+      copy(
+        preventResolutionForTypes = None,
+        fieldOverrides = Map.empty,
+        legacy = legacy.copy(definitionScope = None)
+      )
+
+    def addFieldOverride(fieldName: String, fieldOverride: RuntimeFieldOverride): TransformerConfig = {
+      copy(fieldOverrides = fieldOverrides + (fieldName -> fieldOverride))
+    }
+
+    def addCoproductInstance(
+        instanceType: ComputedType,
+        targetType: ComputedType,
+        coproductOverride: RuntimeCoproductOverride
+    ): TransformerConfig = {
+      copy(coproductOverrides = coproductOverrides + ((instanceType, targetType) -> coproductOverride))
+    }
+
+  }
+
   object TransformerConfig {
 
     type UpdateCfg[_ <: TransformerCfg]

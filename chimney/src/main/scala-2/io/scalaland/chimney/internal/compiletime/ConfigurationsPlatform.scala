@@ -28,7 +28,6 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
     private val implicitConflictResolutionTC =
       typeOf[internal.TransformerFlags.ImplicitConflictResolution[?]].typeConstructor
 
-    // TODO: this coule be tailrec
     private def extractTransformerFlags[Flag <: internal.TransformerFlags: Type](
         defaultFlags: TransformerFlags
     ): TransformerFlags = {
@@ -92,7 +91,6 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
     private def extractTransformerConfig[From: Type, To: Type, Cfg <: internal.TransformerCfg: Type](
         runtimeDataIdx: Int
     ): TransformerConfig = {
-      /*
       val cfgTpe = Type[Cfg].dealias
 
       if (cfgTpe =:= emptyT) {
@@ -100,54 +98,61 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
       } else if (cfgTpe.typeConstructor =:= fieldConstTC) {
         val List(fieldNameT, rest) = cfgTpe.typeArgs
         val fieldName = fieldNameT.asStringSingletonType
-        implicit val CfgTail: Type[CfgTail] = typeImpl.fromUntyped(rest)
+        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
         extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
-          .fieldOverride(fieldName, FieldOverrideSource.Const(runtimeDataIdx))
+          .addFieldOverride(fieldName, RuntimeFieldOverride.Const(runtimeDataIdx))
       } else if (cfgTpe.typeConstructor =:= fieldComputedTC) {
         val List(fieldNameT, rest) = cfgTpe.typeArgs
         val fieldName = fieldNameT.asStringSingletonType
-        implicit val CfgTail: Type[CfgTail] = typeImpl.fromUntyped(rest)
+        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
         extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
-          .fieldOverride(fieldName, FieldOverrideSource.Computed(runtimeDataIdx))
+          .addFieldOverride(fieldName, RuntimeFieldOverride.Computed(runtimeDataIdx))
+      } else if (cfgTpe.typeConstructor =:= fieldConstPartialTC) {
+        val List(fieldNameT, rest) = cfgTpe.typeArgs
+        val fieldName = fieldNameT.asStringSingletonType
+        implicit val Tail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
+          .addFieldOverride(fieldName, RuntimeFieldOverride.ConstPartial(runtimeDataIdx))
+      } else if (cfgTpe.typeConstructor =:= fieldComputedPartialTC) {
+        val List(fieldNameT, rest) = cfgTpe.typeArgs
+        val fieldName = fieldNameT.asStringSingletonType
+        implicit val Tail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
+          .addFieldOverride(fieldName, RuntimeFieldOverride.ComputedPartial(runtimeDataIdx))
       } else if (cfgTpe.typeConstructor =:= fieldRelabelledTC) {
         val List(fieldNameFromT, fieldNameToT, rest) = cfgTpe.typeArgs
         val fieldNameFrom = fieldNameFromT.asStringSingletonType
         val fieldNameTo = fieldNameToT.asStringSingletonType
-        implicit val CfgTail: Type[CfgTail] = typeImpl.fromUntyped(rest)
+        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
         extractTransformerConfig[From, To, CfgTail](runtimeDataIdx)
-          .fieldOverride(fieldNameTo, FieldOverrideSource.RenamedFrom(fieldNameFrom))
+          .addFieldOverride(fieldNameTo, RuntimeFieldOverride.RenamedFrom(fieldNameFrom))
       } else if (cfgTpe.typeConstructor =:= coproductInstanceTC) {
         val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-        implicit val From: Type[Arbitrary] = typeImpl.fromUntyped(instanceType)
-        implicit val To: Type[Arbitrary2] = typeImpl.fromUntyped(targetType)
-        implicit val CfgTail: Type[CfgTail] = typeImpl.fromUntyped(rest)
-        extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx).coproductInstance[Arbitrary, Arbitrary2](runtimeDataIdx)
-      } else if (cfgTpe.typeConstructor =:= fieldConstPartialTC) {
-        val List(fieldNameT, rest) = cfgTpe.typeArgs
-        val fieldName = fieldNameT.asStringSingletonType
-        implicit val Tail: Type[CfgTail] = typeImpl.fromUntyped(rest)
+        implicit val From: Type[?] = typeUtils.fromUntyped(instanceType)
+        implicit val To: Type[?] = typeUtils.fromUntyped(targetType)
+        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
         extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
-          .fieldOverride(fieldName, FieldOverrideSource.ConstPartial(runtimeDataIdx))
-      } else if (cfgTpe.typeConstructor =:= fieldComputedPartialTC) {
-        val List(fieldNameT, rest) = cfgTpe.typeArgs
-        val fieldName = fieldNameT.asStringSingletonType
-        implicit val Tail: Type[CfgTail] = typeImpl.fromUntyped(rest)
-        extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
-          .fieldOverride(fieldName, FieldOverrideSource.ComputedPartial(runtimeDataIdx))
+          .addCoproductInstance(
+            ComputedType(From),
+            ComputedType(To),
+            RuntimeCoproductOverride.CoproductInstance(runtimeDataIdx)
+          )
       } else if (cfgTpe.typeConstructor =:= coproductInstancePartialTC) {
         val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-        implicit val From: Type[Arbitrary] = typeImpl.fromUntyped(instanceType)
-        implicit val To: Type[Arbitrary2] = typeImpl.fromUntyped(targetType)
-        implicit val Tail: Type[CfgTail] = typeImpl.fromUntyped(rest)
+        implicit val From: Type[?] = typeUtils.fromUntyped(instanceType)
+        implicit val To: Type[?] = typeUtils.fromUntyped(targetType)
+        implicit val Tail: Type[CfgTail] = typeUtils.fromUntyped(rest)
         extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
-          .coproductInstancePartial[Arbitrary, Arbitrary2](runtimeDataIdx)
+          .addCoproductInstance(
+            ComputedType(From),
+            ComputedType(To),
+            RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
+          )
       } else {
         // $COVERAGE-OFF$
-        c.abort(c.enclosingPosition, "Bad internal transformer config type shape!")
+        reportError("Bad internal transformer config type shape!")
         // $COVERAGE-ON$
       }
-       */
-      ???
     }
   }
 }
