@@ -126,8 +126,8 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
           .addFieldOverride(fieldNameTo, RuntimeFieldOverride.RenamedFrom(fieldNameFrom))
       } else if (cfgTpe.typeConstructor =:= coproductInstanceTC) {
         val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-        implicit val From: Type[?] = typeUtils.fromUntyped(instanceType)
-        implicit val To: Type[?] = typeUtils.fromUntyped(targetType)
+        val From: Type[?] = typeUtils.fromUntyped(instanceType)
+        val To: Type[?] = typeUtils.fromUntyped(targetType)
         implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
         extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
           .addCoproductInstance(
@@ -137,8 +137,8 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
           )
       } else if (cfgTpe.typeConstructor =:= coproductInstancePartialTC) {
         val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-        implicit val From: Type[?] = typeUtils.fromUntyped(instanceType)
-        implicit val To: Type[?] = typeUtils.fromUntyped(targetType)
+        val From: Type[?] = typeUtils.fromUntyped(instanceType)
+        val To: Type[?] = typeUtils.fromUntyped(targetType)
         implicit val Tail: Type[CfgTail] = typeUtils.fromUntyped(rest)
         extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
           .addCoproductInstance(
