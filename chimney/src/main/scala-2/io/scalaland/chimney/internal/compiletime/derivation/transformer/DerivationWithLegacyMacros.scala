@@ -20,7 +20,7 @@ private[compiletime] trait DerivationWithLegacyMacros {
   protected object LegacyMacrosRule extends Rule {
 
     // we want this fallback to ALWAYS work until we no longer need it
-    override def isApplicableTo[From, To](ctx: TransformerContext[From, To]): Boolean = true
+    override def isApplicableTo[From, To](implicit ctx: TransformerContext[From, To]): Boolean = true
 
     override def apply[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[DerivedExpr[To]] =
       DerivationResult {

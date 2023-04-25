@@ -14,7 +14,7 @@ private[derivation] trait Derivation { this: Definitions =>
 
   abstract protected class Rule {
 
-    def isApplicableTo[From, To](ctx: TransformerContext[From, To]): Boolean
+    def isApplicableTo[From, To](implicit ctx: TransformerContext[From, To]): Boolean
 
     def apply[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[DerivedExpr[To]]
   }
