@@ -5,9 +5,12 @@ import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
 import scala.quoted.{Expr, Quotes, Type}
 
-final class Macro(q: Quotes) extends DefinitionsPlatform(using q) with DerivationPlatform with GatewayPlatform
+final class NewTransformerMacros(q: Quotes)
+    extends DefinitionsPlatform(using q)
+    with DerivationPlatform
+    with GatewayPlatform
 
-object Macro {
+object NewTransformerMacros {
 
   final def deriveTotalTransformationResult[
       From: Type,
