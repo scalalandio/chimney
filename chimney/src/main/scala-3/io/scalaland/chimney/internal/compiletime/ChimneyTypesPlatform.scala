@@ -16,11 +16,11 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
     import typeUtils.*
 
     def Transformer[From: Type, To: Type]: Type[Transformer[From, To]] =
-      fromTC[Transformer[*, *], Transformer[From, To]](Type[From], Type[To])
+      fromTC[Transformer[?, ?], Transformer[From, To]](Type[From], Type[To])
     def PartialTransformer[From: Type, To: Type]: Type[PartialTransformer[From, To]] =
-      fromTC[PartialTransformer[*, *], PartialTransformer[From, To]](Type[From], Type[To])
+      fromTC[PartialTransformer[?, ?], PartialTransformer[From, To]](Type[From], Type[To])
     def Patcher[T: Type, Patch: Type]: Type[Patcher[T, Patch]] =
-      fromTC[Patcher[*, *], Patcher[T, Patch]](Type[T], Type[Patch])
+      fromTC[Patcher[?, ?], Patcher[T, Patch]](Type[T], Type[Patch])
 
     object PartialResult extends PartialResultModule {
       def apply[T: Type]: Type[partial.Result[T]] = fromTC[partial.Result[*], partial.Result[T]](Type[T])
@@ -33,6 +33,10 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
       quoted.Type.of[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       quoted.Type.of[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
+
+    object TransformerCfg extends TransformerCfgModule {
+      val Empty: Type[internal.TransformerCfg.Empty] = quoted.Type.of[internal.TransformerCfg.Empty]
+    }
 
     object TransformerFlags extends TransformerFlagsModule {
       import internal.TransformerFlags.Flag

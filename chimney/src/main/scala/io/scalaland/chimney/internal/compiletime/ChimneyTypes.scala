@@ -22,6 +22,11 @@ private[compiletime] trait ChimneyTypes { this: Types =>
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val TransformerCfg: TransformerCfgModule
+    trait TransformerCfgModule {
+      def Empty: Type[internal.TransformerCfg.Empty]
+    }
+
     val TransformerFlags: TransformerFlagsModule
     trait TransformerFlagsModule { this: TransformerFlags.type =>
       import internal.TransformerFlags.Flag

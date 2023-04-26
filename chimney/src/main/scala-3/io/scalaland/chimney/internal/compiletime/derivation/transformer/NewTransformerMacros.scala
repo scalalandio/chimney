@@ -12,54 +12,60 @@ final class NewTransformerMacros(q: Quotes)
 
 object NewTransformerMacros {
 
-  final def deriveTotalTransformationResult[
-      From: Type,
-      To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      InstanceFlags <: internal.TransformerFlags: Type,
-      SharedFlags <: internal.TransformerFlags: Type
-  ](src: Expr[From])(using quotes: Quotes): Expr[To] =
-    new NewTransformerMacros(quotes).deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](src)
+//  final def deriveTotalTransformationResult[
+//      From: Type,
+//      To: Type,
+//      Cfg <: internal.TransformerCfg: Type,
+//      InstanceFlags <: internal.TransformerFlags: Type,
+//      SharedFlags <: internal.TransformerFlags: Type
+//  ](src: Expr[From])(using quotes: Quotes): Expr[To] =
+//    new NewTransformerMacros(quotes).deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](src)
 
   final def deriveTotalTransformer[
       From: Type,
-      To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      InstanceFlags <: internal.TransformerFlags: Type,
-      SharedFlags <: internal.TransformerFlags: Type
-  ](using quotes: Quotes): Expr[Transformer[From, To]] =
-    new NewTransformerMacros(quotes).deriveTotalTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
-
-  final def derivePartialTransformationFullResult[
-      From: Type,
-      To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      InstanceFlags <: internal.TransformerFlags: Type,
-      SharedFlags <: internal.TransformerFlags: Type
-  ](src: Expr[From])(using quotes: Quotes): Expr[partial.Result[To]] =
-    new NewTransformerMacros(quotes).derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
-      src,
-      '{ false }
+      To: Type
+  ](using quotes: Quotes): Expr[Transformer[From, To]] = {
+    val inst = new NewTransformerMacros(quotes)
+    inst.deriveTotalTransformer(using
+      inst.Type[From],
+      inst.Type[To],
+      inst.ChimneyType.TransformerCfg.Empty,
+      inst.ChimneyType.TransformerFlags.Default,
+      inst.ChimneyType.TransformerFlags.Default
     )
+  }
 
-  final def derivePartialTransformationFailFastResult[
-      From: Type,
-      To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      InstanceFlags <: internal.TransformerFlags: Type,
-      SharedFlags <: internal.TransformerFlags: Type
-  ](src: Expr[From])(using quotes: Quotes): Expr[partial.Result[To]] =
-    new NewTransformerMacros(quotes).derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
-      src,
-      '{ true }
-    )
+//  final def derivePartialTransformationFullResult[
+//      From: Type,
+//      To: Type,
+//      Cfg <: internal.TransformerCfg: Type,
+//      InstanceFlags <: internal.TransformerFlags: Type,
+//      SharedFlags <: internal.TransformerFlags: Type
+//  ](src: Expr[From])(using quotes: Quotes): Expr[partial.Result[To]] =
+//    new NewTransformerMacros(quotes).derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
+//      src,
+//      '{ false }
+//    )
 
-  final def derivePartialTransformer[
-      From: Type,
-      To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      InstanceFlags <: internal.TransformerFlags: Type,
-      SharedFlags <: internal.TransformerFlags: Type
-  ](using quotes: Quotes): Expr[PartialTransformer[From, To]] =
-    new NewTransformerMacros(quotes).derivePartialTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
+//  final def derivePartialTransformationFailFastResult[
+//      From: Type,
+//      To: Type,
+//      Cfg <: internal.TransformerCfg: Type,
+//      InstanceFlags <: internal.TransformerFlags: Type,
+//      SharedFlags <: internal.TransformerFlags: Type
+//  ](src: Expr[From])(using quotes: Quotes): Expr[partial.Result[To]] = {
+//    new NewTransformerMacros(quotes).derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
+//      src,
+//      '{ true }
+//    )
+//  }
+
+  //  final def derivePartialTransformer[
+//      From: Type,
+//      To: Type,
+//      Cfg <: internal.TransformerCfg: Type,
+//      InstanceFlags <: internal.TransformerFlags: Type,
+//      SharedFlags <: internal.TransformerFlags: Type
+//  ](using quotes: Quotes): Expr[PartialTransformer[From, To]] =
+//    new NewTransformerMacros(quotes).derivePartialTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
 }

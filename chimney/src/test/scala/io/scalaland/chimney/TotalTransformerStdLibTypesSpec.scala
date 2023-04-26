@@ -7,11 +7,17 @@ object TotalTransformerStdLibTypesSpec extends TestSuite {
 
   val tests = Tests {
 
+    test("rudimentary subtype transformation test") {
+
+      class Base(val x: Int)
+      object Sub extends Base(10)
+
+      Sub.transformInto[Base].x ==> 10
+    }
+
     test("not support converting non-Unit field to Unit field if there is no implicit converter allowing that") {
       case class Buzz(value: String)
       case class ConflictingFooBuzz(value: Unit)
-
-//      Buzz("a").transformInto[ConflictingFooBuzz]
 
       compileError("""Buzz("a").transformInto[ConflictingFooBuzz]""").check(
         "",
