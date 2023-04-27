@@ -11,7 +11,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
   import quotes.*
   import quotes.reflect.*
 
-  final override protected type Type[T] = quoted.Type[T]
+  final override type Type[T] = quoted.Type[T]
 
   protected object typeUtils {
     def fromTC[Unswapped <: AnyKind: quoted.Type, T](args: Type[?]*): Type[T] = {
@@ -31,6 +31,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     import typeUtils.*
 
     val Any: Type[Any] = quoted.Type.of[Any]
+    val Boolean: Type[Boolean] = quoted.Type.of[Boolean]
     val Int: Type[Int] = quoted.Type.of[Int]
     val Unit: Type[Unit] = quoted.Type.of[Unit]
 

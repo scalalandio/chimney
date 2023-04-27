@@ -23,9 +23,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
       fromTC[Patcher[?, ?], Patcher[T, Patch]](Type[T], Type[Patch])
 
     object PartialResult extends PartialResultModule {
-      def apply[T: Type]: Type[partial.Result[T]] = fromTC[partial.Result[*], partial.Result[T]](Type[T])
+      def apply[T: Type]: Type[partial.Result[T]] = fromTC[partial.Result[?], partial.Result[T]](Type[T])
       def Value[T: Type]: Type[partial.Result.Value[T]] =
-        fromTC[partial.Result.Value[*], partial.Result.Value[T]](Type[T])
+        fromTC[partial.Result.Value[?], partial.Result.Value[T]](Type[T])
       val Errors: Type[partial.Result.Errors] = quoted.Type.of[partial.Result.Errors]
     }
 

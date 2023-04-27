@@ -38,6 +38,15 @@ private[compiletime] trait Configurations { this: Definitions =>
 
     def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags =
       copy(implicitConflictResolution = preference)
+
+    override def toString: String = s"Flags(${Vector(
+        if (processDefaultValues) Vector("processDefaultValues") else Vector.empty,
+        if (beanSetters) Vector("beanSetters") else Vector.empty,
+        if (beanGetters) Vector("beanGetters") else Vector.empty,
+        if (methodAccessors) Vector("methodAccessors") else Vector.empty,
+        if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
+        implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector
+      ).flatten.mkString(", ")})"
   }
 
   sealed abstract class RuntimeFieldOverride(val needValueLevelAccess: Boolean) extends Product with Serializable

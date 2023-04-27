@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.compiletime.derivation.transformer.NewTransformerMacros
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 
 private[chimney] trait TransformerCompanionPlatform { this: Transformer.type =>
 
@@ -13,7 +13,6 @@ private[chimney] trait TransformerCompanionPlatform { this: Transformer.type =>
    * @return [[io.scalaland.chimney.Transformer]] type class instance
    * @since 0.8.0
    */
-  implicit inline def derive[From, To]: Transformer[From, To] = ${
-    NewTransformerMacros.deriveTotalTransformer[From, To]
-  }
+  implicit inline def derive[From, To]: Transformer[From, To] =
+    ${ TransformerMacros.deriveTotalTransformerWithDefaults[From, To] }
 }

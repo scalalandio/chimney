@@ -33,6 +33,12 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       val Target = To
       final type TypeClass = Transformer[From, To]
       val TypeClass = ChimneyType.Transformer(From, To)
+
+      override def toString: String = {
+        implicit val ctx: TransformerContext.ForTotal[From, To] = this
+        s"Total(From = ${Type.prettyPrint(using From)}, To = ${Type
+            .prettyPrint(using To)}, src = ${Expr.prettyPrint(src)}, $config)"
+      }
     }
     object ForTotal {
 
@@ -57,6 +63,12 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       val Target = ChimneyType.PartialResult(To)
       final type TypeClass = PartialTransformer[From, To]
       val TypeClass = ChimneyType.PartialTransformer(From, To)
+
+      override def toString: String = {
+        implicit val ctx: TransformerContext.ForPartial[From, To] = this
+        s"Partial(From = ${Type.prettyPrint(From)}, To = ${Type.prettyPrint(To)}, src = ${Expr
+            .prettyPrint(src)}, failFast = ${Expr.prettyPrint(failFast)(Type.Boolean)}, $config)"
+      }
     }
     object ForPartial {
 

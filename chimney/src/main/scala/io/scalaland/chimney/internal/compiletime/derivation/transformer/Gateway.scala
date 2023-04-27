@@ -55,14 +55,29 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       Cfg <: internal.TransformerCfg: Type,
       InstanceFlags <: internal.TransformerFlags: Type,
       SharedFlags <: internal.TransformerFlags: Type
-  ](src: Expr[From], failFast: Expr[Boolean]): Expr[partial.Result[To]] = ???
-//    deriveTransformationResult(
-//      TransformerContext.ForPartial.create[From, To](
-//        src,
-//        failFast,
-//        configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, SharedFlags]
-//      )
-//    ).unsafeGet._2
+  ](src: Expr[From], failFast: Expr[Boolean]): Expr[partial.Result[To]] =
+    deriveTransformationResult(
+      TransformerContext.ForPartial.create[From, To](
+        src,
+        failFast,
+        configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, SharedFlags]
+      )
+    ).toEither.fold(
+      derivationErrors => {
+        val lines = derivationErrors.prettyPrint
+
+        val richLines =
+          s"""Chimney can't derive transformation from ${Type[From]} to ${Type[To]}
+             |
+             |$lines
+             |Consult $chimneyDocUrl for usage examples.
+             |
+             |""".stripMargin
+
+        reportError(richLines)
+      },
+      identity
+    )
 
   final def derivePartialTransformer[
       From: Type,
@@ -84,7 +99,8 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       .flatMap {
         case DerivedExpr.TotalExpr(expr) =>
           ctx match {
-            case TransformerContext.ForTotal(_, _, _, _) => DerivationResult.pure(expr)
+            case TransformerContext.ForTotal(_, _, _, _) =>
+              DerivationResult.pure(expr)
             case TransformerContext.ForPartial(_, _, _, _, _) =>
               DerivationResult.pure(ChimneyExpr.PartialResult.Value(expr))
           }

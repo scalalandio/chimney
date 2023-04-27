@@ -32,6 +32,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
   object Type extends TypeModule {
     import typeUtils.*
     val Any: Type[Any] = fromWeak[Any]
+    val Boolean: Type[Boolean] = fromWeak[Boolean]
     val Int: Type[Int] = fromWeak[Int]
     val Unit: Type[Unit] = fromWeak[Unit]
 

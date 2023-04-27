@@ -10,6 +10,7 @@ import io.scalaland.chimney.internal.compiletime.{
   DerivationResult
 }
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
+import io.scalaland.chimney.partial
 
 import scala.annotation.nowarn
 
@@ -37,7 +38,9 @@ private[compiletime] trait DerivationWithLegacyMacros {
         derivationTarget = ctx match {
           case _: TransformerContext.ForTotal[?, ?] => oldMacros.DerivationTarget.TotalTransformer
           case a: TransformerContext.ForPartial[?, ?] =>
-            oldMacros.DerivationTarget.PartialTransformer(a.failFast.tree.asInstanceOf[oldMacros.c.TermName])
+            oldMacros.DerivationTarget.PartialTransformer(
+              a.failFast.tree.asInstanceOf[oldMacros.c.universe.Ident].name.toTermName
+            )
         },
         flags = oldMacros.TransformerFlags(
           methodAccessors = ctx.config.flags.methodAccessors,
@@ -91,7 +94,9 @@ private[compiletime] trait DerivationWithLegacyMacros {
         DerivationResult.pure(DerivedExpr.TotalExpr(c.Expr[To](tree.asInstanceOf[c.Tree])(c.WeakTypeTag(Type[To]))))
       case Right(oldMacros.DerivedTree(tree, _: oldMacros.DerivationTarget.PartialTransformer)) =>
         DerivationResult.pure(
-          DerivedExpr.TotalExpr(c.Expr[To](tree.asInstanceOf[c.Tree])(c.WeakTypeTag(ChimneyType.PartialResult[To])))
+          DerivedExpr.PartialExpr(
+            c.Expr[partial.Result[To]](tree.asInstanceOf[c.Tree])(c.WeakTypeTag(ChimneyType.PartialResult[To]))
+          )
         )
     }
   }

@@ -10,6 +10,7 @@ private[compiletime] trait Types {
     def apply[T](implicit T: Type[T]): Type[T] = T
 
     val Any: Type[Any]
+    val Boolean: Type[Boolean]
     val Int: Type[Int]
     val Unit: Type[Unit]
 
