@@ -9,11 +9,6 @@ private[derivation] trait DerivationPlatform
     with rules.NotImplementedFallbackRuleModule {
   this: DefinitionsPlatform =>
 
-// TODO: stack overflow error on Scala 3 when TransformSubtypesRule enabled
-
-//  override protected val rulesAvailableForPlatform: Seq[Rule] =
-//    Seq(TransformSubtypesRule, NotImplementedFallbackRule)
-
   override protected val rulesAvailableForPlatform: Seq[Rule] =
-    Seq(NotImplementedFallbackRule)
+    Seq(TransformSubtypesRule, NotImplementedFallbackRule)
 }
