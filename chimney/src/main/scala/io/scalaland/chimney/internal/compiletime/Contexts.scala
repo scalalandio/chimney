@@ -53,8 +53,13 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
           From = Type[From],
           To = Type[To],
           src = src,
-          runtimeDataStore =
-            runtimeDataStore.getOrElse(Expr.asInstanceOf(Expr.Nothing)(Type.Nothing, ChimneyType.RuntimeDataStore)),
+          runtimeDataStore = runtimeDataStore
+            .getOrElse(
+              Expr.asInstanceOf[Nothing, TransformerDefinitionCommons.RuntimeDataStore](Expr.Nothing)(
+                Type.Nothing,
+                ChimneyType.RuntimeDataStore
+              )
+            ),
           config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
         )
     }
@@ -91,8 +96,12 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         To = Type[To],
         src = src,
         failFast = failFast,
-        runtimeDataStore =
-          runtimeDataStore.getOrElse(Expr.asInstanceOf(Expr.Nothing)(Type.Nothing, ChimneyType.RuntimeDataStore)),
+        runtimeDataStore = runtimeDataStore.getOrElse(
+          Expr.asInstanceOf[Nothing, TransformerDefinitionCommons.RuntimeDataStore](Expr.Nothing)(
+            Type.Nothing,
+            ChimneyType.RuntimeDataStore
+          )
+        ),
         config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
       )
     }

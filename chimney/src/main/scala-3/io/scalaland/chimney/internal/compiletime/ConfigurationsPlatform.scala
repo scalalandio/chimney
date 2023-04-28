@@ -94,7 +94,9 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
               RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
             )
         case _ =>
-          reportError(s"Bad internal transformer config type shape!  ${Type.prettyPrint[Cfg]}")
+          reportError(
+            s"Bad internal transformer config type shape!  ${Type.prettyPrint[Cfg]} dealiased to ${cfgTpe.show(using Printer.TypeReprAnsiCode)}"
+          )
       }
     }
   }

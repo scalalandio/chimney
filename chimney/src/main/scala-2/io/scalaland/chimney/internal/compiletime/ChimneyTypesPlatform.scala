@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.dsl.ImplicitTransformerPreference
+import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
