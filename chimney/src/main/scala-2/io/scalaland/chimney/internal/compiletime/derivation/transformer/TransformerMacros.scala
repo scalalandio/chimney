@@ -1,5 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
+import io.scalaland.chimney.internal.TransformerCfg.Empty
+import io.scalaland.chimney.internal.TransformerFlags.Default
 import io.scalaland.chimney.{internal, PartialTransformer, Transformer}
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
@@ -10,39 +12,25 @@ final class TransformerMacros(val c: blackbox.Context)
     with DerivationPlatform
     with GatewayPlatform {
 
+  type LocalConfigType <: internal.TransformerFlags
+
   final def deriveTotalTransformerWithDefaults[
       From: c.WeakTypeTag,
       To: c.WeakTypeTag
-  ]: c.universe.Expr[Transformer[From, To]] = {
-    import typeUtils.fromWeakConversion.*
-
-    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings(LocalConfugType =>
-      deriveTotalTransformer(
-        Type[From],
-        Type[To],
-        ChimneyType.TransformerCfg.Empty,
-        ChimneyType.TransformerFlags.Default,
-        LocalConfugType
-      )
-    )
-  }
+  ]: c.universe.Expr[Transformer[From, To]] =
+    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings { implicit LocalConfigType =>
+      import typeUtils.fromWeakConversion.*
+      deriveTotalTransformer[From, To, Empty, Default, LocalConfigType](runtimeDataStore = None)
+    }
 
   final def derivePartialTransformerWithDefaults[
       From: c.WeakTypeTag,
       To: c.WeakTypeTag
-  ]: c.universe.Expr[PartialTransformer[From, To]] = {
-    import typeUtils.fromWeakConversion.*
-
-    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings(LocalConfugType =>
-      derivePartialTransformer(
-        Type[From],
-        Type[To],
-        ChimneyType.TransformerCfg.Empty,
-        ChimneyType.TransformerFlags.Default,
-        LocalConfugType
-      )
-    )
-  }
+  ]: c.universe.Expr[PartialTransformer[From, To]] =
+    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings { implicit LocalConfigType =>
+      import typeUtils.fromWeakConversion.*
+      derivePartialTransformer[From, To, Empty, Default, LocalConfigType](runtimeDataStore = None)
+    }
 
   private def findLocalTransformerConfigurationFlags: c.universe.Tree = {
     import c.universe.*
@@ -72,11 +60,11 @@ final class TransformerMacros(val c: blackbox.Context)
   }
 
   private def resolveLocalTransformerConfigAndMuteUnusedConfigWarnings[A](
-      useLocalConfig: Type[internal.TransformerFlags] => Expr[A]
+      useLocalConfig: Type[LocalConfigType] => Expr[A]
   ): Expr[A] = {
     val localConfig = findLocalTransformerConfigurationFlags
     val localConfigType =
-      typeUtils.fromUntyped(localConfig.tpe.typeArgs.head).asInstanceOf[Type[internal.TransformerFlags]]
+      typeUtils.fromUntyped(localConfig.tpe.typeArgs.head).asInstanceOf[Type[LocalConfigType]]
 
     import c.universe.*
     c.Expr[A](
@@ -86,4 +74,7 @@ final class TransformerMacros(val c: blackbox.Context)
        """
     )
   }
+
+  implicit private val EmptyConfigType: Type[Empty] = ChimneyType.TransformerCfg.Empty
+  implicit private val DefaultFlagsType: Type[Default] = ChimneyType.TransformerFlags.Default
 }

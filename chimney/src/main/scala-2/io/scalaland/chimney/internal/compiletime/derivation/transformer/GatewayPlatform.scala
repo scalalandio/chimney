@@ -1,9 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
-import io.scalaland.chimney.{internal, partial, PartialTransformer, Transformer}
-
-import scala.annotation.unused
+import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
 
 trait GatewayPlatform extends Gateway {
   this: DefinitionsPlatform & DerivationPlatform =>
@@ -12,59 +10,6 @@ trait GatewayPlatform extends Gateway {
   import typeUtils.fromWeakConversion.*
 
   // Intended to be called directly from macro splicing site; converts WeakTypeTags into our internal Types
-
-  final def deriveTotalTransformationResultImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
-      Cfg <: internal.TransformerCfg: WeakTypeTag,
-      InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
-      SharedFlags <: internal.TransformerFlags: WeakTypeTag
-  ](@unused tc: c.Tree): Expr[To] =
-    deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
-      c.Expr[From](q"${c.prefix}.source")
-    )
-
-//  final def deriveTotalTransformerImpl[
-//    From: WeakTypeTag,
-//    To: WeakTypeTag,
-//    Cfg <: internal.TransformerCfg : WeakTypeTag,
-//    InstanceFlags <: internal.TransformerFlags : WeakTypeTag,
-//    SharedFlags <: internal.TransformerFlags : WeakTypeTag
-//  ](@unused tc: c.Tree): Expr[Transformer[From, To]] =
-//    deriveTotalTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
-
-  final def derivePartialTransformationResultFullImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
-      Cfg <: internal.TransformerCfg: WeakTypeTag,
-      InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
-      SharedFlags <: internal.TransformerFlags: WeakTypeTag
-  ](@unused tc: c.Tree): Expr[partial.Result[To]] =
-    derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
-      c.Expr[From](q"${c.prefix}.source"),
-      c.Expr[Boolean](q"false")
-    )
-
-  final def derivePartialTransformationResultFailFastImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
-      Cfg <: internal.TransformerCfg: WeakTypeTag,
-      InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
-      SharedFlags <: internal.TransformerFlags: WeakTypeTag
-  ](@unused tc: c.Tree): Expr[partial.Result[To]] =
-    derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](
-      c.Expr[From](q"${c.prefix}.source"),
-      c.Expr[Boolean](q"true")
-    )
-
-  final def derivePartialTransformerImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
-      Cfg <: internal.TransformerCfg: WeakTypeTag,
-      InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
-      SharedFlags <: internal.TransformerFlags: WeakTypeTag
-  ](@unused tc: c.Tree): Expr[PartialTransformer[From, To]] =
-    derivePartialTransformer[From, To, Cfg, InstanceFlags, SharedFlags]
 
   override protected def instantiateTotalTransformer[From: Type, To: Type](
       toExpr: Expr[From] => Expr[To]
