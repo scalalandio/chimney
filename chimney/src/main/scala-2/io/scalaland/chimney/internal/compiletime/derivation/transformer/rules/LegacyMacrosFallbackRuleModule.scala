@@ -1,24 +1,23 @@
-package io.scalaland.chimney.internal.compiletime.derivation.transformer
+package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
 import io.scalaland.chimney.internal.TransformerDerivationError
 import io.scalaland.chimney.internal.compiletime.{
-  ConfigurationsPlatform,
-  Contexts,
   DefinitionsPlatform,
   DerivationError,
   DerivationErrors,
   DerivationResult
 }
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.DerivationPlatform
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 import io.scalaland.chimney.partial
 
 import scala.annotation.nowarn
 
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-private[compiletime] trait DerivationWithLegacyMacros {
-  this: DefinitionsPlatform & ConfigurationsPlatform & Contexts & Derivation =>
+private[compiletime] trait LegacyMacrosFallbackRuleModule {
+  this: DefinitionsPlatform & DerivationPlatform =>
 
-  protected object LegacyMacrosRule extends Rule {
+  protected object LegacyMacrosFallbackRule extends Rule {
 
     // we want this fallback to ALWAYS work until we no longer need it
     override def isApplicableTo[From, To](implicit ctx: TransformerContext[From, To]): Boolean = true
