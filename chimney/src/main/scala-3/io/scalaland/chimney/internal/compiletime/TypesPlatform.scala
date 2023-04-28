@@ -30,6 +30,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
   object Type extends TypeModule {
     import typeUtils.*
 
+    val Nothing: Type[Nothing] = quoted.Type.of[Nothing]
     val Any: Type[Any] = quoted.Type.of[Any]
     val Boolean: Type[Boolean] = quoted.Type.of[Boolean]
     val Int: Type[Int] = quoted.Type.of[Int]

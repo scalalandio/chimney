@@ -10,6 +10,7 @@ private[compiletime] trait Exprs { this: Definitions =>
 
   val Expr: ExprModule
   trait ExprModule { this: Expr.type =>
+    val Nothing: Expr[Nothing]
     val Unit: Expr[Unit]
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]]
 

@@ -11,6 +11,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
   final override type Expr[A] = quoted.Expr[A]
 
   object Expr extends ExprModule {
+    val Nothing: Expr[Nothing] = '{ ??? }
     val Unit: Expr[Unit] = '{ () }
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]] =
       '{ scala.Array.apply[A](${ quoted.Varargs(args.toSeq) }*)(${ quoted.Expr.summon[ClassTag[A]].get }) }

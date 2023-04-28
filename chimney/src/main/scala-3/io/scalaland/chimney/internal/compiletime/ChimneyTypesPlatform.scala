@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal.compiletime
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal
 import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
-import io.scalaland.chimney.dsl.ImplicitTransformerPreference
+import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
 
 import scala.quoted
 
@@ -33,6 +33,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
       quoted.Type.of[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       quoted.Type.of[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
+
+    val RuntimeDataStore: Type[TransformerDefinitionCommons.RuntimeDataStore] =
+      quoted.Type.of[TransformerDefinitionCommons.RuntimeDataStore]
 
     object TransformerCfg extends TransformerCfgModule {
       val Empty: Type[internal.TransformerCfg.Empty] = quoted.Type.of[internal.TransformerCfg.Empty]

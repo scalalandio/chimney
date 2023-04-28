@@ -35,6 +35,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       fromWeak[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val RuntimeDataStore: Type[TransformerDefinitionCommons.RuntimeDataStore] =
+      fromWeak[TransformerDefinitionCommons.RuntimeDataStore]
+
     object TransformerCfg extends TransformerCfgModule {
       val Empty: Type[internal.TransformerCfg.Empty] = fromWeak[internal.TransformerCfg.Empty]
     }

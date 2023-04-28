@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.FieldNameUtils
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
 
@@ -87,11 +88,6 @@ object TransformerDefinitionImpl {
       ScopeFlags <: TransformerFlags: Type
   ](
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
-  )(using Quotes): Expr[Transformer[From, To]] = {
-    '{
-      new Transformer[From, To] {
-        def transform(src: From): To = null.asInstanceOf[To]
-      }
-    }
-  }
+  )(using Quotes): Expr[Transformer[From, To]] =
+    TransformerMacros.deriveTotalTransformerWithConfig[From, To, Cfg, Flags, ScopeFlags](td)
 }
