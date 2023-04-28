@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
+import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.partial
 
@@ -26,6 +27,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         From: Type[From],
         To: Type[To],
         src: Expr[From],
+        runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
         config: TransformerConfig
     ) extends TransformerContext[From, To] {
 
@@ -42,11 +44,17 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
     }
     object ForTotal {
 
-      def create[From: Type, To: Type](src: Expr[From], config: TransformerConfig): ForTotal[From, To] =
+      def create[From: Type, To: Type](
+          src: Expr[From],
+          config: TransformerConfig,
+          runtimeDataStore: Option[Expr[TransformerDefinitionCommons.RuntimeDataStore]]
+      ): ForTotal[From, To] =
         ForTotal(
           From = Type[From],
           To = Type[To],
           src = src,
+          runtimeDataStore =
+            runtimeDataStore.getOrElse(Expr.asInstanceOf(Expr.Nothing)(Type.Nothing, ChimneyType.RuntimeDataStore)),
           config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
         )
     }
@@ -56,6 +64,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         To: Type[To],
         src: Expr[From],
         failFast: Expr[Boolean],
+        runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
         config: TransformerConfig
     ) extends TransformerContext[From, To] {
 
@@ -75,12 +84,15 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       def create[From: Type, To: Type](
           src: Expr[From],
           failFast: Expr[Boolean],
-          config: TransformerConfig
+          config: TransformerConfig,
+          runtimeDataStore: Option[Expr[TransformerDefinitionCommons.RuntimeDataStore]]
       ): ForPartial[From, To] = ForPartial(
         From = Type[From],
         To = Type[To],
         src = src,
         failFast = failFast,
+        runtimeDataStore =
+          runtimeDataStore.getOrElse(Expr.asInstanceOf(Expr.Nothing)(Type.Nothing, ChimneyType.RuntimeDataStore)),
         config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
       )
     }

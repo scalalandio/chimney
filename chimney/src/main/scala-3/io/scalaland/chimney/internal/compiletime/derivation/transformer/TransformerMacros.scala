@@ -1,5 +1,8 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
+import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinition}
+import io.scalaland.chimney.internal.TransformerCfg.Empty
+import io.scalaland.chimney.internal.TransformerFlags.Default
 import io.scalaland.chimney.{internal, partial, PartialTransformer, Transformer}
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
@@ -10,33 +13,45 @@ final class TransformerMacros(q: Quotes)
     with DerivationPlatform
     with GatewayPlatform {
 
+  type LocalConfigType <: internal.TransformerFlags
+
   final def deriveTotalTransformerWithDefaults[
       From: Type,
       To: Type
   ](using quotes: Quotes): Expr[Transformer[From, To]] =
-    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings(LocalConfigType =>
-      deriveTotalTransformer(using
-        Type[From],
-        Type[To],
-        ChimneyType.TransformerCfg.Empty,
-        ChimneyType.TransformerFlags.Default,
-        LocalConfigType
-      )
-    )(using ChimneyType.Transformer[From, To])
+    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings { implicit LocalConfigType =>
+      deriveTotalTransformer[From, To, Empty, Default, LocalConfigType](runtimeDataStore = None)
+    }
+
+  final def deriveTotalTransformerWithConfig[
+      From: Type,
+      To: Type,
+      Cfg <: internal.TransformerCfg: Type,
+      Flags <: internal.TransformerFlags: Type,
+      ScopeFlags <: internal.TransformerFlags: Type
+  ](
+      td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
+  )(using quotes: Quotes): Expr[Transformer[From, To]] =
+    deriveTotalTransformer[From, To, Cfg, Flags, ScopeFlags](runtimeDataStore = Some('{ ${ td }.runtimeData }))
 
   final def derivePartialTransformerWithDefaults[
       From: Type,
       To: Type
   ](using quotes: Quotes): Expr[PartialTransformer[From, To]] =
-    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings(LocalConfigType =>
-      derivePartialTransformer(using
-        Type[From],
-        Type[To],
-        ChimneyType.TransformerCfg.Empty,
-        ChimneyType.TransformerFlags.Default,
-        LocalConfigType
-      )
-    )(using ChimneyType.PartialTransformer[From, To])
+    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings { implicit LocalConfigType =>
+      derivePartialTransformer[From, To, Empty, Default, LocalConfigType](runtimeDataStore = None)
+    }
+
+  final def derivePartialTransformerWithConfig[
+      From: Type,
+      To: Type,
+      Cfg <: internal.TransformerCfg: Type,
+      Flags <: internal.TransformerFlags: Type,
+      ScopeFlags <: internal.TransformerFlags: Type
+  ](
+      td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
+  )(using quotes: Quotes): Expr[PartialTransformer[From, To]] =
+    derivePartialTransformer[From, To, Cfg, Flags, ScopeFlags](runtimeDataStore = Some('{ ${ td }.runtimeData }))
 
   private def findLocalTransformerConfigurationFlags(using
       quotes: Quotes
@@ -50,20 +65,23 @@ final class TransformerMacros(q: Quotes)
       }
 
   private def resolveLocalTransformerConfigAndMuteUnusedConfigWarnings[A: Type](
-      useLocalConfig: Type[internal.TransformerFlags] => Expr[A]
+      useLocalConfig: Type[LocalConfigType] => Expr[A]
   ): Expr[A] = {
     import quotes.*
     import quotes.reflect.*
 
     val localConfig = findLocalTransformerConfigurationFlags
     val localConfigType = findLocalTransformerConfigurationFlags.asTerm.tpe.widen.typeArgs.head.asType
-      .asInstanceOf[Type[internal.TransformerFlags]]
+      .asInstanceOf[Type[LocalConfigType]]
 
     '{
       val _ = $localConfig
       ${ useLocalConfig(localConfigType) }
     }
   }
+
+  implicit private val EmptyConfigType: Type[Empty] = ChimneyType.TransformerCfg.Empty
+  implicit private val DefaultFlagsType: Type[Default] = ChimneyType.TransformerFlags.Default
 }
 
 object TransformerMacros {
@@ -74,9 +92,31 @@ object TransformerMacros {
   ](using quotes: Quotes): Expr[Transformer[From, To]] =
     new TransformerMacros(quotes).deriveTotalTransformerWithDefaults[From, To]
 
+  final def deriveTotalTransformerWithConfig[
+      From: Type,
+      To: Type,
+      Cfg <: internal.TransformerCfg: Type,
+      Flags <: internal.TransformerFlags: Type,
+      ScopeFlags <: internal.TransformerFlags: Type
+  ](
+      td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
+  )(using quotes: Quotes): Expr[Transformer[From, To]] =
+    new TransformerMacros(quotes).deriveTotalTransformerWithConfig[From, To, Cfg, Flags, ScopeFlags](td)
+
   final def derivePartialTransformerWithDefaults[
       From: Type,
       To: Type
   ](using quotes: Quotes): Expr[PartialTransformer[From, To]] =
     new TransformerMacros(quotes).derivePartialTransformerWithDefaults[From, To]
+
+  final def derivePartialTransformerWithConfig[
+      From: Type,
+      To: Type,
+      Cfg <: internal.TransformerCfg: Type,
+      Flags <: internal.TransformerFlags: Type,
+      ScopeFlags <: internal.TransformerFlags: Type
+  ](
+      td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
+  )(using quotes: Quotes): Expr[PartialTransformer[From, To]] =
+    new TransformerMacros(quotes).derivePartialTransformerWithConfig[From, To, Cfg, Flags, ScopeFlags](td)
 }

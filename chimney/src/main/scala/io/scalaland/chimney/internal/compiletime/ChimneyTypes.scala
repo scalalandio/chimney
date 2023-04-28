@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.*
-import io.scalaland.chimney.dsl.ImplicitTransformerPreference
+import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
 
 private[compiletime] trait ChimneyTypes { this: Types =>
 
@@ -21,6 +21,8 @@ private[compiletime] trait ChimneyTypes { this: Types =>
 
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
+
+    val RuntimeDataStore: Type[TransformerDefinitionCommons.RuntimeDataStore]
 
     val TransformerCfg: TransformerCfgModule
     trait TransformerCfgModule {
