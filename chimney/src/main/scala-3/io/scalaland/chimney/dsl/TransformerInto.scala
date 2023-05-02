@@ -1,6 +1,8 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.*
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
+import io.scalaland.chimney.internal.compiletime.dsl.TransformerIntoImpl
 
 final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,
@@ -14,31 +16,30 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
       inline selector: To => T,
       inline value: U
   )(using U <:< T): TransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    new TransformerInto(source, td.withFieldConst(selector, value))
+    ${ TransformerIntoImpl.withFieldConstImpl('this, 'selector, 'value) }
   }
 
   transparent inline def withFieldComputed[T, U](
       inline selector: To => T,
       inline f: From => U
   )(using U <:< T): TransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    new TransformerInto(source, td.withFieldComputed(selector, f))
+    ${ TransformerIntoImpl.withFieldComputedImpl('this, 'selector, 'f) }
   }
 
   transparent inline def withFieldRenamed[T, U](
       inline selectorFrom: From => T,
       inline selectorTo: To => U
   ): TransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    new TransformerInto(source, td.withFieldRenamed(selectorFrom, selectorTo))
+    ${ TransformerIntoImpl.withFieldRenamedImpl('this, 'selectorFrom, 'selectorTo) }
   }
 
   transparent inline def withCoproductInstance[Inst](
       inline f: Inst => To
   ): TransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    new TransformerInto(source, td.withCoproductInstance(f))
+    ${ TransformerIntoImpl.withCoproductInstanceImpl('this, 'f) }
   }
 
   inline def transform[ScopeFlags <: TransformerFlags](using tc: TransformerConfiguration[ScopeFlags]): To = {
-    // TODO: rewrite to avoid instantiating a transformer by just inlining transformer body
-    td.buildTransformer.transform(source)
+    ${ TransformerIntoImpl.transform[From, To, Cfg, Flags, ScopeFlags]('source, 'td) }
   }
 }
