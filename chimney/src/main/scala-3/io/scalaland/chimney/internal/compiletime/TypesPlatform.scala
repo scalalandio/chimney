@@ -54,13 +54,12 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     }
   }
 
-  implicit class UntypedTypeOps[T](private val tpe: Type[T]) {
+  extension [T <: String](tpe: Type[T]) {
 
-    /** Assumes that this `tpe` is String singleton type and extracts its value */
     def asStringSingletonType: String = {
       import quotes.reflect.*
 
-      quoted.Type.valueOfConstant[T](using tpe)(using quotes).map(_.toString) match {
+      quoted.Type.valueOfConstant[T](using tpe)(using quotes) match {
         case Some(str) => str
         case None      => reportError(s"Invalid string literal type: ${tpe}")
       }
