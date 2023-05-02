@@ -103,6 +103,18 @@ object TransformerMacros {
   )(using quotes: Quotes): Expr[Transformer[From, To]] =
     new TransformerMacros(quotes).deriveTotalTransformerWithConfig[From, To, Cfg, Flags, ScopeFlags](td)
 
+  final def deriveTotalTransformerResultWithConfig[
+      From: Type,
+      To: Type,
+      Cfg <: internal.TransformerCfg: Type,
+      Flags <: internal.TransformerFlags: Type,
+      ScopeFlags <: internal.TransformerFlags: Type
+  ](source: Expr[From], td: Expr[TransformerDefinition[From, To, Cfg, Flags]])(using quotes: Quotes): Expr[To] =
+    new TransformerMacros(quotes).deriveTotalTransformationResult[From, To, Cfg, Flags, ScopeFlags](
+      source,
+      Some('{ ${ td }.runtimeData })
+    )
+
   final def derivePartialTransformerWithDefaults[
       From: Type,
       To: Type
