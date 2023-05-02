@@ -57,6 +57,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
   implicit class UntypedTypeOps[T](private val tpe: Type[T]) {
 
     /** Assumes that this `tpe` is String singleton type and extracts its value */
-    def asStringSingletonType: String = ???
+    def asStringSingletonType: String = s"TODO impl (${tpe.toString})"
+    // TODO: provide real implementation
   }
 }
