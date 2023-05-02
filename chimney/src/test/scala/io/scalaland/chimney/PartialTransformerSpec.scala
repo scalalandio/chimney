@@ -53,5 +53,16 @@ object PartialTransformerSpec extends TestSuite {
         // no second error due to fail fast mode
       )
     }
+
+    test("fail fast transform with dsl") {
+      import io.scalaland.chimney.dsl.*
+
+      implicit val strToInt: PartialTransformer[String, Int] = pt1
+
+      FooStr("abc", "xyz").intoPartial[Foo].transformFailFast.asErrorPathMessageStrings ==> Iterable(
+        ("s1", """For input string: "abc"""")
+        // no second error due to fail fast mode
+      )
+    }
   }
 }
