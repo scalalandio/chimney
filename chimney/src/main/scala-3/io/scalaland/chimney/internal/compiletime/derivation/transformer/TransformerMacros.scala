@@ -131,4 +131,20 @@ object TransformerMacros {
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
   )(using quotes: Quotes): Expr[PartialTransformer[From, To]] =
     new TransformerMacros(quotes).derivePartialTransformerWithConfig[From, To, Cfg, Flags, ScopeFlags](td)
+
+  final def derivePartialTransformerResultWithConfig[
+      From: Type,
+      To: Type,
+      Cfg <: internal.TransformerCfg: Type,
+      Flags <: internal.TransformerFlags: Type,
+      ScopeFlags <: internal.TransformerFlags: Type
+  ](source: Expr[From], td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]], failFast: Boolean)(using
+      quotes: Quotes
+  ): Expr[partial.Result[To]] =
+    new TransformerMacros(quotes).derivePartialTransformationResult[From, To, Cfg, Flags, ScopeFlags](
+      source,
+      Expr(failFast),
+      Some('{ ${ td }.runtimeData })
+    )
+
 }

@@ -139,9 +139,13 @@ object PartialTransformerIntoImpl {
       ScopeFlags <: TransformerFlags: Type
   ](
       source: Expr[From],
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
-  )(using Quotes): Expr[To] = {
-    TransformerMacros.deriveTotalTransformerResultWithConfig[From, To, Cfg, Flags, ScopeFlags](source, td)
+      td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]],
+      failFast: Boolean
+  )(using Quotes): Expr[partial.Result[To]] = {
+    TransformerMacros.derivePartialTransformerResultWithConfig[From, To, Cfg, Flags, ScopeFlags](
+      source,
+      td,
+      failFast
+    )
   }
-
 }

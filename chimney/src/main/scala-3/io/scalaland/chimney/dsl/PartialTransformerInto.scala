@@ -60,15 +60,13 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
   inline def transform[ScopeFlags <: TransformerFlags](using
       tc: TransformerConfiguration[ScopeFlags]
   ): partial.Result[To] = {
-    // TODO: rewrite to avoid instantiating a transformer by just inlining transformer body
-    td.buildTransformer.transform(source, failFast = false)
+    ${ PartialTransformerIntoImpl.transform[From, To, Cfg, Flags, ScopeFlags]('source, 'td, failFast = false) }
+
   }
 
   inline def transformFailFast[ScopeFlags <: TransformerFlags](using
       tc: TransformerConfiguration[ScopeFlags]
   ): partial.Result[To] = {
-    // TODO: rewrite to avoid instantiating a transformer by just inlining transformer body
-    td.buildTransformer.transform(source, failFast = true)
+    ${ PartialTransformerIntoImpl.transform[From, To, Cfg, Flags, ScopeFlags]('source, 'td, failFast = true) }
   }
-
 }
