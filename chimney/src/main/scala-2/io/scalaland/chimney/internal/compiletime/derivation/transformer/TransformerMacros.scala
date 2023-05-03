@@ -18,7 +18,7 @@ final class TransformerMacros(val c: blackbox.Context)
       From: c.WeakTypeTag,
       To: c.WeakTypeTag
   ]: c.universe.Expr[Transformer[From, To]] =
-    resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
+    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicit ImplicitScopeFlagsType =>
       import typeUtils.fromWeakConversion.*
       deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](
         runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty
@@ -29,14 +29,14 @@ final class TransformerMacros(val c: blackbox.Context)
       From: c.WeakTypeTag,
       To: c.WeakTypeTag
   ]: c.universe.Expr[PartialTransformer[From, To]] =
-    resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
+    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicit ImplicitScopeFlagsType =>
       import typeUtils.fromWeakConversion.*
       derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore =
         ChimneyExpr.RuntimeDataStore.empty
       )
     }
 
-  private def findImplicitScopeFlags: c.universe.Tree = {
+  private def findImplicitScopeTransformerConfiguration: c.universe.Tree = {
     import c.universe.*
 
     val searchTypeTree =
@@ -63,18 +63,18 @@ final class TransformerMacros(val c: blackbox.Context)
       .filterNot(_ == c.universe.EmptyTree)
   }
 
-  private def resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings[A](
-      useLocalConfig: Type[ImplicitScopeFlagsType] => Expr[A]
+  private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A](
+      useImplicitScopeFlags: Type[ImplicitScopeFlagsType] => Expr[A]
   ): Expr[A] = {
-    val localConfig = findImplicitScopeFlags
-    val localConfigType =
-      typeUtils.fromUntyped(localConfig.tpe.typeArgs.head).asInstanceOf[Type[ImplicitScopeFlagsType]]
+    val implicitScopeConfig = findImplicitScopeTransformerConfiguration
+    val implicitScopeConfigType =
+      typeUtils.fromUntyped(implicitScopeConfig.tpe.typeArgs.head).asInstanceOf[Type[ImplicitScopeFlagsType]]
 
     import c.universe.*
     c.Expr[A](
       q"""
-          val _ = $localConfig
-          ${useLocalConfig(localConfigType)}
+          val _ = $implicitScopeConfig
+          ${useImplicitScopeFlags(implicitScopeConfigType)}
        """
     )
   }

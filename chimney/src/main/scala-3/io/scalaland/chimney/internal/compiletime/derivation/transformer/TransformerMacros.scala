@@ -19,7 +19,7 @@ final class TransformerMacros(q: Quotes)
       From: Type,
       To: Type
   ](using quotes: Quotes): Expr[Transformer[From, To]] =
-    resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
+    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicit ImplicitScopeFlagsType =>
       deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](
         runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty
       )
@@ -40,7 +40,7 @@ final class TransformerMacros(q: Quotes)
       From: Type,
       To: Type
   ](using quotes: Quotes): Expr[PartialTransformer[From, To]] =
-    resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
+    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicit ImplicitScopeFlagsType =>
       derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](
         runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty
       )
@@ -57,7 +57,7 @@ final class TransformerMacros(q: Quotes)
   )(using quotes: Quotes): Expr[PartialTransformer[From, To]] =
     derivePartialTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
 
-  private def findImplicitScopeFlags(using
+  private def findImplicitScopeTransformerConfiguration(using
       quotes: Quotes
   ): Expr[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]] =
     scala.quoted.Expr
@@ -68,19 +68,19 @@ final class TransformerMacros(q: Quotes)
         // $COVERAGE-ON$
       }
 
-  private def resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings[A: Type](
-      useLocalConfig: Type[ImplicitScopeFlagsType] => Expr[A]
+  private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
+      useImplicitScopeFlags: Type[ImplicitScopeFlagsType] => Expr[A]
   ): Expr[A] = {
     import quotes.*
     import quotes.reflect.*
 
-    val localConfig = findImplicitScopeFlags
-    val localConfigType = localConfig.asTerm.tpe.widen.typeArgs.head.asType
+    val implicitScopeConfig = findImplicitScopeTransformerConfiguration
+    val implicitScopeConfigType = implicitScopeConfig.asTerm.tpe.widen.typeArgs.head.asType
       .asInstanceOf[Type[ImplicitScopeFlagsType]]
 
     '{
-      val _ = $localConfig
-      ${ useLocalConfig(localConfigType) }
+      val _ = $implicitScopeConfig
+      ${ useImplicitScopeFlags(implicitScopeConfigType) }
     }
   }
 }
