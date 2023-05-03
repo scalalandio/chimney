@@ -137,9 +137,9 @@ object PartialTransformerDefinitionImpl {
       To: Type,
       Cfg <: TransformerCfg: Type,
       Flags <: TransformerFlags: Type,
-      ScopeFlags <: TransformerFlags: Type
+      ImplicitScopeFlags <: TransformerFlags: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
   )(using Quotes): Expr[PartialTransformer[From, To]] =
-    TransformerMacros.derivePartialTransformerWithConfig[From, To, Cfg, Flags, ScopeFlags](td)
+    TransformerMacros.derivePartialTransformerWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](td)
 }

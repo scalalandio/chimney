@@ -85,12 +85,12 @@ object TransformerIntoImpl {
       To: Type,
       Cfg <: TransformerCfg: Type,
       Flags <: TransformerFlags: Type,
-      ScopeFlags <: TransformerFlags: Type
+      ImplicitScopeFlags <: TransformerFlags: Type
   ](
       source: Expr[From],
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
   )(using Quotes): Expr[To] = {
-    TransformerMacros.deriveTotalTransformerResultWithConfig[From, To, Cfg, Flags, ScopeFlags](source, td)
+    TransformerMacros.deriveTotalTransformerResultWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](source, td)
   }
 
 }

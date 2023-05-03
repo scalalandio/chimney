@@ -117,10 +117,10 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     *
     * @since 0.4.0
     */
-  def buildTransformer[ScopeFlags <: TransformerFlags](implicit
-      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
+  def buildTransformer[ImplicitScopeFlags <: TransformerFlags](implicit
+      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]
   ): Transformer[From, To] =
-    macro TransformerBlackboxMacros.buildTransformerImpl[From, To, Cfg, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.buildTransformerImpl[From, To, Cfg, Flags, ImplicitScopeFlags]
 
   override protected def __updateRuntimeData(newRuntimeData: TransformerDefinitionCommons.RuntimeDataStore): this.type =
     new TransformerDefinition(newRuntimeData).asInstanceOf[this.type]

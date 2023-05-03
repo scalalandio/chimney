@@ -16,12 +16,12 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
       InstanceFlags <: internal.TransformerFlags: Type,
-      SharedFlags <: internal.TransformerFlags: Type
+      ImplicitImplicitScopeFlags <: internal.TransformerFlags: Type
   ](src: Expr[From], runtimeDataStore: Option[Expr[TransformerDefinitionCommons.RuntimeDataStore]]): Expr[To] =
     deriveTransformationResult(
       TransformerContext.ForTotal.create[From, To](
         src,
-        configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, SharedFlags],
+        configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, ImplicitImplicitScopeFlags],
         runtimeDataStore
       )
     ).toEither.fold(
@@ -46,10 +46,10 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
       InstanceFlags <: internal.TransformerFlags: Type,
-      SharedFlags <: internal.TransformerFlags: Type
+      ImplicitImplicitScopeFlags <: internal.TransformerFlags: Type
   ](runtimeDataStore: Option[Expr[TransformerDefinitionCommons.RuntimeDataStore]]): Expr[Transformer[From, To]] =
     instantiateTotalTransformer[From, To] { (src: Expr[From]) =>
-      deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](src, runtimeDataStore)
+      deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, ImplicitImplicitScopeFlags](src, runtimeDataStore)
     }
 
   final def derivePartialTransformationResult[
@@ -57,7 +57,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
       InstanceFlags <: internal.TransformerFlags: Type,
-      SharedFlags <: internal.TransformerFlags: Type
+      ImplicitImplicitScopeFlags <: internal.TransformerFlags: Type
   ](
       src: Expr[From],
       failFast: Expr[Boolean],
@@ -67,7 +67,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       TransformerContext.ForPartial.create[From, To](
         src,
         failFast,
-        configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, SharedFlags],
+        configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, ImplicitImplicitScopeFlags],
         runtimeDataStore
       )
     ).toEither.fold(
@@ -92,10 +92,14 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
       InstanceFlags <: internal.TransformerFlags: Type,
-      SharedFlags <: internal.TransformerFlags: Type
+      ImplicitImplicitScopeFlags <: internal.TransformerFlags: Type
   ](runtimeDataStore: Option[Expr[TransformerDefinitionCommons.RuntimeDataStore]]): Expr[PartialTransformer[From, To]] =
     instantiatePartialTransformer[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
-      derivePartialTransformationResult[From, To, Cfg, InstanceFlags, SharedFlags](src, failFast, runtimeDataStore)
+      derivePartialTransformationResult[From, To, Cfg, InstanceFlags, ImplicitImplicitScopeFlags](
+        src,
+        failFast,
+        runtimeDataStore
+      )
     }
 
   /** Adapts DerivedExpr[To] to expected type of transformation */

@@ -57,10 +57,10 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     ${ TransformerDefinitionImpl.withCoproductInstance('this, 'f) }
   }
 
-  inline def buildTransformer[ScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ScopeFlags]
+  inline def buildTransformer[ImplicitScopeFlags <: TransformerFlags](using
+      tc: TransformerConfiguration[ImplicitScopeFlags]
   ): Transformer[From, To] = {
-    ${ TransformerDefinitionImpl.buildTransformer[From, To, Cfg, Flags, ScopeFlags]('this) }
+    ${ TransformerDefinitionImpl.buildTransformer[From, To, Cfg, Flags, ImplicitScopeFlags]('this) }
   }
 
   override protected def __updateRuntimeData(newRuntimeData: TransformerDefinitionCommons.RuntimeDataStore): this.type =

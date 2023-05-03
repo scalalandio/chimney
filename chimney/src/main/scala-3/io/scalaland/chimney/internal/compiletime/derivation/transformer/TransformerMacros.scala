@@ -28,11 +28,11 @@ final class TransformerMacros(q: Quotes)
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
       Flags <: internal.TransformerFlags: Type,
-      ScopeFlags <: internal.TransformerFlags: Type
+      ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
   )(using quotes: Quotes): Expr[Transformer[From, To]] =
-    deriveTotalTransformer[From, To, Cfg, Flags, ScopeFlags](runtimeDataStore = Some('{ ${ td }.runtimeData }))
+    deriveTotalTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = Some('{ ${ td }.runtimeData }))
 
   final def derivePartialTransformerWithDefaults[
       From: Type,
@@ -47,11 +47,13 @@ final class TransformerMacros(q: Quotes)
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
       Flags <: internal.TransformerFlags: Type,
-      ScopeFlags <: internal.TransformerFlags: Type
+      ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
   )(using quotes: Quotes): Expr[PartialTransformer[From, To]] =
-    derivePartialTransformer[From, To, Cfg, Flags, ScopeFlags](runtimeDataStore = Some('{ ${ td }.runtimeData }))
+    derivePartialTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = Some('{
+      ${ td }.runtimeData
+    }))
 
   private def findLocalTransformerConfigurationFlags(using
       quotes: Quotes
@@ -97,20 +99,20 @@ object TransformerMacros {
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
       Flags <: internal.TransformerFlags: Type,
-      ScopeFlags <: internal.TransformerFlags: Type
+      ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
   )(using quotes: Quotes): Expr[Transformer[From, To]] =
-    new TransformerMacros(quotes).deriveTotalTransformerWithConfig[From, To, Cfg, Flags, ScopeFlags](td)
+    new TransformerMacros(quotes).deriveTotalTransformerWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](td)
 
   final def deriveTotalTransformerResultWithConfig[
       From: Type,
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
       Flags <: internal.TransformerFlags: Type,
-      ScopeFlags <: internal.TransformerFlags: Type
+      ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](source: Expr[From], td: Expr[TransformerDefinition[From, To, Cfg, Flags]])(using quotes: Quotes): Expr[To] =
-    new TransformerMacros(quotes).deriveTotalTransformationResult[From, To, Cfg, Flags, ScopeFlags](
+    new TransformerMacros(quotes).deriveTotalTransformationResult[From, To, Cfg, Flags, ImplicitScopeFlags](
       source,
       Some('{ ${ td }.runtimeData })
     )
@@ -126,22 +128,22 @@ object TransformerMacros {
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
       Flags <: internal.TransformerFlags: Type,
-      ScopeFlags <: internal.TransformerFlags: Type
+      ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
   )(using quotes: Quotes): Expr[PartialTransformer[From, To]] =
-    new TransformerMacros(quotes).derivePartialTransformerWithConfig[From, To, Cfg, Flags, ScopeFlags](td)
+    new TransformerMacros(quotes).derivePartialTransformerWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](td)
 
   final def derivePartialTransformerResultWithConfig[
       From: Type,
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
       Flags <: internal.TransformerFlags: Type,
-      ScopeFlags <: internal.TransformerFlags: Type
+      ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](source: Expr[From], td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]], failFast: Boolean)(using
       quotes: Quotes
   ): Expr[partial.Result[To]] =
-    new TransformerMacros(quotes).derivePartialTransformationResult[From, To, Cfg, Flags, ScopeFlags](
+    new TransformerMacros(quotes).derivePartialTransformationResult[From, To, Cfg, Flags, ImplicitScopeFlags](
       source,
       Expr(failFast),
       Some('{ ${ td }.runtimeData })

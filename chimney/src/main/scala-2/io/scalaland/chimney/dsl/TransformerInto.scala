@@ -114,10 +114,10 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     *
     * @since 0.1.0
     */
-  def transform[ScopeFlags <: TransformerFlags](implicit
-      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
+  def transform[ImplicitScopeFlags <: TransformerFlags](implicit
+      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]
   ): To =
-    macro TransformerBlackboxMacros.transformImpl[From, To, Cfg, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.transformImpl[From, To, Cfg, Flags, ImplicitScopeFlags]
 
   /** Used internally by macro. Please don't use in your code.
     */

@@ -15,10 +15,10 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       To: WeakTypeTag,
       C: WeakTypeTag,
       Flags: WeakTypeTag,
-      ScopeFlags: WeakTypeTag
+      ImplicitScopeFlags: WeakTypeTag
   ](@unused tc: c.Tree): c.Expr[chimney.Transformer[From, To]] = {
     c.Expr[chimney.Transformer[From, To]](
-      buildDefinedTransformer[From, To, C, Flags, ScopeFlags](DerivationTarget.TotalTransformer)
+      buildDefinedTransformer[From, To, C, Flags, ImplicitScopeFlags](DerivationTarget.TotalTransformer)
     )
   }
 
@@ -27,10 +27,10 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       To: WeakTypeTag,
       C: WeakTypeTag,
       Flags: WeakTypeTag,
-      ScopeFlags: WeakTypeTag
+      ImplicitScopeFlags: WeakTypeTag
   ](@unused tc: c.Tree): c.Expr[chimney.PartialTransformer[From, To]] = {
     c.Expr[chimney.PartialTransformer[From, To]](
-      buildDefinedTransformer[From, To, C, Flags, ScopeFlags](DerivationTarget.PartialTransformer())
+      buildDefinedTransformer[From, To, C, Flags, ImplicitScopeFlags](DerivationTarget.PartialTransformer())
     )
   }
 
@@ -39,10 +39,10 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       To: WeakTypeTag,
       C: WeakTypeTag,
       InstanceFlags: WeakTypeTag,
-      ScopeFlags: WeakTypeTag
+      ImplicitScopeFlags: WeakTypeTag
   ](tc: c.Tree): c.Expr[To] = {
     c.Expr[To](
-      expandTransform[From, To, C, InstanceFlags, ScopeFlags](DerivationTarget.TotalTransformer, tc) {
+      expandTransform[From, To, C, InstanceFlags, ImplicitScopeFlags](DerivationTarget.TotalTransformer, tc) {
         (derivedTransformer, srcField) =>
           derivedTransformer.callTransform(srcField)
       }
@@ -54,10 +54,10 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       To: WeakTypeTag,
       C: WeakTypeTag,
       InstanceFlags: WeakTypeTag,
-      ScopeFlags: WeakTypeTag
+      ImplicitScopeFlags: WeakTypeTag
   ](tc: c.Tree): c.Expr[To] = {
     c.Expr[To](
-      expandTransform[From, To, C, InstanceFlags, ScopeFlags](DerivationTarget.PartialTransformer(), tc) {
+      expandTransform[From, To, C, InstanceFlags, ImplicitScopeFlags](DerivationTarget.PartialTransformer(), tc) {
         (derivedTransformer, srcField) =>
           derivedTransformer.callPartialTransform(srcField, q"false")
       }
@@ -69,10 +69,10 @@ class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacr
       To: WeakTypeTag,
       C: WeakTypeTag,
       InstanceFlags: WeakTypeTag,
-      ScopeFlags: WeakTypeTag
+      ImplicitScopeFlags: WeakTypeTag
   ](tc: c.Tree): c.Expr[To] = {
     c.Expr[To](
-      expandTransform[From, To, C, InstanceFlags, ScopeFlags](DerivationTarget.PartialTransformer(), tc) {
+      expandTransform[From, To, C, InstanceFlags, ImplicitScopeFlags](DerivationTarget.PartialTransformer(), tc) {
         (derivedTransformer, srcField) =>
           derivedTransformer.callPartialTransform(srcField, q"true")
       }

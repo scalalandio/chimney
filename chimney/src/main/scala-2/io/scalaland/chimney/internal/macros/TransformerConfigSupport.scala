@@ -12,9 +12,9 @@ trait TransformerConfigSupport extends MacroUtils {
 
   import c.universe.*
 
-  def readConfig[C: WeakTypeTag, InstanceFlags: WeakTypeTag, ScopeFlags: WeakTypeTag]: TransformerConfig = {
-    val scopeFlags = captureTransformerFlags(weakTypeOf[ScopeFlags])
-    val combinedFlags = captureTransformerFlags(weakTypeOf[InstanceFlags], scopeFlags)
+  def readConfig[C: WeakTypeTag, InstanceFlags: WeakTypeTag, ImplicitScopeFlags: WeakTypeTag]: TransformerConfig = {
+    val implicitScopeFlags = captureTransformerFlags(weakTypeOf[ImplicitScopeFlags])
+    val combinedFlags = captureTransformerFlags(weakTypeOf[InstanceFlags], implicitScopeFlags)
 
     captureTransformerConfig(weakTypeOf[C], runtimeDataIdx = 0).copy(flags = combinedFlags)
   }
