@@ -20,7 +20,9 @@ final class TransformerMacros(q: Quotes)
       To: Type
   ](using quotes: Quotes): Expr[Transformer[From, To]] =
     resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
-      deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore = None)
+      deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](
+        runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty
+      )
     }
 
   final def deriveTotalTransformerWithConfig[
@@ -32,14 +34,16 @@ final class TransformerMacros(q: Quotes)
   ](
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
   )(using quotes: Quotes): Expr[Transformer[From, To]] =
-    deriveTotalTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = Some('{ ${ td }.runtimeData }))
+    deriveTotalTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
 
   final def derivePartialTransformerWithDefaults[
       From: Type,
       To: Type
   ](using quotes: Quotes): Expr[PartialTransformer[From, To]] =
     resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
-      derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore = None)
+      derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](
+        runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty
+      )
     }
 
   final def derivePartialTransformerWithConfig[
@@ -51,9 +55,7 @@ final class TransformerMacros(q: Quotes)
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
   )(using quotes: Quotes): Expr[PartialTransformer[From, To]] =
-    derivePartialTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = Some('{
-      ${ td }.runtimeData
-    }))
+    derivePartialTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
 
   private def findImplicitScopeFlags(using
       quotes: Quotes
@@ -114,7 +116,7 @@ object TransformerMacros {
   ](source: Expr[From], td: Expr[TransformerDefinition[From, To, Cfg, Flags]])(using quotes: Quotes): Expr[To] =
     new TransformerMacros(quotes).deriveTotalTransformationResult[From, To, Cfg, Flags, ImplicitScopeFlags](
       source,
-      Some('{ ${ td }.runtimeData })
+      '{ ${ td }.runtimeData }
     )
 
   final def derivePartialTransformerWithDefaults[
@@ -146,7 +148,7 @@ object TransformerMacros {
     new TransformerMacros(quotes).derivePartialTransformationResult[From, To, Cfg, Flags, ImplicitScopeFlags](
       source,
       Expr(failFast),
-      Some('{ ${ td }.runtimeData })
+      '{ ${ td }.runtimeData }
     )
 
 }

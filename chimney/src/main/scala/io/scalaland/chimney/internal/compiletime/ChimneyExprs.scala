@@ -71,6 +71,8 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
     val RuntimeDataStore: RuntimeDataStoreModule
     trait RuntimeDataStoreModule { this: RuntimeDataStore.type =>
 
+      def empty: Expr[TransformerDefinitionCommons.RuntimeDataStore]
+
       def extractAt(
           runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
           index: Int

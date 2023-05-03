@@ -80,6 +80,9 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
 
     object RuntimeDataStore extends RuntimeDataStoreModule {
 
+      val empty: Expr[TransformerDefinitionCommons.RuntimeDataStore] =
+        '{ TransformerDefinitionCommons.emptyRuntimeDataStore }
+
       def extractAt(
           runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
           index: Int
