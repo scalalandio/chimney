@@ -46,7 +46,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
   def deriveWithTarget[From: WeakTypeTag, To: WeakTypeTag, ResultTpe](
       derivationTarget: DerivationTarget
   ): c.Expr[ResultTpe] = {
-    val tcTree = findImplicitScopeFlags
+    val tcTree = findImplicitScopeTransformerConfiguration
     val flags = captureFromTransformerConfigurationTree(tcTree)
     val config = TransformerConfig(flags = flags)
       .withDefinitionScope(weakTypeOf[From], weakTypeOf[To])
@@ -857,7 +857,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
     }
   }
 
-  def findImplicitScopeFlags: Tree = {
+  def findImplicitScopeTransformerConfiguration: Tree = {
     val searchTypeTree =
       tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]]}"
     inferImplicitTpe(searchTypeTree, macrosDisabled = false)
