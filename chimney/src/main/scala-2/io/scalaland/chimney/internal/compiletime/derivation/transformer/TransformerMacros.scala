@@ -12,27 +12,27 @@ final class TransformerMacros(val c: blackbox.Context)
     with DerivationPlatform
     with GatewayPlatform {
 
-  type LocalConfigType <: internal.TransformerFlags
+  type ImplicitScopeFlagsType <: internal.TransformerFlags
 
   final def deriveTotalTransformerWithDefaults[
       From: c.WeakTypeTag,
       To: c.WeakTypeTag
   ]: c.universe.Expr[Transformer[From, To]] =
-    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings { implicit LocalConfigType =>
+    resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
       import typeUtils.fromWeakConversion.*
-      deriveTotalTransformer[From, To, Empty, Default, LocalConfigType](runtimeDataStore = None)
+      deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore = None)
     }
 
   final def derivePartialTransformerWithDefaults[
       From: c.WeakTypeTag,
       To: c.WeakTypeTag
   ]: c.universe.Expr[PartialTransformer[From, To]] =
-    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings { implicit LocalConfigType =>
+    resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
       import typeUtils.fromWeakConversion.*
-      derivePartialTransformer[From, To, Empty, Default, LocalConfigType](runtimeDataStore = None)
+      derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore = None)
     }
 
-  private def findLocalTransformerConfigurationFlags: c.universe.Tree = {
+  private def findImplicitScopeFlags: c.universe.Tree = {
     import c.universe.*
 
     val searchTypeTree =
@@ -59,12 +59,12 @@ final class TransformerMacros(val c: blackbox.Context)
       .filterNot(_ == c.universe.EmptyTree)
   }
 
-  private def resolveLocalTransformerConfigAndMuteUnusedConfigWarnings[A](
-      useLocalConfig: Type[LocalConfigType] => Expr[A]
+  private def resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings[A](
+      useLocalConfig: Type[ImplicitScopeFlagsType] => Expr[A]
   ): Expr[A] = {
-    val localConfig = findLocalTransformerConfigurationFlags
+    val localConfig = findImplicitScopeFlags
     val localConfigType =
-      typeUtils.fromUntyped(localConfig.tpe.typeArgs.head).asInstanceOf[Type[LocalConfigType]]
+      typeUtils.fromUntyped(localConfig.tpe.typeArgs.head).asInstanceOf[Type[ImplicitScopeFlagsType]]
 
     import c.universe.*
     c.Expr[A](

@@ -13,14 +13,14 @@ final class TransformerMacros(q: Quotes)
     with DerivationPlatform
     with GatewayPlatform {
 
-  type LocalConfigType <: internal.TransformerFlags
+  type ImplicitScopeFlagsType <: internal.TransformerFlags
 
   final def deriveTotalTransformerWithDefaults[
       From: Type,
       To: Type
   ](using quotes: Quotes): Expr[Transformer[From, To]] =
-    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings { implicit LocalConfigType =>
-      deriveTotalTransformer[From, To, Empty, Default, LocalConfigType](runtimeDataStore = None)
+    resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
+      deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore = None)
     }
 
   final def deriveTotalTransformerWithConfig[
@@ -38,8 +38,8 @@ final class TransformerMacros(q: Quotes)
       From: Type,
       To: Type
   ](using quotes: Quotes): Expr[PartialTransformer[From, To]] =
-    resolveLocalTransformerConfigAndMuteUnusedConfigWarnings { implicit LocalConfigType =>
-      derivePartialTransformer[From, To, Empty, Default, LocalConfigType](runtimeDataStore = None)
+    resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
+      derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore = None)
     }
 
   final def derivePartialTransformerWithConfig[
@@ -55,7 +55,7 @@ final class TransformerMacros(q: Quotes)
       ${ td }.runtimeData
     }))
 
-  private def findLocalTransformerConfigurationFlags(using
+  private def findImplicitScopeFlags(using
       quotes: Quotes
   ): Expr[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]] =
     scala.quoted.Expr
@@ -66,15 +66,15 @@ final class TransformerMacros(q: Quotes)
         // $COVERAGE-ON$
       }
 
-  private def resolveLocalTransformerConfigAndMuteUnusedConfigWarnings[A: Type](
-      useLocalConfig: Type[LocalConfigType] => Expr[A]
+  private def resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings[A: Type](
+      useLocalConfig: Type[ImplicitScopeFlagsType] => Expr[A]
   ): Expr[A] = {
     import quotes.*
     import quotes.reflect.*
 
-    val localConfig = findLocalTransformerConfigurationFlags
-    val localConfigType = findLocalTransformerConfigurationFlags.asTerm.tpe.widen.typeArgs.head.asType
-      .asInstanceOf[Type[LocalConfigType]]
+    val localConfig = findImplicitScopeFlags
+    val localConfigType = findImplicitScopeFlags.asTerm.tpe.widen.typeArgs.head.asType
+      .asInstanceOf[Type[ImplicitScopeFlagsType]]
 
     '{
       val _ = $localConfig
