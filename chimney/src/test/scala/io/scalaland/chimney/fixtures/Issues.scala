@@ -164,3 +164,9 @@ object Issue291 {
   case class Bar(address: GenericValueClass[String])
   case class Foo(address: Option[GenericValueClass[String]])
 }
+
+object Issue297 {
+  case class Foo(value: String) extends AnyVal
+  case class Bar(value: String)
+  case class Bar2(value: String, number: Int)
+}

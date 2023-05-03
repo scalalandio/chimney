@@ -222,7 +222,11 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
         derivedTree <- resolveRecursiveTransformerBody(config.withSrcPrefixTree(fromMemberAccessTree))(
           fromValueClassMemberType,
           To
-        )
+        ).orElse {
+          // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
+          expandDestinationCaseClass(config)(From, To)
+            .getOrElse(notSupportedDerivation(config.srcPrefixTree, From, To))
+        }
       } yield derivedTree
     }
   }
@@ -237,7 +241,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
         // $COVERAGE-ON$
       )
 
-      for {
+      val expandToValueClass = for {
         toValueClassMethodSymbol <- toValueClassMember
         toValueClassMemberType <- toValueClassMember.map(_.resultTypeIn(To))
         transformerBodyTree <- resolveRecursiveTransformerBody(config)(From, toValueClassMemberType)
@@ -247,6 +251,13 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
         transformerBodyTree,
         config.derivationTarget
       )(innerTree => q"new $To($innerTree)")
+
+      expandToValueClass
+        .orElse {
+          // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
+          expandDestinationCaseClass(config)(From, To)
+            .getOrElse(notSupportedDerivation(config.srcPrefixTree, From, To))
+        }
     }
   }
 

@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.utils
 
-trait EitherUtils {
+trait EitherUtils extends EitherOrElseCompat {
 
   implicit class MapOps[K, E, V](map: Map[K, Either[E, V]]) {
 

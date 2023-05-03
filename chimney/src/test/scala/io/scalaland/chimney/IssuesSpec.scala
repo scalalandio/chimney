@@ -653,5 +653,13 @@ object IssuesSpec extends TestSuite {
       val foo = Bar(new GenericValueClass("barToFoo")).transformInto[Foo]
       foo.address.get.value ==> "barToFoo"
     }
+
+    test("fix issue #297") {
+      import Issue297.*
+
+      Foo("b").transformInto[Bar] ==> Bar("b")
+      Bar("b").transformInto[Foo] ==> Foo("b")
+      Foo("b").into[Bar2].withFieldConst(_.number, 3).transform ==> Bar2("b", 3)
+    }
   }
 }
