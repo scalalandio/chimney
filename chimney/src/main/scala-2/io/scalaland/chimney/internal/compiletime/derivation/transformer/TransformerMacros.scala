@@ -78,7 +78,4 @@ final class TransformerMacros(val c: blackbox.Context)
        """
     )
   }
-
-  implicit private val EmptyConfigType: Type[Empty] = ChimneyType.TransformerCfg.Empty
-  implicit private val DefaultFlagsType: Type[Default] = ChimneyType.TransformerFlags.Default
 }

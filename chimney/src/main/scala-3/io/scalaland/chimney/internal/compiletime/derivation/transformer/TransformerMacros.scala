@@ -75,7 +75,7 @@ final class TransformerMacros(q: Quotes)
     import quotes.reflect.*
 
     val localConfig = findImplicitScopeFlags
-    val localConfigType = findImplicitScopeFlags.asTerm.tpe.widen.typeArgs.head.asType
+    val localConfigType = localConfig.asTerm.tpe.widen.typeArgs.head.asType
       .asInstanceOf[Type[ImplicitScopeFlagsType]]
 
     '{
@@ -83,9 +83,6 @@ final class TransformerMacros(q: Quotes)
       ${ useLocalConfig(localConfigType) }
     }
   }
-
-  implicit private val EmptyConfigType: Type[Empty] = ChimneyType.TransformerCfg.Empty
-  implicit private val DefaultFlagsType: Type[Default] = ChimneyType.TransformerFlags.Default
 }
 
 object TransformerMacros {
