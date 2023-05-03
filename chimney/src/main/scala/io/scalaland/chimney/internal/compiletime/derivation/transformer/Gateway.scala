@@ -107,18 +107,18 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       .flatMap {
         case DerivedExpr.TotalExpr(expr) =>
           ctx match {
-            case TransformerContext.ForTotal(_, _, _, _, _) =>
+            case _: TransformerContext.ForTotal[?, ?] =>
               DerivationResult.pure(expr)
-            case TransformerContext.ForPartial(_, _, _, _, _, _) =>
+            case _: TransformerContext.ForPartial[?, ?] =>
               DerivationResult.pure(ChimneyExpr.PartialResult.Value(expr))
           }
         case DerivedExpr.PartialExpr(expr) =>
           ctx match {
-            case TransformerContext.ForTotal(_, _, _, _, _) =>
+            case _: TransformerContext.ForTotal[?, ?] =>
               DerivationResult.fromException(
                 new AssertionError("Derived partial.Result expression where total Transformer excepts direct value")
               )
-            case TransformerContext.ForPartial(_, _, _, _, _, _) =>
+            case _: TransformerContext.ForPartial[?, ?] =>
               DerivationResult.pure(expr)
           }
       }
