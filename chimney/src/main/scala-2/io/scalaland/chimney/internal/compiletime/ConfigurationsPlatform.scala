@@ -84,8 +84,6 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
     private val coproductInstancePartialTC =
       typeOf[internal.TransformerCfg.CoproductInstancePartial[?, ?, ?]].typeConstructor
 
-    // TODO: adjust for new config type
-    // TODO: this coule be tailrec
     private def extractTransformerConfig[Cfg <: internal.TransformerCfg: Type](
         runtimeDataIdx: Int
     ): TransformerConfig = {
