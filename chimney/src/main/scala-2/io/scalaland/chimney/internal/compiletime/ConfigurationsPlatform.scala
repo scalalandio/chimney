@@ -12,10 +12,10 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
     final override def readTransformerConfig[
         Cfg <: internal.TransformerCfg: Type,
         InstanceFlags <: internal.TransformerFlags: Type,
-        ImplicitImplicitScopeFlags <: internal.TransformerFlags: Type
+        ImplicitScopeFlags <: internal.TransformerFlags: Type
     ]: TransformerConfig = {
-      val implicitImplicitScopeFlags = extractTransformerFlags[ImplicitImplicitScopeFlags](TransformerFlags())
-      val allFlags = extractTransformerFlags[InstanceFlags](implicitImplicitScopeFlags)
+      val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags())
+      val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
       extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
     }
 
