@@ -57,16 +57,16 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     ${ PartialTransformerIntoImpl.withCoproductInstancePartialImpl('this, 'f) }
   }
 
-  inline def transform[ScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ScopeFlags]
+  inline def transform[ImplicitScopeFlags <: TransformerFlags](using
+      tc: TransformerConfiguration[ImplicitScopeFlags]
   ): partial.Result[To] = {
-    ${ PartialTransformerIntoImpl.transform[From, To, Cfg, Flags, ScopeFlags]('source, 'td, failFast = false) }
+    ${ PartialTransformerIntoImpl.transform[From, To, Cfg, Flags, ImplicitScopeFlags]('source, 'td, failFast = false) }
 
   }
 
-  inline def transformFailFast[ScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ScopeFlags]
+  inline def transformFailFast[ImplicitScopeFlags <: TransformerFlags](using
+      tc: TransformerConfiguration[ImplicitScopeFlags]
   ): partial.Result[To] = {
-    ${ PartialTransformerIntoImpl.transform[From, To, Cfg, Flags, ScopeFlags]('source, 'td, failFast = true) }
+    ${ PartialTransformerIntoImpl.transform[From, To, Cfg, Flags, ImplicitScopeFlags]('source, 'td, failFast = true) }
   }
 }

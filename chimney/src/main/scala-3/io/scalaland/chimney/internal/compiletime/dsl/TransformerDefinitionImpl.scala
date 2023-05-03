@@ -85,9 +85,9 @@ object TransformerDefinitionImpl {
       To: Type,
       Cfg <: TransformerCfg: Type,
       Flags <: TransformerFlags: Type,
-      ScopeFlags <: TransformerFlags: Type
+      ImplicitScopeFlags <: TransformerFlags: Type
   ](
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
   )(using Quotes): Expr[Transformer[From, To]] =
-    TransformerMacros.deriveTotalTransformerWithConfig[From, To, Cfg, Flags, ScopeFlags](td)
+    TransformerMacros.deriveTotalTransformerWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](td)
 }

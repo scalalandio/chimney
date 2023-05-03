@@ -161,10 +161,10 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     *
     * @since 0.7.0
     */
-  def buildTransformer[ScopeFlags <: TransformerFlags](implicit
-      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
+  def buildTransformer[ImplicitScopeFlags <: TransformerFlags](implicit
+      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]
   ): PartialTransformer[From, To] =
-    macro TransformerBlackboxMacros.buildPartialTransformerImpl[From, To, Cfg, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.buildPartialTransformerImpl[From, To, Cfg, Flags, ImplicitScopeFlags]
 
   override protected def __updateRuntimeData(newRuntimeData: TransformerDefinitionCommons.RuntimeDataStore): this.type =
     new PartialTransformerDefinition(newRuntimeData).asInstanceOf[this.type]

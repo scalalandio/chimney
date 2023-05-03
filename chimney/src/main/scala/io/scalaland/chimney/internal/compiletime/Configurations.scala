@@ -114,7 +114,7 @@ private[compiletime] trait Configurations { this: Definitions =>
     def readTransformerConfig[
         Cfg <: internal.TransformerCfg: Type,
         InstanceFlags <: internal.TransformerFlags: Type,
-        SharedFlags <: internal.TransformerFlags: Type
+        ImplicitImplicitScopeFlags <: internal.TransformerFlags: Type
     ]: TransformerConfig
   }
 }

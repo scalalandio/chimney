@@ -39,7 +39,9 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     ${ TransformerIntoImpl.withCoproductInstanceImpl('this, 'f) }
   }
 
-  inline def transform[ScopeFlags <: TransformerFlags](using tc: TransformerConfiguration[ScopeFlags]): To = {
-    ${ TransformerIntoImpl.transform[From, To, Cfg, Flags, ScopeFlags]('source, 'td) }
+  inline def transform[ImplicitScopeFlags <: TransformerFlags](using
+      tc: TransformerConfiguration[ImplicitScopeFlags]
+  ): To = {
+    ${ TransformerIntoImpl.transform[From, To, Cfg, Flags, ImplicitScopeFlags]('source, 'td) }
   }
 }
