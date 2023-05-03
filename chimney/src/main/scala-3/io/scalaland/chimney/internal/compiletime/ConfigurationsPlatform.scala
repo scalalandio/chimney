@@ -45,7 +45,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
             case _ =>
               flagsRest.setBoolFlag[flag](value = false)
         case _ =>
-          reportError(s"Bad internal transformer flags type shape!  ${Type.prettyPrint[Flag]}")
+          reportError("Bad internal transformer flags type shape!")
       }
     }
 
@@ -93,9 +93,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
               RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
             )
         case _ =>
-          reportError(
-            s"Bad internal transformer config type shape!  ${Type.prettyPrint[Cfg]} dealiased to ${cfgTpe.show(using Printer.TypeReprAnsiCode)}"
-          )
+          reportError("Bad internal transformer config type shape!")
       }
     }
   }
