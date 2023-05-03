@@ -53,14 +53,4 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     def prettyPrint[T: Type]: String = Type[T].toString
   }
-
-  implicit class UntypedTypeOps(private val tpe: c.Type) {
-
-    /** Assumes that this `tpe` is String singleton type and extracts its value */
-    def asStringSingletonType: String = tpe
-      .asInstanceOf[scala.reflect.internal.Types#UniqueConstantType]
-      .value
-      .value
-      .asInstanceOf[String]
-  }
 }

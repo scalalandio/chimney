@@ -97,4 +97,16 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
       }
     }
   }
+
+  extension [T <: String](tpe: Type[T]) {
+
+    private def asStringSingletonType: String = {
+      import quotes.reflect.*
+
+      quoted.Type.valueOfConstant[T](using tpe)(using quotes) match {
+        case Some(str) => str
+        case None      => reportError(s"Invalid string literal type: ${tpe}")
+      }
+    }
+  }
 }
