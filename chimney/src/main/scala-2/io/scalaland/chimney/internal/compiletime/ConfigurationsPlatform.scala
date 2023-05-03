@@ -153,4 +153,14 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
       }
     }
   }
+
+  implicit private class StringSingletonTypeOps(private val tpe: c.Type) {
+
+    /** Assumes that this `tpe` is String singleton type and extracts its value */
+    def asStringSingletonType: String = tpe
+      .asInstanceOf[scala.reflect.internal.Types#UniqueConstantType]
+      .value
+      .value
+      .asInstanceOf[String]
+  }
 }

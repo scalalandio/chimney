@@ -53,16 +53,4 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       scala.util.Try(repr.dealias.show(using Printer.TypeReprAnsiCode)).getOrElse(repr.toString)
     }
   }
-
-  extension [T <: String](tpe: Type[T]) {
-
-    def asStringSingletonType: String = {
-      import quotes.reflect.*
-
-      quoted.Type.valueOfConstant[T](using tpe)(using quotes) match {
-        case Some(str) => str
-        case None      => reportError(s"Invalid string literal type: ${tpe}")
-      }
-    }
-  }
 }
