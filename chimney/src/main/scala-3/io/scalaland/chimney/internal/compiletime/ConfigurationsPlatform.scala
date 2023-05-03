@@ -45,7 +45,6 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
             case _ =>
               flagsRest.setBoolFlag[flag](value = false)
         case _ =>
-          println(s"Bad tpe: ${Type.prettyPrint[Flag]}")
           reportError(s"Bad internal transformer flags type shape!  ${Type.prettyPrint[Flag]}")
       }
     }
