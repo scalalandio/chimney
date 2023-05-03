@@ -47,19 +47,13 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       def create[From: Type, To: Type](
           src: Expr[From],
           config: TransformerConfig,
-          runtimeDataStore: Option[Expr[TransformerDefinitionCommons.RuntimeDataStore]]
+          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
       ): ForTotal[From, To] =
         ForTotal(
           From = Type[From],
           To = Type[To],
           src = src,
-          runtimeDataStore = runtimeDataStore
-            .getOrElse(
-              Expr.asInstanceOf[Nothing, TransformerDefinitionCommons.RuntimeDataStore](Expr.Nothing)(
-                Type.Nothing,
-                ChimneyType.RuntimeDataStore
-              )
-            ),
+          runtimeDataStore = runtimeDataStore,
           config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
         )
     }
@@ -90,18 +84,13 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
           src: Expr[From],
           failFast: Expr[Boolean],
           config: TransformerConfig,
-          runtimeDataStore: Option[Expr[TransformerDefinitionCommons.RuntimeDataStore]]
+          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
       ): ForPartial[From, To] = ForPartial(
         From = Type[From],
         To = Type[To],
         src = src,
         failFast = failFast,
-        runtimeDataStore = runtimeDataStore.getOrElse(
-          Expr.asInstanceOf[Nothing, TransformerDefinitionCommons.RuntimeDataStore](Expr.Nothing)(
-            Type.Nothing,
-            ChimneyType.RuntimeDataStore
-          )
-        ),
+        runtimeDataStore = runtimeDataStore,
         config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
       )
     }

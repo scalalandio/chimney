@@ -20,7 +20,9 @@ final class TransformerMacros(val c: blackbox.Context)
   ]: c.universe.Expr[Transformer[From, To]] =
     resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
       import typeUtils.fromWeakConversion.*
-      deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore = None)
+      deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](
+        runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty
+      )
     }
 
   final def derivePartialTransformerWithDefaults[
@@ -29,7 +31,9 @@ final class TransformerMacros(val c: blackbox.Context)
   ]: c.universe.Expr[PartialTransformer[From, To]] =
     resolveImplicitScopeFlagsAndMuteUnusedConfigWarnings { implicit ImplicitScopeFlagsType =>
       import typeUtils.fromWeakConversion.*
-      derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore = None)
+      derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore =
+        ChimneyExpr.RuntimeDataStore.empty
+      )
     }
 
   private def findImplicitScopeFlags: c.universe.Tree = {

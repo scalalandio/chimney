@@ -17,7 +17,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       Cfg <: internal.TransformerCfg: Type,
       InstanceFlags <: internal.TransformerFlags: Type,
       ImplicitImplicitScopeFlags <: internal.TransformerFlags: Type
-  ](src: Expr[From], runtimeDataStore: Option[Expr[TransformerDefinitionCommons.RuntimeDataStore]]): Expr[To] =
+  ](src: Expr[From], runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[To] =
     deriveTransformationResult(
       TransformerContext.ForTotal.create[From, To](
         src,
@@ -47,7 +47,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       Cfg <: internal.TransformerCfg: Type,
       InstanceFlags <: internal.TransformerFlags: Type,
       ImplicitImplicitScopeFlags <: internal.TransformerFlags: Type
-  ](runtimeDataStore: Option[Expr[TransformerDefinitionCommons.RuntimeDataStore]]): Expr[Transformer[From, To]] =
+  ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[Transformer[From, To]] =
     instantiateTotalTransformer[From, To] { (src: Expr[From]) =>
       deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, ImplicitImplicitScopeFlags](src, runtimeDataStore)
     }
@@ -61,7 +61,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
   ](
       src: Expr[From],
       failFast: Expr[Boolean],
-      runtimeDataStore: Option[Expr[TransformerDefinitionCommons.RuntimeDataStore]]
+      runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
   ): Expr[partial.Result[To]] =
     deriveTransformationResult(
       TransformerContext.ForPartial.create[From, To](
@@ -93,7 +93,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
       Cfg <: internal.TransformerCfg: Type,
       InstanceFlags <: internal.TransformerFlags: Type,
       ImplicitImplicitScopeFlags <: internal.TransformerFlags: Type
-  ](runtimeDataStore: Option[Expr[TransformerDefinitionCommons.RuntimeDataStore]]): Expr[PartialTransformer[From, To]] =
+  ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[PartialTransformer[From, To]] =
     instantiatePartialTransformer[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
       derivePartialTransformationResult[From, To, Cfg, InstanceFlags, ImplicitImplicitScopeFlags](
         src,
