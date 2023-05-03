@@ -5,9 +5,13 @@ import scala.reflect.ClassTag
 
 private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatform =>
 
+  import quotes.*
+  import quotes.reflect.*
+
   final override type Expr[A] = quoted.Expr[A]
 
   object Expr extends ExprModule {
+    val Nothing: Expr[Nothing] = '{ ??? }
     val Unit: Expr[Unit] = '{ () }
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]] =
       '{ scala.Array.apply[A](${ quoted.Varargs(args.toSeq) }*)(${ quoted.Expr.summon[ClassTag[A]].get }) }
@@ -25,5 +29,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     }
 
     def asInstanceOf[T: Type, U: Type](expr: Expr[T]): Expr[U] = '{ ${ expr }.asInstanceOf[U] }
+
+    def prettyPrint[T: Type](expr: Expr[T]): String = expr.asTerm.show(using Printer.TreeAnsiCode)
   }
 }

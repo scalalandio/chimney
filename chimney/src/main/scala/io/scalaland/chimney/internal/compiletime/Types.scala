@@ -9,7 +9,9 @@ private[compiletime] trait Types {
   trait TypeModule { this: Type.type =>
     def apply[T](implicit T: Type[T]): Type[T] = T
 
+    val Nothing: Type[Nothing]
     val Any: Type[Any]
+    val Boolean: Type[Boolean]
     val Int: Type[Int]
     val Unit: Type[Unit]
 
@@ -26,6 +28,8 @@ private[compiletime] trait Types {
 
     def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean
     def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean
+
+    def prettyPrint[T: Type]: String
   }
 
   implicit class TypeOps[T](private val tpe: Type[T]) {

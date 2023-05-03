@@ -1,5 +1,6 @@
-package io.scalaland.chimney.compiletime.dsl
+package io.scalaland.chimney.internal.compiletime.dsl
 
+import scala.annotation.nowarn
 import scala.quoted.*
 
 object FieldNameUtils {
@@ -42,6 +43,9 @@ object FieldNameUtils {
     }
   }
 
+  @nowarn(
+    "msg=the type test for quotes.reflect.ValDef cannot be checked at runtime because it refers to an abstract type member or type parameter"
+  )
   def extractSelectorFieldNameOpt(using quotes: Quotes)(selectorTerm: quotes.reflect.Term): Option[String] = {
     import quotes.reflect.*
 
@@ -71,5 +75,4 @@ object FieldNameUtils {
   private def invalidSelectorErrorMessage[T](selectorExpr: Expr[T])(using Quotes): String = {
     s"Invalid selector expression: ${selectorExpr.show}"
   }
-
 }

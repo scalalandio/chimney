@@ -10,6 +10,7 @@ private[compiletime] trait Exprs { this: Definitions =>
 
   val Expr: ExprModule
   trait ExprModule { this: Expr.type =>
+    val Nothing: Expr[Nothing]
     val Unit: Expr[Unit]
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]]
 
@@ -28,6 +29,8 @@ private[compiletime] trait Exprs { this: Definitions =>
     }
 
     def asInstanceOf[T: Type, U: Type](expr: Expr[T]): Expr[U]
+
+    def prettyPrint[T: Type](expr: Expr[T]): String
   }
 
   implicit class ExprOps[T: Type](private val expr: Expr[T]) {

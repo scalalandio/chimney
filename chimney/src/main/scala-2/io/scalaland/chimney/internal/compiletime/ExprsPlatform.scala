@@ -7,6 +7,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
   final override type Expr[A] = c.Expr[A]
 
   object Expr extends ExprModule {
+    val Nothing: Expr[Nothing] = c.Expr(q"???")
     val Unit: Expr[Unit] = c.Expr(q"()")
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]] = c.Expr(q"_root_.scala.Array[${Type[A]}](..${args})")
     object Option extends OptionModule {
@@ -24,5 +25,11 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     }
 
     def asInstanceOf[T: Type, U: Type](expr: Expr[T]): Expr[U] = c.Expr(q"${expr}.asInstanceOf[${Type[U]}]")
+
+    def prettyPrint[T: Type](expr: Expr[T]): String =
+      expr
+        .toString()
+        .replaceAll("\\$\\d+", "")
+        .replace("$u002E", ".")
   }
 }

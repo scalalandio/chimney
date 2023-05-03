@@ -1,7 +1,8 @@
-package io.scalaland.chimney.compiletime.dsl
+package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.compiletime.dsl.FieldNameUtils
 import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
+import io.scalaland.chimney.internal.compiletime.dsl.FieldNameUtils
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.PartialTransformer
@@ -136,15 +137,9 @@ object PartialTransformerDefinitionImpl {
       To: Type,
       Cfg <: TransformerCfg: Type,
       Flags <: TransformerFlags: Type,
-      ScopeFlags <: TransformerFlags: Type
+      ImplicitScopeFlags <: TransformerFlags: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
-  )(using Quotes): Expr[PartialTransformer[From, To]] = {
-    '{
-      new PartialTransformer[From, To] {
-        def transform(src: From, failFast: Boolean): partial.Result[To] =
-          partial.Result.fromErrorString("not implemented yet")
-      }
-    }
-  }
+  )(using Quotes): Expr[PartialTransformer[From, To]] =
+    TransformerMacros.derivePartialTransformerWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](td)
 }

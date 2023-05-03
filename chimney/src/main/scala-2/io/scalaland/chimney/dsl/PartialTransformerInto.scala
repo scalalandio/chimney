@@ -170,10 +170,10 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     *
     * @since 0.7.0
     */
-  def transform[ScopeFlags <: TransformerFlags](implicit
-      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
+  def transform[ImplicitScopeFlags <: TransformerFlags](implicit
+      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]
   ): partial.Result[To] =
-    macro TransformerBlackboxMacros.partialTransformNoFailFastImpl[From, To, Cfg, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.partialTransformNoFailFastImpl[From, To, Cfg, Flags, ImplicitScopeFlags]
 
   /** Apply configured partial transformation in-place in a short-circuit (fail fast) mode.
     *
@@ -185,10 +185,10 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     *
     * @since 0.7.0
     */
-  def transformFailFast[ScopeFlags <: TransformerFlags](implicit
-      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ScopeFlags]
+  def transformFailFast[ImplicitScopeFlags <: TransformerFlags](implicit
+      tc: io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]
   ): partial.Result[To] =
-    macro TransformerBlackboxMacros.partialTransformFailFastImpl[From, To, Cfg, Flags, ScopeFlags]
+    macro TransformerBlackboxMacros.partialTransformFailFastImpl[From, To, Cfg, Flags, ImplicitScopeFlags]
 
   /** Used internally by macro. Please don't use in your code.
     */

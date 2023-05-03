@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
+import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.partial
 
 import scala.annotation.nowarn
@@ -65,6 +66,17 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
       def Index(index: Expr[Int]): Expr[partial.PathElement.Index]
       def MapKey(key: Expr[Any]): Expr[partial.PathElement.MapKey]
       def MapValue(key: Expr[Any]): Expr[partial.PathElement.MapValue]
+    }
+
+    val RuntimeDataStore: RuntimeDataStoreModule
+    trait RuntimeDataStoreModule { this: RuntimeDataStore.type =>
+
+      def empty: Expr[TransformerDefinitionCommons.RuntimeDataStore]
+
+      def extractAt(
+          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
+          index: Int
+      ): Expr[Any]
     }
   }
 

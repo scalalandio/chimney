@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.dsl.ImplicitTransformerPreference
+import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
@@ -34,6 +34,13 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
       fromWeak[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       fromWeak[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
+
+    val RuntimeDataStore: Type[TransformerDefinitionCommons.RuntimeDataStore] =
+      fromWeak[TransformerDefinitionCommons.RuntimeDataStore]
+
+    object TransformerCfg extends TransformerCfgModule {
+      val Empty: Type[internal.TransformerCfg.Empty] = fromWeak[internal.TransformerCfg.Empty]
+    }
 
     object TransformerFlags extends TransformerFlagsModule {
       import internal.TransformerFlags.Flag

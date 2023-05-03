@@ -9,31 +9,14 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
 
   protected object configurationsImpl extends ConfigurationDefinitionsImpl {
 
-    import typeUtils.fromWeakConversion.*
-
-    def extractRuntimeConfiguration[From: Type, ToField: Type](
-        runtimeConfiguration: FieldOverride.RuntimeConfiguration,
-        runtimeDataStore: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore]
-    ): FieldOverride.ValueSource[From, ToField] = ???
-
-    final def readTransformerConfigPlatform[
-        From: WeakTypeTag,
-        To: WeakTypeTag,
-        Cfg <: internal.TransformerCfg: WeakTypeTag,
-        InstanceFlags <: internal.TransformerFlags: WeakTypeTag,
-        ScopeFlags <: internal.TransformerFlags: WeakTypeTag
-    ]: TransformerConfig[From, To] = readTransformerConfig[From, To, Cfg, InstanceFlags, ScopeFlags]
-
     final override def readTransformerConfig[
-        From: Type,
-        To: Type,
         Cfg <: internal.TransformerCfg: Type,
         InstanceFlags <: internal.TransformerFlags: Type,
-        SharedFlags <: internal.TransformerFlags: Type
-    ]: TransformerConfig[From, To] = {
-      val sharedFlags = extractTransformerFlags[SharedFlags](TransformerFlags())
-      val allFlags = extractTransformerFlags[InstanceFlags](sharedFlags)
-      extractTransformerConfig[From, To, Cfg](runtimeDataIdx = 0).copy[From, To](flags = allFlags)
+        ImplicitScopeFlags <: internal.TransformerFlags: Type
+    ]: TransformerConfig = {
+      val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags())
+      val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
+      extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
     }
 
     protected type FlagHead <: internal.TransformerFlags.Flag
@@ -43,7 +26,6 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
     private val implicitConflictResolutionTC =
       typeOf[internal.TransformerFlags.ImplicitConflictResolution[?]].typeConstructor
 
-    // TODO: this coule be tailrec
     private def extractTransformerFlags[Flag <: internal.TransformerFlags: Type](
         defaultFlags: TransformerFlags
     ): TransformerFlags = {
@@ -102,12 +84,9 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
     private val coproductInstancePartialTC =
       typeOf[internal.TransformerCfg.CoproductInstancePartial[?, ?, ?]].typeConstructor
 
-    // TODO: adjust for new config type
-    // TODO: this coule be tailrec
-    private def extractTransformerConfig[From: Type, To: Type, Cfg <: internal.TransformerCfg: Type](
+    private def extractTransformerConfig[Cfg <: internal.TransformerCfg: Type](
         runtimeDataIdx: Int
-    ): TransformerConfig[From, To] = {
-      /*
+    ): TransformerConfig = {
       val cfgTpe = Type[Cfg].dealias
 
       if (cfgTpe =:= emptyT) {
@@ -115,54 +94,71 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
       } else if (cfgTpe.typeConstructor =:= fieldConstTC) {
         val List(fieldNameT, rest) = cfgTpe.typeArgs
         val fieldName = fieldNameT.asStringSingletonType
-        implicit val CfgTail: Type[CfgTail] = typeImpl.fromUntyped(rest)
-        extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
-          .fieldOverride(fieldName, FieldOverrideSource.Const(runtimeDataIdx))
+        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
+          .addFieldOverride(fieldName, RuntimeFieldOverride.Const(runtimeDataIdx))
       } else if (cfgTpe.typeConstructor =:= fieldComputedTC) {
         val List(fieldNameT, rest) = cfgTpe.typeArgs
         val fieldName = fieldNameT.asStringSingletonType
-        implicit val CfgTail: Type[CfgTail] = typeImpl.fromUntyped(rest)
-        extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
-          .fieldOverride(fieldName, FieldOverrideSource.Computed(runtimeDataIdx))
+        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
+          .addFieldOverride(fieldName, RuntimeFieldOverride.Computed(runtimeDataIdx))
+      } else if (cfgTpe.typeConstructor =:= fieldConstPartialTC) {
+        val List(fieldNameT, rest) = cfgTpe.typeArgs
+        val fieldName = fieldNameT.asStringSingletonType
+        implicit val Tail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
+          .addFieldOverride(fieldName, RuntimeFieldOverride.ConstPartial(runtimeDataIdx))
+      } else if (cfgTpe.typeConstructor =:= fieldComputedPartialTC) {
+        val List(fieldNameT, rest) = cfgTpe.typeArgs
+        val fieldName = fieldNameT.asStringSingletonType
+        implicit val Tail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
+          .addFieldOverride(fieldName, RuntimeFieldOverride.ComputedPartial(runtimeDataIdx))
       } else if (cfgTpe.typeConstructor =:= fieldRelabelledTC) {
         val List(fieldNameFromT, fieldNameToT, rest) = cfgTpe.typeArgs
         val fieldNameFrom = fieldNameFromT.asStringSingletonType
         val fieldNameTo = fieldNameToT.asStringSingletonType
-        implicit val CfgTail: Type[CfgTail] = typeImpl.fromUntyped(rest)
-        extractTransformerConfig[From, To, CfgTail](runtimeDataIdx)
-          .fieldOverride(fieldNameTo, FieldOverrideSource.RenamedFrom(fieldNameFrom))
+        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        extractTransformerConfig[CfgTail](runtimeDataIdx)
+          .addFieldOverride(fieldNameTo, RuntimeFieldOverride.RenamedFrom(fieldNameFrom))
       } else if (cfgTpe.typeConstructor =:= coproductInstanceTC) {
         val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-        implicit val From: Type[Arbitrary] = typeImpl.fromUntyped(instanceType)
-        implicit val To: Type[Arbitrary2] = typeImpl.fromUntyped(targetType)
-        implicit val CfgTail: Type[CfgTail] = typeImpl.fromUntyped(rest)
-        extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx).coproductInstance[Arbitrary, Arbitrary2](runtimeDataIdx)
-      } else if (cfgTpe.typeConstructor =:= fieldConstPartialTC) {
-        val List(fieldNameT, rest) = cfgTpe.typeArgs
-        val fieldName = fieldNameT.asStringSingletonType
-        implicit val Tail: Type[CfgTail] = typeImpl.fromUntyped(rest)
-        extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
-          .fieldOverride(fieldName, FieldOverrideSource.ConstPartial(runtimeDataIdx))
-      } else if (cfgTpe.typeConstructor =:= fieldComputedPartialTC) {
-        val List(fieldNameT, rest) = cfgTpe.typeArgs
-        val fieldName = fieldNameT.asStringSingletonType
-        implicit val Tail: Type[CfgTail] = typeImpl.fromUntyped(rest)
-        extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
-          .fieldOverride(fieldName, FieldOverrideSource.ComputedPartial(runtimeDataIdx))
+        val From: Type[?] = typeUtils.fromUntyped(instanceType)
+        val To: Type[?] = typeUtils.fromUntyped(targetType)
+        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
+          .addCoproductInstance(
+            ComputedType(From),
+            ComputedType(To),
+            RuntimeCoproductOverride.CoproductInstance(runtimeDataIdx)
+          )
       } else if (cfgTpe.typeConstructor =:= coproductInstancePartialTC) {
         val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-        implicit val From: Type[Arbitrary] = typeImpl.fromUntyped(instanceType)
-        implicit val To: Type[Arbitrary2] = typeImpl.fromUntyped(targetType)
-        implicit val Tail: Type[CfgTail] = typeImpl.fromUntyped(rest)
-        extractTransformerConfig[From, To, CfgTail](1 + runtimeDataIdx)
-          .coproductInstancePartial[Arbitrary, Arbitrary2](runtimeDataIdx)
+        val From: Type[?] = typeUtils.fromUntyped(instanceType)
+        val To: Type[?] = typeUtils.fromUntyped(targetType)
+        implicit val Tail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
+          .addCoproductInstance(
+            ComputedType(From),
+            ComputedType(To),
+            RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
+          )
       } else {
         // $COVERAGE-OFF$
-        c.abort(c.enclosingPosition, "Bad internal transformer config type shape!")
+        reportError("Bad internal transformer config type shape!")
         // $COVERAGE-ON$
       }
-       */
-      ???
     }
+  }
+
+  implicit private class StringSingletonTypeOps(private val tpe: c.Type) {
+
+    /** Assumes that this `tpe` is String singleton type and extracts its value */
+    def asStringSingletonType: String = tpe
+      .asInstanceOf[scala.reflect.internal.Types#UniqueConstantType]
+      .value
+      .value
+      .asInstanceOf[String]
   }
 }

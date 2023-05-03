@@ -18,9 +18,9 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       To: WeakTypeTag,
       C: WeakTypeTag,
       InstanceFlags: WeakTypeTag,
-      ScopeFlags: WeakTypeTag
+      ImplicitScopeFlags: WeakTypeTag
   ](derivationTarget: DerivationTarget): Tree = {
-    val config = readConfig[C, InstanceFlags, ScopeFlags]
+    val config = readConfig[C, InstanceFlags, ImplicitScopeFlags]
       .withDefinitionScope(weakTypeOf[From], weakTypeOf[To])
       .withDerivationTarget(derivationTarget)
 
@@ -46,7 +46,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
   def deriveWithTarget[From: WeakTypeTag, To: WeakTypeTag, ResultTpe](
       derivationTarget: DerivationTarget
   ): c.Expr[ResultTpe] = {
-    val tcTree = findLocalTransformerConfigurationFlags
+    val tcTree = findImplicitScopeTransformerConfiguration
     val flags = captureFromTransformerConfigurationTree(tcTree)
     val config = TransformerConfig(flags = flags)
       .withDefinitionScope(weakTypeOf[From], weakTypeOf[To])
@@ -67,11 +67,11 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       To: WeakTypeTag,
       C: WeakTypeTag,
       InstanceFlags: WeakTypeTag,
-      ScopeFlags: WeakTypeTag
+      ImplicitScopeFlags: WeakTypeTag
   ](derivationTarget: DerivationTarget, tcTree: c.Tree)(callTransform: (Tree, Tree) => Tree): Tree = {
     val tiName = freshTermName("ti")
 
-    val config = readConfig[C, InstanceFlags, ScopeFlags]
+    val config = readConfig[C, InstanceFlags, ImplicitScopeFlags]
       .withTransformerDefinitionPrefix(q"$tiName.td")
       .withDerivationTarget(derivationTarget)
 
@@ -857,7 +857,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
     }
   }
 
-  def findLocalTransformerConfigurationFlags: Tree = {
+  def findImplicitScopeTransformerConfiguration: Tree = {
     val searchTypeTree =
       tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]]}"
     inferImplicitTpe(searchTypeTree, macrosDisabled = false)

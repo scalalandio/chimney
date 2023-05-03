@@ -31,7 +31,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
   object Type extends TypeModule {
     import typeUtils.*
+
+    val Nothing: Type[Nothing] = fromWeak[Nothing]
     val Any: Type[Any] = fromWeak[Any]
+    val Boolean: Type[Boolean] = fromWeak[Boolean]
     val Int: Type[Int] = fromWeak[Int]
     val Unit: Type[Unit] = fromWeak[Unit]
 
@@ -47,15 +50,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean = S.<:<(T)
     def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean = S.=:=(T)
-  }
 
-  implicit class UntypedTypeOps(private val tpe: c.Type) {
-
-    /** Assumes that this `tpe` is String singleton type and extracts its value */
-    def asStringSingletonType: String = tpe
-      .asInstanceOf[scala.reflect.internal.Types#UniqueConstantType]
-      .value
-      .value
-      .asInstanceOf[String]
+    def prettyPrint[T: Type]: String = Type[T].toString
   }
 }

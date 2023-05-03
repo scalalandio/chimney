@@ -2,7 +2,6 @@ package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.dsl.ImplicitTransformerPreference
 import io.scalaland.chimney.internal
-import io.scalaland.chimney.partial
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.TransformerCfg
 
@@ -39,94 +38,70 @@ private[compiletime] trait Configurations { this: Definitions =>
 
     def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags =
       copy(implicitConflictResolution = preference)
+
+    override def toString: String = s"Flags(${Vector(
+        if (processDefaultValues) Vector("processDefaultValues") else Vector.empty,
+        if (beanSetters) Vector("beanSetters") else Vector.empty,
+        if (beanGetters) Vector("beanGetters") else Vector.empty,
+        if (methodAccessors) Vector("methodAccessors") else Vector.empty,
+        if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
+        implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector
+      ).flatten.mkString(", ")})"
   }
 
-  protected case class FieldOverride[From, ToField](
-      toFieldName: String,
-      toFieldType: Type[ToField],
-      exprSource: FieldOverride.ValueSource[From, ToField]
-  )
-  protected object FieldOverride {
-
-    def fromRuntimeConfiguration[From: Type, ToField: Type](
-        toFieldName: String,
-        runtimeConfiguration: FieldOverride.RuntimeConfiguration,
-        runtimeDataStore: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore]
-    ): FieldOverride[From, ToField] =
-      FieldOverride(
-        toFieldName,
-        Type[ToField],
-        configurationsImpl.extractRuntimeConfiguration[From, ToField](runtimeConfiguration, runtimeDataStore)
-      )
-
-    sealed trait ValueSource[From, ToField] extends Product with Serializable
-    object ValueSource {
-      final case class Const[From, ToField](
-          value: Expr[ToField]
-      ) extends ValueSource[From, ToField]
-
-      final case class ConstPartial[From, ToField](
-          value: Expr[partial.Result[ToField]]
-      ) extends ValueSource[From, ToField]
-
-      final case class Computed[From, ToField](
-          compute: Expr[From] => Expr[ToField]
-      ) extends ValueSource[From, ToField]
-
-      final case class ComputedPartial[From, ToField](
-          compute: Expr[From] => Expr[partial.Result[ToField]]
-      ) extends ValueSource[From, ToField]
-
-      final case class Renamed[From, FromField, ToField](
-          fromFieldName: String,
-          fromFieldType: Type[FromField],
-          originalValue: Expr[From] => Expr[FromField]
-      ) extends ValueSource[From, ToField]
-    }
-
-    sealed abstract class RuntimeConfiguration(val needValueLevelAccess: Boolean) extends Product with Serializable
-    object RuntimeConfiguration {
-
-      final case class Const(runtimeDataIdx: Int) extends RuntimeConfiguration(true)
-      final case class ConstPartial(runtimeDataIdx: Int) extends RuntimeConfiguration(true)
-      final case class Computed(runtimeDataIdx: Int) extends RuntimeConfiguration(true)
-      final case class ComputedPartial(runtimeDataIdx: Int) extends RuntimeConfiguration(true)
-      final case class RenamedFrom(sourceName: String) extends RuntimeConfiguration(false)
-    }
+  sealed abstract class RuntimeFieldOverride(val needValueLevelAccess: Boolean) extends Product with Serializable
+  object RuntimeFieldOverride {
+    final case class Const(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
+    final case class ConstPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
+    final case class Computed(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
+    final case class ComputedPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
+    final case class RenamedFrom(sourceName: String) extends RuntimeFieldOverride(false)
   }
 
-  sealed protected trait CoproductOverride[From, FromSubtype <: From, To] extends Product with Serializable {
-    val fromSubtype: Type[FromSubtype]
-  }
-  protected object CoproductOverride {
-
-    final case class CoproductTotalInstance[From, FromSubtype <: From, To](
-        fromSubtype: Type[FromSubtype],
-        convert: Expr[FromSubtype] => Expr[To]
-    ) extends CoproductOverride[From, FromSubtype, To]
-
-    final case class CoproductPartialInstance[From, FromSubtype <: From, To](
-        fromSubtype: Type[FromSubtype],
-        convert: Expr[FromSubtype] => Expr[partial.Result[To]]
-    ) extends CoproductOverride[From, FromSubtype, To]
+  sealed abstract class RuntimeCoproductOverride extends Product with Serializable
+  object RuntimeCoproductOverride {
+    final case class CoproductInstance(runtimeDataIdx: Int) extends RuntimeCoproductOverride
+    final case class CoproductInstancePartial(runtimeDataIdx: Int) extends RuntimeCoproductOverride
   }
 
-  final protected case class TransformerConfig[From, To](
+  final protected case class TransformerConfig(
       flags: TransformerFlags = TransformerFlags(),
-      fieldOverrides: Map[String, FieldOverride[From, ?]] = Map.empty,
-      coproductOverride: Vector[CoproductOverride[From, ? <: From, To]] = Vector.empty,
+      fieldOverrides: Map[String, RuntimeFieldOverride] = Map.empty,
+      coproductOverrides: Map[(ComputedType, ComputedType), RuntimeCoproductOverride] = Map.empty,
       preventResolutionForTypes: Option[(ComputedType, ComputedType)] = None,
       legacy: TransformerConfig.LegacyData = TransformerConfig.LegacyData() // TODO: temporary
-  )
+  ) {
+
+    def prepareForRecursiveCall: TransformerConfig =
+      copy(
+        preventResolutionForTypes = None,
+        fieldOverrides = Map.empty,
+        legacy = legacy.copy(definitionScope = None)
+      )
+
+    def addFieldOverride(fieldName: String, fieldOverride: RuntimeFieldOverride): TransformerConfig = {
+      copy(fieldOverrides = fieldOverrides + (fieldName -> fieldOverride))
+    }
+
+    def addCoproductInstance(
+        instanceType: ComputedType,
+        targetType: ComputedType,
+        coproductOverride: RuntimeCoproductOverride
+    ): TransformerConfig = {
+      copy(coproductOverrides = coproductOverrides + ((instanceType, targetType) -> coproductOverride))
+    }
+
+    def withDefinitionScope(defScope: (ComputedType, ComputedType)): TransformerConfig = {
+      copy(preventResolutionForTypes = Some(defScope), legacy = legacy.copy(definitionScope = Some(defScope)))
+    }
+  }
+
   object TransformerConfig {
 
     type UpdateCfg[_ <: TransformerCfg]
 
     // TODO: for creating TransformerConfig for old macros in Scala 2 until everything is migrated
     final case class LegacyData(
-        fieldOverrideLegacy: Map[String, FieldOverride.RuntimeConfiguration] = Map.empty,
-        coproductInstanceOverridesLegacy: Map[(ComputedType, ComputedType), Int] = Map.empty,
-        coproductInstancesPartialOverridesLegacy: Map[(ComputedType, ComputedType), Int] = Map.empty,
         transformerDefinitionPrefix: Expr[dsls.TransformerDefinitionCommons[UpdateCfg]] =
           null.asInstanceOf[Expr[dsls.TransformerDefinitionCommons[UpdateCfg]]],
         definitionScope: Option[(ComputedType, ComputedType)] = None
@@ -136,17 +111,10 @@ private[compiletime] trait Configurations { this: Definitions =>
   protected def configurationsImpl: ConfigurationDefinitionsImpl
   protected trait ConfigurationDefinitionsImpl {
 
-    def extractRuntimeConfiguration[From: Type, ToField: Type](
-        runtimeConfiguration: FieldOverride.RuntimeConfiguration,
-        runtimeDataStore: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore]
-    ): FieldOverride.ValueSource[From, ToField]
-
     def readTransformerConfig[
-        From: Type,
-        To: Type,
         Cfg <: internal.TransformerCfg: Type,
         InstanceFlags <: internal.TransformerFlags: Type,
-        SharedFlags <: internal.TransformerFlags: Type
-    ]: TransformerConfig[From, To]
+        ImplicitScopeFlags <: internal.TransformerFlags: Type
+    ]: TransformerConfig
   }
 }

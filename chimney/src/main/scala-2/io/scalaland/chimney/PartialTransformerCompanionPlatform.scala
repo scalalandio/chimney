@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 
 import scala.language.experimental.macros
 
@@ -16,5 +16,5 @@ private[chimney] trait PartialTransformerCompanionPlatform { this: PartialTransf
    * @since 0.7.0
    */
   implicit def derive[From, To]: PartialTransformer[From, To] =
-    macro TransformerBlackboxMacros.derivePartialTransformerImpl[From, To]
+    macro TransformerMacros.derivePartialTransformerWithDefaults[From, To]
 }

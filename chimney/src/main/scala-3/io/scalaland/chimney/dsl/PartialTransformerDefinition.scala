@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.{partial, PartialTransformer}
 import io.scalaland.chimney.internal.*
-import io.scalaland.chimney.compiletime.dsl.*
+import io.scalaland.chimney.internal.compiletime.dsl.*
 
 /** Allows customization of [[io.scalaland.chimney.PartialTransformer]] derivation.
  *
@@ -67,10 +67,10 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     ${ PartialTransformerDefinitionImpl.withCoproductInstancePartial('this, 'f) }
   }
 
-  inline def buildTransformer[ScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ScopeFlags]
+  inline def buildTransformer[ImplicitScopeFlags <: TransformerFlags](using
+      tc: TransformerConfiguration[ImplicitScopeFlags]
   ): PartialTransformer[From, To] = {
-    ${ PartialTransformerDefinitionImpl.buildTransformer[From, To, Cfg, Flags, ScopeFlags]('this) }
+    ${ PartialTransformerDefinitionImpl.buildTransformer[From, To, Cfg, Flags, ImplicitScopeFlags]('this) }
   }
 
   override protected def __updateRuntimeData(newRuntimeData: TransformerDefinitionCommons.RuntimeDataStore): this.type =

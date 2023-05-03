@@ -1,7 +1,9 @@
 package io.scalaland.chimney.dsl
 
+import io.scalaland.chimney.internal.compiletime.dsl
 import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
 import io.scalaland.chimney.partial
+import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerIntoImpl
 
 final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,
@@ -12,54 +14,59 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
       inline selector: To => T,
       inline value: U
   )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    new PartialTransformerInto(source, td.withFieldConst(selector, value))
+    ${ PartialTransformerIntoImpl.withFieldConstImpl('this, 'selector, 'value) }
   }
 
   transparent inline def withFieldConstPartial[T, U](
       inline selector: To => T,
       inline value: partial.Result[U]
   )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    new PartialTransformerInto(source, td.withFieldConstPartial(selector, value))
+    ${ PartialTransformerIntoImpl.withFieldConstPartialImpl('this, 'selector, 'value) }
   }
 
   transparent inline def withFieldComputed[T, U](
       inline selector: To => T,
       inline f: From => U
   )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    new PartialTransformerInto(source, td.withFieldComputed(selector, f))
+    ${ PartialTransformerIntoImpl.withFieldComputedImpl('this, 'selector, 'f) }
   }
 
   transparent inline def withFieldComputedPartial[T, U](
       inline selector: To => T,
       inline f: From => partial.Result[U]
   )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    new PartialTransformerInto(source, td.withFieldComputedPartial(selector, f))
+    ${ PartialTransformerIntoImpl.withFieldComputedPartialImpl('this, 'selector, 'f) }
   }
 
   transparent inline def withFieldRenamed[T, U](
       inline selectorFrom: From => T,
       inline selectorTo: To => U
   ): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    new PartialTransformerInto(source, td.withFieldRenamed(selectorFrom, selectorTo))
+    ${ PartialTransformerIntoImpl.withFieldRenamedImpl('this, 'selectorFrom, 'selectorTo) }
   }
 
   transparent inline def withCoproductInstance[Inst](
       inline f: Inst => To
   ): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    new PartialTransformerInto(source, td.withCoproductInstance(f))
+    ${ PartialTransformerIntoImpl.withCoproductInstanceImpl('this, 'f) }
   }
 
   transparent inline def withCoproductInstancePartial[Inst](
       inline f: Inst => partial.Result[To]
   ): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    new PartialTransformerInto(source, td.withCoproductInstancePartial(f))
+    ${ PartialTransformerIntoImpl.withCoproductInstancePartialImpl('this, 'f) }
   }
 
-  inline def transform[ScopeFlags <: TransformerFlags](using
-      tc: TransformerConfiguration[ScopeFlags]
+  inline def transform[ImplicitScopeFlags <: TransformerFlags](using
+      tc: TransformerConfiguration[ImplicitScopeFlags]
   ): partial.Result[To] = {
-    // TODO: rewrite to avoid instantiating a transformer by just inlining transformer body
-    td.buildTransformer.transform(source)
+    ${ PartialTransformerIntoImpl.transform[From, To, Cfg, Flags, ImplicitScopeFlags]('source, 'td, failFast = false) }
+
   }
 
+  inline def transformFailFast[ImplicitScopeFlags <: TransformerFlags](using
+      tc: TransformerConfiguration[ImplicitScopeFlags]
+  ): partial.Result[To] = {
+    ${ PartialTransformerIntoImpl.transform[From, To, Cfg, Flags, ImplicitScopeFlags]('source, 'td, failFast = true) }
+  }
 }

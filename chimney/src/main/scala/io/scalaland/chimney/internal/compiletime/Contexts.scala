@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
+import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.partial
 
@@ -13,7 +14,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
     val To: Type[To]
     val src: Expr[From]
 
-    val config: TransformerConfig[From, To]
+    val config: TransformerConfig
 
     type Target
     val Target: Type[Target]
@@ -26,22 +27,34 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         From: Type[From],
         To: Type[To],
         src: Expr[From],
-        config: TransformerConfig[From, To]
+        runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
+        config: TransformerConfig
     ) extends TransformerContext[From, To] {
 
       final type Target = To
       val Target = To
       final type TypeClass = Transformer[From, To]
       val TypeClass = ChimneyType.Transformer(From, To)
+
+      override def toString: String = {
+        implicit val ctx: TransformerContext.ForTotal[From, To] = this
+        s"Total(From = ${Type.prettyPrint(using From)}, To = ${Type
+            .prettyPrint(using To)}, src = ${Expr.prettyPrint(src)}, $config)"
+      }
     }
     object ForTotal {
 
-      def create[From: Type, To: Type](src: Expr[From], config: TransformerConfig[From, To]): ForTotal[From, To] =
+      def create[From: Type, To: Type](
+          src: Expr[From],
+          config: TransformerConfig,
+          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
+      ): ForTotal[From, To] =
         ForTotal(
           From = Type[From],
           To = Type[To],
           src = src,
-          config = config
+          runtimeDataStore = runtimeDataStore,
+          config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
         )
     }
 
@@ -50,26 +63,35 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         To: Type[To],
         src: Expr[From],
         failFast: Expr[Boolean],
-        config: TransformerConfig[From, To]
+        runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
+        config: TransformerConfig
     ) extends TransformerContext[From, To] {
 
       final type Target = partial.Result[To]
       val Target = ChimneyType.PartialResult(To)
       final type TypeClass = PartialTransformer[From, To]
       val TypeClass = ChimneyType.PartialTransformer(From, To)
+
+      override def toString: String = {
+        implicit val ctx: TransformerContext.ForPartial[From, To] = this
+        s"Partial(From = ${Type.prettyPrint(From)}, To = ${Type.prettyPrint(To)}, src = ${Expr
+            .prettyPrint(src)}, failFast = ${Expr.prettyPrint(failFast)(Type.Boolean)}, $config)"
+      }
     }
     object ForPartial {
 
       def create[From: Type, To: Type](
           src: Expr[From],
           failFast: Expr[Boolean],
-          config: TransformerConfig[From, To]
+          config: TransformerConfig,
+          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
       ): ForPartial[From, To] = ForPartial(
         From = Type[From],
         To = Type[To],
         src = src,
         failFast = failFast,
-        config = config
+        runtimeDataStore = runtimeDataStore,
+        config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
       )
     }
   }
