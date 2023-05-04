@@ -100,6 +100,11 @@ sealed private[compiletime] trait DerivationResult[+A] {
 
   final def log(msg: => String): DerivationResult[A] = updateState(_.log(msg))
 
+  final def logSuccess(msg: A => String): DerivationResult[A] = this match {
+    case Success(value, _) => log(msg(value))
+    case Failure(_, _)     => this
+  }
+
   final def namedScope[B](scopeName: String)(f: A => DerivationResult[B]): DerivationResult[B] = flatMap { a =>
     f(a).updateState(_.nestScope(scopeName))
   }

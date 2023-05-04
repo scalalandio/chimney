@@ -20,6 +20,8 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
     val Target: Type[Target]
     type TypeClass
     val TypeClass: Type[TypeClass]
+
+    val derivationStartedAt: java.time.Instant
   }
   protected object TransformerContext {
 
@@ -28,7 +30,8 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         To: Type[To],
         src: Expr[From],
         runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
-        config: TransformerConfig
+        config: TransformerConfig,
+        derivationStartedAt: java.time.Instant
     ) extends TransformerContext[From, To] {
 
       final type Target = To
@@ -36,11 +39,9 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       final type TypeClass = Transformer[From, To]
       val TypeClass = ChimneyType.Transformer(From, To)
 
-      override def toString: String = {
-        implicit val ctx: TransformerContext.ForTotal[From, To] = this
+      override def toString: String =
         s"Total(From = ${Type.prettyPrint(using From)}, To = ${Type
             .prettyPrint(using To)}, src = ${Expr.prettyPrint(src)}, $config)"
-      }
     }
     object ForTotal {
 
@@ -54,7 +55,8 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
           To = Type[To],
           src = src,
           runtimeDataStore = runtimeDataStore,
-          config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
+          config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To]))),
+          derivationStartedAt = java.time.Instant.now()
         )
     }
 
@@ -64,7 +66,8 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         src: Expr[From],
         failFast: Expr[Boolean],
         runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
-        config: TransformerConfig
+        config: TransformerConfig,
+        derivationStartedAt: java.time.Instant
     ) extends TransformerContext[From, To] {
 
       final type Target = partial.Result[To]
@@ -72,11 +75,9 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       final type TypeClass = PartialTransformer[From, To]
       val TypeClass = ChimneyType.PartialTransformer(From, To)
 
-      override def toString: String = {
-        implicit val ctx: TransformerContext.ForPartial[From, To] = this
+      override def toString: String =
         s"Partial(From = ${Type.prettyPrint(From)}, To = ${Type.prettyPrint(To)}, src = ${Expr
-            .prettyPrint(src)}, failFast = ${Expr.prettyPrint(failFast)(Type.Boolean)}, $config)"
-      }
+            .prettyPrint(src)}, failFast = ${Expr.prettyPrint(failFast)}, $config)"
     }
     object ForPartial {
 
@@ -91,7 +92,8 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         src = src,
         failFast = failFast,
         runtimeDataStore = runtimeDataStore,
-        config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To])))
+        config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To]))),
+        derivationStartedAt = java.time.Instant.now()
       )
     }
   }

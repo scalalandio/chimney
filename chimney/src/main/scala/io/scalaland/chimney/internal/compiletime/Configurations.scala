@@ -16,7 +16,8 @@ private[compiletime] trait Configurations { this: Definitions =>
       beanGetters: Boolean = false,
       methodAccessors: Boolean = false,
       optionDefaultsToNone: Boolean = false,
-      implicitConflictResolution: Option[ImplicitTransformerPreference] = None
+      implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
+      displayDerivationLog: Boolean = false
   ) {
 
     def setBoolFlag[Flag <: internal.TransformerFlags.Flag: Type](value: Boolean): TransformerFlags =

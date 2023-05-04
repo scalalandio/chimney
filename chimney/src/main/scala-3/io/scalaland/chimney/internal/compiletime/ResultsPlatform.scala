@@ -4,5 +4,7 @@ private[compiletime] trait ResultsPlatform extends Results { this: DefinitionsPl
 
   import quotes.*, quotes.reflect.*
 
+  protected def reportInfo(info: String): Unit = report.info(info, Position.ofMacroExpansion)
+
   protected def reportError(errors: String): Nothing = report.errorAndAbort(errors, Position.ofMacroExpansion)
 }
