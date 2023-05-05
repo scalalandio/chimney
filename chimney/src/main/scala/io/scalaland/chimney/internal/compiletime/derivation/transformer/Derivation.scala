@@ -10,7 +10,20 @@ private[derivation] trait Derivation { this: Definitions =>
   /** Intended use case: recursive derivation */
   final protected def deriveTransformationResultExpr[From, To](implicit
       ctx: TransformerContext[From, To]
-  ): DerivationResult[DerivedExpr[To]] = Rule[From, To](rulesAvailableForPlatform*)
+  ): DerivationResult[DerivedExpr[To]] =
+    DerivationResult.namedScope(
+      ctx match {
+        case _: TransformerContext.ForTotal[?, ?] =>
+          s"Deriving Total Transformer expression from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]}"
+        case _: TransformerContext.ForPartial[?, ?] =>
+          s"Deriving Partial Transformer expression from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]}"
+      }
+    ) {
+      Rule[From, To](rulesAvailableForPlatform*).logSuccess {
+        case DerivedExpr.TotalExpr(expr)   => s"Derived total expression ${Expr.prettyPrint(expr)}"
+        case DerivedExpr.PartialExpr(expr) => s"Derived partial expression ${Expr.prettyPrint(expr)}"
+      }
+    }
 
   abstract protected class Rule {
 

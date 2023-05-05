@@ -10,7 +10,7 @@ trait NotImplementedFallbackRuleModule { this: DefinitionsPlatform & Derivation 
     def isApplicableTo[From, To](implicit ctx: TransformerContext[From, To]): Boolean = true
 
     def apply[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[DerivedExpr[To]] =
-      DerivationResult.pure(DerivedExpr.TotalExpr[To]('{ ??? }))
+      DerivationResult.log(s"Matched fallback to ??? implementation derivation rule") >>
+        DerivationResult.pure(DerivedExpr.TotalExpr[To]('{ ??? }))
   }
-
 }

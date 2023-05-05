@@ -23,9 +23,10 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule {
     override def isApplicableTo[From, To](implicit ctx: TransformerContext[From, To]): Boolean = true
 
     override def apply[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[DerivedExpr[To]] =
-      DerivationResult {
-        oldMacros.resolveTransformerBody(convertToLegacyConfig)(convertToLegacyType[From], convertToLegacyType[To])
-      }.flatMap(convertFromLegacyDerivedTree[From, To](_))
+      DerivationResult.log(s"Matched fallback to legacy macros derivation rule") >>
+        DerivationResult {
+          oldMacros.resolveTransformerBody(convertToLegacyConfig)(convertToLegacyType[From], convertToLegacyType[To])
+        }.flatMap(convertFromLegacyDerivedTree[From, To](_))
 
     private val oldMacros = new TransformerBlackboxMacros(c)
 
