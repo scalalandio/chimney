@@ -9,6 +9,39 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
 
   object ChimneyExpr extends ChimneyExprModule {
 
+    object Transformer extends TransformerModule {
+
+      def summon[From: Type, To: Type]: Option[Expr[io.scalaland.chimney.Transformer[From, To]]] =
+        scala.util
+          .Try(c.inferImplicitValue(ChimneyType.Transformer[From, To], silent = true, withMacrosDisabled = false))
+          .toOption
+          .filterNot(_ == EmptyTree)
+          .map(c.Expr[io.scalaland.chimney.Transformer[From, To]](_))
+
+      def transform[From: Type, To: Type](
+          transformer: Expr[io.scalaland.chimney.Transformer[From, To]],
+          src: Expr[From]
+      ): Expr[To] = c.Expr(q"$transformer.transform($src)")
+    }
+
+    object PartialTransformer extends PartialTransformerModule {
+
+      def summon[From: Type, To: Type]: Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
+        scala.util
+          .Try(
+            c.inferImplicitValue(ChimneyType.PartialTransformer[From, To], silent = true, withMacrosDisabled = false)
+          )
+          .toOption
+          .filterNot(_ == EmptyTree)
+          .map(c.Expr[io.scalaland.chimney.PartialTransformer[From, To]](_))
+
+      def transform[From: Type, To: Type](
+          transformer: Expr[io.scalaland.chimney.PartialTransformer[From, To]],
+          src: Expr[From],
+          failFast: Expr[Boolean]
+      ): Expr[partial.Result[To]] = c.Expr(q"$transformer.transform($src, $failFast)")
+    }
+
     object PartialResult extends PartialResultModule {
       def Value[T: Type](value: Expr[T]): Expr[partial.Result.Value[T]] =
         c.Expr(q"_root_.io.scalaland.chimney.partial.Result.Value[${Type[T]}]($value)")

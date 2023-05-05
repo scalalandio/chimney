@@ -42,7 +42,14 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       def apply[T: Type]: Type[Array[T]] = fromTC[Array[*], Array[T]](Type[T])
     }
 
-    def Option[T: Type]: Type[Option[T]] = fromTC[Option[*], Option[T]](Type[T])
+    object Option extends OptionModule {
+
+      def apply[T: Type]: Type[Option[T]] = fromTC[Option[*], Option[T]](Type[T])
+      def unapply[T](tpe: Type[T]): Option[ComputedType] = tpe match {
+        case '[Option[inner]] => Some(ComputedType(Type[inner]))
+        case _                => None
+      }
+    }
     def Either[L: Type, R: Type]: Type[Either[L, R]] = fromTC[Either[*, *], Either[L, R]](Type[L], Type[R])
 
     def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean = TypeRepr.of(using S) <:< TypeRepr.of(using T)

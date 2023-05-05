@@ -44,7 +44,19 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       def apply[T: Type]: Type[Array[T]] = fromWeakTC[Array[?], Array[T]](Type[T])
     }
 
-    def Option[T: Type]: Type[Option[T]] = fromWeakTC[Option[?], Option[T]](Type[T])
+    object Option extends OptionModule {
+
+      def apply[T: Type]: Type[Option[T]] = fromWeakTC[Option[?], Option[T]](Type[T])
+      def unapply[T](tpe: Type[T]): Option[ComputedType] =
+        // None has no type parameters, so we need getOrElse(Nothing)
+        if (apply[Any](Any) <:< tpe)
+          Some(
+            tpe.typeArgs.headOption
+              .map(inner => ComputedType(typeUtils.fromUntyped(inner)))
+              .getOrElse(ComputedType(Nothing))
+          )
+        else None
+    }
 
     def Either[L: Type, R: Type]: Type[Either[L, R]] = fromWeakTC[Either[?, ?], Either[L, R]](Type[L], Type[R])
 

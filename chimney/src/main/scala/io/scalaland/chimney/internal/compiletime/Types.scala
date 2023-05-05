@@ -23,7 +23,12 @@ private[compiletime] trait Types {
       val Any: Type[Array[Any]] = apply(Type.Any)
     }
 
-    def Option[T: Type]: Type[Option[T]]
+    val Option: OptionModule
+    trait OptionModule { this: Option.type =>
+
+      def apply[T: Type]: Type[Option[T]]
+      def unapply[T](tpe: Type[T]): Option[ComputedType]
+    }
     def Either[L: Type, R: Type]: Type[Either[L, R]]
 
     def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean
