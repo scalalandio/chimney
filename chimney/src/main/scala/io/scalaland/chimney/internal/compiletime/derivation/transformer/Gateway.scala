@@ -82,27 +82,32 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
   private def deriveTransformationResult[From, To](implicit
       ctx: TransformerContext[From, To]
   ): DerivationResult[Expr[ctx.Target]] =
-    // pattern match on DerivedExpr and convert to whatever is needed
-    deriveTransformationResultExpr[From, To]
-      .flatMap {
-        case DerivedExpr.TotalExpr(expr) =>
-          ctx match {
-            case _: TransformerContext.ForTotal[?, ?] =>
-              DerivationResult.pure(expr)
-            case _: TransformerContext.ForPartial[?, ?] =>
-              DerivationResult.pure(ChimneyExpr.PartialResult.Value(expr))
-          }
-        case DerivedExpr.PartialExpr(expr) =>
-          ctx match {
-            case _: TransformerContext.ForTotal[?, ?] =>
-              DerivationResult.fromException(
-                new AssertionError("Derived partial.Result expression where total Transformer excepts direct value")
-              )
-            case _: TransformerContext.ForPartial[?, ?] =>
-              DerivationResult.pure(expr)
-          }
-      }
-      .asInstanceOf[DerivationResult[Expr[ctx.Target]]]
+    DerivationResult.log(s"Start derivation with context: $ctx") >>
+      // pattern match on DerivedExpr and convert to whatever is needed
+      deriveTransformationResultExpr[From, To]
+        .flatMap {
+          case DerivedExpr.TotalExpr(expr) =>
+            ctx match {
+              case _: TransformerContext.ForTotal[?, ?] =>
+                DerivationResult.pure(expr)
+              case _: TransformerContext.ForPartial[?, ?] =>
+                DerivationResult
+                  .pure(ChimneyExpr.PartialResult.Value(expr))
+                  .log(
+                    s"Derived expression is Total while Partial is expected - adapting by wrapping in partial.Result.Value"
+                  )
+            }
+          case DerivedExpr.PartialExpr(expr) =>
+            ctx match {
+              case _: TransformerContext.ForTotal[?, ?] =>
+                DerivationResult.fromException(
+                  new AssertionError("Derived partial.Result expression where total Transformer excepts direct value")
+                )
+              case _: TransformerContext.ForPartial[?, ?] =>
+                DerivationResult.pure(expr)
+            }
+        }
+        .asInstanceOf[DerivationResult[Expr[ctx.Target]]]
 
   protected def instantiateTotalTransformer[From: Type, To: Type](
       toExpr: Expr[From] => Expr[To]
@@ -118,7 +123,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
     if (ctx.config.flags.displayDerivationLog) {
       val duration = java.time.Duration.between(ctx.derivationStartedAt, java.time.Instant.now())
       val info = result
-        .logSuccess(expr => s"Derived expression is:\n${Expr.prettyPrint(expr)}")
+        .logSuccess(expr => s"Derived final expression is:\n${Expr.prettyPrint(expr)}")
         .log(f"Derivation took ${duration.getSeconds}%d.${duration.getNano}%09d s")
         .state
         .journal
