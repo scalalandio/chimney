@@ -9,6 +9,7 @@ import scala.annotation.nowarn
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
+  // TODO: rename to TransformationContext
   sealed protected trait TransformerContext[From, To] extends Product with Serializable {
     val From: Type[From]
     val To: Type[To]
