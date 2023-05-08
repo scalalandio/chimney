@@ -48,7 +48,7 @@ private[compiletime] trait ChimneyTypes { this: Types =>
         val OptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone]
         def ImplicitConflictResolution[R <: ImplicitTransformerPreference: Type]
             : Type[internal.TransformerFlags.ImplicitConflictResolution[R]]
-        val DerivationLog: Type[internal.TransformerFlags.DerivationLog]
+        val MacrosLogging: Type[internal.TransformerFlags.MacrosLogging]
       }
     }
   }

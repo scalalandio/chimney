@@ -17,7 +17,7 @@ private[compiletime] trait Configurations { this: Definitions =>
       methodAccessors: Boolean = false,
       optionDefaultsToNone: Boolean = false,
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
-      displayDerivationLog: Boolean = false
+      displayMacrosLogging: Boolean = false
   ) {
 
     def setBoolFlag[Flag <: internal.TransformerFlags.Flag: Type](value: Boolean): TransformerFlags =
@@ -31,8 +31,8 @@ private[compiletime] trait Configurations { this: Definitions =>
         copy(methodAccessors = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.OptionDefaultsToNone) {
         copy(optionDefaultsToNone = value)
-      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.DerivationLog) {
-        copy(displayDerivationLog = value)
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.MacrosLogging) {
+        copy(displayMacrosLogging = value)
       } else {
         // $COVERAGE-OFF$
         reportError(s"Invalid transformer flag type: ${Type[Flag]}!")
@@ -49,7 +49,7 @@ private[compiletime] trait Configurations { this: Definitions =>
         if (methodAccessors) Vector("methodAccessors") else Vector.empty,
         if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
-        if (displayDerivationLog) Vector("displayDerivationLog") else Vector.empty
+        if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
       ).flatten.mkString(", ")})"
   }
 

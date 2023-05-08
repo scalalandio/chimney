@@ -15,5 +15,5 @@ object TransformerFlags {
   final class BeanGetters extends Flag
   final class OptionDefaultsToNone extends Flag
   final class ImplicitConflictResolution[R <: ImplicitTransformerPreference] extends Flag
-  final class DerivationLog extends Flag
+  final class MacrosLogging extends Flag
 }

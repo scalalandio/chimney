@@ -120,7 +120,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
   private def extractExprAndLog[From: Type, To: Type](
       ctx: TransformerContext[From, To]
   )(result: DerivationResult[Expr[ctx.Target]]): Expr[ctx.Target] = {
-    if (ctx.config.flags.displayDerivationLog) {
+    if (ctx.config.flags.displayMacrosLogging) {
       val duration = java.time.Duration.between(ctx.derivationStartedAt, java.time.Instant.now())
       val info = result
         .logSuccess(expr => s"Derived final expression is:\n${Expr.prettyPrint(expr)}")

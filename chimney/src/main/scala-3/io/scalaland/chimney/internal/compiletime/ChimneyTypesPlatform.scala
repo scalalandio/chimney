@@ -65,8 +65,8 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
           quoted.Type.of[internal.TransformerFlags.MethodAccessors]
         val OptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone] =
           quoted.Type.of[internal.TransformerFlags.OptionDefaultsToNone]
-        val DerivationLog: Type[internal.TransformerFlags.DerivationLog] =
-          quoted.Type.of[internal.TransformerFlags.DerivationLog]
+        val MacrosLogging: Type[internal.TransformerFlags.MacrosLogging] =
+          quoted.Type.of[internal.TransformerFlags.MacrosLogging]
 
         def ImplicitConflictResolution[R <: ImplicitTransformerPreference: Type]
             : Type[internal.TransformerFlags.ImplicitConflictResolution[R]] =
