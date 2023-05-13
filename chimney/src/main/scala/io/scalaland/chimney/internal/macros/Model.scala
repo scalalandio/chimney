@@ -23,6 +23,16 @@ trait Model extends TransformerConfigSupport {
     def isLiftedTarget: Boolean = target.isInstanceOf[DerivationTarget.LiftedTransformer]
 
     def mapTree(f: Tree => Tree): DerivedTree = copy(tree = f(tree))
+    def callTransform(input: Tree): DerivedTree = mapTree { tree =>
+      target match {
+        case DerivationTarget.TotalTransformer =>
+          tree.callTransform(input)
+        case DerivationTarget.PartialTransformer(failFastTermName) =>
+          tree.callPartialTransform(input, q"$failFastTermName")
+        case _: DerivationTarget.LiftedTransformer =>
+          tree.callTransform(input)
+      }
+    }
   }
   object DerivedTree {
     def fromTotalTree(tree: Tree): DerivedTree = DerivedTree(tree, DerivationTarget.TotalTransformer)
