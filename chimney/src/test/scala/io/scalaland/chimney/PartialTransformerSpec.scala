@@ -18,6 +18,11 @@ object PartialTransformerSpec extends TestSuite {
     PartialTransformer.derive[FooStr, Foo]
   }
 
+  val pt5 = {
+    implicit val fooStrToFoo = pt4
+    PartialTransformer.derive[List[FooStr], List[Foo]]
+  }
+
   val tests = Tests {
 
     test("transform") {
@@ -35,6 +40,11 @@ object PartialTransformerSpec extends TestSuite {
         ("s1", """For input string: "abc""""),
         ("s2", """For input string: "xyz"""")
       )
+
+      pt5.transform(List(FooStr("abc", "xyz"))).asErrorPathMessageStrings ==> Iterable(
+        ("(0).s1", """For input string: "abc""""),
+        ("(0).s2", """For input string: "xyz"""")
+      )
     }
 
     test("transformFailFast") {
@@ -51,6 +61,10 @@ object PartialTransformerSpec extends TestSuite {
       pt4.transformFailFast(FooStr("abc", "xyz")).asErrorPathMessageStrings ==> Iterable(
         ("s1", """For input string: "abc"""")
         // no second error due to fail fast mode
+      )
+
+      pt5.transformFailFast(List(FooStr("abc", "xyz"))).asErrorPathMessageStrings ==> Iterable(
+        ("(0).s1", """For input string: "abc"""")
       )
     }
   }

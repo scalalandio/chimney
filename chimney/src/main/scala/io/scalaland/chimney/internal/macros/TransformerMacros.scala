@@ -146,7 +146,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
 
     resolveImplicitTransformer(config)(From, To)
       .map { localImplicitDerivedTree =>
-        Right(localImplicitDerivedTree.mapTree(_.callTransform(config.srcPrefixTree)))
+        Right(localImplicitDerivedTree.callTransform(config.srcPrefixTree))
       }
       .getOrElse {
         deriveTransformerTree(config)(From, To)
@@ -698,7 +698,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                     .map { implicitTransformerTree =>
                       val fn = freshTermName(instName)
                       Right(
-                        InstanceClause(Some(fn), instTpe, implicitTransformerTree.mapTree(_.callTransform(Ident(fn))))
+                        InstanceClause(Some(fn), instTpe, implicitTransformerTree.callTransform(Ident(fn)))
                       )
                     }
                 }
@@ -734,7 +734,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                             InstanceClause(
                               Some(fn),
                               instTpe,
-                              implicitTransformerTree.mapTree(_.callTransform(Ident(fn)))
+                              implicitTransformerTree.callTransform(Ident(fn))
                             )
                           )
                         }
@@ -1007,9 +1007,9 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
                  |""".stripMargin
             )
           case (Some(localImplicitTreeF), None) =>
-            Right(localImplicitTreeF.mapTree(_.callTransform(config.srcPrefixTree)))
+            Right(localImplicitTreeF.callTransform(config.srcPrefixTree))
           case (None, Some(localImplicitTree)) =>
-            Right(localImplicitTree.mapTree(_.callTransform(config.srcPrefixTree)))
+            Right(localImplicitTree.callTransform(config.srcPrefixTree))
           case (None, None) =>
             deriveTransformerTree(config)(From, To)
         }
@@ -1019,15 +1019,15 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
 
         (implicitPartialTransformer, implicitTransformer) match {
           case (Some(localImplicitTreePartial), None) =>
-            Right(localImplicitTreePartial.mapTree(_.callTransform(config.srcPrefixTree)))
+            Right(localImplicitTreePartial.callTransform(config.srcPrefixTree))
           case (Some(localImplicitTreePartial), Some(_))
               if config.flags.implicitConflictResolution.contains(PreferPartialTransformer) =>
-            Right(localImplicitTreePartial.mapTree(_.callTransform(config.srcPrefixTree)))
+            Right(localImplicitTreePartial.callTransform(config.srcPrefixTree))
           case (None, Some(localImplicitTree)) =>
-            Right(localImplicitTree.mapTree(_.callTransform(config.srcPrefixTree)))
+            Right(localImplicitTree.callTransform(config.srcPrefixTree))
           case (Some(_), Some(localImplicitTree))
               if config.flags.implicitConflictResolution.contains(PreferTotalTransformer) =>
-            Right(localImplicitTree.mapTree(_.callTransform(config.srcPrefixTree)))
+            Right(localImplicitTree.callTransform(config.srcPrefixTree))
           case (Some(localImplicitTreePartial), Some(localImplicitTree)) =>
             c.abort(
               c.enclosingPosition,
