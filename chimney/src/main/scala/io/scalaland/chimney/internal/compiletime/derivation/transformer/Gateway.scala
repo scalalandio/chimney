@@ -128,7 +128,7 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
         .state
         .journal
         .print
-      reportInfo(info)
+      reportInfo("\n" + info)
     }
 
     result.toEither.fold(

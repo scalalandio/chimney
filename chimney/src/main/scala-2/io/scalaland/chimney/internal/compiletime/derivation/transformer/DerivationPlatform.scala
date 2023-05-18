@@ -8,5 +8,5 @@ private[derivation] trait DerivationPlatform
     with rules.LegacyMacrosFallbackRuleModule {
   this: DefinitionsPlatform =>
 
-  override protected val rulesAvailableForPlatform: Seq[Rule] = Seq(TransformSubtypesRule, LegacyMacrosFallbackRule)
+  override protected val rulesAvailableForPlatform: List[Rule] = List(TransformSubtypesRule, LegacyMacrosFallbackRule)
 }

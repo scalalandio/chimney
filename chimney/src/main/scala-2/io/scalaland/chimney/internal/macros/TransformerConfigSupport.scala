@@ -190,6 +190,8 @@ trait TransformerConfigSupport extends MacroUtils {
         copy(beanGetters = value)
       } else if (flagTpe =:= FlagsTpes.optionDefaultsToNoneT) {
         copy(optionDefaultsToNone = value)
+      } else if (flagTpe =:= FlagsTpes.macrosLoggingT) {
+        this
       } else {
         // $COVERAGE-OFF$
         c.abort(c.enclosingPosition, s"Invalid transformer flag type: $flagTpe!")
@@ -216,6 +218,7 @@ trait TransformerConfigSupport extends MacroUtils {
     val beanGettersT: Type = typeOf[BeanGetters]
     val optionDefaultsToNoneT: Type = typeOf[OptionDefaultsToNone]
     val implicitConflictResolutionT: Type = typeOf[ImplicitConflictResolution[?]].typeConstructor
+    val macrosLoggingT: Type = typeOf[MacrosLogging]
   }
 
   def captureTransformerFlags(

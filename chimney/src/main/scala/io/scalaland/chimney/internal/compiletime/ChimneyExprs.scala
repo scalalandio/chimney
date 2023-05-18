@@ -79,12 +79,4 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
       ): Expr[Any]
     }
   }
-
-  // TODO: move to a separate, higher level models module?
-  // TODO: rename to TransformerBodyExpr?
-  sealed protected trait DerivedExpr[A]
-  protected object DerivedExpr {
-    final case class TotalExpr[A](expr: Expr[A]) extends DerivedExpr[A]
-    final case class PartialExpr[A](expr: Expr[partial.Result[A]]) extends DerivedExpr[A]
-  }
 }
