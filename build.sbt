@@ -90,7 +90,7 @@ val settings = Seq(
 
 val dependencies = Seq(
   libraryDependencies ++= Seq(
-    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0",
+    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.10.0",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
     "com.lihaoyi" %%% "utest" % "0.8.1" % "test",
   ),
