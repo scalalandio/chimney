@@ -9,6 +9,6 @@ private[derivation] trait DerivationPlatform
     with rules.NotImplementedFallbackRuleModule {
   this: DefinitionsPlatform =>
 
-  override protected val rulesAvailableForPlatform: Seq[Rule] =
-    Seq(TransformSubtypesRule, NotImplementedFallbackRule)
+  override protected val rulesAvailableForPlatform: List[Rule] =
+    List(TransformSubtypesRule, NotImplementedFallbackRule)
 }

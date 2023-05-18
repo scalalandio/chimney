@@ -5,12 +5,10 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
 
 trait NotImplementedFallbackRuleModule { this: DefinitionsPlatform & Derivation =>
 
-  object NotImplementedFallbackRule extends Rule {
+  // TODO: remove this rule once all rules are migrated; it's here only to make the Scala 3 tests compile
+  object NotImplementedFallbackRule extends Rule("NotImplementedFallback") {
 
-    def isApplicableTo[From, To](implicit ctx: TransformerContext[From, To]): Boolean = true
-
-    def apply[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[DerivedExpr[To]] =
-      DerivationResult.pure(DerivedExpr.TotalExpr[To]('{ ??? }))
+    def expand[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+      DerivationResult.totalExpr('{ ??? })
   }
-
 }

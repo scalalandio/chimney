@@ -17,12 +17,12 @@ import scala.annotation.nowarn
 private[compiletime] trait LegacyMacrosFallbackRuleModule {
   this: DefinitionsPlatform & DerivationPlatform =>
 
-  protected object LegacyMacrosFallbackRule extends Rule {
+  // TODO: remove this rule once all rules are migrated; it's here only to make the Scala 2 tests pass during migration
+  protected object LegacyMacrosFallbackRule extends Rule("LegacyMacrosFallback") {
 
-    // we want this fallback to ALWAYS work until we no longer need it
-    override def isApplicableTo[From, To](implicit ctx: TransformerContext[From, To]): Boolean = true
-
-    override def apply[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[DerivedExpr[To]] =
+    override def expand[From, To](implicit
+        ctx: TransformerContext[From, To]
+    ): DerivationResult[Rule.ExpansionResult[To]] =
       DerivationResult {
         oldMacros.resolveTransformerBody(convertToLegacyConfig)(convertToLegacyType[From], convertToLegacyType[To])
       }.flatMap(convertFromLegacyDerivedTree[From, To](_))
@@ -81,21 +81,19 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule {
 
     private def convertFromLegacyDerivedTree[From, To](
         derivedTree: Either[Seq[TransformerDerivationError], oldMacros.DerivedTree]
-    )(implicit ctx: TransformerContext[From, To]): DerivationResult[DerivedExpr[To]] = derivedTree match {
+    )(implicit ctx: TransformerContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = derivedTree match {
       case Left(oldErrors) =>
         DerivationResult.fail(
           DerivationErrors(
             DerivationError.TransformerError(oldErrors.head),
-            oldErrors.tail.map(DerivationError.TransformerError).toSeq*
+            oldErrors.tail.map(DerivationError.TransformerError)*
           )
         )
       case Right(oldMacros.DerivedTree(tree, _: oldMacros.DerivationTarget.TotalTransformer.type)) =>
-        DerivationResult.pure(DerivedExpr.TotalExpr(c.Expr[To](tree.asInstanceOf[c.Tree])(c.WeakTypeTag(Type[To]))))
+        DerivationResult.totalExpr(c.Expr[To](tree.asInstanceOf[c.Tree])(c.WeakTypeTag(Type[To])))
       case Right(oldMacros.DerivedTree(tree, _: oldMacros.DerivationTarget.PartialTransformer)) =>
-        DerivationResult.pure(
-          DerivedExpr.PartialExpr(
-            c.Expr[partial.Result[To]](tree.asInstanceOf[c.Tree])(c.WeakTypeTag(ChimneyType.PartialResult[To]))
-          )
+        DerivationResult.partialExpr(
+          c.Expr[partial.Result[To]](tree.asInstanceOf[c.Tree])(c.WeakTypeTag(ChimneyType.PartialResult[To]))
         )
     }
   }

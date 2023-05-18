@@ -45,6 +45,7 @@ final case class IncompatibleSourceTuple(
     targetTypeName: String
 ) extends TransformerDerivationError
 
+// TODO: rename fieldName to valueName
 final case class NotSupportedTransformerDerivation(fieldName: String, sourceTypeName: String, targetTypeName: String)
     extends TransformerDerivationError
 

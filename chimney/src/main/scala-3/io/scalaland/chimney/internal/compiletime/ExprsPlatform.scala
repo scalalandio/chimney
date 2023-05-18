@@ -30,6 +30,6 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     def asInstanceOf[T: Type, U: Type](expr: Expr[T]): Expr[U] = '{ ${ expr }.asInstanceOf[U] }
 
-    def prettyPrint[T: Type](expr: Expr[T]): String = expr.asTerm.show(using Printer.TreeAnsiCode)
+    def prettyPrint[T](expr: Expr[T]): String = expr.asTerm.show(using Printer.TreeAnsiCode)
   }
 }

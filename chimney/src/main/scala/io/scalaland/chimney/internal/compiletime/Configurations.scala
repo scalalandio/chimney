@@ -16,7 +16,8 @@ private[compiletime] trait Configurations { this: Definitions =>
       beanGetters: Boolean = false,
       methodAccessors: Boolean = false,
       optionDefaultsToNone: Boolean = false,
-      implicitConflictResolution: Option[ImplicitTransformerPreference] = None
+      implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
+      displayMacrosLogging: Boolean = false
   ) {
 
     def setBoolFlag[Flag <: internal.TransformerFlags.Flag: Type](value: Boolean): TransformerFlags =
@@ -30,6 +31,8 @@ private[compiletime] trait Configurations { this: Definitions =>
         copy(methodAccessors = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.OptionDefaultsToNone) {
         copy(optionDefaultsToNone = value)
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.MacrosLogging) {
+        copy(displayMacrosLogging = value)
       } else {
         // $COVERAGE-OFF$
         reportError(s"Invalid transformer flag type: ${Type[Flag]}!")
@@ -45,12 +48,15 @@ private[compiletime] trait Configurations { this: Definitions =>
         if (beanGetters) Vector("beanGetters") else Vector.empty,
         if (methodAccessors) Vector("methodAccessors") else Vector.empty,
         if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
-        implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector
+        implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
+        if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
       ).flatten.mkString(", ")})"
   }
 
-  sealed abstract class RuntimeFieldOverride(val needValueLevelAccess: Boolean) extends Product with Serializable
-  object RuntimeFieldOverride {
+  sealed abstract protected class RuntimeFieldOverride(val needValueLevelAccess: Boolean)
+      extends Product
+      with Serializable
+  protected object RuntimeFieldOverride {
     final case class Const(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
     final case class ConstPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
     final case class Computed(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
@@ -59,7 +65,7 @@ private[compiletime] trait Configurations { this: Definitions =>
   }
 
   sealed abstract class RuntimeCoproductOverride extends Product with Serializable
-  object RuntimeCoproductOverride {
+  protected object RuntimeCoproductOverride {
     final case class CoproductInstance(runtimeDataIdx: Int) extends RuntimeCoproductOverride
     final case class CoproductInstancePartial(runtimeDataIdx: Int) extends RuntimeCoproductOverride
   }
@@ -94,9 +100,25 @@ private[compiletime] trait Configurations { this: Definitions =>
     def withDefinitionScope(defScope: (ComputedType, ComputedType)): TransformerConfig = {
       copy(preventResolutionForTypes = Some(defScope), legacy = legacy.copy(definitionScope = Some(defScope)))
     }
-  }
 
-  object TransformerConfig {
+    override def toString: String = {
+      val fieldOverridesString = fieldOverrides.map { case (k, v) => s"$k -> $v" }.mkString(", ")
+      val coproductOverridesString = coproductOverrides
+        .map { case ((f, t), v) => s"(${ComputedType.prettyPrint(f)}, ${ComputedType.prettyPrint(t)}) -> $v" }
+        .mkString(", ")
+      val preventResolutionForTypesString = preventResolutionForTypes.map { case (f, t) =>
+        s"(${ComputedType.prettyPrint(f)}, ${ComputedType.prettyPrint(t)})"
+      }.toString
+      s"""TransformerConfig(
+          |  flags = $flags,
+          |  fieldOverrides = Map($fieldOverridesString),
+          |  coproductOverrides = Map($coproductOverridesString),
+          |  preventResolutionForTypes = $preventResolutionForTypesString,
+          |  legacy = $legacy
+          |)""".stripMargin
+    }
+  }
+  protected object TransformerConfig {
 
     type UpdateCfg[_ <: TransformerCfg]
 

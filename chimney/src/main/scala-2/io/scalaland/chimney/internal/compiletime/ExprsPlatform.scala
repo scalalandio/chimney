@@ -26,7 +26,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     def asInstanceOf[T: Type, U: Type](expr: Expr[T]): Expr[U] = c.Expr(q"${expr}.asInstanceOf[${Type[U]}]")
 
-    def prettyPrint[T: Type](expr: Expr[T]): String =
+    def prettyPrint[T](expr: Expr[T]): String =
       expr
         .toString()
         .replaceAll("\\$\\d+", "")
