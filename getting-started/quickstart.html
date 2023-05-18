@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Quickstart &mdash; Chimney 0.7.4 documentation</title>
+  <title>Quickstart &mdash; Chimney 0.7.5 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.7.4
+                0.7.5
               </div>
             
           
@@ -197,9 +197,9 @@
 <p>To include Chimney to your SBT project, add the following line
 to your <code class="docutils literal notranslate"><span class="pre">build.sbt</span></code>:</p>
 <pre class="literal-block">// if you use Scala on JVM-only
-libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.7.4&quot;
+libraryDependencies += &quot;io.scalaland&quot; %% &quot;chimney&quot; % &quot;0.7.5&quot;
 // if you cross-compile to Scala.js and/or Scala Native
-libraryDependencies += &quot;io.scalaland&quot; %%% &quot;chimney&quot; % &quot;0.7.4&quot;</pre>
+libraryDependencies += &quot;io.scalaland&quot; %%% &quot;chimney&quot; % &quot;0.7.5&quot;</pre>
 <p>Library is currently supported for Scala 2.12.x and 2.13.x on JVM, ScalaJS 1.x,
 Scala Native 0.4.</p>
 <div class="admonition warning">
@@ -212,7 +212,7 @@ it’s recommended to use at least Scala 2.12.1.</p>
 <h2>Using Scala CLI/Ammonite<a class="headerlink" href="#using-scala-cli-ammonite" title="Permalink to this headline">¶</a></h2>
 <p>If you are using Scala CLI you can try out Chimney by adding it with <cite>using</cite> clause:</p>
 <div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="c1">//&gt; using scala &quot;2.13.10&quot;</span>
-<span class="c1">//&gt; using lib &quot;io.scalaland::chimney:0.7.4&quot;</span>
+<span class="c1">//&gt; using lib &quot;io.scalaland::chimney:0.7.5&quot;</span>
 <span class="k">import</span> <span class="nn">io.scalaland.chimney.dsl._</span>
 
 <span class="k">case</span> <span class="k">class</span> <span class="nc">Foo</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">y</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">z</span><span class="k">:</span> <span class="kt">Boolean</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
@@ -225,7 +225,7 @@ it’s recommended to use at least Scala 2.12.1.</p>
 </pre></div>
 </div>
 <p>or run the Ammonite REPL:</p>
-<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="n">scala</span><span class="o">-</span><span class="n">cli</span> <span class="n">repl</span> <span class="o">--</span><span class="n">ammonite</span> <span class="o">--</span><span class="n">scala</span> <span class="s">&quot;2.13.10&quot;</span> <span class="o">--</span><span class="n">dependency</span> <span class="s">&quot;io.scalaland::chimney:0.7.4&quot;</span>
+<div class="highlight-scala notranslate"><div class="highlight"><pre><span></span><span class="n">scala</span><span class="o">-</span><span class="n">cli</span> <span class="n">repl</span> <span class="o">--</span><span class="n">ammonite</span> <span class="o">--</span><span class="n">scala</span> <span class="s">&quot;2.13.10&quot;</span> <span class="o">--</span><span class="n">dependency</span> <span class="s">&quot;io.scalaland::chimney:0.7.5&quot;</span>
 <span class="nc">Loading</span><span class="o">...</span>
 <span class="nc">Welcome</span> <span class="n">to</span> <span class="n">the</span> <span class="nc">Ammonite</span> <span class="nc">Repl</span> <span class="mf">2.5</span><span class="o">.</span><span class="mi">6</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="n">f8bff243</span> <span class="o">(</span><span class="nc">Scala</span> <span class="mf">2.13</span><span class="o">.</span><span class="mi">10</span> <span class="nc">Java</span> <span class="mf">17.0</span><span class="o">.</span><span class="mi">1</span><span class="o">)</span>
 <span class="k">@</span> <span class="k">case</span> <span class="k">class</span> <span class="nc">Foo</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">y</span><span class="k">:</span> <span class="kt">Int</span><span class="o">,</span> <span class="n">z</span><span class="k">:</span> <span class="kt">Boolean</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
