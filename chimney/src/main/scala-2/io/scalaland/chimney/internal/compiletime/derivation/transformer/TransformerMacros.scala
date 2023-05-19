@@ -3,14 +3,10 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 import io.scalaland.chimney.internal.TransformerCfg.Empty
 import io.scalaland.chimney.internal.TransformerFlags.Default
 import io.scalaland.chimney.{internal, PartialTransformer, Transformer}
-import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
 import scala.reflect.macros.blackbox
 
-final class TransformerMacros(val c: blackbox.Context)
-    extends DefinitionsPlatform
-    with DerivationPlatform
-    with GatewayPlatform {
+final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatform with GatewayPlatform {
 
   type ImplicitScopeFlagsType <: internal.TransformerFlags
 

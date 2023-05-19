@@ -1,12 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
 import io.scalaland.chimney.internal.TransformerDerivationError
-import io.scalaland.chimney.internal.compiletime.{
-  DefinitionsPlatform,
-  DerivationError,
-  DerivationErrors,
-  DerivationResult
-}
+import io.scalaland.chimney.internal.compiletime.{DerivationError, DerivationErrors, DerivationResult}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.DerivationPlatform
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 import io.scalaland.chimney.partial
@@ -14,8 +9,7 @@ import io.scalaland.chimney.partial
 import scala.annotation.nowarn
 
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-private[compiletime] trait LegacyMacrosFallbackRuleModule {
-  this: DefinitionsPlatform & DerivationPlatform =>
+private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlatform =>
 
   // TODO: remove this rule once all rules are migrated; it's here only to make the Scala 2 tests pass during migration
   protected object LegacyMacrosFallbackRule extends Rule("LegacyMacrosFallback") {

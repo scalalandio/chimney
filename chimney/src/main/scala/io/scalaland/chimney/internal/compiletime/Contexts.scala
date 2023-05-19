@@ -23,6 +23,19 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
     val TypeClass: Type[TypeClass]
 
     val derivationStartedAt: java.time.Instant
+
+    def updateFromTo[NewFrom: Type, NewTo: Type](newSrc: Expr[NewFrom]): TransformerContext[NewFrom, NewTo] =
+      this match {
+        case total: TransformerContext.ForTotal[?, ?] =>
+          total.copy(From = Type[NewFrom], To = Type[NewTo], src = newSrc)
+        case partial: TransformerContext.ForPartial[?, ?] =>
+          partial.copy(From = Type[NewFrom], To = Type[NewTo], src = newSrc)
+      }
+
+    def updateConfig(f: TransformerConfig => TransformerConfig): TransformerContext[From, To] = this match {
+      case total: TransformerContext.ForTotal[?, ?]     => total.copy(config = f(total.config))
+      case partial: TransformerContext.ForPartial[?, ?] => partial.copy(config = f(partial.config))
+    }
   }
   protected object TransformerContext {
 

@@ -14,9 +14,7 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
     val Transformer: TransformerModule
     trait TransformerModule { this: Transformer.type =>
 
-      def summon[From: Type, To: Type]: Option[Expr[io.scalaland.chimney.Transformer[From, To]]]
-
-      def transform[From: Type, To: Type](
+      def callTransform[From: Type, To: Type](
           transformer: Expr[io.scalaland.chimney.Transformer[From, To]],
           src: Expr[From]
       ): Expr[To]
@@ -25,9 +23,7 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
     val PartialTransformer: PartialTransformerModule
     trait PartialTransformerModule { this: PartialTransformer.type =>
 
-      def summon[From: Type, To: Type]: Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]]
-
-      def transform[From: Type, To: Type](
+      def callTransform[From: Type, To: Type](
           transformer: Expr[io.scalaland.chimney.PartialTransformer[From, To]],
           src: Expr[From],
           failFast: Expr[Boolean]
@@ -101,5 +97,20 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
           index: Int
       ): Expr[Any]
     }
+  }
+
+  implicit class TransformerExprOps[From: Type, To: Type](
+      private val transformer: Expr[io.scalaland.chimney.Transformer[From, To]]
+  ) {
+
+    def callTransform(src: Expr[From]): Expr[To] = ChimneyExpr.Transformer.callTransform(transformer, src)
+  }
+
+  implicit class PartialTransformerExprOps[From: Type, To: Type](
+      private val transformer: Expr[io.scalaland.chimney.PartialTransformer[From, To]]
+  ) {
+
+    def callTransform(src: Expr[From], failFast: Expr[Boolean]): Expr[partial.Result[To]] =
+      ChimneyExpr.PartialTransformer.callTransform(transformer, src, failFast)
   }
 }

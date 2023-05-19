@@ -12,10 +12,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
 
     object Transformer extends TransformerModule {
 
-      def summon[From: Type, To: Type]: Option[Expr[io.scalaland.chimney.Transformer[From, To]]] =
-        scala.quoted.Expr.summon(using ChimneyType.Transformer[From, To])
-
-      def transform[From: Type, To: Type](
+      def callTransform[From: Type, To: Type](
           transformer: Expr[io.scalaland.chimney.Transformer[From, To]],
           src: Expr[From]
       ): Expr[To] = '{ ${ transformer }.transform(${ src }) }
@@ -23,10 +20,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
 
     object PartialTransformer extends PartialTransformerModule {
 
-      def summon[From: Type, To: Type]: Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
-        scala.quoted.Expr.summon(using ChimneyType.PartialTransformer[From, To])
-
-      def transform[From: Type, To: Type](
+      def callTransform[From: Type, To: Type](
           transformer: Expr[io.scalaland.chimney.PartialTransformer[From, To]],
           src: Expr[From],
           failFast: Expr[Boolean]

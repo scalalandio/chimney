@@ -41,6 +41,10 @@ private[compiletime] trait Types {
 
     final def <:<[S](another: Type[S]): Boolean = Type.isSubtypeOf(tpe, another)
     final def =:=[S](another: Type[S]): Boolean = Type.isSameAs(tpe, another)
+
+    final def isOption: Boolean = tpe <:< Type.Option(Type.Any)
+
+    final def asComputed: ComputedType = ComputedType(tpe)
   }
 
   /** Used to erase the type of Type, while providing the utilities to still make it useful */
@@ -50,10 +54,11 @@ private[compiletime] trait Types {
     def apply[T](tpe: Type[T]): ComputedType = tpe.asInstanceOf[ComputedType]
 
     def prettyPrint(computedType: ComputedType): String = Type.prettyPrint(computedType.Type)
+
+    def use[Out](ct: ComputedType)(thunk: Type[ct.Underlying] => Out): Out = thunk(ct.asInstanceOf[Type[ct.Underlying]])
   }
 
   implicit class ComputedTypeOps(val ct: ComputedType) {
     def Type: Type[ct.Underlying] = ct.asInstanceOf[Type[ct.Underlying]]
-    def use[Out](thunk: Type[ct.Underlying] => Out): Out = thunk(Type)
   }
 }

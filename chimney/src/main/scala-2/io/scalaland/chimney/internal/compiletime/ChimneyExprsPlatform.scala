@@ -11,14 +11,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
 
     object Transformer extends TransformerModule {
 
-      def summon[From: Type, To: Type]: Option[Expr[io.scalaland.chimney.Transformer[From, To]]] =
-        scala.util
-          .Try(c.inferImplicitValue(ChimneyType.Transformer[From, To], silent = true, withMacrosDisabled = false))
-          .toOption
-          .filterNot(_ == EmptyTree)
-          .map(c.Expr[io.scalaland.chimney.Transformer[From, To]](_))
-
-      def transform[From: Type, To: Type](
+      def callTransform[From: Type, To: Type](
           transformer: Expr[io.scalaland.chimney.Transformer[From, To]],
           src: Expr[From]
       ): Expr[To] = c.Expr(q"$transformer.transform($src)")
@@ -26,16 +19,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
 
     object PartialTransformer extends PartialTransformerModule {
 
-      def summon[From: Type, To: Type]: Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
-        scala.util
-          .Try(
-            c.inferImplicitValue(ChimneyType.PartialTransformer[From, To], silent = true, withMacrosDisabled = false)
-          )
-          .toOption
-          .filterNot(_ == EmptyTree)
-          .map(c.Expr[io.scalaland.chimney.PartialTransformer[From, To]](_))
-
-      def transform[From: Type, To: Type](
+      def callTransform[From: Type, To: Type](
           transformer: Expr[io.scalaland.chimney.PartialTransformer[From, To]],
           src: Expr[From],
           failFast: Expr[Boolean]

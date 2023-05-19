@@ -1,42 +1,12 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-import io.scalaland.chimney.dsl.{PreferPartialTransformer, PreferTotalTransformer}
 import io.scalaland.chimney.internal.compiletime.{Definitions, DerivationResult}
 import io.scalaland.chimney.partial
 
 import scala.annotation.nowarn
 
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-private[compiletime] trait Derivation extends Definitions with ResultOps {
-
-  final protected def summonTransformerForTransformationResultExpr[From, To](implicit
-      ctx: TransformerContext[From, To]
-  ): Option[DerivedExpr[To]] = ctx match {
-    case totalCtx: TransformerContext.ForTotal[?, ?] =>
-      ChimneyExpr.Transformer.summon[From, To].map { transformer =>
-        DerivedExpr.TotalExpr(ChimneyExpr.Transformer.transform(transformer, totalCtx.src))
-      }
-    case partialCtx: TransformerContext.ForPartial[?, ?] =>
-      import partialCtx.{src, failFast}
-      import partialCtx.config.flags.implicitConflictResolution
-      (ChimneyExpr.Transformer.summon[From, To], ChimneyExpr.PartialTransformer.summon[From, To]) match {
-        case (Some(total), Some(partial)) if implicitConflictResolution.isEmpty =>
-          reportError(
-            s"""Ambiguous implicits while resolving Chimney recursive transformation:
-               |
-               |PartialTransformer[${Type.prettyPrint[From]}, ${Type.prettyPrint[To]}]: ${Expr.prettyPrint(total)}
-               |Transformer[${Type.prettyPrint[From]}, ${Type.prettyPrint[To]}]: ${Expr.prettyPrint(partial)}
-               |
-               |Please eliminate ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used
-               |""".stripMargin
-          )
-        case (Some(total), partialOpt) if partialOpt.isEmpty || implicitConflictResolution == PreferTotalTransformer =>
-          Some(DerivedExpr.TotalExpr(ChimneyExpr.Transformer.transform(total, src)))
-        case (totalOpt, Some(partial)) if totalOpt.isEmpty || implicitConflictResolution == PreferPartialTransformer =>
-          Some(DerivedExpr.PartialExpr(ChimneyExpr.PartialTransformer.transform(partial, src, failFast)))
-        case _ => None
-      }
-  }
+private[compiletime] trait Derivation extends Definitions with ResultOps with ImplicitSummoning {
 
   /** Intended use case: recursive derivation */
   final protected def deriveTransformationResultExpr[From, To](implicit
@@ -51,20 +21,33 @@ private[compiletime] trait Derivation extends Definitions with ResultOps {
       }
     ) {
       Rule.expandRules[From, To](rulesAvailableForPlatform)
-// TODO: move logging below to the place when we exit recursive call
-//        .logSuccess {
-//          case DerivedExpr.TotalExpr(expr)   => s"Derived total expression ${Expr.prettyPrint(expr)}"
-//          case DerivedExpr.PartialExpr(expr) => s"Derived partial expression ${Expr.prettyPrint(expr)}"
-//        }
     }
 
-  /** Intended use case: recursive derivation when we want to attempt summoning first */
-  final protected def summonOrElseDeriveTransformationResultExpr[From, To](implicit
-      ctx: TransformerContext[From, To]
-  ): DerivationResult[DerivedExpr[To]] = summonTransformerForTransformationResultExpr[From, To] match {
-    case Some(derivedExpr) => DerivationResult.pure(derivedExpr)
-    case None              => deriveTransformationResultExpr[From, To]
+  final protected def deriveRecursiveTransformationExpr[NewFrom: Type, NewTo: Type](
+      newSrc: Expr[NewFrom]
+  )(implicit ctx: TransformerContext[?, ?]): DerivationResult[DerivedExpr[NewTo]] = {
+    val newCtx: TransformerContext[NewFrom, NewTo] = ctx.updateFromTo[NewFrom, NewTo](newSrc).updateConfig {
+      _.prepareForRecursiveCall
+    }
+    deriveTransformationResultExpr(newCtx)
+      .logSuccess {
+        case DerivedExpr.TotalExpr(expr)   => s"Derived recursively total expression ${Expr.prettyPrint(expr)}"
+        case DerivedExpr.PartialExpr(expr) => s"Derived recursively partial expression ${Expr.prettyPrint(expr)}"
+      }
   }
+
+  // proposed initial version of the API, we might make it more generic later on
+  // idea:
+  //   1. we derive the Expr[To] OR Expr[partial.Result[To]] because we don't know what we'll get until we try
+  //   2. THEN we create the code which will initialize Expr[From] because that might depend on the result of derivation
+  //   3. we also propagate the errors and Rule.ExpansionResult
+  protected def deriveFold[NewFrom: Type, NewTo: Type, To: Type](
+      deriveFromSrc: Expr[NewFrom] => DerivationResult[Rule.ExpansionResult[NewTo]]
+  )(
+      provideSrcForTotal: (Expr[NewFrom] => Expr[NewTo]) => DerivedExpr[To]
+  )(
+      provideSrcForPartial: (Expr[NewFrom] => Expr[partial.Result[NewTo]]) => DerivedExpr[To]
+  ): DerivationResult[Rule.ExpansionResult[To]]
 
   abstract protected class Rule(val name: String) {
 

@@ -6,7 +6,7 @@ import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
 
 import scala.quoted
 
-private[compiletime] trait DefinitionsPlatform(using val quotes: quoted.Quotes)
+abstract private[compiletime] class DefinitionsPlatform(using val quotes: quoted.Quotes)
     extends Definitions
     with TypesPlatform
     with ChimneyTypesPlatform
