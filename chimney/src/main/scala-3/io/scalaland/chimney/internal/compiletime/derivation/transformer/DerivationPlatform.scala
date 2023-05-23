@@ -21,6 +21,25 @@ abstract private[derivation] class DerivationPlatform(q: scala.quoted.Quotes)
   ): DerivationResult[Rule.ExpansionResult[To]] =
     DerivationResult.notYetImplemented("deriveFrom")
 
+  protected object DeferredExprInit extends DeferredExprInitModule {
+
+    // TODO: freshName with extra steps in Scala 2, random in Scala 3 since freshName is experimental
+    protected def provideFreshName(): String = ???
+
+    protected def refToTypedName[T](typedName: TypedName[T]): Expr[T] = ???
+
+    // TODO:
+    // val $freshName1: $tpe = $expr1
+    // ...
+    // $value
+    protected def initializeVals[To](init: InitializedAsVal[DerivedExpr[To]]): DerivedExpr[To] = ???
+
+    // TODO:
+    // { $freshName: $tpe => $value }
+    protected def useLambda[From, To, B](param: InitializedAsParam[From, Expr[To]], usage: Expr[From => To] => B): B =
+      ???
+  }
+
   final override protected val rulesAvailableForPlatform: List[Rule] =
     List(TransformImplicitRule, TransformSubtypesRule, TransformOptionToOptionRule, NotImplementedFallbackRule)
 }

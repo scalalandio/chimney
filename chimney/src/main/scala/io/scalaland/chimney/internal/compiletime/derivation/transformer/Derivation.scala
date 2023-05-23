@@ -49,6 +49,79 @@ private[compiletime] trait Derivation extends Definitions with ResultOps with Im
       provideSrcForPartial: (Expr[NewFrom] => Expr[partial.Result[NewTo]]) => DerivedExpr[To]
   ): DerivationResult[Rule.ExpansionResult[To]]
 
+  final protected class DeferredExprInit[From, A](value: A, typedName: DeferredExprInit.TypedName[From]) {
+
+    def map[B](f: A => B): DeferredExprInit[From, B] = new DeferredExprInit(f(value), typedName)
+
+    def initializeAsVal[From2: Type](init: Expr[From2]): DerivationResult[DeferredExprInit.InitializedAsVal[A]] = {
+      if (typedName.tpe == Type[From2])
+        DerivationResult.pure(DeferredExprInit.InitializedAsVal(value, typedName, init.asInstanceOf[Expr[From]]))
+      else
+        DerivationResult.fromException(
+          new AssertionError(
+            s"Initialized deferred Expr[${Type.prettyPrint(typedName.tpe)}] with expression of type ${Type.prettyPrint[From2]}"
+          )
+        )
+    }
+
+    def initializeAsLambdaParam: DeferredExprInit.InitializedAsParam[From, A] =
+      new DeferredExprInit.InitializedAsParam(value, typedName)
+  }
+  protected val DeferredExprInit: DeferredExprInitModule
+  protected trait DeferredExprInitModule { this: DeferredExprInit.type =>
+
+    final case class TypedName[T](tpe: Type[T], name: String)
+
+    def use[From: Type, To: Type](
+        f: Expr[From] => DerivationResult[DerivedExpr[To]]
+    ): DerivationResult[DeferredExprInit[From, DerivedExpr[To]]] = {
+      val typedName = TypedName(Type[From], provideFreshName())
+      f(refToTypedName(typedName)).map(new DeferredExprInit(_, typedName))
+    }
+
+    final class InitializedAsVal[A] private (private val value: A, private val inits: Vector[InitializedAsVal.Init]) {
+
+      def map[B](f: A => B): InitializedAsVal[B] = new InitializedAsVal(f(value), inits)
+
+      def map2[B, C](init2: InitializedAsVal[B])(f: (A, B) => C): InitializedAsVal[C] =
+        new InitializedAsVal(f(value, init2.value), inits ++ init2.inits)
+
+      def asInitializedExpr[B](implicit ev: A <:< DerivedExpr[B]): DerivedExpr[B] = initializeVals(this.map(ev))
+    }
+    object InitializedAsVal {
+      def apply[A, From](value: A, typedName: TypedName[From], initExpr: Expr[From]): InitializedAsVal[A] =
+        new InitializedAsVal(
+          value,
+          Vector(
+            new Init {
+              type T = From
+              val name = typedName
+              val init = initExpr
+            }
+          )
+        )
+
+      private trait Init {
+        type T
+        val name: TypedName[T]
+        val init: Expr[T]
+      }
+    }
+
+    final class InitializedAsParam[From, A](value: A, typedName: TypedName[From]) {
+
+      def map[B](f: A => B): InitializedAsParam[From, B] = new InitializedAsParam(f(value), typedName)
+
+      def injectLambda[To: Type, B](f: Expr[From => To] => B)(implicit ev: A <:< Expr[To]): B =
+        useLambda(this.map(ev), f)
+    }
+
+    protected def provideFreshName(): String
+    protected def refToTypedName[T](typedName: TypedName[T]): Expr[T]
+    protected def initializeVals[To](init: InitializedAsVal[DerivedExpr[To]]): DerivedExpr[To]
+    protected def useLambda[From, To, B](param: InitializedAsParam[From, Expr[To]], usage: Expr[From => To] => B): B
+  }
+
   abstract protected class Rule(val name: String) {
 
     def expand[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[Rule.ExpansionResult[To]]
