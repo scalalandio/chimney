@@ -26,6 +26,7 @@ private[compiletime] trait Derivation extends Definitions with ResultOps with Im
   final protected def deriveRecursiveTransformationExpr[NewFrom: Type, NewTo: Type](
       newSrc: Expr[NewFrom]
   )(implicit ctx: TransformerContext[?, ?]): DerivationResult[DerivedExpr[NewTo]] = {
+    // TODO: log that we're entering the recrusion?
     val newCtx: TransformerContext[NewFrom, NewTo] = ctx.updateFromTo[NewFrom, NewTo](newSrc).updateConfig {
       _.prepareForRecursiveCall
     }
