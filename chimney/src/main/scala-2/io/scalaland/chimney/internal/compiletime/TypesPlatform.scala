@@ -52,10 +52,11 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         if (apply[Any](Any) <:< tpe)
           Some(
             tpe.typeArgs.headOption
-              .map(inner => ComputedType(typeUtils.fromUntyped(inner)))
-              .getOrElse(ComputedType(Nothing))
+              .fold[ComputedType](ComputedType(Nothing))(inner => ComputedType(typeUtils.fromUntyped(inner)))
           )
-        else None
+        else scala.None
+
+      val None: Type[scala.None.type] = fromWeak[scala.None.type]
     }
 
     def Either[L: Type, R: Type]: Type[Either[L, R]] = fromWeakTC[Either[?, ?], Either[L, R]](Type[L], Type[R])

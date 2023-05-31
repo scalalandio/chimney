@@ -65,6 +65,9 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
       ): Expr[partial.Result[M]] =
         '{ partial.Result.sequence[M, A](${ it }, ${ failFast })(${ quoted.Expr.summon[Factory[A, M]].get }) }
 
+      def map[A: Type, B: Type](pr: Expr[partial.Result[A]])(f: Expr[A => B]): Expr[partial.Result[B]] =
+        '{ ${ pr }.map(${ f }) }
+
       def map2[A: Type, B: Type, C: Type](
           fa: Expr[partial.Result[A]],
           fb: Expr[partial.Result[B]],

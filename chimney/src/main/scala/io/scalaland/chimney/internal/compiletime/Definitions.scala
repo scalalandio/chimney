@@ -5,6 +5,7 @@ private[compiletime] trait Definitions
     with ChimneyTypes
     with Exprs
     with ChimneyExprs
+    with ExprPromises
     with Configurations
     with Contexts
     with Results

@@ -1,13 +1,13 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
-import io.scalaland.chimney.internal.compiletime.{Definitions, DerivationResult}
+import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.{internal, partial, PartialTransformer, Transformer}
 
 import scala.annotation.nowarn
 
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-private[compiletime] trait Gateway { this: Definitions & Derivation =>
+private[compiletime] trait Gateway { this: Derivation =>
 
   // Intended for: being called from platform-specific code which returns Expr directly to splicing site
 
@@ -108,6 +108,8 @@ private[compiletime] trait Gateway { this: Definitions & Derivation =>
             }
         }
         .asInstanceOf[DerivationResult[Expr[ctx.Target]]]
+
+  // TODO: rewrite in terms of ExprPromise
 
   protected def instantiateTotalTransformer[From: Type, To: Type](
       toExpr: Expr[From] => Expr[To]

@@ -13,8 +13,12 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     object Option extends OptionModule {
       def apply[A: Type](a: Expr[A]): Expr[Option[A]] = c.Expr(q"_root_.scala.Option[${Type[A]}]($a)")
       def empty[A: Type]: Expr[Option[A]] = c.Expr(q"_root_.scala.Option.empty[${Type[A]}]")
-      def apply[A: Type]: Expr[A => Option[A]] = c.Expr(q"_root_.scala.Option.apply[${Type[A]}](_)")
+      def wrap[A: Type]: Expr[A => Option[A]] = c.Expr(q"_root_.scala.Option[${Type[A]}](_)")
       val None: Expr[scala.None.type] = c.Expr(q"_root_.scala.None")
+      def map[A: Type, B: Type](opt: Expr[Option[A]])(f: Expr[A => B]): Expr[Option[B]] =
+        c.Expr(q"$opt.map[${Type[B]}]($f)")
+      def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(onSome: Expr[A => B]): Expr[B] =
+        c.Expr(q"$opt.fold[${Type[B]}]($onNone)($onSome)")
     }
 
     object Either extends EitherModule {
@@ -31,5 +35,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         .toString()
         .replaceAll("\\$\\d+", "")
         .replace("$u002E", ".")
+
+    def typeOf[T](expr: Expr[T]): Type[T] = typeUtils.fromUntyped(expr.actualType)
   }
 }

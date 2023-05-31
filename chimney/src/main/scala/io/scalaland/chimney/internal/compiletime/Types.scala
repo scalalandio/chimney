@@ -28,6 +28,8 @@ private[compiletime] trait Types {
 
       def apply[T: Type]: Type[Option[T]]
       def unapply[T](tpe: Type[T]): Option[ComputedType]
+
+      val None: Type[scala.None.type]
     }
     def Either[L: Type, R: Type]: Type[Either[L, R]]
 
@@ -60,5 +62,23 @@ private[compiletime] trait Types {
 
   implicit class ComputedTypeOps(val ct: ComputedType) {
     def Type: Type[ct.Underlying] = ct.asInstanceOf[Type[ct.Underlying]]
+  }
+
+  // you can import TypeImplicits.* in your shared code to avoid providing types manually, while avoiding conflicts with
+  // implicit types seen in platform-specific scopes
+  protected object TypeImplicits {
+
+    implicit val NothingType: Type[Nothing] = Type.Nothing
+    implicit val AnyType: Type[Any] = Type.Any
+    implicit val BooleanType: Type[Boolean] = Type.Boolean
+    implicit val IntType: Type[Int] = Type.Int
+    implicit val UnitType: Type[Unit] = Type.Unit
+
+    implicit def Function1Type[A: Type, B: Type]: Type[A => B] = Type.Function1[A, B]
+
+    implicit def ArrayType[A: Type]: Type[Array[A]] = Type.Array[A]
+    implicit def OptionType[A: Type]: Type[Option[A]] = Type.Option[A]
+    implicit val NoneType: Type[None.type] = Type.Option.None
+    implicit def EitherType[L: Type, R: Type]: Type[Either[L, R]] = Type.Either[L, R]
   }
 }

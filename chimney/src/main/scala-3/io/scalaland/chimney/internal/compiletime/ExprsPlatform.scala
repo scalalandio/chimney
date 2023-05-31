@@ -5,8 +5,7 @@ import scala.reflect.ClassTag
 
 private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatform =>
 
-  import quotes.*
-  import quotes.reflect.*
+  import quotes.*, quotes.reflect.*
 
   final override type Expr[A] = quoted.Expr[A]
 
@@ -19,8 +18,11 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     object Option extends OptionModule {
       def apply[A: Type](a: Expr[A]): Expr[Option[A]] = '{ scala.Option(${ a }) }
       def empty[A: Type]: Expr[Option[A]] = '{ scala.Option.empty[A] }
-      def apply[A: Type]: Expr[A => Option[A]] = '{ scala.Option.apply[A](_) }
+      def wrap[A: Type]: Expr[A => Option[A]] = '{ scala.Option[A](_) }
       val None: Expr[scala.None.type] = '{ scala.None }
+      def map[A: Type, B: Type](opt: Expr[Option[A]])(f: Expr[A => B]): Expr[Option[B]] = '{ ${ opt }.map(${ f }) }
+      def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(onSome: Expr[A => B]): Expr[B] =
+        '{ ${ opt }.fold(${ onNone })(${ onSome }) }
     }
 
     object Either extends EitherModule {
@@ -31,5 +33,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     def asInstanceOf[T: Type, U: Type](expr: Expr[T]): Expr[U] = '{ ${ expr }.asInstanceOf[U] }
 
     def prettyPrint[T](expr: Expr[T]): String = expr.asTerm.show(using Printer.TreeAnsiCode)
+
+    def typeOf[T](expr: Expr[T]): Type[T] = expr.asTerm.tpe.asType.asInstanceOf[Type[T]]
   }
 }

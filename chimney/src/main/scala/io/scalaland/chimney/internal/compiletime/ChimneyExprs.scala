@@ -65,6 +65,8 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
           failFast: Expr[Boolean]
       ): Expr[partial.Result[M]]
 
+      def map[A: Type, B: Type](pr: Expr[partial.Result[A]])(f: Expr[A => B]): Expr[partial.Result[B]]
+
       def map2[A: Type, B: Type, C: Type](
           fa: Expr[partial.Result[A]],
           fb: Expr[partial.Result[B]],

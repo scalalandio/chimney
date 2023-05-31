@@ -194,4 +194,21 @@ private[compiletime] object DerivationResult {
 
   def namedScope[A](name: String)(ra: => DerivationResult[A]): DerivationResult[A] =
     unit.namedScope(name)(_ => ra)
+
+  implicit val DerivationResultTraversableApplicative: fp.ApplicativeTraverse[DerivationResult] =
+    new fp.ApplicativeTraverse[DerivationResult] {
+
+      def map2[A, B, C](fa: DerivationResult[A], fb: DerivationResult[B])(f: (A, B) => C): DerivationResult[C] =
+        fa.map2(fb)(f)
+
+      def pure[A](a: A): DerivationResult[A] = DerivationResult.pure(a)
+
+      def traverse[G[_]: fp.Applicative, A, B](fa: DerivationResult[A])(f: A => G[B]): G[DerivationResult[B]] = {
+        import fp.Syntax.*
+        fa match {
+          case Success(value, state) => f(value).map(Success(_, state))
+          case failure: Failure      => (failure: DerivationResult[B]).pure[G]
+        }
+      }
+    }
 }

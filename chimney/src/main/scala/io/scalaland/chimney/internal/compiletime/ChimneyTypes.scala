@@ -52,4 +52,18 @@ private[compiletime] trait ChimneyTypes { this: Types =>
       }
     }
   }
+
+  // you can import TypeImplicits.* in your shared code to avoid providing types manually, while avoiding conflicts with
+  // implicit types seen in platform-specific scopes
+  protected object ChimneyTypeImplicits {
+
+    implicit def TransformerType[From: Type, To: Type]: Type[Transformer[From, To]] = ChimneyType.Transformer[From, To]
+    implicit def PartialTransformerType[From: Type, To: Type]: Type[PartialTransformer[From, To]] =
+      ChimneyType.PartialTransformer[From, To]
+    implicit def PatcherType[T: Type, Patch: Type]: Type[Patcher[T, Patch]] = ChimneyType.Patcher[T, Patch]
+
+    implicit def PartialResultType[A: Type]: Type[partial.Result[A]] = ChimneyType.PartialResult[A]
+    implicit def PartialResultValueType[A: Type]: Type[partial.Result.Value[A]] = ChimneyType.PartialResult.Value[A]
+    implicit val PartialResultErrorsType: Type[partial.Result.Errors] = ChimneyType.PartialResult.Errors
+  }
 }

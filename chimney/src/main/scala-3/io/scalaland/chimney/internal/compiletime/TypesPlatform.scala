@@ -47,8 +47,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       def apply[T: Type]: Type[Option[T]] = fromTC[Option[*], Option[T]](Type[T])
       def unapply[T](tpe: Type[T]): Option[ComputedType] = tpe match {
         case '[Option[inner]] => Some(ComputedType(Type[inner]))
-        case _                => None
+        case _                => scala.None
       }
+
+      val None: Type[scala.None.type] = quoted.Type.of[scala.None.type]
     }
     def Either[L: Type, R: Type]: Type[Either[L, R]] = fromTC[Either[*, *], Either[L, R]](Type[L], Type[R])
 
