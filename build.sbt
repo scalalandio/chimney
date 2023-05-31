@@ -8,14 +8,14 @@ ThisBuild / scalafmtOnCompile := !isCI
 val versions = new {
   val scala212 = "2.12.17"
   val scala213 = "2.13.10"
-  val scala3 = "3.3.0-RC5"
+  val scala3 = "3.3.0"
 
   // Which versions should be cross-compiled for publishing
   val scalas = List(scala212, scala213, scala3)
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Which version should be used in IntelliJ
-  val ideScala = scala3
+  val ideScala = scala213
   val idePlatform = VirtualAxis.jvm
 }
 
@@ -39,10 +39,11 @@ val settings = Seq(
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((3, _)) =>
         Seq(
+          // TODO: add linters
           "-explain",
           "-rewrite",
           // format: off
-          "-source", "3.2-migration",
+          "-source", "3.3-migration",
           // format: on
           "-Ykind-projector:underscores"
         )
@@ -127,24 +128,24 @@ val settings = Seq(
       case _ => Seq.empty
     }
   },
-  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
-  testFrameworks += new TestFramework("utest.runner.Framework")
+  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
 )
 
 val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang.modules" %%% "scala-collection-compat" % "2.9.0",
-    "com.lihaoyi" %%% "utest" % "0.8.1" % "test",
+    "org.scalameta" %%% "munit" % "1.0.0-M7" % "test"
   ),
   libraryDependencies ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, _)) => Seq(
-        "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
-        compilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
-      )
+      case Some((2, _)) =>
+        Seq(
+          "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
+          compilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
+        )
       case _ => Seq.empty
     }
-  },
+  }
 )
 
 val versionSchemeSettings = Seq(versionScheme := Some("early-semver"))
