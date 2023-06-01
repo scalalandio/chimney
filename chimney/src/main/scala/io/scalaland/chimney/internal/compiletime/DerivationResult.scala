@@ -123,7 +123,10 @@ sealed private[compiletime] trait DerivationResult[+A] {
 }
 private[compiletime] object DerivationResult {
 
-  final case class State(journal: Log.Journal = Log.Journal(logs = Vector.empty)) {
+  final case class State(
+      journal: Log.Journal = Log.Journal(logs = Vector.empty),
+      macroLogging: Option[State.MacroLogging] = None
+  ) {
 
     private[DerivationResult] def log(msg: => String): State = copy(journal = journal.append(msg))
 
@@ -131,8 +134,12 @@ private[compiletime] object DerivationResult {
       copy(journal = Log.Journal(Vector(Log.Scope(scopeName = scopeName, journal = journal))))
 
     private[DerivationResult] def appendedTo(previousState: State): State = State(
-      journal = Log.Journal(logs = previousState.journal.logs ++ this.journal.logs)
+      journal = Log.Journal(logs = previousState.journal.logs ++ this.journal.logs),
+      macroLogging = previousState.macroLogging.orElse(macroLogging)
     )
+  }
+  object State {
+    final case class MacroLogging(derivationStartedAt: java.time.Instant)
   }
 
   final private case class Success[A](value: A, state: State) extends DerivationResult[A]
@@ -195,10 +202,13 @@ private[compiletime] object DerivationResult {
   def namedScope[A](name: String)(ra: => DerivationResult[A]): DerivationResult[A] =
     unit.namedScope(name)(_ => ra)
 
+  def enableLogPrinting(derivationStartedAt: java.time.Instant): DerivationResult[Unit] =
+    unit.updateState(_.copy(macroLogging = Some(State.MacroLogging(derivationStartedAt))))
+
   // direct style
 
-  sealed trait Await[A] {
-    final case class PassErrors(derivationErrors: DerivationErrors) extends Throwable
+  final private case class PassErrors(derivationErrors: DerivationErrors, owner: Await[?]) extends Throwable
+  sealed private[compiletime] trait Await[A] {
     def apply(dr: DerivationResult[A]): A
   }
 
@@ -207,19 +217,19 @@ private[compiletime] object DerivationResult {
     val await = new Await[A] {
       def apply(dr: DerivationResult[A]): A = dr match {
         case Success(value, state) =>
-          val stateCache = state
+          stateCache = state
           value
         case Failure(derivationErrors, state) =>
-          val stateCache = state
-          throw PassErrors(derivationErrors)
+          stateCache = state
+          throw PassErrors(derivationErrors, this)
       }
     }
     try {
       val result = thunk(await)
       Success(result, stateCache)
     } catch {
-      case await.PassErrors(derivationErrors) => Failure(derivationErrors, stateCache)
-      case NonFatal(error)                    => DerivationResult.fromException(error)
+      case PassErrors(derivationErrors, `await`) => Failure(derivationErrors, stateCache)
+      case NonFatal(error)                       => DerivationResult.fromException(error)
     }
   }
 

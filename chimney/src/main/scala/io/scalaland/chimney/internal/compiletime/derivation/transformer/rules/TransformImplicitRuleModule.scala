@@ -13,7 +13,7 @@ trait TransformImplicitRuleModule { this: Derivation =>
 
     def expand[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       ctx match {
-        case totalCtx: TransformerContext.ForTotal[?, ?] =>
+        case _: TransformerContext.ForTotal[?, ?] =>
           summonTransformerSafe[From, To].fold(DerivationResult.continue[To]) { transformer =>
             DerivationResult.totalExpr(transformer.callTransform(ctx.src))
           }

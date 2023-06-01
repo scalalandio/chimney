@@ -18,6 +18,8 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
           transformer: Expr[io.scalaland.chimney.Transformer[From, To]],
           src: Expr[From]
       ): Expr[To]
+
+      def lift[From: Type, To: Type](f: Expr[From] => Expr[To]): Expr[io.scalaland.chimney.Transformer[From, To]]
     }
 
     val PartialTransformer: PartialTransformerModule
@@ -28,6 +30,10 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
           src: Expr[From],
           failFast: Expr[Boolean]
       ): Expr[partial.Result[To]]
+
+      def lift[From: Type, To: Type](
+          toExpr: (Expr[From], Expr[Boolean]) => Expr[partial.Result[To]]
+      ): Expr[io.scalaland.chimney.PartialTransformer[From, To]]
     }
 
     val PartialResult: PartialResultModule

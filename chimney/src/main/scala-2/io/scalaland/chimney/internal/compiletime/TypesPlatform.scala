@@ -51,8 +51,9 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         // None has no type parameters, so we need getOrElse(Nothing)
         if (apply[Any](Any) <:< tpe)
           Some(
-            tpe.typeArgs.headOption
-              .fold[ComputedType](ComputedType(Nothing))(inner => ComputedType(typeUtils.fromUntyped(inner)))
+            tpe.typeArgs.headOption.fold[ComputedType](ComputedType(Nothing))(inner =>
+              ComputedType(typeUtils.fromUntyped(inner))
+            )
           )
         else scala.None
 

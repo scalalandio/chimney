@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 trait ImplicitSummoning { this: Derivation =>
 
-  import TypeImplicits.*, ChimneyTypeImplicits.*
+  import ChimneyTypeImplicits.*
 
   final protected def summonTransformerSafe[From, To](implicit
       ctx: TransformerContext[From, To]

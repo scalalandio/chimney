@@ -53,8 +53,7 @@ private[compiletime] trait Types {
   type ComputedType = { type Underlying }
 
   object ComputedType {
-    def apply[A](tpe: Type[A]): ComputedType { type Underlying = A } =
-      tpe.asInstanceOf[ComputedType { type Underlying = A }]
+    def apply[A](tpe: Type[A]): ComputedType = tpe.asInstanceOf[ComputedType]
 
     def prettyPrint(computedType: ComputedType): String = Type.prettyPrint(computedType.Type)
 

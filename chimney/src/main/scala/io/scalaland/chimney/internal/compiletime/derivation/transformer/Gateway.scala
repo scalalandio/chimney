@@ -24,9 +24,9 @@ private[compiletime] trait Gateway { this: Derivation =>
       runtimeDataStore
     )
 
-    val result = deriveTransformationResult(context)
+    val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
 
-    extractExprAndLog(context)(result)
+    extractExprAndLog[From, To, To](result)
   }
 
   final def deriveTotalTransformer[
@@ -35,10 +35,21 @@ private[compiletime] trait Gateway { this: Derivation =>
       Cfg <: internal.TransformerCfg: Type,
       InstanceFlags <: internal.TransformerFlags: Type,
       ImplicitScopeFlags <: internal.TransformerFlags: Type
-  ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[Transformer[From, To]] =
-    instantiateTotalTransformer[From, To] { (src: Expr[From]) =>
-      deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, ImplicitScopeFlags](src, runtimeDataStore)
+  ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[Transformer[From, To]] = {
+    val result = DerivationResult.direct[Expr[To], Expr[Transformer[From, To]]] { await =>
+      ChimneyExpr.Transformer.lift[From, To] { (src: Expr[From]) =>
+        val context = TransformerContext.ForTotal.create[From, To](
+          src,
+          configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+          runtimeDataStore
+        )
+
+        await(enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context))
+      }
     }
+
+    extractExprAndLog[From, To, Transformer[From, To]](result)
+  }
 
   final def derivePartialTransformationResult[
       From: Type,
@@ -58,9 +69,9 @@ private[compiletime] trait Gateway { this: Derivation =>
       runtimeDataStore
     )
 
-    val result = deriveTransformationResult(context)
+    val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
 
-    extractExprAndLog(context)(result)
+    extractExprAndLog[From, To, partial.Result[To]](result)
   }
 
   final def derivePartialTransformer[
@@ -70,17 +81,24 @@ private[compiletime] trait Gateway { this: Derivation =>
       InstanceFlags <: internal.TransformerFlags: Type,
       ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[PartialTransformer[From, To]] = {
-    instantiatePartialTransformer[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
-      derivePartialTransformationResult[From, To, Cfg, InstanceFlags, ImplicitScopeFlags](
-        src,
-        failFast,
-        runtimeDataStore
-      )
+    val result = DerivationResult.direct[Expr[partial.Result[To]], Expr[PartialTransformer[From, To]]] { await =>
+      ChimneyExpr.PartialTransformer.lift[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
+        val context = TransformerContext.ForPartial.create[From, To](
+          src,
+          failFast,
+          configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+          runtimeDataStore
+        )
+
+        await(enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context))
+      }
     }
+
+    extractExprAndLog[From, To, PartialTransformer[From, To]](result)
   }
 
   /** Adapts DerivedExpr[To] to expected type of transformation */
-  private def deriveTransformationResult[From, To](implicit
+  private def deriveFinalTransformationResultExpr[From, To](implicit
       ctx: TransformerContext[From, To]
   ): DerivationResult[Expr[ctx.Target]] =
     DerivationResult.log(s"Start derivation with context: $ctx") >>
@@ -110,21 +128,16 @@ private[compiletime] trait Gateway { this: Derivation =>
         }
         .asInstanceOf[DerivationResult[Expr[ctx.Target]]]
 
-  // TODO: rewrite in terms of ExprPromise
+  private def enableLoggingIfFlagEnabled[A](
+      result: DerivationResult[A],
+      ctx: TransformerContext[?, ?]
+  ): DerivationResult[A] =
+    if (ctx.config.flags.displayMacrosLogging) DerivationResult.enableLogPrinting(ctx.derivationStartedAt) >> result
+    else result
 
-  protected def instantiateTotalTransformer[From: Type, To: Type](
-      toExpr: Expr[From] => Expr[To]
-  ): Expr[Transformer[From, To]]
-
-  protected def instantiatePartialTransformer[From: Type, To: Type](
-      toExpr: (Expr[From], Expr[Boolean]) => Expr[partial.Result[To]]
-  ): Expr[PartialTransformer[From, To]]
-
-  private def extractExprAndLog[From: Type, To: Type](
-      ctx: TransformerContext[From, To]
-  )(result: DerivationResult[Expr[ctx.Target]]): Expr[ctx.Target] = {
-    if (ctx.config.flags.displayMacrosLogging) {
-      val duration = java.time.Duration.between(ctx.derivationStartedAt, java.time.Instant.now())
+  private def extractExprAndLog[From: Type, To: Type, Out](result: DerivationResult[Expr[Out]]): Expr[Out] = {
+    result.state.macroLogging.foreach { case DerivationResult.State.MacroLogging(derivationStartedAt) =>
+      val duration = java.time.Duration.between(derivationStartedAt, java.time.Instant.now())
       val info = result
         .logSuccess(expr => s"Derived final expression is:\n${Expr.prettyPrint(expr)}")
         .log(f"Derivation took ${duration.getSeconds}%d.${duration.getNano}%09d s")

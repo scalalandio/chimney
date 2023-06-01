@@ -16,6 +16,13 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
           transformer: Expr[io.scalaland.chimney.Transformer[From, To]],
           src: Expr[From]
       ): Expr[To] = '{ ${ transformer }.transform(${ src }) }
+
+      def lift[From: Type, To: Type](toExpr: Expr[From] => Expr[To]): Expr[Transformer[From, To]] =
+        '{
+          new Transformer[From, To] {
+            def transform(src: From): To = ${ toExpr('{ src }) }
+          }
+        }
     }
 
     object PartialTransformer extends PartialTransformerModule {
@@ -25,6 +32,15 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
           src: Expr[From],
           failFast: Expr[Boolean]
       ): Expr[partial.Result[To]] = '{ ${ transformer }.transform(${ src }, ${ failFast }) }
+
+      def lift[From: Type, To: Type](
+          toExpr: (Expr[From], Expr[Boolean]) => Expr[partial.Result[To]]
+      ): Expr[PartialTransformer[From, To]] =
+        '{
+          new PartialTransformer[From, To] {
+            def transform(src: From, failFast: Boolean): partial.Result[To] = ${ toExpr('{ src }, '{ failFast }) }
+          }
+        }
     }
 
     object PartialResult extends PartialResultModule {

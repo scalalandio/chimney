@@ -6,7 +6,7 @@ import io.scalaland.chimney.{internal, PartialTransformer, Transformer}
 
 import scala.reflect.macros.blackbox
 
-final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatform with GatewayPlatform {
+final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatform with Gateway {
 
   type ImplicitScopeFlagsType <: internal.TransformerFlags
 

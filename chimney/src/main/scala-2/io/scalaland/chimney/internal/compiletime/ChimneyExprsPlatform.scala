@@ -6,6 +6,7 @@ import io.scalaland.chimney.partial
 private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
+  import TypeImplicits.*
 
   object ChimneyExpr extends ChimneyExprModule {
 
@@ -15,6 +16,20 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
           transformer: Expr[io.scalaland.chimney.Transformer[From, To]],
           src: Expr[From]
       ): Expr[To] = c.Expr(q"$transformer.transform($src)")
+
+      def lift[From: Type, To: Type](
+          toExpr: Expr[From] => Expr[To]
+      ): Expr[io.scalaland.chimney.Transformer[From, To]] = {
+        val srcTermName = ExprPromise.provideFreshName[From](ExprPromise.NameGenerationStrategy.FromType)
+        val srcExpr: Expr[From] = c.Expr[From](q"$srcTermName")
+        c.Expr[io.scalaland.chimney.Transformer[From, To]](
+          q"""new _root_.io.scalaland.chimney.Transformer[${Type[From]}, ${Type[To]}] {
+              def transform($srcTermName: ${Type[From]}): ${Type[To]} = {
+                ${toExpr(srcExpr)}
+              }
+            }"""
+        )
+      }
     }
 
     object PartialTransformer extends PartialTransformerModule {
@@ -24,6 +39,26 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
           src: Expr[From],
           failFast: Expr[Boolean]
       ): Expr[partial.Result[To]] = c.Expr(q"$transformer.transform($src, $failFast)")
+
+      def lift[From: Type, To: Type](
+          toExpr: (Expr[From], Expr[Boolean]) => Expr[partial.Result[To]]
+      ): Expr[io.scalaland.chimney.PartialTransformer[From, To]] = {
+        val srcTermName = ExprPromise.provideFreshName[From](ExprPromise.NameGenerationStrategy.FromType)
+        val srcExpr: Expr[From] = c.Expr[From](q"$srcTermName")
+        val failFastTermName =
+          ExprPromise.provideFreshName[Boolean](ExprPromise.NameGenerationStrategy.FromPrefix("failFast"))
+        val failFastExpr: Expr[Boolean] = c.Expr[Boolean](q"$failFastTermName")
+        c.Expr[io.scalaland.chimney.PartialTransformer[From, To]](
+          q"""new _root_.io.scalaland.chimney.PartialTransformer[${Type[From]}, ${Type[To]}] {
+                def transform(
+                  $srcTermName: ${Type[From]},
+                  $failFastTermName: ${Type[Boolean]}
+                ): _root_.io.scalaland.chimney.partial.Result[${Type[To]}] = {
+                  ${toExpr(srcExpr, failFastExpr)}
+                }
+              }"""
+        )
+      }
     }
 
     object PartialResult extends PartialResultModule {

@@ -8,7 +8,7 @@ import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
 import scala.quoted.{Expr, Quotes, Type}
 
-final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with GatewayPlatform {
+final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
 
   type ImplicitScopeFlagsType <: internal.TransformerFlags
 
