@@ -23,24 +23,29 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     def createAndUseLambda[From: Type, To: Type, B](
         fromName: ExprPromiseName,
         to: Expr[To],
-        usage: Expr[From => To] => B
+        use: Expr[From => To] => B
     ): B =
-      usage(c.Expr[From => To](q"($fromName: ${Type[From]}) => $to"))
+      use(c.Expr[From => To](q"($fromName: ${Type[From]}) => $to"))
 
-    private def freshTermName(srcPrefixTree: Expr[?]): ExprPromiseName =
-      freshTermName(toFieldName(srcPrefixTree))
-    private def freshTermName(tpe: c.Type): ExprPromiseName =
-      freshTermName(tpe.typeSymbol.name.decodedName.toString.toLowerCase)
+    def createAndUseLambda2[From: Type, From2: Type, To: Type, B](
+        fromName: ExprPromiseName,
+        from2Name: ExprPromiseName,
+        to: Expr[To],
+        use: Expr[(From, From2) => To] => B
+    ): B =
+      use(c.Expr[(From, From2) => To](q"($fromName: ${Type[From]}, $from2Name: ${Type[From2]}) => $to"))
+
     private def freshTermName(prefix: String): ExprPromiseName =
       c.internal.reificationSupport.freshTermName(prefix.toLowerCase + "$")
+    private def freshTermName(tpe: c.Type): ExprPromiseName =
+      freshTermName(tpe.typeSymbol.name.decodedName.toString.toLowerCase)
+    private def freshTermName(srcPrefixTree: Expr[?]): ExprPromiseName =
+      freshTermName(toFieldName(srcPrefixTree))
 
-    private def toFieldName(srcPrefixTree: Expr[?]): String = {
-      // TODO: document why it that a thing
-      // undo the encoding of freshTermName
-      srcPrefixTree.tree.toString
-        .replaceAll("\\$\\d+", "")
-        .replace("$u002E", ".")
-    }
+    // TODO: document why it that a thing
+    // undo the encoding of freshTermName
+    private def toFieldName[A](srcPrefixTree: Expr[A]): String =
+      srcPrefixTree.tree.toString.replaceAll("\\$\\d+", "").replace("$u002E", ".")
   }
 
   protected object PrependValsTo extends PrependValsToModule {

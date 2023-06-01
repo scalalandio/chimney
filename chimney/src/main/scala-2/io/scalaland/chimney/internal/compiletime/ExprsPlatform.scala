@@ -28,14 +28,28 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         c.Expr(q"new _root_.scala.util.Right[${Type[L]}, ${Type[R]}]($value)")
     }
 
-    def asInstanceOf[T: Type, U: Type](expr: Expr[T]): Expr[U] = c.Expr(q"${expr}.asInstanceOf[${Type[U]}]")
+    def summonImplicit[A: Type]: Option[Expr[A]] = scala.util
+      .Try(c.inferImplicitValue(Type[A], silent = true, withMacrosDisabled = false))
+      .toOption
+      .filterNot(_ == EmptyTree)
+      .map(c.Expr[A](_))
 
-    def prettyPrint[T](expr: Expr[T]): String =
+    def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B] = c.Expr(q"${expr}.asInstanceOf[${Type[B]}]")
+
+    def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] = {
+      Predef.assert(
+        Type[A] <:< Type[B],
+        s"Upcasting can only be done to type proved to be super type! Failed ${Type.prettyPrint[A]} <:< ${Type.prettyPrint[B]} check"
+      )
+      if (Type[A] =:= Type[B]) expr.asInstanceOf[Expr[B]] else c.Expr[B](q"($expr : ${Type[B]})")
+    }
+
+    def prettyPrint[A](expr: Expr[A]): String =
       expr
         .toString()
         .replaceAll("\\$\\d+", "")
         .replace("$u002E", ".")
 
-    def typeOf[T](expr: Expr[T]): Type[T] = typeUtils.fromUntyped(expr.actualType)
+    def typeOf[A](expr: Expr[A]): Type[A] = typeUtils.fromUntyped(expr.actualType)
   }
 }

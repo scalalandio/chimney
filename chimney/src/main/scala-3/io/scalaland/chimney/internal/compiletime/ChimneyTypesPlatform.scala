@@ -9,23 +9,18 @@ import scala.quoted
 
 private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: DefinitionsPlatform =>
 
-  import quotes.*
-  import quotes.reflect.*
+  import quotes.*, quotes.reflect.*
 
   object ChimneyType extends ChimneyTypeModule {
-    import typeUtils.*
 
-    def Transformer[From: Type, To: Type]: Type[Transformer[From, To]] =
-      fromTC[Transformer[?, ?], Transformer[From, To]](Type[From], Type[To])
+    def Transformer[From: Type, To: Type]: Type[Transformer[From, To]] = quoted.Type.of[Transformer[From, To]]
     def PartialTransformer[From: Type, To: Type]: Type[PartialTransformer[From, To]] =
-      fromTC[PartialTransformer[?, ?], PartialTransformer[From, To]](Type[From], Type[To])
-    def Patcher[T: Type, Patch: Type]: Type[Patcher[T, Patch]] =
-      fromTC[Patcher[?, ?], Patcher[T, Patch]](Type[T], Type[Patch])
+      quoted.Type.of[PartialTransformer[From, To]]
+    def Patcher[T: Type, Patch: Type]: Type[Patcher[T, Patch]] = quoted.Type.of[Patcher[T, Patch]]
 
     object PartialResult extends PartialResultModule {
-      def apply[T: Type]: Type[partial.Result[T]] = fromTC[partial.Result[?], partial.Result[T]](Type[T])
-      def Value[T: Type]: Type[partial.Result.Value[T]] =
-        fromTC[partial.Result.Value[?], partial.Result.Value[T]](Type[T])
+      def apply[T: Type]: Type[partial.Result[T]] = quoted.Type.of[partial.Result[T]]
+      def Value[T: Type]: Type[partial.Result.Value[T]] = quoted.Type.of[partial.Result.Value[T]]
       val Errors: Type[partial.Result.Errors] = quoted.Type.of[partial.Result.Errors]
     }
 

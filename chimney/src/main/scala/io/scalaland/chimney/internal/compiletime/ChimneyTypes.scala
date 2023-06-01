@@ -10,12 +10,12 @@ private[compiletime] trait ChimneyTypes { this: Types =>
 
     def Transformer[From: Type, To: Type]: Type[Transformer[From, To]]
     def PartialTransformer[From: Type, To: Type]: Type[PartialTransformer[From, To]]
-    def Patcher[T: Type, Patch: Type]: Type[Patcher[T, Patch]]
+    def Patcher[A: Type, Patch: Type]: Type[Patcher[A, Patch]]
 
     val PartialResult: PartialResultModule
     trait PartialResultModule { this: PartialResult.type =>
-      def apply[T: Type]: Type[partial.Result[T]]
-      def Value[T: Type]: Type[partial.Result.Value[T]]
+      def apply[A: Type]: Type[partial.Result[A]]
+      def Value[A: Type]: Type[partial.Result.Value[A]]
       val Errors: Type[partial.Result.Errors]
     }
 
@@ -60,7 +60,7 @@ private[compiletime] trait ChimneyTypes { this: Types =>
     implicit def TransformerType[From: Type, To: Type]: Type[Transformer[From, To]] = ChimneyType.Transformer[From, To]
     implicit def PartialTransformerType[From: Type, To: Type]: Type[PartialTransformer[From, To]] =
       ChimneyType.PartialTransformer[From, To]
-    implicit def PatcherType[T: Type, Patch: Type]: Type[Patcher[T, Patch]] = ChimneyType.Patcher[T, Patch]
+    implicit def PatcherType[A: Type, Patch: Type]: Type[Patcher[A, Patch]] = ChimneyType.Patcher[A, Patch]
 
     implicit def PartialResultType[A: Type]: Type[partial.Result[A]] = ChimneyType.PartialResult[A]
     implicit def PartialResultValueType[A: Type]: Type[partial.Result.Value[A]] = ChimneyType.PartialResult.Value[A]

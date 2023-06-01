@@ -17,16 +17,14 @@ trait ResultOps { this: Definitions & Derivation =>
     def continue[A]: DerivationResult[Rule.ExpansionResult[A]] =
       DerivationResult.pure(Rule.ExpansionResult.Continue)
 
-    def notSupportedTransformerDerivation[From, To, T](implicit
+    def notSupportedTransformerDerivation[From, To, A](implicit
         ctx: TransformerContext[From, To]
-    ): DerivationResult[T] =
-      DerivationResult.transformerError(
-        NotSupportedTransformerDerivation(
-          fieldName = Expr.prettyPrint(ctx.src),
-          sourceTypeName = Type.prettyPrint[From],
-          targetTypeName = Type.prettyPrint[To]
-        )
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      NotSupportedTransformerDerivation(
+        fieldName = Expr.prettyPrint(ctx.src),
+        sourceTypeName = Type.prettyPrint[From],
+        targetTypeName = Type.prettyPrint[To]
       )
+    )
   }
-
 }

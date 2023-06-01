@@ -4,20 +4,21 @@ private[derivation] trait ImplicitSummoningPlatform { this: DerivationPlatform =
 
   import c.universe.{internal as _, Transformer as _, *}
 
-  final override protected def summonTransformerUnchecked[From: Type, To: Type]
-      : Option[Expr[io.scalaland.chimney.Transformer[From, To]]] = scala.util
-    .Try(c.inferImplicitValue(ChimneyType.Transformer[From, To], silent = true, withMacrosDisabled = false))
-    .toOption
-    .filterNot(_ == EmptyTree)
-    .map(c.Expr[io.scalaland.chimney.Transformer[From, To]](_))
+  final protected def isAutoderivedFromTransformerDerive[From: Type, To: Type](
+      expr: Expr[io.scalaland.chimney.Transformer[From, To]]
+  ): Boolean = expr.tree match {
+    case TypeApply(Select(qualifier, name), _) =>
+      qualifier.tpe =:= weakTypeOf[io.scalaland.chimney.Transformer.type] && name.toString == "derive"
+    case _ =>
+      false
+  }
 
-  final override protected def summonPartialTransformerUnchecked[From: Type, To: Type]
-      : Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
-    scala.util
-      .Try(
-        c.inferImplicitValue(ChimneyType.PartialTransformer[From, To], silent = true, withMacrosDisabled = false)
-      )
-      .toOption
-      .filterNot(_ == EmptyTree)
-      .map(c.Expr[io.scalaland.chimney.PartialTransformer[From, To]](_))
+  final protected def isAutoderivedFromPartialTransformerDerive[From: Type, To: Type](
+      expr: Expr[io.scalaland.chimney.PartialTransformer[From, To]]
+  ): Boolean = expr.tree match {
+    case TypeApply(Select(qualifier, name), _) =>
+      qualifier.tpe =:= weakTypeOf[io.scalaland.chimney.PartialTransformer.type] && name.toString == "derive"
+    case _ =>
+      false
+  }
 }

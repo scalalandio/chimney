@@ -6,8 +6,7 @@ import io.scalaland.chimney.partial
 
 trait TransformOptionToOptionRuleModule { this: Derivation =>
 
-  import TypeImplicits.*
-  import ChimneyTypeImplicits.*
+  import TypeImplicits.*, ChimneyTypeImplicits.*
 
   object TransformOptionToOptionRule extends Rule("OptionToOption") {
 
@@ -30,9 +29,9 @@ trait TransformOptionToOptionRuleModule { this: Derivation =>
                       DerivedExpr.total(
                         totalP
                           .fulfilAsLambda { (lambda: Expr[from2.Underlying => to2.Underlying]) =>
-                            Expr.Option.map(ctx.src.unsafeAs[Option[from2.Underlying]])(lambda)
+                            Expr.Option.map(ctx.src.upcastExpr[Option[from2.Underlying]])(lambda)
                           }
-                          .unsafeAs[To]
+                          .upcastExpr[To]
                       )
                     } { (partialP: ExprPromise[from2.Underlying, Expr[partial.Result[to2.Underlying]]]) =>
                       // We're constructing:
@@ -43,14 +42,14 @@ trait TransformOptionToOptionRuleModule { this: Derivation =>
                         partialP.map(ChimneyExpr.PartialResult.map(_)(Expr.Option.wrap)).fulfilAsLambda {
                           (lambda: Expr[from2.Underlying => partial.Result[Option[to2.Underlying]]]) =>
                             Expr.Option
-                              .fold(ctx.src.unsafeAs[Option[from2.Underlying]])(
+                              .fold(ctx.src.upcastExpr[Option[from2.Underlying]])(
                                 ChimneyExpr.PartialResult
                                   .Value(Expr.Option.None)
-                                  .asInstanceOfExpr[partial.Result[Option[to2.Underlying]]]
+                                  .upcastExpr[partial.Result[Option[to2.Underlying]]]
                               )(
                                 lambda
                               )
-                              .unsafeAs[partial.Result[To]]
+                              .upcastExpr[partial.Result[To]]
                         }
                       )
                     }

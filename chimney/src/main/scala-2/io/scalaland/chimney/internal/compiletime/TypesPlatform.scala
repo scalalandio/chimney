@@ -4,14 +4,14 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
   import c.universe.{internal as _, Transformer as _, *}
 
-  protected type Tagged[U] = { type Tag = U }
-  protected type @@[T, U] = T & Tagged[U]
+  protected type Tagged[Tag_] = { type Tag = Tag_ }
+  protected type @@[A, Tag] = A & Tagged[Tag]
 
-  final override protected type Type[T] = c.Type @@ T
+  final override protected type Type[A] = c.Type @@ A
   protected object typeUtils {
-    def fromUntyped[T](untyped: c.Type): Type[T] = untyped.asInstanceOf[Type[T]]
-    def fromWeak[T: WeakTypeTag]: Type[T] = fromUntyped(weakTypeOf[T])
-    def fromWeakTC[Unswapped: WeakTypeTag, T](args: c.Type*): Type[T] = fromUntyped {
+    def fromUntyped[A](untyped: c.Type): Type[A] = untyped.asInstanceOf[Type[A]]
+    def fromWeak[A: WeakTypeTag]: Type[A] = fromUntyped(weakTypeOf[A])
+    def fromWeakTC[Unswapped: WeakTypeTag, A](args: c.Type*): Type[A] = fromUntyped {
       val ee = weakTypeOf[Unswapped].etaExpand
       // $COVERAGE-OFF$
       if (ee.typeParams.size != args.size) {
@@ -41,13 +41,13 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def Function1[From: Type, To: Type]: Type[From => To] = fromWeakTC[? => ?, From => To](Type[From], Type[To])
 
     object Array extends ArrayModule {
-      def apply[T: Type]: Type[Array[T]] = fromWeakTC[Array[?], Array[T]](Type[T])
+      def apply[A: Type]: Type[Array[A]] = fromWeakTC[Array[?], Array[A]](Type[A])
     }
 
     object Option extends OptionModule {
 
-      def apply[T: Type]: Type[Option[T]] = fromWeakTC[Option[?], Option[T]](Type[T])
-      def unapply[T](tpe: Type[T]): Option[ComputedType] =
+      def apply[A: Type]: Type[Option[A]] = fromWeakTC[Option[?], Option[A]](Type[A])
+      def unapply[A](tpe: Type[A]): Option[ComputedType] =
         // None has no type parameters, so we need getOrElse(Nothing)
         if (apply[Any](Any) <:< tpe)
           Some(
@@ -61,9 +61,9 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     def Either[L: Type, R: Type]: Type[Either[L, R]] = fromWeakTC[Either[?, ?], Either[L, R]](Type[L], Type[R])
 
-    def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean = S.<:<(T)
-    def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean = S.=:=(T)
+    def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean = S.<:<(T)
+    def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean = S.=:=(T)
 
-    def prettyPrint[T: Type]: String = Type[T].toString
+    def prettyPrint[A: Type]: String = Type[A].toString
   }
 }

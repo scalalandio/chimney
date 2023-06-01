@@ -2,12 +2,12 @@ package io.scalaland.chimney
 
 /** Type class definition that wraps patching behavior.
   *
-  * @tparam T type of object to apply patch to
+  * @tparam A type of object to apply patch to
   * @tparam Patch type of patch object
   *
   * @since 0.1.3
   */
-trait Patcher[T, Patch] {
+trait Patcher[A, Patch] {
 
   /** Modifies a copy of one object using values from another object.
     *
@@ -17,7 +17,7 @@ trait Patcher[T, Patch] {
     *
     * @since 0.1.3
     */
-  def patch(obj: T, patch: Patch): T
+  def patch(obj: A, patch: Patch): A
 }
 
 /** @since 0.1.3 */

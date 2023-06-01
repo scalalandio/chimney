@@ -3,11 +3,11 @@ package io.scalaland.chimney.internal.compiletime
 private[compiletime] trait Types {
 
   /** Platform-specific type representation (c.universe.Type in 2, scala.quoted.Type[A] in 3) */
-  protected type Type[T]
+  protected type Type[A]
 
   val Type: TypeModule
   trait TypeModule { this: Type.type =>
-    def apply[T](implicit T: Type[T]): Type[T] = T
+    def apply[A](implicit A: Type[A]): Type[A] = A
 
     val Nothing: Type[Nothing]
     val Any: Type[Any]
@@ -15,34 +15,34 @@ private[compiletime] trait Types {
     val Int: Type[Int]
     val Unit: Type[Unit]
 
-    def Function1[From: Type, To: Type]: Type[From => To]
+    def Function1[A: Type, B: Type]: Type[A => B]
 
     val Array: ArrayModule
     trait ArrayModule { this: Array.type =>
-      def apply[T: Type]: Type[Array[T]]
+      def apply[A: Type]: Type[Array[A]]
       val Any: Type[Array[Any]] = apply(Type.Any)
     }
 
     val Option: OptionModule
     trait OptionModule { this: Option.type =>
 
-      def apply[T: Type]: Type[Option[T]]
-      def unapply[T](tpe: Type[T]): Option[ComputedType]
+      def apply[A: Type]: Type[Option[A]]
+      def unapply[A](tpe: Type[A]): Option[ComputedType]
 
       val None: Type[scala.None.type]
     }
     def Either[L: Type, R: Type]: Type[Either[L, R]]
 
-    def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean
-    def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean
+    def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean
+    def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean
 
-    def prettyPrint[T: Type]: String
+    def prettyPrint[A: Type]: String
   }
 
-  implicit class TypeOps[T](private val tpe: Type[T]) {
+  implicit class TypeOps[A](private val tpe: Type[A]) {
 
-    final def <:<[S](another: Type[S]): Boolean = Type.isSubtypeOf(tpe, another)
-    final def =:=[S](another: Type[S]): Boolean = Type.isSameAs(tpe, another)
+    final def <:<[B](another: Type[B]): Boolean = Type.isSubtypeOf(tpe, another)
+    final def =:=[B](another: Type[B]): Boolean = Type.isSameAs(tpe, another)
 
     final def isOption: Boolean = tpe <:< Type.Option(Type.Any)
 
@@ -53,7 +53,8 @@ private[compiletime] trait Types {
   type ComputedType = { type Underlying }
 
   object ComputedType {
-    def apply[T](tpe: Type[T]): ComputedType = tpe.asInstanceOf[ComputedType]
+    def apply[A](tpe: Type[A]): ComputedType { type Underlying = A } =
+      tpe.asInstanceOf[ComputedType { type Underlying = A }]
 
     def prettyPrint(computedType: ComputedType): String = Type.prettyPrint(computedType.Type)
 

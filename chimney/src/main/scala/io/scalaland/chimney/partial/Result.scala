@@ -7,11 +7,11 @@ import scala.util.{Failure, Success, Try}
 
 /** Data type representing either successfully computed value or collection of path-annotated errors.
   *
-  * @tparam T type of success value
+  * @tparam A type of success value
   *
   * @since 0.7.0
   */
-sealed trait Result[+T] {
+sealed trait Result[+A] {
 
   /** Converts a partial result to an optional value.
     *
@@ -19,7 +19,7 @@ sealed trait Result[+T] {
     *
     * @since 0.7.0
     */
-  final def asOption: Option[T] = this match {
+  final def asOption: Option[A] = this match {
     case Result.Value(value) => Some(value)
     case Result.Errors(_)    => None
   }
@@ -31,7 +31,7 @@ sealed trait Result[+T] {
     *
     * @since 0.7.0
     */
-  final def asEither: Either[Result.Errors, T] = this match {
+  final def asEither: Either[Result.Errors, A] = this match {
     case Result.Value(value)   => Right(value)
     case errors: Result.Errors => Left(errors)
   }
@@ -59,29 +59,29 @@ sealed trait Result[+T] {
 
   /** Builds a new result by applying a function to a success value.
     *
-    * @tparam U the element type of the returned result
+    * @tparam B the element type of the returned result
     * @param f the function to apply to a success value
     * @return a new result built from applying a function to a success value
     *
     * @since 0.7.0
     */
-  final def map[U](f: T => U): Result[U] = this match {
+  final def map[B](f: A => B): Result[B] = this match {
     case Result.Value(value) => Result.Value(f(value))
-    case _: Result.Errors    => this.asInstanceOf[Result[U]]
+    case _: Result.Errors    => this.asInstanceOf[Result[B]]
   }
 
   /** Builds a new result by applying a function to a success value and using result returned by that that function.
     *
-    * @tparam U the element type of the returned result
+    * @tparam B the element type of the returned result
     * @param f the function to apply to a success value
     * @return a new result built from applying a function to a success value
     *         and using the result returned by that function
     *
     * @since 0.7.0
     */
-  final def flatMap[U](f: T => Result[U]): Result[U] = this match {
+  final def flatMap[B](f: A => Result[B]): Result[B] = this match {
     case Result.Value(value) => f(value)
-    case _: Result.Errors    => this.asInstanceOf[Result[U]]
+    case _: Result.Errors    => this.asInstanceOf[Result[B]]
   }
 
   /** Prepends a path element to all errors represented by this result.
@@ -101,12 +101,12 @@ object Result {
 
   /** Success value case representation
     *
-    * @tparam T type of success value
+    * @tparam A type of success value
     * @param value value of type `T`
     *
     * @since 0.7.0
     */
-  final case class Value[T](value: T) extends Result[T] {
+  final case class Value[A](value: A) extends Result[A] {
 
     def asErrorPathMessages: Iterable[(String, ErrorMessage)] = Iterable.empty
   }
@@ -191,179 +191,179 @@ object Result {
 
   /** Converts a function that throws Exceptions into function that returns Result.
     *
-    * @tparam S input type
-    * @tparam T output type
+    * @tparam A input type
+    * @tparam B output type
     * @param f function that possibly throws
     * @return function that caches Exceptions as failed results
     *
     * @since 0.7.0
     */
-  final def fromFunction[S, T](f: S => T): S => Result[T] = { u =>
-    Result.fromCatching(f(u))
+  final def fromFunction[A, B](f: A => B): A => Result[B] = { a =>
+    Result.fromCatching(f(a))
   }
 
   /** Converts a partial function that throws Exceptions into function that returns Result.
     *
-    * @tparam S input type
-    * @tparam T output type
+    * @tparam A input type
+    * @tparam B output type
     * @param pf partial function that possibly throws
     * @return function that caches Exceptions and arguments without defined value as failed Results
     *
     * @since 0.7.0
     */
-  final def fromPartialFunction[S, T](pf: PartialFunction[S, T]): S => Result[T] = { u =>
-    if (pf.isDefinedAt(u)) {
-      Result.fromCatching(pf(u))
+  final def fromPartialFunction[A, B](pf: PartialFunction[A, B]): A => Result[B] = { a =>
+    if (pf.isDefinedAt(a)) {
+      Result.fromCatching(pf(a))
     } else {
-      Errors.single(Error.fromNotDefinedAt(u))
+      Errors.single(Error.fromNotDefinedAt(a))
     }
   }
 
   /** Creates successful Result from a precomputed value.
     *
-    * @tparam T type of sucessful value
+    * @tparam A type of sucessful value
     * @param value successful value to return in result
     * @return successful result
     *
     * @since 0.7.0
     */
-  final def fromValue[T](value: T): Result[T] = Value(value)
+  final def fromValue[A](value: A): Result[A] = Value(value)
 
   /** Creates failed Result with an empty value error.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @return failed result
     *
     * @since 0.7.0
     */
-  final def fromEmpty[T]: Result[T] = Errors.single(Error.fromEmptyValue)
+  final def fromEmpty[A]: Result[A] = Errors.single(Error.fromEmptyValue)
 
   /** Creates failed result from a single error.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param error required error
     * @return result containing one error
     *
     * @since 0.7.0
     */
-  final def fromError[T](error: Error): Result[T] = Errors.single(error)
+  final def fromError[A](error: Error): Result[A] = Errors.single(error)
 
   /** Creates failed result from one error or more.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param error  required head [[io.scalaland.chimney.partial.Error]]
     * @param errors optional tail [[io.scalaland.chimney.partial.Error]]s
     * @return result aggregating all passed errors
     *
     * @since 0.7.0
     */
-  final def fromErrors[T](error: Error, errors: Error*): Result[T] = Errors(error, errors*)
+  final def fromErrors[A](error: Error, errors: Error*): Result[A] = Errors(error, errors*)
 
   /** Creates failed result from an error message.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param message message to wrap in Error
     * @return result containing one error
     *
     * @since 0.7.0
     */
-  final def fromErrorString[T](message: String): Result[T] = Errors.fromString(message)
+  final def fromErrorString[A](message: String): Result[A] = Errors.fromString(message)
 
   /** Creates failed result from one error message or more.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param message  required message to wrap in Error
     * @param messages optional messages to wrap in Error
     * @return result aggregating all passed errors
     *
     * @since 0.7.0
     */
-  final def fromErrorStrings[T](message: String, messages: String*): Result[T] =
+  final def fromErrorStrings[A](message: String, messages: String*): Result[A] =
     Errors.fromStrings(message, messages*)
 
   /** Creates failed result from argument for which PartialFunction was not defined.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param value value for which partial function was not defined
     * @return result containing one error
     *
     * @since 0.7.0
     */
-  final def fromErrorNotDefinedAt[T](value: Any): Result[T] = Errors.single(Error.fromNotDefinedAt(value))
+  final def fromErrorNotDefinedAt[A](value: Any): Result[A] = Errors.single(Error.fromNotDefinedAt(value))
 
   /** Creates failed result from Exception that was caught.
     *
-    * @tparam T type of successful result
+    * @tparam W type of successful result
     * @param throwable exception
     * @return result containing one error
     *
     * @since 0.7.0
     */
-  final def fromErrorThrowable[T](throwable: Throwable): Result[T] = Errors.single(Error.fromThrowable(throwable))
+  final def fromErrorThrowable[W](throwable: Throwable): Result[W] = Errors.single(Error.fromThrowable(throwable))
 
   /** Converts Option to Result, using EmptyValue error if None.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param value Option to convert
     * @return successful result if [[scala.Some]], failed result with EmptyValue error if [[None]]
     *
     * @since 0.7.0
     */
-  final def fromOption[T](value: Option[T]): Result[T] = value match {
+  final def fromOption[A](value: Option[A]): Result[A] = value match {
     case Some(value) => fromValue(value)
-    case _           => fromEmpty[T]
+    case _           => fromEmpty[A]
   }
 
   /** Converts Option to Result, using provided Error if None.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param value   Option to convert
     * @param ifEmpty lazy error for [[scala.None]]
     * @return successful result if [[scala.Some]], failed result with provided error if [[scala.None]]
     * @since 0.7.0
     */
-  final def fromOptionOrError[T](value: Option[T], ifEmpty: => Error): Result[T] = value match {
+  final def fromOptionOrError[A](value: Option[A], ifEmpty: => Error): Result[A] = value match {
     case Some(value) => fromValue(value)
     case _           => fromError(ifEmpty)
   }
 
   /** Converts Option to Result, using provided error message if None.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param value   Option to convert
     * @param ifEmpty lazy error message for [[scala.None]]
     * @return successful result if [[scala.Some]], failed result with provided error message if [[scala.None]]
     *
     * @since 0.7.0
     */
-  final def fromOptionOrString[T](value: Option[T], ifEmpty: => String): Result[T] = value match {
+  final def fromOptionOrString[A](value: Option[A], ifEmpty: => String): Result[A] = value match {
     case Some(value) => fromValue(value)
     case _           => fromErrorString(ifEmpty)
   }
 
   /** Converts Option to Result, using provided Throwable if None.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param value   Option to convert
     * @param ifEmpty lazy error for [[scala.None]]
     * @return successful result if [[scala.Some]], failed result with provided Throwable if [[scala.None]]
     *
     * @since 0.7.0
     */
-  final def fromOptionOrThrowable[T](value: Option[T], ifEmpty: => Throwable): Result[T] = value match {
+  final def fromOptionOrThrowable[A](value: Option[A], ifEmpty: => Throwable): Result[A] = value match {
     case Some(value) => fromValue(value)
     case _           => fromErrorThrowable(ifEmpty)
   }
 
   /** Converts Either to Result, using Errors from Left as failed result.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param value   Either to convert
     * @return successful result if [[scala.Right]], failed result if [[scala.Left]]
     *
     * @since 0.7.0
     */
-  final def fromEither[T](value: Either[Errors, T]): Result[T] = value match {
+  final def fromEither[A](value: Either[Errors, A]): Result[A] = value match {
     case Right(value)         => fromValue(value)
     case Left(errors: Errors) => errors
   }
@@ -381,26 +381,26 @@ object Result {
 
   /** Converts Try to Result, using Throwable from Failure as failed result.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param value Try to convert
     * @return successful result if [[scala.util.Success]], failed result with Throwable if [[scala.util.Failure]]
     *
     * @since 0.7.0
     */
-  final def fromTry[T](value: Try[T]): Result[T] = value match {
+  final def fromTry[A](value: Try[A]): Result[A] = value match {
     case Success(value)     => fromValue(value)
     case Failure(throwable) => fromErrorThrowable(throwable)
   }
 
   /** Converts possibly throwing computation into Result.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param value computation to run while catching its exceptions
     * @return successful Result if computation didn't throw, failed Result with caught exception if it threw
     *
     * @since 0.7.0
     */
-  final def fromCatching[T](value: => T): Result[T] =
+  final def fromCatching[A](value: => A): Result[A] =
     try {
       fromValue(value)
     } catch {

@@ -14,13 +14,13 @@ trait TransformImplicitRuleModule { this: Derivation =>
     def expand[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       ctx match {
         case totalCtx: TransformerContext.ForTotal[?, ?] =>
-          summonTransformer[From, To].fold(DerivationResult.continue[To]) { transformer =>
-            DerivationResult.totalExpr(transformer.callTransform(totalCtx.src))
+          summonTransformerSafe[From, To].fold(DerivationResult.continue[To]) { transformer =>
+            DerivationResult.totalExpr(transformer.callTransform(ctx.src))
           }
         case partialCtx: TransformerContext.ForPartial[?, ?] =>
-          import partialCtx.{src, failFast}
+          import partialCtx.failFast
           import partialCtx.config.flags.implicitConflictResolution
-          (summonTransformer[From, To], summonPartialTransformer[From, To]) match {
+          (summonTransformerSafe[From, To], summonPartialTransformerSafe[From, To]) match {
             case (Some(total), Some(partial)) if implicitConflictResolution.isEmpty =>
               reportError(
                 s"""Ambiguous implicits while resolving Chimney recursive transformation:
@@ -32,11 +32,11 @@ trait TransformImplicitRuleModule { this: Derivation =>
                    |""".stripMargin
               )
             case (Some(total), partialOpt)
-                if partialOpt.isEmpty || implicitConflictResolution == PreferTotalTransformer =>
-              DerivationResult.totalExpr(total.callTransform(src))
+                if partialOpt.isEmpty || implicitConflictResolution.contains(PreferTotalTransformer) =>
+              DerivationResult.totalExpr(total.callTransform(ctx.src))
             case (totalOpt, Some(partial))
-                if totalOpt.isEmpty || implicitConflictResolution == PreferPartialTransformer =>
-              DerivationResult.partialExpr(partial.callTransform(src, failFast))
+                if totalOpt.isEmpty || implicitConflictResolution.contains(PreferPartialTransformer) =>
+              DerivationResult.partialExpr(partial.callTransform(ctx.src, failFast))
             case _ => DerivationResult.continue
           }
       }

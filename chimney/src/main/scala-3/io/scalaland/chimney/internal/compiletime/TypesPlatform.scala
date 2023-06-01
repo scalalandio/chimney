@@ -13,22 +13,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
   final override type Type[T] = quoted.Type[T]
 
-  protected object typeUtils {
-    def fromTC[Unswapped <: AnyKind: quoted.Type, T](args: Type[?]*): Type[T] = {
-      val U = TypeRepr.of[Unswapped]
-      // $COVERAGE-OFF$
-      if U.typeArgs.size != args.size then {
-        val een = U.typeArgs.size
-        val argsn = args.size
-        report.errorAndAbort(s"Type ${U.show} has different arity ($een) than applied to applyTypeArgs ($argsn)!")
-      }
-      // $COVERAGE-ON$
-      U.appliedTo(args.map(t => TypeRepr.of(using t)).toList).asType.asInstanceOf[Type[T]]
-    }
-  }
-
   object Type extends TypeModule {
-    import typeUtils.*
 
     val Nothing: Type[Nothing] = quoted.Type.of[Nothing]
     val Any: Type[Any] = quoted.Type.of[Any]
@@ -36,15 +21,15 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     val Int: Type[Int] = quoted.Type.of[Int]
     val Unit: Type[Unit] = quoted.Type.of[Unit]
 
-    def Function1[From: Type, To: Type]: Type[From => To] = fromTC[* => *, From => To](Type[From], Type[To])
+    def Function1[From: Type, To: Type]: Type[From => To] = quoted.Type.of[From => To]
 
     object Array extends ArrayModule {
-      def apply[T: Type]: Type[Array[T]] = fromTC[Array[*], Array[T]](Type[T])
+      def apply[T: Type]: Type[Array[T]] = quoted.Type.of[Array[T]]
     }
 
     object Option extends OptionModule {
 
-      def apply[T: Type]: Type[Option[T]] = fromTC[Option[*], Option[T]](Type[T])
+      def apply[T: Type]: Type[Option[T]] = quoted.Type.of[Option[T]]
       def unapply[T](tpe: Type[T]): Option[ComputedType] = tpe match {
         case '[Option[inner]] => Some(ComputedType(Type[inner]))
         case _                => scala.None
@@ -52,7 +37,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
       val None: Type[scala.None.type] = quoted.Type.of[scala.None.type]
     }
-    def Either[L: Type, R: Type]: Type[Either[L, R]] = fromTC[Either[*, *], Either[L, R]](Type[L], Type[R])
+    def Either[L: Type, R: Type]: Type[Either[L, R]] = quoted.Type.of[Either[L, R]]
 
     def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean = TypeRepr.of(using S) <:< TypeRepr.of(using T)
     def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean = TypeRepr.of(using S) =:= TypeRepr.of(using T)

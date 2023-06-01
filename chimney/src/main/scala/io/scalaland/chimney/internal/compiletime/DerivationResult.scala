@@ -144,11 +144,11 @@ private[compiletime] object DerivationResult {
 
   val unit: DerivationResult[Unit] = pure(())
 
-  def fromException[T](error: Throwable): DerivationResult[T] =
+  def fromException[A](error: Throwable): DerivationResult[A] =
     fail(DerivationErrors(DerivationError.MacroException(error)))
-  def notYetImplemented[T](what: String): DerivationResult[T] =
+  def notYetImplemented[A](what: String): DerivationResult[A] =
     fail(DerivationErrors(DerivationError.NotYetImplemented(what)))
-  def transformerError[T](transformerDerivationError: TransformerDerivationError): DerivationResult[T] =
+  def transformerError[A](transformerDerivationError: TransformerDerivationError): DerivationResult[A] =
     fail(DerivationErrors(DerivationError.TransformerError(transformerDerivationError)))
 
   type FactoryOf[Coll[+_], O] = Factory[O, Coll[O]]
@@ -194,6 +194,34 @@ private[compiletime] object DerivationResult {
 
   def namedScope[A](name: String)(ra: => DerivationResult[A]): DerivationResult[A] =
     unit.namedScope(name)(_ => ra)
+
+  // direct style
+
+  sealed trait Await[A] {
+    final case class PassErrors(derivationErrors: DerivationErrors) extends Throwable
+    def apply(dr: DerivationResult[A]): A
+  }
+
+  def direct[A, B](thunk: Await[A] => B): DerivationResult[B] = {
+    var stateCache: State = null.asInstanceOf[State]
+    val await = new Await[A] {
+      def apply(dr: DerivationResult[A]): A = dr match {
+        case Success(value, state) =>
+          val stateCache = state
+          value
+        case Failure(derivationErrors, state) =>
+          val stateCache = state
+          throw PassErrors(derivationErrors)
+      }
+    }
+    try {
+      val result = thunk(await)
+      Success(result, stateCache)
+    } catch {
+      case await.PassErrors(derivationErrors) => Failure(derivationErrors, stateCache)
+      case NonFatal(error)                    => DerivationResult.fromException(error)
+    }
+  }
 
   implicit val DerivationResultTraversableApplicative: fp.ApplicativeTraverse[DerivationResult] =
     new fp.ApplicativeTraverse[DerivationResult] {

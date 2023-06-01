@@ -6,11 +6,20 @@ private[derivation] trait ImplicitSummoningPlatform { this: DerivationPlatform =
 
   import quotes.*, quotes.reflect.*
 
-  protected def summonTransformerUnchecked[From: Type, To: Type]
-      : Option[Expr[io.scalaland.chimney.Transformer[From, To]]] =
-    scala.quoted.Expr.summon(using ChimneyType.Transformer[From, To])
+  // TODO: consult with Janek Chyb more buller proof way of verifying that we aren't calling
+  //       Transformer.derive nor PartialTransformer.derive
 
-  protected def summonPartialTransformerUnchecked[From: Type, To: Type]
-      : Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
-    scala.quoted.Expr.summon(using ChimneyType.PartialTransformer[From, To])
+  final protected def isAutoderivedFromTransformerDerive[From: Type, To: Type](
+      expr: Expr[io.scalaland.chimney.Transformer[From, To]]
+  ): Boolean = expr.asTerm match {
+    case Inlined(Some(TypeApply(Ident("derive"), _)), _, _) => true //
+    case _                                                  => false
+  }
+
+  final protected def isAutoderivedFromPartialTransformerDerive[From: Type, To: Type](
+      expr: Expr[io.scalaland.chimney.PartialTransformer[From, To]]
+  ): Boolean = expr.asTerm match {
+    case Inlined(Some(TypeApply(Ident("derive"), _)), _, _) => true
+    case _                                                  => false
+  }
 }

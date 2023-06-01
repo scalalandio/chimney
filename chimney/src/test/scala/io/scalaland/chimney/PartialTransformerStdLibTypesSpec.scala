@@ -35,7 +35,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     )
   }
 
-  test("transform from Option-type into Option-type, using Total Transformer for inner type transformation") {
+  group("transform from Option-type into Option-type, using Total Transformer for inner type transformation") {
 
     implicit val intPrinter: Transformer[Int, String] = _.toString
 

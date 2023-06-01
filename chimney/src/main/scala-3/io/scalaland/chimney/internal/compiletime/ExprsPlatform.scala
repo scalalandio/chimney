@@ -30,10 +30,20 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def Right[L: Type, R: Type](value: Expr[R]): Expr[Right[L, R]] = '{ scala.Right[L, R](${ value }) }
     }
 
-    def asInstanceOf[T: Type, U: Type](expr: Expr[T]): Expr[U] = '{ ${ expr }.asInstanceOf[U] }
+    def summonImplicit[A: Type]: Option[Expr[A]] = scala.quoted.Expr.summon[A]
 
-    def prettyPrint[T](expr: Expr[T]): String = expr.asTerm.show(using Printer.TreeAnsiCode)
+    def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B] = '{ ${ expr }.asInstanceOf[B] }
 
-    def typeOf[T](expr: Expr[T]): Type[T] = expr.asTerm.tpe.asType.asInstanceOf[Type[T]]
+    def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] = {
+      Predef.assert(
+        Type[A] <:< Type[B],
+        s"Upcasting can only be done to type proved to be super type! Failed ${Type.prettyPrint[A]} <:< ${Type.prettyPrint[B]} check"
+      )
+      if Type[A] =:= Type[B] then expr.asInstanceOf[Expr[B]] else expr.asExprOf[B]
+    }
+
+    def prettyPrint[A](expr: Expr[A]): String = expr.asTerm.show(using Printer.TreeAnsiCode)
+
+    def typeOf[A](expr: Expr[A]): Type[A] = expr.asTerm.tpe.asType.asInstanceOf[Type[A]]
   }
 }

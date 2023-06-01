@@ -7,7 +7,7 @@ trait ExprPromises { this: Definitions =>
 
   type ExprPromiseName
 
-  final protected class ExprPromise[From: Type, A](usage: A, fromName: ExprPromiseName) {
+  final protected class ExprPromise[From: Type, A](private val usage: A, private val fromName: ExprPromiseName) {
 
     def map[B](f: A => B): ExprPromise[From, B] = new ExprPromise(f(usage), fromName)
 
@@ -28,8 +28,17 @@ trait ExprPromises { this: Definitions =>
           )
         )
 
-    def fulfilAsLambda[To: Type, B](f: Expr[From => To] => B)(implicit ev: A <:< Expr[To]): B =
-      ExprPromise.createAndUseLambda(fromName, ev(usage), f)
+    def fulfilAsLambda[To: Type, B](use: Expr[From => To] => B)(implicit ev: A <:< Expr[To]): B =
+      ExprPromise.createAndUseLambda(fromName, ev(usage), use)
+
+    def fulfilAsLambda2[From2: Type, B, To: Type, C](
+        promise: ExprPromise[From2, B]
+    )(
+        combine: (A, B) => Expr[To]
+    )(
+        use: Expr[(From, From2) => To] => C
+    ): C =
+      ExprPromise.createAndUseLambda2(fromName, promise.fromName, combine(usage, promise.usage), use)
 
     def foldEither[L, R, B](
         left: ExprPromise[From, L] => B
@@ -56,6 +65,12 @@ trait ExprPromises { this: Definitions =>
         fromName: ExprPromiseName,
         to: Expr[To],
         usage: Expr[From => To] => B
+    ): B
+    def createAndUseLambda2[From: Type, From2: Type, To: Type, B](
+        fromName: ExprPromiseName,
+        from2Name: ExprPromiseName,
+        to: Expr[To],
+        usage: Expr[(From, From2) => To] => B
     ): B
 
     sealed trait NameGenerationStrategy extends Product with Serializable

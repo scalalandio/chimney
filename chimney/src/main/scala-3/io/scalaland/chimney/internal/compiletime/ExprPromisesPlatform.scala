@@ -10,58 +10,48 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
     protected def provideFreshName[From: Type](nameGenerationStrategy: NameGenerationStrategy): ExprPromiseName =
       nameGenerationStrategy match {
-        case NameGenerationStrategy.FromPrefix(src) => freshTermName(src)
-        case NameGenerationStrategy.FromType        => freshTermName(Type[From])
-        case NameGenerationStrategy.FromExpr(expr)  => freshTermName(expr)
+        case NameGenerationStrategy.FromPrefix(src) => freshTermName[From](src)
+        case NameGenerationStrategy.FromType        => freshTermName[From]
+        case NameGenerationStrategy.FromExpr(expr)  => freshTermName[From](expr)
       }
 
     protected def createRefToName[From: Type](name: ExprPromiseName): Expr[From] =
-      Ref(name).asExpr.asInstanceOf[Expr[From]]
+      Ref(name).asExpr.asExprOf[From]
 
     def createAndUseLambda[From: Type, To: Type, B](
         fromName: ExprPromiseName,
         to: Expr[To],
-        usage: Expr[From => To] => B
-    ): B =
-      // Block(
-      //  List(
-      //    DefDef(
-      //      "$anonfun",
-      //      List(TermParamClause(List(ValDef("a", TypeIdent("Int"), None)))),
-      //      Inferred(),
-      //      Some(Block(Nil, Apply(Select(Ident("a"), "toString"), Nil)))
-      //    )
-      //  ),
-      //  Closure(Ident("$anonfun"), None)
-      // )
+        use: Expr[From => To] => B
+    ): B = use('{ (param: From) =>
+      ${ PrependValsTo.initializeVals[To](vals = Vector(fromName -> ComputedExpr('{ param })), expr = to) }
+    })
 
-      usage(
-        Lambda(
-          owner = Symbol.spliceOwner,
-          tpe = MethodType(
-            paramNames = List(fromName.name)
-          )(
-            paramInfosExp = _ => List(TypeRepr.of[From]),
-            resultTypeExp = _ => TypeRepr.of[To]
-          ),
-          rhsFn = (_, _) => to.asTerm
-        ).asExprOf[From => To]
-      )
+    def createAndUseLambda2[From: Type, From2: Type, To: Type, B](
+        fromName: ExprPromiseName,
+        from2Name: ExprPromiseName,
+        to: Expr[To],
+        use: Expr[(From, From2) => To] => B
+    ): B = use('{ (param: From, param2: From2) =>
+      ${
+        PrependValsTo.initializeVals[To](
+          vals = Vector(fromName -> ComputedExpr('{ param }), from2Name -> ComputedExpr('{ param2 })),
+          expr = to
+        )
+      }
+    })
 
-    private def freshTermName(srcPrefixTree: Expr[?]): ExprPromiseName =
-      // TODO: check if that is still a thing
-      freshTermName(
-        srcPrefixTree.asTerm.toString
-          .replaceAll("\\$\\d+", "")
-          .replace("$u002E", ".")
-      )
-    private def freshTermName(tpe: Type[?]): ExprPromiseName =
-      freshTermName(TypeRepr.of(using tpe).toString.toLowerCase)
-    private def freshTermName[T: Type](prefix: String): ExprPromiseName = {
-      val freshName = freshTermImpl.generate(prefix)
-      Symbol.newVal(Symbol.spliceOwner, freshName, TypeRepr.of[T], Flags.EmptyFlags, Symbol.noSymbol)
-    }
-    private lazy val freshTermImpl: FreshTerm = new FreshTerm
+    private val freshTerm: FreshTerm = new FreshTerm
+    private def freshTermName[A: Type](prefix: String): ExprPromiseName =
+      Symbol.newVal(Symbol.spliceOwner, freshTerm.generate(prefix), TypeRepr.of[A], Flags.EmptyFlags, Symbol.noSymbol)
+    private def freshTermName[A: Type]: ExprPromiseName =
+      freshTermName(TypeRepr.of[A].toString.toLowerCase)
+    private def freshTermName[A: Type](srcPrefixTree: Expr[?]): ExprPromiseName =
+      freshTermName[A](toFieldName(srcPrefixTree))
+
+    // TODO: check if that is still a thing
+    // undo the encoding of freshTermName
+    private def toFieldName[A](srcPrefixTree: Expr[A]): String =
+      srcPrefixTree.asTerm.toString.replaceAll("\\$\\d+", "").replace("$u002E", ".")
   }
 
   protected object PrependValsTo extends PrependValsToModule {
@@ -74,10 +64,11 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     }
   }
 
+  // TODO: consult with Janek Chyb if this is necessary/safe
   // workaround to contain @experimental from polluting the whole codebase
   private class FreshTerm(using q: quoted.Quotes) {
-    val freshTerm = q.reflect.Symbol.getClass.getMethod("freshName", classOf[String])
+    private val impl = q.reflect.Symbol.getClass.getMethod("freshName", classOf[String])
 
-    def generate(prefix: String): String = freshTerm.invoke(q.reflect.Symbol, prefix).asInstanceOf[String]
+    def generate(prefix: String): String = impl.invoke(q.reflect.Symbol, prefix).asInstanceOf[String]
   }
 }

@@ -69,7 +69,7 @@ private[compiletime] trait Gateway { this: Derivation =>
       Cfg <: internal.TransformerCfg: Type,
       InstanceFlags <: internal.TransformerFlags: Type,
       ImplicitScopeFlags <: internal.TransformerFlags: Type
-  ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[PartialTransformer[From, To]] =
+  ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[PartialTransformer[From, To]] = {
     instantiatePartialTransformer[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
       derivePartialTransformationResult[From, To, Cfg, InstanceFlags, ImplicitScopeFlags](
         src,
@@ -77,6 +77,7 @@ private[compiletime] trait Gateway { this: Derivation =>
         runtimeDataStore
       )
     }
+  }
 
   /** Adapts DerivedExpr[To] to expected type of transformation */
   private def deriveTransformationResult[From, To](implicit

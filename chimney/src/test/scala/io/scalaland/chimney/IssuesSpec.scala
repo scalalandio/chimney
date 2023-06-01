@@ -33,6 +33,7 @@ class IssuesSpec extends ChimneySpec {
     case class One(text: Option[String])
     case class Two(text: Option[String])
 
+    implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
     One(None).transformInto[Two] ==> Two(None)
     One(Some("abc")).transformInto[Two] ==> Two(Some("abc"))
   }

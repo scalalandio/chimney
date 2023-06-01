@@ -33,7 +33,7 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
     val PartialResult: PartialResultModule
     trait PartialResultModule { this: PartialResult.type =>
 
-      def Value[T: Type](value: Expr[T]): Expr[partial.Result.Value[T]]
+      def Value[A: Type](value: Expr[A]): Expr[partial.Result.Value[A]]
 
       val Errors: ErrorsModule
 
@@ -44,15 +44,15 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
             errors2: Expr[partial.Result.Errors]
         ): Expr[partial.Result.Errors]
 
-        def mergeResultNullable[T: Type](
+        def mergeResultNullable[A: Type](
             errorsNullable: Expr[partial.Result.Errors],
-            result: Expr[partial.Result[T]]
+            result: Expr[partial.Result[A]]
         ): Expr[partial.Result.Errors]
       }
 
-      def fromEmpty[T: Type]: Expr[partial.Result[T]]
+      def fromEmpty[A: Type]: Expr[partial.Result[A]]
 
-      def fromFunction[S: Type, T: Type](f: Expr[S => T]): Expr[S => partial.Result[T]]
+      def fromFunction[A: Type, B: Type](f: Expr[A => B]): Expr[A => partial.Result[B]]
 
       def traverse[M: Type, A: Type, B: Type](
           it: Expr[Iterator[A]],

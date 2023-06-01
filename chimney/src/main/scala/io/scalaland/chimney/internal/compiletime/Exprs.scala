@@ -5,6 +5,8 @@ import scala.annotation.nowarn
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Exprs { this: Definitions =>
 
+  import TypeImplicits.*
+
   /** Platform-specific expression representation (c.universe.Expr[A] in 2, quotes.Expr[A] in 3 */
   protected type Expr[A]
 
@@ -30,23 +32,44 @@ private[compiletime] trait Exprs { this: Definitions =>
       def Right[L: Type, R: Type](value: Expr[R]): Expr[Right[L, R]]
     }
 
-    def asInstanceOf[T: Type, U: Type](expr: Expr[T]): Expr[U]
+    object Function1 {
+      def lift[A: Type, B: Type](f: Expr[A] => Expr[B]): Expr[A => B] =
+        ExprPromise
+          .promise[A](ExprPromise.NameGenerationStrategy.FromType)
+          .map[Expr[B]](f)
+          .fulfilAsLambda[B, Expr[A => B]](e => e)
+    }
 
-    def prettyPrint[T](expr: Expr[T]): String
+    object Function2 {
+      def lift[A: Type, B: Type, C: Type](f: (Expr[A], Expr[B]) => Expr[C]): Expr[(A, B) => C] =
+        ExprPromise
+          .promise[A](ExprPromise.NameGenerationStrategy.FromType)
+          .fulfilAsLambda2[B, Expr[B], C, Expr[(A, B) => C]](
+            ExprPromise.promise[B](ExprPromise.NameGenerationStrategy.FromType)
+          )(f)(e => e)
+    }
 
-    def typeOf[T](expr: Expr[T]): Type[T]
+    def summonImplicit[A: Type]: Option[Expr[A]]
+
+    def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B]
+
+    def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B]
+
+    def prettyPrint[A](expr: Expr[A]): String
+
+    def typeOf[A](expr: Expr[A]): Type[A]
   }
 
-  implicit class ExprOps[T: Type](private val expr: Expr[T]) {
-    def asInstanceOfExpr[U: Type]: Expr[U] = Expr.asInstanceOf[T, U](expr)
-    def unsafeAs[U]: Expr[U] = expr.asInstanceOf[Expr[U]]
+  implicit final class ExprOps[A: Type](private val expr: Expr[A]) {
+    def asInstanceOfExpr[B: Type]: Expr[B] = Expr.asInstanceOf[A, B](expr)
+    def upcastExpr[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
   }
 
   type ComputedExpr = { type Underlying }
   object ComputedExpr {
 
-    def apply[T](expr: Expr[T]): ComputedExpr { type Underlying = T } =
-      expr.asInstanceOf[ComputedExpr { type Underlying = T }]
+    def apply[A](expr: Expr[A]): ComputedExpr { type Underlying = A } =
+      expr.asInstanceOf[ComputedExpr { type Underlying = A }]
 
     def prettyPrint(computedExpr: ComputedExpr): String = Expr.prettyPrint(computedExpr.Expr)
 

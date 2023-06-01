@@ -54,8 +54,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       val TypeClass = ChimneyType.Transformer(From, To)
 
       override def toString: String =
-        s"Total(From = ${Type.prettyPrint(using From)}, To = ${Type
-            .prettyPrint(using To)}, src = ${Expr.prettyPrint(src)}, $config)"
+        s"Total(From = ${Type.prettyPrint(From)}, To = ${Type.prettyPrint(To)}, src = ${Expr.prettyPrint(src)}, $config)"
     }
     object ForTotal {
 
@@ -112,22 +111,22 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
     }
   }
 
-  final case class PatcherContext[T, Patch](
-      T: Type[T],
+  final case class PatcherContext[A, Patch](
+      A: Type[A],
       Patch: Type[Patch],
-      obj: Expr[T],
+      obj: Expr[A],
       patch: Expr[Patch]
   ) {
 
-    final type Target = T
-    val Target = T
-    final type TypeClass = Patcher[T, Patch]
-    val TypeClass = ChimneyType.Patcher(T, Patch)
+    final type Target = A
+    val Target = A
+    final type TypeClass = Patcher[A, Patch]
+    val TypeClass = ChimneyType.Patcher(A, Patch)
   }
   object PatcherContext {
 
-    def create[T: Type, Patch: Type](obj: Expr[T], patch: Expr[Patch]): PatcherContext[T, Patch] = PatcherContext(
-      T = Type[T],
+    def create[A: Type, Patch: Type](obj: Expr[A], patch: Expr[Patch]): PatcherContext[A, Patch] = PatcherContext(
+      A = Type[A],
       Patch = Type[Patch],
       obj = obj,
       patch = patch
@@ -137,8 +136,8 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
   // unpacks Types from Contexts
   implicit final protected def ctx2FromType[From, To](implicit ctx: TransformerContext[From, To]): Type[From] = ctx.From
   implicit final protected def ctx2ToType[From, To](implicit ctx: TransformerContext[From, To]): Type[To] = ctx.To
-  implicit final protected def ctx2TType[T, Patch](implicit ctx: PatcherContext[T, Patch]): Type[T] = ctx.T
-  implicit final protected def ctx2PatchType[T, Patch](implicit ctx: PatcherContext[T, Patch]): Type[Patch] = ctx.Patch
+  implicit final protected def ctx2TType[A, Patch](implicit ctx: PatcherContext[A, Patch]): Type[A] = ctx.A
+  implicit final protected def ctx2PatchType[A, Patch](implicit ctx: PatcherContext[A, Patch]): Type[Patch] = ctx.Patch
 
   // for unpacking Exprs from Context, import ctx.* should be enough
 }
