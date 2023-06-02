@@ -7,13 +7,13 @@ trait ImplicitSummoning { this: Derivation =>
   final protected def summonTransformerSafe[From, To](implicit
       ctx: TransformerContext[From, To]
   ): Option[Expr[io.scalaland.chimney.Transformer[From, To]]] =
-    if (ctx.config.preventResolutionForTypes.contains((Type[From].asComputed, Type[From].asComputed))) None
+    if (isForwardReferenceToItself[From, To](ctx.config.preventResolutionForTypes)) None
     else summonTransformerUnchecked[From, To].filterNot(isAutoderivedFromTransformerDerive(_))
 
   final protected def summonPartialTransformerSafe[From, To](implicit
       ctx: TransformerContext[From, To]
   ): Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
-    if (ctx.config.preventResolutionForTypes.contains((Type[From].asComputed, Type[From].asComputed))) None
+    if (isForwardReferenceToItself[From, To](ctx.config.preventResolutionForTypes)) None
     else summonPartialTransformerUnchecked[From, To].filterNot(isAutoderivedFromPartialTransformerDerive(_))
 
   final protected def summonTransformerUnchecked[From: Type, To: Type]
@@ -24,11 +24,18 @@ trait ImplicitSummoning { this: Derivation =>
       : Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
     Expr.summonImplicit[io.scalaland.chimney.PartialTransformer[From, To]]
 
+  // prevents: transformer.transform(a):B when we can inline result, and with passing configs down
   protected def isAutoderivedFromTransformerDerive[From: Type, To: Type](
       expr: Expr[io.scalaland.chimney.Transformer[From, To]]
   ): Boolean
 
+  // prevents: pTransformer.transform(a):partial.Result[B] when we can inline result, and with passing configs down
   protected def isAutoderivedFromPartialTransformerDerive[From: Type, To: Type](
       expr: Expr[io.scalaland.chimney.PartialTransformer[From, To]]
   ): Boolean
+
+  // prevents: val t: Transformer[A, B] = a => t.transform(a)
+  private def isForwardReferenceToItself[From: Type, To: Type](
+      preventResolutionForTypes: Option[(ComputedType, ComputedType)]
+  ): Boolean = preventResolutionForTypes.exists { case (from, to) => from.Type =:= Type[From] && to.Type =:= Type[To] }
 }

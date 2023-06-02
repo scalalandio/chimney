@@ -80,7 +80,7 @@ private[compiletime] trait Configurations { this: Definitions =>
 
     def prepareForRecursiveCall: TransformerConfig =
       copy(
-        preventResolutionForTypes = None,
+        // preventResolutionForTypes = None,
         fieldOverrides = Map.empty,
         legacy = legacy.copy(definitionScope = None)
       )

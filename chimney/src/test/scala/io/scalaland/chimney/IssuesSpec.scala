@@ -33,7 +33,6 @@ class IssuesSpec extends ChimneySpec {
     case class One(text: Option[String])
     case class Two(text: Option[String])
 
-    implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
     One(None).transformInto[Two] ==> Two(None)
     One(Some("abc")).transformInto[Two] ==> Two(Some("abc"))
   }
@@ -580,13 +579,14 @@ class IssuesSpec extends ChimneySpec {
     case class RawData(id: String)
     case class Data(id: Int)
 
-    implicit val alwaysFailingPT: PartialTransformer[String, Int] = {
+    implicit val alwaysFailingPT: PartialTransformer[String, Int] =
       PartialTransformer(_ => partial.Result.fromErrorString("always fails"))
-    }
 
-    RawData("any").transformIntoPartial[Data].asErrorPathMessageStrings ==> Iterable(
-      "id" -> "always fails"
-    )
+    test("without any modifiers") {
+      RawData("any").transformIntoPartial[Data].asErrorPathMessageStrings ==> Iterable(
+        "id" -> "always fails"
+      )
+    }
 
     test("withFieldComputedPartial") {
       val result = RawData("any")

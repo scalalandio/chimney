@@ -22,14 +22,14 @@ private[chimney] trait TransformerDefinitionCommons[UpdateCfg[_ <: TransformerCf
   // used by generated code to help debugging
 
   /** Used internally by macro. Please don't use in your code. */
-  inline def __refineConfig[Cfg <: TransformerCfg]: UpdateCfg[Cfg] =
+  def __refineConfig[Cfg <: TransformerCfg]: UpdateCfg[Cfg] =
     this.asInstanceOf[UpdateCfg[Cfg]]
 
   /** Used internally by macro. Please don't use in your code. */
-  inline def __addOverride(overrideData: Any): this.type =
+  def __addOverride(overrideData: Any): this.type =
     __updateRuntimeData(overrideData +: runtimeData)
 
   /** Used internally by macro. Please don't use in your code. */
-  inline def __addInstance(instanceData: Any): this.type =
+  def __addInstance(instanceData: Any): this.type =
     __updateRuntimeData(instanceData +: runtimeData)
 }
