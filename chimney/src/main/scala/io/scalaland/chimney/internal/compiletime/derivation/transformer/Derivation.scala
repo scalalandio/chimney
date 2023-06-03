@@ -8,6 +8,8 @@ import scala.annotation.nowarn
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Derivation extends Definitions with ResultOps with ImplicitSummoning {
 
+  import ChimneyTypeImplicits.*
+
   /** Intended use case: recursive derivation */
   final protected def deriveTransformationResultExpr[From, To](implicit
       ctx: TransformerContext[From, To]
@@ -82,6 +84,13 @@ private[compiletime] trait Derivation extends Definitions with ResultOps with Im
     def toEither: Either[Expr[A], Expr[partial.Result[A]]] = this match {
       case DerivedExpr.TotalExpr(expr)   => Left(expr)
       case DerivedExpr.PartialExpr(expr) => Right(expr)
+    }
+
+    def ensurePartial: Expr[partial.Result[A]] = this match {
+      case DerivedExpr.TotalExpr(expr) =>
+        implicit val A: Type[A] = Expr.typeOf(expr)
+        ChimneyExpr.PartialResult.Value(expr).upcastExpr[partial.Result[A]]
+      case DerivedExpr.PartialExpr(expr) => expr
     }
   }
 

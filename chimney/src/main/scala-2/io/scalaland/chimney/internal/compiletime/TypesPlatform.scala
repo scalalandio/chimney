@@ -12,15 +12,23 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def fromUntyped[A](untyped: c.Type): Type[A] = untyped.asInstanceOf[Type[A]]
     def fromWeak[A: WeakTypeTag]: Type[A] = fromUntyped(weakTypeOf[A])
     def fromWeakTC[Unswapped: WeakTypeTag, A](args: c.Type*): Type[A] = fromUntyped {
-      val ee = weakTypeOf[Unswapped].etaExpand
       // $COVERAGE-OFF$
-      if (ee.typeParams.size != args.size) {
+      val ee = weakTypeOf[Unswapped].etaExpand
+      if (ee.typeParams.isEmpty || args.isEmpty) {
+        c.abort(
+          c.enclosingPosition,
+          s"fromWeakTC should be used only to apply type paramerers to type constructors, got $ee and $args!"
+        )
+      } else if (ee.typeParams.size != args.size) {
         val een = ee.typeParams.size
         val argsn = args.size
         c.abort(c.enclosingPosition, s"Type $ee has different arity ($een) than applied to applyTypeArgs ($argsn)!")
+      } else if (args.exists(_ == null)) {
+        c.abort(c.enclosingPosition, "One of type parameters to apply was null!")
+      } else {
+        ee.finalResultType.substituteTypes(ee.typeParams, args.toList)
       }
       // $COVERAGE-ON$
-      ee.finalResultType.substituteTypes(ee.typeParams, args.toList)
     }
 
     object fromWeakConversion {

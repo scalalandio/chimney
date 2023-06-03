@@ -102,12 +102,15 @@ trait ExprPromises { this: Definitions =>
       f(usage).map(new PrependValsTo(_, vals))
     }
 
-    def prepend[B](implicit ev: A <:< Expr[B]): Expr[B] = PrependValsTo.initializeVals(vals, ev(usage))
+    def prepend[B](implicit ev: A <:< Expr[B]): Expr[B] = {
+      val expr = ev(usage)
+      PrependValsTo.initializeVals(vals, expr)(Expr.typeOf(expr))
+    }
   }
   protected val PrependValsTo: PrependValsToModule
   protected trait PrependValsToModule { this: PrependValsTo.type =>
 
-    def initializeVals[To](vals: Vector[(ExprPromiseName, ComputedExpr)], expr: Expr[To]): Expr[To]
+    def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ComputedExpr)], expr: Expr[To]): Expr[To]
   }
 
   implicit val PrependValsToTraversableApplicative: fp.ApplicativeTraverse[PrependValsTo] =

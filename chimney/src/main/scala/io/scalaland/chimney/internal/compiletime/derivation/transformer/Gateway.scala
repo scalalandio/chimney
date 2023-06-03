@@ -104,27 +104,12 @@ private[compiletime] trait Gateway { this: Derivation =>
     DerivationResult.log(s"Start derivation with context: $ctx") >>
       // pattern match on DerivedExpr and convert to whatever is needed
       deriveTransformationResultExpr[From, To]
-        .flatMap {
-          case DerivedExpr.TotalExpr(expr) =>
-            ctx match {
-              case _: TransformerContext.ForTotal[?, ?] =>
-                DerivationResult.pure(expr)
-              case _: TransformerContext.ForPartial[?, ?] =>
-                DerivationResult
-                  .pure(ChimneyExpr.PartialResult.Value(expr))
-                  .log(
-                    s"Derived expression is Total while Partial is expected - adapting by wrapping in partial.Result.Value"
-                  )
-            }
-          case DerivedExpr.PartialExpr(expr) =>
-            ctx match {
-              case _: TransformerContext.ForTotal[?, ?] =>
-                DerivationResult.fromException(
-                  new AssertionError("Derived partial.Result expression where total Transformer excepts direct value")
-                )
-              case _: TransformerContext.ForPartial[?, ?] =>
-                DerivationResult.pure(expr)
-            }
+        .flatMap { derivedExpr =>
+          (ctx, derivedExpr) match {
+            case (_: TransformerContext.ForTotal[?, ?], DerivedExpr.TotalExpr(expr)) => DerivationResult.pure(expr)
+            case (_: TransformerContext.ForTotal[?, ?], _)   => DerivationResult.fromException(partialWhenExpectedTotal)
+            case (_: TransformerContext.ForPartial[?, ?], _) => DerivationResult.pure(derivedExpr.ensurePartial)
+          }
         }
         .asInstanceOf[DerivationResult[Expr[ctx.Target]]]
 
@@ -166,4 +151,7 @@ private[compiletime] trait Gateway { this: Derivation =>
   }
 
   private val chimneyDocUrl = "https://scalalandio.github.io/chimney"
+
+  private val partialWhenExpectedTotal =
+    new AssertionError("Derived partial.Result expression where total Transformer excepts direct value")
 }

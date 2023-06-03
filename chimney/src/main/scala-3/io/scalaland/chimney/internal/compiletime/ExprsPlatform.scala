@@ -23,6 +23,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def map[A: Type, B: Type](opt: Expr[Option[A]])(f: Expr[A => B]): Expr[Option[B]] = '{ ${ opt }.map(${ f }) }
       def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(onSome: Expr[A => B]): Expr[B] =
         '{ ${ opt }.fold(${ onNone })(${ onSome }) }
+      def getOrElse[A: Type](opt: Expr[Option[A]])(orElse: Expr[A]): Expr[A] =
+        '{ ${ opt }.getOrElse(${ orElse }) }
     }
 
     object Either extends EitherModule {

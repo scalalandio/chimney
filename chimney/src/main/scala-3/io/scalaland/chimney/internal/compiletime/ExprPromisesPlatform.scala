@@ -44,7 +44,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     private def freshTermName[A: Type](prefix: String): ExprPromiseName =
       Symbol.newVal(Symbol.spliceOwner, freshTerm.generate(prefix), TypeRepr.of[A], Flags.EmptyFlags, Symbol.noSymbol)
     private def freshTermName[A: Type]: ExprPromiseName =
-      freshTermName(TypeRepr.of[A].toString.toLowerCase)
+      freshTermName(TypeRepr.of[A].show(using Printer.TypeReprShortCode).toLowerCase)
     private def freshTermName[A: Type](srcPrefixTree: Expr[?]): ExprPromiseName =
       freshTermName[A](toFieldName(srcPrefixTree))
 
@@ -56,11 +56,11 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
   protected object PrependValsTo extends PrependValsToModule {
 
-    def initializeVals[To](vals: Vector[(ExprPromiseName, ComputedExpr)], expr: Expr[To]): Expr[To] = {
+    def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ComputedExpr)], expr: Expr[To]): Expr[To] = {
       val statements = vals.map { case (name, cexpr) =>
         ComputedExpr.use(cexpr) { (_, expr) => ValDef(name, Some(expr.asTerm)) }
       }.toList
-      Block(statements, expr.asTerm).asExprOf(using Expr.typeOf(expr))
+      Block(statements, expr.asTerm).asExprOf[To]
     }
   }
 

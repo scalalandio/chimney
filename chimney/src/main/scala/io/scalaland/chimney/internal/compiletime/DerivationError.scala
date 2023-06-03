@@ -14,7 +14,7 @@ object DerivationError {
       .collectFirst {
         case MacroException(exception) =>
           val stackTrace = exception.getStackTrace.view.map(ste => s"  \t$ste").mkString("\n")
-          s"  macro expansion thrown exception!: ${exception.getMessage}:\n$stackTrace"
+          s"  macro expansion thrown exception!: $exception:\n$stackTrace"
         case NotYetImplemented(what) =>
           s"  derivation failed because functionality $what is not yet implemented!"
       }

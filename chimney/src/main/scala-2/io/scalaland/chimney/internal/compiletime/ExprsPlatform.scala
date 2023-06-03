@@ -19,6 +19,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         c.Expr(q"$opt.map[${Type[B]}]($f)")
       def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(onSome: Expr[A => B]): Expr[B] =
         c.Expr(q"$opt.fold[${Type[B]}]($onNone)($onSome)")
+      def getOrElse[A: Type](opt: Expr[Option[A]])(orElse: Expr[A]): Expr[A] =
+        c.Expr(q"$opt.getOrElse[${Type[A]}]($orElse)")
     }
 
     object Either extends EitherModule {
@@ -50,6 +52,6 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         .replaceAll("\\$\\d+", "")
         .replace("$u002E", ".")
 
-    def typeOf[A](expr: Expr[A]): Type[A] = typeUtils.fromUntyped(expr.actualType)
+    def typeOf[A](expr: Expr[A]): Type[A] = typeUtils.fromUntyped(expr.staticType)
   }
 }
