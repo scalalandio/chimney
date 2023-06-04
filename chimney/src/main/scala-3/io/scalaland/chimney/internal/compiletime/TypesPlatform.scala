@@ -47,8 +47,13 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       def Right[L: Type, R: Type]: Type[Right[L, R]] = quoted.Type.of[Right[L, R]]
     }
 
-    def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean = TypeRepr.of(using S) <:< TypeRepr.of(using T)
-    def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean = TypeRepr.of(using S) =:= TypeRepr.of(using T)
+    def isSubtypeOf[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) <:< TypeRepr.of(using B)
+    def isSameAs[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) =:= TypeRepr.of(using B)
+
+    def isSealed[A](A: Type[A]): Boolean = {
+      val flags = TypeRepr.of(using A).typeSymbol.flags
+      flags.is(Flags.Enum) || flags.is(Flags.Sealed)
+    }
 
     def prettyPrint[T: Type]: String = {
       val repr = TypeRepr.of[T]

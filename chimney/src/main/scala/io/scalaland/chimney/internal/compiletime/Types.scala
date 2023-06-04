@@ -45,6 +45,8 @@ private[compiletime] trait Types {
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean
     def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean
 
+    def isSealed[A](A: Type[A]): Boolean
+
     def prettyPrint[A: Type]: String
   }
 
@@ -54,6 +56,7 @@ private[compiletime] trait Types {
     final def =:=[B](another: Type[B]): Boolean = Type.isSameAs(tpe, another)
 
     final def isOption: Boolean = tpe <:< Type.Option(Type.Any)
+    final def isSealed: Boolean = Type.isSealed(tpe)
 
     final def asComputed: ComputedType = ComputedType(tpe)
   }

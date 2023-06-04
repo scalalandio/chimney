@@ -11,6 +11,7 @@ abstract private[derivation] class DerivationPlatform(q: scala.quoted.Quotes)
     with rules.TransformSubtypesRuleModule
     with rules.TransformOptionToOptionRuleModule
     with rules.TransformPartialOptionToNonOptionRuleModule
+    with rules.TransformToOptionRuleModule
     with rules.NotImplementedFallbackRuleModule {
 
   final override protected val rulesAvailableForPlatform: List[Rule] = List(
@@ -18,6 +19,7 @@ abstract private[derivation] class DerivationPlatform(q: scala.quoted.Quotes)
     TransformSubtypesRule,
     TransformOptionToOptionRule,
     TransformPartialOptionToNonOptionRule,
+    TransformToOptionRule,
     NotImplementedFallbackRule
   )
 }
