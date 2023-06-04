@@ -15,6 +15,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
     val To: Type[To]
     val src: Expr[From]
 
+    val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
     val config: TransformerConfig
 
     type Target

@@ -35,8 +35,8 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
         defaultFlags
       } else if (flags.typeConstructor =:= enableTC) {
         val List(h, t) = flags.typeArgs
-        implicit val Flag: Type[FlagHead] = typeUtils.fromUntyped(h)
-        implicit val Tail: Type[FlagTail] = typeUtils.fromUntyped(t)
+        implicit val Flag: Type[FlagHead] = Type.platformSpecific.fromUntyped(h)
+        implicit val Tail: Type[FlagTail] = Type.platformSpecific.fromUntyped(t)
 
         if (Flag.typeConstructor =:= implicitConflictResolutionTC) {
           val preference = Flag.typeArgs.head
@@ -50,7 +50,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
             )
           } else {
             // $COVERAGE-OFF$
-            c.abort(c.enclosingPosition, "Invalid implicit conflict resolution preference type!!")
+            reportError("Invalid implicit conflict resolution preference type!!")
             // $COVERAGE-ON$
           }
         } else {
@@ -58,8 +58,8 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
         }
       } else if (flags.typeConstructor =:= disableTC) {
         val List(h, t) = flags.typeArgs
-        implicit val Flag: Type[FlagHead] = typeUtils.fromUntyped(h)
-        implicit val Tail: Type[FlagTail] = typeUtils.fromUntyped(t)
+        implicit val Flag: Type[FlagHead] = Type.platformSpecific.fromUntyped(h)
+        implicit val Tail: Type[FlagTail] = Type.platformSpecific.fromUntyped(t)
 
         if (flags.typeConstructor =:= implicitConflictResolutionTC) {
           extractTransformerFlags[FlagTail](defaultFlags).setImplicitConflictResolution(None)
@@ -68,7 +68,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
         }
       } else {
         // $COVERAGE-OFF$
-        c.abort(c.enclosingPosition, "Bad internal transformer flags type shape!")
+        reportError(s"Bad internal transformer flags type shape ${Type.prettyPrint[Flag]}!")
         // $COVERAGE-ON$
       }
     }
@@ -94,39 +94,39 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
       } else if (cfgTpe.typeConstructor =:= fieldConstTC) {
         val List(fieldNameT, rest) = cfgTpe.typeArgs
         val fieldName = fieldNameT.asStringSingletonType
-        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        implicit val CfgTail: Type[CfgTail] = Type.platformSpecific.fromUntyped(rest)
         extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
           .addFieldOverride(fieldName, RuntimeFieldOverride.Const(runtimeDataIdx))
       } else if (cfgTpe.typeConstructor =:= fieldComputedTC) {
         val List(fieldNameT, rest) = cfgTpe.typeArgs
         val fieldName = fieldNameT.asStringSingletonType
-        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        implicit val CfgTail: Type[CfgTail] = Type.platformSpecific.fromUntyped(rest)
         extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
           .addFieldOverride(fieldName, RuntimeFieldOverride.Computed(runtimeDataIdx))
       } else if (cfgTpe.typeConstructor =:= fieldConstPartialTC) {
         val List(fieldNameT, rest) = cfgTpe.typeArgs
         val fieldName = fieldNameT.asStringSingletonType
-        implicit val Tail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        implicit val Tail: Type[CfgTail] = Type.platformSpecific.fromUntyped(rest)
         extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
           .addFieldOverride(fieldName, RuntimeFieldOverride.ConstPartial(runtimeDataIdx))
       } else if (cfgTpe.typeConstructor =:= fieldComputedPartialTC) {
         val List(fieldNameT, rest) = cfgTpe.typeArgs
         val fieldName = fieldNameT.asStringSingletonType
-        implicit val Tail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        implicit val Tail: Type[CfgTail] = Type.platformSpecific.fromUntyped(rest)
         extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
           .addFieldOverride(fieldName, RuntimeFieldOverride.ComputedPartial(runtimeDataIdx))
       } else if (cfgTpe.typeConstructor =:= fieldRelabelledTC) {
         val List(fieldNameFromT, fieldNameToT, rest) = cfgTpe.typeArgs
         val fieldNameFrom = fieldNameFromT.asStringSingletonType
         val fieldNameTo = fieldNameToT.asStringSingletonType
-        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        implicit val CfgTail: Type[CfgTail] = Type.platformSpecific.fromUntyped(rest)
         extractTransformerConfig[CfgTail](runtimeDataIdx)
           .addFieldOverride(fieldNameTo, RuntimeFieldOverride.RenamedFrom(fieldNameFrom))
       } else if (cfgTpe.typeConstructor =:= coproductInstanceTC) {
         val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-        val From: Type[?] = typeUtils.fromUntyped(instanceType)
-        val To: Type[?] = typeUtils.fromUntyped(targetType)
-        implicit val CfgTail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        val From: Type[?] = Type.platformSpecific.fromUntyped(instanceType)
+        val To: Type[?] = Type.platformSpecific.fromUntyped(targetType)
+        implicit val CfgTail: Type[CfgTail] = Type.platformSpecific.fromUntyped(rest)
         extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
           .addCoproductInstance(
             ComputedType(From),
@@ -135,9 +135,9 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
           )
       } else if (cfgTpe.typeConstructor =:= coproductInstancePartialTC) {
         val List(instanceType, targetType, rest) = cfgTpe.typeArgs
-        val From: Type[?] = typeUtils.fromUntyped(instanceType)
-        val To: Type[?] = typeUtils.fromUntyped(targetType)
-        implicit val Tail: Type[CfgTail] = typeUtils.fromUntyped(rest)
+        val From: Type[?] = Type.platformSpecific.fromUntyped(instanceType)
+        val To: Type[?] = Type.platformSpecific.fromUntyped(targetType)
+        implicit val Tail: Type[CfgTail] = Type.platformSpecific.fromUntyped(rest)
         extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
           .addCoproductInstance(
             ComputedType(From),
@@ -152,6 +152,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
     }
   }
 
+  // TODO: move to Type.platformSpecific ?
   implicit private class StringSingletonTypeOps(private val tpe: c.Type) {
 
     /** Assumes that this `tpe` is String singleton type and extracts its value */

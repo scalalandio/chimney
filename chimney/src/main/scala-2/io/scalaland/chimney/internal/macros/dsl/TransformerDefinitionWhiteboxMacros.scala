@@ -5,6 +5,8 @@ import io.scalaland.chimney.internal.utils.DslMacroUtils
 import scala.annotation.unused
 import scala.reflect.macros.whitebox
 
+// TODO: move to io.scalaland.chimney.internal.compiletime.dsl
+// TODO rename to TransformerDefinition
 class TransformerDefinitionWhiteboxMacros(val c: whitebox.Context) extends DslMacroUtils {
 
   import CfgTpes.*

@@ -15,7 +15,10 @@ private[compiletime] trait Types {
     val Int: Type[Int]
     val Unit: Type[Unit]
 
+    def Tuple2[A: Type, B: Type]: Type[(A, B)]
+
     def Function1[A: Type, B: Type]: Type[A => B]
+    def Function2[A: Type, B: Type, C: Type]: Type[(A, B) => C]
 
     val Array: ArrayModule
     trait ArrayModule { this: Array.type =>
@@ -31,7 +34,13 @@ private[compiletime] trait Types {
 
       val None: Type[scala.None.type]
     }
-    def Either[L: Type, R: Type]: Type[Either[L, R]]
+
+    val Either: EitherModule
+    trait EitherModule { this: Either.type =>
+      def apply[L: Type, R: Type]: Type[Either[L, R]]
+      def Left[L: Type, R: Type]: Type[Left[L, R]]
+      def Right[L: Type, R: Type]: Type[Right[L, R]]
+    }
 
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean
     def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean
@@ -74,11 +83,16 @@ private[compiletime] trait Types {
     implicit val IntType: Type[Int] = Type.Int
     implicit val UnitType: Type[Unit] = Type.Unit
 
+    implicit def Tuple2Type[A: Type, B: Type]: Type[(A, B)] = Type.Tuple2[A, B]
+
     implicit def Function1Type[A: Type, B: Type]: Type[A => B] = Type.Function1[A, B]
+    implicit def Function2Type[A: Type, B: Type, C: Type]: Type[(A, B) => C] = Type.Function2[A, B, C]
 
     implicit def ArrayType[A: Type]: Type[Array[A]] = Type.Array[A]
     implicit def OptionType[A: Type]: Type[Option[A]] = Type.Option[A]
     implicit val NoneType: Type[None.type] = Type.Option.None
     implicit def EitherType[L: Type, R: Type]: Type[Either[L, R]] = Type.Either[L, R]
+    implicit def LeftType[L: Type, R: Type]: Type[Left[L, R]] = Type.Either.Left[L, R]
+    implicit def RightType[L: Type, R: Type]: Type[Right[L, R]] = Type.Either.Right[L, R]
   }
 }

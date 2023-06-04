@@ -7,27 +7,33 @@ import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 
 private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: DefinitionsPlatform =>
 
-  import c.universe.{internal as _, Transformer as _}
-
   object ChimneyType extends ChimneyTypeModule {
-    import typeUtils.*
+
+    import Type.platformSpecific.{fromWeak, fromWeakTypeConstructor}
 
     def Transformer[From: Type, To: Type]: Type[Transformer[From, To]] =
-      fromWeakTC[Transformer[?, ?], Transformer[From, To]](Type[From], Type[To])
+      fromWeakTypeConstructor[Transformer[?, ?], Transformer[From, To]](Type[From], Type[To])
 
     def PartialTransformer[From: Type, To: Type]: Type[PartialTransformer[From, To]] =
-      fromWeakTC[PartialTransformer[?, ?], PartialTransformer[From, To]](Type[From], Type[To])
+      fromWeakTypeConstructor[PartialTransformer[?, ?], PartialTransformer[From, To]](Type[From], Type[To])
 
-    def Patcher[T: Type, Patch: Type]: Type[Patcher[T, Patch]] =
-      fromWeakTC[Patcher[?, ?], Patcher[T, Patch]](Type[T], Type[Patch])
+    def Patcher[A: Type, Patch: Type]: Type[Patcher[A, Patch]] =
+      fromWeakTypeConstructor[Patcher[?, ?], Patcher[A, Patch]](Type[A], Type[Patch])
 
     object PartialResult extends PartialResultModule {
-      def apply[T: Type]: Type[partial.Result[T]] =
-        fromWeakTC[partial.Result[?], partial.Result[T]](Type[T])
-      def Value[T: Type]: Type[partial.Result.Value[T]] =
-        fromWeakTC[partial.Result.Value[?], partial.Result.Value[T]](Type[T])
+      def apply[A: Type]: Type[partial.Result[A]] =
+        fromWeakTypeConstructor[partial.Result[?], partial.Result[A]](Type[A])
+      def Value[A: Type]: Type[partial.Result.Value[A]] =
+        fromWeakTypeConstructor[partial.Result.Value[?], partial.Result.Value[A]](Type[A])
       val Errors: Type[partial.Result.Errors] =
         fromWeak[partial.Result.Errors]
+    }
+
+    object PathElement extends PathElementModule {
+      val Accessor: Type[partial.PathElement.Accessor] = fromWeak[partial.PathElement.Accessor]
+      val Index: Type[partial.PathElement.Index] = fromWeak[partial.PathElement.Index]
+      val MapKey: Type[partial.PathElement.MapKey] = fromWeak[partial.PathElement.MapKey]
+      val MapValue: Type[partial.PathElement.MapValue] = fromWeak[partial.PathElement.MapValue]
     }
 
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type] =
@@ -73,5 +79,6 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
           fromWeak[internal.TransformerFlags.ImplicitConflictResolution[R]]
       }
     }
+
   }
 }

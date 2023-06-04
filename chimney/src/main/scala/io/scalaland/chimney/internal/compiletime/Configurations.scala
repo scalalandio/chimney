@@ -53,7 +53,7 @@ private[compiletime] trait Configurations { this: Definitions =>
       ).flatten.mkString(", ")})"
   }
 
-  sealed abstract protected class RuntimeFieldOverride(val needValueLevelAccess: Boolean)
+  sealed abstract protected class RuntimeFieldOverride(val usesRuntimeDataStore: Boolean)
       extends Product
       with Serializable
   protected object RuntimeFieldOverride {
@@ -74,32 +74,30 @@ private[compiletime] trait Configurations { this: Definitions =>
       flags: TransformerFlags = TransformerFlags(),
       fieldOverrides: Map[String, RuntimeFieldOverride] = Map.empty,
       coproductOverrides: Map[(ComputedType, ComputedType), RuntimeCoproductOverride] = Map.empty,
-      preventResolutionForTypes: Option[(ComputedType, ComputedType)] = None,
-      legacy: TransformerConfig.LegacyData = TransformerConfig.LegacyData() // TODO: temporary
+      preventResolutionForTypes: Option[(ComputedType, ComputedType)] = None
   ) {
 
     def prepareForRecursiveCall: TransformerConfig =
       copy(
         // preventResolutionForTypes = None,
-        fieldOverrides = Map.empty,
-        legacy = legacy.copy(definitionScope = None)
+        fieldOverrides = Map.empty
       )
 
-    def addFieldOverride(fieldName: String, fieldOverride: RuntimeFieldOverride): TransformerConfig = {
+    def usesRuntimeDataStore: Boolean =
+      fieldOverrides.values.exists(_.usesRuntimeDataStore) || coproductOverrides.nonEmpty
+
+    def addFieldOverride(fieldName: String, fieldOverride: RuntimeFieldOverride): TransformerConfig =
       copy(fieldOverrides = fieldOverrides + (fieldName -> fieldOverride))
-    }
 
     def addCoproductInstance(
         instanceType: ComputedType,
         targetType: ComputedType,
         coproductOverride: RuntimeCoproductOverride
-    ): TransformerConfig = {
+    ): TransformerConfig =
       copy(coproductOverrides = coproductOverrides + ((instanceType, targetType) -> coproductOverride))
-    }
 
-    def withDefinitionScope(defScope: (ComputedType, ComputedType)): TransformerConfig = {
-      copy(preventResolutionForTypes = Some(defScope), legacy = legacy.copy(definitionScope = Some(defScope)))
-    }
+    def withDefinitionScope(defScope: (ComputedType, ComputedType)): TransformerConfig =
+      copy(preventResolutionForTypes = Some(defScope))
 
     override def toString: String = {
       val fieldOverridesString = fieldOverrides.map { case (k, v) => s"$k -> $v" }.mkString(", ")
@@ -113,8 +111,7 @@ private[compiletime] trait Configurations { this: Definitions =>
           |  flags = $flags,
           |  fieldOverrides = Map($fieldOverridesString),
           |  coproductOverrides = Map($coproductOverridesString),
-          |  preventResolutionForTypes = $preventResolutionForTypesString,
-          |  legacy = $legacy
+          |  preventResolutionForTypes = $preventResolutionForTypesString
           |)""".stripMargin
     }
   }

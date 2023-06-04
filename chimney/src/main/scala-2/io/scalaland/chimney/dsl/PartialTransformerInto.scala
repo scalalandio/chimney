@@ -2,7 +2,8 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.*
-import io.scalaland.chimney.internal.macros.dsl.{PartialTransformerIntoWhiteboxMacros, TransformerBlackboxMacros}
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
+import io.scalaland.chimney.internal.macros.dsl.PartialTransformerIntoWhiteboxMacros
 
 import scala.language.experimental.macros
 
@@ -173,7 +174,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
   def transform[ImplicitScopeFlags <: TransformerFlags](implicit
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]
   ): partial.Result[To] =
-    macro TransformerBlackboxMacros.partialTransformNoFailFastImpl[From, To, Cfg, Flags, ImplicitScopeFlags]
+    macro TransformerMacros.derivePartialTransformationWithConfigNoFailFast[From, To, Cfg, Flags, ImplicitScopeFlags]
 
   /** Apply configured partial transformation in-place in a short-circuit (fail fast) mode.
     *
@@ -188,8 +189,9 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
   def transformFailFast[ImplicitScopeFlags <: TransformerFlags](implicit
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]
   ): partial.Result[To] =
-    macro TransformerBlackboxMacros.partialTransformFailFastImpl[From, To, Cfg, Flags, ImplicitScopeFlags]
+    macro TransformerMacros.derivePartialTransformationWithConfigFailFast[From, To, Cfg, Flags, ImplicitScopeFlags]
 
+  // TODO: create internal.runtime.UpdateDefinition object which would replace this methods and hide them from users
   /** Used internally by macro. Please don't use in your code.
     */
   def __refineTransformerDefinition[Cfg1 <: TransformerCfg](

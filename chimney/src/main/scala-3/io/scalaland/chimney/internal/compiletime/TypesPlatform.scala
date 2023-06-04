@@ -21,7 +21,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     val Int: Type[Int] = quoted.Type.of[Int]
     val Unit: Type[Unit] = quoted.Type.of[Unit]
 
-    def Function1[From: Type, To: Type]: Type[From => To] = quoted.Type.of[From => To]
+    def Tuple2[A: Type, B: Type]: Type[(A, B)] = quoted.Type.of[(A, B)]
+
+    def Function1[A: Type, B: Type]: Type[A => B] = quoted.Type.of[A => B]
+    def Function2[A: Type, B: Type, C: Type]: Type[(A, B) => C] = quoted.Type.of[(A, B) => C]
 
     object Array extends ArrayModule {
       def apply[T: Type]: Type[Array[T]] = quoted.Type.of[Array[T]]
@@ -37,7 +40,12 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
       val None: Type[scala.None.type] = quoted.Type.of[scala.None.type]
     }
-    def Either[L: Type, R: Type]: Type[Either[L, R]] = quoted.Type.of[Either[L, R]]
+
+    object Either extends EitherModule {
+      def apply[L: Type, R: Type]: Type[Either[L, R]] = quoted.Type.of[Either[L, R]]
+      def Left[L: Type, R: Type]: Type[Left[L, R]] = quoted.Type.of[Left[L, R]]
+      def Right[L: Type, R: Type]: Type[Right[L, R]] = quoted.Type.of[Right[L, R]]
+    }
 
     def isSubtypeOf[S, T](S: Type[S], T: Type[T]): Boolean = TypeRepr.of(using S) <:< TypeRepr.of(using T)
     def isSameAs[S, T](S: Type[S], T: Type[T]): Boolean = TypeRepr.of(using S) =:= TypeRepr.of(using T)

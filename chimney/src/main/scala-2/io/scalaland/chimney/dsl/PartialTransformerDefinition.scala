@@ -2,7 +2,8 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.{partial, PartialTransformer}
 import io.scalaland.chimney.internal.*
-import io.scalaland.chimney.internal.macros.dsl.{PartialTransformerDefinitionWhiteboxMacros, TransformerBlackboxMacros}
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
+import io.scalaland.chimney.internal.macros.dsl.PartialTransformerDefinitionWhiteboxMacros
 
 import scala.language.experimental.macros
 
@@ -164,8 +165,9 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   def buildTransformer[ImplicitScopeFlags <: TransformerFlags](implicit
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]
   ): PartialTransformer[From, To] =
-    macro TransformerBlackboxMacros.buildPartialTransformerImpl[From, To, Cfg, Flags, ImplicitScopeFlags]
+    macro TransformerMacros.derivePartialTransformerWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags]
 
+  // TODO: create internal.runtime.UpdateDefinition object which would replace this methods and hide them from users
   override protected def __updateRuntimeData(newRuntimeData: TransformerDefinitionCommons.RuntimeDataStore): this.type =
     new PartialTransformerDefinition(newRuntimeData).asInstanceOf[this.type]
 }

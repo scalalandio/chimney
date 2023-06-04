@@ -6,6 +6,8 @@ import io.scalaland.chimney.internal.utils.DslMacroUtils
 import scala.annotation.unused
 import scala.reflect.macros.whitebox
 
+// TODO: move to io.scalaland.chimney.internal.compiletime.dsl
+// TODO: rename to PartialTransformerDefinition
 class PartialTransformerDefinitionWhiteboxMacros(val c: whitebox.Context)
     extends DslMacroUtils
     with TransformerConfigSupport {
@@ -41,5 +43,4 @@ class PartialTransformerDefinitionWhiteboxMacros(val c: whitebox.Context)
   def withCoproductInstancePartialImpl[To: WeakTypeTag, Inst: WeakTypeTag, C: WeakTypeTag](f: Tree): Tree = {
     c.prefix.tree.overrideCoproductInstance[C](weakTypeOf[Inst], weakTypeOf[To], f, coproductInstancePartialT)
   }
-
 }

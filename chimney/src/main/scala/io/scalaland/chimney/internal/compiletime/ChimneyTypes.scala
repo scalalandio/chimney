@@ -1,7 +1,9 @@
 package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.*
+import io.scalaland.chimney.dsl.TransformerDefinitionCommons.RuntimeDataStore
 import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
+import io.scalaland.chimney.partial.PathElement
 
 private[compiletime] trait ChimneyTypes { this: Types =>
 
@@ -17,6 +19,14 @@ private[compiletime] trait ChimneyTypes { this: Types =>
       def apply[A: Type]: Type[partial.Result[A]]
       def Value[A: Type]: Type[partial.Result.Value[A]]
       val Errors: Type[partial.Result.Errors]
+    }
+
+    val PathElement: PathElementModule
+    trait PathElementModule { this: PathElement.type =>
+      val Accessor: Type[partial.PathElement.Accessor]
+      val Index: Type[partial.PathElement.Index]
+      val MapKey: Type[partial.PathElement.MapKey]
+      val MapValue: Type[partial.PathElement.MapValue]
     }
 
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
@@ -65,5 +75,12 @@ private[compiletime] trait ChimneyTypes { this: Types =>
     implicit def PartialResultType[A: Type]: Type[partial.Result[A]] = ChimneyType.PartialResult[A]
     implicit def PartialResultValueType[A: Type]: Type[partial.Result.Value[A]] = ChimneyType.PartialResult.Value[A]
     implicit val PartialResultErrorsType: Type[partial.Result.Errors] = ChimneyType.PartialResult.Errors
+
+    implicit val PathElementAccessor: Type[PathElement.Accessor] = ChimneyType.PathElement.Accessor
+    implicit val PathElementIndex: Type[PathElement.Index] = ChimneyType.PathElement.Index
+    implicit val PathElementMapKey: Type[PathElement.MapKey] = ChimneyType.PathElement.MapKey
+    implicit val PathElementMapValue: Type[PathElement.MapValue] = ChimneyType.PathElement.MapValue
+
+    implicit val RuntimeDataStoreType: Type[RuntimeDataStore] = ChimneyType.RuntimeDataStore
   }
 }

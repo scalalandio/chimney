@@ -24,6 +24,13 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
       val Errors: Type[partial.Result.Errors] = quoted.Type.of[partial.Result.Errors]
     }
 
+    object PathElement extends PathElementModule {
+      val Accessor: Type[partial.PathElement.Accessor] = quoted.Type.of[partial.PathElement.Accessor]
+      val Index: Type[partial.PathElement.Index] = quoted.Type.of[partial.PathElement.Index]
+      val MapKey: Type[partial.PathElement.MapKey] = quoted.Type.of[partial.PathElement.MapKey]
+      val MapValue: Type[partial.PathElement.MapValue] = quoted.Type.of[partial.PathElement.MapValue]
+    }
+
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type] =
       quoted.Type.of[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =

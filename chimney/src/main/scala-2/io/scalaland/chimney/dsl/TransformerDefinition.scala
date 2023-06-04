@@ -2,7 +2,8 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.internal.*
-import io.scalaland.chimney.internal.macros.dsl.{TransformerBlackboxMacros, TransformerDefinitionWhiteboxMacros}
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
+import io.scalaland.chimney.internal.macros.dsl.TransformerDefinitionWhiteboxMacros
 
 import scala.language.experimental.macros
 
@@ -120,9 +121,9 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
   def buildTransformer[ImplicitScopeFlags <: TransformerFlags](implicit
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]
   ): Transformer[From, To] =
-    macro TransformerBlackboxMacros.buildTransformerImpl[From, To, Cfg, Flags, ImplicitScopeFlags]
+    macro TransformerMacros.deriveTotalTransformerWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags]
 
+  // TODO: create internal.runtime.UpdateDefinition object which would replace this methods and hide them from users
   override protected def __updateRuntimeData(newRuntimeData: TransformerDefinitionCommons.RuntimeDataStore): this.type =
     new TransformerDefinition(newRuntimeData).asInstanceOf[this.type]
-
 }

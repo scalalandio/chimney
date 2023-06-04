@@ -6,6 +6,7 @@ import io.scalaland.chimney.internal.macros.TransformerMacros
 import scala.annotation.unused
 import scala.reflect.macros.blackbox
 
+// TODO: move to io.scalaland.chimney.internal.compiletime.dsl
 class TransformerBlackboxMacros(val c: blackbox.Context) extends TransformerMacros {
 
   import c.universe.*

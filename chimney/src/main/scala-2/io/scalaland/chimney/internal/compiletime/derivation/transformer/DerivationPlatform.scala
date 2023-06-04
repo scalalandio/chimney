@@ -16,10 +16,10 @@ private[derivation] trait DerivationPlatform
     with rules.LegacyMacrosFallbackRuleModule {
 
   final override protected val rulesAvailableForPlatform: List[Rule] = List(
-//    TransformImplicitRule,
-//    TransformSubtypesRule,
-//    TransformOptionToOptionRule,
-//    TransformPartialOptionToNonOptionRule,
+    TransformImplicitRule,
+    TransformSubtypesRule,
+    TransformOptionToOptionRule,
+    TransformPartialOptionToNonOptionRule,
     LegacyMacrosFallbackRule
   )
 }

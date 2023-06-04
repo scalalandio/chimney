@@ -1,7 +1,8 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.*
-import io.scalaland.chimney.internal.macros.dsl.{TransformerBlackboxMacros, TransformerIntoWhiteboxMacros}
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
+import io.scalaland.chimney.internal.macros.dsl.TransformerIntoWhiteboxMacros
 
 import scala.language.experimental.macros
 
@@ -117,8 +118,9 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
   def transform[ImplicitScopeFlags <: TransformerFlags](implicit
       tc: io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]
   ): To =
-    macro TransformerBlackboxMacros.transformImpl[From, To, Cfg, Flags, ImplicitScopeFlags]
+    macro TransformerMacros.deriveTotalTransformationWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags]
 
+  // TODO: create internal.runtime.UpdateDefinition object which would replace this methods and hide them from users
   /** Used internally by macro. Please don't use in your code.
     */
   def __refineTransformerDefinition[Cfg1 <: TransformerCfg](

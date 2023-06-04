@@ -11,15 +11,21 @@ import scala.annotation.nowarn
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlatform =>
 
+  import c.universe.{internal as _, Transformer as _, *}
+  import ChimneyTypeImplicits.*
+
   // TODO: remove this rule once all rules are migrated; it's here only to make the Scala 2 tests pass during migration
   protected object LegacyMacrosFallbackRule extends Rule("LegacyMacrosFallback") {
 
     override def expand[From, To](implicit
         ctx: TransformerContext[From, To]
-    ): DerivationResult[Rule.ExpansionResult[To]] =
-      DerivationResult {
-        oldMacros.resolveTransformerBody(convertToLegacyConfig)(convertToLegacyType[From], convertToLegacyType[To])
-      }.flatMap(convertFromLegacyDerivedTree[From, To](_))
+    ): DerivationResult[Rule.ExpansionResult[To]] = {
+      for {
+        cfg <- DerivationResult(convertToLegacyConfig)
+        legacyBody = oldMacros.resolveTransformerBody(cfg)(convertToLegacyType[From], convertToLegacyType[To])
+        body <- convertFromLegacyDerivedTree[From, To](legacyBody)
+      } yield initializeFailFastIfNeeded(body, cfg.derivationTarget, ctx)
+    }
 
     private val oldMacros = new TransformerBlackboxMacros(c)
 
@@ -30,10 +36,8 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlat
         srcPrefixTree = ctx.src.tree.asInstanceOf[oldMacros.c.Tree],
         derivationTarget = ctx match {
           case _: TransformerContext.ForTotal[?, ?] => oldMacros.DerivationTarget.TotalTransformer
-          case a: TransformerContext.ForPartial[?, ?] =>
-            oldMacros.DerivationTarget.PartialTransformer(
-              a.failFast.tree.asInstanceOf[oldMacros.c.universe.Ident].name.toTermName
-            )
+          // THIS ONE CREATE FRESH TERM THAT WE HAVE TO INITIALIZE!
+          case _: TransformerContext.ForPartial[?, ?] => oldMacros.DerivationTarget.PartialTransformer()
         },
         flags = oldMacros.TransformerFlags(
           methodAccessors = ctx.config.flags.methodAccessors,
@@ -63,11 +67,12 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlat
           case ((ct1, ct2), RuntimeCoproductOverride.CoproductInstancePartial(idx)) =>
             (ct1.Type.typeSymbol.asInstanceOf[oldMacros.c.Symbol], ct2.Type.asInstanceOf[oldMacros.c.Type]) -> idx
         },
-        transformerDefinitionPrefix = Option(ctx.config.legacy.transformerDefinitionPrefix)
-          .map(_.tree)
-          .getOrElse(oldMacros.c.universe.EmptyTree)
-          .asInstanceOf[oldMacros.c.Tree],
-        definitionScope = ctx.config.legacy.definitionScope.asInstanceOf[Option[(oldMacros.c.Type, oldMacros.c.Type)]]
+        transformerDefinitionPrefix = ctx.runtimeDataStore.tree match {
+          case q"$td.runtimeData" => td.asInstanceOf[oldMacros.c.Tree]
+          case _                  => q"null".asInstanceOf[oldMacros.c.Tree]
+        },
+        definitionScope =
+          ctx.config.preventResolutionForTypes.asInstanceOf[Option[(oldMacros.c.Type, oldMacros.c.Type)]]
       )
     }
 
@@ -84,11 +89,33 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlat
           )
         )
       case Right(oldMacros.DerivedTree(tree, _: oldMacros.DerivationTarget.TotalTransformer.type)) =>
-        DerivationResult.totalExpr(c.Expr[To](tree.asInstanceOf[c.Tree])(c.WeakTypeTag(Type[To])))
+        DerivationResult.totalExpr(Expr.platformSpecific.asExpr[To](tree.asInstanceOf[c.Tree]))
       case Right(oldMacros.DerivedTree(tree, _: oldMacros.DerivationTarget.PartialTransformer)) =>
-        DerivationResult.partialExpr(
-          c.Expr[partial.Result[To]](tree.asInstanceOf[c.Tree])(c.WeakTypeTag(ChimneyType.PartialResult[To]))
+        DerivationResult.partialExpr(Expr.platformSpecific.asExpr[partial.Result[To]](tree.asInstanceOf[c.Tree]))
+    }
+
+    private def initializeFailFastIfNeeded[To: Type](
+        result: Rule.ExpansionResult[To],
+        dt: oldMacros.DerivationTarget,
+        ctx: TransformerContext[?, ?]
+    ): Rule.ExpansionResult[To] = result match {
+      case Rule.ExpansionResult.Expanded(DerivedExpr.PartialExpr(expr)) =>
+        val termName =
+          dt.asInstanceOf[oldMacros.DerivationTarget.PartialTransformer].failFastTermName.asInstanceOf[c.TermName]
+        val failFastValue = ctx.asInstanceOf[TransformerContext.ForPartial[?, ?]].failFast
+        import c.universe.{internal as _, Transformer as _, Expr as _, *}
+        Rule.ExpansionResult.Expanded(
+          DerivedExpr.PartialExpr(
+            Expr.platformSpecific.asExpr[partial.Result[To]](
+              q"""
+                val $termName: scala.Boolean = $failFastValue
+                val _ = $termName
+                $expr
+              """
+            )
+          )
         )
+      case els => els
     }
   }
 }
