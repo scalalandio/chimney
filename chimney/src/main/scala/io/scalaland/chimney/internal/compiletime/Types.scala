@@ -1,5 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
+import scala.collection.immutable.ListSet
+
 private[compiletime] trait Types {
 
   /** Platform-specific type representation (c.universe.Type in 2, scala.quoted.Type[A] in 3) */
@@ -7,13 +9,32 @@ private[compiletime] trait Types {
 
   val Type: TypeModule
   trait TypeModule { this: Type.type =>
-    def apply[A](implicit A: Type[A]): Type[A] = A
+    final def apply[A](implicit A: Type[A]): Type[A] = A
 
     val Nothing: Type[Nothing]
     val Any: Type[Any]
+    val AnyVal: Type[AnyVal]
     val Boolean: Type[Boolean]
+    val Byte: Type[Byte]
+    val Char: Type[Char]
+    val Short: Type[Short]
     val Int: Type[Int]
+    val Long: Type[Long]
+    val Float: Type[Float]
+    val Double: Type[Double]
     val Unit: Type[Unit]
+
+    lazy val primitives: Set[ComputedType] = ListSet(
+      Boolean.asComputed,
+      Byte.asComputed,
+      Char.asComputed,
+      Short.asComputed,
+      Int.asComputed,
+      Long.asComputed,
+      Float.asComputed,
+      Double.asComputed,
+      Unit.asComputed
+    )
 
     def Tuple2[A: Type, B: Type]: Type[(A, B)]
 
@@ -55,6 +76,9 @@ private[compiletime] trait Types {
     final def <:<[B](another: Type[B]): Boolean = Type.isSubtypeOf(tpe, another)
     final def =:=[B](another: Type[B]): Boolean = Type.isSameAs(tpe, another)
 
+    final def isPrimitive: Boolean = Type.primitives.exists(tpe <:< _.Type)
+
+    final def isAnyVal: Boolean = tpe <:< Type.AnyVal
     final def isOption: Boolean = tpe <:< Type.Option(Type.Any)
     final def isSealed: Boolean = Type.isSealed(tpe)
 
@@ -82,8 +106,15 @@ private[compiletime] trait Types {
 
     implicit val NothingType: Type[Nothing] = Type.Nothing
     implicit val AnyType: Type[Any] = Type.Any
+    implicit val AnyValType: Type[AnyVal] = Type.AnyVal
     implicit val BooleanType: Type[Boolean] = Type.Boolean
+    implicit val ByteType: Type[Byte] = Type.Byte
+    implicit val CharType: Type[Char] = Type.Char
+    implicit val ShortType: Type[Short] = Type.Short
     implicit val IntType: Type[Int] = Type.Int
+    implicit val LongType: Type[Long] = Type.Long
+    implicit val FloatType: Type[Float] = Type.Float
+    implicit val DoubleType: Type[Double] = Type.Double
     implicit val UnitType: Type[Unit] = Type.Unit
 
     implicit def Tuple2Type[A: Type, B: Type]: Type[(A, B)] = Type.Tuple2[A, B]

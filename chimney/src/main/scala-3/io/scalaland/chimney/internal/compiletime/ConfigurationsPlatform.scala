@@ -105,7 +105,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
 
       quoted.Type.valueOfConstant[T](using tpe)(using quotes) match {
         case Some(str) => str
-        case None      => reportError(s"Invalid string literal type: ${tpe}")
+        case None      => assertionFailed(s"Invalid string literal type: ${tpe}")
       }
     }
   }

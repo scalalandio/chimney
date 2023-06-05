@@ -38,7 +38,6 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
 
     val PartialResult: PartialResultModule
     trait PartialResultModule { this: PartialResult.type =>
-
       def Value[A: Type](value: Expr[A]): Expr[partial.Result.Value[A]]
 
       val Errors: ErrorsModule

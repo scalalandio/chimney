@@ -19,21 +19,27 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         // $COVERAGE-OFF$
         val ee = weakTypeOf[Unswapped].etaExpand
         if (ee.typeParams.isEmpty || args.isEmpty) {
-          c.abort(
-            c.enclosingPosition,
+          assertionFailed(
             s"fromWeakTC should be used only to apply type paramerers to type constructors, got $ee and $args!"
           )
         } else if (ee.typeParams.size != args.size) {
           val een = ee.typeParams.size
           val argsn = args.size
-          reportError(s"Type $ee has different arity ($een) than applied to applyTypeArgs ($argsn)!")
+          assertionFailed(s"Type $ee has different arity ($een) than applied to applyTypeArgs ($argsn)!")
         } else if (args.contains(null)) {
-          reportError("One of type parameters to apply was null!")
+          assertionFailed("One of type parameters to apply was null!")
         } else {
           ee.finalResultType.substituteTypes(ee.typeParams, args.toList)
         }
         // $COVERAGE-ON$
       }
+
+      /** Applies type arguments obtained from tpe to the type parameters in method's parameters' types */
+      def paramListsOf(tpe: c.Type, method: c.Symbol): List[List[c.universe.Symbol]] =
+        method.asMethod.typeSignatureIn(tpe).paramLists
+
+      /** Applies type arguments obtained from tpe to the type parameters in method's return type */
+      def returnTypeOf(tpe: c.Type, method: c.Symbol): c.universe.Type = method.typeSignatureIn(tpe).finalResultType
 
       object fromWeakConversion {
         // convert WeakTypeTag[T] to Type[T] automatically
@@ -53,8 +59,15 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     val Nothing: Type[Nothing] = fromWeak[Nothing]
     val Any: Type[Any] = fromWeak[Any]
+    val AnyVal: Type[AnyVal] = fromWeak[AnyVal]
     val Boolean: Type[Boolean] = fromWeak[Boolean]
+    val Byte: Type[Byte] = fromWeak[Byte]
+    val Char: Type[Char] = fromWeak[Char]
+    val Short: Type[Short] = fromWeak[Short]
     val Int: Type[Int] = fromWeak[Int]
+    val Long: Type[Long] = fromWeak[Long]
+    val Float: Type[Float] = fromWeak[Float]
+    val Double: Type[Double] = fromWeak[Double]
     val Unit: Type[Unit] = fromWeak[Unit]
 
     def Tuple2[A: Type, B: Type]: Type[(A, B)] =

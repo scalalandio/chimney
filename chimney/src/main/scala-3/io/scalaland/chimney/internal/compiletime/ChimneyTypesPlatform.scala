@@ -20,6 +20,11 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
 
     object PartialResult extends PartialResultModule {
       def apply[T: Type]: Type[partial.Result[T]] = quoted.Type.of[partial.Result[T]]
+      def unapply[T](tpe: Type[T]): Option[ComputedType] = tpe match {
+        case '[partial.Result[inner]] => Some(ComputedType(Type[inner]))
+        case _                        => scala.None
+      }
+
       def Value[T: Type]: Type[partial.Result.Value[T]] = quoted.Type.of[partial.Result.Value[T]]
       val Errors: Type[partial.Result.Errors] = quoted.Type.of[partial.Result.Errors]
     }

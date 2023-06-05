@@ -17,6 +17,8 @@ private[compiletime] trait ChimneyTypes { this: Types =>
     val PartialResult: PartialResultModule
     trait PartialResultModule { this: PartialResult.type =>
       def apply[A: Type]: Type[partial.Result[A]]
+      def unapply[A](tpe: Type[A]): Option[ComputedType]
+
       def Value[A: Type]: Type[partial.Result.Value[A]]
       val Errors: Type[partial.Result.Errors]
     }

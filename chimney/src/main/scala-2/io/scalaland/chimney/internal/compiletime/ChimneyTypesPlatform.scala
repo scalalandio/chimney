@@ -9,7 +9,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
 
   object ChimneyType extends ChimneyTypeModule {
 
-    import Type.platformSpecific.{fromWeak, fromWeakTypeConstructor}
+    import Type.platformSpecific.{fromWeak, fromWeakTypeConstructor}, TypeImplicits.*
 
     def Transformer[From: Type, To: Type]: Type[Transformer[From, To]] =
       fromWeakTypeConstructor[Transformer[?, ?], Transformer[From, To]](Type[From], Type[To])
@@ -23,6 +23,16 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
     object PartialResult extends PartialResultModule {
       def apply[A: Type]: Type[partial.Result[A]] =
         fromWeakTypeConstructor[partial.Result[?], partial.Result[A]](Type[A])
+      def unapply[A](tpe: Type[A]): Option[ComputedType] =
+        // None has no type parameters, so we need getOrElse(Nothing)
+        if (apply[Any] <:< tpe)
+          Some(
+            tpe.typeArgs.headOption.fold[ComputedType](ComputedType(Type.Nothing))(inner =>
+              ComputedType(Type.platformSpecific.fromUntyped(inner))
+            )
+          )
+        else scala.None
+
       def Value[A: Type]: Type[partial.Result.Value[A]] =
         fromWeakTypeConstructor[partial.Result.Value[?], partial.Result.Value[A]](Type[A])
       val Errors: Type[partial.Result.Errors] =

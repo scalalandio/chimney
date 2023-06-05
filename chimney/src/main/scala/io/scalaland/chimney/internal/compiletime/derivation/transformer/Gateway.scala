@@ -105,10 +105,9 @@ private[compiletime] trait Gateway { this: Derivation =>
       // pattern match on DerivedExpr and convert to whatever is needed
       deriveTransformationResultExpr[From, To]
         .flatMap { derivedExpr =>
-          (ctx, derivedExpr) match {
-            case (_: TransformerContext.ForTotal[?, ?], DerivedExpr.TotalExpr(expr)) => DerivationResult.pure(expr)
-            case (_: TransformerContext.ForTotal[?, ?], _)   => DerivationResult.fromException(partialWhenExpectedTotal)
-            case (_: TransformerContext.ForPartial[?, ?], _) => DerivationResult.pure(derivedExpr.ensurePartial)
+          ctx match {
+            case _: TransformerContext.ForTotal[?, ?]   => DerivationResult(derivedExpr.ensureTotal)
+            case _: TransformerContext.ForPartial[?, ?] => DerivationResult.pure(derivedExpr.ensurePartial)
           }
         }
         .asInstanceOf[DerivationResult[Expr[ctx.Target]]]
@@ -137,7 +136,7 @@ private[compiletime] trait Gateway { this: Derivation =>
         val lines = derivationErrors.prettyPrint
 
         val richLines =
-          s"""Chimney can't derive transformation from ${Type[From]} to ${Type[To]}
+          s"""Chimney can't derive transformation from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]}
              |
              |$lines
              |Consult $chimneyDocUrl for usage examples.
@@ -151,7 +150,4 @@ private[compiletime] trait Gateway { this: Derivation =>
   }
 
   private val chimneyDocUrl = "https://scalalandio.github.io/chimney"
-
-  private val partialWhenExpectedTotal =
-    new AssertionError("Derived partial.Result expression where total Transformer excepts direct value")
 }
