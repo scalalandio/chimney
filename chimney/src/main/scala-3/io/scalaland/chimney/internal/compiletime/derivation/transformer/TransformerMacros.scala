@@ -10,9 +10,9 @@ import scala.quoted.{Expr, Quotes, Type}
 
 final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
 
-  type ImplicitScopeFlagsType <: internal.TransformerFlags
+  protected type ImplicitScopeFlagsType <: internal.TransformerFlags
 
-  final def deriveTotalTransformerWithDefaults[
+  def deriveTotalTransformerWithDefaults[
       From: Type,
       To: Type
   ](using quotes: Quotes): Expr[Transformer[From, To]] =
@@ -22,7 +22,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       )
     }
 
-  final def deriveTotalTransformerWithConfig[
+  def deriveTotalTransformerWithConfig[
       From: Type,
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
@@ -33,7 +33,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
   )(using quotes: Quotes): Expr[Transformer[From, To]] =
     deriveTotalTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
 
-  final def derivePartialTransformerWithDefaults[
+  def derivePartialTransformerWithDefaults[
       From: Type,
       To: Type
   ](using quotes: Quotes): Expr[PartialTransformer[From, To]] =
@@ -43,7 +43,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       )
     }
 
-  final def derivePartialTransformerWithConfig[
+  def derivePartialTransformerWithConfig[
       From: Type,
       To: Type,
       Cfg <: internal.TransformerCfg: Type,
@@ -68,8 +68,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
       useImplicitScopeFlags: Type[ImplicitScopeFlagsType] => Expr[A]
   ): Expr[A] = {
-    import quotes.*
-    import quotes.reflect.*
+    import quotes.*, quotes.reflect.*
 
     val implicitScopeConfig = findImplicitScopeTransformerConfiguration
     val implicitScopeConfigType = implicitScopeConfig.asTerm.tpe.widen.typeArgs.head.asType

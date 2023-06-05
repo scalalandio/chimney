@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-private[derivation] trait ImplicitSummoningPlatform { this: DerivationPlatform =>
+private[compiletime] trait ImplicitSummoningPlatform { this: DerivationPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
 

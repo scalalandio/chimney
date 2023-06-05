@@ -3,13 +3,13 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
-trait TransformToOptionRuleModule { this: Derivation with TransformOptionToOptionRuleModule =>
+private[compiletime] trait TransformToOptionRuleModule { this: Derivation & TransformOptionToOptionRuleModule =>
 
   import TypeImplicits.*
 
-  object TransformToOptionRule extends Rule("ToOption") {
+  protected object TransformToOptionRule extends Rule("ToOption") {
 
-    def expand[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[To] match {
         case Type.Option(to2) if !to2.Type.isSealed =>
           if (Type[To] <:< Type[None.type]) {

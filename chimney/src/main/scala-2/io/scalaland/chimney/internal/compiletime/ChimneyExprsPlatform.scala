@@ -8,7 +8,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
   import c.universe.{internal as _, Transformer as _, *}
   import TypeImplicits.*, ChimneyTypeImplicits.*
 
-  object ChimneyExpr extends ChimneyExprModule {
+  protected object ChimneyExpr extends ChimneyExprModule {
 
     import Expr.platformSpecific.*
 

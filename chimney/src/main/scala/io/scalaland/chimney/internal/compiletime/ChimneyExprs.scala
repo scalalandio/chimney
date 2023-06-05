@@ -8,8 +8,8 @@ import scala.annotation.nowarn
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait ChimneyExprs { this: Definitions =>
 
-  val ChimneyExpr: ChimneyExprModule
-  trait ChimneyExprModule { this: ChimneyExpr.type =>
+  protected val ChimneyExpr: ChimneyExprModule
+  protected trait ChimneyExprModule { this: ChimneyExpr.type =>
 
     val Transformer: TransformerModule
     trait TransformerModule { this: Transformer.type =>

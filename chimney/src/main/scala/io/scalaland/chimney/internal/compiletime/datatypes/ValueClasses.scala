@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 
 import io.scalaland.chimney.internal.compiletime.Definitions
 
-trait ValueClasses { this: Definitions =>
+private[compiletime] trait ValueClasses { this: Definitions =>
 
   protected trait ValueClass[Outer] {
 

@@ -18,7 +18,7 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlat
   protected object LegacyMacrosFallbackRule extends Rule("LegacyMacrosFallback") {
 
     override def expand[From, To](implicit
-        ctx: TransformerContext[From, To]
+        ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] = {
       for {
         cfg <- DerivationResult(convertToLegacyConfig)
@@ -30,14 +30,14 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlat
     private val oldMacros = new TransformerBlackboxMacros(c)
 
     private def convertToLegacyConfig[From, To](implicit
-        ctx: TransformerContext[From, To]
+        ctx: TransformationContext[From, To]
     ): oldMacros.TransformerConfig = {
       oldMacros.TransformerConfig(
         srcPrefixTree = ctx.src.tree.asInstanceOf[oldMacros.c.Tree],
         derivationTarget = ctx match {
-          case _: TransformerContext.ForTotal[?, ?] => oldMacros.DerivationTarget.TotalTransformer
+          case _: TransformationContext.ForTotal[?, ?] => oldMacros.DerivationTarget.TotalTransformer
           // THIS ONE CREATE FRESH TERM THAT WE HAVE TO INITIALIZE!
-          case _: TransformerContext.ForPartial[?, ?] => oldMacros.DerivationTarget.PartialTransformer()
+          case _: TransformationContext.ForPartial[?, ?] => oldMacros.DerivationTarget.PartialTransformer()
         },
         flags = oldMacros.TransformerFlags(
           methodAccessors = ctx.config.flags.methodAccessors,
@@ -80,7 +80,7 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlat
 
     private def convertFromLegacyDerivedTree[From, To](
         derivedTree: Either[Seq[TransformerDerivationError], oldMacros.DerivedTree]
-    )(implicit ctx: TransformerContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = derivedTree match {
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = derivedTree match {
       case Left(oldErrors) =>
         DerivationResult.fail(
           DerivationErrors(
@@ -97,15 +97,15 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlat
     private def initializeFailFastIfNeeded[To: Type](
         result: Rule.ExpansionResult[To],
         dt: oldMacros.DerivationTarget,
-        ctx: TransformerContext[?, ?]
+        ctx: TransformationContext[?, ?]
     ): Rule.ExpansionResult[To] = result match {
-      case Rule.ExpansionResult.Expanded(DerivedExpr.PartialExpr(expr)) =>
+      case Rule.ExpansionResult.Expanded(TransformationExpr.PartialExpr(expr)) =>
         val termName =
           dt.asInstanceOf[oldMacros.DerivationTarget.PartialTransformer].failFastTermName.asInstanceOf[c.TermName]
-        val failFastValue = ctx.asInstanceOf[TransformerContext.ForPartial[?, ?]].failFast
+        val failFastValue = ctx.asInstanceOf[TransformationContext.ForPartial[?, ?]].failFast
         import c.universe.{internal as _, Transformer as _, Expr as _, *}
         Rule.ExpansionResult.Expanded(
-          DerivedExpr.PartialExpr(
+          TransformationExpr.PartialExpr(
             Expr.platformSpecific.asExpr[partial.Result[To]](
               q"""
                 val $termName: scala.Boolean = $failFastValue

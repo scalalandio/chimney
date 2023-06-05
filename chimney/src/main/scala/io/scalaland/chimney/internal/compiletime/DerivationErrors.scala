@@ -1,5 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
+// TODO: create fp.NonEmptyVector because it might be useful
+
 /** Non-empty list of errors */
 final private[compiletime] case class DerivationErrors(head: DerivationError, tail: Vector[DerivationError]) {
 

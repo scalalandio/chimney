@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
-trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
+private[compiletime] trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
 
   import quotes.*, quotes.reflect.*
 
@@ -25,10 +25,12 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
             }
           private val (typeByName, typeParams) =
             Type.platformSpecific.resolveTypeArgsForMethodArguments(repr, primaryConstructor)
-          private val argument = (if typeParams.isEmpty then primaryConstructor.paramSymss.tail
+          private val argument = (if typeParams.nonEmpty then primaryConstructor.paramSymss.tail
                                   else primaryConstructor.paramSymss).flatten match {
             case argument :: Nil => argument
-            case _ =>
+            case els =>
+              println(primaryConstructor.paramSymss)
+              println(els)
               assertionFailed(s"AnyVal ${Type.prettyPrint[A]} expected to have public constructor with 1 argument")
           }
 

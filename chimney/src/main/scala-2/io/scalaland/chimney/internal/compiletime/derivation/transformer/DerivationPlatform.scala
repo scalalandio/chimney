@@ -6,7 +6,7 @@ import io.scalaland.chimney.internal.compiletime.datatypes
 import scala.annotation.nowarn
 
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-private[derivation] trait DerivationPlatform
+private[compiletime] trait DerivationPlatform
     extends Derivation
     with DefinitionsPlatform
     with ImplicitSummoningPlatform

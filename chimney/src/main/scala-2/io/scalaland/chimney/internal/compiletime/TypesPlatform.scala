@@ -8,8 +8,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
   protected type @@[A, Tag] = A & Tagged[Tag]
 
   final override protected type Type[A] = c.Type @@ A
-
-  object Type extends TypeModule {
+  protected object Type extends TypeModule {
 
     object platformSpecific {
 

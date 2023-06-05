@@ -6,9 +6,8 @@ private[compiletime] trait Types {
 
   /** Platform-specific type representation (c.universe.Type in 2, scala.quoted.Type[A] in 3) */
   protected type Type[A]
-
-  val Type: TypeModule
-  trait TypeModule { this: Type.type =>
+  protected val Type: TypeModule
+  protected trait TypeModule { this: Type.type =>
     final def apply[A](implicit A: Type[A]): Type[A] = A
 
     val Nothing: Type[Nothing]
@@ -70,8 +69,7 @@ private[compiletime] trait Types {
 
     def prettyPrint[A: Type]: String
   }
-
-  implicit class TypeOps[A](private val tpe: Type[A]) {
+  implicit protected class TypeOps[A](private val tpe: Type[A]) {
 
     final def <:<[B](another: Type[B]): Boolean = Type.isSubtypeOf(tpe, another)
     final def =:=[B](another: Type[B]): Boolean = Type.isSameAs(tpe, another)
@@ -86,17 +84,15 @@ private[compiletime] trait Types {
   }
 
   /** Used to erase the type of Type, while providing the utilities to still make it useful */
-  type ComputedType = { type Underlying }
-
-  object ComputedType {
+  protected type ComputedType = { type Underlying }
+  protected object ComputedType {
     def apply[A](tpe: Type[A]): ComputedType = tpe.asInstanceOf[ComputedType]
 
     def prettyPrint(computedType: ComputedType): String = Type.prettyPrint(computedType.Type)
 
     def use[Out](ct: ComputedType)(thunk: Type[ct.Underlying] => Out): Out = thunk(ct.asInstanceOf[Type[ct.Underlying]])
   }
-
-  implicit class ComputedTypeOps(val ct: ComputedType) {
+  implicit protected class ComputedTypeOps(val ct: ComputedType) {
     def Type: Type[ct.Underlying] = ct.asInstanceOf[Type[ct.Underlying]]
   }
 

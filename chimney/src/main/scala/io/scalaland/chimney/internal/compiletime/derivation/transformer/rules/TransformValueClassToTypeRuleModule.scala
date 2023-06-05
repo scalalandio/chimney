@@ -3,11 +3,11 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
-trait TransformValueClassToTypeRuleModule { this: Derivation =>
+private[compiletime] trait TransformValueClassToTypeRuleModule { this: Derivation =>
 
-  object TransformValueClassToTypeRule extends Rule("ValueClassToType") {
+  protected object TransformValueClassToTypeRule extends Rule("ValueClassToType") {
 
-    def expand[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[From] match {
         case ValueClass(from) =>
           implicit val InnerFrom: Type[from.Inner] = from.Inner

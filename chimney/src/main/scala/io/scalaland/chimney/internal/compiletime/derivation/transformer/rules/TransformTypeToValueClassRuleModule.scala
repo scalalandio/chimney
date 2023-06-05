@@ -3,17 +3,17 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
-trait TransformTypeToValueClassRuleModule { this: Derivation =>
+private[compiletime] trait TransformTypeToValueClassRuleModule { this: Derivation =>
 
-  object TransformTypeToValueClassRule extends Rule("TypeToValueClass") {
+  protected object TransformTypeToValueClassRule extends Rule("TypeToValueClass") {
 
-    def expand[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[To] match {
         case ValueClass(to) =>
           implicit val InnerTo: Type[to.Inner] = to.Inner
           deriveRecursiveTransformationExpr[From, to.Inner](ctx.src)
-            .map { derivedExpr =>
-              Rule.ExpansionResult.Expanded(derivedExpr.map(to.wrap))
+            .map { transformationExpr =>
+              Rule.ExpansionResult.Expanded(transformationExpr.map(to.wrap))
             }
             .orElse {
               // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info

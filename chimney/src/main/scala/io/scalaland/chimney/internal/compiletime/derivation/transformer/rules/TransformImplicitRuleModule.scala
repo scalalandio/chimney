@@ -7,17 +7,17 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
 import scala.annotation.nowarn
 
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-trait TransformImplicitRuleModule { this: Derivation =>
+private[compiletime] trait TransformImplicitRuleModule { this: Derivation =>
 
-  object TransformImplicitRule extends Rule("Implicit") {
+  protected object TransformImplicitRule extends Rule("Implicit") {
 
-    def expand[From, To](implicit ctx: TransformerContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+    def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       ctx match {
-        case _: TransformerContext.ForTotal[?, ?] =>
+        case _: TransformationContext.ForTotal[?, ?] =>
           summonTransformerSafe[From, To].fold(DerivationResult.continue[To]) { transformer =>
             DerivationResult.totalExpr(transformer.callTransform(ctx.src))
           }
-        case partialCtx: TransformerContext.ForPartial[?, ?] =>
+        case partialCtx: TransformationContext.ForPartial[?, ?] =>
           import partialCtx.failFast
           import partialCtx.config.flags.implicitConflictResolution
           (summonTransformerSafe[From, To], summonPartialTransformerSafe[From, To]) match {

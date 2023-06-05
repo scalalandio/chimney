@@ -10,7 +10,7 @@ import scala.annotation.nowarn
 private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
   // TODO: rename to TransformationContext
-  sealed protected trait TransformerContext[From, To] extends Product with Serializable {
+  sealed protected trait TransformationContext[From, To] extends Product with Serializable {
     val From: Type[From]
     val To: Type[To]
     val src: Expr[From]
@@ -25,20 +25,20 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
     val derivationStartedAt: java.time.Instant
 
-    def updateFromTo[NewFrom: Type, NewTo: Type](newSrc: Expr[NewFrom]): TransformerContext[NewFrom, NewTo] =
+    def updateFromTo[NewFrom: Type, NewTo: Type](newSrc: Expr[NewFrom]): TransformationContext[NewFrom, NewTo] =
       this match {
-        case total: TransformerContext.ForTotal[?, ?] =>
+        case total: TransformationContext.ForTotal[?, ?] =>
           total.copy(From = Type[NewFrom], To = Type[NewTo], src = newSrc)
-        case partial: TransformerContext.ForPartial[?, ?] =>
+        case partial: TransformationContext.ForPartial[?, ?] =>
           partial.copy(From = Type[NewFrom], To = Type[NewTo], src = newSrc)
       }
 
-    def updateConfig(f: TransformerConfig => TransformerConfig): TransformerContext[From, To] = this match {
-      case total: TransformerContext.ForTotal[?, ?]     => total.copy(config = f(total.config))
-      case partial: TransformerContext.ForPartial[?, ?] => partial.copy(config = f(partial.config))
+    def updateConfig(f: TransformerConfig => TransformerConfig): TransformationContext[From, To] = this match {
+      case total: TransformationContext.ForTotal[?, ?]     => total.copy(config = f(total.config))
+      case partial: TransformationContext.ForPartial[?, ?] => partial.copy(config = f(partial.config))
     }
   }
-  protected object TransformerContext {
+  protected object TransformationContext {
 
     final case class ForTotal[From, To](
         From: Type[From],
@@ -47,7 +47,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
         config: TransformerConfig,
         derivationStartedAt: java.time.Instant
-    ) extends TransformerContext[From, To] {
+    ) extends TransformationContext[From, To] {
 
       final type Target = To
       val Target = To
@@ -82,7 +82,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
         config: TransformerConfig,
         derivationStartedAt: java.time.Instant
-    ) extends TransformerContext[From, To] {
+    ) extends TransformationContext[From, To] {
 
       final type Target = partial.Result[To]
       val Target = ChimneyType.PartialResult(To)
@@ -135,8 +135,9 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
   }
 
   // unpacks Types from Contexts
-  implicit final protected def ctx2FromType[From, To](implicit ctx: TransformerContext[From, To]): Type[From] = ctx.From
-  implicit final protected def ctx2ToType[From, To](implicit ctx: TransformerContext[From, To]): Type[To] = ctx.To
+  implicit final protected def ctx2FromType[From, To](implicit ctx: TransformationContext[From, To]): Type[From] =
+    ctx.From
+  implicit final protected def ctx2ToType[From, To](implicit ctx: TransformationContext[From, To]): Type[To] = ctx.To
   implicit final protected def ctx2TType[A, Patch](implicit ctx: PatcherContext[A, Patch]): Type[A] = ctx.A
   implicit final protected def ctx2PatchType[A, Patch](implicit ctx: PatcherContext[A, Patch]): Type[Patch] = ctx.Patch
 

@@ -7,7 +7,7 @@ import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 
 private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: DefinitionsPlatform =>
 
-  object ChimneyType extends ChimneyTypeModule {
+  protected object ChimneyType extends ChimneyTypeModule {
 
     import Type.platformSpecific.{fromWeak, fromWeakTypeConstructor}, TypeImplicits.*
 

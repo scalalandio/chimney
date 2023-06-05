@@ -7,9 +7,8 @@ private[compiletime] trait Exprs { this: Definitions =>
 
   /** Platform-specific expression representation (c.universe.Expr[A] in 2, quotes.Expr[A] in 3 */
   protected type Expr[A]
-
-  val Expr: ExprModule
-  trait ExprModule { this: Expr.type =>
+  protected val Expr: ExprModule
+  protected trait ExprModule { this: Expr.type =>
     val Nothing: Expr[Nothing]
     val Unit: Expr[Unit]
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]]
@@ -58,14 +57,13 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     def typeOf[A](expr: Expr[A]): Type[A]
   }
-
-  implicit final class ExprOps[A: Type](private val expr: Expr[A]) {
+  implicit final protected class ExprOps[A: Type](private val expr: Expr[A]) {
     def asInstanceOfExpr[B: Type]: Expr[B] = Expr.asInstanceOf[A, B](expr)
     def upcastExpr[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
   }
 
-  type ComputedExpr = { type Underlying }
-  object ComputedExpr {
+  protected type ComputedExpr = { type Underlying }
+  protected object ComputedExpr {
 
     def apply[A](expr: Expr[A]): ComputedExpr { type Underlying = A } =
       expr.asInstanceOf[ComputedExpr { type Underlying = A }]
@@ -77,8 +75,7 @@ private[compiletime] trait Exprs { this: Definitions =>
       thunk(Expr.typeOf(e).asInstanceOf[Type[expr.Underlying]], e)
     }
   }
-
-  implicit class ComputedExprOps(val ce: ComputedExpr) {
+  implicit protected class ComputedExprOps(val ce: ComputedExpr) {
     def Expr: Expr[ce.Underlying] = ce.asInstanceOf[Expr[ce.Underlying]]
   }
 }

@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 import io.scalaland.chimney.internal.compiletime.datatypes
 
-abstract private[derivation] class DerivationPlatform(q: scala.quoted.Quotes)
+abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     extends DefinitionsPlatform(using q)
     with Derivation
     with ImplicitSummoningPlatform

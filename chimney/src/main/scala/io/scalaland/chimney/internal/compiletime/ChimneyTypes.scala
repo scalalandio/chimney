@@ -7,8 +7,8 @@ import io.scalaland.chimney.partial.PathElement
 
 private[compiletime] trait ChimneyTypes { this: Types =>
 
-  val ChimneyType: ChimneyTypeModule
-  trait ChimneyTypeModule {
+  protected val ChimneyType: ChimneyTypeModule
+  protected trait ChimneyTypeModule {
 
     def Transformer[From: Type, To: Type]: Type[Transformer[From, To]]
     def PartialTransformer[From: Type, To: Type]: Type[PartialTransformer[From, To]]

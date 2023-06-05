@@ -3,9 +3,9 @@ package io.scalaland.chimney.internal.compiletime
 import scala.annotation.nowarn
 
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
-trait ExprPromises { this: Definitions =>
+private[compiletime] trait ExprPromises { this: Definitions =>
 
-  type ExprPromiseName
+  protected type ExprPromiseName
 
   final protected class ExprPromise[From: Type, A](private val usage: A, private val fromName: ExprPromiseName) {
 
@@ -81,11 +81,12 @@ trait ExprPromises { this: Definitions =>
     }
   }
 
-  implicit def ExprPromiseTraverse[From]: fp.Traverse[ExprPromise[From, *]] = new fp.Traverse[ExprPromise[From, *]] {
+  implicit protected def ExprPromiseTraverse[From]: fp.Traverse[ExprPromise[From, *]] =
+    new fp.Traverse[ExprPromise[From, *]] {
 
-    def traverse[G[_]: fp.Applicative, A, B](fa: ExprPromise[From, A])(f: A => G[B]): G[ExprPromise[From, B]] =
-      fa.traverse(f)
-  }
+      def traverse[G[_]: fp.Applicative, A, B](fa: ExprPromise[From, A])(f: A => G[B]): G[ExprPromise[From, B]] =
+        fa.traverse(f)
+    }
 
   final protected class PrependValsTo[A](
       private val usage: A,
@@ -113,7 +114,7 @@ trait ExprPromises { this: Definitions =>
     def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ComputedExpr)], expr: Expr[To]): Expr[To]
   }
 
-  implicit val PrependValsToTraversableApplicative: fp.ApplicativeTraverse[PrependValsTo] =
+  implicit protected val PrependValsToTraversableApplicative: fp.ApplicativeTraverse[PrependValsTo] =
     new fp.ApplicativeTraverse[PrependValsTo] {
 
       def map2[A, B, C](fa: PrependValsTo[A], fb: PrependValsTo[B])(f: (A, B) => C): PrependValsTo[C] = fa.map2(fb)(f)

@@ -5,9 +5,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
   import c.universe.{internal as _, Transformer as _, *}
   import TypeImplicits.*
 
-  final override type Expr[A] = c.Expr[A]
-
-  object Expr extends ExprModule {
+  final override protected type Expr[A] = c.Expr[A]
+  protected object Expr extends ExprModule {
 
     object platformSpecific {
 

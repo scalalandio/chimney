@@ -2,9 +2,11 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
-trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
+import scala.collection.compat.*
 
-  import c.universe.{internal as _, Transformer as _, *}
+private[compiletime] trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
+
+  import c.universe.{internal as _, Expr as _, Transformer as _, Type as _, *}
 
   protected object ValueClass extends ValueClassModule {
 

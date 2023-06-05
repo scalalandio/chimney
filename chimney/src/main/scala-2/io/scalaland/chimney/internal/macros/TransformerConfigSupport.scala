@@ -53,7 +53,7 @@ trait TransformerConfigSupport extends MacroUtils {
     }
   }
 
-  case class TransformerConfig( // TODO: rename to TransformerContext
+  case class TransformerConfig( // TODO: rename to TransformationContext
       srcPrefixTree: Tree = EmptyTree,
       derivationTarget: DerivationTarget = DerivationTarget.TotalTransformer,
       flags: TransformerFlags = TransformerFlags(),
