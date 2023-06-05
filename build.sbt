@@ -6,8 +6,8 @@ ThisBuild / scalafmtOnCompile := !isCI
 // versions
 
 val versions = new {
-  val scala212 = "2.12.17"
-  val scala213 = "2.13.10"
+  val scala212 = "2.12.18"
+  val scala213 = "2.13.11"
   val scala3 = "3.3.0"
 
   // Which versions should be cross-compiled for publishing
@@ -15,7 +15,7 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Which version should be used in IntelliJ
-  val ideScala = scala213
+  val ideScala = scala3
   val idePlatform = VirtualAxis.jvm
 }
 

@@ -1,2 +1,3 @@
+-XX:-OmitStackTraceInFastThrow
 -XX:+UseG1GC
 -Xmx2g
