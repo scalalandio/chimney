@@ -21,7 +21,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
     object PartialResult extends PartialResultModule {
       def apply[T: Type]: Type[partial.Result[T]] = quoted.Type.of[partial.Result[T]]
       def unapply[T](tpe: Type[T]): Option[ComputedType] = tpe match {
-        case '[partial.Result[inner]] => Some(ComputedType(Type[inner]))
+        case '[partial.Result[inner]] => Some(Type[inner].asComputed)
         case _                        => scala.None
       }
 

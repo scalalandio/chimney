@@ -5,8 +5,7 @@ import io.scalaland.chimney.internal
 
 private[compiletime] trait ConfigurationsPlatform extends Configurations { this: DefinitionsPlatform =>
 
-  import quotes.*
-  import quotes.reflect.*
+  import quotes.*, quotes.reflect.*
 
   protected object configurationsImpl extends ConfigurationDefinitionsImpl {
 
@@ -81,15 +80,15 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
         case '[internal.TransformerCfg.CoproductInstance[instanceT, targetT, cfgTailT]] =>
           extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
             .addCoproductInstance(
-              ComputedType(Type[instanceT]),
-              ComputedType(Type[targetT]),
+              Type[instanceT].asComputed,
+              Type[targetT].asComputed,
               RuntimeCoproductOverride.CoproductInstance(runtimeDataIdx)
             )
         case '[internal.TransformerCfg.CoproductInstancePartial[instanceT, targetT, cfgTailT]] =>
           extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
             .addCoproductInstance(
-              ComputedType(Type[instanceT]),
-              ComputedType(Type[targetT]),
+              Type[instanceT].asComputed,
+              Type[targetT].asComputed,
               RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
             )
         case _ =>
@@ -100,13 +99,9 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
 
   extension [T <: String](tpe: Type[T]) {
 
-    private def asStringSingletonType: String = {
-      import quotes.reflect.*
-
-      quoted.Type.valueOfConstant[T](using tpe)(using quotes) match {
-        case Some(str) => str
-        case None      => assertionFailed(s"Invalid string literal type: ${tpe}")
-      }
+    private def asStringSingletonType: String = quoted.Type.valueOfConstant[T](using tpe)(using quotes) match {
+      case Some(str) => str
+      case None      => assertionFailed(s"Invalid string literal type: ${tpe}")
     }
   }
 }

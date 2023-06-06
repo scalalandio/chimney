@@ -104,13 +104,11 @@ private[compiletime] trait Gateway { this: Derivation =>
     DerivationResult.log(s"Start derivation with context: $ctx") >>
       // pattern match on TransformationExpr and convert to whatever is needed
       deriveTransformationResultExpr[From, To]
-        .flatMap { transformationExpr =>
-          ctx match {
-            case _: TransformationContext.ForTotal[?, ?]   => DerivationResult(transformationExpr.ensureTotal)
-            case _: TransformationContext.ForPartial[?, ?] => DerivationResult.pure(transformationExpr.ensurePartial)
-          }
+        .map { transformationExpr =>
+          ctx.fold(_ => transformationExpr.ensureTotal.asInstanceOf[Expr[ctx.Target]])(_ =>
+            transformationExpr.ensurePartial.asInstanceOf[Expr[ctx.Target]]
+          )
         }
-        .asInstanceOf[DerivationResult[Expr[ctx.Target]]]
 
   private def enableLoggingIfFlagEnabled[A](
       result: DerivationResult[A],

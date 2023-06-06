@@ -34,10 +34,11 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlat
     ): oldMacros.TransformerConfig = {
       oldMacros.TransformerConfig(
         srcPrefixTree = ctx.src.tree.asInstanceOf[oldMacros.c.Tree],
-        derivationTarget = ctx match {
-          case _: TransformationContext.ForTotal[?, ?] => oldMacros.DerivationTarget.TotalTransformer
+        derivationTarget = ctx.fold[oldMacros.DerivationTarget] { _ =>
+          oldMacros.DerivationTarget.TotalTransformer
+        } {
           // THIS ONE CREATE FRESH TERM THAT WE HAVE TO INITIALIZE!
-          case _: TransformationContext.ForPartial[?, ?] => oldMacros.DerivationTarget.PartialTransformer()
+          _ => oldMacros.DerivationTarget.PartialTransformer()
         },
         flags = oldMacros.TransformerFlags(
           methodAccessors = ctx.config.flags.methodAccessors,

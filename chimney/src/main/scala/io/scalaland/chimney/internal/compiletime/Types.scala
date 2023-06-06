@@ -43,12 +43,13 @@ private[compiletime] trait Types {
     val Array: ArrayModule
     trait ArrayModule { this: Array.type =>
       def apply[A: Type]: Type[Array[A]]
+      def unapply[A](tpe: Type[A]): Option[ComputedType]
+
       val Any: Type[Array[Any]] = apply(Type.Any)
     }
 
     val Option: OptionModule
     trait OptionModule { this: Option.type =>
-
       def apply[A: Type]: Type[Option[A]]
       def unapply[A](tpe: Type[A]): Option[ComputedType]
 
@@ -58,8 +59,31 @@ private[compiletime] trait Types {
     val Either: EitherModule
     trait EitherModule { this: Either.type =>
       def apply[L: Type, R: Type]: Type[Either[L, R]]
-      def Left[L: Type, R: Type]: Type[Left[L, R]]
-      def Right[L: Type, R: Type]: Type[Right[L, R]]
+      def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)]
+
+      val Left: LeftModule
+      trait LeftModule { this: Left.type =>
+        def apply[L: Type, R: Type]: Type[Left[L, R]]
+        def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)]
+      }
+
+      val Right: RightModule
+      trait RightModule { this: Right.type =>
+        def apply[L: Type, R: Type]: Type[Right[L, R]]
+        def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)]
+      }
+    }
+
+    val Iterable: IterableModule
+    trait IterableModule { this: Iterable.type =>
+      def apply[A: Type]: Type[Iterable[A]]
+      def unapply[A](tpe: Type[A]): Option[ComputedType]
+    }
+
+    val Map: MapModule
+    trait MapModule { this: Map.type =>
+      def apply[K: Type, V: Type]: Type[Map[K, V]]
+      def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)]
     }
 
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean
@@ -76,9 +100,15 @@ private[compiletime] trait Types {
 
     final def isPrimitive: Boolean = Type.primitives.exists(tpe <:< _.Type)
 
+    final def isSealed: Boolean = Type.isSealed(tpe)
+
     final def isAnyVal: Boolean = tpe <:< Type.AnyVal
     final def isOption: Boolean = tpe <:< Type.Option(Type.Any)
-    final def isSealed: Boolean = Type.isSealed(tpe)
+    final def isEither: Boolean = tpe <:< Type.Either(Type.Any, Type.Any)
+    final def isLeft: Boolean = tpe <:< Type.Either.Left(Type.Any, Type.Any)
+    final def isRight: Boolean = tpe <:< Type.Either.Right(Type.Any, Type.Any)
+    final def isIterable: Boolean = tpe <:< Type.Iterable(Type.Any)
+    final def isMap: Boolean = tpe <:< Type.Map(Type.Any, Type.Any)
 
     final def asComputed: ComputedType = ComputedType(tpe)
   }

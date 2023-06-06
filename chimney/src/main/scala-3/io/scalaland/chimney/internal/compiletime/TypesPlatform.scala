@@ -10,9 +10,8 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
   import quotes.*, quotes.reflect.*
 
-  final override type Type[T] = quoted.Type[T]
-
-  object Type extends TypeModule {
+  final override protected type Type[T] = quoted.Type[T]
+  protected object Type extends TypeModule {
 
     object platformSpecific {
 
@@ -70,14 +69,18 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def Function2[A: Type, B: Type, C: Type]: Type[(A, B) => C] = quoted.Type.of[(A, B) => C]
 
     object Array extends ArrayModule {
-      def apply[T: Type]: Type[Array[T]] = quoted.Type.of[Array[T]]
+      def apply[A: Type]: Type[Array[A]] = quoted.Type.of[Array[A]]
+      def unapply[A](tpe: Type[A]): Option[ComputedType] = tpe match {
+        case '[Array[inner]] => Some(Type[inner].asComputed)
+        case _               => scala.None
+      }
     }
 
     object Option extends OptionModule {
 
-      def apply[T: Type]: Type[Option[T]] = quoted.Type.of[Option[T]]
-      def unapply[T](tpe: Type[T]): Option[ComputedType] = tpe match {
-        case '[Option[inner]] => Some(ComputedType(Type[inner]))
+      def apply[A: Type]: Type[Option[A]] = quoted.Type.of[Option[A]]
+      def unapply[A](tpe: Type[A]): Option[ComputedType] = tpe match {
+        case '[Option[inner]] => Some(Type[inner].asComputed)
         case _                => scala.None
       }
 
@@ -86,8 +89,41 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Either extends EitherModule {
       def apply[L: Type, R: Type]: Type[Either[L, R]] = quoted.Type.of[Either[L, R]]
-      def Left[L: Type, R: Type]: Type[Left[L, R]] = quoted.Type.of[Left[L, R]]
-      def Right[L: Type, R: Type]: Type[Right[L, R]] = quoted.Type.of[Right[L, R]]
+      def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] = tpe match {
+        case '[Either[innerL, innerR]] => Some(Type[innerL].asComputed -> Type[innerR].asComputed)
+        case _                         => scala.None
+      }
+
+      object Left extends LeftModule {
+        def apply[L: Type, R: Type]: Type[Left[L, R]] = quoted.Type.of[Left[L, R]]
+        def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] = tpe match {
+          case '[Left[innerL, innerR]] => Some(Type[innerL].asComputed -> Type[innerR].asComputed)
+          case _                       => scala.None
+        }
+      }
+      object Right extends RightModule {
+        def apply[L: Type, R: Type]: Type[Right[L, R]] = quoted.Type.of[Right[L, R]]
+        def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] = tpe match {
+          case '[Right[innerL, innerR]] => Some(Type[innerL].asComputed -> Type[innerR].asComputed)
+          case _                        => scala.None
+        }
+      }
+    }
+
+    object Iterable extends IterableModule {
+      def apply[A: Type]: Type[Iterable[A]] = quoted.Type.of[Iterable[A]]
+      def unapply[A](tpe: Type[A]): Option[ComputedType] = tpe match {
+        case '[Iterable[inner]] => Some(Type[inner].asComputed)
+        case _                  => scala.None
+      }
+    }
+
+    object Map extends MapModule {
+      def apply[K: Type, V: Type]: Type[Map[K, V]] = quoted.Type.of[Map[K, V]]
+      def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] = tpe match {
+        case '[Map[innerK, innerV]] => Some(Type[innerK].asComputed -> Type[innerV].asComputed)
+        case _                      => scala.None
+      }
     }
 
     def isSubtypeOf[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) <:< TypeRepr.of(using B)

@@ -15,7 +15,7 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (ctx, Type[From]) match {
-        case (_: TransformationContext.ForPartial[?, ?], Type.Option(from2)) if !(Type[To] <:< Type[Option[Any]]) =>
+        case (_: TransformationContext.ForPartial[?, ?], Type.Option(from2)) if !Type[To].isOption =>
           ComputedType.use(from2) { implicit InnerFrom: Type[from2.Underlying] =>
             // We're constructing:
             // ${ src }.map[partial.Result[$To]] { from2: $from2 =>

@@ -4,7 +4,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
   import quotes.*, quotes.reflect.*
 
-  type ExprPromiseName = Symbol
+  final override protected type ExprPromiseName = Symbol
 
   protected object ExprPromise extends ExprPromiseModule {
 

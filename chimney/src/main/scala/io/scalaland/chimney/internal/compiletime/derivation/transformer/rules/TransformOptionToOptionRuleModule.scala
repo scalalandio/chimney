@@ -26,7 +26,7 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
                     .foldEither { (totalP: ExprPromise[from2.Underlying, Expr[to2.Underlying]]) =>
                       // We're constructing:
                       // '{ ${ src }.map(from2: $from2 => ${ derivedTo2 }) }
-                      TransformationExpr.total(
+                      TransformationExpr.fromTotal(
                         totalP
                           .fulfilAsLambda { (lambda: Expr[from2.Underlying => to2.Underlying]) =>
                             Expr.Option.map(ctx.src.upcastExpr[Option[from2.Underlying]])(lambda)
@@ -38,7 +38,7 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
                       // ${ src }.fold[$To](partial.Result.Value(None)) { from2: $from2 =>
                       //   ${ derivedResultTo2 }.map(Option(_))
                       // }
-                      TransformationExpr.partial(
+                      TransformationExpr.fromPartial(
                         partialP.map(ChimneyExpr.PartialResult.map(_)(Expr.Option.wrap)).fulfilAsLambda {
                           (lambda: Expr[from2.Underlying => partial.Result[Option[to2.Underlying]]]) =>
                             Expr.Option

@@ -12,8 +12,10 @@ private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Der
         case (ValueClass(from), ValueClass(to)) =>
           implicit val InnerFrom: Type[from.Inner] = from.Inner
           implicit val InnerTo: Type[to.Inner] = to.Inner
+          // We're constructing:
+          // '{ ${ new $To(${ derivedTo2 }) } // using ${ src }.$from internally }
           deriveRecursiveTransformationExpr[from.Inner, to.Inner](from.unwrap(ctx.src)).map { transformationExpr =>
-            // TODO: append from2.fieldName to partial.Result
+            // TODO: append from2.fieldName to partial.Result ?
             Rule.ExpansionResult.Expanded(transformationExpr.map(to.wrap))
           }
         case _ => DerivationResult.continue

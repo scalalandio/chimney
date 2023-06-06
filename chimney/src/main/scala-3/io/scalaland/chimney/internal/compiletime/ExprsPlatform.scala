@@ -7,9 +7,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
   import quotes.*, quotes.reflect.*
 
-  final override type Expr[A] = quoted.Expr[A]
-
-  object Expr extends ExprModule {
+  final override protected type Expr[A] = quoted.Expr[A]
+  protected object Expr extends ExprModule {
     val Nothing: Expr[Nothing] = '{ ??? }
     val Unit: Expr[Unit] = '{ () }
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]] =

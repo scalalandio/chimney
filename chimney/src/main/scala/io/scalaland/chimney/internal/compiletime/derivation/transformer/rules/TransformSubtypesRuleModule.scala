@@ -10,7 +10,8 @@ private[compiletime] trait TransformSubtypesRuleModule { this: Derivation =>
     override def expand[From, To](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] =
-      if (Type[From] <:< Type[To]) DerivationResult.totalExpr(ctx.src.upcastExpr[To])
-      else DerivationResult.continue
+      // We're constructing:
+      // '{ ${ src } : $To } }
+      if (Type[From] <:< Type[To]) DerivationResult.totalExpr(ctx.src.upcastExpr[To]) else DerivationResult.continue
   }
 }

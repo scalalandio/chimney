@@ -16,6 +16,11 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     with rules.TransformValueClassToValueClassRuleModule
     with rules.TransformValueClassToTypeRuleModule
     with rules.TransformTypeToValueClassRuleModule
+    with rules.TransformEitherToEitherRuleModule
+    with rules.TransformMapToMapRuleModule
+    with rules.TransformIterableToIterableRuleModule
+    with rules.TransformProductToProductRuleModule
+    with rules.TransformSealedHierarchyToSealedHierarchyRuleModule
     with rules.NotImplementedFallbackRuleModule {
 
   final override protected val rulesAvailableForPlatform: List[Rule] = List(
@@ -27,6 +32,11 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     TransformValueClassToValueClassRule,
     TransformValueClassToTypeRule,
     TransformTypeToValueClassRule,
+    TransformEitherToEitherRule,
+    TransformMapToMapRule,
+    TransformIterableToIterableRule,
+    TransformProductToProductRule,
+    TransformSealedHierarchyToSealedHierarchyRule,
     NotImplementedFallbackRule
   )
 }

@@ -8,7 +8,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
   import c.universe.{internal as _, Transformer as _, *}
   import TypeImplicits.*
 
-  protected type ExprPromiseName = TermName
+  final override protected type ExprPromiseName = TermName
 
   protected object ExprPromise extends ExprPromiseModule {
 

@@ -56,12 +56,36 @@ private[compiletime] trait TransformationRules { this: Derivation =>
 
     import TransformationExpr.{PartialExpr, TotalExpr}
 
-    final def map[B: Type](f: Expr[A] => Expr[B]): TransformationExpr[B] = this match {
-      case TotalExpr(expr) => TotalExpr(f(expr))
+    implicit private lazy val A: Type[A] = this match {
+      case TotalExpr(expr) => Expr.typeOf(expr)
       case PartialExpr(expr) =>
         val ChimneyType.PartialResult(a) = Expr.typeOf(expr): @unchecked
-        implicit val A: Type[A] = a.Type.asInstanceOf[Type[A]]
-        PartialExpr(ChimneyExpr.PartialResult.map(expr)(Expr.Function1.lift(f)))
+        a.Type.asInstanceOf[Type[A]]
+    }
+
+    final def map[B: Type](f: Expr[A] => Expr[B]): TransformationExpr[B] = this match {
+      case TotalExpr(expr)   => TotalExpr(f(expr))
+      case PartialExpr(expr) => PartialExpr(ChimneyExpr.PartialResult.map(expr)(Expr.Function1.lift(f)))
+    }
+
+    final def flatMap[B: Type](f: Expr[A] => TransformationExpr[B]): TransformationExpr[B] = this match {
+      case TotalExpr(expr) => f(expr)
+      case PartialExpr(expr) =>
+        ExprPromise
+          .promise[A](ExprPromise.NameGenerationStrategy.FromType)
+          .map(f(_).toEither)
+          .foldEither { (totalE: ExprPromise[A, Expr[B]]) =>
+            // '{ ${ expr }.map { a: $A => ${ b } } }
+            PartialExpr(
+              totalE.fulfilAsLambda[B, Expr[partial.Result[B]]](ChimneyExpr.PartialResult.map(expr)(_))
+            )
+          } { (partialE: ExprPromise[A, Expr[partial.Result[B]]]) =>
+            // '{ ${ expr }.flatMap { a: $A => ${ resultB } } }
+            PartialExpr(
+              partialE
+                .fulfilAsLambda[partial.Result[B], Expr[partial.Result[B]]](ChimneyExpr.PartialResult.flatMap(expr)(_))
+            )
+          }
     }
 
     final def fold[B](onTotal: Expr[A] => B)(onPartial: Expr[partial.Result[A]] => B): B = this match {
@@ -83,11 +107,11 @@ private[compiletime] trait TransformationRules { this: Derivation =>
   }
 
   protected object TransformationExpr {
-    def total[A](expr: Expr[A]): TransformationExpr[A] = TotalExpr(expr)
-    def partial[A](expr: Expr[io.scalaland.chimney.partial.Result[A]]): TransformationExpr[A] = PartialExpr(expr)
+    def fromTotal[A](expr: Expr[A]): TransformationExpr[A] = TotalExpr(expr)
+    def fromPartial[A](expr: Expr[partial.Result[A]]): TransformationExpr[A] = PartialExpr(expr)
 
     final case class TotalExpr[A](expr: Expr[A]) extends TransformationExpr[A]
-    final case class PartialExpr[A](expr: Expr[io.scalaland.chimney.partial.Result[A]]) extends TransformationExpr[A]
+    final case class PartialExpr[A](expr: Expr[partial.Result[A]]) extends TransformationExpr[A]
   }
 
   protected val rulesAvailableForPlatform: List[Rule]

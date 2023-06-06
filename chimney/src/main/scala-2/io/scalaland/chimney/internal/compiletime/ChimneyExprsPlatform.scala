@@ -108,6 +108,11 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
           q"_root_.io.scalaland.chimney.partial.Result.sequence[${Type[M]}, ${Type[A]}]($it, $failFast)"
         )
 
+      def flatMap[A: Type, B: Type](pr: Expr[partial.Result[A]])(
+          f: Expr[A => partial.Result[B]]
+      ): Expr[partial.Result[B]] =
+        asExpr[partial.Result[B]](q"$pr.flatMap[${Type[B]}]($f)")
+
       def map[A: Type, B: Type](pr: Expr[partial.Result[A]])(f: Expr[A => B]): Expr[partial.Result[B]] =
         asExpr[partial.Result[B]](q"$pr.map[${Type[B]}]($f)")
 

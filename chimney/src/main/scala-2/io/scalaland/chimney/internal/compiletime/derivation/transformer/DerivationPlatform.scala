@@ -19,6 +19,11 @@ private[compiletime] trait DerivationPlatform
     with rules.TransformValueClassToValueClassRuleModule
     with rules.TransformValueClassToTypeRuleModule
     with rules.TransformTypeToValueClassRuleModule
+    with rules.TransformEitherToEitherRuleModule
+    with rules.TransformMapToMapRuleModule
+    with rules.TransformIterableToIterableRuleModule
+    with rules.TransformProductToProductRuleModule
+    with rules.TransformSealedHierarchyToSealedHierarchyRuleModule
     with rules.LegacyMacrosFallbackRuleModule {
 
   final override protected val rulesAvailableForPlatform: List[Rule] = List(
@@ -30,6 +35,11 @@ private[compiletime] trait DerivationPlatform
     TransformValueClassToValueClassRule,
     TransformValueClassToTypeRule,
     TransformTypeToValueClassRule,
+    TransformEitherToEitherRule,
+    TransformMapToMapRule,
+    TransformIterableToIterableRule,
+    TransformProductToProductRule,
+    TransformSealedHierarchyToSealedHierarchyRule,
     LegacyMacrosFallbackRule
   )
 }

@@ -17,6 +17,8 @@ private[compiletime] trait TransformToOptionRuleModule { this: Derivation & Tran
             DerivationResult.notSupportedTransformerDerivation
           } else {
             // TODO: log
+            // We're constructing:
+            // '{ Option(${ derivedTo2 }) } }
             TransformOptionToOptionRule.expand(ctx.updateFromTo[Option[From], To](Expr.Option(ctx.src)))
           }
         case _ =>

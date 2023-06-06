@@ -70,6 +70,10 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
           failFast: Expr[Boolean]
       ): Expr[partial.Result[M]]
 
+      def flatMap[A: Type, B: Type](pr: Expr[partial.Result[A]])(
+          f: Expr[A => partial.Result[B]]
+      ): Expr[partial.Result[B]]
+
       def map[A: Type, B: Type](pr: Expr[partial.Result[A]])(f: Expr[A => B]): Expr[partial.Result[B]]
 
       def map2[A: Type, B: Type, C: Type](

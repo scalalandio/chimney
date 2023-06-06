@@ -9,7 +9,6 @@ import scala.annotation.nowarn
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
-  // TODO: rename to TransformationContext
   sealed protected trait TransformationContext[From, To] extends Product with Serializable {
     val From: Type[From]
     val To: Type[To]
@@ -26,17 +25,31 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
     val derivationStartedAt: java.time.Instant
 
     def updateFromTo[NewFrom: Type, NewTo: Type](newSrc: Expr[NewFrom]): TransformationContext[NewFrom, NewTo] =
-      this match {
-        case total: TransformationContext.ForTotal[?, ?] =>
-          total.copy(From = Type[NewFrom], To = Type[NewTo], src = newSrc)
-        case partial: TransformationContext.ForPartial[?, ?] =>
-          partial.copy(From = Type[NewFrom], To = Type[NewTo], src = newSrc)
-      }
+      fold[TransformationContext[NewFrom, NewTo]](
+        _.copy(From = Type[NewFrom], To = Type[NewTo], src = newSrc)
+      )(
+        _.copy(From = Type[NewFrom], To = Type[NewTo], src = newSrc)
+      )
 
-    def updateConfig(f: TransformerConfig => TransformerConfig): TransformationContext[From, To] = this match {
-      case total: TransformationContext.ForTotal[?, ?]     => total.copy(config = f(total.config))
-      case partial: TransformationContext.ForPartial[?, ?] => partial.copy(config = f(partial.config))
-    }
+    def updateConfig(f: TransformerConfig => TransformerConfig): TransformationContext[From, To] =
+      fold[TransformationContext[From, To]](total => total.copy(config = f(total.config)))(partial =>
+        partial.copy(config = f(partial.config))
+      )
+
+    /** Avoid clumsy
+     * {{{
+     * @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
+     * ctx match {
+     *   case total: TransformationContext.ForTotal[?, ?]     => ...
+     *   case partial: TransformationContext.ForPartial[?, ?] => ...
+     * }
+     * }}}
+     */
+    def fold[B](
+        forTotal: TransformationContext.ForTotal[From, To] => B
+    )(
+        forPartial: TransformationContext.ForPartial[From, To] => B
+    ): B
   }
   protected object TransformationContext {
 
@@ -54,6 +67,12 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       final type TypeClass = Transformer[From, To]
       val TypeClass = ChimneyType.Transformer(From, To)
 
+      override def fold[B](
+          forTotal: TransformationContext.ForTotal[From, To] => B
+      )(
+          forPartial: TransformationContext.ForPartial[From, To] => B
+      ): B = forTotal(this)
+
       override def toString: String =
         s"Total(From = ${Type.prettyPrint(From)}, To = ${Type.prettyPrint(To)}, src = ${Expr.prettyPrint(src)}, $config)"
     }
@@ -69,7 +88,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
           To = Type[To],
           src = src,
           runtimeDataStore = runtimeDataStore,
-          config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To]))),
+          config = config.withDefinitionScope(Type[From].asComputed -> Type[To].asComputed),
           derivationStartedAt = java.time.Instant.now()
         )
     }
@@ -89,6 +108,12 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       final type TypeClass = PartialTransformer[From, To]
       val TypeClass = ChimneyType.PartialTransformer(From, To)
 
+      override def fold[B](
+          forTotal: TransformationContext.ForTotal[From, To] => B
+      )(
+          forPartial: TransformationContext.ForPartial[From, To] => B
+      ): B = forPartial(this)
+
       override def toString: String =
         s"Partial(From = ${Type.prettyPrint(From)}, To = ${Type.prettyPrint(To)}, src = ${Expr
             .prettyPrint(src)}, failFast = ${Expr.prettyPrint(failFast)}, $config)"
@@ -106,7 +131,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         src = src,
         failFast = failFast,
         runtimeDataStore = runtimeDataStore,
-        config = config.withDefinitionScope((ComputedType(Type[From]), ComputedType(Type[To]))),
+        config = config.withDefinitionScope(Type[From].asComputed -> Type[To].asComputed),
         derivationStartedAt = java.time.Instant.now()
       )
     }

@@ -129,8 +129,8 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
         implicit val CfgTail: Type[CfgTail] = Type.platformSpecific.fromUntyped(rest)
         extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
           .addCoproductInstance(
-            ComputedType(From),
-            ComputedType(To),
+            From.asComputed,
+            To.asComputed,
             RuntimeCoproductOverride.CoproductInstance(runtimeDataIdx)
           )
       } else if (cfgTpe.typeConstructor =:= coproductInstancePartialTC) {
@@ -140,8 +140,8 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
         implicit val Tail: Type[CfgTail] = Type.platformSpecific.fromUntyped(rest)
         extractTransformerConfig[CfgTail](1 + runtimeDataIdx)
           .addCoproductInstance(
-            ComputedType(From),
-            ComputedType(To),
+            From.asComputed,
+            To.asComputed,
             RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
           )
       } else {
