@@ -70,8 +70,8 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Array extends ArrayModule {
       def apply[A: Type]: Type[Array[A]] = quoted.Type.of[Array[A]]
-      def unapply[A](tpe: Type[A]): Option[ComputedType] = tpe match {
-        case '[Array[inner]] => Some(Type[inner].asComputed)
+      def unapply[A](tpe: Type[A]): Option[ExistentialType] = tpe match {
+        case '[Array[inner]] => Some(Type[inner].asExistential)
         case _               => scala.None
       }
     }
@@ -79,8 +79,8 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     object Option extends OptionModule {
 
       def apply[A: Type]: Type[Option[A]] = quoted.Type.of[Option[A]]
-      def unapply[A](tpe: Type[A]): Option[ComputedType] = tpe match {
-        case '[Option[inner]] => Some(Type[inner].asComputed)
+      def unapply[A](tpe: Type[A]): Option[ExistentialType] = tpe match {
+        case '[Option[inner]] => Some(Type[inner].asExistential)
         case _                => scala.None
       }
 
@@ -89,22 +89,22 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Either extends EitherModule {
       def apply[L: Type, R: Type]: Type[Either[L, R]] = quoted.Type.of[Either[L, R]]
-      def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] = tpe match {
-        case '[Either[innerL, innerR]] => Some(Type[innerL].asComputed -> Type[innerR].asComputed)
+      def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] = tpe match {
+        case '[Either[innerL, innerR]] => Some(Type[innerL].asExistential -> Type[innerR].asExistential)
         case _                         => scala.None
       }
 
       object Left extends LeftModule {
         def apply[L: Type, R: Type]: Type[Left[L, R]] = quoted.Type.of[Left[L, R]]
-        def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] = tpe match {
-          case '[Left[innerL, innerR]] => Some(Type[innerL].asComputed -> Type[innerR].asComputed)
+        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] = tpe match {
+          case '[Left[innerL, innerR]] => Some(Type[innerL].asExistential -> Type[innerR].asExistential)
           case _                       => scala.None
         }
       }
       object Right extends RightModule {
         def apply[L: Type, R: Type]: Type[Right[L, R]] = quoted.Type.of[Right[L, R]]
-        def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] = tpe match {
-          case '[Right[innerL, innerR]] => Some(Type[innerL].asComputed -> Type[innerR].asComputed)
+        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] = tpe match {
+          case '[Right[innerL, innerR]] => Some(Type[innerL].asExistential -> Type[innerR].asExistential)
           case _                        => scala.None
         }
       }
@@ -112,16 +112,16 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Iterable extends IterableModule {
       def apply[A: Type]: Type[Iterable[A]] = quoted.Type.of[Iterable[A]]
-      def unapply[A](tpe: Type[A]): Option[ComputedType] = tpe match {
-        case '[Iterable[inner]] => Some(Type[inner].asComputed)
+      def unapply[A](tpe: Type[A]): Option[ExistentialType] = tpe match {
+        case '[Iterable[inner]] => Some(Type[inner].asExistential)
         case _                  => scala.None
       }
     }
 
     object Map extends MapModule {
       def apply[K: Type, V: Type]: Type[Map[K, V]] = quoted.Type.of[Map[K, V]]
-      def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] = tpe match {
-        case '[Map[innerK, innerV]] => Some(Type[innerK].asComputed -> Type[innerV].asComputed)
+      def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] = tpe match {
+        case '[Map[innerK, innerV]] => Some(Type[innerK].asExistential -> Type[innerV].asExistential)
         case _                      => scala.None
       }
     }

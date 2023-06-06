@@ -5,7 +5,7 @@ import io.scalaland.chimney.dsl.TransformerDefinitionCommons.RuntimeDataStore
 import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
 import io.scalaland.chimney.partial.PathElement
 
-private[compiletime] trait ChimneyTypes { this: Types =>
+private[compiletime] trait ChimneyTypes { this: Types & Existentials =>
 
   protected val ChimneyType: ChimneyTypeModule
   protected trait ChimneyTypeModule {
@@ -17,7 +17,7 @@ private[compiletime] trait ChimneyTypes { this: Types =>
     val PartialResult: PartialResultModule
     trait PartialResultModule { this: PartialResult.type =>
       def apply[A: Type]: Type[partial.Result[A]]
-      def unapply[A](tpe: Type[A]): Option[ComputedType]
+      def unapply[A](tpe: Type[A]): Option[ExistentialType]
 
       def Value[A: Type]: Type[partial.Result.Value[A]]
       val Errors: Type[partial.Result.Errors]

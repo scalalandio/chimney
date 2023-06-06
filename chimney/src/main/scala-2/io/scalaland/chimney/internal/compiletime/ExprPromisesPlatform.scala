@@ -57,9 +57,9 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
   protected object PrependValsTo extends PrependValsToModule {
 
-    def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ComputedExpr)], expr: Expr[To]): Expr[To] = {
+    def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ExistentialExpr)], expr: Expr[To]): Expr[To] = {
       val statements = vals.map { case (name, initialValue) =>
-        ComputedExpr.use(initialValue) { (tpe, expr) => q"val $name: $tpe = $expr" }
+        ExistentialExpr.use(initialValue) { tpe => expr => q"val $name: $tpe = $expr" }
       }.toList
       Expr.platformSpecific.asExpr[To](q"..$statements; $expr")
     }

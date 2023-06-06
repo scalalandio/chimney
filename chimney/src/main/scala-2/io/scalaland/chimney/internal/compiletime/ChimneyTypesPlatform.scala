@@ -23,10 +23,12 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
     object PartialResult extends PartialResultModule {
       def apply[A: Type]: Type[partial.Result[A]] =
         fromWeakTypeConstructor[partial.Result[?], partial.Result[A]](Type[A])
-      def unapply[A](tpe: Type[A]): Option[ComputedType] =
+      def unapply[A](tpe: Type[A]): Option[ExistentialType] =
         // None has no type parameters, so we need getOrElse(Nothing)
         if (apply[Any] <:< tpe)
-          Some(tpe.typeArgs.headOption.fold(ComputedType(Type.Nothing))(inner => fromUntyped[Any](inner).asComputed))
+          Some(
+            tpe.typeArgs.headOption.fold(ExistentialType(Type.Nothing))(inner => fromUntyped[Any](inner).asExistential)
+          )
         else scala.None
 
       def Value[A: Type]: Type[partial.Result.Value[A]] =

@@ -73,8 +73,8 @@ private[compiletime] trait Configurations { this: Definitions =>
   final protected case class TransformerConfig(
       flags: TransformerFlags = TransformerFlags(),
       fieldOverrides: Map[String, RuntimeFieldOverride] = Map.empty,
-      coproductOverrides: Map[(ComputedType, ComputedType), RuntimeCoproductOverride] = Map.empty,
-      preventResolutionForTypes: Option[(ComputedType, ComputedType)] = None
+      coproductOverrides: Map[(ExistentialType, ExistentialType), RuntimeCoproductOverride] = Map.empty,
+      preventResolutionForTypes: Option[(ExistentialType, ExistentialType)] = None
   ) {
 
     def prepareForRecursiveCall: TransformerConfig =
@@ -90,22 +90,22 @@ private[compiletime] trait Configurations { this: Definitions =>
       copy(fieldOverrides = fieldOverrides + (fieldName -> fieldOverride))
 
     def addCoproductInstance(
-        instanceType: ComputedType,
-        targetType: ComputedType,
+        instanceType: ExistentialType,
+        targetType: ExistentialType,
         coproductOverride: RuntimeCoproductOverride
     ): TransformerConfig =
       copy(coproductOverrides = coproductOverrides + ((instanceType, targetType) -> coproductOverride))
 
-    def withDefinitionScope(defScope: (ComputedType, ComputedType)): TransformerConfig =
+    def withDefinitionScope(defScope: (ExistentialType, ExistentialType)): TransformerConfig =
       copy(preventResolutionForTypes = Some(defScope))
 
     override def toString: String = {
       val fieldOverridesString = fieldOverrides.map { case (k, v) => s"$k -> $v" }.mkString(", ")
       val coproductOverridesString = coproductOverrides
-        .map { case ((f, t), v) => s"(${ComputedType.prettyPrint(f)}, ${ComputedType.prettyPrint(t)}) -> $v" }
+        .map { case ((f, t), v) => s"(${ExistentialType.prettyPrint(f)}, ${ExistentialType.prettyPrint(t)}) -> $v" }
         .mkString(", ")
       val preventResolutionForTypesString = preventResolutionForTypes.map { case (f, t) =>
-        s"(${ComputedType.prettyPrint(f)}, ${ComputedType.prettyPrint(t)})"
+        s"(${ExistentialType.prettyPrint(f)}, ${ExistentialType.prettyPrint(t)})"
       }.toString
       s"""TransformerConfig(
           |  flags = $flags,

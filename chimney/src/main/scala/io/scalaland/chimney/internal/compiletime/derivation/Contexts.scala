@@ -113,7 +113,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
           From = Type[From],
           To = Type[To],
           runtimeDataStore = runtimeDataStore,
-          config = config.withDefinitionScope(Type[From].asComputed -> Type[To].asComputed),
+          config = config.withDefinitionScope(Type[From].asExistential -> Type[To].asExistential),
           derivationStartedAt = java.time.Instant.now()
         )
     }
@@ -152,7 +152,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         From = Type[From],
         To = Type[To],
         runtimeDataStore = runtimeDataStore,
-        config = config.withDefinitionScope(Type[From].asComputed -> Type[To].asComputed),
+        config = config.withDefinitionScope(Type[From].asExistential -> Type[To].asExistential),
         derivationStartedAt = java.time.Instant.now()
       )
     }

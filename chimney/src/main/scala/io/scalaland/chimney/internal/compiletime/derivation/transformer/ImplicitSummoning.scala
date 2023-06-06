@@ -36,6 +36,8 @@ private[compiletime] trait ImplicitSummoning { this: Derivation =>
 
   // prevents: val t: Transformer[A, B] = a => t.transform(a)
   private def isForwardReferenceToItself[From: Type, To: Type](
-      preventResolutionForTypes: Option[(ComputedType, ComputedType)]
-  ): Boolean = preventResolutionForTypes.exists { case (from, to) => from.Type =:= Type[From] && to.Type =:= Type[To] }
+      preventResolutionForTypes: Option[(ExistentialType, ExistentialType)]
+  ): Boolean = preventResolutionForTypes.exists { case (from, to) =>
+    from.Underlying =:= Type[From] && to.Underlying =:= Type[To]
+  }
 }

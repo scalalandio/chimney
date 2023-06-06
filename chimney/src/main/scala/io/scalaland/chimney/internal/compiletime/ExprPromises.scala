@@ -19,7 +19,7 @@ private[compiletime] trait ExprPromises { this: Definitions =>
     def fulfilAsVal[From2: Type](init: Expr[From2]): DerivationResult[PrependValsTo[A]] =
       if (Type[From2] <:< Type[From])
         DerivationResult.pure(
-          new PrependValsTo(usage, Vector(fromName -> ComputedExpr(Expr.asInstanceOf[From2, From](init))))
+          new PrependValsTo(usage, Vector(fromName -> ExistentialExpr(Expr.asInstanceOf[From2, From](init))))
         )
       else
         DerivationResult.fromException(
@@ -90,7 +90,7 @@ private[compiletime] trait ExprPromises { this: Definitions =>
 
   final protected class PrependValsTo[A](
       private val usage: A,
-      private val vals: Vector[(ExprPromiseName, ComputedExpr)]
+      private val vals: Vector[(ExprPromiseName, ExistentialExpr)]
   ) {
 
     def map[B](f: A => B): PrependValsTo[B] = new PrependValsTo(f(usage), vals)
@@ -111,7 +111,7 @@ private[compiletime] trait ExprPromises { this: Definitions =>
   protected val PrependValsTo: PrependValsToModule
   protected trait PrependValsToModule { this: PrependValsTo.type =>
 
-    def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ComputedExpr)], expr: Expr[To]): Expr[To]
+    def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ExistentialExpr)], expr: Expr[To]): Expr[To]
   }
 
   implicit protected val PrependValsToTraversableApplicative: fp.ApplicativeTraverse[PrependValsTo] =

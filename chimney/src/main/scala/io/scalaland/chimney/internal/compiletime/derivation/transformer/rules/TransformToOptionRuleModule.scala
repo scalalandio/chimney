@@ -11,7 +11,7 @@ private[compiletime] trait TransformToOptionRuleModule { this: Derivation & Tran
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[To] match {
-        case Type.Option(to2) if !to2.Type.isSealed =>
+        case Type.Option(to2) if !to2.Underlying.isSealed =>
           if (Type[To] <:< Type[None.type]) {
             // TODO: log
             DerivationResult.notSupportedTransformerDerivation

@@ -58,7 +58,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
       case TotalExpr(expr) => Expr.typeOf(expr)
       case PartialExpr(expr) =>
         val ChimneyType.PartialResult(a) = Expr.typeOf(expr): @unchecked
-        a.Type.asInstanceOf[Type[A]]
+        a.Underlying.asInstanceOf[Type[A]]
     }
 
     final def map[B: Type](f: Expr[A] => Expr[B]): TransformationExpr[B] = this match {

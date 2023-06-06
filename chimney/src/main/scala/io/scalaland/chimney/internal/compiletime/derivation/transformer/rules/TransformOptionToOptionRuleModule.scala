@@ -14,7 +14,7 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
         case (Type.Option(from2), Type.Option(to2)) =>
-          ComputedType.use2(from2, to2) {
+          ExistentialType.use2(from2, to2) {
             implicit From2: Type[from2.Underlying] => implicit To2: Type[to2.Underlying] =>
               ExprPromise
                 .promise[from2.Underlying](ExprPromise.NameGenerationStrategy.FromType)

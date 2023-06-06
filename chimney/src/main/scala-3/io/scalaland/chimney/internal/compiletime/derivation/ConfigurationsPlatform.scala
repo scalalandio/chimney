@@ -81,15 +81,15 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
         case '[internal.TransformerCfg.CoproductInstance[instanceT, targetT, cfgTailT]] =>
           extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
             .addCoproductInstance(
-              Type[instanceT].asComputed,
-              Type[targetT].asComputed,
+              Type[instanceT].asExistential,
+              Type[targetT].asExistential,
               RuntimeCoproductOverride.CoproductInstance(runtimeDataIdx)
             )
         case '[internal.TransformerCfg.CoproductInstancePartial[instanceT, targetT, cfgTailT]] =>
           extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
             .addCoproductInstance(
-              Type[instanceT].asComputed,
-              Type[targetT].asComputed,
+              Type[instanceT].asExistential,
+              Type[targetT].asExistential,
               RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
             )
         case _ =>

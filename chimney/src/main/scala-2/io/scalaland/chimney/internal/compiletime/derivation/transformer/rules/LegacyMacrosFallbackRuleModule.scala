@@ -62,11 +62,17 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlat
         },
         coproductInstanceOverrides =
           ctx.config.coproductOverrides.collect { case ((ct1, ct2), RuntimeCoproductOverride.CoproductInstance(idx)) =>
-            (ct1.Type.typeSymbol.asInstanceOf[oldMacros.c.Symbol], ct2.Type.asInstanceOf[oldMacros.c.Type]) -> idx
+            (
+              ct1.Underlying.typeSymbol.asInstanceOf[oldMacros.c.Symbol],
+              ct2.Underlying.asInstanceOf[oldMacros.c.Type]
+            ) -> idx
           },
         coproductInstancesPartialOverrides = ctx.config.coproductOverrides.collect {
           case ((ct1, ct2), RuntimeCoproductOverride.CoproductInstancePartial(idx)) =>
-            (ct1.Type.typeSymbol.asInstanceOf[oldMacros.c.Symbol], ct2.Type.asInstanceOf[oldMacros.c.Type]) -> idx
+            (
+              ct1.Underlying.typeSymbol.asInstanceOf[oldMacros.c.Symbol],
+              ct2.Underlying.asInstanceOf[oldMacros.c.Type]
+            ) -> idx
         },
         transformerDefinitionPrefix = ctx.runtimeDataStore.tree match {
           case q"$td.runtimeData" => td.asInstanceOf[oldMacros.c.Tree]

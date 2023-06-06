@@ -79,19 +79,22 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Array extends ArrayModule {
       def apply[A: Type]: Type[Array[A]] = fromWeakTypeConstructor[Array[?], Array[A]](Type[A])
-      def unapply[A](tpe: Type[A]): Option[ComputedType] =
+      def unapply[A](tpe: Type[A]): Option[ExistentialType] =
         // Array is invariant so we cannot check with Array[Any] <:< A
-        if (fromWeak[Array[?]].typeConstructor <:< tpe.typeConstructor) Some(fromUntyped(tpe.typeArgs.head).asComputed)
+        if (fromWeak[Array[?]].typeConstructor <:< tpe.typeConstructor)
+          Some(fromUntyped(tpe.typeArgs.head).asExistential)
         else scala.None
     }
 
     object Option extends OptionModule {
       def apply[A: Type]: Type[Option[A]] = fromWeakTypeConstructor[Option[?], Option[A]](Type[A])
-      def unapply[A](tpe: Type[A]): Option[ComputedType] =
+      def unapply[A](tpe: Type[A]): Option[ExistentialType] =
         // None has no type parameters, so we need getOrElse(Nothing)
         if (apply[Any](Any) <:< tpe)
           Some(
-            tpe.typeArgs.headOption.fold[ComputedType](ComputedType(Nothing))(inner => fromUntyped(inner).asComputed)
+            tpe.typeArgs.headOption.fold[ExistentialType](ExistentialType(Nothing))(inner =>
+              fromUntyped(inner).asExistential
+            )
           )
         else scala.None
 
@@ -101,42 +104,42 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     object Either extends EitherModule {
       def apply[L: Type, R: Type]: Type[Either[L, R]] =
         fromWeakTypeConstructor[Either[?, ?], Either[L, R]](Type[L], Type[R])
-      def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] =
+      def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
         if (apply[Any, Any](Any, Any) <:< tpe)
-          Some(fromUntyped(tpe.typeArgs.head).asComputed -> fromUntyped(tpe.typeArgs.tail.head).asComputed)
+          Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
         else scala.None
 
       object Left extends LeftModule {
         def apply[L: Type, R: Type]: Type[Left[L, R]] =
           fromWeakTypeConstructor[Left[?, ?], Left[L, R]](Type[L], Type[R])
-        def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] =
+        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
           if (apply[Any, Any](Any, Any) <:< tpe)
-            Some(fromUntyped(tpe.typeArgs.head).asComputed -> fromUntyped(tpe.typeArgs.tail.head).asComputed)
+            Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
           else scala.None
       }
       object Right extends RightModule {
         def apply[L: Type, R: Type]: Type[Right[L, R]] =
           fromWeakTypeConstructor[Right[?, ?], Right[L, R]](Type[L], Type[R])
-        def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] =
+        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
           if (apply[Any, Any](Any, Any) <:< tpe)
-            Some(fromUntyped(tpe.typeArgs.head).asComputed -> fromUntyped(tpe.typeArgs.tail.head).asComputed)
+            Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
           else scala.None
       }
     }
 
     object Iterable extends IterableModule {
       def apply[A: Type]: Type[Iterable[A]] = fromWeakTypeConstructor[Iterable[?], Iterable[A]](Type[A])
-      def unapply[A](tpe: Type[A]): Option[ComputedType] =
-        if (apply[Any](Any) <:< tpe) Some(fromUntyped(tpe.typeArgs.head).asComputed)
+      def unapply[A](tpe: Type[A]): Option[ExistentialType] =
+        if (apply[Any](Any) <:< tpe) Some(fromUntyped(tpe.typeArgs.head).asExistential)
         else scala.None
     }
 
     object Map extends MapModule {
       def apply[K: Type, V: Type]: Type[Map[K, V]] =
         fromWeakTypeConstructor[Map[?, ?], Map[K, V]](Type[K], Type[V])
-      def unapply[A](tpe: Type[A]): Option[(ComputedType, ComputedType)] =
+      def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
         if (apply[Any, Any](Any, Any) <:< tpe)
-          Some(fromUntyped(tpe.typeArgs.head).asComputed -> fromUntyped(tpe.typeArgs.tail.head).asComputed)
+          Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
         else scala.None
     }
 

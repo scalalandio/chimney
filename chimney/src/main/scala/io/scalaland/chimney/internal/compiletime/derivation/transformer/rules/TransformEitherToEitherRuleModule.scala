@@ -14,7 +14,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
         case (Type.Either.Left(fromL, fromR), Type.Either(toL, toR)) if !Type[To].isRight =>
-          ComputedType.use4(fromL, fromR, toL, toR) {
+          ExistentialType.use4(fromL, fromR, toL, toR) {
             implicit FromL: Type[fromL.Underlying] => implicit FromR: Type[fromR.Underlying] =>
               implicit ToL: Type[toL.Underlying] => implicit ToR: Type[toR.Underlying] =>
                 deriveRecursiveTransformationExpr[fromL.Underlying, toL.Underlying](
@@ -28,7 +28,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
                 }
           }
         case (Type.Either.Right(fromL, fromR), Type.Either(toL, toR)) if !Type[To].isLeft =>
-          ComputedType.use4(fromL, fromR, toL, toR) {
+          ExistentialType.use4(fromL, fromR, toL, toR) {
             implicit FromL: Type[fromL.Underlying] => implicit FromR: Type[fromR.Underlying] =>
               implicit ToL: Type[toL.Underlying] => implicit ToR: Type[toR.Underlying] =>
                 deriveRecursiveTransformationExpr[fromR.Underlying, toR.Underlying](

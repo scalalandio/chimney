@@ -81,21 +81,4 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     def value: Expr[R] = ???
   }
-
-  protected type ComputedExpr = { type Underlying }
-  protected object ComputedExpr {
-
-    def apply[A](expr: Expr[A]): ComputedExpr { type Underlying = A } =
-      expr.asInstanceOf[ComputedExpr { type Underlying = A }]
-
-    def prettyPrint(computedExpr: ComputedExpr): String = Expr.prettyPrint(computedExpr.Expr)
-
-    def use[Out](expr: ComputedExpr)(thunk: (Type[expr.Underlying], Expr[expr.Underlying]) => Out): Out = {
-      val e = expr.asInstanceOf[Expr[expr.Underlying]]
-      thunk(Expr.typeOf(e).asInstanceOf[Type[expr.Underlying]], e)
-    }
-  }
-  implicit protected class ComputedExprOps(val ce: ComputedExpr) {
-    def Expr: Expr[ce.Underlying] = ce.asInstanceOf[Expr[ce.Underlying]]
-  }
 }

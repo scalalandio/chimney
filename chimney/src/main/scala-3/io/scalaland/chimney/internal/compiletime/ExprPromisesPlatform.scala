@@ -23,7 +23,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         to: Expr[To],
         use: Expr[From => To] => B
     ): B = use('{ (param: From) =>
-      ${ PrependValsTo.initializeVals[To](vals = Vector(fromName -> ComputedExpr('{ param })), expr = to) }
+      ${ PrependValsTo.initializeVals[To](vals = Vector(fromName -> ExistentialExpr('{ param })), expr = to) }
     })
 
     def createAndUseLambda2[From: Type, From2: Type, To: Type, B](
@@ -34,7 +34,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     ): B = use('{ (param: From, param2: From2) =>
       ${
         PrependValsTo.initializeVals[To](
-          vals = Vector(fromName -> ComputedExpr('{ param }), from2Name -> ComputedExpr('{ param2 })),
+          vals = Vector(fromName -> ExistentialExpr('{ param }), from2Name -> ExistentialExpr('{ param2 })),
           expr = to
         )
       }
@@ -56,9 +56,9 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
   protected object PrependValsTo extends PrependValsToModule {
 
-    def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ComputedExpr)], expr: Expr[To]): Expr[To] = {
-      val statements = vals.map { case (name, cexpr) =>
-        ComputedExpr.use(cexpr) { (_, expr) => ValDef(name, Some(expr.asTerm)) }
+    def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ExistentialExpr)], expr: Expr[To]): Expr[To] = {
+      val statements = vals.map { case (name, eexpr) =>
+        ExistentialExpr.use(eexpr) { _ => expr => ValDef(name, Some(expr.asTerm)) }
       }.toList
       Block(statements, expr.asTerm).asExprOf[To]
     }
