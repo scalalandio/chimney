@@ -6,6 +6,4 @@ private[compiletime] trait Definitions
     with Exprs
     with ChimneyExprs
     with ExprPromises
-    with Configurations
-    with Contexts
     with Results

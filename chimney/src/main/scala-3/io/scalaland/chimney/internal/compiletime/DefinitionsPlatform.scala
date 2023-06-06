@@ -13,5 +13,4 @@ abstract private[compiletime] class DefinitionsPlatform(using val quotes: quoted
     with ExprsPlatform
     with ExprPromisesPlatform
     with ChimneyExprsPlatform
-    with ConfigurationsPlatform
     with ResultsPlatform

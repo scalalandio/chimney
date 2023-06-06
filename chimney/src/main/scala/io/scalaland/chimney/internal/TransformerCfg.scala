@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal
 
+// TODO: move to internal.compiletime.derivation once macros are migrated
 sealed abstract class TransformerCfg
 object TransformerCfg {
   final class Empty extends TransformerCfg

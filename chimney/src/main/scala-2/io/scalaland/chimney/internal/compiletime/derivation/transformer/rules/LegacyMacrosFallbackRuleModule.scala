@@ -90,9 +90,9 @@ private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlat
           )
         )
       case Right(oldMacros.DerivedTree(tree, _: oldMacros.DerivationTarget.TotalTransformer.type)) =>
-        DerivationResult.totalExpr(Expr.platformSpecific.asExpr[To](tree.asInstanceOf[c.Tree]))
+        DerivationResult.expandedTotal(Expr.platformSpecific.asExpr[To](tree.asInstanceOf[c.Tree]))
       case Right(oldMacros.DerivedTree(tree, _: oldMacros.DerivationTarget.PartialTransformer)) =>
-        DerivationResult.partialExpr(Expr.platformSpecific.asExpr[partial.Result[To]](tree.asInstanceOf[c.Tree]))
+        DerivationResult.expandedPartial(Expr.platformSpecific.asExpr[partial.Result[To]](tree.asInstanceOf[c.Tree]))
     }
 
     private def initializeFailFastIfNeeded[To: Type](

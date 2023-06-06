@@ -1,13 +1,14 @@
-package io.scalaland.chimney.internal.compiletime
+package io.scalaland.chimney.internal.compiletime.derivation
 
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal
+import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
 private[compiletime] trait ConfigurationsPlatform extends Configurations { this: DefinitionsPlatform =>
 
   import quotes.*, quotes.reflect.*
 
-  protected object configurationsImpl extends ConfigurationDefinitionsImpl {
+  protected object Configurations extends ConfigurationsModule {
 
     final override def readTransformerConfig[
         Cfg <: internal.TransformerCfg: Type,

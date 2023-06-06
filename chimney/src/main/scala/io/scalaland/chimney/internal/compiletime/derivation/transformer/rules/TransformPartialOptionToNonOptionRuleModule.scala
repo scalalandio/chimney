@@ -15,25 +15,25 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (ctx, Type[From]) match {
-        case (_: TransformationContext.ForPartial[?, ?], Type.Option(from2)) if !Type[To].isOption =>
-          ComputedType.use(from2) { implicit InnerFrom: Type[from2.Underlying] =>
-            // We're constructing:
-            // ${ src }.map[partial.Result[$To]] { from2: $from2 =>
-            //   ${ derivedResultTo } // wrap if needed
-            // }.getOrElse(partial.Result.empty)
+        case (TransformationContext.ForPartial(src, _), Type.Option(from2)) if !Type[To].isOption =>
+          ComputedType.use(from2) { implicit From2: Type[from2.Underlying] =>
             DerivationResult
               .direct { (await: DerivationResult.Await[TransformationExpr[To]]) =>
-                Expr.Option.getOrElse(
-                  Expr.Option.map[from2.Underlying, partial.Result[To]](ctx.src.upcastExpr[Option[from2.Underlying]])(
-                    Expr.Function1.lift[from2.Underlying, partial.Result[To]] { (param: Expr[from2.Underlying]) =>
-                      await(deriveRecursiveTransformationExpr[from2.Underlying, To](param)).ensurePartial
-                    }
-                  )
-                )(ChimneyExpr.PartialResult.fromEmpty[To])
+                // We're constructing:
+                // ${ src }.map[partial.Result[$To]] { from2Expr: $from2 =>
+                //   ${ derivedResultTo } // wrap if needed
+                // }.getOrElse(partial.Result.empty)
+                src
+                  .upcastExpr[Option[from2.Underlying]]
+                  .map(Expr.Function1.instance[from2.Underlying, partial.Result[To]] {
+                    (from2Expr: Expr[from2.Underlying]) =>
+                      await(deriveRecursiveTransformationExpr[from2.Underlying, To](from2Expr)).ensurePartial
+                  })
+                  .getOrElse(ChimneyExpr.PartialResult.fromEmpty[To])
               }
-              .flatMap(DerivationResult.partialExpr(_))
+              .flatMap(DerivationResult.expandedPartial(_))
           }
-        case _ => DerivationResult.continue
+        case _ => DerivationResult.attemptNextRule
       }
   }
 }

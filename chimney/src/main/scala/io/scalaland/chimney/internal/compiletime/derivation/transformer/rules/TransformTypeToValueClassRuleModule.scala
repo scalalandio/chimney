@@ -13,15 +13,15 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
         case ValueClass(to) =>
           implicit val InnerTo: Type[to.Inner] = to.Inner
           deriveRecursiveTransformationExpr[From, to.Inner](ctx.src)
-            .map { transformationExpr =>
+            .flatMap { derivedTo2 =>
               // We're constructing:
               // '{ new $To(${ derivedTo2 }) }
-              Rule.ExpansionResult.Expanded(transformationExpr.map(to.wrap))
+              DerivationResult.expanded(derivedTo2.map(to.wrap))
             }
             // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
             .orElse(TransformProductToProductRule.expand(ctx))
             .orElse(DerivationResult.notSupportedTransformerDerivation[From, To, Rule.ExpansionResult[To]])
-        case _ => DerivationResult.continue
+        case _ => DerivationResult.attemptNextRule
       }
   }
 }

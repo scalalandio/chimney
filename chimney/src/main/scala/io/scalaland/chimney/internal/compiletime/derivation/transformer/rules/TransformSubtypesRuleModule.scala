@@ -12,6 +12,7 @@ private[compiletime] trait TransformSubtypesRuleModule { this: Derivation =>
     ): DerivationResult[Rule.ExpansionResult[To]] =
       // We're constructing:
       // '{ ${ src } : $To } }
-      if (Type[From] <:< Type[To]) DerivationResult.totalExpr(ctx.src.upcastExpr[To]) else DerivationResult.continue
+      if (Type[From] <:< Type[To]) DerivationResult.expandedTotal(ctx.src.upcastExpr[To])
+      else DerivationResult.attemptNextRule
   }
 }

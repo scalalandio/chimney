@@ -120,7 +120,19 @@ private[compiletime] trait Types {
 
     def prettyPrint(computedType: ComputedType): String = Type.prettyPrint(computedType.Type)
 
+    // Different arities of use* allow us to avoid absurdly nested blocks, since only 1-parameter lambda can have
+    // implicit parameter.
+
     def use[Out](ct: ComputedType)(thunk: Type[ct.Underlying] => Out): Out = thunk(ct.asInstanceOf[Type[ct.Underlying]])
+    def use2[Out](ct1: ComputedType, ct2: ComputedType)(
+        thunk: Type[ct1.Underlying] => Type[ct2.Underlying] => Out
+    ): Out = use(ct2)(use(ct1)(thunk))
+    def use3[Out](ct1: ComputedType, ct2: ComputedType, ct3: ComputedType)(
+        thunk: Type[ct1.Underlying] => Type[ct2.Underlying] => Type[ct3.Underlying] => Out
+    ): Out = use(ct3)(use2(ct1, ct2)(thunk))
+    def use4[Out](ct1: ComputedType, ct2: ComputedType, ct3: ComputedType, ct4: ComputedType)(
+        thunk: Type[ct1.Underlying] => Type[ct2.Underlying] => Type[ct3.Underlying] => Type[ct4.Underlying] => Out
+    ): Out = use(ct4)(use3(ct1, ct2, ct3)(thunk))
   }
   implicit protected class ComputedTypeOps(val ct: ComputedType) {
     def Type: Type[ct.Underlying] = ct.asInstanceOf[Type[ct.Underlying]]

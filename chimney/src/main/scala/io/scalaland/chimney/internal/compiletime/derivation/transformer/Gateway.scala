@@ -20,7 +20,7 @@ private[compiletime] trait Gateway { this: Derivation =>
   ](src: Expr[From], runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[To] = {
     val context = TransformationContext.ForTotal.create[From, To](
       src,
-      configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+      Configurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
       runtimeDataStore
     )
 
@@ -37,10 +37,10 @@ private[compiletime] trait Gateway { this: Derivation =>
       ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[Transformer[From, To]] = {
     val result = DerivationResult.direct[Expr[To], Expr[Transformer[From, To]]] { await =>
-      ChimneyExpr.Transformer.lift[From, To] { (src: Expr[From]) =>
+      ChimneyExpr.Transformer.instance[From, To] { (src: Expr[From]) =>
         val context = TransformationContext.ForTotal.create[From, To](
           src,
-          configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+          Configurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
           runtimeDataStore
         )
 
@@ -65,7 +65,7 @@ private[compiletime] trait Gateway { this: Derivation =>
     val context = TransformationContext.ForPartial.create[From, To](
       src,
       failFast,
-      configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+      Configurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
       runtimeDataStore
     )
 
@@ -82,11 +82,11 @@ private[compiletime] trait Gateway { this: Derivation =>
       ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[PartialTransformer[From, To]] = {
     val result = DerivationResult.direct[Expr[partial.Result[To]], Expr[PartialTransformer[From, To]]] { await =>
-      ChimneyExpr.PartialTransformer.lift[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
+      ChimneyExpr.PartialTransformer.instance[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
         val context = TransformationContext.ForPartial.create[From, To](
           src,
           failFast,
-          configurationsImpl.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+          Configurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
           runtimeDataStore
         )
 

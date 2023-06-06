@@ -22,7 +22,7 @@ private[compiletime] trait TransformToOptionRuleModule { this: Derivation & Tran
             TransformOptionToOptionRule.expand(ctx.updateFromTo[Option[From], To](Expr.Option(ctx.src)))
           }
         case _ =>
-          DerivationResult.continue
+          DerivationResult.attemptNextRule
       }
   }
 }

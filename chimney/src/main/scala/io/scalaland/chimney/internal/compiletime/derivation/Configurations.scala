@@ -1,9 +1,9 @@
-package io.scalaland.chimney.internal.compiletime
+package io.scalaland.chimney.internal.compiletime.derivation
 
 import io.scalaland.chimney.dsl.ImplicitTransformerPreference
 import io.scalaland.chimney.internal
-import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.TransformerCfg
+import io.scalaland.chimney.internal.compiletime.Definitions
 
 import scala.annotation.nowarn
 
@@ -83,8 +83,8 @@ private[compiletime] trait Configurations { this: Definitions =>
         fieldOverrides = Map.empty
       )
 
-    def usesRuntimeDataStore: Boolean =
-      fieldOverrides.values.exists(_.usesRuntimeDataStore) || coproductOverrides.nonEmpty
+    // def usesRuntimeDataStore: Boolean =
+    //  fieldOverrides.values.exists(_.usesRuntimeDataStore) || coproductOverrides.nonEmpty
 
     def addFieldOverride(fieldName: String, fieldOverride: RuntimeFieldOverride): TransformerConfig =
       copy(fieldOverrides = fieldOverrides + (fieldName -> fieldOverride))
@@ -118,17 +118,10 @@ private[compiletime] trait Configurations { this: Definitions =>
   protected object TransformerConfig {
 
     type UpdateCfg[_ <: TransformerCfg]
-
-    // TODO: for creating TransformerConfig for old macros in Scala 2 until everything is migrated
-    final case class LegacyData(
-        transformerDefinitionPrefix: Expr[dsls.TransformerDefinitionCommons[UpdateCfg]] =
-          null.asInstanceOf[Expr[dsls.TransformerDefinitionCommons[UpdateCfg]]],
-        definitionScope: Option[(ComputedType, ComputedType)] = None
-    )
   }
 
-  protected def configurationsImpl: ConfigurationDefinitionsImpl
-  protected trait ConfigurationDefinitionsImpl {
+  protected val Configurations: ConfigurationsModule
+  protected trait ConfigurationsModule { this: Configurations.type =>
 
     def readTransformerConfig[
         Cfg <: internal.TransformerCfg: Type,

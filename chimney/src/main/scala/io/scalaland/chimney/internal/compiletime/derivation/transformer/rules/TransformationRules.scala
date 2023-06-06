@@ -21,34 +21,32 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     sealed trait ExpansionResult[+A]
 
     object ExpansionResult {
-      // successfully expanded transformation expr
+      // successfully expanded TransformationExpr
       case class Expanded[A](transformationExpr: TransformationExpr[A]) extends ExpansionResult[A]
 
       // continue expansion with another rule on the list
-      case object Continue extends ExpansionResult[Nothing]
+      case object AttemptNextRule extends ExpansionResult[Nothing]
     }
 
     def expandRules[From, To](
         rules: List[Rule]
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[To]] = {
-      rules match {
-        case Nil =>
-          DerivationResult.notSupportedTransformerDerivation
-        case rule :: nextRules =>
-          DerivationResult
-            .namedScope(s"Attempting expansion of rule ${rule.name}")(
-              rule.expand[From, To].logFailure { errors => errors.prettyPrint }
-            )
-            .flatMap {
-              case ExpansionResult.Expanded(transformationExpr) =>
-                DerivationResult
-                  .log(s"Rule ${rule.name} expanded successfully")
-                  .as(transformationExpr.asInstanceOf[TransformationExpr[To]])
-              case ExpansionResult.Continue =>
-                DerivationResult.log(s"Rule ${rule.name} decided to continue expansion") >>
-                  expandRules[From, To](nextRules)
-            }
-      }
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[To]] = rules match {
+      case Nil =>
+        DerivationResult.notSupportedTransformerDerivation
+      case rule :: nextRules =>
+        DerivationResult
+          .namedScope(s"Attempting expansion of rule ${rule.name}")(
+            rule.expand[From, To].logFailure(errors => errors.prettyPrint)
+          )
+          .flatMap {
+            case ExpansionResult.Expanded(transformationExpr) =>
+              DerivationResult
+                .log(s"Rule ${rule.name} expanded successfully")
+                .as(transformationExpr.asInstanceOf[TransformationExpr[To]])
+            case ExpansionResult.AttemptNextRule =>
+              DerivationResult.log(s"Rule ${rule.name} decided to continue expansion") >>
+                expandRules[From, To](nextRules)
+          }
     }
   }
 
@@ -65,7 +63,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
 
     final def map[B: Type](f: Expr[A] => Expr[B]): TransformationExpr[B] = this match {
       case TotalExpr(expr)   => TotalExpr(f(expr))
-      case PartialExpr(expr) => PartialExpr(ChimneyExpr.PartialResult.map(expr)(Expr.Function1.lift(f)))
+      case PartialExpr(expr) => PartialExpr(ChimneyExpr.PartialResult.map(expr)(Expr.Function1.instance(f)))
     }
 
     final def flatMap[B: Type](f: Expr[A] => TransformationExpr[B]): TransformationExpr[B] = this match {

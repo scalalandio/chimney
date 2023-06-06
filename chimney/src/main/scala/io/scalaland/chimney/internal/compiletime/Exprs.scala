@@ -9,6 +9,7 @@ private[compiletime] trait Exprs { this: Definitions =>
   protected type Expr[A]
   protected val Expr: ExprModule
   protected trait ExprModule { this: Expr.type =>
+
     val Nothing: Expr[Nothing]
     val Unit: Expr[Unit]
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]]
@@ -31,7 +32,7 @@ private[compiletime] trait Exprs { this: Definitions =>
     }
 
     object Function1 {
-      def lift[A: Type, B: Type](f: Expr[A] => Expr[B]): Expr[A => B] =
+      def instance[A: Type, B: Type](f: Expr[A] => Expr[B]): Expr[A => B] =
         ExprPromise
           .promise[A](ExprPromise.NameGenerationStrategy.FromType)
           .map[Expr[B]](f)
@@ -39,7 +40,7 @@ private[compiletime] trait Exprs { this: Definitions =>
     }
 
     object Function2 {
-      def lift[A: Type, B: Type, C: Type](f: (Expr[A], Expr[B]) => Expr[C]): Expr[(A, B) => C] =
+      def instance[A: Type, B: Type, C: Type](f: (Expr[A], Expr[B]) => Expr[C]): Expr[(A, B) => C] =
         ExprPromise
           .promise[A](ExprPromise.NameGenerationStrategy.FromType)
           .fulfilAsLambda2[B, Expr[B], C, Expr[(A, B) => C]](
@@ -58,8 +59,27 @@ private[compiletime] trait Exprs { this: Definitions =>
     def typeOf[A](expr: Expr[A]): Type[A]
   }
   implicit final protected class ExprOps[A: Type](private val expr: Expr[A]) {
+
     def asInstanceOfExpr[B: Type]: Expr[B] = Expr.asInstanceOf[A, B](expr)
     def upcastExpr[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
+  }
+
+  implicit final protected class OptionExprOps[A: Type](private val optionExpr: Expr[Option[A]]) {
+
+    def map[B: Type](fExpr: Expr[A => B]): Expr[Option[B]] = Expr.Option.map(optionExpr)(fExpr)
+    def fold[B: Type](noneExpr: Expr[B])(fExpr: Expr[A => B]): Expr[B] =
+      Expr.Option.fold(optionExpr)(noneExpr)(fExpr)
+    def getOrElse(noneExpr: Expr[A]): Expr[A] = Expr.Option.getOrElse(optionExpr)(noneExpr)
+  }
+
+  implicit final protected class LeftExprOps[L: Type, R: Type](private val leftExpr: Expr[Left[L, R]]) {
+
+    def value: Expr[L] = ???
+  }
+
+  implicit final protected class RightExprOps[L: Type, R: Type](private val leftExpr: Expr[Right[L, R]]) {
+
+    def value: Expr[R] = ???
   }
 
   protected type ComputedExpr = { type Underlying }

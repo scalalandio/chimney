@@ -15,11 +15,11 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
           // We're constructing:
           // '{ ${ derivedTo } // using ${ src }.from internally }
           deriveRecursiveTransformationExpr[from.Inner, To](from.unwrap(ctx.src))
-            .map(Rule.ExpansionResult.Expanded(_))
+            .flatMap(DerivationResult.expanded)
             // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
             .orElse(TransformProductToProductRule.expand(ctx))
             .orElse(DerivationResult.notSupportedTransformerDerivation[From, To, Rule.ExpansionResult[To]])
-        case _ => DerivationResult.continue
+        case _ => DerivationResult.attemptNextRule
       }
   }
 }

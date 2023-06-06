@@ -12,6 +12,6 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     // TODO: append index to error path
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-      DerivationResult.continue
+      DerivationResult.attemptNextRule
   }
 }

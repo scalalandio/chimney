@@ -1,8 +1,9 @@
-package io.scalaland.chimney.internal.compiletime
+package io.scalaland.chimney.internal.compiletime.derivation
 
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.partial
+import io.scalaland.chimney.internal.compiletime.Definitions
 
 import scala.annotation.nowarn
 
@@ -10,31 +11,57 @@ import scala.annotation.nowarn
 private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
   sealed protected trait TransformationContext[From, To] extends Product with Serializable {
+    val src: Expr[From]
+
     val From: Type[From]
     val To: Type[To]
-    val src: Expr[From]
 
     val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
     val config: TransformerConfig
+    val derivationStartedAt: java.time.Instant
 
     type Target
     val Target: Type[Target]
     type TypeClass
     val TypeClass: Type[TypeClass]
 
-    val derivationStartedAt: java.time.Instant
-
     def updateFromTo[NewFrom: Type, NewTo: Type](newSrc: Expr[NewFrom]): TransformationContext[NewFrom, NewTo] =
-      fold[TransformationContext[NewFrom, NewTo]](
-        _.copy(From = Type[NewFrom], To = Type[NewTo], src = newSrc)
-      )(
-        _.copy(From = Type[NewFrom], To = Type[NewTo], src = newSrc)
-      )
+      fold[TransformationContext[NewFrom, NewTo]] { (ctx: TransformationContext.ForTotal[From, To]) =>
+        TransformationContext.ForTotal[NewFrom, NewTo](src = newSrc)(
+          From = Type[NewFrom],
+          To = Type[NewTo],
+          runtimeDataStore = ctx.runtimeDataStore,
+          config = ctx.config,
+          ctx.derivationStartedAt
+        )
+      } { (ctx: TransformationContext.ForPartial[From, To]) =>
+        TransformationContext.ForPartial[NewFrom, NewTo](src = newSrc, failFast = ctx.failFast)(
+          From = Type[NewFrom],
+          To = Type[NewTo],
+          runtimeDataStore = ctx.runtimeDataStore,
+          config = ctx.config,
+          ctx.derivationStartedAt
+        )
+      }
 
-    def updateConfig(f: TransformerConfig => TransformerConfig): TransformationContext[From, To] =
-      fold[TransformationContext[From, To]](total => total.copy(config = f(total.config)))(partial =>
-        partial.copy(config = f(partial.config))
-      )
+    def updateConfig(update: TransformerConfig => TransformerConfig): TransformationContext[From, To] =
+      fold[TransformationContext[From, To]] { (ctx: TransformationContext.ForTotal[From, To]) =>
+        TransformationContext.ForTotal[From, To](src = ctx.src)(
+          From = ctx.From,
+          To = ctx.To,
+          runtimeDataStore = ctx.runtimeDataStore,
+          config = update(ctx.config),
+          derivationStartedAt = ctx.derivationStartedAt
+        )
+      } { (ctx: TransformationContext.ForPartial[From, To]) =>
+        TransformationContext.ForPartial[From, To](src = ctx.src, failFast = ctx.failFast)(
+          From = ctx.From,
+          To = ctx.To,
+          runtimeDataStore = ctx.runtimeDataStore,
+          config = update(ctx.config),
+          derivationStartedAt = ctx.derivationStartedAt
+        )
+      }
 
     /** Avoid clumsy
      * {{{
@@ -53,13 +80,12 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
   }
   protected object TransformationContext {
 
-    final case class ForTotal[From, To](
-        From: Type[From],
-        To: Type[To],
-        src: Expr[From],
-        runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
-        config: TransformerConfig,
-        derivationStartedAt: java.time.Instant
+    final case class ForTotal[From, To](src: Expr[From])(
+        val From: Type[From],
+        val To: Type[To],
+        val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
+        val config: TransformerConfig,
+        val derivationStartedAt: java.time.Instant
     ) extends TransformationContext[From, To] {
 
       final type Target = To
@@ -74,7 +100,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       ): B = forTotal(this)
 
       override def toString: String =
-        s"Total(From = ${Type.prettyPrint(From)}, To = ${Type.prettyPrint(To)}, src = ${Expr.prettyPrint(src)}, $config)"
+        s"ForTotal[From = ${Type.prettyPrint(From)}, To = ${Type.prettyPrint(To)}](src = ${Expr.prettyPrint(src)})($config)"
     }
     object ForTotal {
 
@@ -83,24 +109,21 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
           config: TransformerConfig,
           runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
       ): ForTotal[From, To] =
-        ForTotal(
+        ForTotal(src = src)(
           From = Type[From],
           To = Type[To],
-          src = src,
           runtimeDataStore = runtimeDataStore,
           config = config.withDefinitionScope(Type[From].asComputed -> Type[To].asComputed),
           derivationStartedAt = java.time.Instant.now()
         )
     }
 
-    final case class ForPartial[From, To](
-        From: Type[From],
-        To: Type[To],
-        src: Expr[From],
-        failFast: Expr[Boolean],
-        runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
-        config: TransformerConfig,
-        derivationStartedAt: java.time.Instant
+    final case class ForPartial[From, To](src: Expr[From], failFast: Expr[Boolean])(
+        val From: Type[From],
+        val To: Type[To],
+        val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
+        val config: TransformerConfig,
+        val derivationStartedAt: java.time.Instant
     ) extends TransformationContext[From, To] {
 
       final type Target = partial.Result[To]
@@ -115,8 +138,8 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       ): B = forPartial(this)
 
       override def toString: String =
-        s"Partial(From = ${Type.prettyPrint(From)}, To = ${Type.prettyPrint(To)}, src = ${Expr
-            .prettyPrint(src)}, failFast = ${Expr.prettyPrint(failFast)}, $config)"
+        s"ForPartial[From = ${Type.prettyPrint(From)}, To = ${Type
+            .prettyPrint(To)}](src = ${Expr.prettyPrint(src)}, failFast = ${Expr.prettyPrint(failFast)})($config)"
     }
     object ForPartial {
 
@@ -125,11 +148,9 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
           failFast: Expr[Boolean],
           config: TransformerConfig,
           runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
-      ): ForPartial[From, To] = ForPartial(
+      ): ForPartial[From, To] = ForPartial(src = src, failFast = failFast)(
         From = Type[From],
         To = Type[To],
-        src = src,
-        failFast = failFast,
         runtimeDataStore = runtimeDataStore,
         config = config.withDefinitionScope(Type[From].asComputed -> Type[To].asComputed),
         derivationStartedAt = java.time.Instant.now()
@@ -137,11 +158,9 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
     }
   }
 
-  final case class PatcherContext[A, Patch](
-      A: Type[A],
-      Patch: Type[Patch],
-      obj: Expr[A],
-      patch: Expr[Patch]
+  final case class PatcherContext[A, Patch](obj: Expr[A], patch: Expr[Patch])(
+      val A: Type[A],
+      val Patch: Type[Patch]
   ) {
 
     final type Target = A
@@ -151,12 +170,11 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
   }
   object PatcherContext {
 
-    def create[A: Type, Patch: Type](obj: Expr[A], patch: Expr[Patch]): PatcherContext[A, Patch] = PatcherContext(
-      A = Type[A],
-      Patch = Type[Patch],
-      obj = obj,
-      patch = patch
-    )
+    def create[A: Type, Patch: Type](obj: Expr[A], patch: Expr[Patch]): PatcherContext[A, Patch] =
+      PatcherContext(obj = obj, patch = patch)(
+        A = Type[A],
+        Patch = Type[Patch]
+      )
   }
 
   // unpacks Types from Contexts

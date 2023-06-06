@@ -14,24 +14,24 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
     val Transformer: TransformerModule
     trait TransformerModule { this: Transformer.type =>
 
-      def callTransform[From: Type, To: Type](
+      def transform[From: Type, To: Type](
           transformer: Expr[io.scalaland.chimney.Transformer[From, To]],
           src: Expr[From]
       ): Expr[To]
 
-      def lift[From: Type, To: Type](f: Expr[From] => Expr[To]): Expr[io.scalaland.chimney.Transformer[From, To]]
+      def instance[From: Type, To: Type](f: Expr[From] => Expr[To]): Expr[io.scalaland.chimney.Transformer[From, To]]
     }
 
     val PartialTransformer: PartialTransformerModule
     trait PartialTransformerModule { this: PartialTransformer.type =>
 
-      def callTransform[From: Type, To: Type](
+      def transform[From: Type, To: Type](
           transformer: Expr[io.scalaland.chimney.PartialTransformer[From, To]],
           src: Expr[From],
           failFast: Expr[Boolean]
       ): Expr[partial.Result[To]]
 
-      def lift[From: Type, To: Type](
+      def instance[From: Type, To: Type](
           toExpr: (Expr[From], Expr[Boolean]) => Expr[partial.Result[To]]
       ): Expr[io.scalaland.chimney.PartialTransformer[From, To]]
     }
@@ -110,18 +110,23 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
     }
   }
 
-  implicit class TransformerExprOps[From: Type, To: Type](
-      private val transformer: Expr[io.scalaland.chimney.Transformer[From, To]]
+  implicit final protected class TransformerExprOps[From: Type, To: Type](
+      private val transformerExpr: Expr[io.scalaland.chimney.Transformer[From, To]]
   ) {
 
-    def callTransform(src: Expr[From]): Expr[To] = ChimneyExpr.Transformer.callTransform(transformer, src)
+    def transform(src: Expr[From]): Expr[To] = ChimneyExpr.Transformer.transform(transformerExpr, src)
   }
 
-  implicit class PartialTransformerExprOps[From: Type, To: Type](
-      private val transformer: Expr[io.scalaland.chimney.PartialTransformer[From, To]]
+  implicit final protected class PartialTransformerExprOps[From: Type, To: Type](
+      private val transformerExpr: Expr[io.scalaland.chimney.PartialTransformer[From, To]]
   ) {
 
-    def callTransform(src: Expr[From], failFast: Expr[Boolean]): Expr[partial.Result[To]] =
-      ChimneyExpr.PartialTransformer.callTransform(transformer, src, failFast)
+    def transform(src: Expr[From], failFast: Expr[Boolean]): Expr[partial.Result[To]] =
+      ChimneyExpr.PartialTransformer.transform(transformerExpr, src, failFast)
+  }
+
+  implicit final protected class PartialResult[A: Type](private val resultExpr: Expr[partial.Result[A]]) {
+
+    def map[B: Type](fExpr: Expr[A => B]): Expr[partial.Result[B]] = ChimneyExpr.PartialResult.map(resultExpr)(fExpr)
   }
 }

@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 import io.scalaland.chimney.internal.compiletime.datatypes
+import io.scalaland.chimney.internal.compiletime.derivation.ConfigurationsPlatform
 
 import scala.annotation.nowarn
 
@@ -9,6 +10,7 @@ import scala.annotation.nowarn
 private[compiletime] trait DerivationPlatform
     extends Derivation
     with DefinitionsPlatform
+    with ConfigurationsPlatform
     with ImplicitSummoningPlatform
     with datatypes.ValueClassesPlatform
     with rules.TransformImplicitRuleModule

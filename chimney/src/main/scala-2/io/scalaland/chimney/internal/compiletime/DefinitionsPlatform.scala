@@ -9,7 +9,6 @@ private[compiletime] trait DefinitionsPlatform
     with ExprsPlatform
     with ExprPromisesPlatform
     with ChimneyExprsPlatform
-    with ConfigurationsPlatform
     with ResultsPlatform {
 
   val c: blackbox.Context

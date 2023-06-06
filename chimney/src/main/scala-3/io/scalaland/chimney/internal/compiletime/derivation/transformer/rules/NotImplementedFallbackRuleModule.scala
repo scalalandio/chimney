@@ -9,6 +9,6 @@ private[compiletime] trait NotImplementedFallbackRuleModule { this: DerivationPl
   protected object NotImplementedFallbackRule extends Rule("NotImplementedFallback") {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-      DerivationResult.totalExpr('{ ??? })
+      DerivationResult.expandedTotal('{ ??? })
   }
 }

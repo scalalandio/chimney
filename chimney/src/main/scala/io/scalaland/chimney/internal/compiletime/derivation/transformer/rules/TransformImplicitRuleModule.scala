@@ -12,39 +12,38 @@ private[compiletime] trait TransformImplicitRuleModule { this: Derivation =>
   protected object TransformImplicitRule extends Rule("Implicit") {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-      ctx.fold { totalCtx =>
-        import totalCtx.src
-        summonTransformerSafe[From, To].fold(DerivationResult.continue[To]) { transformer =>
-          // We're constructing:
-          // '{ ${ totalTransformer }.transform(${ src }) } }
-          DerivationResult.totalExpr(transformer.callTransform(src))
-        }
-      } { partialCtx =>
-        import partialCtx.{src, failFast}
-        import partialCtx.config.flags.implicitConflictResolution
-        (summonTransformerSafe[From, To], summonPartialTransformerSafe[From, To]) match {
-          case (Some(total), Some(partial)) if implicitConflictResolution.isEmpty =>
-            reportError(
-              s"""Ambiguous implicits while resolving Chimney recursive transformation:
+      ctx match {
+        case TransformationContext.ForTotal(src) =>
+          summonTransformerSafe[From, To].fold(DerivationResult.attemptNextRule[To]) { totalTransformer =>
+            // We're constructing:
+            // '{ ${ totalTransformer }.transform(${ src }) } }
+            DerivationResult.expandedTotal(totalTransformer.transform(src))
+          }
+        case TransformationContext.ForPartial(src, failFast) =>
+          import ctx.config.flags.implicitConflictResolution
+          (summonTransformerSafe[From, To], summonPartialTransformerSafe[From, To]) match {
+            case (Some(total), Some(partial)) if implicitConflictResolution.isEmpty =>
+              reportError(
+                s"""Ambiguous implicits while resolving Chimney recursive transformation:
                    |
-                   |PartialTransformer[${Type.prettyPrint[From]}, ${Type.prettyPrint[To]}]: ${Expr.prettyPrint(total)}
-                   |Transformer[${Type.prettyPrint[From]}, ${Type.prettyPrint[To]}]: ${Expr.prettyPrint(partial)}
+                   |PartialTransformer[${Type.prettyPrint[From]}, ${Type.prettyPrint[To]}]: ${Expr.prettyPrint(partial)}
+                   |Transformer[${Type.prettyPrint[From]}, ${Type.prettyPrint[To]}]: ${Expr.prettyPrint(total)}
                    |
                    |Please eliminate ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used
                    |""".stripMargin
-            )
-          case (Some(total), partialOpt)
-              if partialOpt.isEmpty || implicitConflictResolution.contains(PreferTotalTransformer) =>
-            // We're constructing:
-            // '{ ${ totalTransformer }.transform(${ src }) } }
-            DerivationResult.totalExpr(total.callTransform(src))
-          case (totalOpt, Some(partial))
-              if totalOpt.isEmpty || implicitConflictResolution.contains(PreferPartialTransformer) =>
-            // We're constructing:
-            // '{ ${ partialTransformer }.transform(${ src }, ${ failFast }) } }
-            DerivationResult.partialExpr(partial.callTransform(src, failFast))
-          case _ => DerivationResult.continue
-        }
+              )
+            case (Some(totalTransformer), partialTransformerOpt)
+                if partialTransformerOpt.isEmpty || implicitConflictResolution.contains(PreferTotalTransformer) =>
+              // We're constructing:
+              // '{ ${ totalTransformer }.transform(${ src }) } }
+              DerivationResult.expandedTotal(totalTransformer.transform(src))
+            case (totalTransformerOpt, Some(partialTransformer))
+                if totalTransformerOpt.isEmpty || implicitConflictResolution.contains(PreferPartialTransformer) =>
+              // We're constructing:
+              // '{ ${ partialTransformer }.transform(${ src }, ${ failFast }) } }
+              DerivationResult.expandedPartial(partialTransformer.transform(src, failFast))
+            case _ => DerivationResult.attemptNextRule
+          }
       }
   }
 }
