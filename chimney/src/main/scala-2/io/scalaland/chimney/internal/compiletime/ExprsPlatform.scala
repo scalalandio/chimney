@@ -39,10 +39,18 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     }
 
     object Either extends EitherModule {
-      def Left[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]] =
-        asExpr[Left[L, R]](q"new _root_.scala.util.Left[${Type[L]}, ${Type[R]}]($value)")
-      def Right[L: Type, R: Type](value: Expr[R]): Expr[Right[L, R]] =
-        asExpr[Right[L, R]](q"new _root_.scala.util.Right[${Type[L]}, ${Type[R]}]($value)")
+      object Left extends LeftModule {
+        def apply[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]] =
+          asExpr[Left[L, R]](q"new _root_.scala.util.Left[${Type[L]}, ${Type[R]}]($value)")
+
+        def value[L: Type, R: Type](left: Expr[Left[L, R]]): Expr[L] = asExpr[L](q"$left.value")
+      }
+      object Right extends RightModule {
+        def apply[L: Type, R: Type](value: Expr[R]): Expr[Right[L, R]] =
+          asExpr[Right[L, R]](q"new _root_.scala.util.Right[${Type[L]}, ${Type[R]}]($value)")
+
+        def value[L: Type, R: Type](right: Expr[Right[L, R]]): Expr[R] = asExpr[R](q"$right.value")
+      }
     }
 
     def summonImplicit[A: Type]: Option[Expr[A]] = scala.util

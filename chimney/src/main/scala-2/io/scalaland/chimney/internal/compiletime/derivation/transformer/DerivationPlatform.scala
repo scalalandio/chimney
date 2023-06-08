@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 import io.scalaland.chimney.internal.compiletime.datatypes
-import io.scalaland.chimney.internal.compiletime.derivation.ConfigurationsPlatform
+import io.scalaland.chimney.internal.compiletime.derivation.{ConfigurationsPlatform, ImplicitSummoningPlatform}
 
 import scala.annotation.nowarn
 

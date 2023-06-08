@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.compiletime.{Definitions, DerivationResult}
 import io.scalaland.chimney.internal.compiletime.datatypes
-import io.scalaland.chimney.internal.compiletime.derivation.{Configurations, Contexts}
+import io.scalaland.chimney.internal.compiletime.derivation.{Configurations, Contexts, ImplicitSummoning}
 
 import scala.annotation.nowarn
 
@@ -11,8 +11,8 @@ private[compiletime] trait Derivation
     extends Definitions
     with Configurations
     with Contexts
-    with ResultOps
     with ImplicitSummoning
+    with ResultOps
     with datatypes.ValueClasses
     with rules.TransformationRules {
 

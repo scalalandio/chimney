@@ -27,8 +27,16 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     }
 
     object Either extends EitherModule {
-      def Left[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]] = '{ scala.Left[L, R](${ value }) }
-      def Right[L: Type, R: Type](value: Expr[R]): Expr[Right[L, R]] = '{ scala.Right[L, R](${ value }) }
+      object Left extends LeftModule {
+        def apply[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]] = '{ scala.Left[L, R](${ value }) }
+
+        def value[L: Type, R: Type](left: Expr[Left[L, R]]): Expr[L] = '{ ${ left }.value }
+      }
+      object Right extends RightModule {
+        def apply[L: Type, R: Type](value: Expr[R]): Expr[Right[L, R]] = '{ scala.Right[L, R](${ value }) }
+
+        def value[L: Type, R: Type](right: Expr[Right[L, R]]): Expr[R] = '{ ${ right }.value }
+      }
     }
 
     def summonImplicit[A: Type]: Option[Expr[A]] = scala.quoted.Expr.summon[A]

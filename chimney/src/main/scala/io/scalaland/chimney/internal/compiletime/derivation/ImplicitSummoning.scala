@@ -1,6 +1,8 @@
-package io.scalaland.chimney.internal.compiletime.derivation.transformer
+package io.scalaland.chimney.internal.compiletime.derivation
 
-private[compiletime] trait ImplicitSummoning { this: Derivation =>
+import io.scalaland.chimney.internal.compiletime.Definitions
+
+private[compiletime] trait ImplicitSummoning { this: Definitions & Configurations & Contexts =>
 
   import ChimneyTypeImplicits.*
 

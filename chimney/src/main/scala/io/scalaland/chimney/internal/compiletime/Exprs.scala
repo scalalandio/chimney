@@ -27,8 +27,18 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     val Either: EitherModule
     trait EitherModule { this: Either.type =>
-      def Left[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]]
-      def Right[L: Type, R: Type](value: Expr[R]): Expr[Right[L, R]]
+      val Left: LeftModule
+      trait LeftModule { this: Left.type =>
+        def apply[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]]
+
+        def value[L: Type, R: Type](left: Expr[Left[L, R]]): Expr[L]
+      }
+      val Right: RightModule
+      trait RightModule { this: Right.type =>
+        def apply[L: Type, R: Type](value: Expr[R]): Expr[Right[L, R]]
+
+        def value[L: Type, R: Type](right: Expr[Right[L, R]]): Expr[R]
+      }
     }
 
     object Function1 {
@@ -74,11 +84,11 @@ private[compiletime] trait Exprs { this: Definitions =>
 
   implicit final protected class LeftExprOps[L: Type, R: Type](private val leftExpr: Expr[Left[L, R]]) {
 
-    def value: Expr[L] = ???
+    def value: Expr[L] = Expr.Either.Left.value(leftExpr)
   }
 
-  implicit final protected class RightExprOps[L: Type, R: Type](private val leftExpr: Expr[Right[L, R]]) {
+  implicit final protected class RightExprOps[L: Type, R: Type](private val rightExpr: Expr[Right[L, R]]) {
 
-    def value: Expr[R] = ???
+    def value: Expr[R] = Expr.Either.Right.value(rightExpr)
   }
 }
