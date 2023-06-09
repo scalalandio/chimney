@@ -17,7 +17,6 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     object Option extends OptionModule {
       def apply[A: Type](a: Expr[A]): Expr[Option[A]] = '{ scala.Option(${ a }) }
       def empty[A: Type]: Expr[Option[A]] = '{ scala.Option.empty[A] }
-      def wrap[A: Type]: Expr[A => Option[A]] = '{ scala.Option[A](_) }
       val None: Expr[scala.None.type] = '{ scala.None }
       def map[A: Type, B: Type](opt: Expr[Option[A]])(f: Expr[A => B]): Expr[Option[B]] = '{ ${ opt }.map(${ f }) }
       def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(onSome: Expr[A => B]): Expr[B] =
@@ -27,6 +26,11 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     }
 
     object Either extends EitherModule {
+      def fold[L: Type, R: Type, A: Type](either: Expr[Either[L, R]])(left: Expr[L => A])(
+          right: Expr[R => A]
+      ): Expr[A] =
+        '{ ${ either }.fold[A](${ left }, ${ right }) }
+
       object Left extends LeftModule {
         def apply[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]] = '{ scala.Left[L, R](${ value }) }
 

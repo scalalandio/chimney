@@ -28,10 +28,13 @@ private[compiletime] trait ExprPromises { this: Definitions =>
           )
         )
 
-    def fulfilAsLambda[To: Type, B](use: Expr[From => To] => B)(implicit ev: A <:< Expr[To]): B =
+    def fulfilAsLambdaIn[To: Type, B](use: Expr[From => To] => B)(implicit ev: A <:< Expr[To]): B =
       ExprPromise.createAndUseLambda(fromName, ev(usage), use)
 
-    def fulfilAsLambda2[From2: Type, B, To: Type, C](
+    def fulfilAsLambda[To: Type](implicit ev: A <:< Expr[To]): Expr[From => To] =
+      fulfilAsLambdaIn[To, Expr[From => To]](identity)
+
+    def fulfilAsLambda2In[From2: Type, B, To: Type, C](
         promise: ExprPromise[From2, B]
     )(
         combine: (A, B) => Expr[To]
@@ -39,6 +42,20 @@ private[compiletime] trait ExprPromises { this: Definitions =>
         use: Expr[(From, From2) => To] => C
     ): C =
       ExprPromise.createAndUseLambda2(fromName, promise.fromName, combine(usage, promise.usage), use)
+
+    def fulfilAsLambda2[From2: Type, B, To: Type](
+        promise: ExprPromise[From2, B]
+    )(
+        combine: (A, B) => Expr[To]
+    ): Expr[(From, From2) => To] =
+      fulfilAsLambda2In[From2, B, To, Expr[(From, From2) => To]](promise)(combine)(identity)
+
+    def partition[L, R](implicit
+        ev: A <:< Either[L, R]
+    ): Either[ExprPromise[From, L], ExprPromise[From, R]] = ev(usage) match {
+      case Left(value)  => Left(new ExprPromise(value, fromName))
+      case Right(value) => Right(new ExprPromise(value, fromName))
+    }
 
     def foldEither[L, R, B](
         left: ExprPromise[From, L] => B

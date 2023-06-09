@@ -18,7 +18,6 @@ private[compiletime] trait Exprs { this: Definitions =>
     trait OptionModule { this: Option.type =>
       def apply[A: Type](a: Expr[A]): Expr[Option[A]]
       def empty[A: Type]: Expr[Option[A]]
-      def wrap[A: Type]: Expr[A => Option[A]]
       val None: Expr[scala.None.type]
       def map[A: Type, B: Type](opt: Expr[Option[A]])(f: Expr[A => B]): Expr[Option[B]]
       def fold[A: Type, B: Type](opt: Expr[Option[A]])(none: Expr[B])(f: Expr[A => B]): Expr[B]
@@ -27,6 +26,8 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     val Either: EitherModule
     trait EitherModule { this: Either.type =>
+      def fold[L: Type, R: Type, A: Type](either: Expr[Either[L, R]])(left: Expr[L => A])(right: Expr[R => A]): Expr[A]
+
       val Left: LeftModule
       trait LeftModule { this: Left.type =>
         def apply[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]]
@@ -43,19 +44,16 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     object Function1 {
       def instance[A: Type, B: Type](f: Expr[A] => Expr[B]): Expr[A => B] =
-        ExprPromise
-          .promise[A](ExprPromise.NameGenerationStrategy.FromType)
-          .map[Expr[B]](f)
-          .fulfilAsLambda[B, Expr[A => B]](e => e)
+        ExprPromise.promise[A](ExprPromise.NameGenerationStrategy.FromType).map[Expr[B]](f).fulfilAsLambda
     }
 
     object Function2 {
       def instance[A: Type, B: Type, C: Type](f: (Expr[A], Expr[B]) => Expr[C]): Expr[(A, B) => C] =
         ExprPromise
           .promise[A](ExprPromise.NameGenerationStrategy.FromType)
-          .fulfilAsLambda2[B, Expr[B], C, Expr[(A, B) => C]](
+          .fulfilAsLambda2[B, Expr[B], C](
             ExprPromise.promise[B](ExprPromise.NameGenerationStrategy.FromType)
-          )(f)(e => e)
+          )(f)
     }
 
     def summonImplicit[A: Type]: Option[Expr[A]]
@@ -72,6 +70,7 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     def asInstanceOfExpr[B: Type]: Expr[B] = Expr.asInstanceOf[A, B](expr)
     def upcastExpr[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
+    def tpe: Type[A] = Expr.typeOf(expr)
   }
 
   implicit final protected class OptionExprOps[A: Type](private val optionExpr: Expr[Option[A]]) {
@@ -80,6 +79,12 @@ private[compiletime] trait Exprs { this: Definitions =>
     def fold[B: Type](noneExpr: Expr[B])(fExpr: Expr[A => B]): Expr[B] =
       Expr.Option.fold(optionExpr)(noneExpr)(fExpr)
     def getOrElse(noneExpr: Expr[A]): Expr[A] = Expr.Option.getOrElse(optionExpr)(noneExpr)
+  }
+
+  implicit final protected class EitherExprOps[L: Type, R: Type](private val eitherExpr: Expr[Either[L, R]]) {
+
+    def fold[B: Type](onLeft: Expr[L => B])(onRight: Expr[R => B]): Expr[B] =
+      Expr.Either.fold(eitherExpr)(onLeft)(onRight)
   }
 
   implicit final protected class LeftExprOps[L: Type, R: Type](private val leftExpr: Expr[Left[L, R]]) {

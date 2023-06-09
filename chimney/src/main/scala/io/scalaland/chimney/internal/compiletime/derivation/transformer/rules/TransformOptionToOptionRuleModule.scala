@@ -3,7 +3,6 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
-import io.scalaland.chimney.partial.Result
 
 private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation =>
 
@@ -28,10 +27,9 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
                       // We're constructing:
                       // '{ ${ src }.map(from2: $from2 => ${ derivedTo2 }) }
                       DerivationResult.expandedTotal(
-                        totalP
-                          .fulfilAsLambda { (lambda: Expr[from2.Underlying => to2.Underlying]) =>
-                            ctx.src.upcastExpr[Option[from2.Underlying]].map(lambda)
-                          }
+                        ctx.src
+                          .upcastExpr[Option[from2.Underlying]]
+                          .map(totalP.fulfilAsLambda[to2.Underlying])
                           .upcastExpr[To]
                       )
                     } { (partialP: ExprPromise[from2.Underlying, Expr[partial.Result[to2.Underlying]]]) =>
@@ -40,21 +38,22 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
                       //   ${ derivedResultTo2 }.map(Option(_))
                       // }
                       DerivationResult.expandedPartial(
-                        partialP
-                          .map { (derivedResultTo2: Expr[Result[to2.Underlying]]) =>
-                            derivedResultTo2.map(Expr.Option.wrap)
-                          }
-                          .fulfilAsLambda {
-                            (lambda: Expr[from2.Underlying => partial.Result[Option[to2.Underlying]]]) =>
-                              ctx.src
-                                .upcastExpr[Option[from2.Underlying]]
-                                .fold(
-                                  ChimneyExpr.PartialResult
-                                    .Value(Expr.Option.None)
-                                    .upcastExpr[partial.Result[Option[to2.Underlying]]]
-                                )(lambda)
-                                .upcastExpr[partial.Result[To]]
-                          }
+                        ctx.src
+                          .upcastExpr[Option[from2.Underlying]]
+                          .fold(
+                            ChimneyExpr.PartialResult
+                              .Value(Expr.Option.None)
+                              .upcastExpr[partial.Result[Option[to2.Underlying]]]
+                          )(
+                            partialP
+                              .map { (derivedResultTo2: Expr[partial.Result[to2.Underlying]]) =>
+                                derivedResultTo2.map(Expr.Function1.instance { (param: Expr[to2.Underlying]) =>
+                                  Expr.Option(param)
+                                })
+                              }
+                              .fulfilAsLambda[partial.Result[Option[to2.Underlying]]]
+                          )
+                          .upcastExpr[partial.Result[To]]
                       )
                     }
                 }

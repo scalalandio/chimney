@@ -74,15 +74,10 @@ private[compiletime] trait TransformationRules { this: Derivation =>
           .map(f(_).toEither)
           .foldEither { (totalE: ExprPromise[A, Expr[B]]) =>
             // '{ ${ expr }.map { a: $A => ${ b } } }
-            PartialExpr(
-              totalE.fulfilAsLambda[B, Expr[partial.Result[B]]](ChimneyExpr.PartialResult.map(expr)(_))
-            )
+            PartialExpr(expr.map[B](totalE.fulfilAsLambda))
           } { (partialE: ExprPromise[A, Expr[partial.Result[B]]]) =>
             // '{ ${ expr }.flatMap { a: $A => ${ resultB } } }
-            PartialExpr(
-              partialE
-                .fulfilAsLambda[partial.Result[B], Expr[partial.Result[B]]](ChimneyExpr.PartialResult.flatMap(expr)(_))
-            )
+            PartialExpr(expr.flatMap[B](partialE.fulfilAsLambda))
           }
     }
 

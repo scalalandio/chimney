@@ -127,6 +127,8 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
 
   implicit final protected class PartialResult[A: Type](private val resultExpr: Expr[partial.Result[A]]) {
 
+    def flatMap[B: Type](fExpr: Expr[A => partial.Result[B]]): Expr[partial.Result[B]] =
+      ChimneyExpr.PartialResult.flatMap(resultExpr)(fExpr)
     def map[B: Type](fExpr: Expr[A => B]): Expr[partial.Result[B]] = ChimneyExpr.PartialResult.map(resultExpr)(fExpr)
   }
 }

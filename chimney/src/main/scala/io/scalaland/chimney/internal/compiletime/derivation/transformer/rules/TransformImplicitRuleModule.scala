@@ -23,6 +23,7 @@ private[compiletime] trait TransformImplicitRuleModule { this: Derivation =>
           import ctx.config.flags.implicitConflictResolution
           (summonTransformerSafe[From, To], summonPartialTransformerSafe[From, To]) match {
             case (Some(total), Some(partial)) if implicitConflictResolution.isEmpty =>
+              // TODO: change from immediately terminating error to DerivationResult.fail
               reportError(
                 s"""Ambiguous implicits while resolving Chimney recursive transformation:
                    |
