@@ -134,6 +134,11 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
         asExpr[partial.Result[(A, B)]](
           q"_root_.io.scalaland.chimney.partial.Result.product[${Type[A]}, ${Type[B]}]($fa, $fb, $failFast)"
         )
+
+      def prependErrorPath[A: Type](
+          fa: Expr[partial.Result[A]],
+          path: Expr[partial.PathElement]
+      ): Expr[partial.Result[A]] = asExpr(q"$fa.prependErrorPath($path)")
     }
 
     object PathElement extends PathElementModule {

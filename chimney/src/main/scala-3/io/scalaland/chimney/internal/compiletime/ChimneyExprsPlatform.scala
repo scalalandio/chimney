@@ -103,6 +103,12 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
           failFast: Expr[Boolean]
       ): Expr[partial.Result[(A, B)]] =
         '{ partial.Result.product[A, B](${ fa }, ${ fb }, ${ failFast }) }
+
+      def prependErrorPath[A: Type](
+          fa: Expr[partial.Result[A]],
+          path: Expr[partial.PathElement]
+      ): Expr[partial.Result[A]] =
+        '{ ${ fa }.prependErrorPath(${ path }) }
     }
 
     object PathElement extends PathElementModule {

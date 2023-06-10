@@ -86,6 +86,11 @@ private[compiletime] trait Types { this: Existentials =>
       def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)]
     }
 
+    val Iterator: IteratorModule
+    trait IteratorModule { this: Iterator.type =>
+      def apply[A: Type]: Type[Iterator[A]]
+    }
+
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean
     def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean
 
@@ -141,5 +146,8 @@ private[compiletime] trait Types { this: Existentials =>
     implicit def EitherType[L: Type, R: Type]: Type[Either[L, R]] = Type.Either[L, R]
     implicit def LeftType[L: Type, R: Type]: Type[Left[L, R]] = Type.Either.Left[L, R]
     implicit def RightType[L: Type, R: Type]: Type[Right[L, R]] = Type.Either.Right[L, R]
+    implicit def IterableType[A: Type]: Type[Iterable[A]] = Type.Iterable[A]
+    implicit def MapType[K: Type, V: Type]: Type[Map[K, V]] = Type.Map[K, V]
+    implicit def IteratorType[A: Type]: Type[Iterator[A]] = Type.Iterator[A]
   }
 }

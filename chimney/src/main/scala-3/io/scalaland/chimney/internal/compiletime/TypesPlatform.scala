@@ -126,6 +126,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       }
     }
 
+    object Iterator extends IteratorModule {
+      def apply[A: Type]: Type[Iterator[A]] = quoted.Type.of[Iterator[A]]
+    }
+
     def isSubtypeOf[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) <:< TypeRepr.of(using B)
     def isSameAs[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) =:= TypeRepr.of(using B)
 

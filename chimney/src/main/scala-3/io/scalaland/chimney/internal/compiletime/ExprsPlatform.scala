@@ -11,6 +11,11 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
   protected object Expr extends ExprModule {
     val Nothing: Expr[Nothing] = '{ ??? }
     val Unit: Expr[Unit] = '{ () }
+
+    object Function2 extends Function2Module {
+      def tupled[A: Type, B: Type, C: Type](fn2: Expr[(A, B) => C]): Expr[((A, B)) => C] = '{ ${ fn2 }.tupled }
+    }
+
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]] =
       '{ scala.Array.apply[A](${ quoted.Varargs(args.toSeq) }*)(${ quoted.Expr.summon[ClassTag[A]].get }) }
 
@@ -41,6 +46,10 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
         def value[L: Type, R: Type](right: Expr[Right[L, R]]): Expr[R] = '{ ${ right }.value }
       }
+    }
+
+    object Map extends MapModule {
+      def iterator[K: Type, V: Type](map: Expr[Map[K, V]]): Expr[Iterator[(K, V)]] = '{ ${ map }.iterator }
     }
 
     def summonImplicit[A: Type]: Option[Expr[A]] = scala.quoted.Expr.summon[A]

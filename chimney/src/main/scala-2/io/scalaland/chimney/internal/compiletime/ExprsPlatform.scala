@@ -24,7 +24,13 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     val Nothing: Expr[Nothing] = asExpr[Nothing](q"???")
     val Unit: Expr[Unit] = asExpr[Unit](q"()")
+
+    object Function2 extends Function2Module {
+      def tupled[A: Type, B: Type, C: Type](fn2: Expr[(A, B) => C]): Expr[((A, B)) => C] = asExpr(q"($fn2).tupled")
+    }
+
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]] = asExpr[Array[A]](q"_root_.scala.Array[${Type[A]}](..${args})")
+
     object Option extends OptionModule {
       def apply[A: Type](a: Expr[A]): Expr[Option[A]] = asExpr[Option[A]](q"_root_.scala.Option[${Type[A]}]($a)")
       def empty[A: Type]: Expr[Option[A]] = asExpr[Option[A]](q"_root_.scala.Option.empty[${Type[A]}]")
@@ -55,6 +61,10 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
         def value[L: Type, R: Type](right: Expr[Right[L, R]]): Expr[R] = asExpr[R](q"$right.value")
       }
+    }
+
+    object Map extends MapModule {
+      def iterator[K: Type, V: Type](map: Expr[Map[K, V]]): Expr[Iterator[(K, V)]] = asExpr(q"$map.iterator")
     }
 
     def summonImplicit[A: Type]: Option[Expr[A]] = scala.util

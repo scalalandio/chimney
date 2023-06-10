@@ -88,6 +88,11 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
           fb: Expr[partial.Result[B]],
           failFast: Expr[Boolean]
       ): Expr[partial.Result[(A, B)]]
+
+      def prependErrorPath[A: Type](
+          fa: Expr[partial.Result[A]],
+          path: Expr[partial.PathElement]
+      ): Expr[partial.Result[A]]
     }
 
     val PathElement: PathElementModule
@@ -130,5 +135,8 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
     def flatMap[B: Type](fExpr: Expr[A => partial.Result[B]]): Expr[partial.Result[B]] =
       ChimneyExpr.PartialResult.flatMap(resultExpr)(fExpr)
     def map[B: Type](fExpr: Expr[A => B]): Expr[partial.Result[B]] = ChimneyExpr.PartialResult.map(resultExpr)(fExpr)
+
+    def prependErrorPath(path: Expr[partial.PathElement]): Expr[partial.Result[A]] =
+      ChimneyExpr.PartialResult.prependErrorPath(resultExpr, path)
   }
 }

@@ -30,6 +30,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
     }
 
     object PathElement extends PathElementModule {
+      val tpe: Type[partial.PathElement] = quoted.Type.of[partial.PathElement]
       val Accessor: Type[partial.PathElement.Accessor] = quoted.Type.of[partial.PathElement.Accessor]
       val Index: Type[partial.PathElement.Index] = quoted.Type.of[partial.PathElement.Index]
       val MapKey: Type[partial.PathElement.MapKey] = quoted.Type.of[partial.PathElement.MapKey]

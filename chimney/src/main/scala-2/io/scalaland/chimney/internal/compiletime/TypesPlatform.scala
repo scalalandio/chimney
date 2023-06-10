@@ -143,6 +143,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         else scala.None
     }
 
+    object Iterator extends IteratorModule {
+      def apply[A: Type]: Type[Iterator[A]] = fromWeakTypeConstructor[Iterator[?], Iterator[A]](Type[A])
+    }
+
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean = S.<:<(T)
     def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean = S.=:=(T)
 

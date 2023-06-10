@@ -12,6 +12,25 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     val Nothing: Expr[Nothing]
     val Unit: Expr[Unit]
+
+    object Function1 {
+      def instance[A: Type, B: Type](f: Expr[A] => Expr[B]): Expr[A => B] =
+        ExprPromise.promise[A](ExprPromise.NameGenerationStrategy.FromType).map[Expr[B]](f).fulfilAsLambda
+    }
+
+    val Function2: Function2Module
+    trait Function2Module {
+      this: Function2.type =>
+      def instance[A: Type, B: Type, C: Type](f: (Expr[A], Expr[B]) => Expr[C]): Expr[(A, B) => C] =
+        ExprPromise
+          .promise[A](ExprPromise.NameGenerationStrategy.FromType)
+          .fulfilAsLambda2[B, Expr[B], C](
+            ExprPromise.promise[B](ExprPromise.NameGenerationStrategy.FromType)
+          )(f)
+
+      def tupled[A: Type, B: Type, C: Type](fn2: Expr[(A, B) => C]): Expr[((A, B)) => C]
+    }
+
     def Array[A: Type](args: Expr[A]*): Expr[Array[A]]
 
     val Option: OptionModule
@@ -42,18 +61,9 @@ private[compiletime] trait Exprs { this: Definitions =>
       }
     }
 
-    object Function1 {
-      def instance[A: Type, B: Type](f: Expr[A] => Expr[B]): Expr[A => B] =
-        ExprPromise.promise[A](ExprPromise.NameGenerationStrategy.FromType).map[Expr[B]](f).fulfilAsLambda
-    }
-
-    object Function2 {
-      def instance[A: Type, B: Type, C: Type](f: (Expr[A], Expr[B]) => Expr[C]): Expr[(A, B) => C] =
-        ExprPromise
-          .promise[A](ExprPromise.NameGenerationStrategy.FromType)
-          .fulfilAsLambda2[B, Expr[B], C](
-            ExprPromise.promise[B](ExprPromise.NameGenerationStrategy.FromType)
-          )(f)
+    val Map: MapModule
+    trait MapModule { this: Map.type =>
+      def iterator[K: Type, V: Type](map: Expr[Map[K, V]]): Expr[Iterator[(K, V)]]
     }
 
     def summonImplicit[A: Type]: Option[Expr[A]]
@@ -71,6 +81,11 @@ private[compiletime] trait Exprs { this: Definitions =>
     def asInstanceOfExpr[B: Type]: Expr[B] = Expr.asInstanceOf[A, B](expr)
     def upcastExpr[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
     def tpe: Type[A] = Expr.typeOf(expr)
+  }
+
+  implicit final protected class Function2[A: Type, B: Type, C: Type](private val function2Expr: Expr[(A, B) => C]) {
+
+    def tupled: Expr[((A, B)) => C] = Expr.Function2.tupled(function2Expr)
   }
 
   implicit final protected class OptionExprOps[A: Type](private val optionExpr: Expr[Option[A]]) {
@@ -95,5 +110,10 @@ private[compiletime] trait Exprs { this: Definitions =>
   implicit final protected class RightExprOps[L: Type, R: Type](private val rightExpr: Expr[Right[L, R]]) {
 
     def value: Expr[R] = Expr.Either.Right.value(rightExpr)
+  }
+
+  implicit final protected class MapExprOps[K: Type, V: Type](private val iteratorExpr: Expr[Map[K, V]]) {
+
+    def iterator: Expr[Iterator[(K, V)]] = Expr.Map.iterator(iteratorExpr)
   }
 }
