@@ -9,6 +9,8 @@ import scala.annotation.nowarn
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Gateway { this: Derivation =>
 
+  import ChimneyTypeImplicits.*
+
   // Intended for: being called from platform-specific code which returns Expr directly to splicing site
 
   final def deriveTotalTransformationResult[
@@ -117,11 +119,11 @@ private[compiletime] trait Gateway { this: Derivation =>
     if (ctx.config.flags.displayMacrosLogging) DerivationResult.enableLogPrinting(ctx.derivationStartedAt) >> result
     else result
 
-  private def extractExprAndLog[From: Type, To: Type, Out](result: DerivationResult[Expr[Out]]): Expr[Out] = {
+  private def extractExprAndLog[From: Type, To: Type, Out: Type](result: DerivationResult[Expr[Out]]): Expr[Out] = {
     result.state.macroLogging.foreach { case DerivationResult.State.MacroLogging(derivationStartedAt) =>
       val duration = java.time.Duration.between(derivationStartedAt, java.time.Instant.now())
       val info = result
-        .logSuccess(expr => s"Derived final expression is:\n${Expr.prettyPrint(expr)}")
+        .logSuccess(expr => s"Derived final expression is:\n${expr.prettyPrint}")
         .log(f"Derivation took ${duration.getSeconds}%d.${duration.getNano}%09d s")
         .state
         .journal

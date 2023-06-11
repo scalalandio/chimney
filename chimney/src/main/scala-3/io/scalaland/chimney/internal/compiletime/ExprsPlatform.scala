@@ -16,8 +16,21 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def tupled[A: Type, B: Type, C: Type](fn2: Expr[(A, B) => C]): Expr[((A, B)) => C] = '{ ${ fn2 }.tupled }
     }
 
-    def Array[A: Type](args: Expr[A]*): Expr[Array[A]] =
-      '{ scala.Array.apply[A](${ quoted.Varargs(args.toSeq) }*)(${ quoted.Expr.summon[ClassTag[A]].get }) }
+    object Array extends ArrayModule {
+      def apply[A: Type](args: Expr[A]*): Expr[Array[A]] =
+        '{ scala.Array.apply[A](${ quoted.Varargs(args.toSeq) }*)(${ summonImplicit[ClassTag[A]].get }) }
+
+      def map[A: Type, B: Type](array: Expr[Array[A]])(fExpr: Expr[A => B]): Expr[Array[B]] =
+        '{ ${ array }.map(${ fExpr })(${ summonImplicit[ClassTag[B]].get }) }
+
+      // TODO: write it in similar way to MacroUtils.convertCollection
+      def to[A: Type, C: Type](array: Expr[Array[A]])(
+          factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
+      ): Expr[C] =
+        '{ ${ array }.to(${ factoryExpr }) }
+
+      def iterator[A: Type](array: Expr[Array[A]]): Expr[Iterator[A]] = '{ ${ array }.iterator }
+    }
 
     object Option extends OptionModule {
       def apply[A: Type](a: Expr[A]): Expr[Option[A]] = '{ scala.Option(${ a }) }
@@ -48,8 +61,34 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       }
     }
 
+    object Iterable extends IterableModule {
+      def map[A: Type, B: Type](iterable: Expr[Iterable[A]])(fExpr: Expr[A => B]): Expr[Iterable[B]] =
+        '{ ${ iterable }.map(${ fExpr }) }
+
+      // TODO: write it in similar way to MacroUtils.convertCollection
+      def to[A: Type, C: Type](iterable: Expr[Iterable[A]])(
+          factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
+      ): Expr[C] =
+        '{ ${ iterable }.to(${ factoryExpr }) }
+
+      def iterator[A: Type](iterable: Expr[Iterable[A]]): Expr[Iterator[A]] = '{ ${ iterable }.iterator }
+    }
+
     object Map extends MapModule {
       def iterator[K: Type, V: Type](map: Expr[Map[K, V]]): Expr[Iterator[(K, V)]] = '{ ${ map }.iterator }
+    }
+
+    object Iterator extends IteratorModule {
+      def map[A: Type, B: Type](iterator: Expr[Iterator[A]])(fExpr: Expr[A => B]): Expr[Iterator[B]] =
+        '{ ${ iterator }.map(${ fExpr }) }
+
+      // TODO: write it in similar way to MacroUtils.convertCollection
+      def to[A: Type, C: Type](iterator: Expr[Iterator[A]])(
+          factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
+      ): Expr[C] =
+        '{ ${ iterator }.to(${ factoryExpr }) }
+
+      def zipWithIndex[A: Type](it: Expr[Iterator[A]]): Expr[Iterator[(A, Int)]] = '{ ${ it }.zipWithIndex }
     }
 
     def summonImplicit[A: Type]: Option[Expr[A]] = scala.quoted.Expr.summon[A]
@@ -57,11 +96,9 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B] = '{ ${ expr }.asInstanceOf[B] }
 
     def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] = {
-      Predef.assert(
-        Type[A] <:< Type[B],
-        s"Upcasting can only be done to type proved to be super type! Failed ${Type.prettyPrint[A]} <:< ${Type.prettyPrint[B]} check"
-      )
-      if Type[A] =:= Type[B] then expr.asInstanceOf[Expr[B]] else expr.asExprOf[B]
+      val wideningChecked = expr.widenExpr[B]
+      if Type[A] =:= Type[B] then wideningChecked
+      else expr.asExprOf[B] // TODO: ask Janek if this upcast in code
     }
 
     def prettyPrint[A](expr: Expr[A]): String = expr.asTerm.show(using Printer.TreeAnsiCode)

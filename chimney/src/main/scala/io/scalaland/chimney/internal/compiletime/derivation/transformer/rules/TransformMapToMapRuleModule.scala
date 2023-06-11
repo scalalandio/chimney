@@ -5,6 +5,7 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
 import io.scalaland.chimney.partial
 
 import scala.annotation.nowarn
+import scala.collection.compat.Factory
 
 @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with TransformIterableToIterableRuleModule =>
@@ -40,10 +41,12 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
                       )
                   }
 
-                toKeyResult
-                  .map2(toValueResult) { (toKeyP, toValueP) =>
+                val factoryResult = DerivationResult.summonImplicit[Factory[(toK.Underlying, toV.Underlying), To]]
+
+                toKeyResult.parTuple(toValueResult).parTuple(factoryResult).flatMap {
+                  case ((toKeyP, toValueP), factory) =>
                     // We're constructing:
-                    // '{ partial.Result.traverse[Map[toK, $toV], ($fromK, $fromV), ($toK, toV)](
+                    // '{ partial.Result.traverse[To, ($fromK, $fromV), ($toK, $toV)](
                     //   ${ src }.iterator,
                     //   { case (key, value) =>
                     //     partial.Result.product(
@@ -53,19 +56,17 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
                     //     )
                     //   },
                     //   ${ failFast }
-                    // )
-                    ChimneyExpr.PartialResult
-                      .traverse[Map[
-                        toK.Underlying,
-                        toV.Underlying
-                      ], (fromK.Underlying, fromV.Underlying), (toK.Underlying, toV.Underlying)](
-                        src.upcastExpr[Map[fromK.Underlying, fromV.Underlying]].iterator,
-                        toKeyP.fulfilAsLambda2(toValueP)(ChimneyExpr.PartialResult.product(_, _, failFast)).tupled,
-                        failFast
-                      )
-                      .upcastExpr[partial.Result[To]]
-                  }
-                  .flatMap(DerivationResult.expandedPartial(_))
+                    // )(${ factory })
+                    DerivationResult.expandedPartial(
+                      ChimneyExpr.PartialResult
+                        .traverse[To, (fromK.Underlying, fromV.Underlying), (toK.Underlying, toV.Underlying)](
+                          src.upcastExpr[Map[fromK.Underlying, fromV.Underlying]].iterator,
+                          toKeyP.fulfilAsLambda2(toValueP)(ChimneyExpr.PartialResult.product(_, _, failFast)).tupled,
+                          failFast,
+                          factory
+                        )
+                    )
+                }
           }
         case (_, Type.Map(_, _), _) =>
           // TODO: fallback log

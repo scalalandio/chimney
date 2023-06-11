@@ -69,17 +69,19 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
       def traverse[M: Type, A: Type, B: Type](
           it: Expr[Iterator[A]],
           f: Expr[A => partial.Result[B]],
-          failFast: Expr[Boolean]
+          failFast: Expr[Boolean],
+          factory: Expr[Factory[B, M]]
       ): Expr[partial.Result[M]] =
         '{
-          partial.Result.traverse[M, A, B](${ it }, ${ f }, ${ failFast })(${ quoted.Expr.summon[Factory[B, M]].get })
+          partial.Result.traverse[M, A, B](${ it }, ${ f }, ${ failFast })(${ factory })
         }
 
       def sequence[M: Type, A: Type](
           it: Expr[Iterator[partial.Result[A]]],
-          failFast: Expr[Boolean]
+          failFast: Expr[Boolean],
+          factory: Expr[Factory[A, M]]
       ): Expr[partial.Result[M]] =
-        '{ partial.Result.sequence[M, A](${ it }, ${ failFast })(${ quoted.Expr.summon[Factory[A, M]].get }) }
+        '{ partial.Result.sequence[M, A](${ it }, ${ failFast })(${ factory }) }
 
       def flatMap[A: Type, B: Type](pr: Expr[partial.Result[A]])(
           f: Expr[A => partial.Result[B]]

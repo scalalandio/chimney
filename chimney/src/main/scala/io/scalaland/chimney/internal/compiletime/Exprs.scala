@@ -31,7 +31,18 @@ private[compiletime] trait Exprs { this: Definitions =>
       def tupled[A: Type, B: Type, C: Type](fn2: Expr[(A, B) => C]): Expr[((A, B)) => C]
     }
 
-    def Array[A: Type](args: Expr[A]*): Expr[Array[A]]
+    val Array: ArrayModule
+    trait ArrayModule { this: Array.type =>
+      def apply[A: Type](args: Expr[A]*): Expr[Array[A]]
+
+      def map[A: Type, B: Type](array: Expr[Array[A]])(fExpr: Expr[A => B]): Expr[Array[B]]
+
+      def to[A: Type, C: Type](array: Expr[Array[A]])(
+          factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
+      ): Expr[C]
+
+      def iterator[A: Type](array: Expr[Array[A]]): Expr[Iterator[A]]
+    }
 
     val Option: OptionModule
     trait OptionModule { this: Option.type =>
@@ -61,9 +72,31 @@ private[compiletime] trait Exprs { this: Definitions =>
       }
     }
 
+    val Iterable: IterableModule
+    trait IterableModule { this: Iterable.type =>
+      def map[A: Type, B: Type](iterable: Expr[Iterable[A]])(fExpr: Expr[A => B]): Expr[Iterable[B]]
+
+      def to[A: Type, C: Type](iterable: Expr[Iterable[A]])(
+          factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
+      ): Expr[C]
+
+      def iterator[A: Type](iterable: Expr[Iterable[A]]): Expr[Iterator[A]]
+    }
+
     val Map: MapModule
     trait MapModule { this: Map.type =>
       def iterator[K: Type, V: Type](map: Expr[Map[K, V]]): Expr[Iterator[(K, V)]]
+    }
+
+    val Iterator: IteratorModule
+    trait IteratorModule { this: Iterator.type =>
+      def map[A: Type, B: Type](iterator: Expr[Iterator[A]])(fExpr: Expr[A => B]): Expr[Iterator[B]]
+
+      def to[A: Type, C: Type](iterator: Expr[Iterator[A]])(
+          factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
+      ): Expr[C]
+
+      def zipWithIndex[A: Type](it: Expr[Iterator[A]]): Expr[Iterator[(A, Int)]]
     }
 
     def summonImplicit[A: Type]: Option[Expr[A]]
@@ -78,14 +111,46 @@ private[compiletime] trait Exprs { this: Definitions =>
   }
   implicit final protected class ExprOps[A: Type](private val expr: Expr[A]) {
 
-    def asInstanceOfExpr[B: Type]: Expr[B] = Expr.asInstanceOf[A, B](expr)
-    def upcastExpr[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
+    def prettyPrint: String = Expr.prettyPrint(expr)
+
     def tpe: Type[A] = Expr.typeOf(expr)
+
+    // All of methods below change Expr[A] to Expr[B], but they differ in checks ans how it affects the underlying code:
+    // - asInstanceOfExpr should be used when we want to generate .asInstanceOf in generated code, because we need to
+    //   perform the check in the runtime
+    // - widenExpr should be used when we e.g. have List[A] and we want to use .map method from Iterable to create
+    //   List[B] but without loosing information about concrete type in the generated code, because we proved ourselves
+    //   that the generated code matches our expectations, but it would be PITA to juggle F[_] around
+    // - upcastExpr should be used in simple cases when we can get away with just doing '{ a : B } to access methods
+    //   we have defined for super type without juggling type constructors around
+
+    /** Creates '{ ${ expr }.asInstanceOf[B] } expression in emitted code, moving check to the runtime */
+    def asInstanceOfExpr[B: Type]: Expr[B] = Expr.asInstanceOf[A, B](expr)
+
+    /** Upcasts Expr[A] to Expr[B] if A <:< B, without upcasting the underlying code */
+    def widenExpr[B: Type]: Expr[B] = {
+      Predef.assert(
+        Type[A] <:< Type[B],
+        s"Upcasting can only be done to type proved to be super type! Failed ${Type.prettyPrint[A]} <:< ${Type.prettyPrint[B]} check"
+      )
+      expr.asInstanceOf[Expr[B]]
+    }
+
+    /** Upcasts Expr[A] to Expr[B] in the emitted code: '{ (${ expr }) : B } */
+    def upcastExpr[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
   }
 
   implicit final protected class Function2[A: Type, B: Type, C: Type](private val function2Expr: Expr[(A, B) => C]) {
 
     def tupled: Expr[((A, B)) => C] = Expr.Function2.tupled(function2Expr)
+  }
+
+  implicit final protected class ArrayExprOps[A: Type](private val arrayExpr: Expr[Array[A]]) {
+
+    def map[B: Type](fExpr: Expr[A => B]): Expr[Array[B]] = Expr.Array.map(arrayExpr)(fExpr)
+    def to[C: Type](factoryExpr: Expr[scala.collection.compat.Factory[A, C]]): Expr[C] =
+      Expr.Array.to(arrayExpr)(factoryExpr)
+    def iterator: Expr[Iterator[A]] = Expr.Array.iterator(arrayExpr)
   }
 
   implicit final protected class OptionExprOps[A: Type](private val optionExpr: Expr[Option[A]]) {
@@ -112,8 +177,24 @@ private[compiletime] trait Exprs { this: Definitions =>
     def value: Expr[R] = Expr.Either.Right.value(rightExpr)
   }
 
-  implicit final protected class MapExprOps[K: Type, V: Type](private val iteratorExpr: Expr[Map[K, V]]) {
+  implicit final protected class IterableExprOps[A: Type](private val iterableExpr: Expr[Iterable[A]]) {
 
-    def iterator: Expr[Iterator[(K, V)]] = Expr.Map.iterator(iteratorExpr)
+    def map[B: Type](fExpr: Expr[A => B]): Expr[Iterable[B]] = Expr.Iterable.map(iterableExpr)(fExpr)
+    def to[C: Type](factoryExpr: Expr[scala.collection.compat.Factory[A, C]]): Expr[C] =
+      Expr.Iterable.to(iterableExpr)(factoryExpr)
+    def iterator: Expr[Iterator[A]] = Expr.Iterable.iterator(iterableExpr)
+  }
+
+  implicit final protected class MapExprOps[K: Type, V: Type](private val mapExpr: Expr[Map[K, V]]) {
+
+    def iterator: Expr[Iterator[(K, V)]] = Expr.Map.iterator(mapExpr)
+  }
+
+  implicit final protected class IteratorExprOps[A: Type](private val iteratorExpr: Expr[Iterator[A]]) {
+
+    def map[B: Type](fExpr: Expr[A => B]): Expr[Iterator[B]] = Expr.Iterator.map(iteratorExpr)(fExpr)
+    def to[C: Type](factoryExpr: Expr[scala.collection.compat.Factory[A, C]]): Expr[C] =
+      Expr.Iterator.to(iteratorExpr)(factoryExpr)
+    def zipWithIndex: Expr[Iterator[(A, Int)]] = Expr.Iterator.zipWithIndex(iteratorExpr)
   }
 }

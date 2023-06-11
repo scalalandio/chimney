@@ -1,10 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.dsl as dsls
-import io.scalaland.chimney.internal
-import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
-
 import scala.quoted
+import scala.collection.compat.Factory
 
 private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatform =>
 
@@ -128,7 +125,13 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Iterator extends IteratorModule {
       def apply[A: Type]: Type[Iterator[A]] = quoted.Type.of[Iterator[A]]
+      def unapply[A](tpe: Type[A]): Option[(ExistentialType)] = tpe match {
+        case '[Iterator[inner]] => Some(Type[inner].asExistential)
+        case _                  => scala.None
+      }
     }
+
+    def Factory[A: Type, C: Type]: Type[Factory[A, C]] = quoted.Type.of[Factory[A, C]]
 
     def isSubtypeOf[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) <:< TypeRepr.of(using B)
     def isSameAs[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) =:= TypeRepr.of(using B)

@@ -3,6 +3,8 @@ package io.scalaland.chimney.internal.compiletime
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.partial
 
+import scala.collection.compat.Factory
+
 private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
@@ -94,18 +96,20 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
       def traverse[M: Type, A: Type, B: Type](
           it: Expr[Iterator[A]],
           f: Expr[A => partial.Result[B]],
-          failFast: Expr[Boolean]
+          failFast: Expr[Boolean],
+          factory: Expr[Factory[B, M]]
       ): Expr[partial.Result[M]] =
         asExpr[partial.Result[M]](
-          q"_root_.io.scalaland.chimney.partial.Result.traverse[${Type[M]}, ${Type[A]}, ${Type[B]}]($it, $f, $failFast)"
+          q"_root_.io.scalaland.chimney.partial.Result.traverse[${Type[M]}, ${Type[A]}, ${Type[B]}]($it, $f, $failFast)($factory)"
         )
 
       def sequence[M: Type, A: Type](
           it: Expr[Iterator[partial.Result[A]]],
-          failFast: Expr[Boolean]
+          failFast: Expr[Boolean],
+          factory: Expr[Factory[A, M]]
       ): Expr[partial.Result[M]] =
         asExpr[partial.Result[M]](
-          q"_root_.io.scalaland.chimney.partial.Result.sequence[${Type[M]}, ${Type[A]}]($it, $failFast)"
+          q"_root_.io.scalaland.chimney.partial.Result.sequence[${Type[M]}, ${Type[A]}]($it, $failFast)($factory)"
         )
 
       def flatMap[A: Type, B: Type](pr: Expr[partial.Result[A]])(

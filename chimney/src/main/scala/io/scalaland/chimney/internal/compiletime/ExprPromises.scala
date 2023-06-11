@@ -22,10 +22,8 @@ private[compiletime] trait ExprPromises { this: Definitions =>
           new PrependValsTo(usage, Vector(fromName -> ExistentialExpr(Expr.asInstanceOf[From2, From](init))))
         )
       else
-        DerivationResult.fromException(
-          new AssertionError(
-            s"Initialized deferred Expr[${Type.prettyPrint[From]}] with expression of type ${Type.prettyPrint[From2]}"
-          )
+        DerivationResult.assertionError(
+          s"Initialized deferred Expr[${Type.prettyPrint[From]}] with expression of type ${Type.prettyPrint[From2]}"
         )
 
     def fulfilAsLambdaIn[To: Type, B](use: Expr[From => To] => B)(implicit ev: A <:< Expr[To]): B =

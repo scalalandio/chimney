@@ -62,6 +62,8 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
 
     def apply[A: Type](expr: Expr[A]): ExistentialExpr = Existential[Id, Expr, A](expr)(Type[A])
 
+    def withoutType[A](expr: Expr[A]): ExistentialExpr = apply(expr)(Expr.typeOf(expr))
+
     def prettyPrint(existentialExpr: ExistentialExpr): String = Expr.prettyPrint(existentialExpr.value)
 
     def use[Out](e: ExistentialExpr)(thunk: Type[e.Underlying] => Expr[e.Underlying] => Out): Out =

@@ -6,7 +6,7 @@ import io.scalaland.chimney.partial
 
 private[compiletime] trait ResultOps { this: Definitions & Derivation =>
 
-  implicit class DerivationResultModule(derivationResult: DerivationResult.type) {
+  implicit protected class DerivationResultModule(derivationResult: DerivationResult.type) {
 
     def expanded[To](expr: TransformationExpr[To]): DerivationResult[Rule.ExpansionResult[To]] =
       DerivationResult.pure(Rule.ExpansionResult.Expanded(expr))
@@ -24,10 +24,17 @@ private[compiletime] trait ResultOps { this: Definitions & Derivation =>
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       NotSupportedTransformerDerivation(
-        fieldName = Expr.prettyPrint(ctx.src),
+        fieldName = ctx.src.prettyPrint,
         sourceTypeName = Type.prettyPrint[From],
         targetTypeName = Type.prettyPrint[To]
       )
     )
+
+    def summonImplicit[A: Type]: DerivationResult[Expr[A]] = Expr
+      .summonImplicit[A]
+      .fold(
+        // TODO: create separate type for missing implicit
+        DerivationResult.assertionError[Expr[A]](s"Implicit not found: ${Type.prettyPrint[A]}")
+      )(DerivationResult.pure[Expr[A]](_))
   }
 }

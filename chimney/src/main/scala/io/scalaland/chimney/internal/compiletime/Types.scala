@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
+import scala.collection.compat.Factory
 import scala.collection.immutable.ListSet
 
 private[compiletime] trait Types { this: Existentials =>
@@ -35,61 +36,50 @@ private[compiletime] trait Types { this: Existentials =>
       Unit.asExistential
     )
 
+    trait Constructor1[F[_]] {
+      def apply[A: Type]: Type[F[A]]
+      def unapply[A](tpe: Type[A]): Option[ExistentialType]
+    }
+
+    trait Constructor2[F[_, _]] {
+      def apply[A: Type, B: Type]: Type[F[A, B]]
+      def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)]
+    }
+
     def Tuple2[A: Type, B: Type]: Type[(A, B)]
 
     def Function1[A: Type, B: Type]: Type[A => B]
     def Function2[A: Type, B: Type, C: Type]: Type[(A, B) => C]
 
     val Array: ArrayModule
-    trait ArrayModule { this: Array.type =>
-      def apply[A: Type]: Type[Array[A]]
-      def unapply[A](tpe: Type[A]): Option[ExistentialType]
-
-      val Any: Type[Array[Any]] = apply(Type.Any)
+    trait ArrayModule extends Constructor1[Array] { this: Array.type =>
+      val Any: Type[Array[Any]] = Array(Type.Any)
     }
 
     val Option: OptionModule
-    trait OptionModule { this: Option.type =>
-      def apply[A: Type]: Type[Option[A]]
-      def unapply[A](tpe: Type[A]): Option[ExistentialType]
-
+    trait OptionModule extends Constructor1[Option] { this: Option.type =>
       val None: Type[scala.None.type]
     }
 
     val Either: EitherModule
-    trait EitherModule { this: Either.type =>
-      def apply[L: Type, R: Type]: Type[Either[L, R]]
-      def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)]
-
+    trait EitherModule extends Constructor2[Either] { this: Either.type =>
       val Left: LeftModule
-      trait LeftModule { this: Left.type =>
-        def apply[L: Type, R: Type]: Type[Left[L, R]]
-        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)]
-      }
+      trait LeftModule extends Constructor2[Left] { this: Left.type => }
 
       val Right: RightModule
-      trait RightModule { this: Right.type =>
-        def apply[L: Type, R: Type]: Type[Right[L, R]]
-        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)]
-      }
+      trait RightModule extends Constructor2[Right] { this: Right.type => }
     }
 
     val Iterable: IterableModule
-    trait IterableModule { this: Iterable.type =>
-      def apply[A: Type]: Type[Iterable[A]]
-      def unapply[A](tpe: Type[A]): Option[ExistentialType]
-    }
+    trait IterableModule extends Constructor1[Iterable] { this: Iterable.type => }
 
     val Map: MapModule
-    trait MapModule { this: Map.type =>
-      def apply[K: Type, V: Type]: Type[Map[K, V]]
-      def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)]
-    }
+    trait MapModule extends Constructor2[Map] { this: Map.type => }
 
     val Iterator: IteratorModule
-    trait IteratorModule { this: Iterator.type =>
-      def apply[A: Type]: Type[Iterator[A]]
-    }
+    trait IteratorModule extends Constructor1[Iterator] { this: Iterator.type => }
+
+    def Factory[A: Type, C: Type]: Type[Factory[A, C]]
 
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean
     def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean
@@ -149,5 +139,6 @@ private[compiletime] trait Types { this: Existentials =>
     implicit def IterableType[A: Type]: Type[Iterable[A]] = Type.Iterable[A]
     implicit def MapType[K: Type, V: Type]: Type[Map[K, V]] = Type.Map[K, V]
     implicit def IteratorType[A: Type]: Type[Iterator[A]] = Type.Iterator[A]
+    implicit def FactoryType[A: Type, C: Type]: Type[Factory[A, C]] = Type.Factory[A, C]
   }
 }

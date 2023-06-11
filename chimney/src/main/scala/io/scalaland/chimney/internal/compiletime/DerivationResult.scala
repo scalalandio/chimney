@@ -153,6 +153,8 @@ private[compiletime] object DerivationResult {
 
   def fromException[A](error: Throwable): DerivationResult[A] =
     fail(DerivationErrors(DerivationError.MacroException(error)))
+  def assertionError[A](msg: String): DerivationResult[A] =
+    fromException(new AssertionError(msg))
   def notYetImplemented[A](what: String): DerivationResult[A] =
     fail(DerivationErrors(DerivationError.NotYetImplemented(what)))
   def transformerError[A](transformerDerivationError: TransformerDerivationError): DerivationResult[A] =

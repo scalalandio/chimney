@@ -1,5 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
+import scala.collection.compat.Factory
+
 private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
@@ -145,7 +147,15 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Iterator extends IteratorModule {
       def apply[A: Type]: Type[Iterator[A]] = fromWeakTypeConstructor[Iterator[?], Iterator[A]](Type[A])
+
+      def unapply[A](tpe: Type[A]): Option[(ExistentialType)] =
+        if (apply[Any](Any) <:< tpe)
+          Some(fromUntyped(tpe.typeArgs.head).asExistential)
+        else scala.None
     }
+
+    def Factory[A: Type, C: Type]: Type[Factory[A, C]] =
+      fromWeakTypeConstructor[Factory[?, ?], Factory[A, C]](Type[A], Type[C])
 
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean = S.<:<(T)
     def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean = S.=:=(T)
