@@ -5,9 +5,6 @@ import io.scalaland.chimney.internal
 import io.scalaland.chimney.internal.TransformerCfg
 import io.scalaland.chimney.internal.compiletime.Definitions
 
-import scala.annotation.nowarn
-
-@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Configurations { this: Definitions =>
 
   final protected case class TransformerFlags(

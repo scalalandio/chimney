@@ -4,10 +4,8 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-import scala.annotation.nowarn
 import scala.collection.compat.Factory
 
-@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivation =>
 
   import TypeImplicits.*, ChimneyTypeImplicits.*
@@ -109,13 +107,13 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
     }
     private object IterableOrArray {
 
-      def unapply[M](tpe: Type[M]): Option[Existential[Id, IterableOrArray[M, *]]] = {
-        implicit val M: Type[M] = tpe
+      def unapply[M](implicit tpe: Type[M]): Option[Existential[IterableOrArray[M, *]]] = {
+        // implicit val M: Type[M] = tpe
         tpe match {
           case Type.Iterable(a) =>
             ExistentialType.use(a) { implicit Inner: Type[a.Underlying] =>
               Some(
-                Existential[Id, IterableOrArray[M, *], a.Underlying](
+                Existential[IterableOrArray[M, *], a.Underlying](
                   new IterableOrArray[M, a.Underlying] {
 
                     def iterator(m: Expr[M]): Expr[Iterator[a.Underlying]] =
@@ -136,7 +134,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
           case Type.Array(a) =>
             ExistentialType.use(a) { implicit Inner: Type[a.Underlying] =>
               Some(
-                Existential[Id, IterableOrArray[M, *], a.Underlying](
+                Existential[IterableOrArray[M, *], a.Underlying](
                   new IterableOrArray[M, a.Underlying] {
                     def iterator(m: Expr[M]): Expr[Iterator[a.Underlying]] =
                       m.widenExpr[Array[a.Underlying]].iterator

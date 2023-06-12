@@ -6,9 +6,6 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
 import io.scalaland.chimney.internal.macros.dsl.TransformerBlackboxMacros
 import io.scalaland.chimney.partial
 
-import scala.annotation.nowarn
-
-@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait LegacyMacrosFallbackRuleModule { this: DerivationPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}

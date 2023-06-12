@@ -1,8 +1,5 @@
 package io.scalaland.chimney.internal.compiletime
 
-import scala.annotation.nowarn
-
-@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Exprs { this: Definitions =>
 
   /** Platform-specific expression representation (c.universe.Expr[A] in 2, quotes.Expr[A] in 3 */

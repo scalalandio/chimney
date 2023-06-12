@@ -8,36 +8,34 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
    * Additionally, we might need to have something to prove that our Type[?] is has the same ? as some Value[?].
    * For that, this utility would be useful.
    */
-  sealed protected trait Existential[T[_], V[_]] {
+  sealed protected trait Existential[F[_]] {
 
     type Underlying
-    val Underlying: Type[T[Underlying]]
+    val Underlying: Type[Underlying]
 
-    val value: V[Underlying]
+    val value: F[Underlying]
   }
   protected object Existential {
 
-    private class Impl[T[_], V[_], A](val Underlying: Type[T[A]], val value: V[A]) extends Existential[T, V] {
+    private class Impl[F[_], A](val Underlying: Type[A], val value: F[A]) extends Existential[F] {
 
       type Underlying = A
     }
 
-    def apply[T[_], V[_], A](value: V[A])(implicit TA: Type[T[A]]): Existential[T, V] = new Impl(TA, value)
+    def apply[F[_], A: Type](value: F[A]): Existential[F] = new Impl(Type[A], value)
 
-    def use[T[_], V[_], Out](e: Existential[T, V])(thunk: Type[T[e.Underlying]] => V[e.Underlying] => Out): Out =
+    def use[F[_], Out](e: Existential[F])(thunk: Type[e.Underlying] => F[e.Underlying] => Out): Out =
       thunk(e.Underlying)(e.value)
-    def use2[T1[_], V1[_], T2[_], V2[_], Out](e1: Existential[T1, V1], e2: Existential[T2, V2])(
-        thunk: Type[T1[e1.Underlying]] => Type[T2[e2.Underlying]] => (V1[e1.Underlying], V2[e2.Underlying]) => Out
+    def use2[F1[_], F2[_], Out](e1: Existential[F1], e2: Existential[F2])(
+        thunk: Type[e1.Underlying] => Type[e2.Underlying] => (F1[e1.Underlying], F2[e2.Underlying]) => Out
     ): Out = thunk(e1.Underlying)(e2.Underlying)(e1.value, e2.value)
   }
 
-  final protected type Id[A] = A
-
   /** Convenient utility to represent Type[?] with erased inner type, but without any accompanying value. */
-  final protected type ExistentialType = Existential[Id, Type]
+  final protected type ExistentialType = Existential[Type]
   protected object ExistentialType {
 
-    def apply[A](tpe: Type[A]): ExistentialType = Existential[Id, Type, A](tpe)(tpe)
+    def apply[A](tpe: Type[A]): ExistentialType = Existential[Type, A](tpe)(tpe)
 
     def prettyPrint(existentialType: ExistentialType): String = Type.prettyPrint(existentialType.Underlying)
 
@@ -57,10 +55,10 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
   }
 
   /** Convenient utility to represent Expr[?] with erased inner type with accompanying Type[?] of the same ?. */
-  final protected type ExistentialExpr = Existential[Id, Expr]
+  final protected type ExistentialExpr = Existential[Expr]
   protected object ExistentialExpr {
 
-    def apply[A: Type](expr: Expr[A]): ExistentialExpr = Existential[Id, Expr, A](expr)(Type[A])
+    def apply[A: Type](expr: Expr[A]): ExistentialExpr = Existential[Expr, A](expr)
 
     def withoutType[A](expr: Expr[A]): ExistentialExpr = apply(expr)(Expr.typeOf(expr))
 

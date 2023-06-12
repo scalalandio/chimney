@@ -4,9 +4,6 @@ import io.scalaland.chimney.dsl.{PreferPartialTransformer, PreferTotalTransforme
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
-import scala.annotation.nowarn
-
-@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait TransformImplicitRuleModule { this: Derivation =>
 
   protected object TransformImplicitRule extends Rule("Implicit") {

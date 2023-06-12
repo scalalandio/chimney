@@ -5,9 +5,6 @@ import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.compiletime.Definitions
 
-import scala.annotation.nowarn
-
-@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
   sealed protected trait TransformationContext[From, To] extends Product with Serializable {
@@ -65,7 +62,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
     /** Avoid clumsy
      * {{{
-     * @nowarn("msg=The outer reference in this type test cannot be checked at run time.")
+     * 
      * ctx match {
      *   case total: TransformationContext.ForTotal[?, ?]     => ...
      *   case partial: TransformationContext.ForPartial[?, ?] => ...

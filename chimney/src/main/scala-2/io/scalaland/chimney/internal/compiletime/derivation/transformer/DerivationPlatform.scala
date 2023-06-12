@@ -4,9 +4,6 @@ import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 import io.scalaland.chimney.internal.compiletime.datatypes
 import io.scalaland.chimney.internal.compiletime.derivation.{ConfigurationsPlatform, ImplicitSummoningPlatform}
 
-import scala.annotation.nowarn
-
-@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait DerivationPlatform
     extends Derivation
     with DefinitionsPlatform

@@ -4,9 +4,6 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-import scala.annotation.nowarn
-
-@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: Derivation =>
 
   import TypeImplicits.*, ChimneyTypeImplicits.*

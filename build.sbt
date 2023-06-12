@@ -40,7 +40,7 @@ val settings = Seq(
       case Some((3, _)) =>
         Seq(
           // TODO: add linters
-          "-explain",
+         // "-explain",
           "-rewrite",
           // format: off
           "-source", "3.3-migration",
@@ -81,6 +81,7 @@ val settings = Seq(
           "-Ytasty-reader",
           "-Wconf:origin=scala.collection.compat.*:s",
           "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s",
+          "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
           "-Wconf:src=io/scalaland/chimney/cats/package.scala:s" // silence package object inheritance deprecation
         )
       case Some((2, 12)) =>
@@ -123,6 +124,7 @@ val settings = Seq(
           "-Ywarn-nullary-override",
           "-Ywarn-nullary-unit",
           "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s",
+          "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
           "-Wconf:src=io/scalaland/chimney/cats/package.scala:s" // silence package object inheritance deprecation
         )
       case _ => Seq.empty

@@ -3,10 +3,8 @@ package io.scalaland.chimney.internal.compiletime
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.partial
 
-import scala.annotation.nowarn
 import scala.collection.compat.Factory
 
-@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait ChimneyExprs { this: Definitions =>
 
   protected val ChimneyExpr: ChimneyExprModule

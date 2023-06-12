@@ -4,9 +4,6 @@ import io.scalaland.chimney.internal.compiletime.{Definitions, DerivationResult}
 import io.scalaland.chimney.internal.compiletime.datatypes
 import io.scalaland.chimney.internal.compiletime.derivation.{Configurations, Contexts, ImplicitSummoning}
 
-import scala.annotation.nowarn
-
-@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Derivation
     extends Definitions
     with Configurations

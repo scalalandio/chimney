@@ -4,9 +4,6 @@ import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.{internal, partial, PartialTransformer, Transformer}
 
-import scala.annotation.nowarn
-
-@nowarn("msg=The outer reference in this type test cannot be checked at run time.")
 private[compiletime] trait Gateway { this: Derivation =>
 
   import ChimneyTypeImplicits.*
