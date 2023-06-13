@@ -4,21 +4,19 @@ import io.scalaland.chimney.internal.compiletime.Definitions
 
 private[compiletime] trait ValueClasses { this: Definitions =>
 
-  protected trait ValueClass[Outer] {
+  protected case class ValueClass[Outer, Inner](
+      fieldName: String,
+      unwrap: Expr[Outer] => Expr[Inner],
+      wrap: Expr[Inner] => Expr[Outer]
+  )
+  protected object ValueClass {
 
-    type Inner
-    val Inner: Type[Inner]
-
-    val fieldName: String
-
-    def unwrap(expr: Expr[Outer]): Expr[Inner]
-
-    def wrap(expr: Expr[Inner]): Expr[Outer]
+    def unapply[A](implicit A: Type[A]): Option[Existential[ValueClass[A, *]]] = ValueClassType.parse(A)
   }
 
-  protected val ValueClass: ValueClassModule
-  protected trait ValueClassModule { this: ValueClass.type =>
+  protected val ValueClassType: ValueClassTypeModule
+  protected trait ValueClassTypeModule { this: ValueClassType.type =>
 
-    def unapply[A](implicit A: Type[A]): Option[ValueClass[A]]
+    def parse[A: Type]: Option[Existential[ValueClass[A, *]]]
   }
 }

@@ -10,15 +10,17 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[From] match {
-        case ValueClass(from) =>
-          implicit val InnerFrom: Type[from.Inner] = from.Inner
-          // We're constructing:
-          // '{ ${ derivedTo } // using ${ src }.from internally }
-          deriveRecursiveTransformationExpr[from.Inner, To](from.unwrap(ctx.src))
-            .flatMap(DerivationResult.expanded)
-            // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
-            .orElse(TransformProductToProductRule.expand(ctx))
-            .orElse(DerivationResult.notSupportedTransformerDerivation[From, To, Rule.ExpansionResult[To]])
+        case ValueClass(from2) =>
+          Existential.use(from2) {
+            implicit From2: Type[from2.Underlying] => (valueFrom: ValueClass[From, from2.Underlying]) =>
+              // We're constructing:
+              // '{ ${ derivedTo } // using ${ src }.from internally }
+              deriveRecursiveTransformationExpr[from2.Underlying, To](valueFrom.unwrap(ctx.src))
+                .flatMap(DerivationResult.expanded)
+                // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
+                .orElse(TransformProductToProductRule.expand(ctx))
+                .orElse(DerivationResult.notSupportedTransformerDerivation[From, To, Rule.ExpansionResult[To]])
+          }
         case _ => DerivationResult.attemptNextRule
       }
   }
