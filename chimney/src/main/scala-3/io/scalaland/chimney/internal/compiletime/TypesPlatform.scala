@@ -133,13 +133,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     def Factory[A: Type, C: Type]: Type[Factory[A, C]] = quoted.Type.of[Factory[A, C]]
 
+    def isTuple[A](A: Type[A]): Boolean = TypeRepr.of(using A).typeSymbol.fullName.startsWith("scala.Tuple")
+
     def isSubtypeOf[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) <:< TypeRepr.of(using B)
     def isSameAs[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) =:= TypeRepr.of(using B)
-
-    def isSealed[A](A: Type[A]): Boolean = {
-      val flags = TypeRepr.of(using A).typeSymbol.flags
-      flags.is(Flags.Enum) || flags.is(Flags.Sealed)
-    }
 
     def prettyPrint[T: Type]: String = {
       val repr = TypeRepr.of[T]

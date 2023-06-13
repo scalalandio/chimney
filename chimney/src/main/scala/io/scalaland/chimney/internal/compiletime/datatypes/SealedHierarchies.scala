@@ -4,14 +4,25 @@ import io.scalaland.chimney.internal.compiletime.Definitions
 
 private[compiletime] trait SealedHierarchies { this: Definitions =>
 
-  final protected case class SealedHierarchy[A](components: SealedHierarchy.Components[A])
-  protected object SealedHierarchy {
+  final protected case class Enum[A](components: Enum.Elements[A])
+  protected object Enum {
 
-    final def unapply[A](implicit tpe: Type[A]): Option[SealedHierarchy[A]] = parseAsSealedHierarchy[A]
+    final def unapply[A](implicit tpe: Type[A]): Option[Enum[A]] = SealedHierarchy.parse[A]
 
-    final case class Component[Of, A](name: String, upcast: Expr[A] => Expr[Of])
-    final type Components[Of] = List[Existential[Component[Of, *]]]
+    final case class Element[Of, A](name: String, upcast: Expr[A] => Expr[Of])
+    final type Elements[Of] = List[Existential[Element[Of, *]]]
   }
 
-  protected def parseAsSealedHierarchy[A: Type]: Option[SealedHierarchy[A]]
+  protected val SealedHierarchy: SealedHierarchyModule
+  protected trait SealedHierarchyModule { this: SealedHierarchy.type =>
+
+    def parse[A: Type]: Option[Enum[A]]
+
+    def isSealed[A](A: Type[A]): Boolean
+  }
+
+  implicit class SealedHierarchyOps[A](private val tpe: Type[A]) {
+
+    def isSealed: Boolean = SealedHierarchy.isSealed(tpe)
+  }
 }

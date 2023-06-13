@@ -4,17 +4,14 @@ import io.scalaland.chimney.internal.compiletime.Definitions
 
 private[compiletime] trait ProductTypes { this: Definitions =>
 
-  final protected case class ProductType[A](
-      extraction: ProductType.Getters[A],
-      construction: ProductType.Construction[A]
-  )
-  protected object ProductType {
+  final protected case class Product[A](extraction: Product.Getters[A], construction: Product.Construction[A])
+  protected object Product {
 
-    final def unapply[A](implicit tpe: Type[A]): Option[ProductType[A]] = parseAsProductType(tpe)
+    final def unapply[A](implicit tpe: Type[A]): Option[Product[A]] = ProductType.parse(tpe)
 
     final case class Getter[From, A](name: String, sourceType: Getter.SourceType, get: Expr[From] => Expr[A])
     object Getter {
-      sealed trait SourceType extends Product with Serializable
+      sealed trait SourceType extends scala.Product with Serializable
       object SourceType {
         case object ConstructorVal extends SourceType
         case object AccessorMethod extends SourceType
@@ -26,16 +23,13 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     final case class Setter[To, A](name: String, set: (Expr[To], Expr[A]) => Expr[Unit])
     final type Setters[To] = List[Existential[Setter[To, *]]]
 
-    final case class Param[A](name: String, fallbacks: Vector[Param.Fallback[A]])
+    final case class Param[A](name: String, defaultValue: Option[Param.DefaultValue[A]])
     object Param {
-      sealed trait Fallback[A] extends Product with Serializable
-      object Fallback {
-        final case class DefaultValue[A](default: Expr[A]) extends Fallback[A]
-      }
+      final case class DefaultValue[A](default: Expr[A])
     }
     final type Params = List[List[Existential[Param]]]
 
-    sealed trait Construction[To] extends Product with Serializable
+    sealed trait Construction[To] extends scala.Product with Serializable
     object Construction {
 
       final case class JavaBean[To](defaultConstructor: Expr[To], setters: Setters[To]) extends Construction[To]
@@ -43,5 +37,36 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     }
   }
 
-  protected def parseAsProductType[A: Type]: Option[ProductType[A]]
+  protected val ProductType: ProductTypesModule
+  protected trait ProductTypesModule { this: ProductType.type =>
+
+    def isCaseClass[A](A: Type[A]): Boolean
+    def isCaseObject[A](A: Type[A]): Boolean
+    def isJavaBean[A](A: Type[A]): Boolean
+
+    def parse[A: Type]: Option[Product[A]]
+
+    private val getAccessor = raw"(?i)get(.)(.*)".r
+    private val isAccessor = raw"(?i)is(.)(.*)".r
+    private val dropGetIs: String => String = {
+      case getAccessor(head, tail) => head.toLowerCase + tail
+      case isAccessor(head, tail)  => head.toLowerCase + tail
+      case other                   => other
+    }
+    val isGetterName: String => Boolean = name => getAccessor.matches(name) || isAccessor.matches(name)
+
+    private val setAccessor = raw"(?i)set(.)(.*)".r
+    private val dropSet: String => String = {
+      case setAccessor(head, tail) => head.toLowerCase + tail
+      case other                   => other
+    }
+    val isSetterName: String => Boolean = name => setAccessor.matches(name)
+  }
+
+  implicit class ProductTypeOps[A](private val tpe: Type[A]) {
+
+    def isCaseClass: Boolean = ProductType.isCaseClass(tpe)
+    def isCaseObject: Boolean = ProductType.isCaseObject(tpe)
+    def isJavaBean: Boolean = ProductType.isJavaBean(tpe)
+  }
 }

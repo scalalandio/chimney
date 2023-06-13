@@ -10,6 +10,8 @@ private[compiletime] trait Derivation
     with Contexts
     with ImplicitSummoning
     with ResultOps
+    with datatypes.ProductTypes
+    with datatypes.SealedHierarchies
     with datatypes.ValueClasses
     with rules.TransformationRules {
 

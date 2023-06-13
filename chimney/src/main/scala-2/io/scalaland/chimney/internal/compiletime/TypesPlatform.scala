@@ -157,10 +157,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def Factory[A: Type, C: Type]: Type[Factory[A, C]] =
       fromWeakTypeConstructor[Factory[?, ?], Factory[A, C]](Type[A], Type[C])
 
+    def isTuple[A](A: Type[A]): Boolean = A.typeSymbol.fullName.startsWith("scala.Tuple")
+
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean = S.<:<(T)
     def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean = S.=:=(T)
-
-    def isSealed[A](A: Type[A]): Boolean = A.typeSymbol.asClass.isSealed
 
     def prettyPrint[A: Type]: String = Type[A].toString
   }

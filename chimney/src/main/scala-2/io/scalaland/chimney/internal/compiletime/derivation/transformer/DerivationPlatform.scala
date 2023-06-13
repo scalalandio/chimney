@@ -9,6 +9,8 @@ private[compiletime] trait DerivationPlatform
     with DefinitionsPlatform
     with ConfigurationsPlatform
     with ImplicitSummoningPlatform
+    with datatypes.ProductTypesPlatform
+    with datatypes.SealedHierarchiesPlatform
     with datatypes.ValueClassesPlatform
     with rules.TransformImplicitRuleModule
     with rules.TransformSubtypesRuleModule

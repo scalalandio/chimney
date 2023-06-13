@@ -9,6 +9,8 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     with ConfigurationsPlatform
     with Derivation
     with ImplicitSummoningPlatform
+    with datatypes.ProductTypesPlatform
+    with datatypes.SealedHierarchiesPlatform
     with datatypes.ValueClassesPlatform
     with rules.TransformImplicitRuleModule
     with rules.TransformSubtypesRuleModule

@@ -47,7 +47,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     }
   }
 
-  sealed protected trait TransformationExpr[A] extends Product with Serializable {
+  sealed protected trait TransformationExpr[A] extends scala.Product with Serializable {
 
     import TransformationExpr.{PartialExpr, TotalExpr}
 

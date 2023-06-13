@@ -81,10 +81,10 @@ private[compiletime] trait Types { this: Existentials =>
 
     def Factory[A: Type, C: Type]: Type[Factory[A, C]]
 
+    def isTuple[A](A: Type[A]): Boolean
+
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean
     def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean
-
-    def isSealed[A](A: Type[A]): Boolean
 
     def prettyPrint[A: Type]: String
   }
@@ -95,8 +95,7 @@ private[compiletime] trait Types { this: Existentials =>
 
     final def isPrimitive: Boolean = Type.primitives.exists(tpe <:< _.Underlying)
 
-    final def isSealed: Boolean = Type.isSealed(tpe)
-
+    final def isTuple: Boolean = Type.isTuple(tpe)
     final def isAnyVal: Boolean = tpe <:< Type.AnyVal
     final def isOption: Boolean = tpe <:< Type.Option(Type.Any)
     final def isEither: Boolean = tpe <:< Type.Either(Type.Any, Type.Any)
