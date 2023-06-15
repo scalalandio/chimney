@@ -10,7 +10,7 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[To] match {
-        case ValueClass(to2) =>
+        case ValueClassType(to2) =>
           Existential.use(to2) { implicit To2: Type[to2.Underlying] => (valueTo: ValueClass[To, to2.Underlying]) =>
             deriveRecursiveTransformationExpr[From, to2.Underlying](ctx.src)
               .flatMap { derivedTo2 =>

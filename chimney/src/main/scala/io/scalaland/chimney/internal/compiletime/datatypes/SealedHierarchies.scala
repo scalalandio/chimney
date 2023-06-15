@@ -7,8 +7,6 @@ private[compiletime] trait SealedHierarchies { this: Definitions =>
   final protected case class Enum[A](elements: Enum.Elements[A])
   protected object Enum {
 
-    final def unapply[A](implicit tpe: Type[A]): Option[Enum.Elements[A]] = SealedHierarchy.parse[A].map(_.elements)
-
     final case class Element[Of, A](name: String, upcast: Expr[A] => Expr[Of])
     final type Elements[Of] = List[Existential[Element[Of, *]]]
   }
@@ -17,6 +15,7 @@ private[compiletime] trait SealedHierarchies { this: Definitions =>
   protected trait SealedHierarchyModule { this: SealedHierarchy.type =>
 
     def parse[A: Type]: Option[Enum[A]]
+    final def unapply[A](tpe: Type[A]): Option[Enum[A]] = parse(tpe)
 
     def isSealed[A](A: Type[A]): Boolean
   }

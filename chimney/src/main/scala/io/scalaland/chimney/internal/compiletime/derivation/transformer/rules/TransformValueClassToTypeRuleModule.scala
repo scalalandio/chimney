@@ -10,7 +10,7 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[From] match {
-        case ValueClass(from2) =>
+        case ValueClassType(from2) =>
           Existential.use(from2) {
             implicit From2: Type[from2.Underlying] => (valueFrom: ValueClass[From, from2.Underlying]) =>
               // We're constructing:

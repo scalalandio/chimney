@@ -4,10 +4,8 @@ import io.scalaland.chimney.internal.compiletime.Definitions
 
 private[compiletime] trait ProductTypes { this: Definitions =>
 
-  final protected case class Product[A](extraction: Product.Getters[A], construction: Product.Construction[A])
+  final protected case class Product[A](extraction: Product.Getters[A], construction: Product.Constructor[A])
   protected object Product {
-
-    final def unapply[A](implicit tpe: Type[A]): Option[Product[A]] = ProductType.parse(tpe)
 
     final case class Getter[From, A](name: String, sourceType: Getter.SourceType, get: Expr[From] => Expr[A])
     object Getter {
@@ -23,17 +21,20 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     final case class Setter[To, A](name: String, set: (Expr[To], Expr[A]) => Expr[Unit])
     final type Setters[To] = List[Existential[Setter[To, *]]]
 
-    final case class Param[A](name: String, defaultValue: Option[Param.DefaultValue[A]])
-    object Param {
+    final case class Parameter[A](name: String, defaultValue: Option[Parameter.DefaultValue[A]])
+    object Parameter {
       final case class DefaultValue[A](default: Expr[A])
     }
-    final type Params = List[List[Existential[Param]]]
+    final type Parameters = List[List[Existential[Parameter]]]
 
-    sealed trait Construction[To] extends scala.Product with Serializable
-    object Construction {
+    final case class Argument[A](name: String, value: Expr[A])
+    final type Arguments = List[Existential[Argument]]
 
-      final case class JavaBean[To](defaultConstructor: Expr[To], setters: Setters[To]) extends Construction[To]
-      final case class CaseClass[To](parameters: Params, create: Params => Expr[To]) extends Construction[To]
+    sealed trait Constructor[To] extends scala.Product with Serializable
+    object Constructor {
+
+      final case class JavaBean[To](defaultConstructor: Expr[To], setters: Setters[To]) extends Constructor[To]
+      final case class CaseClass[To](constructor: Arguments => Expr[To], parameters: Parameters) extends Constructor[To]
     }
   }
 
@@ -45,10 +46,11 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     def isJavaBean[A](A: Type[A]): Boolean
 
     def parse[A: Type]: Option[Product[A]]
+    final def unapply[A](tpe: Type[A]): Option[Product[A]] = parse(tpe)
 
     implicit class RegexpOps(regexp: scala.util.matching.Regex) {
 
-      def isMatching(value: String): Boolean = regexp.findFirstIn(value).isDefined // 2.12 doesn't have .matches
+      def isMatching(value: String): Boolean = regexp.pattern.matcher(value).matches() // 2.12 doesn't have .matches
     }
 
     private val getAccessor = raw"(?i)get(.)(.*)".r

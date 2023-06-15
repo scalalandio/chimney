@@ -14,7 +14,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
-        case (Enum(fromElements: Enum.Elements[From]), Enum(toElements: Enum.Elements[To])) =>
+        case (SealedHierarchy(Enum(fromElements)), SealedHierarchy(Enum(toElements))) =>
           Traverse[List]
             .traverse[DerivationResult, Existential[Enum.Element[From, *]], Existential[
               ExprPromise[*, TransformationExpr[To]]
