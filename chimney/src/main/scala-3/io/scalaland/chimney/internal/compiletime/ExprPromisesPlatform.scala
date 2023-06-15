@@ -66,7 +66,31 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
   protected object PatternMatchCase extends PatternMatchCaseModule {
 
-    def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = ???
+    def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = Match(
+      src.asTerm,
+      cases.map { case PatternMatchCase(someFrom, usage, fromName) =>
+        ExistentialType.use(someFrom) { implicit SomeFrom: Type[someFrom.Underlying] =>
+          // TODO: this is a shortcut which most likely won't compile
+          // TODO: we would have to `{ val name = ${ newBindName }; ${ matchCase.usage } }
+
+          // Scala 3's enums' parameterless cases are vals with type erased, so w have to match them by value
+          if TypeRepr.of[someFrom.Underlying].typeSymbol.flags.is(Flags.Enum | Flags.JavaStatic) then
+            // case arg @ Enum.Value => ...
+            CaseDef(
+              Bind(fromName, Ident(TypeRepr.of[someFrom.Underlying].typeSymbol.termRef)),
+              None,
+              usage.asTerm
+            )
+          else
+            // case arg : Enum.Value => ...
+            CaseDef(
+              Bind(fromName, Typed(Wildcard(), TypeTree.of[someFrom.Underlying])),
+              None,
+              usage.asTerm
+            )
+        }
+      }
+    ).asExpr.asExprOf[To]
   }
 
   // TODO: consult with Janek Chyb if this is necessary/safe
