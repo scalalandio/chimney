@@ -24,71 +24,69 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
                     deriveRecursiveTransformationExpr[from2.Underlying, to2.Underlying](newFromSrc)
                   }
                   .flatMap { (to2P: ExprPromise[from2.Underlying, TransformationExpr[to2.Underlying]]) =>
-                    to2P
-                      .map(_.toEither)
-                      .foldEither { (totalP: ExprPromise[from2.Underlying, Expr[to2.Underlying]]) =>
-                        // After mapping we don't know the exact static type here, but we might check the values
-                        // to see if we could skip .to(factory) part
-                        lazy val mappedFrom = fromIorA.map(ctx.src)(totalP.fulfilAsLambda[to2.Underlying])
-                        if (Type[from2.Underlying] =:= Type[to2.Underlying]) {
-                          toIorA.factory.flatMap { (factory: Expr[Factory[to2.Underlying, To]]) =>
-                            // We're constructing:
-                            // '{ ${ src }.to(Factory[$To, $to2]) }
-                            DerivationResult.expandedTotal(
-                              fromIorA.to[To](ctx.src)(factory.upcastExpr[Factory[from2.Underlying, To]])
-                            )
-                          }
-                        } else if (mappedFrom.Underlying =:= Type[To]) {
+                    to2P.foldTransformationExpr { (totalP: ExprPromise[from2.Underlying, Expr[to2.Underlying]]) =>
+                      // After mapping we don't know the exact static type here, but we might check the values
+                      // to see if we could skip .to(factory) part
+                      lazy val mappedFrom = fromIorA.map(ctx.src)(totalP.fulfilAsLambda[to2.Underlying])
+                      if (Type[from2.Underlying] =:= Type[to2.Underlying]) {
+                        toIorA.factory.flatMap { (factory: Expr[Factory[to2.Underlying, To]]) =>
                           // We're constructing:
-                          // '{ ${ src }.map(from2 => ${ derivedTo2 }) }
-                          DerivationResult.expandedTotal {
-                            ExistentialExpr.use(mappedFrom) { implicit Out: Type[mappedFrom.Underlying] => expr =>
-                              expr.upcastExpr[To]
-                            }
-                          }
-                        } else {
-                          // We're constructing
-                          // '{ ${ src }.iterator.map(from2 => ${ derivedTo2 }).to(Factory[$To, $to2]) }
-                          toIorA.factory.flatMap { (factory: Expr[Factory[to2.Underlying, To]]) =>
-                            DerivationResult.expandedTotal(
-                              fromIorA.iterator(ctx.src).map(totalP.fulfilAsLambda[to2.Underlying]).to[To](factory)
-                            )
+                          // '{ ${ src }.to(Factory[$To, $to2]) }
+                          DerivationResult.expandedTotal(
+                            fromIorA.to[To](ctx.src)(factory.upcastExpr[Factory[from2.Underlying, To]])
+                          )
+                        }
+                      } else if (mappedFrom.Underlying =:= Type[To]) {
+                        // We're constructing:
+                        // '{ ${ src }.map(from2 => ${ derivedTo2 }) }
+                        DerivationResult.expandedTotal {
+                          ExistentialExpr.use(mappedFrom) { implicit Out: Type[mappedFrom.Underlying] => expr =>
+                            expr.upcastExpr[To]
                           }
                         }
-                      } { (partialP: ExprPromise[from2.Underlying, Expr[partial.Result[to2.Underlying]]]) =>
-                        ctx match {
-                          case TransformationContext.ForPartial(src, failFast) =>
-                            // We're constructing:
-                            // '{ partial.Result.traverse[To, ($from2, Int), $to2](
-                            //   ${ src }.iterator.zipWithIndex,
-                            //   { case (value, index) =>
-                            //     ${ resultTo }.prependErrorPath(partial.PathElement.Index(index))
-                            //   },
-                            //   ${ failFast }
-                            // )(${ factory })
-                            toIorA.factory.flatMap { (factory: Expr[Factory[to2.Underlying, To]]) =>
-                              DerivationResult.expandedPartial(
-                                ChimneyExpr.PartialResult.traverse[To, (from2.Underlying, Int), to2.Underlying](
-                                  fromIorA.iterator(src).zipWithIndex,
-                                  partialP
-                                    .fulfilAsLambda2(
-                                      ExprPromise.promise[Int](ExprPromise.NameGenerationStrategy.FromPrefix("idx"))
-                                    ) { (result: Expr[partial.Result[to2.Underlying]], idx: Expr[Int]) =>
-                                      result.prependErrorPath(
-                                        ChimneyExpr.PathElement.Index(idx).upcastExpr[partial.PathElement]
-                                      )
-                                    }
-                                    .tupled,
-                                  failFast,
-                                  factory
-                                )
-                              )
-                            }
-                          case TransformationContext.ForTotal(_) =>
-                            // TODO: better error
-                            DerivationResult.assertionError("Derived Partial Expr for Total Context")
+                      } else {
+                        // We're constructing
+                        // '{ ${ src }.iterator.map(from2 => ${ derivedTo2 }).to(Factory[$To, $to2]) }
+                        toIorA.factory.flatMap { (factory: Expr[Factory[to2.Underlying, To]]) =>
+                          DerivationResult.expandedTotal(
+                            fromIorA.iterator(ctx.src).map(totalP.fulfilAsLambda[to2.Underlying]).to[To](factory)
+                          )
                         }
                       }
+                    } { (partialP: ExprPromise[from2.Underlying, Expr[partial.Result[to2.Underlying]]]) =>
+                      ctx match {
+                        case TransformationContext.ForPartial(src, failFast) =>
+                          // We're constructing:
+                          // '{ partial.Result.traverse[To, ($from2, Int), $to2](
+                          //   ${ src }.iterator.zipWithIndex,
+                          //   { case (value, index) =>
+                          //     ${ resultTo }.prependErrorPath(partial.PathElement.Index(index))
+                          //   },
+                          //   ${ failFast }
+                          // )(${ factory })
+                          toIorA.factory.flatMap { (factory: Expr[Factory[to2.Underlying, To]]) =>
+                            DerivationResult.expandedPartial(
+                              ChimneyExpr.PartialResult.traverse[To, (from2.Underlying, Int), to2.Underlying](
+                                fromIorA.iterator(src).zipWithIndex,
+                                partialP
+                                  .fulfilAsLambda2(
+                                    ExprPromise.promise[Int](ExprPromise.NameGenerationStrategy.FromPrefix("idx"))
+                                  ) { (result: Expr[partial.Result[to2.Underlying]], idx: Expr[Int]) =>
+                                    result.prependErrorPath(
+                                      ChimneyExpr.PathElement.Index(idx).upcastExpr[partial.PathElement]
+                                    )
+                                  }
+                                  .tupled,
+                                failFast,
+                                factory
+                              )
+                            )
+                          }
+                        case TransformationContext.ForTotal(_) =>
+                          // TODO: better error
+                          DerivationResult.assertionError("Derived Partial Expr for Total Context")
+                      }
+                    }
                   }
           }
         case _ =>

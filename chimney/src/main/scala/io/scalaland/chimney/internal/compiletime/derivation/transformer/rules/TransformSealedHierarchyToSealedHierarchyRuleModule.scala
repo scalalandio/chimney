@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
+import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.internal.compiletime.fp.Syntax.*
 import io.scalaland.chimney.partial
 
@@ -14,8 +15,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
         case (Enum(fromElements: Enum.Elements[From]), Enum(toElements: Enum.Elements[To])) =>
-          io.scalaland.chimney.internal.compiletime.fp
-            .Traverse[List]
+          Traverse[List]
             .traverse[DerivationResult, Existential[Enum.Element[From, *]], Existential[
               ExprPromise[*, TransformationExpr[To]]
             ]](fromElements) { (fromSubtype: Existential[Enum.Element[From, *]]) =>
@@ -41,7 +41,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                                   )
                                 case RuntimeCoproductOverride.CoproductInstancePartial(idx) =>
                                   // We're constructing:
-                                  // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => partial>Result[$To]](someFromExpr)
+                                  // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => partial.Result[$To]](someFromExpr)
                                   TransformationExpr.fromPartial(
                                     ctx
                                       .runtimeDataStore(idx)
@@ -84,19 +84,18 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               }
             }
             .flatMap { (subtypeMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
-              if (subtypeMappings.exists(_.value.map(_.toEither).isRight)) {
+              if (subtypeMappings.exists(_.value.isPartial))
                 // if any result is partial, all results must be lifted to partial
                 DerivationResult.expandedPartial(
                   subtypeMappings
-                    .map(_.value.map(_.ensurePartial).fulfillAsPatternMatchCase[partial.Result[To]])
+                    .map(_.value.ensurePartial.fulfillAsPatternMatchCase[partial.Result[To]])
                     .matchOn(ctx.src)
                 )
-              } else {
+              else
                 // if all are total, we might treat them as such
                 DerivationResult.expandedTotal(
-                  subtypeMappings.map(_.value.map(_.ensureTotal).fulfillAsPatternMatchCase[To]).matchOn(ctx.src)
+                  subtypeMappings.map(_.value.ensureTotal.fulfillAsPatternMatchCase[To]).matchOn(ctx.src)
                 )
-              }
             }
         case _ => DerivationResult.attemptNextRule
       }

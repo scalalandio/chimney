@@ -51,9 +51,6 @@ private[compiletime] trait TransformationRules { this: Derivation =>
 
     import TransformationExpr.{PartialExpr, TotalExpr}
 
-    final def isTotal: Boolean = fold(_ => true)(_ => false)
-    final def isPartial: Boolean = fold(_ => true)(_ => false)
-
     implicit private lazy val A: Type[A] = this match {
       case TotalExpr(expr) => Expr.typeOf(expr)
       case PartialExpr(expr) =>
@@ -71,8 +68,8 @@ private[compiletime] trait TransformationRules { this: Derivation =>
       case PartialExpr(expr) =>
         ExprPromise
           .promise[A](ExprPromise.NameGenerationStrategy.FromType)
-          .map(f(_).toEither)
-          .foldEither { (totalE: ExprPromise[A, Expr[B]]) =>
+          .map(f)
+          .foldTransformationExpr { (totalE: ExprPromise[A, Expr[B]]) =>
             // '{ ${ expr }.map { a: $A => ${ b } } }
             PartialExpr(expr.map[B](totalE.fulfilAsLambda))
           } { (partialE: ExprPromise[A, Expr[partial.Result[B]]]) =>
@@ -89,10 +86,12 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     final def toEither: Either[Expr[A], Expr[partial.Result[A]]] =
       fold[Either[Expr[A], Expr[partial.Result[A]]]](e => Left(e))(e => Right(e))
 
+    final def isTotal: Boolean = fold(_ => true)(_ => false)
+    final def isPartial: Boolean = fold(_ => true)(_ => false)
+
     final def ensureTotal: Expr[A] = fold(identity) { _ =>
       assertionFailed("Derived partial.Result expression where total Transformer expects direct value")
     }
-
     final def ensurePartial: Expr[partial.Result[A]] = fold { expr =>
       implicit val A: Type[A] = Expr.typeOf(expr)
       ChimneyExpr.PartialResult.Value(expr).upcastExpr[partial.Result[A]]
@@ -104,6 +103,22 @@ private[compiletime] trait TransformationRules { this: Derivation =>
 
     final case class TotalExpr[A](expr: Expr[A]) extends TransformationExpr[A]
     final case class PartialExpr[A](expr: Expr[partial.Result[A]]) extends TransformationExpr[A]
+  }
+
+  implicit final class TransformationExprPromiseOps[From, To](promise: ExprPromise[From, TransformationExpr[To]]) {
+
+    def foldTransformationExpr[B](onTotal: ExprPromise[From, Expr[To]] => B)(
+        onPartial: ExprPromise[From, Expr[partial.Result[To]]] => B
+    ): B = promise.map(_.toEither).foldEither(onTotal)(onPartial)
+
+    def exprPartition: Either[ExprPromise[From, Expr[To]], ExprPromise[From, Expr[partial.Result[To]]]] =
+      promise.map(_.toEither).partition
+
+    final def isTotal: Boolean = foldTransformationExpr(_ => true)(_ => false)
+    final def isPartial: Boolean = foldTransformationExpr(_ => true)(_ => false)
+
+    def ensureTotal: ExprPromise[From, Expr[To]] = promise.map(_.ensureTotal)
+    def ensurePartial: ExprPromise[From, Expr[partial.Result[To]]] = promise.map(_.ensurePartial)
   }
 
   protected val rulesAvailableForPlatform: List[Rule]

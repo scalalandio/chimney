@@ -46,6 +46,11 @@ private[compiletime] trait ProductTypes { this: Definitions =>
 
     def parse[A: Type]: Option[Product[A]]
 
+    implicit class RegexpOps(regexp: scala.util.matching.Regex) {
+
+      def isMatching(value: String): Boolean = regexp.findFirstIn(value).isDefined // 2.12 doesn't have .matches
+    }
+
     private val getAccessor = raw"(?i)get(.)(.*)".r
     private val isAccessor = raw"(?i)is(.)(.*)".r
     private val dropGetIs: String => String = {
@@ -53,14 +58,14 @@ private[compiletime] trait ProductTypes { this: Definitions =>
       case isAccessor(head, tail)  => head.toLowerCase + tail
       case other                   => other
     }
-    val isGetterName: String => Boolean = name => getAccessor.matches(name) || isAccessor.matches(name)
+    val isGetterName: String => Boolean = name => getAccessor.isMatching(name) || isAccessor.isMatching(name)
 
     private val setAccessor = raw"(?i)set(.)(.*)".r
     private val dropSet: String => String = {
       case setAccessor(head, tail) => head.toLowerCase + tail
       case other                   => other
     }
-    val isSetterName: String => Boolean = name => setAccessor.matches(name)
+    val isSetterName: String => Boolean = name => setAccessor.isMatching(name)
   }
 
   implicit class ProductTypeOps[A](private val tpe: Type[A]) {

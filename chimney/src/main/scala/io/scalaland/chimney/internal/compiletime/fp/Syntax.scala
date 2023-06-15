@@ -20,7 +20,7 @@ private[compiletime] object Syntax {
 
     def traverse[G[_]: Applicative, A, B](fa: List[A])(f: A => G[B]): G[List[B]] =
       fa.foldLeft(new ListBuffer[B].pure[G]) { (bufferG, a) =>
-        bufferG.map2(f(a)) { (buffer: ListBuffer[B], b: B) => buffer.addOne(b) }
+        bufferG.map2(f(a)) { (buffer: ListBuffer[B], b: B) => buffer.append(b); buffer } // can't use append 'cause 2.12
       }.map(_.toList)
 
     def map2[A, B, C](fa: List[A], fb: List[B])(f: (A, B) => C): List[C] = fa.zip(fb).map(f.tupled)

@@ -69,7 +69,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
                         toLeft: ExprPromise[fromL.Underlying, TransformationExpr[toL.Underlying]],
                         toRight: ExprPromise[fromR.Underlying, TransformationExpr[toR.Underlying]]
                     ) =>
-                      ((toLeft.map(_.toEither)).partition, toRight.map(_.toEither).partition) match {
+                      (toLeft.exprPartition, toRight.exprPartition) match {
                         case (Left(totalToLeft), Left(totalToRight)) =>
                           // We're constructing:
                           // '{ ${ src }.fold {
