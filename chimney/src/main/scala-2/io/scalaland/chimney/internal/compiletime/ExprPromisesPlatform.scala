@@ -52,6 +52,11 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
       srcPrefixTree.tree.toString.replaceAll("\\$\\d+", "").replace("$u002E", ".")
   }
 
+  protected object PatternMatchCase extends PatternMatchCaseModule {
+
+    def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = ???
+  }
+
   protected object PrependValsTo extends PrependValsToModule {
 
     def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ExistentialExpr)], expr: Expr[To]): Expr[To] = {

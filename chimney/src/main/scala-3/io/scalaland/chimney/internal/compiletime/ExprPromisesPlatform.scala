@@ -64,6 +64,11 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     }
   }
 
+  protected object PatternMatchCase extends PatternMatchCaseModule {
+
+    def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = ???
+  }
+
   // TODO: consult with Janek Chyb if this is necessary/safe
   // workaround to contain @experimental from polluting the whole codebase
   private class FreshTerm(using q: quoted.Quotes) {

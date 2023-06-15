@@ -45,6 +45,9 @@ private[compiletime] trait ExprPromises { this: Definitions =>
     ): Expr[(From, From2) => To] =
       fulfilAsLambda2In[From2, B, To, Expr[(From, From2) => To]](promise)(combine)(identity)
 
+    def fulfillAsPatternMatchCase[To](implicit ev: A <:< Expr[To]): PatternMatchCase[To] =
+      new PatternMatchCase(Existential[ExprPromise[*, Expr[To]], From](this.asInstanceOf[ExprPromise[From, Expr[To]]]))
+
     def partition[L, R](implicit
         ev: A <:< Either[L, R]
     ): Either[ExprPromise[From, L], ExprPromise[From, R]] = ev(usage) match {
@@ -62,6 +65,9 @@ private[compiletime] trait ExprPromises { this: Definitions =>
       case Left(value)  => left(new ExprPromise(value, fromName))
       case Right(value) => right(new ExprPromise(value, fromName))
     }
+
+    def isLeft[L, R](implicit ev: A <:< Either[L, R]): Boolean = foldEither[L, R, Boolean](_ => true)(_ => false)
+    def isRight[L, R](implicit ev: A <:< Either[L, R]): Boolean = foldEither[L, R, Boolean](_ => false)(_ => true)
   }
   protected val ExprPromise: ExprPromiseModule
   protected trait ExprPromiseModule { this: ExprPromise.type =>
@@ -135,4 +141,16 @@ private[compiletime] trait ExprPromises { this: Definitions =>
 
       def traverse[G[_]: fp.Applicative, A, B](fa: PrependValsTo[A])(f: A => G[B]): G[PrependValsTo[B]] = fa.traverse(f)
     }
+
+  final protected class PatternMatchCase[To](val body: Existential[ExprPromise[*, Expr[To]]])
+  protected val PatternMatchCase: PatternMatchCaseModule
+  protected trait PatternMatchCaseModule { this: PatternMatchCase.type =>
+
+    def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To]
+  }
+
+  implicit final protected class ListPatternMatchCaseOps[To: Type](private val cases: List[PatternMatchCase[To]]) {
+
+    def matchOn[From: Type](src: Expr[From]): Expr[To] = PatternMatchCase.matchOn(src, cases)
+  }
 }

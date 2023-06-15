@@ -4,10 +4,10 @@ import io.scalaland.chimney.internal.compiletime.Definitions
 
 private[compiletime] trait SealedHierarchies { this: Definitions =>
 
-  final protected case class Enum[A](components: Enum.Elements[A])
+  final protected case class Enum[A](elements: Enum.Elements[A])
   protected object Enum {
 
-    final def unapply[A](implicit tpe: Type[A]): Option[Enum[A]] = SealedHierarchy.parse[A]
+    final def unapply[A](implicit tpe: Type[A]): Option[Enum.Elements[A]] = SealedHierarchy.parse[A].map(_.elements)
 
     final case class Element[Of, A](name: String, upcast: Expr[A] => Expr[Of])
     final type Elements[Of] = List[Existential[Element[Of, *]]]

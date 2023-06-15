@@ -51,6 +51,9 @@ private[compiletime] trait TransformationRules { this: Derivation =>
 
     import TransformationExpr.{PartialExpr, TotalExpr}
 
+    final def isTotal: Boolean = fold(_ => true)(_ => false)
+    final def isPartial: Boolean = fold(_ => true)(_ => false)
+
     implicit private lazy val A: Type[A] = this match {
       case TotalExpr(expr) => Expr.typeOf(expr)
       case PartialExpr(expr) =>
@@ -95,7 +98,6 @@ private[compiletime] trait TransformationRules { this: Derivation =>
       ChimneyExpr.PartialResult.Value(expr).upcastExpr[partial.Result[A]]
     }(identity)
   }
-
   protected object TransformationExpr {
     def fromTotal[A](expr: Expr[A]): TransformationExpr[A] = TotalExpr(expr)
     def fromPartial[A](expr: Expr[partial.Result[A]]): TransformationExpr[A] = PartialExpr(expr)

@@ -131,7 +131,7 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
       ChimneyExpr.PartialTransformer.transform(transformerExpr, src, failFast)
   }
 
-  implicit final protected class PartialResult[A: Type](private val resultExpr: Expr[partial.Result[A]]) {
+  implicit final protected class PartialResultExprOps[A: Type](private val resultExpr: Expr[partial.Result[A]]) {
 
     def flatMap[B: Type](fExpr: Expr[A => partial.Result[B]]): Expr[partial.Result[B]] =
       ChimneyExpr.PartialResult.flatMap(resultExpr)(fExpr)
@@ -139,5 +139,12 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
 
     def prependErrorPath(path: Expr[partial.PathElement]): Expr[partial.Result[A]] =
       ChimneyExpr.PartialResult.prependErrorPath(resultExpr, path)
+  }
+
+  implicit final protected class RuntimeDataStoreExprOps(
+      private val runtimeDataStoreExpr: Expr[TransformerDefinitionCommons.RuntimeDataStore]
+  ) {
+
+    def apply(index: Int): Expr[Any] = ChimneyExpr.RuntimeDataStore.extractAt(runtimeDataStoreExpr, index)
   }
 }

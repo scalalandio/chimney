@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.compiletime.{Definitions, DerivationResult}
-import io.scalaland.chimney.internal.NotSupportedTransformerDerivation
+import io.scalaland.chimney.internal.{CantFindCoproductInstanceTransformer, NotSupportedTransformerDerivation}
 import io.scalaland.chimney.partial
 
 private[compiletime] trait ResultOps { this: Definitions & Derivation =>
@@ -19,6 +19,16 @@ private[compiletime] trait ResultOps { this: Definitions & Derivation =>
 
     def attemptNextRule[A]: DerivationResult[Rule.ExpansionResult[A]] =
       DerivationResult.pure(Rule.ExpansionResult.AttemptNextRule)
+
+    def cantFindCoproductInstanceTransformer[From, To, Instance: Type, A](implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      CantFindCoproductInstanceTransformer(
+        instance = Type.prettyPrint[Instance],
+        sourceTypeName = Type.prettyPrint[From],
+        targetTypeName = Type.prettyPrint[To]
+      )
+    )
 
     def notSupportedTransformerDerivation[From, To, A](implicit
         ctx: TransformationContext[From, To]
