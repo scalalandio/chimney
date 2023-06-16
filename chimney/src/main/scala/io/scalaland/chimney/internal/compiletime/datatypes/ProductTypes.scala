@@ -7,7 +7,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
   final protected case class Product[A](extraction: Product.Getters[A], construction: Product.Constructor[A])
   protected object Product {
 
-    final case class Getter[From, A](name: String, sourceType: Getter.SourceType, get: Expr[From] => Expr[A])
+    final case class Getter[From, A](sourceType: Getter.SourceType, get: Expr[From] => Expr[A])
     object Getter {
       sealed trait SourceType extends scala.Product with Serializable
       object SourceType {
@@ -16,26 +16,21 @@ private[compiletime] trait ProductTypes { this: Definitions =>
         case object JavaBeanGetter extends SourceType
       }
     }
-    final type Getters[From] = List[Existential[Getter[From, *]]]
+    final type Getters[From] = Map[String, Existential[Getter[From, *]]]
 
-    final case class Setter[To, A](name: String, set: (Expr[To], Expr[A]) => Expr[Unit])
-    final type Setters[To] = List[Existential[Setter[To, *]]]
-
-    final case class Parameter[A](name: String, defaultValue: Option[Parameter.DefaultValue[A]])
+    final case class Parameter[A](targetType: Parameter.TargetType, defaultValue: Option[Expr[A]])
     object Parameter {
-      final case class DefaultValue[A](default: Expr[A])
+      sealed trait TargetType extends scala.Product with Serializable
+      object TargetType {
+        case object ConstructorParameter extends TargetType
+        case object SetterParameter extends TargetType
+      }
     }
-    final type Parameters = List[List[Existential[Parameter]]]
+    final type Parameters = Map[String, Existential[Parameter]]
 
-    final case class Argument[A](name: String, value: Expr[A])
-    final type Arguments = List[Existential[Argument]]
+    final type Arguments = Map[String, ExistentialExpr]
 
-    sealed trait Constructor[To] extends scala.Product with Serializable
-    object Constructor {
-
-      final case class JavaBean[To](defaultConstructor: Expr[To], setters: Setters[To]) extends Constructor[To]
-      final case class CaseClass[To](constructor: Arguments => Expr[To], parameters: Parameters) extends Constructor[To]
-    }
+    final case class Constructor[To](parameters: Parameters, constructor: Arguments => Expr[To], useSetters: Boolean)
   }
 
   protected val ProductType: ProductTypesModule

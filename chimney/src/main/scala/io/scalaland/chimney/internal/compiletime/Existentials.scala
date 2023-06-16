@@ -14,6 +14,9 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
     val Underlying: Type[Underlying]
 
     val value: F[Underlying]
+
+    def mapK[G[_]](f: Type[Underlying] => F[Underlying] => G[Underlying]): Existential[G] =
+      Existential[G, Underlying](f(Underlying)(value))(Underlying)
   }
   protected object Existential {
 
