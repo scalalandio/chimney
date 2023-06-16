@@ -30,7 +30,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
 
     final type Arguments = Map[String, ExistentialExpr]
 
-    final case class Constructor[To](parameters: Parameters, constructor: Arguments => Expr[To], useSetters: Boolean)
+    final case class Constructor[To](parameters: Parameters, constructor: Arguments => Expr[To])
   }
 
   protected val ProductType: ProductTypesModule

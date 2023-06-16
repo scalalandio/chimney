@@ -15,17 +15,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
         case (ProductType(Product(fromExtractors, _)), ProductType(Product(_, toConstructors))) =>
+          import ctx.config.*
           toConstructors match {
-            case Product.Constructor(parameters, _, true)
-                if !ctx.config.flags.beanSetters && parameters.exists(isUsingSetter) =>
+            case Product.Constructor(parameters, _) if !flags.beanSetters && parameters.exists(isUsingSetter) =>
               // TODO: provide a nice error message that there are params but setters are disabled
               DerivationResult.notYetImplemented("error about used setters")
-            case Product.Constructor(parameters, constructor, _) =>
+            case Product.Constructor(parameters, constructor) =>
               lazy val fromEnabledExtractors = fromExtractors.filter { getter =>
                 getter._2.value.sourceType match {
                   case Product.Getter.SourceType.ConstructorVal => true
-                  case Product.Getter.SourceType.AccessorMethod => ctx.config.flags.methodAccessors
-                  case Product.Getter.SourceType.JavaBeanGetter => ctx.config.flags.beanGetters
+                  case Product.Getter.SourceType.AccessorMethod => flags.methodAccessors
+                  case Product.Getter.SourceType.JavaBeanGetter => flags.beanGetters
                 }
               }
 
@@ -39,7 +39,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 ) { case (toName: String, ctorParam: Existential[Product.Parameter]) =>
                   Existential.use(ctorParam) { implicit ParameterType: Type[ctorParam.Underlying] =>
                     { case Product.Parameter(_, defaultValue) =>
-                      ctx.config.fieldOverrides
+                      fieldOverrides
                         .get(toName)
                         .map {
                           case RuntimeFieldOverride.Const(runtimeDataIdx) =>
@@ -223,7 +223,6 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       // TODO: expr.isNullExpr
                       DerivationResult.notYetImplemented("todo")
                   }
-                  ???
                 }
           }
         case _ => DerivationResult.attemptNextRule
