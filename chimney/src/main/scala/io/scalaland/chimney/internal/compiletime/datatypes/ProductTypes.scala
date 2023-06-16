@@ -55,7 +55,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
 
     private val getAccessor = raw"(?i)get(.)(.*)".r
     private val isAccessor = raw"(?i)is(.)(.*)".r
-    private val dropGetIs: String => String = {
+    val dropGetIs: String => String = {
       case getAccessor(head, tail) => head.toLowerCase + tail
       case isAccessor(head, tail)  => head.toLowerCase + tail
       case other                   => other
@@ -63,7 +63,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     val isGetterName: String => Boolean = name => getAccessor.isMatching(name) || isAccessor.isMatching(name)
 
     private val setAccessor = raw"(?i)set(.)(.*)".r
-    private val dropSet: String => String = {
+    val dropSet: String => String = {
       case setAccessor(head, tail) => head.toLowerCase + tail
       case other                   => other
     }
