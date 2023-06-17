@@ -43,7 +43,12 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     .use(ctorParam) { implicit ParameterType: Type[ctorParam.Underlying] =>
                       { case Product.Parameter(_, defaultValue) =>
                         fieldOverrides
-                          .get(toName) // TODO: use might use _.getName, which would be mapped to _.setName in beans!
+                          // user might have used _.getName in modifier, to define target we know as _.setName
+                          // so simple .get(toName) might not be enough
+                          .collectFirst {
+                            case (name, value) if areNamesMatching(name, toName) =>
+                              value
+                          }
                           .map {
                             case RuntimeFieldOverride.Const(runtimeDataIdx) =>
                               // We're constructing:
@@ -363,7 +368,16 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         case _ => DerivationResult.attemptNextRule
       }
 
-    private def areNamesMatching(fromName: String, toName: String): Boolean = ??? // TODO
+    private def areNamesMatching(fromName: String, toName: String): Boolean = {
+      import ProductType.{dropGetIs, isGetterName, dropSet, isSetterName}
+
+      def normalizedFromName =
+        if (isGetterName(fromName)) dropGetIs(fromName) else fromName
+      def normalizedToName =
+        if (isGetterName(fromName)) dropGetIs(fromName) else if (isSetterName(toName)) dropSet(toName) else fromName
+
+      fromName == toName || normalizedFromName == normalizedToName
+    }
 
     private val isUsingSetter: ((String, Existential[Product.Parameter])) => Boolean =
       _._2.value.targetType == Product.Parameter.TargetType.SetterParameter

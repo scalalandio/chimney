@@ -36,9 +36,9 @@ private[compiletime] trait ProductTypes { this: Definitions =>
   protected val ProductType: ProductTypesModule
   protected trait ProductTypesModule { this: ProductType.type =>
 
-    def isCaseClass[A](A: Type[A]): Boolean
-    def isCaseObject[A](A: Type[A]): Boolean
-    def isJavaBean[A](A: Type[A]): Boolean
+    def isCaseClass[A](implicit A: Type[A]): Boolean
+    def isCaseObject[A](implicit A: Type[A]): Boolean
+    def isJavaBean[A](implicit A: Type[A]): Boolean
 
     def parse[A: Type]: Option[Product[A]]
     final def unapply[A](tpe: Type[A]): Option[Product[A]] = parse(tpe)
@@ -63,6 +63,35 @@ private[compiletime] trait ProductTypes { this: Definitions =>
       case other                   => other
     }
     val isSetterName: String => Boolean = name => setAccessor.isMatching(name)
+
+    // methods we can drop from searching scope
+    private val garbage = Set(
+      // case class generated
+      "copy",
+      // scala.Product methods
+      "canEqual",
+      "productArity",
+      "productElement",
+      "productElementName",
+      "productElementNames",
+      "productIterator",
+      "productPrefix",
+      // java.lang.Object methods
+      "equals",
+      "hashCode",
+      "toString",
+      "clone",
+      "synchronized",
+      "wait",
+      "notify",
+      "notifyAll",
+      "getClass",
+      "asInstanceOf",
+      "isInstanceOf"
+    )
+    // default arguments has name method$default$index
+    private val defaultElement = raw"$$default$$"
+    val isGarbage: String => Boolean = name => garbage(name) || name.contains(defaultElement)
   }
 
   implicit class ProductTypeOps[A](private val tpe: Type[A]) {

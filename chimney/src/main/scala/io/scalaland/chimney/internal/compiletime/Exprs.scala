@@ -101,9 +101,11 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     def ifElse[A: Type](cond: Expr[Boolean])(ifBranch: Expr[A])(elseBranch: Expr[A]): Expr[A]
 
-    def block[A: Type](statements: List[Expr[Unit]], expr: Expr[A]): Expr[A] = ??? // TODO
+    def block[A: Type](statements: List[Expr[Unit]], expr: Expr[A]): Expr[A]
 
     def summonImplicit[A: Type]: Option[Expr[A]]
+
+    def eq[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[Boolean]
 
     def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B]
 
@@ -119,7 +121,7 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     def tpe: Type[A] = Expr.typeOf(expr)
 
-    def eqExpr[B: Type](other: Expr[B]): Expr[Boolean] = ??? // TODO
+    def eqExpr[B: Type](other: Expr[B]): Expr[Boolean] = Expr.eq(expr, other)
 
     // All of methods below change Expr[A] to Expr[B], but they differ in checks ans how it affects the underlying code:
     // - asInstanceOfExpr should be used when we want to generate .asInstanceOf in generated code, because we need to

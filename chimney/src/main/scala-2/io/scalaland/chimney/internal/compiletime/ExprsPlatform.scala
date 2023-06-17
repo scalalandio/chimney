@@ -113,11 +113,15 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     def ifElse[A: Type](cond: Expr[Boolean])(ifBranch: Expr[A])(elseBranch: Expr[A]): Expr[A] =
       asExpr(q"if ($cond) { $ifBranch } else { $elseBranch }")
 
+    def block[A: Type](statements: List[Expr[Unit]], expr: Expr[A]): Expr[A] = asExpr[A](q"..$statements; $expr")
+
     def summonImplicit[A: Type]: Option[Expr[A]] = scala.util
       .Try(c.inferImplicitValue(Type[A], silent = true, withMacrosDisabled = false))
       .toOption
       .filterNot(_ == EmptyTree)
       .map(asExpr[A](_))
+
+    def eq[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[Boolean] = asExpr(q"$a == $b")
 
     def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B] = asExpr[B](q"${expr}.asInstanceOf[${Type[B]}]")
 

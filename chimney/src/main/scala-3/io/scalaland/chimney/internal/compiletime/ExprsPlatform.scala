@@ -102,7 +102,12 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         else ${ elseBranch }
       }
 
+    def block[A: Type](statements: List[Expr[Unit]], expr: Expr[A]): Expr[A] =
+      Block(statements.map(_.asTerm), expr.asTerm).asExprOf[A]
+
     def summonImplicit[A: Type]: Option[Expr[A]] = scala.quoted.Expr.summon[A]
+
+    def eq[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[Boolean] = '{ ${ a } == ${ b } }
 
     def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B] = '{ ${ expr }.asInstanceOf[B] }
 

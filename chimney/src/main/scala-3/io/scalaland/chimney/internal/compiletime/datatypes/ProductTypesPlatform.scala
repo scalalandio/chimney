@@ -32,17 +32,17 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
 
     import platformSpecific.*
 
-    def isCaseClass[A](A: Type[A]): Boolean = {
+    def isCaseClass[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
       sym.isClassDef && sym.flags.is(Flags.Case) && !sym.flags.is(Flags.Abstract) && isPublic(sym.primaryConstructor)
     }
-    def isCaseObject[A](A: Type[A]): Boolean = {
+    def isCaseObject[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
       def isScala2Enum = sym.flags.is(Flags.Case | Flags.Module)
       def isScala3Enum = sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic)
       isPublic(sym) && (isScala2Enum || isScala3Enum)
     }
-    def isJavaBean[A](A: Type[A]): Boolean = {
+    def isJavaBean[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
       val mem = sym.declarations
       sym.isClassDef && !sym.flags.is(Flags.Abstract) && mem.exists(isDefaultConstructor) && mem.exists(
