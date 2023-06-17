@@ -6,7 +6,10 @@ import io.scalaland.chimney.partial
 
 private[compiletime] trait ResultOps { this: Definitions & Derivation =>
 
-  implicit protected class DerivationResultModule(derivationResult: DerivationResult.type) {
+  implicit final protected class DerivationResultModule(derivationResult: DerivationResult.type) {
+
+    def existential[F[_], A: Type](fa: F[A]): DerivationResult[Existential[F]] =
+      DerivationResult.pure(Existential[F, A](fa))
 
     def expanded[To](expr: TransformationExpr[To]): DerivationResult[Rule.ExpansionResult[To]] =
       DerivationResult.pure(Rule.ExpansionResult.Expanded(expr))

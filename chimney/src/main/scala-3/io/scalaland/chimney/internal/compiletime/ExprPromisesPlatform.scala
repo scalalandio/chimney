@@ -23,7 +23,12 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         to: Expr[To],
         use: Expr[From => To] => B
     ): B = use('{ (param: From) =>
-      ${ PrependValsTo.initializeVals[To](vals = Vector(fromName -> ExistentialExpr('{ param })), expr = to) }
+      ${
+        PrependValsTo.initializeDefns[To](
+          vals = Vector((fromName, ExistentialExpr('{ param }), PrependValsTo.DefnType.Val)),
+          expr = to
+        )
+      }
     })
 
     def createAndUseLambda2[From: Type, From2: Type, To: Type, B](
@@ -33,8 +38,11 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         use: Expr[(From, From2) => To] => B
     ): B = use('{ (param: From, param2: From2) =>
       ${
-        PrependValsTo.initializeVals[To](
-          vals = Vector(fromName -> ExistentialExpr('{ param }), from2Name -> ExistentialExpr('{ param2 })),
+        PrependValsTo.initializeDefns[To](
+          vals = Vector(
+            (fromName, ExistentialExpr('{ param }), PrependValsTo.DefnType.Val),
+            (from2Name, ExistentialExpr('{ param2 }), PrependValsTo.DefnType.Val)
+          ),
           expr = to
         )
       }
@@ -56,12 +64,21 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
   protected object PrependValsTo extends PrependValsToModule {
 
-    def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ExistentialExpr)], expr: Expr[To]): Expr[To] = {
-      val statements = vals.map { case (name, eexpr) =>
-        ExistentialExpr.use(eexpr) { _ => expr => ValDef(name, Some(expr.asTerm)) }
+    def initializeDefns[To: Type](
+        vals: Vector[(ExprPromiseName, ExistentialExpr, DefnType)],
+        expr: Expr[To]
+    ): Expr[To] = {
+      val statements = vals.map {
+        case (name, eexpr, DefnType.Def)  => ??? // TODO
+        case (name, eexpr, DefnType.Lazy) => ??? // TODO
+        case (name, eexpr, DefnType.Val) =>
+          ExistentialExpr.use(eexpr) { _ => expr => ValDef(name, Some(expr.asTerm)) }
+        case (name, eexpr, DefnType.Var) => ??? // TODO
       }.toList
       Block(statements, expr.asTerm).asExprOf[To]
     }
+
+    def setVal[To: Type](name: ExprPromiseName): Expr[To] => Expr[Unit] = ???
   }
 
   protected object PatternMatchCase extends PatternMatchCaseModule {

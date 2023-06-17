@@ -48,6 +48,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     }
 
     val Nothing: Type[Nothing] = quoted.Type.of[Nothing]
+    val Null: Type[Null] = quoted.Type.of[Null]
     val Any: Type[Any] = quoted.Type.of[Any]
     val AnyVal: Type[AnyVal] = quoted.Type.of[AnyVal]
     val Boolean: Type[Boolean] = quoted.Type.of[Boolean]

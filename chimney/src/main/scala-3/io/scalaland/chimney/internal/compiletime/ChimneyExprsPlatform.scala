@@ -44,8 +44,13 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
     }
 
     object PartialResult extends PartialResultModule {
-      def Value[T: Type](value: Expr[T]): Expr[partial.Result.Value[T]] =
-        '{ partial.Result.Value[T](${ value }) }
+      object Value extends ValueModule {
+        def apply[T: Type](value: Expr[T]): Expr[partial.Result.Value[T]] =
+          '{ partial.Result.Value[T](${ value }) }
+
+        def value[A: Type](valueExpr: Expr[partial.Result.Value[A]]): Expr[A] =
+          '{ ${ valueExpr }.value }
+      }
 
       object Errors extends ErrorsModule {
         def merge(

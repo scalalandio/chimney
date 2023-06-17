@@ -13,25 +13,40 @@ private[compiletime] trait ExprPromises { this: Definitions =>
       f(usage).map(new ExprPromise(_, fromName))
     }
 
-    def fulfilAsDef[From2: Type](init: Expr[From2]): DerivationResult[PrependValsTo[A]] = ???
-    def fulfilAsVal[From2: Type](init: Expr[From2]): DerivationResult[PrependValsTo[A]] =
+    private def fulfilAsDefinition[From2: Type](
+        init: Expr[From2],
+        definitionType: PrependValsTo.DefnType
+    ): DerivationResult[PrependDefinitionsTo[A]] =
       if (Type[From2] <:< Type[From])
         DerivationResult.pure(
-          new PrependValsTo(usage, Vector(fromName -> ExistentialExpr(Expr.asInstanceOf[From2, From](init))))
+          new PrependDefinitionsTo(
+            usage,
+            Vector((fromName, ExistentialExpr(Expr.asInstanceOf[From2, From](init)), definitionType))
+          )
         )
       else
         DerivationResult.assertionError(
           s"Initialized deferred Expr[${Type.prettyPrint[From]}] with expression of type ${Type.prettyPrint[From2]}"
         )
-    def fulfilAsVar[From2: Type](init: Expr[From2]): DerivationResult[PrependValsTo[A]] = ???
 
-    def fulfilAsLambdaIn[To: Type, B](use: Expr[From => To] => B)(implicit ev: A <:< Expr[To]): B =
+    def fulfilAsDef[From2: Type](init: Expr[From2]): DerivationResult[PrependDefinitionsTo[A]] =
+      fulfilAsDefinition(init, PrependValsTo.DefnType.Def)
+    def fulfilAsLazy[From2: Type](init: Expr[From2]): DerivationResult[PrependDefinitionsTo[A]] =
+      fulfilAsDefinition(init, PrependValsTo.DefnType.Lazy)
+    def fulfilAsVal[From2: Type](init: Expr[From2]): DerivationResult[PrependDefinitionsTo[A]] =
+      fulfilAsDefinition(init, PrependValsTo.DefnType.Val)
+    def fulfilAsVar[From2: Type](
+        init: Expr[From2]
+    ): DerivationResult[PrependDefinitionsTo[(A, Expr[From] => Expr[Unit])]] =
+      fulfilAsDefinition(init, PrependValsTo.DefnType.Var)
+        .map(_.map(_ -> PrependValsTo.setVal(fromName)))
+
+    private def fulfilAsLambdaIn[To: Type, B](use: Expr[From => To] => B)(implicit ev: A <:< Expr[To]): B =
       ExprPromise.createAndUseLambda(fromName, ev(usage), use)
-
     def fulfilAsLambda[To: Type](implicit ev: A <:< Expr[To]): Expr[From => To] =
       fulfilAsLambdaIn[To, Expr[From => To]](identity)
 
-    def fulfilAsLambda2In[From2: Type, B, To: Type, C](
+    private def fulfilAsLambda2In[From2: Type, B, To: Type, C](
         promise: ExprPromise[From2, B]
     )(
         combine: (A, B) => Expr[To]
@@ -108,40 +123,53 @@ private[compiletime] trait ExprPromises { this: Definitions =>
         fa.traverse(f)
     }
 
-  final protected class PrependValsTo[A](
+  final protected class PrependDefinitionsTo[A](
       private val usage: A,
-      private val vals: Vector[(ExprPromiseName, ExistentialExpr)]
+      private val defns: Vector[(ExprPromiseName, ExistentialExpr, PrependValsTo.DefnType)]
   ) {
 
-    def map[B](f: A => B): PrependValsTo[B] = new PrependValsTo(f(usage), vals)
+    def map[B](f: A => B): PrependDefinitionsTo[B] = new PrependDefinitionsTo(f(usage), defns)
 
-    def map2[B, C](val2: PrependValsTo[B])(f: (A, B) => C): PrependValsTo[C] =
-      new PrependValsTo(f(usage, val2.usage), vals ++ val2.vals)
+    def map2[B, C](val2: PrependDefinitionsTo[B])(f: (A, B) => C): PrependDefinitionsTo[C] =
+      new PrependDefinitionsTo(f(usage, val2.usage), defns ++ val2.defns)
 
-    def traverse[G[_]: fp.Applicative, B](f: A => G[B]): G[PrependValsTo[B]] = {
+    def traverse[G[_]: fp.Applicative, B](f: A => G[B]): G[PrependDefinitionsTo[B]] = {
       import fp.Syntax.*
-      f(usage).map(new PrependValsTo(_, vals))
+      f(usage).map(new PrependDefinitionsTo(_, defns))
     }
 
     def prepend[B](implicit ev: A <:< Expr[B]): Expr[B] = {
       val expr = ev(usage)
-      PrependValsTo.initializeVals(vals, expr)(Expr.typeOf(expr))
+      PrependValsTo.initializeDefns(defns, expr)(Expr.typeOf(expr))
     }
   }
   protected val PrependValsTo: PrependValsToModule
   protected trait PrependValsToModule { this: PrependValsTo.type =>
 
-    def initializeVals[To: Type](vals: Vector[(ExprPromiseName, ExistentialExpr)], expr: Expr[To]): Expr[To]
+    def initializeDefns[To: Type](vals: Vector[(ExprPromiseName, ExistentialExpr, DefnType)], expr: Expr[To]): Expr[To]
+
+    def setVal[To: Type](name: ExprPromiseName): Expr[To] => Expr[Unit]
+
+    sealed trait DefnType extends scala.Product with Serializable
+    object DefnType {
+      case object Def extends DefnType
+      case object Lazy extends DefnType
+      case object Val extends DefnType
+      case object Var extends DefnType
+    }
   }
 
-  implicit protected val PrependValsToTraversableApplicative: fp.ApplicativeTraverse[PrependValsTo] =
-    new fp.ApplicativeTraverse[PrependValsTo] {
+  implicit protected val PrependValsToTraversableApplicative: fp.ApplicativeTraverse[PrependDefinitionsTo] =
+    new fp.ApplicativeTraverse[PrependDefinitionsTo] {
 
-      def map2[A, B, C](fa: PrependValsTo[A], fb: PrependValsTo[B])(f: (A, B) => C): PrependValsTo[C] = fa.map2(fb)(f)
+      def map2[A, B, C](fa: PrependDefinitionsTo[A], fb: PrependDefinitionsTo[B])(
+          f: (A, B) => C
+      ): PrependDefinitionsTo[C] = fa.map2(fb)(f)
 
-      def pure[A](a: A): PrependValsTo[A] = new PrependValsTo[A](a, Vector.empty)
+      def pure[A](a: A): PrependDefinitionsTo[A] = new PrependDefinitionsTo[A](a, Vector.empty)
 
-      def traverse[G[_]: fp.Applicative, A, B](fa: PrependValsTo[A])(f: A => G[B]): G[PrependValsTo[B]] = fa.traverse(f)
+      def traverse[G[_]: fp.Applicative, A, B](fa: PrependDefinitionsTo[A])(f: A => G[B]): G[PrependDefinitionsTo[B]] =
+        fa.traverse(f)
     }
 
   final protected class PatternMatchCase[To](

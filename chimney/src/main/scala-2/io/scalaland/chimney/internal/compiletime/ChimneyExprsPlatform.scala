@@ -66,8 +66,13 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
     }
 
     object PartialResult extends PartialResultModule {
-      def Value[A: Type](value: Expr[A]): Expr[partial.Result.Value[A]] =
-        asExpr[partial.Result.Value[A]](q"_root_.io.scalaland.chimney.partial.Result.Value[${Type[A]}]($value)")
+      object Value extends ValueModule {
+        def apply[A: Type](value: Expr[A]): Expr[partial.Result.Value[A]] =
+          asExpr[partial.Result.Value[A]](q"_root_.io.scalaland.chimney.partial.Result.Value[${Type[A]}]($value)")
+
+        def value[A: Type](valueExpr: Expr[partial.Result.Value[A]]): Expr[A] =
+          asExpr(q"$valueExpr.value")
+      }
 
       object Errors extends ErrorsModule {
         def merge(

@@ -59,6 +59,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     import platformSpecific.{fromUntyped, fromWeak, fromWeakTypeConstructor}
 
     val Nothing: Type[Nothing] = fromWeak[Nothing]
+    val Null: Type[Null] = fromWeak[Null]
     val Any: Type[Any] = fromWeak[Any]
     val AnyVal: Type[AnyVal] = fromWeak[AnyVal]
     val Boolean: Type[Boolean] = fromWeak[Boolean]

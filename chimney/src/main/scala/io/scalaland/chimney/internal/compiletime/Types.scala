@@ -12,6 +12,7 @@ private[compiletime] trait Types { this: Existentials =>
     final def apply[A](implicit A: Type[A]): Type[A] = A
 
     val Nothing: Type[Nothing]
+    val Null: Type[Null]
     val Any: Type[Any]
     val AnyVal: Type[AnyVal]
     val Boolean: Type[Boolean]
@@ -112,6 +113,7 @@ private[compiletime] trait Types { this: Existentials =>
   protected object TypeImplicits {
 
     implicit val NothingType: Type[Nothing] = Type.Nothing
+    implicit val NullType: Type[Null] = Type.Null
     implicit val AnyType: Type[Any] = Type.Any
     implicit val AnyValType: Type[AnyVal] = Type.AnyVal
     implicit val BooleanType: Type[Boolean] = Type.Boolean

@@ -23,7 +23,12 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     import platformSpecific.asExpr
 
     val Nothing: Expr[Nothing] = asExpr[Nothing](q"???")
+    val Null: Expr[Null] = asExpr[Null](q"null")
     val Unit: Expr[Unit] = asExpr[Unit](q"()")
+
+    object Function1 extends Function1Module {
+      def apply[A: Type, B: Type](fn: Expr[A => B])(a: Expr[A]): Expr[B] = asExpr(q"$fn.apply($a)")
+    }
 
     object Function2 extends Function2Module {
       def tupled[A: Type, B: Type, C: Type](fn2: Expr[(A, B) => C]): Expr[((A, B)) => C] = asExpr(q"($fn2).tupled")
@@ -104,6 +109,9 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
       def zipWithIndex[A: Type](it: Expr[Iterator[A]]): Expr[Iterator[(A, Int)]] = asExpr(q"$it.zipWithIndex")
     }
+
+    def ifElse[A: Type](cond: Expr[Boolean])(ifBranch: Expr[A])(elseBranch: Expr[A]): Expr[A] =
+      asExpr(q"if ($cond) { $ifBranch } else { $elseBranch }")
 
     def summonImplicit[A: Type]: Option[Expr[A]] = scala.util
       .Try(c.inferImplicitValue(Type[A], silent = true, withMacrosDisabled = false))

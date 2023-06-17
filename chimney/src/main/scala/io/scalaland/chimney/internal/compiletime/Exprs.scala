@@ -8,16 +8,19 @@ private[compiletime] trait Exprs { this: Definitions =>
   protected trait ExprModule { this: Expr.type =>
 
     val Nothing: Expr[Nothing]
+    val Null: Expr[Null]
     val Unit: Expr[Unit]
 
-    object Function1 {
+    val Function1: Function1Module
+    trait Function1Module { this: Function1.type =>
+      def apply[A: Type, B: Type](fn: Expr[A => B])(a: Expr[A]): Expr[B]
+
       def instance[A: Type, B: Type](f: Expr[A] => Expr[B]): Expr[A => B] =
         ExprPromise.promise[A](ExprPromise.NameGenerationStrategy.FromType).map[Expr[B]](f).fulfilAsLambda
     }
 
     val Function2: Function2Module
-    trait Function2Module {
-      this: Function2.type =>
+    trait Function2Module { this: Function2.type =>
       def instance[A: Type, B: Type, C: Type](f: (Expr[A], Expr[B]) => Expr[C]): Expr[(A, B) => C] =
         ExprPromise
           .promise[A](ExprPromise.NameGenerationStrategy.FromType)
@@ -96,7 +99,9 @@ private[compiletime] trait Exprs { this: Definitions =>
       def zipWithIndex[A: Type](it: Expr[Iterator[A]]): Expr[Iterator[(A, Int)]]
     }
 
-    def ifElse[A: Type](cond: Expr[Boolean])(ifBranch: Expr[A])(elseBranch: Expr[A]): Expr[A] = ??? // TODO!
+    def ifElse[A: Type](cond: Expr[Boolean])(ifBranch: Expr[A])(elseBranch: Expr[A]): Expr[A]
+
+    def block[A: Type](statements: List[Expr[Unit]], expr: Expr[A]): Expr[A] = ??? // TODO
 
     def summonImplicit[A: Type]: Option[Expr[A]]
 
@@ -113,6 +118,8 @@ private[compiletime] trait Exprs { this: Definitions =>
     def prettyPrint: String = Expr.prettyPrint(expr)
 
     def tpe: Type[A] = Expr.typeOf(expr)
+
+    def eqExpr[B: Type](other: Expr[B]): Expr[Boolean] = ??? // TODO
 
     // All of methods below change Expr[A] to Expr[B], but they differ in checks ans how it affects the underlying code:
     // - asInstanceOfExpr should be used when we want to generate .asInstanceOf in generated code, because we need to
@@ -141,7 +148,7 @@ private[compiletime] trait Exprs { this: Definitions =>
 
   implicit final protected class Function1[A: Type, B: Type](private val function1Expr: Expr[A => B]) {
 
-    def apply(a: Expr[A]): Expr[B] = ??? // TODO!!!
+    def apply(a: Expr[A]): Expr[B] = Expr.Function1.apply(function1Expr)(a)
   }
 
   implicit final protected class Function2[A: Type, B: Type, C: Type](private val function2Expr: Expr[(A, B) => C]) {

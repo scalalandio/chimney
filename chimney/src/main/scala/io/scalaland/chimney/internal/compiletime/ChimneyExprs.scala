@@ -37,7 +37,12 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
 
     val PartialResult: PartialResultModule
     trait PartialResultModule { this: PartialResult.type =>
-      def Value[A: Type](value: Expr[A]): Expr[partial.Result.Value[A]]
+      val Value: ValueModule
+      trait ValueModule { this: Value.type =>
+        def apply[A: Type](value: Expr[A]): Expr[partial.Result.Value[A]]
+
+        def value[A: Type](valueExpr: Expr[partial.Result.Value[A]]): Expr[A]
+      }
 
       val Errors: ErrorsModule
 
@@ -139,6 +144,13 @@ private[compiletime] trait ChimneyExprs { this: Definitions =>
 
     def prependErrorPath(path: Expr[partial.PathElement]): Expr[partial.Result[A]] =
       ChimneyExpr.PartialResult.prependErrorPath(resultExpr, path)
+  }
+
+  implicit final protected class PartialResultValueExprOps[A: Type](
+      private val valueExpr: Expr[partial.Result.Value[A]]
+  ) {
+
+    def value: Expr[A] = ChimneyExpr.PartialResult.Value.value(valueExpr)
   }
 
   implicit final protected class RuntimeDataStoreExprOps(
