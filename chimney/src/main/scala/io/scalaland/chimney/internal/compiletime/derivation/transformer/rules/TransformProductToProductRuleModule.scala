@@ -202,7 +202,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       //       res2.flatMap { $name2 =>
                       //         res3.flatMap { $name3 =>
                       //           ...
-                      //           ${ constructor }
+                      //            resN.map { $nameN => ${ constructor } }
                       //         }
                       //       }
                       //     }
@@ -223,7 +223,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         partialConstructorArguments
                           .traverse[PrependDefinitionsTo, (String, Existential[PartialExpr])] {
                             case (name: String, expr: Existential[PartialExpr]) =>
-                              // We start by building this initial block of def resN = ${ derivedResultTo }
+                              // We start by building this initial block of '{ def resN = ${ derivedResultTo } }
                               Existential.use(expr) {
                                 implicit Expr: Type[expr.Underlying] =>
                                   (partialExpr: Expr[partial.Result[expr.Underlying]]) =>
@@ -240,14 +240,15 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           .use { (partialsAsLazy: List[(String, Existential[PartialExpr])]) =>
                             val failFastBranch: Expr[partial.Result[To]] = {
                               // Here, we're building:
-                              // res1.flatMap { $name1 =>
-                              //   res2.flatMap { $name2 =>
-                              //     res3.flatMap { $name3 =>
-                              //       ...
-                              //       ${ constructor }
+                              // '{
+                              //   res1.flatMap { $name1 =>
+                              //     res2.flatMap { $name2 =>
+                              //       res3.flatMap { $name3 =>
+                              //         ...
+                              //          resN.map { $nameN => ${ constructor } }
+                              //       }
                               //     }
-                              //   }
-                              // }
+                              // } }
                               def nestFlatMaps(
                                   unusedPartials: List[(String, Existential[PartialExpr])],
                                   constructorArguments: Product.Arguments
@@ -286,15 +287,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
                             val fullErrorBranch: Expr[partial.Result[To]] =
                               // Here, we're building:
-                              // var allerrors: Errors = null
-                              // allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res1 })
-                              // allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res2 })
-                              // allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res3 })
-                              // ...
-                              // if (allerrors == null) {
-                              //   ${ constructor } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
-                              // } else {
-                              //   allerrors
+                              // '{
+                              //   var allerrors: Errors = null
+                              //   allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res1 })
+                              //   allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res2 })
+                              //   allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res3 })
+                              //   ...
+                              //   if (allerrors == null) {
+                              //     partial.Result.Value(${ constructor }) // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
+                              //   } else {
+                              //     allerrors
+                              //   }
                               // }
                               ExprPromise
                                 .promise[partial.Result.Errors](
@@ -311,26 +314,28 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                         Existential.use(result) {
                                           implicit Result: Type[result.Underlying] =>
                                             (expr: Expr[partial.Result[result.Underlying]]) =>
+                                              // Here, we're building:
+                                              // '{ allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ resN }) }
                                               setAllErrors(
-                                                ChimneyExpr.PartialResult.Errors
-                                                  .mergeResultNullable(allerrors, expr)
+                                                ChimneyExpr.PartialResult.Errors.mergeResultNullable(allerrors, expr)
                                               )
                                         }
                                       },
+                                      // Here, we're building:
+                                      // `{ if (allerrors == null) $ifBlock else $elseBock }
                                       Expr.ifElse[partial.Result[To]](allerrors eqExpr Expr.Null) {
+                                        // Here, we're building:
+                                        // '{ partial.Result.Value(${ constructor }) } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
                                         ChimneyExpr.PartialResult
                                           .Value[To](
                                             constructor(
                                               totalConstructorArguments ++ partialsAsLazy.map { case (name, result) =>
                                                 name -> result.mapK[Expr] {
-                                                  implicit PartialExpr: Type[result.Underlying] => (expr: Expr[
-                                                    partial.Result[result.Underlying]
-                                                  ]) =>
-                                                    expr
-                                                      .asInstanceOfExpr[
-                                                        partial.Result.Value[result.Underlying]
-                                                      ]
-                                                      .value
+                                                  implicit PartialExpr: Type[result.Underlying] =>
+                                                    (expr: Expr[partial.Result[result.Underlying]]) =>
+                                                      expr
+                                                        .asInstanceOfExpr[partial.Result.Value[result.Underlying]]
+                                                        .value
                                                 }
                                               }
                                             )
