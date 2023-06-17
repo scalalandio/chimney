@@ -20,20 +20,18 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     protected def createRefToName[From: Type](name: ExprPromiseName): Expr[From] =
       asExpr[From](q"$name")
 
-    def createAndUseLambda[From: Type, To: Type, B](
+    def createLambda[From: Type, To: Type, B](
         fromName: ExprPromiseName,
-        to: Expr[To],
-        use: Expr[From => To] => B
-    ): B =
-      use(asExpr[From => To](q"($fromName: ${Type[From]}) => $to"))
+        to: Expr[To]
+    ): Expr[From => To] =
+      asExpr[From => To](q"($fromName: ${Type[From]}) => $to")
 
-    def createAndUseLambda2[From: Type, From2: Type, To: Type, B](
+    def createLambda2[From: Type, From2: Type, To: Type, B](
         fromName: ExprPromiseName,
         from2Name: ExprPromiseName,
-        to: Expr[To],
-        use: Expr[(From, From2) => To] => B
-    ): B =
-      use(asExpr[(From, From2) => To](q"($fromName: ${Type[From]}, $from2Name: ${Type[From2]}) => $to"))
+        to: Expr[To]
+    ): Expr[(From, From2) => To] =
+      asExpr[(From, From2) => To](q"($fromName: ${Type[From]}, $from2Name: ${Type[From2]}) => $to")
 
     private def freshTermName(prefix: String): ExprPromiseName =
       c.internal.reificationSupport.freshTermName(prefix.toLowerCase + "$")

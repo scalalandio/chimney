@@ -13,54 +13,24 @@ private[compiletime] trait ExprPromises { this: Definitions =>
       f(usage).map(new ExprPromise(_, fromName))
     }
 
-    private def fulfilAsDefinition[From2: Type](
-        init: Expr[From2],
-        definitionType: PrependValsTo.DefnType
-    ): DerivationResult[PrependDefinitionsTo[A]] =
-      if (Type[From2] <:< Type[From])
-        DerivationResult.pure(
-          new PrependDefinitionsTo(
-            usage,
-            Vector((fromName, ExistentialExpr(Expr.asInstanceOf[From2, From](init)), definitionType))
-          )
-        )
-      else
-        DerivationResult.assertionError(
-          s"Initialized deferred Expr[${Type.prettyPrint[From]}] with expression of type ${Type.prettyPrint[From2]}"
-        )
+    private def fulfilAsDefinition(init: Expr[From], definitionType: PrependValsTo.DefnType): PrependDefinitionsTo[A] =
+      new PrependDefinitionsTo(usage, Vector((fromName, ExistentialExpr[From](init), definitionType)))
 
-    def fulfilAsDef[From2: Type](init: Expr[From2]): DerivationResult[PrependDefinitionsTo[A]] =
+    def fulfilAsDef(init: Expr[From]): PrependDefinitionsTo[A] =
       fulfilAsDefinition(init, PrependValsTo.DefnType.Def)
-    def fulfilAsLazy[From2: Type](init: Expr[From2]): DerivationResult[PrependDefinitionsTo[A]] =
+    def fulfilAsLazy(init: Expr[From]): PrependDefinitionsTo[A] =
       fulfilAsDefinition(init, PrependValsTo.DefnType.Lazy)
-    def fulfilAsVal[From2: Type](init: Expr[From2]): DerivationResult[PrependDefinitionsTo[A]] =
+    def fulfilAsVal(init: Expr[From]): PrependDefinitionsTo[A] =
       fulfilAsDefinition(init, PrependValsTo.DefnType.Val)
-    def fulfilAsVar[From2: Type](
-        init: Expr[From2]
-    ): DerivationResult[PrependDefinitionsTo[(A, Expr[From] => Expr[Unit])]] =
-      fulfilAsDefinition(init, PrependValsTo.DefnType.Var)
-        .map(_.map(_ -> PrependValsTo.setVal(fromName)))
+    def fulfilAsVar(init: Expr[From]): PrependDefinitionsTo[(A, Expr[From] => Expr[Unit])] =
+      fulfilAsDefinition(init, PrependValsTo.DefnType.Var).map(_ -> PrependValsTo.setVal(fromName))
 
-    private def fulfilAsLambdaIn[To: Type, B](use: Expr[From => To] => B)(implicit ev: A <:< Expr[To]): B =
-      ExprPromise.createAndUseLambda(fromName, ev(usage), use)
     def fulfilAsLambda[To: Type](implicit ev: A <:< Expr[To]): Expr[From => To] =
-      fulfilAsLambdaIn[To, Expr[From => To]](identity)
-
-    private def fulfilAsLambda2In[From2: Type, B, To: Type, C](
-        promise: ExprPromise[From2, B]
-    )(
-        combine: (A, B) => Expr[To]
-    )(
-        use: Expr[(From, From2) => To] => C
-    ): C =
-      ExprPromise.createAndUseLambda2(fromName, promise.fromName, combine(usage, promise.usage), use)
-
-    def fulfilAsLambda2[From2: Type, B, To: Type](
-        promise: ExprPromise[From2, B]
-    )(
+      ExprPromise.createLambda(fromName, ev(usage))
+    def fulfilAsLambda2[From2: Type, B, To: Type](promise: ExprPromise[From2, B])(
         combine: (A, B) => Expr[To]
     ): Expr[(From, From2) => To] =
-      fulfilAsLambda2In[From2, B, To, Expr[(From, From2) => To]](promise)(combine)(identity)
+      ExprPromise.createLambda2(fromName, promise.fromName, combine(usage, promise.usage))
 
     def fulfillAsPatternMatchCase[To](implicit ev: A <:< Expr[To]): PatternMatchCase[To] =
       new PatternMatchCase(someFrom = ExistentialType(Type[From]), usage = ev(usage), fromName = fromName)
@@ -96,17 +66,15 @@ private[compiletime] trait ExprPromises { this: Definitions =>
 
     protected def provideFreshName[From: Type](nameGenerationStrategy: NameGenerationStrategy): ExprPromiseName
     protected def createRefToName[From: Type](name: ExprPromiseName): Expr[From]
-    def createAndUseLambda[From: Type, To: Type, B](
+    def createLambda[From: Type, To: Type, B](
         fromName: ExprPromiseName,
-        to: Expr[To],
-        usage: Expr[From => To] => B
-    ): B
-    def createAndUseLambda2[From: Type, From2: Type, To: Type, B](
+        to: Expr[To]
+    ): Expr[From => To]
+    def createLambda2[From: Type, From2: Type, To: Type, B](
         fromName: ExprPromiseName,
         from2Name: ExprPromiseName,
-        to: Expr[To],
-        usage: Expr[(From, From2) => To] => B
-    ): B
+        to: Expr[To]
+    ): Expr[(From, From2) => To]
 
     sealed trait NameGenerationStrategy extends Product with Serializable
     object NameGenerationStrategy {
@@ -142,6 +110,8 @@ private[compiletime] trait ExprPromises { this: Definitions =>
       val expr = ev(usage)
       PrependValsTo.initializeDefns(defns, expr)(Expr.typeOf(expr))
     }
+
+    def use[B](f: A => Expr[B]): Expr[B] = map(f).prepend
   }
   protected val PrependValsTo: PrependValsToModule
   protected trait PrependValsToModule { this: PrependValsTo.type =>

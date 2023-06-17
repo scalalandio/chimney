@@ -18,25 +18,23 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     protected def createRefToName[From: Type](name: ExprPromiseName): Expr[From] =
       Ref(name).asExpr.asExprOf[From]
 
-    def createAndUseLambda[From: Type, To: Type, B](
+    def createLambda[From: Type, To: Type, B](
         fromName: ExprPromiseName,
-        to: Expr[To],
-        use: Expr[From => To] => B
-    ): B = use('{ (param: From) =>
+        to: Expr[To]
+    ): Expr[From => To] = '{ (param: From) =>
       ${
         PrependValsTo.initializeDefns[To](
           vals = Vector((fromName, ExistentialExpr('{ param }), PrependValsTo.DefnType.Val)),
           expr = to
         )
       }
-    })
+    }
 
-    def createAndUseLambda2[From: Type, From2: Type, To: Type, B](
+    def createLambda2[From: Type, From2: Type, To: Type, B](
         fromName: ExprPromiseName,
         from2Name: ExprPromiseName,
-        to: Expr[To],
-        use: Expr[(From, From2) => To] => B
-    ): B = use('{ (param: From, param2: From2) =>
+        to: Expr[To]
+    ): Expr[(From, From2) => To] = '{ (param: From, param2: From2) =>
       ${
         PrependValsTo.initializeDefns[To](
           vals = Vector(
@@ -46,7 +44,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
           expr = to
         )
       }
-    })
+    }
 
     private val freshTerm: FreshTerm = new FreshTerm
     private def freshTermName[A: Type](prefix: String): ExprPromiseName =
