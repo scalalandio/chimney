@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.internal.compiletime.fp.Syntax.*
-import io.scalaland.chimney.internal.compiletime.fp.Traverse
+import io.scalaland.chimney.internal.compiletime.fp.{Applicative, Traverse}
 import io.scalaland.chimney.partial
 
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>
@@ -133,10 +133,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   }
                 }
                 .flatMap { (resolvedArguments: List[(String, Existential[TransformationExpr])]) =>
-                  val totals = resolvedArguments.collect {
+                  val totals: Map[String, ExistentialExpr] = resolvedArguments.collect {
                     case (name, expr) if expr.value.isTotal => name -> expr.mapK(_ => _.ensureTotal)
                   }.toMap
-                  val partials = resolvedArguments.collect {
+                  val partials: List[(String, Existential[PartialExpr])] = resolvedArguments.collect {
                     case (name, expr) if expr.value.isPartial => name -> expr.mapK(_ => _.ensurePartial)
                   }
 
@@ -206,9 +206,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       //     }
                       //   } else {
                       //     var allerrors: Errors = null
-                      //     errors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res1 })
-                      //     errors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res2 })
-                      //     errors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res3 })
+                      //     allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res1 })
+                      //     allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res2 })
+                      //     allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res3 })
                       //     ...
                       //     if (allerrors == null) {
                       //       ${ constructor } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
@@ -221,7 +221,115 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       // TODO: exprPromise.fulfilAsVar
                       // TODO: Expr.ifElse
                       // TODO: expr.isNullExpr
-                      DerivationResult.notYetImplemented("todo")
+                      type PartialExpr[A] = Expr[partial.Result[A]]
+                      DerivationResult.expandedPartial(
+                        partials
+                          // We start by building this initial block of def resN = ${ derivedResultTo }
+                          .map[(String, PrependValsTo[ExistentialExpr])] {
+                            case (name: String, expr: Existential[PartialExpr]) =>
+                              Existential
+                                .use(expr) {
+                                  implicit Expr: Type[expr.Underlying] =>
+                                    (partialExpr: Expr[partial.Result[expr.Underlying]]) =>
+                                      name ->
+                                        ExprPromise
+                                          .promise[partial.Result[expr.Underlying]](
+                                            ExprPromise.NameGenerationStrategy.FromPrefix("res")
+                                          )
+                                          .map { (inner: Expr[partial.Result[expr.Underlying]]) =>
+                                            Existential[PartialExpr, expr.Underlying](inner)
+                                          }
+                                          .fulfilAsDef(partialExpr)
+                                }
+                          }
+                          .foldLeft(Applicative[PrependValsTo].pure(Vector.empty[(String, Existential[PartialExpr])])) {
+                            case (
+                                  argsP: PrependValsTo[Vector[(String, Existential[PartialExpr])]],
+                                  (name: String, argP: PrependValsTo[Existential[PartialExpr]])
+                                ) =>
+                              argsP.map2(argP) {
+                                (args: Vector[(String, Existential[PartialExpr])], arg: Existential[PartialExpr]) =>
+                                  args :+ (name, arg)
+                              }
+                          }
+                          // Now, that we have these defs defined, we can use them
+                          .map { partialsAsDefs: Vector[(String, Existential[PartialExpr])] =>
+                            val failFastBranch: Expr[partial.Result[To]] = {
+                              // Here, we're building:
+                              // res1.flatMap { $name1 =>
+                              //   res2.flatMap { $name2 =>
+                              //     res3.flatMap { $name3 =>
+                              //       ...
+                              //       ${ constructor }
+                              //     }
+                              //   }
+                              // }
+                              def nestFlatMaps(
+                                  unusedPartials: List[(String, Existential[PartialExpr])],
+                                  constructorArguments: Product.Arguments
+                              ): Expr[partial.Result[To]] = unusedPartials match {
+                                // Should never happen
+                                case Nil => ???
+                                // last result to compose in - use .map instead of .flatMap
+                                case (name, res) :: Nil =>
+                                  Existential.use(res) {
+                                    implicit ToMap: Type[res.Underlying] =>
+                                      (resultToMap: Expr[partial.Result[res.Underlying]]) =>
+                                        resultToMap.map(Expr.Function1.instance[res.Underlying, To] {
+                                          innerExpr: Expr[res.Underlying] =>
+                                            constructor(constructorArguments + (name, ExistentialExpr(innerExpr)))
+                                        })
+                                  }
+                                // use .flatMap
+                                case (name, res) :: tail =>
+                                  Existential.use(res) {
+                                    implicit ToFlatMap: Type[res.Underlying] =>
+                                      (resultToFlatMap: Expr[partial.Result[res.Underlying]]) =>
+                                        resultToFlatMap.flatMap(
+                                          Expr.Function1.instance[res.Underlying, partial.Result[To]] {
+                                            innerExpr: Expr[res.Underlying] =>
+                                              nestFlatMaps(
+                                                tail,
+                                                constructorArguments + (name, ExistentialExpr(innerExpr))
+                                              )
+                                          }
+                                        )
+                                  }
+                              }
+
+                              nestFlatMaps(partialsAsDefs.toList, totals)
+                            }
+
+                            val fullErrorBranch: Expr[partial.Result[To]] = {
+                              // Here, we're building:
+                              // var allerrors: Errors = null
+                              // allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res1 })
+                              // allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res2 })
+                              // allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ res3 })
+                              // ...
+                              // if (allerrors == null) {
+                              //   ${ constructor } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
+                              // } else {
+                              //   allerrors
+                              // }
+                              ??? // TODO
+                            }
+
+                            ctx match {
+                              case TransformationContext.ForTotal(_) =>
+                                assertionFailed("Expected partial, got total")
+                              case TransformationContext.ForTotal(_, failFast) =>
+                                // Finally, we are combining:
+                                // if (${ failFast }) {
+                                //   ${ failFastBranch }
+                                // } else {
+                                //   ${ fullErrorBranch }
+                                // }
+                                Expr.ifElse(failFast)(failFastBranch)(fullErrorBranch)
+                            }
+                          }
+                          .prepend[partial.Result[To]]
+                      )
                   }
                 }
           }

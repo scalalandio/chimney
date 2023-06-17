@@ -96,6 +96,8 @@ private[compiletime] trait Exprs { this: Definitions =>
       def zipWithIndex[A: Type](it: Expr[Iterator[A]]): Expr[Iterator[(A, Int)]]
     }
 
+    def ifElse[A: Type](cond: Expr[Boolean])(ifBranch: Expr[A])(elseBranch: Expr[A]): Expr[A] = ??? // TODO!
+
     def summonImplicit[A: Type]: Option[Expr[A]]
 
     def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B]

@@ -13,6 +13,7 @@ private[compiletime] trait ExprPromises { this: Definitions =>
       f(usage).map(new ExprPromise(_, fromName))
     }
 
+    def fulfilAsDef[From2: Type](init: Expr[From2]): DerivationResult[PrependValsTo[A]] = ???
     def fulfilAsVal[From2: Type](init: Expr[From2]): DerivationResult[PrependValsTo[A]] =
       if (Type[From2] <:< Type[From])
         DerivationResult.pure(
@@ -22,6 +23,7 @@ private[compiletime] trait ExprPromises { this: Definitions =>
         DerivationResult.assertionError(
           s"Initialized deferred Expr[${Type.prettyPrint[From]}] with expression of type ${Type.prettyPrint[From2]}"
         )
+    def fulfilAsVar[From2: Type](init: Expr[From2]): DerivationResult[PrependValsTo[A]] = ???
 
     def fulfilAsLambdaIn[To: Type, B](use: Expr[From => To] => B)(implicit ev: A <:< Expr[To]): B =
       ExprPromise.createAndUseLambda(fromName, ev(usage), use)
