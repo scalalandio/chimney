@@ -3,9 +3,8 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.internal.compiletime.fp.Syntax.*
-import io.scalaland.chimney.internal.compiletime.fp.{Applicative, Traverse}
+import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
-import io.scalaland.chimney.partial.Result
 
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>
 
@@ -137,11 +136,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 }
                 .map[TransformationExpr[To]] { (resolvedArguments: List[(String, Existential[TransformationExpr])]) =>
                   val totalConstructorArguments: Map[String, ExistentialExpr] = resolvedArguments.collect {
-                    case (name, expr) if expr.value.isTotal => name -> expr.mapK(_ => _.ensureTotal)
+                    case (name, expr) if expr.value.isTotal => name -> expr.mapK[Expr](_ => _.ensureTotal)
                   }.toMap
 
-                  resolvedArguments.collect[(String, Existential[PartialExpr])] {
-                    case (name, expr) if expr.value.isPartial => name -> expr.mapK(_ => _.ensurePartial)
+                  resolvedArguments.collect {
+                    case (name, expr) if expr.value.isPartial => name -> expr.mapK[PartialExpr](_ => _.ensurePartial)
                   } match {
                     case Nil =>
                       // We're constructing:
@@ -304,47 +303,43 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                   ExprPromise.NameGenerationStrategy.FromPrefix("allerrors")
                                 )
                                 .fulfilAsVar(Expr.Null.asInstanceOfExpr[partial.Result.Errors])
-                                .use {
-                                  case (
-                                        allerrors: Expr[partial.Result.Errors],
-                                        setAllErrors: (Expr[partial.Result.Errors] => Expr[Unit])
-                                      ) =>
-                                    Expr.block(
-                                      partialsAsLazy.map { case (_, result) =>
-                                        Existential.use(result) {
-                                          implicit Result: Type[result.Underlying] =>
-                                            (expr: Expr[partial.Result[result.Underlying]]) =>
-                                              // Here, we're building:
-                                              // '{ allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ resN }) }
-                                              setAllErrors(
-                                                ChimneyExpr.PartialResult.Errors.mergeResultNullable(allerrors, expr)
-                                              )
-                                        }
-                                      },
-                                      // Here, we're building:
-                                      // `{ if (allerrors == null) $ifBlock else $elseBock }
-                                      Expr.ifElse[partial.Result[To]](allerrors eqExpr Expr.Null) {
-                                        // Here, we're building:
-                                        // '{ partial.Result.Value(${ constructor }) } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
-                                        ChimneyExpr.PartialResult
-                                          .Value[To](
-                                            constructor(
-                                              totalConstructorArguments ++ partialsAsLazy.map { case (name, result) =>
-                                                name -> result.mapK[Expr] {
-                                                  implicit PartialExpr: Type[result.Underlying] =>
-                                                    (expr: Expr[partial.Result[result.Underlying]]) =>
-                                                      expr
-                                                        .asInstanceOfExpr[partial.Result.Value[result.Underlying]]
-                                                        .value
-                                                }
-                                              }
+                                .use { case (allerrors, setAllErrors) =>
+                                  Expr.block(
+                                    partialsAsLazy.map { case (_, result) =>
+                                      Existential.use(result) {
+                                        implicit Result: Type[result.Underlying] =>
+                                          (expr: Expr[partial.Result[result.Underlying]]) =>
+                                            // Here, we're building:
+                                            // '{ allerrors = partial.Result.Errors.__mergeResultNullable(allerrors, ${ resN }) }
+                                            setAllErrors(
+                                              ChimneyExpr.PartialResult.Errors.mergeResultNullable(allerrors, expr)
                                             )
-                                          )
-                                          .upcastExpr[partial.Result[To]]
-                                      } {
-                                        allerrors.upcastExpr[partial.Result[To]]
                                       }
-                                    )
+                                    },
+                                    // Here, we're building:
+                                    // `{ if (allerrors == null) $ifBlock else $elseBock }
+                                    Expr.ifElse[partial.Result[To]](allerrors eqExpr Expr.Null) {
+                                      // Here, we're building:
+                                      // '{ partial.Result.Value(${ constructor }) } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
+                                      ChimneyExpr.PartialResult
+                                        .Value[To](
+                                          constructor(
+                                            totalConstructorArguments ++ partialsAsLazy.map { case (name, result) =>
+                                              name -> result.mapK[Expr] {
+                                                implicit PartialExpr: Type[result.Underlying] =>
+                                                  (expr: Expr[partial.Result[result.Underlying]]) =>
+                                                    expr
+                                                      .asInstanceOfExpr[partial.Result.Value[result.Underlying]]
+                                                      .value
+                                              }
+                                            }
+                                          )
+                                        )
+                                        .upcastExpr[partial.Result[To]]
+                                    } {
+                                      allerrors.upcastExpr[partial.Result[To]]
+                                    }
+                                  )
                                 }
 
                             ctx match {

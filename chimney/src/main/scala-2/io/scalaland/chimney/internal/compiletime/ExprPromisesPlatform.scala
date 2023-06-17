@@ -70,11 +70,14 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         expr: Expr[To]
     ): Expr[To] = {
       val statements = vals.map {
-        case (name, eexpr, DefnType.Def)  => ??? // TODO
-        case (name, eexpr, DefnType.Lazy) => ??? // TODO
+        case (name, initialValue, DefnType.Def) =>
+          ExistentialExpr.use(initialValue) { tpe => expr => q"def $name: $tpe = $expr" }
+        case (name, initialValue, DefnType.Lazy) =>
+          ExistentialExpr.use(initialValue) { tpe => expr => q"lazy val $name: $tpe = $expr" }
         case (name, initialValue, DefnType.Val) =>
           ExistentialExpr.use(initialValue) { tpe => expr => q"val $name: $tpe = $expr" }
-        case (name, eexpr, DefnType.Var) => ??? // TODO
+        case (name, initialValue, DefnType.Var) =>
+          ExistentialExpr.use(initialValue) { tpe => expr => q"var $name: $tpe = $expr" }
       }.toList
       asExpr[To](q"..$statements; $expr")
     }

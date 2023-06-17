@@ -21,7 +21,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         val ee = weakTypeOf[Unswapped].etaExpand
         if (ee.typeParams.isEmpty || args.isEmpty) {
           assertionFailed(
-            s"fromWeakTC should be used only to apply type paramerers to type constructors, got $ee and $args!"
+            s"fromWeakTC should be used only to apply type parameters to type constructors, got $ee and $args!"
           )
         } else if (ee.typeParams.size != args.size) {
           val een = ee.typeParams.size
