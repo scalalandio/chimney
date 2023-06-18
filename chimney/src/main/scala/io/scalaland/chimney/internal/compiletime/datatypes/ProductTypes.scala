@@ -2,6 +2,8 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 
 import io.scalaland.chimney.internal.compiletime.Definitions
 
+import scala.collection.immutable.ListMap
+
 private[compiletime] trait ProductTypes { this: Definitions =>
 
   final protected case class Product[A](extraction: Product.Getters[A], construction: Product.Constructor[A])
@@ -16,7 +18,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
         case object JavaBeanGetter extends SourceType
       }
     }
-    final type Getters[From] = Map[String, Existential[Getter[From, *]]]
+    final type Getters[From] = ListMap[String, Existential[Getter[From, *]]]
 
     final case class Parameter[A](targetType: Parameter.TargetType, defaultValue: Option[Expr[A]])
     object Parameter {
@@ -26,7 +28,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
         case object SetterParameter extends TargetType
       }
     }
-    final type Parameters = Map[String, Existential[Parameter]]
+    final type Parameters = ListMap[String, Existential[Parameter]]
 
     final type Arguments = Map[String, ExistentialExpr]
 
@@ -118,7 +120,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
         }
       }
 
-      arguments.view.filterKeys(parameters.keySet).toMap
+      ListMap.from(arguments.view.filterKeys(parameters.keySet))
     }
   }
 

@@ -86,11 +86,14 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             .flatMap { (subtypeMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
               if (subtypeMappings.exists(_.value.isPartial))
                 // if any result is partial, all results must be lifted to partial
-                DerivationResult.expandedPartial(
-                  subtypeMappings
-                    .map(_.value.ensurePartial.fulfillAsPatternMatchCase[partial.Result[To]])
-                    .matchOn(ctx.src)
-                )
+                DerivationResult.log(
+                  s"Found cases ${subtypeMappings.count(_.value.isPartial)} with Partial target, lifting all cases to Partial"
+                ) >>
+                  DerivationResult.expandedPartial(
+                    subtypeMappings
+                      .map(_.value.ensurePartial.fulfillAsPatternMatchCase[partial.Result[To]])
+                      .matchOn(ctx.src)
+                  )
               else
                 // if all are total, we might treat them as such
                 DerivationResult.expandedTotal(

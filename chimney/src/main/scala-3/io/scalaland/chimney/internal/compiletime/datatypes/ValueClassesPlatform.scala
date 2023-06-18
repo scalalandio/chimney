@@ -29,26 +29,27 @@ private[compiletime] trait ValueClassesPlatform extends ValueClasses { this: Def
           assertionFailed(s"AnyVal ${Type.prettyPrint[A]} expected to have public constructor with 1 argument")
       }
 
-      type Inner
-      implicit val Inner: Type[Inner] = Type.platformSpecific.returnTypeOf[Inner](repr.memberType(getter))
-      assert(
-        typeByName(argument.name).asType.asInstanceOf[Type[Inner]] =:= Inner,
-        s"AnyVal ${Type.prettyPrint[A]} only parameter's type was expected to be the same as only constructor argument's type"
-      )
-
-      Some(
-        Existential(
-          ValueClass[A, Inner](
-            fieldName = getter.name,
-            unwrap = (expr: Expr[A]) => expr.asTerm.select(getter).appliedToArgss(Nil).asExpr.asInstanceOf[Expr[Inner]],
-            wrap = (expr: Expr[Inner]) => {
-              val select = New(TypeTree.of[A]).select(primaryConstructor)
-              val tree = if typeParams.nonEmpty then select.appliedToTypes(typeParams) else select
-              tree.appliedToArgss(List(List(expr.asTerm))).asExprOf[A]
-            }
-          )
+      // TODO: ask Janek about the best way of computing tpe.typeSignatureIn(tpe2)
+      val inner = ExistentialType(typeByName(argument.name).asType.asInstanceOf[Type[Any]])
+      // val inner = ExistentialType(Type.platformSpecific.returnTypeOf[Any](repr.memberType(getter)))
+      Some(inner.mapK[ValueClass[A, *]] { implicit Inner: Type[inner.Underlying] => _ =>
+        assert(
+          typeByName(argument.name).asType.asInstanceOf[Type[Any]] =:= Inner,
+          s"AnyVal ${Type.prettyPrint[A]} only parameter's type (${Type
+              .prettyPrint(typeByName(argument.name).asType.asInstanceOf[Type[Any]])}) was expected to be the same as only constructor argument's type (${Type
+              .prettyPrint(Inner)})"
         )
-      )
+
+        ValueClass[A, inner.Underlying](
+          fieldName = getter.name,
+          unwrap = (expr: Expr[A]) => expr.asTerm.select(getter).appliedToArgss(Nil).asExprOf[inner.Underlying],
+          wrap = (expr: Expr[inner.Underlying]) => {
+            val select = New(TypeTree.of[A]).select(primaryConstructor)
+            val tree = if typeParams.nonEmpty then select.appliedToTypes(typeParams) else select
+            tree.appliedToArgss(List(List(expr.asTerm))).asExprOf[A]
+          }
+        )
+      })
     } else None
   }
 }

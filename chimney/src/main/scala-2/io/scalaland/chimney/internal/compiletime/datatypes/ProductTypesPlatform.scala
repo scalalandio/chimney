@@ -130,7 +130,8 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
           val termNames = setters.map { case (name, termName, _) => name -> termName }.toMap
 
           val constructor: Product.Arguments => Expr[A] = arguments => {
-            val beanTermName: TermName = ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType)
+            val beanTermName: TermName =
+              ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
 
             val checkedArguments = checkArguments(parameters, arguments).map { case (name, e) =>
               ExistentialExpr.use(e) { implicit E: Type[e.Underlying] => expr =>
@@ -138,29 +139,14 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
               }
             }.toList
 
-            parameters.foreach { case (name, param) =>
-              Existential.use(param) { implicit Param: Type[param.Underlying] => _ =>
-                val argument = arguments.getOrElse(
-                  name,
-                  assertionFailed(s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $name")
-                )
-                if (!(argument.Underlying <:< Param)) {
-                  assertionFailed(
-                    s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
-                        .prettyPrint[param.Underlying]}, instead got ${Type.prettyPrint(argument.Underlying)}"
-                  )
-                }
-              }
-            }
-
-            val statements = q"val $beanTermName: ${Type[A]} = $defaultConstructor" +: arguments
+            val statements = q"val $beanTermName: ${Type[A]} = $defaultConstructor" +: checkedArguments
 
             asExpr(q"..$statements; $beanTermName")
           }
 
           Product.Constructor(parameters, constructor)
         } else if (isCaseObject[A]) {
-          Product.Constructor(Map.empty, _ => asExpr(q"${Type[A].typeSymbol.asClass.module}"))
+          Product.Constructor(ListMap.empty, _ => asExpr(q"${Type[A].typeSymbol.asClass.module}"))
         } else {
           val primaryConstructor = Option(Type[A].typeSymbol)
             .filter(_.isClass)
@@ -201,7 +187,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
 
             val checkedArguments = parametersRaw.map { params =>
               params.map { case (name, _) =>
-                unadaptedCheckedArguments(name).value.asInstanceOf[Expr[Ant]]
+                unadaptedCheckedArguments(name).value.asInstanceOf[Expr[Any]]
               }
             }
 

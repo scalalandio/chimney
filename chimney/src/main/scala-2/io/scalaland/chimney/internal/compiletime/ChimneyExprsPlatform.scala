@@ -24,7 +24,8 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
       def instance[From: Type, To: Type](
           toExpr: Expr[From] => Expr[To]
       ): Expr[io.scalaland.chimney.Transformer[From, To]] = {
-        val srcTermName = ExprPromise.provideFreshName[From](ExprPromise.NameGenerationStrategy.FromType)
+        val srcTermName =
+          ExprPromise.provideFreshName[From](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
         val srcExpr: Expr[From] = asExpr[From](q"$srcTermName")
         asExpr[io.scalaland.chimney.Transformer[From, To]](
           q"""new _root_.io.scalaland.chimney.Transformer[${Type[From]}, ${Type[To]}] {
@@ -47,10 +48,14 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Def
       def instance[From: Type, To: Type](
           toExpr: (Expr[From], Expr[Boolean]) => Expr[partial.Result[To]]
       ): Expr[io.scalaland.chimney.PartialTransformer[From, To]] = {
-        val srcTermName = ExprPromise.provideFreshName[From](ExprPromise.NameGenerationStrategy.FromType)
+        val srcTermName =
+          ExprPromise.provideFreshName[From](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
         val srcExpr: Expr[From] = asExpr[From](q"$srcTermName")
         val failFastTermName =
-          ExprPromise.provideFreshName[Boolean](ExprPromise.NameGenerationStrategy.FromPrefix("failFast"))
+          ExprPromise.provideFreshName[Boolean](
+            ExprPromise.NameGenerationStrategy.FromPrefix("failFast"),
+            ExprPromise.UsageHint.None
+          )
         val failFastExpr: Expr[Boolean] = asExpr[Boolean](q"$failFastTermName")
         asExpr[io.scalaland.chimney.PartialTransformer[From, To]](
           q"""new _root_.io.scalaland.chimney.PartialTransformer[${Type[From]}, ${Type[To]}] {

@@ -12,7 +12,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     // made public for ChimneyExprsPlatform: Transformer.lift and PartialTransformer.lift
     def provideFreshName[From: Type](
         nameGenerationStrategy: NameGenerationStrategy,
-        @unused: UsageHint
+        usageHint: UsageHint
     ): ExprPromiseName =
       nameGenerationStrategy match {
         case NameGenerationStrategy.FromPrefix(src) => freshTermName(src)

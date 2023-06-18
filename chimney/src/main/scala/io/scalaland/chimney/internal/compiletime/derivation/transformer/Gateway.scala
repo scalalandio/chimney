@@ -39,11 +39,12 @@ private[compiletime] trait Gateway { this: Derivation =>
     // println(s"Started derivation from ${Type.prettyPrint[From]} -> ${Type.prettyPrint[To]} type class")
     val result = DerivationResult.direct[Expr[To], Expr[Transformer[From, To]]] { await =>
       ChimneyExpr.Transformer.instance[From, To] { (src: Expr[From]) =>
-        val context = TransformationContext.ForTotal.create[From, To](
-          src,
-          Configurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
-          runtimeDataStore
-        )
+        val context = TransformationContext.ForTotal
+          .create[From, To](
+            src,
+            Configurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+            runtimeDataStore
+          )
 
         await(enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context))
       }

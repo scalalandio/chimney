@@ -13,6 +13,9 @@ private[chimney] trait TransformerCompanionPlatform { this: Transformer.type =>
    * @return [[io.scalaland.chimney.Transformer]] type class instance
    * @since 0.8.0
    */
-  implicit inline def derive[From, To]: Transformer[From, To] =
+  inline def derive[From, To]: Transformer[From, To] =
+    ${ TransformerMacros.deriveTotalTransformerWithDefaults[From, To] }
+
+  implicit inline def deriveAutomatic[From, To]: Transformer.AutoDerived[From, To] =
     ${ TransformerMacros.deriveTotalTransformerWithDefaults[From, To] }
 }

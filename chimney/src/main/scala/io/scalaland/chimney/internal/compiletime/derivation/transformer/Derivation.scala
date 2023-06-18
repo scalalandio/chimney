@@ -34,9 +34,11 @@ private[compiletime] trait Derivation
     val newCtx: TransformationContext[NewFrom, NewTo] = ctx.updateFromTo[NewFrom, NewTo](newSrc).updateConfig {
       _.prepareForRecursiveCall
     }
-    deriveTransformationResultExpr(newCtx).logSuccess {
-      case TransformationExpr.TotalExpr(expr)   => s"Derived recursively total expression ${Expr.prettyPrint(expr)}"
-      case TransformationExpr.PartialExpr(expr) => s"Derived recursively partial expression ${Expr.prettyPrint(expr)}"
-    }
+    deriveTransformationResultExpr(newCtx)
+      .logSuccess {
+        case TransformationExpr.TotalExpr(expr)   => s"Derived recursively total expression ${Expr.prettyPrint(expr)}"
+        case TransformationExpr.PartialExpr(expr) => s"Derived recursively partial expression ${Expr.prettyPrint(expr)}"
+      }
+      .logFailure(errors => s"Errors at recursive derivation: ${errors.prettyPrint}")
   }
 }

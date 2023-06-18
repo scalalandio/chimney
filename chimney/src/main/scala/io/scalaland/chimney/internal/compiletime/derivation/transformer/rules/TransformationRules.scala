@@ -38,10 +38,10 @@ private[compiletime] trait TransformationRules { this: Derivation =>
           .flatMap {
             case ExpansionResult.Expanded(transformationExpr) =>
               DerivationResult
-                .log(s"Rule ${rule.name} expanded successfully")
+                .log(s"Rule ${rule.name} expanded successfully: ${transformationExpr.prettyPrint}")
                 .as(transformationExpr.asInstanceOf[TransformationExpr[To]])
             case ExpansionResult.AttemptNextRule =>
-              DerivationResult.log(s"Rule ${rule.name} decided to continue expansion") >>
+              DerivationResult.log(s"Rule ${rule.name} decided to pass on to next rule") >>
                 expandRules[From, To](nextRules)
           }
     }
@@ -87,15 +87,19 @@ private[compiletime] trait TransformationRules { this: Derivation =>
       fold[Either[Expr[A], Expr[partial.Result[A]]]](e => Left(e))(e => Right(e))
 
     final def isTotal: Boolean = fold(_ => true)(_ => false)
-    final def isPartial: Boolean = fold(_ => true)(_ => false)
+    final def isPartial: Boolean = fold(_ => false)(_ => true)
 
-    final def ensureTotal: Expr[A] = fold(identity) { _ =>
-      assertionFailed("Derived partial.Result expression where total Transformer expects direct value")
+    final def ensureTotal: Expr[A] = fold(identity) { expr =>
+      assertionFailed(
+        s"Derived partial.Result expression where total Transformer expects direct value: ${Expr.prettyPrint(expr)}"
+      )
     }
     final def ensurePartial: Expr[partial.Result[A]] = fold { expr =>
       implicit val A: Type[A] = Expr.typeOf(expr)
       ChimneyExpr.PartialResult.Value(expr).upcastExpr[partial.Result[A]]
     }(identity)
+
+    def prettyPrint: String = fold(Expr.prettyPrint)(Expr.prettyPrint)
   }
   protected object TransformationExpr {
     def fromTotal[A](expr: Expr[A]): TransformationExpr[A] = TotalExpr(expr)
@@ -115,7 +119,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
       promise.map(_.toEither).partition
 
     final def isTotal: Boolean = foldTransformationExpr(_ => true)(_ => false)
-    final def isPartial: Boolean = foldTransformationExpr(_ => true)(_ => false)
+    final def isPartial: Boolean = foldTransformationExpr(_ => false)(_ => true)
 
     def ensureTotal: ExprPromise[From, Expr[To]] = promise.map(_.ensureTotal)
     def ensurePartial: ExprPromise[From, Expr[partial.Result[To]]] = promise.map(_.ensurePartial)

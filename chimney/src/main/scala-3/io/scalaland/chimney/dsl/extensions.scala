@@ -11,7 +11,7 @@ extension [From](source: From) {
   def into[To]: TransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new TransformerInto(source, new TransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore))
 
-  def transformInto[To](implicit transformer: Transformer[From, To]): To =
+  def transformInto[To](implicit transformer: Transformer.AutoDerived[From, To]): To =
     transformer.transform(source)
 }
 
@@ -23,11 +23,13 @@ extension [From](source: From) {
       new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
     )
 
-  def transformIntoPartial[To](implicit transformer: PartialTransformer[From, To]): partial.Result[To] =
+  def transformIntoPartial[To](implicit
+      transformer: PartialTransformer.AutoDerived[From, To]
+  ): partial.Result[To] =
     transformIntoPartial(failFast = false)
 
   def transformIntoPartial[To](failFast: Boolean)(implicit
-      transformer: PartialTransformer[From, To]
+      transformer: PartialTransformer.AutoDerived[From, To]
   ): partial.Result[To] =
     transformer.transform(source, failFast)
 }

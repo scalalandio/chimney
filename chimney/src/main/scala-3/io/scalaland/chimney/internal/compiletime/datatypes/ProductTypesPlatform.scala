@@ -96,12 +96,11 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
                 if isCaseFieldName(getter) then Product.Getter.SourceType.ConstructorVal
                 else if isJavaGetter(getter) then Product.Getter.SourceType.JavaBeanGetter
                 else Product.Getter.SourceType.AccessorMethod,
-              get = (in: Expr[A]) =>
-                in.asTerm
-                  .select(getter)
-                  .appliedToArgs(getter.paramSymss.filterNot(_.exists(_.isType)).map(_.asInstanceOf[Term]))
-                  .asExpr
-                  .asExprOf[tpe.Underlying]
+              get =
+                // TODO: pathological cases like def foo[Unused]()()()
+                if getter.paramSymss.isEmpty then
+                  (in: Expr[A]) => in.asTerm.select(getter).appliedToArgss(Nil).asExprOf[tpe.Underlying]
+                else (in: Expr[A]) => in.asTerm.select(getter).appliedToNone.asExprOf[tpe.Underlying]
             )
           }
         }
@@ -185,10 +184,10 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         } else if isCaseObject[A] then {
           if sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic) then
             // Scala 3 case object (enum's case without parameters)
-            Product.Constructor(Map.empty, _ => Ref(sym).asExprOf[A])
+            Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A])
           else
             // Scala 2 case object
-            Product.Constructor(Map.empty, _ => Ref(sym.companionModule).asExprOf[A])
+            Product.Constructor(ListMap.empty, _ => Ref(sym.companionModule).asExprOf[A])
         } else {
           val primaryConstructor =
             Option(TypeRepr.of[A].typeSymbol.primaryConstructor).filter(s => !s.isNoSymbol).filter(isPublic).getOrElse {
@@ -225,7 +224,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
               }
           }
 
-          // TODO: print parameters when list is empty 
+          // TODO: print parameters when list is empty
 
           val parameters: Product.Parameters = ListMap.from(parametersRaw.flatten)
 

@@ -11,7 +11,7 @@ import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
   *
   * @since 0.1.0
   */
-trait Transformer[From, To] {
+trait Transformer[From, To] extends Transformer.AutoDerived[From, To] {
 
   /** Run transformation using provided value as a source.
     *
@@ -52,4 +52,8 @@ object Transformer extends TransformerCompanionPlatform {
     */
   def definePartial[From, To]: PartialTransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
+
+  trait AutoDerived[From, To] {
+    def transform(src: From): To
+  }
 }

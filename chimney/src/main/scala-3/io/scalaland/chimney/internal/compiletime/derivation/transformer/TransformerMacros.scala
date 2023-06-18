@@ -145,5 +145,4 @@ object TransformerMacros {
       Expr(failFast),
       '{ ${ td }.runtimeData }
     )
-
 }
