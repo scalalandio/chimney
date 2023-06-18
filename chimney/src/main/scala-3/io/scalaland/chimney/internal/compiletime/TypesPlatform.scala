@@ -13,8 +13,8 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     object platformSpecific {
 
       @scala.annotation.tailrec
-      def returnType[A](typeRepr: TypeRepr): Type[A] = typeRepr.widenByName match {
-        case MethodType(_, _, out) => returnType[A](out)
+      def returnTypeOf[A](typeRepr: TypeRepr): Type[A] = typeRepr.widenByName match {
+        case MethodType(_, _, out) => returnTypeOf[A](out)
         case out                   => out.asType.asInstanceOf[Type[A]]
       }
 

@@ -30,7 +30,7 @@ private[compiletime] trait ValueClassesPlatform extends ValueClasses { this: Def
       }
 
       type Inner
-      implicit val Inner: Type[Inner] = Type.platformSpecific.returnType[Inner](repr.memberType(getter))
+      implicit val Inner: Type[Inner] = Type.platformSpecific.returnTypeOf[Inner](repr.memberType(getter))
       assert(
         typeByName(argument.name).asType.asInstanceOf[Type[Inner]] =:= Inner,
         s"AnyVal ${Type.prettyPrint[A]} only parameter's type was expected to be the same as only constructor argument's type"
@@ -44,7 +44,7 @@ private[compiletime] trait ValueClassesPlatform extends ValueClasses { this: Def
             wrap = (expr: Expr[Inner]) => {
               val select = New(TypeTree.of[A]).select(primaryConstructor)
               val tree = if typeParams.nonEmpty then select.appliedToTypes(typeParams) else select
-              tree.appliedToArgss(List(List(expr.asTerm))).asExpr.asExprOf[A]
+              tree.appliedToArgss(List(List(expr.asTerm))).asExprOf[A]
             }
           )
         )

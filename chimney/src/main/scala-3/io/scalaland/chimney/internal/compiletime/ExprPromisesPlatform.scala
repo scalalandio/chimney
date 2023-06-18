@@ -8,15 +8,14 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
   protected object ExprPromise extends ExprPromiseModule {
 
-    protected def provideFreshName[From: Type](nameGenerationStrategy: NameGenerationStrategy): ExprPromiseName =
+    def provideFreshName[From: Type](nameGenerationStrategy: NameGenerationStrategy): ExprPromiseName =
       nameGenerationStrategy match {
         case NameGenerationStrategy.FromPrefix(src) => freshTermName[From](src)
         case NameGenerationStrategy.FromType        => freshTermName[From]
         case NameGenerationStrategy.FromExpr(expr)  => freshTermName[From](expr)
       }
 
-    protected def createRefToName[From: Type](name: ExprPromiseName): Expr[From] =
-      Ref(name).asExpr.asExprOf[From]
+    protected def createRefToName[From: Type](name: ExprPromiseName): Expr[From] = Ref(name).asExprOf[From]
 
     def createLambda[From: Type, To: Type, B](
         fromName: ExprPromiseName,
@@ -105,7 +104,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
             )
         }
       }
-    ).asExpr.asExprOf[To]
+    ).asExprOf[To]
   }
 
   // TODO: consult with Janek Chyb if this is necessary/safe
