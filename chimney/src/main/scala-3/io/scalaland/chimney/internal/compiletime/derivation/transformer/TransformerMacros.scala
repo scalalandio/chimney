@@ -12,6 +12,8 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
 
   protected type ImplicitScopeFlagsType <: internal.TransformerFlags
 
+  // TODO: remove (using quotes: Quotes)
+
   def deriveTotalTransformerWithDefaults[
       From: Type,
       To: Type

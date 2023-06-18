@@ -75,8 +75,8 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
         case '[internal.TransformerCfg.FieldRelabelled[fieldNameFromT, fieldNameToT, cfgTailT]] =>
           extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)
             .addFieldOverride(
-              Type[fieldNameFromT].asStringSingletonType,
-              RuntimeFieldOverride.RenamedFrom(Type[fieldNameToT].asStringSingletonType)
+              Type[fieldNameToT].asStringSingletonType,
+              RuntimeFieldOverride.RenamedFrom(Type[fieldNameFromT].asStringSingletonType)
             )
         case '[internal.TransformerCfg.CoproductInstance[instanceT, targetT, cfgTailT]] =>
           extractTransformerConfig[cfgTailT](1 + runtimeDataIdx)

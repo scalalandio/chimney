@@ -8,11 +8,15 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
   protected object ExprPromise extends ExprPromiseModule {
 
-    def provideFreshName[From: Type](nameGenerationStrategy: NameGenerationStrategy): ExprPromiseName =
+    // made public for ProductType.parse
+    def provideFreshName[From: Type](
+        nameGenerationStrategy: NameGenerationStrategy,
+        usageHint: UsageHint
+    ): ExprPromiseName =
       nameGenerationStrategy match {
-        case NameGenerationStrategy.FromPrefix(src) => freshTermName[From](src)
-        case NameGenerationStrategy.FromType        => freshTermName[From]
-        case NameGenerationStrategy.FromExpr(expr)  => freshTermName[From](expr)
+        case NameGenerationStrategy.FromPrefix(src) => freshTermName[From](src, usageHint)
+        case NameGenerationStrategy.FromType        => freshTermName[From](usageHint)
+        case NameGenerationStrategy.FromExpr(expr)  => freshTermName[From](expr, usageHint)
       }
 
     protected def createRefToName[From: Type](name: ExprPromiseName): Expr[From] = Ref(name).asExprOf[From]
@@ -46,17 +50,26 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     }
 
     private val freshTerm: FreshTerm = new FreshTerm
-    private def freshTermName[A: Type](prefix: String): ExprPromiseName =
-      Symbol.newVal(Symbol.spliceOwner, freshTerm.generate(prefix), TypeRepr.of[A], Flags.EmptyFlags, Symbol.noSymbol)
-    private def freshTermName[A: Type]: ExprPromiseName =
-      freshTermName(TypeRepr.of[A].show(using Printer.TypeReprShortCode).toLowerCase)
-    private def freshTermName[A: Type](srcPrefixTree: Expr[?]): ExprPromiseName =
-      freshTermName[A](toFieldName(srcPrefixTree))
+    private def freshTermName[A: Type](prefix: String, usageHint: UsageHint): ExprPromiseName = Symbol.newVal(
+      Symbol.spliceOwner,
+      freshTerm.generate(prefix),
+      TypeRepr.of[A],
+      usageHint match
+        case UsageHint.None => Flags.EmptyFlags
+        case UsageHint.Lazy => Flags.Lazy
+        case UsageHint.Var  => Flags.Mutable
+      ,
+      Symbol.noSymbol
+    )
+    private def freshTermName[A: Type](usageHint: UsageHint): ExprPromiseName =
+      freshTermName(TypeRepr.of[A].show(using Printer.TypeReprShortCode).toLowerCase, usageHint)
+    private def freshTermName[A: Type](expr: Expr[?], usageHint: UsageHint): ExprPromiseName =
+      freshTermName[A](toFieldName(expr), usageHint)
 
     // TODO: check if that is still a thing
     // undo the encoding of freshTermName
-    private def toFieldName[A](srcPrefixTree: Expr[A]): String =
-      srcPrefixTree.asTerm.toString.replaceAll("\\$\\d+", "").replace("$u002E", ".")
+    private def toFieldName[A](expr: Expr[A]): String =
+      expr.asTerm.toString.replaceAll("\\$\\d+", "").replace("$u002E", ".")
   }
 
   protected object PrependValsTo extends PrependValsToModule {
@@ -66,16 +79,17 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         expr: Expr[To]
     ): Expr[To] = {
       val statements = vals.map {
-        case (name, eexpr, DefnType.Def)  => ??? // TODO
-        case (name, eexpr, DefnType.Lazy) => ??? // TODO
-        case (name, eexpr, DefnType.Val) =>
+        case (name, eexpr, DefnType.Def) =>
+          ExistentialExpr.use(eexpr) { _ => expr => DefDef(name, _ => Some(expr.asTerm)) }
+        case (name, eexpr, _) =>
+          // val/lazy val/var is handled by Symbol by flag provided by UsageHint
           ExistentialExpr.use(eexpr) { _ => expr => ValDef(name, Some(expr.asTerm)) }
-        case (name, eexpr, DefnType.Var) => ??? // TODO
       }.toList
       Block(statements, expr.asTerm).asExprOf[To]
     }
 
-    def setVal[To: Type](name: ExprPromiseName): Expr[To] => Expr[Unit] = ???
+    def setVal[To: Type](name: ExprPromiseName): Expr[To] => Expr[Unit] = expr =>
+      Assign(Ref(name), expr.asTerm).asExprOf[Unit]
   }
 
   protected object PatternMatchCase extends PatternMatchCaseModule {

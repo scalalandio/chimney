@@ -53,9 +53,7 @@ private[compiletime] trait Types { this: Existentials =>
     def Function2[A: Type, B: Type, C: Type]: Type[(A, B) => C]
 
     val Array: ArrayModule
-    trait ArrayModule extends Constructor1[Array] { this: Array.type =>
-      val Any: Type[Array[Any]] = Array(Type.Any)
-    }
+    trait ArrayModule extends Constructor1[Array] { this: Array.type => }
 
     val Option: OptionModule
     trait OptionModule extends Constructor1[Option] { this: Option.type =>

@@ -59,12 +59,18 @@ private[compiletime] trait ExprPromises { this: Definitions =>
   protected val ExprPromise: ExprPromiseModule
   protected trait ExprPromiseModule { this: ExprPromise.type =>
 
-    final def promise[From: Type](nameGenerationStrategy: NameGenerationStrategy): ExprPromise[From, Expr[From]] = {
-      val name = provideFreshName[From](nameGenerationStrategy)
+    final def promise[From: Type](
+        nameGenerationStrategy: NameGenerationStrategy,
+        usageHint: UsageHint = UsageHint.None
+    ): ExprPromise[From, Expr[From]] = {
+      val name = provideFreshName[From](nameGenerationStrategy, usageHint: UsageHint)
       new ExprPromise(createRefToName[From](name), name)
     }
 
-    protected def provideFreshName[From: Type](nameGenerationStrategy: NameGenerationStrategy): ExprPromiseName
+    protected def provideFreshName[From: Type](
+        nameGenerationStrategy: NameGenerationStrategy,
+        usageHint: UsageHint
+    ): ExprPromiseName
     protected def createRefToName[From: Type](name: ExprPromiseName): Expr[From]
     def createLambda[From: Type, To: Type, B](
         fromName: ExprPromiseName,
@@ -81,6 +87,13 @@ private[compiletime] trait ExprPromises { this: Definitions =>
       final case class FromPrefix(src: String) extends NameGenerationStrategy
       case object FromType extends NameGenerationStrategy
       final case class FromExpr[A](expr: Expr[A]) extends NameGenerationStrategy
+    }
+
+    sealed trait UsageHint extends Product with Serializable
+    object UsageHint {
+      case object None extends UsageHint
+      case object Lazy extends UsageHint
+      case object Var extends UsageHint
     }
   }
 

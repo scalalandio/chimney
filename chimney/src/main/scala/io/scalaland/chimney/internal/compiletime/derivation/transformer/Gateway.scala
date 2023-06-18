@@ -17,6 +17,7 @@ private[compiletime] trait Gateway { this: Derivation =>
       InstanceFlags <: internal.TransformerFlags: Type,
       ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](src: Expr[From], runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[To] = {
+    // println(s"Started derivation from ${Type.prettyPrint[From]} -> ${Type.prettyPrint[To]} expr")
     val context = TransformationContext.ForTotal.create[From, To](
       src,
       Configurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
@@ -35,6 +36,7 @@ private[compiletime] trait Gateway { this: Derivation =>
       InstanceFlags <: internal.TransformerFlags: Type,
       ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[Transformer[From, To]] = {
+    // println(s"Started derivation from ${Type.prettyPrint[From]} -> ${Type.prettyPrint[To]} type class")
     val result = DerivationResult.direct[Expr[To], Expr[Transformer[From, To]]] { await =>
       ChimneyExpr.Transformer.instance[From, To] { (src: Expr[From]) =>
         val context = TransformationContext.ForTotal.create[From, To](
@@ -61,6 +63,7 @@ private[compiletime] trait Gateway { this: Derivation =>
       failFast: Expr[Boolean],
       runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
   ): Expr[partial.Result[To]] = {
+    // println(s"Started derivation from ${Type.prettyPrint[From]} -> ${Type.prettyPrint[To]} partial expr")
     val context = TransformationContext.ForPartial.create[From, To](
       src,
       failFast,
@@ -80,6 +83,7 @@ private[compiletime] trait Gateway { this: Derivation =>
       InstanceFlags <: internal.TransformerFlags: Type,
       ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): Expr[PartialTransformer[From, To]] = {
+    // println(s"Started derivation from ${Type.prettyPrint[From]} -> ${Type.prettyPrint[To]} partial type class")
     val result = DerivationResult.direct[Expr[partial.Result[To]], Expr[PartialTransformer[From, To]]] { await =>
       ChimneyExpr.PartialTransformer.instance[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
         val context = TransformationContext.ForPartial.create[From, To](

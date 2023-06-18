@@ -92,6 +92,34 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     // default arguments has name method$default$index
     private val defaultElement = raw"$$default$$"
     val isGarbage: String => Boolean = name => garbage(name) || name.contains(defaultElement)
+
+    protected def checkArguments[A: Type](
+        parameters: Product.Parameters,
+        arguments: Product.Arguments
+    ): Product.Arguments = {
+      val missingArguments = parameters.keySet diff arguments.keySet
+      if (missingArguments.nonEmpty) {
+        val missing = missingArguments.mkString(", ")
+        val provided = arguments.keys.mkString(", ")
+        assertionFailed(
+          s"Constructor of ${Type.prettyPrint[A]} expected arguments: $missing but they were not provided, what was provided: $provided"
+        )
+      }
+
+      parameters.foreach { case (name, param) =>
+        Existential.use(param) { implicit Param: Type[param.Underlying] => _ =>
+          val argument = arguments(name)
+          if (!(argument.Underlying <:< Param)) {
+            assertionFailed(
+              s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
+                  .prettyPrint[param.Underlying]}, instead got ${Expr.prettyPrint(argument.value)} ${Type.prettyPrint(argument.Underlying)}"
+            )
+          }
+        }
+      }
+
+      arguments.view.filterKeys(parameters.keySet).toMap
+    }
   }
 
   implicit class ProductTypeOps[A](private val tpe: Type[A]) {

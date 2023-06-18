@@ -85,7 +85,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         def isCaseFieldName(sym: Symbol) = caseFieldNames(sym.name)
 
         val accessorsAndGetters =
-          sym.declaredMethods.filterNot(isGarbageSymbol).filterNot(isCaseFieldName).filter(isAccessor)
+          sym.methodMembers.filterNot(isGarbageSymbol).filterNot(isCaseFieldName).filter(isAccessor)
 
         (caseFields ++ accessorsAndGetters).map { getter =>
           val name = getter.name
@@ -139,7 +139,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
             }
             .getOrElse(assertionFailed(s"Expected default constructor for ${Type.prettyPrint[A]}"))
 
-          val setters = sym.declaredMethods
+          val setters = sym.methodMembers
             .filterNot(isGarbageSymbol)
             .filter(isJavaSetterOrVar)
             .map { setter =>
@@ -166,31 +166,17 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
           val methodSymbols = setters.map { case (name, symbol, _) => name -> symbol }.toMap
 
           val constructor: Product.Arguments => Expr[A] = arguments => {
-            parameters.foreach { case (name, param) =>
-              Existential.use(param) { implicit Param: Type[param.Underlying] => _ =>
-                val argument = arguments.getOrElse(
-                  name,
-                  assertionFailed(s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $name")
-                )
-                if !(argument.Underlying <:< Param) then {
-                  assertionFailed(
-                    s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
-                        .prettyPrint[param.Underlying]}, instead got ${Type.prettyPrint(argument.Underlying)}"
-                  )
-                }
-              }
-            }
-
-            val beanSymbol: Symbol = ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType)
+            val beanSymbol: Symbol =
+              ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
             val beanRef = Ref(beanSymbol)
 
-            val statements =
-              ValDef(beanSymbol, Some(defaultConstructor.asTerm)) +: arguments.view
-                .filterKeys(parameters.keySet)
-                .map[Term] { case (name, e) =>
-                  beanRef.select(methodSymbols(name)).appliedTo(e.value.asTerm)
-                }
-                .toList
+            val checkedArguments = checkArguments(parameters, arguments)
+              .map[Term] { case (name, e) =>
+                beanRef.select(methodSymbols(name)).appliedTo(e.value.asTerm)
+              }
+              .toList
+
+            val statements = ValDef(beanSymbol, Some(defaultConstructor.asTerm)) +: checkedArguments
 
             Block(statements, beanRef).asExprOf[A]
           }
@@ -239,31 +225,23 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
               }
           }
 
+          // TODO: print parameters when list is empty 
+
           val parameters: Product.Parameters = ListMap.from(parametersRaw.flatten)
 
           val constructor: Product.Arguments => Expr[A] = arguments => {
+            val unadaptedCheckedArguments = checkArguments(parameters, arguments)
+
             val checkedArguments = parametersRaw.map { params =>
-              params.map { case (name, param) =>
-                Existential.use(param) { implicit Param: Type[param.Underlying] => _ =>
-                  val argument = arguments.getOrElse(
-                    name,
-                    assertionFailed(s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $name")
-                  )
-                  if !(argument.Underlying <:< Param) then {
-                    assertionFailed(
-                      s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
-                          .prettyPrint[param.Underlying]}, instead got ${Type.prettyPrint(argument.Underlying)}"
-                    )
-                  }
-                  argument.asInstanceOf[Expr[Any]]
-                }
+              params.map { case (name, _) =>
+                unadaptedCheckedArguments(name).value.asTerm
               }
             }
 
             {
               val tree = New(TypeTree.of[A]).select(primaryConstructor)
               if typeParams.nonEmpty then tree.appliedToTypes(typeParams) else tree
-            }.appliedToArgss(checkedArguments.map(_.map(_.asTerm))).asExprOf[A]
+            }.appliedToArgss(checkedArguments).asExprOf[A]
           }
 
           Product.Constructor(parameters, constructor)

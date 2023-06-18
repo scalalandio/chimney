@@ -104,8 +104,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                   }
                                 }
                                 .getOrElse {
+                                  val tpeStr = Type.prettyPrint[From]
+                                  val methods = fromExtractors.keys.map(n => s"`$n`").mkString(", ")
                                   DerivationResult.assertionError(
-                                    s"Assumed that field $sourceName is a part of ${Type[From]}, but wasn't found"
+                                    s"""|Assumed that field $sourceName is a part of $tpeStr, but wasn't found
+                                        |available methods: $methods""".stripMargin
                                   )
                                 }
                           }
@@ -140,6 +143,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     .map(toName -> _)
                 }
                 .map[TransformationExpr[To]] { (resolvedArguments: List[(String, Existential[TransformationExpr])]) =>
+                  println("resolved arguments:")
+                  println(resolvedArguments)
+
                   val totalConstructorArguments: Map[String, ExistentialExpr] = resolvedArguments.collect {
                     case (name, expr) if expr.value.isTotal => name -> expr.mapK[Expr](_ => _.ensureTotal)
                   }.toMap
@@ -233,7 +239,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                   (partialExpr: Expr[partial.Result[expr.Underlying]]) =>
                                     ExprPromise
                                       .promise[partial.Result[expr.Underlying]](
-                                        ExprPromise.NameGenerationStrategy.FromPrefix("res")
+                                        ExprPromise.NameGenerationStrategy.FromPrefix("res"),
+                                        ExprPromise.UsageHint.Lazy
                                       )
                                       .map { (inner: Expr[partial.Result[expr.Underlying]]) =>
                                         name -> Existential[PartialExpr, expr.Underlying](inner)
@@ -305,7 +312,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                               // }
                               ExprPromise
                                 .promise[partial.Result.Errors](
-                                  ExprPromise.NameGenerationStrategy.FromPrefix("allerrors")
+                                  ExprPromise.NameGenerationStrategy.FromPrefix("allerrors"),
+                                  ExprPromise.UsageHint.Var
                                 )
                                 .fulfilAsVar(Expr.Null.asInstanceOfExpr[partial.Result.Errors])
                                 .use { case (allerrors, setAllErrors) =>

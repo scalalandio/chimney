@@ -10,7 +10,10 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
   protected object ExprPromise extends ExprPromiseModule {
 
     // made public for ChimneyExprsPlatform: Transformer.lift and PartialTransformer.lift
-    def provideFreshName[From: Type](nameGenerationStrategy: NameGenerationStrategy): ExprPromiseName =
+    def provideFreshName[From: Type](
+        nameGenerationStrategy: NameGenerationStrategy,
+        @unused: UsageHint
+    ): ExprPromiseName =
       nameGenerationStrategy match {
         case NameGenerationStrategy.FromPrefix(src) => freshTermName(src)
         case NameGenerationStrategy.FromType        => freshTermName(Type[From])

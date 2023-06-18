@@ -130,6 +130,14 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
           val termNames = setters.map { case (name, termName, _) => name -> termName }.toMap
 
           val constructor: Product.Arguments => Expr[A] = arguments => {
+            val beanTermName: TermName = ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType)
+
+            val checkedArguments = checkArguments(parameters, arguments).map { case (name, e) =>
+              ExistentialExpr.use(e) { implicit E: Type[e.Underlying] => expr =>
+                q"$beanTermName.${termNames(name)}($expr)"
+              }
+            }.toList
+
             parameters.foreach { case (name, param) =>
               Existential.use(param) { implicit Param: Type[param.Underlying] => _ =>
                 val argument = arguments.getOrElse(
@@ -145,16 +153,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
               }
             }
 
-            val beanTermName: TermName = ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType)
-
-            val statements = q"val $beanTermName: ${Type[A]} = $defaultConstructor" +: arguments.view
-              .filterKeys(parameters.keySet)
-              .map { case (name, e) =>
-                ExistentialExpr.use(e) { implicit E: Type[e.Underlying] => expr =>
-                  q"$beanTermName.${termNames(name)}($expr)"
-                }
-              }
-              .toList
+            val statements = q"val $beanTermName: ${Type[A]} = $defaultConstructor" +: arguments
 
             asExpr(q"..$statements; $beanTermName")
           }
@@ -198,21 +197,11 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
           val parameters: Product.Parameters = ListMap.from(parametersRaw.flatten)
 
           val constructor: Product.Arguments => Expr[A] = arguments => {
+            val unadaptedCheckedArguments = checkArguments(parameters, arguments)
+
             val checkedArguments = parametersRaw.map { params =>
-              params.map { case (name, param) =>
-                Existential.use(param) { implicit Param: Type[param.Underlying] => _ =>
-                  val argument = arguments.getOrElse(
-                    name,
-                    assertionFailed(s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $name")
-                  )
-                  if (!(argument.Underlying <:< Param)) {
-                    assertionFailed(
-                      s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
-                          .prettyPrint[param.Underlying]}, instead got ${Type.prettyPrint(argument.Underlying)}"
-                    )
-                  }
-                  argument.asInstanceOf[Expr[Any]]
-                }
+              params.map { case (name, _) =>
+                unadaptedCheckedArguments(name).value.asInstanceOf[Expr[Ant]]
               }
             }
 
