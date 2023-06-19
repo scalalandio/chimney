@@ -42,7 +42,7 @@ package object dsl {
       *
       * @since 0.1.0
       */
-    final def transformInto[To](implicit transformer: Transformer[From, To]): To =
+    final def transformInto[To](implicit transformer: Transformer.AutoDerived[From, To]): To =
       transformer.transform(source)
   }
 
@@ -82,7 +82,7 @@ package object dsl {
       * @since 0.7.0
       */
     final def transformIntoPartial[To](implicit
-        transformer: PartialTransformer[From, To]
+        transformer: PartialTransformer.AutoDerived[From, To]
     ): partial.Result[To] =
       transformIntoPartial(failFast = false)
 
@@ -101,7 +101,7 @@ package object dsl {
       * @since 0.7.0
       */
     final def transformIntoPartial[To](failFast: Boolean)(implicit
-        transformer: PartialTransformer[From, To]
+        transformer: PartialTransformer.AutoDerived[From, To]
     ): partial.Result[To] =
       transformer.transform(source, failFast)
   }

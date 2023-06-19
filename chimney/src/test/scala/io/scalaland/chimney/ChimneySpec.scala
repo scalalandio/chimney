@@ -2,6 +2,8 @@ package io.scalaland.chimney
 
 import munit.{Location, TestOptions}
 
+import scala.util.matching.Regex
+
 trait ChimneySpec extends munit.BaseFunSuite { self =>
 
   private var prefix = ""
@@ -38,8 +40,9 @@ trait ChimneySpec extends munit.BaseFunSuite { self =>
   implicit class CompileErrorsCheck(msg: String) {
 
     def check(msgs: String*): Unit = for (msg <- msgs) {
+
       Predef.assert(
-        this.msg.contains(msg),
+        ChimneySpec.AnsiControlCode.replaceAllIn(this.msg, "").contains(msg),
         "Error message did not contain expected snippet\n" +
           "Error message\n" +
           this.msg + "\n" +
@@ -50,4 +53,8 @@ trait ChimneySpec extends munit.BaseFunSuite { self =>
 
     def arePresent(): Unit = Predef.assert(msg.nonEmpty, "Expected compilation errors")
   }
+}
+object ChimneySpec {
+
+  val AnsiControlCode: Regex = "\u001b\\[([0-9]+)m".r
 }

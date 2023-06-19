@@ -41,7 +41,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
                 .log(s"Rule ${rule.name} expanded successfully: ${transformationExpr.prettyPrint}")
                 .as(transformationExpr.asInstanceOf[TransformationExpr[To]])
             case ExpansionResult.AttemptNextRule =>
-              DerivationResult.log(s"Rule ${rule.name} decided to pass on to next rule") >>
+              DerivationResult.log(s"Rule ${rule.name} decided to pass on to the next rule") >>
                 expandRules[From, To](nextRules)
           }
     }

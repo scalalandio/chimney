@@ -1,7 +1,16 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.compiletime.{Definitions, DerivationResult}
-import io.scalaland.chimney.internal.{CantFindCoproductInstanceTransformer, NotSupportedTransformerDerivation}
+import io.scalaland.chimney.internal.{
+  AmbiguousCoproductInstance,
+  CantFindCoproductInstanceTransformer,
+  CantFindValueClassMember,
+  IncompatibleSourceTuple,
+  MissingAccessor,
+  MissingJavaBeanSetterParam,
+  MissingTransformer,
+  NotSupportedTransformerDerivation
+}
 import io.scalaland.chimney.partial
 
 private[compiletime] trait ResultOps { this: Definitions & Derivation =>
@@ -23,11 +32,76 @@ private[compiletime] trait ResultOps { this: Definitions & Derivation =>
     def attemptNextRule[A]: DerivationResult[Rule.ExpansionResult[A]] =
       DerivationResult.pure(Rule.ExpansionResult.AttemptNextRule)
 
+    def missingAccessor[From, To, Field: Type, A](fieldName: String)(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      MissingAccessor(
+        fieldName = fieldName,
+        fieldTypeName = Type.prettyPrint[Field],
+        sourceTypeName = Type.prettyPrint[From],
+        targetTypeName = Type.prettyPrint[To],
+        defAvailable = false // TODO? what is it used for?
+      )
+    )
+
+    def missingJavaBeanSetterParam[From, To, Setter: Type, A](setterName: String)(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      MissingJavaBeanSetterParam(
+        setterName = setterName,
+        requiredTypeName = Type.prettyPrint[Setter],
+        sourceTypeName = Type.prettyPrint[From],
+        targetTypeName = Type.prettyPrint[To]
+      )
+    )
+
+    def missingTransformer[From, To, SourceField: Type, TargetField: Type, A](fieldName: String)(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      MissingTransformer(
+        fieldName = fieldName,
+        sourceFieldTypeName = Type.prettyPrint[SourceField],
+        targetFieldTypeName = Type.prettyPrint[TargetField],
+        sourceTypeName = Type.prettyPrint[From],
+        targetTypeName = Type.prettyPrint[To]
+      )
+    )
+
+    def cantFindValueClassMember[From, To, A](implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      CantFindValueClassMember(
+        sourceTypeName = Type.prettyPrint[From],
+        targetTypeName = Type.prettyPrint[To]
+      )
+    )
+
     def cantFindCoproductInstanceTransformer[From, To, Instance: Type, A](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       CantFindCoproductInstanceTransformer(
         instance = Type.prettyPrint[Instance],
+        sourceTypeName = Type.prettyPrint[From],
+        targetTypeName = Type.prettyPrint[To]
+      )
+    )
+
+    def ambiguousCoproductInstance[From, To, Instance: Type, A](implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      AmbiguousCoproductInstance(
+        instance = Type.prettyPrint[Instance],
+        sourceTypeName = Type.prettyPrint[From],
+        targetTypeName = Type.prettyPrint[To]
+      )
+    )
+
+    def incompatibleSourceTuple[From, To, A](sourceArity: Int, targetArity: Int)(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      IncompatibleSourceTuple(
+        sourceArity = sourceArity,
+        targetArity = targetArity,
         sourceTypeName = Type.prettyPrint[From],
         targetTypeName = Type.prettyPrint[To]
       )

@@ -85,11 +85,15 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         def isCaseFieldName(sym: Symbol) = caseFieldNames(sym.name)
 
         val accessorsAndGetters =
-          sym.methodMembers.filterNot(isGarbageSymbol).filterNot(isCaseFieldName).filter(isAccessor)
+          sym.methodMembers
+            .filterNot(_.paramSymss.exists(_.exists(_.isType))) // remove methods with type parameters
+            .filterNot(isGarbageSymbol)
+            .filterNot(isCaseFieldName)
+            .filter(isAccessor)
 
         (caseFields ++ accessorsAndGetters).map { getter =>
           val name = getter.name
-          val tpe = Existential(returnTypeOf[Any](TypeRepr.of[A].memberType(getter)))
+          val tpe = ExistentialType(returnTypeOf[Any](TypeRepr.of[A].memberType(getter)))
           name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
             Product.Getter(
               sourceType =

@@ -32,13 +32,16 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               }
 
               DerivationResult.log {
-                val gettersStr = fromExtractors.map { case (k, v) => s"$k: ${v.value.sourceType}" }.mkString(", ")
+                val gettersStr = fromExtractors
+                  .map { case (k, v) => s"`$k`: ${Type.prettyPrint(v.Underlying)} (${v.value.sourceType})" }
+                  .mkString(", ")
                 val constructorStr = parameters
                   .map { case (k, v) =>
-                    s"$k: ${v.value.targetType} = ${v.value.defaultValue.map(a => Expr.prettyPrint(a))}"
+                    s"`$k`: ${Type.prettyPrint(v.Underlying)} (${v.value.targetType}, default = ${v.value.defaultValue
+                        .map(a => Expr.prettyPrint(a))})"
                   }
                   .mkString(", ")
-                s"Resolved ${Type.prettyPrint[From]} (getters: $gettersStr) and ${Type.prettyPrint[To]} (constructor: $constructorStr)"
+                s"Resolved ${Type.prettyPrint[From]} getters: ($gettersStr) and ${Type.prettyPrint[To]} constructor ($constructorStr)"
               } >>
                 Traverse[List]
                   .traverse[
@@ -104,11 +107,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                   .collectFirst { case (`sourceName`, getter) =>
                                     Existential.use(getter) { implicit Getter: Type[getter.Underlying] =>
                                       { case Product.Getter(_, get) =>
-                                        // We're constructing:
-                                        // '{ ${ derivedToElement } } // using ${ src.$name }
-                                        deriveRecursiveTransformationExpr[getter.Underlying, ctorParam.Underlying](
-                                          get(ctx.src)
-                                        ).map(Existential[TransformationExpr, ctorParam.Underlying](_))
+                                        DerivationResult.namedScope(
+                                          s"Recursive derivation for field `$sourceName`: ${Type
+                                              .prettyPrint[getter.Underlying]} renamed into `${toName}`: ${Type
+                                              .prettyPrint[ctorParam.Underlying]}"
+                                        ) {
+                                          // We're constructing:
+                                          // '{ ${ derivedToElement } } // using ${ src.$name }
+                                          deriveRecursiveTransformationExpr[getter.Underlying, ctorParam.Underlying](
+                                            get(ctx.src)
+                                          ).map(Existential[TransformationExpr, ctorParam.Underlying](_))
+                                        }
                                       }
                                     }
                                   }
@@ -125,11 +134,16 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                               case (name, getter) if areNamesMatching(name, toName) =>
                                 Existential.use(getter) { implicit Getter: Type[getter.Underlying] =>
                                   { case Product.Getter(_, get) =>
-                                    // We're constructing:
-                                    // '{ ${ derivedToElement } } // using ${ src.$name }
-                                    deriveRecursiveTransformationExpr[getter.Underlying, ctorParam.Underlying](
-                                      get(ctx.src)
-                                    ).map(Existential[TransformationExpr, ctorParam.Underlying](_))
+                                    DerivationResult.namedScope(
+                                      s"Recursive derivation for field `$name`: ${Type
+                                          .prettyPrint[getter.Underlying]} into matched `${toName}`: ${Type.prettyPrint[ctorParam.Underlying]}"
+                                    ) {
+                                      // We're constructing:
+                                      // '{ ${ derivedToElement } } // using ${ src.$name }
+                                      deriveRecursiveTransformationExpr[getter.Underlying, ctorParam.Underlying](
+                                        get(ctx.src)
+                                      ).map(Existential[TransformationExpr, ctorParam.Underlying](_))
+                                    }
                                   }
                                 }
                             })
@@ -145,9 +159,22 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                               //   - if there is Java Bean getter that couldn't be used because flag is off, inform about it
                               //   - if there is accessor that couldn't be used because flag is off, inform about it
                               //   - if default value exists that couldn't be used because flag is off, inform about it
-                              DerivationResult.notYetImplemented("Proper error message")
+                              ctorParam.value.targetType match {
+                                case Product.Parameter.TargetType.ConstructorParameter =>
+                                  DerivationResult
+                                    .missingAccessor[From, To, ctorParam.Underlying, Existential[TransformationExpr]](
+                                      toName
+                                    )
+                                case Product.Parameter.TargetType.SetterParameter =>
+                                  DerivationResult
+                                    .missingJavaBeanSetterParam[From, To, ctorParam.Underlying, Existential[
+                                      TransformationExpr
+                                    ]](
+                                      toName
+                                    )
+                              }
                             }
-                            .logSuccess(expr => s"Resolved $toName field value to ${expr.value.prettyPrint}")
+                            .logSuccess(expr => s"Resolved `$toName` field value to ${expr.value.prettyPrint}")
                         }
                       }
                       .map(toName -> _)
@@ -394,7 +421,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       def normalizedFromName =
         if (isGetterName(fromName)) dropGetIs(fromName) else fromName
       def normalizedToName =
-        if (isGetterName(fromName)) dropGetIs(fromName) else if (isSetterName(toName)) dropSet(toName) else fromName
+        if (isGetterName(toName)) dropGetIs(toName) else if (isSetterName(toName)) dropSet(toName) else toName
 
       fromName == toName || normalizedFromName == normalizedToName
     }

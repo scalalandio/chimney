@@ -163,6 +163,6 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean = S.<:<(T)
     def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean = S.=:=(T)
 
-    def prettyPrint[A: Type]: String = Type[A].toString
+    def prettyPrint[A: Type]: String = Console.MAGENTA + Type[A].typeSymbol.fullName + Console.RESET
   }
 }
