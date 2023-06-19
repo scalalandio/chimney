@@ -3,7 +3,7 @@ package io.scalaland.chimney.fixtures
 import io.scalaland.chimney.Transformer
 
 object foo {
-  import io.scalaland.chimney.dsl.*
+//  import io.scalaland.chimney.dsl.*
 
   sealed trait A extends Product with Serializable
   sealed trait AA extends A
@@ -15,7 +15,7 @@ object foo {
     case object A1 extends AA
   }
 
-  def convert(a: A): into.A = a.transformInto[into.A]
+//  def convert(a: A): into.A = a.transformInto[into.A]
 }
 
 case class VC(x: String) extends AnyVal

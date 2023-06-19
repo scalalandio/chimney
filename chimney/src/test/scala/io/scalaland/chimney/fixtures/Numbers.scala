@@ -22,38 +22,37 @@ package numbers {
     case class Trillion[T](count: T) extends NumScale[T] // 10^18
   }
 
-  import io.scalaland.chimney.{PartialTransformer, Transformer}
-
   object ScalesPartialTransformer {
 
-    import io.scalaland.chimney.dsl.*
-
-    implicit def shortToLongTotalInner[A, B](implicit
-        ft: Transformer[A, B]
-    ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] = {
-      Transformer
-        .definePartial[short.NumScale[A, Nothing], long.NumScale[B]]
-        .withCoproductInstancePartial { (billion: short.Billion[A]) =>
-          billion.transformIntoPartial[long.Milliard[B]]
-        }
-        .withCoproductInstancePartial { (trillion: short.Trillion[A]) =>
-          trillion.transformIntoPartial[long.Billion[B]]
-        }
-        .buildTransformer
-    }
-
-    implicit def shortToLongPartialInner[A, B](implicit
-        ft: PartialTransformer[A, B]
-    ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] = {
-      Transformer
-        .definePartial[short.NumScale[A, Nothing], long.NumScale[B]]
-        .withCoproductInstancePartial { (billion: short.Billion[A]) =>
-          billion.transformIntoPartial[long.Milliard[B]]
-        }
-        .withCoproductInstancePartial { (trillion: short.Trillion[A]) =>
-          trillion.transformIntoPartial[long.Billion[B]]
-        }
-        .buildTransformer
-    }
+//  import io.scalaland.chimney.{PartialTransformer, Transformer}
+//    import io.scalaland.chimney.dsl.*
+//
+//    implicit def shortToLongTotalInner[A, B](implicit
+//        ft: Transformer[A, B]
+//    ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] = {
+//      Transformer
+//        .definePartial[short.NumScale[A, Nothing], long.NumScale[B]]
+//        .withCoproductInstancePartial { (billion: short.Billion[A]) =>
+//          billion.transformIntoPartial[long.Milliard[B]]
+//        }
+//        .withCoproductInstancePartial { (trillion: short.Trillion[A]) =>
+//          trillion.transformIntoPartial[long.Billion[B]]
+//        }
+//        .buildTransformer
+//    }
+//
+//    implicit def shortToLongPartialInner[A, B](implicit
+//        ft: PartialTransformer[A, B]
+//    ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] = {
+//      Transformer
+//        .definePartial[short.NumScale[A, Nothing], long.NumScale[B]]
+//        .withCoproductInstancePartial { (billion: short.Billion[A]) =>
+//          billion.transformIntoPartial[long.Milliard[B]]
+//        }
+//        .withCoproductInstancePartial { (trillion: short.Trillion[A]) =>
+//          trillion.transformIntoPartial[long.Billion[B]]
+//        }
+//        .buildTransformer
+//    }
   }
 }
