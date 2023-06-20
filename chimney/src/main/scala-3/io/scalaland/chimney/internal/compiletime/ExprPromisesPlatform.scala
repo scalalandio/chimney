@@ -107,14 +107,14 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
             CaseDef(
               Bind(fromName, Ident(TypeRepr.of[someFrom.Underlying].typeSymbol.termRef)),
               None,
-              usage.asTerm
+              Expr.block(List(Expr.suppressUnused(Ref(fromName).asExprOf[someFrom.Underlying])), usage).asTerm
             )
           else
             // case arg : Enum.Value => ...
             CaseDef(
               Bind(fromName, Typed(Wildcard(), TypeTree.of[someFrom.Underlying])),
               None,
-              usage.asTerm
+              Expr.block(List(Expr.suppressUnused(Ref(fromName).asExprOf[someFrom.Underlying])), usage).asTerm
             )
         }
       }

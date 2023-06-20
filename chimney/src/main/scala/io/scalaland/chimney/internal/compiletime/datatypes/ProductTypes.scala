@@ -68,6 +68,8 @@ private[compiletime] trait ProductTypes { this: Definitions =>
 
     // methods we can drop from searching scope
     private val garbage = Set(
+      // constructor
+      "<init>",
       // case class generated
       "copy",
       // scala.Product methods

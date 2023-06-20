@@ -11,6 +11,9 @@ private[compiletime] trait Exprs { this: Definitions =>
     val Null: Expr[Null]
     val Unit: Expr[Unit]
 
+    def Int(value: Int): Expr[Int]
+    def String(value: String): Expr[String]
+
     val Function1: Function1Module
     trait Function1Module { this: Function1.type =>
       def apply[A: Type, B: Type](fn: Expr[A => B])(a: Expr[A]): Expr[B]
@@ -110,6 +113,8 @@ private[compiletime] trait Exprs { this: Definitions =>
     def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B]
 
     def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B]
+
+    def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit]
 
     def prettyPrint[A](expr: Expr[A]): String
 

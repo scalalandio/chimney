@@ -59,6 +59,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     val Float: Type[Float] = quoted.Type.of[Float]
     val Double: Type[Double] = quoted.Type.of[Double]
     val Unit: Type[Unit] = quoted.Type.of[Unit]
+    val String: Type[String] = quoted.Type.of[String]
 
     def Tuple2[A: Type, B: Type]: Type[(A, B)] = quoted.Type.of[(A, B)]
 

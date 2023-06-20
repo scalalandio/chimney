@@ -54,12 +54,13 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = {
       val c = cases.map { case PatternMatchCase(someFrom, usage, fromName) =>
         ExistentialType.use(someFrom) { implicit SomeFrom: Type[someFrom.Underlying] =>
+          val markUsed = Expr.suppressUnused(asExpr[someFrom.Underlying](q"$fromName"))
           if (SomeFrom.typeSymbol.isModuleClass)
             // case arg @ Enum.Value => ...
-            cq"""$fromName @ ${Ident(SomeFrom.typeSymbol.asClass.module)} => $usage"""
+            cq"""$fromName @ ${Ident(SomeFrom.typeSymbol.asClass.module)} => { $markUsed; $usage }"""
           else
             // case arg : Enum.Value => ...
-            cq"""$fromName : $SomeFrom => $usage"""
+            cq"""$fromName : $SomeFrom => { $markUsed; $usage }"""
         }
       }
       asExpr[To](q"$src match { case ..$c }")

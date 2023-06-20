@@ -186,11 +186,16 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   }
                   .map[TransformationExpr[To]] { (resolvedArguments: List[(String, Existential[TransformationExpr])]) =>
                     val totalConstructorArguments: Map[String, ExistentialExpr] = resolvedArguments.collect {
-                      case (name, expr) if expr.value.isTotal => name -> expr.mapK[Expr](_ => _.ensureTotal)
+                      case (name, exprE) if exprE.value.isTotal => name -> exprE.mapK[Expr](_ => _.ensureTotal)
                     }.toMap
 
                     resolvedArguments.collect {
-                      case (name, expr) if expr.value.isPartial => name -> expr.mapK[PartialExpr](_ => _.ensurePartial)
+                      case (name, exprE) if exprE.value.isPartial =>
+                        name -> exprE.mapK[PartialExpr] { implicit ExprE: Type[exprE.Underlying] =>
+                          _.ensurePartial.prependErrorPath(
+                            ChimneyExpr.PathElement.Accessor(Expr.String(name)).upcastExpr[partial.PathElement]
+                          )
+                        }
                     } match {
                       case Nil =>
                         // We're constructing:

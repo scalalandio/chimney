@@ -138,8 +138,10 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
     c.Expr[Out](
       q"""
        val $tdn = $td
-       val _ = $tdn
-       ${use(c.Expr[TransformerDefinitionCommons.RuntimeDataStore](q"$tdn.runtimeData"))}
+       ${muteUnusedWarnings(
+          c.Expr(q"$tdn"),
+          use(c.Expr[TransformerDefinitionCommons.RuntimeDataStore](q"$tdn.runtimeData"))
+        )}
        """
     )
   }
@@ -157,20 +159,17 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
     c.Expr[Out](
       q"""
        val $tdn = $td
-       val _ = $tdn
-       ${use(c.Expr[TransformerDefinitionCommons.RuntimeDataStore](q"$tdn.runtimeData"))}
+       ${muteUnusedWarnings(
+          c.Expr(q"$tdn"),
+          use(c.Expr[TransformerDefinitionCommons.RuntimeDataStore](q"$tdn.runtimeData"))
+        )}
        """
     )
   }
 
-  private def muteUnusedWarnings[Muted, A: Type](
-      mute: Expr[Muted],
-      expr: Expr[A]
-  ): Expr[A] = Expr.platformSpecific.asExpr[A](
-    q"""
-      val _ = $mute
-      $expr
-     """
+  private def muteUnusedWarnings[A, B](exprA: Expr[A], exprB: Expr[B]): Expr[B] = Expr.block(
+    List(Expr.suppressUnused(exprA)),
+    exprB
   )
 
   private def findImplicitScopeTransformerConfiguration: c.universe.Tree = {

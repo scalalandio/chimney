@@ -26,6 +26,9 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     val Null: Expr[Null] = asExpr[Null](q"null")
     val Unit: Expr[Unit] = asExpr[Unit](q"()")
 
+    def Int(value: Int): Expr[Int] = asExpr[Int](q"$value")
+    def String(value: String): Expr[String] = asExpr[String](q"$value")
+
     object Function1 extends Function1Module {
       def apply[A: Type, B: Type](fn: Expr[A => B])(a: Expr[A]): Expr[B] = asExpr(q"$fn.apply($a)")
     }
@@ -130,6 +133,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       if (Type[A] =:= Type[B]) wideningChecked
       else asExpr[B](q"($expr : ${Type[B]})")
     }
+
+    def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] = asExpr(q"val _ = $expr")
 
     def prettyPrint[A](expr: Expr[A]): String =
       expr

@@ -71,6 +71,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     val Float: Type[Float] = fromWeak[Float]
     val Double: Type[Double] = fromWeak[Double]
     val Unit: Type[Unit] = fromWeak[Unit]
+    val String: Type[String] = fromWeak[String]
 
     def Tuple2[A: Type, B: Type]: Type[(A, B)] =
       fromWeakTypeConstructor[(?, ?), (A, B)](Type[A], Type[B])

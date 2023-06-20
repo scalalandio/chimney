@@ -24,6 +24,7 @@ private[compiletime] trait Types { this: Existentials =>
     val Float: Type[Float]
     val Double: Type[Double]
     val Unit: Type[Unit]
+    val String: Type[String]
 
     lazy val primitives: Set[ExistentialType] = ListSet(
       Boolean.asExistential,
@@ -123,6 +124,7 @@ private[compiletime] trait Types { this: Existentials =>
     implicit val FloatType: Type[Float] = Type.Float
     implicit val DoubleType: Type[Double] = Type.Double
     implicit val UnitType: Type[Unit] = Type.Unit
+    implicit val StringType: Type[String] = Type.String
 
     implicit def Tuple2Type[A: Type, B: Type]: Type[(A, B)] = Type.Tuple2[A, B]
 

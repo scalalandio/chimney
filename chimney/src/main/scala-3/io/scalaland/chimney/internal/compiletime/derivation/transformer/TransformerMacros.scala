@@ -12,12 +12,12 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
 
   protected type ImplicitScopeFlagsType <: internal.TransformerFlags
 
-  // TODO: remove (using quotes: Quotes)
+  import quotes.*, quotes.reflect.*
 
   def deriveTotalTransformerWithDefaults[
       From: Type,
       To: Type
-  ](using quotes: Quotes): Expr[Transformer[From, To]] =
+  ]: Expr[Transformer[From, To]] =
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicit ImplicitScopeFlagsType =>
       deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](
         runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty
@@ -32,13 +32,13 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
-  )(using quotes: Quotes): Expr[Transformer[From, To]] =
+  ): Expr[Transformer[From, To]] =
     deriveTotalTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
 
   def derivePartialTransformerWithDefaults[
       From: Type,
       To: Type
-  ](using quotes: Quotes): Expr[PartialTransformer[From, To]] =
+  ]: Expr[PartialTransformer[From, To]] =
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicit ImplicitScopeFlagsType =>
       derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](
         runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty
@@ -53,12 +53,11 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       ImplicitScopeFlags <: internal.TransformerFlags: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
-  )(using quotes: Quotes): Expr[PartialTransformer[From, To]] =
+  ): Expr[PartialTransformer[From, To]] =
     derivePartialTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
 
-  private def findImplicitScopeTransformerConfiguration(using
-      quotes: Quotes
-  ): Expr[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]] =
+  private def findImplicitScopeTransformerConfiguration
+      : Expr[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]] =
     scala.quoted.Expr
       .summon[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]]
       .getOrElse {
@@ -77,7 +76,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       .asInstanceOf[Type[ImplicitScopeFlagsType]]
 
     '{
-      val _ = $implicitScopeConfig
+      ${ Expr.suppressUnused(implicitScopeConfig) }
       ${ useImplicitScopeFlags(implicitScopeConfigType) }
     }
   }

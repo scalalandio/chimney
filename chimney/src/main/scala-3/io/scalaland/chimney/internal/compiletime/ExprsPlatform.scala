@@ -13,6 +13,9 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     val Null: Expr[Null] = '{ null }
     val Unit: Expr[Unit] = '{ () }
 
+    def Int(value: Int): Expr[Int] = scala.quoted.Expr(value)
+    def String(value: String): Expr[String] = scala.quoted.Expr(value)
+
     object Function1 extends Function1Module {
       def apply[A: Type, B: Type](fn: Expr[A => B])(a: Expr[A]): Expr[B] = '{ ${ fn }.apply(${ a }) }
     }
@@ -116,6 +119,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       if Type[A] =:= Type[B] then wideningChecked
       else expr.asExprOf[B] // TODO: ask Janek if this upcast in code
     }
+
+    def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] = '{ val _ = ${ expr } }
 
     def prettyPrint[A](expr: Expr[A]): String = expr.asTerm.show(using Printer.TreeAnsiCode)
 
