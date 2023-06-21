@@ -82,16 +82,16 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
           .toList
         val caseFieldNames = caseFields.map(_.name.trim).toSet
 
-        def isCaseFieldName(sym: Symbol) = caseFieldNames(sym.name)
+        def isCaseFieldName(sym: Symbol) = caseFieldNames(sym.name.trim)
 
-        val accessorsAndGetters =
-          sym.methodMembers
-            .filterNot(_.paramSymss.exists(_.exists(_.isType))) // remove methods with type parameters
-            .filterNot(isGarbageSymbol)
-            .filterNot(isCaseFieldName)
-            .filter(isAccessor)
+        val accessorsAndGetters = sym.methodMembers
+          .filterNot(_.paramSymss.exists(_.exists(_.isType))) // remove methods with type parameters
+          .filterNot(isGarbageSymbol)
+          .filterNot(isCaseFieldName)
+          .filter(isAccessor)
 
-        (caseFields ++ accessorsAndGetters).map { getter =>
+        // if we are taking caseFields but then we also are using ALL fieldMembers shouldn't we just use fieldMembers?
+        (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).distinct.map { getter =>
           val name = getter.name
           val tpe = ExistentialType(returnTypeOf[Any](TypeRepr.of[A].memberType(getter)))
           name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
@@ -99,6 +99,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
               sourceType =
                 if isCaseFieldName(getter) then Product.Getter.SourceType.ConstructorVal
                 else if isJavaGetter(getter) then Product.Getter.SourceType.JavaBeanGetter
+                else if getter.isValDef then Product.Getter.SourceType.ConstructorVal
                 else Product.Getter.SourceType.AccessorMethod,
               get =
                 // TODO: pathological cases like def foo[Unused]()()()
@@ -207,7 +208,9 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
           }.headOption.toList.flatten.zipWithIndex.collect {
             case (param, idx) if param.flags.is(Flags.HasDefault) =>
               val mod = TypeRepr.of[A].typeSymbol.companionModule
-              val sym = mod.declaredMethod("apply$default$" + (idx + 1)).head
+              val default = mod.declaredMethod(caseClassApplyDefaultScala2(idx + 1)) ++
+                mod.declaredMethod(caseClassApplyDefaultScala3(idx + 1))
+              val sym = default.head
               param.name -> Ref(mod).select(sym)
           }.toMap
 

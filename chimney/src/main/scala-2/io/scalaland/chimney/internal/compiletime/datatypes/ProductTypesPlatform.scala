@@ -76,6 +76,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
                 sourceType =
                   if (isCaseClassField(getter)) Product.Getter.SourceType.ConstructorVal
                   else if (isJavaGetter(getter)) Product.Getter.SourceType.JavaBeanGetter
+                  else if (getter.isStable) Product.Getter.SourceType.ConstructorVal // Hmm...
                   else Product.Getter.SourceType.AccessorMethod,
                 get =
                   // TODO: handle pathological cases like getName[Unused]()()()
@@ -156,11 +157,21 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
               assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
             }
 
-          // default value for case class field n (1 indexed) is obtained from Companion.apply$default$n
           val defaultValues =
             primaryConstructor.typeSignature.paramLists.headOption.toList.flatten.zipWithIndex.collect {
               case (param, idx) if param.asTerm.isParamWithDefault =>
-                param.name.toString -> q"${Type[A].typeSymbol.companion}.${TermName("apply$default$" + (idx + 1))}"
+                val companion = Type[A].typeSymbol.companion
+                val scala2default = caseClassApplyDefaultScala2(idx + 1)
+                val scala3default = caseClassApplyDefaultScala3(idx + 1)
+                companion.typeSignature.decls
+                  .to(List)
+                  .collectFirst {
+                    case method if method.name.toString == scala2default =>
+                      param.name.toString -> q"${companion}.${TermName(scala2default)}"
+                    case method if method.name.toString == scala3default =>
+                      param.name.toString -> q"${companion}.${TermName(scala3default)}"
+                  }
+                  .head
             }.toMap
 
           val parametersRaw = paramListsOf(Type[A], primaryConstructor).map { params =>

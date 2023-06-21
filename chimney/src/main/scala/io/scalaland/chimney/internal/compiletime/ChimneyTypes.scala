@@ -43,13 +43,19 @@ private[compiletime] trait ChimneyTypes { this: Types & Existentials =>
 
     val TransformerFlags: TransformerFlagsModule
     trait TransformerFlagsModule { this: TransformerFlags.type =>
-      import internal.TransformerFlags.Flag
-
       val Default: Type[internal.TransformerFlags.Default]
-      def Enable[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
-          : Type[internal.TransformerFlags.Enable[F, Flags]]
-      def Disable[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
-          : Type[internal.TransformerFlags.Disable[F, Flags]]
+      val Enable: EnableModule
+      trait EnableModule { this: Enable.type =>
+        def apply[F <: internal.TransformerFlags.Flag: Type, Flags <: internal.TransformerFlags: Type]
+            : Type[internal.TransformerFlags.Enable[F, Flags]]
+        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)]
+      }
+      val Disable: DisableModule
+      trait DisableModule { this: Disable.type =>
+        def apply[F <: internal.TransformerFlags.Flag: Type, Flags <: internal.TransformerFlags: Type]
+            : Type[internal.TransformerFlags.Disable[F, Flags]]
+        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)]
+      }
 
       val Flags: FlagsModule
       trait FlagsModule { this: Flags.type =>
@@ -58,8 +64,12 @@ private[compiletime] trait ChimneyTypes { this: Types & Existentials =>
         val BeanSetters: Type[internal.TransformerFlags.BeanSetters]
         val MethodAccessors: Type[internal.TransformerFlags.MethodAccessors]
         val OptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone]
-        def ImplicitConflictResolution[R <: ImplicitTransformerPreference: Type]
-            : Type[internal.TransformerFlags.ImplicitConflictResolution[R]]
+        val ImplicitConflictResolution: ImplicitConflictResolutionModule
+        trait ImplicitConflictResolutionModule { this: ImplicitConflictResolution.type =>
+          def apply[R <: ImplicitTransformerPreference: Type]
+              : Type[internal.TransformerFlags.ImplicitConflictResolution[R]]
+          def unapply[A](tpe: Type[A]): Option[ExistentialType]
+        }
         val MacrosLogging: Type[internal.TransformerFlags.MacrosLogging]
       }
     }

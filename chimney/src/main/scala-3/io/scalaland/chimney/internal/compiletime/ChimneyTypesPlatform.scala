@@ -53,14 +53,24 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
       import internal.TransformerFlags.Flag
 
       val Default: Type[internal.TransformerFlags.Default] = quoted.Type.of[internal.TransformerFlags.Default]
-
-      def Enable[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
-          : Type[internal.TransformerFlags.Enable[F, Flags]] =
-        quoted.Type.of[internal.TransformerFlags.Enable[F, Flags]]
-
-      def Disable[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
-          : Type[internal.TransformerFlags.Disable[F, Flags]] =
-        quoted.Type.of[internal.TransformerFlags.Disable[F, Flags]]
+      object Enable extends EnableModule {
+        def apply[F <: internal.TransformerFlags.Flag: Type, Flags <: internal.TransformerFlags: Type]
+            : Type[internal.TransformerFlags.Enable[F, Flags]] =
+          quoted.Type.of[internal.TransformerFlags.Enable[F, Flags]]
+        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] = tpe match
+          case '[internal.TransformerFlags.Enable[f, flags]] =>
+            Some(Type[f].asExistential -> Type[flags].asExistential)
+          case _ => scala.None
+      }
+      object Disable extends DisableModule {
+        def apply[F <: internal.TransformerFlags.Flag: Type, Flags <: internal.TransformerFlags: Type]
+            : Type[internal.TransformerFlags.Disable[F, Flags]] =
+          quoted.Type.of[internal.TransformerFlags.Disable[F, Flags]]
+        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] = tpe match
+          case '[internal.TransformerFlags.Disable[f, flags]] =>
+            Some(Type[f].asExistential -> Type[flags].asExistential)
+          case _ => scala.None
+      }
 
       object Flags extends FlagsModule {
         val DefaultValues: Type[internal.TransformerFlags.DefaultValues] =
@@ -73,13 +83,16 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
           quoted.Type.of[internal.TransformerFlags.MethodAccessors]
         val OptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone] =
           quoted.Type.of[internal.TransformerFlags.OptionDefaultsToNone]
+        object ImplicitConflictResolution extends ImplicitConflictResolutionModule {
+          def apply[R <: ImplicitTransformerPreference: Type]
+              : Type[internal.TransformerFlags.ImplicitConflictResolution[R]] =
+            quoted.Type.of[internal.TransformerFlags.ImplicitConflictResolution[R]]
+          def unapply[A](tpe: Type[A]): Option[ExistentialType] = tpe match
+            case '[internal.TransformerFlags.ImplicitConflictResolution[r]] => Some(Type[r].asExistential)
+            case _                                                          => scala.None
+        }
         val MacrosLogging: Type[internal.TransformerFlags.MacrosLogging] =
           quoted.Type.of[internal.TransformerFlags.MacrosLogging]
-
-        def ImplicitConflictResolution[R <: ImplicitTransformerPreference: Type]
-            : Type[internal.TransformerFlags.ImplicitConflictResolution[R]] =
-          quoted.Type.of[internal.TransformerFlags.ImplicitConflictResolution[R]]
-
       }
     }
   }

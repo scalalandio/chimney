@@ -1,6 +1,5 @@
 package io.scalaland.chimney.internal.compiletime.derivation
 
-import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
@@ -9,70 +8,6 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
   import c.universe.{internal as _, Transformer as _, *}
 
   protected object Configurations extends ConfigurationsModule {
-
-    final override def readTransformerConfig[
-        Cfg <: internal.TransformerCfg: Type,
-        InstanceFlags <: internal.TransformerFlags: Type,
-        ImplicitScopeFlags <: internal.TransformerFlags: Type
-    ]: TransformerConfig = {
-      val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags())
-      val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
-      extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
-    }
-
-    protected type FlagHead <: internal.TransformerFlags.Flag
-    protected type FlagTail <: internal.TransformerFlags
-    private val enableTC = typeOf[internal.TransformerFlags.Enable[?, ?]].typeConstructor
-    private val disableTC = typeOf[internal.TransformerFlags.Disable[?, ?]].typeConstructor
-    private val implicitConflictResolutionTC =
-      typeOf[internal.TransformerFlags.ImplicitConflictResolution[?]].typeConstructor
-
-    private def extractTransformerFlags[Flag <: internal.TransformerFlags: Type](
-        defaultFlags: TransformerFlags
-    ): TransformerFlags = {
-      val flags = Type[Flag].dealias
-
-      if (flags =:= ChimneyType.TransformerFlags.Default) {
-        defaultFlags
-      } else if (flags.typeConstructor =:= enableTC) {
-        val List(h, t) = flags.typeArgs
-        implicit val Flag: Type[FlagHead] = Type.platformSpecific.fromUntyped(h)
-        implicit val Tail: Type[FlagTail] = Type.platformSpecific.fromUntyped(t)
-
-        if (Flag.typeConstructor =:= implicitConflictResolutionTC) {
-          val preference = Flag.typeArgs.head
-          if (preference =:= ChimneyType.PreferTotalTransformer) {
-            extractTransformerFlags[FlagTail](defaultFlags).setImplicitConflictResolution(
-              Some(dsls.PreferTotalTransformer)
-            )
-          } else if (preference =:= ChimneyType.PreferPartialTransformer) {
-            extractTransformerFlags[FlagTail](defaultFlags).setImplicitConflictResolution(
-              Some(dsls.PreferPartialTransformer)
-            )
-          } else {
-            // $COVERAGE-OFF$
-            reportError("Invalid implicit conflict resolution preference type!!")
-            // $COVERAGE-ON$
-          }
-        } else {
-          extractTransformerFlags[FlagTail](defaultFlags).setBoolFlag[FlagHead](value = true)
-        }
-      } else if (flags.typeConstructor =:= disableTC) {
-        val List(h, t) = flags.typeArgs
-        implicit val Flag: Type[FlagHead] = Type.platformSpecific.fromUntyped(h)
-        implicit val Tail: Type[FlagTail] = Type.platformSpecific.fromUntyped(t)
-
-        if (flags.typeConstructor =:= implicitConflictResolutionTC) {
-          extractTransformerFlags[FlagTail](defaultFlags).setImplicitConflictResolution(None)
-        } else {
-          extractTransformerFlags[FlagTail](defaultFlags).setBoolFlag[FlagHead](value = false)
-        }
-      } else {
-        // $COVERAGE-OFF$
-        reportError(s"Bad internal transformer flags type shape ${Type.prettyPrint[Flag]}!")
-        // $COVERAGE-ON$
-      }
-    }
 
     protected type CfgTail <: internal.TransformerCfg
     private val emptyT = typeOf[internal.TransformerCfg.Empty]
@@ -85,7 +20,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
     private val coproductInstancePartialTC =
       typeOf[internal.TransformerCfg.CoproductInstancePartial[?, ?, ?]].typeConstructor
 
-    private def extractTransformerConfig[Cfg <: internal.TransformerCfg: Type](
+    protected def extractTransformerConfig[Cfg <: internal.TransformerCfg: Type](
         runtimeDataIdx: Int
     ): TransformerConfig = {
       val cfgTpe = Type[Cfg].dealias

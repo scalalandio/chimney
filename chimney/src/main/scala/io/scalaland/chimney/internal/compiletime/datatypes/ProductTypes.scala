@@ -73,6 +73,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
       // case class generated
       "copy",
       // scala.Product methods
+      "##",
       "canEqual",
       "productArity",
       "productElement",
@@ -82,6 +83,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
       "productPrefix",
       // java.lang.Object methods
       "equals",
+      "finalize",
       "hashCode",
       "toString",
       "clone",
@@ -96,6 +98,10 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     // default arguments has name method$default$index
     private val defaultElement = raw"$$default$$"
     val isGarbage: String => Boolean = name => garbage(name) || name.contains(defaultElement)
+
+    // defaults methods are 1-indexed
+    protected def caseClassApplyDefaultScala2(idx: Int): String = "apply$default$" + idx
+    protected def caseClassApplyDefaultScala3(idx: Int): String = "$lessinit$greater$default$" + idx
 
     protected def checkArguments[A: Type](
         parameters: Product.Parameters,

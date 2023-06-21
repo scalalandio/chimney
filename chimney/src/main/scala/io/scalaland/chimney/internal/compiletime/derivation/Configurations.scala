@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation
 
 import io.scalaland.chimney.dsl.ImplicitTransformerPreference
+import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal
 import io.scalaland.chimney.internal.TransformerCfg
 import io.scalaland.chimney.internal.compiletime.Definitions
@@ -120,10 +121,61 @@ private[compiletime] trait Configurations { this: Definitions =>
   protected val Configurations: ConfigurationsModule
   protected trait ConfigurationsModule { this: Configurations.type =>
 
-    def readTransformerConfig[
+    final def readTransformerConfig[
         Cfg <: internal.TransformerCfg: Type,
         InstanceFlags <: internal.TransformerFlags: Type,
         ImplicitScopeFlags <: internal.TransformerFlags: Type
-    ]: TransformerConfig
+    ]: TransformerConfig = {
+      val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags())
+      val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
+      extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
+    }
+
+    type FlagsHead <: internal.TransformerFlags.Flag
+    type FlagsTail <: internal.TransformerFlags
+    private def extractTransformerFlags[Flag <: internal.TransformerFlags: Type](
+        defaultFlags: TransformerFlags
+    ): TransformerFlags = Type[Flag] match {
+      case default if default =:= ChimneyType.TransformerFlags.Default => defaultFlags
+      case ChimneyType.TransformerFlags.Enable(flag, flags) =>
+        implicit val Flag: Type[FlagsHead] = flag.Underlying.asInstanceOf[Type[FlagsHead]]
+        implicit val Flags: Type[FlagsTail] = flags.Underlying.asInstanceOf[Type[FlagsTail]]
+        Flag match {
+          case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(r) =>
+            if (r.Underlying =:= ChimneyType.PreferTotalTransformer)
+              extractTransformerFlags[FlagsTail](defaultFlags).setImplicitConflictResolution(
+                Some(dsls.PreferTotalTransformer)
+              )
+            else if (r.Underlying =:= ChimneyType.PreferPartialTransformer)
+              extractTransformerFlags[FlagsTail](defaultFlags).setImplicitConflictResolution(
+                Some(dsls.PreferPartialTransformer)
+              )
+            else {
+              // $COVERAGE-OFF$
+              reportError("Invalid implicit conflict resolution preference type!!")
+              // $COVERAGE-ON$
+            }
+          case _ =>
+            extractTransformerFlags[FlagsTail](defaultFlags).setBoolFlag[FlagsHead](value = true)
+        }
+      case ChimneyType.TransformerFlags.Disable(flag, flags) =>
+        implicit val Flag: Type[FlagsHead] = flag.Underlying.asInstanceOf[Type[FlagsHead]]
+        implicit val Flags: Type[FlagsTail] = flags.Underlying.asInstanceOf[Type[FlagsTail]]
+        Flag match {
+          case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(_) =>
+            extractTransformerFlags[FlagsTail](defaultFlags).setImplicitConflictResolution(None)
+          case _ =>
+            extractTransformerFlags[FlagsTail](defaultFlags).setBoolFlag[FlagsHead](value = false)
+        }
+      case _ =>
+        // $COVERAGE-OFF$
+        reportError(s"Bad internal transformer flags type shape ${Type.prettyPrint[Flag]}!")
+      // $COVERAGE-ON$
+    }
+
+    // TODO: rewrite to shared
+    protected def extractTransformerConfig[Cfg <: internal.TransformerCfg: Type](
+        runtimeDataIdx: Int
+    ): TransformerConfig
   }
 }

@@ -147,12 +147,13 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                   }
                                 }
                             })
-                            .orElse(defaultValue.map { (value: Expr[ctorParam.Underlying]) =>
-                              // We're constructing:
-                              // '{ ${ defaultValue } }
-                              DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
-                                TransformationExpr.fromTotal(value)
-                              )
+                            .orElse(defaultValue.filter(_ => ctx.config.flags.processDefaultValues).map {
+                              (value: Expr[ctorParam.Underlying]) =>
+                                // We're constructing:
+                                // '{ ${ defaultValue } }
+                                DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
+                                  TransformationExpr.fromTotal(value)
+                                )
                             })
                             .getOrElse {
                               // TODO:
@@ -163,7 +164,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                 case Product.Parameter.TargetType.ConstructorParameter =>
                                   DerivationResult
                                     .missingAccessor[From, To, ctorParam.Underlying, Existential[TransformationExpr]](
-                                      toName
+                                      toName,
+                                      fromExtractors.exists { case (name, _) => areNamesMatching(name, toName) }
                                     )
                                 case Product.Parameter.TargetType.SetterParameter =>
                                   DerivationResult

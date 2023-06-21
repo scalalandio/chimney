@@ -239,7 +239,7 @@ private[compiletime] object DerivationResult {
     new fp.ApplicativeTraverse[DerivationResult] {
 
       def map2[A, B, C](fa: DerivationResult[A], fb: DerivationResult[B])(f: (A, B) => C): DerivationResult[C] =
-        fa.map2(fb)(f)
+        fa.parMap2(fb)(f) // TODO: I guess we should have also par parTraverse or sth
 
       def pure[A](a: A): DerivationResult[A] = DerivationResult.pure(a)
 

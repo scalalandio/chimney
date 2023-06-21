@@ -60,16 +60,27 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
     object TransformerFlags extends TransformerFlagsModule {
       import internal.TransformerFlags.Flag
 
-      override val Default: Type[internal.TransformerFlags.Default] =
-        fromWeak[internal.TransformerFlags.Default]
+      val Default: Type[internal.TransformerFlags.Default] = fromWeak[internal.TransformerFlags.Default]
 
-      def Enable[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
-          : Type[internal.TransformerFlags.Enable[F, Flags]] =
-        fromWeak[internal.TransformerFlags.Enable[F, Flags]]
-
-      def Disable[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
-          : Type[internal.TransformerFlags.Disable[F, Flags]] =
-        fromWeak[internal.TransformerFlags.Disable[F, Flags]]
+      object Enable extends EnableModule {
+        def apply[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
+            : Type[internal.TransformerFlags.Enable[F, Flags]] =
+          fromWeak[internal.TransformerFlags.Enable[F, Flags]]
+        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] = {
+          if (fromWeak[internal.TransformerFlags.Enable[?, ?]].typeConstructor <:< tpe.typeConstructor)
+            Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
+          else scala.None
+        }
+      }
+      object Disable extends DisableModule {
+        def apply[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
+            : Type[internal.TransformerFlags.Disable[F, Flags]] =
+          fromWeak[internal.TransformerFlags.Disable[F, Flags]]
+        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
+          if (fromWeak[internal.TransformerFlags.Disable[?, ?]].typeConstructor <:< tpe.typeConstructor)
+            Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
+          else scala.None
+      }
 
       object Flags extends FlagsModule {
         val DefaultValues: Type[internal.TransformerFlags.DefaultValues] =
@@ -80,14 +91,20 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
           fromWeak[internal.TransformerFlags.MethodAccessors]
         val OptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone] =
           fromWeak[internal.TransformerFlags.OptionDefaultsToNone]
+        object ImplicitConflictResolution extends ImplicitConflictResolutionModule {
+          def apply[R <: ImplicitTransformerPreference: Type]
+              : Type[internal.TransformerFlags.ImplicitConflictResolution[R]] =
+            fromWeak[internal.TransformerFlags.ImplicitConflictResolution[R]]
+          def unapply[A](tpe: Type[A]): Option[ExistentialType] =
+            if (
+              fromWeak[internal.TransformerFlags.ImplicitConflictResolution[?]].typeConstructor <:< tpe.typeConstructor
+            )
+              Some(fromUntyped(tpe.typeArgs.head).asExistential)
+            else scala.None
+        }
         val MacrosLogging: Type[internal.TransformerFlags.MacrosLogging] =
           fromWeak[internal.TransformerFlags.MacrosLogging]
-
-        def ImplicitConflictResolution[R <: ImplicitTransformerPreference: Type]
-            : Type[internal.TransformerFlags.ImplicitConflictResolution[R]] =
-          fromWeak[internal.TransformerFlags.ImplicitConflictResolution[R]]
       }
     }
-
   }
 }

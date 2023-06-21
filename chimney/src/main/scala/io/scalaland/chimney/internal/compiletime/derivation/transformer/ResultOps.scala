@@ -32,7 +32,7 @@ private[compiletime] trait ResultOps { this: Definitions & Derivation =>
     def attemptNextRule[A]: DerivationResult[Rule.ExpansionResult[A]] =
       DerivationResult.pure(Rule.ExpansionResult.AttemptNextRule)
 
-    def missingAccessor[From, To, Field: Type, A](fieldName: String)(implicit
+    def missingAccessor[From, To, Field: Type, A](fieldName: String, isAccessorAvailable: Boolean)(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       MissingAccessor(
@@ -40,7 +40,7 @@ private[compiletime] trait ResultOps { this: Definitions & Derivation =>
         fieldTypeName = Type.prettyPrint[Field],
         sourceTypeName = Type.prettyPrint[From],
         targetTypeName = Type.prettyPrint[To],
-        defAvailable = false // TODO? what is it used for?
+        defAvailable = isAccessorAvailable
       )
     )
 
