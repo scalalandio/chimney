@@ -12,7 +12,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
 
       private val nonPrivateFlags = Flags.Private | Flags.PrivateLocal | Flags.Protected
 
-      def isPublic(sym: Symbol): Boolean = (sym.flags & nonPrivateFlags).is(Flags.EmptyFlags)
+      def isPublic(sym: Symbol): Boolean = !(sym.flags & nonPrivateFlags).is(nonPrivateFlags)
 
       def isParameterless(method: Symbol): Boolean =
         method.paramSymss.filterNot(_.exists(_.isType)).flatten.isEmpty
@@ -91,7 +91,8 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
           .filter(isAccessor)
 
         // if we are taking caseFields but then we also are using ALL fieldMembers shouldn't we just use fieldMembers?
-        (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).distinct.map { getter =>
+        (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).filter(isPublic).distinct.map { getter =>
+
           val name = getter.name
           val tpe = ExistentialType(returnTypeOf[Any](TypeRepr.of[A].memberType(getter)))
           name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
