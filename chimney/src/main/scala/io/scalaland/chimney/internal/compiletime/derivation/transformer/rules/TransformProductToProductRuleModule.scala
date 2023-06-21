@@ -116,7 +116,18 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                           // '{ ${ derivedToElement } } // using ${ src.$name }
                                           deriveRecursiveTransformationExpr[getter.Underlying, ctorParam.Underlying](
                                             get(ctx.src)
-                                          ).map(Existential[TransformationExpr, ctorParam.Underlying](_))
+                                          ).transformWith(
+                                            DerivationResult.existential[TransformationExpr, ctorParam.Underlying](_)
+                                          ) { _ =>
+                                            // TODO: one day we could make this error message recursive
+                                            DerivationResult.missingTransformer[
+                                              From,
+                                              To,
+                                              getter.Underlying,
+                                              ctorParam.Underlying,
+                                              Existential[TransformationExpr]
+                                            ](toName)
+                                          }
                                         }
                                       }
                                     }
@@ -142,7 +153,18 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                       // '{ ${ derivedToElement } } // using ${ src.$name }
                                       deriveRecursiveTransformationExpr[getter.Underlying, ctorParam.Underlying](
                                         get(ctx.src)
-                                      ).map(Existential[TransformationExpr, ctorParam.Underlying](_))
+                                      ).transformWith(
+                                        DerivationResult.existential[TransformationExpr, ctorParam.Underlying](_)
+                                      ) { _ =>
+                                        // TODO: one day we could make this error message recursive
+                                        DerivationResult.missingTransformer[
+                                          From,
+                                          To,
+                                          getter.Underlying,
+                                          ctorParam.Underlying,
+                                          Existential[TransformationExpr]
+                                        ](toName)
+                                      }
                                     }
                                   }
                                 }
@@ -155,17 +177,41 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                   TransformationExpr.fromTotal(value)
                                 )
                             })
+                            .orElse {
+                              Option(Expr.Option.None)
+                                .filter(_ =>
+                                  Type[ctorParam.Underlying].isOption && ctx.config.flags.optionDefaultsToNone
+                                )
+                                .map(value =>
+                                  // We're constructing:
+                                  // '{ None }
+                                  DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
+                                    TransformationExpr.fromTotal(value.upcastExpr[ctorParam.Underlying])
+                                  )
+                                )
+
+                            }
+                            .orElse {
+                              Option(Expr.Unit).filter(_ => Type[ctorParam.Underlying] =:= Type[Unit]).map { value =>
+                                // We're constructing:
+                                // '{ () }
+                                DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
+                                  TransformationExpr.fromTotal(value.upcastExpr[ctorParam.Underlying])
+                                )
+                              }
+                            }
                             .getOrElse {
-                              // TODO:
-                              //   - if there is Java Bean getter that couldn't be used because flag is off, inform about it
-                              //   - if there is accessor that couldn't be used because flag is off, inform about it
-                              //   - if default value exists that couldn't be used because flag is off, inform about it
+                              val accessorExists = fieldOverrides
+                                .get(toName)
+                                .collectFirst { case RuntimeFieldOverride.RenamedFrom(sourceName) => sourceName }
+                                .flatMap(fromExtractors.get)
+                                .isDefined
                               ctorParam.value.targetType match {
                                 case Product.Parameter.TargetType.ConstructorParameter =>
                                   DerivationResult
                                     .missingAccessor[From, To, ctorParam.Underlying, Existential[TransformationExpr]](
                                       toName,
-                                      fromExtractors.exists { case (name, _) => areNamesMatching(name, toName) }
+                                      accessorExists
                                     )
                                 case Product.Parameter.TargetType.SetterParameter =>
                                   DerivationResult
@@ -376,7 +422,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                         }
                                       },
                                       // Here, we're building:
-                                      // `{ if (allerrors == null) $ifBlock else $elseBock }
+                                      // '{ if (allerrors == null) $ifBlock else $elseBock }
                                       Expr.ifElse[partial.Result[To]](allerrors eqExpr Expr.Null) {
                                         // Here, we're building:
                                         // '{ partial.Result.Value(${ constructor }) } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...

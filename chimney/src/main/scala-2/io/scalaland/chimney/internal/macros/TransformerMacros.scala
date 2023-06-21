@@ -6,6 +6,7 @@ import io.scalaland.chimney.internal.utils.EitherUtils
 
 import scala.reflect.macros.blackbox
 import scala.collection.compat.*
+import scala.collection.immutable
 
 trait TransformerMacros extends MappingMacros with TargetConstructorMacros with EitherUtils {
 
@@ -744,7 +745,7 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
       config: TransformerConfig
   ): Either[Seq[TransformerDerivationError], Map[Target, DerivedTree]] = {
 
-    val (erroredTargets, resolvedBodyTrees) = accessorsMapping.map {
+    val (erroredTargets: Map[Target, Seq[TransformerDerivationError]], resolvedBodyTrees) = accessorsMapping.map {
       case (target, accessor: AccessorResolution.Resolved) =>
         target -> resolveTransformerBodyTreeFromAccessor(target, accessor, From, config)
       case (target, accessor) =>
@@ -764,18 +765,19 @@ trait TransformerMacros extends MappingMacros with TargetConstructorMacros with 
     if (erroredTargets.isEmpty) {
       Right(resolvedBodyTrees)
     } else {
-      val targetsToFallback = erroredTargets.collect {
+      val targetsToFallback: immutable.Iterable[Target] = erroredTargets.collect {
         case (target, _) if !accessorsMapping(target).isResolved => target
       }
-      val fallbackTransformerBodies = resolveFallbackTransformerBodies(targetsToFallback, To, config)
-      val unresolvedTargets = accessorsMapping.keys.toList
+      val fallbackTransformerBodies: Map[Target, DerivedTree] =
+        resolveFallbackTransformerBodies(targetsToFallback, To, config)
+      val unresolvedTargets: Seq[Target] = accessorsMapping.keys.toList
         .diff(resolvedBodyTrees.keys.toList)
         .diff(fallbackTransformerBodies.keys.toList)
 
       if (unresolvedTargets.isEmpty) {
         Right(resolvedBodyTrees ++ fallbackTransformerBodies)
       } else {
-        val errors = unresolvedTargets.flatMap { target =>
+        val errors: Seq[TransformerDerivationError] = unresolvedTargets.flatMap { target =>
           accessorsMapping(target) match {
             case AccessorResolution.Resolved(symbol: MethodSymbol, _) =>
               erroredTargets(target) :+ MissingTransformer(

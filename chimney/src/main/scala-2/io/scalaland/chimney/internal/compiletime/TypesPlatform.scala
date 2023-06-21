@@ -164,6 +164,12 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean = S.<:<(T)
     def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean = S.=:=(T)
 
-    def prettyPrint[A: Type]: String = Console.MAGENTA + Type[A].typeSymbol.fullName + Console.RESET
+    def prettyPrint[A: Type]: String = {
+      def helper(tpe: c.Type): String = {
+        val tpes = tpe.typeArgs.map(helper)
+        tpe.typeSymbol.fullName + (if (tpes.isEmpty) "" else s"[${tpes.mkString(", ")}]")
+      }
+      Console.MAGENTA + helper(Type[A]) + Console.RESET
+    }
   }
 }

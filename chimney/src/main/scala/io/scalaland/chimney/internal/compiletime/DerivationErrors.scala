@@ -9,6 +9,8 @@ final private[compiletime] case class DerivationErrors(head: DerivationError, ta
     DerivationErrors(head, tail ++ Vector(errors.head) ++ errors.tail)
 
   def prettyPrint: String = DerivationError.printErrors(head +: tail)
+
+  def asVector: Vector[DerivationError] = head +: tail
 }
 private[compiletime] object DerivationErrors {
 

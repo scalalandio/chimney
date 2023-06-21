@@ -137,10 +137,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] = asExpr(q"val _ = $expr")
 
     def prettyPrint[A](expr: Expr[A]): String =
-      expr
-        .toString()
-        .replaceAll("\\$\\d+", "")
-        .replace("$u002E", ".")
+      Console.MAGENTA + expr.toString().replaceAll("\\$\\d+", "").replace("$u002E", ".") + Console.RESET
 
     def typeOf[A](expr: Expr[A]): Type[A] = Type.platformSpecific.fromUntyped(expr.staticType.finalResultType)
   }
