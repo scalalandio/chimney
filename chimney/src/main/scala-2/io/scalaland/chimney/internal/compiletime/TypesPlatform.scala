@@ -94,7 +94,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       def apply[A: Type]: Type[Option[A]] = fromWeakTypeConstructor[Option[?], Option[A]](Type[A])
       def unapply[A](tpe: Type[A]): Option[ExistentialType] =
         // None has no type parameters, so we need getOrElse(Nothing)
-        if (apply[Any](Any) <:< tpe)
+        if (tpe <:< apply[Any](Any))
           Some(
             tpe.typeArgs.headOption.fold[ExistentialType](ExistentialType(Nothing))(inner =>
               fromUntyped(inner).asExistential
@@ -109,7 +109,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       def apply[L: Type, R: Type]: Type[Either[L, R]] =
         fromWeakTypeConstructor[Either[?, ?], Either[L, R]](Type[L], Type[R])
       def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
-        if (apply[Any, Any](Any, Any) <:< tpe)
+        if (tpe <:< apply[Any, Any](Any, Any))
           Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
         else scala.None
 
@@ -117,7 +117,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         def apply[L: Type, R: Type]: Type[Left[L, R]] =
           fromWeakTypeConstructor[Left[?, ?], Left[L, R]](Type[L], Type[R])
         def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
-          if (apply[Any, Any](Any, Any) <:< tpe)
+          if (tpe <:< apply[Any, Any](Any, Any))
             Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
           else scala.None
       }
@@ -125,7 +125,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         def apply[L: Type, R: Type]: Type[Right[L, R]] =
           fromWeakTypeConstructor[Right[?, ?], Right[L, R]](Type[L], Type[R])
         def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
-          if (apply[Any, Any](Any, Any) <:< tpe)
+          if (tpe <:< apply[Any, Any](Any, Any))
             Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
           else scala.None
       }
@@ -134,7 +134,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     object Iterable extends IterableModule {
       def apply[A: Type]: Type[Iterable[A]] = fromWeakTypeConstructor[Iterable[?], Iterable[A]](Type[A])
       def unapply[A](tpe: Type[A]): Option[ExistentialType] =
-        if (apply[Any](Any) <:< tpe) Some(fromUntyped(tpe.typeArgs.head).asExistential)
+        if (tpe <:< apply[Any](Any)) Some(fromUntyped(tpe.typeArgs.head).asExistential)
         else scala.None
     }
 
@@ -142,17 +142,15 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       def apply[K: Type, V: Type]: Type[Map[K, V]] =
         fromWeakTypeConstructor[Map[?, ?], Map[K, V]](Type[K], Type[V])
       def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
-        if (apply[Any, Any](Any, Any) <:< tpe)
+        if (tpe <:< apply[Any, Any](Any, Any))
           Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
         else scala.None
     }
 
     object Iterator extends IteratorModule {
       def apply[A: Type]: Type[Iterator[A]] = fromWeakTypeConstructor[Iterator[?], Iterator[A]](Type[A])
-
       def unapply[A](tpe: Type[A]): Option[(ExistentialType)] =
-        if (apply[Any](Any) <:< tpe)
-          Some(fromUntyped(tpe.typeArgs.head).asExistential)
+        if (tpe <:< apply[Any](Any)) Some(fromUntyped(tpe.typeArgs.head).asExistential)
         else scala.None
     }
 

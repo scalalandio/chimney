@@ -25,7 +25,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
         fromWeakTypeConstructor[partial.Result[?], partial.Result[A]](Type[A])
       def unapply[A](tpe: Type[A]): Option[ExistentialType] =
         // None has no type parameters, so we need getOrElse(Nothing)
-        if (apply[Any] <:< tpe)
+        if (tpe <:< apply[Any])
           Some(
             tpe.typeArgs.headOption.fold(ExistentialType(Type.Nothing))(inner => fromUntyped[Any](inner).asExistential)
           )
@@ -67,7 +67,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
             : Type[internal.TransformerFlags.Enable[F, Flags]] =
           fromWeak[internal.TransformerFlags.Enable[F, Flags]]
         def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] = {
-          if (fromWeak[internal.TransformerFlags.Enable[?, ?]].typeConstructor <:< tpe.typeConstructor)
+          if (tpe.typeConstructor <:< fromWeak[internal.TransformerFlags.Enable[?, ?]].typeConstructor)
             Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
           else scala.None
         }
@@ -77,7 +77,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
             : Type[internal.TransformerFlags.Disable[F, Flags]] =
           fromWeak[internal.TransformerFlags.Disable[F, Flags]]
         def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
-          if (fromWeak[internal.TransformerFlags.Disable[?, ?]].typeConstructor <:< tpe.typeConstructor)
+          if (tpe.typeConstructor <:< fromWeak[internal.TransformerFlags.Disable[?, ?]].typeConstructor)
             Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
           else scala.None
       }

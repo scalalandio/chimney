@@ -61,7 +61,8 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
       import Type.platformSpecific.*
       import scala.collection.immutable.ListMap
 
-      val sym = TypeRepr.of[A].typeSymbol
+      val A = TypeRepr.of[A]
+      val sym = A.typeSymbol
 
       val extractors: Product.Getters[A] = ListMap.from[String, Existential[Product.Getter[A, *]]] {
         // case class fields appear once in sym.caseFields as vals and once in sym.declaredMethods as methods
@@ -94,7 +95,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).filter(isPublic).distinct.map { getter =>
 
           val name = getter.name
-          val tpe = ExistentialType(returnTypeOf[Any](TypeRepr.of[A].memberType(getter)))
+          val tpe = ExistentialType(returnTypeOf[Any](A.memberType(getter)))
           name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
             Product.Getter(
               sourceType =
@@ -120,18 +121,10 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
               ctor.paramSymss match {
                 // new Bean[...]
                 case typeArgs :: Nil if typeArgs.exists(_.isType) =>
-                  New(TypeTree.of[A])
-                    .select(ctor)
-                    .appliedToTypes(TypeRepr.of[A].typeArgs)
-                    .appliedToArgss(Nil)
-                    .asExprOf[A]
+                  New(TypeTree.of[A]).select(ctor).appliedToTypes(A.typeArgs).appliedToArgss(Nil).asExprOf[A]
                 // new Bean[...]()
                 case typeArgs :: Nil :: Nil if typeArgs.exists(_.isType) =>
-                  New(TypeTree.of[A])
-                    .select(ctor)
-                    .appliedToTypes(TypeRepr.of[A].typeArgs)
-                    .appliedToNone
-                    .asExprOf[A]
+                  New(TypeTree.of[A]).select(ctor).appliedToTypes(A.typeArgs).appliedToNone.asExprOf[A]
                 // new Bean
                 case Nil =>
                   New(TypeTree.of[A]).select(ctor).appliedToArgss(Nil).asExprOf[A]
@@ -149,10 +142,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
             .filter(isJavaSetterOrVar)
             .map { setter =>
               val name = setter.name
-              val tpe = ExistentialType {
-                val MethodType(_, List(tpe), _) = TypeRepr.of[A].memberType(setter): @unchecked
-                tpe.asType.asInstanceOf[Type[Any]]
-              }
+              val tpe = ExistentialType(paramsWithTypes(A, setter)(name).asType.asInstanceOf[Type[Any]])
               (
                 name,
                 setter,
@@ -176,9 +166,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
             val beanRef = Ref(beanSymbol)
 
             val checkedArguments = checkArguments(parameters, arguments)
-              .map[Term] { case (name, e) =>
-                beanRef.select(methodSymbols(name)).appliedTo(e.value.asTerm)
-              }
+              .map[Term] { case (name, e) => beanRef.select(methodSymbols(name)).appliedTo(e.value.asTerm) }
               .toList
 
             val statements = ValDef(beanSymbol, Some(defaultConstructor.asTerm)) +: checkedArguments
@@ -196,43 +184,35 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
             Product.Constructor(ListMap.empty, _ => Ref(sym.companionModule).asExprOf[A])
         } else {
           val primaryConstructor =
-            Option(TypeRepr.of[A].typeSymbol.primaryConstructor).filter(s => !s.isNoSymbol).filter(isPublic).getOrElse {
+            Option(sym.primaryConstructor).filter(s => !s.isNoSymbol).filter(isPublic).getOrElse {
               assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
             }
 
-          val (typeByName, typeParams) = resolveTypeArgsForMethodArguments(TypeRepr.of[A], primaryConstructor)
+          val paramTypes = paramsWithTypes(A, primaryConstructor)
+          val paramss = paramListsOf(primaryConstructor)
 
-          val defaultValues = {
-            val ps = primaryConstructor.paramSymss
-            // TODO: assumes type parameters are always at the beginning
-            if typeParams.nonEmpty then ps.tail else ps
-          }.headOption.toList.flatten.zipWithIndex.collect {
+          val defaultValues = paramss.headOption.toList.flatten.zipWithIndex.collect {
             case (param, idx) if param.flags.is(Flags.HasDefault) =>
-              val mod = TypeRepr.of[A].typeSymbol.companionModule
-              val default = mod.declaredMethod(caseClassApplyDefaultScala2(idx + 1)) ++
-                mod.declaredMethod(caseClassApplyDefaultScala3(idx + 1))
-              val sym = default.head
-              param.name -> Ref(mod).select(sym)
+              val mod = sym.companionModule
+              val default = (mod.declaredMethod(caseClassApplyDefaultScala2(idx + 1)) ++
+                mod.declaredMethod(caseClassApplyDefaultScala3(idx + 1))).head
+              param.name -> Ref(mod).select(default)
           }.toMap
 
-          val parametersRaw = primaryConstructor.paramSymss.filterNot(_.exists(_.isType)).map { params =>
+          val parametersRaw = paramss.map { params =>
             params
               .map { param =>
                 val name = param.name.toString
-                val tpe = ExistentialType(typeByName(name).asType.asInstanceOf[Type[Any]])
+                val tpe = ExistentialType(paramTypes(name).asType.asInstanceOf[Type[Any]])
                 name ->
                   tpe.mapK { implicit Tpe: Type[tpe.Underlying] => _ =>
                     Product.Parameter(
                       Product.Parameter.TargetType.ConstructorParameter,
-                      defaultValues.get(name).map { value =>
-                        value.asExprOf[tpe.Underlying]
-                      }
+                      defaultValues.get(name).map(_.asExprOf[tpe.Underlying])
                     )
                   }
               }
           }
-
-          // TODO: print parameters when list is empty
 
           val parameters: Product.Parameters = ListMap.from(parametersRaw.flatten)
 
@@ -240,15 +220,12 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
             val unadaptedCheckedArguments = checkArguments(parameters, arguments)
 
             val checkedArguments = parametersRaw.map { params =>
-              params.map { case (name, _) =>
-                unadaptedCheckedArguments(name).value.asTerm
-              }
+              params.map { case (name, _) => unadaptedCheckedArguments(name).value.asTerm }
             }
 
-            {
-              val tree = New(TypeTree.of[A]).select(primaryConstructor)
-              if typeParams.nonEmpty then tree.appliedToTypes(typeParams) else tree
-            }.appliedToArgss(checkedArguments).asExprOf[A]
+            val select = New(TypeTree.of[A]).select(primaryConstructor)
+            val tree = if A.typeArgs.nonEmpty then select.appliedToTypes(A.typeArgs) else select
+            tree.appliedToArgss(checkedArguments).asExprOf[A]
           }
 
           Product.Constructor(parameters, constructor)

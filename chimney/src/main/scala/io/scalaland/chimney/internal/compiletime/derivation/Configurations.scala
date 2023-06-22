@@ -75,11 +75,25 @@ private[compiletime] trait Configurations { this: Definitions =>
       preventResolutionForTypes: Option[(ExistentialType, ExistentialType)] = None
   ) {
 
-    def prepareForRecursiveCall: TransformerConfig =
+    def prepareForRecursiveCall: TransformerConfig = {
+      // When going recursively we have to:
+      // - clear the field overrides since `with*(_.field, *)` might make sense for src, but not for src.field
+      // - clear implicit call prevention:
+      //   - we want to prevent
+      //   {{{
+      //   implicit val foobar: Transformer[Foo, Bar] = foo => summon[Transformer[Foo, Bar]].transform(foo)
+      //   }}}
+      // - but we don't want to prevent:
+      //   {{{
+      //   implicit val foobar: Transformer[Foo, Bar] = foo => Bar(
+      //     foo.x.map(foo2 => summon[Transformer[Foo, Bar]].transform(foo2))
+      //   )
+      //   }}}
       copy(
-        // preventResolutionForTypes = None,
+        preventResolutionForTypes = None,
         fieldOverrides = Map.empty
       )
+    }
 
     // def usesRuntimeDataStore: Boolean =
     //  fieldOverrides.values.exists(_.usesRuntimeDataStore) || coproductOverrides.nonEmpty

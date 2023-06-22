@@ -12,38 +12,38 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object platformSpecific {
 
+      // TODO: assumes each parameter list is made completely out of types OR completely out of values
+      def paramListsOf(method: Symbol): List[List[Symbol]] = method.paramSymss.filterNot(_.exists(_.isType))
+
       def returnTypeOf[A](typeRepr: TypeRepr): Type[A] = typeRepr.widenByName match {
         case lambda: LambdaType => lambda.resType.asType.asInstanceOf[Type[A]]
         case out                => out.asType.asInstanceOf[Type[A]]
       }
 
-      def resolveTypeArgsForMethodArguments(tpe: TypeRepr, method: Symbol): (Map[String, TypeRepr], List[TypeRepr]) =
-        tpe.memberType(method) match {
-          // monomorphic
-          case MethodType(names, types, _) =>
-            val typeArgs: List[TypeRepr] = Nil
-            val typeArgumentByName: Map[String, TypeRepr] = names.zip(types).toMap
-            typeArgumentByName -> typeArgs
-          // polymorphic
-          case PolyType(_, _, MethodType(names, types, AppliedType(_, typeRefs))) =>
-            // TODO: check if types of constructor match types passed to tpe
-            val typeArgs: List[TypeRepr] = tpe.typeArgs
-            val typeArgumentByAlias = typeRefs.zip(typeArgs).toMap
-            val typeArgumentByName: Map[String, TypeRepr] = names
+      def paramsWithTypes(tpe: TypeRepr, method: Symbol): Map[String, TypeRepr] = tpe.memberType(method) match {
+        // monomorphic
+        case MethodType(names, types, _) => names.zip(types).toMap
+        // polymorphic
+        case PolyType(_, _, MethodType(names, types, AppliedType(_, typeRefs))) =>
+          // TODO: check if types of constructor match types passed to tpe
+          val typeArgumentByAlias = typeRefs.zip(tpe.typeArgs).toMap
+          val typeArgumentByName: Map[String, TypeRepr] =
+            names
               .zip(types)
               .toMap
               .view
               .mapValues { tpe =>
+                // FIXME: This has to be recursive
                 typeArgumentByAlias.getOrElse(tpe, tpe)
               }
               .toMap
-            typeArgumentByName -> typeArgs
-          // unknown
-          case tpe =>
-            assertionFailed(
-              s"Constructor of ${Type.prettyPrint(tpe.asType.asInstanceOf[Type[Any]])} has unrecognized/unsupported format of type: ${tpe}"
-            )
-        }
+          typeArgumentByName
+        // unknown
+        case out =>
+          assertionFailed(
+            s"Constructor of ${Type.prettyPrint(tpe.asType.asInstanceOf[Type[Any]])} has unrecognized/unsupported format of type: ${out}"
+          )
+      }
     }
 
     val Nothing: Type[Nothing] = quoted.Type.of[Nothing]
