@@ -37,14 +37,14 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
 //    Bar(3, (3.14, 3.14)).intoPartial[Foo].transform
 
-    compileErrors("Bar(3, (3.14, 3.14)).intoPartial[Foo].transform").check(
+    compileErrorsFixed("Bar(3, (3.14, 3.14)).intoPartial[Foo].transform").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
       "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
       "Consult https://scalalandio.github.io/chimney for usage examples."
     )
 
-    compileErrors("Bar(3, (3.14, 3.14)).transformIntoPartial[Foo]").check(
+    compileErrorsFixed("Bar(3, (3.14, 3.14)).transformIntoPartial[Foo]").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
       "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
