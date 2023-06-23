@@ -75,6 +75,8 @@ private[compiletime] trait Configurations { this: Definitions =>
       preventResolutionForTypes: Option[(ExistentialType, ExistentialType)] = None
   ) {
 
+    def allowFromToImplicitSearch: TransformerConfig = copy(preventResolutionForTypes = None)
+
     def prepareForRecursiveCall: TransformerConfig = {
       // When going recursively we have to:
       // - clear the field overrides since `with*(_.field, *)` might make sense for src, but not for src.field

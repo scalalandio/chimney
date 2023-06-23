@@ -14,16 +14,6 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
 
   import quotes.*, quotes.reflect.*
 
-  def deriveTotalTransformerWithDefaults[
-      From: Type,
-      To: Type
-  ]: Expr[Transformer[From, To]] =
-    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicit ImplicitScopeFlagsType =>
-      deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](
-        runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty
-      )
-    }
-
   def deriveTotalTransformerWithConfig[
       From: Type,
       To: Type,
@@ -35,13 +25,13 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
   ): Expr[Transformer[From, To]] =
     deriveTotalTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
 
-  def derivePartialTransformerWithDefaults[
+  def deriveTotalTransformerWithDefaults[
       From: Type,
       To: Type
-  ]: Expr[PartialTransformer[From, To]] =
+  ]: Expr[Transformer[From, To]] =
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicit ImplicitScopeFlagsType =>
-      derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](
-        runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty
+      deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore =
+        ChimneyExpr.RuntimeDataStore.empty
       )
     }
 
@@ -55,6 +45,16 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
   ): Expr[PartialTransformer[From, To]] =
     derivePartialTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
+
+  def derivePartialTransformerWithDefaults[
+      From: Type,
+      To: Type
+  ]: Expr[PartialTransformer[From, To]] =
+    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicit ImplicitScopeFlagsType =>
+      derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore =
+        ChimneyExpr.RuntimeDataStore.empty
+      )
+    }
 
   private def findImplicitScopeTransformerConfiguration
       : Expr[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]] =

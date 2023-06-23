@@ -68,7 +68,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
           .collect { case method if method.isMethod => method.asMethod }
           .filter(isAccessor)
           .map { getter =>
-            val name = getter.name.toString
+            val name = getDecodedName(getter)
             val tpe = ExistentialType(fromUntyped(returnTypeOf(Type[A], getter)))
             name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
               val termName = getter.asMethod.name.toTermName
@@ -108,7 +108,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
               .map { setter =>
                 // Scala 3's JB setters _are_ methods ending with _= due to change in @BeanProperty behavior.
                 // We have to drop that suffix to align names, so that comparing is possible.
-                val n: String = setter.name.toString
+                val n: String = getDecodedName(setter)
                 val name = if (isVar(setter)) n.substring(0, n.length - "_$eq".length) else n
 
                 val termName = setter.asTerm.name.toTermName
@@ -166,10 +166,10 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
                 companion.typeSignature.decls
                   .to(List)
                   .collectFirst {
-                    case method if method.name.toString == scala2default =>
-                      param.name.toString -> q"${companion}.${TermName(scala2default)}"
-                    case method if method.name.toString == scala3default =>
-                      param.name.toString -> q"${companion}.${TermName(scala3default)}"
+                    case method if getDecodedName(method) == scala2default =>
+                      getDecodedName(param) -> q"${companion}.${TermName(scala2default)}"
+                    case method if getDecodedName(method) == scala3default =>
+                      getDecodedName(param) -> q"${companion}.${TermName(scala3default)}"
                   }
                   .head
             }.toMap
@@ -177,7 +177,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
           val parametersRaw = paramListsOf(Type[A], primaryConstructor).map { params =>
             params
               .map { param =>
-                val name = param.name.toString
+                val name = getDecodedName(param)
                 val tpe = ExistentialType(fromUntyped(param.typeSignatureIn(Type[A])))
                 name ->
                   tpe.mapK { implicit Tpe: Type[tpe.Underlying] => _ =>
@@ -211,6 +211,8 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
       Some(Product(extractors, constructor))
     } else None
 
-    private val isGarbageSymbol = ((s: Symbol) => s.name.toString) andThen isGarbage
+    private val getDecodedName = (s: Symbol) => s.name.decodedName.toString
+
+    private val isGarbageSymbol = getDecodedName andThen isGarbage
   }
 }

@@ -41,7 +41,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         )
       }
 
-    def updateConfig(update: TransformerConfig => TransformerConfig): TransformationContext[From, To] =
+    def updateConfig(update: TransformerConfig => TransformerConfig): this.type =
       fold[TransformationContext[From, To]] { (ctx: TransformationContext.ForTotal[From, To]) =>
         TransformationContext.ForTotal[From, To](src = ctx.src)(
           From = ctx.From,
@@ -58,7 +58,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
           config = update(ctx.config),
           derivationStartedAt = ctx.derivationStartedAt
         )
-      }
+      }.asInstanceOf[this.type]
 
     /** Avoid clumsy
      * {{{

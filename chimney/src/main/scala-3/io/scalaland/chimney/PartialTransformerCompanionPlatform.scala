@@ -16,6 +16,9 @@ private[chimney] trait PartialTransformerCompanionPlatform { this: PartialTransf
   inline def derive[From, To]: PartialTransformer[From, To] =
     ${ TransformerMacros.derivePartialTransformerWithDefaults[From, To] }
 
+}
+private[chimney] trait PartialTransformerAutoDerivedCompanionPlatform { this: PartialTransformer.AutoDerived.type =>
+
   implicit inline def deriveAutomatic[From, To]: PartialTransformer.AutoDerived[From, To] =
     ${ TransformerMacros.derivePartialTransformerWithDefaults[From, To] }
 }
