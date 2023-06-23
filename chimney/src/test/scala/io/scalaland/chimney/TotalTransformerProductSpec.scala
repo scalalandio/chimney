@@ -14,14 +14,14 @@ class TotalTransformerProductSpec extends ChimneySpec {
   ) {
     import products.{Foo, Bar}
 
-    compileErrors("Bar(3, (3.14, 3.14)).into[Foo].transform").check(
+    compileErrorsFixed("Bar(3, (3.14, 3.14)).into[Foo].transform").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
       "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
       "Consult https://scalalandio.github.io/chimney for usage examples."
     )
 
-    compileErrors("Bar(3, (3.14, 3.14)).transformInto[Foo]").check(
+    compileErrorsFixed("Bar(3, (3.14, 3.14)).transformInto[Foo]").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
       "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
@@ -46,15 +46,15 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrors("""
+      compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y, "pi").withFieldConst(_.z._1, 0.0).transform
          """).check("", "Invalid selector expression")
 
-      compileErrors("""
+      compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y + "abc", "pi").transform
         """).check("", "Invalid selector expression")
 
-      compileErrors("""
+      compileErrorsFixed("""
           val haveY = HaveY("")
           Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(cc => haveY.y, "pi").transform
         """).check("", "Invalid selector expression")
@@ -77,7 +77,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrors(
+      compileErrorsFixed(
         """
           Bar(3, (3.14, 3.14))
             .into[Foo]
@@ -87,11 +87,11 @@ class TotalTransformerProductSpec extends ChimneySpec {
           """
       ).check("", "Invalid selector expression")
 
-      compileErrors("""
+      compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.y + "abc", _.toString).transform
         """).check("", "Invalid selector expression")
 
-      compileErrors("""
+      compileErrorsFixed("""
           val haveY = HaveY("")
           Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
         """).check("", "Invalid selector expression")
@@ -119,7 +119,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 //    test("should not be enabled by default") {
 //      import products.Renames.*
 //
-//      compileErrors("""User(1, "Kuba", Some(28)).transformInto[UserPL]""").check(
+//      compileErrorsFixed("""User(1, "Kuba", Some(28)).transformInto[UserPL]""").check(
 //        "",
 //        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
 //        "io.scalaland.chimney.fixtures.products.Renames.UserPL",
@@ -128,7 +128,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 //        "Consult https://scalalandio.github.io/chimney for usage examples."
 //      )
 //
-//      compileErrors("""User(1, "Kuba", Some(28)).into[UserPL].transform""").check(
+//      compileErrorsFixed("""User(1, "Kuba", Some(28)).into[UserPL].transform""").check(
 //        "",
 //        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
 //        "io.scalaland.chimney.fixtures.products.Renames.UserPL",
@@ -141,18 +141,18 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.Renames.*
 
-      compileErrors("""
+      compileErrorsFixed("""
           User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age.get, _.wiek.right.get).transform
         """).check(
         "",
         "Invalid selector expression"
       )
 
-      compileErrors("""
+      compileErrorsFixed("""
           User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
         """).arePresent()
 
-      compileErrors("""
+      compileErrorsFixed("""
           val str = "string"
           User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(u => str, _.toString).transform
         """).check(
@@ -187,7 +187,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile if renamed value change type but an there is no transformer available") {
       import products.Renames.*
 
-      compileErrors(
+      compileErrorsFixed(
         """
           User(1, "Kuba", Some(28))
             .into[UserPL]
@@ -226,7 +226,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should be disabled by default") {
       import products.Defaults.*
 
-      compileErrors("""Source(1, "yy", 1.0).transformInto[Target]""").check(
+      compileErrorsFixed("""Source(1, "yy", 1.0).transformInto[Target]""").check(
         "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
@@ -235,7 +235,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Consult https://scalalandio.github.io/chimney for usage examples."
       )
 
-      compileErrors("""Source(1, "yy", 1.0).into[Target].transform""").check(
+      compileErrorsFixed("""Source(1, "yy", 1.0).into[Target].transform""").check(
         "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
@@ -327,7 +327,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       @unused implicit val config = TransformerConfiguration.default.enableDefaultValues
 
-      compileErrors("""Source(1, "yy", 1.0).into[Target].disableDefaultValues.transform""").check(
+      compileErrorsFixed("""Source(1, "yy", 1.0).into[Target].disableDefaultValues.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -397,7 +397,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 //          method4: String,
 //          method5: String
 //      )
-//      compileErrors("""Foobar("param").into[Foobar5].transform""").check(
+//      compileErrorsFixed("""Foobar("param").into[Foobar5].transform""").check(
 //        "",
 //        "method1: java.lang.String - no accessor named method1 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
 //        "method2: java.lang.String - no accessor named method2 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
@@ -422,7 +422,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 //      case class Foo2(param: String, protect: String, priv: String)
 //
 //      Foobar("param").into[Foo2].enableMethodAccessors.transform
-//      compileErrors("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
+//      compileErrorsFixed("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
 //        "",
 //        "protect: java.lang.String - no accessor named protect in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
 //        "priv: java.lang.String - no accessor named priv in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar"
@@ -548,26 +548,26 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
     test("handle tuple transformation errors") {
 
-      compileErrors("""
+      compileErrorsFixed("""
           (0, "test").transformInto[Foo]
         """)
         .check(
           "source tuple scala.Tuple2 is of arity 2, while target type io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3; they need to be equal!"
         )
 
-      compileErrors("""
+      compileErrorsFixed("""
           (10.5, "abc", 6).transformInto[Foo]
         """)
         .check("", "can't derive transformation")
 
-      compileErrors("""
+      compileErrorsFixed("""
           Foo(10, 36.6, "test").transformInto[(Double, String, Int, Float, Boolean)]
         """)
         .check(
           "source tuple io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3, while target type scala.Tuple5 is of arity 5; they need to be equal!"
         )
 
-      compileErrors("""
+      compileErrorsFixed("""
           Foo(10, 36.6, "test").transformInto[(Int, Double, Boolean)]
         """)
         .check("", "can't derive transformation")

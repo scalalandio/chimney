@@ -18,7 +18,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     case class Buzz(value: String)
     case class ConflictingFooBuzz(value: Unit)
 
-    compileErrors("""Buzz("a").transformInto[ConflictingFooBuzz]""").check(
+    compileErrorsFixed("""Buzz("a").transformInto[ConflictingFooBuzz]""").check(
       "Chimney can't derive transformation from Buzz to ConflictingFooBuzz",
       "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.ConflictingFooBuzz",
       "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Buzz",
@@ -46,14 +46,14 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     (None: Option[Foo]).transformInto[Option[Bar]] ==> None
     (None: Option[String]).transformInto[Option[String]] ==> None
     Option("abc").transformInto[Option[String]] ==> Some("abc")
-    compileErrors("""Some("foobar").into[None.type].transform""").check(
+    compileErrorsFixed("""Some("foobar").into[None.type].transform""").check(
       "Chimney can't derive transformation from Some[String] to None.type",
       "scala.None",
       "derivation from some: scala.Some to scala.None is not supported in Chimney!",
       "Consult https://scalalandio.github.io/chimney for usage examples."
     )
     case class BarNone(value: None.type)
-    compileErrors("""Foo("a").into[BarNone].transform""").check(
+    compileErrorsFixed("""Foo("a").into[BarNone].transform""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo to BarNone",
       "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.BarNone",
       "value: scala.None - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo",
@@ -146,7 +146,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     case class TargetWithOptionAndDefault(x: String, y: Option[Int] = Some(42))
 
     test("should be turned off by default and not allow compiling Option fields with missing source") {
-      compileErrors("""Source("foo").into[TargetWithOption].transform""").check(
+      compileErrorsFixed("""Source("foo").into[TargetWithOption].transform""").check(
         "",
         "Chimney can't derive transformation from Source to TargetWithOption",
         "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",

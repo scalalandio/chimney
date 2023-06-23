@@ -68,7 +68,7 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
    */
 
   test("not allow transformation of of sealed hierarchies when the transformation would be ambiguous") {
-    val error = compileErrors(
+    val error = compileErrorsFixed(
       """
            (shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
              .transformInto[shapes5.Shape]
@@ -93,7 +93,7 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
     test(
       """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""
     ) {
-      compileErrors("""(colors2.Black: colors2.Color).transformInto[colors1.Color]""").check(
+      compileErrorsFixed("""(colors2.Black: colors2.Color).transformInto[colors1.Color]""").check(
         "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors2.Color to io.scalaland.chimney.fixtures.colors1.Color",
         "io.scalaland.chimney.fixtures.colors1.Color",

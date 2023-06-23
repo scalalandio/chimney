@@ -4,7 +4,7 @@ import munit.{Location, TestOptions}
 
 import scala.util.matching.Regex
 
-trait ChimneySpec extends munit.BaseFunSuite { self =>
+trait ChimneySpec extends munit.BaseFunSuite with VersionCompat { self =>
 
   private var prefix = ""
 

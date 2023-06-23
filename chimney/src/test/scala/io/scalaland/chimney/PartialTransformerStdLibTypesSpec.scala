@@ -12,7 +12,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     case class Buzz(value: String)
     case class ConflictingFooBuzz(value: Unit)
 
-    compileErrors("""Buzz("a").transformIntoPartial[ConflictingFooBuzz]""").check(
+    compileErrorsFixed("""Buzz("a").transformIntoPartial[ConflictingFooBuzz]""").check(
       "Chimney can't derive transformation from Buzz to ConflictingFooBuzz",
       "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.ConflictingFooBuzz",
       "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Buzz",
@@ -470,7 +470,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     case class TargetWithOptionAndDefault(x: String, y: Option[Int] = Some(42))
 
     test("should be turned off by default and not allow compiling Option fields with missing source") {
-      compileErrors("""Source("foo").intoPartial[TargetWithOption].transform.asOption""").check(
+      compileErrorsFixed("""Source("foo").intoPartial[TargetWithOption].transform.asOption""").check(
         "Chimney can't derive transformation from Source to TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",

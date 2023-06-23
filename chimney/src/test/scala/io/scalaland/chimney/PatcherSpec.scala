@@ -35,7 +35,7 @@ class PatcherSpec extends ChimneySpec {
 
     val patch = PatchWithRedundantField(Phone(4321L), "Unknown")
 
-    compileErrors("exampleUser.patchUsing(patch)")
+    compileErrorsFixed("exampleUser.patchUsing(patch)")
       .check(
         "",
         "Field named 'address' not found in target patching type io.scalaland.chimney.TestDomain.User!"
@@ -57,7 +57,7 @@ class PatcherSpec extends ChimneySpec {
 
     val patch = PatchWithAnotherRedundantField("Unknown", Phone(4321L))
 
-    compileErrors("exampleUser.patchUsing(patch)")
+    compileErrorsFixed("exampleUser.patchUsing(patch)")
       .check(
         "",
         "Field named 'address' not found in target patching type io.scalaland.chimney.TestDomain.User!"
@@ -153,7 +153,7 @@ class PatcherSpec extends ChimneySpec {
 
     test("failed") {
       // without implicit Transformer[Int, String], it doesn't compile
-      compileErrors("""Obj("").patchUsing(Patch(100))""")
+      compileErrorsFixed("""Obj("").patchUsing(Patch(100))""")
         .check("", "not supported")
     }
   }

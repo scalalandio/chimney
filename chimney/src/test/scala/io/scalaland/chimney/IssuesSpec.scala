@@ -65,7 +65,7 @@ class IssuesSpec extends ChimneySpec {
     // FIXME: this test fail on Scala 3, even though the error message is as it should be!
     test("fix for `withFieldConst`") {
 
-      compileErrors("""
+      compileErrorsFixed("""
           Foo1("test")
             .into[Foo2]
             .withFieldConst(_.x, "xyz")
@@ -76,7 +76,7 @@ class IssuesSpec extends ChimneySpec {
     // FIXME: this test fail on Scala 3, even though the error message is as it should be!
     test("fix for `withFieldComputed`") {
 
-      compileErrors("""
+      compileErrorsFixed("""
           Foo1("test")
             .into[Foo2]
             .withFieldComputed(_.x, _ => "xyz")
@@ -215,7 +215,7 @@ class IssuesSpec extends ChimneySpec {
     case class BarNested(num: String)
     case class Bar(maybeString: scala.collection.immutable.Seq[String], nested: BarNested)
 
-    compileErrors("Foo(None, FooNested(None)).into[Bar].transform")
+    compileErrorsFixed("Foo(None, FooNested(None)).into[Bar].transform")
       .check(
         "derivation from foo.maybeString: scala.Option[java.lang.String] to scala.collection.immutable.Seq[java.lang.String] is not supported in Chimney!",
         "derivation from foo.nested.num: scala.Option to java.lang.String is not supported in Chimney!"
@@ -280,8 +280,8 @@ class IssuesSpec extends ChimneySpec {
 
     // These two will fail to compile as target is case class, but source type is internal.Venue,
     // thus it will try to access `def name` accessor without .enableMethodAccessors flag
-    compileErrors("event.venue.transformInto[dto.Venue]").arePresent()
-    compileErrors("(venue: internal.Venue).transformInto[dto.Venue]").arePresent()
+    compileErrorsFixed("event.venue.transformInto[dto.Venue]").arePresent()
+    compileErrorsFixed("(venue: internal.Venue).transformInto[dto.Venue]").arePresent()
 
     // When .enableMethodAccessors turned on, both should work fine
     event.venue.into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
