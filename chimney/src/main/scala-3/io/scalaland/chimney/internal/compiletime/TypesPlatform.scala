@@ -12,14 +12,17 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object platformSpecific {
 
+      /** Applies type arguments obtained from tpe to the type parameters in method's parameters' types */
       // TODO: assumes each parameter list is made completely out of types OR completely out of values
       def paramListsOf(method: Symbol): List[List[Symbol]] = method.paramSymss.filterNot(_.exists(_.isType))
 
+      /** Applies type arguments obtained from tpe to the type parameters in method's return type */
       def returnTypeOf[A](typeRepr: TypeRepr): Type[A] = typeRepr.widenByName match {
         case lambda: LambdaType => lambda.resType.asType.asInstanceOf[Type[A]]
         case out                => out.asType.asInstanceOf[Type[A]]
       }
 
+      /** What is the type of each method parameter */
       def paramsWithTypes(tpe: TypeRepr, method: Symbol): Map[String, TypeRepr] = tpe.memberType(method) match {
         // monomorphic
         case MethodType(names, types, _) => names.zip(types).toMap

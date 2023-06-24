@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 
 import io.scalaland.chimney.internal.compiletime.Definitions
 
+import scala.collection.compat.*
 import scala.collection.immutable.ListMap
 
 private[compiletime] trait ProductTypes { this: Definitions =>
@@ -121,7 +122,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     protected def checkArguments[A: Type](
         parameters: Product.Parameters,
         arguments: Product.Arguments
-    ): Product.Arguments = {
+    ): (Product.Arguments, Product.Arguments) = {
       val missingArguments = parameters.keySet diff arguments.keySet
       if (missingArguments.nonEmpty) {
         val missing = missingArguments.mkString(", ")
@@ -143,7 +144,15 @@ private[compiletime] trait ProductTypes { this: Definitions =>
         }
       }
 
-      ListMap.from(arguments.view.filterKeys(parameters.keySet))
+      val constructorParameters =
+        parameters.filter(_._2.value.targetType == Product.Parameter.TargetType.ConstructorParameter).keySet
+      val constructorArguments = ListMap.from(arguments.view.filterKeys(constructorParameters))
+
+      val setterParameters =
+        parameters.filter(_._2.value.targetType == Product.Parameter.TargetType.SetterParameter).keySet
+      val setterArguments = ListMap.from(arguments.view.filterKeys(setterParameters))
+
+      constructorArguments -> setterArguments
     }
   }
 

@@ -2,6 +2,9 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
+import scala.collection.compat.*
+import scala.collection.immutable.ListMap
+
 private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
@@ -38,6 +41,8 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
     }
 
     import platformSpecific.*
+    import Type.platformSpecific.*
+    import Expr.platformSpecific.*
 
     def isPOJO[A](implicit A: Type[A]): Boolean = {
       val sym = A.typeSymbol
@@ -48,7 +53,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
     def isCaseObject[A](implicit A: Type[A]): Boolean = {
       val sym = A.typeSymbol
       def isScala2Enum = sym.asClass.isCaseClass
-      def isScala3Enum = sym.isStatic && sym.isFinal // paramless case in S3 cannot be checked for "case"
+      def isScala3Enum = sym.isStatic && sym.isFinal // parameterless case in S3 cannot be checked for "case"
       sym.isPublic && sym.isModuleClass && (isScala2Enum || isScala3Enum)
     }
     def isJavaBean[A](implicit A: Type[A]): Boolean = {
@@ -56,63 +61,80 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
       isPOJO[A] && mem.exists(isDefaultConstructor) && mem.exists(isJavaSetterOrVar)
     }
 
-    def parseExtraction[A: Type]: Option[Product.Extraction[A]] = {
-      import Type.platformSpecific.{fromUntyped, returnTypeOf}
-      import Expr.platformSpecific.*
-      import scala.collection.compat.*
-      import scala.collection.immutable.ListMap
-
-      Some(
-        Product.Extraction(
-          ListMap.from[String, Existential[Product.Getter[A, *]]](
-            Type[A].decls
-              .to(List)
-              .filterNot(isGarbageSymbol)
-              .collect { case method if method.isMethod => method.asMethod }
-              .filter(isAccessor)
-              .map { getter =>
-                val name = getDecodedName(getter)
-                val tpe = ExistentialType(fromUntyped(returnTypeOf(Type[A], getter)))
-                name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
-                  val termName = getter.asMethod.name.toTermName
-                  Product.Getter[A, tpe.Underlying](
-                    sourceType =
-                      if (isCaseClassField(getter)) Product.Getter.SourceType.ConstructorVal
-                      else if (isJavaGetter(getter)) Product.Getter.SourceType.JavaBeanGetter
-                      else if (getter.isStable) Product.Getter.SourceType.ConstructorVal // Hmm...
-                      else Product.Getter.SourceType.AccessorMethod,
-                    get =
-                      // TODO: handle pathological cases like getName[Unused]()()()
-                      if (getter.asMethod.paramLists.isEmpty) (in: Expr[A]) => asExpr[tpe.Underlying](q"$in.$termName")
-                      else
-                        (in: Expr[A]) =>
-                          asExpr[tpe.Underlying](
-                            q"$in.$termName(...${getter.paramLists.map(_.map(_.asInstanceOf[Tree]))})"
-                          )
-                  )
-                }
-              }
-          )
-        )
-      )
-    }
-
-    def parseConstructor[A: Type]: Option[Product.Constructor[A]] = if (
-      isJavaBean[A] || isCaseObject[A] || isCaseClass[A]
-    ) Some({
-      import Type.platformSpecific.{fromUntyped, paramListsOf}
-      import Expr.platformSpecific.*
-      import scala.collection.compat.*
-      import scala.collection.immutable.ListMap
-
-      if (isJavaBean[A]) {
-        val defaultConstructor =
+    def parseExtraction[A: Type]: Option[Product.Extraction[A]] = Some(
+      Product.Extraction(
+        ListMap.from[String, Existential[Product.Getter[A, *]]](
           Type[A].decls
             .to(List)
             .filterNot(isGarbageSymbol)
-            .find(isDefaultConstructor)
-            .map(_ => asExpr[A](q"new ${Type[A]}()"))
-            .getOrElse(assertionFailed(s"Expected default constructor for ${Type.prettyPrint[A]}"))
+            .collect { case method if method.isMethod => method.asMethod }
+            .filter(isAccessor)
+            .map { getter =>
+              val name = getDecodedName(getter)
+              val tpe = ExistentialType(fromUntyped(returnTypeOf(Type[A], getter)))
+              name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
+                val termName = getter.asMethod.name.toTermName
+                Product.Getter[A, tpe.Underlying](
+                  sourceType =
+                    if (isCaseClassField(getter)) Product.Getter.SourceType.ConstructorVal
+                    else if (isJavaGetter(getter)) Product.Getter.SourceType.JavaBeanGetter
+                    else if (getter.isStable) Product.Getter.SourceType.ConstructorVal // Hmm...
+                    else Product.Getter.SourceType.AccessorMethod,
+                  get =
+                    // TODO: handle pathological cases like getName[Unused]()()()
+                    if (getter.asMethod.paramLists.isEmpty) (in: Expr[A]) => asExpr[tpe.Underlying](q"$in.$termName")
+                    else
+                      (in: Expr[A]) =>
+                        asExpr[tpe.Underlying](
+                          q"$in.$termName(...${getter.paramLists.map(_.map(_.asInstanceOf[Tree]))})"
+                        )
+                )
+              }
+            }
+        )
+      )
+    )
+
+    def parseConstructor[A: Type]: Option[Product.Constructor[A]] =
+      if (isCaseObject[A]) {
+        Some(Product.Constructor(ListMap.empty, _ => asExpr(q"${Type[A].typeSymbol.asClass.module}")))
+      } else if (isPOJO[A]) {
+        val primaryConstructor = Option(Type[A].typeSymbol)
+          .filter(_.isClass)
+          .map(_.asClass.primaryConstructor)
+          .filter(_.isPublic)
+          .getOrElse {
+            assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
+          }
+        val paramss = paramListsOf(Type[A], primaryConstructor)
+        val paramNames = paramss.flatMap(_.map(param => param -> getDecodedName(param))).toMap
+        val paramTypes = paramsWithTypes(Type[A], primaryConstructor)
+        val defaultValues = paramss.headOption.toList.flatten.zipWithIndex.collect {
+          case (param, idx) if param.asTerm.isParamWithDefault =>
+            val companion = Type[A].typeSymbol.companion
+            val scala2default = caseClassApplyDefaultScala2(idx + 1)
+            val scala3default = caseClassApplyDefaultScala3(idx + 1)
+            companion.typeSignature.decls
+              .to(List)
+              .collectFirst {
+                case method if getDecodedName(method) == scala2default =>
+                  paramNames(param) -> q"${companion}.${TermName(scala2default)}"
+                case method if getDecodedName(method) == scala3default =>
+                  paramNames(param) -> q"${companion}.${TermName(scala3default)}"
+              }
+              .head
+        }.toMap
+        val constructorParameters = ListMap.from(paramss.flatMap(_.map { param =>
+          val name = paramNames(param)
+          val tpe = ExistentialType(fromUntyped(param.typeSignatureIn(Type[A])))
+          name ->
+            tpe.mapK { implicit Tpe: Type[tpe.Underlying] => _ =>
+              Product.Parameter(
+                Product.Parameter.TargetType.ConstructorParameter,
+                defaultValues.get(name).map(value => asExpr[tpe.Underlying](value))
+              )
+            }
+        }))
 
         val setters =
           Type[A].decls
@@ -125,7 +147,10 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
               // We have to drop that suffix to align names, so that comparing is possible.
               val n: String = getDecodedName(setter)
               val name = if (isVar(setter)) n.substring(0, n.length - "_$eq".length) else n
-
+              name -> setter
+            }
+            .filter { case (name, _) => !paramTypes.keySet(name) }
+            .map { case (name, setter) =>
               val termName = setter.asTerm.name.toTermName
               val tpe = ExistentialType(fromUntyped(paramListsOf(Type[A], setter).flatten.head.typeSignature))
               (
@@ -140,90 +165,34 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
                 )
               )
             }
+        val setterParameters = ListMap.from(setters.map { case (name, _, param) => name -> param })
+        val setterTermNames = setters.map { case (name, termName, _) => name -> termName }.toMap
 
-        val parameters: Product.Parameters = ListMap.from(setters.map { case (name, _, param) => name -> param })
-
-        val termNames = setters.map { case (name, termName, _) => name -> termName }.toMap
+        val parameters: Product.Parameters = constructorParameters ++ setterParameters
 
         val constructor: Product.Arguments => Expr[A] = arguments => {
-          val beanTermName: TermName =
+          val resultValueTermName: TermName =
             ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
 
-          val checkedArguments = checkArguments(parameters, arguments).map { case (name, e) =>
+          val (constructorArguments, setterArguments) = checkArguments(parameters, arguments)
+
+          val constructorExpr = asExpr(
+            q"new ${Type[A]}(...${paramss.map(_.map(param => constructorArguments(paramNames(param)).value))})"
+          )
+
+          val setterExprs = setterArguments.map { case (name, e) =>
             ExistentialExpr.use(e) { implicit E: Type[e.Underlying] => expr =>
-              q"$beanTermName.${termNames(name)}($expr)"
+              q"$resultValueTermName.${setterTermNames(name)}($expr)"
             }
           }.toList
 
-          val statements = q"val $beanTermName: ${Type[A]} = $defaultConstructor" +: checkedArguments
+          val statements = q"val $resultValueTermName: ${Type[A]} = $constructorExpr" +: setterExprs
 
-          asExpr(q"..$statements; $beanTermName")
+          asExpr(q"..$statements; $resultValueTermName")
         }
 
-        Product.Constructor(parameters, constructor)
-      } else if (isCaseObject[A]) {
-        Product.Constructor(ListMap.empty, _ => asExpr(q"${Type[A].typeSymbol.asClass.module}"))
-      } else {
-        val primaryConstructor = Option(Type[A].typeSymbol)
-          .filter(_.isClass)
-          .map(_.asClass.primaryConstructor)
-          .filter(_.isPublic)
-          .getOrElse {
-            assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
-          }
-
-        val defaultValues =
-          primaryConstructor.typeSignature.paramLists.headOption.toList.flatten.zipWithIndex.collect {
-            case (param, idx) if param.asTerm.isParamWithDefault =>
-              val companion = Type[A].typeSymbol.companion
-              val scala2default = caseClassApplyDefaultScala2(idx + 1)
-              val scala3default = caseClassApplyDefaultScala3(idx + 1)
-              companion.typeSignature.decls
-                .to(List)
-                .collectFirst {
-                  case method if getDecodedName(method) == scala2default =>
-                    getDecodedName(param) -> q"${companion}.${TermName(scala2default)}"
-                  case method if getDecodedName(method) == scala3default =>
-                    getDecodedName(param) -> q"${companion}.${TermName(scala3default)}"
-                }
-                .head
-          }.toMap
-
-        val parametersRaw = paramListsOf(Type[A], primaryConstructor).map { params =>
-          params
-            .map { param =>
-              val name = getDecodedName(param)
-              val tpe = ExistentialType(fromUntyped(param.typeSignatureIn(Type[A])))
-              name ->
-                tpe.mapK { implicit Tpe: Type[tpe.Underlying] => _ =>
-                  Product.Parameter(
-                    Product.Parameter.TargetType.ConstructorParameter,
-                    defaultValues.get(name).map { value =>
-                      asExpr[tpe.Underlying](value)
-                    }
-                  )
-                }
-            }
-        }
-
-        val parameters: Product.Parameters = ListMap.from(parametersRaw.flatten)
-
-        val constructor: Product.Arguments => Expr[A] = arguments => {
-          val unadaptedCheckedArguments = checkArguments(parameters, arguments)
-
-          val checkedArguments = parametersRaw.map { params =>
-            params.map { case (name, _) =>
-              unadaptedCheckedArguments(name).value.asInstanceOf[Expr[Any]]
-            }
-          }
-
-          asExpr(q"new ${Type[A]}(...$checkedArguments)")
-        }
-
-        Product.Constructor(parameters, constructor)
-      }
-    })
-    else None
+        Some(Product.Constructor(parameters, constructor))
+      } else None
 
     private val getDecodedName = (s: Symbol) => s.name.decodedName.toString
 

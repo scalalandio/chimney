@@ -42,6 +42,12 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       /** Applies type arguments obtained from tpe to the type parameters in method's return type */
       def returnTypeOf(tpe: c.Type, method: c.Symbol): c.universe.Type = method.typeSignatureIn(tpe).finalResultType
 
+      /** What is the type of each method parameter */
+      def paramsWithTypes(tpe: c.Type, method: c.Symbol): Map[String, c.universe.Type] = (for {
+        params <- paramListsOf(tpe, method)
+        param <- params
+      } yield param.name.decodedName.toString -> param.typeSignatureIn(tpe)).toMap
+
       object fromWeakConversion {
         // convert WeakTypeTag[T] to Type[T] automatically
         implicit def typeFromWeak[T: WeakTypeTag]: Type[T] = fromWeak

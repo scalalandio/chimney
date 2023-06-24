@@ -40,6 +40,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
     }
 
     import platformSpecific.*
+    import Type.platformSpecific.*
 
     def isPOJO[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
@@ -62,10 +63,8 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
       isPOJO[A] && mem.exists(isDefaultConstructor) && mem.exists(isJavaSetterOrVar)
     }
 
-    def parseGetters[A: Type]: Option[Product.Extraction[A]] = {
-      Some(Product.Extraction(ListMap.from[String, Existential[Product.Getter[A, *]]] {
-        import Type.platformSpecific.*
-
+    def parseExtraction[A: Type]: Option[Product.Extraction[A]] = Some(
+      Product.Extraction(ListMap.from[String, Existential[Product.Getter[A, *]]] {
         val A = TypeRepr.of[A]
         val sym = A.typeSymbol
 
@@ -115,136 +114,102 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
             )
           }
         }
-      }))
-    }
+      })
+    )
 
     def parseConstructor[A: Type]: Option[Product.Constructor[A]] =
-      if isCaseClass[A] || isCaseObject[A] || isJavaBean[A] then
-        Some {
-          import Type.platformSpecific.*
-          import scala.collection.immutable.ListMap
+      if isCaseObject[A] then {
+        val A = TypeRepr.of[A]
+        val sym = A.typeSymbol
 
-          val A = TypeRepr.of[A]
-          val sym = A.typeSymbol
+        if sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic) then
+          // Scala 3 case object (enum's case without parameters)
+          Some(Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A]))
+        else
+          // Scala 2 case object
+          Some(Product.Constructor(ListMap.empty, _ => Ref(sym.companionModule).asExprOf[A]))
+      } else if isPOJO[A] then {
+        val A = TypeRepr.of[A]
+        val sym = A.typeSymbol
 
-          if isJavaBean[A] then {
-            val defaultConstructor = sym.declarations
-              .find(isDefaultConstructor)
-              .map { ctor =>
-                ctor.paramSymss match {
-                  // new Bean[...]
-                  case typeArgs :: Nil if typeArgs.exists(_.isType) =>
-                    New(TypeTree.of[A]).select(ctor).appliedToTypes(A.typeArgs).appliedToArgss(Nil).asExprOf[A]
-                  // new Bean[...]()
-                  case typeArgs :: Nil :: Nil if typeArgs.exists(_.isType) =>
-                    New(TypeTree.of[A]).select(ctor).appliedToTypes(A.typeArgs).appliedToNone.asExprOf[A]
-                  // new Bean
-                  case Nil =>
-                    New(TypeTree.of[A]).select(ctor).appliedToArgss(Nil).asExprOf[A]
-                  // new Bean()
-                  case Nil :: Nil =>
-                    New(TypeTree.of[A]).select(ctor).appliedToNone.asExprOf[A]
-                  case _ =>
-                    ??? // should never happen due to isDefaultConstructor filtering
-                }
-              }
-              .getOrElse(assertionFailed(s"Expected default constructor for ${Type.prettyPrint[A]}"))
-
-            val setters = sym.methodMembers
-              .filterNot(isGarbageSymbol)
-              .filter(isJavaSetterOrVar)
-              .map { setter =>
-                val name = setter.name
-                val tpe = ExistentialType(paramsWithTypes(A, setter)(name).asType.asInstanceOf[Type[Any]])
-                (
-                  name,
-                  setter,
-                  tpe.mapK[Product.Parameter](_ =>
-                    _ =>
-                      Product.Parameter(
-                        targetType = Product.Parameter.TargetType.SetterParameter,
-                        defaultValue = None
-                      )
-                  )
-                )
-              }
-
-            val parameters: Product.Parameters = ListMap.from(setters.map { case (name, _, param) => name -> param })
-
-            val methodSymbols = setters.map { case (name, symbol, _) => name -> symbol }.toMap
-
-            val constructor: Product.Arguments => Expr[A] = arguments => {
-              val beanSymbol: Symbol =
-                ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
-              val beanRef = Ref(beanSymbol)
-
-              val checkedArguments = checkArguments(parameters, arguments)
-                .map[Term] { case (name, e) => beanRef.select(methodSymbols(name)).appliedTo(e.value.asTerm) }
-                .toList
-
-              val statements = ValDef(beanSymbol, Some(defaultConstructor.asTerm)) +: checkedArguments
-
-              Block(statements, beanRef).asExprOf[A]
-            }
-
-            Product.Constructor(parameters, constructor)
-          } else if isCaseObject[A] then {
-            if sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic) then
-              // Scala 3 case object (enum's case without parameters)
-              Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A])
-            else
-              // Scala 2 case object
-              Product.Constructor(ListMap.empty, _ => Ref(sym.companionModule).asExprOf[A])
-          } else {
-            val primaryConstructor =
-              Option(sym.primaryConstructor).filter(s => !s.isNoSymbol).filter(isPublic).getOrElse {
-                assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
-              }
-
-            val paramTypes = paramsWithTypes(A, primaryConstructor)
-            val paramss = paramListsOf(primaryConstructor)
-
-            val defaultValues = paramss.headOption.toList.flatten.zipWithIndex.collect {
-              case (param, idx) if param.flags.is(Flags.HasDefault) =>
-                val mod = sym.companionModule
-                val default = (mod.declaredMethod(caseClassApplyDefaultScala2(idx + 1)) ++
-                  mod.declaredMethod(caseClassApplyDefaultScala3(idx + 1))).head
-                param.name -> Ref(mod).select(default)
-            }.toMap
-
-            val parametersRaw = paramss.map { params =>
-              params
-                .map { param =>
-                  val name = param.name.toString
-                  val tpe = ExistentialType(paramTypes(name).asType.asInstanceOf[Type[Any]])
-                  name ->
-                    tpe.mapK { implicit Tpe: Type[tpe.Underlying] => _ =>
-                      Product.Parameter(
-                        Product.Parameter.TargetType.ConstructorParameter,
-                        defaultValues.get(name).map(_.asExprOf[tpe.Underlying])
-                      )
-                    }
-                }
-            }
-
-            val parameters: Product.Parameters = ListMap.from(parametersRaw.flatten)
-
-            val constructor: Product.Arguments => Expr[A] = arguments => {
-              val unadaptedCheckedArguments = checkArguments(parameters, arguments)
-
-              val checkedArguments = parametersRaw.map { params =>
-                params.map { case (name, _) => unadaptedCheckedArguments(name).value.asTerm }
-              }
-
-              val select = New(TypeTree.of[A]).select(primaryConstructor)
-              val tree = if A.typeArgs.nonEmpty then select.appliedToTypes(A.typeArgs) else select
-              tree.appliedToArgss(checkedArguments).asExprOf[A]
-            }
-
-            Product.Constructor(parameters, constructor)
+        val primaryConstructor =
+          Option(sym.primaryConstructor).filter(s => !s.isNoSymbol).filter(isPublic).getOrElse {
+            assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
           }
+        val paramss = paramListsOf(primaryConstructor)
+        val paramNames = paramss.flatMap(_.map(param => param -> param.name)).toMap
+        val paramTypes = paramsWithTypes(A, primaryConstructor)
+        val defaultValues = paramss.headOption.toList.flatten.zipWithIndex.collect {
+          case (param, idx) if param.flags.is(Flags.HasDefault) =>
+            val mod = sym.companionModule
+            val default = (mod.declaredMethod(caseClassApplyDefaultScala2(idx + 1)) ++
+              mod.declaredMethod(caseClassApplyDefaultScala3(idx + 1))).head
+            paramNames(param) -> Ref(mod).select(default)
+        }.toMap
+        val constructorParameters = ListMap.from(paramss.flatMap(_.map { param =>
+          val name = paramNames(param)
+          val tpe = ExistentialType(paramTypes(name).asType.asInstanceOf[Type[Any]])
+          name ->
+            tpe.mapK { implicit Tpe: Type[tpe.Underlying] => _ =>
+              Product.Parameter(
+                Product.Parameter.TargetType.ConstructorParameter,
+                defaultValues.get(name).map(_.asExprOf[tpe.Underlying])
+              )
+            }
+        }))
+
+        val setters = sym.methodMembers
+          .filterNot(isGarbageSymbol)
+          .filter(isJavaSetterOrVar)
+          .map { setter =>
+            setter.name -> setter
+          }
+          .filter { case (name, _) => !paramTypes.keySet(name) }
+          .map { case (name, setter) =>
+            val tpe = ExistentialType(paramsWithTypes(A, setter)(name).asType.asInstanceOf[Type[Any]])
+            (
+              name,
+              setter,
+              tpe.mapK[Product.Parameter](_ =>
+                _ =>
+                  Product.Parameter(
+                    targetType = Product.Parameter.TargetType.SetterParameter,
+                    defaultValue = None
+                  )
+              )
+            )
+          }
+        val setterParameters = ListMap.from(setters.map { case (name, _, param) => name -> param })
+        val setterSymbols = setters.map { case (name, symbol, _) => name -> symbol }.toMap
+
+        val parameters: Product.Parameters = constructorParameters ++ setterParameters
+
+        val constructor: Product.Arguments => Expr[A] = arguments => {
+          val resultValueSymbol: Symbol =
+            ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
+          val resultValueRef = Ref(resultValueSymbol)
+
+          val (constructorArguments, setterArguments) = checkArguments(parameters, arguments)
+
+          val constructorExpr = {
+            val select = New(TypeTree.of[A]).select(primaryConstructor)
+            val tree = if A.typeArgs.nonEmpty then select.appliedToTypes(A.typeArgs) else select
+            tree
+              .appliedToArgss(paramss.map(_.map(param => constructorArguments(paramNames(param)).value.asTerm)))
+              .asExprOf[A]
+          }
+
+          val setterExprs = setterArguments
+            .map[Term] { case (name, e) => resultValueRef.select(setterSymbols(name)).appliedTo(e.value.asTerm) }
+            .toList
+
+          val statements = ValDef(resultValueSymbol, Some(constructorExpr.asTerm)) +: setterExprs
+
+          Block(statements, resultValueRef).asExprOf[A]
         }
-      else None
+
+        Some(Product.Constructor(parameters, constructor))
+      } else None
 
     private val isGarbageSymbol = ((s: Symbol) => s.name) andThen isGarbage
   }

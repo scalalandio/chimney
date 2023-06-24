@@ -6,8 +6,6 @@ import io.scalaland.chimney.internal.compiletime.fp.Syntax.*
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
 
-import scala.language.postfixOps
-
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>
 
   import TypeImplicits.*, ChimneyTypeImplicits.*
@@ -17,11 +15,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     private type PartialExpr[A] = Expr[partial.Result[A]]
 
     // TODO:
-    // 1. update ProductValue.parseConstructor to allow any class with a public constructor:
-    //    1. params from the constructor first
-    //    2. followed by params from setters - deduplicated to avoid setting something twice
-    // 2. add tuple support
-    // 3. check that isValue is checked for Boolean
+    // 1. add tuple support
+    // 2. check that isValue is checked for Boolean
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
