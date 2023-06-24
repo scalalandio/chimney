@@ -18,7 +18,11 @@ private[compiletime] trait ProductTypes { this: Definitions =>
         case object JavaBeanGetter extends SourceType
       }
     }
-    final type Getters[From] = ListMap[String, Existential[Getter[From, *]]]
+    final case class Getters[From](extraction: ListMap[String, Existential[Getter[From, *]]])
+    object Getters {
+      def unapply[From](implicit From: Type[From]): Option[ListMap[String, Existential[Getter[From, *]]]] =
+        ProductType.parseGetters[From].map(getters => getters.extraction)
+    }
 
     final case class Parameter[A](targetType: Parameter.TargetType, defaultValue: Option[Expr[A]])
     object Parameter {
@@ -33,16 +37,25 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     final type Arguments = Map[String, ExistentialExpr]
 
     final case class Constructor[To](parameters: Parameters, constructor: Arguments => Expr[To])
+    object Constructor {
+      def unapply[To](implicit To: Type[To]): Option[(Parameters, Arguments => Expr[To])] =
+        ProductType.parseConstructor[To].map(constructor => constructor.parameters -> constructor.constructor)
+    }
   }
 
   protected val ProductType: ProductTypesModule
   protected trait ProductTypesModule { this: ProductType.type =>
 
+    def isPOJO[A](implicit A: Type[A]): Boolean
     def isCaseClass[A](implicit A: Type[A]): Boolean
     def isCaseObject[A](implicit A: Type[A]): Boolean
     def isJavaBean[A](implicit A: Type[A]): Boolean
 
-    def parse[A: Type]: Option[Product[A]]
+    def parseGetters[A: Type]: Option[Product.Getters[A]]
+    def parseConstructor[A: Type]: Option[Product.Constructor[A]]
+    final def parse[A: Type]: Option[Product[A]] = parseGetters[A].zip(parseConstructor[A]).map {
+      case (getters, constructor) => Product(getters, constructor)
+    }
     final def unapply[A](tpe: Type[A]): Option[Product[A]] = parse(tpe)
 
     implicit class RegexpOps(regexp: scala.util.matching.Regex) {
@@ -137,5 +150,6 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     def isCaseClass: Boolean = ProductType.isCaseClass(tpe)
     def isCaseObject: Boolean = ProductType.isCaseObject(tpe)
     def isJavaBean: Boolean = ProductType.isJavaBean(tpe)
+    def isPOJO: Boolean = ProductType.isPOJO(tpe)
   }
 }
