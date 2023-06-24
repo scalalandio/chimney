@@ -6,6 +6,8 @@ import io.scalaland.chimney.internal.compiletime.fp.Syntax.*
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
 
+import scala.language.postfixOps
+
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>
 
   import TypeImplicits.*, ChimneyTypeImplicits.*
@@ -14,14 +16,16 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     private type PartialExpr[A] = Expr[partial.Result[A]]
 
+    // TODO:
+    // 1. update ProductValue.parseConstructor to allow any class with a public constructor:
+    //    1. params from the constructor first
+    //    2. followed by params from setters - deduplicated to avoid setting something twice
+    // 2. add tuple support
+    // 3. check that isValue is checked for Boolean
+
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
-        // TODO: rewrite this - create error message when setter is automatically resolved the first time
-        case (_, Product.Constructor(parameters, _))
-            if !ctx.config.flags.beanSetters && parameters.exists(isUsingSetter) =>
-          // TODO: provide a nice error message that there are params but setters are disabled
-          DerivationResult.notYetImplemented("error about used setters")
-        case (Product.Getters(fromExtractors), Product.Constructor(parameters, constructor)) =>
+        case (Product.Extraction(fromExtractors), Product.Constructor(parameters, constructor)) =>
           import ctx.config.*
           lazy val fromEnabledExtractors = fromExtractors.filter { getter =>
             getter._2.value.sourceType match {
@@ -142,6 +146,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                               }
                         }
                         .orElse(fromEnabledExtractors.collectFirst {
+                          case _
+                              if ctorParam.value.targetType == Product.Parameter.TargetType.SetterParameter && !flags.beanSetters =>
+                            // TODO: in future we might want to have some better error message here
+                            DerivationResult.notSupportedTransformerDerivation(ctx)
                           case (name, getter) if areNamesMatching(name, toName) =>
                             Existential.use(getter) { implicit Getter: Type[getter.Underlying] =>
                               { case Product.Getter(_, get) =>

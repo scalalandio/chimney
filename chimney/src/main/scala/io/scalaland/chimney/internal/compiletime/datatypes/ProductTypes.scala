@@ -6,7 +6,7 @@ import scala.collection.immutable.ListMap
 
 private[compiletime] trait ProductTypes { this: Definitions =>
 
-  final protected case class Product[A](extraction: Product.Getters[A], construction: Product.Constructor[A])
+  final protected case class Product[A](extraction: Product.Extraction[A], construction: Product.Constructor[A])
   protected object Product {
 
     final case class Getter[From, A](sourceType: Getter.SourceType, get: Expr[From] => Expr[A])
@@ -18,10 +18,12 @@ private[compiletime] trait ProductTypes { this: Definitions =>
         case object JavaBeanGetter extends SourceType
       }
     }
-    final case class Getters[From](extraction: ListMap[String, Existential[Getter[From, *]]])
-    object Getters {
-      def unapply[From](implicit From: Type[From]): Option[ListMap[String, Existential[Getter[From, *]]]] =
-        ProductType.parseGetters[From].map(getters => getters.extraction)
+    final type Getters[From] = ListMap[String, Existential[Getter[From, *]]]
+
+    final case class Extraction[From](extraction: Getters[From])
+    object Extraction {
+      def unapply[From](From: Type[From]): Option[Getters[From]] =
+        ProductType.parseExtraction(From).map(getters => getters.extraction)
     }
 
     final case class Parameter[A](targetType: Parameter.TargetType, defaultValue: Option[Expr[A]])
@@ -38,8 +40,8 @@ private[compiletime] trait ProductTypes { this: Definitions =>
 
     final case class Constructor[To](parameters: Parameters, constructor: Arguments => Expr[To])
     object Constructor {
-      def unapply[To](implicit To: Type[To]): Option[(Parameters, Arguments => Expr[To])] =
-        ProductType.parseConstructor[To].map(constructor => constructor.parameters -> constructor.constructor)
+      def unapply[To](To: Type[To]): Option[(Parameters, Arguments => Expr[To])] =
+        ProductType.parseConstructor(To).map(constructor => constructor.parameters -> constructor.constructor)
     }
   }
 
@@ -51,9 +53,9 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     def isCaseObject[A](implicit A: Type[A]): Boolean
     def isJavaBean[A](implicit A: Type[A]): Boolean
 
-    def parseGetters[A: Type]: Option[Product.Getters[A]]
+    def parseExtraction[A: Type]: Option[Product.Extraction[A]]
     def parseConstructor[A: Type]: Option[Product.Constructor[A]]
-    final def parse[A: Type]: Option[Product[A]] = parseGetters[A].zip(parseConstructor[A]).map {
+    final def parse[A: Type]: Option[Product[A]] = parseExtraction[A].zip(parseConstructor[A]).map {
       case (getters, constructor) => Product(getters, constructor)
     }
     final def unapply[A](tpe: Type[A]): Option[Product[A]] = parse(tpe)

@@ -56,14 +56,14 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
       isPOJO[A] && mem.exists(isDefaultConstructor) && mem.exists(isJavaSetterOrVar)
     }
 
-    def parseGetters[A: Type]: Option[Product.Getters[A]] = {
+    def parseExtraction[A: Type]: Option[Product.Extraction[A]] = {
       import Type.platformSpecific.{fromUntyped, returnTypeOf}
       import Expr.platformSpecific.*
       import scala.collection.compat.*
       import scala.collection.immutable.ListMap
 
       Some(
-        Product.Getters(
+        Product.Extraction(
           ListMap.from[String, Existential[Product.Getter[A, *]]](
             Type[A].decls
               .to(List)
