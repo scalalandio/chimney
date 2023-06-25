@@ -119,12 +119,10 @@ private[compiletime] trait ExprPromises { this: Definitions =>
       f(usage).map(new PrependDefinitionsTo(_, defns))
     }
 
-    def prepend[B](implicit ev: A <:< Expr[B]): Expr[B] = {
-      val expr = ev(usage)
-      PrependValsTo.initializeDefns(defns, expr)(Expr.typeOf(expr))
-    }
+    def prepend[B: Type](implicit ev: A <:< Expr[B]): Expr[B] =
+      PrependValsTo.initializeDefns[B](defns, ev(usage))
 
-    def use[B](f: A => Expr[B]): Expr[B] = map(f).prepend
+    def use[B: Type](f: A => Expr[B]): Expr[B] = map(f).prepend
   }
   protected val PrependValsTo: PrependValsToModule
   protected trait PrependValsToModule { this: PrependValsTo.type =>

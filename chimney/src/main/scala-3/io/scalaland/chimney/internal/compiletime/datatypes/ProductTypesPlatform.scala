@@ -134,7 +134,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         val sym = A.typeSymbol
 
         val primaryConstructor =
-          Option(sym.primaryConstructor).filter(s => !s.isNoSymbol).filter(isPublic).getOrElse {
+          Option(sym.primaryConstructor).filterNot(_.isNoSymbol).filter(isPublic).getOrElse {
             assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
           }
         val paramss = paramListsOf(primaryConstructor)
@@ -191,14 +191,17 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
           ExprPromise
             .promise[A](ExprPromise.NameGenerationStrategy.FromType)
             .fulfilAsVal {
+              // new A
               val select = New(TypeTree.of[A]).select(primaryConstructor)
+              // new A[B1, B2, ...] vs new A
               val tree = if A.typeArgs.nonEmpty then select.appliedToTypes(A.typeArgs) else select
+              // new A... or new A() or new A(b1, b2), ...
               tree
                 .appliedToArgss(paramss.map(_.map(param => constructorArguments(paramNames(param)).value.asTerm)))
                 .asExprOf[A]
             }
             .use { exprA =>
-              Expr.block(
+              Expr.block[A](
                 setterArguments.map { case (name, e) =>
                   exprA.asTerm.select(setterSymbols(name)).appliedTo(e.value.asTerm).asExprOf[Unit]
                 }.toList,
