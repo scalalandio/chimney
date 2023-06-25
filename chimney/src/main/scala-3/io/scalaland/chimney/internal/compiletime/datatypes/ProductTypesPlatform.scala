@@ -41,6 +41,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
 
     import platformSpecific.*
     import Type.platformSpecific.*
+    import TypeImplicits.*
 
     def isPOJO[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
@@ -185,27 +186,25 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         val parameters: Product.Parameters = constructorParameters ++ setterParameters
 
         val constructor: Product.Arguments => Expr[A] = arguments => {
-          val resultValueSymbol: Symbol =
-            ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
-          val resultValueRef = Ref(resultValueSymbol)
+          val (constructorArguments, setterArguments) = checkArguments[A](parameters, arguments)
 
-          val (constructorArguments, setterArguments) = checkArguments(parameters, arguments)
-
-          val constructorExpr = {
-            val select = New(TypeTree.of[A]).select(primaryConstructor)
-            val tree = if A.typeArgs.nonEmpty then select.appliedToTypes(A.typeArgs) else select
-            tree
-              .appliedToArgss(paramss.map(_.map(param => constructorArguments(paramNames(param)).value.asTerm)))
-              .asExprOf[A]
-          }
-
-          val setterExprs = setterArguments
-            .map[Term] { case (name, e) => resultValueRef.select(setterSymbols(name)).appliedTo(e.value.asTerm) }
-            .toList
-
-          val statements = ValDef(resultValueSymbol, Some(constructorExpr.asTerm)) +: setterExprs
-
-          Block(statements, resultValueRef).asExprOf[A]
+          ExprPromise
+            .promise[A](ExprPromise.NameGenerationStrategy.FromType)
+            .fulfilAsVal {
+              val select = New(TypeTree.of[A]).select(primaryConstructor)
+              val tree = if A.typeArgs.nonEmpty then select.appliedToTypes(A.typeArgs) else select
+              tree
+                .appliedToArgss(paramss.map(_.map(param => constructorArguments(paramNames(param)).value.asTerm)))
+                .asExprOf[A]
+            }
+            .use { exprA =>
+              Expr.block(
+                setterArguments.map { case (name, e) =>
+                  exprA.asTerm.select(setterSymbols(name)).appliedTo(e.value.asTerm).asExprOf[Unit]
+                }.toList,
+                exprA
+              )
+            }
         }
 
         Some(Product.Constructor(parameters, constructor))

@@ -42,6 +42,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
 
     import platformSpecific.*
     import Type.platformSpecific.*
+    import TypeImplicits.*
     import Expr.platformSpecific.*
 
     def isPOJO[A](implicit A: Type[A]): Boolean = {
@@ -171,24 +172,25 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         val parameters: Product.Parameters = constructorParameters ++ setterParameters
 
         val constructor: Product.Arguments => Expr[A] = arguments => {
-          val resultValueTermName: TermName =
-            ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
+          val (constructorArguments, setterArguments) = checkArguments[A](parameters, arguments)
 
-          val (constructorArguments, setterArguments) = checkArguments(parameters, arguments)
-
-          val constructorExpr = asExpr(
-            q"new ${Type[A]}(...${paramss.map(_.map(param => constructorArguments(paramNames(param)).value))})"
-          )
-
-          val setterExprs = setterArguments.map { case (name, e) =>
-            ExistentialExpr.use(e) { implicit E: Type[e.Underlying] => expr =>
-              q"$resultValueTermName.${setterTermNames(name)}($expr)"
+          ExprPromise
+            .promise[A](ExprPromise.NameGenerationStrategy.FromType)
+            .fulfilAsVal(
+              asExpr(
+                q"new ${Type[A]}(...${paramss.map(_.map(param => constructorArguments(paramNames(param)).value))})"
+              )
+            )
+            .use { exprA =>
+              Expr.block(
+                setterArguments.map { case (name, e) =>
+                  ExistentialExpr.use(e) { implicit E: Type[e.Underlying] => exprArg =>
+                    asExpr[Unit](q"$exprA.${setterTermNames(name)}($exprArg)")
+                  }
+                }.toList,
+                exprA
+              )
             }
-          }.toList
-
-          val statements = q"val $resultValueTermName: ${Type[A]} = $constructorExpr" +: setterExprs
-
-          asExpr(q"..$statements; $resultValueTermName")
         }
 
         Some(Product.Constructor(parameters, constructor))
