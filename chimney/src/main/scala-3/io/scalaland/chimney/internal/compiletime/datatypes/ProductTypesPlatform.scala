@@ -62,7 +62,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
       isPOJO[A] && mem.exists(isDefaultConstructor) && mem.exists(isJavaSetterOrVar)
     }
 
-    def parseGetters[A: Type]: Option[Product.Extraction[A]] = {
+    def parseExtraction[A: Type]: Option[Product.Extraction[A]] = {
       Some(Product.Extraction(ListMap.from[String, Existential[Product.Getter[A, *]]] {
         import Type.platformSpecific.*
 

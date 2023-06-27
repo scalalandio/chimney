@@ -7,103 +7,101 @@ import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 
 private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: DefinitionsPlatform =>
 
+  import c.universe.{internal as _, Transformer as _, *}
+
   protected object ChimneyType extends ChimneyTypeModule {
 
-    import Type.platformSpecific.{fromUntyped, fromWeak, fromWeakTypeConstructor}, TypeImplicits.*
+    import Type.platformSpecific.fromUntyped
 
-    def Transformer[From: Type, To: Type]: Type[Transformer[From, To]] =
-      fromWeakTypeConstructor[Transformer[?, ?], Transformer[From, To]](Type[From], Type[To])
+    def Transformer[From: Type, To: Type]: Type[Transformer[From, To]] = weakTypeTag[Transformer[From, To]]
 
     def PartialTransformer[From: Type, To: Type]: Type[PartialTransformer[From, To]] =
-      fromWeakTypeConstructor[PartialTransformer[?, ?], PartialTransformer[From, To]](Type[From], Type[To])
+      weakTypeTag[PartialTransformer[From, To]]
 
-    def Patcher[A: Type, Patch: Type]: Type[Patcher[A, Patch]] =
-      fromWeakTypeConstructor[Patcher[?, ?], Patcher[A, Patch]](Type[A], Type[Patch])
+    def Patcher[A: Type, Patch: Type]: Type[Patcher[A, Patch]] = weakTypeTag[Patcher[A, Patch]]
 
     object PartialResult extends PartialResultModule {
-      def apply[A: Type]: Type[partial.Result[A]] =
-        fromWeakTypeConstructor[partial.Result[?], partial.Result[A]](Type[A])
-      def unapply[A](tpe: Type[A]): Option[ExistentialType] =
-        // None has no type parameters, so we need getOrElse(Nothing)
-        if (tpe <:< apply[Any])
-          Some(
-            tpe.typeArgs.headOption.fold(ExistentialType(Type.Nothing))(inner => fromUntyped[Any](inner).asExistential)
-          )
+      def apply[A: Type]: Type[partial.Result[A]] = weakTypeTag[partial.Result[A]]
+      def unapply[A](A: Type[A]): Option[ExistentialType] =
+        // Errors has no type parameters, so we need getOrElse(Nothing)
+        if (A.tpe.typeConstructor <:< weakTypeOf[partial.Result[?]].typeConstructor)
+          Some(A.tpe.typeArgs.headOption.fold(ExistentialType(Type.Nothing))(fromUntyped[Any](_).asExistential))
         else scala.None
 
-      def Value[A: Type]: Type[partial.Result.Value[A]] =
-        fromWeakTypeConstructor[partial.Result.Value[?], partial.Result.Value[A]](Type[A])
-      val Errors: Type[partial.Result.Errors] =
-        fromWeak[partial.Result.Errors]
+      def Value[A: Type]: Type[partial.Result.Value[A]] = weakTypeTag[partial.Result.Value[A]]
+      val Errors: Type[partial.Result.Errors] = weakTypeTag[partial.Result.Errors]
     }
 
     object PathElement extends PathElementModule {
-      val tpe: Type[partial.PathElement] = fromWeak[partial.PathElement]
-      val Accessor: Type[partial.PathElement.Accessor] = fromWeak[partial.PathElement.Accessor]
-      val Index: Type[partial.PathElement.Index] = fromWeak[partial.PathElement.Index]
-      val MapKey: Type[partial.PathElement.MapKey] = fromWeak[partial.PathElement.MapKey]
-      val MapValue: Type[partial.PathElement.MapValue] = fromWeak[partial.PathElement.MapValue]
+      val tpe: Type[partial.PathElement] = weakTypeTag[partial.PathElement]
+      val Accessor: Type[partial.PathElement.Accessor] = weakTypeTag[partial.PathElement.Accessor]
+      val Index: Type[partial.PathElement.Index] = weakTypeTag[partial.PathElement.Index]
+      val MapKey: Type[partial.PathElement.MapKey] = weakTypeTag[partial.PathElement.MapKey]
+      val MapValue: Type[partial.PathElement.MapValue] = weakTypeTag[partial.PathElement.MapValue]
     }
 
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type] =
-      fromWeak[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
+      weakTypeTag[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
-      fromWeak[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
+      weakTypeTag[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
     val RuntimeDataStore: Type[TransformerDefinitionCommons.RuntimeDataStore] =
-      fromWeak[TransformerDefinitionCommons.RuntimeDataStore]
-
+      weakTypeTag
     object TransformerCfg extends TransformerCfgModule {
-      val Empty: Type[internal.TransformerCfg.Empty] = fromWeak[internal.TransformerCfg.Empty]
+      val Empty: Type[internal.TransformerCfg.Empty] = weakTypeTag[internal.TransformerCfg.Empty]
     }
 
     object TransformerFlags extends TransformerFlagsModule {
       import internal.TransformerFlags.Flag
 
-      val Default: Type[internal.TransformerFlags.Default] = fromWeak[internal.TransformerFlags.Default]
+      val Default: Type[internal.TransformerFlags.Default] = weakTypeTag[internal.TransformerFlags.Default]
 
       object Enable extends EnableModule {
         def apply[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
             : Type[internal.TransformerFlags.Enable[F, Flags]] =
-          fromWeak[internal.TransformerFlags.Enable[F, Flags]]
-        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] = {
-          if (tpe.typeConstructor <:< fromWeak[internal.TransformerFlags.Enable[?, ?]].typeConstructor)
-            Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
+          weakTypeTag[internal.TransformerFlags.Enable[F, Flags]]
+        def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] = {
+          if (A.tpe.typeConstructor <:< weakTypeOf[internal.TransformerFlags.Enable[?, ?]].typeConstructor)
+            Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
           else scala.None
         }
       }
       object Disable extends DisableModule {
         def apply[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
             : Type[internal.TransformerFlags.Disable[F, Flags]] =
-          fromWeak[internal.TransformerFlags.Disable[F, Flags]]
-        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
-          if (tpe.typeConstructor <:< fromWeak[internal.TransformerFlags.Disable[?, ?]].typeConstructor)
-            Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
+          weakTypeTag[internal.TransformerFlags.Disable[F, Flags]]
+        def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[internal.TransformerFlags.Disable[?, ?]].typeConstructor)
+            Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
           else scala.None
       }
 
       object Flags extends FlagsModule {
         val DefaultValues: Type[internal.TransformerFlags.DefaultValues] =
-          fromWeak[internal.TransformerFlags.DefaultValues]
-        val BeanGetters: Type[internal.TransformerFlags.BeanGetters] = fromWeak[internal.TransformerFlags.BeanGetters]
-        val BeanSetters: Type[internal.TransformerFlags.BeanSetters] = fromWeak[internal.TransformerFlags.BeanSetters]
+          weakTypeTag[internal.TransformerFlags.DefaultValues]
+        val BeanGetters: Type[internal.TransformerFlags.BeanGetters] =
+          weakTypeTag[internal.TransformerFlags.BeanGetters]
+        val BeanSetters: Type[internal.TransformerFlags.BeanSetters] =
+          weakTypeTag[internal.TransformerFlags.BeanSetters]
         val MethodAccessors: Type[internal.TransformerFlags.MethodAccessors] =
-          fromWeak[internal.TransformerFlags.MethodAccessors]
+          weakTypeTag[internal.TransformerFlags.MethodAccessors]
         val OptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone] =
-          fromWeak[internal.TransformerFlags.OptionDefaultsToNone]
+          weakTypeTag[internal.TransformerFlags.OptionDefaultsToNone]
         object ImplicitConflictResolution extends ImplicitConflictResolutionModule {
           def apply[R <: ImplicitTransformerPreference: Type]
               : Type[internal.TransformerFlags.ImplicitConflictResolution[R]] =
-            fromWeak[internal.TransformerFlags.ImplicitConflictResolution[R]]
-          def unapply[A](tpe: Type[A]): Option[ExistentialType] =
+            weakTypeTag[internal.TransformerFlags.ImplicitConflictResolution[R]]
+          def unapply[A](A: Type[A]): Option[ExistentialType] =
             if (
-              fromWeak[internal.TransformerFlags.ImplicitConflictResolution[?]].typeConstructor <:< tpe.typeConstructor
+              A.tpe.typeConstructor <:< weakTypeOf[
+                internal.TransformerFlags.ImplicitConflictResolution[?]
+              ].typeConstructor
             )
-              Some(fromUntyped(tpe.typeArgs.head).asExistential)
+              Some(fromUntyped(A.tpe.typeArgs.head).asExistential)
             else scala.None
         }
         val MacrosLogging: Type[internal.TransformerFlags.MacrosLogging] =
-          fromWeak[internal.TransformerFlags.MacrosLogging]
+          weakTypeTag[internal.TransformerFlags.MacrosLogging]
       }
     }
   }

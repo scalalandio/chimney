@@ -89,15 +89,25 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                 DerivationResult.log(
                   s"Found cases ${subtypeMappings.count(_.value.isPartial)} with Partial target, lifting all cases to Partial"
                 ) >>
-                  DerivationResult.expandedPartial(
-                    subtypeMappings
-                      .map(_.value.ensurePartial.fulfillAsPatternMatchCase[partial.Result[To]])
-                      .matchOn(ctx.src)
-                  )
+                  DerivationResult
+                    .expandedPartial(
+                      subtypeMappings
+                        .map { subtype =>
+                          subtype.value.ensurePartial.fulfillAsPatternMatchCase[partial.Result[To]](isCaseObject =
+                            subtype.Underlying.isCaseObject
+                          )
+                        }
+                        .matchOn(ctx.src)
+                    )
               else
                 // if all are total, we might treat them as such
                 DerivationResult.expandedTotal(
-                  subtypeMappings.map(_.value.ensureTotal.fulfillAsPatternMatchCase[To]).matchOn(ctx.src)
+                  subtypeMappings
+                    .map { subtype =>
+                      subtype.value.ensureTotal
+                        .fulfillAsPatternMatchCase[To](isCaseObject = subtype.Underlying.isCaseObject)
+                    }
+                    .matchOn(ctx.src)
                 )
             }
         case _ => DerivationResult.attemptNextRule

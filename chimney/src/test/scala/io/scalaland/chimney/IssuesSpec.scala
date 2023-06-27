@@ -291,13 +291,6 @@ class IssuesSpec extends ChimneySpec {
 
   group("fix issue #168") {
 
-    // FIXME: probably messed up case objects in ProductValue or SealedHierarchies on Scala 2 (Scala 3 works fine)
-    // type mismatch;
-    // [error]  found   : instance1$1.type (with underlying type Version1)
-    // [error]  required: Instance1.type
-    // [error]         .transform
-    // [error]          ^
-    /*
     test("objects case") {
       sealed trait Version1
       case object Instance1 extends Version1
@@ -314,7 +307,6 @@ class IssuesSpec extends ChimneySpec {
 
       v2 ==> Instance2
     }
-     */
 
     test("classes case") {
       sealed trait Version1
@@ -334,8 +326,6 @@ class IssuesSpec extends ChimneySpec {
     }
   }
 
-  // FIXME: probably messed up case objects in ProductValue or SealedHierarchies on Scala 2 (Scala 3 works fine)
-  /*
   group("fix issue #173 (rewritten as partial)") {
     sealed trait Foo
     case object Bar extends Foo
@@ -381,7 +371,6 @@ class IssuesSpec extends ChimneySpec {
       (Baz: Foo).transformIntoPartial[Foo2].asOption ==> Some(Baz2)
     }
   }
-   */
 
   group("fix issue #177 (rewritten as partial)") {
 
@@ -428,8 +417,6 @@ class IssuesSpec extends ChimneySpec {
     }
   }
 
-  // FIXME: probably messed up case objects in ProductValue or SealedHierarchies on Scala 2 (Scala 3 works fine)
-  /*
   test("fix issue #185 (rewritten as partial)") {
 
     def blackIsRed(b: colors2.Black.type): colors1.Color =
@@ -459,7 +446,6 @@ class IssuesSpec extends ChimneySpec {
       .transform
       .asOption ==> Some(colors1.Blue)
   }
-   */
 
   test("fix issue #182") {
     foo.convert(foo.A1) ==> foo.into.A1
@@ -659,8 +645,6 @@ class IssuesSpec extends ChimneySpec {
     }
   }
 
-  // FIXME: probably messed up case objects in ProductValue or SealedHierarchies on Scala 2 (Scala 3 works fine)
-  /*
   test("fix issue #228") {
     import Issue228.*
 
@@ -679,7 +663,6 @@ class IssuesSpec extends ChimneySpec {
       "Error"
     )
   }
-   */
 
   test("fix issue #291") {
     import Issue291.*

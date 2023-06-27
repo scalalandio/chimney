@@ -6,8 +6,6 @@ import io.scalaland.chimney.internal.compiletime.fp.Syntax.*
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
 
-import scala.language.postfixOps
-
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>
 
   import TypeImplicits.*, ChimneyTypeImplicits.*

@@ -5,7 +5,7 @@ import scala.collection.immutable.ListSet
 
 private[compiletime] trait Types { this: Existentials =>
 
-  /** Platform-specific type representation (c.universe.Type in 2, scala.quoted.Type[A] in 3) */
+  /** Platform-specific type representation (c.WeakTypeTag[A] in 2, scala.quoted.Type[A] in 3) */
   protected type Type[A]
   protected val Type: TypeModule
   protected trait TypeModule { this: Type.type =>
@@ -40,12 +40,12 @@ private[compiletime] trait Types { this: Existentials =>
 
     trait Constructor1[F[_]] {
       def apply[A: Type]: Type[F[A]]
-      def unapply[A](tpe: Type[A]): Option[ExistentialType]
+      def unapply[A](A: Type[A]): Option[ExistentialType]
     }
 
     trait Constructor2[F[_, _]] {
       def apply[A: Type, B: Type]: Type[F[A, B]]
-      def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)]
+      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)]
     }
 
     def Tuple2[A: Type, B: Type]: Type[(A, B)]

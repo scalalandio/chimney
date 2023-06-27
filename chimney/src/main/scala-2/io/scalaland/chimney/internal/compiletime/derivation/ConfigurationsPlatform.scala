@@ -23,7 +23,7 @@ private[compiletime] trait ConfigurationsPlatform extends Configurations { this:
     protected def extractTransformerConfig[Cfg <: internal.TransformerCfg: Type](
         runtimeDataIdx: Int
     ): TransformerConfig = {
-      val cfgTpe = Type[Cfg].dealias
+      val cfgTpe = Type[Cfg].tpe.dealias
 
       if (cfgTpe =:= emptyT) {
         TransformerConfig()

@@ -11,7 +11,6 @@ import scala.reflect.macros.blackbox
 final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatform with Gateway {
 
   import c.universe.{internal as _, Transformer as _, *}
-  import ChimneyTypeImplicits.*, Type.platformSpecific.fromWeakConversion.*
 
   type ImplicitScopeFlagsType <: internal.TransformerFlags
 
@@ -207,7 +206,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
       Type.platformSpecific.fromUntyped[ImplicitScopeFlagsType](implicitScopeConfig.tpe.typeArgs.head)
 
     muteUnusedWarnings(
-      Expr.platformSpecific.asExpr[ImplicitScopeFlagsType](implicitScopeConfig),
+      c.Expr[ImplicitScopeFlagsType](implicitScopeConfig),
       useImplicitScopeFlags(implicitScopeConfigType)
     )
   }
