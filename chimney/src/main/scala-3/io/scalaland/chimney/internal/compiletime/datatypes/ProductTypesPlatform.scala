@@ -140,7 +140,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         val paramss = paramListsOf(primaryConstructor)
         val paramNames = paramss.flatMap(_.map(param => param -> param.name)).toMap
         val paramTypes = paramsWithTypes(A, primaryConstructor)
-        val defaultValues = paramss.headOption.toList.flatten.zipWithIndex.collect {
+        val defaultValues = paramss.flatten.zipWithIndex.collect {
           case (param, idx) if param.flags.is(Flags.HasDefault) =>
             val mod = sym.companionModule
             val default = (mod.declaredMethod(caseClassApplyDefaultScala2(idx + 1)) ++
@@ -181,7 +181,14 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
             )
           }
         val setterParameters = ListMap.from(setters.map { case (name, _, param) => name -> param })
-        val setterSymbols = setters.map { case (name, symbol, _) => name -> symbol }.toMap
+        type Setter[B] = (Expr[A], Expr[B]) => Expr[Unit]
+        val setterExprs = setters.map { case (name, symbol, param) =>
+          name ->
+            param.mapK[Setter] {
+              implicit Param: Type[param.Underlying] => _ => (exprA: Expr[A], exprArg: Expr[param.Underlying]) =>
+                exprA.asTerm.select(symbol).appliedTo(exprArg.asTerm).asExprOf[Unit]
+            }
+        }.toMap
 
         val parameters: Product.Parameters = constructorParameters ++ setterParameters
 
@@ -201,9 +208,14 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
                 .asExprOf[A]
             }
             .use { exprA =>
-              Expr.block[A](
-                setterArguments.map { case (name, e) =>
-                  exprA.asTerm.select(setterSymbols(name)).appliedTo(e.value.asTerm).asExprOf[Unit]
+              Expr.block(
+                setterArguments.map { case (name, exprArg) =>
+                  val setter = setterExprs(name)
+                  assert(exprArg.Underlying =:= setter.Underlying)
+                  Existential.use(setter) {
+                    implicit Setter: Type[setter.Underlying] => (setterExpr: Setter[setter.Underlying]) =>
+                      setterExpr(exprA, exprArg.value.asInstanceOf[Expr[setter.Underlying]])
+                  }
                 }.toList,
                 exprA
               )
