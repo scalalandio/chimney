@@ -36,7 +36,7 @@ private[compiletime] trait ValueClassesPlatform extends ValueClasses { this: Def
         )
 
         ValueClass[A, inner.Underlying](
-          fieldName = getter.name,
+          fieldName = getter.name, // TODO: use utility from Products
           unwrap = (expr: Expr[A]) => expr.asTerm.select(getter).appliedToArgss(Nil).asExprOf[inner.Underlying],
           wrap = (expr: Expr[inner.Underlying]) => {
             val select = New(TypeTree.of[A]).select(primaryConstructor)

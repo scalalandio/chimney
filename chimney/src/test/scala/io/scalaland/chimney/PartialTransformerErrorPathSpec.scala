@@ -82,8 +82,6 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
     )
   }
 
-  // FIXME: ProductType parser is too conservative on input
-  /*
   test("Java Bean accessors error should contain path to the failed getter") {
     class Foo(a: String, b: String) {
       def getA: String = a
@@ -101,7 +99,6 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
       "getB" -> "empty value"
     )
   }
-   */
 
   // TODO: ProductToProduct doesn't handle tuples yet
   /*
@@ -195,8 +192,6 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
     )
   }
 
-  // FIXME: Implicit not found: scala.collection.Factory[scala.Int, scala.collection.immutable.Map[scala.Int, scala.Int]] on Scala 2
-  /*
   test("flat Map's error should contain key/value that failed conversion") {
     val result = Map("1" -> "x", "y" -> "20").transformIntoPartial[Map[Int, Int]]
     result.asOption ==> None
@@ -210,10 +205,7 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
       "keys(y)" -> "empty value"
     )
   }
-   */
 
-  // FIXME: Probably Type parsing on Scala 2
-  /*
   test("case class-nested Map's error should contain path to key/value that failed conversion") {
     case class EnvelopeStr(map: Map[String, String])
     case class EnvelopeInt(map: Map[Int, Int])
@@ -230,5 +222,4 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
       "map.keys(y)" -> "empty value"
     )
   }
-   */
 }

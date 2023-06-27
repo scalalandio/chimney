@@ -6,174 +6,129 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
   import c.universe.{internal as _, Transformer as _, *}
 
-  protected type Tagged[Tag_] = { type Tag = Tag_ }
-  protected type @@[A, Tag] = A & Tagged[Tag]
-
-  final override protected type Type[A] = c.Type @@ A
+  final override protected type Type[A] = c.WeakTypeTag[A]
   protected object Type extends TypeModule {
 
     object platformSpecific {
 
-      def fromUntyped[A](untyped: c.Type): Type[A] = untyped.asInstanceOf[Type[A]]
-      def fromWeak[A: WeakTypeTag]: Type[A] = fromUntyped(weakTypeOf[A])
-      def fromWeakTypeConstructor[Unswapped: WeakTypeTag, A](args: c.Type*): Type[A] = fromUntyped {
-        // $COVERAGE-OFF$
-        val ee = weakTypeOf[Unswapped].etaExpand
-        if (ee.typeParams.isEmpty || args.isEmpty) {
-          assertionFailed(
-            s"fromWeakTC should be used only to apply type parameters to type constructors, got $ee and $args!"
-          )
-        } else if (ee.typeParams.size != args.size) {
-          val een = ee.typeParams.size
-          val argsn = args.size
-          assertionFailed(s"Type $ee has different arity ($een) than applied to applyTypeArgs ($argsn)!")
-        } else if (args.contains(null)) {
-          assertionFailed("One of type parameters to apply was null!")
-        } else {
-          ee.finalResultType.substituteTypes(ee.typeParams, args.toList)
-        }
-        // $COVERAGE-ON$
-      }
+      def fromUntyped[A](untyped: c.Type): Type[A] = c.WeakTypeTag(untyped)
 
       /** Applies type arguments obtained from tpe to the type parameters in method's parameters' types */
       def paramListsOf(tpe: c.Type, method: c.Symbol): List[List[c.universe.Symbol]] =
         method.asMethod.typeSignatureIn(tpe).paramLists
 
       /** Applies type arguments obtained from tpe to the type parameters in method's return type */
-      def returnTypeOf(tpe: c.Type, method: c.Symbol): c.universe.Type = method.typeSignatureIn(tpe).finalResultType
+      def returnTypeOf(tpe: c.Type, method: c.Symbol): c.Type = method.typeSignatureIn(tpe).finalResultType
 
       /** What is the type of each method parameter */
       def paramsWithTypes(tpe: c.Type, method: c.Symbol): Map[String, c.universe.Type] = (for {
         params <- paramListsOf(tpe, method)
         param <- params
       } yield param.name.decodedName.toString -> param.typeSignatureIn(tpe)).toMap
-
-      object fromWeakConversion {
-        // convert WeakTypeTag[T] to Type[T] automatically
-        implicit def typeFromWeak[T: WeakTypeTag]: Type[T] = fromWeak
-      }
-
-      object toWeakConversion {
-
-        // Required because:
-        // - c.Expr[A] needs WeakTypeTag[A]
-        // - if we used sth like A: Type WeakTypeTag would resolve to macro method's A rather than content of Type[A]
-        implicit def weakFromType[A: Type]: WeakTypeTag[A] = c.WeakTypeTag(Type[A])
-      }
     }
 
-    import platformSpecific.{fromUntyped, fromWeak, fromWeakTypeConstructor}
+    import platformSpecific.fromUntyped
 
-    val Nothing: Type[Nothing] = fromWeak[Nothing]
-    val Null: Type[Null] = fromWeak[Null]
-    val Any: Type[Any] = fromWeak[Any]
-    val AnyVal: Type[AnyVal] = fromWeak[AnyVal]
-    val Boolean: Type[Boolean] = fromWeak[Boolean]
-    val Byte: Type[Byte] = fromWeak[Byte]
-    val Char: Type[Char] = fromWeak[Char]
-    val Short: Type[Short] = fromWeak[Short]
-    val Int: Type[Int] = fromWeak[Int]
-    val Long: Type[Long] = fromWeak[Long]
-    val Float: Type[Float] = fromWeak[Float]
-    val Double: Type[Double] = fromWeak[Double]
-    val Unit: Type[Unit] = fromWeak[Unit]
-    val String: Type[String] = fromWeak[String]
+    val Nothing: Type[Nothing] = weakTypeTag[Nothing]
+    val Null: Type[Null] = weakTypeTag[Null]
+    val Any: Type[Any] = weakTypeTag[Any]
+    val AnyVal: Type[AnyVal] = weakTypeTag[AnyVal]
+    val Boolean: Type[Boolean] = weakTypeTag[Boolean]
+    val Byte: Type[Byte] = weakTypeTag[Byte]
+    val Char: Type[Char] = weakTypeTag[Char]
+    val Short: Type[Short] = weakTypeTag[Short]
+    val Int: Type[Int] = weakTypeTag[Int]
+    val Long: Type[Long] = weakTypeTag[Long]
+    val Float: Type[Float] = weakTypeTag[Float]
+    val Double: Type[Double] = weakTypeTag[Double]
+    val Unit: Type[Unit] = weakTypeTag[Unit]
+    val String: Type[String] = weakTypeTag[String]
 
-    def Tuple2[A: Type, B: Type]: Type[(A, B)] =
-      fromWeakTypeConstructor[(?, ?), (A, B)](Type[A], Type[B])
+    def Tuple2[A: Type, B: Type]: Type[(A, B)] = weakTypeTag[(A, B)]
 
-    def Function1[A: Type, B: Type]: Type[A => B] =
-      fromWeakTypeConstructor[? => ?, A => B](Type[A], Type[B])
-    def Function2[A: Type, B: Type, C: Type]: Type[(A, B) => C] =
-      fromWeakTypeConstructor[(?, ?) => ?, (A, B) => C](Type[A], Type[B], Type[C])
+    def Function1[A: Type, B: Type]: Type[A => B] = weakTypeTag[A => B]
+    def Function2[A: Type, B: Type, C: Type]: Type[(A, B) => C] = weakTypeTag[(A, B) => C]
 
     object Array extends ArrayModule {
-      def apply[A: Type]: Type[Array[A]] = fromWeakTypeConstructor[Array[?], Array[A]](Type[A])
-      def unapply[A](tpe: Type[A]): Option[ExistentialType] =
-        // Array is invariant so we cannot check with Array[Any] <:< A
-        if (fromWeak[Array[?]].typeConstructor <:< tpe.typeConstructor)
-          Some(fromUntyped(tpe.typeArgs.head).asExistential)
+      def apply[A: Type]: Type[Array[A]] = weakTypeTag[Array[A]]
+      def unapply[A](A: Type[A]): Option[ExistentialType] =
+        if (A.tpe.typeConstructor <:< weakTypeOf[Array[?]].typeConstructor)
+          Some(fromUntyped(A.tpe.typeArgs.head).asExistential)
         else scala.None
     }
 
     object Option extends OptionModule {
-      def apply[A: Type]: Type[Option[A]] = fromWeakTypeConstructor[Option[?], Option[A]](Type[A])
-      def unapply[A](tpe: Type[A]): Option[ExistentialType] =
-        // None has no type parameters, so we need getOrElse(Nothing)
-        if (tpe <:< apply[Any](Any))
-          Some(
-            tpe.typeArgs.headOption.fold[ExistentialType](ExistentialType(Nothing))(inner =>
-              fromUntyped(inner).asExistential
-            )
-          )
+      def apply[A: Type]: Type[Option[A]] = weakTypeTag[Option[A]]
+      def unapply[A](A: Type[A]): Option[ExistentialType] = {
+        if (A.tpe.typeConstructor <:< weakTypeOf[Option[?]].typeConstructor)
+          // None has no type parameters, so we need getOrElse(Nothing)
+          Some(A.tpe.typeArgs.headOption.fold[ExistentialType](ExistentialType(Nothing))(fromUntyped(_).asExistential))
         else scala.None
+      }
 
-      val None: Type[scala.None.type] = fromWeak[scala.None.type]
+      val None: Type[scala.None.type] = weakTypeTag[scala.None.type]
     }
 
     object Either extends EitherModule {
-      def apply[L: Type, R: Type]: Type[Either[L, R]] =
-        fromWeakTypeConstructor[Either[?, ?], Either[L, R]](Type[L], Type[R])
-      def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
-        if (tpe <:< apply[Any, Any](Any, Any))
-          Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
+      def apply[L: Type, R: Type]: Type[Either[L, R]] = weakTypeTag[Either[L, R]]
+      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
+        if (A.tpe.typeConstructor <:< weakTypeOf[Either[?, ?]].typeConstructor)
+          Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
         else scala.None
 
       object Left extends LeftModule {
-        def apply[L: Type, R: Type]: Type[Left[L, R]] =
-          fromWeakTypeConstructor[Left[?, ?], Left[L, R]](Type[L], Type[R])
-        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
-          if (tpe <:< apply[Any, Any](Any, Any))
-            Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
+        def apply[L: Type, R: Type]: Type[Left[L, R]] = weakTypeTag[Left[L, R]]
+        def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[Left[?, ?]].typeConstructor)
+            Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
           else scala.None
       }
       object Right extends RightModule {
-        def apply[L: Type, R: Type]: Type[Right[L, R]] =
-          fromWeakTypeConstructor[Right[?, ?], Right[L, R]](Type[L], Type[R])
-        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
-          if (tpe <:< apply[Any, Any](Any, Any))
-            Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
+        def apply[L: Type, R: Type]: Type[Right[L, R]] = weakTypeTag[Right[L, R]]
+        def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[Right[?, ?]].typeConstructor)
+            Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
           else scala.None
       }
     }
 
     object Iterable extends IterableModule {
-      def apply[A: Type]: Type[Iterable[A]] = fromWeakTypeConstructor[Iterable[?], Iterable[A]](Type[A])
-      def unapply[A](tpe: Type[A]): Option[ExistentialType] =
-        if (tpe <:< apply[Any](Any)) Some(fromUntyped(tpe.typeArgs.head).asExistential)
+      def apply[A: Type]: Type[Iterable[A]] = weakTypeTag[Iterable[A]]
+      def unapply[A](A: Type[A]): Option[ExistentialType] =
+        if (A.tpe.typeConstructor <:< weakTypeOf[Iterable[?]].typeConstructor)
+          Some(fromUntyped(A.tpe.typeArgs.head).asExistential)
         else scala.None
     }
 
     object Map extends MapModule {
-      def apply[K: Type, V: Type]: Type[Map[K, V]] =
-        fromWeakTypeConstructor[Map[?, ?], Map[K, V]](Type[K], Type[V])
-      def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)] =
-        if (tpe <:< apply[Any, Any](Any, Any))
-          Some(fromUntyped(tpe.typeArgs.head).asExistential -> fromUntyped(tpe.typeArgs.tail.head).asExistential)
+      def apply[K: Type, V: Type]: Type[Map[K, V]] = weakTypeTag[Map[K, V]]
+      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
+        if (A.tpe.typeConstructor <:< weakTypeOf[Map[?, ?]].typeConstructor)
+          Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
         else scala.None
     }
 
     object Iterator extends IteratorModule {
-      def apply[A: Type]: Type[Iterator[A]] = fromWeakTypeConstructor[Iterator[?], Iterator[A]](Type[A])
-      def unapply[A](tpe: Type[A]): Option[(ExistentialType)] =
-        if (tpe <:< apply[Any](Any)) Some(fromUntyped(tpe.typeArgs.head).asExistential)
+      def apply[A: Type]: Type[Iterator[A]] = weakTypeTag[Iterator[A]]
+      def unapply[A](A: Type[A]): Option[(ExistentialType)] =
+        if (A.tpe.typeConstructor <:< weakTypeOf[Iterator[?]].typeConstructor)
+          Some(fromUntyped(A.tpe.typeArgs.head).asExistential)
         else scala.None
     }
 
-    def Factory[A: Type, C: Type]: Type[Factory[A, C]] =
-      fromWeakTypeConstructor[Factory[?, ?], Factory[A, C]](Type[A], Type[C])
+    def Factory[A: Type, C: Type]: Type[Factory[A, C]] = weakTypeTag[Factory[A, C]]
 
-    def isTuple[A](A: Type[A]): Boolean = A.typeSymbol.fullName.startsWith("scala.Tuple")
+    def isTuple[A](A: Type[A]): Boolean = A.tpe.typeSymbol.fullName.startsWith("scala.Tuple")
 
-    def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean = S.<:<(T)
-    def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean = S.=:=(T)
+    def isSubtypeOf[A, B](A: Type[A], B: Type[B]): Boolean = A.tpe <:< B.tpe
+    def isSameAs[A, B](A: Type[A], B: Type[B]): Boolean = A.tpe =:= B.tpe
 
     def prettyPrint[A: Type]: String = {
       def helper(tpe: c.Type): String = {
         val tpes = tpe.typeArgs.map(helper)
         tpe.typeSymbol.fullName + (if (tpes.isEmpty) "" else s"[${tpes.mkString(", ")}]")
       }
-      Console.MAGENTA + helper(Type[A]) + Console.RESET
+      Console.MAGENTA + helper(Type[A].tpe) + Console.RESET
     }
   }
 }

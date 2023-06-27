@@ -66,6 +66,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
 
     def parseExtraction[A: Type]: Option[Product.Extraction[A]] = Some(
       Product.Extraction(ListMap.from[String, Existential[Product.Getter[A, *]]] {
+        import Type.platformSpecific.*
         val A = TypeRepr.of[A]
         val sym = A.typeSymbol
 

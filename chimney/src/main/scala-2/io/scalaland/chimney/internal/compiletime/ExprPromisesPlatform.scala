@@ -3,7 +3,6 @@ package io.scalaland.chimney.internal.compiletime
 private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
-  import TypeImplicits.*, Expr.platformSpecific.asExpr
 
   final override protected type ExprPromiseName = TermName
 
@@ -16,25 +15,25 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     ): ExprPromiseName =
       nameGenerationStrategy match {
         case NameGenerationStrategy.FromPrefix(src) => freshTermName(src)
-        case NameGenerationStrategy.FromType        => freshTermName(Type[From])
+        case NameGenerationStrategy.FromType        => freshTermName(Type[From].tpe)
         case NameGenerationStrategy.FromExpr(expr)  => freshTermName(expr)
       }
 
     protected def createRefToName[From: Type](name: ExprPromiseName): Expr[From] =
-      asExpr[From](q"$name")
+      c.Expr[From](q"$name")
 
     def createLambda[From: Type, To: Type, B](
         fromName: ExprPromiseName,
         to: Expr[To]
     ): Expr[From => To] =
-      asExpr[From => To](q"($fromName: ${Type[From]}) => $to")
+      c.Expr[From => To](q"($fromName: ${Type[From]}) => $to")
 
     def createLambda2[From: Type, From2: Type, To: Type, B](
         fromName: ExprPromiseName,
         from2Name: ExprPromiseName,
         to: Expr[To]
     ): Expr[(From, From2) => To] =
-      asExpr[(From, From2) => To](q"($fromName: ${Type[From]}, $from2Name: ${Type[From2]}) => $to")
+      c.Expr[(From, From2) => To](q"($fromName: ${Type[From]}, $from2Name: ${Type[From2]}) => $to")
 
     private def freshTermName(prefix: String): ExprPromiseName =
       c.internal.reificationSupport.freshTermName(prefix.toLowerCase + "$")
@@ -52,18 +51,23 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
   protected object PatternMatchCase extends PatternMatchCaseModule {
 
     def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = {
-      val c = cases.map { case PatternMatchCase(someFrom, usage, fromName) =>
+      val casesTrees = cases.map { case PatternMatchCase(someFrom, usage, fromName, _) =>
         ExistentialType.use(someFrom) { implicit SomeFrom: Type[someFrom.Underlying] =>
-          val markUsed = Expr.suppressUnused(asExpr[someFrom.Underlying](q"$fromName"))
-          if (SomeFrom.typeSymbol.isModuleClass)
-            // case arg @ Enum.Value => ...
-            cq"""$fromName @ ${Ident(SomeFrom.typeSymbol.asClass.module)} => { $markUsed; $usage }"""
-          else
-            // case arg : Enum.Value => ...
-            cq"""$fromName : $SomeFrom => { $markUsed; $usage }"""
+          val markUsed = Expr.suppressUnused(c.Expr[someFrom.Underlying](q"$fromName"))
+          // TODO: code below resulted in
+          //   case (instance1 @ (_: Instance1.type)) =>
+          // [error]  type mismatch;
+          // [error]  found   : instance1$1.type (with underlying type Version1)
+          // [error]  required: Instance1.type
+          // if (isCaseObject)
+          // case arg @ Enum.Value => ...
+          // cq"""$fromName @ ${Ident(SomeFrom.typeSymbol.asClass.module)} => { $markUsed; $usage }"""
+          // else
+          // case arg : Enum.Value => ...
+          cq"""$fromName : $SomeFrom => { $markUsed; $usage }"""
         }
       }
-      asExpr[To](q"$src match { case ..$c }")
+      c.Expr[To](q"$src match { case ..$casesTrees }")
     }
   }
 
@@ -83,9 +87,9 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         case (name, initialValue, DefnType.Var) =>
           ExistentialExpr.use(initialValue) { tpe => expr => q"var $name: $tpe = $expr" }
       }.toList
-      asExpr[To](q"..$statements; $expr")
+      c.Expr[To](q"..$statements; $expr")
     }
 
-    def setVal[To: Type](name: ExprPromiseName): Expr[To] => Expr[Unit] = value => asExpr(q"$name = $value")
+    def setVal[To: Type](name: ExprPromiseName): Expr[To] => Expr[Unit] = value => c.Expr[Unit](q"$name = $value")
   }
 }

@@ -49,10 +49,9 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
       }
     }
 
-    private val freshTerm: FreshTerm = new FreshTerm
     private def freshTermName[A: Type](prefix: String, usageHint: UsageHint): ExprPromiseName = Symbol.newVal(
       Symbol.spliceOwner,
-      freshTerm.generate(prefix),
+      FreshTerm.generate(prefix),
       TypeRepr.of[A],
       usageHint match
         case UsageHint.None => Flags.EmptyFlags
@@ -96,26 +95,35 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
     def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = Match(
       src.asTerm,
-      cases.map { case PatternMatchCase(someFrom, usage, fromName) =>
+      cases.map { case PatternMatchCase(someFrom, usage, fromName, isCaseObject) =>
         ExistentialType.use(someFrom) { implicit SomeFrom: Type[someFrom.Underlying] =>
-          // TODO: this is a shortcut which most likely won't compile
-          // TODO: we would have to `{ val name = ${ newBindName }; ${ matchCase.usage } }
+          // Unfortunatelly, we cannot do
+          //   case $fromName: $SomeFrom => $using
+          // because bind and val have different flags in Symbol. We need to do something like
+          //   case $bindName: $SomeFrom => val $fromName = $bindName; $using
+          val bindName = Symbol.newBind(
+            Symbol.spliceOwner,
+            FreshTerm.generate(TypeRepr.of(using SomeFrom).show(using Printer.TypeReprShortCode).toLowerCase),
+            Flags.EmptyFlags,
+            TypeRepr.of(using SomeFrom)
+          )
+          // We're constructing:
+          // '{ val fromName = bindName; val _ = fromName; ${ usage } }
+          val body = Block(
+            List(
+              ValDef(fromName, Some(Ref(bindName))), // not a Term, so we cannot use Expr.block
+              Expr.suppressUnused(Ref(fromName).asExprOf[someFrom.Underlying]).asTerm
+            ),
+            usage.asTerm
+          )
 
           // Scala 3's enums' parameterless cases are vals with type erased, so w have to match them by value
-          if TypeRepr.of[someFrom.Underlying].typeSymbol.flags.is(Flags.Enum | Flags.JavaStatic) then
+          if isCaseObject then
             // case arg @ Enum.Value => ...
-            CaseDef(
-              Bind(fromName, Ident(TypeRepr.of[someFrom.Underlying].typeSymbol.termRef)),
-              None,
-              Expr.block(List(Expr.suppressUnused(Ref(fromName).asExprOf[someFrom.Underlying])), usage).asTerm
-            )
+            CaseDef(Bind(bindName, Ident(TypeRepr.of[someFrom.Underlying].typeSymbol.termRef)), None, body)
           else
             // case arg : Enum.Value => ...
-            CaseDef(
-              Bind(fromName, Typed(Wildcard(), TypeTree.of[someFrom.Underlying])),
-              None,
-              Expr.block(List(Expr.suppressUnused(Ref(fromName).asExprOf[someFrom.Underlying])), usage).asTerm
-            )
+            CaseDef(Bind(bindName, Typed(Wildcard(), TypeTree.of[someFrom.Underlying])), None, body)
         }
       }
     ).asExprOf[To]
@@ -123,9 +131,9 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
   // TODO: consult with Janek Chyb if this is necessary/safe
   // workaround to contain @experimental from polluting the whole codebase
-  private class FreshTerm(using q: quoted.Quotes) {
-    private val impl = q.reflect.Symbol.getClass.getMethod("freshName", classOf[String])
+  private object FreshTerm {
+    private val impl = quotes.reflect.Symbol.getClass.getMethod("freshName", classOf[String])
 
-    def generate(prefix: String): String = impl.invoke(q.reflect.Symbol, prefix).asInstanceOf[String]
+    def generate(prefix: String): String = impl.invoke(quotes.reflect.Symbol, prefix).asInstanceOf[String]
   }
 }

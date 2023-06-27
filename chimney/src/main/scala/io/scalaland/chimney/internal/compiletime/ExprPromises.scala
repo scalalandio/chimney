@@ -32,8 +32,13 @@ private[compiletime] trait ExprPromises { this: Definitions =>
     ): Expr[(From, From2) => To] =
       ExprPromise.createLambda2(fromName, promise.fromName, combine(usage, promise.usage))
 
-    def fulfillAsPatternMatchCase[To](implicit ev: A <:< Expr[To]): PatternMatchCase[To] =
-      new PatternMatchCase(someFrom = ExistentialType(Type[From]), usage = ev(usage), fromName = fromName)
+    def fulfillAsPatternMatchCase[To](isCaseObject: Boolean)(implicit ev: A <:< Expr[To]): PatternMatchCase[To] =
+      new PatternMatchCase(
+        someFrom = ExistentialType(Type[From]),
+        usage = ev(usage),
+        fromName = fromName,
+        isCaseObject = isCaseObject
+      )
 
     def partition[L, R](implicit
         ev: A <:< Either[L, R]
@@ -156,13 +161,18 @@ private[compiletime] trait ExprPromises { this: Definitions =>
   final protected class PatternMatchCase[To](
       val someFrom: ExistentialType,
       val usage: Expr[To],
-      val fromName: ExprPromiseName
+      val fromName: ExprPromiseName,
+      val isCaseObject: Boolean
   )
   protected val PatternMatchCase: PatternMatchCaseModule
   protected trait PatternMatchCaseModule { this: PatternMatchCase.type =>
 
-    final def unapply[To](patternMatchCase: PatternMatchCase[To]): Some[(ExistentialType, Expr[To], ExprPromiseName)] =
-      Some((patternMatchCase.someFrom, patternMatchCase.usage, patternMatchCase.fromName))
+    final def unapply[To](
+        patternMatchCase: PatternMatchCase[To]
+    ): Some[(ExistentialType, Expr[To], ExprPromiseName, Boolean)] =
+      Some(
+        (patternMatchCase.someFrom, patternMatchCase.usage, patternMatchCase.fromName, patternMatchCase.isCaseObject)
+      )
 
     def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To]
   }

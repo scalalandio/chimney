@@ -5,17 +5,18 @@ import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 private[compiletime] trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
+  import Type.platformSpecific.fromUntyped
 
   protected object SealedHierarchy extends SealedHierarchyModule {
 
     def isSealed[A](A: Type[A]): Boolean = {
-      val sym = A.typeSymbol
+      val sym = A.tpe.typeSymbol
       sym.isClass && sym.asClass.isSealed
     }
 
     type Subtype
     def parse[A: Type]: Option[Enum[A]] = if (isSealed(Type[A])) {
-      val elements = extractSubclasses(Type[A].typeSymbol.asType)
+      val elements = extractSubclasses(Type[A].tpe.typeSymbol.asType)
         .map { (subtype: TypeSymbol) =>
           subtypeName(subtype) -> subtypeTypeOf[A](subtype)
         }
@@ -38,9 +39,10 @@ private[compiletime] trait SealedHierarchiesPlatform extends SealedHierarchies {
 
     private def subtypeTypeOf[A: Type](subtype: TypeSymbol): Type[Subtype] = {
       val sEta = subtype.toType.etaExpand
-      sEta.finalResultType
-        .substituteTypes(sEta.baseType(Type[A].typeSymbol).typeArgs.map(_.typeSymbol), Type[A].typeArgs)
-        .asInstanceOf[Type[Subtype]]
+      fromUntyped(
+        sEta.finalResultType
+          .substituteTypes(sEta.baseType(Type[A].tpe.typeSymbol).typeArgs.map(_.typeSymbol), Type[A].tpe.typeArgs)
+      )
     }
   }
 }
