@@ -118,6 +118,16 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     def Factory[A: Type, C: Type]: Type[Factory[A, C]] = weakTypeTag[Factory[A, C]]
 
+    def extractStringSingleton[S <: String](S: Type[S]): String = scala.util
+      .Try(
+        S.tpe
+          .asInstanceOf[scala.reflect.internal.Types#UniqueConstantType]
+          .value
+          .value
+          .asInstanceOf[String]
+      )
+      .getOrElse(assertionFailed(s"Invalid string literal type: ${prettyPrint(S)}"))
+
     def isTuple[A](A: Type[A]): Boolean = A.tpe.typeSymbol.fullName.startsWith("scala.Tuple")
 
     def isSubtypeOf[A, B](A: Type[A], B: Type[B]): Boolean = A.tpe <:< B.tpe

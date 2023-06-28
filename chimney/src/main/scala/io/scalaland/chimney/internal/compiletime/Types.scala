@@ -71,6 +71,8 @@ private[compiletime] trait Types { this: Existentials =>
 
     def Factory[A: Type, C: Type]: Type[Factory[A, C]]
 
+    def extractStringSingleton[S <: String](S: Type[S]): String
+
     def isTuple[A](A: Type[A]): Boolean
 
     def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean
@@ -78,30 +80,34 @@ private[compiletime] trait Types { this: Existentials =>
 
     def prettyPrint[A: Type]: String
   }
-  implicit protected class TypeOps[A](private val tpe: Type[A]) {
+  implicit final protected class TypeOps[A](private val tpe: Type[A]) {
 
-    final def <:<[B](another: Type[B]): Boolean = Type.isSubtypeOf(tpe, another)
-    final def =:=[B](another: Type[B]): Boolean = Type.isSameAs(tpe, another)
+    def <:<[B](another: Type[B]): Boolean = Type.isSubtypeOf(tpe, another)
+    def =:=[B](another: Type[B]): Boolean = Type.isSameAs(tpe, another)
 
-    final def isPrimitive: Boolean = Type.primitives.exists(tpe <:< _.Underlying)
+    def isPrimitive: Boolean = Type.primitives.exists(tpe <:< _.Underlying)
 
-    final def isTuple: Boolean = Type.isTuple(tpe)
-    final def isAnyVal: Boolean = tpe <:< Type.AnyVal
-    final def isOption: Boolean = tpe <:< Type.Option(Type.Any)
-    final def isEither: Boolean = tpe <:< Type.Either(Type.Any, Type.Any)
-    final def isLeft: Boolean = tpe <:< Type.Either.Left(Type.Any, Type.Any)
-    final def isRight: Boolean = tpe <:< Type.Either.Right(Type.Any, Type.Any)
-    final def isIterable: Boolean = tpe <:< Type.Iterable(Type.Any)
-    final def isMap: Boolean = tpe <:< Type.Map(Type.Any, Type.Any)
+    def isTuple: Boolean = Type.isTuple(tpe)
+    def isAnyVal: Boolean = tpe <:< Type.AnyVal
+    def isOption: Boolean = tpe <:< Type.Option(Type.Any)
+    def isEither: Boolean = tpe <:< Type.Either(Type.Any, Type.Any)
+    def isLeft: Boolean = tpe <:< Type.Either.Left(Type.Any, Type.Any)
+    def isRight: Boolean = tpe <:< Type.Either.Right(Type.Any, Type.Any)
+    def isIterable: Boolean = tpe <:< Type.Iterable(Type.Any)
+    def isMap: Boolean = tpe <:< Type.Map(Type.Any, Type.Any)
 
-    final def asExistential: ExistentialType = ExistentialType[A](tpe)
-    final def asExistentialBounded[L <: A, U >: A]: ExistentialType.Bounded[L, U] =
-      ExistentialType.Bounded[L, U, A](tpe)
-    final def asExistentialLowerBounded[L <: A]: ExistentialType.LowerBounded[L] =
-      ExistentialType.LowerBounded[L, A](tpe)
-    final def asExistentialUpperBounded[U >: A]: ExistentialType.UpperBounded[U] =
-      ExistentialType.UpperBounded[U, A](tpe)
+    def asExistential: ExistentialType = ExistentialType[A](tpe)
+    def asExistentialBounded[L <: A, U >: A]: ExistentialType.Bounded[L, U] = ExistentialType.Bounded[L, U, A](tpe)
+    def asExistentialLowerBounded[L <: A]: ExistentialType.LowerBounded[L] = ExistentialType.LowerBounded[L, A](tpe)
+    def asExistentialUpperBounded[U >: A]: ExistentialType.UpperBounded[U] = ExistentialType.UpperBounded[U, A](tpe)
   }
+
+  implicit final protected class TypeStringOps[S <: String](private val tpe: Type[S]) {
+
+    def extractStringSingleton: String = Type.extractStringSingleton(tpe)
+  }
+
+  // TODO: move below
 
   trait Constructor1Bounded[L, U >: L, F[_ >: L <: U]] {
     def apply[A >: L <: U: Type]: Type[F[A]]

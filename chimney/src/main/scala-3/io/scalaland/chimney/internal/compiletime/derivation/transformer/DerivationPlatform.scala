@@ -2,11 +2,9 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 import io.scalaland.chimney.internal.compiletime.datatypes
-import io.scalaland.chimney.internal.compiletime.derivation.ConfigurationsPlatform
 
 abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     extends DefinitionsPlatform(using q)
-    with ConfigurationsPlatform
     with Derivation
     with datatypes.ProductTypesPlatform
     with datatypes.SealedHierarchiesPlatform

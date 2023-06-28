@@ -134,8 +134,7 @@ private[compiletime] trait Configurations { this: Definitions =>
     type UpdateCfg[_ <: TransformerCfg]
   }
 
-  protected val Configurations: ConfigurationsModule
-  protected trait ConfigurationsModule { this: Configurations.type =>
+  protected object Configurations {
 
     final def readTransformerConfig[
         Cfg <: internal.TransformerCfg: Type,
@@ -191,9 +190,82 @@ private[compiletime] trait Configurations { this: Definitions =>
       // $COVERAGE-ON$
     }
 
-    // TODO: rewrite to shared
-    protected def extractTransformerConfig[Cfg <: internal.TransformerCfg: Type](
+    // This (suppressed) error is a case when compiler is simply wrong :)
+    @scala.annotation.nowarn("msg=Unreachable case")
+    private def extractTransformerConfig[Cfg <: internal.TransformerCfg: Type](
         runtimeDataIdx: Int
-    ): TransformerConfig
+    ): TransformerConfig = Type[Cfg] match {
+      case empty if empty =:= ChimneyType.TransformerCfg.Empty => TransformerConfig()
+      case ChimneyType.TransformerCfg.FieldConst(fieldName, cfg) =>
+        ExistentialType.Bounded.use2(fieldName, cfg) {
+          implicit FieldName: Type[fieldName.Underlying] => implicit Cfg: Type[cfg.Underlying] =>
+            extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+              .addFieldOverride(
+                Type[fieldName.Underlying].extractStringSingleton,
+                RuntimeFieldOverride.Const(runtimeDataIdx)
+              )
+        }
+      case ChimneyType.TransformerCfg.FieldConstPartial(fieldName, cfg) =>
+        ExistentialType.Bounded.use2(fieldName, cfg) {
+          implicit FieldName: Type[fieldName.Underlying] => implicit Cfg: Type[cfg.Underlying] =>
+            extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+              .addFieldOverride(
+                Type[fieldName.Underlying].extractStringSingleton,
+                RuntimeFieldOverride.ConstPartial(runtimeDataIdx)
+              )
+        }
+      case ChimneyType.TransformerCfg.FieldComputed(fieldName, cfg) =>
+        ExistentialType.Bounded.use2(fieldName, cfg) {
+          implicit FieldName: Type[fieldName.Underlying] => implicit Cfg: Type[cfg.Underlying] =>
+            extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+              .addFieldOverride(
+                Type[fieldName.Underlying].extractStringSingleton,
+                RuntimeFieldOverride.Computed(runtimeDataIdx)
+              )
+        }
+      case ChimneyType.TransformerCfg.FieldComputedPartial(fieldName, cfg) =>
+        ExistentialType.Bounded.use2(fieldName, cfg) {
+          implicit FieldName: Type[fieldName.Underlying] => implicit Cfg: Type[cfg.Underlying] =>
+            extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+              .addFieldOverride(
+                Type[fieldName.Underlying].extractStringSingleton,
+                RuntimeFieldOverride.ComputedPartial(runtimeDataIdx)
+              )
+        }
+      case ChimneyType.TransformerCfg.FieldRelabelled(fromName, toName, cfg) =>
+        ExistentialType.Bounded.use3(fromName, toName, cfg) {
+          implicit FromName: Type[fromName.Underlying] => implicit ToName: Type[toName.Underlying] =>
+            implicit Cfg: Type[cfg.Underlying] =>
+              extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+                .addFieldOverride(
+                  Type[toName.Underlying].extractStringSingleton,
+                  RuntimeFieldOverride.RenamedFrom(Type[fromName.Underlying].extractStringSingleton)
+                )
+        }
+      case ChimneyType.TransformerCfg.CoproductInstance(instance, target, cfg) =>
+        ExistentialType.Bounded.use3(instance, target, cfg) {
+          implicit Instance: Type[instance.Underlying] => implicit Target: Type[target.Underlying] =>
+            implicit Cfg: Type[cfg.Underlying] =>
+              extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+                .addCoproductInstance(
+                  Type[instance.Underlying].asExistential,
+                  Type[target.Underlying].asExistential,
+                  RuntimeCoproductOverride.CoproductInstance(runtimeDataIdx)
+                )
+        }
+      case ChimneyType.TransformerCfg.CoproductInstancePartial(instance, target, cfg) =>
+        ExistentialType.Bounded.use3(instance, target, cfg) {
+          implicit Instance: Type[instance.Underlying] => implicit Target: Type[target.Underlying] =>
+            implicit Cfg: Type[cfg.Underlying] =>
+              extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+                .addCoproductInstance(
+                  Type[instance.Underlying].asExistential,
+                  Type[target.Underlying].asExistential,
+                  RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
+                )
+        }
+      case _ =>
+        reportError(s"Bad internal transformer config type shape ${Type.prettyPrint[Cfg]}!!")
+    }
   }
 }
