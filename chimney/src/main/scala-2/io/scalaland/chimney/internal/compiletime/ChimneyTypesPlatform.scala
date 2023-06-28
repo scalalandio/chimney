@@ -7,7 +7,7 @@ import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 
 private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: DefinitionsPlatform =>
 
-  import c.universe.{internal as _, Transformer as _, *}
+  import c.universe.{internal as _, Name as _, Transformer as _, *}
 
   protected object ChimneyType extends ChimneyTypeModule {
 
@@ -46,33 +46,194 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
       weakTypeTag[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
     val RuntimeDataStore: Type[TransformerDefinitionCommons.RuntimeDataStore] =
-      weakTypeTag
+      weakTypeTag[TransformerDefinitionCommons.RuntimeDataStore]
+
     object TransformerCfg extends TransformerCfgModule {
       val Empty: Type[internal.TransformerCfg.Empty] = weakTypeTag[internal.TransformerCfg.Empty]
+      object FieldConst extends FieldConstModule {
+        def apply[Name <: String: Type, C <: internal.TransformerCfg: Type]
+            : Type[internal.TransformerCfg.FieldConst[Name, C]] =
+          weakTypeTag[internal.TransformerCfg.FieldConst[Name, C]]
+        def unapply[A](A: Type[A]): Option[
+          (ExistentialType.UpperBounded[String], ExistentialType.UpperBounded[internal.TransformerCfg])
+        ] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[internal.TransformerCfg.FieldConst[?, ?]].typeConstructor)
+            Some(
+              (
+                fromUntyped[String](A.tpe.typeArgs(0)).asExistentialUpperBounded[String],
+                fromUntyped[internal.TransformerCfg](A.tpe.typeArgs(1))
+                  .asExistentialUpperBounded[internal.TransformerCfg]
+              )
+            )
+          else scala.None
+      }
+      object FieldConstPartial extends FieldConstPartialModule {
+        def apply[Name <: String: Type, C <: internal.TransformerCfg: Type]
+            : Type[internal.TransformerCfg.FieldConstPartial[Name, C]] =
+          weakTypeTag[internal.TransformerCfg.FieldConstPartial[Name, C]]
+        def unapply[A](A: Type[A]): Option[
+          (ExistentialType.UpperBounded[String], ExistentialType.UpperBounded[internal.TransformerCfg])
+        ] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[internal.TransformerCfg.FieldConstPartial[?, ?]].typeConstructor)
+            Some(
+              (
+                fromUntyped[String](A.tpe.typeArgs(0)).asExistentialUpperBounded[String],
+                fromUntyped[internal.TransformerCfg](A.tpe.typeArgs(1))
+                  .asExistentialUpperBounded[internal.TransformerCfg]
+              )
+            )
+          else scala.None
+      }
+      object FieldComputed extends FieldComputedModule {
+        def apply[Name <: String: Type, C <: internal.TransformerCfg: Type]
+            : Type[internal.TransformerCfg.FieldComputed[Name, C]] =
+          weakTypeTag[internal.TransformerCfg.FieldComputed[Name, C]]
+        def unapply[A](A: Type[A]): Option[
+          (ExistentialType.UpperBounded[String], ExistentialType.UpperBounded[internal.TransformerCfg])
+        ] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[internal.TransformerCfg.FieldComputed[?, ?]].typeConstructor)
+            Some(
+              (
+                fromUntyped[String](A.tpe.typeArgs(0)).asExistentialUpperBounded[String],
+                fromUntyped[internal.TransformerCfg](A.tpe.typeArgs(1))
+                  .asExistentialUpperBounded[internal.TransformerCfg]
+              )
+            )
+          else scala.None
+      }
+      object FieldComputedPartial extends FieldComputedPartialModule {
+        def apply[Name <: String: Type, C <: internal.TransformerCfg: Type]
+            : Type[internal.TransformerCfg.FieldComputedPartial[Name, C]] =
+          weakTypeTag[internal.TransformerCfg.FieldComputedPartial[Name, C]]
+        def unapply[A](A: Type[A]): Option[
+          (ExistentialType.UpperBounded[String], ExistentialType.UpperBounded[internal.TransformerCfg])
+        ] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[internal.TransformerCfg.FieldComputedPartial[?, ?]].typeConstructor)
+            Some(
+              (
+                fromUntyped[String](A.tpe.typeArgs(0)).asExistentialUpperBounded[String],
+                fromUntyped[internal.TransformerCfg](A.tpe.typeArgs(1))
+                  .asExistentialUpperBounded[internal.TransformerCfg]
+              )
+            )
+          else scala.None
+      }
+      object FieldRelabelled extends FieldRelabelledModule {
+        def apply[FromName <: String: Type, ToName <: String: Type, C <: internal.TransformerCfg: Type]
+            : Type[internal.TransformerCfg.FieldRelabelled[FromName, ToName, C]] =
+          weakTypeTag[internal.TransformerCfg.FieldRelabelled[FromName, ToName, C]]
+        def unapply[A](A: Type[A]): Option[
+          (
+              ExistentialType.UpperBounded[String],
+              ExistentialType.UpperBounded[String],
+              ExistentialType.UpperBounded[internal.TransformerCfg]
+          )
+        ] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[internal.TransformerCfg.FieldRelabelled[?, ?, ?]].typeConstructor)
+            Some(
+              (
+                fromUntyped[String](A.tpe.typeArgs(0)).asExistentialUpperBounded[String],
+                fromUntyped[String](A.tpe.typeArgs(1)).asExistentialUpperBounded[String],
+                fromUntyped[internal.TransformerCfg](A.tpe.typeArgs(2))
+                  .asExistentialUpperBounded[internal.TransformerCfg]
+              )
+            )
+          else scala.None
+      }
+      object CoproductInstance extends CoproductInstanceModule {
+        def apply[InstType: Type, TargetType: Type, C <: internal.TransformerCfg: Type]
+            : Type[internal.TransformerCfg.CoproductInstance[InstType, TargetType, C]] =
+          weakTypeTag[internal.TransformerCfg.CoproductInstance[InstType, TargetType, C]]
+        def unapply[A](A: Type[A]): Option[
+          (
+              ExistentialType,
+              ExistentialType,
+              ExistentialType.UpperBounded[internal.TransformerCfg]
+          )
+        ] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[internal.TransformerCfg.CoproductInstance[?, ?, ?]].typeConstructor)
+            Some(
+              (
+                fromUntyped[String](A.tpe.typeArgs(0)).asExistential,
+                fromUntyped[String](A.tpe.typeArgs(1)).asExistential,
+                fromUntyped[internal.TransformerCfg](A.tpe.typeArgs(2))
+                  .asExistentialUpperBounded[internal.TransformerCfg]
+              )
+            )
+          else scala.None
+      }
+      object CoproductInstancePartial extends CoproductInstancePartialModule {
+        def apply[InstType: Type, TargetType: Type, C <: internal.TransformerCfg: Type]
+            : Type[internal.TransformerCfg.CoproductInstancePartial[InstType, TargetType, C]] =
+          weakTypeTag[internal.TransformerCfg.CoproductInstancePartial[InstType, TargetType, C]]
+        def unapply[A](A: Type[A]): Option[
+          (
+              ExistentialType,
+              ExistentialType,
+              ExistentialType.UpperBounded[internal.TransformerCfg]
+          )
+        ] =
+          if (
+            A.tpe.typeConstructor <:< weakTypeOf[
+              internal.TransformerCfg.CoproductInstancePartial[?, ?, ?]
+            ].typeConstructor
+          )
+            Some(
+              (
+                fromUntyped[String](A.tpe.typeArgs(0)).asExistential,
+                fromUntyped[String](A.tpe.typeArgs(1)).asExistential,
+                fromUntyped[internal.TransformerCfg](A.tpe.typeArgs(2))
+                  .asExistentialUpperBounded[internal.TransformerCfg]
+              )
+            )
+          else scala.None
+      }
     }
 
     object TransformerFlags extends TransformerFlagsModule {
-      import internal.TransformerFlags.Flag
-
       val Default: Type[internal.TransformerFlags.Default] = weakTypeTag[internal.TransformerFlags.Default]
 
       object Enable extends EnableModule {
-        def apply[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
+        def apply[F <: internal.TransformerFlags.Flag: Type, Flags <: internal.TransformerFlags: Type]
             : Type[internal.TransformerFlags.Enable[F, Flags]] =
           weakTypeTag[internal.TransformerFlags.Enable[F, Flags]]
-        def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] = {
+        def unapply[A](A: Type[A]): Option[
+          (
+              ExistentialType.UpperBounded[internal.TransformerFlags.Flag],
+              ExistentialType.UpperBounded[internal.TransformerFlags]
+          )
+        ] = {
           if (A.tpe.typeConstructor <:< weakTypeOf[internal.TransformerFlags.Enable[?, ?]].typeConstructor)
-            Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
+            Some(
+              (
+                fromUntyped[internal.TransformerFlags.Flag](A.tpe.typeArgs(0))
+                  .asExistentialUpperBounded[internal.TransformerFlags.Flag],
+                fromUntyped[internal.TransformerFlags](A.tpe.typeArgs(1))
+                  .asExistentialUpperBounded[internal.TransformerFlags]
+              )
+            )
           else scala.None
         }
       }
       object Disable extends DisableModule {
-        def apply[F <: Flag: Type, Flags <: internal.TransformerFlags: Type]
+        def apply[F <: internal.TransformerFlags.Flag: Type, Flags <: internal.TransformerFlags: Type]
             : Type[internal.TransformerFlags.Disable[F, Flags]] =
           weakTypeTag[internal.TransformerFlags.Disable[F, Flags]]
-        def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
+        def unapply[A](A: Type[A]): Option[
+          (
+              ExistentialType.UpperBounded[internal.TransformerFlags.Flag],
+              ExistentialType.UpperBounded[internal.TransformerFlags]
+          )
+        ] =
           if (A.tpe.typeConstructor <:< weakTypeOf[internal.TransformerFlags.Disable[?, ?]].typeConstructor)
-            Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
+            Some(
+              (
+                fromUntyped[internal.TransformerFlags.Flag](A.tpe.typeArgs(0))
+                  .asExistentialUpperBounded[internal.TransformerFlags.Flag],
+                fromUntyped[internal.TransformerFlags](A.tpe.typeArgs(1))
+                  .asExistentialUpperBounded[internal.TransformerFlags]
+              )
+            )
           else scala.None
       }
 
@@ -91,13 +252,16 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Def
           def apply[R <: ImplicitTransformerPreference: Type]
               : Type[internal.TransformerFlags.ImplicitConflictResolution[R]] =
             weakTypeTag[internal.TransformerFlags.ImplicitConflictResolution[R]]
-          def unapply[A](A: Type[A]): Option[ExistentialType] =
+          def unapply[A](A: Type[A]): Option[ExistentialType.UpperBounded[ImplicitTransformerPreference]] =
             if (
               A.tpe.typeConstructor <:< weakTypeOf[
                 internal.TransformerFlags.ImplicitConflictResolution[?]
               ].typeConstructor
             )
-              Some(fromUntyped(A.tpe.typeArgs.head).asExistential)
+              Some(
+                fromUntyped[ImplicitTransformerPreference](A.tpe.typeArgs.head)
+                  .asExistentialUpperBounded[ImplicitTransformerPreference]
+              )
             else scala.None
         }
         val MacrosLogging: Type[internal.TransformerFlags.MacrosLogging] =

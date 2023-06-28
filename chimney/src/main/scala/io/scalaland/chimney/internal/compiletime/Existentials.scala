@@ -8,24 +8,33 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
    * Additionally, we might need to have something to prove that our Type[?] is has the same ? as some Value[?].
    * For that, this utility would be useful.
    */
-  sealed protected trait Existential[F[_]] {
-
-    type Underlying
-    val Underlying: Type[Underlying]
-
-    val value: F[Underlying]
-
-    def mapK[G[_]](f: Type[Underlying] => F[Underlying] => G[Underlying]): Existential[G] =
-      Existential[G, Underlying](f(Underlying)(value))(Underlying)
-  }
+  final protected type Existential[F[_]] = Existential.Bounded[Nothing, Any, F]
   protected object Existential {
 
-    private class Impl[F[_], A](val Underlying: Type[A], val value: F[A]) extends Existential[F] {
+    /** Bounded version which allows expressing L <:< A <:< U where it's needed. */
+    sealed trait Bounded[L, U >: L, F[_ >: L <: U]] {
 
+      type Underlying >: L <: U
+      val Underlying: Type[Underlying]
+
+      val value: F[Underlying]
+
+      def mapK[G[_]](f: Type[Underlying] => F[Underlying] => G[Underlying]): Bounded[L, U, G] =
+        Bounded[L, U, G, Underlying](f(Underlying)(value))(Underlying)
+    }
+    object Bounded {
+
+      def apply[L, U >: L, F[_ >: L <: U], A >: L <: U: Type](value: F[A]): Bounded[L, U, F] =
+        new Impl[L, U, F, A](Type[A], value)
+    }
+    private class Impl[L, U >: L, F[_ >: L <: U], A >: L <: U](
+        val Underlying: Type[A],
+        val value: F[A]
+    ) extends Bounded[L, U, F] {
       type Underlying = A
     }
 
-    def apply[F[_], A: Type](value: F[A]): Existential[F] = new Impl(Type[A], value)
+    def apply[F[_], A: Type](value: F[A]): Existential[F] = Bounded[Nothing, Any, F, A](value)
 
     def use[F[_], Out](e: Existential[F])(thunk: Type[e.Underlying] => F[e.Underlying] => Out): Out =
       thunk(e.Underlying)(e.value)
@@ -38,7 +47,45 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
   final protected type ExistentialType = Existential[Type]
   protected object ExistentialType {
 
-    def apply[A](tpe: Type[A]): ExistentialType = Existential[Type, A](tpe)(tpe)
+    type Bounded[L, U >: L] = Existential.Bounded[L, U, Type]
+    object Bounded {
+      def apply[L, U >: L, A >: L <: U](implicit A: Type[A]): Bounded[L, U] = Existential.Bounded[L, U, Type, A](A)
+
+      def use[L, U >: L, Out](et: ExistentialType.Bounded[L, U])(thunk: Type[et.Underlying] => Out): Out = thunk(
+        et.Underlying
+      )
+      def use2[L1, U1 >: L1, L2, U2 >: L2, Out](
+          et1: ExistentialType.Bounded[L1, U1],
+          et2: ExistentialType.Bounded[L2, U2]
+      )(
+          thunk: Type[et1.Underlying] => Type[et2.Underlying] => Out
+      ): Out = use(et2)(use(et1)(thunk))
+      def use3[L1, U1 >: L1, L2, U2 >: L2, L3, U3 >: L3, Out](
+          et1: ExistentialType.Bounded[L1, U1],
+          et2: ExistentialType.Bounded[L2, U2],
+          et3: ExistentialType.Bounded[L3, U3]
+      )(
+          thunk: Type[et1.Underlying] => Type[et2.Underlying] => Type[et3.Underlying] => Out
+      ): Out = use(et3)(use2(et1, et2)(thunk))
+      def use4[L1, U1 >: L1, L2, U2 >: L2, L3, U3 >: L3, L4, U4 >: L4, Out](
+          et1: ExistentialType.Bounded[L1, U1],
+          et2: ExistentialType.Bounded[L2, U2],
+          et3: ExistentialType.Bounded[L3, U3],
+          et4: ExistentialType.Bounded[L4, U4]
+      )(
+          thunk: Type[et1.Underlying] => Type[et2.Underlying] => Type[et3.Underlying] => Type[et4.Underlying] => Out
+      ): Out = use(et4)(use3(et1, et2, et3)(thunk))
+    }
+    type LowerBounded[L] = Existential.Bounded[L, Any, Type]
+    object LowerBounded {
+      def apply[L, A >: L](implicit A: Type[A]): Bounded[L, Any] = Existential.Bounded[L, Any, Type, A](A)
+    }
+    type UpperBounded[U] = Existential.Bounded[Nothing, U, Type]
+    object UpperBounded {
+      def apply[U, A <: U](implicit A: Type[A]): Bounded[Nothing, U] = Existential.Bounded[Nothing, U, Type, A](A)
+    }
+
+    def apply[A](implicit A: Type[A]): ExistentialType = Existential[Type, A](A)(A)
 
     def prettyPrint(existentialType: ExistentialType): String = Type.prettyPrint(existentialType.Underlying)
 

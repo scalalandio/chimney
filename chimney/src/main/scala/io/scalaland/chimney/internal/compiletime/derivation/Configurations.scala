@@ -147,45 +147,47 @@ private[compiletime] trait Configurations { this: Definitions =>
       extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
     }
 
-    type FlagsHead <: internal.TransformerFlags.Flag
-    type FlagsTail <: internal.TransformerFlags
-    private def extractTransformerFlags[Flag <: internal.TransformerFlags: Type](
+    // This (suppressed) error is a case when compiler is simply wrong :)
+    @scala.annotation.nowarn("msg=Unreachable case")
+    private def extractTransformerFlags[Flags <: internal.TransformerFlags: Type](
         defaultFlags: TransformerFlags
-    ): TransformerFlags = Type[Flag] match {
+    ): TransformerFlags = Type[Flags] match {
       case default if default =:= ChimneyType.TransformerFlags.Default => defaultFlags
       case ChimneyType.TransformerFlags.Enable(flag, flags) =>
-        implicit val Flag: Type[FlagsHead] = flag.Underlying.asInstanceOf[Type[FlagsHead]]
-        implicit val Flags: Type[FlagsTail] = flags.Underlying.asInstanceOf[Type[FlagsTail]]
-        Flag match {
-          case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(r) =>
-            if (r.Underlying =:= ChimneyType.PreferTotalTransformer)
-              extractTransformerFlags[FlagsTail](defaultFlags).setImplicitConflictResolution(
-                Some(dsls.PreferTotalTransformer)
-              )
-            else if (r.Underlying =:= ChimneyType.PreferPartialTransformer)
-              extractTransformerFlags[FlagsTail](defaultFlags).setImplicitConflictResolution(
-                Some(dsls.PreferPartialTransformer)
-              )
-            else {
-              // $COVERAGE-OFF$
-              reportError("Invalid implicit conflict resolution preference type!!")
-              // $COVERAGE-ON$
+        ExistentialType.Bounded.use2(flag, flags) {
+          implicit Flag: Type[flag.Underlying] => implicit Flags: Type[flags.Underlying] =>
+            Flag match {
+              case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(r) =>
+                if (r.Underlying =:= ChimneyType.PreferTotalTransformer)
+                  extractTransformerFlags[flags.Underlying](defaultFlags).setImplicitConflictResolution(
+                    Some(dsls.PreferTotalTransformer)
+                  )
+                else if (r.Underlying =:= ChimneyType.PreferPartialTransformer)
+                  extractTransformerFlags[flags.Underlying](defaultFlags).setImplicitConflictResolution(
+                    Some(dsls.PreferPartialTransformer)
+                  )
+                else {
+                  // $COVERAGE-OFF$
+                  reportError("Invalid implicit conflict resolution preference type!!")
+                  // $COVERAGE-ON$
+                }
+              case _ =>
+                extractTransformerFlags[flags.Underlying](defaultFlags).setBoolFlag[flag.Underlying](value = true)
             }
-          case _ =>
-            extractTransformerFlags[FlagsTail](defaultFlags).setBoolFlag[FlagsHead](value = true)
         }
       case ChimneyType.TransformerFlags.Disable(flag, flags) =>
-        implicit val Flag: Type[FlagsHead] = flag.Underlying.asInstanceOf[Type[FlagsHead]]
-        implicit val Flags: Type[FlagsTail] = flags.Underlying.asInstanceOf[Type[FlagsTail]]
-        Flag match {
-          case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(_) =>
-            extractTransformerFlags[FlagsTail](defaultFlags).setImplicitConflictResolution(None)
-          case _ =>
-            extractTransformerFlags[FlagsTail](defaultFlags).setBoolFlag[FlagsHead](value = false)
+        ExistentialType.Bounded.use2(flag, flags) {
+          implicit Flag: Type[flag.Underlying] => implicit Flags: Type[flags.Underlying] =>
+            Flag match {
+              case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(_) =>
+                extractTransformerFlags[flags.Underlying](defaultFlags).setImplicitConflictResolution(None)
+              case _ =>
+                extractTransformerFlags[flags.Underlying](defaultFlags).setBoolFlag[flag.Underlying](value = false)
+            }
         }
       case _ =>
         // $COVERAGE-OFF$
-        reportError(s"Bad internal transformer flags type shape ${Type.prettyPrint[Flag]}!")
+        reportError(s"Bad internal transformer flags type shape ${Type.prettyPrint[Flags]}!")
       // $COVERAGE-ON$
     }
 

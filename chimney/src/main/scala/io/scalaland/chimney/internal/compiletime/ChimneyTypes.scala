@@ -4,7 +4,7 @@ import io.scalaland.chimney.*
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons.RuntimeDataStore
 import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
 
-private[compiletime] trait ChimneyTypes { this: Types & Existentials =>
+private[compiletime] trait ChimneyTypes { this: Types with Existentials =>
 
   protected val ChimneyType: ChimneyTypeModule
   protected trait ChimneyTypeModule {
@@ -38,24 +38,99 @@ private[compiletime] trait ChimneyTypes { this: Types & Existentials =>
 
     val TransformerCfg: TransformerCfgModule
     trait TransformerCfgModule {
-      def Empty: Type[internal.TransformerCfg.Empty]
+      val Empty: Type[internal.TransformerCfg.Empty]
+      val FieldConst: FieldConstModule
+      trait FieldConstModule
+          extends Constructor2Bounded[
+            Nothing,
+            String,
+            Nothing,
+            internal.TransformerCfg,
+            internal.TransformerCfg.FieldConst
+          ] { this: FieldConst.type => }
+      val FieldConstPartial: FieldConstPartialModule
+      trait FieldConstPartialModule
+          extends Constructor2Bounded[
+            Nothing,
+            String,
+            Nothing,
+            internal.TransformerCfg,
+            internal.TransformerCfg.FieldConstPartial
+          ] { this: FieldConstPartial.type => }
+      val FieldComputed: FieldComputedModule
+      trait FieldComputedModule
+          extends Constructor2Bounded[
+            Nothing,
+            String,
+            Nothing,
+            internal.TransformerCfg,
+            internal.TransformerCfg.FieldComputed
+          ] { this: FieldComputed.type => }
+      val FieldComputedPartial: FieldComputedPartialModule
+      trait FieldComputedPartialModule
+          extends Constructor2Bounded[
+            Nothing,
+            String,
+            Nothing,
+            internal.TransformerCfg,
+            internal.TransformerCfg.FieldComputedPartial
+          ] { this: FieldComputedPartial.type => }
+      val FieldRelabelled: FieldRelabelledModule
+      trait FieldRelabelledModule
+          extends Constructor3Bounded[
+            Nothing,
+            String,
+            Nothing,
+            String,
+            Nothing,
+            internal.TransformerCfg,
+            internal.TransformerCfg.FieldRelabelled
+          ] { this: FieldRelabelled.type => }
+      val CoproductInstance: CoproductInstanceModule
+      trait CoproductInstanceModule
+          extends Constructor3Bounded[
+            Nothing,
+            Any,
+            Nothing,
+            Any,
+            Nothing,
+            internal.TransformerCfg,
+            internal.TransformerCfg.CoproductInstance
+          ] { this: CoproductInstance.type => }
+      val CoproductInstancePartial: CoproductInstancePartialModule
+      trait CoproductInstancePartialModule
+          extends Constructor3Bounded[
+            Nothing,
+            Any,
+            Nothing,
+            Any,
+            Nothing,
+            internal.TransformerCfg,
+            internal.TransformerCfg.CoproductInstancePartial
+          ] { this: CoproductInstancePartial.type => }
     }
 
     val TransformerFlags: TransformerFlagsModule
     trait TransformerFlagsModule { this: TransformerFlags.type =>
       val Default: Type[internal.TransformerFlags.Default]
       val Enable: EnableModule
-      trait EnableModule { this: Enable.type =>
-        def apply[F <: internal.TransformerFlags.Flag: Type, Flags <: internal.TransformerFlags: Type]
-            : Type[internal.TransformerFlags.Enable[F, Flags]]
-        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)]
-      }
+      trait EnableModule
+          extends Constructor2Bounded[
+            Nothing,
+            internal.TransformerFlags.Flag,
+            Nothing,
+            internal.TransformerFlags,
+            internal.TransformerFlags.Enable
+          ] { this: Enable.type => }
       val Disable: DisableModule
-      trait DisableModule { this: Disable.type =>
-        def apply[F <: internal.TransformerFlags.Flag: Type, Flags <: internal.TransformerFlags: Type]
-            : Type[internal.TransformerFlags.Disable[F, Flags]]
-        def unapply[A](tpe: Type[A]): Option[(ExistentialType, ExistentialType)]
-      }
+      trait DisableModule
+          extends Constructor2Bounded[
+            Nothing,
+            internal.TransformerFlags.Flag,
+            Nothing,
+            internal.TransformerFlags,
+            internal.TransformerFlags.Disable
+          ] { this: Disable.type => }
 
       val Flags: FlagsModule
       trait FlagsModule { this: Flags.type =>
@@ -65,11 +140,12 @@ private[compiletime] trait ChimneyTypes { this: Types & Existentials =>
         val MethodAccessors: Type[internal.TransformerFlags.MethodAccessors]
         val OptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone]
         val ImplicitConflictResolution: ImplicitConflictResolutionModule
-        trait ImplicitConflictResolutionModule { this: ImplicitConflictResolution.type =>
-          def apply[R <: ImplicitTransformerPreference: Type]
-              : Type[internal.TransformerFlags.ImplicitConflictResolution[R]]
-          def unapply[A](tpe: Type[A]): Option[ExistentialType]
-        }
+        trait ImplicitConflictResolutionModule
+            extends Constructor1Bounded[
+              Nothing,
+              ImplicitTransformerPreference,
+              internal.TransformerFlags.ImplicitConflictResolution
+            ] { this: ImplicitConflictResolution.type => }
         val MacrosLogging: Type[internal.TransformerFlags.MacrosLogging]
       }
     }

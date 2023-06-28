@@ -38,16 +38,6 @@ private[compiletime] trait Types { this: Existentials =>
       Unit.asExistential
     )
 
-    trait Constructor1[F[_]] {
-      def apply[A: Type]: Type[F[A]]
-      def unapply[A](A: Type[A]): Option[ExistentialType]
-    }
-
-    trait Constructor2[F[_, _]] {
-      def apply[A: Type, B: Type]: Type[F[A, B]]
-      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)]
-    }
-
     def Tuple2[A: Type, B: Type]: Type[(A, B)]
 
     def Function1[A: Type, B: Type]: Type[A => B]
@@ -104,8 +94,34 @@ private[compiletime] trait Types { this: Existentials =>
     final def isIterable: Boolean = tpe <:< Type.Iterable(Type.Any)
     final def isMap: Boolean = tpe <:< Type.Map(Type.Any, Type.Any)
 
-    final def asExistential: ExistentialType = ExistentialType(tpe)
+    final def asExistential: ExistentialType = ExistentialType[A](tpe)
+    final def asExistentialBounded[L <: A, U >: A]: ExistentialType.Bounded[L, U] =
+      ExistentialType.Bounded[L, U, A](tpe)
+    final def asExistentialLowerBounded[L <: A]: ExistentialType.LowerBounded[L] =
+      ExistentialType.LowerBounded[L, A](tpe)
+    final def asExistentialUpperBounded[U >: A]: ExistentialType.UpperBounded[U] =
+      ExistentialType.UpperBounded[U, A](tpe)
   }
+
+  trait Constructor1Bounded[L, U >: L, F[_ >: L <: U]] {
+    def apply[A >: L <: U: Type]: Type[F[A]]
+    def unapply[A](A: Type[A]): Option[ExistentialType.Bounded[L, U]]
+  }
+  trait Constructor1[F[_]] extends Constructor1Bounded[Nothing, Any, F]
+
+  trait Constructor2Bounded[L1, U1 >: L1, L2, U2 >: L2, F[_ >: L1 <: U1, _ >: L2 <: U2]] {
+    def apply[A >: L1 <: U1: Type, B >: L2 <: U2: Type]: Type[F[A, B]]
+    def unapply[A](A: Type[A]): Option[(ExistentialType.Bounded[L1, U1], ExistentialType.Bounded[L2, U2])]
+  }
+
+  trait Constructor2[F[_, _]] extends Constructor2Bounded[Nothing, Any, Nothing, Any, F]
+  trait Constructor3Bounded[L1, U1 >: L1, L2, U2 >: L2, L3, U3 >: L3, F[_ >: L1 <: U1, _ >: L2 <: U2, _ >: L3 <: U3]] {
+    def apply[A >: L1 <: U1: Type, B >: L2 <: U2: Type, C >: L3 <: U3: Type]: Type[F[A, B, C]]
+    def unapply[A](
+        A: Type[A]
+    ): Option[(ExistentialType.Bounded[L1, U1], ExistentialType.Bounded[L2, U2], ExistentialType.Bounded[L3, U3])]
+  }
+  trait Constructor3[F[_, _, _]] extends Constructor3Bounded[Nothing, Any, Nothing, Any, Nothing, Any, F]
 
   // you can import TypeImplicits.* in your shared code to avoid providing types manually, while avoiding conflicts with
   // implicit types seen in platform-specific scopes
