@@ -28,7 +28,10 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         c.Expr[Array[A]](q"_root_.scala.Array[${Type[A]}](..${args})")
 
       def map[A: Type, B: Type](array: Expr[Array[A]])(fExpr: Expr[A => B]): Expr[Array[B]] =
-        c.Expr[Array[B]](q"$array.map[${Type[B]}]($fExpr)")
+        if (scala.util.Properties.versionNumberString < "2.13")
+          c.Expr[Array[B]](q"$array.map[${Type[B]}, ${Type[Array[B]]}]($fExpr)")
+        else
+          c.Expr[Array[B]](q"$array.map[${Type[B]}]($fExpr)")
 
       // TODO: write it in similar way to MacroUtils.convertCollection
       def to[A: Type, C: Type](array: Expr[Array[A]])(
@@ -125,7 +128,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] = c.Expr[Unit](q"val _ = $expr")
 
     def prettyPrint[A](expr: Expr[A]): String =
-      expr
+      expr.tree
         .toString()
         .replaceAll("\\$\\d+", "")
         .replace("$u002E", ".")
