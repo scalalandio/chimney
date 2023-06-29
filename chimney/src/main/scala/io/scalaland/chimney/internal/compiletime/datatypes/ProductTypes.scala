@@ -12,10 +12,18 @@ private[compiletime] trait ProductTypes { this: Definitions =>
 
     final case class Getter[From, A](sourceType: Getter.SourceType, get: Expr[From] => Expr[A])
     object Getter {
+
+      /** Let us decide whether or now we can use the getter based on configuration */
       sealed trait SourceType extends scala.Product with Serializable
       object SourceType {
+
+        /** `val`/`lazy val` initialized by constructor - either as val parameter or in body */
         case object ConstructorVal extends SourceType
+
+        /** `def` without parameters which cannot be treated as Java Bean getter */
         case object AccessorMethod extends SourceType
+
+        /** `def` without parameters which name starts with `get` or `is` if it returns `Boolean` */
         case object JavaBeanGetter extends SourceType
       }
     }
@@ -31,7 +39,11 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     object Parameter {
       sealed trait TargetType extends scala.Product with Serializable
       object TargetType {
+
+        /** When constructing, value will be passed as constructor argument */
         case object ConstructorParameter extends TargetType
+
+        /** When constructing, value */
         case object SetterParameter extends TargetType
       }
     }
