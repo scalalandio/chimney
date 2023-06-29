@@ -8,7 +8,7 @@ import scala.collection.compat.Factory
 
 private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivation =>
 
-  import TypeImplicits.*, ChimneyTypeImplicits.*
+  import Type.Implicits.*, ChimneyType.Implicits.*
 
   protected object TransformIterableToIterableRule extends Rule("IterableToIterable") {
 

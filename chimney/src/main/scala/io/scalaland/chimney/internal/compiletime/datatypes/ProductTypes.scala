@@ -56,7 +56,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
 
     def parseExtraction[A: Type]: Option[Product.Extraction[A]]
     def parseConstructor[A: Type]: Option[Product.Constructor[A]]
-    final def parse[A: Type]: Option[Product[A]] = parseExtraction[A].zip(parseConstructor[A]).map {
+    final def parse[A: Type]: Option[Product[A]] = parseExtraction[A].zip(parseConstructor[A]).headOption.map {
       case (getters, constructor) => Product(getters, constructor)
     }
     final def unapply[A](tpe: Type[A]): Option[Product[A]] = parse(tpe)

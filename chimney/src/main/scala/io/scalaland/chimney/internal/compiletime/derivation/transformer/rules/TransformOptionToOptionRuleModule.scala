@@ -6,7 +6,7 @@ import io.scalaland.chimney.partial
 
 private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation =>
 
-  import TypeImplicits.*, ChimneyTypeImplicits.*
+  import Type.Implicits.*, ChimneyType.Implicits.*
 
   protected object TransformOptionToOptionRule extends Rule("OptionToOption") {
 

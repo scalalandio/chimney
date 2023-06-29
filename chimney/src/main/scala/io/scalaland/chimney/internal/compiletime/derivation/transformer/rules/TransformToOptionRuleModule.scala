@@ -5,7 +5,7 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
 
 private[compiletime] trait TransformToOptionRuleModule { this: Derivation & TransformOptionToOptionRuleModule =>
 
-  import TypeImplicits.*
+  import Type.Implicits.*
 
   protected object TransformToOptionRule extends Rule("ToOption") {
 

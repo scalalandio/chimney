@@ -6,7 +6,7 @@ import io.scalaland.chimney.{internal, partial, PartialTransformer, Transformer}
 
 private[compiletime] trait Gateway { this: Derivation =>
 
-  import ChimneyTypeImplicits.*
+  import ChimneyType.Implicits.*
 
   // Intended for: being called from platform-specific code which returns Expr directly to splicing site
 

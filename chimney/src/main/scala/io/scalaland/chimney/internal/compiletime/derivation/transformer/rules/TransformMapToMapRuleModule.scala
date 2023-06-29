@@ -8,7 +8,7 @@ import scala.collection.compat.Factory
 
 private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with TransformIterableToIterableRuleModule =>
 
-  import TypeImplicits.*, ChimneyTypeImplicits.*
+  import Type.Implicits.*, ChimneyType.Implicits.*
 
   protected object TransformMapToMapRule extends Rule("MapToMap") {
 

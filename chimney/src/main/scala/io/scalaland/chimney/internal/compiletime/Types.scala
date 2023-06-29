@@ -11,6 +11,37 @@ private[compiletime] trait Types { this: Existentials =>
   protected trait TypeModule { this: Type.type =>
     final def apply[A](implicit A: Type[A]): Type[A] = A
 
+    // Interfaces for applying and extracting type parameters in shared code
+
+    /** Allow applying and extracting some type L <:< ? <:< U */
+    trait Ctor1Bounded[L, U >: L, F[_ >: L <: U]] {
+      def apply[A >: L <: U: Type]: Type[F[A]]
+      def unapply[A](A: Type[A]): Option[ExistentialType.Bounded[L, U]]
+    }
+    trait Ctor1UpperBounded[U, F[_ <: U]] extends Ctor1Bounded[Nothing, U, F]
+    trait Ctor1[F[_]] extends Ctor1Bounded[Nothing, Any, F]
+
+    /** Allow applying and extracting some types L1 <:< ? <:< U1, L2 <:< ? <:< U2 */
+    trait Ctor2Bounded[L1, U1 >: L1, L2, U2 >: L2, F[_ >: L1 <: U1, _ >: L2 <: U2]] {
+      def apply[A >: L1 <: U1: Type, B >: L2 <: U2: Type]: Type[F[A, B]]
+      def unapply[A](A: Type[A]): Option[(ExistentialType.Bounded[L1, U1], ExistentialType.Bounded[L2, U2])]
+    }
+    trait Ctor2UpperBounded[U1, U2, F[_ <: U1, _ <: U2]] extends Ctor2Bounded[Nothing, U1, Nothing, U2, F]
+    trait Ctor2[F[_, _]] extends Ctor2Bounded[Nothing, Any, Nothing, Any, F]
+
+    /** Allow applying and extracting some types L1 <:< ? <:< U1, L2 <:< ? <:< U2, L3 <:< ? <:< U3 */
+    trait Ctor3Bounded[L1, U1 >: L1, L2, U2 >: L2, L3, U3 >: L3, F[_ >: L1 <: U1, _ >: L2 <: U2, _ >: L3 <: U3]] {
+      def apply[A >: L1 <: U1: Type, B >: L2 <: U2: Type, C >: L3 <: U3: Type]: Type[F[A, B, C]]
+      def unapply[A](
+          A: Type[A]
+      ): Option[(ExistentialType.Bounded[L1, U1], ExistentialType.Bounded[L2, U2], ExistentialType.Bounded[L3, U3])]
+    }
+    trait Ctor3UpperBounded[U1, U2, U3, F[_ <: U1, _ <: U2, _ <: U3]]
+        extends Ctor3Bounded[Nothing, U1, Nothing, U2, Nothing, U3, F]
+    trait Ctor3[F[_, _, _]] extends Ctor3Bounded[Nothing, Any, Nothing, Any, Nothing, Any, F]
+
+    // Build-in types' definitions
+
     val Nothing: Type[Nothing]
     val Null: Type[Null]
     val Any: Type[Any]
@@ -44,32 +75,73 @@ private[compiletime] trait Types { this: Existentials =>
     def Function2[A: Type, B: Type, C: Type]: Type[(A, B) => C]
 
     val Array: ArrayModule
-    trait ArrayModule extends Constructor1[Array] { this: Array.type => }
+    trait ArrayModule extends Ctor1[Array] { this: Array.type => }
 
     val Option: OptionModule
-    trait OptionModule extends Constructor1[Option] { this: Option.type =>
+    trait OptionModule extends Ctor1[Option] { this: Option.type =>
       val None: Type[scala.None.type]
     }
 
     val Either: EitherModule
-    trait EitherModule extends Constructor2[Either] { this: Either.type =>
+    trait EitherModule extends Ctor2[Either] { this: Either.type =>
       val Left: LeftModule
-      trait LeftModule extends Constructor2[Left] { this: Left.type => }
+      trait LeftModule extends Ctor2[Left] { this: Left.type => }
 
       val Right: RightModule
-      trait RightModule extends Constructor2[Right] { this: Right.type => }
+      trait RightModule extends Ctor2[Right] { this: Right.type => }
     }
 
     val Iterable: IterableModule
-    trait IterableModule extends Constructor1[Iterable] { this: Iterable.type => }
+    trait IterableModule extends Ctor1[Iterable] { this: Iterable.type => }
 
     val Map: MapModule
-    trait MapModule extends Constructor2[Map] { this: Map.type => }
+    trait MapModule extends Ctor2[Map] { this: Map.type => }
 
     val Iterator: IteratorModule
-    trait IteratorModule extends Constructor1[Iterator] { this: Iterator.type => }
+    trait IteratorModule extends Ctor1[Iterator] { this: Iterator.type => }
 
     def Factory[A: Type, C: Type]: Type[Factory[A, C]]
+
+    // You can import Type.Implicits.* in your shared code to avoid providing types manually, while avoiding conflicts
+    // with implicit types seen in platform-specific scopes (which would happen if those implicits were always used).
+    object Implicits {
+
+      implicit val NothingType: Type[Nothing] = Nothing
+      implicit val NullType: Type[Null] = Null
+      implicit val AnyType: Type[Any] = Any
+      implicit val AnyValType: Type[AnyVal] = AnyVal
+      implicit val BooleanType: Type[Boolean] = Boolean
+      implicit val ByteType: Type[Byte] = Byte
+      implicit val CharType: Type[Char] = Char
+      implicit val ShortType: Type[Short] = Short
+      implicit val IntType: Type[Int] = Int
+      implicit val LongType: Type[Long] = Long
+      implicit val FloatType: Type[Float] = Float
+      implicit val DoubleType: Type[Double] = Double
+      implicit val UnitType: Type[Unit] = Unit
+      implicit val StringType: Type[String] = String
+
+      implicit def Tuple2Type[A: Type, B: Type]: Type[(A, B)] = Tuple2[A, B]
+
+      implicit def Function1Type[A: Type, B: Type]: Type[A => B] = Function1[A, B]
+      implicit def Function2Type[A: Type, B: Type, C: Type]: Type[(A, B) => C] = Function2[A, B, C]
+
+      implicit def ArrayType[A: Type]: Type[Array[A]] = Array[A]
+
+      implicit def OptionType[A: Type]: Type[Option[A]] = Option[A]
+      implicit val NoneType: Type[None.type] = Option.None
+
+      implicit def EitherType[L: Type, R: Type]: Type[Either[L, R]] = Either[L, R]
+      implicit def LeftType[L: Type, R: Type]: Type[Left[L, R]] = Either.Left[L, R]
+      implicit def RightType[L: Type, R: Type]: Type[Right[L, R]] = Either.Right[L, R]
+
+      implicit def IterableType[A: Type]: Type[Iterable[A]] = Iterable[A]
+      implicit def MapType[K: Type, V: Type]: Type[Map[K, V]] = Map[K, V]
+      implicit def IteratorType[A: Type]: Type[Iterator[A]] = Iterator[A]
+      implicit def FactoryType[A: Type, C: Type]: Type[Factory[A, C]] = Factory[A, C]
+    }
+
+    // Implementations of extension methods
 
     def extractStringSingleton[S <: String](S: Type[S]): String
 
@@ -101,67 +173,8 @@ private[compiletime] trait Types { this: Existentials =>
     def asExistentialLowerBounded[L <: A]: ExistentialType.LowerBounded[L] = ExistentialType.LowerBounded[L, A](tpe)
     def asExistentialUpperBounded[U >: A]: ExistentialType.UpperBounded[U] = ExistentialType.UpperBounded[U, A](tpe)
   }
-
   implicit final protected class TypeStringOps[S <: String](private val tpe: Type[S]) {
 
     def extractStringSingleton: String = Type.extractStringSingleton(tpe)
-  }
-
-  // TODO: move below
-
-  trait Constructor1Bounded[L, U >: L, F[_ >: L <: U]] {
-    def apply[A >: L <: U: Type]: Type[F[A]]
-    def unapply[A](A: Type[A]): Option[ExistentialType.Bounded[L, U]]
-  }
-  trait Constructor1[F[_]] extends Constructor1Bounded[Nothing, Any, F]
-
-  trait Constructor2Bounded[L1, U1 >: L1, L2, U2 >: L2, F[_ >: L1 <: U1, _ >: L2 <: U2]] {
-    def apply[A >: L1 <: U1: Type, B >: L2 <: U2: Type]: Type[F[A, B]]
-    def unapply[A](A: Type[A]): Option[(ExistentialType.Bounded[L1, U1], ExistentialType.Bounded[L2, U2])]
-  }
-
-  trait Constructor2[F[_, _]] extends Constructor2Bounded[Nothing, Any, Nothing, Any, F]
-  trait Constructor3Bounded[L1, U1 >: L1, L2, U2 >: L2, L3, U3 >: L3, F[_ >: L1 <: U1, _ >: L2 <: U2, _ >: L3 <: U3]] {
-    def apply[A >: L1 <: U1: Type, B >: L2 <: U2: Type, C >: L3 <: U3: Type]: Type[F[A, B, C]]
-    def unapply[A](
-        A: Type[A]
-    ): Option[(ExistentialType.Bounded[L1, U1], ExistentialType.Bounded[L2, U2], ExistentialType.Bounded[L3, U3])]
-  }
-  trait Constructor3[F[_, _, _]] extends Constructor3Bounded[Nothing, Any, Nothing, Any, Nothing, Any, F]
-
-  // you can import TypeImplicits.* in your shared code to avoid providing types manually, while avoiding conflicts with
-  // implicit types seen in platform-specific scopes
-  protected object TypeImplicits {
-
-    implicit val NothingType: Type[Nothing] = Type.Nothing
-    implicit val NullType: Type[Null] = Type.Null
-    implicit val AnyType: Type[Any] = Type.Any
-    implicit val AnyValType: Type[AnyVal] = Type.AnyVal
-    implicit val BooleanType: Type[Boolean] = Type.Boolean
-    implicit val ByteType: Type[Byte] = Type.Byte
-    implicit val CharType: Type[Char] = Type.Char
-    implicit val ShortType: Type[Short] = Type.Short
-    implicit val IntType: Type[Int] = Type.Int
-    implicit val LongType: Type[Long] = Type.Long
-    implicit val FloatType: Type[Float] = Type.Float
-    implicit val DoubleType: Type[Double] = Type.Double
-    implicit val UnitType: Type[Unit] = Type.Unit
-    implicit val StringType: Type[String] = Type.String
-
-    implicit def Tuple2Type[A: Type, B: Type]: Type[(A, B)] = Type.Tuple2[A, B]
-
-    implicit def Function1Type[A: Type, B: Type]: Type[A => B] = Type.Function1[A, B]
-    implicit def Function2Type[A: Type, B: Type, C: Type]: Type[(A, B) => C] = Type.Function2[A, B, C]
-
-    implicit def ArrayType[A: Type]: Type[Array[A]] = Type.Array[A]
-    implicit def OptionType[A: Type]: Type[Option[A]] = Type.Option[A]
-    implicit val NoneType: Type[None.type] = Type.Option.None
-    implicit def EitherType[L: Type, R: Type]: Type[Either[L, R]] = Type.Either[L, R]
-    implicit def LeftType[L: Type, R: Type]: Type[Left[L, R]] = Type.Either.Left[L, R]
-    implicit def RightType[L: Type, R: Type]: Type[Right[L, R]] = Type.Either.Right[L, R]
-    implicit def IterableType[A: Type]: Type[Iterable[A]] = Type.Iterable[A]
-    implicit def MapType[K: Type, V: Type]: Type[Map[K, V]] = Type.Map[K, V]
-    implicit def IteratorType[A: Type]: Type[Iterator[A]] = Type.Iterator[A]
-    implicit def FactoryType[A: Type, C: Type]: Type[Factory[A, C]] = Type.Factory[A, C]
   }
 }

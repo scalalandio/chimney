@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.compiletime.Definitions
 
 private[compiletime] trait ImplicitSummoning { this: Definitions & Configurations & Contexts =>
 
-  import ChimneyTypeImplicits.*
+  import ChimneyType.Implicits.*
 
   final protected def summonTransformerSafe[From, To](implicit
       ctx: TransformationContext[From, To]

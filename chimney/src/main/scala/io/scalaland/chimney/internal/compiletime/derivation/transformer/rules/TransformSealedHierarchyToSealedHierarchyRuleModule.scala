@@ -8,7 +8,7 @@ import io.scalaland.chimney.partial
 
 private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule { this: Derivation =>
 
-  import TypeImplicits.*, ChimneyTypeImplicits.*
+  import Type.Implicits.*, ChimneyType.Implicits.*
 
   protected object TransformSealedHierarchyToSealedHierarchyRule extends Rule("SealedHierarchyToSealedHierarchy") {
 

@@ -42,7 +42,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
 
     import platformSpecific.*
     import Type.platformSpecific.*
-    import TypeImplicits.*
+    import Type.Implicits.*
 
     def isPOJO[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol

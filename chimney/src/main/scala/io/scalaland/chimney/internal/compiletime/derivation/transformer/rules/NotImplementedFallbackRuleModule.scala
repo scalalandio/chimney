@@ -5,7 +5,7 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 
 private[compiletime] trait NotImplementedFallbackRuleModule { this: DerivationPlatform =>
 
-  import TypeImplicits.*
+  import Type.Implicits.*
 
   // TODO: remove this rule once all rules are migrated; it's here only to make the Scala 3 tests compile
   protected object NotImplementedFallbackRule extends Rule("NotImplementedFallback") {

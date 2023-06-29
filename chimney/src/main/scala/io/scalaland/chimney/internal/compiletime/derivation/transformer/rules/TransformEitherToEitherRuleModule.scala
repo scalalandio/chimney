@@ -6,7 +6,7 @@ import io.scalaland.chimney.partial
 
 private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation =>
 
-  import TypeImplicits.*, ChimneyTypeImplicits.*
+  import Type.Implicits.*, ChimneyType.Implicits.*
 
   protected object TransformEitherToEitherRule extends Rule("EitherToEither") {
 

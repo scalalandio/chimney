@@ -6,7 +6,7 @@ import io.scalaland.chimney.partial
 
 private[compiletime] trait TransformationRules { this: Derivation =>
 
-  import ChimneyTypeImplicits.*
+  import ChimneyType.Implicits.*
 
   abstract protected class Rule(val name: String) {
 

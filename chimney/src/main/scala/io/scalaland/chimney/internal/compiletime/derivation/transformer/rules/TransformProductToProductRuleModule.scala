@@ -8,7 +8,7 @@ import io.scalaland.chimney.partial
 
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>
 
-  import TypeImplicits.*, ChimneyTypeImplicits.*
+  import Type.Implicits.*, ChimneyType.Implicits.*
 
   protected object TransformProductToProductRule extends Rule("ProductToProduct") {
 
