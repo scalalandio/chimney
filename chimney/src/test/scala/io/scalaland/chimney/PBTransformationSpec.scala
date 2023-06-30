@@ -20,17 +20,20 @@ class PBTransformationSpec extends ChimneySpec {
     compileErrorsFixed(""" addressbook.PersonName("John").transformInto[Int] """)
       .check(
         "",
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.PersonName to Int"
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.PersonName to scala.Int"
       )
 
     compileErrorsFixed(""" addressbook.PersonId(5).transformInto[String] """)
       .check(
         "",
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.PersonId to String"
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.PersonId to java.lang.String"
       )
 
     compileErrorsFixed(""" addressbook.Email("john@example.com").transformInto[Float] """)
-      .check("", "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.Email to Float")
+      .check(
+        "",
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.Email to scala.Float"
+      )
   }
 
   test("transform enum represented as sealed trait hierarchy") {
@@ -173,10 +176,10 @@ class PBTransformationSpec extends ChimneySpec {
     }
   }
 
-  // FIXME: probably messed up case objects in ProductValue or SealedHierarchies on Scala 2 (Scala 3 works fine)
-  /*
   group("transformer sealed traits generated from oneof") {
 
+    // FIXME: unreachable code
+    /*
     test("CustomerStatus (oneof sealed_value)") {
       val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered
       val pbStatus: pb.order.CustomerStatus = pb.order.CustomerRegistered()
@@ -189,6 +192,7 @@ class PBTransformationSpec extends ChimneySpec {
         .transform
         .asOption ==> Some(domainStatus)
     }
+     */
 
     test("PaymentStatus (oneof sealed_value_optional)") {
       val domainStatus: Option[order.PaymentStatus] = Option(order.PaymentStatus.PaymentRequested)
@@ -197,5 +201,4 @@ class PBTransformationSpec extends ChimneySpec {
       pbStatus.into[Option[order.PaymentStatus]].transform ==> domainStatus
     }
   }
-   */
 }

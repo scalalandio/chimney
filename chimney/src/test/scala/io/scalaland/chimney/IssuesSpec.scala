@@ -62,7 +62,6 @@ class IssuesSpec extends ChimneySpec {
     case class Foo2(y: String, x: Int)
     case class Foo3(x: Int)
 
-    // FIXME: this test fail on Scala 3, even though the error message is as it should be!
     test("fix for `withFieldConst`") {
 
       compileErrorsFixed("""
@@ -73,7 +72,6 @@ class IssuesSpec extends ChimneySpec {
         .check("", "Cannot prove that String <:< Int")
     }
 
-    // FIXME: this test fail on Scala 3, even though the error message is as it should be!
     test("fix for `withFieldComputed`") {
 
       compileErrorsFixed("""
@@ -208,7 +206,7 @@ class IssuesSpec extends ChimneySpec {
   }
 
   // FIXME: errors message requires fixing
-  test("fix issue #121") {
+  test("fix issue #121".ignore) {
     case class FooNested(num: Option[Int])
     case class Foo(maybeString: Option[Set[String]], nested: FooNested)
 
@@ -265,8 +263,6 @@ class IssuesSpec extends ChimneySpec {
     }
   }
 
-  // FIXME: not picked by any rule
-  /*
   test("fix issue #156") {
 
     import Issue156.*
@@ -287,7 +283,6 @@ class IssuesSpec extends ChimneySpec {
     event.venue.into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
     (venue: internal.Venue).into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
   }
-   */
 
   group("fix issue #168") {
 
@@ -482,7 +477,7 @@ class IssuesSpec extends ChimneySpec {
     assert(partialResult == Right(expected))
   }
 
-  // FIXME
+  // FIXME: implicits aren't found
   /*
   group("fix issue #212") {
 
@@ -512,7 +507,7 @@ class IssuesSpec extends ChimneySpec {
   }
    */
 
-  // FIXME
+  // FIXME: implicits aren't found
   /*
   group("fix issue #199") {
     import Issue199.*

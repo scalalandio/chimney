@@ -24,7 +24,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
     result2.asErrorPathMessageStrings ==> Iterable.empty
   }
 
-  // FIXME: this test fail on Scala 3, even though the error message is as it should be!
   test(
     """not allow transformation from a "subset" of fields into a "superset" of fields when missing values are not provided"""
   ) {
@@ -330,7 +329,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
-        "wiek: scala.util.Either - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "wiek: scala.util.Either[scala.Unit, scala.Int] - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
         "Consult https://scalalandio.github.io/chimney for usage examples."
       )
 
@@ -338,7 +337,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
-        "wiek: scala.util.Either - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "wiek: scala.util.Either[scala.Unit, scala.Int] - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
         "Consult https://scalalandio.github.io/chimney for usage examples."
       )
     }
@@ -413,7 +412,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
-        "wiek: scala.util.Either - can't derive transformation from wiek: scala.Option in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "wiek: scala.util.Either[scala.Unit, scala.Int] - can't derive transformation from wiek: scala.Option[scala.Int] in source type io.scalaland.chimney.fixtures.products.Renames.User",
         "Consult https://scalalandio.github.io/chimney for usage examples."
       )
     }
@@ -899,8 +898,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
      */
   }
 
-  // FIXME: ProductType parser is too conservative on input
-  /*
   group("support scoped transformer configuration passed implicitly") {
 
     class Source {
@@ -908,9 +905,8 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
     case class Target(field1: Int = 200, field2: Option[String] = Some("foo"))
 
-    implicit val transformerConfiguration = {
+    implicit val transformerConfiguration =
       TransformerConfiguration.default.enableOptionDefaultsToNone.enableMethodAccessors.disableDefaultValues
-    }
 
     test("scoped config only") {
 
@@ -946,10 +942,12 @@ class PartialTransformerProductSpec extends ChimneySpec {
       compileErrorsFixed("""
           (new Source).intoPartial[Target].disableOptionDefaultsToNone.transform
         """)
-        .check("", "Chimney can't derive transformation from Source to Target")
+        .check(
+          "",
+          "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Source to io.scalaland.chimney.PartialTransformerProductSpec.Target"
+        )
     }
   }
-   */
 
   group("implicit conflict resolution") {
 

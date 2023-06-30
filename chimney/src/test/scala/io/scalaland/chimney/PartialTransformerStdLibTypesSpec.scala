@@ -4,7 +4,7 @@ import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
 import scala.collection.immutable.Queue
-//import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ArrayBuffer
 
 class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
@@ -13,7 +13,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     case class ConflictingFooBuzz(value: Unit)
 
     compileErrorsFixed("""Buzz("a").transformIntoPartial[ConflictingFooBuzz]""").check(
-      "Chimney can't derive transformation from Buzz to ConflictingFooBuzz",
+      "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Buzz to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.ConflictingFooBuzz",
       "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.ConflictingFooBuzz",
       "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Buzz",
       "scala.Unit",
@@ -317,18 +317,13 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .asErrorPathMessageStrings ==> Iterable("(1)" -> "empty value")
   }
 
-  // FIXME: Probably Type parsing on Scala 2
-  /*
   test("transform Map-type to Map-type, using Total Transformer for inner type transformation") {
     implicit val intPrinter: Transformer[Int, String] = _.toString
 
     Map(1 -> 10, 2 -> 20).transformIntoPartial[Map[String, String]].asOption ==> Some(Map("1" -> "10", "2" -> "20"))
     Map(1 -> 10, 2 -> 20).transformIntoPartial[Map[String, Int]].asOption ==> Some(Map("1" -> 10, "2" -> 20))
   }
-   */
 
-  // FIXME: Probably Type parsing on Scala 2
-  /*
   test("transform Map-type to Map-type, using Partial Transformer for inner type transformation") {
     implicit val intParserOpt: PartialTransformer[String, Int] =
       PartialTransformer(_.parseInt.toPartialResult)
@@ -349,10 +344,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .transformIntoPartial[Map[Int, Int]](failFast = true)
       .asErrorPathMessageStrings ==> Iterable("(1)" -> "empty value")
   }
-   */
 
-  // FIXME: Probably Type parsing on Scala 2
-  /*
   test("transform between Iterables and Maps, using Total Transformer for inner type transformation") {
     implicit val intPrinter: Transformer[Int, String] = _.toString
 
@@ -367,11 +359,9 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       Vector("1" -> 10, "2" -> 20)
     )
   }
-   */
 
-  // FIXME: Probably Type parsing on Scala 2
-  /*
-  test("transform between Iterables and Maps, using Partial Transformer for inner type transformation") {
+  // FIXME: errorPath in map -> iterable
+  test("transform between Iterables and Maps, using Partial Transformer for inner type transformation".ignore) {
     implicit val intParserOpt: PartialTransformer[String, Int] =
       PartialTransformer(_.parseInt.toPartialResult)
 
@@ -410,10 +400,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .transformIntoPartial[List[(Int, Int)]](failFast = true)
       .asErrorPathMessageStrings ==> Iterable("keys(x)" -> "empty value")
   }
-   */
 
-  // FIXME: Probably Type parsing on Scala 2
-  /*
   test("transform between Arrays and Maps, using Total Transformer for inner type transformation") {
     implicit val intPrinter: Transformer[Int, String] = _.toString
 
@@ -428,7 +415,8 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     Map(1 -> 10, 2 -> 20).transformIntoPartial[Array[(String, Int)]].asOption.get ==> Array("1" -> 10, "2" -> 20)
   }
 
-  test("transform between Arrays and Maps, using Partial Transformer for inner type transformation") {
+  // FIXME: error path in map to array
+  test("transform between Arrays and Maps, using Partial Transformer for inner type transformation".ignore) {
     implicit val intParserOpt: PartialTransformer[String, Int] =
       PartialTransformer(_.parseInt.toPartialResult)
 
@@ -461,7 +449,6 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .transformIntoPartial[Array[(Int, String)]](failFast = true)
       .asErrorPathMessageStrings ==> Iterable("keys(x)" -> "empty value")
   }
-   */
 
   group("flag .enableOptionDefaultsToNone") {
 
@@ -471,9 +458,9 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
     test("should be turned off by default and not allow compiling Option fields with missing source") {
       compileErrorsFixed("""Source("foo").intoPartial[TargetWithOption].transform.asOption""").check(
-        "Chimney can't derive transformation from Source to TargetWithOption",
+        "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
-        "y: scala.Option - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
         "Consult https://scalalandio.github.io/chimney for usage examples."
       )
     }

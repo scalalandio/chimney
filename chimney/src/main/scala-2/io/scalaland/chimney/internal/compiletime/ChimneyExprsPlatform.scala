@@ -159,8 +159,8 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         c.Expr[partial.PathElement.Index](q"_root_.io.scalaland.chimney.partial.PathElement.Index($index)")
       def MapKey(key: Expr[Any]): Expr[partial.PathElement.MapKey] =
         c.Expr[partial.PathElement.MapKey](q"_root_.io.scalaland.chimney.partial.PathElement.MapKey($key)")
-      def MapValue(key: Expr[Any]): Expr[partial.PathElement.MapValue] =
-        c.Expr[partial.PathElement.MapValue](q"_root_.io.scalaland.chimney.partial.PathElement.MapValue($key)")
+      def MapValue(value: Expr[Any]): Expr[partial.PathElement.MapValue] =
+        c.Expr[partial.PathElement.MapValue](q"_root_.io.scalaland.chimney.partial.PathElement.MapValue($value)")
     }
 
     object RuntimeDataStore extends RuntimeDataStoreModule {

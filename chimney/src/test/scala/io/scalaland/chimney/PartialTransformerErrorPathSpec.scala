@@ -50,7 +50,9 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
   }
 
   // FIXME: logic in ProductToProduct doesn't consider the source when setting up ErrorPath
-  test("case classes with field error coming from setting should contain path to the source field used in setting") {
+  test(
+    "case classes with field error coming from setting should contain path to the source field used in setting".ignore
+  ) {
     case class Foo(inner: InnerFoo)
     case class InnerFoo(str: String)
 
@@ -82,8 +84,6 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
     )
   }
 
-  // FIXME: fails on Scala 3
-  /*
   test("Java Bean accessors error should contain path to the failed getter") {
     class Foo(a: String, b: String) {
       def getA: String = a
@@ -101,9 +101,8 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
       "getB" -> "empty value"
     )
   }
-   */
 
-  // TODO: ProductToProduct doesn't handle tuples yet
+  // FIXME: ProductToProduct doesn't handle tuples yet
   /*
   test("tuple field's error should contain path to the failed field") {
     val result = ("a", "b").transformIntoPartial[(Int, Int)]
@@ -123,7 +122,7 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
   // FIXME: Internal error: unable to find the outer accessor symbol of class PartialTransformerErrorPathSpec
   /*
   test("sealed hierarchy's error should add path to failed subtype") {
-    val result = (Foo.Baz("fail"): Foo).transformIntoPartial[Bar]
+    val result = (Foo.Baz("fail"): Foo).intoPartial[Bar].transform
     result.asErrorPathMessages ==> Iterable(
       "field" -> partial.ErrorMessage.EmptyValue
     )

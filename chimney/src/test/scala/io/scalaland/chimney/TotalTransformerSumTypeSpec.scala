@@ -13,8 +13,6 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
     (colors1.Blue: colors1.Color).transformInto[colors2.Color] ==> colors2.Blue
   }
 
-  // FIXME: probably messed up case objects in ProductValue or SealedHierarchies on Scala 2 (Scala 3 works fine)
-  /*
   test(
     """transform nested sealed hierarchies between flat and nested hierarchies of case objects without modifiers"""
   ) {
@@ -28,7 +26,6 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
     (colors3.Blue: colors3.Color).transformInto[colors2.Color] ==> colors2.Blue
     (colors3.Black: colors3.Color).transformInto[colors2.Color] ==> colors2.Black
   }
-   */
 
   test(
     """transforming flat hierarchies from "subset" of case classes to "superset" of case classes without modifiers when common corresponding types are transformable with Total Transformers"""
@@ -44,8 +41,6 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
       shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0))
   }
 
-  // FIXME: probably messed up case objects in ProductValue or SealedHierarchies on Scala 2 (Scala 3 works fine)
-  /*
   test(
     """transforming nested sealed hierarchies from "subset" of case classes to "superset" of case classes without modifiers when common corresponding types are transformable"""
   ) {
@@ -65,7 +60,6 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
       .transformInto[shapes3.Shape] ==>
       shapes3.Rectangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0))
   }
-   */
 
   test("not allow transformation of of sealed hierarchies when the transformation would be ambiguous") {
     val error = compileErrorsFixed(
@@ -102,8 +96,6 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
       )
     }
 
-    // FIXME: probably messed up case objects in ProductValue or SealedHierarchies on Scala 2 (Scala 3 works fine)
-    /*
     test(
       """transform sealed hierarchies from "superset" of case objects to "subset" of case objects when user-provided mapping handled additional cases"""
     ) {
@@ -130,7 +122,6 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
         .withCoproductInstance(blackIsRed)
         .transform ==> colors1.Blue
     }
-     */
 
     test(
       """transform sealed hierarchies from "superset" of case classes to "subset" of case classes when user-provided mapping handled non-trivial cases"""

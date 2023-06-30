@@ -12,6 +12,12 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
+        case _ if Type[From].isOption && Type[To] <:< Type[None.type] =>
+          DerivationResult
+            .notSupportedTransformerDerivation(Expr.prettyPrint(ctx.src))
+            .log(
+              s"Discovered that target type is ${Type.prettyPrint[None.type]} which we explicitly reject"
+            )
         case (Type.Option(from2), Type.Option(to2)) =>
           ExistentialType.use2(from2, to2) {
             implicit From2: Type[from2.Underlying] => implicit To2: Type[to2.Underlying] =>

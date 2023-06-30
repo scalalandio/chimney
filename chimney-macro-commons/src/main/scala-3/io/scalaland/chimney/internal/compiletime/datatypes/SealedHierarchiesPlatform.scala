@@ -15,7 +15,7 @@ private[compiletime] trait SealedHierarchiesPlatform extends SealedHierarchies {
 
     type Subtype
     def parse[A: Type]: Option[Enum[A]] = if isSealed(Type[A]) then {
-      val elements = extractSubclasses(TypeRepr.of[A].typeSymbol)
+      val elements = extractSubclasses(TypeRepr.of[A].typeSymbol).distinct
         .map { (subtype: Symbol) =>
           subtypeName(subtype) -> subtypeTypeOf[A](subtype)
         }

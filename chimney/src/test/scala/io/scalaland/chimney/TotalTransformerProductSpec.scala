@@ -7,8 +7,6 @@ import scala.annotation.unused
 
 class TotalTransformerProductSpec extends ChimneySpec {
 
-  // FIXME: this test fail on Scala 3, even though the error message is as it should be!
-  /*
   test(
     """not allow transformation from a "subset" of fields into a "superset" of fields when missing values are not provided"""
   ) {
@@ -28,7 +26,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
       "Consult https://scalalandio.github.io/chimney for usage examples."
     )
   }
-   */
 
   test("""transformation from a "superset" of fields into a "subset" of fields without modifiers""") {
     import products.{Foo, Bar}
@@ -115,28 +112,27 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
   group("""setting .withFieldRenamed(_.from, _.to)""") {
 
-    // FIXME: this test fail on Scala 3, even though the error message is as it should be!
-//    test("should not be enabled by default") {
-//      import products.Renames.*
-//
-//      compileErrorsFixed("""User(1, "Kuba", Some(28)).transformInto[UserPL]""").check(
-//        "",
-//        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
-//        "io.scalaland.chimney.fixtures.products.Renames.UserPL",
-//        "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
-//        "wiek: scala.util.Either - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
-//        "Consult https://scalalandio.github.io/chimney for usage examples."
-//      )
-//
-//      compileErrorsFixed("""User(1, "Kuba", Some(28)).into[UserPL].transform""").check(
-//        "",
-//        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
-//        "io.scalaland.chimney.fixtures.products.Renames.UserPL",
-//        "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
-//        "wiek: scala.util.Either - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
-//        "Consult https://scalalandio.github.io/chimney for usage examples."
-//      )
-//    }
+    test("should not be enabled by default") {
+      import products.Renames.*
+
+      compileErrorsFixed("""User(1, "Kuba", Some(28)).transformInto[UserPL]""").check(
+        "",
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
+        "io.scalaland.chimney.fixtures.products.Renames.UserPL",
+        "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "wiek: scala.util.Either[scala.Unit, scala.Int] - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "Consult https://scalalandio.github.io/chimney for usage examples."
+      )
+
+      compileErrorsFixed("""User(1, "Kuba", Some(28)).into[UserPL].transform""").check(
+        "",
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
+        "io.scalaland.chimney.fixtures.products.Renames.UserPL",
+        "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "wiek: scala.util.Either[scala.Unit, scala.Int] - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "Consult https://scalalandio.github.io/chimney for usage examples."
+      )
+    }
 
     test("should not compile when selector is invalid") {
       import products.Renames.*
@@ -385,28 +381,27 @@ class TotalTransformerProductSpec extends ChimneySpec {
       res ==> FooBar4(p = "param", v = "valField", lv = "lazyValField", m = "method1")
     }
 
-    // FIXME: this test fail on Scala 3, even though the error message is as it should be!
-//    test("method is disabled by default") {
-//      case class Foobar5(
-//          param: String,
-//          valField: String,
-//          lazyValField: String,
-//          method1: String,
-//          method2: String,
-//          method3: String,
-//          method4: String,
-//          method5: String
-//      )
-//      compileErrorsFixed("""Foobar("param").into[Foobar5].transform""").check(
-//        "",
-//        "method1: java.lang.String - no accessor named method1 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-//        "method2: java.lang.String - no accessor named method2 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-//        "method3: java.lang.String - no accessor named method3 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-//        "method4: java.lang.String - no accessor named method4 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-//        "method5: java.lang.String - no accessor named method5 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-//        "There are methods in io.scalaland.chimney.TotalTransformerProductSpec.Foobar that might be used as accessors for `method1`, `method2`, `method3` and 2 other methods fields in io.scalaland.chimney.TotalTransformerProductSpec.Foobar5. Consider using `.enableMethodAccessors`."
-//      )
-//    }
+    test("method is disabled by default".ignore) {
+      case class Foobar5(
+          param: String,
+          valField: String,
+          lazyValField: String,
+          method1: String,
+          method2: String,
+          method3: String,
+          method4: String,
+          method5: String
+      )
+      compileErrorsFixed("""Foobar("param").into[Foobar5].transform""").check(
+        "",
+        "method1: java.lang.String - no accessor named method1 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+        "method2: java.lang.String - no accessor named method2 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+        "method3: java.lang.String - no accessor named method3 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+        "method4: java.lang.String - no accessor named method4 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+        "method5: java.lang.String - no accessor named method5 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+        "There are methods in io.scalaland.chimney.TotalTransformerProductSpec.Foobar that might be used as accessors for `method1`, `method2`, `method3` and 2 other methods fields in io.scalaland.chimney.TotalTransformerProductSpec.Foobar5. Consider using `.enableMethodAccessors`."
+      )
+    }
 
     test("works if transform is configured with .enableMethodAccessors") {
       Foobar("param").into[Foobar3].enableMethodAccessors.transform ==> Foobar3(
@@ -417,17 +412,15 @@ class TotalTransformerProductSpec extends ChimneySpec {
       )
     }
 
-    // FIXME: this test fail on Scala 3, even though the error message is as it should be!
-//    test("protected and private methods are not considered (even if accessible)") {
-//      case class Foo2(param: String, protect: String, priv: String)
-//
-//      Foobar("param").into[Foo2].enableMethodAccessors.transform
-//      compileErrorsFixed("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
-//        "",
-//        "protect: java.lang.String - no accessor named protect in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-//        "priv: java.lang.String - no accessor named priv in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar"
-//      )
-//    }
+    test("protected and private methods are not considered (even if accessible)") {
+      case class Foo2(param: String, protect: String, priv: String)
+
+      compileErrorsFixed("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
+        "",
+        "protect: java.lang.String - no accessor named protect in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+        "priv: java.lang.String - no accessor named priv in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar"
+      )
+    }
   }
 
   group("support polymorphic source/target objects and modifiers") {
@@ -494,8 +487,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
     transformer2.transform ==> Bar(6.0, 3, "abc")
   }
 
-  // FIXME: ProductType parser is too conservative on input
-  /*
   test("transform from non-case class to case class") {
     import products.NonCaseDomain.*
     import javabeans.CaseClassNoFlag
@@ -516,7 +507,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
       target.name ==> source.name
     }
   }
-   */
 
   // TODO: ProductToProduct doesn't handle tuples yet
   /*
@@ -610,7 +600,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
   test("support macro dependent transformers") {
     test("Option[List[A]] -> List[B]") {
-      // TODO: this isn't exactly intuitive :/
+      // FIXME: this isn't exactly intuitive :/
       implicit def optListT[A, B](implicit
           underlying: Transformer.AutoDerived[A, B]
       ): Transformer[Option[List[A]], List[B]] =
@@ -643,8 +633,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
   }
 
-  // FIXME: ProductType parser is too conservative on input
-  /*
   group("support scoped transformer configuration passed implicitly") {
 
     class Source {
@@ -681,5 +669,4 @@ class TotalTransformerProductSpec extends ChimneySpec {
         .transform ==> Target(100, Some("abc"))
     }
   }
-   */
 }

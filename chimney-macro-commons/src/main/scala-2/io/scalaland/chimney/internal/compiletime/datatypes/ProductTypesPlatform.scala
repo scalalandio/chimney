@@ -45,7 +45,9 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
 
     def isPOJO[A](implicit A: Type[A]): Boolean = {
       val sym = A.tpe.typeSymbol
-      sym.isClass && !sym.isAbstract && sym.asClass.primaryConstructor.isPublic
+      !A.isPrimitive && !(A <:< Type[
+        String
+      ]) && sym.isClass && !sym.isAbstract && sym.asClass.primaryConstructor.isPublic
     }
     def isCaseClass[A](implicit A: Type[A]): Boolean =
       isPOJO[A] && A.tpe.typeSymbol.asClass.isCaseClass
@@ -108,9 +110,9 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         val paramss = paramListsOf(A, primaryConstructor)
         val paramNames = paramss.flatMap(_.map(param => param -> getDecodedName(param))).toMap
         val paramTypes = paramsWithTypes(A, primaryConstructor)
+        lazy val companion = companionSymbol[A]
         val defaultValues = paramss.flatten.zipWithIndex.collect {
           case (param, idx) if param.asTerm.isParamWithDefault =>
-            val companion = sym.companion
             val scala2default = caseClassApplyDefaultScala2(idx + 1)
             val scala3default = caseClassApplyDefaultScala3(idx + 1)
             val foundDefault = companion.typeSignature.decls
@@ -119,7 +121,11 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
                 case method if getDecodedName(method) == scala2default => TermName(scala2default)
                 case method if getDecodedName(method) == scala3default => TermName(scala3default)
               }
-              .head
+              .getOrElse(
+                assertionFailed(
+                  s"Default value for parameter ${paramNames(param)} not found, available methods: ${companion.typeSignature.decls}"
+                )
+              )
             paramNames(param) -> q"$companion.$foundDefault"
         }.toMap
         val constructorParameters = ListMap.from(paramss.flatMap(_.map { param =>
@@ -205,5 +211,25 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
     private val getDecodedName = (s: Symbol) => s.name.decodedName.toString
 
     private val isGarbageSymbol = getDecodedName andThen isGarbage
+
+    // Borrowed from jsoniter-scala: https://github.com/plokhotnyuk/jsoniter-scala/blob/b14dbe51d3ae6752e5a9f90f1f3caf5bceb5e4b0/jsoniter-scala-macros/shared/src/main/scala/com/github/plokhotnyuk/jsoniter_scala/macros/JsonCodecMaker.scala#L462
+    private def companionSymbol[A: Type]: Symbol = {
+      val sym = Type[A].tpe.typeSymbol
+      val comp = sym.companion
+      if (comp.isModule) comp
+      else {
+        val ownerChainOf: Symbol => Iterator[Symbol] =
+          s => Iterator.iterate(s)(_.owner).takeWhile(x => x != null && x != NoSymbol).toVector.reverseIterator
+        val path = ownerChainOf(sym)
+          .zipAll(ownerChainOf(c.internal.enclosingOwner), NoSymbol, NoSymbol)
+          .dropWhile { case (x, y) => x == y }
+          .takeWhile(_._1 != NoSymbol)
+          .map(_._1.name.toTermName)
+        // $COVERAGE-OFF$
+        if (path.isEmpty) assertionFailed(s"Cannot find a companion for ${Type.prettyPrint[A]}")
+        else c.typecheck(path.foldLeft[Tree](Ident(path.next()))(Select(_, _)), silent = true).symbol
+        // $COVERAGE-ON$
+      }
+    }
   }
 }

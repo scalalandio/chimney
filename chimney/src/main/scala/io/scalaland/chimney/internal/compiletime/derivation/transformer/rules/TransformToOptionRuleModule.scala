@@ -13,13 +13,18 @@ private[compiletime] trait TransformToOptionRuleModule { this: Derivation & Tran
       Type[To] match {
         case Type.Option(to2) if !to2.Underlying.isSealed =>
           if (Type[To] <:< Type[None.type]) {
-            // TODO: log
-            DerivationResult.notSupportedTransformerDerivation
+            DerivationResult
+              .notSupportedTransformerDerivation(Expr.prettyPrint(ctx.src))
+              .log(
+                s"Discovered that target type is ${Type.prettyPrint[None.type]} which we explicitly reject"
+              )
           } else {
-            // TODO: log
-            // We're constructing:
-            // '{ Option(${ derivedTo2 }) } }
-            TransformOptionToOptionRule.expand(ctx.updateFromTo[Option[From], To](Expr.Option(ctx.src)))
+            DerivationResult.namedScope(s"Lifting ${Type.prettyPrint[From]} -> ${Type
+                .prettyPrint[To]} transformation into ${Type.prettyPrint[Option[From]]} -> ${Type.prettyPrint[To]}") {
+              // We're constructing:
+              // '{ Option(${ derivedTo2 }) } }
+              TransformOptionToOptionRule.expand(ctx.updateFromTo[Option[From], To](Expr.Option(ctx.src)))
+            }
           }
         case _ =>
           DerivationResult.attemptNextRule

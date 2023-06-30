@@ -86,11 +86,11 @@ private[compiletime] trait ResultOps { this: Derivation =>
       )
     )
 
-    def ambiguousCoproductInstance[From, To, Instance: Type, A](implicit
+    def ambiguousCoproductInstance[From, To, A](ambiguousName: String)(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       AmbiguousCoproductInstance(
-        instance = Type.prettyPrint[Instance],
+        instance = ambiguousName,
         sourceTypeName = Type.prettyPrint[From],
         targetTypeName = Type.prettyPrint[To]
       )
@@ -107,11 +107,11 @@ private[compiletime] trait ResultOps { this: Derivation =>
       )
     )
 
-    def notSupportedTransformerDerivation[From, To, A](implicit
+    def notSupportedTransformerDerivation[From, To, A](fieldName: String)(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       NotSupportedTransformerDerivation(
-        fieldName = ctx.src.prettyPrint,
+        fieldName = fieldName,
         sourceTypeName = Type.prettyPrint[From],
         targetTypeName = Type.prettyPrint[To]
       )

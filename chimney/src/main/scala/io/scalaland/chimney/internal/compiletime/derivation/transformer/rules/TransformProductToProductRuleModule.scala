@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
-import io.scalaland.chimney.internal.compiletime.DerivationResult
+import io.scalaland.chimney.internal.compiletime.{DerivationErrors, DerivationResult}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.internal.compiletime.fp.Syntax.*
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
@@ -57,11 +57,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         // user might have used _.getName in modifier, to define target we know as _.setName
                         // so simple .get(toName) might not be enough
                         .collectFirst {
-                          case (name, value) if areNamesMatching(name, toName) =>
-                            value
+                          case (fromName, value) if areNamesMatching(fromName, toName) => fromName -> value
                         }
                         .map {
-                          case RuntimeFieldOverride.Const(runtimeDataIdx) =>
+                          case (_, RuntimeFieldOverride.Const(runtimeDataIdx)) =>
                             // We're constructing:
                             // '{ ${ runtimeDataStore }(idx).asInstanceOf[$ctorParam] }
                             DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
@@ -69,17 +68,26 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                 ctx.runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[ctorParam.Underlying]
                               )
                             )
-                          case RuntimeFieldOverride.ConstPartial(runtimeDataIdx) =>
+                          case (fromName, RuntimeFieldOverride.ConstPartial(runtimeDataIdx)) =>
                             // We're constructing:
-                            // '{ ${ runtimeDataStore }(idx).asInstanceOf[partial.Result[$ctorParam]] }
+                            // '{
+                            //   ${ runtimeDataStore }(idx)
+                            //     .asInstanceOf[partial.Result[$ctorParam]]
+                            //     .prependErrorPath(PathElement.Accessor("fromName"))
+                            //  }
                             DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
                               TransformationExpr.fromPartial(
                                 ctx
                                   .runtimeDataStore(runtimeDataIdx)
                                   .asInstanceOfExpr[partial.Result[ctorParam.Underlying]]
+                                  .prependErrorPath(
+                                    ChimneyExpr.PathElement
+                                      .Accessor(Expr.String(fromName))
+                                      .upcastExpr[partial.PathElement]
+                                  )
                               )
                             )
-                          case RuntimeFieldOverride.Computed(runtimeDataIdx) =>
+                          case (_, RuntimeFieldOverride.Computed(runtimeDataIdx)) =>
                             // We're constructing:
                             // '{ ${ runtimeDataStore }(idx).asInstanceOf[$From => $ctorParam](${ src }) }
                             DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
@@ -90,18 +98,27 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                   .apply(ctx.src)
                               )
                             )
-                          case RuntimeFieldOverride.ComputedPartial(runtimeDataIdx) =>
+                          case (fromName, RuntimeFieldOverride.ComputedPartial(runtimeDataIdx)) =>
                             // We're constructing:
-                            // '{ ${ runtimeDataStore }(idx).asInstanceOf[$From => partial.Result[$ctorParam]](${ src }) }
+                            // '{
+                            //   ${ runtimeDataStore }(idx)
+                            //     .asInstanceOf[$From => partial.Result[$ctorParam]](${ src })
+                            //     .prependErrorPath(PathElement.Accessor("fromName"))
+                            // }
                             DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
                               TransformationExpr.fromPartial(
                                 ctx
                                   .runtimeDataStore(runtimeDataIdx)
                                   .asInstanceOfExpr[From => partial.Result[ctorParam.Underlying]]
                                   .apply(ctx.src)
+                                  .prependErrorPath(
+                                    ChimneyExpr.PathElement
+                                      .Accessor(Expr.String(fromName))
+                                      .upcastExpr[partial.PathElement]
+                                  )
                               )
                             )
-                          case RuntimeFieldOverride.RenamedFrom(sourceName) =>
+                          case (_, RuntimeFieldOverride.RenamedFrom(sourceName)) =>
                             fromExtractors
                               .collectFirst { case (`sourceName`, getter) =>
                                 Existential.use(getter) { implicit Getter: Type[getter.Underlying] =>
@@ -115,17 +132,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                       // '{ ${ derivedToElement } } // using ${ src.$name }
                                       deriveRecursiveTransformationExpr[getter.Underlying, ctorParam.Underlying](
                                         get(ctx.src)
-                                      ).transformWith(
-                                        DerivationResult.existential[TransformationExpr, ctorParam.Underlying](_)
-                                      ) { _ =>
-                                        // TODO: one day we could make this error message recursive
-                                        DerivationResult.missingTransformer[
-                                          From,
-                                          To,
-                                          getter.Underlying,
-                                          ctorParam.Underlying,
-                                          Existential[TransformationExpr]
-                                        ](toName)
+                                      ).transformWith { expr =>
+                                        // If we derived partial.Result[$ctorParam] we are appending
+                                        //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
+                                        DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
+                                          appendPath(expr, sourceName)
+                                        )
+                                      } { errors =>
+                                        appendMissingTransformer[From, To, getter.Underlying, ctorParam.Underlying](
+                                          errors,
+                                          toName
+                                        )
                                       }
                                     }
                                   }
@@ -141,36 +158,37 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                               }
                         }
                         .orElse(fromEnabledExtractors.collectFirst {
-                          case _
-                              if ctorParam.value.targetType == Product.Parameter.TargetType.SetterParameter && !flags.beanSetters =>
-                            // TODO: in future we might want to have some better error message here
-                            DerivationResult.notSupportedTransformerDerivation(ctx)
-                          case (name, getter) if areNamesMatching(name, toName) =>
-                            Existential.use(getter) { implicit Getter: Type[getter.Underlying] =>
-                              { case Product.Getter(_, get) =>
-                                DerivationResult.namedScope(
-                                  s"Recursive derivation for field `$name`: ${Type
-                                      .prettyPrint[getter.Underlying]} into matched `${toName}`: ${Type.prettyPrint[ctorParam.Underlying]}"
-                                ) {
-                                  // We're constructing:
-                                  // '{ ${ derivedToElement } } // using ${ src.$name }
-                                  deriveRecursiveTransformationExpr[getter.Underlying, ctorParam.Underlying](
-                                    get(ctx.src)
-                                  ).transformWith(
-                                    DerivationResult.existential[TransformationExpr, ctorParam.Underlying](_)
-                                  ) { _ =>
-                                    // TODO: one day we could make this error message recursive
-                                    DerivationResult.missingTransformer[
-                                      From,
-                                      To,
-                                      getter.Underlying,
-                                      ctorParam.Underlying,
-                                      Existential[TransformationExpr]
-                                    ](toName)
+                          case (fromName, getter) if areNamesMatching(fromName, toName) =>
+                            if (
+                              ctorParam.value.targetType == Product.Parameter.TargetType.SetterParameter && !flags.beanSetters
+                            )
+                              DerivationResult.notSupportedTransformerDerivation(fromName)(ctx)
+                            else
+                              Existential.use(getter) { implicit Getter: Type[getter.Underlying] =>
+                                { case Product.Getter(_, get) =>
+                                  DerivationResult.namedScope(
+                                    s"Recursive derivation for field `$fromName`: ${Type
+                                        .prettyPrint[getter.Underlying]} into matched `${toName}`: ${Type.prettyPrint[ctorParam.Underlying]}"
+                                  ) {
+                                    // We're constructing:
+                                    // '{ ${ derivedToElement } } // using ${ src.$name }
+                                    deriveRecursiveTransformationExpr[getter.Underlying, ctorParam.Underlying](
+                                      get(ctx.src)
+                                    ).transformWith { expr =>
+                                      // If we derived partial.Result[$ctorParam] we are appending
+                                      //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
+                                      DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
+                                        appendPath(expr, fromName)
+                                      )
+                                    } { errors =>
+                                      appendMissingTransformer[From, To, getter.Underlying, ctorParam.Underlying](
+                                        errors,
+                                        toName
+                                      )
+                                    }
                                   }
                                 }
                               }
-                            }
                         })
                         .orElse(defaultValue.filter(_ => ctx.config.flags.processDefaultValues).map {
                           (value: Expr[ctorParam.Underlying]) =>
@@ -202,7 +220,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           }
                         }
                         .getOrElse {
-                          val accessorExists = fieldOverrides
+                          // FIXME: this logic doesn't find everything
+                          def accessorExists = fieldOverrides
                             .get(toName)
                             .collectFirst { case RuntimeFieldOverride.RenamedFrom(sourceName) => sourceName }
                             .flatMap(fromExtractors.get)
@@ -240,11 +259,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
                 resolvedArguments.collect {
                   case (name, exprE) if exprE.value.isPartial =>
-                    name -> exprE.mapK[PartialExpr] { implicit ExprE: Type[exprE.Underlying] =>
-                      _.ensurePartial.prependErrorPath(
-                        ChimneyExpr.PathElement.Accessor(Expr.String(name)).upcastExpr[partial.PathElement]
-                      )
-                    }
+                    name -> exprE.mapK[PartialExpr] { implicit ExprE: Type[exprE.Underlying] => _.ensurePartial }
                 } match {
                   case Nil =>
                     // We're constructing:
@@ -481,5 +496,33 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     private val isUsingSetter: ((String, Existential[Product.Parameter])) => Boolean =
       _._2.value.targetType == Product.Parameter.TargetType.SetterParameter
+
+    // If we derived partial.Result[$ctorParam] we are appending
+    //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
+    private def appendPath[A: Type](expr: TransformationExpr[A], path: String): TransformationExpr[A] =
+      expr.fold(TransformationExpr.fromTotal)(partialE =>
+        TransformationExpr.fromPartial(
+          partialE.prependErrorPath(
+            ChimneyExpr.PathElement
+              .Accessor(Expr.String(path))
+              .upcastExpr[partial.PathElement]
+          )
+        )
+      )
+
+    private def appendMissingTransformer[From, To, SourceField: Type, TargetField: Type](
+        errors: DerivationErrors,
+        toName: String
+    )(implicit ctx: TransformationContext[From, To]) = {
+      val newError = DerivationResult.missingTransformer[
+        From,
+        To,
+        SourceField,
+        TargetField,
+        Existential[TransformationExpr]
+      ](toName)
+      val oldErrors = DerivationResult.fail(errors)
+      newError.parTuple(oldErrors).map[Existential[TransformationExpr]](_ => ???)
+    }
   }
 }

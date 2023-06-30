@@ -51,7 +51,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
     def isPOJO[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
       val mem = sym.declarations
-      sym.isClassDef && !isAbstract(sym) && isPublic(sym.primaryConstructor)
+      !A.isPrimitive && !(A <:< Type[String]) && sym.isClassDef && !isAbstract(sym) && isPublic(sym.primaryConstructor)
     }
     def isCaseClass[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
