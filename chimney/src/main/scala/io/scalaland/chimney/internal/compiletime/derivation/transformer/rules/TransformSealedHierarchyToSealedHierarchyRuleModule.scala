@@ -32,9 +32,11 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             s"Resolved ${Type.prettyPrint[From]} subtypes: ($fromSubs) and ${Type.prettyPrint[To]} subtypes ($toSubs)"
           } >> verifyEnumNameUniqueness >>
             Traverse[List]
-              .traverse[DerivationResult, Existential[Enum.Element[From, *]], Existential[
-                ExprPromise[*, TransformationExpr[To]]
-              ]](fromElements) { (fromSubtype: Existential[Enum.Element[From, *]]) =>
+              .traverse[
+                DerivationResult,
+                Existential.UpperBounded[From, Enum.Element[From, *]],
+                Existential[ExprPromise[*, TransformationExpr[To]]]
+              ](fromElements) { (fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]]) =>
                 Existential.use(fromSubtype) { implicit FromSubtype: Type[fromSubtype.Underlying] =>
                   { case Enum.Element(fromName, _) =>
                     ctx.config.coproductOverrides
@@ -85,7 +87,9 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                                         fromSubtypeExpr
                                       ).map(_.map(toUpcast))
                                     }
-                                    .map(Existential[ExprPromise[*, TransformationExpr[To]], fromSubtype.Underlying](_))
+                                    .map(
+                                      Existential[ExprPromise[*, TransformationExpr[To]], fromSubtype.Underlying](_)
+                                    )
                                 }
                               }
                           }

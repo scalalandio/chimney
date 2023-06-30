@@ -16,18 +16,16 @@ private[compiletime] trait SealedHierarchiesPlatform extends SealedHierarchies {
 
     type Subtype
     def parse[A: Type]: Option[Enum[A]] = if (isSealed(Type[A])) {
+      // calling .distinct here as `knownDirectSubclasses` returns duplicates for multiply-inherited types
       val elements = extractSubclasses(Type[A].tpe.typeSymbol.asType).distinct
         .map { (subtype: TypeSymbol) =>
-          subtypeName(subtype) -> subtypeTypeOf[A](subtype)
+          val subtypeA = subtypeTypeOf[A](subtype)
+          subtypeA.mapK[Enum.Element[A, *]] { implicit Subtype: Type[subtypeA.Underlying] => _ =>
+            Enum.Element(name = subtypeName(subtype), upcast = _.upcastExpr[A])
+          }
         }
-        .filter { case (_, subtypeType) =>
-          // with GADT we can have subtypes that shouldn't appear in pattern matching
-          subtypeType <:< Type[A]
-        }
-        .map { case (subtypeName, subtypeType) =>
-          implicit val Subtype: Type[Subtype] = subtypeType
-          Existential[Enum.Element[A, *], Subtype](Enum.Element(name = subtypeName, upcast = _.upcastExpr[A]))
-        }
+        // with GADT we can have subtypes that shouldn't appear in pattern matching
+        .filter(_.Underlying <:< Type[A])
       Some(Enum(elements))
     } else None
 
@@ -37,12 +35,16 @@ private[compiletime] trait SealedHierarchiesPlatform extends SealedHierarchies {
 
     private def subtypeName(subtype: TypeSymbol): String = subtype.name.toString
 
-    private def subtypeTypeOf[A: Type](subtype: TypeSymbol): Type[Subtype] = {
+    private def subtypeTypeOf[A: Type](subtype: TypeSymbol): ExistentialType.UpperBounded[A] = {
+      subtype.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
+
       val sEta = subtype.toType.etaExpand
-      fromUntyped(
-        sEta.finalResultType
-          .substituteTypes(sEta.baseType(Type[A].tpe.typeSymbol).typeArgs.map(_.typeSymbol), Type[A].tpe.typeArgs)
-      )
+      fromUntyped[A](
+        sEta.finalResultType.substituteTypes(
+          sEta.baseType(Type[A].tpe.typeSymbol).typeArgs.map(_.typeSymbol),
+          Type[A].tpe.typeArgs
+        )
+      ).asExistentialUpperBounded[A]
     }
   }
 }

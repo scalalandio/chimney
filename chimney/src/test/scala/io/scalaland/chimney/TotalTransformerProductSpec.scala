@@ -510,7 +510,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
   // TODO: ProductToProduct doesn't handle tuples yet
   /*
-  test("transform between case classes and tuples") {
+  group("transform between case classes and tuples") {
 
     case class Foo(field1: Int, field2: Double, field3: String)
 
@@ -584,8 +584,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
       Foo(Some(Foo(None))).transformInto[Bar] ==> Bar(Some(Bar(None)))
     }
 
-    // FIXME: we have broken recursive type application in paramsWithTypes on Scala 3
-    /*
     test("support mutual recursion") {
       implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
 
@@ -595,7 +593,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       Bar1(1, Baz(Some(Bar1(2, Baz(None))))).transformInto[Bar2] ==> Bar2(Baz(Some(Bar2(Baz(None)))))
     }
-     */
   }
 
   test("support macro dependent transformers") {

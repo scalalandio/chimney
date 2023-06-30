@@ -17,16 +17,13 @@ private[compiletime] trait SealedHierarchiesPlatform extends SealedHierarchies {
     def parse[A: Type]: Option[Enum[A]] = if isSealed(Type[A]) then {
       val elements = extractSubclasses(TypeRepr.of[A].typeSymbol).distinct
         .map { (subtype: Symbol) =>
-          subtypeName(subtype) -> subtypeTypeOf[A](subtype)
+          val subtypeA = subtypeTypeOf[A](subtype)
+          subtypeA.mapK[Enum.Element[A, *]] { implicit Subtype: Type[subtypeA.Underlying] => _ =>
+            Enum.Element[A, subtypeA.Underlying](name = subtypeName(subtype), upcast = _.upcastExpr[A])
+          }
         }
-        .filter { case (_, subtypeType) =>
-          // with GADT we can have subtypes that shouldn't appear in pattern matching
-          subtypeType <:< Type[A]
-        }
-        .map { case (subtypeName, subtypeType) =>
-          implicit val Subtype: Type[Subtype] = subtypeType
-          Existential[Enum.Element[A, *], Subtype](Enum.Element(name = subtypeName, upcast = _.upcastExpr[A]))
-        }
+        // with GADT we can have subtypes that shouldn't appear in pattern matching
+        .filter(_.Underlying <:< Type[A])
       Some(Enum(elements))
     } else None
 
@@ -45,7 +42,7 @@ private[compiletime] trait SealedHierarchiesPlatform extends SealedHierarchies {
 
     // TODO: send to review by Janek
 
-    private def subtypeTypeOf[A: Type](subtype: Symbol): Type[Subtype] = {
+    private def subtypeTypeOf[A: Type](subtype: Symbol): ExistentialType.UpperBounded[A] = {
       subtype.primaryConstructor.paramSymss match {
         // subtype takes type parameters
         case typeParamSymbols :: _ if typeParamSymbols.exists(_.isType) =>
@@ -59,10 +56,10 @@ private[compiletime] trait SealedHierarchiesPlatform extends SealedHierarchies {
               .toMap
           // TODO: some better error message if child has an extra type param that doesn't come from the parent
           val typeParamReprs: List[TypeRepr] = typeParamSymbols.map(_.name).map(appliedTypeByParam)
-          subtype.typeRef.appliedTo(typeParamReprs).asType.asInstanceOf[Type[Subtype]]
+          subtype.typeRef.appliedTo(typeParamReprs).asType.asInstanceOf[Type[A]].asExistentialUpperBounded[A]
         // subtype is monomorphic
         case _ =>
-          subtype.typeRef.asType.asInstanceOf[Type[Subtype]]
+          subtype.typeRef.asType.asInstanceOf[Type[A]].asExistentialUpperBounded[A]
       }
     }
   }

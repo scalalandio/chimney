@@ -9,7 +9,7 @@ private[compiletime] trait SealedHierarchies { this: Definitions =>
   protected object Enum {
 
     final case class Element[Of, A](name: String, upcast: Expr[A] => Expr[Of])
-    final type Elements[Of] = List[Existential[Element[Of, *]]]
+    final type Elements[Of] = List[Existential.UpperBounded[Of, Element[Of, *]]]
   }
 
   protected val SealedHierarchy: SealedHierarchyModule

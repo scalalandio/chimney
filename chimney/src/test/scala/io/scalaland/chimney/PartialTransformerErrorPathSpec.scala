@@ -122,7 +122,10 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
   // FIXME: Internal error: unable to find the outer accessor symbol of class PartialTransformerErrorPathSpec
   /*
   test("sealed hierarchy's error should add path to failed subtype") {
-    val result = (Foo.Baz("fail"): Foo).intoPartial[Bar].transform
+    //Foo.Baz("fail").intoPartial[Bar.Baz].enableMacrosLogging.transform
+
+    // val result = (Foo.Baz("fail"): Foo).intoPartial[Bar].enableMacrosLogging.transform
+    val result = (Foo.Baz("fail"): Foo).transformIntoPartial[Bar]
     result.asErrorPathMessages ==> Iterable(
       "field" -> partial.ErrorMessage.EmptyValue
     )
