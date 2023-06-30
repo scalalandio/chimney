@@ -4,7 +4,8 @@ import io.scalaland.chimney.internal.compiletime.Definitions
 
 private[compiletime] trait ValueClasses { this: Definitions =>
 
-  protected case class ValueClass[Outer, Inner](
+  /** Let us unwrap and wrap value in AnyVal value class */
+  final protected case class ValueClass[Outer, Inner](
       fieldName: String,
       unwrap: Expr[Outer] => Expr[Inner],
       wrap: Expr[Inner] => Expr[Outer]

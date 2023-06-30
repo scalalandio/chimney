@@ -4,6 +4,7 @@ import io.scalaland.chimney.internal.compiletime.Definitions
 
 private[compiletime] trait SealedHierarchies { this: Definitions =>
 
+  /** Let us obtain a list of types implementing the sealed hierarchy */
   final protected case class Enum[A](elements: Enum.Elements[A])
   protected object Enum {
 

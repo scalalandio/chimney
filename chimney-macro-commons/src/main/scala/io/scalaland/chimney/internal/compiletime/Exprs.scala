@@ -2,10 +2,12 @@ package io.scalaland.chimney.internal.compiletime
 
 private[compiletime] trait Exprs { this: Definitions =>
 
-  /** Platform-specific expression representation (c.universe.Expr[A] in 2, quotes.Expr[A] in 3 */
+  /** Platform-specific expression representation (c.Expr[A] in 2, quotes.Expr[A] in 3 */
   protected type Expr[A]
   protected val Expr: ExprModule
   protected trait ExprModule { this: Expr.type =>
+
+    // Build-in types expressions
 
     val Nothing: Expr[Nothing]
     val Null: Expr[Null]
@@ -107,6 +109,8 @@ private[compiletime] trait Exprs { this: Definitions =>
     def block[A: Type](statements: List[Expr[Unit]], expr: Expr[A]): Expr[A]
 
     def summonImplicit[A: Type]: Option[Expr[A]]
+
+    // Implementations of Expr extension methods
 
     def eq[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[Boolean]
 

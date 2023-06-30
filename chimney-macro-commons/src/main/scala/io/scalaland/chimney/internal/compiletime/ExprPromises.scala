@@ -2,8 +2,20 @@ package io.scalaland.chimney.internal.compiletime
 
 private[compiletime] trait ExprPromises { this: Definitions =>
 
+  /** In Scala 2 it's c.universe.TermName, in Scala 3 symbol of a val */
   protected type ExprPromiseName
 
+  /** Allow us to use `Expr[A]` before we would either: know how we would initiate it, or: what the final shape of
+   * a whole expression would be.
+   * 
+   * In situations like `'{ val a = sth; ${ useA('{ a }) } } ` you know both how `a` would be created as well as
+   * the shape of the final tree. In cases when you would e.g. use expression in some context-dependent derivation
+   * which could return `Either[Expr[B], Expr[F[B]]`, ExprPromise allows you to calculate that result and THEN decide
+   * how to turn it into final Expr value.
+   * 
+   * @tparam From type of the promised expression
+   * @tparam A type of the current result we created using Expr[From]
+   */
   final protected class ExprPromise[From: Type, A](private val usage: A, private val fromName: ExprPromiseName) {
 
     def map[B](f: A => B): ExprPromise[From, B] = new ExprPromise(f(usage), fromName)
@@ -13,17 +25,20 @@ private[compiletime] trait ExprPromises { this: Definitions =>
       f(usage).map(new ExprPromise(_, fromName))
     }
 
-    private def fulfilAsDefinition(init: Expr[From], definitionType: PrependValsTo.DefnType): PrependDefinitionsTo[A] =
+    private def fulfilAsDefinition(
+        init: Expr[From],
+        definitionType: PrependDefinitionsTo.DefnType
+    ): PrependDefinitionsTo[A] =
       new PrependDefinitionsTo(usage, Vector((fromName, ExistentialExpr[From](init), definitionType)))
 
     def fulfilAsDef(init: Expr[From]): PrependDefinitionsTo[A] =
-      fulfilAsDefinition(init, PrependValsTo.DefnType.Def)
+      fulfilAsDefinition(init, PrependDefinitionsTo.DefnType.Def)
     def fulfilAsLazy(init: Expr[From]): PrependDefinitionsTo[A] =
-      fulfilAsDefinition(init, PrependValsTo.DefnType.Lazy)
+      fulfilAsDefinition(init, PrependDefinitionsTo.DefnType.Lazy)
     def fulfilAsVal(init: Expr[From]): PrependDefinitionsTo[A] =
-      fulfilAsDefinition(init, PrependValsTo.DefnType.Val)
+      fulfilAsDefinition(init, PrependDefinitionsTo.DefnType.Val)
     def fulfilAsVar(init: Expr[From]): PrependDefinitionsTo[(A, Expr[From] => Expr[Unit])] =
-      fulfilAsDefinition(init, PrependValsTo.DefnType.Var).map(_ -> PrependValsTo.setVal(fromName))
+      fulfilAsDefinition(init, PrependDefinitionsTo.DefnType.Var).map(_ -> PrependDefinitionsTo.setVal(fromName))
 
     def fulfilAsLambda[To: Type](implicit ev: A <:< Expr[To]): Expr[From => To] =
       ExprPromise.createLambda(fromName, ev(usage))
@@ -64,6 +79,13 @@ private[compiletime] trait ExprPromises { this: Definitions =>
   protected val ExprPromise: ExprPromiseModule
   protected trait ExprPromiseModule { this: ExprPromise.type =>
 
+    /** Creates the expression promise.
+     * 
+     * @param nameGenerationStrategy to avoid accidental name clashing, we are using fresh name generator which
+     *                               assures us that the name would be unique, we are only choosing the prefix 
+     * @param usageHint if we'll fulfil promise as val/lazy val/var it let us decide as which
+     * @tparam From type of promised expression
+     */
     final def promise[From: Type](
         nameGenerationStrategy: NameGenerationStrategy,
         usageHint: UsageHint = UsageHint.None
@@ -109,9 +131,13 @@ private[compiletime] trait ExprPromises { this: Definitions =>
         fa.traverse(f)
     }
 
+  /** When we decide that promised expression would be used as val/lazy val/var/def, we receive this wrapper around
+   * the results, which would ensure that: initialization of a definition would happen before its use, you can only use
+   * the definition inside its scope.
+   */
   final protected class PrependDefinitionsTo[A](
       private val usage: A,
-      private val defns: Vector[(ExprPromiseName, ExistentialExpr, PrependValsTo.DefnType)]
+      private val defns: Vector[(ExprPromiseName, ExistentialExpr, PrependDefinitionsTo.DefnType)]
   ) {
 
     def map[B](f: A => B): PrependDefinitionsTo[B] = new PrependDefinitionsTo(f(usage), defns)
@@ -125,12 +151,12 @@ private[compiletime] trait ExprPromises { this: Definitions =>
     }
 
     def prepend[B: Type](implicit ev: A <:< Expr[B]): Expr[B] =
-      PrependValsTo.initializeDefns[B](defns, ev(usage))
+      PrependDefinitionsTo.initializeDefns[B](defns, ev(usage))
 
     def use[B: Type](f: A => Expr[B]): Expr[B] = map(f).prepend
   }
-  protected val PrependValsTo: PrependValsToModule
-  protected trait PrependValsToModule { this: PrependValsTo.type =>
+  protected val PrependDefinitionsTo: PrependDefinitionsToModule
+  protected trait PrependDefinitionsToModule { this: PrependDefinitionsTo.type =>
 
     def initializeDefns[To: Type](vals: Vector[(ExprPromiseName, ExistentialExpr, DefnType)], expr: Expr[To]): Expr[To]
 
@@ -145,7 +171,7 @@ private[compiletime] trait ExprPromises { this: Definitions =>
     }
   }
 
-  implicit protected val PrependValsToTraversableApplicative: fp.ApplicativeTraverse[PrependDefinitionsTo] =
+  implicit protected val PrependDefinitionsToTraversableApplicative: fp.ApplicativeTraverse[PrependDefinitionsTo] =
     new fp.ApplicativeTraverse[PrependDefinitionsTo] {
 
       def map2[A, B, C](fa: PrependDefinitionsTo[A], fb: PrependDefinitionsTo[B])(
@@ -158,6 +184,10 @@ private[compiletime] trait ExprPromises { this: Definitions =>
         fa.traverse(f)
     }
 
+  /** When we decide that expression would be crated in patter-match binding, we would receive this wrapper around
+   * the results, which would ensure that definition is only used inside the scope and allow combining several cases
+   * into a single pattern matching.
+   */
   final protected class PatternMatchCase[To](
       val someFrom: ExistentialType,
       val usage: Expr[To],

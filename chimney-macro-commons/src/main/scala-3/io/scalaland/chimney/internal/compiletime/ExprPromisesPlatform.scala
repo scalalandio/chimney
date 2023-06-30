@@ -26,8 +26,8 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         to: Expr[To]
     ): Expr[From => To] = '{ (param: From) =>
       ${
-        PrependValsTo.initializeDefns[To](
-          vals = Vector((fromName, ExistentialExpr('{ param }), PrependValsTo.DefnType.Val)),
+        PrependDefinitionsTo.initializeDefns[To](
+          vals = Vector((fromName, ExistentialExpr('{ param }), PrependDefinitionsTo.DefnType.Val)),
           expr = to
         )
       }
@@ -39,10 +39,10 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         to: Expr[To]
     ): Expr[(From, From2) => To] = '{ (param: From, param2: From2) =>
       ${
-        PrependValsTo.initializeDefns[To](
+        PrependDefinitionsTo.initializeDefns[To](
           vals = Vector(
-            (fromName, ExistentialExpr('{ param }), PrependValsTo.DefnType.Val),
-            (from2Name, ExistentialExpr('{ param2 }), PrependValsTo.DefnType.Val)
+            (fromName, ExistentialExpr('{ param }), PrependDefinitionsTo.DefnType.Val),
+            (from2Name, ExistentialExpr('{ param2 }), PrependDefinitionsTo.DefnType.Val)
           ),
           expr = to
         )
@@ -71,7 +71,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
       expr.asTerm.toString.replaceAll("\\$\\d+", "").replace("$u002E", ".")
   }
 
-  protected object PrependValsTo extends PrependValsToModule {
+  protected object PrependDefinitionsTo extends PrependDefinitionsToModule {
 
     def initializeDefns[To: Type](
         vals: Vector[(ExprPromiseName, ExistentialExpr, DefnType)],

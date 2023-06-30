@@ -29,6 +29,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
     }
     final type Getters[From] = ListMap[String, Existential[Getter[From, *]]]
 
+    /** Let us obtain a list of: vals, lazy vals and parameterless defs that we can always call. */
     final case class Extraction[From](extraction: Getters[From])
     object Extraction {
       def unapply[From](From: Type[From]): Option[Getters[From]] =
@@ -43,7 +44,7 @@ private[compiletime] trait ProductTypes { this: Definitions =>
         /** When constructing, value will be passed as constructor argument */
         case object ConstructorParameter extends TargetType
 
-        /** When constructing, value */
+        /** When constructing, value will be passed as setter argument */
         case object SetterParameter extends TargetType
       }
     }
@@ -51,6 +52,8 @@ private[compiletime] trait ProductTypes { this: Definitions =>
 
     final type Arguments = Map[String, ExistentialExpr]
 
+    /** Let us obtain a list of primary constructor's parameters as well as setter parameters, as well as a method
+     * of taking all computed arguments and turning it into constructed value. */
     final case class Constructor[To](parameters: Parameters, constructor: Arguments => Expr[To])
     object Constructor {
       def unapply[To](To: Type[To]): Option[(Parameters, Arguments => Expr[To])] =

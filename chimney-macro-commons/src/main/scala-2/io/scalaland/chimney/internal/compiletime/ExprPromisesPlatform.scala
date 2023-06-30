@@ -71,7 +71,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     }
   }
 
-  protected object PrependValsTo extends PrependValsToModule {
+  protected object PrependDefinitionsTo extends PrependDefinitionsToModule {
 
     def initializeDefns[To: Type](
         vals: Vector[(ExprPromiseName, ExistentialExpr, DefnType)],
