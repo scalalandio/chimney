@@ -5,7 +5,7 @@ import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 
-private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: DefinitionsPlatform =>
+private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: ChimneyDefinitionsPlatform =>
 
   import c.universe.{internal as _, Name as _, Transformer as _, *}
 

@@ -215,7 +215,7 @@ lazy val root = project
   .settings(settings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate((chimney.projectRefs ++ chimneyCats.projectRefs)*)
+  .aggregate((chimneyMacroCommons.projectRefs ++ chimney.projectRefs ++ chimneyCats.projectRefs)*)
   .settings(
     moduleName := "chimney-build",
     name := "chimney-build",
@@ -267,6 +267,21 @@ lazy val root = project
     )
   )
 
+lazy val chimneyMacroCommons = projectMatrix
+  .in(file("chimney-macro-commons"))
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
+  .disablePlugins(WelcomePlugin)
+  .settings(
+    moduleName := "chimney-macro-commons",
+    name := "chimney-macro-commons",
+    description := "Utilities for writing cross-platform macro logic"
+  )
+  .settings(settings*)
+  .settings(versionSchemeSettings*)
+  .settings(publishSettings*)
+  .settings(dependencies*)
+  .dependsOn(protos % "test->test")
+
 lazy val chimney = projectMatrix
   .in(file("chimney"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
@@ -286,7 +301,7 @@ lazy val chimney = projectMatrix
   .settings(versionSchemeSettings*)
   .settings(publishSettings*)
   .settings(dependencies*)
-  .dependsOn(protos % "test->test")
+  .dependsOn(chimneyMacroCommons, protos % "test->test")
 
 lazy val chimneyCats = projectMatrix
   .in(file("chimneyCats"))

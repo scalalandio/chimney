@@ -7,7 +7,7 @@ import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefin
 
 import scala.quoted
 
-private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: DefinitionsPlatform =>
+private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: ChimneyDefinitionsPlatform =>
 
   import quotes.*, quotes.reflect.*
 

@@ -5,7 +5,7 @@ import io.scalaland.chimney.partial
 
 import scala.collection.compat.Factory
 
-private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: DefinitionsPlatform =>
+private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: ChimneyDefinitionsPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
 

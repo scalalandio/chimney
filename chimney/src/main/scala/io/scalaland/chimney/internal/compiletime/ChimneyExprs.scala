@@ -5,7 +5,7 @@ import io.scalaland.chimney.partial
 
 import scala.collection.compat.Factory
 
-private[compiletime] trait ChimneyExprs { this: Definitions =>
+private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
 
   protected val ChimneyExpr: ChimneyExprModule
   protected trait ChimneyExprModule { this: ChimneyExpr.type =>

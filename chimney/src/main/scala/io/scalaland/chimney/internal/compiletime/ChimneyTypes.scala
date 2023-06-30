@@ -4,7 +4,7 @@ import io.scalaland.chimney.*
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons.RuntimeDataStore
 import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
 
-private[compiletime] trait ChimneyTypes { this: Types with Existentials =>
+private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
 
   protected val ChimneyType: ChimneyTypeModule
   protected trait ChimneyTypeModule {

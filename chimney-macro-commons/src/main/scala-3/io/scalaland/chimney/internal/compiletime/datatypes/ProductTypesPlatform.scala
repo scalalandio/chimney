@@ -16,10 +16,10 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
       private val privateFlags = Flags.Private | Flags.PrivateLocal | Flags.Protected
 
       def isAbstract(sym: Symbol): Boolean =
-        (sym.flags & abstractFlags).is(abstractFlags)
+        (sym.flags & abstractFlags) != Flags.EmptyFlags
 
       def isPublic(sym: Symbol): Boolean =
-        !(sym.flags & privateFlags).is(privateFlags)
+        (sym.flags & privateFlags) == Flags.EmptyFlags
 
       def isParameterless(method: Symbol): Boolean =
         method.paramSymss.filterNot(_.exists(_.isType)).flatten.isEmpty
@@ -55,7 +55,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
     }
     def isCaseClass[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
-      sym.isClassDef && sym.flags.is(Flags.Case) && !sym.flags.is(Flags.Abstract) && isPublic(sym.primaryConstructor)
+      sym.isClassDef && sym.flags.is(Flags.Case) && !isAbstract(sym) && isPublic(sym.primaryConstructor)
     }
     def isCaseObject[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol

@@ -23,7 +23,7 @@ private[compiletime] trait Gateway { this: Derivation =>
     val context = TransformationContext.ForTotal
       .create[From, To](
         src,
-        Configurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+        TransformerConfigurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
         runtimeDataStore
       )
       .updateConfig(_.allowFromToImplicitSearch)
@@ -47,7 +47,7 @@ private[compiletime] trait Gateway { this: Derivation =>
         val context = TransformationContext.ForTotal
           .create[From, To](
             src,
-            Configurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+            TransformerConfigurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
             runtimeDataStore
           )
 
@@ -73,7 +73,7 @@ private[compiletime] trait Gateway { this: Derivation =>
       .create[From, To](
         src,
         failFast,
-        Configurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+        TransformerConfigurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
         runtimeDataStore
       )
       .updateConfig(_.allowFromToImplicitSearch)
@@ -98,7 +98,7 @@ private[compiletime] trait Gateway { this: Derivation =>
           .create[From, To](
             src,
             failFast,
-            Configurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+            TransformerConfigurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
             runtimeDataStore
           )
 

@@ -6,7 +6,7 @@ import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
 import scala.collection.compat.Factory
 import scala.quoted
 
-private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: DefinitionsPlatform =>
+private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: ChimneyDefinitionsPlatform =>
 
   object ChimneyExpr extends ChimneyExprModule {
 

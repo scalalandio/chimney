@@ -1,11 +1,9 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-import io.scalaland.chimney.internal.compiletime.{Definitions, DerivationResult}
-import io.scalaland.chimney.internal.compiletime.datatypes
-import io.scalaland.chimney.internal.compiletime.derivation.{Configurations, Contexts, ImplicitSummoning}
+import io.scalaland.chimney.internal.compiletime.{datatypes, ChimneyDefinitions, DerivationResult}
 
 private[compiletime] trait Derivation
-    extends Definitions
+    extends ChimneyDefinitions
     with Configurations
     with Contexts
     with ImplicitSummoning

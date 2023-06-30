@@ -1,12 +1,10 @@
-package io.scalaland.chimney.internal.compiletime.derivation
+package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.dsl.ImplicitTransformerPreference
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal
-import io.scalaland.chimney.internal.TransformerCfg
-import io.scalaland.chimney.internal.compiletime.Definitions
 
-private[compiletime] trait Configurations { this: Definitions =>
+private[compiletime] trait Configurations { this: Derivation =>
 
   final protected case class TransformerFlags(
       processDefaultValues: Boolean = false,
@@ -52,7 +50,7 @@ private[compiletime] trait Configurations { this: Definitions =>
   }
 
   sealed abstract protected class RuntimeFieldOverride(val usesRuntimeDataStore: Boolean)
-      extends Product
+      extends scala.Product
       with Serializable
   protected object RuntimeFieldOverride {
     final case class Const(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
@@ -62,7 +60,7 @@ private[compiletime] trait Configurations { this: Definitions =>
     final case class RenamedFrom(sourceName: String) extends RuntimeFieldOverride(false)
   }
 
-  sealed abstract class RuntimeCoproductOverride extends Product with Serializable
+  sealed abstract class RuntimeCoproductOverride extends scala.Product with Serializable
   protected object RuntimeCoproductOverride {
     final case class CoproductInstance(runtimeDataIdx: Int) extends RuntimeCoproductOverride
     final case class CoproductInstancePartial(runtimeDataIdx: Int) extends RuntimeCoproductOverride
@@ -122,19 +120,15 @@ private[compiletime] trait Configurations { this: Definitions =>
         s"(${ExistentialType.prettyPrint(f)}, ${ExistentialType.prettyPrint(t)})"
       }.toString
       s"""TransformerConfig(
-          |  flags = $flags,
-          |  fieldOverrides = Map($fieldOverridesString),
-          |  coproductOverrides = Map($coproductOverridesString),
-          |  preventResolutionForTypes = $preventResolutionForTypesString
-          |)""".stripMargin
+         |  flags = $flags,
+         |  fieldOverrides = Map($fieldOverridesString),
+         |  coproductOverrides = Map($coproductOverridesString),
+         |  preventResolutionForTypes = $preventResolutionForTypesString
+         |)""".stripMargin
     }
   }
-  protected object TransformerConfig {
 
-    type UpdateCfg[_ <: TransformerCfg]
-  }
-
-  protected object Configurations {
+  protected object TransformerConfigurations {
 
     final def readTransformerConfig[
         Cfg <: internal.TransformerCfg: Type,

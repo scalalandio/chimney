@@ -1,13 +1,11 @@
-package io.scalaland.chimney.internal.compiletime.derivation
+package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
-import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.partial
-import io.scalaland.chimney.internal.compiletime.Definitions
 
-private[compiletime] trait Contexts { this: Definitions & Configurations =>
+private[compiletime] trait Contexts { this: Derivation =>
 
-  sealed protected trait TransformationContext[From, To] extends Product with Serializable {
+  sealed protected trait TransformationContext[From, To] extends scala.Product with Serializable {
     val src: Expr[From]
 
     val From: Type[From]
@@ -19,8 +17,6 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
     type Target
     val Target: Type[Target]
-    type TypeClass
-    val TypeClass: Type[TypeClass]
 
     def updateFromTo[NewFrom: Type, NewTo: Type](newSrc: Expr[NewFrom]): TransformationContext[NewFrom, NewTo] =
       fold[TransformationContext[NewFrom, NewTo]] { (ctx: TransformationContext.ForTotal[From, To]) =>
@@ -62,7 +58,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
     /** Avoid clumsy
      * {{{
-     * 
+     *
      * ctx match {
      *   case total: TransformationContext.ForTotal[?, ?]     => ...
      *   case partial: TransformationContext.ForPartial[?, ?] => ...
@@ -75,6 +71,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         forPartial: TransformationContext.ForPartial[From, To] => B
     ): B
   }
+
   protected object TransformationContext {
 
     final case class ForTotal[From, To](src: Expr[From])(
@@ -87,8 +84,6 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
       final type Target = To
       val Target = To
-      final type TypeClass = Transformer[From, To]
-      val TypeClass = ChimneyType.Transformer(From, To)
 
       override def fold[B](
           forTotal: TransformationContext.ForTotal[From, To] => B
@@ -99,6 +94,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
       override def toString: String =
         s"ForTotal[From = ${Type.prettyPrint(From)}, To = ${Type.prettyPrint(To)}](src = ${Expr.prettyPrint(src)})($config)"
     }
+
     object ForTotal {
 
       def create[From: Type, To: Type](
@@ -125,8 +121,6 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
 
       final type Target = partial.Result[To]
       val Target = ChimneyType.PartialResult(To)
-      final type TypeClass = PartialTransformer[From, To]
-      val TypeClass = ChimneyType.PartialTransformer(From, To)
 
       override def fold[B](
           forTotal: TransformationContext.ForTotal[From, To] => B
@@ -138,6 +132,7 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
         s"ForPartial[From = ${Type.prettyPrint(From)}, To = ${Type
             .prettyPrint(To)}](src = ${Expr.prettyPrint(src)}, failFast = ${Expr.prettyPrint(failFast)})($config)"
     }
+
     object ForPartial {
 
       def create[From: Type, To: Type](
@@ -155,31 +150,10 @@ private[compiletime] trait Contexts { this: Definitions & Configurations =>
     }
   }
 
-  final case class PatcherContext[A, Patch](obj: Expr[A], patch: Expr[Patch])(
-      val A: Type[A],
-      val Patch: Type[Patch]
-  ) {
-
-    final type Target = A
-    val Target = A
-    final type TypeClass = Patcher[A, Patch]
-    val TypeClass = ChimneyType.Patcher(A, Patch)
-  }
-  object PatcherContext {
-
-    def create[A: Type, Patch: Type](obj: Expr[A], patch: Expr[Patch]): PatcherContext[A, Patch] =
-      PatcherContext(obj = obj, patch = patch)(
-        A = Type[A],
-        Patch = Type[Patch]
-      )
-  }
-
   // unpacks Types from Contexts
   implicit final protected def ctx2FromType[From, To](implicit ctx: TransformationContext[From, To]): Type[From] =
     ctx.From
   implicit final protected def ctx2ToType[From, To](implicit ctx: TransformationContext[From, To]): Type[To] = ctx.To
-  implicit final protected def ctx2TType[A, Patch](implicit ctx: PatcherContext[A, Patch]): Type[A] = ctx.A
-  implicit final protected def ctx2PatchType[A, Patch](implicit ctx: PatcherContext[A, Patch]): Type[Patch] = ctx.Patch
 
-  // for unpacking Exprs from Context, import ctx.* should be enough
+  // for unpacking Exprs from Context, pattern matching should be enough
 }
