@@ -360,8 +360,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     )
   }
 
-  // FIXME: errorPath in map -> iterable
-  test("transform between Iterables and Maps, using Partial Transformer for inner type transformation".ignore) {
+  test("transform between Iterables and Maps, using Partial Transformer for inner type transformation") {
     implicit val intParserOpt: PartialTransformer[String, Int] =
       PartialTransformer(_.parseInt.toPartialResult)
 
@@ -415,8 +414,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     Map(1 -> 10, 2 -> 20).transformIntoPartial[Array[(String, Int)]].asOption.get ==> Array("1" -> 10, "2" -> 20)
   }
 
-  // FIXME: error path in map to array
-  test("transform between Arrays and Maps, using Partial Transformer for inner type transformation".ignore) {
+  test("transform between Arrays and Maps, using Partial Transformer for inner type transformation") {
     implicit val intParserOpt: PartialTransformer[String, Int] =
       PartialTransformer(_.parseInt.toPartialResult)
 

@@ -66,6 +66,14 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     def Tuple2[A: Type, B: Type]: Type[(A, B)] = quoted.Type.of[(A, B)]
 
+    object Tuple2 extends Tuple2Module {
+      def apply[A: Type, B: Type]: Type[(A, B)] = quoted.Type.of[(A, B)]
+      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] = A match {
+        case '[(innerA, innerB)] => Some(Type[innerA].asExistential -> Type[innerB].asExistential)
+        case _                   => scala.None
+      }
+    }
+
     def Function1[A: Type, B: Type]: Type[A => B] = quoted.Type.of[A => B]
     def Function2[A: Type, B: Type, C: Type]: Type[(A, B) => C] = quoted.Type.of[(A, B) => C]
 

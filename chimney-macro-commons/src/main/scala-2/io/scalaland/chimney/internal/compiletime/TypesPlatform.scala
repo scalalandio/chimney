@@ -44,7 +44,13 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     val Unit: Type[Unit] = weakTypeTag[Unit]
     val String: Type[String] = weakTypeTag[String]
 
-    def Tuple2[A: Type, B: Type]: Type[(A, B)] = weakTypeTag[(A, B)]
+    object Tuple2 extends Tuple2Module {
+      def apply[A: Type, B: Type]: Type[(A, B)] = weakTypeTag[(A, B)]
+      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
+        if (A.tpe.typeConstructor <:< weakTypeOf[(?, ?)].typeConstructor)
+          Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
+        else scala.None
+    }
 
     def Function1[A: Type, B: Type]: Type[A => B] = weakTypeTag[A => B]
     def Function2[A: Type, B: Type, C: Type]: Type[(A, B) => C] = weakTypeTag[(A, B) => C]

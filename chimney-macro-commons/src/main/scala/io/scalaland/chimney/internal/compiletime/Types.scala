@@ -69,7 +69,8 @@ private[compiletime] trait Types { this: Existentials =>
       Unit.asExistential
     )
 
-    def Tuple2[A: Type, B: Type]: Type[(A, B)]
+    val Tuple2: Tuple2Module
+    trait Tuple2Module extends Ctor2[Tuple2] { this: Tuple2.type => }
 
     def Function1[A: Type, B: Type]: Type[A => B]
     def Function2[A: Type, B: Type, C: Type]: Type[(A, B) => C]

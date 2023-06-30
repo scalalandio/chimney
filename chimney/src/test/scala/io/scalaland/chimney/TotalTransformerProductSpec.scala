@@ -585,8 +585,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
 
     test("support mutual recursion") {
-      implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
-
       import MutualRec.*
 
       implicit def bar1ToBar2Transformer: Transformer[Bar1, Bar2] = Transformer.derive[Bar1, Bar2]

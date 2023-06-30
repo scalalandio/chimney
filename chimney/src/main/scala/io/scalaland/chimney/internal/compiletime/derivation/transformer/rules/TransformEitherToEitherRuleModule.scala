@@ -10,8 +10,6 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
 
   protected object TransformEitherToEitherRule extends Rule("EitherToEither") {
 
-    // TODO: find out what to append to error path
-
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
         case (Type.Either.Left(fromL, fromR), Type.Either(toL, toR)) if !Type[To].isRight =>
