@@ -65,8 +65,6 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
       }
     }
 
-    // FIXME: I'm not doing that check yet
-    /*
     test("not compile when matching an is- getter with type other than Boolean") {
       compileErrorsFixed("""
              case class MistypedTarget(flag: Int)
@@ -75,7 +73,10 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
              }
              new MistypedSource(1).into[MistypedTarget].enableBeanGetters.transform
           """)
-        .check("", "Chimney can't derive transformation from MistypedSource to MistypedTarget")
+        .check(
+          "",
+          "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedSource to io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedTarget"
+        )
 
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
@@ -87,10 +88,12 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
                }
                new MistypedSource(1).into[MistypedTarget].transform
             """)
-          .check("", "Chimney can't derive transformation from MistypedSource to MistypedTarget")
+          .check(
+            "",
+            "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedSource to io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedTarget"
+          )
       }
     }
-     */
   }
 
   group("""flag .disableBeanGetters""") {

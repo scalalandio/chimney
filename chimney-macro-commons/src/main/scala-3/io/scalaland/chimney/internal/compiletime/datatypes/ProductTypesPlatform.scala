@@ -105,11 +105,12 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).filter(isPublic).distinct.map { getter =>
           val name = getter.name
           val tpe = ExistentialType(returnTypeOf[Any](A.memberType(getter)))
+          def conformToIsGetters = !name.take(2).equalsIgnoreCase("is") || tpe.Underlying <:< Type[Boolean]
           name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
             Product.Getter(
               sourceType =
                 if isCaseFieldName(getter) then Product.Getter.SourceType.ConstructorVal
-                else if isJavaGetter(getter) then Product.Getter.SourceType.JavaBeanGetter
+                else if isJavaGetter(getter) && conformToIsGetters then Product.Getter.SourceType.JavaBeanGetter
                 else if getter.isValDef then Product.Getter.SourceType.ConstructorVal
                 else Product.Getter.SourceType.AccessorMethod,
               get =

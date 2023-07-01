@@ -71,8 +71,6 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       }
     }
 
-    // FIXME: I'm not doing that check yet
-    /*
     test("not compile when matching an is- getter with type other than Boolean") {
       compileErrorsFixed("""
              case class MistypedTarget(flag: Int)
@@ -81,7 +79,10 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
              }
              new MistypedSource(1).intoPartial[MistypedTarget].enableBeanGetters.transform
           """)
-        .check("", "Chimney can't derive transformation from MistypedSource to MistypedTarget")
+        .check(
+          "",
+          "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerJavaBeanSpec.MistypedSource to io.scalaland.chimney.PartialTransformerJavaBeanSpec.MistypedTarget"
+        )
 
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
@@ -93,10 +94,12 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
                }
                new MistypedSource(1).intoPartial[MistypedTarget].transform
             """)
-          .check("", "Chimney can't derive transformation from MistypedSource to MistypedTarget")
+          .check(
+            "",
+            "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerJavaBeanSpec.MistypedSource to io.scalaland.chimney.PartialTransformerJavaBeanSpec.MistypedTarget"
+          )
       }
     }
-     */
   }
 
   group("""flag .disableBeanGetters""") {

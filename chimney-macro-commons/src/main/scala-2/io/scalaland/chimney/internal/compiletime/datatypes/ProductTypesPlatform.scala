@@ -73,12 +73,13 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
             .map { getter =>
               val name = getDecodedName(getter)
               val tpe = ExistentialType(fromUntyped(returnTypeOf(Type[A].tpe, getter)))
+              def conformToIsGetters = !name.take(2).equalsIgnoreCase("is") || tpe.Underlying <:< Type[Boolean]
               name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
                 val termName = getter.asMethod.name.toTermName
                 Product.Getter[A, tpe.Underlying](
                   sourceType =
                     if (isCaseClassField(getter)) Product.Getter.SourceType.ConstructorVal
-                    else if (isJavaGetter(getter)) Product.Getter.SourceType.JavaBeanGetter
+                    else if (isJavaGetter(getter) && conformToIsGetters) Product.Getter.SourceType.JavaBeanGetter
                     else if (getter.isStable) Product.Getter.SourceType.ConstructorVal // Hmm...
                     else Product.Getter.SourceType.AccessorMethod,
                   get =
