@@ -469,8 +469,6 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       )
     }
 
-    // FIXME: ProductValue parsing on Scala 2
-    /*
     test("use None for fields without source but with default value when enabled but default values disabled") {
       Source("foo").intoPartial[TargetWithOptionAndDefault].enableOptionDefaultsToNone.transform.asOption ==> Some(
         TargetWithOptionAndDefault("foo", None)
@@ -498,6 +496,5 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
         )
       )
     }
-     */
   }
 }

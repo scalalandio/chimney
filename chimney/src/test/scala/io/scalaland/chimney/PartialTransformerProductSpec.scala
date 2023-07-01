@@ -687,13 +687,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
       )
     }
 
-    // FIXME: Scala 2
-    // double definition:
-    // [error] def isDefinedAt(x: Object): Boolean at line 699 and
-    // [error] def isDefinedAt(x: Object): Boolean at line 699
-    // [error] have same type
-    // [error]           partial.Result.fromPartialFunction({
-    /*
     test("not defined at") {
       val person = Person("John", 10, 140)
       val result = person
@@ -716,7 +709,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "height" -> s"not defined at $person"
       )
     }
-     */
 
     test("custom string errors") {
       val result = Person("John", 10, 140)
@@ -762,12 +754,8 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
   group("partial transform validation") {
 
-    // import trip.*
+    import trip.*
 
-    // FIXME: Scala 2
-    // [error] ## Exception when compiling 33 sources to /Users/dev/Workspaces/GitHub/chimney/chimney/target/jvm-2.13/test-classes
-    // [error] java.lang.IllegalArgumentException: Could not find proxy for val f$19: Function1 in List(value f$19, method $anonfun$new$247, value result, method $anonfun$new$233, method $anonfun$new$232, value <local PartialTransformerProductSpec>, class PartialTransformerProductSpec, package chimney, package scalaland, package io, package <root>) (currentOwner= method $anonfun$new$237 )
-    /*
     test("success") {
       val okForm = PersonForm("John", "10", "140")
       val expected = Person("JOHN", 10, 140)
@@ -791,13 +779,9 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result.asEither ==> Right(expected)
       result.asErrorPathMessageStrings ==> Iterable.empty
     }
-     */
 
-    // FIXME: Scala 2
-    // [error] ## Exception when compiling 33 sources to /Users/dev/Workspaces/GitHub/chimney/chimney/target/jvm-2.13/test-classes
-    // [error] java.lang.IllegalArgumentException: Could not find proxy for val f$19: Function1 in List(value f$19, method $anonfun$new$223, value result, method $anonfun$new$209, method $anonfun$new$208, value <local PartialTransformerProductSpec>, class PartialTransformerProductSpec, package chimney, package scalaland, package io, package <root>) (currentOwner= method $anonfun$new$213 )
-    /*
-    test("failure with error handling") {
+    // FIXME: withFieldComputed should always lift to partial to allow caching errors and appending error path
+    test("failure with error handling".ignore) {
       val invalidForm = PersonForm("", "foo", "bar")
 
       val result = invalidForm
@@ -822,7 +806,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "height" -> "empty value"
       )
     }
-     */
   }
 
   group("recursive partial transform with nested validation") {
@@ -840,10 +823,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
         )
         .buildTransformer
 
-    // FIXME: Scala 2
-    // [error] ## Exception when compiling 33 sources to /Users/dev/Workspaces/GitHub/chimney/chimney/target/jvm-2.13/test-classes
-    // [error] java.lang.IllegalArgumentException: Could not find proxy for val f$19: Function1 in List(value f$19, method $anonfun$new$247, value result, method $anonfun$new$233, method $anonfun$new$232, value <local PartialTransformerProductSpec>, class PartialTransformerProductSpec, package chimney, package scalaland, package io, package <root>) (currentOwner= method $anonfun$new$237 )
-    /*
     test("success") {
 
       val okTripForm = TripForm("100", List(PersonForm("John", "10", "140"), PersonForm("Caroline", "12", "155")))
@@ -855,12 +834,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       result.asOption ==> Some(Trip(100, Vector(Person("John", 10, 140), Person("Caroline", 12, 155))))
     }
-     */
 
-    // FIXME: Scala 2
-    // [error] ## Exception when compiling 33 sources to /Users/dev/Workspaces/GitHub/chimney/chimney/target/jvm-2.13/test-classes
-    // [error] java.lang.IllegalArgumentException: Could not find proxy for val f$19: Function1 in List(value f$19, method $anonfun$new$247, value result, method $anonfun$new$233, method $anonfun$new$232, value <local PartialTransformerProductSpec>, class PartialTransformerProductSpec, package chimney, package scalaland, package io, package <root>) (currentOwner= method $anonfun$new$237 )
-    /*
     test("failure with error handling") {
 
       val badTripForm =
@@ -895,7 +869,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "people(1).age" -> "bad age value"
       )
     }
-     */
   }
 
   group("support scoped transformer configuration passed implicitly") {

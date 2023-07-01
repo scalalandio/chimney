@@ -165,6 +165,7 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
           case r: shapes1.Rectangle => rectangleToPolygon(r)
           case t: shapes1.Triangle  => triangleToPolygon(t)
         }
+        .enableMacrosLogging
         .transform ==> shapes2.Polygon(
         List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
       )

@@ -10,8 +10,6 @@ import scala.quoted.{Expr, Quotes, Type}
 
 final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
 
-  protected type ImplicitScopeFlagsType <: internal.TransformerFlags
-
   import quotes.*, quotes.reflect.*
 
   def deriveTotalTransformerWithConfig[
@@ -29,10 +27,26 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       From: Type,
       To: Type
   ]: Expr[Transformer[From, To]] =
-    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicit ImplicitScopeFlagsType =>
-      deriveTotalTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore =
-        ChimneyExpr.RuntimeDataStore.empty
-      )
+    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
+      ExistentialType.use(implicitScopeFlagsType) {
+        implicit ImplicitScopeFlagsType: Type[implicitScopeFlagsType.Underlying] =>
+          deriveTotalTransformer[From, To, Empty, Default, implicitScopeFlagsType.Underlying](runtimeDataStore =
+            ChimneyExpr.RuntimeDataStore.empty
+          )
+      }
+    }
+
+  def derivePartialTransformerWithDefaults[
+      From: Type,
+      To: Type
+  ]: Expr[PartialTransformer[From, To]] =
+    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
+      ExistentialType.use(implicitScopeFlagsType) {
+        implicit ImplicitScopeFlagsType: Type[implicitScopeFlagsType.Underlying] =>
+          derivePartialTransformer[From, To, Empty, Default, implicitScopeFlagsType.Underlying](runtimeDataStore =
+            ChimneyExpr.RuntimeDataStore.empty
+          )
+      }
     }
 
   def derivePartialTransformerWithConfig[
@@ -46,39 +60,24 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
   ): Expr[PartialTransformer[From, To]] =
     derivePartialTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
 
-  def derivePartialTransformerWithDefaults[
-      From: Type,
-      To: Type
-  ]: Expr[PartialTransformer[From, To]] =
-    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicit ImplicitScopeFlagsType =>
-      derivePartialTransformer[From, To, Empty, Default, ImplicitScopeFlagsType](runtimeDataStore =
-        ChimneyExpr.RuntimeDataStore.empty
-      )
-    }
-
-  private def findImplicitScopeTransformerConfiguration
-      : Expr[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]] =
-    scala.quoted.Expr
+  private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
+      useImplicitScopeFlags: ExistentialType.UpperBounded[internal.TransformerFlags] => Expr[A]
+  ): Expr[A] = {
+    val implicitScopeConfig = scala.quoted.Expr
       .summon[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]]
       .getOrElse {
         // $COVERAGE-OFF$
         reportError("Can't locate implicit TransformerConfiguration!")
         // $COVERAGE-ON$
       }
+    val implicitScopeFlagsType = implicitScopeConfig.asTerm.tpe.widen.typeArgs.head.asType
+      .asInstanceOf[Type[internal.TransformerFlags]]
+      .asExistentialUpperBounded[internal.TransformerFlags]
 
-  private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
-      useImplicitScopeFlags: Type[ImplicitScopeFlagsType] => Expr[A]
-  ): Expr[A] = {
-    import quotes.*, quotes.reflect.*
-
-    val implicitScopeConfig = findImplicitScopeTransformerConfiguration
-    val implicitScopeConfigType = implicitScopeConfig.asTerm.tpe.widen.typeArgs.head.asType
-      .asInstanceOf[Type[ImplicitScopeFlagsType]]
-
-    '{
-      ${ Expr.suppressUnused(implicitScopeConfig) }
-      ${ useImplicitScopeFlags(implicitScopeConfigType) }
-    }
+    Expr.block(
+      List(Expr.suppressUnused(implicitScopeConfig)),
+      useImplicitScopeFlags(implicitScopeFlagsType)
+    )
   }
 }
 

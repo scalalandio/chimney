@@ -86,6 +86,11 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                                       deriveRecursiveTransformationExpr[fromSubtype.Underlying, toSubtype.Underlying](
                                         fromSubtypeExpr
                                       ).map(_.map(toUpcast))
+                                        .orElse(
+                                          deriveRecursiveTransformationExpr[fromSubtype.Underlying, To](
+                                            fromSubtypeExpr
+                                          )
+                                        )
                                     }
                                     .map(
                                       Existential[ExprPromise[*, TransformationExpr[To]], fromSubtype.Underlying](_)

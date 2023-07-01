@@ -27,30 +27,7 @@ package numbers {
   object ScalesPartialTransformer {
 
     import io.scalaland.chimney.dsl.*
-    import io.scalaland.chimney.partial
 
-    implicit def shortToLongTotalInner[A, B](implicit
-        ft: Transformer[A, B]
-    ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] = (a: short.NumScale[A, Nothing], _) =>
-      a match {
-        case short.Zero                  => partial.Result.fromValue(long.Zero)
-        case million: short.Million[A]   => million.transformIntoPartial[long.Million[B]]
-        case billion: short.Billion[A]   => billion.transformIntoPartial[long.Milliard[B]]
-        case trillion: short.Trillion[A] => trillion.transformIntoPartial[long.Billion[B]]
-      }
-
-    implicit def shortToLongPartialInner[A, B](implicit
-        ft: PartialTransformer[A, B]
-    ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] = (a: short.NumScale[A, Nothing], _) =>
-      a match {
-        case short.Zero                  => partial.Result.fromValue(long.Zero)
-        case million: short.Million[A]   => million.transformIntoPartial[long.Million[B]]
-        case billion: short.Billion[A]   => billion.transformIntoPartial[long.Milliard[B]]
-        case trillion: short.Trillion[A] => trillion.transformIntoPartial[long.Billion[B]]
-      }
-
-    // FIXME
-    /*
     implicit def shortToLongTotalInner[A, B](implicit
         ft: Transformer[A, B]
     ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] = {
@@ -78,6 +55,5 @@ package numbers {
         }
         .buildTransformer
     }
-     */
   }
 }

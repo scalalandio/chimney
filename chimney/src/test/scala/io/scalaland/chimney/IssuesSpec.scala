@@ -477,8 +477,6 @@ class IssuesSpec extends ChimneySpec {
     assert(partialResult == Right(expected))
   }
 
-  // FIXME: implicits aren't found
-  /*
   group("fix issue #212") {
 
     import Issue212.*
@@ -505,10 +503,7 @@ class IssuesSpec extends ChimneySpec {
       failedResult.asErrorPathMessageStrings ==> Iterable("" -> "proto.OneOf.Empty")
     }
   }
-   */
 
-  // FIXME: implicits aren't found
-  /*
   group("fix issue #199") {
     import Issue199.*
 
@@ -556,10 +551,7 @@ class IssuesSpec extends ChimneySpec {
       }
     }
   }
-   */
 
-  // FIXME: "unreachable code" on both 2 and 3
-  /*
   test("fix issue #210") {
     import Issue210.*
 
@@ -583,7 +575,6 @@ class IssuesSpec extends ChimneySpec {
       .transform
       .asOption ==> None
   }
-   */
 
   group("fix issue #209") {
 
