@@ -205,8 +205,7 @@ class IssuesSpec extends ChimneySpec {
     Bar3(Option(1)).into[Bar2].partial.transform.asOption ==> Some(Bar2("1"))
   }
 
-  // FIXME: errors message requires fixing
-  test("fix issue #121".ignore) {
+  test("fix issue #121") {
     case class FooNested(num: Option[Int])
     case class Foo(maybeString: Option[Set[String]], nested: FooNested)
 
@@ -215,8 +214,8 @@ class IssuesSpec extends ChimneySpec {
 
     compileErrorsFixed("Foo(None, FooNested(None)).into[Bar].transform")
       .check(
-        "derivation from foo.maybeString: scala.Option[java.lang.String] to scala.collection.immutable.Seq[java.lang.String] is not supported in Chimney!",
-        "derivation from foo.nested.num: scala.Option to java.lang.String is not supported in Chimney!"
+        "derivation from foo.maybeString: scala.Option[scala.collection.immutable.Set[java.lang.String]] to scala.collection.immutable.Seq[java.lang.String] is not supported in Chimney!",
+        "derivation from foo.nested.num: scala.Option[scala.Int] to java.lang.String is not supported in Chimney!"
       )
   }
 

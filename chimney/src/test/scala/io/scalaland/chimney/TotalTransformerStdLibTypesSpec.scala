@@ -39,14 +39,13 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     NewBuzz("a", null.asInstanceOf[Unit]).transformInto[FooBuzz] ==> FooBuzz(null.asInstanceOf[Unit])
   }
 
-  test("transform from Option-type into Option-type".ignore) {
+  test("transform from Option-type into Option-type") {
     Option(Foo("a")).transformInto[Option[Bar]] ==> Option(Bar("a"))
     (Some(Foo("a")): Option[Foo]).transformInto[Option[Bar]] ==> Option(Bar("a"))
     Some(Foo("a")).transformInto[Option[Bar]] ==> Some(Bar("a"))
     (None: Option[Foo]).transformInto[Option[Bar]] ==> None
     (None: Option[String]).transformInto[Option[String]] ==> None
     Option("abc").transformInto[Option[String]] ==> Some("abc")
-    // FIXME: instead of some we have a full Expr which is much much longer
     compileErrorsFixed("""Some("foobar").into[None.type].transform""").check(
       "Chimney can't derive transformation from scala.Some[java.lang.String] to scala.None",
       "scala.None",
@@ -55,7 +54,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     )
     case class BarNone(value: None.type)
     compileErrorsFixed("""Foo("a").into[BarNone].transform""").check(
-      "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo to BarNone",
+      "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.BarNone",
       "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.BarNone",
       "value: scala.None - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo",
       "scala.None",
