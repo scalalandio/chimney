@@ -28,16 +28,17 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         c.Expr[Array[A]](q"_root_.scala.Array[${Type[A]}](..${args})")
 
       def map[A: Type, B: Type](array: Expr[Array[A]])(fExpr: Expr[A => B]): Expr[Array[B]] =
-        if (scala.util.Properties.versionNumberString < "2.13")
+        if (isScala212)
           c.Expr[Array[B]](q"$array.map[${Type[B]}, ${Type[Array[B]]}]($fExpr)")
         else
           c.Expr[Array[B]](q"$array.map[${Type[B]}]($fExpr)")
 
-      // TODO: write it in similar way to MacroUtils.convertCollection
       def to[A: Type, C: Type](array: Expr[Array[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
       ): Expr[C] =
-        c.Expr[C](q"$array.to($factoryExpr)")
+        // on Scala 2.12 .to(Factory[(k, v), M) creates... Iterable[(k, v)]
+        if (isScala212) c.Expr[C](q"$array.to($factoryExpr).asInstanceOf[${Type[C]}]")
+        else c.Expr[C](q"$array.to($factoryExpr)")
 
       def iterator[A: Type](array: Expr[Array[A]]): Expr[Iterator[A]] = c.Expr[Iterator[A]](q"$array.iterator")
     }
@@ -78,10 +79,12 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def map[A: Type, B: Type](iterable: Expr[Iterable[A]])(fExpr: Expr[A => B]): Expr[Iterable[B]] =
         c.Expr[Iterable[B]](q"$iterable.map[${Type[B]}]($fExpr)")
 
-      // TODO: write it in similar way to MacroUtils.convertCollection
       def to[A: Type, C: Type](iterable: Expr[Iterable[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
-      ): Expr[C] = c.Expr[C](q"$iterable.to($factoryExpr)")
+      ): Expr[C] =
+        // on Scala 2.12 .to(Factory[(k, v), M) creates... Iterable[(k, v)]
+        if (isScala212) c.Expr[C](q"$iterable.to($factoryExpr).asInstanceOf[${Type[C]}]")
+        else c.Expr[C](q"$iterable.to($factoryExpr)")
 
       def iterator[A: Type](iterable: Expr[Iterable[A]]): Expr[Iterator[A]] = c.Expr[Iterator[A]](q"$iterable.iterator")
     }
@@ -98,7 +101,10 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       // TODO: write it in similar way to MacroUtils.convertCollection
       def to[A: Type, C: Type](iterator: Expr[Iterator[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
-      ): Expr[C] = c.Expr[C](q"$iterator.to($factoryExpr)")
+      ): Expr[C] =
+        // on Scala 2.12 .to(Factory[(k, v), M) creates... Iterable[(k, v)]
+        if (isScala212) c.Expr[C](q"$iterator.to($factoryExpr).asInstanceOf[${Type[C]}]")
+        else c.Expr[C](q"$iterator.to($factoryExpr)")
 
       def zipWithIndex[A: Type](it: Expr[Iterator[A]]): Expr[Iterator[(A, Int)]] =
         c.Expr[Iterator[(A, Int)]](q"$it.zipWithIndex")
@@ -125,7 +131,11 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       else c.Expr[B](q"($expr : ${Type[B]})")
     }
 
-    def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] = c.Expr[Unit](q"val _ = $expr")
+    def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] =
+      // In Scala 2.12 suppressing two variables at once resulted in "_ is already defined as value _" error
+      if (scala.util.Properties.versionNumberString < "2.13")
+        c.Expr[Unit](q"_root_.scala.Predef.locally { val _ = $expr }")
+      else c.Expr[Unit](q"val _ = $expr")
 
     def prettyPrint[A](expr: Expr[A]): String =
       expr.tree

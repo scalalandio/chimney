@@ -348,6 +348,9 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
   test("transform between Iterables and Maps, using Total Transformer for inner type transformation") {
     implicit val intPrinter: Transformer[Int, String] = _.toString
 
+//    Seq(1 -> 10, 2 -> 20).intoPartial[Map[String, String]].enableMacrosLogging.transform.asOption ==> Some(
+//      Map("1" -> "10", "2" -> "20")
+//    )
     Seq(1 -> 10, 2 -> 20).transformIntoPartial[Map[String, String]].asOption ==> Some(Map("1" -> "10", "2" -> "20"))
     ArrayBuffer(1 -> 10, 2 -> 20).transformIntoPartial[Map[Int, String]].asOption ==> Some(
       Map(1 -> "10", 2 -> "20")

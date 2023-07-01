@@ -10,4 +10,6 @@ trait DefinitionsPlatform
     with ResultsPlatform {
 
   val c: blackbox.Context
+
+  protected val isScala212 = scala.util.Properties.versionNumberString < "2.13"
 }

@@ -35,7 +35,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           lazy val ctorParamToGetter = parameters
             .zip(fromEnabledExtractors)
             .map { case ((toName, ctorParam), (fromName, getter)) =>
-              ctorParam -> (fromName, toName, getter)
+              val t3 = (fromName, toName, getter)
+              ctorParam -> t3
             }
             .toMap
 
