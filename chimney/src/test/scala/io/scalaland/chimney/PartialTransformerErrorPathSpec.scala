@@ -54,10 +54,7 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
     )
   }
 
-  // FIXME: logic in ProductToProduct doesn't consider the source when setting up ErrorPath
-  test(
-    "case classes with field error coming from setting should contain path to the source field used in setting".ignore
-  ) {
+  test("case classes with field error coming from setting should contain path to the source field used in setting") {
     case class Foo(inner: InnerFoo)
     case class InnerFoo(str: String)
 
