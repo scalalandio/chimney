@@ -22,6 +22,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       (Type[From], Type[To]) match {
         case (Product.Extraction(fromExtractors), Product.Constructor(parameters, constructor)) =>
           import ctx.config.*
+
           lazy val fromEnabledExtractors = fromExtractors.filter { getter =>
             getter._2.value.sourceType match {
               case Product.Getter.SourceType.ConstructorVal => true
@@ -29,6 +30,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               case Product.Getter.SourceType.JavaBeanGetter => flags.beanGetters
             }
           }
+
+          val usePositionBasedMatching = Type[From].isTuple || Type[To].isTuple
+          lazy val ctorParamToGetter = parameters
+            .zip(fromEnabledExtractors)
+            .map { case ((toName, ctorParam), (fromName, getter)) =>
+              ctorParam -> (fromName, toName, getter)
+            }
+            .toMap
 
           DerivationResult.log {
             val gettersStr = fromExtractors
@@ -157,39 +166,56 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                 )
                               }
                         }
-                        .orElse(fromEnabledExtractors.collectFirst {
-                          case (fromName, getter) if areNamesMatching(fromName, toName) =>
-                            if (
-                              ctorParam.value.targetType == Product.Parameter.TargetType.SetterParameter && !flags.beanSetters
-                            )
-                              DerivationResult.notSupportedTransformerDerivation(fromName)(ctx)
-                            else
-                              Existential.use(getter) { implicit Getter: Type[getter.Underlying] =>
-                                { case Product.Getter(_, get) =>
-                                  DerivationResult.namedScope(
-                                    s"Recursive derivation for field `$fromName`: ${Type
-                                        .prettyPrint[getter.Underlying]} into matched `${toName}`: ${Type.prettyPrint[ctorParam.Underlying]}"
-                                  ) {
-                                    // We're constructing:
-                                    // '{ ${ derivedToElement } } // using ${ src.$name }
-                                    deriveRecursiveTransformationExpr[getter.Underlying, ctorParam.Underlying](
-                                      get(ctx.src)
-                                    ).transformWith { expr =>
-                                      // If we derived partial.Result[$ctorParam] we are appending
-                                      //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
-                                      DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
-                                        appendPath(expr, fromName)
-                                      )
-                                    } { errors =>
-                                      appendMissingTransformer[From, To, getter.Underlying, ctorParam.Underlying](
-                                        errors,
-                                        toName
-                                      )
+                        .orElse(
+                          (if (usePositionBasedMatching) ctorParamToGetter.get(ctorParam)
+                           else
+                             fromEnabledExtractors.collectFirst {
+                               case (fromName, getter) if areNamesMatching(fromName, toName) =>
+                                 (fromName, toName, getter)
+                             })
+                            .map { case (fromName, toName, getter) =>
+                              if (
+                                ctorParam.value.targetType == Product.Parameter.TargetType.SetterParameter && !flags.beanSetters
+                              )
+                                DerivationResult.notSupportedTransformerDerivation(fromName)(ctx)
+                              else
+                                Existential.use(getter) { implicit Getter: Type[getter.Underlying] =>
+                                  { case Product.Getter(_, get) =>
+                                    DerivationResult.namedScope(
+                                      s"Recursive derivation for field `$fromName`: ${Type
+                                          .prettyPrint[getter.Underlying]} into matched `${toName}`: ${Type.prettyPrint[ctorParam.Underlying]}"
+                                    ) {
+                                      // We're constructing:
+                                      // '{ ${ derivedToElement } } // using ${ src.$name }
+                                      deriveRecursiveTransformationExpr[getter.Underlying, ctorParam.Underlying](
+                                        get(ctx.src)
+                                      ).transformWith { expr =>
+                                        // If we derived partial.Result[$ctorParam] we are appending
+                                        //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
+                                        DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
+                                          appendPath(expr, fromName)
+                                        )
+                                      } { errors =>
+                                        appendMissingTransformer[From, To, getter.Underlying, ctorParam.Underlying](
+                                          errors,
+                                          toName
+                                        )
+                                      }
                                     }
                                   }
                                 }
-                              }
-                        })
+                            }
+                            .orElse(
+                              if (usePositionBasedMatching)
+                                Option(
+                                  DerivationResult.incompatibleSourceTuple(
+                                    sourceArity = fromEnabledExtractors.size,
+                                    targetArity = parameters.size
+                                  )
+                                )
+                              else None
+                            )
+                        )
                         .orElse(defaultValue.filter(_ => ctx.config.flags.processDefaultValues).map {
                           (value: Expr[ctorParam.Underlying]) =>
                             // We're constructing:

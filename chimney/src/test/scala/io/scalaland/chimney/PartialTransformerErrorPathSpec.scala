@@ -104,8 +104,6 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
     )
   }
 
-  // FIXME: ProductToProduct doesn't handle tuples yet
-  /*
   test("tuple field's error should contain path to the failed field") {
     val result = ("a", "b").transformIntoPartial[(Int, Int)]
     result.asOption ==> None
@@ -119,7 +117,6 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
       "_2" -> "empty value"
     )
   }
-   */
 
   test("sealed hierarchy's error should add path to failed subtype") {
     val result = (Foo.Baz("fail"): Foo).transformIntoPartial[Bar]
