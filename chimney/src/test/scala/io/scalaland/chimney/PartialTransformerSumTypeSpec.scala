@@ -199,8 +199,6 @@ class PartialTransformerSumTypeSpec extends ChimneySpec {
         .transform
         .asOption ==> Some(shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0))))
 
-      // FIXME: unreachable code
-      /*
       val rectangle: shapes1.Shape =
         shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4))
 
@@ -216,7 +214,6 @@ class PartialTransformerSumTypeSpec extends ChimneySpec {
           List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
         )
       )
-       */
     }
   }
 
@@ -289,8 +286,6 @@ class PartialTransformerSumTypeSpec extends ChimneySpec {
         .transform
         .asOption ==> Some(shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0))))
 
-      // FIXME: unreachable code
-      /*
       val rectangle: shapes1.Shape =
         shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4))
 
@@ -306,7 +301,6 @@ class PartialTransformerSumTypeSpec extends ChimneySpec {
           List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
         )
       )
-       */
     }
   }
 }

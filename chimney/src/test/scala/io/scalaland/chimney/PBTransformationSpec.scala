@@ -178,8 +178,6 @@ class PBTransformationSpec extends ChimneySpec {
 
   group("transformer sealed traits generated from oneof") {
 
-    // FIXME: unreachable code
-    /*
     test("CustomerStatus (oneof sealed_value)") {
       val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered
       val pbStatus: pb.order.CustomerStatus = pb.order.CustomerRegistered()
@@ -192,7 +190,6 @@ class PBTransformationSpec extends ChimneySpec {
         .transform
         .asOption ==> Some(domainStatus)
     }
-     */
 
     test("PaymentStatus (oneof sealed_value_optional)") {
       val domainStatus: Option[order.PaymentStatus] = Option(order.PaymentStatus.PaymentRequested)

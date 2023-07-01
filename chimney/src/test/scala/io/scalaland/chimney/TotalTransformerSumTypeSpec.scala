@@ -154,8 +154,6 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
         .withCoproductInstance(rectangleToPolygon)
         .transform ==> shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0)))
 
-      // FIXME: unreachable code
-      /*
       val rectangle: shapes1.Shape =
         shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4))
 
@@ -165,11 +163,9 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
           case r: shapes1.Rectangle => rectangleToPolygon(r)
           case t: shapes1.Triangle  => triangleToPolygon(t)
         }
-        .enableMacrosLogging
         .transform ==> shapes2.Polygon(
         List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
       )
-       */
     }
   }
 }
