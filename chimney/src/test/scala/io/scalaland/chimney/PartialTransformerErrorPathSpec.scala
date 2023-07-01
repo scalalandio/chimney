@@ -3,19 +3,24 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.utils.OptionUtils.StringOps
 
+object PartialTransformerErrorPathSpec {
+  sealed trait Foo
+  object Foo {
+    case class Baz(field: String) extends Foo
+  }
+
+  sealed trait Bar
+  object Bar {
+    case class Baz(field: Int) extends Bar
+  }
+}
+
 class PartialTransformerErrorPathSpec extends ChimneySpec {
 
   implicit val intParserOpt: PartialTransformer[String, Int] =
     PartialTransformer(_.parseInt.toPartialResult)
 
-  sealed trait Foo
-  object Foo {
-    case class Baz(field: String) extends Foo
-  }
-  sealed trait Bar
-  object Bar {
-    case class Baz(field: Int) extends Bar
-  }
+  import PartialTransformerErrorPathSpec.*
 
   test("root error should not contain any path element") {
     val result = "error".transformIntoPartial[Int]
@@ -119,12 +124,7 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
   }
    */
 
-  // FIXME: Internal error: unable to find the outer accessor symbol of class PartialTransformerErrorPathSpec
-  /*
   test("sealed hierarchy's error should add path to failed subtype") {
-    //Foo.Baz("fail").intoPartial[Bar.Baz].enableMacrosLogging.transform
-
-    // val result = (Foo.Baz("fail"): Foo).intoPartial[Bar].enableMacrosLogging.transform
     val result = (Foo.Baz("fail"): Foo).transformIntoPartial[Bar]
     result.asErrorPathMessages ==> Iterable(
       "field" -> partial.ErrorMessage.EmptyValue
@@ -133,7 +133,6 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
       "field" -> "empty value"
     )
   }
-   */
 
   test("flat List's errors should contain indices to failed values") {
     val result = List("a", "b", "c").transformIntoPartial[List[Int]]
