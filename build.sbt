@@ -130,7 +130,13 @@ val settings = Seq(
       case _ => Seq.empty
     }
   },
-  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings")
+  Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
+  Test / compile / scalacOptions --= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 12)) => Seq("-Ywarn-unused:locals") // Scala 2.12 ignores @unused warns
+      case _ => Seq.empty
+    }
+  }
 )
 
 val dependencies = Seq(
