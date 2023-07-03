@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.fp
 
-private[compiletime] trait Applicative[F[_]] extends Functor[F] {
+trait Applicative[F[_]] extends Functor[F] {
 
   def map2[A, B, C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C]
 
@@ -8,7 +8,7 @@ private[compiletime] trait Applicative[F[_]] extends Functor[F] {
 
   override def map[A, B](fa: F[A])(f: A => B): F[B] = map2(fa, pure(()))((a, _) => f(a))
 }
-private[compiletime] object Applicative {
+object Applicative {
 
   def apply[F[_]](implicit F: Applicative[F]): Applicative[F] = F
 

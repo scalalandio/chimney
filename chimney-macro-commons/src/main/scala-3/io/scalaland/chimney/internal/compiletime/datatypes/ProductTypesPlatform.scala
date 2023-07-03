@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
 import scala.collection.immutable.ListMap
 
-private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
+trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
   import quotes.*, quotes.reflect.*
 

@@ -98,7 +98,6 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def map[A: Type, B: Type](iterator: Expr[Iterator[A]])(fExpr: Expr[A => B]): Expr[Iterator[B]] =
         c.Expr[Iterator[B]](q"$iterator.map[${Type[B]}]($fExpr)")
 
-      // TODO: write it in similar way to MacroUtils.convertCollection
       def to[A: Type, C: Type](iterator: Expr[Iterator[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
       ): Expr[C] =

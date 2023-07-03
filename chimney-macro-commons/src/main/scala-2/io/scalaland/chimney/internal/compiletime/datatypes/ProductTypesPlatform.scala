@@ -5,7 +5,7 @@ import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 import scala.collection.compat.*
 import scala.collection.immutable.ListMap
 
-private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
+trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
 

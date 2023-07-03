@@ -20,8 +20,8 @@ private[compiletime] trait ExprPromises { this: Definitions =>
 
     def map[B](f: A => B): ExprPromise[From, B] = new ExprPromise(f(usage), fromName)
 
-    def traverse[G[_]: fp.Applicative, B](f: A => G[B]): G[ExprPromise[From, B]] = {
-      import fp.Syntax.*
+    def traverse[G[_]: fp.Functor, B](f: A => G[B]): G[ExprPromise[From, B]] = {
+      import fp.Implicits.*
       f(usage).map(new ExprPromise(_, fromName))
     }
 
@@ -129,6 +129,9 @@ private[compiletime] trait ExprPromises { this: Definitions =>
 
       def traverse[G[_]: fp.Applicative, A, B](fa: ExprPromise[From, A])(f: A => G[B]): G[ExprPromise[From, B]] =
         fa.traverse(f)
+
+      def parTraverse[G[_]: fp.Parallel, A, B](fa: ExprPromise[From, A])(f: A => G[B]): G[ExprPromise[From, B]] =
+        fa.traverse(f)
     }
 
   /** When we decide that promised expression would be used as val/lazy val/var/def, we receive this wrapper around
@@ -145,8 +148,8 @@ private[compiletime] trait ExprPromises { this: Definitions =>
     def map2[B, C](val2: PrependDefinitionsTo[B])(f: (A, B) => C): PrependDefinitionsTo[C] =
       new PrependDefinitionsTo(f(usage, val2.usage), defns ++ val2.defns)
 
-    def traverse[G[_]: fp.Applicative, B](f: A => G[B]): G[PrependDefinitionsTo[B]] = {
-      import fp.Syntax.*
+    def traverse[G[_]: fp.Functor, B](f: A => G[B]): G[PrependDefinitionsTo[B]] = {
+      import fp.Implicits.*
       f(usage).map(new PrependDefinitionsTo(_, defns))
     }
 
@@ -181,6 +184,9 @@ private[compiletime] trait ExprPromises { this: Definitions =>
       def pure[A](a: A): PrependDefinitionsTo[A] = new PrependDefinitionsTo[A](a, Vector.empty)
 
       def traverse[G[_]: fp.Applicative, A, B](fa: PrependDefinitionsTo[A])(f: A => G[B]): G[PrependDefinitionsTo[B]] =
+        fa.traverse(f)
+
+      def parTraverse[G[_]: fp.Parallel, A, B](fa: PrependDefinitionsTo[A])(f: A => G[B]): G[PrependDefinitionsTo[B]] =
         fa.traverse(f)
     }
 

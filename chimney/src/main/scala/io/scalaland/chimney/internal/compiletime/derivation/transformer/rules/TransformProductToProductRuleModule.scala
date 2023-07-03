@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
 import io.scalaland.chimney.internal.compiletime.{DerivationErrors, DerivationResult}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
-import io.scalaland.chimney.internal.compiletime.fp.Syntax.*
+import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
 
@@ -50,7 +50,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             s"Resolved ${Type.prettyPrint[From]} getters: ($gettersStr) and ${Type.prettyPrint[To]} constructor ($constructorStr)"
           } >>
             Traverse[List]
-              .traverse[
+              .parTraverse[
                 DerivationResult,
                 (String, Existential[Product.Parameter]),
                 (String, Existential[TransformationExpr])

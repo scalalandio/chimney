@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
-private[compiletime] trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPlatform =>
+trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
   import Type.platformSpecific.fromUntyped

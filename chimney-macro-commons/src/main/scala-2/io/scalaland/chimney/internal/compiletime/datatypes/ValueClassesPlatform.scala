@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
 import scala.collection.compat.*
 
-private[compiletime] trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
+trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Expr as _, Transformer as _, Type as _, *}
   import Type.platformSpecific.{fromUntyped, returnTypeOf}

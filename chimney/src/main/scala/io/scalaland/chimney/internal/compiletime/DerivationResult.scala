@@ -235,16 +235,27 @@ private[compiletime] object DerivationResult {
     }
   }
 
-  implicit val DerivationResultTraversableApplicative: fp.ApplicativeTraverse[DerivationResult] =
-    new fp.ApplicativeTraverse[DerivationResult] {
+  implicit val DerivationResultTraversableApplicative: fp.ParallelTraverse[DerivationResult] =
+    new fp.ParallelTraverse[DerivationResult] {
 
       def map2[A, B, C](fa: DerivationResult[A], fb: DerivationResult[B])(f: (A, B) => C): DerivationResult[C] =
-        fa.parMap2(fb)(f) // TODO: I guess we should have also par parTraverse or sth
+        fa.map2(fb)(f)
+
+      def parMap2[A, B, C](fa: DerivationResult[A], fb: DerivationResult[B])(f: (A, B) => C): DerivationResult[C] =
+        fa.parMap2(fb)(f)
 
       def pure[A](a: A): DerivationResult[A] = DerivationResult.pure(a)
 
       def traverse[G[_]: fp.Applicative, A, B](fa: DerivationResult[A])(f: A => G[B]): G[DerivationResult[B]] = {
-        import fp.Syntax.*
+        import fp.Implicits.*
+        fa match {
+          case Success(value, state) => f(value).map(Success(_, state))
+          case failure: Failure      => (failure: DerivationResult[B]).pure[G]
+        }
+      }
+
+      def parTraverse[G[_]: fp.Parallel, A, B](fa: DerivationResult[A])(f: A => G[B]): G[DerivationResult[B]] = {
+        import fp.Implicits.*
         fa match {
           case Success(value, state) => f(value).map(Success(_, state))
           case failure: Failure      => (failure: DerivationResult[B]).pure[G]

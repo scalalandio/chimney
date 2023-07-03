@@ -5,7 +5,7 @@ import io.scalaland.chimney.internal.compiletime.Definitions
 import scala.collection.compat.*
 import scala.collection.immutable.ListMap
 
-private[compiletime] trait ProductTypes { this: Definitions =>
+trait ProductTypes { this: Definitions =>
 
   final protected case class Product[A](extraction: Product.Extraction[A], construction: Product.Constructor[A])
   protected object Product {

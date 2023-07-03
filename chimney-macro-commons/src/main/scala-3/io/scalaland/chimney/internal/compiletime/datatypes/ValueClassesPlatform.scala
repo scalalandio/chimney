@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
-private[compiletime] trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
+trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
 
   import quotes.*, quotes.reflect.*
   import Type.platformSpecific.*

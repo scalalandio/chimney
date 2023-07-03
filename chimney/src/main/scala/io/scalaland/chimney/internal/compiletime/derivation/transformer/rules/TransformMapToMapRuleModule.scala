@@ -69,8 +69,11 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
                 }
           }
         case (_, Type.Map(_, _), _) =>
-          // TODO: fallback log
-          TransformIterableToIterableRule.expand(ctx)
+          DerivationResult.namedScope(
+            "MapToMap matched in the context of total transformation - delegating to IterableToIterable"
+          ) {
+            TransformIterableToIterableRule.expand(ctx)
+          }
         case _ => DerivationResult.attemptNextRule
       }
   }

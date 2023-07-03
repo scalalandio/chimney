@@ -54,16 +54,6 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
       val casesTrees = cases.map { case PatternMatchCase(someFrom, usage, fromName, _) =>
         ExistentialType.use(someFrom) { implicit SomeFrom: Type[someFrom.Underlying] =>
           val markUsed = Expr.suppressUnused(c.Expr[someFrom.Underlying](q"$fromName"))
-          // TODO: code below resulted in
-          //   case (instance1 @ (_: Instance1.type)) =>
-          // [error]  type mismatch;
-          // [error]  found   : instance1$1.type (with underlying type Version1)
-          // [error]  required: Instance1.type
-          // if (isCaseObject)
-          // case arg @ Enum.Value => ...
-          // cq"""$fromName @ ${Ident(SomeFrom.typeSymbol.asClass.module)} => { $markUsed; $usage }"""
-          // else
-          // case arg : Enum.Value => ...
           cq"""$fromName : $SomeFrom => { $markUsed; $usage }"""
         }
       }

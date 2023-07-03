@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 
 import io.scalaland.chimney.internal.compiletime.Definitions
 
-private[compiletime] trait ValueClasses { this: Definitions =>
+trait ValueClasses { this: Definitions =>
 
   /** Let us unwrap and wrap value in AnyVal value class */
   final protected case class ValueClass[Outer, Inner](

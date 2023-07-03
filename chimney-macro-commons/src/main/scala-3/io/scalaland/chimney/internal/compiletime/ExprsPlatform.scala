@@ -31,7 +31,6 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def map[A: Type, B: Type](array: Expr[Array[A]])(fExpr: Expr[A => B]): Expr[Array[B]] =
         '{ ${ array }.map(${ fExpr })(${ summonImplicit[ClassTag[B]].get }) }
 
-      // TODO: write it in similar way to MacroUtils.convertCollection
       def to[A: Type, C: Type](array: Expr[Array[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
       ): Expr[C] =
@@ -73,7 +72,6 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def map[A: Type, B: Type](iterable: Expr[Iterable[A]])(fExpr: Expr[A => B]): Expr[Iterable[B]] =
         '{ ${ iterable }.map(${ fExpr }) }
 
-      // TODO: write it in similar way to MacroUtils.convertCollection
       def to[A: Type, C: Type](iterable: Expr[Iterable[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
       ): Expr[C] =
@@ -90,7 +88,6 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def map[A: Type, B: Type](iterator: Expr[Iterator[A]])(fExpr: Expr[A => B]): Expr[Iterator[B]] =
         '{ ${ iterator }.map(${ fExpr }) }
 
-      // TODO: write it in similar way to MacroUtils.convertCollection
       def to[A: Type, C: Type](iterator: Expr[Iterator[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
       ): Expr[C] =

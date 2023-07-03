@@ -508,8 +508,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
   }
 
-  // TODO: ProductToProduct doesn't handle tuples yet
-
   group("transform between case classes and tuples") {
 
     case class Foo(field1: Int, field2: Double, field3: String)

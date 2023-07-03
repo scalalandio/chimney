@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
-import io.scalaland.chimney.internal.compiletime.fp.Syntax.*
+import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
 import io.scalaland.chimney.partial
 import scala.collection.compat.* // for sizeIs on 2.12
 
@@ -17,11 +17,11 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
       (Type[From], Type[To]) match {
         case (SealedHierarchy(Enum(fromElements)), SealedHierarchy(Enum(toElements))) =>
           val verifyEnumNameUniqueness = {
-            val checkFrom = fromElements.groupBy(_.value.name).toList.traverse { case (name, values) =>
+            val checkFrom = fromElements.groupBy(_.value.name).toList.parTraverse { case (name, values) =>
               if (values.sizeIs == 1) DerivationResult.unit
               else DerivationResult.ambiguousCoproductInstance[From, To, Unit](name)
             }
-            val checkTo = toElements.groupBy(_.value.name).toList.traverse { case (name, values) =>
+            val checkTo = toElements.groupBy(_.value.name).toList.parTraverse { case (name, values) =>
               if (values.sizeIs == 1) DerivationResult.unit
               else DerivationResult.ambiguousCoproductInstance[From, To, Unit](name)
             }
@@ -65,7 +65,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             s"Resolved ${Type.prettyPrint[From]} subtypes: ($fromSubs) and ${Type.prettyPrint[To]} subtypes ($toSubs)"
           } >> verifyEnumNameUniqueness >>
             Traverse[List]
-              .traverse[
+              .parTraverse[
                 DerivationResult,
                 Existential.UpperBounded[From, Enum.Element[From, *]],
                 Existential[ExprPromise[*, TransformationExpr[To]]]

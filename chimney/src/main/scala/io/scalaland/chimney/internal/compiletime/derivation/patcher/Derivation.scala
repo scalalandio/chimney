@@ -7,6 +7,7 @@ private[compiletime] trait Derivation
     with Configurations
     with Contexts
     with ImplicitSummoning
+    with datatypes.IterableOrArrays
     with datatypes.ProductTypes
     with datatypes.SealedHierarchies
     with datatypes.ValueClasses
