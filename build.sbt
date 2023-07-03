@@ -184,7 +184,8 @@ val publishSettings = Seq(
         <url>http://github.com/MateuszKubuszok</url>
       </developer>
     </developers>
-  )
+  ),
+  scalacOptions -= "-Xfatal-warnings"
 )
 
 val noPublishSettings =
