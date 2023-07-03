@@ -5,6 +5,7 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.internal.compiletime.fp.Syntax.*
 import io.scalaland.chimney.partial
+import scala.collection.compat.* // for sizeIs on 2.12
 
 private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule { this: Derivation =>
 
@@ -17,11 +18,11 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         case (SealedHierarchy(Enum(fromElements)), SealedHierarchy(Enum(toElements))) =>
           val verifyEnumNameUniqueness = {
             val checkFrom = fromElements.groupBy(_.value.name).toList.traverse { case (name, values) =>
-              if (values.size == 1) DerivationResult.unit
+              if (values.sizeIs == 1) DerivationResult.unit
               else DerivationResult.ambiguousCoproductInstance[From, To, Unit](name)
             }
             val checkTo = toElements.groupBy(_.value.name).toList.traverse { case (name, values) =>
-              if (values.size == 1) DerivationResult.unit
+              if (values.sizeIs == 1) DerivationResult.unit
               else DerivationResult.ambiguousCoproductInstance[From, To, Unit](name)
             }
             checkFrom.parTuple(checkTo).as(())
