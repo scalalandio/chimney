@@ -94,17 +94,45 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                   )
                               )
                             )
-                          case (_, RuntimeFieldOverride.Computed(runtimeDataIdx)) =>
-                            // We're constructing:
-                            // '{ ${ runtimeDataStore }(idx).asInstanceOf[$From => $ctorParam](${ src }) }
-                            DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
-                              TransformationExpr.fromTotal(
-                                ctx
-                                  .runtimeDataStore(runtimeDataIdx)
-                                  .asInstanceOfExpr[From => ctorParam.Underlying]
-                                  .apply(ctx.src)
-                              )
-                            )
+                          case (fromName, RuntimeFieldOverride.Computed(runtimeDataIdx)) =>
+                            ctx match {
+                              case TransformationContext.ForTotal(src) =>
+                                // We're constructing:
+                                // '{ ${ runtimeDataStore }(idx).asInstanceOf[$From => $ctorParam](${ src }) }
+                                DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
+                                  TransformationExpr.fromTotal(
+                                    ctx
+                                      .runtimeDataStore(runtimeDataIdx)
+                                      .asInstanceOfExpr[From => ctorParam.Underlying]
+                                      .apply(src)
+                                  )
+                                )
+                              case TransformationContext.ForPartial(src, _) =>
+                                // We're constructing:
+                                // '{
+                                //   partial.Result.fromFunction(
+                                //     ${ runtimeDataStore }(idx).asInstanceOf[$From => $ctorParam]
+                                //   )
+                                //   .apply(${ src })
+                                //   .prependErrorPath(PathElement.Accessor("fromName"))
+                                // }
+                                DerivationResult.existential[TransformationExpr, ctorParam.Underlying](
+                                  TransformationExpr.fromPartial(
+                                    ChimneyExpr.PartialResult
+                                      .fromFunction(
+                                        ctx
+                                          .runtimeDataStore(runtimeDataIdx)
+                                          .asInstanceOfExpr[From => ctorParam.Underlying]
+                                      )
+                                      .apply(src)
+                                      .prependErrorPath(
+                                        ChimneyExpr.PathElement
+                                          .Accessor(Expr.String(fromName))
+                                          .upcastExpr[partial.PathElement]
+                                      )
+                                  )
+                                )
+                            }
                           case (fromName, RuntimeFieldOverride.ComputedPartial(runtimeDataIdx)) =>
                             // We're constructing:
                             // '{

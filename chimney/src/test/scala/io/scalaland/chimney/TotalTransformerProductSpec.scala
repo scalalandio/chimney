@@ -381,7 +381,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       res ==> FooBar4(p = "param", v = "valField", lv = "lazyValField", m = "method1")
     }
 
-    test("method is disabled by default".ignore) {
+    test("method is disabled by default") {
       case class Foobar5(
           param: String,
           valField: String,

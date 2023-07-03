@@ -780,8 +780,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result.asErrorPathMessageStrings ==> Iterable.empty
     }
 
-    // FIXME: withFieldComputed should always lift to partial to allow caching errors and appending error path
-    test("failure with error handling".ignore) {
+    test("failure with error handling") {
       val invalidForm = PersonForm("", "foo", "bar")
 
       val result = invalidForm
