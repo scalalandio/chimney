@@ -149,8 +149,14 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         val defaultValues = paramss.flatten.zipWithIndex.collect {
           case (param, idx) if param.flags.is(Flags.HasDefault) =>
             val mod = sym.companionModule
-            val default = (mod.declaredMethod(caseClassApplyDefaultScala2(idx + 1)) ++
-              mod.declaredMethod(caseClassApplyDefaultScala3(idx + 1))).head
+            val scala2default = caseClassApplyDefaultScala2(idx + 1)
+            val scala3default = caseClassApplyDefaultScala3(idx + 1)
+            val default =
+              (mod.declaredMethod(scala2default) ++ mod.declaredMethod(scala3default)).headOption.getOrElse {
+                assertionFailed(
+                  s"Expected that ${Type.prettyPrint[A]}'s constructor parameter `$param` would have default value: attempted `$scala2default` and `$scala3default`, found: ${mod.declaredMethods}"
+                )
+              }
             paramNames(param) -> Ref(mod).select(default)
         }.toMap
         val constructorParameters = ListMap.from(paramss.flatMap(_.map { param =>

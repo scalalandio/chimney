@@ -124,7 +124,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
               }
               .getOrElse(
                 assertionFailed(
-                  s"Default value for parameter ${paramNames(param)} not found, available methods: ${companion.typeSignature.decls}"
+                  s"Expected that ${Type.prettyPrint[A]}'s constructor parameter `$param` would have default value: attempted `$scala2default` and `$scala3default`, found: ${companion.typeSignature.decls}"
                 )
               )
             paramNames(param) -> q"$companion.$foundDefault"
@@ -142,7 +142,7 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
         }))
 
         val setters =
-          A.decls
+          A.decls.sorted
             .to(List)
             .filterNot(isGarbageSymbol)
             .collect { case m if m.isMethod => m.asMethod }
