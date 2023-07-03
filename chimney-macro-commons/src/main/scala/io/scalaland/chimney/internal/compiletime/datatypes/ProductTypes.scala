@@ -81,6 +81,14 @@ private[compiletime] trait ProductTypes { this: Definitions =>
       def isMatching(value: String): Boolean = regexp.pattern.matcher(value).matches() // 2.12 doesn't have .matches
     }
 
+    def areNamesMatching(fromName: String, toName: String): Boolean = {
+      def normalizedFromName =
+        if (isGetterName(fromName)) dropGetIs(fromName) else fromName
+      def normalizedToName =
+        if (isGetterName(toName)) dropGetIs(toName) else if (isSetterName(toName)) dropSet(toName) else toName
+      fromName == toName || normalizedFromName == normalizedToName
+    }
+
     private val getAccessor = raw"(?i)get(.)(.*)".r
     private val isAccessor = raw"(?i)is(.)(.*)".r
     val dropGetIs: String => String = {

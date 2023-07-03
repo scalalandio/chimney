@@ -16,10 +16,12 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
       private val privateFlags = Flags.Private | Flags.PrivateLocal | Flags.Protected
 
       def isAbstract(sym: Symbol): Boolean =
-        (sym.flags & abstractFlags) != Flags.EmptyFlags
+        sym.flags.is(Flags.Abstract) || sym.flags.is(Flags.Trait)
+        // (sym.flags & abstractFlags).is(abstractFlags)
 
       def isPublic(sym: Symbol): Boolean =
-        (sym.flags & privateFlags) == Flags.EmptyFlags
+        !(sym.flags.is(Flags.Private) || sym.flags.is(Flags.PrivateLocal) || sym.flags.is(Flags.Protected))
+        // (sym.flags & privateFlags).is(privateFlags)
 
       def isParameterless(method: Symbol): Boolean =
         method.paramSymss.filterNot(_.exists(_.isType)).flatten.isEmpty
@@ -177,9 +179,13 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
           .map { setter =>
             setter.name -> setter
           }
-          .filter { case (name, _) => !paramTypes.keySet(name) }
+          .filter { case (name, _) => !paramTypes.keySet.exists(areNamesMatching(_, name)) }
           .map { case (name, setter) =>
-            val tpe = ExistentialType(paramsWithTypes(A, setter)(name).asType.asInstanceOf[Type[Any]])
+            val tpe = ExistentialType(paramsWithTypes(A, setter).collectFirst {
+              // `name` might be e.g. `setValue` while key in returned Map might be `value` - we want to return
+              // "setName" as the name of the setter but we don't want to throw exception when accessing Map.
+              case (searchedName, tpe) if areNamesMatching(searchedName, name) => tpe.asType.asInstanceOf[Type[Any]]
+            }.get)
             (
               name,
               setter,

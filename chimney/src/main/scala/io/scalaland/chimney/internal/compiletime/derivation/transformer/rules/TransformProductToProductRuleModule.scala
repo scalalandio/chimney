@@ -14,14 +14,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     private type PartialExpr[A] = Expr[partial.Result[A]]
 
-    // TODO:
-    // 1. add tuple support
-    // 2. check that isValue is checked for Boolean
-
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (Type[From], Type[To]) match {
         case (Product.Extraction(fromExtractors), Product.Constructor(parameters, constructor)) =>
           import ctx.config.*
+          import ProductType.areNamesMatching
 
           lazy val fromEnabledExtractors = fromExtractors.filter { getter =>
             getter._2.value.sourceType match {
@@ -509,17 +506,6 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .flatMap(DerivationResult.expanded)
         case _ => DerivationResult.attemptNextRule
       }
-
-    private def areNamesMatching(fromName: String, toName: String): Boolean = {
-      import ProductType.{dropGetIs, isGetterName, dropSet, isSetterName}
-
-      def normalizedFromName =
-        if (isGetterName(fromName)) dropGetIs(fromName) else fromName
-      def normalizedToName =
-        if (isGetterName(toName)) dropGetIs(toName) else if (isSetterName(toName)) dropSet(toName) else toName
-
-      fromName == toName || normalizedFromName == normalizedToName
-    }
 
     private val isUsingSetter: ((String, Existential[Product.Parameter])) => Boolean =
       _._2.value.targetType == Product.Parameter.TargetType.SetterParameter

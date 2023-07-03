@@ -151,10 +151,11 @@ private[compiletime] trait ProductTypesPlatform extends ProductTypes { this: Def
               // Scala 3's JB setters _are_ methods ending with _= due to change in @BeanProperty behavior.
               // We have to drop that suffix to align names, so that comparing is possible.
               val n: String = getDecodedName(setter)
-              val name = if (isVar(setter)) n.substring(0, n.length - "_$eq".length) else n
+              val name =
+                if (isVar(setter)) n.substring(0, n.length - "_$eq".length) else n
               name -> setter
             }
-            .filter { case (name, _) => !paramTypes.keySet(name) }
+            .filter { case (name, _) => !paramTypes.keySet.exists(areNamesMatching(_, name)) }
             .map { case (name, setter) =>
               val termName = setter.asTerm.name.toTermName
               val tpe = ExistentialType(fromUntyped(paramListsOf(Type[A].tpe, setter).flatten.head.typeSignature))
