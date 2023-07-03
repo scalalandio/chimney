@@ -18,7 +18,8 @@ final case class MissingJavaBeanSetterParam(
     setterName: String,
     requiredTypeName: String,
     sourceTypeName: String,
-    targetTypeName: String
+    targetTypeName: String,
+    defAvailable: Boolean = false
 ) extends TransformerDerivationError
 
 final case class MissingTransformer(
@@ -45,9 +46,11 @@ final case class IncompatibleSourceTuple(
     targetTypeName: String
 ) extends TransformerDerivationError
 
-// TODO: rename fieldName to valueName
-final case class NotSupportedTransformerDerivation(fieldName: String, sourceTypeName: String, targetTypeName: String)
-    extends TransformerDerivationError
+final case class NotSupportedTransformerDerivation(
+    exprPrettyPrint: String,
+    sourceTypeName: String,
+    targetTypeName: String
+) extends TransformerDerivationError
 
 object TransformerDerivationError {
   def printErrors(errors: Seq[TransformerDerivationError]): String = {
@@ -57,7 +60,7 @@ object TransformerDerivationError {
         val errStrings = errs.distinct.map {
           case MissingAccessor(fieldName, fieldTypeName, sourceTypeName, _, _) =>
             s"  $fieldName: $fieldTypeName - no accessor named $fieldName in source type $sourceTypeName"
-          case MissingJavaBeanSetterParam(setterName, requiredTypeName, sourceTypeName, _) =>
+          case MissingJavaBeanSetterParam(setterName, requiredTypeName, sourceTypeName, _, _) =>
             s"  set${setterName.capitalize}($setterName: $requiredTypeName) - no accessor named $setterName in source type $sourceTypeName"
           case MissingTransformer(fieldName, sourceFieldTypeName, targetFieldTypeName, sourceTypeName, _) =>
             s"  $fieldName: $targetFieldTypeName - can't derive transformation from $fieldName: $sourceFieldTypeName in source type $sourceTypeName"
@@ -69,12 +72,13 @@ object TransformerDerivationError {
             s"  coproduct instance $instance of $targetTypeName is ambiguous"
           case IncompatibleSourceTuple(sourceArity, targetArity, sourceTypeName, _) =>
             s"  source tuple $sourceTypeName is of arity $sourceArity, while target type $targetTypeName is of arity $targetArity; they need to be equal!"
-          case NotSupportedTransformerDerivation(fieldName, sourceTypeName, _) =>
-            s"  derivation from $fieldName: $sourceTypeName to $targetTypeName is not supported in Chimney!"
+          case NotSupportedTransformerDerivation(exprPrettyPrint, sourceTypeName, _) =>
+            s"  derivation from $exprPrettyPrint: $sourceTypeName to $targetTypeName is not supported in Chimney!"
         }
 
-        val fieldsWithMethodAccessor = errors.collect { case MissingAccessor(fieldName, _, _, _, true) =>
-          s"`$fieldName`"
+        val fieldsWithMethodAccessor = errors.collect {
+          case MissingAccessor(fieldName, _, _, _, true)            => s"`$fieldName`"
+          case MissingJavaBeanSetterParam(fieldName, _, _, _, true) => s"`$fieldName`"
         }
         val methodAccessorHint =
           if (fieldsWithMethodAccessor.nonEmpty) {

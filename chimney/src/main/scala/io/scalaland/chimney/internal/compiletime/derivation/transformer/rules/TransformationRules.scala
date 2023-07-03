@@ -29,7 +29,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
         rules: List[Rule]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[To]] = rules match {
       case Nil =>
-        DerivationResult.notSupportedTransformerDerivation(Expr.prettyPrint(ctx.src))
+        DerivationResult.notSupportedTransformerDerivation(ctx)
       case rule :: nextRules =>
         DerivationResult
           .namedScope(s"Attempting expansion of rule ${rule.name}")(

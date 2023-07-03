@@ -12,7 +12,7 @@ private[compiletime] trait TransformToOptionRuleModule { this: Derivation & Tran
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       if (Type[To] <:< Type[None.type])
         DerivationResult
-          .notSupportedTransformerDerivation(Expr.prettyPrint(ctx.src))
+          .notSupportedTransformerDerivation(ctx)
           .log(s"Discovered that target type is ${Type.prettyPrint[None.type]} which we explicitly reject")
       else if (Type[To].isOption)
         DerivationResult.namedScope(s"Lifting ${Type.prettyPrint[From]} -> ${Type

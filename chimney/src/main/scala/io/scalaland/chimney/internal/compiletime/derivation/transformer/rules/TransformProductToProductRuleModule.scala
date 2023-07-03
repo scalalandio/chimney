@@ -175,7 +175,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                               if (
                                 ctorParam.value.targetType == Product.Parameter.TargetType.SetterParameter && !flags.beanSetters
                               )
-                                DerivationResult.notSupportedTransformerDerivation(fromName)(ctx)
+                                DerivationResult.notSupportedTransformerDerivation(ctx)
                               else
                                 Existential.use(getter) { implicit Getter: Type[getter.Underlying] =>
                                   { case Product.Getter(_, get) =>
@@ -244,25 +244,20 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           }
                         }
                         .getOrElse {
-                          // FIXME: this logic doesn't find everything
-                          def accessorExists = fieldOverrides
-                            .get(toName)
-                            .collectFirst { case RuntimeFieldOverride.RenamedFrom(sourceName) => sourceName }
-                            .flatMap(fromExtractors.get)
-                            .isDefined
                           ctorParam.value.targetType match {
                             case Product.Parameter.TargetType.ConstructorParameter =>
                               DerivationResult
                                 .missingAccessor[From, To, ctorParam.Underlying, Existential[TransformationExpr]](
                                   toName,
-                                  accessorExists
+                                  fromExtractors.exists { case (fromName, _) => areNamesMatching(fromName, toName) }
                                 )
                             case Product.Parameter.TargetType.SetterParameter =>
                               DerivationResult
                                 .missingJavaBeanSetterParam[From, To, ctorParam.Underlying, Existential[
                                   TransformationExpr
                                 ]](
-                                  toName
+                                  ProductType.dropSet(toName),
+                                  fromExtractors.exists { case (fromName, _) => areNamesMatching(fromName, toName) }
                                 )
                           }
                         }

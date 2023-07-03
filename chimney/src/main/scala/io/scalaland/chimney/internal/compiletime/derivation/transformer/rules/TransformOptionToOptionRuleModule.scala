@@ -14,7 +14,7 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
       (Type[From], Type[To]) match {
         case _ if Type[From].isOption && Type[To] <:< Type[None.type] =>
           DerivationResult
-            .notSupportedTransformerDerivation(Expr.prettyPrint(ctx.src))
+            .notSupportedTransformerDerivation(ctx)
             .log(
               s"Discovered that target type is ${Type.prettyPrint[None.type]} which we explicitly reject"
             )

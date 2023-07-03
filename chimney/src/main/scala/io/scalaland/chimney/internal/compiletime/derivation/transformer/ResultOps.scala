@@ -44,14 +44,15 @@ private[compiletime] trait ResultOps { this: Derivation =>
       )
     )
 
-    def missingJavaBeanSetterParam[From, To, Setter: Type, A](setterName: String)(implicit
+    def missingJavaBeanSetterParam[From, To, Setter: Type, A](setterName: String, isAccessorAvailable: Boolean)(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       MissingJavaBeanSetterParam(
         setterName = setterName,
         requiredTypeName = Type.prettyPrint[Setter],
         sourceTypeName = Type.prettyPrint[From],
-        targetTypeName = Type.prettyPrint[To]
+        targetTypeName = Type.prettyPrint[To],
+        defAvailable = isAccessorAvailable
       )
     )
 
@@ -107,11 +108,20 @@ private[compiletime] trait ResultOps { this: Derivation =>
       )
     )
 
-    def notSupportedTransformerDerivation[From, To, A](fieldName: String)(implicit
+    def notSupportedTransformerDerivation[From, To, A](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       NotSupportedTransformerDerivation(
-        fieldName = fieldName,
+        exprPrettyPrint = ctx.src.prettyPrint,
+        sourceTypeName = Type.prettyPrint[From],
+        targetTypeName = Type.prettyPrint[To]
+      )
+    )
+    def notSupportedTransformerDerivationForField[From, To, A](fieldName: String)(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      NotSupportedTransformerDerivation(
+        exprPrettyPrint = fieldName,
         sourceTypeName = Type.prettyPrint[From],
         targetTypeName = Type.prettyPrint[To]
       )

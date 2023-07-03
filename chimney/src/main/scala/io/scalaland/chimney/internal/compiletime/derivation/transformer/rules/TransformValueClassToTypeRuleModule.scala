@@ -19,11 +19,7 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
                 .flatMap(DerivationResult.expanded)
                 // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
                 .orElse(TransformProductToProductRule.expand(ctx))
-                .orElse(
-                  DerivationResult.notSupportedTransformerDerivation[From, To, Rule.ExpansionResult[To]](
-                    valueFrom.fieldName
-                  )
-                )
+                .orElse(DerivationResult.notSupportedTransformerDerivationForField(valueFrom.fieldName)(ctx))
           }
         case _ => DerivationResult.attemptNextRule
       }
