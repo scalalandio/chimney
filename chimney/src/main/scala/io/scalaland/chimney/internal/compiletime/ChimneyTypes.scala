@@ -136,6 +136,37 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       }
     }
 
+    val PatcherCfg: PatcherCfgModule
+
+    trait PatcherCfgModule {
+      val Empty: Type[internal.PatcherCfg.Empty]
+
+      val IgnoreRedundantPatcherFields: IgnoreRedundantPatcherFieldsModule
+
+      trait IgnoreRedundantPatcherFieldsModule
+          extends Type.Ctor1UpperBounded[
+            internal.PatcherCfg,
+            internal.PatcherCfg.IgnoreRedundantPatcherFields
+          ] {
+        this: IgnoreRedundantPatcherFields.type =>
+      }
+
+      val IgnoreNoneInPatch: IgnoreNoneInPatchModule
+
+      trait IgnoreNoneInPatchModule
+          extends Type.Ctor1UpperBounded[
+            internal.PatcherCfg,
+            internal.PatcherCfg.IgnoreNoneInPatch
+          ] { this: IgnoreNoneInPatch.type => }
+
+      val MacrosLogging: MacrosLoggingModule
+      trait MacrosLoggingModule
+          extends Type.Ctor1UpperBounded[
+            internal.PatcherCfg,
+            internal.PatcherCfg.MacrosLogging
+          ] { this: MacrosLogging.type => }
+    }
+
     // You can import ChimneyType.Implicits.* in your shared code to avoid providing types manually, while avoiding conflicts
     // with implicit types seen in platform-specific scopes (which would happen if those implicits were always used).
     object Implicits {
