@@ -268,5 +268,42 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           weakTypeTag[internal.TransformerFlags.MacrosLogging]
       }
     }
+
+    object PatcherCfg extends PatcherCfgModule {
+      override val Empty: Type[internal.PatcherCfg.Empty] = weakTypeTag[internal.PatcherCfg.Empty]
+
+      object IgnoreRedundantPatcherFields extends IgnoreRedundantPatcherFieldsModule {
+        override def apply[C <: internal.PatcherCfg: Type]: Type[internal.PatcherCfg.IgnoreRedundantPatcherFields[C]] =
+          weakTypeTag[internal.PatcherCfg.IgnoreRedundantPatcherFields[C]]
+
+        override def unapply[A](A: Type[A]): Option[ExistentialType.UpperBounded[internal.PatcherCfg]] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[internal.PatcherCfg.IgnoreRedundantPatcherFields[?]].typeConstructor)
+            Some(fromUntyped[internal.PatcherCfg](A.tpe.typeArgs.head).asExistentialUpperBounded[internal.PatcherCfg])
+          else
+            scala.None
+      }
+
+      object IgnoreNoneInPatch extends IgnoreNoneInPatchModule {
+        override def apply[C <: internal.PatcherCfg: Type]: Type[internal.PatcherCfg.IgnoreNoneInPatch[C]] =
+          weakTypeTag[internal.PatcherCfg.IgnoreNoneInPatch[C]]
+
+        override def unapply[A](A: Type[A]): Option[ExistentialType.UpperBounded[internal.PatcherCfg]] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[internal.PatcherCfg.IgnoreNoneInPatch[?]].typeConstructor)
+            Some(fromUntyped[internal.PatcherCfg](A.tpe.typeArgs.head).asExistentialUpperBounded[internal.PatcherCfg])
+          else
+            scala.None
+      }
+
+      object MacrosLogging extends MacrosLoggingModule {
+        override def apply[C <: internal.PatcherCfg: Type]: Type[internal.PatcherCfg.MacrosLogging[C]] =
+          weakTypeTag[internal.PatcherCfg.MacrosLogging[C]]
+
+        override def unapply[A](A: Type[A]): Option[ExistentialType.UpperBounded[internal.PatcherCfg]] =
+          if (A.tpe.typeConstructor <:< weakTypeOf[internal.PatcherCfg.MacrosLogging[?]].typeConstructor)
+            Some(fromUntyped[internal.PatcherCfg](A.tpe.typeArgs.head).asExistentialUpperBounded[internal.PatcherCfg])
+          else
+            scala.None
+      }
+    }
   }
 }
