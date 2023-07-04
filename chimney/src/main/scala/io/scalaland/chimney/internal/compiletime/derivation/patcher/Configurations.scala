@@ -16,6 +16,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       readPatcherConfigAux(PatcherConfig())
     }
 
+    @scala.annotation.nowarn("msg=Unreachable case")
     private def readPatcherConfigAux[Cfg <: internal.PatcherCfg: Type](cfg: PatcherConfig): PatcherConfig =
       Type[Cfg] match {
         case empty if empty =:= ChimneyType.PatcherCfg.Empty => cfg
