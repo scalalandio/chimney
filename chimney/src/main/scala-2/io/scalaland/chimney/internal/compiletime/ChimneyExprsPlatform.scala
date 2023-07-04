@@ -175,5 +175,34 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           index: Int
       ): Expr[Any] = c.Expr[Any](q"$runtimeDataStore($index)")
     }
+
+    object Patcher extends PatcherModule {
+
+      def patch[A: Type, Patch: Type](
+          patcher: Expr[io.scalaland.chimney.Patcher[A, Patch]],
+          obj: Expr[A],
+          patch: Expr[Patch]
+      ): Expr[A] = c.Expr[A](q"$patcher.patch($obj, $patch)")
+
+      def instance[A: Type, Patch: Type](
+          f: (Expr[A], Expr[Patch]) => Expr[A]
+      ): Expr[io.scalaland.chimney.Patcher[A, Patch]] = {
+        val objTermName =
+          ExprPromise.provideFreshName[A](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
+        val patchTermName =
+          ExprPromise.provideFreshName[Patch](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
+
+        val objExpr: Expr[A] = c.Expr[A](q"$objTermName")
+        val patchExpr: Expr[Patch] = c.Expr[Patch](q"$patchTermName")
+
+        c.Expr[io.scalaland.chimney.Patcher[A, Patch]](
+          q"""new _root_.io.scalaland.chimney.Patcher[${Type[A]}, ${Type[Patch]}] {
+              def patch($objTermName: ${Type[A]}, $patchTermName: ${Type[Patch]}): ${Type[A]} = {
+                ${f(objExpr, patchExpr)}
+              }
+            }"""
+        )
+      }
+    }
   }
 }

@@ -144,5 +144,27 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         '{ ${ runtimeDataStore }.apply(${ quoted.Expr(index) }) }
       }
     }
+
+    object Patcher extends PatcherModule {
+
+      def patch[A: Type, Patch: Type](
+          patcher: Expr[io.scalaland.chimney.Patcher[A, Patch]],
+          obj: Expr[A],
+          patch: Expr[Patch]
+      ): Expr[A] = '{
+        ${ patcher }.patch(${ obj }, ${ patch })
+      }
+
+      def instance[A: Type, Patch: Type](
+          f: (Expr[A], Expr[Patch]) => Expr[A]
+      ): Expr[io.scalaland.chimney.Patcher[A, Patch]] =
+        '{
+          new Patcher[A, Patch] {
+            def patch(obj: A, patch: Patch): A = ${
+              f('{ obj }, '{ patch })
+            }
+          }
+        }
+    }
   }
 }
