@@ -1,12 +1,12 @@
 package io.scalaland.chimney.internal.macros.dsl
 
 import io.scalaland.chimney.Patcher
-import io.scalaland.chimney.internal.macros.{PatcherMacros, TransformerMacros}
+import io.scalaland.chimney.internal.macros.PatcherMacros
 
 import scala.reflect.macros.blackbox
 
 // TODO: remove once patcher macros are migrated to new architecture
-class PatcherBlackboxMacros(val c: blackbox.Context) extends PatcherMacros with TransformerMacros {
+class PatcherBlackboxMacros(val c: blackbox.Context) extends PatcherMacros {
 
   import c.universe.*
 

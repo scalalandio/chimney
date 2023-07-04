@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.utils.{DslMacroUtils, TypeTestUtils}
 
 import scala.reflect.macros.blackbox
 
-trait GenTrees extends Model with TypeTestUtils with DslMacroUtils {
+trait GenTrees extends /*Model with*/ TypeTestUtils with DslMacroUtils {
 
   val c: blackbox.Context
 

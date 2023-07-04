@@ -4,7 +4,7 @@ import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.{internal, partial, PartialTransformer, Transformer}
 
-private[compiletime] trait Gateway { this: Derivation =>
+trait Gateway { this: Derivation =>
 
   import ChimneyType.Implicits.*
 
@@ -128,7 +128,7 @@ private[compiletime] trait Gateway { this: Derivation =>
   }
 
   /** Adapts TransformationExpr[To] to expected type of transformation */
-  private def deriveFinalTransformationResultExpr[From, To](implicit
+  def deriveFinalTransformationResultExpr[From, To](implicit
       ctx: TransformationContext[From, To]
   ): DerivationResult[Expr[ctx.Target]] =
     DerivationResult.log(s"Start derivation with context: $ctx") >>
