@@ -11,5 +11,8 @@ final class PatcherUsing[T, P, Cfg <: PatcherCfg](val obj: T, val objPatch: P) {
   def ignoreRedundantPatcherFields: PatcherUsing[T, P, IgnoreRedundantPatcherFields[Cfg]] =
     this.asInstanceOf[PatcherUsing[T, P, IgnoreRedundantPatcherFields[Cfg]]]
 
+  def enableMacrosLogging: PatcherUsing[T, P, MacrosLogging[Cfg]] =
+    this.asInstanceOf[PatcherUsing[T, P, MacrosLogging[Cfg]]]
+
   def patch: T = ??? // TODO: impl
 }
