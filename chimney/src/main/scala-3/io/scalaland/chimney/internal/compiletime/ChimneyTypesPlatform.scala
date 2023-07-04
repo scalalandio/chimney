@@ -241,5 +241,42 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           quoted.Type.of[internal.TransformerFlags.MacrosLogging]
       }
     }
+
+    object PatcherCfg extends PatcherCfgModule {
+      val Empty: Type[internal.PatcherCfg.Empty] = quoted.Type.of[internal.PatcherCfg.Empty]
+
+      object IgnoreRedundantPatcherFields extends IgnoreRedundantPatcherFieldsModule {
+        def apply[C <: internal.PatcherCfg: Type]: Type[internal.PatcherCfg.IgnoreRedundantPatcherFields[C]] =
+          quoted.Type.of[internal.PatcherCfg.IgnoreRedundantPatcherFields[C]]
+
+        def unapply[A](tpe: Type[A]): Option[ExistentialType.UpperBounded[internal.PatcherCfg]] = tpe match {
+          case '[internal.PatcherCfg.IgnoreRedundantPatcherFields[cfg]] =>
+            Some(Type[cfg].asExistentialUpperBounded[internal.PatcherCfg])
+          case _ => scala.None
+        }
+      }
+
+      object IgnoreNoneInPatch extends IgnoreNoneInPatchModule {
+        def apply[C <: internal.PatcherCfg: Type]: Type[internal.PatcherCfg.IgnoreNoneInPatch[C]] =
+          quoted.Type.of[internal.PatcherCfg.IgnoreNoneInPatch[C]]
+
+        def unapply[A](tpe: Type[A]): Option[ExistentialType.UpperBounded[internal.PatcherCfg]] = tpe match {
+          case '[internal.PatcherCfg.IgnoreNoneInPatch[cfg]] =>
+            Some(Type[cfg].asExistentialUpperBounded[internal.PatcherCfg])
+          case _ => scala.None
+        }
+      }
+
+      object MacrosLogging extends MacrosLoggingModule {
+        def apply[C <: internal.PatcherCfg: Type]: Type[internal.PatcherCfg.MacrosLogging[C]] =
+          quoted.Type.of[internal.PatcherCfg.MacrosLogging[C]]
+
+        def unapply[A](tpe: Type[A]): Option[ExistentialType.UpperBounded[internal.PatcherCfg]] = tpe match {
+          case '[internal.PatcherCfg.MacrosLogging[cfg]] =>
+            Some(Type[cfg].asExistentialUpperBounded[internal.PatcherCfg])
+          case _ => scala.None
+        }
+      }
+    }
   }
 }
