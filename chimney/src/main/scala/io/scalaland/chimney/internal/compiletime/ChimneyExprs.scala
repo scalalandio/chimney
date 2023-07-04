@@ -119,6 +119,21 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
           index: Int
       ): Expr[Any]
     }
+
+    val Patcher: PatcherModule
+    trait PatcherModule {
+      this: Patcher.type =>
+
+      def patch[A: Type, Patch: Type](
+          patcher: Expr[io.scalaland.chimney.Patcher[A, Patch]],
+          obj: Expr[A],
+          patch: Expr[Patch]
+      ): Expr[A]
+
+      def instance[A: Type, Patch: Type](
+          f: (Expr[A], Expr[Patch]) => Expr[A]
+      ): Expr[io.scalaland.chimney.Patcher[A, Patch]]
+    }
   }
 
   implicit final protected class TransformerExprOps[From: Type, To: Type](
