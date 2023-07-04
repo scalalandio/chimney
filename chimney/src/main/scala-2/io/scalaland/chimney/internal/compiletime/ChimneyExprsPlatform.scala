@@ -9,7 +9,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
 
   import c.universe.{internal as _, Transformer as _, *}
 
-  protected object ChimneyExpr extends ChimneyExprModule {
+  object ChimneyExpr extends ChimneyExprModule {
 
     object Transformer extends TransformerModule {
 

@@ -7,7 +7,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
   import c.universe.{internal as _, Transformer as _, *}
 
   final override protected type Type[A] = c.WeakTypeTag[A]
-  protected object Type extends TypeModule {
+  object Type extends TypeModule {
 
     object platformSpecific {
 

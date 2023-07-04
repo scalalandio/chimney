@@ -2,8 +2,8 @@ package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.internal.TransformerDerivationError
 
-sealed private[compiletime] trait DerivationError extends Product with Serializable
-private[compiletime] object DerivationError {
+sealed trait DerivationError extends Product with Serializable
+object DerivationError {
 
   final case class MacroException(exception: Throwable) extends DerivationError
   final case class NotYetImplemented(what: String) extends DerivationError

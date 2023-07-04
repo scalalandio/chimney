@@ -1,14 +1,20 @@
 package io.scalaland.chimney.internal.macros
 
-import io.scalaland.chimney.internal.{PatcherConfiguration, TransformerDerivationError}
+import io.scalaland.chimney.internal.compiletime.DerivationError
+import io.scalaland.chimney.internal.compiletime.derivation.transformer
+import io.scalaland.chimney.internal.PatcherConfiguration
 
 import scala.reflect.macros.blackbox
 
-trait PatcherMacros extends PatcherConfiguration with TransformerMacros with GenTrees {
+trait PatcherMacros
+    extends PatcherConfiguration
+    with GenTrees
+    with transformer.Gateway
+    with transformer.DerivationPlatform {
 
   val c: blackbox.Context
 
-  import c.universe.*
+  import c.universe.{internal as _, Transformer as _, Type as _, *}
 
   def expandPatch[T: WeakTypeTag, Patch: WeakTypeTag, C: WeakTypeTag]: Tree = {
     val C = weakTypeOf[C]
@@ -71,8 +77,8 @@ trait PatcherMacros extends PatcherConfiguration with TransformerMacros with Gen
 
   def resolveFieldMapping(
       config: PatcherConfig,
-      T: Type,
-      Patch: Type,
+      T: c.Type,
+      Patch: c.Type,
       tParamsByName: Map[TermName, MethodSymbol],
       fnObj: TermName,
       fnPatch: TermName,
@@ -91,36 +97,39 @@ trait PatcherMacros extends PatcherConfiguration with TransformerMacros with Gen
           if (patchParamTpe <:< tParamTpe) {
             Right(pParam.name -> q"$patchField.orElse($entityField)")
           } else {
-            expandTransformerTree(TransformerConfig().withSrcPrefixTree(patchField))(
+            expandTransformerTree(
+              patchField,
               patchParamTpe,
               tParamTpe
             ).map { transformerTree =>
-              pParam.name -> q"${transformerTree.tree}.orElse($entityField)"
+              pParam.name -> q"${transformerTree}.orElse($entityField)"
             }.left
-              .map(TransformerDerivationError.printErrors)
+              .map(DerivationError.printErrors)
           }
         }
       case Some(tParam) if patchParamTpe <:< tParam.resultTypeIn(T) =>
         Some(Right(pParam.name -> patchField))
       case Some(tParam) =>
         Some(
-          expandTransformerTree(TransformerConfig().withSrcPrefixTree(patchField))(
+          expandTransformerTree(
+            patchField,
             patchParamTpe,
             tParam.resultTypeIn(T)
           ).map { transformerTree =>
-            pParam.name -> transformerTree.tree
+            pParam.name -> transformerTree
           }.left
             .flatMap { errors =>
               if (isOption(patchParamTpe)) {
-                expandTransformerTree(TransformerConfig().withSrcPrefixTree(q"$patchField.get"))(
+                expandTransformerTree(
+                  q"$patchField.get",
                   patchParamTpe.typeArgs.head,
                   tParam.resultTypeIn(T)
                 ).map { innerTransformerTree =>
-                  pParam.name -> q"if($patchField.isDefined) { ${innerTransformerTree.tree} } else { $entityField }"
+                  pParam.name -> q"if($patchField.isDefined) { ${innerTransformerTree} } else { $entityField }"
                 }.left
-                  .map(errors2 => TransformerDerivationError.printErrors(errors ++ errors2))
+                  .map(errors2 => DerivationError.printErrors(errors ++ errors2))
               } else {
-                Left(TransformerDerivationError.printErrors(errors))
+                Left(DerivationError.printErrors(errors))
               }
             }
         )
@@ -132,6 +141,31 @@ trait PatcherMacros extends PatcherConfiguration with TransformerMacros with Gen
             Left(s"Field named '${pParam.name}' not found in target patching type $T!")
           )
         }
+    }
+  }
+
+  private def expandTransformerTree(
+      srcPrefixTree: c.Tree,
+      patchParamTpe: c.Type,
+      tParamTpe: c.Type
+  ): Either[Seq[DerivationError], c.Tree] = {
+
+    val fromType = Type.platformSpecific.fromUntyped(patchParamTpe).asExistential
+    val toType = Type.platformSpecific.fromUntyped(tParamTpe).asExistential
+
+    ExistentialType.use2(fromType, toType) { implicit from => implicit to =>
+      val context = TransformationContext.ForTotal
+        .create[fromType.Underlying, toType.Underlying](
+          c.Expr(srcPrefixTree),
+          TransformerConfig(),
+          ChimneyExpr.RuntimeDataStore.empty
+        )
+        .updateConfig(_.allowFromToImplicitSearch)
+
+      deriveFinalTransformationResultExpr(context).toEither
+        .map(_.tree)
+        .left
+        .map(_.asVector.toSeq)
     }
   }
 }
