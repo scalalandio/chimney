@@ -181,7 +181,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       case _ =>
         // $COVERAGE-OFF$
         reportError(s"Bad internal transformer flags type shape ${Type.prettyPrint[Flags]}!")
-        // $COVERAGE-ON$
+      // $COVERAGE-ON$
     }
 
     // This (suppressed) error is a case when compiler is simply wrong :)
