@@ -2,10 +2,14 @@ package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
 import io.scalaland.chimney.{dsl, Patcher}
 import io.scalaland.chimney.internal.PatcherCfg
+import io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import scala.reflect.macros.blackbox
 
-final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform with Gateway {
+final class PatcherMacros(val c: blackbox.Context)
+    extends DerivationPlatform
+    with Gateway
+    with transformer.DerivationPlatform {
 
   import c.universe.{internal as _, Transformer as _, *}
 
