@@ -1,9 +1,28 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
-import io.scalaland.chimney.internal
+import io.scalaland.chimney.{internal, Patcher}
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 
 trait Gateway { this: Derivation =>
+
+  import ChimneyType.Implicits.*
+
+  final def derivePatcher[A: Type, Patch: Type]: Expr[Patcher[A, Patch]] = {
+
+    val result = DerivationResult.direct[Expr[A], Expr[Patcher[A, Patch]]] { await =>
+      ChimneyExpr.Patcher.instance[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
+        val context = PatcherContext.create[A, Patch](
+          obj,
+          patch,
+          config = PatcherConfig()
+        )
+
+        await(enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context))
+      }
+    }
+
+    extractExprAndLog[A, Patch, Patcher[A, Patch]](result)
+  }
 
   final def derivePatcherResult[A: Type, Patch: Type, Cfg <: internal.PatcherCfg: Type](
       obj: Expr[A],
@@ -20,7 +39,7 @@ trait Gateway { this: Derivation =>
 
       Expr.block(
         List(Expr.suppressUnused(obj), Expr.suppressUnused(patch)),
-        extractExprAndLog[A, Patch](result)
+        extractExprAndLog[A, Patch, A](result)
       )
     }
   }
@@ -38,7 +57,7 @@ trait Gateway { this: Derivation =>
     else result
 
   // TODO: move to common utils, name it better
-  private def extractExprAndLog[A: Type, Patch: Type](result: DerivationResult[Expr[A]]): Expr[A] = {
+  private def extractExprAndLog[A: Type, Patch: Type, Out: Type](result: DerivationResult[Expr[Out]]): Expr[Out] = {
     result.state.macroLogging.foreach { case DerivationResult.State.MacroLogging(derivationStartedAt) =>
       val duration = java.time.Duration.between(derivationStartedAt, java.time.Instant.now())
       val info = result
