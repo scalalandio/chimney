@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
 private[compiletime] trait Contexts { this: Derivation =>
 
-  final case class PatcherContext[A, Patch](obj: Expr[A], patch: Expr[Patch])(
+  final case class PatcherContext[A, Patch](obj: Expr[A], patch: Expr[Patch], config: PatcherConfig)(
       val A: Type[A],
       val Patch: Type[Patch]
   ) {
@@ -13,8 +13,12 @@ private[compiletime] trait Contexts { this: Derivation =>
 
   object PatcherContext {
 
-    def create[A: Type, Patch: Type](obj: Expr[A], patch: Expr[Patch]): PatcherContext[A, Patch] =
-      PatcherContext(obj = obj, patch = patch)(
+    def create[A: Type, Patch: Type](
+        obj: Expr[A],
+        patch: Expr[Patch],
+        config: PatcherConfig
+    ): PatcherContext[A, Patch] =
+      PatcherContext(obj = obj, patch = patch, config = config)(
         A = Type[A],
         Patch = Type[Patch]
       )
