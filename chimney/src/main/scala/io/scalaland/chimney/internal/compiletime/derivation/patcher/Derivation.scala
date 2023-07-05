@@ -14,7 +14,7 @@ private[compiletime] trait Derivation
     with datatypes.SealedHierarchies
     with datatypes.ValueClasses {
 
-  final def derivePatcher[A, Patch](implicit ctx: PatcherContext[A, Patch]): DerivationResult[Expr[A]] = {
+  final def derivePatcherResultExpr[A, Patch](implicit ctx: PatcherContext[A, Patch]): DerivationResult[Expr[A]] = {
     DerivationResult.namedScope(
       s"Deriving Patcher expression for ${Type.prettyPrint[A]} with patch ${Type.prettyPrint[Patch]}"
     ) {

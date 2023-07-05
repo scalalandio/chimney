@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.PatcherCfg
 import io.scalaland.chimney.internal.PatcherCfg.*
-import io.scalaland.chimney.internal.macros.dsl.PatcherBlackboxMacros
+import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 
 import scala.language.experimental.macros
 
@@ -61,5 +61,5 @@ final class PatcherUsing[T, P, Cfg <: PatcherCfg](val obj: T, val objPatch: P) {
     *
     * @since 0.4.0
     */
-  def patch: T = macro PatcherBlackboxMacros.patchImpl[T, P, Cfg]
+  def patch: T = macro PatcherMacros.derivePatchImpl[T, P, Cfg]
 }
