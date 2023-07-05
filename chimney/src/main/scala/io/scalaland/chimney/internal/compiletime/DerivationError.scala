@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.internal.TransformerDerivationError
+import io.scalaland.chimney.internal.{PatcherDerivationError, TransformerDerivationError}
 
 sealed trait DerivationError extends Product with Serializable
 object DerivationError {
@@ -8,6 +8,7 @@ object DerivationError {
   final case class MacroException(exception: Throwable) extends DerivationError
   final case class NotYetImplemented(what: String) extends DerivationError
   final case class TransformerError(transformerDerivationError: TransformerDerivationError) extends DerivationError
+  final case class PatcherError(patcherDerivationError: PatcherDerivationError) extends DerivationError
 
   def printErrors(derivationErrors: Seq[DerivationError]): String =
     derivationErrors
@@ -20,8 +21,22 @@ object DerivationError {
           s"  derivation failed because functionality $what is not yet implemented!"
       }
       .getOrElse {
-        TransformerDerivationError.printErrors(derivationErrors.collect {
-          case TransformerError(transformerDerivationError) => transformerDerivationError
-        })
+        val transformerErrors = derivationErrors.collect { case TransformerError(transformerDerivationError) =>
+          transformerDerivationError
+        }
+        val patcherErrors = derivationErrors.collect { case PatcherError(patcherDerivationError) =>
+          patcherDerivationError
+        }
+
+        (transformerErrors, patcherErrors) match {
+          case (Seq(), Seq()) =>
+            ""
+          case (tErrs, Seq()) =>
+            TransformerDerivationError.printErrors(tErrs)
+          case (Seq(), pErrs) =>
+            PatcherDerivationError.printErrors(pErrs)
+          case (tErrs, pErrs) =>
+            TransformerDerivationError.printErrors(tErrs) ++ "\n" ++ PatcherDerivationError.printErrors(pErrs)
+        }
       }
 }

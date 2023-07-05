@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.internal.TransformerDerivationError
+import io.scalaland.chimney.internal.{PatcherDerivationError, TransformerDerivationError}
 
 import scala.collection.compat.*
 import scala.util.control.NonFatal
@@ -159,6 +159,8 @@ private[compiletime] object DerivationResult {
     fail(DerivationErrors(DerivationError.NotYetImplemented(what)))
   def transformerError[A](transformerDerivationError: TransformerDerivationError): DerivationResult[A] =
     fail(DerivationErrors(DerivationError.TransformerError(transformerDerivationError)))
+  def patcherError[A](patcherDerivationError: PatcherDerivationError): DerivationResult[A] =
+    fail(DerivationErrors(DerivationError.PatcherError(patcherDerivationError)))
 
   type FactoryOf[Coll[+_], O] = Factory[O, Coll[O]]
 
