@@ -48,6 +48,10 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         '{ ${ opt }.fold(${ onNone })(${ onSome }) }
       def getOrElse[A: Type](opt: Expr[Option[A]])(orElse: Expr[A]): Expr[A] =
         '{ ${ opt }.getOrElse(${ orElse }) }
+      def get[A: Type](opt: Expr[Option[A]]): Expr[A] =
+        '{ ${ opt }.get }
+      def isDefined[A: Type](opt: Expr[Option[A]]): Expr[Boolean] =
+        '{ ${ opt }.isDefined }
     }
 
     object Either extends EitherModule {
