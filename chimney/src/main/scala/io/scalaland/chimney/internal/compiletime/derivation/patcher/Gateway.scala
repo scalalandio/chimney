@@ -44,9 +44,9 @@ trait Gateway { this: Derivation =>
     }
   }
 
-  // TODO: move to common utils, name it better
-  protected def cacheDefinition[A: Type, Out: Type](expr: Expr[A])(usage: Expr[A] => Expr[Out]): Expr[Out] =
-    ExprPromise.promise[A](ExprPromise.NameGenerationStrategy.FromType).fulfilAsVal(expr).use(usage)
+//  // TODO: move to common utils, name it better
+//  protected def cacheDefinition[A: Type, Out: Type](expr: Expr[A])(usage: Expr[A] => Expr[Out]): Expr[Out] =
+//    ExprPromise.promise[A](ExprPromise.NameGenerationStrategy.FromType).fulfilAsVal(expr).use(usage)
 
   // TODO: move to common utils, name it better
   private def enableLoggingIfFlagEnabled[A](
