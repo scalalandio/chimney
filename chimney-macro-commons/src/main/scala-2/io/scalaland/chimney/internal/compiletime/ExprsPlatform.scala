@@ -53,6 +53,10 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         c.Expr[B](q"$opt.fold[${Type[B]}]($onNone)($onSome)")
       def getOrElse[A: Type](opt: Expr[Option[A]])(orElse: Expr[A]): Expr[A] =
         c.Expr[A](q"$opt.getOrElse[${Type[A]}]($orElse)")
+      def get[A: Type](opt: Expr[Option[A]]): Expr[A] =
+        c.Expr[A](q"$opt.get")
+      def isDefined[A: Type](opt: Expr[Option[A]]): Expr[Boolean] =
+        c.Expr[Boolean](q"$opt.isDefined")
     }
 
     object Either extends EitherModule {
