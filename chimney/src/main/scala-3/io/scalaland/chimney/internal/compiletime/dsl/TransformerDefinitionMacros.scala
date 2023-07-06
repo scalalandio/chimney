@@ -8,7 +8,7 @@ import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
 
 import scala.quoted.*
 
-object TransformerDefinitionImpl {
+object TransformerDefinitionMacros {
 
   def withFieldConstImpl[
       From: Type,

@@ -1,38 +1,31 @@
-package io.scalaland.chimney.internal.macros.dsl
+package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.internal.utils.DslMacroUtils
-
+import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
 import scala.annotation.unused
 import scala.reflect.macros.whitebox
 
-// TODO: move to io.scalaland.chimney.internal.compiletime.dsl
-// TODO: rename to TransformerInto
-class TransformerIntoWhiteboxMacros(val c: whitebox.Context) extends DslMacroUtils {
+class TransformerIntoMacros(val c: whitebox.Context) extends DslMacroUtils {
 
   import c.universe.*
 
-  def withFieldConstImpl(selector: Tree, value: Tree)(@unused ev: Tree): Tree = {
+  def withFieldConstImpl(selector: Tree, value: Tree)(@unused ev: Tree): Tree =
     c.prefix.tree.refineTransformerDefinition_Hack(
       trees => q"_.withFieldConst($selector, ${trees("value")})",
       "value" -> value
     )
-  }
 
-  def withFieldComputedImpl(selector: Tree, f: Tree)(@unused ev: Tree): Tree = {
+  def withFieldComputedImpl(selector: Tree, f: Tree)(@unused ev: Tree): Tree =
     c.prefix.tree.refineTransformerDefinition_Hack(
       trees => q"_.withFieldComputed($selector, ${trees("f")})",
       "f" -> f
     )
-  }
 
-  def withFieldRenamedImpl(selectorFrom: Tree, selectorTo: Tree): Tree = {
+  def withFieldRenamedImpl(selectorFrom: Tree, selectorTo: Tree): Tree =
     c.prefix.tree.refineTransformerDefinition(q"_.withFieldRenamed($selectorFrom, $selectorTo)")
-  }
 
-  def withCoproductInstanceImpl(f: Tree): Tree = {
+  def withCoproductInstanceImpl(f: Tree): Tree =
     c.prefix.tree.refineTransformerDefinition_Hack(
       trees => q"_.withCoproductInstance(${trees("f")})",
       "f" -> f
     )
-  }
 }

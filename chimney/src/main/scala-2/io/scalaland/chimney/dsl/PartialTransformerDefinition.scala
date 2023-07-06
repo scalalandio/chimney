@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.{partial, PartialTransformer}
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.macros.dsl.PartialTransformerDefinitionWhiteboxMacros
+import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerDefinitionMacros
 
 import scala.language.experimental.macros
 
@@ -39,7 +39,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   def withFieldConst[T, U](selector: To => T, value: U)(implicit
       ev: U <:< T
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withFieldConstImpl[Cfg]
+    macro PartialTransformerDefinitionMacros.withFieldConstImpl[Cfg]
 
   /** Use provided partial result `value` for field picked using `selector`.
     *
@@ -57,7 +57,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   def withFieldConstPartial[T, U](selector: To => T, value: partial.Result[U])(implicit
       ev: U <:< T
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withFieldConstPartialImpl[Cfg]
+    macro PartialTransformerDefinitionMacros.withFieldConstPartialImpl[Cfg]
 
   /** Use function `f` to compute value of field picked using `selector`.
     *
@@ -75,7 +75,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   def withFieldComputed[T, U](selector: To => T, f: From => U)(implicit
       ev: U <:< T
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withFieldComputedImpl[Cfg]
+    macro PartialTransformerDefinitionMacros.withFieldComputedImpl[Cfg]
 
   /** Use function `f` to compute partial result for field picked using `selector`.
     *
@@ -94,7 +94,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
       selector: To => T,
       f: From => partial.Result[U]
   )(implicit ev: U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withFieldComputedPartialImpl[Cfg]
+    macro PartialTransformerDefinitionMacros.withFieldComputedPartialImpl[Cfg]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
     *
@@ -113,7 +113,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
       selectorFrom: From => T,
       selectorTo: To => U
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withFieldRenamedImpl[Cfg]
+    macro PartialTransformerDefinitionMacros.withFieldRenamedImpl[Cfg]
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
     *
@@ -131,7 +131,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     * @since 0.7.0
     */
   def withCoproductInstance[Inst](f: Inst => To): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[To, Inst, Cfg]
+    macro PartialTransformerDefinitionMacros.withCoproductInstanceImpl[To, Inst, Cfg]
 
   /** Use `f` to calculate the (missing) coproduct instance partial result when mapping one coproduct into another.
     *
@@ -151,7 +151,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   def withCoproductInstancePartial[Inst](
       f: Inst => partial.Result[To]
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro PartialTransformerDefinitionWhiteboxMacros.withCoproductInstancePartialImpl[To, Inst, Cfg]
+    macro PartialTransformerDefinitionMacros.withCoproductInstancePartialImpl[To, Inst, Cfg]
 
   /** Build Partial Transformer using current configuration.
     *

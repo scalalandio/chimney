@@ -1,4 +1,4 @@
-package io.scalaland.chimney.internal.utils
+package io.scalaland.chimney.internal.compiletime.dsl.utils
 
 import scala.reflect.macros.blackbox
 

@@ -9,7 +9,7 @@ import io.scalaland.chimney.PartialTransformer
 
 import scala.quoted.*
 
-object PartialTransformerDefinitionImpl {
+object PartialTransformerDefinitionMacros {
 
   def withFieldConstImpl[
       From: Type,

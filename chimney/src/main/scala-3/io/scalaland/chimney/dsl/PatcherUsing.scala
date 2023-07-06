@@ -2,17 +2,18 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.PatcherCfg
 import io.scalaland.chimney.internal.PatcherCfg.*
+import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 
-final class PatcherUsing[T, P, Cfg <: PatcherCfg](val obj: T, val objPatch: P) {
+final class PatcherUsing[A, Patch, Cfg <: PatcherCfg](val obj: A, val objPatch: Patch) {
 
-  def ignoreNoneInPatch: PatcherUsing[T, P, IgnoreNoneInPatch[Cfg]] =
-    this.asInstanceOf[PatcherUsing[T, P, IgnoreNoneInPatch[Cfg]]]
+  def ignoreNoneInPatch: PatcherUsing[A, Patch, IgnoreNoneInPatch[Cfg]] =
+    this.asInstanceOf[PatcherUsing[A, Patch, IgnoreNoneInPatch[Cfg]]]
 
-  def ignoreRedundantPatcherFields: PatcherUsing[T, P, IgnoreRedundantPatcherFields[Cfg]] =
-    this.asInstanceOf[PatcherUsing[T, P, IgnoreRedundantPatcherFields[Cfg]]]
+  def ignoreRedundantPatcherFields: PatcherUsing[A, Patch, IgnoreRedundantPatcherFields[Cfg]] =
+    this.asInstanceOf[PatcherUsing[A, Patch, IgnoreRedundantPatcherFields[Cfg]]]
 
-  def enableMacrosLogging: PatcherUsing[T, P, MacrosLogging[Cfg]] =
-    this.asInstanceOf[PatcherUsing[T, P, MacrosLogging[Cfg]]]
+  def enableMacrosLogging: PatcherUsing[A, Patch, MacrosLogging[Cfg]] =
+    this.asInstanceOf[PatcherUsing[A, Patch, MacrosLogging[Cfg]]]
 
-  def patch: T = ??? // TODO: impl
+  inline def patch: A = ${ PatcherMacros.derivePatcherResult[A, Patch, Cfg]('obj, 'objPatch) }
 }

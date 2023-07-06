@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.macros.dsl.TransformerIntoWhiteboxMacros
+import io.scalaland.chimney.internal.compiletime.dsl.TransformerIntoMacros
 
 import scala.language.experimental.macros
 
@@ -46,7 +46,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
   def withFieldConst[T, U](selector: To => T, value: U)(implicit
       ev: U <:< T
   ): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerIntoWhiteboxMacros.withFieldConstImpl
+    macro TransformerIntoMacros.withFieldConstImpl
 
   /** Use function `f` to compute value of field picked using `selector`.
     *
@@ -66,7 +66,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
       selector: To => T,
       f: From => U
   )(implicit ev: U <:< T): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerIntoWhiteboxMacros.withFieldComputedImpl
+    macro TransformerIntoMacros.withFieldComputedImpl
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
     *
@@ -86,7 +86,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
       selectorFrom: From => T,
       selectorTo: To => U
   ): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerIntoWhiteboxMacros.withFieldRenamedImpl
+    macro TransformerIntoMacros.withFieldRenamedImpl
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another
     *
@@ -103,7 +103,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     * @since 0.1.2
     */
   def withCoproductInstance[Inst](f: Inst => To): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerIntoWhiteboxMacros.withCoproductInstanceImpl
+    macro TransformerIntoMacros.withCoproductInstanceImpl
 
   /** Apply configured transformation in-place.
     *

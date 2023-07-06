@@ -7,7 +7,7 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Transfor
 
 import scala.quoted.*
 
-object PartialTransformerIntoImpl {
+object PartialTransformerIntoMacros {
 
   def withFieldConstImpl[
       From: Type,
@@ -21,7 +21,7 @@ object PartialTransformerIntoImpl {
       selectorExpr: Expr[To => T],
       valueExpr: Expr[U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionImpl.withFieldConstImpl('{ ${ tiExpr }.td }, selectorExpr, valueExpr) match {
+    PartialTransformerDefinitionMacros.withFieldConstImpl('{ ${ tiExpr }.td }, selectorExpr, valueExpr) match {
       case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
         '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
     }
@@ -39,7 +39,7 @@ object PartialTransformerIntoImpl {
       selectorExpr: Expr[To => T],
       valueExpr: Expr[partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionImpl.withFieldConstPartialImpl('{ ${ tiExpr }.td }, selectorExpr, valueExpr) match {
+    PartialTransformerDefinitionMacros.withFieldConstPartialImpl('{ ${ tiExpr }.td }, selectorExpr, valueExpr) match {
       case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
         '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
     }
@@ -57,7 +57,7 @@ object PartialTransformerIntoImpl {
       selectorExpr: Expr[To => T],
       fExpr: Expr[From => U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionImpl.withFieldComputedImpl('{ ${ tiExpr }.td }, selectorExpr, fExpr) match {
+    PartialTransformerDefinitionMacros.withFieldComputedImpl('{ ${ tiExpr }.td }, selectorExpr, fExpr) match {
       case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
         '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
     }
@@ -75,7 +75,7 @@ object PartialTransformerIntoImpl {
       selectorExpr: Expr[To => T],
       fExpr: Expr[From => partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionImpl.withFieldComputedPartialImpl('{ ${ tiExpr }.td }, selectorExpr, fExpr) match {
+    PartialTransformerDefinitionMacros.withFieldComputedPartialImpl('{ ${ tiExpr }.td }, selectorExpr, fExpr) match {
       case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
         '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
     }
@@ -93,7 +93,7 @@ object PartialTransformerIntoImpl {
       selectorFromExpr: Expr[From => T],
       selectorToExpr: Expr[To => U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionImpl.withFieldRenamed('{ ${ tiExpr }.td }, selectorFromExpr, selectorToExpr) match {
+    PartialTransformerDefinitionMacros.withFieldRenamed('{ ${ tiExpr }.td }, selectorFromExpr, selectorToExpr) match {
       case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
         '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
     }
@@ -109,7 +109,7 @@ object PartialTransformerIntoImpl {
       tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
       fExpr: Expr[Inst => To]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionImpl.withCoproductInstance('{ ${ tiExpr }.td }, fExpr) match {
+    PartialTransformerDefinitionMacros.withCoproductInstance('{ ${ tiExpr }.td }, fExpr) match {
       case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
         '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
     }
@@ -125,7 +125,7 @@ object PartialTransformerIntoImpl {
       tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
       fExpr: Expr[Inst => partial.Result[To]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionImpl.withCoproductInstancePartial('{ ${ tiExpr }.td }, fExpr) match {
+    PartialTransformerDefinitionMacros.withCoproductInstancePartial('{ ${ tiExpr }.td }, fExpr) match {
       case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
         '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
     }

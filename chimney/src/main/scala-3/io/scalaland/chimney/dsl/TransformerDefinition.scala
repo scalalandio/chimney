@@ -34,33 +34,33 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
       inline selector: To => T,
       inline value: U
   )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] = {
-    ${ TransformerDefinitionImpl.withFieldConstImpl('this, 'selector, 'value) }
+    ${ TransformerDefinitionMacros.withFieldConstImpl('this, 'selector, 'value) }
   }
 
   transparent inline def withFieldComputed[T, U](
       inline selector: To => T,
       inline f: From => U
   )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] = {
-    ${ TransformerDefinitionImpl.withFieldComputedImpl('this, 'selector, 'f) }
+    ${ TransformerDefinitionMacros.withFieldComputedImpl('this, 'selector, 'f) }
   }
 
   transparent inline def withFieldRenamed[T, U](
       inline selectorFrom: From => T,
       inline selectorTo: To => U
   ): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] = {
-    ${ TransformerDefinitionImpl.withFieldRenamed('this, 'selectorFrom, 'selectorTo) }
+    ${ TransformerDefinitionMacros.withFieldRenamed('this, 'selectorFrom, 'selectorTo) }
   }
 
   transparent inline def withCoproductInstance[Inst](
       inline f: Inst => To
   ): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] = {
-    ${ TransformerDefinitionImpl.withCoproductInstance('this, 'f) }
+    ${ TransformerDefinitionMacros.withCoproductInstance('this, 'f) }
   }
 
   inline def buildTransformer[ImplicitScopeFlags <: TransformerFlags](using
       tc: TransformerConfiguration[ImplicitScopeFlags]
   ): Transformer[From, To] = {
-    ${ TransformerDefinitionImpl.buildTransformer[From, To, Cfg, Flags, ImplicitScopeFlags]('this) }
+    ${ TransformerDefinitionMacros.buildTransformer[From, To, Cfg, Flags, ImplicitScopeFlags]('this) }
   }
 
   override protected def __updateRuntimeData(newRuntimeData: TransformerDefinitionCommons.RuntimeDataStore): this.type =
