@@ -51,6 +51,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         c.Expr[Option[B]](q"$opt.map[${Type[B]}]($f)")
       def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(onSome: Expr[A => B]): Expr[B] =
         c.Expr[B](q"$opt.fold[${Type[B]}]($onNone)($onSome)")
+      def orElse[A: Type](opt1: Expr[Option[A]], opt2: Expr[Option[A]]): Expr[Option[A]] =
+        c.Expr[Option[A]](q"$opt1.orElse[${Type[A]}]($opt2)")
       def getOrElse[A: Type](opt: Expr[Option[A]])(orElse: Expr[A]): Expr[A] =
         c.Expr[A](q"$opt.getOrElse[${Type[A]}]($orElse)")
       def get[A: Type](opt: Expr[Option[A]]): Expr[A] =

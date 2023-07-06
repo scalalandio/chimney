@@ -56,6 +56,7 @@ private[compiletime] trait Exprs { this: Definitions =>
       val None: Expr[scala.None.type]
       def map[A: Type, B: Type](opt: Expr[Option[A]])(f: Expr[A => B]): Expr[Option[B]]
       def fold[A: Type, B: Type](opt: Expr[Option[A]])(none: Expr[B])(f: Expr[A => B]): Expr[B]
+      def orElse[A: Type](opt1: Expr[Option[A]], opt2: Expr[Option[A]]): Expr[Option[A]]
       def getOrElse[A: Type](opt: Expr[Option[A]])(orElse: Expr[A]): Expr[A]
       def get[A: Type](opt: Expr[Option[A]]): Expr[A]
       def isDefined[A: Type](opt: Expr[Option[A]]): Expr[Boolean]

@@ -94,7 +94,7 @@ trait PatcherMacros
       case Some(tParam) if config.ignoreNoneInPatch && bothOptions(patchParamTpe, tParam.resultTypeIn(T)) =>
         Some {
           val tParamTpe = tParam.resultTypeIn(T)
-          if (patchParamTpe <:< tParamTpe) {
+          if (patchParamTpe <:< tParamTpe) { // not really crucial branch, should be handled by transformer
             Right(pParam.name -> q"$patchField.orElse($entityField)")
           } else {
             expandTransformerTree(
