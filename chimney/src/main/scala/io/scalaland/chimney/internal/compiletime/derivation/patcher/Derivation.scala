@@ -113,11 +113,11 @@ private[compiletime] trait Derivation
                         .map { ep => // TODO: naming
                           val eee = ep // TODO: naming
                             .fulfilAsVal(
-                              Expr.asInstanceOf[patchGetter.Underlying, Option[innerTpe.Underlying]](
-                                getter.get(ctx.patch)
-                              )
+                              getter
+                                .get(ctx.patch)
+                                .asInstanceOfExpr[Option[innerTpe.Underlying]]
                             )
-                            .use { expr => expr } // TODO: is there a better way?
+                            .prepend[targetParam.Underlying] //  TODO: rename?
                           Some(ExistentialExpr(eee))
                         }
                     }
