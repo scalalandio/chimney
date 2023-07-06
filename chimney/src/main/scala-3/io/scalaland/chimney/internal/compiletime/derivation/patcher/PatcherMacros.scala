@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
 import io.scalaland.chimney.Patcher
-import io.scalaland.chimney.internal
+import io.scalaland.chimney.internal.runtime
 
 import scala.quoted.{Expr, Quotes, Type}
 
@@ -9,7 +9,7 @@ final class PatcherMacros(q: Quotes) extends DerivationPlatform(q) with Gateway
 
 object PatcherMacros {
 
-  final def derivePatcherResult[A: Type, Patch: Type, Cfg <: internal.PatcherCfg: Type](
+  final def derivePatcherResult[A: Type, Patch: Type, Cfg <: runtime.PatcherCfg: Type](
       obj: Expr[A],
       patch: Expr[Patch]
   )(using q: Quotes): Expr[A] = new PatcherMacros(q).derivePatcherResult[A, Patch, Cfg](obj, patch)

@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.{PatcherCfg, TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.{PatcherCfg, TransformerCfg, TransformerFlags}
 
 import scala.util.Try
 

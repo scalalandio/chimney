@@ -1,10 +1,10 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinition}
-import io.scalaland.chimney.internal.TransformerCfg.Empty
-import io.scalaland.chimney.internal.TransformerFlags.Default
-import io.scalaland.chimney.{internal, partial, PartialTransformer, Transformer}
+import io.scalaland.chimney.{PartialTransformer, Transformer}
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
+import io.scalaland.chimney.internal.runtime
+import io.scalaland.chimney.partial
 
 import scala.quoted.{Expr, Quotes, Type}
 
@@ -15,9 +15,9 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
   def deriveTotalTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      Flags <: internal.TransformerFlags: Type,
-      ImplicitScopeFlags <: internal.TransformerFlags: Type
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
   ): Expr[Transformer[From, To]] =
@@ -30,9 +30,13 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
       ExistentialType.use(implicitScopeFlagsType) {
         implicit ImplicitScopeFlagsType: Type[implicitScopeFlagsType.Underlying] =>
-          deriveTotalTransformer[From, To, Empty, Default, implicitScopeFlagsType.Underlying](runtimeDataStore =
-            ChimneyExpr.RuntimeDataStore.empty
-          )
+          deriveTotalTransformer[
+            From,
+            To,
+            runtime.TransformerCfg.Empty,
+            runtime.TransformerFlags.Default,
+            implicitScopeFlagsType.Underlying
+          ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
       }
     }
 
@@ -43,36 +47,40 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
       ExistentialType.use(implicitScopeFlagsType) {
         implicit ImplicitScopeFlagsType: Type[implicitScopeFlagsType.Underlying] =>
-          derivePartialTransformer[From, To, Empty, Default, implicitScopeFlagsType.Underlying](runtimeDataStore =
-            ChimneyExpr.RuntimeDataStore.empty
-          )
+          derivePartialTransformer[
+            From,
+            To,
+            runtime.TransformerCfg.Empty,
+            runtime.TransformerFlags.Default,
+            implicitScopeFlagsType.Underlying
+          ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
       }
     }
 
   def derivePartialTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      Flags <: internal.TransformerFlags: Type,
-      ImplicitScopeFlags <: internal.TransformerFlags: Type
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
   ): Expr[PartialTransformer[From, To]] =
     derivePartialTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
-      useImplicitScopeFlags: ExistentialType.UpperBounded[internal.TransformerFlags] => Expr[A]
+      useImplicitScopeFlags: ExistentialType.UpperBounded[runtime.TransformerFlags] => Expr[A]
   ): Expr[A] = {
     val implicitScopeConfig = scala.quoted.Expr
-      .summon[io.scalaland.chimney.dsl.TransformerConfiguration[? <: io.scalaland.chimney.internal.TransformerFlags]]
+      .summon[io.scalaland.chimney.dsl.TransformerConfiguration[? <: runtime.TransformerFlags]]
       .getOrElse {
         // $COVERAGE-OFF$
         reportError("Can't locate implicit TransformerConfiguration!")
         // $COVERAGE-ON$
       }
     val implicitScopeFlagsType = implicitScopeConfig.asTerm.tpe.widen.typeArgs.head.asType
-      .asInstanceOf[Type[internal.TransformerFlags]]
-      .asExistentialUpperBounded[internal.TransformerFlags]
+      .asInstanceOf[Type[runtime.TransformerFlags]]
+      .asExistentialUpperBounded[runtime.TransformerFlags]
 
     Expr.block(
       List(Expr.suppressUnused(implicitScopeConfig)),
@@ -92,9 +100,9 @@ object TransformerMacros {
   final def deriveTotalTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      Flags <: internal.TransformerFlags: Type,
-      ImplicitScopeFlags <: internal.TransformerFlags: Type
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
   )(using quotes: Quotes): Expr[Transformer[From, To]] =
@@ -103,9 +111,9 @@ object TransformerMacros {
   final def deriveTotalTransformerResultWithConfig[
       From: Type,
       To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      Flags <: internal.TransformerFlags: Type,
-      ImplicitScopeFlags <: internal.TransformerFlags: Type
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](source: Expr[From], td: Expr[TransformerDefinition[From, To, Cfg, Flags]])(using quotes: Quotes): Expr[To] =
     new TransformerMacros(quotes).deriveTotalTransformationResult[From, To, Cfg, Flags, ImplicitScopeFlags](
       source,
@@ -121,9 +129,9 @@ object TransformerMacros {
   final def derivePartialTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      Flags <: internal.TransformerFlags: Type,
-      ImplicitScopeFlags <: internal.TransformerFlags: Type
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
   )(using quotes: Quotes): Expr[PartialTransformer[From, To]] =
@@ -132,9 +140,9 @@ object TransformerMacros {
   final def derivePartialTransformerResultWithConfig[
       From: Type,
       To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      Flags <: internal.TransformerFlags: Type,
-      ImplicitScopeFlags <: internal.TransformerFlags: Type
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](source: Expr[From], td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]], failFast: Boolean)(using
       quotes: Quotes
   ): Expr[partial.Result[To]] =

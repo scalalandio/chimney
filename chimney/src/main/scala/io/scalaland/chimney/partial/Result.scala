@@ -1,7 +1,6 @@
 package io.scalaland.chimney.partial
 
-import io.scalaland.chimney.internal.NonEmptyErrorsChain
-
+import io.scalaland.chimney.internal.runtime.NonEmptyErrorsChain
 import scala.collection.compat.*
 import scala.util.{Failure, Success, Try}
 

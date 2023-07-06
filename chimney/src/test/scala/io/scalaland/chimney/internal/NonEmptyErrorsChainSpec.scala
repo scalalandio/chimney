@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal
 
+import io.scalaland.chimney.internal.runtime.NonEmptyErrorsChain
 import io.scalaland.chimney.{partial, ChimneySpec}
 
 class NonEmptyErrorsChainSpec extends ChimneySpec {

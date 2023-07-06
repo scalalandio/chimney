@@ -20,8 +20,7 @@ trait DerivationPlatform
     with rules.TransformMapToMapRuleModule
     with rules.TransformIterableToIterableRuleModule
     with rules.TransformProductToProductRuleModule
-    with rules.TransformSealedHierarchyToSealedHierarchyRuleModule
-    with rules.NotImplementedFallbackRuleModule {
+    with rules.TransformSealedHierarchyToSealedHierarchyRuleModule {
 
   final override protected val rulesAvailableForPlatform: List[Rule] = List(
     TransformImplicitRule,
@@ -37,6 +36,5 @@ trait DerivationPlatform
     TransformIterableToIterableRule,
     TransformProductToProductRule,
     TransformSealedHierarchyToSealedHierarchyRule
-//    NotImplementedFallbackRule
   )
 }

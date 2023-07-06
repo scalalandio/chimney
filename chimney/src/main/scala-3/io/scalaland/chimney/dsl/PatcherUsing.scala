@@ -1,8 +1,8 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.PatcherCfg
-import io.scalaland.chimney.internal.PatcherCfg.*
+import io.scalaland.chimney.internal.runtime.PatcherCfg.*
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
+import io.scalaland.chimney.internal.runtime.PatcherCfg
 
 final class PatcherUsing[A, Patch, Cfg <: PatcherCfg](val obj: A, val objPatch: Patch) {
 

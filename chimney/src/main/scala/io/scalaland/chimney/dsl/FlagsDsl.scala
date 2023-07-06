@@ -1,7 +1,7 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.TransformerFlags
-import io.scalaland.chimney.internal.TransformerFlags.*
+import io.scalaland.chimney.internal.runtime.TransformerFlags.*
+import io.scalaland.chimney.internal.runtime.TransformerFlags
 
 import scala.annotation.unused
 

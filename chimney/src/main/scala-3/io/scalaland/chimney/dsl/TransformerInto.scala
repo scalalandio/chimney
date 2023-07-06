@@ -3,6 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.TransformerIntoMacros
+import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
 
 final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,

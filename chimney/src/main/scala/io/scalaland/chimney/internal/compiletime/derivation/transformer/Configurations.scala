@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.dsl.ImplicitTransformerPreference
 import io.scalaland.chimney.dsl as dsls
-import io.scalaland.chimney.internal
+import io.scalaland.chimney.internal.runtime
 
 private[compiletime] trait Configurations { this: Derivation =>
 
@@ -16,7 +16,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       displayMacrosLogging: Boolean = false
   ) {
 
-    def setBoolFlag[Flag <: internal.TransformerFlags.Flag: Type](value: Boolean): TransformerFlags =
+    def setBoolFlag[Flag <: runtime.TransformerFlags.Flag: Type](value: Boolean): TransformerFlags =
       if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.DefaultValues) {
         copy(processDefaultValues = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.BeanSetters) {
@@ -131,9 +131,9 @@ private[compiletime] trait Configurations { this: Derivation =>
   protected object TransformerConfigurations {
 
     final def readTransformerConfig[
-        Cfg <: internal.TransformerCfg: Type,
-        InstanceFlags <: internal.TransformerFlags: Type,
-        ImplicitScopeFlags <: internal.TransformerFlags: Type
+        Cfg <: runtime.TransformerCfg: Type,
+        InstanceFlags <: runtime.TransformerFlags: Type,
+        ImplicitScopeFlags <: runtime.TransformerFlags: Type
     ]: TransformerConfig = {
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags())
       val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
@@ -142,7 +142,7 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     // This (suppressed) error is a case when compiler is simply wrong :)
     @scala.annotation.nowarn("msg=Unreachable case")
-    private def extractTransformerFlags[Flags <: internal.TransformerFlags: Type](
+    private def extractTransformerFlags[Flags <: runtime.TransformerFlags: Type](
         defaultFlags: TransformerFlags
     ): TransformerFlags = Type[Flags] match {
       case default if default =:= ChimneyType.TransformerFlags.Default => defaultFlags
@@ -186,7 +186,7 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     // This (suppressed) error is a case when compiler is simply wrong :)
     @scala.annotation.nowarn("msg=Unreachable case")
-    private def extractTransformerConfig[Cfg <: internal.TransformerCfg: Type](
+    private def extractTransformerConfig[Cfg <: runtime.TransformerCfg: Type](
         runtimeDataIdx: Int
     ): TransformerConfig = Type[Cfg] match {
       case empty if empty =:= ChimneyType.TransformerCfg.Empty => TransformerConfig()

@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
-import io.scalaland.chimney.internal
+import io.scalaland.chimney.internal.runtime
 
 private[compiletime] trait Configurations { this: Derivation =>
 
@@ -12,11 +12,11 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   protected object PatcherConfigurations {
 
-    final def readPatcherConfig[Cfg <: internal.PatcherCfg: Type]: PatcherConfig =
+    final def readPatcherConfig[Cfg <: runtime.PatcherCfg: Type]: PatcherConfig =
       readPatcherConfigAux(PatcherConfig())
 
     @scala.annotation.nowarn("msg=Unreachable case")
-    private def readPatcherConfigAux[Cfg <: internal.PatcherCfg: Type](cfg: PatcherConfig): PatcherConfig =
+    private def readPatcherConfigAux[Cfg <: runtime.PatcherCfg: Type](cfg: PatcherConfig): PatcherConfig =
       Type[Cfg] match {
         case empty if empty =:= ChimneyType.PatcherCfg.Empty => cfg
         case ChimneyType.PatcherCfg.IgnoreRedundantPatcherFields(cfgRest) =>

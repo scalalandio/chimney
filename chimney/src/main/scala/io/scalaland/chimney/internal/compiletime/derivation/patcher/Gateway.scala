@@ -1,14 +1,15 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
-import io.scalaland.chimney.{internal, Patcher}
+import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.GatewayCommons
+import io.scalaland.chimney.internal.runtime
 
 private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
 
   import ChimneyType.Implicits.*
 
-  final def derivePatcherResult[A: Type, Patch: Type, Cfg <: internal.PatcherCfg: Type](
+  final def derivePatcherResult[A: Type, Patch: Type, Cfg <: runtime.PatcherCfg: Type](
       obj: Expr[A],
       patch: Expr[Patch]
   ): Expr[A] = cacheDefinition(obj) { obj =>

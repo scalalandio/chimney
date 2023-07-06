@@ -1,9 +1,10 @@
 package io.scalaland.chimney.internal.compiletime
 
+import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal
 import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
-import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
+import io.scalaland.chimney.internal.runtime
 
 import scala.quoted
 
@@ -46,130 +47,130 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       quoted.Type.of[TransformerDefinitionCommons.RuntimeDataStore]
 
     object TransformerCfg extends TransformerCfgModule {
-      val Empty: Type[internal.TransformerCfg.Empty] = quoted.Type.of[internal.TransformerCfg.Empty]
+      val Empty: Type[runtime.TransformerCfg.Empty] = quoted.Type.of[runtime.TransformerCfg.Empty]
       object FieldConst extends FieldConstModule {
-        def apply[Name <: String: Type, C <: internal.TransformerCfg: Type]
-            : Type[internal.TransformerCfg.FieldConst[Name, C]] =
-          quoted.Type.of[internal.TransformerCfg.FieldConst[Name, C]]
+        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+            : Type[runtime.TransformerCfg.FieldConst[Name, Cfg]] =
+          quoted.Type.of[runtime.TransformerCfg.FieldConst[Name, Cfg]]
         def unapply[A](tpe: Type[A]): Option[
-          (ExistentialType.UpperBounded[String], ExistentialType.UpperBounded[internal.TransformerCfg])
+          (ExistentialType.UpperBounded[String], ExistentialType.UpperBounded[runtime.TransformerCfg])
         ] = tpe match
-          case '[internal.TransformerCfg.FieldConst[name, c]] =>
+          case '[runtime.TransformerCfg.FieldConst[name, c]] =>
             Some(
               (
                 Type[name].asExistentialUpperBounded[String],
-                Type[c].asExistentialUpperBounded[internal.TransformerCfg]
+                Type[c].asExistentialUpperBounded[runtime.TransformerCfg]
               )
             )
           case _ => scala.None
       }
       object FieldConstPartial extends FieldConstPartialModule {
-        def apply[Name <: String: Type, C <: internal.TransformerCfg: Type]
-            : Type[internal.TransformerCfg.FieldConstPartial[Name, C]] =
-          quoted.Type.of[internal.TransformerCfg.FieldConstPartial[Name, C]]
+        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+            : Type[runtime.TransformerCfg.FieldConstPartial[Name, Cfg]] =
+          quoted.Type.of[runtime.TransformerCfg.FieldConstPartial[Name, Cfg]]
         def unapply[A](tpe: Type[A]): Option[
-          (ExistentialType.UpperBounded[String], ExistentialType.UpperBounded[internal.TransformerCfg])
+          (ExistentialType.UpperBounded[String], ExistentialType.UpperBounded[runtime.TransformerCfg])
         ] = tpe match
-          case '[internal.TransformerCfg.FieldConstPartial[name, c]] =>
+          case '[runtime.TransformerCfg.FieldConstPartial[name, c]] =>
             Some(
               (
                 Type[name].asExistentialBounded[Nothing, String],
-                Type[c].asExistentialBounded[Nothing, internal.TransformerCfg]
+                Type[c].asExistentialBounded[Nothing, runtime.TransformerCfg]
               )
             )
           case _ => scala.None
       }
       object FieldComputed extends FieldComputedModule {
-        def apply[Name <: String: Type, C <: internal.TransformerCfg: Type]
-            : Type[internal.TransformerCfg.FieldComputed[Name, C]] =
-          quoted.Type.of[internal.TransformerCfg.FieldComputed[Name, C]]
+        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+            : Type[runtime.TransformerCfg.FieldComputed[Name, Cfg]] =
+          quoted.Type.of[runtime.TransformerCfg.FieldComputed[Name, Cfg]]
         def unapply[A](tpe: Type[A]): Option[
-          (ExistentialType.UpperBounded[String], ExistentialType.UpperBounded[internal.TransformerCfg])
+          (ExistentialType.UpperBounded[String], ExistentialType.UpperBounded[runtime.TransformerCfg])
         ] = tpe match
-          case '[internal.TransformerCfg.FieldComputed[name, c]] =>
+          case '[runtime.TransformerCfg.FieldComputed[name, c]] =>
             Some(
               (
                 Type[name].asExistentialUpperBounded[String],
-                Type[c].asExistentialUpperBounded[internal.TransformerCfg]
+                Type[c].asExistentialUpperBounded[runtime.TransformerCfg]
               )
             )
           case _ => scala.None
       }
       object FieldComputedPartial extends FieldComputedPartialModule {
-        def apply[Name <: String: Type, C <: internal.TransformerCfg: Type]
-            : Type[internal.TransformerCfg.FieldComputedPartial[Name, C]] =
-          quoted.Type.of[internal.TransformerCfg.FieldComputedPartial[Name, C]]
+        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+            : Type[runtime.TransformerCfg.FieldComputedPartial[Name, Cfg]] =
+          quoted.Type.of[runtime.TransformerCfg.FieldComputedPartial[Name, Cfg]]
         def unapply[A](tpe: Type[A]): Option[
-          (ExistentialType.Bounded[Nothing, String], ExistentialType.Bounded[Nothing, internal.TransformerCfg])
+          (ExistentialType.Bounded[Nothing, String], ExistentialType.Bounded[Nothing, runtime.TransformerCfg])
         ] = tpe match
-          case '[internal.TransformerCfg.FieldComputedPartial[name, c]] =>
+          case '[runtime.TransformerCfg.FieldComputedPartial[name, c]] =>
             Some(
               (
                 Type[name].asExistentialUpperBounded[String],
-                Type[c].asExistentialUpperBounded[internal.TransformerCfg]
+                Type[c].asExistentialUpperBounded[runtime.TransformerCfg]
               )
             )
           case _ => scala.None
       }
       object FieldRelabelled extends FieldRelabelledModule {
-        def apply[FromName <: String: Type, ToName <: String: Type, C <: internal.TransformerCfg: Type]
-            : Type[internal.TransformerCfg.FieldRelabelled[FromName, ToName, C]] =
-          quoted.Type.of[internal.TransformerCfg.FieldRelabelled[FromName, ToName, C]]
+        def apply[FromName <: String: Type, ToName <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+            : Type[runtime.TransformerCfg.FieldRelabelled[FromName, ToName, Cfg]] =
+          quoted.Type.of[runtime.TransformerCfg.FieldRelabelled[FromName, ToName, Cfg]]
         def unapply[A](tpe: Type[A]): Option[
           (
               ExistentialType.UpperBounded[String],
               ExistentialType.UpperBounded[String],
-              ExistentialType.UpperBounded[internal.TransformerCfg]
+              ExistentialType.UpperBounded[runtime.TransformerCfg]
           )
         ] = tpe match
-          case '[internal.TransformerCfg.FieldRelabelled[fromName, toName, c]] =>
+          case '[runtime.TransformerCfg.FieldRelabelled[fromName, toName, c]] =>
             Some(
               (
                 Type[fromName].asExistentialUpperBounded[String],
                 Type[toName].asExistentialUpperBounded[String],
-                Type[c].asExistentialUpperBounded[internal.TransformerCfg]
+                Type[c].asExistentialUpperBounded[runtime.TransformerCfg]
               )
             )
           case _ => scala.None
       }
       object CoproductInstance extends CoproductInstanceModule {
-        def apply[InstType: Type, TargetType: Type, C <: internal.TransformerCfg: Type]
-            : Type[internal.TransformerCfg.CoproductInstance[InstType, TargetType, C]] =
-          quoted.Type.of[internal.TransformerCfg.CoproductInstance[InstType, TargetType, C]]
+        def apply[InstType: Type, TargetType: Type, Cfg <: runtime.TransformerCfg: Type]
+            : Type[runtime.TransformerCfg.CoproductInstance[InstType, TargetType, Cfg]] =
+          quoted.Type.of[runtime.TransformerCfg.CoproductInstance[InstType, TargetType, Cfg]]
         def unapply[A](tpe: Type[A]): Option[
           (
               ExistentialType,
               ExistentialType,
-              ExistentialType.UpperBounded[internal.TransformerCfg]
+              ExistentialType.UpperBounded[runtime.TransformerCfg]
           )
         ] = tpe match
-          case '[internal.TransformerCfg.CoproductInstance[instType, targetType, c]] =>
+          case '[runtime.TransformerCfg.CoproductInstance[instType, targetType, c]] =>
             Some(
               (
                 Type[instType].asExistential,
                 Type[targetType].asExistential,
-                Type[c].asExistentialUpperBounded[internal.TransformerCfg]
+                Type[c].asExistentialUpperBounded[runtime.TransformerCfg]
               )
             )
           case _ => scala.None
       }
       object CoproductInstancePartial extends CoproductInstancePartialModule {
-        def apply[InstType: Type, TargetType: Type, C <: internal.TransformerCfg: Type]
-            : Type[internal.TransformerCfg.CoproductInstancePartial[InstType, TargetType, C]] =
-          quoted.Type.of[internal.TransformerCfg.CoproductInstancePartial[InstType, TargetType, C]]
+        def apply[InstType: Type, TargetType: Type, Cfg <: runtime.TransformerCfg: Type]
+            : Type[runtime.TransformerCfg.CoproductInstancePartial[InstType, TargetType, Cfg]] =
+          quoted.Type.of[runtime.TransformerCfg.CoproductInstancePartial[InstType, TargetType, Cfg]]
         def unapply[A](tpe: Type[A]): Option[
           (
               ExistentialType,
               ExistentialType,
-              ExistentialType.UpperBounded[internal.TransformerCfg]
+              ExistentialType.UpperBounded[runtime.TransformerCfg]
           )
         ] = tpe match
-          case '[internal.TransformerCfg.CoproductInstancePartial[instType, targetType, c]] =>
+          case '[runtime.TransformerCfg.CoproductInstancePartial[instType, targetType, c]] =>
             Some(
               (
                 Type[instType].asExistential,
                 Type[targetType].asExistential,
-                Type[c].asExistentialUpperBounded[internal.TransformerCfg]
+                Type[c].asExistentialUpperBounded[runtime.TransformerCfg]
               )
             )
           case _ => scala.None
@@ -177,103 +178,103 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     }
 
     object TransformerFlags extends TransformerFlagsModule {
-      val Default: Type[internal.TransformerFlags.Default] = quoted.Type.of[internal.TransformerFlags.Default]
+      val Default: Type[runtime.TransformerFlags.Default] = quoted.Type.of[runtime.TransformerFlags.Default]
       object Enable extends EnableModule {
-        def apply[F <: internal.TransformerFlags.Flag: Type, Flags <: internal.TransformerFlags: Type]
-            : Type[internal.TransformerFlags.Enable[F, Flags]] =
-          quoted.Type.of[internal.TransformerFlags.Enable[F, Flags]]
+        def apply[F <: runtime.TransformerFlags.Flag: Type, Flags <: runtime.TransformerFlags: Type]
+            : Type[runtime.TransformerFlags.Enable[F, Flags]] =
+          quoted.Type.of[runtime.TransformerFlags.Enable[F, Flags]]
         def unapply[A](tpe: Type[A]): Option[
           (
-              ExistentialType.UpperBounded[internal.TransformerFlags.Flag],
-              ExistentialType.UpperBounded[internal.TransformerFlags]
+              ExistentialType.UpperBounded[runtime.TransformerFlags.Flag],
+              ExistentialType.UpperBounded[runtime.TransformerFlags]
           )
         ] = tpe match
-          case '[internal.TransformerFlags.Enable[f, flags]] =>
+          case '[runtime.TransformerFlags.Enable[f, flags]] =>
             Some(
               (
-                Type[f].asExistentialUpperBounded[internal.TransformerFlags.Flag],
-                Type[flags].asExistentialUpperBounded[internal.TransformerFlags]
+                Type[f].asExistentialUpperBounded[runtime.TransformerFlags.Flag],
+                Type[flags].asExistentialUpperBounded[runtime.TransformerFlags]
               )
             )
           case _ => scala.None
       }
       object Disable extends DisableModule {
-        def apply[F <: internal.TransformerFlags.Flag: Type, Flags <: internal.TransformerFlags: Type]
-            : Type[internal.TransformerFlags.Disable[F, Flags]] =
-          quoted.Type.of[internal.TransformerFlags.Disable[F, Flags]]
+        def apply[F <: runtime.TransformerFlags.Flag: Type, Flags <: runtime.TransformerFlags: Type]
+            : Type[runtime.TransformerFlags.Disable[F, Flags]] =
+          quoted.Type.of[runtime.TransformerFlags.Disable[F, Flags]]
         def unapply[A](tpe: Type[A]): Option[
           (
-              ExistentialType.UpperBounded[internal.TransformerFlags.Flag],
-              ExistentialType.UpperBounded[internal.TransformerFlags]
+              ExistentialType.UpperBounded[runtime.TransformerFlags.Flag],
+              ExistentialType.UpperBounded[runtime.TransformerFlags]
           )
         ] = tpe match
-          case '[internal.TransformerFlags.Disable[f, flags]] =>
+          case '[runtime.TransformerFlags.Disable[f, flags]] =>
             Some(
               (
-                Type[f].asExistentialUpperBounded[internal.TransformerFlags.Flag],
-                Type[flags].asExistentialUpperBounded[internal.TransformerFlags]
+                Type[f].asExistentialUpperBounded[runtime.TransformerFlags.Flag],
+                Type[flags].asExistentialUpperBounded[runtime.TransformerFlags]
               )
             )
           case _ => scala.None
       }
 
       object Flags extends FlagsModule {
-        val DefaultValues: Type[internal.TransformerFlags.DefaultValues] =
-          quoted.Type.of[internal.TransformerFlags.DefaultValues]
-        val BeanGetters: Type[internal.TransformerFlags.BeanGetters] =
-          quoted.Type.of[internal.TransformerFlags.BeanGetters]
-        val BeanSetters: Type[internal.TransformerFlags.BeanSetters] =
-          quoted.Type.of[internal.TransformerFlags.BeanSetters]
-        val MethodAccessors: Type[internal.TransformerFlags.MethodAccessors] =
-          quoted.Type.of[internal.TransformerFlags.MethodAccessors]
-        val OptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone] =
-          quoted.Type.of[internal.TransformerFlags.OptionDefaultsToNone]
+        val DefaultValues: Type[runtime.TransformerFlags.DefaultValues] =
+          quoted.Type.of[runtime.TransformerFlags.DefaultValues]
+        val BeanGetters: Type[runtime.TransformerFlags.BeanGetters] =
+          quoted.Type.of[runtime.TransformerFlags.BeanGetters]
+        val BeanSetters: Type[runtime.TransformerFlags.BeanSetters] =
+          quoted.Type.of[runtime.TransformerFlags.BeanSetters]
+        val MethodAccessors: Type[runtime.TransformerFlags.MethodAccessors] =
+          quoted.Type.of[runtime.TransformerFlags.MethodAccessors]
+        val OptionDefaultsToNone: Type[runtime.TransformerFlags.OptionDefaultsToNone] =
+          quoted.Type.of[runtime.TransformerFlags.OptionDefaultsToNone]
         object ImplicitConflictResolution extends ImplicitConflictResolutionModule {
           def apply[R <: ImplicitTransformerPreference: Type]
-              : Type[internal.TransformerFlags.ImplicitConflictResolution[R]] =
-            quoted.Type.of[internal.TransformerFlags.ImplicitConflictResolution[R]]
+              : Type[runtime.TransformerFlags.ImplicitConflictResolution[R]] =
+            quoted.Type.of[runtime.TransformerFlags.ImplicitConflictResolution[R]]
           def unapply[A](tpe: Type[A]): Option[ExistentialType.UpperBounded[ImplicitTransformerPreference]] = tpe match
-            case '[internal.TransformerFlags.ImplicitConflictResolution[r]] =>
+            case '[runtime.TransformerFlags.ImplicitConflictResolution[r]] =>
               Some(Type[r].asExistentialUpperBounded[ImplicitTransformerPreference])
             case _ => scala.None
         }
-        val MacrosLogging: Type[internal.TransformerFlags.MacrosLogging] =
-          quoted.Type.of[internal.TransformerFlags.MacrosLogging]
+        val MacrosLogging: Type[runtime.TransformerFlags.MacrosLogging] =
+          quoted.Type.of[runtime.TransformerFlags.MacrosLogging]
       }
     }
 
     object PatcherCfg extends PatcherCfgModule {
-      val Empty: Type[internal.PatcherCfg.Empty] = quoted.Type.of[internal.PatcherCfg.Empty]
+      val Empty: Type[runtime.PatcherCfg.Empty] = quoted.Type.of[runtime.PatcherCfg.Empty]
 
       object IgnoreRedundantPatcherFields extends IgnoreRedundantPatcherFieldsModule {
-        def apply[C <: internal.PatcherCfg: Type]: Type[internal.PatcherCfg.IgnoreRedundantPatcherFields[C]] =
-          quoted.Type.of[internal.PatcherCfg.IgnoreRedundantPatcherFields[C]]
+        def apply[Cfg <: runtime.PatcherCfg: Type]: Type[runtime.PatcherCfg.IgnoreRedundantPatcherFields[Cfg]] =
+          quoted.Type.of[runtime.PatcherCfg.IgnoreRedundantPatcherFields[Cfg]]
 
-        def unapply[A](tpe: Type[A]): Option[ExistentialType.UpperBounded[internal.PatcherCfg]] = tpe match {
-          case '[internal.PatcherCfg.IgnoreRedundantPatcherFields[cfg]] =>
-            Some(Type[cfg].asExistentialUpperBounded[internal.PatcherCfg])
+        def unapply[A](tpe: Type[A]): Option[ExistentialType.UpperBounded[runtime.PatcherCfg]] = tpe match {
+          case '[runtime.PatcherCfg.IgnoreRedundantPatcherFields[cfg]] =>
+            Some(Type[cfg].asExistentialUpperBounded[runtime.PatcherCfg])
           case _ => scala.None
         }
       }
 
       object IgnoreNoneInPatch extends IgnoreNoneInPatchModule {
-        def apply[C <: internal.PatcherCfg: Type]: Type[internal.PatcherCfg.IgnoreNoneInPatch[C]] =
-          quoted.Type.of[internal.PatcherCfg.IgnoreNoneInPatch[C]]
+        def apply[Cfg <: runtime.PatcherCfg: Type]: Type[runtime.PatcherCfg.IgnoreNoneInPatch[Cfg]] =
+          quoted.Type.of[runtime.PatcherCfg.IgnoreNoneInPatch[Cfg]]
 
-        def unapply[A](tpe: Type[A]): Option[ExistentialType.UpperBounded[internal.PatcherCfg]] = tpe match {
-          case '[internal.PatcherCfg.IgnoreNoneInPatch[cfg]] =>
-            Some(Type[cfg].asExistentialUpperBounded[internal.PatcherCfg])
+        def unapply[A](tpe: Type[A]): Option[ExistentialType.UpperBounded[runtime.PatcherCfg]] = tpe match {
+          case '[runtime.PatcherCfg.IgnoreNoneInPatch[cfg]] =>
+            Some(Type[cfg].asExistentialUpperBounded[runtime.PatcherCfg])
           case _ => scala.None
         }
       }
 
       object MacrosLogging extends MacrosLoggingModule {
-        def apply[C <: internal.PatcherCfg: Type]: Type[internal.PatcherCfg.MacrosLogging[C]] =
-          quoted.Type.of[internal.PatcherCfg.MacrosLogging[C]]
+        def apply[Cfg <: runtime.PatcherCfg: Type]: Type[runtime.PatcherCfg.MacrosLogging[Cfg]] =
+          quoted.Type.of[runtime.PatcherCfg.MacrosLogging[Cfg]]
 
-        def unapply[A](tpe: Type[A]): Option[ExistentialType.UpperBounded[internal.PatcherCfg]] = tpe match {
-          case '[internal.PatcherCfg.MacrosLogging[cfg]] =>
-            Some(Type[cfg].asExistentialUpperBounded[internal.PatcherCfg])
+        def unapply[A](tpe: Type[A]): Option[ExistentialType.UpperBounded[runtime.PatcherCfg]] = tpe match {
+          case '[runtime.PatcherCfg.MacrosLogging[cfg]] =>
+            Some(Type[cfg].asExistentialUpperBounded[runtime.PatcherCfg])
           case _ => scala.None
         }
       }

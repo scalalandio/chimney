@@ -3,9 +3,9 @@ package io.scalaland.chimney.internal.compiletime.dsl
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.FieldNameUtils
-import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.PartialTransformer
+import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
 
 import scala.quoted.*
 
