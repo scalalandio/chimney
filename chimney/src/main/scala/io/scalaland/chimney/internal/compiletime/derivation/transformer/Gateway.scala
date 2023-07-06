@@ -2,9 +2,10 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.internal.compiletime.DerivationResult
+import io.scalaland.chimney.internal.compiletime.derivation.GatewayCommons
 import io.scalaland.chimney.{internal, partial, PartialTransformer, Transformer}
 
-trait Gateway { this: Derivation =>
+private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
 
   import ChimneyType.Implicits.*
 
@@ -139,45 +140,16 @@ trait Gateway { this: Derivation =>
           )
         }
 
-  protected def cacheDefinition[A: Type, Out: Type](expr: Expr[A])(usage: Expr[A] => Expr[Out]): Expr[Out] =
-    PrependDefinitionsTo.prependVal[A](expr, ExprPromise.NameGenerationStrategy.FromType).use(usage)
-
   private def enableLoggingIfFlagEnabled[A](
       result: DerivationResult[A],
       ctx: TransformationContext[?, ?]
   ): DerivationResult[A] =
-    if (ctx.config.flags.displayMacrosLogging) DerivationResult.enableLogPrinting(ctx.derivationStartedAt) >> result
-    else result
+    enableLoggingIfFlagEnabled[A](result, ctx.config.flags.displayMacrosLogging, ctx.derivationStartedAt)
 
-  private def extractExprAndLog[From: Type, To: Type, Out: Type](result: DerivationResult[Expr[Out]]): Expr[Out] = {
-    result.state.macroLogging.foreach { case DerivationResult.State.MacroLogging(derivationStartedAt) =>
-      val duration = java.time.Duration.between(derivationStartedAt, java.time.Instant.now())
-      val info = result
-        .logSuccess(expr => s"Derived final expression is:\n${expr.prettyPrint}")
-        .log(f"Derivation took ${duration.getSeconds}%d.${duration.getNano}%09d s")
-        .state
-        .journal
-        .print
-      reportInfo("\n" + info)
-    }
-
-    result.toEither.fold(
-      derivationErrors => {
-        val lines = derivationErrors.prettyPrint
-
-        val richLines =
-          s"""Chimney can't derive transformation from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]}
-             |
-             |$lines
-             |Consult $chimneyDocUrl for usage examples.
-             |
-             |""".stripMargin
-
-        reportError(richLines)
-      },
-      identity
+  // TODO: name it better
+  private def extractExprAndLog[From: Type, To: Type, Out: Type](result: DerivationResult[Expr[Out]]): Expr[Out] =
+    extractExprAndLog[Out](
+      result,
+      s"""Chimney can't derive transformation from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]}"""
     )
-  }
-
-  private val chimneyDocUrl = "https://scalalandio.github.io/chimney"
 }
