@@ -147,9 +147,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
           extends Type.Ctor1UpperBounded[
             internal.PatcherCfg,
             internal.PatcherCfg.IgnoreRedundantPatcherFields
-          ] {
-        this: IgnoreRedundantPatcherFields.type =>
-      }
+          ] { this: IgnoreRedundantPatcherFields.type => }
 
       val IgnoreNoneInPatch: IgnoreNoneInPatchModule
 

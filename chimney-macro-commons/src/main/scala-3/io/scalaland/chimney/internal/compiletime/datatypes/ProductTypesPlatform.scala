@@ -213,18 +213,20 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         val constructor: Product.Arguments => Expr[A] = arguments => {
           val (constructorArguments, setterArguments) = checkArguments[A](parameters, arguments)
 
-          ExprPromise
-            .promise[A](ExprPromise.NameGenerationStrategy.FromType)
-            .fulfilAsVal {
-              // new A
-              val select = New(TypeTree.of[A]).select(primaryConstructor)
-              // new A[B1, B2, ...] vs new A
-              val tree = if A.typeArgs.nonEmpty then select.appliedToTypes(A.typeArgs) else select
-              // new A... or new A() or new A(b1, b2), ...
-              tree
-                .appliedToArgss(paramss.map(_.map(param => constructorArguments(paramNames(param)).value.asTerm)))
-                .asExprOf[A]
-            }
+          PrependDefinitionsTo
+            .prependVal[A](
+              {
+                // new A
+                val select = New(TypeTree.of[A]).select(primaryConstructor)
+                // new A[B1, B2, ...] vs new A
+                val tree = if A.typeArgs.nonEmpty then select.appliedToTypes(A.typeArgs) else select
+                // new A... or new A() or new A(b1, b2), ...
+                tree
+                  .appliedToArgss(paramss.map(_.map(param => constructorArguments(paramNames(param)).value.asTerm)))
+                  .asExprOf[A]
+              },
+              ExprPromise.NameGenerationStrategy.FromType
+            )
             .use { exprA =>
               Expr.block(
                 setterArguments.map { case (name, exprArg) =>

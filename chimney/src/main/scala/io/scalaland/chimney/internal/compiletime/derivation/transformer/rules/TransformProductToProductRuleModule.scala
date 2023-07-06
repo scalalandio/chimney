@@ -392,15 +392,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                             Existential.use(expr) {
                               implicit Expr: Type[expr.Underlying] =>
                                 (partialExpr: Expr[partial.Result[expr.Underlying]]) =>
-                                  ExprPromise
-                                    .promise[partial.Result[expr.Underlying]](
-                                      ExprPromise.NameGenerationStrategy.FromPrefix("res"),
-                                      ExprPromise.UsageHint.Lazy
+                                  PrependDefinitionsTo
+                                    .prependLazyVal(
+                                      partialExpr,
+                                      ExprPromise.NameGenerationStrategy.FromPrefix("res")
                                     )
                                     .map { (inner: Expr[partial.Result[expr.Underlying]]) =>
                                       name -> Existential[PartialExpr, expr.Underlying](inner)
                                     }
-                                    .fulfilAsLazy(partialExpr)
                             }
                         }
                         .use { (partialsAsLazy: List[(String, Existential[PartialExpr])]) =>
@@ -451,7 +450,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                             nestFlatMaps(partialsAsLazy.toList, totalConstructorArguments)
                           }
 
-                          val fullErrorBranch: Expr[partial.Result[To]] =
+                          val fullErrorBranch: Expr[partial.Result[To]] = {
                             // Here, we're building:
                             // '{
                             //   var allerrors: Errors = null
@@ -465,12 +464,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                             //     allerrors
                             //   }
                             // }
-                            ExprPromise
-                              .promise[partial.Result.Errors](
-                                ExprPromise.NameGenerationStrategy.FromPrefix("allerrors"),
-                                ExprPromise.UsageHint.Var
+                            PrependDefinitionsTo
+                              .prependVar[partial.Result.Errors](
+                                Expr.Null.asInstanceOfExpr[partial.Result.Errors],
+                                ExprPromise.NameGenerationStrategy.FromPrefix("allerrors")
                               )
-                              .fulfilAsVar(Expr.Null.asInstanceOfExpr[partial.Result.Errors])
                               .use { case (allerrors, setAllErrors) =>
                                 Expr.block(
                                   partialsAsLazy.map { case (_, result) =>
@@ -509,6 +507,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                   }
                                 )
                               }
+                          }
 
                           ctx match {
                             case TransformationContext.ForTotal(_) =>

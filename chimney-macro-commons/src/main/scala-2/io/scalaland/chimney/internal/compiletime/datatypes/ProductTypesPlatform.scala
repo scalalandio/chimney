@@ -186,10 +186,10 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         val constructor: Product.Arguments => Expr[A] = arguments => {
           val (constructorArguments, setterArguments) = checkArguments[A](parameters, arguments)
 
-          ExprPromise
-            .promise[A](ExprPromise.NameGenerationStrategy.FromType)
-            .fulfilAsVal(
-              c.Expr[A](q"new $A(...${paramss.map(_.map(param => constructorArguments(paramNames(param)).value))})")
+          PrependDefinitionsTo
+            .prependVal[A](
+              c.Expr[A](q"new $A(...${paramss.map(_.map(param => constructorArguments(paramNames(param)).value))})"),
+              ExprPromise.NameGenerationStrategy.FromType
             )
             .use { exprA =>
               Expr.block(
