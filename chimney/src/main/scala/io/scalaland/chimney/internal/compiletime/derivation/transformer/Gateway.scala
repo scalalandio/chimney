@@ -140,7 +140,7 @@ trait Gateway { this: Derivation =>
         }
 
   protected def cacheDefinition[A: Type, Out: Type](expr: Expr[A])(usage: Expr[A] => Expr[Out]): Expr[Out] =
-    ExprPromise.promise[A](ExprPromise.NameGenerationStrategy.FromType).fulfilAsVal(expr).use(usage)
+    PrependDefinitionsTo.prependVal[A](expr, ExprPromise.NameGenerationStrategy.FromType).use(usage)
 
   private def enableLoggingIfFlagEnabled[A](
       result: DerivationResult[A],

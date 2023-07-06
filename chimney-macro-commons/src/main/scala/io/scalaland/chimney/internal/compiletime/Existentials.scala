@@ -90,6 +90,12 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
 
   sealed trait ExistentialCompanion {
 
+    // Allow using:
+    // Existential.use5(a, b, c, d, e) { implicit A => implicit B => implicit C => implicit D => implicit E =>
+    //   (aValue, bValue, cValue, dValue, eValue) =>
+    //     // code which needs a.Underlying, b.Underlying, d.underlying, e.Underlying
+    // }
+
     // Different arities of use* allow us to avoid absurdly nested blocks, since only 1-parameter lambda can have
     // implicit parameter.
 
@@ -136,39 +142,84 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
       et3.value,
       et4.value
     )
+
+    def use4[L1, U1 >: L1, F1[_ >: L1 <: U1], L2, U2 >: L2, F2[_ >: L2 <: U2], L3, U3 >: L3, F3[
+        _ >: L3 <: U3
+    ], L4, U4 >: L4, F4[_ >: L4 <: U4], L5, U5 >: L5, F5[_ >: L5 <: U5], Out](
+        et1: Existential.Bounded[L1, U1, F1],
+        et2: Existential.Bounded[L2, U2, F2],
+        et3: Existential.Bounded[L3, U3, F3],
+        et4: Existential.Bounded[L4, U4, F4],
+        et5: Existential.Bounded[L5, U5, F5]
+    )(
+        thunk: Type[et1.Underlying] => Type[et2.Underlying] => Type[et3.Underlying] => Type[et4.Underlying] => (
+            F1[et1.Underlying],
+            F2[et2.Underlying],
+            F3[et3.Underlying],
+            F4[et4.Underlying],
+            F5[et5.Underlying]
+        ) => Out
+    ): Out = thunk(et1.Underlying)(et2.Underlying)(et3.Underlying)(et4.Underlying)(
+      et1.value,
+      et2.value,
+      et3.value,
+      et4.value,
+      et5.value
+    )
   }
 
   sealed trait ExistentialTypeCompanion {
 
+    // Allow using:
+    // ExistentialType.use5(a, b, c, d, e) { implicit A => implicit B => implicit C => implicit D => implicit E =>
+    //   // code which needs a.Underlying, b.Underlying, d.underlying, e.Underlying but not values
+    // }
+
     // Different arities of use* allow us to avoid absurdly nested blocks, since only 1-parameter lambda can have
     // implicit parameter.
 
-    def use[L, U >: L, Out](et: ExistentialType.Bounded[L, U])(thunk: Type[et.Underlying] => Out): Out = thunk(
-      et.Underlying
-    )
+    def use[L, U >: L, F[_ >: L <: U], Out](et: Existential.Bounded[L, U, F])(
+        thunk: Type[et.Underlying] => Out
+    ): Out = thunk(et.Underlying)
 
-    def use2[L1, U1 >: L1, L2, U2 >: L2, Out](
-        et1: ExistentialType.Bounded[L1, U1],
-        et2: ExistentialType.Bounded[L2, U2]
+    def use2[L1, U1 >: L1, F1[_ >: L1 <: U1], L2, U2 >: L2, F2[_ >: L2 <: U2], Out](
+        et1: Existential.Bounded[L1, U1, F1],
+        et2: Existential.Bounded[L2, U2, F2]
     )(
         thunk: Type[et1.Underlying] => Type[et2.Underlying] => Out
-    ): Out = use(et2)(use(et1)(thunk))
+    ): Out = thunk(et1.Underlying)(et2.Underlying)
 
-    def use3[L1, U1 >: L1, L2, U2 >: L2, L3, U3 >: L3, Out](
-        et1: ExistentialType.Bounded[L1, U1],
-        et2: ExistentialType.Bounded[L2, U2],
-        et3: ExistentialType.Bounded[L3, U3]
+    def use3[L1, U1 >: L1, F1[_ >: L1 <: U1], L2, U2 >: L2, F2[_ >: L2 <: U2], L3, U3 >: L3, F3[_ >: L3 <: U3], Out](
+        et1: Existential.Bounded[L1, U1, F1],
+        et2: Existential.Bounded[L2, U2, F2],
+        et3: Existential.Bounded[L3, U3, F3]
     )(
         thunk: Type[et1.Underlying] => Type[et2.Underlying] => Type[et3.Underlying] => Out
-    ): Out = use(et3)(use2(et1, et2)(thunk))
+    ): Out = thunk(et1.Underlying)(et2.Underlying)(et3.Underlying)
 
-    def use4[L1, U1 >: L1, L2, U2 >: L2, L3, U3 >: L3, L4, U4 >: L4, Out](
-        et1: ExistentialType.Bounded[L1, U1],
-        et2: ExistentialType.Bounded[L2, U2],
-        et3: ExistentialType.Bounded[L3, U3],
-        et4: ExistentialType.Bounded[L4, U4]
+    def use4[L1, U1 >: L1, F1[_ >: L1 <: U1], L2, U2 >: L2, F2[_ >: L2 <: U2], L3, U3 >: L3, F3[
+        _ >: L3 <: U3
+    ], L4, U4 >: L4, F4[_ >: L4 <: U4], Out](
+        et1: Existential.Bounded[L1, U1, F1],
+        et2: Existential.Bounded[L2, U2, F2],
+        et3: Existential.Bounded[L3, U3, F3],
+        et4: Existential.Bounded[L4, U4, F4]
     )(
         thunk: Type[et1.Underlying] => Type[et2.Underlying] => Type[et3.Underlying] => Type[et4.Underlying] => Out
-    ): Out = use(et4)(use3(et1, et2, et3)(thunk))
+    ): Out = thunk(et1.Underlying)(et2.Underlying)(et3.Underlying)(et4.Underlying)
+
+    def use5[L1, U1 >: L1, F1[_ >: L1 <: U1], L2, U2 >: L2, F2[_ >: L2 <: U2], L3, U3 >: L3, F3[
+        _ >: L3 <: U3
+    ], L4, U4 >: L4, F4[_ >: L4 <: U4], L5, U5 >: L5, F5[_ >: L5 <: U5], Out](
+        et1: Existential.Bounded[L1, U1, F1],
+        et2: Existential.Bounded[L2, U2, F2],
+        et3: Existential.Bounded[L3, U3, F3],
+        et4: Existential.Bounded[L4, U4, F4],
+        et5: Existential.Bounded[L5, U5, F5]
+    )(
+        thunk: Type[et1.Underlying] => Type[et2.Underlying] => Type[et3.Underlying] => Type[et4.Underlying] => Type[
+          et5.Underlying
+        ] => Out
+    ): Out = thunk(et1.Underlying)(et2.Underlying)(et3.Underlying)(et4.Underlying)(et5.Underlying)
   }
 }

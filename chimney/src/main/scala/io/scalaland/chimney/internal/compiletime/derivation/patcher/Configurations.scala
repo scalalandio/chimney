@@ -12,9 +12,8 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   protected object PatcherConfigurations {
 
-    final def readPatcherConfig[Cfg <: internal.PatcherCfg: Type]: PatcherConfig = {
+    final def readPatcherConfig[Cfg <: internal.PatcherCfg: Type]: PatcherConfig =
       readPatcherConfigAux(PatcherConfig())
-    }
 
     @scala.annotation.nowarn("msg=Unreachable case")
     private def readPatcherConfigAux[Cfg <: internal.PatcherCfg: Type](cfg: PatcherConfig): PatcherConfig =

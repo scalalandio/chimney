@@ -153,13 +153,34 @@ private[compiletime] trait ExprPromises { this: Definitions =>
       f(usage).map(new PrependDefinitionsTo(_, defns))
     }
 
-    def prepend[B: Type](implicit ev: A <:< Expr[B]): Expr[B] =
+    def closeBlockAsExprOf[B: Type](implicit ev: A <:< Expr[B]): Expr[B] =
       PrependDefinitionsTo.initializeDefns[B](defns, ev(usage))
 
-    def use[B: Type](f: A => Expr[B]): Expr[B] = map(f).prepend
+    def use[B: Type](f: A => Expr[B]): Expr[B] = map(f).closeBlockAsExprOf
   }
   protected val PrependDefinitionsTo: PrependDefinitionsToModule
   protected trait PrependDefinitionsToModule { this: PrependDefinitionsTo.type =>
+
+    def prependDef[From: Type](
+        init: Expr[From],
+        nameGenerationStrategy: ExprPromise.NameGenerationStrategy
+    ): PrependDefinitionsTo[Expr[From]] =
+      ExprPromise.promise[From](nameGenerationStrategy, ExprPromise.UsageHint.None).fulfilAsDef(init)
+    def prependVal[From: Type](
+        init: Expr[From],
+        nameGenerationStrategy: ExprPromise.NameGenerationStrategy
+    ): PrependDefinitionsTo[Expr[From]] =
+      ExprPromise.promise[From](nameGenerationStrategy, ExprPromise.UsageHint.None).fulfilAsVal(init)
+    def prependLazyVal[From: Type](
+        init: Expr[From],
+        nameGenerationStrategy: ExprPromise.NameGenerationStrategy
+    ): PrependDefinitionsTo[Expr[From]] =
+      ExprPromise.promise[From](nameGenerationStrategy, ExprPromise.UsageHint.Lazy).fulfilAsLazy(init)
+    def prependVar[From: Type](
+        init: Expr[From],
+        nameGenerationStrategy: ExprPromise.NameGenerationStrategy
+    ): PrependDefinitionsTo[(Expr[From], Expr[From] => Expr[Unit])] =
+      ExprPromise.promise[From](nameGenerationStrategy, ExprPromise.UsageHint.Var).fulfilAsVar(init)
 
     def initializeDefns[To: Type](vals: Vector[(ExprPromiseName, ExistentialExpr, DefnType)], expr: Expr[To]): Expr[To]
 

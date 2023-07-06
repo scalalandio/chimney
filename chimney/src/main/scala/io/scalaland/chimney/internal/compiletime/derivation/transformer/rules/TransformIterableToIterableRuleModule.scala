@@ -19,52 +19,50 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
             if to2.Underlying.isTuple =>
           // val Type.Tuple2(toK, toV) = to2: @unchecked
           val (toK, toV) = Type.Tuple2.unapply(to2.Underlying).get
-          ExistentialType.use4(fromK, fromV, toK, toV) {
+          ExistentialType.use5(fromK, fromV, toK, toV, to2) {
             implicit FromKey: Type[fromK.Underlying] => implicit FromValue: Type[fromV.Underlying] =>
               implicit ToKey: Type[toK.Underlying] => implicit ToValue: Type[toV.Underlying] =>
-                Existential.use(to2) {
-                  implicit To2: Type[to2.Underlying] => (toIorA: IterableOrArray[To, to2.Underlying]) =>
-                    val toKeyResult = ExprPromise
-                      .promise[fromK.Underlying](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
-                      .traverse { key =>
-                        deriveRecursiveTransformationExpr[fromK.Underlying, toK.Underlying](key)
-                          .map(_.ensurePartial -> key)
-                      }
-                    val toValueResult = ExprPromise
-                      .promise[fromV.Underlying](ExprPromise.NameGenerationStrategy.FromPrefix("value"))
-                      .traverse { value =>
-                        deriveRecursiveTransformationExpr[fromV.Underlying, toV.Underlying](value).map(_.ensurePartial)
-                      }
-
-                    toKeyResult.parTuple(toValueResult).parTuple(toIorA.factory).flatMap {
-                      case ((toKeyP, toValueP), factory) =>
-                        DerivationResult.expandedPartial(
-                          ChimneyExpr.PartialResult
-                            .traverse[To, (fromK.Underlying, fromV.Underlying), (toK.Underlying, toV.Underlying)](
-                              src.widenExpr[Map[fromK.Underlying, fromV.Underlying]].iterator,
-                              toKeyP
-                                .fulfilAsLambda2(toValueP) { case ((keyResult, key), valueResult) =>
-                                  ChimneyExpr.PartialResult.product(
-                                    keyResult.prependErrorPath(
-                                      ChimneyExpr.PathElement
-                                        .MapKey(key.upcastExpr[Any])
-                                        .upcastExpr[partial.PathElement]
-                                    ),
-                                    valueResult.prependErrorPath(
-                                      ChimneyExpr.PathElement
-                                        .MapValue(key.upcastExpr[Any])
-                                        .upcastExpr[partial.PathElement]
-                                    ),
-                                    failFast
-                                  )
-                                }
-                                .tupled,
-                              failFast,
-                              factory.widenExpr[Factory[(toK.Underlying, toV.Underlying), To]]
-                            )
-                        )
+                implicit To2: Type[to2.Underlying] =>
+                  val toKeyResult = ExprPromise
+                    .promise[fromK.Underlying](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
+                    .traverse { key =>
+                      deriveRecursiveTransformationExpr[fromK.Underlying, toK.Underlying](key)
+                        .map(_.ensurePartial -> key)
                     }
-                }
+                  val toValueResult = ExprPromise
+                    .promise[fromV.Underlying](ExprPromise.NameGenerationStrategy.FromPrefix("value"))
+                    .traverse { value =>
+                      deriveRecursiveTransformationExpr[fromV.Underlying, toV.Underlying](value).map(_.ensurePartial)
+                    }
+
+                  toKeyResult.parTuple(toValueResult).parTuple(to2.value.factory).flatMap {
+                    case ((toKeyP, toValueP), factory) =>
+                      DerivationResult.expandedPartial(
+                        ChimneyExpr.PartialResult
+                          .traverse[To, (fromK.Underlying, fromV.Underlying), (toK.Underlying, toV.Underlying)](
+                            src.widenExpr[Map[fromK.Underlying, fromV.Underlying]].iterator,
+                            toKeyP
+                              .fulfilAsLambda2(toValueP) { case ((keyResult, key), valueResult) =>
+                                ChimneyExpr.PartialResult.product(
+                                  keyResult.prependErrorPath(
+                                    ChimneyExpr.PathElement
+                                      .MapKey(key.upcastExpr[Any])
+                                      .upcastExpr[partial.PathElement]
+                                  ),
+                                  valueResult.prependErrorPath(
+                                    ChimneyExpr.PathElement
+                                      .MapValue(key.upcastExpr[Any])
+                                      .upcastExpr[partial.PathElement]
+                                  ),
+                                  failFast
+                                )
+                              }
+                              .tupled,
+                            failFast,
+                            factory.widenExpr[Factory[(toK.Underlying, toV.Underlying), To]]
+                          )
+                      )
+                  }
           }
         case (IterableOrArray(from2), IterableOrArray(to2), _) =>
           Existential.use2(from2, to2) {

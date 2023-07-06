@@ -180,10 +180,13 @@ private[compiletime] trait Exprs { this: Definitions =>
 
   implicit final protected class OptionExprOps[A: Type](private val optionExpr: Expr[Option[A]]) {
 
+    def isDefined: Expr[Boolean] = Expr.Option.isDefined(optionExpr)
     def map[B: Type](fExpr: Expr[A => B]): Expr[Option[B]] = Expr.Option.map(optionExpr)(fExpr)
     def fold[B: Type](noneExpr: Expr[B])(fExpr: Expr[A => B]): Expr[B] =
       Expr.Option.fold(optionExpr)(noneExpr)(fExpr)
     def getOrElse(noneExpr: Expr[A]): Expr[A] = Expr.Option.getOrElse(optionExpr)(noneExpr)
+    def get: Expr[A] = Expr.Option.get(optionExpr)
+    def orElse(other: Expr[Option[A]]): Expr[Option[A]] = Expr.Option.orElse(optionExpr, other)
   }
 
   implicit final protected class EitherExprOps[L: Type, R: Type](private val eitherExpr: Expr[Either[L, R]]) {
