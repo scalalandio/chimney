@@ -13,18 +13,6 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
 
   implicit class TransformerDefinitionTreeOps(td: Tree) {
 
-    def accessRuntimeData(runtimeDataIdx: Int): Tree = {
-      q"$td.runtimeData($runtimeDataIdx)"
-    }
-
-    def accessOverriddenConstValue(runtimeDataIdx: Int, targetTpe: Type): Tree = {
-      q"${td.accessRuntimeData(runtimeDataIdx)}.asInstanceOf[$targetTpe]"
-    }
-
-    def accessOverriddenComputedFunction(runtimeDataIdx: Int, fromTpe: Type, targetTpe: Type): Tree = {
-      q"${td.accessRuntimeData(runtimeDataIdx)}.asInstanceOf[$fromTpe => $targetTpe]"
-    }
-
     def overrideField[C: WeakTypeTag](fieldName: Name, overrideTree: Tree, configWrapperTC: Type): Tree = {
       c.prefix.tree
         .addOverride(overrideTree)
