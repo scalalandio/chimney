@@ -24,53 +24,53 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
       inline selector: To => T,
       inline value: U
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] = {
-    ${ PartialTransformerDefinitionImpl.withFieldConstImpl('this, 'selector, 'value) }
+    ${ PartialTransformerDefinitionMacros.withFieldConstImpl('this, 'selector, 'value) }
   }
 
   transparent inline def withFieldConstPartial[T, U](
       inline selector: To => T,
       inline value: partial.Result[U]
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] = {
-    ${ PartialTransformerDefinitionImpl.withFieldConstPartialImpl('this, 'selector, 'value) }
+    ${ PartialTransformerDefinitionMacros.withFieldConstPartialImpl('this, 'selector, 'value) }
   }
 
   transparent inline def withFieldComputed[T, U](
       inline selector: To => T,
       inline f: From => U
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] = {
-    ${ PartialTransformerDefinitionImpl.withFieldComputedImpl('this, 'selector, 'f) }
+    ${ PartialTransformerDefinitionMacros.withFieldComputedImpl('this, 'selector, 'f) }
   }
 
   transparent inline def withFieldComputedPartial[T, U](
       inline selector: To => T,
       inline f: From => partial.Result[U]
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] = {
-    ${ PartialTransformerDefinitionImpl.withFieldComputedPartialImpl('this, 'selector, 'f) }
+    ${ PartialTransformerDefinitionMacros.withFieldComputedPartialImpl('this, 'selector, 'f) }
   }
 
   transparent inline def withFieldRenamed[T, U](
       inline selectorFrom: From => T,
       inline selectorTo: To => U
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] = {
-    ${ PartialTransformerDefinitionImpl.withFieldRenamed('this, 'selectorFrom, 'selectorTo) }
+    ${ PartialTransformerDefinitionMacros.withFieldRenamed('this, 'selectorFrom, 'selectorTo) }
   }
 
   transparent inline def withCoproductInstance[Inst](
       inline f: Inst => To
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] = {
-    ${ PartialTransformerDefinitionImpl.withCoproductInstance('this, 'f) }
+    ${ PartialTransformerDefinitionMacros.withCoproductInstance('this, 'f) }
   }
 
   transparent inline def withCoproductInstancePartial[Inst](
       inline f: Inst => partial.Result[To]
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] = {
-    ${ PartialTransformerDefinitionImpl.withCoproductInstancePartial('this, 'f) }
+    ${ PartialTransformerDefinitionMacros.withCoproductInstancePartial('this, 'f) }
   }
 
   inline def buildTransformer[ImplicitScopeFlags <: TransformerFlags](using
       tc: TransformerConfiguration[ImplicitScopeFlags]
   ): PartialTransformer[From, To] = {
-    ${ PartialTransformerDefinitionImpl.buildTransformer[From, To, Cfg, Flags, ImplicitScopeFlags]('this) }
+    ${ PartialTransformerDefinitionMacros.buildTransformer[From, To, Cfg, Flags, ImplicitScopeFlags]('this) }
   }
 
   override protected def __updateRuntimeData(newRuntimeData: TransformerDefinitionCommons.RuntimeDataStore): this.type =

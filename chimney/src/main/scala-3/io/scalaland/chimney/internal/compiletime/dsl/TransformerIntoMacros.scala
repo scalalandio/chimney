@@ -8,7 +8,7 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Transfor
 
 import scala.quoted.*
 
-object TransformerIntoImpl {
+object TransformerIntoMacros {
 
   def withFieldConstImpl[
       From: Type,
@@ -22,7 +22,7 @@ object TransformerIntoImpl {
       selectorExpr: Expr[To => T],
       valueExpr: Expr[U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    TransformerDefinitionImpl.withFieldConstImpl('{ ${ tiExpr }.td }, selectorExpr, valueExpr) match {
+    TransformerDefinitionMacros.withFieldConstImpl('{ ${ tiExpr }.td }, selectorExpr, valueExpr) match {
       case '{ $td: TransformerDefinition[From, To, cfg, Flags] } =>
         '{ new TransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
     }
@@ -40,7 +40,7 @@ object TransformerIntoImpl {
       selectorExpr: Expr[To => T],
       fExpr: Expr[From => U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    TransformerDefinitionImpl.withFieldComputedImpl('{ ${ tiExpr }.td }, selectorExpr, fExpr) match {
+    TransformerDefinitionMacros.withFieldComputedImpl('{ ${ tiExpr }.td }, selectorExpr, fExpr) match {
       case '{ $td: TransformerDefinition[From, To, cfg, Flags] } =>
         '{ new TransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
     }
@@ -58,7 +58,7 @@ object TransformerIntoImpl {
       selectorFromExpr: Expr[From => T],
       selectorToExpr: Expr[To => U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    TransformerDefinitionImpl.withFieldRenamed('{ ${ tiExpr }.td }, selectorFromExpr, selectorToExpr) match {
+    TransformerDefinitionMacros.withFieldRenamed('{ ${ tiExpr }.td }, selectorFromExpr, selectorToExpr) match {
       case '{ $td: TransformerDefinition[From, To, cfg, Flags] } =>
         '{ new TransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
     }
@@ -74,7 +74,7 @@ object TransformerIntoImpl {
       tiExpr: Expr[TransformerInto[From, To, Cfg, Flags]],
       fExpr: Expr[Inst => To]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    TransformerDefinitionImpl.withCoproductInstance('{ ${ tiExpr }.td }, fExpr) match {
+    TransformerDefinitionMacros.withCoproductInstance('{ ${ tiExpr }.td }, fExpr) match {
       case '{ $td: TransformerDefinition[From, To, cfg, Flags] } =>
         '{ new TransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
     }
@@ -92,5 +92,4 @@ object TransformerIntoImpl {
   )(using Quotes): Expr[To] = {
     TransformerMacros.deriveTotalTransformerResultWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](source, td)
   }
-
 }

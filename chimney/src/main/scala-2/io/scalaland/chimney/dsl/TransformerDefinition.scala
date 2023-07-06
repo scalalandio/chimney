@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.macros.dsl.TransformerDefinitionWhiteboxMacros
+import io.scalaland.chimney.internal.compiletime.dsl.TransformerDefinitionMacros
 
 import scala.language.experimental.macros
 
@@ -49,7 +49,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
   def withFieldConst[T, U](selector: To => T, value: U)(implicit
       ev: U <:< T
   ): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withFieldConstImpl[Cfg]
+    macro TransformerDefinitionMacros.withFieldConstImpl[Cfg]
 
   /** Use function `f` to compute value of field picked using `selector`.
     *
@@ -69,7 +69,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
       selector: To => T,
       f: From => U
   )(implicit ev: U <:< T): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withFieldComputedImpl[Cfg]
+    macro TransformerDefinitionMacros.withFieldComputedImpl[Cfg]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
     *
@@ -89,7 +89,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
       selectorFrom: From => T,
       selectorTo: To => U
   ): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withFieldRenamedImpl[Cfg]
+    macro TransformerDefinitionMacros.withFieldRenamedImpl[Cfg]
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
     *
@@ -107,7 +107,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     * @since 0.4.0
     */
   def withCoproductInstance[Inst](f: Inst => To): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
-    macro TransformerDefinitionWhiteboxMacros.withCoproductInstanceImpl[To, Inst, Cfg]
+    macro TransformerDefinitionMacros.withCoproductInstanceImpl[To, Inst, Cfg]
 
   /** Build Transformer using current configuration.
     *

@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.compiletime.dsl.TransformerIntoImpl
+import io.scalaland.chimney.internal.compiletime.dsl.TransformerIntoMacros
 
 final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,
@@ -16,32 +16,32 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
       inline selector: To => T,
       inline value: U
   )(using U <:< T): TransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    ${ TransformerIntoImpl.withFieldConstImpl('this, 'selector, 'value) }
+    ${ TransformerIntoMacros.withFieldConstImpl('this, 'selector, 'value) }
   }
 
   transparent inline def withFieldComputed[T, U](
       inline selector: To => T,
       inline f: From => U
   )(using U <:< T): TransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    ${ TransformerIntoImpl.withFieldComputedImpl('this, 'selector, 'f) }
+    ${ TransformerIntoMacros.withFieldComputedImpl('this, 'selector, 'f) }
   }
 
   transparent inline def withFieldRenamed[T, U](
       inline selectorFrom: From => T,
       inline selectorTo: To => U
   ): TransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    ${ TransformerIntoImpl.withFieldRenamedImpl('this, 'selectorFrom, 'selectorTo) }
+    ${ TransformerIntoMacros.withFieldRenamedImpl('this, 'selectorFrom, 'selectorTo) }
   }
 
   transparent inline def withCoproductInstance[Inst](
       inline f: Inst => To
   ): TransformerInto[From, To, ? <: TransformerCfg, Flags] = {
-    ${ TransformerIntoImpl.withCoproductInstanceImpl('this, 'f) }
+    ${ TransformerIntoMacros.withCoproductInstanceImpl('this, 'f) }
   }
 
   inline def transform[ImplicitScopeFlags <: TransformerFlags](using
       tc: TransformerConfiguration[ImplicitScopeFlags]
   ): To = {
-    ${ TransformerIntoImpl.transform[From, To, Cfg, Flags, ImplicitScopeFlags]('source, 'td) }
+    ${ TransformerIntoMacros.transform[From, To, Cfg, Flags, ImplicitScopeFlags]('source, 'td) }
   }
 }

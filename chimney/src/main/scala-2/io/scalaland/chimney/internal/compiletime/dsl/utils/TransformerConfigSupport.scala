@@ -1,8 +1,4 @@
-package io.scalaland.chimney.internal.macros
-
-//import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, PreferPartialTransformer, PreferTotalTransformer}
-//import io.scalaland.chimney.partial
-import io.scalaland.chimney.internal.utils.MacroUtils
+package io.scalaland.chimney.internal.compiletime.dsl.utils
 
 import scala.reflect.macros.blackbox
 
@@ -28,5 +24,4 @@ trait TransformerConfigSupport extends MacroUtils {
     val coproductInstanceT: Type = typeOf[CoproductInstance[?, ?, ?]].typeConstructor
     val coproductInstancePartialT: Type = typeOf[CoproductInstancePartial[?, ?, ?]].typeConstructor
   }
-
 }

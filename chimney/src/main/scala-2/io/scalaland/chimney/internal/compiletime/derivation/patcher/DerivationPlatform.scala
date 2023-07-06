@@ -1,10 +1,5 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
-import io.scalaland.chimney.internal.compiletime.{datatypes, ChimneyDefinitionsPlatform}
+import io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-trait DerivationPlatform
-    extends Derivation
-    with ChimneyDefinitionsPlatform
-    with datatypes.ProductTypesPlatform
-    with datatypes.SealedHierarchiesPlatform
-    with datatypes.ValueClassesPlatform
+trait DerivationPlatform extends Derivation with transformer.DerivationPlatform

@@ -14,8 +14,7 @@ private[compiletime] trait Derivation
     with datatypes.ProductTypes
     with datatypes.SealedHierarchies
     with datatypes.ValueClasses
-    with transformer.Derivation
-    with transformer.Gateway {
+    with transformer.Derivation {
 
   import Type.Implicits.*
 
@@ -154,6 +153,6 @@ private[compiletime] trait Derivation
       )
       .updateConfig(_.allowFromToImplicitSearch)
 
-    deriveFinalTransformationResultExpr(context)
+    deriveTransformationResultExpr(context).map(_.ensureTotal)
   }
 }

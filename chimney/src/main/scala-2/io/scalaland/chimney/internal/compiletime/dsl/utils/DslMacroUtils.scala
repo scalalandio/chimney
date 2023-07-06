@@ -1,6 +1,4 @@
-package io.scalaland.chimney.internal.utils
-
-import io.scalaland.chimney.internal.macros.TransformerConfigSupport
+package io.scalaland.chimney.internal.compiletime.dsl.utils
 
 import scala.reflect.macros.blackbox
 
@@ -13,29 +11,26 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
 
   implicit class TransformerDefinitionTreeOps(td: Tree) {
 
-    def overrideField[C: WeakTypeTag](fieldName: Name, overrideTree: Tree, configWrapperTC: Type): Tree = {
+    def overrideField[C: WeakTypeTag](fieldName: Name, overrideTree: Tree, configWrapperTC: Type): Tree =
       c.prefix.tree
         .addOverride(overrideTree)
         .refineConfig(configWrapperTC.applyTypeArgs(fieldName.toSingletonTpe, weakTypeOf[C]))
-    }
 
     def overrideCoproductInstance[C: WeakTypeTag](
         instTpe: Type,
         targetTpe: Type,
         f: Tree,
         configWrapperTC: Type
-    ): Tree = {
+    ): Tree =
       c.prefix.tree
         .addInstance(f)
         .refineConfig(configWrapperTC.applyTypeArgs(instTpe, targetTpe, weakTypeOf[C]))
-    }
 
-    def renameField[C: WeakTypeTag](fromName: TermName, toName: TermName): Tree = {
+    def renameField[C: WeakTypeTag](fromName: TermName, toName: TermName): Tree =
       c.prefix.tree
         .refineConfig(
           fieldRelabelledT.applyTypeArgs(fromName.toSingletonTpe, toName.toSingletonTpe, weakTypeOf[C])
         )
-    }
 
     def refineTransformerDefinition_Hack(
         definitionRefinementFn: Map[String, Tree] => Tree,
@@ -56,20 +51,16 @@ trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
       """
     }
 
-    def refineTransformerDefinition(definitionRefinementFn: Tree): Tree = {
+    def refineTransformerDefinition(definitionRefinementFn: Tree): Tree =
       q"$td.__refineTransformerDefinition($definitionRefinementFn)"
-    }
 
-    def addOverride(overrideTree: Tree): Tree = {
+    def addOverride(overrideTree: Tree): Tree =
       q"$td.__addOverride(${overrideTree}.asInstanceOf[Any])"
-    }
 
-    def addInstance(f: Tree): Tree = {
+    def addInstance(f: Tree): Tree =
       q"$td.__addInstance(${f}.asInstanceOf[Any])"
-    }
 
-    def refineConfig(cfgTpe: Type): Tree = {
+    def refineConfig(cfgTpe: Type): Tree =
       q"$td.__refineConfig[$cfgTpe]"
-    }
   }
 }
