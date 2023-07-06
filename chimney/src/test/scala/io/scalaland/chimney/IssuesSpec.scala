@@ -240,7 +240,6 @@ class IssuesSpec extends ChimneySpec {
     Transformer.define[WithOption, WithoutOption].partial.buildTransformer
   }
 
-  // FIXME: patchers are not yet implemented
   group("fix issue #149") {
 
     import Issue149.*
