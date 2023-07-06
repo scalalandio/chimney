@@ -1,8 +1,8 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.{partial, PartialTransformer}
-import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.dsl.*
+import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
 
 /** Allows customization of [[io.scalaland.chimney.PartialTransformer]] derivation.
  *

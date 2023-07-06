@@ -3,6 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.dsl.*
+import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
 
 import scala.quoted.*
 

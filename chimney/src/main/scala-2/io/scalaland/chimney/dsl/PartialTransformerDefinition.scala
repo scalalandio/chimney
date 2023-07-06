@@ -1,9 +1,9 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.{partial, PartialTransformer}
-import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerDefinitionMacros
+import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
 
 import scala.language.experimental.macros
 

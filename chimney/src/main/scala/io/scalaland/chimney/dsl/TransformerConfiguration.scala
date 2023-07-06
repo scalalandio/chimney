@@ -1,6 +1,6 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.TransformerFlags
+import io.scalaland.chimney.internal.runtime.TransformerFlags
 
 /** Type-level set of derivation flags that can be shared between derivations through implicit scope.
   *

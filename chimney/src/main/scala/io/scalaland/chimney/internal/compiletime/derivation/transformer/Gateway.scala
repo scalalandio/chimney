@@ -1,9 +1,11 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
+import io.scalaland.chimney.{PartialTransformer, Transformer}
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.GatewayCommons
-import io.scalaland.chimney.{internal, partial, PartialTransformer, Transformer}
+import io.scalaland.chimney.internal.runtime
+import io.scalaland.chimney.partial
 
 private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
 
@@ -16,9 +18,9 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def deriveTotalTransformationResult[
       From: Type,
       To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      InstanceFlags <: internal.TransformerFlags: Type,
-      ImplicitScopeFlags <: internal.TransformerFlags: Type
+      Cfg <: runtime.TransformerCfg: Type,
+      InstanceFlags <: runtime.TransformerFlags: Type,
+      ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       src: Expr[From],
       runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
@@ -44,9 +46,9 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def deriveTotalTransformer[
       From: Type,
       To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      InstanceFlags <: internal.TransformerFlags: Type,
-      ImplicitScopeFlags <: internal.TransformerFlags: Type
+      Cfg <: runtime.TransformerCfg: Type,
+      InstanceFlags <: runtime.TransformerFlags: Type,
+      ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
   ): Expr[Transformer[From, To]] = cacheDefinition(runtimeDataStore) { runtimeDataStore =>
@@ -72,9 +74,9 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def derivePartialTransformationResult[
       From: Type,
       To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      InstanceFlags <: internal.TransformerFlags: Type,
-      ImplicitScopeFlags <: internal.TransformerFlags: Type
+      Cfg <: runtime.TransformerCfg: Type,
+      InstanceFlags <: runtime.TransformerFlags: Type,
+      ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       src: Expr[From],
       failFast: Expr[Boolean],
@@ -102,9 +104,9 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def derivePartialTransformer[
       From: Type,
       To: Type,
-      Cfg <: internal.TransformerCfg: Type,
-      InstanceFlags <: internal.TransformerFlags: Type,
-      ImplicitScopeFlags <: internal.TransformerFlags: Type
+      Cfg <: runtime.TransformerCfg: Type,
+      InstanceFlags <: runtime.TransformerFlags: Type,
+      ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
   ): Expr[PartialTransformer[From, To]] = cacheDefinition(runtimeDataStore) { runtimeDataStore =>

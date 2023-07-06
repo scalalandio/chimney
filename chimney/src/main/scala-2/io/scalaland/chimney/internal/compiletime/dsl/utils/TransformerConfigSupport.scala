@@ -10,7 +10,7 @@ trait TransformerConfigSupport extends MacroUtils {
 
   object CfgTpes {
 
-    import io.scalaland.chimney.internal.TransformerCfg.*
+    import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 
     // We cannot get typeOf[HigherKind] directly, but we can get the typeOf[ExistentialType]
     // and extract type constructor out of it.

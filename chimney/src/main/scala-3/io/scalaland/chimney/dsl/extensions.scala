@@ -2,6 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.internal.*
+import io.scalaland.chimney.internal.runtime.{PatcherCfg, TransformerCfg, TransformerFlags}
 import io.scalaland.chimney.partial
 
 import scala.util.Try

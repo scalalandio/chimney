@@ -1,7 +1,6 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.TransformerCfg
-
+import io.scalaland.chimney.internal.runtime.TransformerCfg
 import scala.annotation.static
 
 object TransformerDefinitionCommons {

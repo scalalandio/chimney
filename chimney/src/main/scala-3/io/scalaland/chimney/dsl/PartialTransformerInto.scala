@@ -1,9 +1,9 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.compiletime.dsl
-import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerIntoMacros
+import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
 
 final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,

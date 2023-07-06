@@ -1,6 +1,6 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.TransformerCfg
+import io.scalaland.chimney.internal.runtime.TransformerCfg
 
 object TransformerDefinitionCommons {
   type RuntimeDataStore = Vector[Any]

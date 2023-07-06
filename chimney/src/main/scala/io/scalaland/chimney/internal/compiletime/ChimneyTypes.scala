@@ -3,6 +3,7 @@ package io.scalaland.chimney.internal.compiletime
 import io.scalaland.chimney.*
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons.RuntimeDataStore
 import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
+import io.scalaland.chimney.internal.runtime
 
 private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
 
@@ -37,38 +38,38 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
 
     val TransformerCfg: TransformerCfgModule
     trait TransformerCfgModule {
-      val Empty: Type[internal.TransformerCfg.Empty]
+      val Empty: Type[runtime.TransformerCfg.Empty]
 
       val FieldConst: FieldConstModule
       trait FieldConstModule
           extends Type.Ctor2UpperBounded[
             String,
-            internal.TransformerCfg,
-            internal.TransformerCfg.FieldConst
+            runtime.TransformerCfg,
+            runtime.TransformerCfg.FieldConst
           ] { this: FieldConst.type => }
 
       val FieldConstPartial: FieldConstPartialModule
       trait FieldConstPartialModule
           extends Type.Ctor2UpperBounded[
             String,
-            internal.TransformerCfg,
-            internal.TransformerCfg.FieldConstPartial
+            runtime.TransformerCfg,
+            runtime.TransformerCfg.FieldConstPartial
           ] { this: FieldConstPartial.type => }
 
       val FieldComputed: FieldComputedModule
       trait FieldComputedModule
           extends Type.Ctor2UpperBounded[
             String,
-            internal.TransformerCfg,
-            internal.TransformerCfg.FieldComputed
+            runtime.TransformerCfg,
+            runtime.TransformerCfg.FieldComputed
           ] { this: FieldComputed.type => }
 
       val FieldComputedPartial: FieldComputedPartialModule
       trait FieldComputedPartialModule
           extends Type.Ctor2UpperBounded[
             String,
-            internal.TransformerCfg,
-            internal.TransformerCfg.FieldComputedPartial
+            runtime.TransformerCfg,
+            runtime.TransformerCfg.FieldComputedPartial
           ] { this: FieldComputedPartial.type => }
 
       val FieldRelabelled: FieldRelabelledModule
@@ -76,8 +77,8 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
           extends Type.Ctor3UpperBounded[
             String,
             String,
-            internal.TransformerCfg,
-            internal.TransformerCfg.FieldRelabelled
+            runtime.TransformerCfg,
+            runtime.TransformerCfg.FieldRelabelled
           ] { this: FieldRelabelled.type => }
 
       val CoproductInstance: CoproductInstanceModule
@@ -85,8 +86,8 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
           extends Type.Ctor3UpperBounded[
             Any,
             Any,
-            internal.TransformerCfg,
-            internal.TransformerCfg.CoproductInstance
+            runtime.TransformerCfg,
+            runtime.TransformerCfg.CoproductInstance
           ] { this: CoproductInstance.type => }
 
       val CoproductInstancePartial: CoproductInstancePartialModule
@@ -94,74 +95,74 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
           extends Type.Ctor3UpperBounded[
             Any,
             Any,
-            internal.TransformerCfg,
-            internal.TransformerCfg.CoproductInstancePartial
+            runtime.TransformerCfg,
+            runtime.TransformerCfg.CoproductInstancePartial
           ] { this: CoproductInstancePartial.type => }
     }
 
     val TransformerFlags: TransformerFlagsModule
     trait TransformerFlagsModule { this: TransformerFlags.type =>
-      val Default: Type[internal.TransformerFlags.Default]
+      val Default: Type[runtime.TransformerFlags.Default]
 
       val Enable: EnableModule
       trait EnableModule
           extends Type.Ctor2UpperBounded[
-            internal.TransformerFlags.Flag,
-            internal.TransformerFlags,
-            internal.TransformerFlags.Enable
+            runtime.TransformerFlags.Flag,
+            runtime.TransformerFlags,
+            runtime.TransformerFlags.Enable
           ] { this: Enable.type => }
 
       val Disable: DisableModule
       trait DisableModule
           extends Type.Ctor2UpperBounded[
-            internal.TransformerFlags.Flag,
-            internal.TransformerFlags,
-            internal.TransformerFlags.Disable
+            runtime.TransformerFlags.Flag,
+            runtime.TransformerFlags,
+            runtime.TransformerFlags.Disable
           ] { this: Disable.type => }
 
       val Flags: FlagsModule
       trait FlagsModule { this: Flags.type =>
-        val DefaultValues: Type[internal.TransformerFlags.DefaultValues]
-        val BeanGetters: Type[internal.TransformerFlags.BeanGetters]
-        val BeanSetters: Type[internal.TransformerFlags.BeanSetters]
-        val MethodAccessors: Type[internal.TransformerFlags.MethodAccessors]
-        val OptionDefaultsToNone: Type[internal.TransformerFlags.OptionDefaultsToNone]
+        val DefaultValues: Type[runtime.TransformerFlags.DefaultValues]
+        val BeanGetters: Type[runtime.TransformerFlags.BeanGetters]
+        val BeanSetters: Type[runtime.TransformerFlags.BeanSetters]
+        val MethodAccessors: Type[runtime.TransformerFlags.MethodAccessors]
+        val OptionDefaultsToNone: Type[runtime.TransformerFlags.OptionDefaultsToNone]
         val ImplicitConflictResolution: ImplicitConflictResolutionModule
         trait ImplicitConflictResolutionModule
             extends Type.Ctor1UpperBounded[
               ImplicitTransformerPreference,
-              internal.TransformerFlags.ImplicitConflictResolution
+              runtime.TransformerFlags.ImplicitConflictResolution
             ] { this: ImplicitConflictResolution.type => }
-        val MacrosLogging: Type[internal.TransformerFlags.MacrosLogging]
+        val MacrosLogging: Type[runtime.TransformerFlags.MacrosLogging]
       }
     }
 
     val PatcherCfg: PatcherCfgModule
 
     trait PatcherCfgModule {
-      val Empty: Type[internal.PatcherCfg.Empty]
+      val Empty: Type[runtime.PatcherCfg.Empty]
 
       val IgnoreRedundantPatcherFields: IgnoreRedundantPatcherFieldsModule
 
       trait IgnoreRedundantPatcherFieldsModule
           extends Type.Ctor1UpperBounded[
-            internal.PatcherCfg,
-            internal.PatcherCfg.IgnoreRedundantPatcherFields
+            runtime.PatcherCfg,
+            runtime.PatcherCfg.IgnoreRedundantPatcherFields
           ] { this: IgnoreRedundantPatcherFields.type => }
 
       val IgnoreNoneInPatch: IgnoreNoneInPatchModule
 
       trait IgnoreNoneInPatchModule
           extends Type.Ctor1UpperBounded[
-            internal.PatcherCfg,
-            internal.PatcherCfg.IgnoreNoneInPatch
+            runtime.PatcherCfg,
+            runtime.PatcherCfg.IgnoreNoneInPatch
           ] { this: IgnoreNoneInPatch.type => }
 
       val MacrosLogging: MacrosLoggingModule
       trait MacrosLoggingModule
           extends Type.Ctor1UpperBounded[
-            internal.PatcherCfg,
-            internal.PatcherCfg.MacrosLogging
+            runtime.PatcherCfg,
+            runtime.PatcherCfg.MacrosLogging
           ] { this: MacrosLogging.type => }
     }
 

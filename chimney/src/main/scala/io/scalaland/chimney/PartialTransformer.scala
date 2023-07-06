@@ -1,7 +1,7 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinitionCommons}
-import io.scalaland.chimney.internal.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
 
 /** Type class expressing partial transformation between
   * source type `From` and target type `To`, with the ability

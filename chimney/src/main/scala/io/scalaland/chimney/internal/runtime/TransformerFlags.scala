@@ -1,4 +1,4 @@
-package io.scalaland.chimney.internal
+package io.scalaland.chimney.internal.runtime
 
 import io.scalaland.chimney.dsl.ImplicitTransformerPreference
 
