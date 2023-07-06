@@ -71,8 +71,36 @@ private[compiletime] trait Derivation
 
     targetParams.get(patchFieldName) match {
 
-      // TODO: impl
-//      case Some(tParam) if config.ignoreNoneInPatch && bothOptions(patchParamTpe, tParam.resultTypeIn(T)) =>
+      case Some(targetParam)
+          if ctx.config.ignoreNoneInPatch && patchGetter.Underlying.isOption && targetParam.Underlying.isOption =>
+        (patchGetter.Underlying, targetParam.Underlying) match {
+          case (Type.Option(getterInnerTpe), Type.Option(targetInnerTpe)) =>
+            ExistentialType.use2(getterInnerTpe, targetInnerTpe) {
+              implicit from: Type[getterInnerTpe.Underlying] => implicit to: Type[targetInnerTpe.Underlying] =>
+                deriveTransformerForPatcherField[Option[getterInnerTpe.Underlying], Option[
+                  targetInnerTpe.Underlying
+                ]](
+                  src = Existential.use(patchGetter) { implicit t => _ =>
+                    patchGetter.value.get(ctx.patch).asInstanceOfExpr[Option[getterInnerTpe.Underlying]]
+                  }
+                )
+                  .map { transformedExpr =>
+                    val targetGetter = targetGetters(patchFieldName)
+                    Existential.use(targetGetter) { implicit tgTpe: Type[targetGetter.Underlying] => _ =>
+                      val targetExpr = targetGetter.value
+                        .get(ctx.obj)
+                        .asInstanceOfExpr[Option[targetInnerTpe.Underlying]]
+
+                      val finalExpr = Expr.Option.orElse(transformedExpr, targetExpr)
+
+                      Some(ExistentialExpr(finalExpr))
+                    }
+
+                  }
+            }
+          case _ =>
+            ??? // can't happen due to isOption test on both
+        }
 
       case Some(targetParam) if patchGetter.Underlying <:< targetParam.Underlying =>
         DerivationResult.pure(Some(patchGetterExpr))
@@ -103,9 +131,7 @@ private[compiletime] trait Derivation
                             ) {
                               val targetGetter = targetGetters(patchFieldName)
                               Existential.use(targetGetter) { implicit tgTpe: Type[targetGetter.Underlying] => _ =>
-                                Expr.asInstanceOf[targetGetter.Underlying, targetParam.Underlying](
-                                  targetGetter.value.get(ctx.obj)
-                                )
+                                targetGetter.value.get(ctx.obj).asInstanceOfExpr[targetParam.Underlying]
                               }
                             }
                           }
