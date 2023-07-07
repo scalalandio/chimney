@@ -1,7 +1,5 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.internal.{PatcherDerivationError, TransformerDerivationError}
-
 sealed trait DerivationError extends Product with Serializable
 object DerivationError {
 

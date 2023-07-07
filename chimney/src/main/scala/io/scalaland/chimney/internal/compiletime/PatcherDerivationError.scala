@@ -1,6 +1,5 @@
-package io.scalaland.chimney.internal
+package io.scalaland.chimney.internal.compiletime
 
-// TODO: move to compiletime once all rules are migrated and old macros removed
 sealed trait PatcherDerivationError extends Product with Serializable
 
 case class NotSupportedPatcherDerivation(objTypeName: String, patchTypeName: String) extends PatcherDerivationError
