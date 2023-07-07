@@ -74,41 +74,33 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                 // the need for several non-abstract subtypes - keeping them would result in unreachable code errors.
                 overrideMappings.exists(usedFromSubtype => fromSubtype.Underlying <:< usedFromSubtype.Underlying)
               }) { (fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]]) =>
-                Existential.use(fromSubtype) { implicit FromSubtype: Type[fromSubtype.Underlying] =>
-                  { case Enum.Element(fromName, _) =>
-                    toElements
-                      .collectFirst {
-                        case toSubtype if enumNamesMatch(fromName, toSubtype.value.name) =>
-                          Existential.use(toSubtype) { implicit ToSubtype: Type[toSubtype.Underlying] =>
-                            { case Enum.Element(_, toUpcast) =>
-                              ExprPromise
-                                .promise[fromSubtype.Underlying](ExprPromise.NameGenerationStrategy.FromType)
-                                .traverse { (fromSubtypeExpr: Expr[fromSubtype.Underlying]) =>
-                                  // We're constructing:
-                                  // case fromSubtypeExpr: $fromSubtype => ${ derivedTo } // or ${ derivedResultTo }
-                                  deriveRecursiveTransformationExpr[fromSubtype.Underlying, toSubtype.Underlying](
-                                    fromSubtypeExpr
-                                  ).map(_.map(toUpcast))
-                                    .orElse(
-                                      deriveRecursiveTransformationExpr[fromSubtype.Underlying, To](
-                                        fromSubtypeExpr
-                                      )
-                                    )
-                                }
-                                .map(
-                                  Existential[ExprPromise[*, TransformationExpr[To]], fromSubtype.Underlying](_)
-                                )
-                            }
-                          }
-                      }
-                      .getOrElse {
-                        DerivationResult
-                          .cantFindCoproductInstanceTransformer[From, To, fromSubtype.Underlying, Existential[
-                            ExprPromise[*, TransformationExpr[To]]
-                          ]]
-                      }
+                import fromSubtype.Underlying as FromSubtype, fromSubtype.value.name as fromName
+                toElements
+                  .collectFirst {
+                    case toSubtype if enumNamesMatch(fromName, toSubtype.value.name) =>
+                      import toSubtype.Underlying as ToSubtype, toSubtype.value.upcast as toUpcast
+                      ExprPromise
+                        .promise[fromSubtype.Underlying](ExprPromise.NameGenerationStrategy.FromType)
+                        .traverse { (fromSubtypeExpr: Expr[fromSubtype.Underlying]) =>
+                          // We're constructing:
+                          // case fromSubtypeExpr: $fromSubtype => ${ derivedTo } // or ${ derivedResultTo }
+                          deriveRecursiveTransformationExpr[fromSubtype.Underlying, toSubtype.Underlying](
+                            fromSubtypeExpr
+                          ).map(_.map(toUpcast))
+                            .orElse(
+                              deriveRecursiveTransformationExpr[fromSubtype.Underlying, To](
+                                fromSubtypeExpr
+                              )
+                            )
+                        }
+                        .map(Existential[ExprPromise[*, TransformationExpr[To]], fromSubtype.Underlying](_))
                   }
-                }
+                  .getOrElse {
+                    DerivationResult
+                      .cantFindCoproductInstanceTransformer[From, To, fromSubtype.Underlying, Existential[
+                        ExprPromise[*, TransformationExpr[To]]
+                      ]]
+                  }
               }
               .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
                 val subtypeMappings = overrideMappings ++ nameMatchedMappings

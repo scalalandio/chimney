@@ -38,16 +38,14 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
       To: c.WeakTypeTag
   ]: Expr[Transformer[From, To]] = retypecheck(
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
-      ExistentialType.use(implicitScopeFlagsType) {
-        implicit ImplicitScopeFlagsType: Type[implicitScopeFlagsType.Underlying] =>
-          deriveTotalTransformer[
-            From,
-            To,
-            runtime.TransformerCfg.Empty,
-            runtime.TransformerFlags.Default,
-            implicitScopeFlagsType.Underlying
-          ](ChimneyExpr.RuntimeDataStore.empty)
-      }
+      import implicitScopeFlagsType.Underlying
+      deriveTotalTransformer[
+        From,
+        To,
+        runtime.TransformerCfg.Empty,
+        runtime.TransformerFlags.Default,
+        implicitScopeFlagsType.Underlying
+      ](ChimneyExpr.RuntimeDataStore.empty)
     }
   )
 
@@ -118,16 +116,14 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   ]: c.universe.Expr[PartialTransformer[From, To]] =
     retypecheck(
       resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
-        ExistentialType.use(implicitScopeFlagsType) {
-          implicit ImplicitScopeFlagsType: Type[implicitScopeFlagsType.Underlying] =>
-            derivePartialTransformer[
-              From,
-              To,
-              runtime.TransformerCfg.Empty,
-              runtime.TransformerFlags.Default,
-              implicitScopeFlagsType.Underlying
-            ](ChimneyExpr.RuntimeDataStore.empty)
-        }
+        import implicitScopeFlagsType.Underlying
+        derivePartialTransformer[
+          From,
+          To,
+          runtime.TransformerCfg.Empty,
+          runtime.TransformerFlags.Default,
+          implicitScopeFlagsType.Underlying
+        ](ChimneyExpr.RuntimeDataStore.empty)
       }
     )
 

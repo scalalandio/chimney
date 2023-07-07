@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.runtime
 
 private[compiletime] trait Configurations { this: Derivation =>
 
-  case class PatcherConfig(
+  final protected case class PatcherConfig(
       ignoreNoneInPatch: Boolean = false,
       ignoreRedundantPatcherFields: Boolean = false,
       displayMacrosLogging: Boolean = false
@@ -20,17 +20,14 @@ private[compiletime] trait Configurations { this: Derivation =>
       Type[Cfg] match {
         case empty if empty =:= ChimneyType.PatcherCfg.Empty => cfg
         case ChimneyType.PatcherCfg.IgnoreRedundantPatcherFields(cfgRest) =>
-          ExistentialType.Bounded.use(cfgRest) { implicit CfgRest: Type[cfgRest.Underlying] =>
-            readPatcherConfigAux[cfgRest.Underlying](cfg).copy(ignoreRedundantPatcherFields = true)
-          }
+          import cfgRest.Underlying as CfgRest
+          readPatcherConfigAux[cfgRest.Underlying](cfg).copy(ignoreRedundantPatcherFields = true)
         case ChimneyType.PatcherCfg.IgnoreNoneInPatch(cfgRest) =>
-          ExistentialType.Bounded.use(cfgRest) { implicit CfgRest: Type[cfgRest.Underlying] =>
-            readPatcherConfigAux[cfgRest.Underlying](cfg).copy(ignoreNoneInPatch = true)
-          }
+          import cfgRest.Underlying as CfgRest
+          readPatcherConfigAux[cfgRest.Underlying](cfg).copy(ignoreNoneInPatch = true)
         case ChimneyType.PatcherCfg.MacrosLogging(cfgRest) =>
-          ExistentialType.Bounded.use(cfgRest) { implicit CfgRest: Type[cfgRest.Underlying] =>
-            readPatcherConfigAux[cfgRest.Underlying](cfg).copy(displayMacrosLogging = true)
-          }
+          import cfgRest.Underlying as CfgRest
+          readPatcherConfigAux[cfgRest.Underlying](cfg).copy(displayMacrosLogging = true)
         case _ =>
           // $COVERAGE-OFF$
           reportError(s"Bad internal patcher config type shape ${Type.prettyPrint[Cfg]}!")

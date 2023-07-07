@@ -147,36 +147,32 @@ private[compiletime] trait Configurations { this: Derivation =>
     ): TransformerFlags = Type[Flags] match {
       case default if default =:= ChimneyType.TransformerFlags.Default => defaultFlags
       case ChimneyType.TransformerFlags.Enable(flag, flags) =>
-        ExistentialType.Bounded.use2(flag, flags) {
-          implicit Flag: Type[flag.Underlying] => implicit Flags: Type[flags.Underlying] =>
-            Flag match {
-              case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(r) =>
-                if (r.Underlying =:= ChimneyType.PreferTotalTransformer)
-                  extractTransformerFlags[flags.Underlying](defaultFlags).setImplicitConflictResolution(
-                    Some(dsls.PreferTotalTransformer)
-                  )
-                else if (r.Underlying =:= ChimneyType.PreferPartialTransformer)
-                  extractTransformerFlags[flags.Underlying](defaultFlags).setImplicitConflictResolution(
-                    Some(dsls.PreferPartialTransformer)
-                  )
-                else {
-                  // $COVERAGE-OFF$
-                  reportError("Invalid implicit conflict resolution preference type!!")
-                  // $COVERAGE-ON$
-                }
-              case _ =>
-                extractTransformerFlags[flags.Underlying](defaultFlags).setBoolFlag[flag.Underlying](value = true)
+        import flag.Underlying as Flag, flags.Underlying as Flags
+        Flag match {
+          case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(r) =>
+            if (r.Underlying =:= ChimneyType.PreferTotalTransformer)
+              extractTransformerFlags[flags.Underlying](defaultFlags).setImplicitConflictResolution(
+                Some(dsls.PreferTotalTransformer)
+              )
+            else if (r.Underlying =:= ChimneyType.PreferPartialTransformer)
+              extractTransformerFlags[flags.Underlying](defaultFlags).setImplicitConflictResolution(
+                Some(dsls.PreferPartialTransformer)
+              )
+            else {
+              // $COVERAGE-OFF$
+              reportError("Invalid implicit conflict resolution preference type!!")
+              // $COVERAGE-ON$
             }
+          case _ =>
+            extractTransformerFlags[flags.Underlying](defaultFlags).setBoolFlag[flag.Underlying](value = true)
         }
       case ChimneyType.TransformerFlags.Disable(flag, flags) =>
-        ExistentialType.Bounded.use2(flag, flags) {
-          implicit Flag: Type[flag.Underlying] => implicit Flags: Type[flags.Underlying] =>
-            Flag match {
-              case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(_) =>
-                extractTransformerFlags[flags.Underlying](defaultFlags).setImplicitConflictResolution(None)
-              case _ =>
-                extractTransformerFlags[flags.Underlying](defaultFlags).setBoolFlag[flag.Underlying](value = false)
-            }
+        import flag.Underlying as Flag, flags.Underlying as Flags
+        Flag match {
+          case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(_) =>
+            extractTransformerFlags[flags.Underlying](defaultFlags).setImplicitConflictResolution(None)
+          case _ =>
+            extractTransformerFlags[flags.Underlying](defaultFlags).setBoolFlag[flag.Underlying](value = false)
         }
       case _ =>
         // $COVERAGE-OFF$
@@ -191,73 +187,56 @@ private[compiletime] trait Configurations { this: Derivation =>
     ): TransformerConfig = Type[Cfg] match {
       case empty if empty =:= ChimneyType.TransformerCfg.Empty => TransformerConfig()
       case ChimneyType.TransformerCfg.FieldConst(fieldName, cfg) =>
-        ExistentialType.Bounded.use2(fieldName, cfg) {
-          implicit FieldName: Type[fieldName.Underlying] => implicit Cfg: Type[cfg.Underlying] =>
-            extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
-              .addFieldOverride(
-                Type[fieldName.Underlying].extractStringSingleton,
-                RuntimeFieldOverride.Const(runtimeDataIdx)
-              )
-        }
+        import fieldName.Underlying as FieldName, cfg.Underlying as Cfg
+        extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+          .addFieldOverride(
+            Type[fieldName.Underlying].extractStringSingleton,
+            RuntimeFieldOverride.Const(runtimeDataIdx)
+          )
       case ChimneyType.TransformerCfg.FieldConstPartial(fieldName, cfg) =>
-        ExistentialType.Bounded.use2(fieldName, cfg) {
-          implicit FieldName: Type[fieldName.Underlying] => implicit Cfg: Type[cfg.Underlying] =>
-            extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
-              .addFieldOverride(
-                Type[fieldName.Underlying].extractStringSingleton,
-                RuntimeFieldOverride.ConstPartial(runtimeDataIdx)
-              )
-        }
+        import fieldName.Underlying as FieldName, cfg.Underlying as Cfg
+        extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+          .addFieldOverride(
+            Type[fieldName.Underlying].extractStringSingleton,
+            RuntimeFieldOverride.ConstPartial(runtimeDataIdx)
+          )
       case ChimneyType.TransformerCfg.FieldComputed(fieldName, cfg) =>
-        ExistentialType.Bounded.use2(fieldName, cfg) {
-          implicit FieldName: Type[fieldName.Underlying] => implicit Cfg: Type[cfg.Underlying] =>
-            extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
-              .addFieldOverride(
-                Type[fieldName.Underlying].extractStringSingleton,
-                RuntimeFieldOverride.Computed(runtimeDataIdx)
-              )
-        }
+        import fieldName.Underlying as FieldName, cfg.Underlying as Cfg
+        extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+          .addFieldOverride(
+            Type[fieldName.Underlying].extractStringSingleton,
+            RuntimeFieldOverride.Computed(runtimeDataIdx)
+          )
       case ChimneyType.TransformerCfg.FieldComputedPartial(fieldName, cfg) =>
-        ExistentialType.Bounded.use2(fieldName, cfg) {
-          implicit FieldName: Type[fieldName.Underlying] => implicit Cfg: Type[cfg.Underlying] =>
-            extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
-              .addFieldOverride(
-                Type[fieldName.Underlying].extractStringSingleton,
-                RuntimeFieldOverride.ComputedPartial(runtimeDataIdx)
-              )
-        }
+        import fieldName.Underlying as FieldName, cfg.Underlying as Cfg
+        extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+          .addFieldOverride(
+            Type[fieldName.Underlying].extractStringSingleton,
+            RuntimeFieldOverride.ComputedPartial(runtimeDataIdx)
+          )
       case ChimneyType.TransformerCfg.FieldRelabelled(fromName, toName, cfg) =>
-        ExistentialType.Bounded.use3(fromName, toName, cfg) {
-          implicit FromName: Type[fromName.Underlying] => implicit ToName: Type[toName.Underlying] =>
-            implicit Cfg: Type[cfg.Underlying] =>
-              extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
-                .addFieldOverride(
-                  Type[toName.Underlying].extractStringSingleton,
-                  RuntimeFieldOverride.RenamedFrom(Type[fromName.Underlying].extractStringSingleton)
-                )
-        }
+        import fromName.Underlying as FromName, toName.Underlying as ToName, cfg.Underlying as Cfg
+        extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+          .addFieldOverride(
+            Type[toName.Underlying].extractStringSingleton,
+            RuntimeFieldOverride.RenamedFrom(Type[fromName.Underlying].extractStringSingleton)
+          )
       case ChimneyType.TransformerCfg.CoproductInstance(instance, target, cfg) =>
-        ExistentialType.Bounded.use3(instance, target, cfg) {
-          implicit Instance: Type[instance.Underlying] => implicit Target: Type[target.Underlying] =>
-            implicit Cfg: Type[cfg.Underlying] =>
-              extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
-                .addCoproductInstance(
-                  Type[instance.Underlying].asExistential,
-                  Type[target.Underlying].asExistential,
-                  RuntimeCoproductOverride.CoproductInstance(runtimeDataIdx)
-                )
-        }
+        import instance.Underlying as Instance, target.Underlying as Target, cfg.Underlying as Cfg
+        extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+          .addCoproductInstance(
+            Type[instance.Underlying].asExistential,
+            Type[target.Underlying].asExistential,
+            RuntimeCoproductOverride.CoproductInstance(runtimeDataIdx)
+          )
       case ChimneyType.TransformerCfg.CoproductInstancePartial(instance, target, cfg) =>
-        ExistentialType.Bounded.use3(instance, target, cfg) {
-          implicit Instance: Type[instance.Underlying] => implicit Target: Type[target.Underlying] =>
-            implicit Cfg: Type[cfg.Underlying] =>
-              extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
-                .addCoproductInstance(
-                  Type[instance.Underlying].asExistential,
-                  Type[target.Underlying].asExistential,
-                  RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
-                )
-        }
+        import instance.Underlying as Instance, target.Underlying as Target, cfg.Underlying as Cfg
+        extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+          .addCoproductInstance(
+            Type[instance.Underlying].asExistential,
+            Type[target.Underlying].asExistential,
+            RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
+          )
       case _ =>
         reportError(s"Bad internal transformer config type shape ${Type.prettyPrint[Cfg]}!!")
     }

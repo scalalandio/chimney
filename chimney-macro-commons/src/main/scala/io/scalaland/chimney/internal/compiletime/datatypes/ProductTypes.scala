@@ -156,14 +156,13 @@ trait ProductTypes { this: Definitions =>
       }
 
       parameters.foreach { case (name, param) =>
-        Existential.use(param) { implicit Param: Type[param.Underlying] => _ =>
-          val argument = arguments(name)
-          if (!(argument.Underlying <:< Param)) {
-            assertionFailed(
-              s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
-                  .prettyPrint[param.Underlying]}, instead got ${Expr.prettyPrint(argument.value)} ${Type.prettyPrint(argument.Underlying)}"
-            )
-          }
+        import param.Underlying as Param
+        val argument = arguments(name)
+        if (!(argument.Underlying <:< Param)) {
+          assertionFailed(
+            s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
+                .prettyPrint[param.Underlying]}, instead got ${Expr.prettyPrint(argument.value)} ${Type.prettyPrint(argument.Underlying)}"
+          )
         }
       }
 
