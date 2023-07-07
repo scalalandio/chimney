@@ -196,10 +196,8 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
                 setterArguments.map { case (name, exprArg) =>
                   val setter = setterExprs(name)
                   assert(exprArg.Underlying =:= setter.Underlying)
-                  Existential.use(setter) {
-                    implicit Setter: Type[setter.Underlying] => (setterExpr: Setter[setter.Underlying]) =>
-                      setterExpr(exprA, exprArg.value.asInstanceOf[Expr[setter.Underlying]])
-                  }
+                  import setter.value as setterExpr
+                  setterExpr(exprA, exprArg.value.asInstanceOf[Expr[setter.Underlying]])
                 }.toList,
                 exprA
               )

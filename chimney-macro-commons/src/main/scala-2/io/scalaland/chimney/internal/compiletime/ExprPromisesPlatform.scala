@@ -52,10 +52,9 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
     def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = {
       val casesTrees = cases.map { case PatternMatchCase(someFrom, usage, fromName, _) =>
-        ExistentialType.use(someFrom) { implicit SomeFrom: Type[someFrom.Underlying] =>
-          val markUsed = Expr.suppressUnused(c.Expr[someFrom.Underlying](q"$fromName"))
-          cq"""$fromName : $SomeFrom => { $markUsed; $usage }"""
-        }
+        import someFrom.Underlying as SomeFrom
+        val markUsed = Expr.suppressUnused(c.Expr[someFrom.Underlying](q"$fromName"))
+        cq"""$fromName : $SomeFrom => { $markUsed; $usage }"""
       }
       c.Expr[To](q"$src match { case ..$casesTrees }")
     }
@@ -69,13 +68,13 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     ): Expr[To] = {
       val statements = vals.map {
         case (name, initialValue, DefnType.Def) =>
-          ExistentialExpr.use(initialValue) { tpe => expr => q"def $name: $tpe = $expr" }
+          q"def $name: ${initialValue.Underlying} = ${initialValue.value}"
         case (name, initialValue, DefnType.Lazy) =>
-          ExistentialExpr.use(initialValue) { tpe => expr => q"lazy val $name: $tpe = $expr" }
+          q"lazy val $name: ${initialValue.Underlying} = ${initialValue.value}"
         case (name, initialValue, DefnType.Val) =>
-          ExistentialExpr.use(initialValue) { tpe => expr => q"val $name: $tpe = $expr" }
+          q"val $name: ${initialValue.Underlying} = ${initialValue.value}"
         case (name, initialValue, DefnType.Var) =>
-          ExistentialExpr.use(initialValue) { tpe => expr => q"var $name: $tpe = $expr" }
+          q"var $name: ${initialValue.Underlying} = ${initialValue.value}"
       }.toList
       c.Expr[To](q"..$statements; $expr")
     }

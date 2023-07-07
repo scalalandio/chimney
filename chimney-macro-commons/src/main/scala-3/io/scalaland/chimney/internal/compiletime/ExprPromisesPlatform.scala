@@ -78,11 +78,11 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         expr: Expr[To]
     ): Expr[To] = {
       val statements = vals.map {
-        case (name, eexpr, DefnType.Def) =>
-          ExistentialExpr.use(eexpr) { _ => expr => DefDef(name, _ => Some(expr.asTerm)) }
-        case (name, eexpr, _) =>
+        case (name, expr, DefnType.Def) =>
+          DefDef(name, _ => Some(expr.value.asTerm))
+        case (name, expr, _) =>
           // val/lazy val/var is handled by Symbol by flag provided by UsageHint
-          ExistentialExpr.use(eexpr) { _ => expr => ValDef(name, Some(expr.asTerm)) }
+          ValDef(name, Some(expr.value.asTerm))
       }.toList
       Block(statements, expr.asTerm).asExprOf[To]
     }
@@ -96,35 +96,34 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = Match(
       src.asTerm,
       cases.map { case PatternMatchCase(someFrom, usage, fromName, isCaseObject) =>
-        ExistentialType.use(someFrom) { implicit SomeFrom: Type[someFrom.Underlying] =>
-          // Unfortunatelly, we cannot do
-          //   case $fromName: $SomeFrom => $using
-          // because bind and val have different flags in Symbol. We need to do something like
-          //   case $bindName: $SomeFrom => val $fromName = $bindName; $using
-          val bindName = Symbol.newBind(
-            Symbol.spliceOwner,
-            FreshTerm.generate(TypeRepr.of(using SomeFrom).show(using Printer.TypeReprShortCode).toLowerCase),
-            Flags.EmptyFlags,
-            TypeRepr.of(using SomeFrom)
-          )
-          // We're constructing:
-          // '{ val fromName = bindName; val _ = fromName; ${ usage } }
-          val body = Block(
-            List(
-              ValDef(fromName, Some(Ref(bindName))), // not a Term, so we cannot use Expr.block
-              Expr.suppressUnused(Ref(fromName).asExprOf[someFrom.Underlying]).asTerm
-            ),
-            usage.asTerm
-          )
+        import someFrom.Underlying as SomeFrom
+        // Unfortunately, we cannot do
+        //   case $fromName: $SomeFrom => $using
+        // because bind and val have different flags in Symbol. We need to do something like
+        //   case $bindName: $SomeFrom => val $fromName = $bindName; $using
+        val bindName = Symbol.newBind(
+          Symbol.spliceOwner,
+          FreshTerm.generate(TypeRepr.of(using SomeFrom).show(using Printer.TypeReprShortCode).toLowerCase),
+          Flags.EmptyFlags,
+          TypeRepr.of(using SomeFrom)
+        )
+        // We're constructing:
+        // '{ val fromName = bindName; val _ = fromName; ${ usage } }
+        val body = Block(
+          List(
+            ValDef(fromName, Some(Ref(bindName))), // not a Term, so we cannot use Expr.block
+            Expr.suppressUnused(Ref(fromName).asExprOf[someFrom.Underlying]).asTerm
+          ),
+          usage.asTerm
+        )
 
-          // Scala 3's enums' parameterless cases are vals with type erased, so w have to match them by value
-          if isCaseObject then
-            // case arg @ Enum.Value => ...
-            CaseDef(Bind(bindName, Ident(TypeRepr.of[someFrom.Underlying].typeSymbol.termRef)), None, body)
-          else
-            // case arg : Enum.Value => ...
-            CaseDef(Bind(bindName, Typed(Wildcard(), TypeTree.of[someFrom.Underlying])), None, body)
-        }
+        // Scala 3's enums' parameterless cases are vals with type erased, so w have to match them by value
+        if isCaseObject then
+          // case arg @ Enum.Value => ...
+          CaseDef(Bind(bindName, Ident(TypeRepr.of[someFrom.Underlying].typeSymbol.termRef)), None, body)
+        else
+          // case arg : Enum.Value => ...
+          CaseDef(Bind(bindName, Typed(Wildcard(), TypeTree.of[someFrom.Underlying])), None, body)
       }
     ).asExprOf[To]
   }
