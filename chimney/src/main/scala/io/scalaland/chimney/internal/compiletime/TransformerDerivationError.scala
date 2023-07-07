@@ -1,6 +1,5 @@
-package io.scalaland.chimney.internal
+package io.scalaland.chimney.internal.compiletime
 
-// TODO: move to compiletime once all rules are migrated and old macros removed
 sealed trait TransformerDerivationError extends Product with Serializable {
   def sourceTypeName: String
   def targetTypeName: String

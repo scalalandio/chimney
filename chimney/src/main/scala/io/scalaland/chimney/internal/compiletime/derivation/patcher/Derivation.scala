@@ -1,8 +1,13 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
-import io.scalaland.chimney.internal.{NotSupportedPatcherDerivation, PatchFieldNotFoundInTargetObj}
 import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
-import io.scalaland.chimney.internal.compiletime.{datatypes, ChimneyDefinitions, DerivationResult}
+import io.scalaland.chimney.internal.compiletime.{
+  datatypes,
+  ChimneyDefinitions,
+  DerivationResult,
+  NotSupportedPatcherDerivation,
+  PatchFieldNotFoundInTargetObj
+}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 private[compiletime] trait Derivation
