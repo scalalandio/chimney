@@ -16,6 +16,11 @@ class PartialTransformerSpec extends ChimneySpec {
     PartialTransformer.derive[FooStr, Foo]
   }
 
+  val pt5 = {
+    implicit val fooStrToFoo = pt4
+    PartialTransformer.derive[List[FooStr], List[Foo]]
+  }
+
   test("transform") {
 
     pt1.transform("100") ==> partial.Result.fromValue(100)
@@ -31,10 +36,14 @@ class PartialTransformerSpec extends ChimneySpec {
       ("s1", """For input string: "abc""""),
       ("s2", """For input string: "xyz"""")
     )
+
+    pt5.transform(List(FooStr("abc", "xyz"))).asErrorPathMessageStrings ==> Iterable(
+      ("(0).s1", """For input string: "abc""""),
+      ("(0).s2", """For input string: "xyz"""")
+    )
   }
 
   test("transformFailFast") {
-
     pt1.transformFailFast("100") ==> partial.Result.fromValue(100)
     pt1.transformFailFast("abc").asErrorPathMessageStrings ==> Iterable(("", """For input string: "abc""""))
 
@@ -47,6 +56,10 @@ class PartialTransformerSpec extends ChimneySpec {
     pt4.transformFailFast(FooStr("abc", "xyz")).asErrorPathMessageStrings ==> Iterable(
       ("s1", """For input string: "abc"""")
       // no second error due to fail fast mode
+    )
+
+    pt5.transformFailFast(List(FooStr("abc", "xyz"))).asErrorPathMessageStrings ==> Iterable(
+      ("(0).s1", """For input string: "abc"""")
     )
   }
 
