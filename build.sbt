@@ -128,6 +128,17 @@ val publishSettings = Seq(
   )
 )
 
+val mimaSettings = Seq(
+  mimaPreviousArtifacts := {
+    name.value match {
+      case nameValue =>
+        Set(
+          organization.value %% moduleName.value % "0.7.5"
+        )
+    }
+  }
+)
+
 val noPublishSettings =
   Seq(publish / skip := true, publishArtifact := false)
 
@@ -219,6 +230,7 @@ lazy val chimney = projectMatrix
   .settings(settings*)
   .settings(versionSchemeSettings*)
   .settings(publishSettings*)
+  .settings(mimaSettings*)
   .settings(dependencies*)
   .dependsOn(protos % "test->test")
 
@@ -234,6 +246,7 @@ lazy val chimneyCats = projectMatrix
   .settings(settings*)
   .settings(versionSchemeSettings*)
   .settings(publishSettings*)
+  .settings(mimaSettings*)
   .settings(dependencies*)
   .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.9.0" % "provided")
   .dependsOn(chimney % "test->test;compile->compile")
