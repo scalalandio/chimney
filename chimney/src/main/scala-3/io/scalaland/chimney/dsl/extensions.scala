@@ -14,6 +14,9 @@ extension [From](source: From) {
 
   def transformInto[To](implicit transformer: Transformer.AutoDerived[From, To]): To =
     transformer.transform(source)
+
+  def transformIntoSafe[To](implicit transformer: Transformer[From, To]): To =
+    transformer.transform(source)
 }
 
 extension [From](source: From) {
@@ -31,6 +34,16 @@ extension [From](source: From) {
 
   def transformIntoPartial[To](failFast: Boolean)(implicit
       transformer: PartialTransformer.AutoDerived[From, To]
+  ): partial.Result[To] =
+    transformer.transform(source, failFast)
+
+  def transformIntoPartialSafe[To](implicit
+      transformer: PartialTransformer[From, To]
+  ): partial.Result[To] =
+    transformIntoPartial(failFast = false)
+
+  def transformIntoPartialSafe[To](failFast: Boolean)(implicit
+      transformer: PartialTransformer[From, To]
   ): partial.Result[To] =
     transformer.transform(source, failFast)
 }
@@ -51,7 +64,6 @@ extension [T](option: Option[T]) {
 
   def toPartialResultOrString(ifEmpty: => String): partial.Result[T] =
     partial.Result.fromOptionOrString(option, ifEmpty)
-
 }
 
 extension [T](either: Either[String, T]) {

@@ -37,12 +37,29 @@ package object dsl {
       * @see [[io.scalaland.chimney.Transformer#derive]] for default implicit instance
       *
       * @tparam To target type
-      * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
+      * @param transformer implicit instance of [[io.scalaland.chimney.Transformer.AutoDerived]] type class -
+     *                     provided by user (as [[io.scalaland.chimney.Transformer]]) or auto-derived
       * @return transformed value of target type `To`
       *
       * @since 0.1.0
       */
     final def transformInto[To](implicit transformer: Transformer.AutoDerived[From, To]): To =
+      transformer.transform(source)
+
+    /** Performs in-place transformation of captured source value to target type which uses only implicits already existing in scope.
+      *
+      * If you want to customize transformer behavior, consider using
+      * [[io.scalaland.chimney.dsl.TransformerOps#into]] method.
+      *
+      * @see [[io.scalaland.chimney.Transformer#derive]] for default implicit instance
+      *
+      * @tparam To target type
+      * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
+      * @return transformed value of target type `To`
+      *
+      * @since 0.8.0
+      */
+    final def transformIntoSafe[To](implicit transformer: Transformer[From, To]): To =
       transformer.transform(source)
   }
 
@@ -76,7 +93,8 @@ package object dsl {
       * @see [[io.scalaland.chimney.PartialTransformer#derive]] for default implicit instance
       *
       * @tparam To result target type of partial transformation
-      * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
+      * @param transformer implicit instance of [[io.scalaland.chimney.PartialTransformer.AutoDerived]] type class -
+     *                     provided by user (as [[io.scalaland.chimney.PartialTransformer]]) or auto-derived
       * @return partial transformation result value of target type `To`
       *
       * @since 0.7.0
@@ -95,13 +113,49 @@ package object dsl {
       *
       * @tparam To result target type of partial transformation
       * @param failFast should fail as early as the first set of errors appear
-      * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
+      * @param transformer implicit instance of [[io.scalaland.chimney.PartialTransformer.AutoDerived]] type class -
+     *                     provided by user (as [[io.scalaland.chimney.PartialTransformer]]) or auto-derived
       * @return partial transformation result value of target type `To`
       *
       * @since 0.7.0
       */
     final def transformIntoPartial[To](failFast: Boolean)(implicit
         transformer: PartialTransformer.AutoDerived[From, To]
+    ): partial.Result[To] =
+      transformer.transform(source, failFast)
+
+    /** Performs in-place partial transformation of captured source value to target type.
+      *
+      * If you want to customize transformer behavior, consider using
+      * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
+      *
+      * @see [[io.scalaland.chimney.PartialTransformer#derive]] for default implicit instance
+      *
+      * @tparam To result target type of partial transformation
+      * @param transformer implicit instance of [[io.scalaland.chimney.PartialTransformer]] type class
+      * @return partial transformation result value of target type `To`
+      *
+      * @since 0.8.0
+      */
+    final def transformIntoPartialSafe[To](implicit transformer: PartialTransformer[From, To]): partial.Result[To] =
+      transformIntoPartial(failFast = false)
+
+    /** Performs in-place partial transformation of captured source value to target type.
+      *
+      * If you want to customize transformer behavior, consider using
+      * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
+      *
+      * @see [[io.scalaland.chimney.PartialTransformer#derive]] for default implicit instance
+      *
+      * @tparam To result target type of partial transformation
+      * @param failFast should fail as early as the first set of errors appear
+      * @param transformer implicit instance of [[io.scalaland.chimney.PartialTransformer]] type class
+      * @return partial transformation result value of target type `To`
+      *
+      * @since 0.8.0
+      */
+    final def transformIntoPartialSafe[To](failFast: Boolean)(implicit
+        transformer: PartialTransformer[From, To]
     ): partial.Result[To] =
       transformer.transform(source, failFast)
   }

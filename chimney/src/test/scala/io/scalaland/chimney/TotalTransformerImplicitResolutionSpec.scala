@@ -29,4 +29,16 @@ class TotalTransformerImplicitResolutionSpec extends ChimneySpec {
     Person("John", 10, 140).into[User].transform ==> User("John", 10, 140)
     Person("John", 10, 140).transformInto[User] ==> User("John", 10, 140)
   }
+
+  test("safe transform should only use user-provided implicit and not derive anything") {
+    import trip.*
+
+    compileErrorsFixed("""Person("John", 10, 140).transformIntoSafe[User]""").arePresent()
+
+    locally {
+      implicit val transformer: Transformer[Person, User] = Transformer.derive[Person, User]
+
+      Person("John", 10, 140).transformIntoSafe[User] ==> User("John", 10, 140)
+    }
+  }
 }

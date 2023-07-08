@@ -68,4 +68,27 @@ class PartialTransformerImplicitResolutionSpec extends ChimneySpec {
     result2.asEither ==> Right(expected)
     result2.asErrorPathMessageStrings ==> Iterable.empty
   }
+
+  test("safe transform should only use user-provided implicit and not derive anything") {
+    import trip.*
+
+    compileErrorsFixed("""Person("John", 10, 140).transformIntoSafe[User]""").arePresent()
+    compileErrorsFixed("""Person("John", 10, 140).transformIntoSafe[User](true)""").arePresent()
+
+    locally {
+      implicit val transformer: PartialTransformer[Person, User] = PartialTransformer.derive[Person, User]
+
+      val expected = User("John", 10, 140)
+
+      val result = Person("John", 10, 140).transformIntoPartialSafe[User]
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = Person("John", 10, 140).transformIntoPartialSafe[User](true)
+      result2.asOption ==> Some(expected)
+      result2.asEither ==> Right(expected)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
+    }
+  }
 }
