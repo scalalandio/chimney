@@ -298,6 +298,36 @@ class TotalTransformerProductSpec extends ChimneySpec {
       }
     }
 
+    test(
+      "should ignore default value and fail compilation if source fields with different type but no Transformer exists"
+    ) {
+      import products.Defaults.*
+
+      compileErrorsFixed("""Source(1, "yy", 1.0).into[Target2].enableDefaultValues.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
+        "io.scalaland.chimney.fixtures.products.Defaults.Target2",
+        "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "Consult https://scalalandio.github.io/chimney for usage examples."
+      )
+
+      locally {
+        @unused implicit val config = TransformerConfiguration.default.enableDefaultValues
+
+        compileErrorsFixed("""Source(1, "yy", 1.0).transformInto[Target2]""").check(
+          "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
+          "io.scalaland.chimney.fixtures.products.Defaults.Target2",
+          "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+          "Consult https://scalalandio.github.io/chimney for usage examples."
+        )
+        compileErrorsFixed("""Source(1, "yy", 1.0).into[Target2].transform""").check(
+          "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
+          "io.scalaland.chimney.fixtures.products.Defaults.Target2",
+          "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+          "Consult https://scalalandio.github.io/chimney for usage examples."
+        )
+      }
+    }
+
     test("should ignore default value if source fields with different type but Total Transformer for it exists") {
       import products.Defaults.*
       implicit val converter: Transformer[Int, Long] = _.toLong
