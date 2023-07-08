@@ -46,14 +46,15 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
     }
   }
 
-  group("""setting .withFieldRenamed(_.from, _.getTo)""") {
+  group("""settings .withField*(_.getTo, ...) and .withFieldRenamed(_.from, _.getTo)""") {
 
     test("transform case class to Java Bean, allowing using getters as a way to rename into matching setters") {
       val source = CaseClassWithFlagRenamed("test-id", "test-name", renamedFlag = true)
       val target = source
         .intoPartial[JavaBeanTarget]
+        .withFieldConstPartial(_.getId, partial.Result.fromValue(source.id))
+        .withFieldComputedPartial(_.getName, cc => partial.Result.fromCatching(cc.name))
         .withFieldRenamed(_.renamedFlag, _.isFlag)
-        .enableBeanSetters
         .transform
         .asOption
         .get
