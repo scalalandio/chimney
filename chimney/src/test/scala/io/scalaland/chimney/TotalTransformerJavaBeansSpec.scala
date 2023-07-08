@@ -44,14 +44,15 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
     }
   }
 
-  group("""setting .withFieldRenamed(_.from, _.getTo)""") {
+  group("""settings .withField*(_.getTo, ...) and .withFieldRenamed(_.from, _.getTo)""") {
 
     test("transform case class to Java Bean, allowing using getters as a way to rename into matching setters") {
       val source = CaseClassWithFlagRenamed("test-id", "test-name", renamedFlag = true)
       val target = source
         .into[JavaBeanTarget]
+        .withFieldConst(_.getId, source.id)
+        .withFieldComputed(_.getName, _.name)
         .withFieldRenamed(_.renamedFlag, _.isFlag)
-        .enableBeanSetters
         .transform
 
       target.getId ==> source.id

@@ -216,7 +216,7 @@ private[compiletime] trait Configurations { this: Derivation =>
           )
       case ChimneyType.TransformerCfg.FieldRelabelled(fromName, toName, cfg) =>
         import fromName.Underlying as FromName, toName.Underlying as ToName, cfg.Underlying as Cfg
-        extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
+        extractTransformerConfig[cfg.Underlying](runtimeDataIdx)
           .addFieldOverride(
             Type[toName.Underlying].extractStringSingleton,
             RuntimeFieldOverride.RenamedFrom(Type[fromName.Underlying].extractStringSingleton)
