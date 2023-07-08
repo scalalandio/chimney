@@ -18,7 +18,14 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
             .flatMap(DerivationResult.expanded)
             // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
             .orElse(TransformProductToProductRule.expand(ctx))
-            .orElse(DerivationResult.notSupportedTransformerDerivationForField(valueFrom.fieldName)(ctx))
+            .orElse(
+              DerivationResult
+                .notSupportedTransformerDerivationForField(valueFrom.fieldName)(ctx)
+                .log(
+                  s"Failed to resolve derivation from ${Type.prettyPrint[from2.Underlying]} (wrapped by ${Type
+                      .prettyPrint[From]}) to ${Type.prettyPrint[To]}"
+                )
+            )
         case _ => DerivationResult.attemptNextRule
       }
   }

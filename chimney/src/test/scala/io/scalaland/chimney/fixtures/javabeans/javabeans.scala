@@ -12,6 +12,8 @@ case class CaseClassWithFlag(id: String, name: String, flag: Boolean) {
   }
 }
 
+case class CaseClassWithFlagRenamed(id: String, name: String, renamedFlag: Boolean)
+
 class JavaBeanSource(id: String, name: String) {
   def getId: String = id
 
