@@ -192,7 +192,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         if (
                           ctorParam.value.targetType == Product.Parameter.TargetType.SetterParameter && !flags.beanSetters
                         )
-                          DerivationResult.notSupportedTransformerDerivation(ctx)
+                          DerivationResult
+                            .notSupportedTransformerDerivation(ctx)
+                            .log(s"Matched $fromName to $toName but $toName is setter and they are disabled")
                         else {
                           import getter.Underlying, getter.value.get
                           DerivationResult.namedScope(
