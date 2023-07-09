@@ -15,6 +15,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     final def readPatcherConfig[Cfg <: runtime.PatcherCfg: Type]: PatcherConfig =
       readPatcherConfigAux(PatcherConfig())
 
+    // This (suppressed) error is a case when Scala 3 compiler is simply wrong :)
     @scala.annotation.nowarn("msg=Unreachable case")
     private def readPatcherConfigAux[Cfg <: runtime.PatcherCfg: Type](cfg: PatcherConfig): PatcherConfig =
       Type[Cfg] match {

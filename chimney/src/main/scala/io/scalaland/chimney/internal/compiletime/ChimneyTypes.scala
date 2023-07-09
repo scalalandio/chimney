@@ -34,8 +34,6 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
-    val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore]
-
     val TransformerCfg: TransformerCfgModule
     trait TransformerCfgModule {
       val Empty: Type[runtime.TransformerCfg.Empty]
@@ -138,12 +136,10 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     }
 
     val PatcherCfg: PatcherCfgModule
-
     trait PatcherCfgModule {
       val Empty: Type[runtime.PatcherCfg.Empty]
 
       val IgnoreRedundantPatcherFields: IgnoreRedundantPatcherFieldsModule
-
       trait IgnoreRedundantPatcherFieldsModule
           extends Type.Ctor1UpperBounded[
             runtime.PatcherCfg,
@@ -151,7 +147,6 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
           ] { this: IgnoreRedundantPatcherFields.type => }
 
       val IgnoreNoneInPatch: IgnoreNoneInPatchModule
-
       trait IgnoreNoneInPatchModule
           extends Type.Ctor1UpperBounded[
             runtime.PatcherCfg,
@@ -166,28 +161,148 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
           ] { this: MacrosLogging.type => }
     }
 
+    val TransformerInto: TransformerIntoModule
+    trait TransformerIntoModule
+        extends Type.Ctor4UpperBounded[
+          Any,
+          Any,
+          runtime.TransformerCfg,
+          runtime.TransformerFlags,
+          dsls.TransformerInto
+        ] { this: TransformerInto.type => }
+
+    val TransformerDefinition: TransformerDefinitionModule
+    trait TransformerDefinitionModule
+        extends Type.Ctor4UpperBounded[
+          Any,
+          Any,
+          runtime.TransformerCfg,
+          runtime.TransformerFlags,
+          dsls.TransformerDefinition
+        ] { this: TransformerDefinition.type => }
+
+    val PartialTransformerInto: PartialTransformerIntoModule
+    trait PartialTransformerIntoModule
+        extends Type.Ctor4UpperBounded[
+          Any,
+          Any,
+          runtime.TransformerCfg,
+          runtime.TransformerFlags,
+          dsls.PartialTransformerInto
+        ] { this: PartialTransformerInto.type => }
+
+    val PartialTransformerDefinition: PartialTransformerDefinitionModule
+    trait PartialTransformerDefinitionModule
+        extends Type.Ctor4UpperBounded[
+          Any,
+          Any,
+          runtime.TransformerCfg,
+          runtime.TransformerFlags,
+          dsls.PartialTransformerDefinition
+        ] { this: PartialTransformerDefinition.type => }
+
+    val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore]
+
     // You can import ChimneyType.Implicits.* in your shared code to avoid providing types manually, while avoiding conflicts
     // with implicit types seen in platform-specific scopes (which would happen if those implicits were always used).
     object Implicits {
 
       implicit def TransformerType[From: Type, To: Type]: Type[Transformer[From, To]] = Transformer[From, To]
-
       implicit def PartialTransformerType[From: Type, To: Type]: Type[PartialTransformer[From, To]] =
         PartialTransformer[From, To]
-
       implicit def PatcherType[A: Type, Patch: Type]: Type[Patcher[A, Patch]] = Patcher[A, Patch]
 
       implicit def PartialResultType[A: Type]: Type[partial.Result[A]] = PartialResult[A]
-
       implicit def PartialResultValueType[A: Type]: Type[partial.Result.Value[A]] = PartialResult.Value[A]
 
       implicit val PartialResultErrorsType: Type[partial.Result.Errors] = PartialResult.Errors
 
       implicit val PathElementType: Type[partial.PathElement] = PathElement.tpe
-      implicit val PathElementAccessor: Type[partial.PathElement.Accessor] = PathElement.Accessor
-      implicit val PathElementIndex: Type[partial.PathElement.Index] = PathElement.Index
-      implicit val PathElementMapKey: Type[partial.PathElement.MapKey] = PathElement.MapKey
-      implicit val PathElementMapValue: Type[partial.PathElement.MapValue] = PathElement.MapValue
+      implicit val PathElementAccessorType: Type[partial.PathElement.Accessor] = PathElement.Accessor
+      implicit val PathElementIndexType: Type[partial.PathElement.Index] = PathElement.Index
+      implicit val PathElementMapKeyType: Type[partial.PathElement.MapKey] = PathElement.MapKey
+      implicit val PathElementMapValueType: Type[partial.PathElement.MapValue] = PathElement.MapValue
+
+      implicit val TransformerCfgEmptyType: Type[runtime.TransformerCfg.Empty] = TransformerCfg.Empty
+      implicit def TransformerCfgFieldConstType[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+          : Type[runtime.TransformerCfg.FieldConst[Name, Cfg]] = TransformerCfg.FieldConst[Name, Cfg]
+      implicit def TransformerCfgFieldComputedType[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+          : Type[runtime.TransformerCfg.FieldComputed[Name, Cfg]] = TransformerCfg.FieldComputed[Name, Cfg]
+      implicit def TransformerCfgFieldConstPartialType[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+          : Type[runtime.TransformerCfg.FieldConstPartial[Name, Cfg]] = TransformerCfg.FieldConstPartial[Name, Cfg]
+      implicit def TransformerCfgFieldComputedPartialType[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+          : Type[runtime.TransformerCfg.FieldComputedPartial[Name, Cfg]] =
+        TransformerCfg.FieldComputedPartial[Name, Cfg]
+      implicit def TransformerCfgFieldRelabelledType[
+          FromName <: String: Type,
+          ToName <: String: Type,
+          Cfg <: runtime.TransformerCfg: Type
+      ]: Type[runtime.TransformerCfg.FieldRelabelled[FromName, ToName, Cfg]] =
+        TransformerCfg.FieldRelabelled[FromName, ToName, Cfg]
+      implicit def TransformerCfgCoproductInstanceType[
+          InstType: Type,
+          TargetType: Type,
+          Cfg <: runtime.TransformerCfg: Type
+      ]: Type[runtime.TransformerCfg.CoproductInstance[InstType, TargetType, Cfg]] =
+        TransformerCfg.CoproductInstance[InstType, TargetType, Cfg]
+      implicit def TransformerCfgCoproductInstancePartialType[
+          InstType: Type,
+          TargetType: Type,
+          Cfg <: runtime.TransformerCfg: Type
+      ]: Type[runtime.TransformerCfg.CoproductInstancePartial[InstType, TargetType, Cfg]] =
+        TransformerCfg.CoproductInstancePartial[InstType, TargetType, Cfg]
+
+      implicit val TransformerFlagsDefaultType: Type[runtime.TransformerFlags.Default] = TransformerFlags.Default
+      implicit def TransformerFlagsEnableType[
+          Flag <: runtime.TransformerFlags.Flag: Type,
+          Flags <: runtime.TransformerFlags: Type
+      ]: Type[runtime.TransformerFlags.Enable[Flag, Flags]] = TransformerFlags.Enable[Flag, Flags]
+      implicit def TransformerFlagsDisableType[
+          Flag <: runtime.TransformerFlags.Flag: Type,
+          Flags <: runtime.TransformerFlags: Type
+      ]: Type[runtime.TransformerFlags.Disable[Flag, Flags]] = TransformerFlags.Disable[Flag, Flags]
+
+      implicit val TransformerFlagDefaultValuesType: Type[runtime.TransformerFlags.DefaultValues] =
+        TransformerFlags.Flags.DefaultValues
+      implicit val TransformerFlagBeanGettersType: Type[runtime.TransformerFlags.BeanGetters] =
+        TransformerFlags.Flags.BeanGetters
+      implicit val TransformerFlagBeanSettersType: Type[runtime.TransformerFlags.BeanSetters] =
+        TransformerFlags.Flags.BeanSetters
+      implicit val TransformerFlagMethodAccessorsType: Type[runtime.TransformerFlags.MethodAccessors] =
+        TransformerFlags.Flags.MethodAccessors
+      implicit val TransformerFlagOptionDefaultsToNoneType: Type[runtime.TransformerFlags.OptionDefaultsToNone] =
+        TransformerFlags.Flags.OptionDefaultsToNone
+      implicit def TransformerFlagImplicitConflictResolutionType[R <: dsls.ImplicitTransformerPreference: Type]
+          : Type[runtime.TransformerFlags.ImplicitConflictResolution[R]] =
+        TransformerFlags.Flags.ImplicitConflictResolution[R]
+      implicit val TransformerFlagImplicitConflictResolutionType: Type[runtime.TransformerFlags.MacrosLogging] =
+        TransformerFlags.Flags.MacrosLogging
+
+      implicit def TransformerIntoType[
+          From: Type,
+          To: Type,
+          Cfg <: runtime.TransformerCfg: Type,
+          Flags <: runtime.TransformerFlags: Type
+      ]: Type[dsls.TransformerInto[From, To, Cfg, Flags]] = TransformerInto[From, To, Cfg, Flags]
+      implicit def TransformerDefinitionType[
+          From: Type,
+          To: Type,
+          Cfg <: runtime.TransformerCfg: Type,
+          Flags <: runtime.TransformerFlags: Type
+      ]: Type[dsls.TransformerDefinition[From, To, Cfg, Flags]] = TransformerDefinition[From, To, Cfg, Flags]
+      implicit def PartialTransformerIntoType[
+          From: Type,
+          To: Type,
+          Cfg <: runtime.TransformerCfg: Type,
+          Flags <: runtime.TransformerFlags: Type
+      ]: Type[dsls.PartialTransformerInto[From, To, Cfg, Flags]] = PartialTransformerInto[From, To, Cfg, Flags]
+      implicit def PartialTransformerDefinitionType[
+          From: Type,
+          To: Type,
+          Cfg <: runtime.TransformerCfg: Type,
+          Flags <: runtime.TransformerFlags: Type
+      ]: Type[dsls.PartialTransformerDefinition[From, To, Cfg, Flags]] =
+        PartialTransformerDefinition[From, To, Cfg, Flags]
 
       implicit val RuntimeDataStoreType: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] = RuntimeDataStore
     }

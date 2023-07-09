@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.dsl.TransformerDefinitionCommons
+import io.scalaland.chimney.dsl as dsls
+import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
 import scala.collection.compat.Factory
@@ -109,20 +110,8 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
       def MapValue(key: Expr[Any]): Expr[partial.PathElement.MapValue]
     }
 
-    val RuntimeDataStore: RuntimeDataStoreModule
-    trait RuntimeDataStoreModule { this: RuntimeDataStore.type =>
-
-      def empty: Expr[TransformerDefinitionCommons.RuntimeDataStore]
-
-      def extractAt(
-          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
-          index: Int
-      ): Expr[Any]
-    }
-
     val Patcher: PatcherModule
-    trait PatcherModule {
-      this: Patcher.type =>
+    trait PatcherModule { this: Patcher.type =>
 
       def patch[A: Type, Patch: Type](
           patcher: Expr[io.scalaland.chimney.Patcher[A, Patch]],
@@ -133,6 +122,20 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
       def instance[A: Type, Patch: Type](
           f: (Expr[A], Expr[Patch]) => Expr[A]
       ): Expr[io.scalaland.chimney.Patcher[A, Patch]]
+    }
+
+    val WithRuntimeDataStore: WithRuntimeDataStoreModule
+    trait WithRuntimeDataStoreModule { this: WithRuntimeDataStore.type =>
+
+      def addOverride[A <: runtime.WithRuntimeDataStore: Type](value: Expr[A], overrideData: Expr[Any]): Expr[A]
+    }
+
+    val RuntimeDataStore: RuntimeDataStoreModule
+    trait RuntimeDataStoreModule { this: RuntimeDataStore.type =>
+
+      def empty: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore]
+
+      def extractAt(runtimeDataStore: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore], index: Int): Expr[Any]
     }
   }
 
@@ -168,10 +171,18 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
     def value: Expr[A] = ChimneyExpr.PartialResult.Value.value(valueExpr)
   }
 
-  implicit final protected class RuntimeDataStoreExprOps(
-      private val runtimeDataStoreExpr: Expr[TransformerDefinitionCommons.RuntimeDataStore]
+  implicit final protected class WithRuntimeDataStoreExprOps[A <: runtime.WithRuntimeDataStore: Type](
+      private val withRuntimeDataStore: Expr[A]
   ) {
 
-    def apply(index: Int): Expr[Any] = ChimneyExpr.RuntimeDataStore.extractAt(runtimeDataStoreExpr, index)
+    def addOverride(overrideData: Expr[Any]): Expr[A] =
+      ChimneyExpr.WithRuntimeDataStore.addOverride(withRuntimeDataStore, overrideData)
+  }
+
+  implicit final protected class RuntimeDataStoreExprOps(
+      private val runtimeDataStore: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore]
+  ) {
+
+    def apply(index: Int): Expr[Any] = ChimneyExpr.RuntimeDataStore.extractAt(runtimeDataStore, index)
   }
 }

@@ -44,9 +44,6 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       weakTypeTag[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
-    val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
-      weakTypeTag[dsls.TransformerDefinitionCommons.RuntimeDataStore]
-
     object TransformerCfg extends TransformerCfgModule {
       val Empty: Type[runtime.TransformerCfg.Empty] = weakTypeTag[runtime.TransformerCfg.Empty]
       object FieldConst extends FieldConstModule {
@@ -188,5 +185,48 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           else scala.None
       }
     }
+
+    object TransformerInto extends TransformerIntoModule {
+      def apply[From: Type, To: Type, Cfg <: runtime.TransformerCfg: Type, Flags <: runtime.TransformerFlags: Type]
+          : Type[dsls.TransformerInto[From, To, Cfg, Flags]] = weakTypeTag[dsls.TransformerInto[From, To, Cfg, Flags]]
+      def unapply[A](A: Type[A]): Option[(??, ??, ?<[runtime.TransformerCfg], ?<[runtime.TransformerFlags])] =
+        if (A.tpe.typeConstructor <:< weakTypeOf[dsls.TransformerInto[?, ?, ?, ?]].typeConstructor)
+          Some((A.param(0), A.param(1), A.param_<[runtime.TransformerCfg](2), A.param_<[runtime.TransformerFlags](3)))
+        else scala.None
+    }
+
+    object TransformerDefinition extends TransformerDefinitionModule {
+      def apply[From: Type, To: Type, Cfg <: runtime.TransformerCfg: Type, Flags <: runtime.TransformerFlags: Type]
+          : Type[dsls.TransformerDefinition[From, To, Cfg, Flags]] =
+        weakTypeTag[dsls.TransformerDefinition[From, To, Cfg, Flags]]
+      def unapply[A](A: Type[A]): Option[(??, ??, ?<[runtime.TransformerCfg], ?<[runtime.TransformerFlags])] =
+        if (A.tpe.typeConstructor <:< weakTypeOf[dsls.TransformerDefinition[?, ?, ?, ?]].typeConstructor)
+          Some((A.param(0), A.param(1), A.param_<[runtime.TransformerCfg](2), A.param_<[runtime.TransformerFlags](3)))
+        else scala.None
+    }
+
+    object PartialTransformerInto extends PartialTransformerIntoModule {
+      def apply[From: Type, To: Type, Cfg <: runtime.TransformerCfg: Type, Flags <: runtime.TransformerFlags: Type]
+          : Type[dsls.PartialTransformerInto[From, To, Cfg, Flags]] =
+        weakTypeTag[dsls.PartialTransformerInto[From, To, Cfg, Flags]]
+      def unapply[A](A: Type[A]): Option[(??, ??, ?<[runtime.TransformerCfg], ?<[runtime.TransformerFlags])] =
+        if (A.tpe.typeConstructor <:< weakTypeOf[dsls.PartialTransformerInto[?, ?, ?, ?]].typeConstructor)
+          Some((A.param(0), A.param(1), A.param_<[runtime.TransformerCfg](2), A.param_<[runtime.TransformerFlags](3)))
+        else scala.None
+    }
+
+    object PartialTransformerDefinition extends PartialTransformerDefinitionModule {
+      def apply[From: Type, To: Type, Cfg <: runtime.TransformerCfg: Type, Flags <: runtime.TransformerFlags: Type]
+          : Type[dsls.PartialTransformerDefinition[From, To, Cfg, Flags]] =
+        weakTypeTag[dsls.PartialTransformerDefinition[From, To, Cfg, Flags]]
+
+      def unapply[A](A: Type[A]): Option[(??, ??, ?<[runtime.TransformerCfg], ?<[runtime.TransformerFlags])] =
+        if (A.tpe.typeConstructor <:< weakTypeOf[dsls.PartialTransformerDefinition[?, ?, ?, ?]].typeConstructor)
+          Some((A.param(0), A.param(1), A.param_<[runtime.TransformerCfg](2), A.param_<[runtime.TransformerFlags](3)))
+        else scala.None
+    }
+
+    val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
+      weakTypeTag[dsls.TransformerDefinitionCommons.RuntimeDataStore]
   }
 }

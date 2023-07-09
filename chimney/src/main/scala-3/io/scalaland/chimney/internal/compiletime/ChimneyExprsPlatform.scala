@@ -1,7 +1,9 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.dsl.TransformerDefinitionCommons
-import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
+import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
+import io.scalaland.chimney.dsl as dsls
+import io.scalaland.chimney.internal.runtime
+import io.scalaland.chimney.partial
 
 import scala.collection.compat.Factory
 import scala.quoted
@@ -132,28 +134,14 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         '{ partial.PathElement.MapValue(${ key }) }
     }
 
-    object RuntimeDataStore extends RuntimeDataStoreModule {
-
-      val empty: Expr[TransformerDefinitionCommons.RuntimeDataStore] =
-        '{ TransformerDefinitionCommons.emptyRuntimeDataStore }
-
-      def extractAt(
-          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
-          index: Int
-      ): Expr[Any] = {
-        '{ ${ runtimeDataStore }.apply(${ quoted.Expr(index) }) }
-      }
-    }
-
     object Patcher extends PatcherModule {
 
       def patch[A: Type, Patch: Type](
           patcher: Expr[io.scalaland.chimney.Patcher[A, Patch]],
           obj: Expr[A],
           patch: Expr[Patch]
-      ): Expr[A] = '{
-        ${ patcher }.patch(${ obj }, ${ patch })
-      }
+      ): Expr[A] =
+        '{ ${ patcher }.patch(${ obj }, ${ patch }) }
 
       def instance[A: Type, Patch: Type](
           f: (Expr[A], Expr[Patch]) => Expr[A]
@@ -165,6 +153,24 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
             }
           }
         }
+    }
+
+    object WithRuntimeDataStore extends WithRuntimeDataStoreModule {
+
+      def addOverride[A <: runtime.WithRuntimeDataStore: Type](value: Expr[A], overrideData: Expr[Any]): Expr[A] =
+        '{ runtime.WithRuntimeDataStore.update[A](${ value }, ${ overrideData }) }
+    }
+
+    object RuntimeDataStore extends RuntimeDataStoreModule {
+
+      val empty: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
+        '{ dsls.TransformerDefinitionCommons.emptyRuntimeDataStore }
+
+      def extractAt(
+          runtimeDataStore: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore],
+          index: Int
+      ): Expr[Any] =
+        '{ ${ runtimeDataStore }.apply(${ quoted.Expr(index) }) }
     }
   }
 }

@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.dsl.TransformerDefinitionCommons
+import io.scalaland.chimney.dsl as dsls
+import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
 import scala.collection.compat.Factory
@@ -163,19 +164,6 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         c.Expr[partial.PathElement.MapValue](q"_root_.io.scalaland.chimney.partial.PathElement.MapValue($value)")
     }
 
-    object RuntimeDataStore extends RuntimeDataStoreModule {
-
-      val empty: Expr[TransformerDefinitionCommons.RuntimeDataStore] =
-        c.Expr[TransformerDefinitionCommons.RuntimeDataStore](
-          q"_root_.io.scalaland.chimney.dsl.TransformerDefinitionCommons.emptyRuntimeDataStore"
-        )
-
-      def extractAt(
-          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
-          index: Int
-      ): Expr[Any] = c.Expr[Any](q"$runtimeDataStore($index)")
-    }
-
     object Patcher extends PatcherModule {
 
       def patch[A: Type, Patch: Type](
@@ -203,6 +191,27 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
             }"""
         )
       }
+    }
+
+    object WithRuntimeDataStore extends WithRuntimeDataStoreModule {
+
+      def addOverride[A <: runtime.WithRuntimeDataStore: Type](value: Expr[A], overrideData: Expr[Any]): Expr[A] =
+        c.Expr[A](
+          q"_root_.io.scalaland.chimney.internal.runtime.WithRuntimeDataStore.update[${Type[A]}]($value, $overrideData)"
+        )
+    }
+
+    object RuntimeDataStore extends RuntimeDataStoreModule {
+
+      val empty: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
+        c.Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore](
+          q"_root_.io.scalaland.chimney.dsl.TransformerDefinitionCommons.emptyRuntimeDataStore"
+        )
+
+      def extractAt(
+          runtimeDataStore: Expr[dsls.TransformerDefinitionCommons.RuntimeDataStore],
+          index: Int
+      ): Expr[Any] = c.Expr[Any](q"$runtimeDataStore($index)")
     }
   }
 }

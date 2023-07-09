@@ -1,35 +1,89 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.internal.compiletime.dsl.utils.{DslMacroUtils, TransformerConfigSupport}
+import io.scalaland.chimney.dsl as dsls
+import io.scalaland.chimney.internal.runtime
+import io.scalaland.chimney.partial
 
 import scala.annotation.unused
 import scala.reflect.macros.whitebox
 
-class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends DslMacroUtils with TransformerConfigSupport {
+final class PartialTransformerDefinitionMacros(val c: whitebox.Context)
+    extends PartialTransformerDefinitionGateway
+    with DslDefinitionsPlatform {
 
-  import CfgTpes.*
-  import c.universe.*
+  private def ptd[From, To, Cfg <: runtime.TransformerCfg, Flags <: runtime.TransformerFlags] =
+    c.prefix.asInstanceOf[Expr[dsls.PartialTransformerDefinition[From, To, Cfg, Flags]]]
 
-  def withFieldConstImpl[C: WeakTypeTag](selector: Tree, value: Tree)(@unused ev: Tree): Tree =
-    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, value, fieldConstT)
+  // While Scala 2.13 would accept Expr[dsls.PartialTransformerDefinition[From, To, ? <: runtime.TransformerCfg, Flags]]
+  // as return type, Scala 2.12 forces us to return c.Tree in whitebox macros.
 
-  def withFieldConstPartialImpl[C: WeakTypeTag](selector: Tree, value: Tree)(@unused ev: Tree): Tree =
-    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, value, fieldConstPartialT)
+  def withFieldConstImpl[
+      From: Type,
+      To: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      T: Type,
+      U: Type
+  ](selector: Expr[To => T], value: Expr[U])(@unused ev: Expr[U <:< T]): c.Tree =
+    withFieldConst[From, To, Cfg, Flags, T](ptd, selector, value.upcastExpr[T]).tree
 
-  def withFieldComputedImpl[C: WeakTypeTag](selector: Tree, f: Tree)(@unused ev: Tree): Tree =
-    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, f, fieldComputedT)
+  def withFieldConstPartialImpl[
+      From: Type,
+      To: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      T: Type,
+      U: Type
+  ](selector: Expr[To => T], value: Expr[partial.Result[U]])(@unused ev: Expr[U <:< T]): c.Tree =
+    withFieldConstPartial[From, To, Cfg, Flags, T](ptd, selector, value.upcastExpr[partial.Result[T]]).tree
 
-  def withFieldComputedPartialImpl[C: WeakTypeTag](selector: Tree, f: Tree)(@unused ev: Tree): Tree =
-    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, f, fieldComputedPartialT)
+  def withFieldComputedImpl[
+      From: Type,
+      To: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      T: Type,
+      U: Type
+  ](selector: Expr[To => T], f: Expr[From => U])(
+      @unused ev: Expr[U <:< T]
+  ): c.Tree =
+    withFieldComputed[From, To, Cfg, Flags, T](ptd, selector, f.upcastExpr[From => T]).tree
 
-  def withFieldRenamedImpl[C: WeakTypeTag](selectorFrom: Tree, selectorTo: Tree): Tree = {
-    val (fieldNameFrom, fieldNameTo) = (selectorFrom, selectorTo).extractSelectorsOrAbort
-    c.prefix.tree.renameField[C](fieldNameFrom, fieldNameTo)
-  }
+  def withFieldComputedPartialImpl[
+      From: Type,
+      To: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      T: Type,
+      U: Type
+  ](selector: Expr[To => T], f: Expr[From => partial.Result[U]])(@unused ev: Expr[U <:< T]): c.Tree =
+    withFieldComputedPartial[From, To, Cfg, Flags, T](ptd, selector, f.upcastExpr[From => partial.Result[T]]).tree
 
-  def withCoproductInstanceImpl[To: WeakTypeTag, Inst: WeakTypeTag, C: WeakTypeTag](f: Tree): Tree =
-    c.prefix.tree.overrideCoproductInstance[C](weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceT)
+  def withFieldRenamedImpl[
+      From: Type,
+      To: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      T: Type,
+      U: Type
+  ](selectorFrom: Expr[From => T], selectorTo: Expr[To => U]): c.Tree =
+    withFieldRenamed[From, To, Cfg, Flags, T, U](ptd, selectorFrom, selectorTo).tree
 
-  def withCoproductInstancePartialImpl[To: WeakTypeTag, Inst: WeakTypeTag, C: WeakTypeTag](f: Tree): Tree =
-    c.prefix.tree.overrideCoproductInstance[C](weakTypeOf[Inst], weakTypeOf[To], f, coproductInstancePartialT)
+  def withCoproductInstanceImpl[
+      From: Type,
+      To: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      Inst: Type
+  ](f: Expr[Inst => To]): c.Tree =
+    withCoproductInstance[From, To, Cfg, Flags, Inst](ptd, f).tree
+
+  def withCoproductInstancePartialImpl[
+      From: Type,
+      To: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      Inst: Type
+  ](f: Expr[Inst => partial.Result[To]]): c.Tree =
+    withCoproductInstancePartial[From, To, Cfg, Flags, Inst](ptd, f).tree
 }

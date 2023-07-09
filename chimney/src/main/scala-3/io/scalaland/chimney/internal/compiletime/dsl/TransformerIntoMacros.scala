@@ -1,96 +1,66 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import scala.quoted.*
-import io.scalaland.chimney.*
-import io.scalaland.chimney.internal.*
-import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.dsl as dsls
+import io.scalaland.chimney.internal.runtime
+import io.scalaland.chimney.partial
 
-import scala.quoted.*
+import scala.quoted.{Expr, Quotes, Type}
+
+final class TransformerIntoMacros(q: Quotes) extends DslDefinitionsPlatform(q) with TransformIntoGateway
 
 object TransformerIntoMacros {
 
   def withFieldConstImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[TransformerInto[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      valueExpr: Expr[U]
-  )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    TransformerDefinitionMacros.withFieldConstImpl('{ ${ tiExpr }.td }, selectorExpr, valueExpr) match {
-      case '{ $td: TransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new TransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
-    }
-  }
+      ti: Expr[dsls.TransformerInto[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      value: Expr[U]
+  )(using quotes: Quotes): Expr[dsls.TransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new TransformerIntoMacros(quotes).withFieldConst(ti, selector, value)
 
   def withFieldComputedImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[TransformerInto[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      fExpr: Expr[From => U]
-  )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    TransformerDefinitionMacros.withFieldComputedImpl('{ ${ tiExpr }.td }, selectorExpr, fExpr) match {
-      case '{ $td: TransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new TransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
-    }
-  }
+      ti: Expr[dsls.TransformerInto[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      f: Expr[From => U]
+  )(using quotes: Quotes): Expr[dsls.TransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new TransformerIntoMacros(quotes).withFieldComputed(ti, selector, f)
 
   def withFieldRenamedImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[TransformerInto[From, To, Cfg, Flags]],
-      selectorFromExpr: Expr[From => T],
-      selectorToExpr: Expr[To => U]
-  )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    TransformerDefinitionMacros.withFieldRenamed('{ ${ tiExpr }.td }, selectorFromExpr, selectorToExpr) match {
-      case '{ $td: TransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new TransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
-    }
-  }
+      ti: Expr[dsls.TransformerInto[From, To, Cfg, Flags]],
+      selectorFrom: Expr[From => T],
+      selectorTo: Expr[To => U]
+  )(using quotes: Quotes): Expr[dsls.TransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new TransformerIntoMacros(quotes).withFieldRenamed(ti, selectorFrom, selectorTo)
 
   def withCoproductInstanceImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       Inst: Type
   ](
-      tiExpr: Expr[TransformerInto[From, To, Cfg, Flags]],
-      fExpr: Expr[Inst => To]
-  )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    TransformerDefinitionMacros.withCoproductInstance('{ ${ tiExpr }.td }, fExpr) match {
-      case '{ $td: TransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new TransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
-    }
-  }
-
-  def transform[
-      From: Type,
-      To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
-      ImplicitScopeFlags <: TransformerFlags: Type
-  ](
-      source: Expr[From],
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
-  )(using Quotes): Expr[To] = {
-    TransformerMacros.deriveTotalTransformerResultWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](source, td)
-  }
+      ti: Expr[dsls.TransformerInto[From, To, Cfg, Flags]],
+      f: Expr[Inst => To]
+  )(using quotes: Quotes): Expr[dsls.TransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new TransformerIntoMacros(quotes).withCoproductInstance(ti, f)
 }

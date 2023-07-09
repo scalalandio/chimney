@@ -1,31 +1,55 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
+import io.scalaland.chimney.dsl as dsls
+import io.scalaland.chimney.internal.runtime
+
 import scala.annotation.unused
 import scala.reflect.macros.whitebox
 
-class TransformerIntoMacros(val c: whitebox.Context) extends DslMacroUtils {
+final class TransformerIntoMacros(val c: whitebox.Context) extends TransformIntoGateway with DslDefinitionsPlatform {
 
-  import c.universe.*
+  private def ti[From, To, Cfg <: runtime.TransformerCfg, Flags <: runtime.TransformerFlags] =
+    c.prefix.asInstanceOf[Expr[dsls.TransformerInto[From, To, Cfg, Flags]]]
 
-  def withFieldConstImpl(selector: Tree, value: Tree)(@unused ev: Tree): Tree =
-    c.prefix.tree.refineTransformerDefinition_Hack(
-      trees => q"_.withFieldConst($selector, ${trees("value")})",
-      "value" -> value
-    )
+  // While Scala 2.13 would accept Expr[dsls.TransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]]
+  // as return type, Scala 2.12 forces us to return c.Tree in whitebox macros.
 
-  def withFieldComputedImpl(selector: Tree, f: Tree)(@unused ev: Tree): Tree =
-    c.prefix.tree.refineTransformerDefinition_Hack(
-      trees => q"_.withFieldComputed($selector, ${trees("f")})",
-      "f" -> f
-    )
+  def withFieldConstImpl[
+      From: Type,
+      To: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      T: Type,
+      U: Type
+  ](selector: Expr[To => T], value: Expr[U])(@unused ev: Expr[U <:< T]): c.Tree =
+    withFieldConst[From, To, Cfg, Flags, T](ti, selector, value.upcastExpr[T]).tree
 
-  def withFieldRenamedImpl(selectorFrom: Tree, selectorTo: Tree): Tree =
-    c.prefix.tree.refineTransformerDefinition(q"_.withFieldRenamed($selectorFrom, $selectorTo)")
+  def withFieldComputedImpl[
+      From: Type,
+      To: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      T: Type,
+      U: Type
+  ](selector: Expr[To => T], f: Expr[From => U])(@unused ev: Expr[U <:< T]): c.Tree =
+    withFieldComputed[From, To, Cfg, Flags, T](ti, selector, f.upcastExpr[From => T]).tree
 
-  def withCoproductInstanceImpl(f: Tree): Tree =
-    c.prefix.tree.refineTransformerDefinition_Hack(
-      trees => q"_.withCoproductInstance(${trees("f")})",
-      "f" -> f
-    )
+  def withFieldRenamedImpl[
+      From: Type,
+      To: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      T: Type,
+      U: Type
+  ](selectorFrom: Expr[From => T], selectorTo: Expr[To => U]): c.Tree =
+    withFieldRenamed[From, To, Cfg, Flags, T, U](ti, selectorFrom, selectorTo).tree
+
+  def withCoproductInstanceImpl[
+      From: Type,
+      To: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
+      Inst: Type
+  ](f: Expr[Inst => To]): c.Tree =
+    withCoproductInstance[From, To, Cfg, Flags, Inst](ti, f).tree
 }

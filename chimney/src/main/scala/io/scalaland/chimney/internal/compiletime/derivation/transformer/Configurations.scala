@@ -140,7 +140,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
     }
 
-    // This (suppressed) error is a case when compiler is simply wrong :)
+    // This (suppressed) error is a case when Scala 3 compiler is simply wrong :)
     @scala.annotation.nowarn("msg=Unreachable case")
     private def extractTransformerFlags[Flags <: runtime.TransformerFlags: Type](
         defaultFlags: TransformerFlags
@@ -180,7 +180,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       // $COVERAGE-ON$
     }
 
-    // This (suppressed) error is a case when compiler is simply wrong :)
+    // This (suppressed) error is a case when Scala 3 compiler is simply wrong :)
     @scala.annotation.nowarn("msg=Unreachable case")
     private def extractTransformerConfig[Cfg <: runtime.TransformerCfg: Type](
         runtimeDataIdx: Int

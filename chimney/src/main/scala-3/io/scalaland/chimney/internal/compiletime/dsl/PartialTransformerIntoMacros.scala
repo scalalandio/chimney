@@ -1,152 +1,106 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.*
-import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.internal.*
-import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.dsl as dsls
+import io.scalaland.chimney.internal.runtime
+import io.scalaland.chimney.partial
 
-import scala.quoted.*
+import scala.quoted.{Expr, Quotes, Type}
+
+final class PartialTransformerIntoMacros(q: Quotes) extends DslDefinitionsPlatform(q) with PartialTransformerIntoGateway
 
 object PartialTransformerIntoMacros {
 
   def withFieldConstImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      valueExpr: Expr[U]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withFieldConstImpl('{ ${ tiExpr }.td }, selectorExpr, valueExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
-    }
-  }
+      pti: Expr[dsls.PartialTransformerInto[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      value: Expr[U]
+  )(using quotes: Quotes): Expr[dsls.PartialTransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new PartialTransformerIntoMacros(quotes).withFieldConst(pti, selector, value)
 
   def withFieldConstPartialImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      valueExpr: Expr[partial.Result[U]]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withFieldConstPartialImpl('{ ${ tiExpr }.td }, selectorExpr, valueExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
-    }
-  }
+      pti: Expr[dsls.PartialTransformerInto[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      value: Expr[partial.Result[U]]
+  )(using quotes: Quotes): Expr[dsls.PartialTransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new PartialTransformerIntoMacros(quotes).withFieldConstPartial(pti, selector, value)
 
   def withFieldComputedImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      fExpr: Expr[From => U]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withFieldComputedImpl('{ ${ tiExpr }.td }, selectorExpr, fExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
-    }
-  }
+      pti: Expr[dsls.PartialTransformerInto[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      f: Expr[From => U]
+  )(using quotes: Quotes): Expr[dsls.PartialTransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new PartialTransformerIntoMacros(quotes).withFieldComputed(pti, selector, f)
 
   def withFieldComputedPartialImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      fExpr: Expr[From => partial.Result[U]]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withFieldComputedPartialImpl('{ ${ tiExpr }.td }, selectorExpr, fExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
-    }
-  }
+      pti: Expr[dsls.PartialTransformerInto[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      f: Expr[From => partial.Result[U]]
+  )(using quotes: Quotes): Expr[dsls.PartialTransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new PartialTransformerIntoMacros(quotes).withFieldComputedPartial(pti, selector, f)
 
   def withFieldRenamedImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      selectorFromExpr: Expr[From => T],
-      selectorToExpr: Expr[To => U]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withFieldRenamed('{ ${ tiExpr }.td }, selectorFromExpr, selectorToExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
-    }
-  }
+      pti: Expr[dsls.PartialTransformerInto[From, To, Cfg, Flags]],
+      selectorFrom: Expr[From => T],
+      selectorTo: Expr[To => U]
+  )(using quotes: Quotes): Expr[dsls.PartialTransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new PartialTransformerIntoMacros(quotes).withFieldRenamed(pti, selectorFrom, selectorTo)
 
   def withCoproductInstanceImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       Inst: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      fExpr: Expr[Inst => To]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withCoproductInstance('{ ${ tiExpr }.td }, fExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
-    }
-  }
+      pti: Expr[dsls.PartialTransformerInto[From, To, Cfg, Flags]],
+      f: Expr[Inst => To]
+  )(using quotes: Quotes): Expr[dsls.PartialTransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new PartialTransformerIntoMacros(quotes).withCoproductInstance(pti, f)
 
   def withCoproductInstancePartialImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       Inst: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      fExpr: Expr[Inst => partial.Result[To]]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withCoproductInstancePartial('{ ${ tiExpr }.td }, fExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
-    }
-  }
-
-  def transform[
-      From: Type,
-      To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
-      ImplicitScopeFlags <: TransformerFlags: Type
-  ](
-      source: Expr[From],
-      td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]],
-      failFast: Boolean
-  )(using Quotes): Expr[partial.Result[To]] = {
-    TransformerMacros.derivePartialTransformerResultWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](
-      source,
-      td,
-      failFast
-    )
-  }
+      pti: Expr[dsls.PartialTransformerInto[From, To, Cfg, Flags]],
+      f: Expr[Inst => partial.Result[To]]
+  )(using quotes: Quotes): Expr[dsls.PartialTransformerInto[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new PartialTransformerIntoMacros(quotes).withCoproductInstancePartial(pti, f)
 }

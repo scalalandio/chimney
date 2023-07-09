@@ -1,93 +1,66 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.Transformer
-import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.compiletime.dsl.FieldNameUtils
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.dsl as dsls
+import io.scalaland.chimney.internal.runtime
+import io.scalaland.chimney.partial
 
-import scala.quoted.*
+import scala.quoted.{Expr, Quotes, Type}
+
+final class TransformerDefinitionMacros(q: Quotes) extends DslDefinitionsPlatform(q) with TransformerDefinitionGateway
 
 object TransformerDefinitionMacros {
 
   def withFieldConstImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      valueExpr: Expr[U]
-  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selectorExpr)
-    FieldNameUtils.strLiteralType(fieldName).asType match {
-      case '[FieldNameUtils.StringBounded[fieldNameT]] =>
-        '{ $td.__addOverride($valueExpr).__refineConfig[TransformerCfg.FieldConst[fieldNameT, Cfg]] }
-    }
-  }
+      td: Expr[dsls.TransformerDefinition[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      value: Expr[U]
+  )(using quotes: Quotes): Expr[dsls.TransformerDefinition[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new TransformerDefinitionMacros(quotes).withFieldConst(td, selector, value)
 
   def withFieldComputedImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      fExpr: Expr[From => U]
-  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selectorExpr)
-    FieldNameUtils.strLiteralType(fieldName).asType match {
-      case '[FieldNameUtils.StringBounded[fieldNameT]] =>
-        '{ $td.__addOverride($fExpr).__refineConfig[TransformerCfg.FieldComputed[fieldNameT, Cfg]] }
-    }
-  }
+      td: Expr[dsls.TransformerDefinition[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      f: Expr[From => U]
+  )(using quotes: Quotes): Expr[dsls.TransformerDefinition[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new TransformerDefinitionMacros(quotes).withFieldComputed(td, selector, f)
 
   def withFieldRenamed[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]],
-      selectorFromExpr: Expr[From => T],
-      selectorToExpr: Expr[To => U]
-  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    val (fieldNameFrom, fieldNameTo) = FieldNameUtils.extractSelectorFieldNamesOrAbort(selectorFromExpr, selectorToExpr)
-    (FieldNameUtils.strLiteralType(fieldNameFrom).asType, FieldNameUtils.strLiteralType(fieldNameTo).asType) match {
-      case ('[FieldNameUtils.StringBounded[fieldNameFromT]], '[FieldNameUtils.StringBounded[fieldNameToT]]) =>
-        '{ $td.__refineConfig[TransformerCfg.FieldRelabelled[fieldNameFromT, fieldNameToT, Cfg]] }
-    }
-  }
+      td: Expr[dsls.TransformerDefinition[From, To, Cfg, Flags]],
+      selectorFrom: Expr[From => T],
+      selectorTo: Expr[To => U]
+  )(using quotes: Quotes): Expr[dsls.TransformerDefinition[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new TransformerDefinitionMacros(quotes).withFieldRenamed(td, selectorFrom, selectorTo)
 
   def withCoproductInstance[
       From: Type,
       To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
+      Cfg <: runtime.TransformerCfg: Type,
+      Flags <: runtime.TransformerFlags: Type,
       Inst: Type
   ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]],
-      fExpr: Expr[Inst => To]
-  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    '{ $td.__addInstance($fExpr).__refineConfig[TransformerCfg.CoproductInstance[Inst, To, Cfg]] }
-  }
-
-  def buildTransformer[
-      From: Type,
-      To: Type,
-      Cfg <: TransformerCfg: Type,
-      Flags <: TransformerFlags: Type,
-      ImplicitScopeFlags <: TransformerFlags: Type
-  ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
-  )(using Quotes): Expr[Transformer[From, To]] =
-    TransformerMacros.deriveTotalTransformerWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](td)
+      td: Expr[dsls.TransformerDefinition[From, To, Cfg, Flags]],
+      f: Expr[Inst => To]
+  )(using quotes: Quotes): Expr[dsls.TransformerDefinition[From, To, ? <: runtime.TransformerCfg, Flags]] =
+    new TransformerDefinitionMacros(quotes).withCoproductInstance(td, f)
 }

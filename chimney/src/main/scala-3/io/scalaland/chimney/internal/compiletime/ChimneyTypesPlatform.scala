@@ -41,9 +41,6 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       quoted.Type.of[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
-    val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
-      quoted.Type.of[dsls.TransformerDefinitionCommons.RuntimeDataStore]
-
     object TransformerCfg extends TransformerCfgModule {
       val Empty: Type[runtime.TransformerCfg.Empty] = quoted.Type.of[runtime.TransformerCfg.Empty]
       object FieldConst extends FieldConstModule {
@@ -186,5 +183,84 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           case _                                        => scala.None
       }
     }
+
+    object TransformerInto extends TransformerIntoModule {
+      def apply[From: Type, To: Type, Cfg <: runtime.TransformerCfg: Type, Flags <: runtime.TransformerFlags: Type]
+          : Type[dsls.TransformerInto[From, To, Cfg, Flags]] =
+        quoted.Type.of[dsls.TransformerInto[From, To, Cfg, Flags]]
+
+      def unapply[A](tpe: Type[A]): Option[(??, ??, ?<[runtime.TransformerCfg], ?<[runtime.TransformerFlags])] =
+        tpe match
+          case '[dsls.TransformerInto[from, to, cfg, flags]] =>
+            Some(
+              (
+                Type[from].as_??,
+                Type[to].as_??,
+                Type[cfg].as_?<[runtime.TransformerCfg],
+                Type[flags].as_?<[runtime.TransformerFlags]
+              )
+            )
+          case _ => scala.None
+    }
+
+    object TransformerDefinition extends TransformerDefinitionModule {
+      def apply[From: Type, To: Type, Cfg <: runtime.TransformerCfg: Type, Flags <: runtime.TransformerFlags: Type]
+          : Type[dsls.TransformerDefinition[From, To, Cfg, Flags]] =
+        quoted.Type.of[dsls.TransformerDefinition[From, To, Cfg, Flags]]
+
+      def unapply[A](tpe: Type[A]): Option[(??, ??, ?<[runtime.TransformerCfg], ?<[runtime.TransformerFlags])] =
+        tpe match
+          case '[dsls.TransformerDefinition[from, to, cfg, flags]] =>
+            Some(
+              (
+                Type[from].as_??,
+                Type[to].as_??,
+                Type[cfg].as_?<[runtime.TransformerCfg],
+                Type[flags].as_?<[runtime.TransformerFlags]
+              )
+            )
+          case _ => scala.None
+    }
+
+    object PartialTransformerInto extends PartialTransformerIntoModule {
+      def apply[From: Type, To: Type, Cfg <: runtime.TransformerCfg: Type, Flags <: runtime.TransformerFlags: Type]
+          : Type[dsls.PartialTransformerInto[From, To, Cfg, Flags]] =
+        quoted.Type.of[dsls.PartialTransformerInto[From, To, Cfg, Flags]]
+
+      def unapply[A](tpe: Type[A]): Option[(??, ??, ?<[runtime.TransformerCfg], ?<[runtime.TransformerFlags])] =
+        tpe match
+          case '[dsls.PartialTransformerInto[from, to, cfg, flags]] =>
+            Some(
+              (
+                Type[from].as_??,
+                Type[to].as_??,
+                Type[cfg].as_?<[runtime.TransformerCfg],
+                Type[flags].as_?<[runtime.TransformerFlags]
+              )
+            )
+          case _ => scala.None
+    }
+
+    object PartialTransformerDefinition extends PartialTransformerDefinitionModule {
+      def apply[From: Type, To: Type, Cfg <: runtime.TransformerCfg: Type, Flags <: runtime.TransformerFlags: Type]
+          : Type[dsls.PartialTransformerDefinition[From, To, Cfg, Flags]] =
+        quoted.Type.of[dsls.PartialTransformerDefinition[From, To, Cfg, Flags]]
+
+      def unapply[A](tpe: Type[A]): Option[(??, ??, ?<[runtime.TransformerCfg], ?<[runtime.TransformerFlags])] =
+        tpe match
+          case '[dsls.PartialTransformerInto[from, to, cfg, flags]] =>
+            Some(
+              (
+                Type[from].as_??,
+                Type[to].as_??,
+                Type[cfg].as_?<[runtime.TransformerCfg],
+                Type[flags].as_?<[runtime.TransformerFlags]
+              )
+            )
+          case _ => scala.None
+    }
+
+    val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
+      quoted.Type.of[dsls.TransformerDefinitionCommons.RuntimeDataStore]
   }
 }
