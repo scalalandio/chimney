@@ -117,7 +117,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                             }
                           // We're constructing:
                           // case fromSubtypeExpr: $fromSubtype => Subtype(${ derivedToSubtypeInner } // or ${ derivedResultToSubtypeInner }.map(Subtype)
-                          lazy val fromSubtypeToSubtypeUpwrapped = toSubtype.Underlying match {
+                          lazy val fromSubtypeToSubtypeUnwrapped = toSubtype.Underlying match {
                             case WrapperClassType(toSubtypeInner) =>
                               import toSubtypeInner.{Underlying as FromSubtypeInner, value as wrapper}
                               Some(
@@ -134,7 +134,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                           subtypeToSubtype
                             .orElse(subtypeToTarget)
                             .orElseOpt(fromSubtypeUnwrappedToSubtype)
-                            .orElseOpt(fromSubtypeToSubtypeUpwrapped)
+                            .orElseOpt(fromSubtypeToSubtypeUnwrapped)
                         }
                         .map(Existential[ExprPromise[*, TransformationExpr[To]], fromSubtype.Underlying](_))
                   }
