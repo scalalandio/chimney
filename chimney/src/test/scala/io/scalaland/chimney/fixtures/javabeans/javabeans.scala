@@ -65,6 +65,29 @@ class JavaBeanTarget {
     }
   }
 }
+class JavaBeanTargetNoIdSetter {
+  private var id: String = _
+
+  def withId(id: String): Unit = {
+    this.id = id
+  }
+
+  // make sure that only public setters are taken into account
+  protected def setFoo(foo: Unit): Unit = ()
+
+  private def setBar(bar: Int): Unit = ()
+
+  def getId: String = id
+
+  override def equals(obj: Any): Boolean = {
+    obj match {
+      case jbt: JavaBeanTarget =>
+        this.id == jbt.getId
+      case _ =>
+        false
+    }
+  }
+}
 
 case class EnclosingCaseClass(ccNoFlag: CaseClassNoFlag)
 

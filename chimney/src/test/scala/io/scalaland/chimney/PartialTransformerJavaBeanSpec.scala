@@ -63,6 +63,14 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       target.getName ==> source.name
       target.isFlag ==> source.renamedFlag
     }
+
+    test("should fail to compile when getter is not paired with the right setter") {
+      compileErrorsFixed(
+        """CaseClassWithFlagRenamed("test-id", "test-name", renamedFlag = true).intoPartial[JavaBeanTargetNoIdSetter].withFieldRenamed(_.id, _.getId).transform"""
+      ).check(
+        "Assumed that parameter/setter getId is a part of io.scalaland.chimney.fixtures.javabeans.JavaBeanTargetNoIdSetter, but wasn't found"
+      )
+    }
   }
 
   group("""flag .enableBeanGetters""") {
