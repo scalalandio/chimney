@@ -22,11 +22,14 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
 
       (getterOpt, primaryConstructorOpt, argumentOpt) match {
         case (Some(getter), Some(_), Some(argument)) if !Type[A].isPrimitive =>
+          val argumentT = fromUntyped[Any](argument.typeSignature)
           val inner = fromUntyped(returnTypeOf(A, getter)).asExistential
           import inner.Underlying as Inner
           assert(
-            argument.typeSignature =:= inner.Underlying.tpe,
-            s"Wrapper/AnyVal ${Type.prettyPrint[A]} only parameter's type was expected to be the same as only constructor argument's type"
+            argumentT =:= inner.Underlying,
+            s"Wrapper/AnyVal ${Type.prettyPrint[A]} only property's type (${Type
+                .prettyPrint(argumentT)}) was expected to be the same as only constructor argument's type (${Type
+                .prettyPrint(Inner)})"
           )
 
           val termName = getter.asMethod.name.toTermName
@@ -34,7 +37,7 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
           Some(
             Existential[WrapperClass[A, *], inner.Underlying](
               WrapperClass[A, inner.Underlying](
-                fieldName = getter.name.toString, // TODO: use utility from Products
+                fieldName = getter.name.toString,
                 unwrap = (expr: Expr[A]) =>
                   if (getter.asMethod.paramLists.isEmpty) c.Expr[inner.Underlying](q"$expr.$termName")
                   else c.Expr[inner.Underlying](q"$expr.$termName()"),

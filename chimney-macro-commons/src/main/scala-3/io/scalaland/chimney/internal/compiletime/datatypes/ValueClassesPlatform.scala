@@ -24,19 +24,19 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
 
       (getterOpt, primaryConstructorOpt, argumentOpt) match {
         case (Some(getter), Some(primaryConstructor), Some(argument)) if !Type[A].isPrimitive =>
-          val typeByName = paramsWithTypes(A, primaryConstructor, isConstructor = true)
-          val inner = ExistentialType(typeByName(argument.name).asType.asInstanceOf[Type[Any]])
+          val argumentT = paramsWithTypes(A, primaryConstructor, isConstructor = true)(argument.name).asType.asInstanceOf[Type[Any]]
+          val inner = returnTypeOf[Any](A.memberType(getter)).asExistential
           import inner.Underlying as Inner
           assert(
-            typeByName(argument.name).asType.asInstanceOf[Type[Any]] =:= Inner,
-            s"Wrapper/AnyVal ${Type.prettyPrint[A]} only parameter's type (${Type
-                .prettyPrint(typeByName(argument.name).asType.asInstanceOf[Type[Any]])}) was expected to be the same as only constructor argument's type (${Type
+            argumentT =:= Inner,
+            s"Wrapper/AnyVal ${Type.prettyPrint[A]} only property's type (${Type
+                .prettyPrint(argumentT)}) was expected to be the same as only constructor argument's type (${Type
                 .prettyPrint(Inner)})"
           )
           Some(
             Existential[WrapperClass[A, *], inner.Underlying](
               WrapperClass[A, inner.Underlying](
-                fieldName = getter.name, // TODO: use utility from Products
+                fieldName = getter.name,
                 unwrap = (expr: Expr[A]) => expr.asTerm.select(getter).appliedToArgss(Nil).asExprOf[inner.Underlying],
                 wrap = (expr: Expr[inner.Underlying]) => {
                   val select = New(TypeTree.of[A]).select(primaryConstructor)
