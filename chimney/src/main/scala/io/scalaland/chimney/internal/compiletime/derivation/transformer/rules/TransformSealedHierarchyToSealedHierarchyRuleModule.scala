@@ -90,30 +90,43 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                             ).map(_.map(toUpcast))
                           // We're constructing:
                           // case fromSubtypeExpr: $fromSubtype => ${ derivedToSubtype } // or ${ derivedResultToSubtype }
-                          lazy val subtypeToTarget = deriveRecursiveTransformationExpr[fromSubtype.Underlying, To](
-                            fromSubtypeExpr
-                          )
+                          lazy val subtypeToTarget =
+                            DerivationResult.log(
+                              s"Falling back on ${Type.prettyPrint[fromSubtype.Underlying]} to ${Type.prettyPrint[To]} (target upcasted)"
+                            ) >>
+                              deriveRecursiveTransformationExpr[fromSubtype.Underlying, To](fromSubtypeExpr)
                           // We're constructing:
                           // case fromSubtypeExpr: $fromSubtype => ${ derivedToSubtype } // or ${ derivedResultToSubtype } // using fromSubtypeExpr.value
-                          lazy val fromSubtypeUnwrappedToSubtype = fromSubtype.Underlying match {
-                            case WrapperClassType(fromSubtypeInner) =>
-                              import fromSubtypeInner.{Underlying as FromSubtypeInner, value as wrapper}
-                              Some(
-                                deriveRecursiveTransformationExpr[fromSubtypeInner.Underlying, toSubtype.Underlying](
-                                  wrapper.unwrap(fromSubtypeExpr)
-                                ).map(_.map(toUpcast))
-                              )
-                            case _ => None
-                          }
+                          lazy val fromSubtypeUnwrappedToSubtype =
+                            fromSubtype.Underlying match {
+                              case WrapperClassType(fromSubtypeInner) =>
+                                import fromSubtypeInner.{Underlying as FromSubtypeInner, value as wrapper}
+                                Some(
+                                  DerivationResult.log(
+                                    s"Falling back on ${Type.prettyPrint[fromSubtypeInner.Underlying]} to ${Type
+                                        .prettyPrint[toSubtype.Underlying]} (source subtype unwrapped)"
+                                  ) >>
+                                    deriveRecursiveTransformationExpr[
+                                      fromSubtypeInner.Underlying,
+                                      toSubtype.Underlying
+                                    ](
+                                      wrapper.unwrap(fromSubtypeExpr)
+                                    ).map(_.map(toUpcast))
+                                )
+                              case _ => None
+                            }
                           // We're constructing:
                           // case fromSubtypeExpr: $fromSubtype => Subtype(${ derivedToSubtypeInner } // or ${ derivedResultToSubtypeInner }.map(Subtype)
                           lazy val fromSubtypeToSubtypeUpwrapped = toSubtype.Underlying match {
                             case WrapperClassType(toSubtypeInner) =>
                               import toSubtypeInner.{Underlying as FromSubtypeInner, value as wrapper}
                               Some(
-                                deriveRecursiveTransformationExpr[fromSubtype.Underlying, toSubtypeInner.Underlying](
-                                  fromSubtypeExpr
-                                ).map(_.map(wrapper.wrap)).map(_.map(toUpcast))
+                                DerivationResult.log(
+                                  s"Falling back on ${Type.prettyPrint[fromSubtype.Underlying]} to ${Type.prettyPrint[toSubtypeInner.Underlying]} (target subtype unwrapped)"
+                                ) >>
+                                  deriveRecursiveTransformationExpr[fromSubtype.Underlying, toSubtypeInner.Underlying](
+                                    fromSubtypeExpr
+                                  ).map(_.map(wrapper.wrap)).map(_.map(toUpcast))
                               )
                             case _ => None
                           }

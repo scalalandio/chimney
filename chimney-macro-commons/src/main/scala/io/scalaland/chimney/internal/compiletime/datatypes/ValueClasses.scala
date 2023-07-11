@@ -30,9 +30,8 @@ trait ValueClasses { this: Definitions =>
       if (Type[A].isAnyVal)
         WrapperClassType.parse[A].map {
           _.asInstanceOf[Existential.UpperBounded[AnyVal, WrapperClass[A, *]]].mapK[ValueClass[A, *]] { _ =>
-            {
-              case WrapperClass(fieldName, unwrap, wrap) => ValueClass(fieldName, unwrap, wrap)
-              case _                                     => ???
+            { case WrapperClass(fieldName, unwrap, wrap) =>
+              ValueClass(fieldName, unwrap, wrap)
             }
           }
         }

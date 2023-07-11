@@ -8,6 +8,7 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
 
   protected object TransformTypeToValueClassRule extends Rule("TypeToValueClass") {
 
+    @scala.annotation.nowarn("msg=Unreachable case")
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[To] match {
         case ValueClassType(to2) =>
