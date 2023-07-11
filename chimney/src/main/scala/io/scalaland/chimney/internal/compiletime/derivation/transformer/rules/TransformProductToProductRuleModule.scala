@@ -37,6 +37,20 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             }
             .toMap
 
+          val verifyNoOverrideUnused = Traverse[List]
+            .parTraverse(
+              fieldOverrides.keys
+                .filterNot(fromName => parameters.keys.exists(toName => areNamesMatching(fromName, toName)))
+                .toList
+            ) { fromName =>
+              val tpeStr = Type.prettyPrint[To]
+              val params = parameters.keys.map(n => s"`$n`").mkString(", ")
+              DerivationResult.assertionError(
+                s"""|Assumed that parameter/setter $fromName is a part of $tpeStr, but wasn't found
+                    |available methods: $params""".stripMargin
+              )
+            }
+
           DerivationResult.log {
             val gettersStr = fromExtractors
               .map { case (k, v) => s"`$k`: ${Type.prettyPrint(v.Underlying)} (${v.value.sourceType})" }
@@ -48,7 +62,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               }
               .mkString(", ")
             s"Resolved ${Type.prettyPrint[From]} getters: ($gettersStr) and ${Type.prettyPrint[To]} constructor ($constructorStr)"
-          } >>
+          } >> verifyNoOverrideUnused >>
             Traverse[List]
               .parTraverse[
                 DerivationResult,
