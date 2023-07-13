@@ -89,13 +89,6 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                               fromSubtypeExpr
                             ).map(_.map(toUpcast))
                           // We're constructing:
-                          // case fromSubtypeExpr: $fromSubtype => ${ derivedTo } } // or ${ derivedResultTo
-                          lazy val fromSubtypeIntoToType =
-                            DerivationResult.log(
-                              s"Falling back on ${Type.prettyPrint[fromSubtype.Underlying]} to ${Type.prettyPrint[To]} (target upcasted)"
-                            ) >>
-                              deriveRecursiveTransformationExpr[fromSubtype.Underlying, To](fromSubtypeExpr)
-                          // We're constructing:
                           // case fromSubtypeExpr: $fromSubtype => ${ derivedToSubtype } } // or ${ derivedResultToSubtype }; using fromSubtypeExpr.value
                           lazy val fromSubtypeUnwrappedIntoToSubtype =
                             fromSubtype.Underlying match {
@@ -132,13 +125,18 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                           }
 
                           fromSubtypeIntoToSubtype
-                            .orElse(fromSubtypeIntoToType)
                             .orElseOpt(fromSubtypeUnwrappedIntoToSubtype)
                             .orElseOpt(fromSubtypeIntoToSubtypeUnwrapped)
                         }
                         .map(Existential[ExprPromise[*, TransformationExpr[To]], fromSubtype.Underlying](_))
                   }
-                  .getOrElse {
+                  .getOrElse(
+                    DerivationResult
+                      .cantFindCoproductInstanceTransformer[From, To, fromSubtype.Underlying, Existential[
+                        ExprPromise[*, TransformationExpr[To]]
+                      ]]
+                  )
+                  .orElse(
                     // Then there is no matching subtype name we can still attempt to look at more generic implicit
                     ExprPromise
                       .promise[fromSubtype.Underlying](ExprPromise.NameGenerationStrategy.FromType)
@@ -151,13 +149,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                           deriveRecursiveTransformationExpr[fromSubtype.Underlying, To](fromSubtypeExpr)
                       }
                       .map(Existential[ExprPromise[*, TransformationExpr[To]], fromSubtype.Underlying](_))
-                      .orElse(
-                        DerivationResult
-                          .cantFindCoproductInstanceTransformer[From, To, fromSubtype.Underlying, Existential[
-                            ExprPromise[*, TransformationExpr[To]]
-                          ]]
-                      )
-                  }
+                  )
               }
               .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
                 val subtypeMappings = overrideMappings ++ nameMatchedMappings
