@@ -15,7 +15,7 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Which version should be used in IntelliJ
-  val ideScala = scala212
+  val ideScala = scala213
   val idePlatform = VirtualAxis.jvm
 }
 
@@ -40,7 +40,7 @@ val settings = Seq(
       case Some((3, _)) =>
         Seq(
           // TODO: add linters
-         // "-explain",
+          // "-explain",
           "-rewrite",
           // format: off
           "-source", "3.3-migration",
@@ -134,7 +134,7 @@ val settings = Seq(
   Test / compile / scalacOptions --= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 12)) => Seq("-Ywarn-unused:locals") // Scala 2.12 ignores @unused warns
-      case _ => Seq.empty
+      case _             => Seq.empty
     }
   }
 )
@@ -277,7 +277,7 @@ lazy val root = project
 lazy val chimneyMacroCommons = projectMatrix
   .in(file("chimney-macro-commons"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
-  .disablePlugins(WelcomePlugin)
+  .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
     moduleName := "chimney-macro-commons",
     name := "chimney-macro-commons",
@@ -287,16 +287,21 @@ lazy val chimneyMacroCommons = projectMatrix
   .settings(versionSchemeSettings*)
   .settings(publishSettings*)
   .settings(dependencies*)
-  .dependsOn(protos % "test->test")
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
-  .disablePlugins(WelcomePlugin)
+  .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
     moduleName := "chimney",
     name := "chimney",
-    description := "Scala library for boilerplate-free data rewriting",
+    description := "Scala library for boilerplate-free data rewriting"
+  )
+  .settings(settings*)
+  .settings(versionSchemeSettings*)
+  .settings(publishSettings*)
+  .settings(dependencies*)
+  .settings(
     Compile / doc / scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, _)) => Seq("-skip-packages", "io.scalaland.chimney.internal")
@@ -304,10 +309,6 @@ lazy val chimney = projectMatrix
       }
     }
   )
-  .settings(settings*)
-  .settings(versionSchemeSettings*)
-  .settings(publishSettings*)
-  .settings(dependencies*)
   .dependsOn(chimneyMacroCommons, protos % "test->test")
 
 lazy val chimneyCats = projectMatrix
@@ -337,6 +338,10 @@ lazy val protos = projectMatrix
   )
   .settings(settings*)
   .settings(noPublishSettings*)
+  .settings(
+    Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
+    libraryDependencies += "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
+  )
 
 lazy val benchmarks = projectMatrix
   .in(file("benchmarks"))
@@ -347,7 +352,7 @@ lazy val benchmarks = projectMatrix
     description := "Chimney benchmarking harness"
   )
   .enablePlugins(JmhPlugin)
-  .disablePlugins(WelcomePlugin)
+  .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(settings*)
   .settings(noPublishSettings*)
   .dependsOn(chimney)
