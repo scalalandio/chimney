@@ -35,7 +35,7 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
 
     private def subtypeName(subtype: TypeSymbol): String = subtype.name.toString
 
-    private def subtypeTypeOf[A: Type](subtype: TypeSymbol): ExistentialType.UpperBounded[A] = {
+    private def subtypeTypeOf[A: Type](subtype: TypeSymbol): ?<[A] = {
       subtype.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
 
       val sEta = subtype.toType.etaExpand
@@ -44,7 +44,7 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
           sEta.baseType(Type[A].tpe.typeSymbol).typeArgs.map(_.typeSymbol),
           Type[A].tpe.typeArgs
         )
-      ).asExistentialUpperBounded[A]
+      ).as_?<[A]
     }
   }
 }

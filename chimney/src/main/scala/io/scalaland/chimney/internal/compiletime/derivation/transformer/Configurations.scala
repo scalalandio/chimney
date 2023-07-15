@@ -69,8 +69,8 @@ private[compiletime] trait Configurations { this: Derivation =>
   final protected case class TransformerConfig(
       flags: TransformerFlags = TransformerFlags(),
       fieldOverrides: Map[String, RuntimeFieldOverride] = Map.empty,
-      coproductOverrides: Map[(ExistentialType, ExistentialType), RuntimeCoproductOverride] = Map.empty,
-      preventResolutionForTypes: Option[(ExistentialType, ExistentialType)] = None
+      coproductOverrides: Map[(??, ??), RuntimeCoproductOverride] = Map.empty,
+      preventResolutionForTypes: Option[(??, ??)] = None
   ) {
 
     def allowFromToImplicitSearch: TransformerConfig = copy(preventResolutionForTypes = None)
@@ -102,13 +102,13 @@ private[compiletime] trait Configurations { this: Derivation =>
       copy(fieldOverrides = fieldOverrides + (fieldName -> fieldOverride))
 
     def addCoproductInstance(
-        instanceType: ExistentialType,
-        targetType: ExistentialType,
+        instanceType: ??,
+        targetType: ??,
         coproductOverride: RuntimeCoproductOverride
     ): TransformerConfig =
       copy(coproductOverrides = coproductOverrides + ((instanceType, targetType) -> coproductOverride))
 
-    def withDefinitionScope(defScope: (ExistentialType, ExistentialType)): TransformerConfig =
+    def withDefinitionScope(defScope: (??, ??)): TransformerConfig =
       copy(preventResolutionForTypes = Some(defScope))
 
     override def toString: String = {
@@ -225,16 +225,16 @@ private[compiletime] trait Configurations { this: Derivation =>
         import instance.Underlying as Instance, target.Underlying as Target, cfg.Underlying as Cfg
         extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
           .addCoproductInstance(
-            Type[instance.Underlying].asExistential,
-            Type[target.Underlying].asExistential,
+            Type[instance.Underlying].as_??,
+            Type[target.Underlying].as_??,
             RuntimeCoproductOverride.CoproductInstance(runtimeDataIdx)
           )
       case ChimneyType.TransformerCfg.CoproductInstancePartial(instance, target, cfg) =>
         import instance.Underlying as Instance, target.Underlying as Target, cfg.Underlying as Cfg
         extractTransformerConfig[cfg.Underlying](1 + runtimeDataIdx)
           .addCoproductInstance(
-            Type[instance.Underlying].asExistential,
-            Type[target.Underlying].asExistential,
+            Type[instance.Underlying].as_??,
+            Type[target.Underlying].as_??,
             RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
           )
       case _ =>

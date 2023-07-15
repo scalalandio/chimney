@@ -25,9 +25,19 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         params <- paramListsOf(tpe, method)
         param <- params
       } yield param.name.decodedName.toString -> param.typeSignatureIn(tpe)).toMap
+
+      implicit class TypeCtorOps[A](private val A: Type[A]) {
+
+        def isCtor[B: Type]: Boolean = weakTypeOf(A).typeConstructor <:< weakTypeOf[B].typeConstructor
+
+        def param(idx: Int): ?? = fromUntyped(A.tpe.typeArgs(idx)).as_??
+        def param_>[L](idx: Int): ?>[L] = fromUntyped[L](A.tpe.typeArgs(idx)).as_?>[L]
+        def param_<[U](idx: Int): ?<[U] = fromUntyped[U](A.tpe.typeArgs(idx)).as_?<[U]
+        def param_>?<[L, U >: L](idx: Int): L >?< U = fromUntyped[L](A.tpe.typeArgs(idx)).as_>?<[L, U]
+      }
     }
 
-    import platformSpecific.fromUntyped
+    import platformSpecific.*
 
     val Nothing: Type[Nothing] = weakTypeTag[Nothing]
     val Null: Type[Null] = weakTypeTag[Null]
@@ -46,9 +56,8 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Tuple2 extends Tuple2Module {
       def apply[A: Type, B: Type]: Type[(A, B)] = weakTypeTag[(A, B)]
-      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
-        if (A.tpe.typeConstructor <:< weakTypeOf[(?, ?)].typeConstructor)
-          Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
+      def unapply[A](A: Type[A]): Option[(??, ??)] =
+        if (A.isCtor[(?, ?)]) Some(A.param(0) -> A.param(1))
         else scala.None
     }
 
@@ -57,68 +66,59 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Array extends ArrayModule {
       def apply[A: Type]: Type[Array[A]] = weakTypeTag[Array[A]]
-      def unapply[A](A: Type[A]): Option[ExistentialType] =
-        if (A.tpe.typeConstructor <:< weakTypeOf[Array[?]].typeConstructor)
-          Some(fromUntyped(A.tpe.typeArgs.head).asExistential)
+      def unapply[A](A: Type[A]): Option[??] =
+        if (A.isCtor[Array[?]]) Some(A.param(0))
         else scala.None
     }
 
     object Option extends OptionModule {
       def apply[A: Type]: Type[Option[A]] = weakTypeTag[Option[A]]
-      def unapply[A](A: Type[A]): Option[ExistentialType] = {
-        if (A.tpe.typeConstructor <:< weakTypeOf[Option[?]].typeConstructor)
-          // None has no type parameters, so we need getOrElse(Nothing)
-          Some(A.tpe.typeArgs.headOption.fold[ExistentialType](ExistentialType(Nothing))(fromUntyped(_).asExistential))
+      def unapply[A](A: Type[A]): Option[??] =
+        if (A <:< None) Some(ExistentialType(Nothing))
+        else if (A.isCtor[Option[?]]) Some(A.param(0))
         else scala.None
-      }
 
       val None: Type[scala.None.type] = weakTypeTag[scala.None.type]
     }
 
     object Either extends EitherModule {
       def apply[L: Type, R: Type]: Type[Either[L, R]] = weakTypeTag[Either[L, R]]
-      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
-        if (A.tpe.typeConstructor <:< weakTypeOf[Either[?, ?]].typeConstructor)
-          Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
+      def unapply[A](A: Type[A]): Option[(??, ??)] =
+        if (A.isCtor[Either[?, ?]]) Some(A.param(0) -> A.param(1))
         else scala.None
 
       object Left extends LeftModule {
         def apply[L: Type, R: Type]: Type[Left[L, R]] = weakTypeTag[Left[L, R]]
-        def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
-          if (A.tpe.typeConstructor <:< weakTypeOf[Left[?, ?]].typeConstructor)
-            Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
+        def unapply[A](A: Type[A]): Option[(??, ??)] =
+          if (A.isCtor[Left[?, ?]]) Some(A.param(0) -> A.param(1))
           else scala.None
       }
       object Right extends RightModule {
         def apply[L: Type, R: Type]: Type[Right[L, R]] = weakTypeTag[Right[L, R]]
-        def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
-          if (A.tpe.typeConstructor <:< weakTypeOf[Right[?, ?]].typeConstructor)
-            Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
+        def unapply[A](A: Type[A]): Option[(??, ??)] =
+          if (A.isCtor[Right[?, ?]]) Some(A.param(0) -> A.param(1))
           else scala.None
       }
     }
 
     object Iterable extends IterableModule {
       def apply[A: Type]: Type[Iterable[A]] = weakTypeTag[Iterable[A]]
-      def unapply[A](A: Type[A]): Option[ExistentialType] =
-        if (A.tpe.typeConstructor <:< weakTypeOf[Iterable[?]].typeConstructor)
-          Some(fromUntyped(A.tpe.typeArgs.head).asExistential)
+      def unapply[A](A: Type[A]): Option[??] =
+        if (A.isCtor[Iterable[?]]) Some(A.param(0))
         else scala.None
     }
 
     object Map extends MapModule {
       def apply[K: Type, V: Type]: Type[Map[K, V]] = weakTypeTag[Map[K, V]]
-      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] =
-        if (A.tpe.typeConstructor <:< weakTypeOf[Map[?, ?]].typeConstructor)
-          Some(fromUntyped(A.tpe.typeArgs(0)).asExistential -> fromUntyped(A.tpe.typeArgs(1)).asExistential)
+      def unapply[A](A: Type[A]): Option[(??, ??)] =
+        if (A.isCtor[Map[?, ?]]) Some(A.param(0) -> A.param(1))
         else scala.None
     }
 
     object Iterator extends IteratorModule {
       def apply[A: Type]: Type[Iterator[A]] = weakTypeTag[Iterator[A]]
-      def unapply[A](A: Type[A]): Option[(ExistentialType)] =
-        if (A.tpe.typeConstructor <:< weakTypeOf[Iterator[?]].typeConstructor)
-          Some(fromUntyped(A.tpe.typeArgs.head).asExistential)
+      def unapply[A](A: Type[A]): Option[(??)] =
+        if (A.isCtor[Iterator[?]]) Some(A.param(0))
         else scala.None
     }
 
