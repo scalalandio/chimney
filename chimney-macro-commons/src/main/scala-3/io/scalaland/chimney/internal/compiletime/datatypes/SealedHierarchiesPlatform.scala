@@ -42,7 +42,7 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
 
     // TODO: send to review by Janek
 
-    private def subtypeTypeOf[A: Type](subtype: Symbol): ExistentialType.UpperBounded[A] = {
+    private def subtypeTypeOf[A: Type](subtype: Symbol): ?<[A] = {
       subtype.primaryConstructor.paramSymss match {
         // subtype takes type parameters
         case typeParamSymbols :: _ if typeParamSymbols.exists(_.isType) =>
@@ -56,10 +56,10 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
               .toMap
           // TODO: some better error message if child has an extra type param that doesn't come from the parent
           val typeParamReprs: List[TypeRepr] = typeParamSymbols.map(_.name).map(appliedTypeByParam)
-          subtype.typeRef.appliedTo(typeParamReprs).asType.asInstanceOf[Type[A]].asExistentialUpperBounded[A]
+          subtype.typeRef.appliedTo(typeParamReprs).asType.asInstanceOf[Type[A]].as_?<[A]
         // subtype is monomorphic
         case _ =>
-          subtype.typeRef.asType.asInstanceOf[Type[A]].asExistentialUpperBounded[A]
+          subtype.typeRef.asType.asInstanceOf[Type[A]].as_?<[A]
       }
     }
   }

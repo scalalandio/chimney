@@ -1,9 +1,9 @@
 package io.scalaland.chimney.internal.compiletime
 
-import io.scalaland.chimney.*
-import io.scalaland.chimney.dsl.TransformerDefinitionCommons.RuntimeDataStore
-import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
+import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
+import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.runtime
+import io.scalaland.chimney.partial
 
 private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
 
@@ -34,7 +34,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
-    val RuntimeDataStore: Type[TransformerDefinitionCommons.RuntimeDataStore]
+    val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
     val TransformerCfg: TransformerCfgModule
     trait TransformerCfgModule {
@@ -130,7 +130,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
         val ImplicitConflictResolution: ImplicitConflictResolutionModule
         trait ImplicitConflictResolutionModule
             extends Type.Ctor1UpperBounded[
-              ImplicitTransformerPreference,
+              dsls.ImplicitTransformerPreference,
               runtime.TransformerFlags.ImplicitConflictResolution
             ] { this: ImplicitConflictResolution.type => }
         val MacrosLogging: Type[runtime.TransformerFlags.MacrosLogging]
@@ -189,7 +189,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       implicit val PathElementMapKey: Type[partial.PathElement.MapKey] = PathElement.MapKey
       implicit val PathElementMapValue: Type[partial.PathElement.MapValue] = PathElement.MapValue
 
-      implicit val RuntimeDataStoreType: Type[RuntimeDataStore] = RuntimeDataStore
+      implicit val RuntimeDataStoreType: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] = RuntimeDataStore
     }
   }
 }

@@ -106,7 +106,7 @@ private[compiletime] trait Contexts { this: Derivation =>
           From = Type[From],
           To = Type[To],
           runtimeDataStore = runtimeDataStore,
-          config = config.withDefinitionScope(Type[From].asExistential -> Type[To].asExistential),
+          config = config.withDefinitionScope(Type[From].as_?? -> Type[To].as_??),
           derivationStartedAt = java.time.Instant.now()
         )
     }
@@ -144,7 +144,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         From = Type[From],
         To = Type[To],
         runtimeDataStore = runtimeDataStore,
-        config = config.withDefinitionScope(Type[From].asExistential -> Type[To].asExistential),
+        config = config.withDefinitionScope(Type[From].as_?? -> Type[To].as_??),
         derivationStartedAt = java.time.Instant.now()
       )
     }

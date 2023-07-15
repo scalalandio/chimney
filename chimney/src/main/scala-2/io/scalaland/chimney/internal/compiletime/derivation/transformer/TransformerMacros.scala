@@ -146,7 +146,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   )
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
-      useImplicitScopeFlags: ExistentialType.UpperBounded[runtime.TransformerFlags] => Expr[A]
+      useImplicitScopeFlags: ?<[runtime.TransformerFlags] => Expr[A]
   ): Expr[A] = {
     val implicitScopeConfig = {
       import c.universe.*
@@ -173,7 +173,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
     }
     val implicitScopeFlagsType = Type.platformSpecific
       .fromUntyped[runtime.TransformerFlags](implicitScopeConfig.tpe.typeArgs.head)
-      .asExistentialUpperBounded[runtime.TransformerFlags]
+      .as_?<[runtime.TransformerFlags]
 
     Expr.block(
       List(Expr.suppressUnused(c.Expr(implicitScopeConfig)(implicitScopeFlagsType.Underlying))),

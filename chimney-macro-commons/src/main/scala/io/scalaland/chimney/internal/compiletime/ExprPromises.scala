@@ -216,7 +216,7 @@ private[compiletime] trait ExprPromises { this: Definitions =>
    * into a single pattern matching.
    */
   final protected class PatternMatchCase[To](
-      val someFrom: ExistentialType,
+      val someFrom: ??,
       val usage: Expr[To],
       val fromName: ExprPromiseName,
       val isCaseObject: Boolean
@@ -226,7 +226,7 @@ private[compiletime] trait ExprPromises { this: Definitions =>
 
     final def unapply[To](
         patternMatchCase: PatternMatchCase[To]
-    ): Some[(ExistentialType, Expr[To], ExprPromiseName, Boolean)] =
+    ): Some[(??, Expr[To], ExprPromiseName, Boolean)] =
       Some(
         (patternMatchCase.someFrom, patternMatchCase.usage, patternMatchCase.fromName, patternMatchCase.isCaseObject)
       )

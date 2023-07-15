@@ -68,8 +68,8 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Tuple2 extends Tuple2Module {
       def apply[A: Type, B: Type]: Type[(A, B)] = quoted.Type.of[(A, B)]
-      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] = A match {
-        case '[(innerA, innerB)] => Some(Type[innerA].asExistential -> Type[innerB].asExistential)
+      def unapply[A](A: Type[A]): Option[(??, ??)] = A match {
+        case '[(innerA, innerB)] => Some(Type[innerA].as_?? -> Type[innerB].as_??)
         case _                   => scala.None
       }
     }
@@ -79,8 +79,8 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Array extends ArrayModule {
       def apply[A: Type]: Type[Array[A]] = quoted.Type.of[Array[A]]
-      def unapply[A](A: Type[A]): Option[ExistentialType] = A match {
-        case '[Array[inner]] => Some(Type[inner].asExistential)
+      def unapply[A](A: Type[A]): Option[??] = A match {
+        case '[Array[inner]] => Some(Type[inner].as_??)
         case _               => scala.None
       }
     }
@@ -88,8 +88,8 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     object Option extends OptionModule {
 
       def apply[A: Type]: Type[Option[A]] = quoted.Type.of[Option[A]]
-      def unapply[A](A: Type[A]): Option[ExistentialType] = A match {
-        case '[Option[inner]] => Some(Type[inner].asExistential)
+      def unapply[A](A: Type[A]): Option[??] = A match {
+        case '[Option[inner]] => Some(Type[inner].as_??)
         case _                => scala.None
       }
 
@@ -98,22 +98,22 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Either extends EitherModule {
       def apply[L: Type, R: Type]: Type[Either[L, R]] = quoted.Type.of[Either[L, R]]
-      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] = A match {
-        case '[Either[innerL, innerR]] => Some(Type[innerL].asExistential -> Type[innerR].asExistential)
+      def unapply[A](A: Type[A]): Option[(??, ??)] = A match {
+        case '[Either[innerL, innerR]] => Some(Type[innerL].as_?? -> Type[innerR].as_??)
         case _                         => scala.None
       }
 
       object Left extends LeftModule {
         def apply[L: Type, R: Type]: Type[Left[L, R]] = quoted.Type.of[Left[L, R]]
-        def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] = A match {
-          case '[Left[innerL, innerR]] => Some(Type[innerL].asExistential -> Type[innerR].asExistential)
+        def unapply[A](A: Type[A]): Option[(??, ??)] = A match {
+          case '[Left[innerL, innerR]] => Some(Type[innerL].as_?? -> Type[innerR].as_??)
           case _                       => scala.None
         }
       }
       object Right extends RightModule {
         def apply[L: Type, R: Type]: Type[Right[L, R]] = quoted.Type.of[Right[L, R]]
-        def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] = A match {
-          case '[Right[innerL, innerR]] => Some(Type[innerL].asExistential -> Type[innerR].asExistential)
+        def unapply[A](A: Type[A]): Option[(??, ??)] = A match {
+          case '[Right[innerL, innerR]] => Some(Type[innerL].as_?? -> Type[innerR].as_??)
           case _                        => scala.None
         }
       }
@@ -121,24 +121,24 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object Iterable extends IterableModule {
       def apply[A: Type]: Type[Iterable[A]] = quoted.Type.of[Iterable[A]]
-      def unapply[A](A: Type[A]): Option[ExistentialType] = A match {
-        case '[Iterable[inner]] => Some(Type[inner].asExistential)
+      def unapply[A](A: Type[A]): Option[??] = A match {
+        case '[Iterable[inner]] => Some(Type[inner].as_??)
         case _                  => scala.None
       }
     }
 
     object Map extends MapModule {
       def apply[K: Type, V: Type]: Type[Map[K, V]] = quoted.Type.of[Map[K, V]]
-      def unapply[A](A: Type[A]): Option[(ExistentialType, ExistentialType)] = A match {
-        case '[Map[innerK, innerV]] => Some(Type[innerK].asExistential -> Type[innerV].asExistential)
+      def unapply[A](A: Type[A]): Option[(??, ??)] = A match {
+        case '[Map[innerK, innerV]] => Some(Type[innerK].as_?? -> Type[innerV].as_??)
         case _                      => scala.None
       }
     }
 
     object Iterator extends IteratorModule {
       def apply[A: Type]: Type[Iterator[A]] = quoted.Type.of[Iterator[A]]
-      def unapply[A](A: Type[A]): Option[(ExistentialType)] = A match {
-        case '[Iterator[inner]] => Some(Type[inner].asExistential)
+      def unapply[A](A: Type[A]): Option[(??)] = A match {
+        case '[Iterator[inner]] => Some(Type[inner].as_??)
         case _                  => scala.None
       }
     }

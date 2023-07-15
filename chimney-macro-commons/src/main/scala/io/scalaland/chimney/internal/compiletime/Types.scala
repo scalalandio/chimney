@@ -16,7 +16,7 @@ private[compiletime] trait Types { this: Existentials =>
     /** Allow applying and extracting some type L <:< ? <:< U */
     trait Ctor1Bounded[L, U >: L, F[_ >: L <: U]] {
       def apply[A >: L <: U: Type]: Type[F[A]]
-      def unapply[A](A: Type[A]): Option[ExistentialType.Bounded[L, U]]
+      def unapply[A](A: Type[A]): Option[L >?< U]
     }
     trait Ctor1UpperBounded[U, F[_ <: U]] extends Ctor1Bounded[Nothing, U, F]
     trait Ctor1[F[_]] extends Ctor1Bounded[Nothing, Any, F]
@@ -24,7 +24,7 @@ private[compiletime] trait Types { this: Existentials =>
     /** Allow applying and extracting some types L1 <:< ? <:< U1, L2 <:< ? <:< U2 */
     trait Ctor2Bounded[L1, U1 >: L1, L2, U2 >: L2, F[_ >: L1 <: U1, _ >: L2 <: U2]] {
       def apply[A >: L1 <: U1: Type, B >: L2 <: U2: Type]: Type[F[A, B]]
-      def unapply[A](A: Type[A]): Option[(ExistentialType.Bounded[L1, U1], ExistentialType.Bounded[L2, U2])]
+      def unapply[A](A: Type[A]): Option[(L1 >?< U1, L2 >?< U2)]
     }
     trait Ctor2UpperBounded[U1, U2, F[_ <: U1, _ <: U2]] extends Ctor2Bounded[Nothing, U1, Nothing, U2, F]
     trait Ctor2[F[_, _]] extends Ctor2Bounded[Nothing, Any, Nothing, Any, F]
@@ -32,9 +32,7 @@ private[compiletime] trait Types { this: Existentials =>
     /** Allow applying and extracting some types L1 <:< ? <:< U1, L2 <:< ? <:< U2, L3 <:< ? <:< U3 */
     trait Ctor3Bounded[L1, U1 >: L1, L2, U2 >: L2, L3, U3 >: L3, F[_ >: L1 <: U1, _ >: L2 <: U2, _ >: L3 <: U3]] {
       def apply[A >: L1 <: U1: Type, B >: L2 <: U2: Type, C >: L3 <: U3: Type]: Type[F[A, B, C]]
-      def unapply[A](
-          A: Type[A]
-      ): Option[(ExistentialType.Bounded[L1, U1], ExistentialType.Bounded[L2, U2], ExistentialType.Bounded[L3, U3])]
+      def unapply[A](A: Type[A]): Option[(L1 >?< U1, L2 >?< U2, L3 >?< U3)]
     }
     trait Ctor3UpperBounded[U1, U2, U3, F[_ <: U1, _ <: U2, _ <: U3]]
         extends Ctor3Bounded[Nothing, U1, Nothing, U2, Nothing, U3, F]
@@ -57,16 +55,16 @@ private[compiletime] trait Types { this: Existentials =>
     val Unit: Type[Unit]
     val String: Type[String]
 
-    lazy val primitives: Set[ExistentialType] = ListSet(
-      Boolean.asExistential,
-      Byte.asExistential,
-      Char.asExistential,
-      Short.asExistential,
-      Int.asExistential,
-      Long.asExistential,
-      Float.asExistential,
-      Double.asExistential,
-      Unit.asExistential
+    lazy val primitives: Set[??] = ListSet(
+      Boolean.as_??,
+      Byte.as_??,
+      Char.as_??,
+      Short.as_??,
+      Int.as_??,
+      Long.as_??,
+      Float.as_??,
+      Double.as_??,
+      Unit.as_??
     )
 
     val Tuple2: Tuple2Module
@@ -169,10 +167,10 @@ private[compiletime] trait Types { this: Existentials =>
     def isIterable: Boolean = tpe <:< Type.Iterable(Type.Any)
     def isMap: Boolean = tpe <:< Type.Map(Type.Any, Type.Any)
 
-    def asExistential: ExistentialType = ExistentialType[A](tpe)
-    def asExistentialBounded[L <: A, U >: A]: ExistentialType.Bounded[L, U] = ExistentialType.Bounded[L, U, A](tpe)
-    def asExistentialLowerBounded[L <: A]: ExistentialType.LowerBounded[L] = ExistentialType.LowerBounded[L, A](tpe)
-    def asExistentialUpperBounded[U >: A]: ExistentialType.UpperBounded[U] = ExistentialType.UpperBounded[U, A](tpe)
+    def as_?? : ?? = ExistentialType[A](tpe)
+    def as_>?<[L <: A, U >: A]: L >?< U = ExistentialType.Bounded[L, U, A](tpe)
+    def as_?>[L <: A]: ?>[L] = ExistentialType.LowerBounded[L, A](tpe)
+    def as_?<[U >: A]: ?<[U] = ExistentialType.UpperBounded[U, A](tpe)
   }
   implicit final protected class TypeStringOps[S <: String](private val tpe: Type[S]) {
 
