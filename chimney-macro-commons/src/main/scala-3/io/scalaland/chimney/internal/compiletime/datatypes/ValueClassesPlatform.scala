@@ -16,7 +16,7 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
       val getterOpt: Option[Symbol] = sym.declarations.filter(isPublic).headOption
       val primaryConstructorOpt: Option[Symbol] = Option(sym.primaryConstructor).filter(_.isClassConstructor)
       val argumentOpt: Option[Symbol] = primaryConstructorOpt.flatMap { primaryConstructor =>
-        paramListsOf(primaryConstructor).flatten match {
+        paramListsOf(A, primaryConstructor).flatten match {
           case argument :: Nil => Some(argument)
           case _               => None
         }
@@ -25,9 +25,8 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
       (getterOpt, primaryConstructorOpt, argumentOpt) match {
         case (Some(getter), Some(primaryConstructor), Some(argument))
             if !Type[A].isPrimitive && getter.name == argument.name =>
-          val Argument =
-            paramsWithTypes(A, primaryConstructor, isConstructor = true)(argument.name).asType.asInstanceOf[Type[Any]]
-          val inner = returnTypeOf[Any](A.memberType(getter)).as_??
+          val Argument = fromUntyped[Any](paramsWithTypes(A, primaryConstructor, isConstructor = true)(argument.name))
+          val inner = returnTypeOf[Any](A, getter).as_??
           import inner.Underlying as Inner
           assert(
             Argument =:= Inner,

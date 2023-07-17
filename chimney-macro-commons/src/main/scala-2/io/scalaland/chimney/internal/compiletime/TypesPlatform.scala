@@ -26,6 +26,19 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         param <- params
       } yield param.name.decodedName.toString -> param.typeSignatureIn(tpe)).toMap
 
+      /** Applies type arguments from supertype to subtype if there are any */
+      def subtypeTypeOf[A: Type](subtype: TypeSymbol): ?<[A] = {
+        subtype.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
+
+        val sEta = subtype.toType.etaExpand
+        fromUntyped[A](
+          sEta.finalResultType.substituteTypes(
+            sEta.baseType(Type[A].tpe.typeSymbol).typeArgs.map(_.typeSymbol),
+            Type[A].tpe.typeArgs
+          )
+        ).as_?<[A]
+      }
+
       implicit class TypeCtorOps[A](private val A: Type[A]) {
 
         def isCtor[B: Type]: Boolean = weakTypeOf(A).typeConstructor <:< weakTypeOf[B].typeConstructor

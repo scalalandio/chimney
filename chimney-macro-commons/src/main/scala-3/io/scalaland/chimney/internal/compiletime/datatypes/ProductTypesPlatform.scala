@@ -106,7 +106,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         // if we are taking caseFields but then we also are using ALL fieldMembers shouldn't we just use fieldMembers?
         (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).filter(isPublic).distinct.map { getter =>
           val name = getter.name
-          val tpe = ExistentialType(returnTypeOf[Any](A.memberType(getter)))
+          val tpe = ExistentialType(returnTypeOf[Any](A, getter))
           def conformToIsGetters = !name.take(2).equalsIgnoreCase("is") || tpe.Underlying <:< Type[Boolean]
           name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
             Product.Getter(
@@ -145,7 +145,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           Option(sym.primaryConstructor).filterNot(_.isNoSymbol).filter(isPublic).getOrElse {
             assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
           }
-        val paramss = paramListsOf(primaryConstructor)
+        val paramss = paramListsOf(A, primaryConstructor)
         val paramNames = paramss.flatMap(_.map(param => param -> param.name)).toMap
         val paramTypes = paramsWithTypes(A, primaryConstructor, isConstructor = true)
         val defaultValues = paramss.flatten.zipWithIndex.collect {
@@ -163,7 +163,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         }.toMap
         val constructorParameters = ListMap.from(paramss.flatMap(_.map { param =>
           val name = paramNames(param)
-          val tpe = ExistentialType(paramTypes(name).asType.asInstanceOf[Type[Any]])
+          val tpe = ExistentialType(fromUntyped[Any](paramTypes(name)))
           name ->
             tpe.mapK { implicit Tpe: Type[tpe.Underlying] => _ =>
               Product.Parameter(
@@ -184,7 +184,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
             val tpe = ExistentialType(paramsWithTypes(A, setter, isConstructor = false).collectFirst {
               // `name` might be e.g. `setValue` while key in returned Map might be `value` - we want to return
               // "setName" as the name of the setter but we don't want to throw exception when accessing Map.
-              case (searchedName, tpe) if areNamesMatching(searchedName, name) => tpe.asType.asInstanceOf[Type[Any]]
+              case (searchedName, tpe) if areNamesMatching(searchedName, name) => fromUntyped[Any](tpe)
             }.get)
             (
               name,

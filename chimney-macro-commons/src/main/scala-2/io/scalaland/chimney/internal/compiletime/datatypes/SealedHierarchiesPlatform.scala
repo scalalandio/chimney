@@ -5,7 +5,7 @@ import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
-  import Type.platformSpecific.fromUntyped
+  import Type.platformSpecific.*
 
   protected object SealedHierarchy extends SealedHierarchyModule {
 
@@ -14,7 +14,6 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
       sym.isClass && sym.asClass.isSealed
     }
 
-    type Subtype
     def parse[A: Type]: Option[Enum[A]] = if (isSealed(Type[A])) {
       // calling .distinct here as `knownDirectSubclasses` returns duplicates for multiply-inherited types
       val elements = extractSubclasses(Type[A].tpe.typeSymbol.asType).distinct
@@ -34,17 +33,5 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
       else List(t)
 
     private def subtypeName(subtype: TypeSymbol): String = subtype.name.toString
-
-    private def subtypeTypeOf[A: Type](subtype: TypeSymbol): ?<[A] = {
-      subtype.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
-
-      val sEta = subtype.toType.etaExpand
-      fromUntyped[A](
-        sEta.finalResultType.substituteTypes(
-          sEta.baseType(Type[A].tpe.typeSymbol).typeArgs.map(_.typeSymbol),
-          Type[A].tpe.typeArgs
-        )
-      ).as_?<[A]
-    }
   }
 }
