@@ -12,14 +12,17 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object platformSpecific {
 
+      def fromUntyped[A](untyped: TypeRepr): Type[A] = untyped.asType.asInstanceOf[Type[A]]
+
       /** Applies type arguments obtained from tpe to the type parameters in method's parameters' types */
       // TODO: assumes each parameter list is made completely out of types OR completely out of values
-      def paramListsOf(method: Symbol): List[List[Symbol]] = method.paramSymss.filterNot(_.exists(_.isType))
+      def paramListsOf(tpe: TypeRepr, method: Symbol): List[List[Symbol]] =
+        method.paramSymss.filterNot(_.exists(_.isType))
 
       /** Applies type arguments obtained from tpe to the type parameters in method's return type */
-      def returnTypeOf[A](typeRepr: TypeRepr): Type[A] = typeRepr.widenByName match {
-        case lambda: LambdaType => lambda.resType.asType.asInstanceOf[Type[A]]
-        case out                => out.asType.asInstanceOf[Type[A]]
+      def returnTypeOf[A](tpe: TypeRepr, method: Symbol): Type[A] = tpe.memberType(method).widenByName match {
+        case lambda: LambdaType => fromUntyped[A](lambda.resType)
+        case out                => fromUntyped[A](out)
       }
 
       /** What is the type of each method parameter */
@@ -48,9 +51,31 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
           // unknown
           case out =>
             assertionFailed(
-              s"Constructor of ${Type.prettyPrint(tpe.asType.asInstanceOf[Type[Any]])} has unrecognized/unsupported format of type: ${out}"
+              s"Constructor of ${Type.prettyPrint(fromUntyped[Any](tpe))} has unrecognized/unsupported format of type: ${out}"
             )
         }
+
+      /** Applies type arguments from supertype to subtype if there are any */
+      def subtypeTypeOf[A: Type](subtype: Symbol): ?<[A] = {
+        subtype.primaryConstructor.paramSymss match {
+          // subtype takes type parameters
+          case typeParamSymbols :: _ if typeParamSymbols.exists(_.isType) =>
+            // we have to figure how subtypes type params map to parent type params
+            val appliedTypeByParam: Map[String, TypeRepr] =
+              subtype.typeRef
+                .baseType(TypeRepr.of[A].typeSymbol)
+                .typeArgs
+                .map(_.typeSymbol.name)
+                .zip(TypeRepr.of[A].typeArgs)
+                .toMap
+            // TODO: some better error message if child has an extra type param that doesn't come from the parent
+            val typeParamReprs: List[TypeRepr] = typeParamSymbols.map(_.name).map(appliedTypeByParam)
+            fromUntyped[A](subtype.typeRef.appliedTo(typeParamReprs)).as_?<[A]
+          // subtype is monomorphic
+          case _ =>
+            fromUntyped[A](subtype.typeRef).as_?<[A]
+        }
+      }
     }
 
     val Nothing: Type[Nothing] = quoted.Type.of[Nothing]

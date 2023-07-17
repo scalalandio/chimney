@@ -5,6 +5,7 @@ import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPlatform =>
 
   import quotes.*, quotes.reflect.*
+  import Type.platformSpecific.*
 
   protected object SealedHierarchy extends SealedHierarchyModule {
 
@@ -13,7 +14,6 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
       flags.is(Flags.Enum) || flags.is(Flags.Sealed)
     }
 
-    type Subtype
     def parse[A: Type]: Option[Enum[A]] = if isSealed(Type[A]) then {
       val elements = extractSubclasses(TypeRepr.of[A].typeSymbol).distinct
         .map { (subtype: Symbol) =>
@@ -38,29 +38,6 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
       // case objects from Scala 2 has names with $ at the end (like all modules) while Scala 3's name
       // have all these suffixes like "$" or ".type" dropped. We need to align these names to allow comparing
       if n.endsWith("$") then n.substring(0, n.length - 1) else n
-    }
-
-    // TODO: send to review by Janek
-
-    private def subtypeTypeOf[A: Type](subtype: Symbol): ?<[A] = {
-      subtype.primaryConstructor.paramSymss match {
-        // subtype takes type parameters
-        case typeParamSymbols :: _ if typeParamSymbols.exists(_.isType) =>
-          // we have to figure how subtypes type params map to parent type params
-          val appliedTypeByParam: Map[String, TypeRepr] =
-            subtype.typeRef
-              .baseType(TypeRepr.of[A].typeSymbol)
-              .typeArgs
-              .map(_.typeSymbol.name)
-              .zip(TypeRepr.of[A].typeArgs)
-              .toMap
-          // TODO: some better error message if child has an extra type param that doesn't come from the parent
-          val typeParamReprs: List[TypeRepr] = typeParamSymbols.map(_.name).map(appliedTypeByParam)
-          subtype.typeRef.appliedTo(typeParamReprs).asType.asInstanceOf[Type[A]].as_?<[A]
-        // subtype is monomorphic
-        case _ =>
-          subtype.typeRef.asType.asInstanceOf[Type[A]].as_?<[A]
-      }
     }
   }
 }
