@@ -1,10 +1,11 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.*
+import io.scalaland.chimney.PartialTransformer
 import io.scalaland.chimney.dsl.*
-import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.TransformerCfg.*
+import io.scalaland.chimney.partial
 
 import scala.quoted.*
 
@@ -18,13 +19,18 @@ object PartialTransformerIntoMacros {
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      valueExpr: Expr[U]
+      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      value: Expr[U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withFieldConstImpl('{ ${ tiExpr }.td }, selectorExpr, valueExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
+    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selector)
+    FieldNameUtils.strLiteralType(fieldName).asType match {
+      case '[FieldNameUtils.StringBounded[fieldNameT]] =>
+        '{
+          WithRuntimeDataStore
+            .update($ti, $value)
+            .asInstanceOf[PartialTransformerInto[From, To, FieldConst[fieldNameT, Cfg], Flags]]
+        }
     }
   }
 
@@ -36,13 +42,18 @@ object PartialTransformerIntoMacros {
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      valueExpr: Expr[partial.Result[U]]
+      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      value: Expr[partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withFieldConstPartialImpl('{ ${ tiExpr }.td }, selectorExpr, valueExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
+    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selector)
+    FieldNameUtils.strLiteralType(fieldName).asType match {
+      case '[FieldNameUtils.StringBounded[fieldNameT]] =>
+        '{
+          WithRuntimeDataStore
+            .update($ti, $value)
+            .asInstanceOf[PartialTransformerInto[From, To, FieldConstPartial[fieldNameT, Cfg], Flags]]
+        }
     }
   }
 
@@ -54,13 +65,18 @@ object PartialTransformerIntoMacros {
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      fExpr: Expr[From => U]
+      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      f: Expr[From => U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withFieldComputedImpl('{ ${ tiExpr }.td }, selectorExpr, fExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
+    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selector)
+    FieldNameUtils.strLiteralType(fieldName).asType match {
+      case '[FieldNameUtils.StringBounded[fieldNameT]] =>
+        '{
+          WithRuntimeDataStore
+            .update($ti, $f)
+            .asInstanceOf[PartialTransformerInto[From, To, FieldComputed[fieldNameT, Cfg], Flags]]
+        }
     }
   }
 
@@ -72,13 +88,18 @@ object PartialTransformerIntoMacros {
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      fExpr: Expr[From => partial.Result[U]]
+      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      selector: Expr[To => T],
+      f: Expr[From => partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withFieldComputedPartialImpl('{ ${ tiExpr }.td }, selectorExpr, fExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
+    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selector)
+    FieldNameUtils.strLiteralType(fieldName).asType match {
+      case '[FieldNameUtils.StringBounded[fieldNameT]] =>
+        '{
+          WithRuntimeDataStore
+            .update($ti, $f)
+            .asInstanceOf[PartialTransformerInto[From, To, FieldComputedPartial[fieldNameT, Cfg], Flags]]
+        }
     }
   }
 
@@ -90,13 +111,17 @@ object PartialTransformerIntoMacros {
       T: Type,
       U: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      selectorFromExpr: Expr[From => T],
-      selectorToExpr: Expr[To => U]
+      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      selectorFrom: Expr[From => T],
+      selectorTo: Expr[To => U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withFieldRenamed('{ ${ tiExpr }.td }, selectorFromExpr, selectorToExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
+    val (fieldNameFrom, fieldNameTo) = FieldNameUtils.extractSelectorFieldNamesOrAbort(selectorFrom, selectorTo)
+    (FieldNameUtils.strLiteralType(fieldNameFrom).asType, FieldNameUtils.strLiteralType(fieldNameTo).asType) match {
+      case ('[FieldNameUtils.StringBounded[fieldNameFromT]], '[FieldNameUtils.StringBounded[fieldNameToT]]) =>
+        '{
+          $ti
+            .asInstanceOf[PartialTransformerInto[From, To, FieldRelabelled[fieldNameFromT, fieldNameToT, Cfg], Flags]]
+        }
     }
   }
 
@@ -107,14 +132,14 @@ object PartialTransformerIntoMacros {
       Flags <: TransformerFlags: Type,
       Inst: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      fExpr: Expr[Inst => To]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withCoproductInstance('{ ${ tiExpr }.td }, fExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
+      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      f: Expr[Inst => To]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] =
+    '{
+      WithRuntimeDataStore
+        .update($ti, $f)
+        .asInstanceOf[PartialTransformerInto[From, To, CoproductInstance[Inst, To, Cfg], Flags]]
     }
-  }
 
   def withCoproductInstancePartialImpl[
       From: Type,
@@ -123,14 +148,14 @@ object PartialTransformerIntoMacros {
       Flags <: TransformerFlags: Type,
       Inst: Type
   ](
-      tiExpr: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      fExpr: Expr[Inst => partial.Result[To]]
-  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] = {
-    PartialTransformerDefinitionMacros.withCoproductInstancePartial('{ ${ tiExpr }.td }, fExpr) match {
-      case '{ $td: PartialTransformerDefinition[From, To, cfg, Flags] } =>
-        '{ new PartialTransformerInto[From, To, cfg, Flags](${ tiExpr }.source, ${ td }) }
+      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      f: Expr[Inst => partial.Result[To]]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] =
+    '{
+      WithRuntimeDataStore
+        .update($ti, $f)
+        .asInstanceOf[PartialTransformerInto[From, To, CoproductInstancePartial[Inst, To, Cfg], Flags]]
     }
-  }
 
   def transform[
       From: Type,

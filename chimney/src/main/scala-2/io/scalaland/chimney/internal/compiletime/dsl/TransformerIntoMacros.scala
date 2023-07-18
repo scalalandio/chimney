@@ -1,31 +1,64 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
+import io.scalaland.chimney.dsl.TransformerInto
+import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.TransformerCfg.*
+
 import scala.annotation.unused
 import scala.reflect.macros.whitebox
 
-class TransformerIntoMacros(val c: whitebox.Context) extends DslMacroUtils {
+class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
 
   import c.universe.*
 
-  def withFieldConstImpl(selector: Tree, value: Tree)(@unused ev: Tree): Tree =
-    c.prefix.tree.refineTransformerDefinition_Hack(
-      trees => q"_.withFieldConst($selector, ${trees("value")})",
-      "value" -> value
+  def withFieldConstImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: TransformerCfg: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selector: Tree, value: Tree)(@unused ev: Tree): Tree = c.prefix.tree
+    .addOverride(value)
+    .asInstanceOfExpr(
+      new ApplyFieldNameType {
+        def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerInto[From, To, FieldConst[FromField, Cfg], Flags]]
+      }.applyFromSelector(selector)
     )
 
-  def withFieldComputedImpl(selector: Tree, f: Tree)(@unused ev: Tree): Tree =
-    c.prefix.tree.refineTransformerDefinition_Hack(
-      trees => q"_.withFieldComputed($selector, ${trees("f")})",
-      "f" -> f
+  def withFieldComputedImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: TransformerCfg: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = c.prefix.tree
+    .addOverride(f)
+    .asInstanceOfExpr(
+      new ApplyFieldNameType {
+        def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerInto[From, To, FieldComputed[FromField, Cfg], Flags]]
+      }.applyFromSelector(selector)
     )
 
-  def withFieldRenamedImpl(selectorFrom: Tree, selectorTo: Tree): Tree =
-    c.prefix.tree.refineTransformerDefinition(q"_.withFieldRenamed($selectorFrom, $selectorTo)")
-
-  def withCoproductInstanceImpl(f: Tree): Tree =
-    c.prefix.tree.refineTransformerDefinition_Hack(
-      trees => q"_.withCoproductInstance(${trees("f")})",
-      "f" -> f
+  def withFieldRenamedImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: TransformerCfg: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selectorFrom: Tree, selectorTo: Tree): Tree = c.prefix.tree
+    .asInstanceOfExpr(
+      new ApplyFieldNameTypes {
+        def apply[FromField <: String: WeakTypeTag, ToField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerInto[From, To, FieldRelabelled[FromField, ToField, Cfg], Flags]]
+      }.applyFromSelectors(selectorFrom, selectorTo)
     )
+
+  def withCoproductInstanceImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: TransformerCfg: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      Inst: WeakTypeTag
+  ](f: Tree): Tree = c.prefix.tree
+    .addOverride(f)
+    .asInstanceOfExpr[TransformerInto[From, To, CoproductInstance[Inst, To, Cfg], Flags]]
 }

@@ -1,11 +1,11 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
+import io.scalaland.chimney.PartialTransformer
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.compiletime.dsl.FieldNameUtils
+import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 import io.scalaland.chimney.partial
-import io.scalaland.chimney.PartialTransformer
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
 
 import scala.quoted.*
 
@@ -20,13 +20,17 @@ object PartialTransformerDefinitionMacros {
       U: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      valueExpr: Expr[U]
+      selector: Expr[To => T],
+      value: Expr[U]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selectorExpr)
+    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selector)
     FieldNameUtils.strLiteralType(fieldName).asType match {
       case '[FieldNameUtils.StringBounded[fieldNameT]] =>
-        '{ $td.__addOverride($valueExpr).__refineConfig[TransformerCfg.FieldConst[fieldNameT, Cfg]] }
+        '{
+          WithRuntimeDataStore
+            .update($td, $value)
+            .asInstanceOf[PartialTransformerDefinition[From, To, FieldConst[fieldNameT, Cfg], Flags]]
+        }
     }
   }
 
@@ -39,13 +43,17 @@ object PartialTransformerDefinitionMacros {
       U: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      valueExpr: Expr[partial.Result[U]]
+      selector: Expr[To => T],
+      value: Expr[partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selectorExpr)
+    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selector)
     FieldNameUtils.strLiteralType(fieldName).asType match {
       case '[FieldNameUtils.StringBounded[fieldNameT]] =>
-        '{ $td.__addOverride($valueExpr).__refineConfig[TransformerCfg.FieldConstPartial[fieldNameT, Cfg]] }
+        '{
+          WithRuntimeDataStore
+            .update($td, $value)
+            .asInstanceOf[PartialTransformerDefinition[From, To, FieldConstPartial[fieldNameT, Cfg], Flags]]
+        }
     }
   }
 
@@ -58,13 +66,17 @@ object PartialTransformerDefinitionMacros {
       U: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      fExpr: Expr[From => U]
+      selector: Expr[To => T],
+      f: Expr[From => U]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selectorExpr)
+    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selector)
     FieldNameUtils.strLiteralType(fieldName).asType match {
       case '[FieldNameUtils.StringBounded[fieldNameT]] =>
-        '{ $td.__addOverride($fExpr).__refineConfig[TransformerCfg.FieldComputed[fieldNameT, Cfg]] }
+        '{
+          WithRuntimeDataStore
+            .update($td, $f)
+            .asInstanceOf[PartialTransformerDefinition[From, To, FieldComputed[fieldNameT, Cfg], Flags]]
+        }
     }
   }
 
@@ -77,13 +89,17 @@ object PartialTransformerDefinitionMacros {
       U: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]],
-      selectorExpr: Expr[To => T],
-      fExpr: Expr[From => partial.Result[U]]
+      selector: Expr[To => T],
+      f: Expr[From => partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selectorExpr)
+    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selector)
     FieldNameUtils.strLiteralType(fieldName).asType match {
       case '[FieldNameUtils.StringBounded[fieldNameT]] =>
-        '{ $td.__addOverride($fExpr).__refineConfig[TransformerCfg.FieldComputedPartial[fieldNameT, Cfg]] }
+        '{
+          WithRuntimeDataStore
+            .update($td, $f)
+            .asInstanceOf[PartialTransformerDefinition[From, To, FieldComputedPartial[fieldNameT, Cfg], Flags]]
+        }
     }
   }
 
@@ -96,15 +112,18 @@ object PartialTransformerDefinitionMacros {
       U: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]],
-      selectorFromExpr: Expr[From => T],
-      selectorToExpr: Expr[To => U]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    val (fieldNameFrom, fieldNameTo) = FieldNameUtils.extractSelectorFieldNamesOrAbort(selectorFromExpr, selectorToExpr)
+      selectorFrom: Expr[From => T],
+      selectorTo: Expr[To => U]
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags]] =
+    val (fieldNameFrom, fieldNameTo) = FieldNameUtils.extractSelectorFieldNamesOrAbort(selectorFrom, selectorTo)
     (FieldNameUtils.strLiteralType(fieldNameFrom).asType, FieldNameUtils.strLiteralType(fieldNameTo).asType) match {
       case ('[FieldNameUtils.StringBounded[fieldNameFromT]], '[FieldNameUtils.StringBounded[fieldNameToT]]) =>
-        '{ $td.__refineConfig[TransformerCfg.FieldRelabelled[fieldNameFromT, fieldNameToT, Cfg]] }
+        '{
+          $td.asInstanceOf[
+            PartialTransformerDefinition[From, To, FieldRelabelled[fieldNameFromT, fieldNameToT, Cfg], Flags]
+          ]
+        }
     }
-  }
 
   def withCoproductInstance[
       From: Type,
@@ -114,10 +133,13 @@ object PartialTransformerDefinitionMacros {
       Inst: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]],
-      fExpr: Expr[Inst => To]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    '{ $td.__addInstance($fExpr).__refineConfig[TransformerCfg.CoproductInstance[Inst, To, Cfg]] }
-  }
+      f: Expr[Inst => To]
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags]] =
+    '{
+      WithRuntimeDataStore
+        .update($td, $f)
+        .asInstanceOf[PartialTransformerDefinition[From, To, CoproductInstance[Inst, To, Cfg], Flags]]
+    }
 
   def withCoproductInstancePartial[
       From: Type,
@@ -127,10 +149,13 @@ object PartialTransformerDefinitionMacros {
       Inst: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]],
-      fExpr: Expr[Inst => partial.Result[To]]
-  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    '{ $td.__addInstance($fExpr).__refineConfig[TransformerCfg.CoproductInstancePartial[Inst, To, Cfg]] }
-  }
+      f: Expr[Inst => partial.Result[To]]
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags]] =
+    '{
+      WithRuntimeDataStore
+        .update($td, $f)
+        .asInstanceOf[PartialTransformerDefinition[From, To, CoproductInstancePartial[Inst, To, Cfg], Flags]]
+    }
 
   def buildTransformer[
       From: Type,

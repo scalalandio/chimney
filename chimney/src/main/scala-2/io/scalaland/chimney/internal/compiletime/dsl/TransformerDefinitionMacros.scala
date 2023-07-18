@@ -1,25 +1,64 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
+import io.scalaland.chimney.dsl.TransformerDefinition
+import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.TransformerCfg.*
+
 import scala.annotation.unused
 import scala.reflect.macros.whitebox
 
-class TransformerDefinitionMacros(val c: whitebox.Context) extends DslMacroUtils {
+class TransformerDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
 
-  import CfgTpes.*
   import c.universe.*
 
-  def withFieldConstImpl[C: WeakTypeTag](selector: Tree, value: Tree)(@unused ev: Tree): Tree =
-    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, value, fieldConstT)
+  def withFieldConstImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: TransformerCfg: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selector: Tree, value: Tree)(@unused ev: Tree): Tree = c.prefix.tree
+    .addOverride(value)
+    .asInstanceOfExpr(
+      new ApplyFieldNameType {
+        def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerDefinition[From, To, FieldConst[FromField, Cfg], Flags]]
+      }.applyFromSelector(selector)
+    )
 
-  def withFieldComputedImpl[C: WeakTypeTag](selector: Tree, f: Tree)(@unused ev: Tree): Tree =
-    c.prefix.tree.overrideField[C](selector.extractSelectorFieldName, f, fieldComputedT)
+  def withFieldComputedImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: TransformerCfg: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = c.prefix.tree
+    .addOverride(f)
+    .asInstanceOfExpr(
+      new ApplyFieldNameType {
+        def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerDefinition[From, To, FieldComputed[FromField, Cfg], Flags]]
+      }.applyFromSelector(selector)
+    )
 
-  def withFieldRenamedImpl[C: WeakTypeTag](selectorFrom: Tree, selectorTo: Tree): Tree = {
-    val (fieldNameFrom, fieldNameTo) = (selectorFrom, selectorTo).extractSelectorsOrAbort
-    c.prefix.tree.renameField[C](fieldNameFrom, fieldNameTo)
-  }
+  def withFieldRenamedImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: TransformerCfg: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selectorFrom: Tree, selectorTo: Tree): Tree = c.prefix.tree
+    .asInstanceOfExpr(
+      new ApplyFieldNameTypes {
+        def apply[FromField <: String: WeakTypeTag, ToField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerDefinition[From, To, FieldRelabelled[FromField, ToField, Cfg], Flags]]
+      }.applyFromSelectors(selectorFrom, selectorTo)
+    )
 
-  def withCoproductInstanceImpl[To: WeakTypeTag, Inst: WeakTypeTag, C: WeakTypeTag](f: Tree): Tree =
-    c.prefix.tree.overrideCoproductInstance[C](weakTypeOf[Inst], weakTypeOf[To], f, coproductInstanceT)
+  def withCoproductInstanceImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: TransformerCfg: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      Inst: WeakTypeTag
+  ](f: Tree): Tree = c.prefix.tree
+    .addOverride(f)
+    .asInstanceOfExpr[TransformerDefinition[From, To, CoproductInstance[Inst, To, Cfg], Flags]]
 }
