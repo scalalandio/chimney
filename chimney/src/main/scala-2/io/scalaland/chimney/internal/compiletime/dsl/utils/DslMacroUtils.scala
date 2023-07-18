@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime.dsl.utils
 
 import scala.reflect.macros.blackbox
 
-trait DslMacroUtils {
+private[chimney] trait DslMacroUtils {
 
   val c: blackbox.Context
 
