@@ -2,65 +2,81 @@ package io.scalaland.chimney.internal.compiletime.dsl.utils
 
 import scala.reflect.macros.blackbox
 
-trait DslMacroUtils extends MacroUtils with TransformerConfigSupport {
+trait DslMacroUtils {
 
   val c: blackbox.Context
-  import CfgTpes.*
 
   import c.universe.*
 
-  implicit class TransformerDefinitionTreeOps(td: Tree) {
+  implicit final protected class TreeOps(tree: Tree) {
 
-    def overrideField[C: WeakTypeTag](fieldName: Name, overrideTree: Tree, configWrapperTC: Type): Tree =
-      c.prefix.tree
-        .addOverride(overrideTree)
-        .refineConfig(configWrapperTC.applyTypeArgs(fieldName.toSingletonTpe, weakTypeOf[C]))
+    def addOverride(data: Tree): Tree =
+      q"_root_.io.scalaland.chimney.internal.runtime.WithRuntimeDataStore.update($tree, $data)"
 
-    def overrideCoproductInstance[C: WeakTypeTag](
-        instTpe: Type,
-        targetTpe: Type,
-        f: Tree,
-        configWrapperTC: Type
-    ): Tree =
-      c.prefix.tree
-        .addInstance(f)
-        .refineConfig(configWrapperTC.applyTypeArgs(instTpe, targetTpe, weakTypeOf[C]))
+    def asInstanceOfExpr[A: WeakTypeTag]: Tree =
+      q"$tree.asInstanceOf[${weakTypeOf[A]}]"
+  }
 
-    def renameField[C: WeakTypeTag](fromName: TermName, toName: TermName): Tree =
-      c.prefix.tree
-        .refineConfig(
-          fieldRelabelledT.applyTypeArgs(fromName.toSingletonTpe, toName.toSingletonTpe, weakTypeOf[C])
-        )
+  // If we try to do:
+  //
+  //   implicit val fieldNameT = fieldName.Underlying
+  //   someMethod[SomeType[fieldNameT.Underlying]
+  //
+  // compiler will generate type containing... fieldName.Underlying instead of using implicit, and it'll start printing:
+  //
+  //   Macro expansion contains free term variable fieldName defined by withFieldConstImpl in ....
+  //   Have you forgotten to use splice when splicing this variable into a reifee?
+  //   If you have troubles tracking free term variables, consider using -Xlog-free-terms
+  //
+  // Using type parameters instead of path-dependent types make compiler use the implicit as intended.
+  trait ApplyFieldNameType {
+    def apply[A <: String: WeakTypeTag]: WeakTypeTag[?]
 
-    def refineTransformerDefinition_Hack(
-        definitionRefinementFn: Map[String, Tree] => Tree,
-        valTree: (String, Tree)
-    ): Tree = {
-      // normally, we would like to use refineTransformerDefinition, which works well on Scala 2.11
-      // in few cases on Scala 2.12+ it ends up as 'Error while emitting XXX.scala' compiler error
-      // with this hack, we can work around scalac bugs
+    final def applyFromSelector(t: c.Tree): WeakTypeTag[?] = apply(extractSelectorAsType(t).Underlying)
+  }
+  trait ApplyFieldNameTypes {
+    def apply[A <: String: WeakTypeTag, B <: String: WeakTypeTag]: WeakTypeTag[?]
 
-      val (name, tree) = valTree
-      val fnTermName = freshTermName(name)
-      val fnMapTree = Map(name -> Ident(fnTermName))
-      q"""
-        {
-          val ${fnTermName} = $tree
-          $td.__refineTransformerDefinition(${definitionRefinementFn(fnMapTree)})
-        }
-      """
+    final def applyFromSelectors(t1: c.Tree, t2: c.Tree): WeakTypeTag[?] = {
+      val (e1, e2) = extractSelectorsAsTypes(t1, t2)
+      apply(e1.Underlying, e2.Underlying)
+    }
+  }
+
+  private trait ExistentialString {
+    type Underlying <: String
+    val Underlying: c.WeakTypeTag[Underlying]
+  }
+
+  private def extractSelectorAsType(t: Tree): ExistentialString = extractSelectorAsTypeOpt(t).getOrElse {
+    c.abort(c.enclosingPosition, invalidSelectorErrorMessage(t))
+  }
+
+  private def extractSelectorsAsTypes(t1: Tree, t2: Tree): (ExistentialString, ExistentialString) =
+    (extractSelectorAsTypeOpt(t1), extractSelectorAsTypeOpt(t2)) match {
+      case (Some(fieldName1), Some(fieldName2)) =>
+        (fieldName1, fieldName2)
+      case (None, Some(_)) =>
+        c.abort(c.enclosingPosition, invalidSelectorErrorMessage(t1))
+      case (Some(_), None) =>
+        c.abort(c.enclosingPosition, invalidSelectorErrorMessage(t2))
+      case (None, None) =>
+        val err1 = invalidSelectorErrorMessage(t1)
+        val err2 = invalidSelectorErrorMessage(t2)
+        c.abort(c.enclosingPosition, s"Invalid selectors:\n$err1\n$err2")
     }
 
-    def refineTransformerDefinition(definitionRefinementFn: Tree): Tree =
-      q"$td.__refineTransformerDefinition($definitionRefinementFn)"
-
-    def addOverride(overrideTree: Tree): Tree =
-      q"$td.__addOverride(${overrideTree}.asInstanceOf[Any])"
-
-    def addInstance(f: Tree): Tree =
-      q"$td.__addInstance(${f}.asInstanceOf[Any])"
-
-    def refineConfig(cfgTpe: Type): Tree =
-      q"$td.__refineConfig[$cfgTpe]"
+  private def extractSelectorAsTypeOpt(t: Tree): Option[ExistentialString] = t match {
+    case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: TermName}" if vd.name == idt.name =>
+      Some(new ExistentialString {
+        type Underlying = String
+        val Underlying: WeakTypeTag[String] =
+          c.WeakTypeTag(c.internal.constantType(Constant(fieldName.decodedName.toString)))
+      })
+    case _ =>
+      None
   }
+
+  private def invalidSelectorErrorMessage(selectorTree: Tree): String =
+    s"Invalid selector expression: $selectorTree"
 }
