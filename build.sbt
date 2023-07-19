@@ -15,7 +15,7 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Which version should be used in IntelliJ
-  val ideScala = scala213
+  val ideScala = scala3
   val idePlatform = VirtualAxis.jvm
 }
 
@@ -358,7 +358,8 @@ lazy val protos = projectMatrix
   .settings(noPublishSettings*)
   .settings(
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
-    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
+    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
+    scalacOptions := Seq.empty
   )
 
 lazy val benchmarks = projectMatrix
