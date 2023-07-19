@@ -7,7 +7,7 @@ import scala.collection.compat.*
 trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Expr as _, Transformer as _, Type as _, *}
-  import Type.platformSpecific.{fromUntyped, returnTypeOf}
+  import Type.platformSpecific.*
 
   protected object WrapperClassType extends WrapperClassTypeModule {
 
@@ -24,7 +24,7 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
         case (Some(getter), Some(_), Some(argument))
             if !Type[A].isPrimitive && getDecodedName(getter) == getDecodedName(argument) =>
           val Argument = fromUntyped[Any](argument.typeSignature)
-          val inner = fromUntyped(returnTypeOf(A, getter)).asExistential
+          val inner = fromUntyped(returnTypeOf(A, getter)).as_??
           import inner.Underlying as Inner
           assert(
             Argument =:= Inner,

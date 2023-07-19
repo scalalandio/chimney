@@ -27,7 +27,7 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
             if !Type[A].isPrimitive && getter.name == argument.name =>
           val Argument =
             paramsWithTypes(A, primaryConstructor, isConstructor = true)(argument.name).asType.asInstanceOf[Type[Any]]
-          val inner = returnTypeOf[Any](A.memberType(getter)).asExistential
+          val inner = returnTypeOf[Any](A.memberType(getter)).as_??
           import inner.Underlying as Inner
           assert(
             Argument =:= Inner,
