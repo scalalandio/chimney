@@ -14,39 +14,42 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
     def parse[A: Type]: Option[Existential[WrapperClass[A, *]]] = {
       val A = Type[A].tpe
 
-      val getterOpt: Option[Symbol] = A.decls.to(List).find(m => m.isMethod && m.asMethod.isGetter)
+      val getterOpt: Option[Symbol] = A.decls.to(List).find(m => m.isPublic && m.isMethod && m.asMethod.isGetter)
       val primaryConstructorOpt: Option[Symbol] = A.decls
         .to(List)
         .find(m => m.isPublic && m.isConstructor && m.asMethod.paramLists.flatten.size == 1)
       val argumentOpt: Option[Symbol] = primaryConstructorOpt.flatMap(_.asMethod.paramLists.flatten.headOption)
 
       (getterOpt, primaryConstructorOpt, argumentOpt) match {
-        case (Some(getter), Some(_), Some(argument)) if !Type[A].isPrimitive =>
-          val argumentT = fromUntyped[Any](argument.typeSignature)
+        case (Some(getter), Some(_), Some(argument))
+            if !Type[A].isPrimitive && getDecodedName(getter) == getDecodedName(argument) =>
+          val Argument = fromUntyped[Any](argument.typeSignature)
           val inner = fromUntyped(returnTypeOf(A, getter)).asExistential
           import inner.Underlying as Inner
           assert(
-            argumentT =:= inner.Underlying,
+            Argument =:= Inner,
             s"Wrapper/AnyVal ${Type.prettyPrint[A]} only property's type (${Type
-                .prettyPrint(argumentT)}) was expected to be the same as only constructor argument's type (${Type
+                .prettyPrint(Argument)}) was expected to be the same as only constructor argument's type (${Type
                 .prettyPrint(Inner)})"
           )
 
           val termName = getter.asMethod.name.toTermName
 
           Some(
-            Existential[WrapperClass[A, *], inner.Underlying](
-              WrapperClass[A, inner.Underlying](
-                fieldName = getter.name.toString,
+            Existential[WrapperClass[A, *], Inner](
+              WrapperClass[A, Inner](
+                fieldName = getDecodedName(getter),
                 unwrap = (expr: Expr[A]) =>
-                  if (getter.asMethod.paramLists.isEmpty) c.Expr[inner.Underlying](q"$expr.$termName")
-                  else c.Expr[inner.Underlying](q"$expr.$termName()"),
-                wrap = (expr: Expr[inner.Underlying]) => c.Expr[A](q"new $A($expr)")
+                  if (getter.asMethod.paramLists.isEmpty) c.Expr[Inner](q"$expr.$termName")
+                  else c.Expr[Inner](q"$expr.$termName()"),
+                wrap = (expr: Expr[Inner]) => c.Expr[A](q"new $A($expr)")
               )
             )
           )
         case _ => None
       }
     }
+
+    private val getDecodedName = (s: Symbol) => s.name.decodedName.toString
   }
 }

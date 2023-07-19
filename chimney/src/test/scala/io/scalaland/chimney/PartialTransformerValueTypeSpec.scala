@@ -3,7 +3,26 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.valuetypes.*
 
+import scala.annotation.unused
+
 class PartialTransformerValueTypeSpec extends ChimneySpec {
+
+  test("AnyVals with private val and single accessor of different name/type are not considered value classes") {
+    @unused val transformer: Transformer[String, Int] = (src: String) => src.length
+
+    compileErrorsFixed("new NotAValueType(100).transformIntoPartial[UserName]").check(
+      "derivation from value: io.scalaland.chimney.fixtures.valuetypes.NotAValueType to io.scalaland.chimney.fixtures.valuetypes.UserName is not supported in Chimney!"
+    )
+    compileErrorsFixed("new NotAValueType(100).transformIntoPartial[UserId]").check(
+      "derivation from notavaluetype: io.scalaland.chimney.fixtures.valuetypes.NotAValueType to scala.Int is not supported in Chimney!"
+    )
+    compileErrorsFixed("""UserName("Batman").transformIntoPartial[NotAValueType]""").check(
+      "derivation from value: io.scalaland.chimney.fixtures.valuetypes.UserName to io.scalaland.chimney.fixtures.valuetypes.NotAValueType is not supported in Chimney!"
+    )
+    compileErrorsFixed("UserId(100).transformIntoPartial[NotAValueType]").check(
+      "derivation from value: io.scalaland.chimney.fixtures.valuetypes.UserId to io.scalaland.chimney.fixtures.valuetypes.NotAValueType is not supported in Chimney!"
+    )
+  }
 
   test("transform from a value class(member type 'T') into a value(type 'T')") {
     UserName("Batman").transformIntoPartial[String].asOption ==> Some("Batman")

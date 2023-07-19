@@ -12,3 +12,7 @@ case class UserWithUserName(id: UserName)
 case class UserWithName(id: String)
 case class UserWithUserId(id: UserId)
 case class UserWithId(id: Int)
+
+class NotAValueType(private val integer: Int) extends AnyVal {
+  def string: String = integer.toString
+}
