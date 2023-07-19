@@ -156,10 +156,10 @@ val dependencies = Seq(
   },
   excludeDependencies ++= {
     // Workaround based on https://github.com/akka/akka-grpc/issues/1471#issuecomment-946476281 to prevent:
-    //   [error] Modules were resolved with conflicting cross-version suffixes in ProjectRef(uri("file:/Users/dev/Workspaces/GitHub/chimney/"), "chimneyMacroCommons3"):
+    //   [error] Modules were resolved with conflicting cross-version suffixes in ProjectRef(uri("file:/Users/dev/Workspaces/GitHub/chimney/"), "chimney3"):
     //   [error]    org.scala-lang.modules:scala-collection-compat _3, _2.13
-    //   [error] stack trace is suppressed; run last chimneyMacroCommons3 / update for the full output
-    //   [error] (chimneyMacroCommons3 / update) Conflicting cross-version suffixes in: org.scala-lang.modules:scala-collection-compat
+    //   [error] stack trace is suppressed; run last chimney3 / update for the full output
+    //   [error] (chimney3 / update) Conflicting cross-version suffixes in: org.scala-lang.modules:scala-collection-compat
     //   [error] Total time: 0 s, completed Jul 19, 2023, 1:19:23 PM
     // most likely caused somehow by the line:
     //   Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
@@ -359,7 +359,7 @@ lazy val protos = projectMatrix
   .settings(
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
     libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
-    scalacOptions := Seq.empty
+    scalacOptions := Seq.empty // contains only generated classes, and settings:* scalacOptions break Scala 3 compilation
   )
 
 lazy val benchmarks = projectMatrix
