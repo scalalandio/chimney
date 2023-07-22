@@ -15,7 +15,7 @@ val versions = new {
   val platforms = List(VirtualAxis.jvm, VirtualAxis.js, VirtualAxis.native)
 
   // Which version should be used in IntelliJ
-  val ideScala = scala212
+  val ideScala = scala3
   val idePlatform = VirtualAxis.jvm
 }
 
@@ -40,7 +40,7 @@ val settings = Seq(
       case Some((3, _)) =>
         Seq(
           // TODO: add linters
-         // "-explain",
+          // "-explain",
           "-rewrite",
           // format: off
           "-source", "3.3-migration",
@@ -134,7 +134,7 @@ val settings = Seq(
   Test / compile / scalacOptions --= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 12)) => Seq("-Ywarn-unused:locals") // Scala 2.12 ignores @unused warns
-      case _ => Seq.empty
+      case _             => Seq.empty
     }
   }
 )
@@ -151,6 +151,24 @@ val dependencies = Seq(
           "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
           compilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full)
         )
+      case _ => Seq.empty
+    }
+  },
+  excludeDependencies ++= {
+    // Workaround based on https://github.com/akka/akka-grpc/issues/1471#issuecomment-946476281 to prevent:
+    //   [error] Modules were resolved with conflicting cross-version suffixes in ProjectRef(uri("file:/Users/dev/Workspaces/GitHub/chimney/"), "chimney3"):
+    //   [error]    org.scala-lang.modules:scala-collection-compat _3, _2.13
+    //   [error] stack trace is suppressed; run last chimney3 / update for the full output
+    //   [error] (chimney3 / update) Conflicting cross-version suffixes in: org.scala-lang.modules:scala-collection-compat
+    //   [error] Total time: 0 s, completed Jul 19, 2023, 1:19:23 PM
+    // most likely caused somehow by the line:
+    //   Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
+    // as replacing it with empty Seq fixes the update (though it will fail the actual protoc generation).
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case (Some((3, _))) => Seq(
+        "com.thesamet.scalapb" % "scalapb-runtime_2.13",
+        "org.scala-lang.modules" % "scala-collection-compat_2.13"
+      )
       case _ => Seq.empty
     }
   }
@@ -277,7 +295,7 @@ lazy val root = project
 lazy val chimneyMacroCommons = projectMatrix
   .in(file("chimney-macro-commons"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
-  .disablePlugins(WelcomePlugin)
+  .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
     moduleName := "chimney-macro-commons",
     name := "chimney-macro-commons",
@@ -287,16 +305,21 @@ lazy val chimneyMacroCommons = projectMatrix
   .settings(versionSchemeSettings*)
   .settings(publishSettings*)
   .settings(dependencies*)
-  .dependsOn(protos % "test->test")
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
-  .disablePlugins(WelcomePlugin)
+  .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
     moduleName := "chimney",
     name := "chimney",
-    description := "Scala library for boilerplate-free data rewriting",
+    description := "Scala library for boilerplate-free data rewriting"
+  )
+  .settings(settings*)
+  .settings(versionSchemeSettings*)
+  .settings(publishSettings*)
+  .settings(dependencies*)
+  .settings(
     Compile / doc / scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, _)) => Seq("-skip-packages", "io.scalaland.chimney.internal")
@@ -304,10 +327,6 @@ lazy val chimney = projectMatrix
       }
     }
   )
-  .settings(settings*)
-  .settings(versionSchemeSettings*)
-  .settings(publishSettings*)
-  .settings(dependencies*)
   .dependsOn(chimneyMacroCommons, protos % "test->test")
 
 lazy val chimneyCats = projectMatrix
@@ -337,6 +356,11 @@ lazy val protos = projectMatrix
   )
   .settings(settings*)
   .settings(noPublishSettings*)
+  .settings(
+    Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
+    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
+    scalacOptions := Seq.empty // contains only generated classes, and settings:* scalacOptions break Scala 3 compilation
+  )
 
 lazy val benchmarks = projectMatrix
   .in(file("benchmarks"))
@@ -347,7 +371,7 @@ lazy val benchmarks = projectMatrix
     description := "Chimney benchmarking harness"
   )
   .enablePlugins(JmhPlugin)
-  .disablePlugins(WelcomePlugin)
+  .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(settings*)
   .settings(noPublishSettings*)
   .dependsOn(chimney)

@@ -55,3 +55,16 @@ package shapes5 {
     case class Circle(center: Point, rad: Double) extends Shape
   }
 }
+
+package shapes6 {
+  case class Point(x: Int, y: Int)
+
+  sealed trait Shape
+  case class Triangle(value: Shape.Triangle) extends Shape
+  case class Rectangle(value: Shape.Rectangle) extends Shape
+
+  object Shape {
+    case class Triangle(p1: Point, p2: Point, p3: Point)
+    case class Rectangle(p1: Point, p2: Point)
+  }
+}

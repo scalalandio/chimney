@@ -83,24 +83,73 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                         .promise[fromSubtype.Underlying](ExprPromise.NameGenerationStrategy.FromType)
                         .traverse { (fromSubtypeExpr: Expr[fromSubtype.Underlying]) =>
                           // We're constructing:
-                          // case fromSubtypeExpr: $fromSubtype => ${ derivedTo } // or ${ derivedResultTo }
-                          deriveRecursiveTransformationExpr[fromSubtype.Underlying, toSubtype.Underlying](
-                            fromSubtypeExpr
-                          ).map(_.map(toUpcast))
-                            .orElse(
-                              deriveRecursiveTransformationExpr[fromSubtype.Underlying, To](
-                                fromSubtypeExpr
+                          // case fromSubtypeExpr: $fromSubtype => ${ derivedToSubtype } } // or ${ derivedResultToSubtype
+                          lazy val fromSubtypeIntoToSubtype =
+                            deriveRecursiveTransformationExpr[fromSubtype.Underlying, toSubtype.Underlying](
+                              fromSubtypeExpr
+                            ).map(_.map(toUpcast))
+                          // We're constructing:
+                          // case fromSubtypeExpr: $fromSubtype => ${ derivedToSubtype } } // or ${ derivedResultToSubtype }; using fromSubtypeExpr.value
+                          lazy val fromSubtypeUnwrappedIntoToSubtype =
+                            fromSubtype.Underlying match {
+                              case WrapperClassType(fromSubtypeInner) =>
+                                import fromSubtypeInner.{Underlying as FromSubtypeInner, value as wrapper}
+                                Some(
+                                  DerivationResult.log(
+                                    s"Falling back on ${Type.prettyPrint[fromSubtypeInner.Underlying]} to ${Type
+                                        .prettyPrint[toSubtype.Underlying]} (source subtype unwrapped)"
+                                  ) >>
+                                    deriveRecursiveTransformationExpr[
+                                      fromSubtypeInner.Underlying,
+                                      toSubtype.Underlying
+                                    ](
+                                      wrapper.unwrap(fromSubtypeExpr)
+                                    ).map(_.map(toUpcast))
+                                )
+                              case _ => None
+                            }
+                          // We're constructing:
+                          // case fromSubtypeExpr: $fromSubtype => Subtype(${ derivedToSubtypeInner } // or ${ derivedResultToSubtypeInner }.map(Subtype)
+                          lazy val fromSubtypeIntoToSubtypeUnwrapped = toSubtype.Underlying match {
+                            case WrapperClassType(toSubtypeInner) =>
+                              import toSubtypeInner.{Underlying as FromSubtypeInner, value as wrapper}
+                              Some(
+                                DerivationResult.log(
+                                  s"Falling back on ${Type.prettyPrint[fromSubtype.Underlying]} to ${Type.prettyPrint[toSubtypeInner.Underlying]} (target subtype unwrapped)"
+                                ) >>
+                                  deriveRecursiveTransformationExpr[fromSubtype.Underlying, toSubtypeInner.Underlying](
+                                    fromSubtypeExpr
+                                  ).map(_.map(wrapper.wrap)).map(_.map(toUpcast))
                               )
-                            )
+                            case _ => None
+                          }
+
+                          fromSubtypeIntoToSubtype
+                            .orElseOpt(fromSubtypeUnwrappedIntoToSubtype)
+                            .orElseOpt(fromSubtypeIntoToSubtypeUnwrapped)
                         }
                         .map(Existential[ExprPromise[*, TransformationExpr[To]], fromSubtype.Underlying](_))
                   }
-                  .getOrElse {
+                  .getOrElse(
                     DerivationResult
                       .cantFindCoproductInstanceTransformer[From, To, fromSubtype.Underlying, Existential[
                         ExprPromise[*, TransformationExpr[To]]
                       ]]
-                  }
+                  )
+                  .orElse(
+                    // Then there is no matching subtype name we can still attempt to look at more generic implicit
+                    ExprPromise
+                      .promise[fromSubtype.Underlying](ExprPromise.NameGenerationStrategy.FromType)
+                      .traverse { (fromSubtypeExpr: Expr[fromSubtype.Underlying]) =>
+                        // We're constructing:
+                        // case fromSubtypeExpr: $fromSubtype => ${ derivedTo } // or ${ derivedResultTo }
+                        DerivationResult.log(
+                          s"Falling back on ${Type.prettyPrint[fromSubtype.Underlying]} to ${Type.prettyPrint[To]} (target upcasted)"
+                        ) >>
+                          deriveRecursiveTransformationExpr[fromSubtype.Underlying, To](fromSubtypeExpr)
+                      }
+                      .map(Existential[ExprPromise[*, TransformationExpr[To]], fromSubtype.Underlying](_))
+                  )
               }
               .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
                 val subtypeMappings = overrideMappings ++ nameMatchedMappings

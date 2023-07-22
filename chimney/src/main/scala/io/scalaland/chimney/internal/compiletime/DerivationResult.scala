@@ -94,6 +94,17 @@ sealed private[compiletime] trait DerivationResult[+A] {
       }
     }
 
+  final def orElseOpt[A1 >: A](resultOpt: => Option[DerivationResult[A1]]): DerivationResult[A1] =
+    transformWith[A1](pure) { err1 =>
+      resultOpt match {
+        case Some(result) =>
+          result.transformWith(pure) { err2 =>
+            fail(err1 ++ err2)
+          }
+        case None => fail(err1)
+      }
+    }
+
   // logging
 
   final def log(msg: => String): DerivationResult[A] = updateState(_.log(msg))

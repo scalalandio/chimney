@@ -7,48 +7,49 @@ import scala.collection.compat.*
 trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Expr as _, Transformer as _, Type as _, *}
-  import Type.platformSpecific.{fromUntyped, returnTypeOf}
+  import Type.platformSpecific.*
 
-  protected object ValueClassType extends ValueClassTypeModule {
+  protected object WrapperClassType extends WrapperClassTypeModule {
 
-    type Inner
-
-    def parse[A: Type]: Option[Existential[ValueClass[A, *]]] = if (Type[A].isAnyVal && !Type[A].isPrimitive) {
+    def parse[A: Type]: Option[Existential[WrapperClass[A, *]]] = {
       val A = Type[A].tpe
 
-      val getter: Symbol = A.decls.to(List).find(m => m.isMethod && m.asMethod.isGetter).getOrElse {
-        assertionFailed(s"AnyVal ${Type.prettyPrint[A]} expected to have 1 parameter")
-      }
-
-      val primaryConstructor: Symbol = A.decls
+      val getterOpt: Option[Symbol] = A.decls.to(List).find(m => m.isPublic && m.isMethod && m.asMethod.isGetter)
+      val primaryConstructorOpt: Option[Symbol] = A.decls
         .to(List)
         .find(m => m.isPublic && m.isConstructor && m.asMethod.paramLists.flatten.size == 1)
-        .getOrElse {
-          assertionFailed(s"AnyVal ${Type.prettyPrint[A]} expected to have 1 public constructor")
-        }
-      val argument = primaryConstructor.asMethod.paramLists.flatten.headOption.getOrElse {
-        assertionFailed(s"AnyVal ${Type.prettyPrint[A]} expected to have public constructor with 1 argument")
-      }
+      val argumentOpt: Option[Symbol] = primaryConstructorOpt.flatMap(_.asMethod.paramLists.flatten.headOption)
 
-      implicit val Inner: Type[Inner] = fromUntyped[Inner](returnTypeOf(A, getter))
-      assert(
-        argument.typeSignature =:= Inner.tpe,
-        s"AnyVal ${Type.prettyPrint[A]} only parameter's type was expected to be the same as only constructor argument's type"
-      )
-
-      val termName = getter.asMethod.name.toTermName
-
-      Some(
-        Existential(
-          ValueClass[A, Inner](
-            fieldName = getter.name.toString, // TODO: use utility from Products
-            unwrap = (expr: Expr[A]) =>
-              if (getter.asMethod.paramLists.isEmpty) c.Expr[Inner](q"$expr.$termName")
-              else c.Expr[Inner](q"$expr.$termName()"),
-            wrap = (expr: Expr[Inner]) => c.Expr[A](q"new $A($expr)")
+      (getterOpt, primaryConstructorOpt, argumentOpt) match {
+        case (Some(getter), Some(_), Some(argument))
+            if !Type[A].isPrimitive && getDecodedName(getter) == getDecodedName(argument) =>
+          val Argument = fromUntyped[Any](argument.typeSignature)
+          val inner = fromUntyped(returnTypeOf(A, getter)).as_??
+          import inner.Underlying as Inner
+          assert(
+            Argument =:= Inner,
+            s"Wrapper/AnyVal ${Type.prettyPrint[A]} only property's type (${Type
+                .prettyPrint(Argument)}) was expected to be the same as only constructor argument's type (${Type
+                .prettyPrint(Inner)})"
           )
-        )
-      )
-    } else None
+
+          val termName = getter.asMethod.name.toTermName
+
+          Some(
+            Existential[WrapperClass[A, *], Inner](
+              WrapperClass[A, Inner](
+                fieldName = getDecodedName(getter),
+                unwrap = (expr: Expr[A]) =>
+                  if (getter.asMethod.paramLists.isEmpty) c.Expr[Inner](q"$expr.$termName")
+                  else c.Expr[Inner](q"$expr.$termName()"),
+                wrap = (expr: Expr[Inner]) => c.Expr[A](q"new $A($expr)")
+              )
+            )
+          )
+        case _ => None
+      }
+    }
+
+    private val getDecodedName = (s: Symbol) => s.name.decodedName.toString
   }
 }

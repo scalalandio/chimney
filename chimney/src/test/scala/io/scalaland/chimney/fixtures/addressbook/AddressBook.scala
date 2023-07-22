@@ -15,3 +15,9 @@ case class PhoneNumber(number: String, `type`: PhoneType)
 case class Person(name: PersonName, id: PersonId, email: Email, phones: List[PhoneNumber])
 
 case class AddressBook(people: List[Person])
+
+sealed trait AddressBookType
+object AddressBookType {
+  case object Public extends AddressBookType
+  case class Private(owner: String) extends AddressBookType
+}
