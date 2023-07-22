@@ -20,7 +20,7 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
       val primaryConstructor: Symbol = Option(sym.primaryConstructor).filter(_.isClassConstructor).getOrElse {
         assertionFailed(s"AnyVal ${Type.prettyPrint[A]} expected to have 1 public constructor")
       }
-      val typeByName = paramsWithTypes(A, primaryConstructor)
+      val typeByName = paramsWithTypes(A, primaryConstructor, isConstructor = true)
       val argument = paramListsOf(primaryConstructor).flatten match {
         case argument :: Nil => argument
         case _ => assertionFailed(s"AnyVal ${Type.prettyPrint[A]} expected to have public constructor with 1 argument")
