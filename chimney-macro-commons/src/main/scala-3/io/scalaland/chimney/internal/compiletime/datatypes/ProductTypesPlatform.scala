@@ -147,7 +147,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           }
         val paramss = paramListsOf(primaryConstructor)
         val paramNames = paramss.flatMap(_.map(param => param -> param.name)).toMap
-        val paramTypes = paramsWithTypes(A, primaryConstructor)
+        val paramTypes = paramsWithTypes(A, primaryConstructor, isConstructor = true)
         val defaultValues = paramss.flatten.zipWithIndex.collect {
           case (param, idx) if param.flags.is(Flags.HasDefault) =>
             val mod = sym.companionModule
@@ -181,7 +181,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           }
           .filter { case (name, _) => !paramTypes.keySet.exists(areNamesMatching(_, name)) }
           .map { case (name, setter) =>
-            val tpe = ExistentialType(paramsWithTypes(A, setter).collectFirst {
+            val tpe = ExistentialType(paramsWithTypes(A, setter, isConstructor = false).collectFirst {
               // `name` might be e.g. `setValue` while key in returned Map might be `value` - we want to return
               // "setName" as the name of the setter but we don't want to throw exception when accessing Map.
               case (searchedName, tpe) if areNamesMatching(searchedName, name) => tpe.asType.asInstanceOf[Type[Any]]
