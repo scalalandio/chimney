@@ -2,6 +2,8 @@ package io.scalaland.chimney
 
 trait VersionCompat {
 
+  def isScala3 = true
+
   /* Copy/Paste from munit, with transparent keyword added.
    * Without the keyword some unexpected error reports would be collected
    */
@@ -21,4 +23,6 @@ trait VersionCompat {
       }
       .mkString("\n")
   }
+
+  transparent inline def compileErrorsScala2(inline code: String): String = ""
 }
