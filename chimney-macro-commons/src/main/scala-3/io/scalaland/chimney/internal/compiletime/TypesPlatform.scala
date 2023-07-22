@@ -25,7 +25,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       /** What is the type of each method parameter */
       def paramsWithTypes(tpe: TypeRepr, method: Symbol, isConstructor: Boolean): Map[String, TypeRepr] =
         // constructor methods still have to have their type parameters manually applied,
-        // aven if we know the exact type of their class
+        // even if we know the exact type of their class
         val appliedIfNecessary =
           if tpe.typeArgs.isEmpty && isConstructor then tpe.memberType(method)
           else tpe.memberType(method).appliedTo(tpe.typeArgs)
@@ -34,7 +34,6 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
           case MethodType(names, types, _) => names.zip(types).toMap
           // polymorphic
           case PolyType(_, _, MethodType(names, types, AppliedType(_, typeRefs))) =>
-            // TODO: check if types of constructor match types passed to tpe
             val typeArgumentByAlias = typeRefs.zip(tpe.typeArgs).toMap
             val typeArgumentByName: Map[String, TypeRepr] =
               names
@@ -42,7 +41,6 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
                 .toMap
                 .view
                 .mapValues { tpe =>
-                  // FIXME: This has to be recursive
                   typeArgumentByAlias.getOrElse(tpe, tpe)
                 }
                 .toMap

@@ -24,5 +24,8 @@ trait VersionCompat {
       .mkString("\n")
   }
 
+  /* Compilation errors that should be checked in Scala 2-only as currently Scala 3 has some issues
+   * (which we don't want to comment out but also which we don't want to fail compilation and prevent us for other checks)
+   */
   transparent inline def compileErrorsScala2(inline code: String): String = ""
 }

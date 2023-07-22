@@ -13,6 +13,9 @@ trait VersionCompat {
   def compileErrorsFixed(code: String): String =
     macro MacroCompatScala2.compileErrorsImpl
 
+  /* Compilation errors that should be checked in Scala 2-only as currently Scala 3 has some issues
+   * (which we don't want to comment out but also which we don't want to fail compilation and prevent us for other checks)
+   */
   def compileErrorsScala2(code: String): String =
     macro MacroCompatScala2.compileErrorsImpl
 }
