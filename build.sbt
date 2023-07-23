@@ -25,11 +25,16 @@ Global / excludeLintKeys += ideSkipProject
 val only1VersionInIDE =
   MatrixAction
     .ForPlatform(versions.idePlatform)
-    .Configure(_.settings(ideSkipProject := (scalaVersion.value != versions.ideScala))) +:
+    .Configure(
+      _.settings(
+        ideSkipProject := (scalaVersion.value != versions.ideScala),
+        bspEnabled := (scalaVersion.value == versions.ideScala)
+      )
+    ) +:
     versions.platforms.filter(_ != versions.idePlatform).map { platform =>
       MatrixAction
         .ForPlatform(platform)
-        .Configure(_.settings(ideSkipProject := true))
+        .Configure(_.settings(ideSkipProject := true, bspEnabled := false))
     }
 
 val settings = Seq(
@@ -165,10 +170,11 @@ val dependencies = Seq(
     //   Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
     // as replacing it with empty Seq fixes the update (though it will fail the actual protoc generation).
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case (Some((3, _))) => Seq(
-        "com.thesamet.scalapb" % "scalapb-runtime_2.13",
-        "org.scala-lang.modules" % "scala-collection-compat_2.13"
-      )
+      case (Some((3, _))) =>
+        Seq(
+          "com.thesamet.scalapb" % "scalapb-runtime_2.13",
+          "org.scala-lang.modules" % "scala-collection-compat_2.13"
+        )
       case _ => Seq.empty
     }
   }
@@ -259,7 +265,7 @@ lazy val root = project
          | - Scala 2.13 adds no suffix to a project name seen in build.sbt
          | - Scala 3 adds the suffix "3" to a project name seen in build.sbt
          |
-         |When working with IntelliJ, edit "val ideScala = ..." and "val idePlatform = ..." within "val versions" in build.sbt to control which Scala version you're currently working with.""".stripMargin,
+         |When working with IntelliJ or Scala Metals, edit "val ideScala = ..." and "val idePlatform = ..." within "val versions" in build.sbt to control which Scala version you're currently working with.""".stripMargin,
     usefulTasks := Seq(
       sbtwelcome
         .UsefulTask(
