@@ -3,6 +3,8 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
+import scala.annotation.unused
+
 class IssuesSpec extends ChimneySpec {
 
   test("fix issue #19") {
@@ -59,7 +61,7 @@ class IssuesSpec extends ChimneySpec {
   group("fix issue #66") {
 
     case class Foo1(y: String)
-    case class Foo2(y: String, x: Int)
+    @unused case class Foo2(y: String, x: Int)
     case class Foo3(x: Int)
 
     test("fix for `withFieldConst`") {
@@ -207,10 +209,10 @@ class IssuesSpec extends ChimneySpec {
 
   test("fix issue #121") {
     case class FooNested(num: Option[Int])
-    case class Foo(maybeString: Option[Set[String]], nested: FooNested)
+    @unused case class Foo(maybeString: Option[Set[String]], nested: FooNested)
 
     case class BarNested(num: String)
-    case class Bar(maybeString: scala.collection.immutable.Seq[String], nested: BarNested)
+    @unused case class Bar(maybeString: scala.collection.immutable.Seq[String], nested: BarNested)
 
     compileErrorsFixed("Foo(None, FooNested(None)).into[Bar].transform")
       .check(
@@ -412,7 +414,7 @@ class IssuesSpec extends ChimneySpec {
 
   test("fix issue #185 (rewritten as partial)") {
 
-    def blackIsRed(b: colors2.Black.type): colors1.Color =
+    @unused def blackIsRed(b: colors2.Black.type): colors1.Color =
       colors1.Red
 
     (colors2.Black: colors2.Color)
@@ -480,9 +482,9 @@ class IssuesSpec extends ChimneySpec {
     import Issue212.*
 
     test("partial transformers") {
-      implicit val somethingPartialTransformer: PartialTransformer[proto.Something, OneOf] =
+      @unused implicit val somethingPartialTransformer: PartialTransformer[proto.Something, OneOf] =
         PartialTransformer(_.value.transformIntoPartial[Something])
-      implicit val somethingElsePartialTransformer: PartialTransformer[proto.SomethingElse, OneOf] =
+      @unused implicit val somethingElsePartialTransformer: PartialTransformer[proto.SomethingElse, OneOf] =
         PartialTransformer(_.value.transformIntoPartial[SomethingElse])
 
       implicit val oneOfPartialTransformer: PartialTransformer[proto.OneOf, OneOf] =

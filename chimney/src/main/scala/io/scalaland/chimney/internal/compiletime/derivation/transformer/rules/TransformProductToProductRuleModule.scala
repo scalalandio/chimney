@@ -509,9 +509,6 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         case _ => DerivationResult.attemptNextRule
       }
 
-    private val isUsingSetter: ((String, Existential[Product.Parameter])) => Boolean =
-      _._2.value.targetType == Product.Parameter.TargetType.SetterParameter
-
     // If we derived partial.Result[$ctorParam] we are appending
     //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
     private def appendPath[A: Type](expr: TransformationExpr[A], path: String): TransformationExpr[A] =

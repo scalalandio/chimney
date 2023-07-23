@@ -3,14 +3,15 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
+import scala.annotation.unused
 import scala.collection.immutable.Queue
 import scala.collection.mutable.ArrayBuffer
 
 class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
   test("not support converting non-Unit field to Unit field if there is no implicit converter allowing that") {
-    case class Buzz(value: String)
-    case class ConflictingFooBuzz(value: Unit)
+    @unused case class Buzz(value: String)
+    @unused case class ConflictingFooBuzz(value: Unit)
 
     compileErrorsFixed("""Buzz("a").transformIntoPartial[ConflictingFooBuzz]""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Buzz to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.ConflictingFooBuzz",
@@ -25,8 +26,8 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
   test("support automatically filling of scala.Unit") {
     case class Buzz(value: String)
     case class NewBuzz(value: String, unit: Unit)
-    case class FooBuzz(unit: Unit)
-    case class ConflictingFooBuzz(value: Unit)
+    @unused case class FooBuzz(unit: Unit)
+    @unused case class ConflictingFooBuzz(value: Unit)
 
     Buzz("a").transformIntoPartial[NewBuzz].asOption ==> Some(NewBuzz("a", ()))
     Buzz("a").transformIntoPartial[FooBuzz].asOption ==> Some(FooBuzz(()))

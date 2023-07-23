@@ -1,5 +1,7 @@
 package io.scalaland.chimney.fixtures.javabeans
 
+import scala.annotation.unused
+
 case class CaseClassNoFlag(id: String, name: String)
 
 case class CaseClassWithFlagMethod(id: String, name: String) {
@@ -44,7 +46,7 @@ class JavaBeanTarget {
   // make sure that only public setters are taken into account
   protected def setFoo(foo: Unit): Unit = ()
 
-  private def setBar(bar: Int): Unit = ()
+  @unused private def setBar(bar: Int): Unit = ()
 
   def getId: String = id
 
@@ -69,7 +71,7 @@ class JavaBeanTargetNoIdSetter {
   // make sure that only public setters are taken into account
   protected def setFoo(foo: Unit): Unit = ()
 
-  private def setBar(bar: Int): Unit = ()
+  @unused private def setBar(bar: Int): Unit = ()
 
   def getId: String = id
 
