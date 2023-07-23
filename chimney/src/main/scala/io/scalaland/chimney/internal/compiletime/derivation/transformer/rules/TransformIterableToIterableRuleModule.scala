@@ -20,7 +20,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
           // val Type.Tuple2(toK, toV) = to2: @unchecked
           val (toK, toV) = Type.Tuple2.unapply(to2.Underlying).get
           import fromK.Underlying as FromK, fromV.Underlying as FromV, toV.Underlying as ToV, toK.Underlying as ToK,
-          to2.Underlying as To2
+            to2.Underlying as To2
           val toKeyResult = ExprPromise
             .promise[fromK.Underlying](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
             .traverse { key =>

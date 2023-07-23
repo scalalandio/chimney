@@ -80,7 +80,7 @@ private[compiletime] trait Derivation
           case (Type.Option(getterInner), Type.Option(targetInner)) =>
             val targetGetter = targetGetters(patchFieldName)
             import patchGetter.Underlying as PatchGetter, targetGetter.Underlying as TargetGetter,
-            getterInner.Underlying as GetterInner, targetInner.Underlying as TargetInner
+              getterInner.Underlying as GetterInner, targetInner.Underlying as TargetInner
             deriveTransformerForPatcherField[Option[getterInner.Underlying], Option[
               targetInner.Underlying
             ]](src = patchGetter.value.get(ctx.patch).asInstanceOfExpr[Option[getterInner.Underlying]])

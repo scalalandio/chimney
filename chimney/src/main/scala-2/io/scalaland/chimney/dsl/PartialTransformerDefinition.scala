@@ -20,7 +20,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
 ) extends FlagsDsl[Lambda[`Flags1 <: TransformerFlags` => PartialTransformerDefinition[From, To, Cfg, Flags1]], Flags]
     with TransformerDefinitionCommons[
-      Lambda[`Cfg1 <: TransformerCfg` => PartialTransformerDefinition[From, To, Cfg1, Flags]],
+      Lambda[`Cfg1 <: TransformerCfg` => PartialTransformerDefinition[From, To, Cfg1, Flags]]
     ]
     with WithRuntimeDataStore {
 

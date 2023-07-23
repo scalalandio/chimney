@@ -328,7 +328,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     //   ${ constructor }
                     // }, ${ failFast }) }
                     import res1.{Underlying as Res1, value as result1Expr},
-                    res2.{Underlying as Res2, value as result2Expr}
+                      res2.{Underlying as Res2, value as result2Expr}
                     ctx match {
                       case TransformationContext.ForTotal(_) =>
                         assertionFailed("Expected partial while got total")

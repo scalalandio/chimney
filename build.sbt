@@ -28,13 +28,14 @@ val only1VersionInIDE =
     .Configure(
       _.settings(
         ideSkipProject := (scalaVersion.value != versions.ideScala),
-        bspEnabled := (scalaVersion.value == versions.ideScala)
+        bspEnabled := (scalaVersion.value == versions.ideScala),
+        scalafmtOnCompile := !isCI
       )
     ) +:
     versions.platforms.filter(_ != versions.idePlatform).map { platform =>
       MatrixAction
         .ForPlatform(platform)
-        .Configure(_.settings(ideSkipProject := true, bspEnabled := false))
+        .Configure(_.settings(ideSkipProject := true, bspEnabled := false, scalafmtOnCompile := false))
     }
 
 val settings = Seq(
@@ -336,7 +337,7 @@ lazy val chimney = projectMatrix
   .dependsOn(chimneyMacroCommons, protos % "test->test")
 
 lazy val chimneyCats = projectMatrix
-  .in(file("chimneyCats"))
+  .in(file("chimney-cats"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
   .disablePlugins(WelcomePlugin)
   .settings(
