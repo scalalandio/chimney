@@ -35,6 +35,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *         
     * @since 0.7.0
     */
   def withFieldConst[T, U](selector: To => T, value: U)(implicit
@@ -53,6 +54,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *         
     * @since 0.7.0
     */
   def withFieldConstPartial[T, U](selector: To => T, value: partial.Result[U])(implicit
@@ -71,6 +73,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *         
     * @since 0.7.0
     */
   def withFieldComputed[T, U](selector: To => T, f: From => U)(implicit
@@ -89,6 +92,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *         
     * @since 0.7.0
     */
   def withFieldComputedPartial[T, U](
@@ -108,6 +112,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     * @param selectorFrom source field in `From`, defined like `_.originalName`
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *         
     * @since 0.7.0
     */
   def withFieldRenamed[T, U](
