@@ -19,9 +19,7 @@ import scala.language.experimental.macros
 final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
 ) extends FlagsDsl[Lambda[`Flags1 <: TransformerFlags` => TransformerDefinition[From, To, Cfg, Flags1]], Flags]
-    with TransformerDefinitionCommons[
-      Lambda[`Cfg1 <: TransformerCfg` => TransformerDefinition[From, To, Cfg1, Flags]]
-    ]
+    with TransformerDefinitionCommons[Lambda[`Cfg1 <: TransformerCfg` => TransformerDefinition[From, To, Cfg1, Flags]]]
     with WithRuntimeDataStore {
 
   /** Lifts current transformer definition as `PartialTransformer` definition
@@ -45,6 +43,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    *         
     * @since 0.4.0
     */
   def withFieldConst[T, U](selector: To => T, value: U)(implicit
