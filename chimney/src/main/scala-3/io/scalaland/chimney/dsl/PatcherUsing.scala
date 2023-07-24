@@ -48,6 +48,12 @@ final class PatcherUsing[A, Patch, Cfg <: PatcherCfg](val obj: A, val objPatch: 
   def ignoreRedundantPatcherFields: PatcherUsing[A, Patch, IgnoreRedundantPatcherFields[Cfg]] =
     this.asInstanceOf[PatcherUsing[A, Patch, IgnoreRedundantPatcherFields[Cfg]]]
 
+  /** Enable printing the logs from the derivation process.
+    *
+    * @see [[https://scalalandio.github.io/chimney/TODO]] for more details
+    *
+    * @since 0.8.0
+    */
   def enableMacrosLogging: PatcherUsing[A, Patch, MacrosLogging[Cfg]] =
     this.asInstanceOf[PatcherUsing[A, Patch, MacrosLogging[Cfg]]]
 
