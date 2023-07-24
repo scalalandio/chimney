@@ -135,7 +135,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Enable printing the logs from the derivation process.
     *
-    * @see [[https://chimney.readthedocs.io/TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/troubleshooting/debugging-macros.html]] for more details
     *
     * @since 0.8.0
     */
@@ -144,7 +144,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Disable printing the logs from the derivation process.
     *
-    * @see [[https://chimney.readthedocs.io/TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/troubleshooting/debugging-macros.html]] for more details
     *
     * @since 0.8.0
     */

@@ -50,7 +50,7 @@ final class PatcherUsing[A, Patch, Cfg <: PatcherCfg](val obj: A, val objPatch: 
 
   /** Enable printing the logs from the derivation process.
     *
-    * @see [[https://chimney.readthedocs.io/TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/troubleshooting/debugging-macros.html]] for more details
     *
     * @since 0.8.0
     */
