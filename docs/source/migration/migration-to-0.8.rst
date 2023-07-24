@@ -10,4 +10,5 @@ several breaking changes:
 - ``.enableUnsafeOption`` option was removed - if ``Option`` unwrapping is
   needed, it is recommended to use
   `partial transformers section <partial-transformers/partial-transformers.html>`_
-- TODO autoderivation description
+- TODO autoderivation changes description
+- TODO default value changes description
