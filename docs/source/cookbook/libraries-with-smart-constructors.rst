@@ -53,7 +53,7 @@ we could use it to construct ``PartialTransformer`` automatically:
      }
 
 The same would be true about extracting values from smart constructed types
-(if they are not ``AnyVal``s, handled by Chimney out of the box).
+(if they are not ``AnyVal``\s, handled by Chimney out of the box).
 
 Let's see how we could implement support for automatic transformations of
 types provided in some popular libraries.
@@ -71,7 +71,7 @@ library which attempts to remove runtime overhead from user's types.
   @newtype case class Username(value: String)
 
 would be rewritten to become ``String`` in the runtime, while prevent
-mixing ``Username`` values with other ``String``s accidentally.
+mixing ``Username`` values with other ``String``\s accidentally.
 
 Newtype ``Coercible`` type class `to allow generic wrapping and unwrapping <https://github.com/estatico/scala-newtype#coercible-instance-trick>`_
 of ``@newtype`` values. This type class is not able to validate
@@ -85,7 +85,7 @@ e.g. Refined Type which performs this validation.
   ): Transformer[From, To] = coercible(_)
 
 Monix Newtypes
--------------
+--------------
 
 `Monix's Newtypes <https://newtypes.monix.io/>`_ is similar to NewType in that
 it tries to remove wrapping in runtime. However, it uses different tricks to

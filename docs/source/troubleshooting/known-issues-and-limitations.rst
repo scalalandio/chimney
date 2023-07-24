@@ -42,5 +42,5 @@ so it is recommended to update 2.12 to at least 2.12.1.
 Patchers are flat
 -----------------
 
-Currently ``Patcher``s support only flat updates. They cannot perform recursive
+Currently ``Patcher``\s support only flat updates. They cannot perform recursive
 update of a class.

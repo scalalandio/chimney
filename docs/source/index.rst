@@ -163,8 +163,27 @@ Contents:
    patchers/options-handling
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Cookbook
+
+   cookbook/libraries-with-smart-constructors
+   cookbook/protocol-buffers
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Troubleshooting
+
+   troubleshooting/known-issues-and-limitations
+   troubleshooting/debugging-macros
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Migration
+
+   migration/migration-to-0.8
+
+.. toctree::
    :maxdepth: 1
    :caption: Benchmarks
 
    benchmarks
-

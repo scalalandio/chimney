@@ -273,8 +273,8 @@ sealed_value_optional oneof fields
 ----------------------------------
 
 If instead of non-nullable type with ``.Empty`` subtype, we would prefer
-``Option``al type without `.Empty` subtype, there is optional sealed hierarchy
-available. Similarly to non-optional it requires `several conditions defined by ScalaPB <https://scalapb.github.io/docs/sealed-oneofs#optional-sealed-oneof>`_.
+``Option``\al type without ``.Empty`` subtype, there is optional sealed hierarchy
+available. Similarly to non-optional it requires `several conditions <https://scalapb.github.io/docs/sealed-oneofs#optional-sealed-oneof>`_.
 
 When you define it:
 
