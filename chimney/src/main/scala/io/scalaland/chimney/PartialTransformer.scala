@@ -57,13 +57,12 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
     * @since 0.7.0
     */
   def apply[From, To](f: From => partial.Result[To]): PartialTransformer[From, To] =
-    (src: From, _: Boolean) => {
-      try {
+    (src: From, _: Boolean) =>
+      try
         f(src)
-      } catch {
+      catch {
         case why: Throwable => partial.Result.fromErrorThrowable(why)
       }
-    }
 
   /** Construct ad-hoc instance of partial transformer from transforming function returning target value.
     *
@@ -75,13 +74,12 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
     * @since 0.7.0
     */
   def fromFunction[From, To](f: From => To): PartialTransformer[From, To] =
-    (src: From, _: Boolean) => {
-      try {
+    (src: From, _: Boolean) =>
+      try
         partial.Result.fromValue(f(src))
-      } catch {
+      catch {
         case why: Throwable => partial.Result.fromErrorThrowable(why)
       }
-    }
 
   /** Lifts total transformer to partial transformer
     *

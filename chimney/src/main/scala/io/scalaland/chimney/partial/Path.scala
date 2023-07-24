@@ -14,14 +14,14 @@ final case class Path(private val elems: List[PathElement]) extends AnyVal {
     * @return path with prepended path element
     *
     * @since 0.7.0
-    * */
+    */
   def prepend(pathElement: PathElement): Path = Path(pathElement :: elems)
 
   /** Returns conventional string based representation of a path
     *
     * @since 0.7.0
     */
-  def asString: String = {
+  def asString: String =
     if (elems.isEmpty) ""
     else {
       val sb = new StringBuilder
@@ -35,7 +35,6 @@ final case class Path(private val elems: List[PathElement]) extends AnyVal {
       }
       sb.result()
     }
-  }
 }
 
 object Path {

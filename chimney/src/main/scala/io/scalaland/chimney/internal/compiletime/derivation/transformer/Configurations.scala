@@ -75,7 +75,7 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     def allowFromToImplicitSearch: TransformerConfig = copy(preventResolutionForTypes = None)
 
-    def prepareForRecursiveCall: TransformerConfig = {
+    def prepareForRecursiveCall: TransformerConfig =
       // When going recursively we have to:
       // - clear the field overrides since `with*(_.field, *)` might make sense for src, but not for src.field
       // - clear implicit call prevention:
@@ -93,7 +93,6 @@ private[compiletime] trait Configurations { this: Derivation =>
         preventResolutionForTypes = None,
         fieldOverrides = Map.empty
       )
-    }
 
     // def usesRuntimeDataStore: Boolean =
     //  fieldOverrides.values.exists(_.usesRuntimeDataStore) || coproductOverrides.nonEmpty

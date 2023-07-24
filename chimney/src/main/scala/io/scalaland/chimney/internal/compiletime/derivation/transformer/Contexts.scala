@@ -57,14 +57,14 @@ private[compiletime] trait Contexts { this: Derivation =>
       }.asInstanceOf[this.type]
 
     /** Avoid clumsy
-     * {{{
-     *
-     * ctx match {
-     *   case total: TransformationContext.ForTotal[?, ?]     => ...
-     *   case partial: TransformationContext.ForPartial[?, ?] => ...
-     * }
-     * }}}
-     */
+      * {{{
+      *
+      * ctx match {
+      *   case total: TransformationContext.ForTotal[?, ?]     => ...
+      *   case partial: TransformationContext.ForPartial[?, ?] => ...
+      * }
+      * }}}
+      */
     def fold[B](
         forTotal: TransformationContext.ForTotal[From, To] => B
     )(

@@ -49,7 +49,7 @@ private[compiletime] trait Derivation
               val patchedArgs = targetParams.map { case (targetParamName, _) =>
                 targetParamName -> patchMapping.getOrElse(
                   targetParamName,
-                  targetGetters(targetParamName).mapK[Expr] { _ => getter => getter.get(ctx.obj) }
+                  targetGetters(targetParamName).mapK[Expr](_ => getter => getter.get(ctx.obj))
                 )
               }
 
@@ -71,7 +71,7 @@ private[compiletime] trait Derivation
   ): DerivationResult[Option[ExistentialExpr]] = {
 
     def patchGetterExpr: ExistentialExpr =
-      patchGetter.mapK[Expr] { _ => getter => getter.get(ctx.patch) }
+      patchGetter.mapK[Expr](_ => getter => getter.get(ctx.patch))
 
     targetParams.get(patchFieldName) match {
       case Some(targetParam)

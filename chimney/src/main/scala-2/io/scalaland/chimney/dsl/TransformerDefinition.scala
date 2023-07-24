@@ -43,7 +43,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
-    *         
+    *
     * @since 0.4.0
     */
   def withFieldConst[T, U](selector: To => T, value: U)(implicit

@@ -26,7 +26,7 @@ final class PatcherUsing[A, Patch, Cfg <: PatcherCfg](val obj: A, val objPatch: 
     *
     * @see [[https://scalalandio.github.io/chimney/patchers/options-handling.html]] for more details
     * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
-    *         
+    *
     * @since 0.4.0
     */
   def ignoreNoneInPatch: PatcherUsing[A, Patch, IgnoreNoneInPatch[Cfg]] =
@@ -42,7 +42,7 @@ final class PatcherUsing[A, Patch, Cfg <: PatcherCfg](val obj: A, val objPatch: 
     *
     * @see [[https://scalalandio.github.io/chimney/patchers/redundant-fields.html]] for more details
     * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
-    *         
+    *
     * @since 0.4.0
     */
   def ignoreRedundantPatcherFields: PatcherUsing[A, Patch, IgnoreRedundantPatcherFields[Cfg]] =
@@ -60,7 +60,7 @@ final class PatcherUsing[A, Patch, Cfg <: PatcherCfg](val obj: A, val objPatch: 
   /** Applies configured patching in-place
     *
     * @return patched value
-    *         
+    *
     * @since 0.4.0
     */
   inline def patch: A = ${ PatcherMacros.derivePatcherResult[A, Patch, Cfg]('obj, 'objPatch) }

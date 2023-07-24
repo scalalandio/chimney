@@ -52,7 +52,7 @@ final case class NotSupportedTransformerDerivation(
 ) extends TransformerDerivationError
 
 object TransformerDerivationError {
-  def printErrors(errors: Seq[TransformerDerivationError]): String = {
+  def printErrors(errors: Seq[TransformerDerivationError]): String =
     errors
       .groupBy(e => (e.targetTypeName, e.sourceTypeName))
       .map { case ((targetTypeName, sourceTypeName), errs) =>
@@ -94,5 +94,4 @@ object TransformerDerivationError {
            |""".stripMargin
       }
       .mkString("\n")
-  }
 }

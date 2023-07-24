@@ -25,7 +25,7 @@ trait ChimneySpec extends munit.BaseFunSuite with VersionCompat { self =>
     else super.test(options.withName(appendName(prefix, options.name)))(body)
 
   implicit class ArrowAssert(lhs: Any) {
-    def ==>[V](rhs: V): Unit = {
+    def ==>[V](rhs: V): Unit =
       (lhs, rhs) match {
         // Hack to make Arrays compare sanely; at some point we may want some
         // custom, extensible, typesafe equality check but for now this will do
@@ -34,13 +34,11 @@ trait ChimneySpec extends munit.BaseFunSuite with VersionCompat { self =>
         case (lhs, rhs) =>
           Predef.assert(lhs == rhs, s"==> assertion failed: $lhs != $rhs")
       }
-    }
   }
 
   implicit class CompileErrorsCheck(msg: String) {
 
-    def check(msgs: String*): Unit = for (msg <- msgs) {
-
+    def check(msgs: String*): Unit = for (msg <- msgs)
       Predef.assert(
         ChimneySpec.AnsiControlCode.replaceAllIn(this.msg, "").contains(msg),
         "Error message did not contain expected snippet\n" +
@@ -49,7 +47,6 @@ trait ChimneySpec extends munit.BaseFunSuite with VersionCompat { self =>
           "Expected Snippet\n" +
           msg
       )
-    }
 
     def arePresent(): Unit = Predef.assert(msg.nonEmpty, "Expected compilation errors")
   }

@@ -7,9 +7,8 @@ case class CaseClassWithFlagMethod(id: String, name: String) {
 }
 
 case class CaseClassWithFlag(id: String, name: String, flag: Boolean) {
-  def equalsToBean(jbswf: JavaBeanSourceWithFlag): Boolean = {
+  def equalsToBean(jbswf: JavaBeanSourceWithFlag): Boolean =
     id == jbswf.getId && name == jbswf.getName && flag == jbswf.isFlag
-  }
 }
 
 case class CaseClassWithFlagRenamed(id: String, name: String, renamedFlag: Boolean)
@@ -33,17 +32,14 @@ class JavaBeanTarget {
   private var name: String = _
   private var flag: Boolean = _
 
-  def setId(id: String): Unit = {
+  def setId(id: String): Unit =
     this.id = id
-  }
 
-  def setName(name: String): Unit = {
+  def setName(name: String): Unit =
     this.name = name
-  }
 
-  def setFlag(flag: Boolean): Unit = {
+  def setFlag(flag: Boolean): Unit =
     this.flag = flag
-  }
 
   // make sure that only public setters are taken into account
   protected def setFoo(foo: Unit): Unit = ()
@@ -56,21 +52,19 @@ class JavaBeanTarget {
 
   def isFlag: Boolean = flag
 
-  override def equals(obj: Any): Boolean = {
+  override def equals(obj: Any): Boolean =
     obj match {
       case jbt: JavaBeanTarget =>
         this.id == jbt.getId && this.name == jbt.getName && this.flag == jbt.isFlag
       case _ =>
         false
     }
-  }
 }
 class JavaBeanTargetNoIdSetter {
   private var id: String = _
 
-  def withId(id: String): Unit = {
+  def withId(id: String): Unit =
     this.id = id
-  }
 
   // make sure that only public setters are taken into account
   protected def setFoo(foo: Unit): Unit = ()
@@ -79,14 +73,13 @@ class JavaBeanTargetNoIdSetter {
 
   def getId: String = id
 
-  override def equals(obj: Any): Boolean = {
+  override def equals(obj: Any): Boolean =
     obj match {
       case jbt: JavaBeanTarget =>
         this.id == jbt.getId
       case _ =>
         false
     }
-  }
 }
 
 case class EnclosingCaseClass(ccNoFlag: CaseClassNoFlag)
@@ -96,16 +89,14 @@ class EnclosingBean {
 
   def getCcNoFlag: CaseClassNoFlag = ccNoFlag
 
-  def setCcNoFlag(ccNoFlag: CaseClassNoFlag): Unit = {
+  def setCcNoFlag(ccNoFlag: CaseClassNoFlag): Unit =
     this.ccNoFlag = ccNoFlag
-  }
 
-  override def equals(obj: Any): Boolean = {
+  override def equals(obj: Any): Boolean =
     obj match {
       case eb: EnclosingBean =>
         this.ccNoFlag == eb.ccNoFlag
       case _ =>
         false
     }
-  }
 }

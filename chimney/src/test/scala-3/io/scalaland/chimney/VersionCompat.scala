@@ -19,7 +19,7 @@ trait VersionCompat {
           }
           .mkString("\n")
         val separator = if error.message.contains('\n') then "\n" else " "
-        s"error:${separator}${trimMessage}\n${error.lineContent}\n${indent}^"
+        s"error:$separator$trimMessage\n${error.lineContent}\n$indent^"
       }
       .mkString("\n")
   }

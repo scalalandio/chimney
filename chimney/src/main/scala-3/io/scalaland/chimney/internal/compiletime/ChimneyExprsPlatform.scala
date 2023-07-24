@@ -140,9 +140,8 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
       def extractAt(
           runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
           index: Int
-      ): Expr[Any] = {
+      ): Expr[Any] =
         '{ ${ runtimeDataStore }.apply(${ quoted.Expr(index) }) }
-      }
     }
 
     object Patcher extends PatcherModule {

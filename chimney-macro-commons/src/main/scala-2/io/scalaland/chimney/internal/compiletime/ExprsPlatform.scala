@@ -25,7 +25,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     object Array extends ArrayModule {
       def apply[A: Type](args: Expr[A]*): Expr[Array[A]] =
-        c.Expr[Array[A]](q"_root_.scala.Array[${Type[A]}](..${args})")
+        c.Expr[Array[A]](q"_root_.scala.Array[${Type[A]}](..$args)")
 
       def map[A: Type, B: Type](array: Expr[Array[A]])(fExpr: Expr[A => B]): Expr[Array[B]] =
         if (isScala212)
@@ -128,7 +128,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     def eq[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[Boolean] = c.Expr[Boolean](q"$a == $b")
 
-    def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B] = c.Expr[B](q"${expr}.asInstanceOf[${Type[B]}]")
+    def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B] = c.Expr[B](q"$expr.asInstanceOf[${Type[B]}]")
 
     def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] = {
       val wideningChecked = expr.widenExpr[B]

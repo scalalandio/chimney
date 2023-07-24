@@ -39,7 +39,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     *
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
-    *         
+    *
     * @since 0.1.5
     */
   transparent inline def withFieldConst[T, U](
@@ -58,7 +58,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
-    *         
+    *
     * @since 0.1.5
     */
   transparent inline def withFieldComputed[T, U](
@@ -77,7 +77,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     * @param selectorFrom source field in `From`, defined like `_.originalName`
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
-    *         
+    *
     * @since 0.1.5
     */
   transparent inline def withFieldRenamed[T, U](
@@ -96,7 +96,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
     * @tparam Inst type of coproduct instance@param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
-    *         
+    *
     * @since 0.1.2
     */
   transparent inline def withCoproductInstance[Inst](
@@ -111,7 +111,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     * When transformation can't be derived, it results with compilation error.
     *
     * @return transformed value of type `To`
-    *         
+    *
     * @since 0.1.0
     */
   inline def transform[ImplicitScopeFlags <: TransformerFlags](using

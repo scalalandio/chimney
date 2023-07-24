@@ -19,9 +19,8 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
     *
     * @since 0.7.0
     */
-  final def prependPath(pathElement: partial.PathElement): NonEmptyErrorsChain = {
+  final def prependPath(pathElement: partial.PathElement): NonEmptyErrorsChain =
     NonEmptyErrorsChain.WrapPath(this, pathElement)
-  }
 
   /** Tests whether collections is empty.
     *
@@ -35,14 +34,13 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
     *
     * @since 0.7.0
     */
-  final override def iterator: Iterator[partial.Error] = {
+  final override def iterator: Iterator[partial.Error] =
     this match {
       case NonEmptyErrorsChain.Single(error)                 => Iterator.single(error)
       case NonEmptyErrorsChain.Wrap(errors)                  => errors.iterator
       case NonEmptyErrorsChain.Merge(left, right)            => left.iterator ++ right.iterator
       case NonEmptyErrorsChain.WrapPath(errors, pathElement) => errors.iterator.map(_.prependErrorPath(pathElement))
     }
-  }
 
   /** Returns a new errors collection containing elements from this, followed by elements of other collection.
     *
@@ -51,20 +49,17 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
     *
     * @since 0.7.0
     */
-  final def ++(other: NonEmptyErrorsChain): NonEmptyErrorsChain = {
+  final def ++(other: NonEmptyErrorsChain): NonEmptyErrorsChain =
     NonEmptyErrorsChain.Merge(this, other)
-  }
 
-  final override def equals(obj: Any): Boolean = {
+  final override def equals(obj: Any): Boolean =
     obj match {
       case xs: NonEmptyErrorsChain => xs.iterator.sameElements(this.iterator)
       case _                       => false
     }
-  }
 
-  final override def hashCode(): Int = {
+  final override def hashCode(): Int =
     MurmurHash3.orderedHash(iterator)
-  }
 }
 
 object NonEmptyErrorsChain {
@@ -75,9 +70,8 @@ object NonEmptyErrorsChain {
     * @return instance of [[NonEmptyErrorsChain]]
     * @since 0.7.0
     */
-  final def single(error: partial.Error): NonEmptyErrorsChain = {
+  final def single(error: partial.Error): NonEmptyErrorsChain =
     Single(error)
-  }
 
   /** Creates errors collection from head and tail.
     *
@@ -86,11 +80,10 @@ object NonEmptyErrorsChain {
     * @return instance of [[NonEmptyErrorsChain]]
     * @since 0.7.0
     */
-  final def from(head: partial.Error, tail: partial.Error*): NonEmptyErrorsChain = {
+  final def from(head: partial.Error, tail: partial.Error*): NonEmptyErrorsChain =
     if (tail.isEmpty) Single(head)
     else if (tail.sizeIs == 1) Merge(Single(head), Single(tail.head))
     else Merge(Single(head), Wrap(tail))
-  }
 
   final private case class Single(error: partial.Error) extends NonEmptyErrorsChain
   final private case class Wrap(errors: Iterable[partial.Error]) extends NonEmptyErrorsChain

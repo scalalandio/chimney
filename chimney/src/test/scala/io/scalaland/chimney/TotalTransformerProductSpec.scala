@@ -598,9 +598,8 @@ class TotalTransformerProductSpec extends ChimneySpec {
     case class Bar(x: Option[Bar])
 
     test("defined by hand") {
-      implicit def fooToBarTransformer: Transformer[Foo, Bar] = (foo: Foo) => {
-        Bar(foo.x.map(fooToBarTransformer.transform))
-      }
+      implicit def fooToBarTransformer: Transformer[Foo, Bar] =
+        (foo: Foo) => Bar(foo.x.map(fooToBarTransformer.transform))
 
       Foo(Some(Foo(None))).transformInto[Bar] ==> Bar(Some(Bar(None)))
     }

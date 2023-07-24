@@ -30,7 +30,7 @@ package numbers {
 
     implicit def shortToLongTotalInner[A, B](implicit
         ft: Transformer[A, B]
-    ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] = {
+    ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] =
       Transformer
         .definePartial[short.NumScale[A, Nothing], long.NumScale[B]]
         .withCoproductInstancePartial { (billion: short.Billion[A]) =>
@@ -40,11 +40,10 @@ package numbers {
           trillion.transformIntoPartial[long.Billion[B]]
         }
         .buildTransformer
-    }
 
     implicit def shortToLongPartialInner[A, B](implicit
         ft: PartialTransformer[A, B]
-    ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] = {
+    ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] =
       Transformer
         .definePartial[short.NumScale[A, Nothing], long.NumScale[B]]
         .withCoproductInstancePartial { (billion: short.Billion[A]) =>
@@ -54,6 +53,5 @@ package numbers {
           trillion.transformIntoPartial[long.Billion[B]]
         }
         .buildTransformer
-    }
   }
 }

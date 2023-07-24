@@ -53,7 +53,8 @@ trait ProductTypes { this: Definitions =>
     final type Arguments = Map[String, ExistentialExpr]
 
     /** Let us obtain a list of primary constructor's parameters as well as setter parameters, as well as a method
-     * of taking all computed arguments and turning it into constructed value. */
+      * of taking all computed arguments and turning it into constructed value.
+      */
     final case class Constructor[To](parameters: Parameters, constructor: Arguments => Expr[To])
     object Constructor {
       def unapply[To](To: Type[To]): Option[(Parameters, Arguments => Expr[To])] =
