@@ -72,7 +72,6 @@ object FieldNameUtils {
       case _                    => None
   }
 
-  private def invalidSelectorErrorMessage[T](selectorExpr: Expr[T])(using Quotes): String = {
+  private def invalidSelectorErrorMessage[T](selectorExpr: Expr[T])(using Quotes): String =
     s"Invalid selector expression: ${selectorExpr.show}"
-  }
 }

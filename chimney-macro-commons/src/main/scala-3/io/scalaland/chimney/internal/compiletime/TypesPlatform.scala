@@ -51,12 +51,12 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
           // unknown
           case out =>
             assertionFailed(
-              s"Constructor of ${Type.prettyPrint(fromUntyped[Any](tpe))} has unrecognized/unsupported format of type: ${out}"
+              s"Constructor of ${Type.prettyPrint(fromUntyped[Any](tpe))} has unrecognized/unsupported format of type: $out"
             )
         }
 
       /** Applies type arguments from supertype to subtype if there are any */
-      def subtypeTypeOf[A: Type](subtype: Symbol): ?<[A] = {
+      def subtypeTypeOf[A: Type](subtype: Symbol): ?<[A] =
         subtype.primaryConstructor.paramSymss match {
           // subtype takes type parameters
           case typeParamSymbols :: _ if typeParamSymbols.exists(_.isType) =>
@@ -75,7 +75,6 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
           case _ =>
             fromUntyped[A](subtype.typeRef).as_?<[A]
         }
-      }
     }
 
     val Nothing: Type[Nothing] = quoted.Type.of[Nothing]

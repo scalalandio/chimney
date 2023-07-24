@@ -11,7 +11,7 @@ import scala.util.Try
   *
   * @tparam From type of source value
   * @param source wrapped source value
-  *               
+  *
   * @since 0.4.0
   */
 extension [From](source: From) {
@@ -20,7 +20,7 @@ extension [From](source: From) {
     *
     * @tparam To target type
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
-    *         
+    *
     * @since 0.1.0
     */
   def into[To]: TransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
@@ -147,11 +147,11 @@ extension [T](obj: T) {
 extension [T](option: Option[T]) {
 
   /** Converts Option to Result, using EmptyValue error if None.
-   *
-   * @return successful result if [[scala.Some]], failed result with EmptyValue error if [[None]]
-   *
-   * @since 0.7.0
-   */
+    *
+    * @return successful result if [[scala.Some]], failed result with EmptyValue error if [[None]]
+    *
+    * @since 0.7.0
+    */
   def toPartialResult: partial.Result[T] =
     partial.Result.fromOption(option)
 

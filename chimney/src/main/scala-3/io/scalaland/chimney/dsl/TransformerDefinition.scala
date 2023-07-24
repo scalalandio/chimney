@@ -42,7 +42,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
-    *         
+    *
     * @since 0.4.0
     */
   transparent inline def withFieldConst[T, U](
@@ -61,7 +61,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
-    *         
+    *
     * @since 0.4.0
     */
   transparent inline def withFieldComputed[T, U](
@@ -80,7 +80,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     * @param selectorFrom source field in `From`, defined like `_.originalName`
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
-    *         
+    *
     * @since 0.4.0
     */
   transparent inline def withFieldRenamed[T, U](
@@ -100,7 +100,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
-    *         
+    *
     * @since 0.4.0
     */
   transparent inline def withCoproductInstance[Inst](
@@ -114,7 +114,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     * When transformation can't be derived, it results with compilation error.
     *
     * @return [[io.scalaland.chimney.Transformer]] type class instance
-    *         
+    *
     * @since 0.4.0
     */
   inline def buildTransformer[ImplicitScopeFlags <: TransformerFlags](using

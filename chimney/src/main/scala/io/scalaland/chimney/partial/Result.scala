@@ -115,7 +115,7 @@ object Result {
     * @param errors non-empty collection of path-annotated errors
     *
     * @since 0.7.0
-    * */
+    */
   final case class Errors(errors: NonEmptyErrorsChain) extends Result[Nothing] {
 
     def prependPath(pathElement: PathElement): Errors = Errors(errors.prependPath(pathElement))
@@ -180,12 +180,11 @@ object Result {
 
     /** Used internally by macro. Please don't use in your code.
       */
-    final def __mergeResultNullable[T](errorsNullable: Errors, result: Result[T]): Errors = {
+    final def __mergeResultNullable[T](errorsNullable: Errors, result: Result[T]): Errors =
       result match {
         case _: Value[?]    => errorsNullable
         case errors: Errors => if (errorsNullable == null) errors else merge(errorsNullable, errors)
       }
-    }
   }
 
   /** Converts a function that throws Exceptions into function that returns Result.
@@ -400,9 +399,9 @@ object Result {
     * @since 0.7.0
     */
   final def fromCatching[A](value: => A): Result[A] =
-    try {
+    try
       fromValue(value)
-    } catch {
+    catch {
       case t: Throwable => fromErrorThrowable(t)
     }
 
@@ -431,23 +430,21 @@ object Result {
 
     if (failFast) {
       var errors: Errors = null
-      while (errors == null && it.hasNext) {
+      while (errors == null && it.hasNext)
         f(it.next()) match {
           case Value(value) => bs += value
           case e: Errors    => errors = e
         }
-      }
       if (errors == null) Result.Value(bs.result()) else errors
     } else {
       var allErrors: NonEmptyErrorsChain = null
-      while (it.hasNext) {
+      while (it.hasNext)
         f(it.next()) match {
           case Value(value) => bs += value
           case Errors(ee) =>
             if (allErrors == null) allErrors = ee
             else allErrors ++= ee
         }
-      }
       if (allErrors == null) Result.Value(bs.result()) else Result.Errors(allErrors)
     }
   }

@@ -4,14 +4,14 @@ import scala.collection.compat.*
 import scala.util.control.NonFatal
 
 /** Representations of a ongoing computation.
- *
- * Features:
- * - handles errors
- * - catches exceptions
- * - provides sequential and parallel combinators
- *
- * Intended to simplify how we express our logic during the derivation without long types and boilerplate.
- */
+  *
+  * Features:
+  * - handles errors
+  * - catches exceptions
+  * - provides sequential and parallel combinators
+  *
+  * Intended to simplify how we express our logic during the derivation without long types and boilerplate.
+  */
 sealed private[compiletime] trait DerivationResult[+A] {
 
   import DerivationResult.*
@@ -33,7 +33,7 @@ sealed private[compiletime] trait DerivationResult[+A] {
     var state: State = null.asInstanceOf[State]
 
     val result =
-      try {
+      try
         this match {
           case Success(value, s) =>
             state = s
@@ -42,7 +42,7 @@ sealed private[compiletime] trait DerivationResult[+A] {
             state = s
             onFailure(derivationErrors)
         }
-      } catch {
+      catch {
         case NonFatal(err) => DerivationResult.fromException(err)
       }
 

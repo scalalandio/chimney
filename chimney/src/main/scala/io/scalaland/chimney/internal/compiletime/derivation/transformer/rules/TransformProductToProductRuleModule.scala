@@ -165,7 +165,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           import getter.Underlying as Getter, getter.value.get
                           DerivationResult.namedScope(
                             s"Recursive derivation for field `$sourceName`: ${Type
-                                .prettyPrint[getter.Underlying]} renamed into `${toName}`: ${Type
+                                .prettyPrint[getter.Underlying]} renamed into `$toName`: ${Type
                                 .prettyPrint[ctorParam.Underlying]}"
                           ) {
                             // We're constructing:
@@ -213,7 +213,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           import getter.Underlying, getter.value.get
                           DerivationResult.namedScope(
                             s"Recursive derivation for field `$fromName`: ${Type
-                                .prettyPrint[getter.Underlying]} into matched `${toName}`: ${Type.prettyPrint[ctorParam.Underlying]}"
+                                .prettyPrint[getter.Underlying]} into matched `$toName`: ${Type.prettyPrint[ctorParam.Underlying]}"
                           ) {
                             // We're constructing:
                             // '{ ${ derivedToElement } } // using ${ src.$name }
@@ -436,7 +436,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                             nestFlatMaps(partialsAsLazy.toList, totalConstructorArguments)
                           }
 
-                          val fullErrorBranch: Expr[partial.Result[To]] = {
+                          val fullErrorBranch: Expr[partial.Result[To]] =
                             // Here, we're building:
                             // '{
                             //   var allerrors: Errors = null
@@ -488,7 +488,6 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                   }
                                 )
                               }
-                          }
 
                           ctx match {
                             case TransformationContext.ForTotal(_) =>

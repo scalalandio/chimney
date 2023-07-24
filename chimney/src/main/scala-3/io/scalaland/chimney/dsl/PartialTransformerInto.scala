@@ -33,7 +33,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
-    *         
+    *
     * @since 0.7.0
     */
   transparent inline def withFieldConst[T, U](
@@ -52,7 +52,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     * @param selector target field in `To`, defined like `_.name`
     * @param value    constant value to use for the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
-    *         
+    *
     * @since 0.7.0
     */
   transparent inline def withFieldConstPartial[T, U](
@@ -71,7 +71,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
-    *         
+    *
     * @since 0.7.0
     */
   transparent inline def withFieldComputed[T, U](
@@ -90,7 +90,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     * @param selector target field in `To`, defined like `_.name`
     * @param f        function used to compute value of the target field
     * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
-    *         
+    *
     * @since 0.7.0
     */
   transparent inline def withFieldComputedPartial[T, U](
@@ -109,7 +109,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     * @param selectorFrom source field in `From`, defined like `_.originalName`
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
-    *         
+    *
     * @since 0.7.0
     */
   transparent inline def withFieldRenamed[T, U](
@@ -129,7 +129,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
-    *         
+    *
     * @since 0.7.0
     */
   transparent inline def withCoproductInstance[Inst](
@@ -148,7 +148,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
-    *         
+    *
     * @since 0.7.0
     */
   transparent inline def withCoproductInstancePartial[Inst](
@@ -163,7 +163,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     * When transformation can't be derived, it results with compilation error.
     *
     * @return partial transformation result of type `partial.Result[To]`
-    *         
+    *
     * @since 0.7.0
     */
   inline def transform[ImplicitScopeFlags <: TransformerFlags](using
@@ -180,7 +180,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     * When transformation can't be derived, it results with compilation error.
     *
     * @return partial transformation result of type `partial.Result[To]`
-    *         
+    *
     * @since 0.7.0
     */
   inline def transformFailFast[ImplicitScopeFlags <: TransformerFlags](using

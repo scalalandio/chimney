@@ -134,18 +134,20 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     disableFlag[ImplicitConflictResolution[?]]
 
   /** Enable printing the logs from the derivation process.
-   *
-   * @see [[https://scalalandio.github.io/chimney/TODO]] for more details
-   * @since 0.8.0
-   */
+    *
+    * @see [[https://scalalandio.github.io/chimney/TODO]] for more details
+    *
+    * @since 0.8.0
+    */
   def enableMacrosLogging: UpdateFlag[Enable[MacrosLogging, Flags]] =
     enableFlag[MacrosLogging]
 
   /** Disable printing the logs from the derivation process.
-   *
-   * @see [[https://scalalandio.github.io/chimney/TODO]] for more details
-   * @since 0.8.0
-   */
+    *
+    * @see [[https://scalalandio.github.io/chimney/TODO]] for more details
+    *
+    * @since 0.8.0
+    */
   def disableMacrosLogging: UpdateFlag[Disable[MacrosLogging, Flags]] =
     disableFlag[MacrosLogging]
 

@@ -15,7 +15,6 @@ object PatcherDerivationError {
       s"Field named '$patchFieldName' not found in target patching type $objTypeName!"
   }
 
-  def printErrors(errors: Seq[PatcherDerivationError]): String = {
+  def printErrors(errors: Seq[PatcherDerivationError]): String =
     errors.map(printError).mkString("\n")
-  }
 }

@@ -166,11 +166,10 @@ object PartialTransformerIntoMacros {
       source: Expr[From],
       td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]],
       failFast: Boolean
-  )(using Quotes): Expr[partial.Result[To]] = {
+  )(using Quotes): Expr[partial.Result[To]] =
     TransformerMacros.derivePartialTransformerResultWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](
       source,
       td,
       failFast
     )
-  }
 }

@@ -103,7 +103,6 @@ object TransformerIntoMacros {
   ](
       source: Expr[From],
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
-  )(using Quotes): Expr[To] = {
+  )(using Quotes): Expr[To] =
     TransformerMacros.deriveTotalTransformerResultWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](source, td)
-  }
 }

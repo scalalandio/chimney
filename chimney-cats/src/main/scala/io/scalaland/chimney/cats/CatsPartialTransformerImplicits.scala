@@ -11,9 +11,8 @@ import language.implicitConversions
 trait CatsPartialTransformerImplicits extends CatsPartialTransformerLowPriorityImplicits1 {
 
   /** @since 0.7.0 */
-  implicit final val semigroupPartialResultErrors: Semigroup[partial.Result.Errors] = {
+  implicit final val semigroupPartialResultErrors: Semigroup[partial.Result.Errors] =
     Semigroup.instance(partial.Result.Errors.merge)
-  }
 
   /** @since 0.7.0 */
   implicit final val applicativePartialResult: Applicative[partial.Result] =
