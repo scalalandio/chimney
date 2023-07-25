@@ -16,7 +16,7 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
       "id: java.lang.String - no accessor named id in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
       "name: java.lang.String - no accessor named name in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
       "flag: scala.Boolean - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
-      "Consult https://scalalandio.github.io/chimney for usage examples."
+      "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
 
@@ -25,7 +25,7 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
       "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
       "derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
-      "Consult https://scalalandio.github.io/chimney for usage examples."
+      "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
 
@@ -201,7 +201,7 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
           "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
           "setFlag(flag: scala.Boolean) - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod",
           "There are methods in io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod that might be used as accessors for `flag` fields in io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget. Consider using `.enableMethodAccessors`.",
-          "Consult https://scalalandio.github.io/chimney for usage examples."
+          "Consult https://chimney.readthedocs.io for usage examples."
         )
 
       locally {
@@ -218,7 +218,7 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
             "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
             "setFlag(flag: scala.Boolean) - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod",
             "There are methods in io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod that might be used as accessors for `flag` fields in io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget. Consider using `.enableMethodAccessors`.",
-            "Consult https://scalalandio.github.io/chimney for usage examples."
+            "Consult https://chimney.readthedocs.io for usage examples."
           )
       }
 
@@ -257,7 +257,7 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
           "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
           "derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
-          "Consult https://scalalandio.github.io/chimney for usage examples."
+          "Consult https://chimney.readthedocs.io for usage examples."
         )
     }
   }
@@ -306,7 +306,7 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
           "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
           "setFlag(flag: scala.Boolean) - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod",
           "There are methods in io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod that might be used as accessors for `flag` fields in io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget. Consider using `.enableMethodAccessors`.",
-          "Consult https://scalalandio.github.io/chimney for usage examples."
+          "Consult https://chimney.readthedocs.io for usage examples."
         )
     }
   }

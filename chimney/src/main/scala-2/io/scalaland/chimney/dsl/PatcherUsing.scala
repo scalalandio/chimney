@@ -26,7 +26,7 @@ final class PatcherUsing[T, P, Cfg <: PatcherCfg](val obj: T, val objPatch: P) {
     * By default, when `None` is delivered in patch, Chimney clears
     * the value of such field on patching.
     *
-    * @see [[https://scalalandio.github.io/chimney/patchers/options-handling.html]] for more details
+    * @see [[https://chimney.readthedocs.io/patchers/options-handling.html]] for more details
     *
     * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
@@ -43,7 +43,7 @@ final class PatcherUsing[T, P, Cfg <: PatcherCfg](val obj: T, val objPatch: P) {
     * fails the compilation in order to prevent silent oversight of field name
     * typos.
     *
-    * @see [[https://scalalandio.github.io/chimney/patchers/redundant-fields.html]] for more details
+    * @see [[https://chimney.readthedocs.io/patchers/redundant-fields.html]] for more details
     *
     * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
@@ -54,7 +54,7 @@ final class PatcherUsing[T, P, Cfg <: PatcherCfg](val obj: T, val objPatch: P) {
 
   /** Enable printing the logs from the derivation process.
     *
-    * @see [[https://scalalandio.github.io/chimney/TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/TODO]] for more details
     *
     * @since 0.8.0
     */

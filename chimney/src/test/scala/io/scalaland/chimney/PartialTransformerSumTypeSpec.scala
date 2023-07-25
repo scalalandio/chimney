@@ -132,7 +132,7 @@ class PartialTransformerSumTypeSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors2.Color to io.scalaland.chimney.fixtures.colors1.Color",
         "io.scalaland.chimney.fixtures.colors1.Color",
         "can't transform coproduct instance io.scalaland.chimney.fixtures.colors2.Black to io.scalaland.chimney.fixtures.colors1.Color",
-        "Consult https://scalalandio.github.io/chimney for usage examples."
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
 

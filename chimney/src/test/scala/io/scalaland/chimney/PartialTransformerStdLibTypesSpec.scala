@@ -18,7 +18,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Buzz",
       "scala.Unit",
       "derivation from buzz.value: java.lang.String to scala.Unit is not supported in Chimney!",
-      "Consult https://scalalandio.github.io/chimney for usage examples."
+      "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
 
@@ -462,7 +462,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
-        "Consult https://scalalandio.github.io/chimney for usage examples."
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
 

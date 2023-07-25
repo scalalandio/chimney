@@ -6,7 +6,7 @@
 [![codecov.io](http://codecov.io/github/scalalandio/chimney/coverage.svg?branch=master)](http://codecov.io/github/scalalandio/chimney?branch=master)
 [![License](http://img.shields.io/:license-Apache%202-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt) [![Join the chat at https://gitter.im/scalalandio/chimney](https://badges.gitter.im/scalalandio/chimney.svg)](https://gitter.im/scalalandio/chimney?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-[![Build docs](https://github.com/scalalandio/chimney/workflows/Build%20docs/badge.svg)](https://scalalandio.github.io/chimney/)
+[![Documentation Status](https://readthedocs.org/projects/chimney/badge/?version=latest)](https://chimney.readthedocs.io/en/latest/?badge=latest)
 [![Scaladoc 2.11](https://javadoc.io/badge2/io.scalaland/chimney_2.11/scaladoc%202.11.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.11)
 [![Scaladoc 2.12](https://javadoc.io/badge2/io.scalaland/chimney_2.12/scaladoc%202.12.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.12)
 [![Scaladoc 2.13](https://javadoc.io/badge2/io.scalaland/chimney_2.13/scaladoc%202.13.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.13)
@@ -161,7 +161,7 @@ curl -s https://raw.githubusercontent.com/scalalandio/chimney/master/try-chimney
 
 ## Documentation
 
-Chimney documentation is available at https://scalalandio.github.io/chimney
+Chimney documentation is available at https://chimney.readthedocs.io
 
 #### Building documentation locally
 

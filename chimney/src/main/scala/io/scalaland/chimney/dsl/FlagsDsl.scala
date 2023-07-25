@@ -15,7 +15,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * By default this is disabled because method calls may perform side effects (e.g. mutations)
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#using-method-accessors]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#using-method-accessors]] for more details
     *
     * @since 0.6.0
     */
@@ -24,7 +24,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Disable method accessors lookup that was previously enabled by `enableMethodAccessors`
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#using-method-accessors]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#using-method-accessors]] for more details
     *
     * @since 0.5.0
     */
@@ -35,7 +35,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * By default in such case derivation will fail. By enabling this flag, derivation will fallback to default value.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#enabling-default-values-in-generated-transformer]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/default-values.html#enabling-default-values-in-generated-transformer]] for more details
     *
     * @since 0.6.0
     */
@@ -44,7 +44,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Fail derivation if `From` type is missing field even if `To` has default value for it.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#enabling-default-values-in-generated-transformer]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/default-values.html#enabling-default-values-in-generated-transformer]] for more details
     *
     * @since 0.1.9
     */
@@ -55,7 +55,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * By default only Scala conversions (`.name`) are allowed.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#reading-from-java-beans]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/java-beans.html#reading-from-java-beans]] for more details
     *
     * @since 0.2.1
     */
@@ -64,7 +64,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Disable Java Beans naming convention (`.getName`, `.isName`) on `From`.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#reading-from-java-beans]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/java-beans.html#reading-from-java-beans]] for more details
     *
     * @since 0.6.0
     */
@@ -75,7 +75,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * By default only Scala conversions (`.copy(name = value)`) are allowed.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#writing-to-java-beans]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/java-beans.html#writing-to-java-beans]] for more details
     *
     * @since 0.2.1
     */
@@ -84,7 +84,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Disable Java Beans naming convention (`.setName(value)`) on `To`.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/java-beans.html#writing-to-java-beans]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/java-beans.html#writing-to-java-beans]] for more details
     *
     * @since 0.6.0
     */
@@ -95,7 +95,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * By default in such case compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#default-values-for-option-fields]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/default-values.html#default-values-for-option-fields]] for more details
     *
     * @since 0.2.1
     */
@@ -104,7 +104,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Disable `None` fallback value for optional fields in `To`.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/default-values.html#default-values-for-option-fields]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/default-values.html#default-values-for-option-fields]] for more details
     *
     * @since 0.6.0
     */
@@ -115,7 +115,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
     *
     * @param preference parameter specifying which implicit transformer to pick in case of conflict
     *
-    * @see [[https://scalalandio.github.io/chimney/partial-transformers/total-vs-partial-conflicts.html]] for more details
+    * @see [[https://chimney.readthedocs.io/partial-transformers/total-vs-partial-conflicts.html]] for more details
     *
     * @since 0.7.0
     */
@@ -126,7 +126,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Disable any implicit conflict resolution preference that was set previously.
     *
-    * @see [[https://scalalandio.github.io/chimney/partial-transformers/total-vs-partial-conflicts.html]] for more details
+    * @see [[https://chimney.readthedocs.io/partial-transformers/total-vs-partial-conflicts.html]] for more details
     *
     * @since 0.7.0
     */
@@ -135,7 +135,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Enable printing the logs from the derivation process.
     *
-    * @see [[https://scalalandio.github.io/chimney/TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/TODO]] for more details
     *
     * @since 0.8.0
     */
@@ -144,7 +144,7 @@ private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: Transfor
 
   /** Disable printing the logs from the derivation process.
     *
-    * @see [[https://scalalandio.github.io/chimney/TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/TODO]] for more details
     *
     * @since 0.8.0
     */

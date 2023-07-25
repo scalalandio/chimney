@@ -29,7 +29,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     *
     * By default if `From` is missing field picked by `selector`, compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#providing-missing-values]] for more details
     *
     * @tparam T type of target field
     * @tparam U type of provided value
@@ -48,7 +48,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     *
     * By default if `From` is missing field picked by `selector`, compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#providing-missing-values]] for more details
     *
     * @tparam T type of target field
     * @tparam U type of provided value
@@ -68,7 +68,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#providing-missing-values]] for more details
     *
     * @tparam T type of target field
     * @tparam U type of computed value
@@ -88,7 +88,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#providing-missing-values]] for more details
     *
     * @tparam T type of target field
     * @tparam U type of computed value
@@ -108,7 +108,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     *
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#fields-renaming]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#fields-renaming]] for more details
     *
     * @tparam T type of source field
     * @tparam U type of target field
@@ -131,7 +131,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#transforming-coproducts]] for more details
     *
     * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
@@ -149,7 +149,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
     *
-    * @see [[https://scalalandio.github.io/chimney/transformers/customizing-transformers.html#transforming-coproducts]] for more details
+    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#transforming-coproducts]] for more details
     *
     * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically

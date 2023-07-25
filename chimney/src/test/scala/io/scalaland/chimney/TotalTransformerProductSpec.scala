@@ -16,14 +16,14 @@ class TotalTransformerProductSpec extends ChimneySpec {
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
       "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
-      "Consult https://scalalandio.github.io/chimney for usage examples."
+      "Consult https://chimney.readthedocs.io for usage examples."
     )
 
     compileErrorsFixed("Bar(3, (3.14, 3.14)).transformInto[Foo]").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
       "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
-      "Consult https://scalalandio.github.io/chimney for usage examples."
+      "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
 
@@ -121,7 +121,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
         "wiek: scala.util.Either[scala.Unit, scala.Int] - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
-        "Consult https://scalalandio.github.io/chimney for usage examples."
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrorsFixed("""User(1, "Kuba", Some(28)).into[UserPL].transform""").check(
@@ -130,7 +130,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
         "wiek: scala.util.Either[scala.Unit, scala.Int] - no accessor named wiek in source type io.scalaland.chimney.fixtures.products.Renames.User",
-        "Consult https://scalalandio.github.io/chimney for usage examples."
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
 
@@ -196,7 +196,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "wiek: scala.util.Either[scala.Unit, scala.Int] - can't derive transformation from wiek: scala.Option[scala.Int] in source type io.scalaland.chimney.fixtures.products.Renames.User",
-        "Consult https://scalalandio.github.io/chimney for usage examples."
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
 
@@ -228,7 +228,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-        "Consult https://scalalandio.github.io/chimney for usage examples."
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       compileErrorsFixed("""Source(1, "yy", 1.0).into[Target].transform""").check(
@@ -237,7 +237,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-        "Consult https://scalalandio.github.io/chimney for usage examples."
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
 
@@ -307,7 +307,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
         "io.scalaland.chimney.fixtures.products.Defaults.Target2",
         "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-        "Consult https://scalalandio.github.io/chimney for usage examples."
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
 
       locally {
@@ -317,13 +317,13 @@ class TotalTransformerProductSpec extends ChimneySpec {
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-          "Consult https://scalalandio.github.io/chimney for usage examples."
+          "Consult https://chimney.readthedocs.io for usage examples."
         )
         compileErrorsFixed("""Source(1, "yy", 1.0).into[Target2].transform""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-          "Consult https://scalalandio.github.io/chimney for usage examples."
+          "Consult https://chimney.readthedocs.io for usage examples."
         )
       }
     }
@@ -358,7 +358,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-        "Consult https://scalalandio.github.io/chimney for usage examples."
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
   }

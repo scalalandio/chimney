@@ -25,7 +25,7 @@ new ``wingsColor`` field.
   // Butterfly
   //   wingsColor: String - no accessor named wingsColor in source type Catterpillar
   //
-  // Consult https://scalalandio.github.io/chimney for usage examples.
+  // Consult https://chimney.readthedocs.io for usage examples.
   //
   //        val steve = stevie.transformInto[Butterfly]
   //
@@ -145,7 +145,7 @@ How about other way round?
   // Color
   //   can't transform coproduct instance Channel.Alpha to Color
   //
-  // Consult https://scalalandio.github.io/chimney for usage examples.
+  // Consult https://chimney.readthedocs.io for usage examples.
   //
   //        chanRed.transformInto[Color]
   //                             ^

@@ -29,7 +29,7 @@ accidents.
   // Butterfly
   //   wingsColor: String - no field named wingsColor in source type Catterpillar
   //
-  // Consult https://scalalandio.github.io/chimney for usage examples.
+  // Consult https://chimney.readthedocs.io for usage examples.
   //
   //            .transform
   //            ^

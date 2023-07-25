@@ -24,7 +24,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
       "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Buzz",
       "scala.Unit",
       "derivation from buzz.value: java.lang.String to scala.Unit is not supported in Chimney!",
-      "Consult https://scalalandio.github.io/chimney for usage examples."
+      "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
 
@@ -50,7 +50,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
       "Chimney can't derive transformation from scala.Some[java.lang.String] to scala.None",
       "scala.None",
       "derivation from some: scala.Some[java.lang.String] to scala.None is not supported in Chimney!",
-      "Consult https://scalalandio.github.io/chimney for usage examples."
+      "Consult https://chimney.readthedocs.io for usage examples."
     )
     case class BarNone(value: None.type)
     compileErrorsFixed("""Foo("a").into[BarNone].transform""").check(
@@ -59,7 +59,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
       "value: scala.None - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo",
       "scala.None",
       "derivation from foo.value: java.lang.String to scala.None is not supported in Chimney!",
-      "Consult https://scalalandio.github.io/chimney for usage examples."
+      "Consult https://chimney.readthedocs.io for usage examples."
     )
   }
 
@@ -148,7 +148,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source",
-        "Consult https://scalalandio.github.io/chimney for usage examples."
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
 

@@ -45,5 +45,5 @@ private[compiletime] trait GatewayCommons { this: Definitions =>
     )
   }
 
-  private val chimneyDocUrl = "https://scalalandio.github.io/chimney"
+  private val chimneyDocUrl = "https://chimney.readthedocs.io"
 }

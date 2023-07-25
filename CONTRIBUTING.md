@@ -34,7 +34,7 @@ Additionally, we would like to:
 * for any new feature we need a documentation:
     * Scaladoc documenting: what is does, what are its type parameters, what are its value parameters
     * Sphinx documentation describing new functionality
-    * linking Scaladoc entries to corresponding Sphinx documentation (https://scalalandio.github.io/chimney/ subpage)
+    * linking Scaladoc entries to corresponding Sphinx documentation (https://chimney.readthedocs.io/ subpage)
     * it might be good to discuss whether put this information into a new page or as a section of an existing page
 
 ### How to start working on Chimney
