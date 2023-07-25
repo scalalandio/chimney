@@ -6,10 +6,9 @@ several breaking changes:
 
 - lifted transformers, deprecated in 0.7.0, got removed in favor of partial
   transformers. Since 0.7.0 migration guide from lifted to partial is available
-  in ``partial transformers`` migrating from :doc:`lifted section<partial-transformers/migrating-from-lifted>`.
+  in ``partial transformers`` migrating from :ref:`lifted section<migrating-from-lifted>`.
 - ``.enableUnsafeOption`` option was removed - if ``Option`` unwrapping is
-  needed, it is recommended to use
-  :doc:`partial transformers<partial-transformers/partial-transformers>`
+  needed, it is recommended to use :ref:`partial transformers<partial-transformers>`
 - types returned by automatic derivation got split from types that are used
   for user-provided transformations and configured (semiautomatic) derivation:
   ``Transformer`` got split into ``Transformer`` and ``Transformer.AutoDerived``
