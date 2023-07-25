@@ -6,10 +6,10 @@ several breaking changes:
 
 - lifted transformers, deprecated in 0.7.0, got removed in favor of partial
   transformers. Since 0.7.0 migration guide from lifted to partial is available
-  in `partial transformers' migrating from lifted section <partial-transformers/migrating-from-lifted.html>`_.
+  in ``partial transformers`` migrating from :ref:`lifted section <partial-transformers/migrating-from-lifted>`.
 - ``.enableUnsafeOption`` option was removed - if ``Option`` unwrapping is
   needed, it is recommended to use
-  `partial transformers <partial-transformers/partial-transformers.html>`_
+  :ref:`partial transformers <partial-transformers/partial-transformers>`
 - types returned by automatic derivation got split from types that are used
   for user-provided transformations and configured (semiautomatic) derivation:
   ``Transformer`` got split into ``Transformer`` and ``Transformer.AutoDerived``
@@ -40,7 +40,7 @@ several breaking changes:
   - this field had default value defined
   - macro couldn't derive transformation from source field type to target field type
 
-  Chimney used to use default value.
+  Chimney used to use the default value.
 
   However, this was a buggy behavior, and currently it only uses default values
   if there is no source field nor other fallback or override. Although it is
