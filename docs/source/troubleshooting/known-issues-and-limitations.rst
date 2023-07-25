@@ -1,21 +1,26 @@
 Known issues and limitations
 ============================
 
-Recursive types fail to compile without a type class
-----------------------------------------------------
+Recursive types fail to compile
+-------------------------------
 
-Code ``foo.into[Bar].transform`` tries avoiding creation of the
-``Transformer[Foo, Bar]`` to avoid the overhead of an object allocation (and
-then a method call).
+Chimney attempts to avoid unnecessary memory allocations for good performance.
 
-This isn't possible with recursive types. For them it is suggested to derive
-the recursive ``Transformer`` with:
+It means that the code ``foo.into[Bar].transform`` would try to avoid creation of
+``Transformer[Foo, Bar]`` - if user provided one it would have to be used, but if
+the only available would come from automatic derivation, it would be ignored so
+that macro would generate an inlined expression.
+
+This isn't possible with recursive types, as you cannot inline potentially unbounded
+nesting of transformations. For them it is suggested to derive the ``Transformer``,
+assigning it to ``implicit val``/``implicit def`` so that recursive transformations would
+be handled by recursive calls. This can be done with:
 
 .. code-block:: scala
 
-   implicit val foo2bar: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
+  implicit val foo2bar: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
 
-   // or
+  // or
 
   implicit val foo2bar: Transformer[Foo, Bar] = Transformer.define[Foo, Bar].buildTransformer
 
@@ -23,7 +28,7 @@ and then
 
 .. code-block:: scala
 
-  foo.transformInto[Bar] // uses implicit with recursive transformation
+  foo.transformInto[Bar] // uses implicit Transformer (with recursive transformation)
 
 The same is true for partial transformers.
 

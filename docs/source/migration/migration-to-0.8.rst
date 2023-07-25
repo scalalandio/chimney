@@ -33,9 +33,15 @@ several breaking changes:
   If users want to allow summoning there automatic instances as well, they need
   to use ``implicit def definition(implicit auto: Transformer.AutoDerived[From, To])``
   which would summon both automatically derived instances as well as manually provided.
-- if: 1) default values were enabled, 2) source and target had a field defined
-  3) this field had default value defined 4) macro couldn't derive transformation
-  from source field type to target field type - Chimney used to use default value.
+- if:
+
+  - default values were enabled,
+  - source and target had a field defined
+  - this field had default value defined
+  - macro couldn't derive transformation from source field type to target field type
+
+  Chimney used to use default value.
+
   However, this was a buggy behavior, and currently it only uses default values
   if there is no source field nor other fallback or override. Although it is
   a bugfix, it is also a breaking change so it has to be documented. The fix would

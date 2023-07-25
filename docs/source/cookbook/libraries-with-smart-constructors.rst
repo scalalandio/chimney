@@ -11,7 +11,7 @@ performing smart construction:
 .. code-block:: scala
 
   // assuming Scala 3 or -Xsource:3 for fixed private constructors
-  final case class Username private (value: String) extends AnyVal
+  final case class Username private (value: String)
   object Username {
     def parse(value: String): Either[String, Username] =
       if (value.isEmpty) Left("Username cannot be empty")
@@ -22,10 +22,13 @@ then partial transformer would have to be created manually:
 
 .. code-block:: scala
 
-   implicit val usernameParse: PartialTransformer[String, Username] =
-     PartialTransformer[String, Username] { value =>
-       partial.Result.fromEitherString(Username.parse(value))
-     }
+  import io.scalaland.chimney.PartialTransformer
+  import io.scalaland.chimney.partial
+
+  implicit val usernameParse: PartialTransformer[String, Username] =
+    PartialTransformer[String, Username] { value =>
+      partial.Result.fromEitherString(Username.parse(value))
+    }
 
 However, if there was some type class interface, e.g.
 
@@ -45,6 +48,9 @@ we could use it to construct ``PartialTransformer`` automatically:
 
 .. code-block:: scala
 
+  import io.scalaland.chimney.PartialTransformer
+  import io.scalaland.chimney.partial
+
   implicit def smartConstructedPartial[From, To](
     implicit smartConstructor: SmartConstructor[From, To]
   ): PartialTransformer[From, To] =
@@ -61,7 +67,7 @@ types provided in some popular libraries.
 Scala NewType
 -------------
 
-`NewType <https://github.com/estatico/scala-newtype>`_ is macro-annotation-based
+`NewType <https://github.com/estatico/scala-newtype>`_ is a macro-annotation-based
 library which attempts to remove runtime overhead from user's types.
 
 .. code-block:: scala
@@ -73,27 +79,31 @@ library which attempts to remove runtime overhead from user's types.
 would be rewritten to become ``String`` in the runtime, while prevent
 mixing ``Username`` values with other ``String``\s accidentally.
 
-Newtype ``Coercible`` type class `to allow generic wrapping and unwrapping <https://github.com/estatico/scala-newtype#coercible-instance-trick>`_
+NewType provides ``Coercible`` type class `to allow generic wrapping and unwrapping <https://github.com/estatico/scala-newtype#coercible-instance-trick>`_
 of ``@newtype`` values. This type class is not able to validate
-casted type, so it safe to use only if NewType is used as a wrapper around
-e.g. Refined Type which performs this validation.
+the casted type, so it safe to use only if NewType is used as a wrapper around
+another type which performs this validation e.g. Refined Type.
 
 .. code-block:: scala
 
+  import io.estatico.newtype.Coercible
+  import io.scalaland.chimney.Transformer
+
   implicit def newTypeTransformer[From, To](
-    implicit coercible: io.estatico.newtype.Coercible[From, To]
+    implicit coercible: Coercible[From, To]
   ): Transformer[From, To] = coercible(_)
 
 Monix Newtypes
 --------------
 
 `Monix's Newtypes <https://newtypes.monix.io/>`_ is similar to NewType in that
-it tries to remove wrapping in runtime. However, it uses different tricks to
-achieve it.
+it tries to remove wrapping in runtime. However, it uses different tricks
+(and syntax) to achieve it.
 
 .. code-block:: scala
 
   import monix.newtypes._
+
   type Username = Username.Type
   object Username extends NewtypeValidated[String] {
     def apply(value: String): Either[BuildFailure[Type], Type] =
@@ -103,24 +113,27 @@ achieve it.
         Right(unsafeCoerce(value))
   }
 
-Additionally it provides 2 type classes: one to extract value
+Additionally, it provides 2 type classes: one to extract value
 (``HasExtractor``) and one to wrap it (possibly validating, ``HasBuilder``).
 We can use them to provide unwrapping ``Transformer`` and wrapping
 ``PartialTransformer``:
 
 .. code-block:: scala
 
+  import io.scalaland.chimney.{PartialTransformer, Transformer}
+  import io.scalaland.chimney.partial
+  import monix.newtypes._
+
   implicit def unwrapNewType[Outer, Inner](
-    implicit extractor: monix.newtypes.HasExtractor.Aux[Inner, Outer]
+    implicit extractor: HasExtractor.Aux[Outer, Inner]
   ): Transformer[Outer, Inner] = extractor.extract(_)
 
-  implicit def wrapNewType[Outer, Inner](
-    implicit builder: monix.newtype.HasBuilder.Aux[Inner, Outer]
-  ): PartialTransformer[Inner, Outer] =  PartialTransformer[Inner, Outer] {
-    value =>
-      partial.Result.fromEitherString(
-        builder.build(value).left.map(_.toReadableString)
-      )
+  implicit def wrapNewType[Inner, Outer](
+    implicit builder: HasBuilder.Aux[Inner, Outer]
+  ): PartialTransformer[Inner, Outer] =  PartialTransformer[Inner, Outer] { value =>
+    partial.Result.fromEitherString(
+      builder.build(value).left.map(_.toReadableString)
+    )
   }
 
 Refined Types
@@ -138,21 +151,24 @@ popular constraints as long as we express them in value's type.
 
   type Username = String Refined NonEmpty
 
-We can validate using dedicated type class (``api.Validate``), while extraction
+We can validate using dedicated type class (``Validate``), while extraction
 is a simple accessor:
 
 .. code-block:: scala
+
+  import eu.timepit.refined.api.{Refined, Validate}
+  import io.scalaland.chimney.{PartialTransformer, Transformer}
+  import io.scalaland.chimney.partial
 
   implicit def extractRefined[Type, Refinement]:
       Transformer[Type Refined Refinement, Type] =
     _.value
 
   implicit def validateRefined[Type, Refinement](
-    implicit validate: api.Validate.Plain[Type, Refinement]
+    implicit validate: Validate.Plain[Type, Refinement]
   ): PartialTransformer[Type, Type Refined Refinement] =
-    PartialTransformer[Type, Type Refined Refinement] {
-      value =>
-        partial.Result.fromOption(
-          validate.validate(value).fold(Some(_), _ => None)
-        )
+    PartialTransformer[Type, Type Refined Refinement] { value =>
+      partial.Result.fromOption(
+        validate.validate(value).fold(Some(_), _ => None)
+      )
     }

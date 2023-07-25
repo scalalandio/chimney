@@ -1,6 +1,14 @@
 Protocol Buffers
 ================
 
+Most of the time, working with Protocol Buffers should not be different than
+working with any other DTO objects. ``Transformer``\s could be use to encode
+domain objects into protobufs and ``PartialTransformer``\s could decode them.
+
+However, there are 2 concepts specific to PBs and their implementation in
+ScalaPB: storing unencoded values in an additional case class field and
+wrapping done by sealed traits' cases in ``oneof`` values.
+
 UnknownFieldSet
 ---------------
 
@@ -36,7 +44,7 @@ The automatic conversion into a protobuf with such field can be problematic:
 
 There are 2 ways in which Chimney could handle this issue:
 
-- using default values
+- using `default values <transformers/default-values>`_
 
   .. code-block:: scala
 
@@ -44,7 +52,7 @@ There are 2 ways in which Chimney could handle this issue:
        .enableDefaultValues
        .transform
 
-- manually setting this one field
+- manually `setting this one field <transformers/customizing-transformers.html#providing-missing-values>`_
 
   .. code-block:: scala
 
@@ -52,7 +60,7 @@ There are 2 ways in which Chimney could handle this issue:
        .withFieldConst(_.unknownFields, UnknownFieldSet())
        .transform
 
-However, if you have a control over the ScalaPB process, you could configure it
+However, if you have a control over the ScalaPB generation process, you could configure it
 to simply not generate this field, either by `editing the protobuf <https://scalapb.github.io/docs/customizations#file-level-options>`_:
 
 .. code-block:: protobuf
@@ -83,7 +91,7 @@ oneof fields
     }
   }
 
-would generate scala code similar to:
+would generate scala code similar to (some parts removed for brevity):
 
 .. code-block:: scala
 
@@ -101,18 +109,14 @@ would generate scala code similar to:
     sealed trait Value extends scalapb.GeneratedOneof
     object Value {
       case object Empty extends AddressBookType.Value {
-        type ValueType = _root_.scala.Nothing
         // ...
       }
       final case class Public(value: AddressBookType.Public)
           extends AddressBookType.Value {
-        type ValueType = AddressBookType.Public
         // ...
       }
-      @SerialVersionUID(0L)
       final case class Private(value: AddressBookType.Private)
           extends AddressBookType.Value {
-        type ValueType = AddressBookType.Private
         // ...
       }
     }
@@ -131,14 +135,14 @@ would generate scala code similar to:
     // ...
   }
 
-As we see:
+As we can see:
 
 - there is an extra ``Value.Empty`` type
 - this is not "flat" ``sealed`` hierarchy - ``AddressBookType`` wraps
   sealed hierarchy ``AddressBookType.Value``, where each ``case class``
   wraps the actual message
 
-Meanwhile, we would prefer to extract it to flat:
+Meanwhile, we would like to extract it into a flat:
 
 .. code-block:: scala
 
@@ -150,7 +154,7 @@ Meanwhile, we would prefer to extract it to flat:
     case class Private(owner: String) extends AddressBookType
   }
 
-Luckily for us, since 0.8.0 Chimney supports automatic unwrapping of sealed
+Luckily for us, since 0.8.x Chimney supports automatic (un)wrapping of sealed
 hierarchy cases.
 
 Encoding (with transformers) is pretty straightforward:
@@ -160,7 +164,9 @@ Encoding (with transformers) is pretty straightforward:
   val domainType: addressbook.AddressBookType = addressbook.AddressBookType.Private("test")
   val pbType: pb.addressbook.AddressBookType =
     pb.addressbook.AddressBookType.of(
-      pb.addressbook.AddressBookType.Value.Private(pb.addressbook.AddressBookType.Private.of("test"))
+      pb.addressbook.AddressBookType.Value.Private(
+        pb.addressbook.AddressBookType.Private.of("test")
+      )
     )
 
   domainType.into[pb.addressbook.AddressBookType.Value].transform == pbType.value
@@ -172,7 +178,9 @@ Decoding (with partial transformers) requires handling of ``Empty.Value`` type
 
   pbType.value
     .intoPartial[addressbook.AddressBookType]
-    .withCoproductInstancePartial[pb.addressbook.AddressBookType.Value.Empty.type](_ => partial.Result.fromEmpty)
+    .withCoproductInstancePartial[pb.addressbook.AddressBookType.Value.Empty.type](
+      _ => partial.Result.fromEmpty
+    )
     .transform
     .asOption == Some(domainType)
 
@@ -189,8 +197,9 @@ or handle all such fields with a single implicit:
 sealed_value oneof fields
 -------------------------
 
-In case we can edit out protobuf definition, we can arrange the generated code
-to be flat ``sealed`` hierarchy. It requires `several conditions defined by ScalaPB <https://scalapb.github.io/docs/sealed-oneofs#sealed-oneof-rules>`_.
+In case we are able to edit out the protobuf definition, we can arrange the generated code
+to be flat ``sealed`` hierarchy. It requires fulfilling `several conditions defined by ScalaPB <https://scalapb.github.io/docs/sealed-oneofs#sealed-oneof-rules>`_.
+For instance, the code below following the mentioned requirements:
 
 .. code-block:: protobuf
 
@@ -205,7 +214,7 @@ to be flat ``sealed`` hierarchy. It requires `several conditions defined by Scal
 
   message CustomerOneTime {}
 
-would generate something like:
+would generate something like (again, some parts omitted for brevity):
 
 .. code-block:: scala
 
@@ -235,9 +244,9 @@ would generate something like:
     // ...
   }
 
-Notice, that while it is flat, it still adds ``CustmerStatus.Empty`` - this is
-because this type would be used directly inside the message that contains is
-and it would be non-nullable (while the oneof content could still be absent).
+Notice, that while this implementation is flat, it still adds ``CustmerStatus.Empty``
+- it happens because this type would be used directly inside the message that contains is
+and it would be non-nullable (while the ``oneof`` content could still be absent).
 
 Transforming to and from:
 
@@ -262,21 +271,25 @@ could be done with:
 
   pbStatus
     .intoPartial[order.CustomerStatus]
-    .withCoproductInstancePartial[pb.order.CustomerStatus.Empty.type](_ => partial.Result.fromEmpty)
-    .withCoproductInstance[pb.order.CustomerStatus.NonEmpty](_.transformInto[order.CustomerStatus])
+    .withCoproductInstancePartial[pb.order.CustomerStatus.Empty.type](
+      _ => partial.Result.fromEmpty
+    )
+    .withCoproductInstance[pb.order.CustomerStatus.NonEmpty](
+      _.transformInto[order.CustomerStatus]
+    )
     .transform
     .asOption == Some(domainStatus)
 
-Notice how we have to manually handle decoding from ``Empty`` value.
+As you can see, we have to manually handle decoding the ``Empty`` value.
 
 sealed_value_optional oneof fields
 ----------------------------------
 
-If instead of non-nullable type with ``.Empty`` subtype, we would prefer
-``Option``\al type without ``.Empty`` subtype, there is optional sealed hierarchy
-available. Similarly to non-optional it requires `several conditions <https://scalapb.github.io/docs/sealed-oneofs#optional-sealed-oneof>`_.
+If instead of non-nullable type with ``.Empty`` subtype, we prefer ``Option``\al
+type without ``.Empty`` subtype, there is optional sealed hierarchy available.
+Similarly to non-optional it requires `several conditions <https://scalapb.github.io/docs/sealed-oneofs#optional-sealed-oneof>`_.
 
-When you define it:
+When you define message according to them:
 
 .. code-block:: protobuf
 
@@ -323,4 +336,6 @@ the transformation is pretty straightforward both directions:
   domainStatus.into[Option[pb.order.PaymentStatus]].transform ==> pbStatus
   pbStatus.into[Option[order.PaymentStatus]].transform ==> domainStatus
 
-since no ``Empty`` case handling is needed.
+since there is no ``Empty`` case to handle. Wrapping into ``Option`` would
+be handled automatically, similarly unwrapping (as long as you decode using
+partial transformers).

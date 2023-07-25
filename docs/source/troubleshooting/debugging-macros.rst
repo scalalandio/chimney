@@ -5,7 +5,7 @@ In some cases it could be helpful to preview what is the expression generated
 by macros, which implicits were used in macro (or not) and what was the exact
 logic that lead to the final expression or compilation errors.
 
-In such cases we can use a dedicated flag, ``.enableMacrosLogging``:
+In such cases, we can use a dedicated flag, ``.enableMacrosLogging``:
 
 .. code-block:: scala
 
@@ -16,7 +16,7 @@ In such cases we can use a dedicated flag, ``.enableMacrosLogging``:
 
   Bar("abc", 10).into[Foo].enableDefaultValues.enableMacrosLogging.transform
 
-For the snippet above macro could print this structured log:
+For the snippet above, the macro could print this structured log:
 
 .. code-block::
 
@@ -87,14 +87,21 @@ With the structured log user could see e.g.:
 - that default values was used and how it was obtained
 - what is the final expression and how long it took to compute it
 
+.. warning::
+
+  Structured logs from macros are still logs - their role is to help with
+  debugging, but their format evolves over time and log for one macro could
+  look completely different to log from another macro. Examples from this
+  page should not be treated as any point of reference.
+
 Enabling logs can be done both on an individual transformation level, like
-above, or with shared implicit config:
+above, or with a shared implicit config:
 
 .. code-block:: scala
 
-  implicit val TransformerConfiguration.default.enableMacrosLogging
+  implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
 
-The flag is also available to ``Patchers``:
+The flag is also available to ``Patcher``\s, this code:
 
 .. code-block:: scala
 
