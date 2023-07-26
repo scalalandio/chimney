@@ -2,16 +2,16 @@ package io.scalaland.chimney.internal.compiletime
 
 private[compiletime] trait Existentials { this: Types with Exprs =>
 
-  /** Represents value with some existential type and Type using the same existential.
+  /** Represents value with some existential type `t` both for `Type[t]` as well as `F[t]`.
     *
-    * Since Scala 3 removed a lot of cases for existential types we cannot just use Type[?] in shared code.
-    * Additionally, we might need to have something to prove that our Type[?] is has the same ? as some Value[?].
+    * Since Scala 3 removed a lot of cases for existential types we cannot just use `Type[?]` in shared code.
+    * Additionally, we might need to have something to prove that our `Type[?]` is has the same `?` as some `Value[?]`.
     * For that, this utility would be useful.
     */
   final protected type Existential[F[_]] = Existential.Bounded[Nothing, Any, F]
   protected object Existential {
 
-    /** Bounded version which allows expressing L <:< A <:< U where it's needed. */
+    /** Bounded version which allows expressing `L <:< A <:< U` where it's needed. */
     sealed trait Bounded[L, U >: L, F[_ >: L <: U]] {
 
       type Underlying >: L <: U
@@ -40,23 +40,23 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
     def apply[F[_], A: Type](value: F[A]): Existential[F] = Bounded[Nothing, Any, F, A](value)
   }
 
-  /** Convenient utility to represent Type[?] with erased inner type, but without any accompanying value. */
+  /** Convenient utility to represent `Type[?]` with erased inner type, but without any accompanying value. */
   final protected type ExistentialType = ExistentialType.Bounded[Nothing, Any]
   protected object ExistentialType {
 
-    /** Convenient utility to represent Type[? >: L <: U] with erased inner type, but without any accompanying value. */
+    /** Convenient utility to represent `Type[? >: L <: U]` with erased inner type, but without any accompanying value. */
     type Bounded[L, U >: L] = Existential.Bounded[L, U, Type]
     object Bounded {
       def apply[L, U >: L, A >: L <: U](implicit A: Type[A]): Bounded[L, U] = Existential.Bounded[L, U, Type, A](A)
     }
 
-    /** Convenient utility to represent Type[? >: L] with erased inner type, but without any accompanying value. */
+    /** Convenient utility to represent `Type[? >: L]` with erased inner type, but without any accompanying value. */
     type LowerBounded[L] = Existential.Bounded[L, Any, Type]
     object LowerBounded {
       def apply[L, A >: L](implicit A: Type[A]): Bounded[L, Any] = Existential.Bounded[L, Any, Type, A](A)
     }
 
-    /** Convenient utility to represent Type[? <: U] with erased inner type, but without any accompanying value. */
+    /** Convenient utility to represent `Type[? <: U]` with erased inner type, but without any accompanying value. */
     type UpperBounded[U] = Existential.Bounded[Nothing, U, Type]
     object UpperBounded {
       def apply[U, A <: U](implicit A: Type[A]): Bounded[Nothing, U] = Existential.Bounded[Nothing, U, Type, A](A)
@@ -67,7 +67,7 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
     def prettyPrint(existentialType: ExistentialType): String = Type.prettyPrint(existentialType.Underlying)
   }
 
-  /** Convenient utility to represent Expr[?] with erased inner type with accompanying Type[?] of the same ?. */
+  /** Convenient utility to represent `Expr[?]` with erased inner type with accompanying `Type[?]` of the same `?`. */
   final protected type ExistentialExpr = Existential[Expr]
   protected object ExistentialExpr {
 
@@ -84,6 +84,8 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
   ) extends Existential.Bounded[L, U, F] {
     type Underlying = A
   }
+
+  // aliases to make the (very common) existential types shorter
 
   type ?? = ExistentialType
   type ?>[L] = ExistentialType.LowerBounded[L]

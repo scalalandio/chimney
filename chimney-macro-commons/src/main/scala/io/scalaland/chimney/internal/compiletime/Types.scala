@@ -5,15 +5,17 @@ import scala.collection.immutable.ListSet
 
 private[compiletime] trait Types { this: Existentials =>
 
-  /** Platform-specific type representation (c.WeakTypeTag[A] in 2, scala.quoted.Type[A] in 3) */
+  /** Platform-specific type representation (`c.WeakTypeTag[A]` in 2, `scala.quoted.Type[A]` in 3) */
   protected type Type[A]
   protected val Type: TypeModule
   protected trait TypeModule { this: Type.type =>
+
+    /** Summons `Type` instance */
     final def apply[A](implicit A: Type[A]): Type[A] = A
 
     // Interfaces for applying and extracting type parameters in shared code
 
-    /** Allow applying and extracting some type L <:< ? <:< U */
+    /** Allow applying and extracting some type `L <:< ? <:< U` */
     trait Ctor1Bounded[L, U >: L, F[_ >: L <: U]] {
       def apply[A >: L <: U: Type]: Type[F[A]]
       def unapply[A](A: Type[A]): Option[L >?< U]
@@ -21,7 +23,7 @@ private[compiletime] trait Types { this: Existentials =>
     trait Ctor1UpperBounded[U, F[_ <: U]] extends Ctor1Bounded[Nothing, U, F]
     trait Ctor1[F[_]] extends Ctor1Bounded[Nothing, Any, F]
 
-    /** Allow applying and extracting some types L1 <:< ? <:< U1, L2 <:< ? <:< U2 */
+    /** Allow applying and extracting some types `L1 <:< ? <:< U1, L2 <:< ? <:< U2` */
     trait Ctor2Bounded[L1, U1 >: L1, L2, U2 >: L2, F[_ >: L1 <: U1, _ >: L2 <: U2]] {
       def apply[A >: L1 <: U1: Type, B >: L2 <: U2: Type]: Type[F[A, B]]
       def unapply[A](A: Type[A]): Option[(L1 >?< U1, L2 >?< U2)]
@@ -29,7 +31,7 @@ private[compiletime] trait Types { this: Existentials =>
     trait Ctor2UpperBounded[U1, U2, F[_ <: U1, _ <: U2]] extends Ctor2Bounded[Nothing, U1, Nothing, U2, F]
     trait Ctor2[F[_, _]] extends Ctor2Bounded[Nothing, Any, Nothing, Any, F]
 
-    /** Allow applying and extracting some types L1 <:< ? <:< U1, L2 <:< ? <:< U2, L3 <:< ? <:< U3 */
+    /** Allow applying and extracting some types `L1 <:< ? <:< U1, L2 <:< ? <:< U2, L3 <:< ? <:< U3` */
     trait Ctor3Bounded[L1, U1 >: L1, L2, U2 >: L2, L3, U3 >: L3, F[_ >: L1 <: U1, _ >: L2 <: U2, _ >: L3 <: U3]] {
       def apply[A >: L1 <: U1: Type, B >: L2 <: U2: Type, C >: L3 <: U3: Type]: Type[F[A, B, C]]
       def unapply[A](A: Type[A]): Option[(L1 >?< U1, L2 >?< U2, L3 >?< U3)]
@@ -101,7 +103,7 @@ private[compiletime] trait Types { this: Existentials =>
 
     def Factory[A: Type, C: Type]: Type[Factory[A, C]]
 
-    // You can import Type.Implicits.* in your shared code to avoid providing types manually, while avoiding conflicts
+    // You can `import Type.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts
     // with implicit types seen in platform-specific scopes (which would happen if those implicits were always used).
     object Implicits {
 

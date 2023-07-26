@@ -1,10 +1,13 @@
 package io.scalaland.chimney.internal.compiletime
 
+/** Patcher-specific error related to derivation logic */
 sealed trait PatcherDerivationError extends Product with Serializable
 
-case class NotSupportedPatcherDerivation(objTypeName: String, patchTypeName: String) extends PatcherDerivationError
+final case class NotSupportedPatcherDerivation(objTypeName: String, patchTypeName: String)
+    extends PatcherDerivationError
 
-case class PatchFieldNotFoundInTargetObj(patchFieldName: String, objTypeName: String) extends PatcherDerivationError
+final case class PatchFieldNotFoundInTargetObj(patchFieldName: String, objTypeName: String)
+    extends PatcherDerivationError
 
 object PatcherDerivationError {
 

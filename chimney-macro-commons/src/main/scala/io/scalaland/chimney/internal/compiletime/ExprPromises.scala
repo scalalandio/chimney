@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime
 
 private[compiletime] trait ExprPromises { this: Definitions =>
 
-  /** In Scala 2 it's c.universe.TermName, in Scala 3 symbol of a val */
+  /** In Scala 2 it's `c.universe.TermName`, in Scala 3 `Symbol` of a val */
   protected type ExprPromiseName
 
   /** Allow us to use `Expr[A]` before we would either: know how we would initiate it, or: what the final shape of

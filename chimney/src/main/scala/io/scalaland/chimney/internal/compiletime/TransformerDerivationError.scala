@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
+/** Transformer-specific error related to derivation logic */
 sealed trait TransformerDerivationError extends Product with Serializable {
   def sourceTypeName: String
   def targetTypeName: String

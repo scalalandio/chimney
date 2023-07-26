@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
+/** Gathers all possible derivation errors in a single type */
 sealed trait DerivationError extends Product with Serializable
 object DerivationError {
 

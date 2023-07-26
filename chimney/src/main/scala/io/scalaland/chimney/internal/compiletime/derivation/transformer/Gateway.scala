@@ -148,7 +148,6 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   ): DerivationResult[A] =
     enableLoggingIfFlagEnabled[A](result, ctx.config.flags.displayMacrosLogging, ctx.derivationStartedAt)
 
-  // TODO: name it better
   private def extractExprAndLog[From: Type, To: Type, Out: Type](result: DerivationResult[Expr[Out]]): Expr[Out] =
     extractExprAndLog[Out](
       result,

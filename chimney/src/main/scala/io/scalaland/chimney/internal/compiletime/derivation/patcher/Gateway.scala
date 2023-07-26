@@ -45,14 +45,12 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
     extractExprAndLog[A, Patch, Patcher[A, Patch]](result)
   }
 
-  // TODO: name it better
   private def enableLoggingIfFlagEnabled[A](
       result: DerivationResult[A],
       ctx: PatcherContext[?, ?]
   ): DerivationResult[A] =
     enableLoggingIfFlagEnabled[A](result, ctx.config.displayMacrosLogging, ctx.derivationStartedAt)
 
-  // TODO: name it better
   private def extractExprAndLog[A: Type, Patch: Type, Out: Type](result: DerivationResult[Expr[Out]]): Expr[Out] =
     extractExprAndLog[Out](
       result,

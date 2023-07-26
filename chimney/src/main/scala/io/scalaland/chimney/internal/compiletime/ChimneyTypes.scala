@@ -166,7 +166,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
           ] { this: MacrosLogging.type => }
     }
 
-    // You can import ChimneyType.Implicits.* in your shared code to avoid providing types manually, while avoiding conflicts
+    // You can `import ChimneyType.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts
     // with implicit types seen in platform-specific scopes (which would happen if those implicits were always used).
     object Implicits {
 

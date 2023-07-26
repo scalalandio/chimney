@@ -8,15 +8,21 @@ private[compiletime] trait TransformationRules { this: Derivation =>
 
   import ChimneyType.Implicits.*
 
+  /** Defines "derivation rule" ("if condition is met then derive").
+    *
+    * Since we cannot restrict how condition is checked (running some predicate or using PartialFunction is too
+    * restrictive), we have to express matching or not with the result:
+    * - `Expanded` means that rule applied and created `Expr` value
+    * - `AttemptNextRule` means that rule decided that conditions aren't met
+    * The `DerivationResult` as a whole might also fail, which means that rule did apply but couldn't derive expression.
+    */
   abstract protected class Rule(val name: String) {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]]
   }
-
   protected object Rule {
 
     sealed trait ExpansionResult[+A]
-
     object ExpansionResult {
       // successfully expanded TransformationExpr
       case class Expanded[A](transformationExpr: TransformationExpr[A]) extends ExpansionResult[A]
@@ -25,6 +31,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
       case object AttemptNextRule extends ExpansionResult[Nothing]
     }
 
+    /** Attempt to apply rules in order in which they are on list. The first match wins. */
     def expandRules[From, To](
         rules: List[Rule]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[TransformationExpr[To]] = rules match {
@@ -47,6 +54,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     }
   }
 
+  /** Let us store both `Expr[A]` and `Expr[partial.Result[A]]` as one type for convenience. */
   sealed protected trait TransformationExpr[A] extends scala.Product with Serializable {
 
     import TransformationExpr.{PartialExpr, TotalExpr}
@@ -118,8 +126,8 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     def exprPartition: Either[ExprPromise[From, Expr[To]], ExprPromise[From, Expr[partial.Result[To]]]] =
       promise.map(_.toEither).partition
 
-    final def isTotal: Boolean = foldTransformationExpr(_ => true)(_ => false)
-    final def isPartial: Boolean = foldTransformationExpr(_ => false)(_ => true)
+    def isTotal: Boolean = foldTransformationExpr(_ => true)(_ => false)
+    def isPartial: Boolean = foldTransformationExpr(_ => false)(_ => true)
 
     def ensureTotal: ExprPromise[From, Expr[To]] = promise.map(_.ensureTotal)
     def ensurePartial: ExprPromise[From, Expr[partial.Result[To]]] = promise.map(_.ensurePartial)

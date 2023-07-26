@@ -15,6 +15,7 @@ import io.scalaland.chimney.partial
 
 private[compiletime] trait ResultOps { this: Derivation =>
 
+  /** DerivationResult is defined outside the "cake", so methods using utilities from the cake have to be extensions */
   implicit final protected class DerivationResultModule(derivationResult: DerivationResult.type) {
 
     def existential[F[_], A: Type](fa: F[A]): DerivationResult[Existential[F]] =

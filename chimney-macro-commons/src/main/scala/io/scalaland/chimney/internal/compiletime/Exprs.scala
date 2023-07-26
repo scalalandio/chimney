@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime
 
 private[compiletime] trait Exprs { this: Definitions =>
 
-  /** Platform-specific expression representation (c.Expr[A] in 2, quotes.Expr[A] in 3 */
+  /** Platform-specific expression representation (`c.Expr[A]` in 2, `scala.quoted.Expr[A]` in 3 */
   protected type Expr[A]
   protected val Expr: ExprModule
   protected trait ExprModule { this: Expr.type =>
@@ -133,6 +133,7 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     def tpe: Type[A] = Expr.typeOf(expr)
 
+    /** Creates '{ $expr == $other } expression, which would compare both expressions in runtime */
     def eqExpr[B: Type](other: Expr[B]): Expr[Boolean] = Expr.eq(expr, other)
 
     // All of methods below change Expr[A] to Expr[B], but they differ in checks ans how it affects the underlying code:
@@ -147,7 +148,7 @@ private[compiletime] trait Exprs { this: Definitions =>
     /** Creates '{ ${ expr }.asInstanceOf[B] } expression in emitted code, moving check to the runtime */
     def asInstanceOfExpr[B: Type]: Expr[B] = Expr.asInstanceOf[A, B](expr)
 
-    /** Upcasts Expr[A] to Expr[B] if A <:< B, without upcasting the underlying code */
+    /** Upcasts `Expr[A]` to `Expr[B]` if `A <:< B`, without upcasting the underlying code */
     def widenExpr[B: Type]: Expr[B] = {
       Predef.assert(
         Type[A] <:< Type[B],
@@ -156,7 +157,7 @@ private[compiletime] trait Exprs { this: Definitions =>
       expr.asInstanceOf[Expr[B]]
     }
 
-    /** Upcasts Expr[A] to Expr[B] in the emitted code: '{ (${ expr }) : B } */
+    /** Upcasts `Expr[A]` to `Expr[B]` in the emitted code: '{ (${ expr }) : B } */
     def upcastExpr[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
   }
 
