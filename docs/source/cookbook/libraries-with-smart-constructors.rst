@@ -11,6 +11,7 @@ performing smart construction:
 .. code-block:: scala
 
   // assuming Scala 3 or -Xsource:3 for fixed private constructors
+  // so that Username.apply and .copy would be private
   final case class Username private (value: String)
   object Username {
     def parse(value: String): Either[String, Username] =
