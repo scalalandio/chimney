@@ -13,7 +13,7 @@ several breaking changes:
   for user-provided transformations and configured (semiautomatic) derivation:
   ``Transformer`` got split into ``Transformer`` and ``Transformer.AutoDerived``
   while ``PartialTransformer`` got split into ``PartialTransformer`` and
-  ``PartialTransformer.Autoderived``.
+  ``PartialTransformer.AutoDerived``.
 
   It was caused be the change in mechanism for recursive derivation: since it
   avoid boxing and allocation where possible, it used to check if summoned
@@ -27,11 +27,60 @@ several breaking changes:
   user haven't provided any.
 
   The consequence is only visible if there is some ``implicit def`` which takes
-  another implicit ``Transformer``. After changes ``implicit Transformer`` means
-  instance provided by user, either manually or through semiautomatic derivation.
-  If users want to allow summoning there automatic instances as well, they need
-  to use ``implicit def definition(implicit auto: Transformer.AutoDerived[From, To])``
+  another implicit ``Transformer``.
+
+  .. code-block:: scala
+
+    class MyType[A](private val a: A) {
+      def map[B](f: A => B): MyType[B] =
+        new MyType(f(a))
+    }
+
+    implicit def provideMyType[A, B](
+      implicit a2b: Transformer[A, B]
+    ): Transformer[MyType[A], MyType[B]] =
+      myA => myA.map(_.transformInto[B])
+
+  After changes ``implicit Transformer[A, B]`` means "instance provided by user",
+  either manually or through semiautomatic derivation. If users want to allow summoning
+  there automatic instances as well, they need to use
+
+  .. code-block:: scala
+
+    class MyOtherType[A](private val a: A) {
+      def map[B](f: A => B): MyOtherType[B] =
+        new MyOtherType(f(a))
+    }
+
+    implicit def provideMyOtherType[A, B](
+      implicit a2b: Transformer.AutoDerived[A, B]
+    ): Transformer[MyOtherType[A], MyOtherType[B]] =
+      myA => myA.map(_.transformInto[B])
+
   which would summon both automatically derived instances as well as manually provided.
+
+  .. code-block:: scala
+
+    implicit val int2str: Transformer[Int, String] = _.toString
+
+    val myType: MyType[Int] = new MyType(10)
+    val myOtherType: MyOtherType[Int] = new MyOtherType(10)
+
+    // uses provideMyType(int2str):
+    myType.transformInto[MyType[String]]
+
+    // uses provideMyOtherType(int2str):
+    myOtherType.transformInto[MyOtherType[String]
+
+    val myType2: MyType[Either[Int, Int]] = new MyType(Right(10))
+    val myOtherType2: MyOtherType[Either[Int, Int]] = new MyOtherType(Right(10)
+
+    // requires manually provided transformer e.g.
+    //   implicit val either2either = Transformer.derive[Either[Int, Int], Either[String, String]]
+    // myType2.transformInto[MyType[Either[String, String]]]
+
+    // uses provideMyOtherType(Transformer.derive):
+    myOtherType2.transformInto[Either[String, String]]
 - if:
 
   - default values were enabled,
