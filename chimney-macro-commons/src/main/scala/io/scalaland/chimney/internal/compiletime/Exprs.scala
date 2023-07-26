@@ -133,6 +133,7 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     def tpe: Type[A] = Expr.typeOf(expr)
 
+    /** Creates '{ $expr == $other } expression, which would compare both expressions in runtime */
     def eqExpr[B: Type](other: Expr[B]): Expr[Boolean] = Expr.eq(expr, other)
 
     // All of methods below change Expr[A] to Expr[B], but they differ in checks ans how it affects the underlying code:

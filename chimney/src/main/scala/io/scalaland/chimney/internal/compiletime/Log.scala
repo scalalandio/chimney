@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
+/** Represents a single log position in a log journal */
 sealed private[compiletime] trait Log extends Product with Serializable
 private[compiletime] object Log {
 

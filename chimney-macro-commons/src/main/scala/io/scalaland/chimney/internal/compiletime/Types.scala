@@ -9,6 +9,7 @@ private[compiletime] trait Types { this: Existentials =>
   protected type Type[A]
   protected val Type: TypeModule
   protected trait TypeModule { this: Type.type =>
+    /** Summons Type instance */
     final def apply[A](implicit A: Type[A]): Type[A] = A
 
     // Interfaces for applying and extracting type parameters in shared code

@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
 private[compiletime] trait Contexts { this: Derivation =>
 
+  /** Stores all the "global" information that might be needed: types used, user configuration, runtime values, etc */
   final case class PatcherContext[A, Patch](
       obj: Expr[A],
       patch: Expr[Patch],
@@ -15,7 +16,6 @@ private[compiletime] trait Contexts { this: Derivation =>
     final type Target = A
     val Target = A
   }
-
   object PatcherContext {
 
     def create[A: Type, Patch: Type](

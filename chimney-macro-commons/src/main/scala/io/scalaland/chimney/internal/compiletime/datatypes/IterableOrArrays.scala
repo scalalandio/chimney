@@ -8,7 +8,11 @@ trait IterableOrArrays { this: Definitions =>
 
   import Type.Implicits.*
 
-  /** Something allowing us to dispatch same-looking-source-code-but-different ASTs for Iterables and Arrays */
+  /** Something allowing us to dispatch same-looking-source-code-but-different ASTs for Iterables and Arrays.
+    *
+    * Exists because `Array` is NOT `Iterable`, and all operations like `.map`, `.to`, etc are done through extension
+    * methods. Meanwhile, we would like to be able to convert to and from Array easily.
+    */
   abstract protected class IterableOrArray[M, A] {
     def iterator(m: Expr[M]): Expr[Iterator[A]]
 

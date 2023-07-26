@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime
 
 private[compiletime] trait Existentials { this: Types with Exprs =>
 
-  /** Represents value with some existential type and Type using the same existential.
+  /** Represents value with some existential type t both for Type[t] as well as F[t].
     *
     * Since Scala 3 removed a lot of cases for existential types we cannot just use Type[?] in shared code.
     * Additionally, we might need to have something to prove that our Type[?] is has the same ? as some Value[?].
@@ -85,6 +85,8 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
     type Underlying = A
   }
 
+  // aliases to make the (very common) existential types shorter
+  
   type ?? = ExistentialType
   type ?>[L] = ExistentialType.LowerBounded[L]
   type ?<[U] = ExistentialType.UpperBounded[U]

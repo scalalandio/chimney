@@ -4,7 +4,10 @@ import io.scalaland.chimney.internal.compiletime.Definitions
 
 trait SealedHierarchies { this: Definitions =>
 
-  /** Let us obtain a list of types implementing the sealed hierarchy */
+  /** Let us obtain a list of types implementing the sealed hierarchy.
+    *
+    * It describes both Scala 2's "normal" sealed hierarchies as well as Scala 3's enums.
+    */
   final protected case class Enum[A](elements: Enum.Elements[A])
   protected object Enum {
 

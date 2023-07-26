@@ -5,6 +5,7 @@ import io.scalaland.chimney.partial
 
 private[compiletime] trait Contexts { this: Derivation =>
 
+  /** Stores all the "global" information that might be needed: types used, user configuration, runtime values, etc */
   sealed protected trait TransformationContext[From, To] extends scala.Product with Serializable {
     val src: Expr[From]
 
