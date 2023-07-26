@@ -41,9 +41,9 @@ several breaking changes:
     ): Transformer[MyType[A], MyType[B]] =
       myA => myA.map(_.transformInto[B])
 
-  After changes ``implicit Transformer[A, B]`` means "instance provided by user",
+  After changes in 0.8.x ``implicit Transformer[A, B]`` means "instance provided by user",
   either manually or through semiautomatic derivation. If users want to allow summoning
-  there automatic instances as well, they need to use
+  there automatic instances as well, they need to use ``Transformer.AutoDerived``:
 
   .. code-block:: scala
 
@@ -58,9 +58,11 @@ several breaking changes:
       myA => myA.map(_.transformInto[B])
 
   which would summon both automatically derived instances as well as manually provided.
+  The difference is shown in this example:
 
   .. code-block:: scala
 
+    // implicit provided by user
     implicit val int2str: Transformer[Int, String] = _.toString
 
     val myType: MyType[Int] = new MyType(10)
@@ -76,7 +78,9 @@ several breaking changes:
     val myOtherType2: MyOtherType[Either[Int, Int]] = new MyOtherType(Right(10)
 
     // requires manually provided transformer e.g.
-    //   implicit val either2either = Transformer.derive[Either[Int, Int], Either[String, String]]
+    //   implicit val either2either =
+    //     Transformer.derive[Either[Int, Int], Either[String, String]]
+    // without it, compilation fails
     // myType2.transformInto[MyType[Either[String, String]]]
 
     // uses provideMyOtherType(Transformer.derive):
