@@ -1,12 +1,17 @@
-*.class
-*.log
-.idea
-target
+# sbt build
 project/project
 project/target
-.bloop
-.metals
-.vscode
-project/metals.sbt
+target
+*.class
+# Sphinx documentation
 docs/build
+# Scala Metals and BSP
+.bloop
 .bsp
+.metals
+project/metals.sbt
+# IDEs
+.idea
+.vscode
+# other
+*.log
