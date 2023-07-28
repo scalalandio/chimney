@@ -11,6 +11,7 @@
 [![Scaladoc 2.11](https://javadoc.io/badge2/io.scalaland/chimney_2.11/scaladoc%202.11.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.11)
 [![Scaladoc 2.12](https://javadoc.io/badge2/io.scalaland/chimney_2.12/scaladoc%202.12.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.12)
 [![Scaladoc 2.13](https://javadoc.io/badge2/io.scalaland/chimney_2.13/scaladoc%202.13.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.13)
+[![Scaladoc 3](https://javadoc.io/badge2/io.scalaland/chimney_3/scaladoc%203.svg)](https://javadoc.io/doc/io.scalaland/chimney_3)
 
 Battle tested Scala library for boilerplate-free data transformations.
 
@@ -107,7 +108,7 @@ where the latest versions available on Maven for each platform are
 [![Chimney Scala Native 0.4 versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=native0.4)](https://search.maven.org/artifact/io.scalaland/chimney_native0.4_2.13) <br>
 [![Chimney Scala Native 0.3 versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=native0.3)](https://search.maven.org/artifact/io.scalaland/chimney_native0.3_2.11) <br>
 
-Library is currently supported for Scala 2.12.x and 2.13.x on JVM, SJS 1.x, SN 0.4. Other versions should be considered EOL.
+Library is currently supported for Scala 2.12.x, 2.13.x and 3.x on JVM, SJS 1.x, SN 0.4. Other versions should be considered EOL.
 
 Due to some [compiler bugs](https://issues.scala-lang.org/browse/SI-7046),
 it's recommended to use at least Scala 2.12.1.
@@ -116,7 +117,7 @@ it's recommended to use at least Scala 2.12.1.
 
 If you are using Scala CLI you can try out Chimney by adding it with `using` clause:
 ```scala
-//> using scala "2.13.10"
+//> using scala "2.13.11"
 //> using dep "io.scalaland::chimney:0.7.5"
 import io.scalaland.chimney.dsl._
 
@@ -132,9 +133,9 @@ object Main extends App {
 or run the Ammonite REPL:
 
 ```scala
-scala-cli --power repl --ammonite --scala "2.13.10" --dependency "io.scalaland::chimney:0.7.5"
+scala-cli --power repl --ammonite --scala "2.13.11" --dependency "io.scalaland::chimney:0.7.5"
 Loading...
-Welcome to the Ammonite Repl 2.5.6-1-f8bff243 (Scala 2.13.10 Java 17.0.1)
+Welcome to the Ammonite Repl 2.5.9 (Scala 2.13.11 Java 17.0.3)
 @ case class Foo(x: String, y: Int, z: Boolean = true)
 defined class Foo
 
@@ -162,22 +163,11 @@ curl -s https://raw.githubusercontent.com/scalalandio/chimney/master/try-chimney
 
 ## Documentation
 
-Chimney documentation is available at https://chimney.readthedocs.io
+Chimney documentation is available at https://chimney.readthedocs.io.
 
 #### Building documentation locally
 
-In order to build documentation locally, you need to install
-[Sphinx](https://www.sphinx-doc.org) documentation generator first.
-
-Then in project's root directory run command:
-
-```
-sbt makeSite
-```
-
-HTML Documentation should be generated at `target/sphinx/html/index.html`.
-
-Alternatively use Docker:
+For building documentation locally you can use Docker:
 
 ```bash
 docker run --rm -v "$PWD/docs:/docs" sphinxdoc/sphinx:3.2.1 bash -c "pip install sphinx-rtd-theme && make html"

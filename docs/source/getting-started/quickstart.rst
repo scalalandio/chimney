@@ -15,7 +15,7 @@ to your ``build.sbt``:
   libraryDependencies += "io.scalaland" %%% "chimney" % "|version|"
 
 
-Library is currently supported for Scala 2.12.x and 2.13.x on JVM, ScalaJS 1.x,
+Library is currently supported for Scala 2.12.x, 2.13.x, and Scala 3.x on JVM, ScalaJS 1.x,
 Scala Native 0.4.
 
 .. warning:: Due to some `compiler bugs <https://issues.scala-lang.org/browse/SI-7046>`_,
@@ -28,8 +28,8 @@ If you are using Scala CLI you can try out Chimney by adding it with `using` cla
 
 .. code-block:: scala
 
-  //> using scala "2.13.10"
-  //> using lib "io.scalaland::chimney:0.7.5"
+  //> using scala "2.13.11"
+  //> using dep "io.scalaland::chimney:0.7.5"
   import io.scalaland.chimney.dsl._
 
   case class Foo(x: String, y: Int, z: Boolean = true)
@@ -44,9 +44,9 @@ or run the Ammonite REPL:
 
 .. code-block:: scala
 
-  scala-cli repl --ammonite --scala "2.13.10" --dependency "io.scalaland::chimney:0.7.5"
+  scala-cli repl --ammonite --scala "2.13.11" --dependency "io.scalaland::chimney:0.7.5"
   Loading...
-  Welcome to the Ammonite Repl 2.5.6-1-f8bff243 (Scala 2.13.10 Java 17.0.1)
+  Welcome to the Ammonite Repl 2.5.9 (Scala 2.13.11 Java 17.0.3)
   @ case class Foo(x: String, y: Int, z: Boolean = true)
   defined class Foo
 
