@@ -207,7 +207,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     Right(1).transformIntoPartial[Right[String, String]].asOption ==> Some(Right("1"))
   }
 
-  test("transform from Either-type into Either-type, using Lifted Transformer for inner types transformation") {
+  test("transform from Either-type into Either-type, using Partial Transformer for inner types transformation") {
     implicit val intParserOpt: PartialTransformer[String, Int] =
       PartialTransformer(_.parseInt.toPartialResult)
 
