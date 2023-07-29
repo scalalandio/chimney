@@ -363,9 +363,102 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
   }
 
-  // TODO: test("flag .enableMethodAccessors") {}
+  group("flag .enableMethodAccessors") {
 
-  // TODO: test("flag .disableMethodAccessors") {}
+    test("should be disabled by default") {
+      import products.Accessors.*
+
+      compileErrorsFixed("Source(10).transformInto[Target2]").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
+        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for `z` fields in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using `.enableMethodAccessors`.",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("Source(10).into[Target2].transform").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
+        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for `z` fields in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using `.enableMethodAccessors`.",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should not be needed if all target fields with default values have their values provided in other way") {
+      import products.Accessors.*
+
+      Source(10).into[Target2].withFieldConst(_.z, 20.0).transform ==> Target2(10, 20.0)
+      Source(10).into[Target2].withFieldComputed(_.z, a => a.z * 3).transform ==> Target2(10, 30.0)
+    }
+
+    test("should not be needed to providing values from vals defined in body") {
+      import products.Accessors.*
+
+      Source(10).transformInto[Target] ==> Target(10, "10")
+      Source(10).into[Target].transform ==> Target(10, "10")
+    }
+
+    test("should enable using accessors in flat transformers") {
+      import products.Accessors.*
+
+      Source(10).into[Target2].enableMethodAccessors.transform ==> Target2(10, 10.0)
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableMethodAccessors
+
+        Source(10).transformInto[Target2] ==> Target2(10, 10.0)
+        Source(10).into[Target2].transform ==> Target2(10, 10.0)
+      }
+    }
+
+    test("should enable using accessors in nested transformers") {
+      import products.Accessors.*
+
+      Nested(Source(10)).into[Nested[Target2]].enableMethodAccessors.transform ==> Nested(Target2(10, 10.0))
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableMethodAccessors
+
+        Nested(Source(10)).transformInto[Nested[Target2]] ==> Nested(Target2(10, 10.0))
+        Nested(Source(10)).into[Nested[Target2]].transform ==> Nested(Target2(10, 10.0))
+      }
+    }
+
+    test("should ignore accessors if other setting provides it or source field exists") {
+      import products.Accessors.*
+
+      Source(10).into[Target2].enableMethodAccessors.withFieldConst(_.z, 20.0).transform ==> Target2(10, 20.0)
+      Source(10).into[Target2].enableMethodAccessors.withFieldComputed(_.z, a => a.z * 3).transform ==> Target2(
+        10,
+        30.0
+      )
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableMethodAccessors
+
+        Source(10).into[Target2].withFieldConst(_.z, 20.0).transform ==> Target2(10, 20.0)
+        Source(10).into[Target2].withFieldComputed(_.z, a => a.z * 3).transform ==> Target2(10, 30.0)
+      }
+    }
+  }
+
+  group("flag .disableMethodAccessors") {
+
+    test("should disable globally enabled .enableDefaultValues") {
+      import products.Accessors.*
+
+      @unused implicit val config = TransformerConfiguration.default.enableMethodAccessors
+
+      compileErrorsFixed("""Source(10).into[Target2].disableMethodAccessors.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
+        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for `z` fields in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using `.enableMethodAccessors`.",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+  }
 
   // TODO: refactor tests below
 
@@ -620,6 +713,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
   }
 
   test("support macro dependent transformers") {
+
     test("Option[List[A]] -> List[B]") {
       // FIXME: this isn't exactly intuitive :/
       implicit def optListT[A, B](implicit

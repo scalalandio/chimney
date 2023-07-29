@@ -690,9 +690,158 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
   }
 
-  // TODO: test("flag .enableMethodAccessors") {}
+  group("flag .enableMethodAccessors") {
 
-  // TODO: test("flag .disableMethodAccessors") {}
+    test("should be disabled by default") {
+      import products.Accessors.*
+
+      compileErrorsFixed("Source(10).transformIntoPartial[Target2]").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
+        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for `z` fields in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using `.enableMethodAccessors`.",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("Source(10).intoPartial[Target2].transform").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
+        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for `z` fields in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using `.enableMethodAccessors`.",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should not be needed if all target fields with default values have their values provided in other way") {
+      import products.Accessors.*
+
+      val expected = Target2(10, 20.0)
+
+      val result = Source(10).intoPartial[Target2].withFieldConst(_.z, 20.0).transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = Source(10).intoPartial[Target2].withFieldComputed(_.z, a => a.z * 2).transform
+      result2.asOption ==> Some(expected)
+      result2.asEither ==> Right(expected)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
+    }
+
+    test("should not be needed to providing values from vals defined in body") {
+      import products.Accessors.*
+
+      val expected = Target(10, "10")
+
+      val result = Source(10).transformIntoPartial[Target]
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = Source(10).intoPartial[Target].transform
+      result2.asOption ==> Some(expected)
+      result2.asEither ==> Right(expected)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
+    }
+
+    test("should enable using accessors in flat transformers") {
+      import products.Accessors.*
+
+      val expected = Target2(10, 10.0)
+
+      val result = Source(10).intoPartial[Target2].enableMethodAccessors.transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableMethodAccessors
+
+        val result2 = Source(10).transformIntoPartial[Target2]
+        result2.asOption ==> Some(expected)
+        result2.asEither ==> Right(expected)
+        result2.asErrorPathMessageStrings ==> Iterable.empty
+
+        val result3 = Source(10).intoPartial[Target2].transform
+        result3.asOption ==> Some(expected)
+        result3.asEither ==> Right(expected)
+        result3.asErrorPathMessageStrings ==> Iterable.empty
+      }
+    }
+
+    test("should enable using accessors in nested transformers") {
+      import products.Accessors.*
+
+      val expected = Nested(Target2(10, 10.0))
+
+      val result = Nested(Source(10)).intoPartial[Nested[Target2]].enableMethodAccessors.transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableMethodAccessors
+
+        val result2 = Nested(Source(10)).transformIntoPartial[Nested[Target2]]
+        result2.asOption ==> Some(expected)
+        result2.asEither ==> Right(expected)
+        result2.asErrorPathMessageStrings ==> Iterable.empty
+
+        val result3 = Nested(Source(10)).intoPartial[Nested[Target2]].transform
+        result3.asOption ==> Some(expected)
+        result3.asEither ==> Right(expected)
+        result3.asErrorPathMessageStrings ==> Iterable.empty
+      }
+    }
+
+    test("should ignore accessors if other setting provides it or source field exists") {
+      import products.Accessors.*
+
+      val expected = Target2(10, 20.0)
+
+      val result =
+        Source(10).intoPartial[Target2].enableMethodAccessors.withFieldConst(_.z, 20.0).transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = Source(10).intoPartial[Target2].enableMethodAccessors.withFieldComputed(_.z, a => a.z * 2).transform
+      result2.asOption ==> Some(expected)
+      result2.asEither ==> Right(expected)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableMethodAccessors
+
+        val result3 = Source(10).intoPartial[Target2].withFieldConst(_.z, 20.0).transform
+        result3.asOption ==> Some(expected)
+        result3.asEither ==> Right(expected)
+        result3.asErrorPathMessageStrings ==> Iterable.empty
+
+        val result4 = Source(10).intoPartial[Target2].withFieldComputed(_.z, a => a.z * 2).transform
+        result4.asOption ==> Some(expected)
+        result4.asEither ==> Right(expected)
+        result4.asErrorPathMessageStrings ==> Iterable.empty
+      }
+    }
+  }
+
+  group("flag .disableMethodAccessors") {
+
+    test("should disable globally enabled .enableDefaultValues") {
+      import products.Accessors.*
+
+      @unused implicit val config = TransformerConfiguration.default.enableMethodAccessors
+
+      compileErrorsFixed("""Source(10).into[Target2].disableMethodAccessors.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "io.scalaland.chimney.fixtures.products.Accessors.Target2",
+        "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
+        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for `z` fields in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using `.enableMethodAccessors`.",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+  }
 
   // TODO: refactor tests below
 
