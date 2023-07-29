@@ -67,3 +67,15 @@ object Defaults {
 
   case class Nested[A](value: A)
 }
+
+object Accessors {
+
+  case class Source(x: Int) {
+    val y: String = x.toString
+    def z: Double = x.toDouble
+  }
+  case class Target(x: Int, y: String)
+  case class Target2(x: Int, z: Double)
+
+  case class Nested[A](value: A)
+}
