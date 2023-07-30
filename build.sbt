@@ -283,6 +283,8 @@ lazy val root = project
           "Compile and test all projects in all Scala versions and platforms (beware! it uses a lot of memory and might OOM!)"
         )
         .noAlias,
+      sbtwelcome.UsefulTask("chimney3/console", "Drop into REPL with Chimney DSL imported (3)").noAlias,
+      sbtwelcome.UsefulTask("chimney/console", "Drop into REPL with Chimney DSL imported (2.13)").noAlias,
       sbtwelcome.UsefulTask("publishSigned", "Stage all versions for publishing").noAlias,
       sbtwelcome.UsefulTask("sonatypeBundleRelease", "Publish all artifacts staged for release").noAlias,
       sbtwelcome.UsefulTask("benchmarks/Jmh/run", "Run JMH benchmarks suite").alias("runBenchmarks"),
@@ -331,6 +333,7 @@ lazy val chimney = projectMatrix
   .settings(mimaSettings*)
   .settings(dependencies*)
   .settings(
+    Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*",
     Compile / doc / scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, _)) => Seq("-skip-packages", "io.scalaland.chimney.internal")
