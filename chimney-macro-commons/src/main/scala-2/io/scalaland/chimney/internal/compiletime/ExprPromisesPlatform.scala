@@ -42,10 +42,10 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     private def freshTermName(srcPrefixTree: Expr[?]): ExprPromiseName =
       freshTermName(toFieldName(srcPrefixTree))
 
-    // TODO: document why it that a thing
-    // undo the encoding of freshTermName
+    // Undoes the encoding of freshTermName so that generated value would not contain $1, $2, ...
+    // - this makes generated fresh names more readable as it prevents e.g. typename$macro$1$2$3
     private def toFieldName[A](srcPrefixTree: Expr[A]): String =
-      srcPrefixTree.tree.toString.replaceAll("\\$\\d+", "").replace("$u002E", ".")
+      srcPrefixTree.tree.toString.replaceAll("\\$\\d+", "")
   }
 
   protected object PatternMatchCase extends PatternMatchCaseModule {

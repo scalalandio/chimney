@@ -11,9 +11,7 @@ To include it to your sbt project, add the following line to your ``build.sbt``:
 
   libraryDependencies += "io.scalaland" %% "chimney-cats" % "|version|"
 
-.. TODO: verify cats version
-
-The module is released for Scala 2.12.x and 2.13.x and cats 2.x.
+The module is released for Scala 2.12.x, 2.13.x, 3.3.x and cats 2.9.x.
 If you want to use it with Scala.js, you need to replace ``%%`` with ``%%%``.
 
 The module provides package ``io.scalaland.chimney.cats`` with all the goodies

@@ -14,7 +14,6 @@ private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Der
           import from2.{Underlying as From2, value as valueFrom}, to2.{Underlying as To2, value as valueTo}
           deriveRecursiveTransformationExpr[from2.Underlying, to2.Underlying](valueFrom.unwrap(ctx.src)).flatMap {
             (derivedTo2: TransformationExpr[to2.Underlying]) =>
-              // TODO: append from2.fieldName to partial.Result ?
               // We're constructing:
               // '{ ${ new $To(${ derivedTo2 }) } // using ${ src }.$from internally }
               DerivationResult.expanded(derivedTo2.map(valueTo.wrap))

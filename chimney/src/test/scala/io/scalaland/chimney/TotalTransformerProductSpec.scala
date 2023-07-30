@@ -460,8 +460,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
   }
 
-  // TODO: refactor tests below
-
   group("support using method calls to fill values from target type") {
     case class Foobar(param: String) {
       val valField: String = "valField"

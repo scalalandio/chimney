@@ -13,8 +13,6 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
 
   // Intended for: being called from platform-specific code which returns Expr directly to splicing site
 
-  // TODO: don't suppress runtimeDataStore if it's not used
-
   final def deriveTotalTransformationResult[
       From: Type,
       To: Type,

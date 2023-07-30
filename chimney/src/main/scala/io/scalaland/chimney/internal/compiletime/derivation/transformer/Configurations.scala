@@ -94,9 +94,6 @@ private[compiletime] trait Configurations { this: Derivation =>
         fieldOverrides = Map.empty
       )
 
-    // def usesRuntimeDataStore: Boolean =
-    //  fieldOverrides.values.exists(_.usesRuntimeDataStore) || coproductOverrides.nonEmpty
-
     def addFieldOverride(fieldName: String, fieldOverride: RuntimeFieldOverride): TransformerConfig =
       copy(fieldOverrides = fieldOverrides + (fieldName -> fieldOverride))
 

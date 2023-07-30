@@ -120,7 +120,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] = {
       val wideningChecked = expr.widenExpr[B]
       if Type[A] =:= Type[B] then wideningChecked
-      else expr.asExprOf[B] // TODO: ask Janek if this upcast in code
+      else asInstanceOf[A, B](expr)
     }
 
     def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] = '{ val _ = ${ expr } }

@@ -843,8 +843,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
   }
 
-  // TODO: refactor tests below
-
   group("transform always fails") {
 
     import trip.*
