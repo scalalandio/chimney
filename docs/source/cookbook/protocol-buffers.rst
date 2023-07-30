@@ -73,6 +73,17 @@ or adding to `package-scoped options <https://scalapb.github.io/docs/customizati
 If the field won't be generated in the first place, there will be no issues
 with providing values to it.
 
+At this point, one might also consider option:
+
+.. code-block:: protobuf
+
+   option (scalapb.options) = {
+     no_default_values_in_constructor: true
+   };
+
+preventing ScalaBP from generating default values in constructor, to control
+how exactly the protobuf value is created..
+
 oneof fields
 ------------
 
