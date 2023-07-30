@@ -79,8 +79,6 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     (Right("a"): Either[String, String]).transformInto[Either[String, String]] ==> Right("a")
   }
 
-  // TODO: transform from non-either to either
-
   test("transform from Iterable-type to Iterable-type") {
     Seq(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))
     List(Foo("a")).transformInto[List[Bar]] ==> List(Bar("a"))
