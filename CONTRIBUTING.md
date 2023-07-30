@@ -62,3 +62,6 @@ to sbt-projectmatrix.
 
 Some details of this setup along with useful commands you would be able to see in the welcome prompt when you start sbt
 shell.
+
+Very basic introduction can be found in [design doc](DESIGN.md). From then on we suggest looking at tests, and using
+`.enableMacrosLogging` to see how some branches are triggered. If still at doubt, you can ask us on GH discussions.
