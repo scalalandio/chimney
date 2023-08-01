@@ -159,25 +159,6 @@ val dependencies = Seq(
         )
       case _ => Seq.empty
     }
-  },
-  excludeDependencies ++= {
-    // Workaround based on https://github.com/akka/akka-grpc/issues/1471#issuecomment-946476281 to prevent:
-    //   [error] Modules were resolved with conflicting cross-version suffixes in ProjectRef(uri("file:/Users/dev/Workspaces/GitHub/chimney/"), "chimney3"):
-    //   [error]    org.scala-lang.modules:scala-collection-compat _3, _2.13
-    //   [error] stack trace is suppressed; run last chimney3 / update for the full output
-    //   [error] (chimney3 / update) Conflicting cross-version suffixes in: org.scala-lang.modules:scala-collection-compat
-    //   [error] Total time: 0 s, completed Jul 19, 2023, 1:19:23 PM
-    // most likely caused somehow by the line:
-    //   Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
-    // as replacing it with empty Seq fixes the update (though it will fail the actual protoc generation).
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case (Some((3, _))) =>
-        Seq(
-          "com.thesamet.scalapb" % "scalapb-runtime_2.13",
-          "org.scala-lang.modules" % "scala-collection-compat_2.13"
-        )
-      case _ => Seq.empty
-    }
   }
 )
 
@@ -228,23 +209,22 @@ val noPublishSettings =
   Seq(publish / skip := true, publishArtifact := false)
 
 val ciCommand = (platform: String, scalaSuffix: String) => {
-  val clean = Seq("clean")
-  def withCoverage(tasks: String*): Seq[String] = "coverage" +: tasks :+ "coverageAggregate" :+ "coverageOff"
+  val isJVM = platform == "JVM"
 
-  val tasks = platform match {
-    case "JVM" => // JVM
-      clean ++ Seq("scalafmtCheck", "Test/scalafmtCheck") ++
-        Seq(s"chimney$scalaSuffix/compile", s"chimneyCats$scalaSuffix/compile") ++
-        withCoverage(
-          s"chimney$scalaSuffix/test",
-          s"chimneyCats$scalaSuffix/test",
-          s"chimney$scalaSuffix/coverageReport",
-          s"chimneyCats$scalaSuffix/coverageReport"
-        ) ++ Seq("benchmarks/compile")
-    case "JS" =>
-      clean ++ Seq(s"chimneyJS$scalaSuffix/test", s"chimneyCatsJS$scalaSuffix/test")
-    case "Native" =>
-      clean ++ Seq(s"chimneyNative$scalaSuffix/test", s"chimneyCatsNative$scalaSuffix/test")
+  val clean = Vector("clean")
+  def withCoverage(tasks: String*): Vector[String] =
+    "coverage" +: tasks.toVector :+ "coverageAggregate" :+ "coverageOff"
+
+  val projects = Vector("chimney", "chimneyCats", "protobufs")
+    .map(name => s"$name${if (isJVM) "" else platform}$scalaSuffix")
+  def tasksOf(name: String): Vector[String] = projects.map(project => s"$project/$name")
+
+  val tasks = if (isJVM) {
+    (clean :+ "scalafmtCheck" :+ "Test/scalafmtCheck") ++ tasksOf("compile") ++ withCoverage(
+      (tasksOf("test") ++ tasksOf("coverageReport"))*
+    ) :+ "benchmarks/compile"
+  } else {
+    clean ++ tasksOf("test")
   }
 
   tasks.mkString(";")
@@ -258,7 +238,9 @@ lazy val root = project
   .settings(settings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate((chimneyMacroCommons.projectRefs ++ chimney.projectRefs ++ chimneyCats.projectRefs)*)
+  .aggregate(
+    (chimneyMacroCommons.projectRefs ++ chimney.projectRefs ++ chimneyCats.projectRefs ++ protobufs.projectRefs)*
+  )
   .settings(
     moduleName := "chimney-build",
     name := "chimney-build",
@@ -341,12 +323,12 @@ lazy val chimney = projectMatrix
       }
     }
   )
-  .dependsOn(chimneyMacroCommons, protos % "test->test")
+  .dependsOn(chimneyMacroCommons)
 
 lazy val chimneyCats = projectMatrix
   .in(file("chimney-cats"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
-  .disablePlugins(WelcomePlugin)
+  .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
     moduleName := "chimney-cats",
     name := "chimney-cats",
@@ -360,22 +342,23 @@ lazy val chimneyCats = projectMatrix
   .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.9.0" % "provided")
   .dependsOn(chimney % "test->test;compile->compile")
 
-lazy val protos = projectMatrix
-  .in(file("protos"))
+lazy val protobufs = projectMatrix
+  .in(file("protobufs"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
   .disablePlugins(WelcomePlugin)
   .settings(
-    moduleName := "chimney-protos",
-    name := "chimney-protos",
+    moduleName := "chimney-protobufs",
+    name := "chimney-protobufs",
     description := "Protobufs used for conversion testing"
   )
   .settings(settings*)
   .settings(noPublishSettings*)
   .settings(
+    Compile / scalacOptions := Seq.empty, // contains only generated classes, and settings:* scalacOptions break Scala 3 compilation
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
-    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
-    scalacOptions := Seq.empty // contains only generated classes, and settings:* scalacOptions break Scala 3 compilation
+    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
   )
+  .dependsOn(chimney % "test->test;compile->compile")
 
 lazy val benchmarks = projectMatrix
   .in(file("benchmarks"))

@@ -5,7 +5,12 @@ import scala.annotation.static
 
 object TransformerDefinitionCommons {
   type RuntimeDataStore = Vector[Any]
-  @static final def emptyRuntimeDataStore: RuntimeDataStore = Vector.empty[Any]
+  final def emptyRuntimeDataStore: RuntimeDataStore = Vector.empty[Any]
+  // @static annotation breaks Scala.js 3 with:
+  // [error] ## Exception when compiling 73 sources to /Users/dev/Workspaces/GitHub/chimney/chimney/target/js-3/classes
+  // [error] java.lang.AssertionError: assertion failed: Trying to access the this of another class:
+  //   tree.symbol = trait TransformerDefinitionCommons, class symbol = module class extensions$package$
+  // @static final def emptyRuntimeDataStore: RuntimeDataStore = Vector.empty[Any]
 }
 
 private[chimney] trait TransformerDefinitionCommons[UpdateCfg[_ <: TransformerCfg]] {
