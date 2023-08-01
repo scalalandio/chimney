@@ -354,7 +354,11 @@ lazy val protobufs = projectMatrix
   .settings(settings*)
   .settings(noPublishSettings*)
   .settings(
-    scalacOptions := Seq.empty, // contains only generated classes, and settings:* scalacOptions break Scala 3 compilation
+    scalacOptions := {
+      // protobufs Compile contains only generated classes, and scalacOptions from settings:* breaks Scala 3 compilation
+      if (scalacOptions.value.contains("-scalajs")) Seq("-scalajs")
+      else Seq.empty
+    },
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
     libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
   )
