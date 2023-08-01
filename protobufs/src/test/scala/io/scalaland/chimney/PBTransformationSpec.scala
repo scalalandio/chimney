@@ -1,12 +1,10 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.fixtures.addressbook
-import io.scalaland.chimney.fixtures.order
+import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.examples.pb
+import io.scalaland.chimney.fixtures.{addressbook, order}
 
 class PBTransformationSpec extends ChimneySpec {
-
-  import dsl.*
 
   test("transform value classes between their primitive representations") {
 
