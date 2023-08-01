@@ -1,8 +1,11 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl.*
+// format: off
+import io.scalaland.chimney.dsl._
+// format: on
 import io.scalaland.chimney.examples.pb
 import io.scalaland.chimney.fixtures.{addressbook, order}
+import io.scalaland.chimney.{partial, ChimneySpec, PartialTransformer}
 
 class PBTransformationSpec extends ChimneySpec {
 
@@ -198,7 +201,9 @@ class PBTransformationSpec extends ChimneySpec {
         .transform
         .asOption ==> Some(domainType)
       locally {
-        import HandleEmptyAutomatically.*
+        // format: off
+        import HandleEmptyAutomatically._
+        // format: on
         pbType.value.intoPartial[addressbook.AddressBookType].transform.asOption ==> Some(domainType)
       }
     }
