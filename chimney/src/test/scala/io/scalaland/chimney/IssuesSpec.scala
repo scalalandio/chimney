@@ -414,7 +414,7 @@ class IssuesSpec extends ChimneySpec {
 
   test("fix issue #185 (rewritten as partial)") {
 
-    @unused def blackIsRed(b: colors2.Black.type): colors1.Color =
+    def blackIsRed(@unused b: colors2.Black.type): colors1.Color =
       colors1.Red
 
     (colors2.Black: colors2.Color)

@@ -141,7 +141,7 @@ class PartialTransformerSumTypeSpec extends ChimneySpec {
     test(
       """transform sealed hierarchies from "superset" of case objects to "subset" of case objects when user-provided mapping handled additional cases"""
     ) {
-      @unused def blackIsRed(b: colors2.Black.type): colors1.Color =
+      def blackIsRed(@unused b: colors2.Black.type): colors1.Color =
         colors1.Red
 
       (colors2.Black: colors2.Color)
