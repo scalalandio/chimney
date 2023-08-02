@@ -170,8 +170,10 @@ Chimney documentation is available at https://chimney.readthedocs.io.
 For building documentation locally you can use Docker:
 
 ```bash
-docker run --rm -v "$PWD/docs:/docs" sphinxdoc/sphinx:3.2.1 bash -c "pip install sphinx-rtd-theme && make html"
+docker run --rm -v "$PWD/docs:/docs" sphinxdoc/sphinx:5.3.0 bash -c "pip install sphinx-rtd-theme && make html"
 ```
+
+It will build the docs in the `./docs/build/html/` directory.
 
 ## Thanks
 
