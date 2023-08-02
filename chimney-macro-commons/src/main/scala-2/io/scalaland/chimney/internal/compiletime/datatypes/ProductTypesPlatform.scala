@@ -186,22 +186,26 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         val constructor: Product.Arguments => Expr[A] = arguments => {
           val (constructorArguments, setterArguments) = checkArguments[A](parameters, arguments)
 
-          PrependDefinitionsTo
-            .prependVal[A](
-              c.Expr[A](q"new $A(...${paramss.map(_.map(param => constructorArguments(paramNames(param)).value))})"),
-              ExprPromise.NameGenerationStrategy.FromType
-            )
-            .use { exprA =>
-              Expr.block(
-                setterArguments.map { case (name, exprArg) =>
-                  val setter = setterExprs(name)
-                  assert(exprArg.Underlying =:= setter.Underlying)
-                  import setter.value as setterExpr
-                  setterExpr(exprA, exprArg.value.asInstanceOf[Expr[setter.Underlying]])
-                }.toList,
-                exprA
-              )
-            }
+          def newExpr =
+            c.Expr[A](q"new $A(...${paramss.map(_.map(param => constructorArguments(paramNames(param)).value))})")
+
+          if (setterArguments.isEmpty) {
+            newExpr
+          } else {
+            PrependDefinitionsTo
+              .prependVal[A](newExpr, ExprPromise.NameGenerationStrategy.FromType)
+              .use { exprA =>
+                Expr.block(
+                  setterArguments.map { case (name, exprArg) =>
+                    val setter = setterExprs(name)
+                    assert(exprArg.Underlying =:= setter.Underlying)
+                    import setter.value as setterExpr
+                    setterExpr(exprA, exprArg.value.asInstanceOf[Expr[setter.Underlying]])
+                  }.toList,
+                  exprA
+                )
+              }
+          }
         }
 
         Some(Product.Constructor(parameters, constructor))
