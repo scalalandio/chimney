@@ -58,8 +58,8 @@ jobs:
           jvm: 'temurin:1.19.0.2' # TODO LB java version from matrix
           apps: sbt
 
-      - name: Run benchmarks
-        run: sbt "++2.13.11 benchmarks/Jmh/run -rf json -rff $(pwd)/$(git describe --tags --always).json" # TODO LB scala version from matrix
+      - name: Run Scala 2 benchmarks # TODO: run for Scala 3 too
+        run: sbt "benchmarks/Jmh/run -rf json -rff $(pwd)/$(git describe --tags --always).json"
 
       - name: Fetch benchmarks metadata
         run: curl https://raw.githubusercontent.com/scalalandio/chimney-benchmark-results/main/meta.json -o meta.json
