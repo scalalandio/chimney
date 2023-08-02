@@ -97,7 +97,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
   protected object PatternMatchCase extends PatternMatchCaseModule {
 
     def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = Match(
-      src.asTerm,
+      '{ ${ src }: @scala.unchecked }.asTerm,
       cases.map { case PatternMatchCase(someFrom, usage, fromName, isCaseObject) =>
         import someFrom.Underlying as SomeFrom
         // Unfortunately, we cannot do
