@@ -50,6 +50,7 @@ val settings = Seq(
           // format: off
           "-source", "3.3-migration",
           // format: on
+          "-Xfatal-warnings",
           // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is!
           "-Wunused:privates",
           "-Wunused:locals",
