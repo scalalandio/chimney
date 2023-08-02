@@ -69,15 +69,10 @@ For the snippet above, the macro could print this structured log:
       + Resolved `y` field value to bar.y
       + Resolved `z` field value to Foo.apply$default
       + Resolved 3 arguments, 3 as total and 0 as partial Expr
-    + Rule ProductToProduct expanded successfully: {
-    |   val foo: Foo = new Foo(bar.x, bar.y, Foo.apply$default);
-    |   foo
-    | }
+    + Rule ProductToProduct expanded successfully:
+    | new Foo(bar.x, bar.y, Foo.apply$default)
   + Derived final expression is:
-  | {
-  |   val foo: Foo = new Foo(bar.x, bar.y, Foo.apply$default);
-  |   foo
-  | }
+  | new Foo(bar.x, bar.y, Foo.apply$default)
   + Derivation took 0.109828000 s
 
 With the structured log user could see e.g.:
