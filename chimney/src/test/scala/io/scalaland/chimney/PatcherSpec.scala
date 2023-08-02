@@ -2,6 +2,8 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 
+import scala.annotation.unused
+
 class PatcherSpec extends ChimneySpec {
 
   test("patch simple objects") {
@@ -108,7 +110,7 @@ class PatcherSpec extends ChimneySpec {
 
     import TestDomain.*
 
-    case class UserWithOptional(id: Int, email: Email, phone: Option[Phone])
+    @unused case class UserWithOptional(id: Int, email: Email, phone: Option[Phone])
 
     case class UserPatch(email: String, phone: Option[Option[Phone]])
     val update = UserPatch(email = "updated@example.com", phone = None)
@@ -121,7 +123,6 @@ class PatcherSpec extends ChimneySpec {
 
     import TestDomain.*
 
-    case class Foo(x: Option[Int])
     case class PhonePatch(phone: Option[Phone])
     case class IntPatch(phone: Option[Long])
 

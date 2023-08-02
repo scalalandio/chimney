@@ -12,16 +12,11 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
     object platformSpecific {
 
-      private val abstractFlags = Flags.Abstract | Flags.Trait
-      private val privateFlags = Flags.Private | Flags.PrivateLocal | Flags.Protected
-
       def isAbstract(sym: Symbol): Boolean =
         sym.flags.is(Flags.Abstract) || sym.flags.is(Flags.Trait)
-        // (sym.flags & abstractFlags).is(abstractFlags)
 
       def isPublic(sym: Symbol): Boolean =
         !(sym.flags.is(Flags.Private) || sym.flags.is(Flags.PrivateLocal) || sym.flags.is(Flags.Protected))
-        // (sym.flags & privateFlags).is(privateFlags)
 
       def isParameterless(method: Symbol): Boolean =
         method.paramSymss.filterNot(_.exists(_.isType)).flatten.isEmpty
@@ -52,7 +47,6 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
     def isPOJO[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
-      val mem = sym.declarations
       !A.isPrimitive && !(A <:< Type[String]) && sym.isClassDef && !isAbstract(sym) && isPublic(sym.primaryConstructor)
     }
     def isCaseClass[A](implicit A: Type[A]): Boolean = {

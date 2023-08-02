@@ -4,6 +4,7 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
+import scala.annotation.unused
 import scala.collection.compat.Factory
 
 private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivation =>
@@ -128,7 +129,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
           DerivationResult.attemptNextRule
       }
 
-    implicit private class IorAOps[M: Type, A: Type](private val iora: IterableOrArray[M, A]) {
+    implicit private class IorAOps[M: Type, A: Type](@unused private val iora: IterableOrArray[M, A]) {
 
       def factory: DerivationResult[Expr[Factory[A, M]]] = DerivationResult.summonImplicit[Factory[A, M]]
     }

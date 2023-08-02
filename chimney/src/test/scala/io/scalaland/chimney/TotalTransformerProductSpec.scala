@@ -503,7 +503,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
 
     test("method is disabled by default") {
-      case class Foobar5(
+      @unused case class Foobar5(
           param: String,
           valField: String,
           lazyValField: String,
@@ -534,7 +534,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
 
     test("protected and private methods are not considered (even if accessible)") {
-      case class Foo2(param: String, protect: String, priv: String)
+      @unused case class Foo2(param: String, protect: String, priv: String)
 
       compileErrorsFixed("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
         "",

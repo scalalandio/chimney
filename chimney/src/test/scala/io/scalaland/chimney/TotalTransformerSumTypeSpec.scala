@@ -3,6 +3,8 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
+import scala.annotation.unused
+
 class TotalTransformerSumTypeSpec extends ChimneySpec {
 
   test(
@@ -125,7 +127,7 @@ class TotalTransformerSumTypeSpec extends ChimneySpec {
     test(
       """transform sealed hierarchies from "superset" of case objects to "subset" of case objects when user-provided mapping handled additional cases"""
     ) {
-      def blackIsRed(b: colors2.Black.type): colors1.Color =
+      @unused def blackIsRed(b: colors2.Black.type): colors1.Color =
         colors1.Red
 
       (colors2.Black: colors2.Color)

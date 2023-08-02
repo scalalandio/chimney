@@ -45,12 +45,19 @@ val settings = Seq(
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((3, _)) =>
         Seq(
-          // TODO: add linters
           // "-explain",
           "-rewrite",
           // format: off
           "-source", "3.3-migration",
           // format: on
+          "-Xfatal-warnings",
+          // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is!
+          "-Wunused:privates",
+          "-Wunused:locals",
+          "-Wunused:explicits",
+          "-Wunused:implicits",
+          "-Wunused:params",
+          "-Wvalue-discard",
           "-Ykind-projector:underscores"
         )
       case Some((2, 13)) =>

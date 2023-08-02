@@ -2,6 +2,8 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 
+import scala.annotation.unused
+
 class TotalTransformerStdLibTypesSpec extends ChimneySpec {
 
   import TotalTransformerStdLibTypesSpec.*
@@ -15,8 +17,8 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
   }
 
   test("not support converting non-Unit field to Unit field if there is no implicit converter allowing that") {
-    case class Buzz(value: String)
-    case class ConflictingFooBuzz(value: Unit)
+    @unused case class Buzz(value: String)
+    @unused case class ConflictingFooBuzz(value: Unit)
 
     compileErrorsFixed("""Buzz("a").transformInto[ConflictingFooBuzz]""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Buzz to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.ConflictingFooBuzz",
@@ -32,7 +34,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     case class Buzz(value: String)
     case class NewBuzz(value: String, unit: Unit)
     case class FooBuzz(unit: Unit)
-    case class ConflictingFooBuzz(value: Unit)
+    @unused case class ConflictingFooBuzz(value: Unit)
 
     Buzz("a").transformInto[NewBuzz] ==> NewBuzz("a", ())
     Buzz("a").transformInto[FooBuzz] ==> FooBuzz(())
@@ -52,7 +54,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
       "derivation from some: scala.Some[java.lang.String] to scala.None is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
-    case class BarNone(value: None.type)
+    @unused case class BarNone(value: None.type)
     compileErrorsFixed("""Foo("a").into[BarNone].transform""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.BarNone",
       "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.BarNone",
