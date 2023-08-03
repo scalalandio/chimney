@@ -5,7 +5,7 @@ import io.scalaland.chimney.fixtures.*
 
 import scala.annotation.unused
 
-class TotalTransformerSumTypeSpec extends ChimneySpec {
+class TotalTransformerSealedHierarchySpec extends ChimneySpec {
 
   test(
     """transform flat sealed hierarchies from "subset" of case objects to "superset" of case objects without modifiers"""
