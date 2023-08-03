@@ -6,7 +6,7 @@ import io.scalaland.chimney.utils.OptionUtils.*
 
 import scala.annotation.unused
 
-class PartialTransformerSumTypeSpec extends ChimneySpec {
+class PartialTransformerSealedHierarchySpec extends ChimneySpec {
 
   test(
     """transform sealed hierarchies from "subset" of case objects to "superset" of case objects without modifiers"""
