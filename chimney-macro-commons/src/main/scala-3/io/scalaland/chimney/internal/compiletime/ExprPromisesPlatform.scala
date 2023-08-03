@@ -68,10 +68,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     // Undoes the encoding of freshTermName so that generated value would not contain $1, $2, ... and weird
     // dot-replacement - this makes generated fresh names more readable as it prevents e.g. typename$macro$1$2$3
     private def toFieldName[A](expr: Expr[A]): String =
-      if expr.asTerm.toString.contains("$u002E") then {
-        println(expr.asTerm.toString)
-      }
-      expr.asTerm.toString // .replaceAll("\\$\\d+", "").replace("$u002E", ".")
+      expr.asTerm.toString
   }
 
   protected object PrependDefinitionsTo extends PrependDefinitionsToModule {
