@@ -8,6 +8,10 @@ import scala.quoted
 
 private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: ChimneyDefinitionsPlatform =>
 
+  def resetOwner[T: Type](using quotes: scala.quoted.Quotes)(a: Expr[T]): Expr[T] =
+    import quotes.reflect.*
+    a.asTerm.changeOwner(Symbol.spliceOwner).asExprOf[T]
+
   object ChimneyExpr extends ChimneyExprModule {
 
     object Transformer extends TransformerModule {
@@ -15,12 +19,12 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
       def transform[From: Type, To: Type](
           transformer: Expr[io.scalaland.chimney.Transformer[From, To]],
           src: Expr[From]
-      ): Expr[To] = '{ ${ transformer }.transform(${ src }) }
+      ): Expr[To] = '{ ${ transformer }.transform(${ resetOwner(src) }) }
 
       def instance[From: Type, To: Type](toExpr: Expr[From] => Expr[To]): Expr[Transformer[From, To]] =
         '{
           new Transformer[From, To] {
-            def transform(src: From): To = ${ toExpr('{ src }) }
+            def transform(src: From): To = ${ resetOwner(toExpr('{ src })) }
           }
         }
     }
@@ -31,14 +35,17 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           transformer: Expr[io.scalaland.chimney.PartialTransformer[From, To]],
           src: Expr[From],
           failFast: Expr[Boolean]
-      ): Expr[partial.Result[To]] = '{ ${ transformer }.transform(${ src }, ${ failFast }) }
+      ): Expr[partial.Result[To]] =
+        '{ ${ transformer }.transform(${ resetOwner(src) }, ${ resetOwner(failFast) }) }
 
       def instance[From: Type, To: Type](
           toExpr: (Expr[From], Expr[Boolean]) => Expr[partial.Result[To]]
       ): Expr[PartialTransformer[From, To]] =
         '{
           new PartialTransformer[From, To] {
-            def transform(src: From, failFast: Boolean): partial.Result[To] = ${ toExpr('{ src }, '{ failFast }) }
+            def transform(src: From, failFast: Boolean): partial.Result[To] = ${
+              resetOwner(toExpr('{ src }, '{ failFast }))
+            }
           }
         }
     }
@@ -78,7 +85,9 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           factory: Expr[Factory[B, M]]
       ): Expr[partial.Result[M]] =
         '{
-          partial.Result.traverse[M, A, B](${ it }, ${ f }, ${ failFast })(${ factory })
+          partial.Result.traverse[M, A, B](${ resetOwner(it) }, ${ resetOwner(f) }, ${ resetOwner(failFast) })(${
+            factory
+          })
         }
 
       def sequence[M: Type, A: Type](
@@ -102,14 +111,21 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           f: Expr[(A, B) => C],
           failFast: Expr[Boolean]
       ): Expr[partial.Result[C]] =
-        '{ partial.Result.map2[A, B, C](${ fa }, ${ fb }, ${ f }, ${ failFast }) }
+        '{
+          partial.Result.map2[A, B, C](
+            ${ resetOwner(fa) },
+            ${ resetOwner(fb) },
+            ${ resetOwner(f) },
+            ${ resetOwner(failFast) }
+          )
+        }
 
       def product[A: Type, B: Type](
           fa: Expr[partial.Result[A]],
           fb: Expr[partial.Result[B]],
           failFast: Expr[Boolean]
       ): Expr[partial.Result[(A, B)]] =
-        '{ partial.Result.product[A, B](${ fa }, ${ fb }, ${ failFast }) }
+        '{ partial.Result.product[A, B](${ resetOwner(fa) }, ${ resetOwner(fb) }, ${ resetOwner(failFast) }) }
 
       def prependErrorPath[A: Type](
           fa: Expr[partial.Result[A]],
