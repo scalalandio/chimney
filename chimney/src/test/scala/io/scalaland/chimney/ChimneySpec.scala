@@ -37,11 +37,8 @@ trait ChimneySpec extends munit.BaseFunSuite with VersionCompat { self =>
   }
 
   implicit class CompileErrorsCheck(msg: String) {
-
-    // FIXME: temporary workaround to disable checking compilation errors format on Scala 3 until we fix them
-    def check(msgs: String*): Unit = if (isScala3) arePresent() else check2(msgs*)
-
-    def check2(msgs: String*): Unit = for (msg <- msgs)
+    
+    def check(msgs: String*): Unit = for (msg <- msgs)
       Predef.assert(
         ChimneySpec.AnsiControlCode.replaceAllIn(this.msg, "").contains(msg),
         "Error message did not contain expected snippet\n" +

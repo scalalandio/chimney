@@ -87,7 +87,7 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
     rectangle.transformInto[shapes1.Shape] ==>
       shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(2, 2))
   }
-
+  
   test("not allow transformation of of sealed hierarchies when the transformation would be ambiguous".ignore) {
     val error = compileErrorsScala2(
       """
