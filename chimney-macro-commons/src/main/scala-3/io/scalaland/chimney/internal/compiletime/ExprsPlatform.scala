@@ -9,6 +9,15 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
   final override protected type Expr[A] = quoted.Expr[A]
   protected object Expr extends ExprModule {
+
+    object platformSpecific {
+
+      // Required by -Xcheck-macros to pass.
+      def resetOwner[T: Type](a: Expr[T]): Expr[T] =
+        a.asTerm.changeOwner(Symbol.spliceOwner).asExprOf[T]
+    }
+    import platformSpecific.resetOwner
+
     val Nothing: Expr[Nothing] = '{ ??? }
     val Null: Expr[Null] = '{ null }
     val Unit: Expr[Unit] = '{ () }
@@ -132,9 +141,5 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     def prettyPrint[A](expr: Expr[A]): String = expr.asTerm.show(using Printer.TreeAnsiCode)
 
     def typeOf[A](expr: Expr[A]): Type[A] = Type.platformSpecific.fromUntyped[A](expr.asTerm.tpe)
-
-    def resetOwner[T: Type](using quotes: quoted.Quotes)(a: Expr[T]): Expr[T] =
-      import quotes.reflect.*
-      a.asTerm.changeOwner(Symbol.spliceOwner).asExprOf[T]
   }
 }

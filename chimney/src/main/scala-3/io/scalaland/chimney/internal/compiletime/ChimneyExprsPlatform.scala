@@ -8,11 +8,9 @@ import scala.quoted
 
 private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: ChimneyDefinitionsPlatform =>
 
-  def resetOwner[T: Type](using quotes: scala.quoted.Quotes)(a: Expr[T]): Expr[T] =
-    import quotes.reflect.*
-    a.asTerm.changeOwner(Symbol.spliceOwner).asExprOf[T]
-
   object ChimneyExpr extends ChimneyExprModule {
+
+    import Expr.platformSpecific.resetOwner
 
     object Transformer extends TransformerModule {
 
