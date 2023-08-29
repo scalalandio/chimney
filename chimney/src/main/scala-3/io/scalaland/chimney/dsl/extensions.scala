@@ -23,7 +23,7 @@ extension [From](source: From) {
     *
     * @since 0.1.0
     */
-  def into[To]: TransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+  transparent inline def into[To]: TransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new TransformerInto(source, new TransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore))
 
   /** Performs in-place transformation of captured source value to target type.
@@ -38,7 +38,7 @@ extension [From](source: From) {
     *
     * @since 0.1.0
     */
-  def transformInto[To](implicit transformer: Transformer.AutoDerived[From, To]): To =
+  transparent inline def transformInto[To](implicit transformer: Transformer.AutoDerived[From, To]): To =
     transformer.transform(source)
 }
 
@@ -58,7 +58,8 @@ extension [From](source: From) {
     *
     * @since 0.7.0
     */
-  def intoPartial[To]: PartialTransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+  transparent inline def intoPartial[To]
+      : PartialTransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new PartialTransformerInto(
       source,
       new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
@@ -76,7 +77,7 @@ extension [From](source: From) {
     *
     * @since 0.7.0
     */
-  def transformIntoPartial[To](implicit
+  transparent inline def transformIntoPartial[To](implicit
       transformer: PartialTransformer.AutoDerived[From, To]
   ): partial.Result[To] =
     transformIntoPartial(failFast = false)
@@ -94,7 +95,7 @@ extension [From](source: From) {
     *
     * @since 0.7.0
     */
-  def transformIntoPartial[To](failFast: Boolean)(implicit
+  transparent inline def transformIntoPartial[To](failFast: Boolean)(implicit
       transformer: PartialTransformer.AutoDerived[From, To]
   ): partial.Result[To] =
     transformer.transform(source, failFast)
@@ -117,7 +118,7 @@ extension [T](obj: T) {
     *
     * @since 0.4.0
     */
-  def using[P](patch: P): PatcherUsing[T, P, PatcherCfg.Empty] =
+  transparent inline def using[P](patch: P): PatcherUsing[T, P, PatcherCfg.Empty] =
     new PatcherUsing[T, P, PatcherCfg.Empty](obj, patch)
 
   /** Performs in-place patching of wrapped object with provided value.
@@ -133,7 +134,7 @@ extension [T](obj: T) {
     *
     * @since 0.4.0
     */
-  def patchUsing[P](patch: P)(implicit patcher: Patcher[T, P]): T =
+  transparent inline def patchUsing[P](patch: P)(implicit patcher: Patcher[T, P]): T =
     patcher.patch(obj, patch)
 }
 
@@ -152,7 +153,7 @@ extension [T](option: Option[T]) {
     *
     * @since 0.7.0
     */
-  def toPartialResult: partial.Result[T] =
+  transparent inline def toPartialResult: partial.Result[T] =
     partial.Result.fromOption(option)
 
   /** Converts Option to Result, using provided error message if None.
@@ -162,7 +163,7 @@ extension [T](option: Option[T]) {
     *
     * @since 0.7.0
     */
-  def toPartialResultOrString(ifEmpty: => String): partial.Result[T] =
+  transparent inline def toPartialResultOrString(ifEmpty: => String): partial.Result[T] =
     partial.Result.fromOptionOrString(option, ifEmpty)
 }
 
@@ -181,7 +182,7 @@ extension [T](either: Either[String, T]) {
     *
     * @since 0.7.0
     */
-  def toPartialResult: partial.Result[T] =
+  transparent inline def toPartialResult: partial.Result[T] =
     partial.Result.fromEitherString(either)
 }
 
@@ -200,6 +201,6 @@ extension [T](`try`: Try[T]) {
     *
     * @since 0.7.0
     */
-  def toPartialResult: partial.Result[T] =
+  transparent inline def toPartialResult: partial.Result[T] =
     partial.Result.fromTry(`try`)
 }

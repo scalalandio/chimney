@@ -79,10 +79,10 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     ): Expr[To] = {
       val statements = vals.map {
         case (name, expr, DefnType.Def) =>
-          DefDef(name, _ => Some(expr.value.asTerm))
+          DefDef(name, _ => Some(expr.value.asTerm.changeOwner(name)))
         case (name, expr, _) =>
           // val/lazy val/var is handled by Symbol by flag provided by UsageHint
-          ValDef(name, Some(expr.value.asTerm))
+          ValDef(name, Some(expr.value.asTerm.changeOwner(name)))
       }.toList
       Block(statements, expr.asTerm).asExprOf[To]
     }
@@ -94,7 +94,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
   protected object PatternMatchCase extends PatternMatchCaseModule {
 
     def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = Match(
-      '{ ${ src }: @scala.unchecked }.asTerm,
+      src.asTerm.changeOwner(Symbol.spliceOwner),
       cases.map { case PatternMatchCase(someFrom, usage, fromName, isCaseObject) =>
         import someFrom.Underlying as SomeFrom
         // Unfortunately, we cannot do
