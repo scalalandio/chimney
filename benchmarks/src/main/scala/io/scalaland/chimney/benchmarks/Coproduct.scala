@@ -19,13 +19,12 @@ class Coproduct extends CommonBenchmarkSettings {
   var color: Color = Color.Red
 
   @Setup(Level.Iteration)
-  def nextColor(): Unit = {
+  def nextColor(): Unit =
     color = color match {
       case Color.Red   => Color.Green
       case Color.Green => Color.Blue
       case Color.Blue  => Color.Red
     }
-  }
 
   @Benchmark
   def coproductIsomorphismChimneyInto: Color =

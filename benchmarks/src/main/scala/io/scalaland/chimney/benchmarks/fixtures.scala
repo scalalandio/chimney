@@ -250,7 +250,7 @@ object fixtures {
       fb: Double => M[Double],
       fc: String => M[String],
       fd: Option[String] => M[Option[String]]
-  ): M[SimpleOutput] = {
+  ): M[SimpleOutput] =
     fa(simple.a) match {
       case Right(a) =>
         fb(simple.b) match {
@@ -311,7 +311,6 @@ object fixtures {
             }
         }
     }
-  }
 
   object transformers {
 
