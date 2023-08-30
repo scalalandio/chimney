@@ -185,7 +185,21 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     def prettyPrint[T: Type]: String = {
       val repr = TypeRepr.of[T]
-      scala.util.Try(repr.dealias.show(using Printer.TypeReprAnsiCode)).getOrElse(repr.toString)
+
+      scala.util
+        .Try {
+          val symbolFullName = (repr.typeSymbol.fullName: String).replaceAll("\\$", "")
+          val colorlessReprName = repr.dealias.show(using Printer.TypeReprCode)
+          val colorfulReprName = repr.dealias.show(using Printer.TypeReprAnsiCode)
+
+          // workaround for local classes skipping on package and enclosing object name
+          if symbolFullName != colorlessReprName && symbolFullName.endsWith("__" + colorlessReprName) then
+            symbolFullName.substring(0, symbolFullName.length - 2 - colorlessReprName.length) + colorfulReprName
+          else if symbolFullName != colorlessReprName && symbolFullName.endsWith("_" + colorlessReprName) then
+            symbolFullName.substring(0, symbolFullName.length - 1 - colorlessReprName.length) + colorfulReprName
+          else colorfulReprName
+        }
+        .getOrElse(repr.toString)
     }
   }
 }
