@@ -22,7 +22,10 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
       def instance[From: Type, To: Type](toExpr: Expr[From] => Expr[To]): Expr[Transformer[From, To]] =
         '{
           new Transformer[From, To] {
-            def transform(src: From): To = ${ resetOwner(toExpr('{ src })) }
+            def transform(src: From): To = ${
+              // TODO: check if whole expr or src needs to use "resetOwner"
+              PrependDefinitionsTo.prependVal[From]('{ src }, ExprPromise.NameGenerationStrategy.FromType).use(toExpr)
+            }
           }
         }
     }
@@ -42,7 +45,10 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         '{
           new PartialTransformer[From, To] {
             def transform(src: From, failFast: Boolean): partial.Result[To] = ${
-              resetOwner(toExpr('{ src }, '{ failFast }))
+              // TODO: check if whole expr or src needs to use "resetOwner"
+              PrependDefinitionsTo
+                .prependVal[From]('{ src }, ExprPromise.NameGenerationStrategy.FromType)
+                .use(toExpr(_, '{ failFast }))
             }
           }
         }
