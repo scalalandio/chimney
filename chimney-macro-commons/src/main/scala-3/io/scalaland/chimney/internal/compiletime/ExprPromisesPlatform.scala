@@ -49,26 +49,38 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
       }
     }
 
-    private def freshTermName[A: Type](prefix: String, usageHint: UsageHint): ExprPromiseName = Symbol.newVal(
-      Symbol.spliceOwner,
-      FreshTerm.generate(prefix),
-      TypeRepr.of[A],
-      usageHint match
-        case UsageHint.None => Flags.EmptyFlags
-        case UsageHint.Lazy => Flags.Lazy
-        case UsageHint.Var  => Flags.Mutable
-      ,
-      Symbol.noSymbol
-    )
-    private def freshTermName[A: Type](usageHint: UsageHint): ExprPromiseName =
-      freshTermName(TypeRepr.of[A].show(using Printer.TypeReprShortCode).toLowerCase, usageHint)
+    import scala.util.chaining.*
+    private def freshTermName[A: Type](
+        prefix: String,
+        usageHint: UsageHint,
+        dropSuffix: Boolean = false
+    ): ExprPromiseName = Symbol
+      .newVal(
+        Symbol.spliceOwner,
+        FreshTerm.generate(prefix).pipe(name => if dropSuffix then dropMacroSuffix(name) else name),
+        TypeRepr.of[A],
+        usageHint match
+          case UsageHint.None => Flags.EmptyFlags
+          case UsageHint.Lazy => Flags.Lazy
+          case UsageHint.Var  => Flags.Mutable
+        ,
+        Symbol.noSymbol
+      )
+    private def freshTermName[A: Type](usageHint: UsageHint): ExprPromiseName = {
+      // To keep things consistent with Scala 2 for e.g. "Some[String]" we should generate "some" rather than
+      // "some[string], so we need to remove types applied to type constructor.
+      val repr = TypeRepr.of[A] match
+        case AppliedType(repr, _) => repr
+        case otherwise            => otherwise
+      freshTermName(repr.show(using Printer.TypeReprShortCode).toLowerCase, usageHint, dropSuffix = true)
+    }
     private def freshTermName[A: Type](expr: Expr[?], usageHint: UsageHint): ExprPromiseName =
-      freshTermName[A](toFieldName(expr), usageHint)
+      freshTermName[A](expr.asTerm.toString, usageHint, dropSuffix = true)
 
-    // Undoes the encoding of freshTermName so that generated value would not contain $1, $2, ... and weird
-    // dot-replacement - this makes generated fresh names more readable as it prevents e.g. typename$macro$1$2$3
-    private def toFieldName[A](expr: Expr[A]): String =
-      expr.asTerm.toString
+    // Undoes the encoding of freshTermName so that generated value would not contain $1, $2, ...
+    // - this makes generated fresh names more readable as it prevents e.g. typename$macro$1, typename$macro$2
+    private def dropMacroSuffix[A](freshName: String): String =
+      freshName.replaceAll("\\$macro\\$\\d+", "")
   }
 
   protected object PrependDefinitionsTo extends PrependDefinitionsToModule {

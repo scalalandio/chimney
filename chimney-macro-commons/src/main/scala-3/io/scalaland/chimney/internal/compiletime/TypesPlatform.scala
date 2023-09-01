@@ -184,15 +184,24 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def isSameAs[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) =:= TypeRepr.of(using B)
 
     def prettyPrint[T: Type]: String = {
-      val repr = TypeRepr.of[T]
+      // In Scala 3 typeRepr.dealias dealiases only the "main" type but not types applied as type parameters,
+      // while in Scala 2 macros it dealiases everything - to keep the same behavior between them we need to
+      // apply recursiv dealiasing ourselved.
+      def dealiasAll(tpe: TypeRepr): TypeRepr =
+        tpe match
+          case AppliedType(tycon, args) => AppliedType(dealiasAll(tycon), args.map(dealiasAll(_)))
+          case _                        => tpe.dealias
+
+      val repr = dealiasAll(TypeRepr.of[T])
 
       scala.util
         .Try {
           val symbolFullName = (repr.typeSymbol.fullName: String).replaceAll("\\$", "")
-          val colorlessReprName = repr.dealias.show(using Printer.TypeReprCode)
-          val colorfulReprName = repr.dealias.show(using Printer.TypeReprAnsiCode)
+          val colorlessReprName = repr.show(using Printer.TypeReprCode)
+          val colorfulReprName = repr.show(using Printer.TypeReprAnsiCode)
 
-          // workaround for local classes skipping on package and enclosing object name
+          // Classes defined inside a "class" or "def" have package.name.ClassName removed from the type,
+          // so we have to prepend it ourselves to keep behavior consistent with Scala 2.
           if symbolFullName != colorlessReprName && symbolFullName.endsWith("__" + colorlessReprName) then
             symbolFullName.substring(0, symbolFullName.length - 2 - colorlessReprName.length) + colorfulReprName
           else if symbolFullName != colorlessReprName && symbolFullName.endsWith("_" + colorlessReprName) then

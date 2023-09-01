@@ -155,7 +155,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def prettyPrint[A: Type]: String = {
       def helper(tpe: c.Type): String = {
         val tpes = tpe.typeArgs.map(helper)
-        tpe.typeSymbol.fullName + (if (tpes.isEmpty) "" else s"[${tpes.mkString(", ")}]")
+        tpe.dealias.typeSymbol.fullName + (if (tpes.isEmpty) "" else s"[${tpes.mkString(", ")}]")
       }
       Console.MAGENTA + helper(Type[A].tpe) + Console.RESET
     }
