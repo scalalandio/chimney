@@ -45,7 +45,7 @@ sealed private[compiletime] trait DerivationResult[+A] {
       catch {
         case fatal @ FatalError(_, _) => throw fatal // unwind stack, we already saved the cause and last state
         case NonFatal(err)            => DerivationResult.fromException(err) // recoverable, turn into DerivationResult
-        case fatal => throw FatalError(fatal, this.state) // save last state and cause of a fatal error
+        case fatal: Throwable => throw FatalError(fatal, this.state) // save last state and cause of a fatal error
       }
 
     result.updateState(_.appendedTo(state))
