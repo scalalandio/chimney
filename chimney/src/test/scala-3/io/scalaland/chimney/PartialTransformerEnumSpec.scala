@@ -187,7 +187,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
         .check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors2enums.Color to io.scalaland.chimney.fixtures.colors1enums.Color",
           "io.scalaland.chimney.fixtures.colors1enums.Color",
-          "can't transform coproduct instance io.scalaland.chimney.fixtures.colors2enums.Black to io.scalaland.chimney.fixtures.colors1enums.Color",
+          "can't transform coproduct instance io.scalaland.chimney.fixtures.colors2enums.Color.Black to io.scalaland.chimney.fixtures.colors1enums.Color",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
     }

@@ -16,7 +16,8 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         sym.flags.is(Flags.Abstract) || sym.flags.is(Flags.Trait)
 
       def isPublic(sym: Symbol): Boolean =
-        !(sym.flags.is(Flags.Private) || sym.flags.is(Flags.PrivateLocal) || sym.flags.is(Flags.Protected))
+        !(sym.flags.is(Flags.Private) || sym.flags.is(Flags.PrivateLocal) || sym.flags.is(Flags.Protected) ||
+          sym.privateWithin.isDefined || sym.protectedWithin.isDefined)
 
       def isParameterless(method: Symbol): Boolean =
         method.paramSymss.filterNot(_.exists(_.isType)).flatten.isEmpty
