@@ -163,29 +163,38 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
 
     object PatcherCfg extends PatcherCfgModule {
       val Empty: Type[runtime.PatcherCfg.Empty] = weakTypeTag[runtime.PatcherCfg.Empty]
+    }
 
-      object IgnoreRedundantPatcherFields extends IgnoreRedundantPatcherFieldsModule {
-        def apply[Cfg <: runtime.PatcherCfg: Type]: Type[runtime.PatcherCfg.IgnoreRedundantPatcherFields[Cfg]] =
-          weakTypeTag[runtime.PatcherCfg.IgnoreRedundantPatcherFields[Cfg]]
-        def unapply[A](A: Type[A]): Option[?<[runtime.PatcherCfg]] =
-          if (A.isCtor[runtime.PatcherCfg.IgnoreRedundantPatcherFields[?]]) Some(A.param_<[runtime.PatcherCfg](0))
+    object PatcherFlags extends PatcherFlagsModule {
+      val Default: Type[runtime.PatcherFlags.Default] = weakTypeTag[runtime.PatcherFlags.Default]
+
+      object Enable extends EnableModule {
+        def apply[F <: runtime.PatcherFlags.Flag: Type, Flags <: runtime.PatcherFlags: Type]
+            : Type[runtime.PatcherFlags.Enable[F, Flags]] =
+          weakTypeTag[runtime.PatcherFlags.Enable[F, Flags]]
+
+        def unapply[A](A: Type[A]): Option[(?<[runtime.PatcherFlags.Flag], ?<[runtime.PatcherFlags])] =
+          if (A.isCtor[runtime.PatcherFlags.Enable[?, ?]])
+            Some(A.param_<[runtime.PatcherFlags.Flag](0) -> A.param_<[runtime.PatcherFlags](1))
+          else scala.None
+      }
+      object Disable extends DisableModule {
+        def apply[F <: runtime.PatcherFlags.Flag: Type, Flags <: runtime.PatcherFlags: Type]
+            : Type[runtime.PatcherFlags.Disable[F, Flags]] =
+          weakTypeTag[runtime.PatcherFlags.Disable[F, Flags]]
+
+        def unapply[A](A: Type[A]): Option[(?<[runtime.PatcherFlags.Flag], ?<[runtime.PatcherFlags])] =
+          if (A.isCtor[runtime.PatcherFlags.Disable[?, ?]])
+            Some(A.param_<[runtime.PatcherFlags.Flag](0) -> A.param_<[runtime.PatcherFlags](1))
           else scala.None
       }
 
-      object IgnoreNoneInPatch extends IgnoreNoneInPatchModule {
-        def apply[Cfg <: runtime.PatcherCfg: Type]: Type[runtime.PatcherCfg.IgnoreNoneInPatch[Cfg]] =
-          weakTypeTag[runtime.PatcherCfg.IgnoreNoneInPatch[Cfg]]
-        def unapply[A](A: Type[A]): Option[?<[runtime.PatcherCfg]] =
-          if (A.isCtor[runtime.PatcherCfg.IgnoreNoneInPatch[?]]) Some(A.param_<[runtime.PatcherCfg](0))
-          else scala.None
-      }
-
-      object MacrosLogging extends MacrosLoggingModule {
-        def apply[Cfg <: runtime.PatcherCfg: Type]: Type[runtime.PatcherCfg.MacrosLogging[Cfg]] =
-          weakTypeTag[runtime.PatcherCfg.MacrosLogging[Cfg]]
-        def unapply[A](A: Type[A]): Option[?<[runtime.PatcherCfg]] =
-          if (A.isCtor[runtime.PatcherCfg.MacrosLogging[?]]) Some(A.param_<[runtime.PatcherCfg](0))
-          else scala.None
+      object Flags extends FlagsModule {
+        val IgnoreNoneInPatch: Type[runtime.PatcherFlags.IgnoreNoneInPatch] =
+          weakTypeTag[runtime.PatcherFlags.IgnoreNoneInPatch]
+        val IgnoreRedundantPatcherFields: Type[runtime.PatcherFlags.IgnoreRedundantPatcherFields] =
+          weakTypeTag[runtime.PatcherFlags.IgnoreRedundantPatcherFields]
+        val MacrosLogging: Type[runtime.PatcherFlags.MacrosLogging] = weakTypeTag[runtime.PatcherFlags.MacrosLogging]
       }
     }
   }

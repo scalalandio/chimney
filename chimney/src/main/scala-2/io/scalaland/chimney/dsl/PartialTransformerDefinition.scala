@@ -18,7 +18,9 @@ import scala.language.experimental.macros
   */
 final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
-) extends FlagsDsl[Lambda[`Flags1 <: TransformerFlags` => PartialTransformerDefinition[From, To, Cfg, Flags1]], Flags]
+) extends TransformerFlagsDsl[Lambda[
+      `Flags1 <: TransformerFlags` => PartialTransformerDefinition[From, To, Cfg, Flags1]
+    ], Flags]
     with TransformerDefinitionCommons[
       Lambda[`Cfg1 <: TransformerCfg` => PartialTransformerDefinition[From, To, Cfg1, Flags]]
     ]

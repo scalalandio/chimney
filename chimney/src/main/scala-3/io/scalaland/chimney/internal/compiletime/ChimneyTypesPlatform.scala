@@ -113,6 +113,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
 
     object TransformerFlags extends TransformerFlagsModule {
       val Default: Type[runtime.TransformerFlags.Default] = quoted.Type.of[runtime.TransformerFlags.Default]
+
       object Enable extends EnableModule {
         def apply[F <: runtime.TransformerFlags.Flag: Type, Flags <: runtime.TransformerFlags: Type]
             : Type[runtime.TransformerFlags.Enable[F, Flags]] =
@@ -161,29 +162,40 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
 
     object PatcherCfg extends PatcherCfgModule {
       val Empty: Type[runtime.PatcherCfg.Empty] = quoted.Type.of[runtime.PatcherCfg.Empty]
+    }
 
-      object IgnoreRedundantPatcherFields extends IgnoreRedundantPatcherFieldsModule {
-        def apply[Cfg <: runtime.PatcherCfg: Type]: Type[runtime.PatcherCfg.IgnoreRedundantPatcherFields[Cfg]] =
-          quoted.Type.of[runtime.PatcherCfg.IgnoreRedundantPatcherFields[Cfg]]
-        def unapply[A](tpe: Type[A]): Option[?<[runtime.PatcherCfg]] = tpe match
-          case '[runtime.PatcherCfg.IgnoreRedundantPatcherFields[cfg]] => Some(Type[cfg].as_?<[runtime.PatcherCfg])
-          case _                                                       => scala.None
+    object PatcherFlags extends PatcherFlagsModule {
+      val Default: Type[runtime.PatcherFlags.Default] = quoted.Type.of[runtime.PatcherFlags.Default]
+
+      object Enable extends EnableModule {
+        def apply[F <: runtime.PatcherFlags.Flag: Type, Flags <: runtime.PatcherFlags: Type]
+            : Type[runtime.PatcherFlags.Enable[F, Flags]] =
+          quoted.Type.of[runtime.PatcherFlags.Enable[F, Flags]]
+
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.PatcherFlags.Flag], ?<[runtime.PatcherFlags])] =
+          tpe match
+            case '[runtime.PatcherFlags.Enable[f, flags]] =>
+              Some((Type[f].as_?<[runtime.PatcherFlags.Flag], Type[flags].as_?<[runtime.PatcherFlags]))
+            case _ => scala.None
+      }
+      object Disable extends DisableModule {
+        def apply[F <: runtime.PatcherFlags.Flag: Type, Flags <: runtime.PatcherFlags: Type]
+            : Type[runtime.PatcherFlags.Disable[F, Flags]] =
+          quoted.Type.of[runtime.PatcherFlags.Disable[F, Flags]]
+
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.PatcherFlags.Flag], ?<[runtime.PatcherFlags])] =
+          tpe match
+            case '[runtime.PatcherFlags.Disable[f, flags]] =>
+              Some((Type[f].as_?<[runtime.PatcherFlags.Flag], Type[flags].as_?<[runtime.PatcherFlags]))
+            case _ => scala.None
       }
 
-      object IgnoreNoneInPatch extends IgnoreNoneInPatchModule {
-        def apply[Cfg <: runtime.PatcherCfg: Type]: Type[runtime.PatcherCfg.IgnoreNoneInPatch[Cfg]] =
-          quoted.Type.of[runtime.PatcherCfg.IgnoreNoneInPatch[Cfg]]
-        def unapply[A](tpe: Type[A]): Option[?<[runtime.PatcherCfg]] = tpe match
-          case '[runtime.PatcherCfg.IgnoreNoneInPatch[cfg]] => Some(Type[cfg].as_?<[runtime.PatcherCfg])
-          case _                                            => scala.None
-      }
-
-      object MacrosLogging extends MacrosLoggingModule {
-        def apply[Cfg <: runtime.PatcherCfg: Type]: Type[runtime.PatcherCfg.MacrosLogging[Cfg]] =
-          quoted.Type.of[runtime.PatcherCfg.MacrosLogging[Cfg]]
-        def unapply[A](tpe: Type[A]): Option[?<[runtime.PatcherCfg]] = tpe match
-          case '[runtime.PatcherCfg.MacrosLogging[cfg]] => Some(Type[cfg].as_?<[runtime.PatcherCfg])
-          case _                                        => scala.None
+      object Flags extends FlagsModule {
+        val IgnoreNoneInPatch: Type[runtime.PatcherFlags.IgnoreNoneInPatch] =
+          quoted.Type.of[runtime.PatcherFlags.IgnoreNoneInPatch]
+        val IgnoreRedundantPatcherFields: Type[runtime.PatcherFlags.IgnoreRedundantPatcherFields] =
+          quoted.Type.of[runtime.PatcherFlags.IgnoreRedundantPatcherFields]
+        val MacrosLogging: Type[runtime.PatcherFlags.MacrosLogging] = quoted.Type.of[runtime.PatcherFlags.MacrosLogging]
       }
     }
   }

@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.internal.*
-import io.scalaland.chimney.internal.runtime.{PatcherCfg, TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.{PatcherCfg, PatcherFlags, TransformerCfg, TransformerFlags}
 import io.scalaland.chimney.partial
 
 import scala.util.Try
@@ -118,8 +118,8 @@ extension [T](obj: T) {
     *
     * @since 0.4.0
     */
-  transparent inline def using[P](patch: P): PatcherUsing[T, P, PatcherCfg.Empty] =
-    new PatcherUsing[T, P, PatcherCfg.Empty](obj, patch)
+  transparent inline def using[P](patch: P): PatcherUsing[T, P, PatcherCfg.Empty, PatcherFlags.Default] =
+    new PatcherUsing[T, P, PatcherCfg.Empty, PatcherFlags.Default](obj, patch)
 
   /** Performs in-place patching of wrapped object with provided value.
     *

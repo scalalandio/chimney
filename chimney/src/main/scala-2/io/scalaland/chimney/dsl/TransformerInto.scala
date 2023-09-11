@@ -21,7 +21,7 @@ import scala.language.experimental.macros
 final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,
     val td: TransformerDefinition[From, To, Cfg, Flags]
-) extends FlagsDsl[Lambda[`Flags1 <: TransformerFlags` => TransformerInto[From, To, Cfg, Flags1]], Flags]
+) extends TransformerFlagsDsl[Lambda[`Flags1 <: TransformerFlags` => TransformerInto[From, To, Cfg, Flags1]], Flags]
     with WithRuntimeDataStore {
 
   /** Lifts current transformation as partial transformation.

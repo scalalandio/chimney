@@ -9,7 +9,7 @@ import scala.annotation.unused
   *
   * @since 0.6.0
   */
-private[dsl] trait FlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
+private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
 
   /** Enable values to be supplied from method calls. Source method must be public and have no parameter list.
     *

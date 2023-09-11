@@ -22,7 +22,9 @@ import scala.language.experimental.macros
 final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val source: From,
     val td: PartialTransformerDefinition[From, To, Cfg, Flags]
-) extends FlagsDsl[Lambda[`Flags1 <: TransformerFlags` => PartialTransformerInto[From, To, Cfg, Flags1]], Flags]
+) extends TransformerFlagsDsl[Lambda[
+      `Flags1 <: TransformerFlags` => PartialTransformerInto[From, To, Cfg, Flags1]
+    ], Flags]
     with WithRuntimeDataStore {
 
   /** Use provided `value` for field picked using `selector`.
