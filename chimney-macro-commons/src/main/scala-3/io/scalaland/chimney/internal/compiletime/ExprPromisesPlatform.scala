@@ -52,12 +52,11 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     import scala.util.chaining.*
     private def freshTermName[A: Type](
         prefix: String,
-        usageHint: UsageHint,
-        dropSuffix: Boolean = false
+        usageHint: UsageHint
     ): ExprPromiseName = Symbol
       .newVal(
         Symbol.spliceOwner,
-        FreshTerm.generate(prefix).pipe(name => if dropSuffix then dropMacroSuffix(name) else name),
+        FreshTerm.generate(prefix),
         TypeRepr.of[A],
         usageHint match
           case UsageHint.None => Flags.EmptyFlags
@@ -72,15 +71,10 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
       val repr = TypeRepr.of[A] match
         case AppliedType(repr, _) => repr
         case otherwise            => otherwise
-      freshTermName(repr.show(using Printer.TypeReprShortCode).toLowerCase, usageHint, dropSuffix = true)
+      freshTermName(repr.show(using Printer.TypeReprShortCode).toLowerCase, usageHint)
     }
     private def freshTermName[A: Type](expr: Expr[?], usageHint: UsageHint): ExprPromiseName =
-      freshTermName[A](expr.asTerm.toString, usageHint, dropSuffix = true)
-
-    // Undoes the encoding of freshTermName so that generated value would not contain $1, $2, ...
-    // - this makes generated fresh names more readable as it prevents e.g. typename$macro$1, typename$macro$2
-    private def dropMacroSuffix[A](freshName: String): String =
-      freshName.replaceAll("\\$macro\\$\\d+", "")
+      freshTermName[A](expr.asTerm.toString, usageHint)
   }
 
   protected object PrependDefinitionsTo extends PrependDefinitionsToModule {
