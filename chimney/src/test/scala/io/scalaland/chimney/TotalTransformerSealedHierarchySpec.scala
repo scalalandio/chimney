@@ -104,8 +104,8 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
-    assert(
-      !error.contains("coproduct instance Circle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous")
+    error.checkNot(
+      "coproduct instance Circle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous"
     )
   }
 
