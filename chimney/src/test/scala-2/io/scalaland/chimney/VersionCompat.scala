@@ -11,6 +11,10 @@ trait VersionCompat {
   def compileErrorsFixed(code: String): String =
     macro MacroCompatScala2.compileErrorsImpl
 
+  // TODO: I wish to remove these one day
+
   def compileErrorsScala2(code: String): String =
     macro MacroCompatScala2.compileErrorsImpl
+
+  def isScala3: Boolean = false
 }
