@@ -35,11 +35,9 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     ): Expr[(From, From2) => To] =
       c.Expr[(From, From2) => To](q"($fromName: ${Type[From]}, $from2Name: ${Type[From2]}) => $to")
 
-    private def freshTermName(prefix: String): ExprPromiseName = {
-      val alignedPrefix = prefix.toLowerCase + "$macro"
-      // Scala 3 generate prefix$macro$n while Scala 2 prefix$n and we want to align the behavior
-      c.internal.reificationSupport.freshTermName(alignedPrefix + "$")
-    }
+    private def freshTermName(prefix: String): ExprPromiseName =
+      // Scala 3 generate prefix$macro$[n] while Scala 2 prefix[n] and we want to align the behavior
+      c.internal.reificationSupport.freshTermName(prefix.toLowerCase + "$macro$")
     private def freshTermName(tpe: c.Type): ExprPromiseName =
       freshTermName(tpe.typeSymbol.name.decodedName.toString.toLowerCase)
     private def freshTermName(srcPrefixTree: Expr[?]): ExprPromiseName =

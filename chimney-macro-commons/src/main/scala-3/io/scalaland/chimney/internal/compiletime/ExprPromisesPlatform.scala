@@ -49,7 +49,6 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
       }
     }
 
-    import scala.util.chaining.*
     private def freshTermName[A: Type](
         prefix: String,
         usageHint: UsageHint
