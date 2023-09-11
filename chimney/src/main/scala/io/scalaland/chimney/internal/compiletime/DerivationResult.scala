@@ -43,7 +43,9 @@ sealed private[compiletime] trait DerivationResult[+A] {
             onFailure(derivationErrors)
         }
       catch {
-        case NonFatal(err) => DerivationResult.fromException(err)
+        case fatal @ FatalError(_, _) => throw fatal // unwind stack, we already saved the cause and last state
+        case NonFatal(err)            => DerivationResult.fromException(err) // recoverable, turn into DerivationResult
+        case fatal => throw FatalError(fatal, this.state) // save last state and cause of a fatal error
       }
 
     result.updateState(_.appendedTo(state))
@@ -218,6 +220,12 @@ private[compiletime] object DerivationResult {
   def enableLogPrinting(derivationStartedAt: java.time.Instant): DerivationResult[Unit] =
     unit.updateState(_.copy(macroLogging = Some(State.MacroLogging(derivationStartedAt))))
 
+  def catchFatalErrors[A](result: => DerivationResult[A]): DerivationResult[A] = try
+    result
+  catch {
+    case FatalError(fatal, state) => Failure(DerivationErrors(DerivationError.MacroException(fatal)), state)
+  }
+
   // direct style
 
   final private case class PassErrors(derivationErrors: DerivationErrors, owner: Await[?]) extends Throwable
@@ -273,4 +281,6 @@ private[compiletime] object DerivationResult {
         }
       }
     }
+
+  private case class FatalError(error: Throwable, state: State) extends Exception(error)
 }

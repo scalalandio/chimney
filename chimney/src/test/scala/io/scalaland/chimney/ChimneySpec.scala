@@ -37,7 +37,7 @@ trait ChimneySpec extends munit.BaseFunSuite with VersionCompat { self =>
   }
 
   implicit class CompileErrorsCheck(msg: String) {
-    
+
     def check(msgs: String*): Unit = for (msg <- msgs)
       Predef.assert(
         ChimneySpec.AnsiControlCode.replaceAllIn(this.msg, "").contains(msg),

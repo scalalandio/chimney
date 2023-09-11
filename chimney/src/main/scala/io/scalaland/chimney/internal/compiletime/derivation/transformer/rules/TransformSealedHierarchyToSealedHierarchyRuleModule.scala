@@ -166,7 +166,9 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
           DerivationResult.log(
             s"Falling back on ${Type.prettyPrint[FromSubtype]} to ${Type.prettyPrint[To]} (target upcasted)"
           ) >>
-            deriveRecursiveTransformationExpr[FromSubtype, To](fromSubtypeExpr)
+            deriveRecursiveTransformationExprUpdatingRules[fromSubtype.Underlying, To](fromSubtypeExpr)(
+              rules => rules.filter(rule => rule.name == "Implicit")
+            )
         }
         .map(Existential[ExprPromise[*, TransformationExpr[To]], FromSubtype](_))
     }
