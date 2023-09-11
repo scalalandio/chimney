@@ -141,10 +141,14 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
         }
 
   private def enableLoggingIfFlagEnabled[A](
-      result: DerivationResult[A],
+      result: => DerivationResult[A],
       ctx: TransformationContext[?, ?]
   ): DerivationResult[A] =
-    enableLoggingIfFlagEnabled[A](result, ctx.config.flags.displayMacrosLogging, ctx.derivationStartedAt)
+    enableLoggingIfFlagEnabled[A](
+      DerivationResult.catchFatalErrors(result),
+      ctx.config.flags.displayMacrosLogging,
+      ctx.derivationStartedAt
+    )
 
   private def extractExprAndLog[From: Type, To: Type, Out: Type](result: DerivationResult[Expr[Out]]): Expr[Out] =
     extractExprAndLog[Out](

@@ -23,8 +23,9 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         '{
           new Transformer[From, To] {
             def transform(src: From): To = ${
-              // TODO: check if whole expr or src needs to use "resetOwner"
-              PrependDefinitionsTo.prependVal[From]('{ src }, ExprPromise.NameGenerationStrategy.FromType).use(toExpr)
+              PrependDefinitionsTo
+                .prependVal[From](resetOwner('{ src }), ExprPromise.NameGenerationStrategy.FromType)
+                .use(toExpr)
             }
           }
         }
@@ -45,10 +46,9 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         '{
           new PartialTransformer[From, To] {
             def transform(src: From, failFast: Boolean): partial.Result[To] = ${
-              // TODO: check if whole expr or src needs to use "resetOwner"
               PrependDefinitionsTo
-                .prependVal[From]('{ src }, ExprPromise.NameGenerationStrategy.FromType)
-                .use(toExpr(_, '{ failFast }))
+                .prependVal[From](resetOwner('{ src }), ExprPromise.NameGenerationStrategy.FromType)
+                .use(toExpr(_, resetOwner('{ failFast })))
             }
           }
         }
@@ -180,7 +180,15 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         '{
           new Patcher[A, Patch] {
             def patch(obj: A, patch: Patch): A = ${
-              f('{ obj }, '{ patch })
+              PrependDefinitionsTo
+                .prependVal[A](resetOwner('{ obj }), ExprPromise.NameGenerationStrategy.FromType)
+                .map2(
+                  PrependDefinitionsTo
+                    .prependVal[Patch](resetOwner('{ patch }), ExprPromise.NameGenerationStrategy.FromType)
+                )(
+                  f
+                )
+                .closeBlockAsExprOf[A]
             }
           }
         }
