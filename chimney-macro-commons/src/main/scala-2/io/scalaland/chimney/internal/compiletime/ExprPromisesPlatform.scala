@@ -35,18 +35,15 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     ): Expr[(From, From2) => To] =
       c.Expr[(From, From2) => To](q"($fromName: ${Type[From]}, $from2Name: ${Type[From2]}) => $to")
 
-    private def freshTermName(prefix: String): ExprPromiseName =
-      c.internal.reificationSupport.freshTermName(prefix.toLowerCase + "$")
-
+    private def freshTermName(prefix: String): ExprPromiseName = {
+      val alignedPrefix = prefix.toLowerCase + "$macro"
+      // Scala 3 generate prefix$macro$n while Scala 2 prefix$n and we want to align the behavior
+      c.internal.reificationSupport.freshTermName(alignedPrefix + "$")
+    }
     private def freshTermName(tpe: c.Type): ExprPromiseName =
       freshTermName(tpe.typeSymbol.name.decodedName.toString.toLowerCase)
     private def freshTermName(srcPrefixTree: Expr[?]): ExprPromiseName =
-      freshTermName(dropMacroSuffix(srcPrefixTree.tree.toString))
-
-    // Undoes the encoding of freshTermName so that generated value would not contain $1, $2, ...
-    // - this makes generated fresh names more readable as it prevents e.g. typename$1, typename$2
-    private def dropMacroSuffix[A](freshName: String): String =
-      freshName.replaceAll("\\$\\d+", "")
+      freshTermName(srcPrefixTree.tree.toString)
   }
 
   protected object PatternMatchCase extends PatternMatchCaseModule {

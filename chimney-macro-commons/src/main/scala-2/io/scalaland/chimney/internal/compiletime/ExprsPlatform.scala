@@ -145,8 +145,10 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     def prettyPrint[A](expr: Expr[A]): String =
       expr.tree
         .toString()
+        // removes $macro$n from freshterms to make it easier to test and read
+        .replaceAll("\\$macro", "")
         .replaceAll("\\$\\d+", "")
-        .replace("$u002E", ".")
+        // color expression for better UX (not as good as Scala 3 coloring but better than none)
         .split('\n')
         .map(line => Console.MAGENTA + line + Console.RESET)
         .mkString("\n")

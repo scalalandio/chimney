@@ -138,7 +138,12 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] = '{ val _ = ${ expr } }
 
-    def prettyPrint[A](expr: Expr[A]): String = expr.asTerm.show(using Printer.TreeAnsiCode)
+    def prettyPrint[A](expr: Expr[A]): String =
+      expr.asTerm
+        .show(using Printer.TreeAnsiCode)
+        // remove $macro$n from freshterms to make it easier to test and read
+        .replaceAll("\\$macro", "")
+        .replaceAll("\\$\\d+", "")
 
     def typeOf[A](expr: Expr[A]): Type[A] = Type.platformSpecific.fromUntyped[A](expr.asTerm.tpe)
   }
