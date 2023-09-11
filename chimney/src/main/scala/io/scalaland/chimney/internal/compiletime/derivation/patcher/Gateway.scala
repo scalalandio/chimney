@@ -9,7 +9,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
 
   import ChimneyType.Implicits.*
 
-  final def derivePatcherResult[A: Type, Patch: Type, Cfg <: runtime.PatcherCfg: Type](
+  final def derivePatcherResult[A: Type, Patch: Type, Flags <: runtime.PatcherFlags: Type](
       obj: Expr[A],
       patch: Expr[Patch]
   ): Expr[A] = cacheDefinition(obj) { obj =>
@@ -17,7 +17,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       val context = PatcherContext.create[A, Patch](
         obj,
         patch,
-        config = PatcherConfigurations.readPatcherConfig[Cfg]
+        config = PatcherConfigurations.readPatcherConfig[Flags]
       )
 
       val result = enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
@@ -51,7 +51,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   ): DerivationResult[A] =
     enableLoggingIfFlagEnabled[A](
       DerivationResult.catchFatalErrors(result),
-      ctx.config.displayMacrosLogging,
+      ctx.config.flags.displayMacrosLogging,
       ctx.derivationStartedAt
     )
 

@@ -75,7 +75,7 @@ private[compiletime] trait Derivation
 
     targetParams.get(patchFieldName) match {
       case Some(targetParam)
-          if ctx.config.ignoreNoneInPatch && patchGetter.Underlying.isOption && targetParam.Underlying.isOption =>
+          if ctx.config.flags.ignoreNoneInPatch && patchGetter.Underlying.isOption && targetParam.Underlying.isOption =>
         (patchGetter.Underlying, targetParam.Underlying) match {
           case (Type.Option(getterInner), Type.Option(targetInner)) =>
             val targetGetter = targetGetters(patchFieldName)
@@ -137,7 +137,7 @@ private[compiletime] trait Derivation
           }
 
       case None =>
-        if (ctx.config.ignoreRedundantPatcherFields)
+        if (ctx.config.flags.ignoreRedundantPatcherFields)
           DerivationResult.pure(None)
         else
           DerivationResult.patcherError(PatchFieldNotFoundInTargetObj(patchFieldName, Type.prettyPrint(ctx.A)))

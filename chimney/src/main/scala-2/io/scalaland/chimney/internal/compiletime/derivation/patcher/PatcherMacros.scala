@@ -9,11 +9,19 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
 
   import c.universe.{internal as _, Transformer as _, *}
 
-  def derivePatchImpl[A: WeakTypeTag, Patch: WeakTypeTag, Cfg <: runtime.PatcherCfg: WeakTypeTag]: c.Expr[A] =
-    cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Cfg]](c.prefix.tree)) { pu =>
+  def derivePatchImpl[
+      A: WeakTypeTag,
+      Patch: WeakTypeTag,
+      Cfg <: runtime.PatcherCfg: WeakTypeTag,
+      Flags <: runtime.PatcherFlags: WeakTypeTag,
+      ImplicitScopeFlags <: runtime.PatcherFlags: WeakTypeTag
+  ](
+      tc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
+  ): c.Expr[A] =
+    cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Cfg, Flags]](c.prefix.tree)) { pu =>
       Expr.block(
         List(Expr.suppressUnused(pu)),
-        derivePatcherResult(obj = c.Expr[A](q"$pu.obj"), patch = c.Expr[Patch](q"$pu.objPatch"))
+        derivePatcherResult[A, Patch, Flags](obj = c.Expr[A](q"$pu.obj"), patch = c.Expr[Patch](q"$pu.objPatch"))
       )
     }
 

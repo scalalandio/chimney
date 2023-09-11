@@ -138,32 +138,36 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     }
 
     val PatcherCfg: PatcherCfgModule
-
     trait PatcherCfgModule {
       val Empty: Type[runtime.PatcherCfg.Empty]
+    }
 
-      val IgnoreRedundantPatcherFields: IgnoreRedundantPatcherFieldsModule
+    val PatcherFlags: PatcherFlagsModule
+    trait PatcherFlagsModule {
+      val Default: Type[runtime.PatcherFlags.Default]
 
-      trait IgnoreRedundantPatcherFieldsModule
-          extends Type.Ctor1UpperBounded[
-            runtime.PatcherCfg,
-            runtime.PatcherCfg.IgnoreRedundantPatcherFields
-          ] { this: IgnoreRedundantPatcherFields.type => }
+      val Enable: EnableModule
+      trait EnableModule
+          extends Type.Ctor2UpperBounded[
+            runtime.PatcherFlags.Flag,
+            runtime.PatcherFlags,
+            runtime.PatcherFlags.Enable
+          ] { this: Enable.type => }
 
-      val IgnoreNoneInPatch: IgnoreNoneInPatchModule
+      val Disable: DisableModule
+      trait DisableModule
+          extends Type.Ctor2UpperBounded[
+            runtime.PatcherFlags.Flag,
+            runtime.PatcherFlags,
+            runtime.PatcherFlags.Disable
+          ] { this: Disable.type => }
 
-      trait IgnoreNoneInPatchModule
-          extends Type.Ctor1UpperBounded[
-            runtime.PatcherCfg,
-            runtime.PatcherCfg.IgnoreNoneInPatch
-          ] { this: IgnoreNoneInPatch.type => }
-
-      val MacrosLogging: MacrosLoggingModule
-      trait MacrosLoggingModule
-          extends Type.Ctor1UpperBounded[
-            runtime.PatcherCfg,
-            runtime.PatcherCfg.MacrosLogging
-          ] { this: MacrosLogging.type => }
+      val Flags: FlagsModule
+      trait FlagsModule { this: Flags.type =>
+        val IgnoreNoneInPatch: Type[runtime.PatcherFlags.IgnoreNoneInPatch]
+        val IgnoreRedundantPatcherFields: Type[runtime.PatcherFlags.IgnoreRedundantPatcherFields]
+        val MacrosLogging: Type[runtime.PatcherFlags.MacrosLogging]
+      }
     }
 
     // You can `import ChimneyType.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts

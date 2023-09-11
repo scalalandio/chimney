@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.runtime.{PatcherCfg, TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.{PatcherCfg, PatcherFlags, TransformerCfg, TransformerFlags}
 
 import scala.util.Try
 
@@ -123,8 +123,8 @@ package object dsl {
       *
       * @since 0.4.0
       */
-    final def using[P](patch: P): PatcherUsing[T, P, PatcherCfg.Empty] =
-      new PatcherUsing[T, P, PatcherCfg.Empty](obj, patch)
+    final def using[P](patch: P): PatcherUsing[T, P, PatcherCfg.Empty, PatcherFlags.Default] =
+      new PatcherUsing[T, P, PatcherCfg.Empty, PatcherFlags.Default](obj, patch)
 
     /** Performs in-place patching of wrapped object with provided value.
       *

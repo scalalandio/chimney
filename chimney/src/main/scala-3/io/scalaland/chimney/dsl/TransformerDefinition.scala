@@ -18,7 +18,7 @@ import scala.quoted.*
   */
 final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
-) extends FlagsDsl[[Flags1 <: TransformerFlags] =>> TransformerDefinition[From, To, Cfg, Flags1], Flags]
+) extends TransformerFlagsDsl[[Flags1 <: TransformerFlags] =>> TransformerDefinition[From, To, Cfg, Flags1], Flags]
     with TransformerDefinitionCommons[[Cfg1 <: TransformerCfg] =>> TransformerDefinition[From, To, Cfg1, Flags]]
     with WithRuntimeDataStore {
 

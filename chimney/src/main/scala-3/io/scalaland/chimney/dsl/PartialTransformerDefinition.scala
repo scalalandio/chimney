@@ -15,7 +15,10 @@ import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, 
   */
 final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
-) extends FlagsDsl[[Flags1 <: TransformerFlags] =>> PartialTransformerDefinition[From, To, Cfg, Flags1], Flags]
+) extends TransformerFlagsDsl[
+      [Flags1 <: TransformerFlags] =>> PartialTransformerDefinition[From, To, Cfg, Flags1],
+      Flags
+    ]
     with TransformerDefinitionCommons[[Cfg1 <: TransformerCfg] =>> PartialTransformerDefinition[From, To, Cfg1, Flags]]
     with WithRuntimeDataStore {
 
