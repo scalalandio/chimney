@@ -137,8 +137,8 @@ class TotalTransformerEnumSpec extends ChimneySpec {
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
-    assert(
-      !error.contains("coproduct instance Circle of io.scalaland.chimney.fixtures.shapes5enums.Shape is ambiguous")
+    error.checkNot(
+      "coproduct instance Circle of io.scalaland.chimney.fixtures.shapes5enums.Shape is ambiguous"
     )
   }
 
