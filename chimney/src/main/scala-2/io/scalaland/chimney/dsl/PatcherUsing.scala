@@ -28,5 +28,5 @@ final class PatcherUsing[A, Patch, Cfg <: PatcherCfg, Flags <: PatcherFlags](val
     */
   def patch[ImplicitScopeFlags <: PatcherFlags](implicit
       tc: PatcherConfiguration[ImplicitScopeFlags]
-  ): A = macro PatcherMacros.derivePatchImpl[A, Patch, Cfg, Flags, ImplicitScopeFlags]
+  ): A = macro PatcherMacros.derivePatchWithConfig[A, Patch, Cfg, Flags, ImplicitScopeFlags]
 }

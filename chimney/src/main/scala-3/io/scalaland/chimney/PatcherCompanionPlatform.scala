@@ -10,7 +10,8 @@ private[chimney] trait PatcherCompanionPlatform { this: Patcher.type =>
     * @tparam A     type of object to apply patch to
     * @tparam Patch type of patch object
     * @return [[io.scalaland.chimney.Patcher]] type class instance
+    *
     * @since 0.8.0
     */
-  implicit inline def derive[A, Patch]: Patcher[A, Patch] = ${ PatcherMacros.derivePatcher[A, Patch] }
+  implicit inline def derive[A, Patch]: Patcher[A, Patch] = ${ PatcherMacros.derivePatcherWithDefaults[A, Patch] }
 }

@@ -12,11 +12,11 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   import c.universe.{internal as _, Transformer as _, *}
 
   def deriveTotalTransformationWithConfig[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      Cfg <: runtime.TransformerCfg: c.WeakTypeTag,
-      InstanceFlags <: runtime.TransformerFlags: c.WeakTypeTag,
-      ImplicitScopeFlags <: runtime.TransformerFlags: c.WeakTypeTag
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: runtime.TransformerCfg: WeakTypeTag,
+      InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
+      ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](
       tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]
   ): Expr[To] = retypecheck(
@@ -34,27 +34,27 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   )
 
   def deriveTotalTransformerWithDefaults[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag
+      From: WeakTypeTag,
+      To: WeakTypeTag
   ]: Expr[Transformer[From, To]] = retypecheck(
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
-      import implicitScopeFlagsType.Underlying
+      import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
       deriveTotalTransformer[
         From,
         To,
         runtime.TransformerCfg.Empty,
         runtime.TransformerFlags.Default,
-        implicitScopeFlagsType.Underlying
+        ImplicitScopeFlags
       ](ChimneyExpr.RuntimeDataStore.empty)
     }
   )
 
   def deriveTotalTransformerWithConfig[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      Cfg <: runtime.TransformerCfg: c.WeakTypeTag,
-      InstanceFlags <: runtime.TransformerFlags: c.WeakTypeTag,
-      ImplicitScopeFlags <: runtime.TransformerFlags: c.WeakTypeTag
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: runtime.TransformerCfg: WeakTypeTag,
+      InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
+      ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]): Expr[Transformer[From, To]] =
     retypecheck(
       Expr.block(
@@ -67,11 +67,11 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
     )
 
   def derivePartialTransformationWithConfigNoFailFast[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      Cfg <: runtime.TransformerCfg: c.WeakTypeTag,
-      InstanceFlags <: runtime.TransformerFlags: c.WeakTypeTag,
-      ImplicitScopeFlags <: runtime.TransformerFlags: c.WeakTypeTag
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: runtime.TransformerCfg: WeakTypeTag,
+      InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
+      ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]): Expr[partial.Result[To]] =
     retypecheck(
       // Called by PartialTransformerInto => prefix is PartialTransformerInto
@@ -89,11 +89,11 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
     )
 
   def derivePartialTransformationWithConfigFailFast[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      Cfg <: runtime.TransformerCfg: c.WeakTypeTag,
-      InstanceFlags <: runtime.TransformerFlags: c.WeakTypeTag,
-      ImplicitScopeFlags <: runtime.TransformerFlags: c.WeakTypeTag
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: runtime.TransformerCfg: WeakTypeTag,
+      InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
+      ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]): Expr[partial.Result[To]] =
     retypecheck(
       // Called by PartialTransformerInto => prefix is PartialTransformerInto
@@ -111,8 +111,8 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
     )
 
   def derivePartialTransformerWithDefaults[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag
+      From: WeakTypeTag,
+      To: WeakTypeTag
   ]: c.universe.Expr[PartialTransformer[From, To]] =
     retypecheck(
       resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
@@ -128,11 +128,11 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
     )
 
   def derivePartialTransformerWithConfig[
-      From: c.WeakTypeTag,
-      To: c.WeakTypeTag,
-      Cfg <: runtime.TransformerCfg: c.WeakTypeTag,
-      InstanceFlags <: runtime.TransformerFlags: c.WeakTypeTag,
-      ImplicitScopeFlags <: runtime.TransformerFlags: c.WeakTypeTag
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: runtime.TransformerCfg: WeakTypeTag,
+      InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
+      ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](
       tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]
   ): Expr[PartialTransformer[From, To]] = retypecheck(
