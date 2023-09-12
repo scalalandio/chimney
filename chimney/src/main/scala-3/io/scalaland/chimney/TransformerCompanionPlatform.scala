@@ -15,6 +15,9 @@ private[chimney] trait TransformerCompanionPlatform { this: Transformer.type =>
     */
   inline def derive[From, To]: Transformer[From, To] =
     ${ TransformerMacros.deriveTotalTransformerWithDefaults[From, To] }
+}
+
+private[chimney] trait TransformerAutoDerivedCompanionPlatform { this: Transformer.AutoDerived.type =>
 
   implicit inline def deriveAutomatic[From, To]: Transformer.AutoDerived[From, To] =
     ${ TransformerMacros.deriveTotalTransformerWithDefaults[From, To] }
