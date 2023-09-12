@@ -42,4 +42,5 @@ object Patcher extends PatcherCompanionPlatform {
   trait AutoDerived[A, Patch] {
     def patch(obj: A, patch: Patch): A
   }
+  object AutoDerived extends PatcherAutoDerivedCompanionPlatform
 }

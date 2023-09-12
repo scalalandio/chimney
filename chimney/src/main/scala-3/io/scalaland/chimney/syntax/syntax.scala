@@ -1,9 +1,6 @@
-package io.scalaland.chimney.dsl
+package io.scalaland.chimney.syntax
 
-import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
-import io.scalaland.chimney.internal.*
-import io.scalaland.chimney.internal.runtime.{PatcherCfg, PatcherFlags, TransformerCfg, TransformerFlags}
-import io.scalaland.chimney.partial
+import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
 
 import scala.util.Try
 
@@ -15,16 +12,6 @@ import scala.util.Try
   * @since 0.4.0
   */
 extension [From](source: From) {
-
-  /** Allows to customize transformer generation to your target type.
-    *
-    * @tparam To target type
-    * @return [[io.scalaland.chimney.dsl.TransformerInto]]
-    *
-    * @since 0.1.0
-    */
-  transparent inline def into[To]: TransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
-    new TransformerInto(source, new TransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore))
 
   /** Performs in-place transformation of captured source value to target type.
     *
@@ -50,20 +37,6 @@ extension [From](source: From) {
   * @since 0.7.0
   */
 extension [From](source: From) {
-
-  /** Allows to customize partial transformer generation to your target type.
-    *
-    * @tparam To target success type
-    * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
-    *
-    * @since 0.7.0
-    */
-  transparent inline def intoPartial[To]
-      : PartialTransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
-    new PartialTransformerInto(
-      source,
-      new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
-    )
 
   /** Performs in-place partial transformation of captured source value to target type.
     *
@@ -109,17 +82,6 @@ extension [From](source: From) {
   * @since 0.1.3
   */
 extension [T](obj: T) {
-
-  /** Allows to customize patcher generation
-    *
-    * @tparam P type of patch object
-    * @param patch patch object value
-    * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
-    *
-    * @since 0.4.0
-    */
-  transparent inline def using[P](patch: P): PatcherUsing[T, P, PatcherCfg.Empty, PatcherFlags.Default] =
-    new PatcherUsing[T, P, PatcherCfg.Empty, PatcherFlags.Default](obj, patch)
 
   /** Performs in-place patching of wrapped object with provided value.
     *

@@ -13,11 +13,13 @@ private[chimney] trait PartialTransformerCompanionPlatform { this: PartialTransf
     * @tparam From type of input value
     * @tparam To   type of output value
     * @return [[io.scalaland.chimney.PartialTransformer]] type class definition
+    *
     * @since 0.7.0
     */
   def derive[From, To]: PartialTransformer[From, To] =
     macro TransformerMacros.derivePartialTransformerWithDefaults[From, To]
 }
+
 private[chimney] trait PartialTransformerAutoDerivedCompanionPlatform { this: PartialTransformer.AutoDerived.type =>
 
   implicit def deriveAutomatic[From, To]: PartialTransformer.AutoDerived[From, To] =

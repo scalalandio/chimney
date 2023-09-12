@@ -14,6 +14,9 @@ private[chimney] trait PatcherCompanionPlatform { this: Patcher.type =>
     */
   inline def derive[A, Patch]: Patcher[A, Patch] =
     ${ PatcherMacros.derivePatcherWithDefaults[A, Patch] }
+}
+
+private[chimney] trait PatcherAutoDerivedCompanionPlatform { this: Patcher.AutoDerived.type =>
 
   implicit inline def deriveAutomatic[A, Patch]: Patcher.AutoDerived[A, Patch] =
     ${ PatcherMacros.derivePatcherWithDefaults[A, Patch] }

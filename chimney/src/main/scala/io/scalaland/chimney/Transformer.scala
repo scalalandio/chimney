@@ -56,4 +56,5 @@ object Transformer extends TransformerCompanionPlatform {
   trait AutoDerived[From, To] {
     def transform(src: From): To
   }
+  object AutoDerived extends TransformerAutoDerivedCompanionPlatform
 }
