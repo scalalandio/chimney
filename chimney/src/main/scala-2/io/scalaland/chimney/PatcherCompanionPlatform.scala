@@ -15,5 +15,5 @@ private[chimney] trait PatcherCompanionPlatform { this: Patcher.type =>
     * @since 0.2.0
     */
   implicit def derive[A, Patch]: Patcher[A, Patch] =
-    macro PatcherMacros.derivePatcherImpl[A, Patch]
+    macro PatcherMacros.derivePatcherWithDefaults[A, Patch]
 }

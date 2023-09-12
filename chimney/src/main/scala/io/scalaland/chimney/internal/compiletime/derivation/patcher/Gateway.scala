@@ -9,7 +9,13 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
 
   import ChimneyType.Implicits.*
 
-  final def derivePatcherResult[A: Type, Patch: Type, Flags <: runtime.PatcherFlags: Type](
+  final def derivePatcherResult[
+      A: Type,
+      Patch: Type,
+      Cfg <: runtime.PatcherCfg: Type,
+      Flags <: runtime.PatcherFlags: Type,
+      ImplicitScopeFlags <: runtime.PatcherFlags: Type
+  ](
       obj: Expr[A],
       patch: Expr[Patch]
   ): Expr[A] = cacheDefinition(obj) { obj =>
@@ -17,7 +23,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       val context = PatcherContext.create[A, Patch](
         obj,
         patch,
-        config = PatcherConfigurations.readPatcherConfig[Flags]
+        config = PatcherConfigurations.readPatcherConfig[Cfg, Flags, ImplicitScopeFlags]
       )
 
       val result = enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
@@ -29,13 +35,19 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
     }
   }
 
-  final def derivePatcher[A: Type, Patch: Type]: Expr[Patcher[A, Patch]] = {
+  final def derivePatcher[
+      A: Type,
+      Patch: Type,
+      Cfg <: runtime.PatcherCfg: Type,
+      Flags <: runtime.PatcherFlags: Type,
+      ImplicitScopeFlags <: runtime.PatcherFlags: Type
+  ]: Expr[Patcher[A, Patch]] = {
     val result = DerivationResult.direct[Expr[A], Expr[Patcher[A, Patch]]] { await =>
       ChimneyExpr.Patcher.instance[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
         val context = PatcherContext.create[A, Patch](
           obj,
           patch,
-          config = PatcherConfig()
+          config = PatcherConfigurations.readPatcherConfig[Cfg, Flags, ImplicitScopeFlags]
         )
 
         await(enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context))

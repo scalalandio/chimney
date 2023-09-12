@@ -30,11 +30,11 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   protected object PatcherConfigurations {
 
-    final def readPatcherConfig[Flags <: runtime.PatcherFlags: Type]: PatcherConfig = {
-      type Cfg = runtime.PatcherCfg.Empty // TODO: remove when type parameter used
-      implicit val Cfg: Type[Cfg] = ChimneyType.PatcherCfg.Empty
-      type ImplicitScopeFlags = runtime.PatcherFlags.Default // TODO: remove when type parameter used
-      implicit val ImplicitScopeFlags: Type[ImplicitScopeFlags] = ChimneyType.PatcherFlags.Default
+    final def readPatcherConfig[
+        Cfg <: runtime.PatcherCfg: Type,
+        Flags <: runtime.PatcherFlags: Type,
+        ImplicitScopeFlags <: runtime.PatcherFlags: Type
+    ]: PatcherConfig = {
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](PatcherFlags())
       val allFlags = extractTransformerFlags[Flags](implicitScopeFlags)
       extractPatcherConfig[Cfg]().copy(flags = allFlags)
