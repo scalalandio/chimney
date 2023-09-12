@@ -34,7 +34,7 @@ package object dsl {
       * If you want to customize transformer behavior, consider using
       * [[io.scalaland.chimney.dsl.TransformerOps#into]] method.
       *
-      * @see [[io.scalaland.chimney.Transformer#derive]] for default implicit instance
+      * @see [[io.scalaland.chimney.Transformer#deriveAutomatic]] for default implicit instance
       *
       * @tparam To target type
       * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
@@ -91,7 +91,7 @@ package object dsl {
       * If you want to customize transformer behavior, consider using
       * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
       *
-      * @see [[io.scalaland.chimney.PartialTransformer#derive]] for default implicit instance
+      * @see [[io.scalaland.chimney.PartialTransformer#deriveAutomatic]] for default implicit instance
       *
       * @tparam To result target type of partial transformation
       * @param failFast should fail as early as the first set of errors appear
@@ -131,7 +131,7 @@ package object dsl {
       * If you want to customize patching behavior, consider using
       * [[io.scalaland.chimney.dsl.PatcherOps#using using]] method.
       *
-      * @see [[io.scalaland.chimney.Patcher#derive]] for default implicit instance
+      * @see [[io.scalaland.chimney.Patcher#deriveAutomatic]] for default implicit instance
       *
       * @tparam P type of patch object
       * @param patch patch object value
@@ -140,7 +140,7 @@ package object dsl {
       *
       * @since 0.4.0
       */
-    final def patchUsing[P](patch: P)(implicit patcher: Patcher[T, P]): T =
+    final def patchUsing[P](patch: P)(implicit patcher: Patcher.AutoDerived[T, P]): T =
       patcher.patch(obj, patch)
   }
 

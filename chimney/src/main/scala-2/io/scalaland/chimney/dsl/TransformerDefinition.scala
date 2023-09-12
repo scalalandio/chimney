@@ -85,7 +85,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     * @param selectorTo   target field in `To`, defined like `_.newName`
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     *
-    *  @since 0.4.0
+    * @since 0.4.0
     */
   def withFieldRenamed[T, U](
       selectorFrom: From => T,

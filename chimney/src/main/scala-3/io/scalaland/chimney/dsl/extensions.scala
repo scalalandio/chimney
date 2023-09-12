@@ -70,7 +70,7 @@ extension [From](source: From) {
     * If you want to customize transformer behavior, consider using
     * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
     *
-    * @see [[io.scalaland.chimney.PartialTransformer#derive]] for default implicit instance
+    * @see [[io.scalaland.chimney.PartialTransformer#deriveAutomatic]] for default implicit instance
     * @tparam To result target type of partial transformation
     * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
     * @return partial transformation result value of target type `To`
@@ -87,7 +87,7 @@ extension [From](source: From) {
     * If you want to customize transformer behavior, consider using
     * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
     *
-    * @see [[io.scalaland.chimney.PartialTransformer#derive]] for default implicit instance
+    * @see [[io.scalaland.chimney.PartialTransformer#deriveAutomatic]] for default implicit instance
     * @tparam To result target type of partial transformation
     * @param failFast    should fail as early as the first set of errors appear
     * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
@@ -126,7 +126,7 @@ extension [T](obj: T) {
     * If you want to customize patching behavior, consider using
     * [[io.scalaland.chimney.dsl.PatcherOps#using using]] method.
     *
-    * @see [[io.scalaland.chimney.Patcher#derive]] for default implicit instance
+    * @see [[io.scalaland.chimney.Patcher#deriveAutomatic]] for default implicit instance
     * @tparam P type of patch object
     * @param patch   patch object value
     * @param patcher implicit instance of [[io.scalaland.chimney.Patcher]] type class
@@ -134,7 +134,7 @@ extension [T](obj: T) {
     *
     * @since 0.4.0
     */
-  transparent inline def patchUsing[P](patch: P)(implicit patcher: Patcher[T, P]): T =
+  transparent inline def patchUsing[P](patch: P)(implicit patcher: Patcher.AutoDerived[T, P]): T =
     patcher.patch(obj, patch)
 }
 
