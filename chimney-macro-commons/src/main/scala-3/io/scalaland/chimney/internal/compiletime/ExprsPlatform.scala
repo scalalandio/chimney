@@ -10,12 +10,15 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
   final override protected type Expr[A] = quoted.Expr[A]
   protected object Expr extends ExprModule {
 
+    // $COVERAGE-OFF$
     object platformSpecific {
 
       // Required by -Xcheck-macros to pass.
       def resetOwner[T: Type](a: Expr[T]): Expr[T] =
         a.asTerm.changeOwner(Symbol.spliceOwner).asExprOf[T]
     }
+    // $COVERAGE-ON$
+
     import platformSpecific.resetOwner
 
     val Nothing: Expr[Nothing] = '{ ??? }

@@ -9,6 +9,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
   final override protected type Type[A] = c.WeakTypeTag[A]
   object Type extends TypeModule {
 
+    // $COVERAGE-OFF$
     object platformSpecific {
 
       def fromUntyped[A](untyped: c.Type): Type[A] = c.WeakTypeTag(untyped)
@@ -49,6 +50,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         def param_>?<[L, U >: L](idx: Int): L >?< U = fromUntyped[L](A.tpe.typeArgs(idx)).as_>?<[L, U]
       }
     }
+    // $COVERAGE-ON$
 
     import platformSpecific.*
 

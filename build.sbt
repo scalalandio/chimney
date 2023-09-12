@@ -64,8 +64,7 @@ val settings = Seq(
       case Some((2, 13)) =>
         Seq(
           // format: off
-          "-encoding", "UTF-8",
-          "-release", "8",
+          "-encoding", "UTF-8", "-release", "8",
           // format: on
           "-unchecked",
           "-deprecation",
@@ -150,7 +149,9 @@ val settings = Seq(
       case Some((2, 12)) => Seq("-Ywarn-unused:locals") // Scala 2.12 ignores @unused warns
       case _             => Seq.empty
     }
-  }
+  },
+  coverageExcludedFiles := ".*\\/DerivationResult\\.scala",
+  coverageExcludedPackages := "io\\.scalaland\\.chimney\\.internal\\.compiletime\\.fp"
 )
 
 val dependencies = Seq(

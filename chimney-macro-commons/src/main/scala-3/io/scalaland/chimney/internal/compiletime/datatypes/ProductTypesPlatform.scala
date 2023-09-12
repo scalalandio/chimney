@@ -10,6 +10,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
   protected object ProductType extends ProductTypesModule {
 
+    // $COVERAGE-OFF$
     object platformSpecific {
 
       def isAbstract(sym: Symbol): Boolean =
@@ -41,6 +42,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       def isJavaSetterOrVar(setter: Symbol): Boolean =
         isJavaSetter(setter) || isVar(setter)
     }
+    // $COVERAGE-ON$
 
     import platformSpecific.*
     import Type.platformSpecific.*

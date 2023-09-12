@@ -10,6 +10,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
   final override protected type Type[T] = quoted.Type[T]
   protected object Type extends TypeModule {
 
+    // $COVERAGE-OFF$
     object platformSpecific {
 
       def fromUntyped[A](untyped: TypeRepr): Type[A] = untyped.asType.asInstanceOf[Type[A]]
@@ -76,6 +77,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
             fromUntyped[A](subtype.typeRef).as_?<[A]
         }
     }
+    // $COVERAGE-ON$
 
     val Nothing: Type[Nothing] = quoted.Type.of[Nothing]
     val Null: Type[Null] = quoted.Type.of[Null]

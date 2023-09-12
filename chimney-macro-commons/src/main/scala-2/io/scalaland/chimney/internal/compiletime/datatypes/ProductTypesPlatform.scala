@@ -11,6 +11,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
   protected object ProductType extends ProductTypesModule {
 
+    // $COVERAGE-OFF$
     object platformSpecific {
 
       def isParameterless(method: MethodSymbol): Boolean = method.paramLists.flatten.isEmpty
@@ -39,6 +40,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       def isJavaSetterOrVar(setter: Symbol): Boolean =
         (setter.isMethod && isJavaSetter(setter.asMethod)) || isVar(setter)
     }
+    // $COVERAGE-ON$
 
     import platformSpecific.*
     import Type.platformSpecific.*

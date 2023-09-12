@@ -234,7 +234,9 @@ private[compiletime] trait Configurations { this: Derivation =>
             RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
           )
       case _ =>
+        // $COVERAGE-OFF$
         reportError(s"Bad internal transformer config type shape ${Type.prettyPrint[Cfg]}!!")
+      // $COVERAGE-ON$
     }
   }
 }
