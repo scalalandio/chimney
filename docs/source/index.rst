@@ -174,6 +174,7 @@ Contents:
    :caption: Troubleshooting
 
    troubleshooting/known-issues-and-limitations
+   troubleshooting/automatic-semiautomatic-and-inlined-derivation
    troubleshooting/debugging-macros
 
 .. toctree::
