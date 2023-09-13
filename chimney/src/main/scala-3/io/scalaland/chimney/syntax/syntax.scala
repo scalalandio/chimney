@@ -4,6 +4,9 @@ import io.scalaland.chimney.{partial, PartialTransformer, Patcher, Transformer}
 
 import scala.util.Try
 
+// Extension methods in dsl.* summon TypeClass.AutoDerived while extension methods in syntax.* summon TypeClass.
+// This help us preserve legacy behavior in dsl code while keeping stricter separation in auto/syntax imports.
+
 /** Provides transformer operations on values of any type.
   *
   * @tparam From type of source value
@@ -18,14 +21,13 @@ extension [From](source: From) {
     * If you want to customize transformer behavior, consider using
     * [[io.scalaland.chimney.dsl.TransformerOps#into]] method.
     *
-    * @see [[io.scalaland.chimney.Transformer#derive]] for default implicit instance
+    * @see [[io.scalaland.chimney.auto#deriveAutomaticTransformer]] for default implicit instance
     * @tparam To target type
     * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
     * @return transformed value of target type `To`
-    *
     * @since 0.1.0
     */
-  transparent inline def transformInto[To](implicit transformer: Transformer.AutoDerived[From, To]): To =
+  transparent inline def transformInto[To](implicit transformer: Transformer[From, To]): To =
     transformer.transform(source)
 }
 
@@ -43,7 +45,7 @@ extension [From](source: From) {
     * If you want to customize transformer behavior, consider using
     * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
     *
-    * @see [[io.scalaland.chimney.PartialTransformer#deriveAutomatic]] for default implicit instance
+    * @see [[io.scalaland.chimney.auto#deriveAutomaticPartialTransformer]] for default implicit instance
     * @tparam To result target type of partial transformation
     * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
     * @return partial transformation result value of target type `To`
@@ -51,7 +53,7 @@ extension [From](source: From) {
     * @since 0.7.0
     */
   transparent inline def transformIntoPartial[To](implicit
-      transformer: PartialTransformer.AutoDerived[From, To]
+      transformer: PartialTransformer[From, To]
   ): partial.Result[To] =
     transformIntoPartial(failFast = false)
 
@@ -60,7 +62,7 @@ extension [From](source: From) {
     * If you want to customize transformer behavior, consider using
     * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
     *
-    * @see [[io.scalaland.chimney.PartialTransformer#deriveAutomatic]] for default implicit instance
+    * @see [[io.scalaland.chimney.auto#deriveAutomaticPartialTransformer]] for default implicit instance
     * @tparam To result target type of partial transformation
     * @param failFast    should fail as early as the first set of errors appear
     * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
@@ -69,7 +71,7 @@ extension [From](source: From) {
     * @since 0.7.0
     */
   transparent inline def transformIntoPartial[To](failFast: Boolean)(implicit
-      transformer: PartialTransformer.AutoDerived[From, To]
+      transformer: PartialTransformer[From, To]
   ): partial.Result[To] =
     transformer.transform(source, failFast)
 }
@@ -88,7 +90,7 @@ extension [T](obj: T) {
     * If you want to customize patching behavior, consider using
     * [[io.scalaland.chimney.dsl.PatcherOps#using using]] method.
     *
-    * @see [[io.scalaland.chimney.Patcher#deriveAutomatic]] for default implicit instance
+    * @see [[io.scalaland.chimney.auto#deriveAutomaticPatcher]] for default implicit instance
     * @tparam P type of patch object
     * @param patch   patch object value
     * @param patcher implicit instance of [[io.scalaland.chimney.Patcher]] type class
@@ -96,7 +98,7 @@ extension [T](obj: T) {
     *
     * @since 0.4.0
     */
-  transparent inline def patchUsing[P](patch: P)(implicit patcher: Patcher.AutoDerived[T, P]): T =
+  transparent inline def patchUsing[P](patch: P)(implicit patcher: Patcher[T, P]): T =
     patcher.patch(obj, patch)
 }
 

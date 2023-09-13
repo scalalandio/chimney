@@ -5,7 +5,9 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Transfor
 
 import scala.language.experimental.macros
 
-package object auto {
+object auto extends LowPriorityAutoInstances
+
+private[chimney] trait LowPriorityAutoInstances { this: auto.type =>
 
   implicit def deriveAutomaticTransformer[From, To]: Transformer[From, To] =
     macro TransformerMacros.deriveTotalTransformerWithDefaults[From, To]
