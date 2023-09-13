@@ -20,6 +20,17 @@ private[chimney] trait PatcherCompanionPlatform { this: Patcher.type =>
 
 private[chimney] trait PatcherAutoDerivedCompanionPlatform { this: Patcher.AutoDerived.type =>
 
+  /** Provides [[io.scalaland.chimney.Patcher]] derived with the default settings.
+    *
+    * This instance WILL NOT be visible for recursive derivation (automatic, semiautomatic, inlined),
+    * which is how it differs from [[io.scalaland.chimney.auto#deriveAutomaticPatcher]].
+    *
+    * @tparam A     type of object to apply patch to
+    * @tparam Patch type of patch object
+    * @return [[io.scalaland.chimney.Patcher]] type class instance
+    *
+    * @since 0.8.0
+    */
   implicit def deriveAutomatic[A, Patch]: Patcher.AutoDerived[A, Patch] =
     macro PatcherMacros.derivePatcherWithDefaults[A, Patch]
 }

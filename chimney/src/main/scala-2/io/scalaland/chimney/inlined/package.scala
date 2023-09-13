@@ -10,9 +10,9 @@ import io.scalaland.chimney.dsl.{
 }
 import io.scalaland.chimney.internal.runtime.{PatcherCfg, PatcherFlags, TransformerCfg, TransformerFlags}
 
-/** Main object to import in order to use Chimney's features
+/** Imports only extension methods for inlined derivation
   *
-  * @since 0.1.0
+  * @since 0.8.0
   */
 package object inlined {
 
