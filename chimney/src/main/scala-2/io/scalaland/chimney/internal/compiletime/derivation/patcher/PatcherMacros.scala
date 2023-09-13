@@ -39,7 +39,7 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   ](
       tc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): Expr[Patcher[A, Patch]] = retypecheck(
-    cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Cfg, InstanceFlags]](c.prefix.tree)) { pu =>
+    cacheDefinition(c.Expr[dsl.PatcherDefinition[A, Patch, Cfg, InstanceFlags]](c.prefix.tree)) { pu =>
       Expr.block(
         List(Expr.suppressUnused(pu)),
         derivePatcher[A, Patch, Cfg, InstanceFlags, ImplicitScopeFlags]

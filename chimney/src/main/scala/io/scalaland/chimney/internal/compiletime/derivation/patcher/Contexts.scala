@@ -3,18 +3,24 @@ package io.scalaland.chimney.internal.compiletime.derivation.patcher
 private[compiletime] trait Contexts { this: Derivation =>
 
   /** Stores all the "global" information that might be needed: types used, user configuration, runtime values, etc */
-  final case class PatcherContext[A, Patch](
-      obj: Expr[A],
-      patch: Expr[Patch],
-      config: PatcherConfig,
-      derivationStartedAt: java.time.Instant
-  )(
+  final case class PatcherContext[A, Patch](obj: Expr[A], patch: Expr[Patch])(
       val A: Type[A],
-      val Patch: Type[Patch]
+      val Patch: Type[Patch],
+      val config: PatcherConfig,
+      val derivationStartedAt: java.time.Instant
   ) {
 
     final type Target = A
     val Target = A
+
+    def updateConfig(update: PatcherConfig => PatcherConfig): this.type =
+      PatcherContext(obj, patch)(
+        A = A,
+        Patch = Patch,
+        config = update(config),
+        derivationStartedAt = derivationStartedAt
+      )
+        .asInstanceOf[this.type]
   }
   object PatcherContext {
 
@@ -23,9 +29,11 @@ private[compiletime] trait Contexts { this: Derivation =>
         patch: Expr[Patch],
         config: PatcherConfig
     ): PatcherContext[A, Patch] =
-      PatcherContext(obj = obj, patch = patch, config = config, derivationStartedAt = java.time.Instant.now())(
+      PatcherContext(obj = obj, patch = patch)(
         A = Type[A],
-        Patch = Type[Patch]
+        Patch = Type[Patch],
+        config = config.withDefinitionScope(Type[A].as_?? -> Type[Patch].as_??),
+        derivationStartedAt = java.time.Instant.now()
       )
   }
 

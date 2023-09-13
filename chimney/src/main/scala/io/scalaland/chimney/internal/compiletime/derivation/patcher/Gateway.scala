@@ -20,11 +20,13 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       patch: Expr[Patch]
   ): Expr[A] = cacheDefinition(obj) { obj =>
     cacheDefinition(patch) { patch =>
-      val context = PatcherContext.create[A, Patch](
-        obj,
-        patch,
-        config = PatcherConfigurations.readPatcherConfig[Cfg, Flags, ImplicitScopeFlags]
-      )
+      val context = PatcherContext
+        .create[A, Patch](
+          obj,
+          patch,
+          config = PatcherConfigurations.readPatcherConfig[Cfg, Flags, ImplicitScopeFlags]
+        )
+        .updateConfig(_.allowAPatchImplicitSearch)
 
       val result = enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
 

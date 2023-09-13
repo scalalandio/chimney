@@ -174,4 +174,13 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
 
     def apply(index: Int): Expr[Any] = ChimneyExpr.RuntimeDataStore.extractAt(runtimeDataStoreExpr, index)
   }
+
+  implicit final protected class PatcherExprOps[A: Type, Patch: Type](
+      private val patcherExpr: Expr[io.scalaland.chimney.Patcher[A, Patch]]
+  ) {
+
+    def patch(obj: Expr[A], patch: Expr[Patch]): Expr[A] =
+      ChimneyExpr.Patcher.patch(patcherExpr, obj, patch)
+  }
+
 }
