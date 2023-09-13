@@ -22,6 +22,17 @@ private[chimney] trait PartialTransformerCompanionPlatform { this: PartialTransf
 
 private[chimney] trait PartialTransformerAutoDerivedCompanionPlatform { this: PartialTransformer.AutoDerived.type =>
 
+  /** Provides [[io.scalaland.chimney.PartialTransformer.AutoDerived]] derived with the default settings.
+    *
+    * This instance WILL NOT be visible for recursive derivation (automatic, semiautomatic, inlined),
+    * which is how it differs from [[io.scalaland.chimney.auto#deriveAutomaticPartialTransformer]].
+    *
+    * @tparam From type of input value
+    * @tparam To   type of output value
+    * @return [[io.scalaland.chimney.PartialTransformer.AutoDerived]] type class instance
+    *
+    * @since 0.8.0
+    */
   implicit def deriveAutomatic[From, To]: PartialTransformer.AutoDerived[From, To] =
     macro TransformerMacros.derivePartialTransformerWithDefaults[From, To]
 }

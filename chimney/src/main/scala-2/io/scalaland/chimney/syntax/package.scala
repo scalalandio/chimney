@@ -2,6 +2,10 @@ package io.scalaland.chimney
 
 import scala.util.Try
 
+/** Imports only extension methods for summoning and using Transformer, PartialTransformer or Patcher
+  *
+  * @since 0.8.0
+  */
 package object syntax {
 
   // Extension methods in dsl.* summon TypeClass.AutoDerived while extension methods in syntax.* summon TypeClass.

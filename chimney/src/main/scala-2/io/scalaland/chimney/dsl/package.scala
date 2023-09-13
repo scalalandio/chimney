@@ -132,5 +132,4 @@ package object dsl {
     final def patchUsing[P](patch: P)(implicit patcher: Patcher.AutoDerived[T, P]): T =
       patcher.patch(obj, patch)
   }
-
 }

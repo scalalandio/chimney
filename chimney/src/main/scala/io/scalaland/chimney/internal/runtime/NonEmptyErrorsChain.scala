@@ -78,6 +78,7 @@ object NonEmptyErrorsChain {
     * @param head error
     * @param tail errors
     * @return instance of [[NonEmptyErrorsChain]]
+    *
     * @since 0.7.0
     */
   final def from(head: partial.Error, tail: partial.Error*): NonEmptyErrorsChain =
