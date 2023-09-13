@@ -3,6 +3,8 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
+import scala.annotation.unused
+
 class PatcherProductSpec extends ChimneySpec {
 
   test("""patch an product type object with a product type patch object containing a "subset" of fields""") {
@@ -87,7 +89,6 @@ class PatcherProductSpec extends ChimneySpec {
   }
 
   group("flag .ignoreRedundantPatcherFields") {
-
     import PatchDomain.*
 
     case class PatchWithRedundantField(phone: Phone, address: String)
@@ -100,10 +101,10 @@ class PatcherProductSpec extends ChimneySpec {
 
     test("should be disabled by default") {
 
-      compileErrorsFixed("exampleUser.using(patch1).patch").check(
+      compileErrorsFixed("exampleUser.patchUsing(patch1)").check(
         "Field named 'address' not found in target patching type io.scalaland.chimney.fixtures.PatchDomain.User!"
       )
-      compileErrorsFixed("exampleUser.patchUsing(patch1)").check(
+      compileErrorsFixed("exampleUser.using(patch1).patch").check(
         "Field named 'address' not found in target patching type io.scalaland.chimney.fixtures.PatchDomain.User!"
       )
 
@@ -142,7 +143,28 @@ class PatcherProductSpec extends ChimneySpec {
     }
   }
 
-  // TODO: flag .failRedundantPatcherFields
+  group("flag .failRedundantPatcherFields") {
+
+    test("should disable globally enabled .ignoreRedundantPatcherFields") {
+      import PatchDomain.*
+
+      case class PatchWithRedundantField(phone: Phone, address: String)
+      // note address doesn't exist in User
+      @unused val patch1 = PatchWithRedundantField(Phone(4321L), "Unknown")
+
+      case class PatchWithAnotherRedundantField(address: String, phone: Phone)
+      // note address doesn't exist in User and it's at the beginning of the case class
+      @unused val patch2 = PatchWithAnotherRedundantField("Unknown", Phone(4321L))
+
+      compileErrorsFixed("exampleUser.using(patch1).failRedundantPatcherFields.patch").check(
+        "Field named 'address' not found in target patching type io.scalaland.chimney.fixtures.PatchDomain.User!"
+      )
+
+      compileErrorsFixed("exampleUser.using(patch2).failRedundantPatcherFields.patch").check(
+        "Field named 'address' not found in target patching type io.scalaland.chimney.fixtures.PatchDomain.User!"
+      )
+    }
+  }
 
   group("flag .ignoreNoneInPatch") {
 
@@ -180,5 +202,25 @@ class PatcherProductSpec extends ChimneySpec {
     }
   }
 
-  // TODO: flag .clearOnNoneInPatch
+  group("flag .clearOnNoneInPatch") {
+
+    test("should disable globally enabled .ignoreNoneInPatch") {
+      import PatchDomain.*
+
+      case class PhonePatch(phone: Option[Phone])
+      case class IntPatch(phone: Option[Long])
+
+      @unused val cfg = PatcherConfiguration.default.ignoreNoneInPatch
+
+      exampleUserWithOptionalField
+        .using(PhonePatch(None))
+        .clearOnNoneInPatch
+        .patch ==> exampleUserWithOptionalField.copy(phone = None)
+
+      exampleUserWithOptionalField
+        .using(IntPatch(None))
+        .clearOnNoneInPatch
+        .patch ==> exampleUserWithOptionalField.copy(phone = None)
+    }
+  }
 }
