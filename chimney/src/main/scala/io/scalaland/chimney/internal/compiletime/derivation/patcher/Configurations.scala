@@ -25,8 +25,15 @@ private[compiletime] trait Configurations { this: Derivation =>
   }
 
   final protected case class PatcherConfig(
-      flags: PatcherFlags = PatcherFlags()
-  )
+      flags: PatcherFlags = PatcherFlags(),
+      preventResolutionForTypes: Option[(??, ??)] = None
+  ) {
+
+    def allowAPatchImplicitSearch: PatcherConfig = copy(preventResolutionForTypes = None)
+
+    def withDefinitionScope(defScope: (??, ??)): PatcherConfig =
+      copy(preventResolutionForTypes = Some(defScope))
+  }
 
   protected object PatcherConfigurations {
 
