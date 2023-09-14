@@ -9,6 +9,7 @@ object TransformerFlags {
   final class Disable[F <: Flag, Flags <: TransformerFlags] extends TransformerFlags
 
   sealed abstract class Flag
+  final class InheritedAccessors extends Flag
   final class MethodAccessors extends Flag
   final class DefaultValues extends Flag
   final class BeanSetters extends Flag

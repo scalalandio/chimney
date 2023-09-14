@@ -11,6 +11,26 @@ import scala.annotation.unused
   */
 private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
 
+  /** Enable lookup in definitions inherited from supertype.
+    *
+    * By default only values defined directly in the type are considered. With this flag supertype methods would not be filtered out
+    *
+    * @see TODO
+    *
+    * @since 0.8.0
+    */
+  def enableInheritedAccessors: UpdateFlag[Enable[InheritedAccessors, Flags]] =
+    enableFlag[InheritedAccessors]
+
+  /** Disable inherited accessors lookup that was previously enabled by `enableInheritedAccessors`
+    *
+    * @see TODO
+    *
+    * @since 0.8.0
+    */
+  def disableInheritedAccessors: UpdateFlag[Disable[InheritedAccessors, Flags]] =
+    disableFlag[InheritedAccessors]
+
   /** Enable values to be supplied from method calls. Source method must be public and have no parameter list.
     *
     * By default this is disabled because method calls may perform side effects (e.g. mutations)
