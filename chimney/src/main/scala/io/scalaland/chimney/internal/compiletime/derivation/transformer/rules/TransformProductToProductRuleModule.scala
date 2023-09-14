@@ -20,13 +20,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           import ctx.config.*
           import ProductType.areNamesMatching
 
-          lazy val fromEnabledExtractors = fromExtractors.filter { getter =>
-            getter._2.value.sourceType match {
-              case Product.Getter.SourceType.ConstructorVal => true
-              case Product.Getter.SourceType.AccessorMethod => flags.methodAccessors
-              case Product.Getter.SourceType.JavaBeanGetter => flags.beanGetters
+          lazy val fromEnabledExtractors = fromExtractors
+            .filter { getter =>
+              getter._2.value.sourceType match {
+                case Product.Getter.SourceType.ConstructorVal => true
+                case Product.Getter.SourceType.AccessorMethod => flags.methodAccessors
+                case Product.Getter.SourceType.JavaBeanGetter => flags.beanGetters
+              }
             }
-          }
+            .filter { getter =>
+              getter._2.value.isLocal || flags.inheritedAccessors
+            }
 
           val usePositionBasedMatching = Type[From].isTuple || Type[To].isTuple
           lazy val ctorParamToGetter = parameters
@@ -53,7 +57,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
           DerivationResult.log {
             val gettersStr = fromExtractors
-              .map { case (k, v) => s"`$k`: ${Type.prettyPrint(v.Underlying)} (${v.value.sourceType})" }
+              .map { case (k, v) =>
+                s"`$k`: ${Type.prettyPrint(v.Underlying)} (${v.value.sourceType}, ${if (v.value.isLocal) "declared"
+                  else "inherited"})"
+              }
               .mkString(", ")
             val constructorStr = parameters
               .map { case (k, v) =>
@@ -277,12 +284,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   .getOrElse {
                     ctorParam.value.targetType match {
                       case Product.Parameter.TargetType.ConstructorParameter =>
+                        // TODO: update this for isLocal
                         DerivationResult
                           .missingAccessor[From, To, ctorParam.Underlying, Existential[TransformationExpr]](
                             toName,
                             fromExtractors.exists { case (fromName, _) => areNamesMatching(fromName, toName) }
                           )
                       case Product.Parameter.TargetType.SetterParameter =>
+                        // TODO: update this for isLocal
                         DerivationResult
                           .missingJavaBeanSetterParam[From, To, ctorParam.Underlying, Existential[
                             TransformationExpr
