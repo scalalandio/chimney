@@ -7,7 +7,7 @@ ThisBuild / scalafmtOnCompile := !isCI
 
 val versions = new {
   val scala212 = "2.12.18"
-  val scala213 = "2.13.11"
+  val scala213 = "2.13.12"
   val scala3 = "3.3.1"
 
   // Which versions should be cross-compiled for publishing
@@ -94,6 +94,7 @@ val settings = Seq(
           "-Ywarn-macros:after",
           "-Ytasty-reader",
           "-Wconf:origin=scala.collection.compat.*:s",
+          "-Wconf:cat=scala3-migration:s",
           "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s",
           "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
           "-Wconf:src=io/scalaland/chimney/cats/package.scala:s" // silence package object inheritance deprecation
