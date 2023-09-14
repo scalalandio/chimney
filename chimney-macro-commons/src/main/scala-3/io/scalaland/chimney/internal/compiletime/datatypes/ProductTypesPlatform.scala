@@ -97,7 +97,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           .filterNot(isGarbageSymbol)
           .filterNot(isCaseFieldName)
           .filter(isAccessor)
-        val localDefinitions = sym.declaredMethods.toSet
+        val localDefinitions = (sym.declaredMethods ++ sym.declaredFields).toSet
 
         // if we are taking caseFields but then we also are using ALL fieldMembers shouldn't we just use fieldMembers?
         (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).filter(isPublic).distinct.map { getter =>
