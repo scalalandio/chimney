@@ -21,6 +21,7 @@ val versions = new {
 
 // common settings
 
+Global / excludeLintKeys += git.useGitDescribe
 Global / excludeLintKeys += ideSkipProject
 val only1VersionInIDE =
   MatrixAction
@@ -50,7 +51,6 @@ val settings = Seq(
           // format: off
           "-source", "3.3-migration",
           // format: on
-          "-Xfatal-warnings",
           // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is!
           "-Wunused:privates",
           "-Wunused:locals",
@@ -58,8 +58,9 @@ val settings = Seq(
           "-Wunused:implicits",
           "-Wunused:params",
           "-Wvalue-discard",
-          "-Ykind-projector:underscores",
-          "-Xcheck-macros"
+          "-Xfatal-warnings",
+          "-Xcheck-macros",
+          "-Ykind-projector:underscores"
         )
       case Some((2, 13)) =>
         Seq(
@@ -72,6 +73,11 @@ val settings = Seq(
           "-explaintypes",
           "-feature",
           "-language:higherKinds",
+          "-Wconf:origin=scala.collection.compat.*:s", // type aliases without which 2.12 fail compilation but 2.13 doesn't need them
+          "-Wconf:cat=scala3-migration:s", // silence mainly issues with -Xsource:3 and private case class constructors
+          "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
+          "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
+          "-Wconf:src=io/scalaland/chimney/cats/package.scala:s", // silence package object inheritance deprecation
           "-Wunused:patvars",
           "-Xfatal-warnings",
           "-Xlint:adapted-args",
@@ -92,12 +98,7 @@ val settings = Seq(
           "-Ywarn-unused:locals",
           "-Ywarn-unused:imports",
           "-Ywarn-macros:after",
-          "-Ytasty-reader",
-          "-Wconf:origin=scala.collection.compat.*:s",
-          "-Wconf:cat=scala3-migration:s",
-          "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s",
-          "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
-          "-Wconf:src=io/scalaland/chimney/cats/package.scala:s" // silence package object inheritance deprecation
+          "-Ytasty-reader"
         )
       case Some((2, 12)) =>
         Seq(
@@ -110,7 +111,11 @@ val settings = Seq(
           "-explaintypes",
           "-feature",
           "-language:higherKinds",
+          "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
+          "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
+          "-Wconf:src=io/scalaland/chimney/cats/package.scala:s", // silence package object inheritance deprecation
           "-Xexperimental",
+          "-Xfatal-warnings",
           "-Xfuture",
           "-Xlint:adapted-args",
           "-Xlint:by-name-right-associative",
@@ -137,10 +142,7 @@ val settings = Seq(
           "-Ywarn-unused:imports",
           "-Ywarn-macros:after",
           "-Ywarn-nullary-override",
-          "-Ywarn-nullary-unit",
-          "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s",
-          "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
-          "-Wconf:src=io/scalaland/chimney/cats/package.scala:s" // silence package object inheritance deprecation
+          "-Ywarn-nullary-unit"
         )
       case _ => Seq.empty
     }

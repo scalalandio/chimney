@@ -1,6 +1,6 @@
 package io.scalaland.chimney.fixtures.javabeans
 
-import scala.annotation.unused
+import scala.annotation.{nowarn, unused}
 
 case class CaseClassNoFlag(id: String, name: String)
 
@@ -21,7 +21,9 @@ class JavaBeanSource(id: String, name: String) {
   def getName: String = name
 }
 
+@nowarn("msg=unset private variable")
 class JavaBeanSourceWithFlag(private var id: String, private var name: String, private var flag: Boolean) {
+
   def getId: String = id
 
   def getName: String = name
