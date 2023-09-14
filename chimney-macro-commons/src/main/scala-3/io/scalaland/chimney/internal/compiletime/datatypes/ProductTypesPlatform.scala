@@ -97,6 +97,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           .filterNot(isGarbageSymbol)
           .filterNot(isCaseFieldName)
           .filter(isAccessor)
+        val localDefinitions = sym.declaredMethods.toSet
 
         // if we are taking caseFields but then we also are using ALL fieldMembers shouldn't we just use fieldMembers?
         (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).filter(isPublic).distinct.map { getter =>
@@ -110,6 +111,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
                 else if isJavaGetter(getter) && conformToIsGetters then Product.Getter.SourceType.JavaBeanGetter
                 else if getter.isValDef then Product.Getter.SourceType.ConstructorVal
                 else Product.Getter.SourceType.AccessorMethod,
+              isLocal = localDefinitions(getter),
               get =
                 // TODO: pathological cases like def foo[Unused]()()()
                 if getter.paramSymss.isEmpty then
