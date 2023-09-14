@@ -13,7 +13,7 @@ addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.21")
 // MiMa
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.3")
 // benchmarks
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.4")
+addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.6")
 // disabling projects in IDE
 addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.1.0")
 // testing protobufs
