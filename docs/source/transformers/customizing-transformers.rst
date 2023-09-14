@@ -102,6 +102,32 @@ and have no parameter list are considered.
   // FooV2(1, "m")
 
 
+Using inherited accessors
+-------------------------
+
+By default, Chimney will only consider ``val`` and ``lazy val`` (and ``def`` if you enable method accessors) defined
+directly within the source type, because it might be surprising to lookup all possible method inherited by supertypes or
+mixins.
+
+You can ask Chimney to consider inherited ``val`` and ``lazy val`` (and ``def`` if methods accessors are enabled) with
+``.enableInheritedAccessors``. Note that only methods that are public and have no parameter list are considered.
+
+.. code-block:: scala
+
+  trait SourceParent {
+    val value: String = "value"
+  }
+  class Source extends SourceParent
+
+  case class Target(value: String)
+
+  (new Source)
+    .into[Target]
+    .enableInheritedAccessors
+    .transform
+  // Target("value")
+
+
 Transforming coproducts
 -----------------------
 
