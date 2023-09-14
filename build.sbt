@@ -347,7 +347,7 @@ lazy val chimneyCats = projectMatrix
   .settings(publishSettings*)
   .settings(mimaSettings*)
   .settings(dependencies*)
-  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.9.0" % "provided")
+  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0" % "provided")
   .dependsOn(chimney % "test->test;compile->compile")
 
 lazy val protobufs = projectMatrix
