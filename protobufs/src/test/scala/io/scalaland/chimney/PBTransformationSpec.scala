@@ -5,7 +5,6 @@ import io.scalaland.chimney.dsl._
 // format: on
 import io.scalaland.chimney.examples.pb
 import io.scalaland.chimney.fixtures.{addressbook, order}
-import io.scalaland.chimney.{partial, ChimneySpec, PartialTransformer}
 
 class PBTransformationSpec extends ChimneySpec {
 

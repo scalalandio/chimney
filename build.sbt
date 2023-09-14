@@ -3,6 +3,13 @@ import commandmatrix.extra.*
 lazy val isCI = sys.env.get("CI").contains("true")
 ThisBuild / scalafmtOnCompile := !isCI
 
+// publishSigned emits
+//   Could not find any member to link for "scala.None".
+// and similar, and we cannot turn them off in any other way than by removing -Xfatal-warnings
+// so at least we can remove them ONLY when building a release from a commit which already
+// passed the tests.
+lazy val isRelease = sys.env.get("RELEASE").contains("true")
+
 // versions
 
 val versions = new {
@@ -201,9 +208,8 @@ val publishSettings = Seq(
         <url>http://github.com/MateuszKubuszok</url>
       </developer>
     </developers>
-  ),
-  scalacOptions -= "-Xfatal-warnings"
-)
+  )
+) ++ (if (isRelease) Seq(scalacOptions -= "-Xfatal-warnings") else Seq.empty)
 
 val mimaSettings = Seq(
   mimaPreviousArtifacts := {
