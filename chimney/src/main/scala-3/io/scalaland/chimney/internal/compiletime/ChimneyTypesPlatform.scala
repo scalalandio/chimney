@@ -136,14 +136,16 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       }
 
       object Flags extends FlagsModule {
+        val InheritedAccessors: Type[runtime.TransformerFlags.InheritedAccessors] =
+          quoted.Type.of[runtime.TransformerFlags.InheritedAccessors]
+        val MethodAccessors: Type[runtime.TransformerFlags.MethodAccessors] =
+          quoted.Type.of[runtime.TransformerFlags.MethodAccessors]
         val DefaultValues: Type[runtime.TransformerFlags.DefaultValues] =
           quoted.Type.of[runtime.TransformerFlags.DefaultValues]
         val BeanGetters: Type[runtime.TransformerFlags.BeanGetters] =
           quoted.Type.of[runtime.TransformerFlags.BeanGetters]
         val BeanSetters: Type[runtime.TransformerFlags.BeanSetters] =
           quoted.Type.of[runtime.TransformerFlags.BeanSetters]
-        val MethodAccessors: Type[runtime.TransformerFlags.MethodAccessors] =
-          quoted.Type.of[runtime.TransformerFlags.MethodAccessors]
         val OptionDefaultsToNone: Type[runtime.TransformerFlags.OptionDefaultsToNone] =
           quoted.Type.of[runtime.TransformerFlags.OptionDefaultsToNone]
         object ImplicitConflictResolution extends ImplicitConflictResolutionModule {

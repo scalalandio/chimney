@@ -7,24 +7,27 @@ import io.scalaland.chimney.internal.runtime
 private[compiletime] trait Configurations { this: Derivation =>
 
   final protected case class TransformerFlags(
+      inheritedAccessors: Boolean = false,
+      methodAccessors: Boolean = false,
       processDefaultValues: Boolean = false,
       beanSetters: Boolean = false,
       beanGetters: Boolean = false,
-      methodAccessors: Boolean = false,
       optionDefaultsToNone: Boolean = false,
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
       displayMacrosLogging: Boolean = false
   ) {
 
     def setBoolFlag[Flag <: runtime.TransformerFlags.Flag: Type](value: Boolean): TransformerFlags =
-      if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.DefaultValues) {
+      if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.InheritedAccessors) {
+        copy(inheritedAccessors = value)
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.MethodAccessors) {
+        copy(methodAccessors = value)
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.DefaultValues) {
         copy(processDefaultValues = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.BeanSetters) {
         copy(beanSetters = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.BeanGetters) {
         copy(beanGetters = value)
-      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.MethodAccessors) {
-        copy(methodAccessors = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.OptionDefaultsToNone) {
         copy(optionDefaultsToNone = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.MacrosLogging) {
@@ -39,10 +42,11 @@ private[compiletime] trait Configurations { this: Derivation =>
       copy(implicitConflictResolution = preference)
 
     override def toString: String = s"Flags(${Vector(
+        if (inheritedAccessors) Vector("inheritedAccessors") else Vector.empty,
+        if (methodAccessors) Vector("methodAccessors") else Vector.empty,
         if (processDefaultValues) Vector("processDefaultValues") else Vector.empty,
         if (beanSetters) Vector("beanSetters") else Vector.empty,
         if (beanGetters) Vector("beanGetters") else Vector.empty,
-        if (methodAccessors) Vector("methodAccessors") else Vector.empty,
         if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
         if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
