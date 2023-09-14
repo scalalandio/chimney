@@ -64,8 +64,9 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
     def parseExtraction[A: Type]: Option[Product.Extraction[A]] = Some(
       Product.Extraction(
-        ListMap.from[String, Existential[Product.Getter[A, *]]](
-          Type[A].tpe.decls
+        ListMap.from[String, Existential[Product.Getter[A, *]]] {
+          val localDefinitions = Type[A].tpe.decls.to(Set)
+          Type[A].tpe.members.sorted
             .to(List)
             .filterNot(isGarbageSymbol)
             .collect { case method if method.isMethod => method.asMethod }
@@ -82,6 +83,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
                     else if (isJavaGetter(getter) && conformToIsGetters) Product.Getter.SourceType.JavaBeanGetter
                     else if (getter.isStable) Product.Getter.SourceType.ConstructorVal // Hmm...
                     else Product.Getter.SourceType.AccessorMethod,
+                  isLocal = localDefinitions(getter),
                   get =
                     // TODO: handle pathological cases like getName[Unused]()()()
                     if (getter.asMethod.paramLists.isEmpty) (in: Expr[A]) => c.Expr[tpe.Underlying](q"$in.$termName")
@@ -93,7 +95,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
                 )
               }
             }
-        )
+        }
       )
     )
 

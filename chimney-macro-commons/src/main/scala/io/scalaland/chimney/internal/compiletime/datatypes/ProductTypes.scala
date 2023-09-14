@@ -25,7 +25,7 @@ trait ProductTypes { this: Definitions =>
   final protected case class Product[A](extraction: Product.Extraction[A], construction: Product.Constructor[A])
   protected object Product {
 
-    final case class Getter[From, A](sourceType: Getter.SourceType, get: Expr[From] => Expr[A])
+    final case class Getter[From, A](sourceType: Getter.SourceType, isLocal: Boolean, get: Expr[From] => Expr[A])
     object Getter {
 
       /** Let us decide whether or now we can use the getter based on configuration */
