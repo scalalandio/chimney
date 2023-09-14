@@ -68,6 +68,16 @@ object Defaults {
   case class Nested[A](value: A)
 }
 
+object Inherited {
+
+  trait SourceParent {
+    val value: String = "value"
+  }
+  class Source extends SourceParent
+
+  case class Target(value: String)
+}
+
 object Accessors {
 
   case class Source(x: Int) {
