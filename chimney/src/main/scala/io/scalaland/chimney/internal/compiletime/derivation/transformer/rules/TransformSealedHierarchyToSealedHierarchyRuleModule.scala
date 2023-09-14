@@ -79,6 +79,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         }
     }
 
+    @scala.annotation.nowarn("msg=Unreachable case")
     private def mapElementsMatchedByName[From, To](
         fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]],
         toElements: Enum.Elements[To]
