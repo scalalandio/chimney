@@ -690,6 +690,66 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
   }
 
+  group("flag .enableInheritedAccessors") {
+
+    test("should be disabled by default") {
+      import products.Inherited.*
+
+      compileErrorsFixed("(new Source).transformIntoPartial[Target]").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
+        "io.scalaland.chimney.fixtures.products.Inherited.Target",
+        "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
+        "There are methods in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for `value` fields in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using `.enableMethodAccessors`.",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("(new Source).intoPartial[Target].transform").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
+        "io.scalaland.chimney.fixtures.products.Inherited.Target",
+        "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
+        "There are methods in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for `value` fields in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using `.enableMethodAccessors`.",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should enable using inherited accessors") {
+      import products.Inherited.*
+
+      val expected = Target("value")
+
+      val result = (new Source).intoPartial[Target].enableInheritedAccessors.transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      locally {
+        implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
+
+        val result2 = (new Source).transformIntoPartial[Target]
+        result2.asOption ==> Some(expected)
+        result2.asEither ==> Right(expected)
+        result2.asErrorPathMessageStrings ==> Iterable.empty
+      }
+    }
+  }
+
+  group("flag .disableInheritedAccessors") {
+
+    test("should disable globally enabled .enableInheritedAccessors") {
+      import products.Inherited.*
+
+      @unused implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
+
+      compileErrorsFixed("(new Source).intoPartial[Target].disableInheritedAccessors.transform").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
+        "io.scalaland.chimney.fixtures.products.Inherited.Target",
+        "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
+        "There are methods in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for `value` fields in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using `.enableMethodAccessors`.",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+  }
+
   group("flag .enableMethodAccessors") {
 
     test("should be disabled by default") {
