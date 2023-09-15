@@ -200,5 +200,17 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         val MacrosLogging: Type[runtime.PatcherFlags.MacrosLogging] = quoted.Type.of[runtime.PatcherFlags.MacrosLogging]
       }
     }
+
+    object Path extends PathModule {
+      val Root: Type[runtime.Path.Root] = quoted.Type.of[runtime.Path.Root]
+      object Select extends SelectModule {
+        def apply[Name <: String: Type, Instance <: runtime.Path: Type]: Type[runtime.Path.Select[Name, Instance]] =
+          quoted.Type.of[runtime.Path.Select[Name, Instance]]
+        def unapply[A](tpe: Type[A]): Option[(?<[String], ?<[runtime.Path])] = tpe match
+          case '[runtime.Path.Select[name, instance]] =>
+            Some((Type[name].as_?<[String], Type[instance].as_?<[runtime.Path]))
+          case _ => scala.None
+      }
+    }
   }
 }

@@ -171,6 +171,18 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       }
     }
 
+    val Path: PathModule
+    trait PathModule { this: Path.type =>
+      val Root: Type[runtime.Path.Root]
+      val Select: SelectModule
+      trait SelectModule
+          extends Type.Ctor2UpperBounded[
+            String,
+            runtime.Path,
+            runtime.Path.Select
+          ] { this: Select.type => }
+    }
+
     // You can `import ChimneyType.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts
     // with implicit types seen in platform-specific scopes (which would happen if those implicits were always used).
     object Implicits {

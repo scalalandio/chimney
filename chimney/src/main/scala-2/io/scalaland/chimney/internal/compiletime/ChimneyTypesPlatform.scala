@@ -174,7 +174,6 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[F <: runtime.PatcherFlags.Flag: Type, Flags <: runtime.PatcherFlags: Type]
             : Type[runtime.PatcherFlags.Enable[F, Flags]] =
           weakTypeTag[runtime.PatcherFlags.Enable[F, Flags]]
-
         def unapply[A](A: Type[A]): Option[(?<[runtime.PatcherFlags.Flag], ?<[runtime.PatcherFlags])] =
           if (A.isCtor[runtime.PatcherFlags.Enable[?, ?]])
             Some(A.param_<[runtime.PatcherFlags.Flag](0) -> A.param_<[runtime.PatcherFlags](1))
@@ -184,7 +183,6 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[F <: runtime.PatcherFlags.Flag: Type, Flags <: runtime.PatcherFlags: Type]
             : Type[runtime.PatcherFlags.Disable[F, Flags]] =
           weakTypeTag[runtime.PatcherFlags.Disable[F, Flags]]
-
         def unapply[A](A: Type[A]): Option[(?<[runtime.PatcherFlags.Flag], ?<[runtime.PatcherFlags])] =
           if (A.isCtor[runtime.PatcherFlags.Disable[?, ?]])
             Some(A.param_<[runtime.PatcherFlags.Flag](0) -> A.param_<[runtime.PatcherFlags](1))
@@ -197,6 +195,17 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         val IgnoreRedundantPatcherFields: Type[runtime.PatcherFlags.IgnoreRedundantPatcherFields] =
           weakTypeTag[runtime.PatcherFlags.IgnoreRedundantPatcherFields]
         val MacrosLogging: Type[runtime.PatcherFlags.MacrosLogging] = weakTypeTag[runtime.PatcherFlags.MacrosLogging]
+      }
+    }
+
+    object Path extends PathModule {
+      val Root: Type[runtime.Path.Root] = weakTypeTag[runtime.Path.Root]
+      object Select extends SelectModule {
+        def apply[Name <: String: Type, Instance <: runtime.Path: Type]: Type[runtime.Path.Select[Name, Instance]] =
+          weakTypeTag[runtime.Path.Select[Name, Instance]]
+        def unapply[A](A: Type[A]): Option[(?<[String], ?<[runtime.Path])] =
+          if (A.isCtor[runtime.Path.Select[?, ?]]) Some(A.param_<[String](0) -> A.param_<[runtime.Path](1))
+          else scala.None
       }
     }
   }
