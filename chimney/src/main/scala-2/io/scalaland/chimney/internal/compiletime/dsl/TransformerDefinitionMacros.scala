@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.dsl.TransformerDefinition
 import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.Path.*
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 
 import scala.annotation.unused
@@ -9,7 +10,7 @@ import scala.reflect.macros.whitebox
 
 class TransformerDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
 
-  import c.universe.*
+  import c.universe.{Select as _, *}
 
   def withFieldConstImpl[
       From: WeakTypeTag,
@@ -21,7 +22,7 @@ class TransformerDefinitionMacros(val c: whitebox.Context) extends utils.DslMacr
     .asInstanceOfExpr(
       new ApplyFieldNameType {
         def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[TransformerDefinition[From, To, FieldConst[FromField, Cfg], Flags]]
+          weakTypeTag[TransformerDefinition[From, To, FieldConst[Select[FromField, Root], Cfg], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -35,7 +36,7 @@ class TransformerDefinitionMacros(val c: whitebox.Context) extends utils.DslMacr
     .asInstanceOfExpr(
       new ApplyFieldNameType {
         def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[TransformerDefinition[From, To, FieldComputed[FromField, Cfg], Flags]]
+          weakTypeTag[TransformerDefinition[From, To, FieldComputed[Select[FromField, Root], Cfg], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -48,7 +49,9 @@ class TransformerDefinitionMacros(val c: whitebox.Context) extends utils.DslMacr
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
         def apply[FromField <: String: WeakTypeTag, ToField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[TransformerDefinition[From, To, FieldRelabelled[FromField, ToField, Cfg], Flags]]
+          weakTypeTag[
+            TransformerDefinition[From, To, FieldRelabelled[Select[FromField, Root], Select[ToField, Root], Cfg], Flags]
+          ]
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 

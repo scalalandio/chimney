@@ -190,36 +190,36 @@ private[compiletime] trait Configurations { this: Derivation =>
         import fieldName.Underlying as FieldName, cfg.Underlying as Cfg2
         extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
           .addFieldOverride(
-            Type[FieldName].extractStringSingleton,
+            extractPath[FieldName],
             RuntimeFieldOverride.Const(runtimeDataIdx)
           )
       case ChimneyType.TransformerCfg.FieldConstPartial(fieldName, cfg) =>
         import fieldName.Underlying as FieldName, cfg.Underlying as Cfg2
         extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
           .addFieldOverride(
-            Type[FieldName].extractStringSingleton,
+            extractPath[FieldName],
             RuntimeFieldOverride.ConstPartial(runtimeDataIdx)
           )
       case ChimneyType.TransformerCfg.FieldComputed(fieldName, cfg) =>
         import fieldName.Underlying as FieldName, cfg.Underlying as Cfg2
         extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
           .addFieldOverride(
-            Type[FieldName].extractStringSingleton,
+            extractPath[FieldName],
             RuntimeFieldOverride.Computed(runtimeDataIdx)
           )
       case ChimneyType.TransformerCfg.FieldComputedPartial(fieldName, cfg) =>
         import fieldName.Underlying as FieldName, cfg.Underlying as Cfg2
         extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
           .addFieldOverride(
-            Type[FieldName].extractStringSingleton,
+            extractPath[FieldName],
             RuntimeFieldOverride.ComputedPartial(runtimeDataIdx)
           )
       case ChimneyType.TransformerCfg.FieldRelabelled(fromName, toName, cfg) =>
         import fromName.Underlying as FromName, toName.Underlying as ToName, cfg.Underlying as Cfg2
         extractTransformerConfig[Cfg2](runtimeDataIdx)
           .addFieldOverride(
-            Type[ToName].extractStringSingleton,
-            RuntimeFieldOverride.RenamedFrom(Type[FromName].extractStringSingleton)
+            extractPath[ToName],
+            RuntimeFieldOverride.RenamedFrom(extractPath[FromName])
           )
       case ChimneyType.TransformerCfg.CoproductInstance(instance, target, cfg) =>
         import instance.Underlying as Instance, target.Underlying as Target, cfg.Underlying as Cfg2
@@ -238,7 +238,21 @@ private[compiletime] trait Configurations { this: Derivation =>
             RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
           )
       case _ =>
+        // $COVERAGE-OFF$
         reportError(s"Bad internal transformer config type shape ${Type.prettyPrint[Cfg]}!!")
+      // $COVERAGE-ON$
+    }
+
+    // currently we aren't supporting nested paths
+    // This (suppressed) error is a case when compiler is simply wrong :)
+    @scala.annotation.nowarn("msg=Unreachable case")
+    private def extractPath[Field <: runtime.Path: Type]: String = Type[Field] match {
+      case ChimneyType.Path.Select(fieldName, path) if path.value =:= ChimneyType.Path.Root =>
+        fieldName.value.extractStringSingleton
+      case _ =>
+        // $COVERAGE-OFF$
+        reportError(s"Nested paths ${Type.prettyPrint[Field]} are not supported!!")
+      // $COVERAGE-ON$
     }
   }
 }

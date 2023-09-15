@@ -43,7 +43,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       val FieldConst: FieldConstModule
       trait FieldConstModule
           extends Type.Ctor2UpperBounded[
-            String,
+            runtime.Path,
             runtime.TransformerCfg,
             runtime.TransformerCfg.FieldConst
           ] { this: FieldConst.type => }
@@ -51,7 +51,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       val FieldConstPartial: FieldConstPartialModule
       trait FieldConstPartialModule
           extends Type.Ctor2UpperBounded[
-            String,
+            runtime.Path,
             runtime.TransformerCfg,
             runtime.TransformerCfg.FieldConstPartial
           ] { this: FieldConstPartial.type => }
@@ -59,7 +59,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       val FieldComputed: FieldComputedModule
       trait FieldComputedModule
           extends Type.Ctor2UpperBounded[
-            String,
+            runtime.Path,
             runtime.TransformerCfg,
             runtime.TransformerCfg.FieldComputed
           ] { this: FieldComputed.type => }
@@ -67,7 +67,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       val FieldComputedPartial: FieldComputedPartialModule
       trait FieldComputedPartialModule
           extends Type.Ctor2UpperBounded[
-            String,
+            runtime.Path,
             runtime.TransformerCfg,
             runtime.TransformerCfg.FieldComputedPartial
           ] { this: FieldComputedPartial.type => }
@@ -75,8 +75,8 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       val FieldRelabelled: FieldRelabelledModule
       trait FieldRelabelledModule
           extends Type.Ctor3UpperBounded[
-            String,
-            String,
+            runtime.Path,
+            runtime.Path,
             runtime.TransformerCfg,
             runtime.TransformerCfg.FieldRelabelled
           ] { this: FieldRelabelled.type => }

@@ -4,6 +4,7 @@ import io.scalaland.chimney.PartialTransformer
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.Path.*
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 import io.scalaland.chimney.partial
 
@@ -29,7 +30,7 @@ object PartialTransformerIntoMacros {
         '{
           WithRuntimeDataStore
             .update($ti, $value)
-            .asInstanceOf[PartialTransformerInto[From, To, FieldConst[fieldNameT, Cfg], Flags]]
+            .asInstanceOf[PartialTransformerInto[From, To, FieldConst[Select[fieldNameT, Root], Cfg], Flags]]
         }
     }
   }
@@ -52,7 +53,7 @@ object PartialTransformerIntoMacros {
         '{
           WithRuntimeDataStore
             .update($ti, $value)
-            .asInstanceOf[PartialTransformerInto[From, To, FieldConstPartial[fieldNameT, Cfg], Flags]]
+            .asInstanceOf[PartialTransformerInto[From, To, FieldConstPartial[Select[fieldNameT, Root], Cfg], Flags]]
         }
     }
   }
@@ -75,7 +76,7 @@ object PartialTransformerIntoMacros {
         '{
           WithRuntimeDataStore
             .update($ti, $f)
-            .asInstanceOf[PartialTransformerInto[From, To, FieldComputed[fieldNameT, Cfg], Flags]]
+            .asInstanceOf[PartialTransformerInto[From, To, FieldComputed[Select[fieldNameT, Root], Cfg], Flags]]
         }
     }
   }
@@ -98,7 +99,7 @@ object PartialTransformerIntoMacros {
         '{
           WithRuntimeDataStore
             .update($ti, $f)
-            .asInstanceOf[PartialTransformerInto[From, To, FieldComputedPartial[fieldNameT, Cfg], Flags]]
+            .asInstanceOf[PartialTransformerInto[From, To, FieldComputedPartial[Select[fieldNameT, Root], Cfg], Flags]]
         }
     }
   }
@@ -119,7 +120,12 @@ object PartialTransformerIntoMacros {
     (FieldNameUtils.strLiteralType(fieldNameFrom).asType, FieldNameUtils.strLiteralType(fieldNameTo).asType) match {
       case ('[FieldNameUtils.StringBounded[fieldNameFromT]], '[FieldNameUtils.StringBounded[fieldNameToT]]) =>
         '{
-          $ti.asInstanceOf[PartialTransformerInto[From, To, FieldRelabelled[fieldNameFromT, fieldNameToT, Cfg], Flags]]
+          $ti.asInstanceOf[PartialTransformerInto[
+            From,
+            To,
+            FieldRelabelled[Select[fieldNameFromT, Root], Select[fieldNameToT, Root], Cfg],
+            Flags
+          ]]
         }
     }
   }
