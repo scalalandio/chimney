@@ -95,7 +95,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       //   }}}
       copy(
         preventResolutionForTypes = None,
-        fieldOverrides = Map.empty
+        fieldOverrides = Map.empty,
+        coproductOverrides = Map.empty
       )
 
     def addFieldOverride(fieldName: String, fieldOverride: RuntimeFieldOverride): TransformerConfig =
@@ -107,6 +108,9 @@ private[compiletime] trait Configurations { this: Derivation =>
         coproductOverride: RuntimeCoproductOverride
     ): TransformerConfig =
       copy(coproductOverrides = coproductOverrides + ((instanceType, targetType) -> coproductOverride))
+
+    def areOverridesEmpty: Boolean =
+      fieldOverrides.isEmpty && coproductOverrides.isEmpty
 
     def withDefinitionScope(defScope: (??, ??)): TransformerConfig =
       copy(preventResolutionForTypes = Some(defScope))
