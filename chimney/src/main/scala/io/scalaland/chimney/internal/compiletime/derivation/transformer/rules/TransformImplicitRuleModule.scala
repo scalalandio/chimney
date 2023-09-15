@@ -10,6 +10,10 @@ private[compiletime] trait TransformImplicitRuleModule { this: Derivation =>
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       ctx match {
+        case _ if !ctx.config.areOverridesEmpty =>
+          DerivationResult.log(
+            "Configuration has defined overrides - implicit summoning is skipped"
+          ) >> DerivationResult.attemptNextRule
         case TransformationContext.ForTotal(src) =>
           summonTransformerSafe[From, To].fold(DerivationResult.attemptNextRule[To]) { totalTransformer =>
             // We're constructing:
