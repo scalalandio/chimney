@@ -248,10 +248,17 @@ private[compiletime] trait Configurations { this: Derivation =>
     @scala.annotation.nowarn("msg=Unreachable case")
     private def extractPath[Field <: runtime.Path: Type]: String = Type[Field] match {
       case ChimneyType.Path.Select(fieldName, path) if path.value =:= ChimneyType.Path.Root =>
-        fieldName.value.extractStringSingleton
+        import fieldName.Underlying as FieldName, path.Underlying as Path
+        Type[Path] match {
+          case root if root =:= ChimneyType.Path.Root => Type[FieldName].extractStringSingleton
+          case _                                      =>
+            // $COVERAGE-OFF$
+            reportError(s"Nested paths ${Type.prettyPrint[Field]} are not supported!!")
+          // $COVERAGE-ON$
+        }
       case _ =>
         // $COVERAGE-OFF$
-        reportError(s"Nested paths ${Type.prettyPrint[Field]} are not supported!!")
+        reportError(s"Bad paths shape ${Type.prettyPrint[Field]}!!")
       // $COVERAGE-ON$
     }
   }
