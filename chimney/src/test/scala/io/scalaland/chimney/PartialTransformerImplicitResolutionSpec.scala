@@ -3,6 +3,8 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
+import scala.annotation.unused
+
 class PartialTransformerImplicitResolutionSpec extends ChimneySpec {
 
   test("transform using implicit Total Transformer for whole transformation when available") {
@@ -67,5 +69,18 @@ class PartialTransformerImplicitResolutionSpec extends ChimneySpec {
     result2.asOption ==> Some(expected)
     result2.asEither ==> Right(expected)
     result2.asErrorPathMessageStrings ==> Iterable.empty
+  }
+
+  test("ignore implicit Partial Transformer if an override is present") {
+    import trip.*
+
+    @unused implicit def instance: PartialTransformer[Person, User] = PartialTransformer.derive
+
+    val expected = User("Not John", 10, 140)
+
+    val result = Person("John", 10, 140).intoPartial[User].withFieldConst(_.name, "Not John").transform
+    result.asOption ==> Some(expected)
+    result.asEither ==> Right(expected)
+    result.asErrorPathMessageStrings ==> Iterable.empty
   }
 }
