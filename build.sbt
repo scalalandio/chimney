@@ -263,7 +263,7 @@ lazy val root = project
     name := "chimney-build",
     description := "Build setup for Chimney modules",
     logo :=
-      s"""Chimney ${(ThisBuild / version).value} build for (${versions.scala212}, ${versions.scala213}, ${versions.scala3}) x (Scala JVM, Scala.js $scalaJSVersion, Scala Native $nativeVersion)
+      s"""Chimney ${(version).value} build for (${versions.scala212}, ${versions.scala213}, ${versions.scala3}) x (Scala JVM, Scala.js $scalaJSVersion, Scala Native $nativeVersion)
          |
          |This build uses sbt-projectmatrix with sbt-commandmatrix helper:
          | - Scala JVM adds no suffix to a project name seen in build.sbt
@@ -306,6 +306,7 @@ lazy val root = project
 lazy val chimneyMacroCommons = projectMatrix
   .in(file("chimney-macro-commons"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
+  .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
     moduleName := "chimney-macro-commons",
@@ -320,6 +321,7 @@ lazy val chimneyMacroCommons = projectMatrix
 lazy val chimney = projectMatrix
   .in(file("chimney"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
+  .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
     moduleName := "chimney",
@@ -345,6 +347,7 @@ lazy val chimney = projectMatrix
 lazy val chimneyCats = projectMatrix
   .in(file("chimney-cats"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
+  .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
     moduleName := "chimney-cats",
@@ -362,6 +365,7 @@ lazy val chimneyCats = projectMatrix
 lazy val protobufs = projectMatrix
   .in(file("protobufs"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
+  .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin)
   .settings(
     moduleName := "chimney-protobufs",
