@@ -3,6 +3,8 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
+import scala.annotation.unused
+
 class TotalTransformerImplicitResolutionSpec extends ChimneySpec {
 
   test("transform using implicit Total Transformer for whole transformation when available") {
@@ -28,5 +30,13 @@ class TotalTransformerImplicitResolutionSpec extends ChimneySpec {
 
     Person("John", 10, 140).into[User].transform ==> User("John", 10, 140)
     Person("John", 10, 140).transformInto[User] ==> User("John", 10, 140)
+  }
+
+  test("ignore implicit Total Transformer if an override is present") {
+    import trip.*
+
+    @unused implicit def instance: Transformer[Person, User] = Transformer.derive
+
+    Person("John", 10, 140).into[User].withFieldConst(_.name, "Not John").transform ==> User("Not John", 10, 140)
   }
 }
