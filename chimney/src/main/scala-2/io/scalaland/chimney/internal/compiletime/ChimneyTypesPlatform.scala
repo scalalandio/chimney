@@ -50,48 +50,48 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     object TransformerCfg extends TransformerCfgModule {
       val Empty: Type[runtime.TransformerCfg.Empty] = weakTypeTag[runtime.TransformerCfg.Empty]
       object FieldConst extends FieldConstModule {
-        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+        def apply[Name <: runtime.Path: Type, Cfg <: runtime.TransformerCfg: Type]
             : Type[runtime.TransformerCfg.FieldConst[Name, Cfg]] =
           weakTypeTag[runtime.TransformerCfg.FieldConst[Name, Cfg]]
-        def unapply[A](A: Type[A]): Option[(?<[String], ?<[runtime.TransformerCfg])] =
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerCfg])] =
           if (A.isCtor[runtime.TransformerCfg.FieldConst[?, ?]])
-            Some(A.param_<[String](0) -> A.param_<[runtime.TransformerCfg](1))
+            Some(A.param_<[runtime.Path](0) -> A.param_<[runtime.TransformerCfg](1))
           else scala.None
       }
       object FieldConstPartial extends FieldConstPartialModule {
-        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+        def apply[Name <: runtime.Path: Type, Cfg <: runtime.TransformerCfg: Type]
             : Type[runtime.TransformerCfg.FieldConstPartial[Name, Cfg]] =
           weakTypeTag[runtime.TransformerCfg.FieldConstPartial[Name, Cfg]]
-        def unapply[A](A: Type[A]): Option[(?<[String], ?<[runtime.TransformerCfg])] =
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerCfg])] =
           if (A.isCtor[runtime.TransformerCfg.FieldConstPartial[?, ?]])
-            Some(A.param_<[String](0) -> A.param_<[runtime.TransformerCfg](1))
+            Some(A.param_<[runtime.Path](0) -> A.param_<[runtime.TransformerCfg](1))
           else scala.None
       }
       object FieldComputed extends FieldComputedModule {
-        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+        def apply[Name <: runtime.Path: Type, Cfg <: runtime.TransformerCfg: Type]
             : Type[runtime.TransformerCfg.FieldComputed[Name, Cfg]] =
           weakTypeTag[runtime.TransformerCfg.FieldComputed[Name, Cfg]]
-        def unapply[A](A: Type[A]): Option[(?<[String], ?<[runtime.TransformerCfg])] =
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerCfg])] =
           if (A.isCtor[runtime.TransformerCfg.FieldComputed[?, ?]])
-            Some(A.param_<[String](0) -> A.param_<[runtime.TransformerCfg](1))
+            Some(A.param_<[runtime.Path](0) -> A.param_<[runtime.TransformerCfg](1))
           else scala.None
       }
       object FieldComputedPartial extends FieldComputedPartialModule {
-        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+        def apply[Name <: runtime.Path: Type, Cfg <: runtime.TransformerCfg: Type]
             : Type[runtime.TransformerCfg.FieldComputedPartial[Name, Cfg]] =
           weakTypeTag[runtime.TransformerCfg.FieldComputedPartial[Name, Cfg]]
-        def unapply[A](A: Type[A]): Option[(?<[String], ?<[runtime.TransformerCfg])] =
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerCfg])] =
           if (A.isCtor[runtime.TransformerCfg.FieldComputedPartial[?, ?]])
-            Some(A.param_<[String](0) -> A.param_<[runtime.TransformerCfg](1))
+            Some(A.param_<[runtime.Path](0) -> A.param_<[runtime.TransformerCfg](1))
           else scala.None
       }
       object FieldRelabelled extends FieldRelabelledModule {
-        def apply[FromName <: String: Type, ToName <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+        def apply[FromName <: runtime.Path: Type, ToName <: runtime.Path: Type, Cfg <: runtime.TransformerCfg: Type]
             : Type[runtime.TransformerCfg.FieldRelabelled[FromName, ToName, Cfg]] =
           weakTypeTag[runtime.TransformerCfg.FieldRelabelled[FromName, ToName, Cfg]]
-        def unapply[A](A: Type[A]): Option[(?<[String], ?<[String], ?<[runtime.TransformerCfg])] =
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerCfg])] =
           if (A.isCtor[runtime.TransformerCfg.FieldRelabelled[?, ?, ?]])
-            Some((A.param_<[String](0), A.param_<[String](1), A.param_<[runtime.TransformerCfg](2)))
+            Some((A.param_<[runtime.Path](0), A.param_<[runtime.Path](1), A.param_<[runtime.TransformerCfg](2)))
           else scala.None
       }
       object CoproductInstance extends CoproductInstanceModule {

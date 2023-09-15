@@ -47,49 +47,56 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     object TransformerCfg extends TransformerCfgModule {
       val Empty: Type[runtime.TransformerCfg.Empty] = quoted.Type.of[runtime.TransformerCfg.Empty]
       object FieldConst extends FieldConstModule {
-        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+        def apply[Name <: runtime.Path: Type, Cfg <: runtime.TransformerCfg: Type]
             : Type[runtime.TransformerCfg.FieldConst[Name, Cfg]] =
           quoted.Type.of[runtime.TransformerCfg.FieldConst[Name, Cfg]]
-        def unapply[A](tpe: Type[A]): Option[(?<[String], ?<[runtime.TransformerCfg])] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerCfg])] = tpe match
           case '[runtime.TransformerCfg.FieldConst[name, c]] =>
-            Some((Type[name].as_?<[String], Type[c].as_?<[runtime.TransformerCfg]))
+            Some((Type[name].as_?<[runtime.Path], Type[c].as_?<[runtime.TransformerCfg]))
           case _ => scala.None
       }
       object FieldConstPartial extends FieldConstPartialModule {
-        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+        def apply[Name <: runtime.Path: Type, Cfg <: runtime.TransformerCfg: Type]
             : Type[runtime.TransformerCfg.FieldConstPartial[Name, Cfg]] =
           quoted.Type.of[runtime.TransformerCfg.FieldConstPartial[Name, Cfg]]
-        def unapply[A](tpe: Type[A]): Option[(?<[String], ?<[runtime.TransformerCfg])] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerCfg])] = tpe match
           case '[runtime.TransformerCfg.FieldConstPartial[name, c]] =>
-            Some((Type[name].as_>?<[Nothing, String], Type[c].as_>?<[Nothing, runtime.TransformerCfg]))
+            Some((Type[name].as_>?<[Nothing, runtime.Path], Type[c].as_>?<[Nothing, runtime.TransformerCfg]))
           case _ => scala.None
       }
       object FieldComputed extends FieldComputedModule {
-        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+        def apply[Name <: runtime.Path: Type, Cfg <: runtime.TransformerCfg: Type]
             : Type[runtime.TransformerCfg.FieldComputed[Name, Cfg]] =
           quoted.Type.of[runtime.TransformerCfg.FieldComputed[Name, Cfg]]
-        def unapply[A](tpe: Type[A]): Option[(?<[String], ?<[runtime.TransformerCfg])] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerCfg])] = tpe match
           case '[runtime.TransformerCfg.FieldComputed[name, c]] =>
-            Some((Type[name].as_?<[String], Type[c].as_?<[runtime.TransformerCfg]))
+            Some((Type[name].as_?<[runtime.Path], Type[c].as_?<[runtime.TransformerCfg]))
           case _ => scala.None
       }
       object FieldComputedPartial extends FieldComputedPartialModule {
-        def apply[Name <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+        def apply[Name <: runtime.Path: Type, Cfg <: runtime.TransformerCfg: Type]
             : Type[runtime.TransformerCfg.FieldComputedPartial[Name, Cfg]] =
           quoted.Type.of[runtime.TransformerCfg.FieldComputedPartial[Name, Cfg]]
-        def unapply[A](tpe: Type[A]): Option[(Nothing >?< String, Nothing >?< runtime.TransformerCfg)] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(Nothing >?< runtime.Path, Nothing >?< runtime.TransformerCfg)] = tpe match
           case '[runtime.TransformerCfg.FieldComputedPartial[name, c]] =>
-            Some((Type[name].as_?<[String], Type[c].as_?<[runtime.TransformerCfg]))
+            Some((Type[name].as_?<[runtime.Path], Type[c].as_?<[runtime.TransformerCfg]))
           case _ => scala.None
       }
       object FieldRelabelled extends FieldRelabelledModule {
-        def apply[FromName <: String: Type, ToName <: String: Type, Cfg <: runtime.TransformerCfg: Type]
+        def apply[FromName <: runtime.Path: Type, ToName <: runtime.Path: Type, Cfg <: runtime.TransformerCfg: Type]
             : Type[runtime.TransformerCfg.FieldRelabelled[FromName, ToName, Cfg]] =
           quoted.Type.of[runtime.TransformerCfg.FieldRelabelled[FromName, ToName, Cfg]]
-        def unapply[A](tpe: Type[A]): Option[(?<[String], ?<[String], ?<[runtime.TransformerCfg])] = tpe match
-          case '[runtime.TransformerCfg.FieldRelabelled[fromName, toName, c]] =>
-            Some((Type[fromName].as_?<[String], Type[toName].as_?<[String], Type[c].as_?<[runtime.TransformerCfg]))
-          case _ => scala.None
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerCfg])] =
+          tpe match
+            case '[runtime.TransformerCfg.FieldRelabelled[fromName, toName, c]] =>
+              Some(
+                (
+                  Type[fromName].as_?<[runtime.Path],
+                  Type[toName].as_?<[runtime.Path],
+                  Type[c].as_?<[runtime.TransformerCfg]
+                )
+              )
+            case _ => scala.None
       }
       object CoproductInstance extends CoproductInstanceModule {
         def apply[InstType: Type, TargetType: Type, Cfg <: runtime.TransformerCfg: Type]

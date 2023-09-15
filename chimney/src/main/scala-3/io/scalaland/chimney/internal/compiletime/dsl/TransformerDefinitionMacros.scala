@@ -4,6 +4,7 @@ import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.Path.*
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 
 import scala.quoted.*
@@ -28,7 +29,7 @@ object TransformerDefinitionMacros {
         '{
           WithRuntimeDataStore
             .update($td, $value)
-            .asInstanceOf[TransformerDefinition[From, To, FieldConst[fieldNameT, Cfg], Flags]]
+            .asInstanceOf[TransformerDefinition[From, To, FieldConst[Select[fieldNameT, Root], Cfg], Flags]]
         }
     }
   }
@@ -51,7 +52,7 @@ object TransformerDefinitionMacros {
         '{
           WithRuntimeDataStore
             .update($td, $f)
-            .asInstanceOf[TransformerDefinition[From, To, FieldComputed[fieldNameT, Cfg], Flags]]
+            .asInstanceOf[TransformerDefinition[From, To, FieldComputed[Select[fieldNameT, Root], Cfg], Flags]]
         }
     }
   }
@@ -72,7 +73,12 @@ object TransformerDefinitionMacros {
     (FieldNameUtils.strLiteralType(fieldNameFrom).asType, FieldNameUtils.strLiteralType(fieldNameTo).asType) match {
       case ('[FieldNameUtils.StringBounded[fieldNameFromT]], '[FieldNameUtils.StringBounded[fieldNameToT]]) =>
         '{
-          $td.asInstanceOf[TransformerDefinition[From, To, FieldRelabelled[fieldNameFromT, fieldNameToT, Cfg], Flags]]
+          $td.asInstanceOf[TransformerDefinition[
+            From,
+            To,
+            FieldRelabelled[Select[fieldNameFromT, Root], Select[fieldNameToT, Root], Cfg],
+            Flags
+          ]]
         }
     }
   }

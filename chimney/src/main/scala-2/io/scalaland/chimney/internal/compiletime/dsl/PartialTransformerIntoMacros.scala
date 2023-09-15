@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.dsl.PartialTransformerInto
 import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.Path.*
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 
 import scala.annotation.unused
@@ -9,7 +10,7 @@ import scala.reflect.macros.whitebox
 
 class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
 
-  import c.universe.*
+  import c.universe.{Select as _, *}
 
   def withFieldConstImpl[
       From: WeakTypeTag,
@@ -21,7 +22,7 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
     .asInstanceOfExpr(
       new ApplyFieldNameType {
         def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerInto[From, To, FieldConst[FromField, Cfg], Flags]]
+          weakTypeTag[PartialTransformerInto[From, To, FieldConst[Select[FromField, Root], Cfg], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -35,7 +36,7 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
     .asInstanceOfExpr(
       new ApplyFieldNameType {
         def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerInto[From, To, FieldConstPartial[FromField, Cfg], Flags]]
+          weakTypeTag[PartialTransformerInto[From, To, FieldConstPartial[Select[FromField, Root], Cfg], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -49,7 +50,7 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
     .asInstanceOfExpr(
       new ApplyFieldNameType {
         def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerInto[From, To, FieldComputed[FromField, Cfg], Flags]]
+          weakTypeTag[PartialTransformerInto[From, To, FieldComputed[Select[FromField, Root], Cfg], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -63,7 +64,7 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
     .asInstanceOfExpr(
       new ApplyFieldNameType {
         def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerInto[From, To, FieldComputedPartial[FromField, Cfg], Flags]]
+          weakTypeTag[PartialTransformerInto[From, To, FieldComputedPartial[Select[FromField, Root], Cfg], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -76,7 +77,12 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
         def apply[FromField <: String: WeakTypeTag, ToField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerInto[From, To, FieldRelabelled[FromField, ToField, Cfg], Flags]]
+          weakTypeTag[PartialTransformerInto[
+            From,
+            To,
+            FieldRelabelled[Select[FromField, Root], Select[ToField, Root], Cfg],
+            Flags
+          ]]
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 

@@ -4,6 +4,7 @@ import io.scalaland.chimney.PartialTransformer
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.Path.*
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 import io.scalaland.chimney.partial
 
@@ -29,7 +30,7 @@ object PartialTransformerDefinitionMacros {
         '{
           WithRuntimeDataStore
             .update($td, $value)
-            .asInstanceOf[PartialTransformerDefinition[From, To, FieldConst[fieldNameT, Cfg], Flags]]
+            .asInstanceOf[PartialTransformerDefinition[From, To, FieldConst[Select[fieldNameT, Root], Cfg], Flags]]
         }
     }
   }
@@ -52,7 +53,12 @@ object PartialTransformerDefinitionMacros {
         '{
           WithRuntimeDataStore
             .update($td, $value)
-            .asInstanceOf[PartialTransformerDefinition[From, To, FieldConstPartial[fieldNameT, Cfg], Flags]]
+            .asInstanceOf[PartialTransformerDefinition[
+              From,
+              To,
+              FieldConstPartial[Select[fieldNameT, Root], Cfg],
+              Flags
+            ]]
         }
     }
   }
@@ -75,7 +81,7 @@ object PartialTransformerDefinitionMacros {
         '{
           WithRuntimeDataStore
             .update($td, $f)
-            .asInstanceOf[PartialTransformerDefinition[From, To, FieldComputed[fieldNameT, Cfg], Flags]]
+            .asInstanceOf[PartialTransformerDefinition[From, To, FieldComputed[Select[fieldNameT, Root], Cfg], Flags]]
         }
     }
   }
@@ -98,7 +104,12 @@ object PartialTransformerDefinitionMacros {
         '{
           WithRuntimeDataStore
             .update($td, $f)
-            .asInstanceOf[PartialTransformerDefinition[From, To, FieldComputedPartial[fieldNameT, Cfg], Flags]]
+            .asInstanceOf[PartialTransformerDefinition[
+              From,
+              To,
+              FieldComputedPartial[Select[fieldNameT, Root], Cfg],
+              Flags
+            ]]
         }
     }
   }
@@ -120,7 +131,12 @@ object PartialTransformerDefinitionMacros {
       case ('[FieldNameUtils.StringBounded[fieldNameFromT]], '[FieldNameUtils.StringBounded[fieldNameToT]]) =>
         '{
           $td.asInstanceOf[
-            PartialTransformerDefinition[From, To, FieldRelabelled[fieldNameFromT, fieldNameToT, Cfg], Flags]
+            PartialTransformerDefinition[
+              From,
+              To,
+              FieldRelabelled[Select[fieldNameFromT, Root], Select[fieldNameToT, Root], Cfg],
+              Flags
+            ]
           ]
         }
     }
