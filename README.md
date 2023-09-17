@@ -15,6 +15,8 @@
 
 Battle tested Scala library for boilerplate-free data transformations.
 
+What does it mean?
+
 Imagine you have strict domain definition of a `User` and much less strict
 API definition of a `UserAPI`:
 
@@ -34,7 +36,7 @@ Converting the strict representation to less strict is obvious and boring:
 val user = User(User.Name("John"), User.Surname("Smith"))
 
 // encoding domain to API by hand
-val userApi = UserAPI(Some(user.name.value), Some(user.surname.value))
+UserAPI(Some(user.name.value), Some(user.surname.value))
 ```
 
 Converting the less strict representation to strict is also obvious and boring,
@@ -44,11 +46,15 @@ and additionally long:
 val userApi = UserAPI(Some(user.name.value), Some(user.surname.value))
 
 // decoding API to domain by hand
-val userOpt = for {
+for {
   name <- user.name.map(User.Name)
   surname <- user.surname.map(User.Surname)
 } yield User(name, surname)
 ```
+
+You know how this code would look like to the letter. There is nothing new you
+would learn from reading it if someone else wrote it. And you need to write it
+and update any time your case classes change.
 
 The good news is that this obvious and boring code could be generated for you:
 
@@ -62,8 +68,12 @@ userApi.transformIntoPartial[User].asOption
 // Some(User(Name(John, Surname(Smith))))
 ```
 
-it can also be generated for you when you works with sealed hierarchies
-(including Scala 3's enum):
+Short, simple, easy! When you update the classes, it would update the generated
+code for you. Additionally, you need not worry that you forgot to change something
+as you copy-pasted pieces of the transformation ad nauseam!
+
+It can also be generated for you when you works with sealed hierarchies
+(including Scala 3's `enum`!):
 
 ```scala
 sealed trait UserStatusAPI
