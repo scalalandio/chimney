@@ -76,9 +76,9 @@ class PatcherProductSpec extends ChimneySpec {
     test("should fail compilation if transformation is not possible") {
       // without implicit Transformer[Int, String], it doesn't compile
       compileErrorsFixed("""Obj("").patchUsing(Patch(100))""")
-        .check("", "not supported")
+        .check("not supported")
       compileErrorsFixed("""Obj("").using(Patch(100)).patch""")
-        .check("", "not supported")
+        .check("not supported")
     }
 
     test("should adapting field's type with a Transformer") {

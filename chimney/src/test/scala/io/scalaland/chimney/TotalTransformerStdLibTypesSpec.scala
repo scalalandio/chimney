@@ -144,7 +144,6 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
 
     test("should be turned off by default and not allow compiling Option fields with missing source") {
       compileErrorsFixed("""Source("foo").into[TargetWithOption].transform""").check(
-        "",
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source",

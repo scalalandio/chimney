@@ -77,16 +77,16 @@ class PartialTransformerProductSpec extends ChimneySpec {
         """
           Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.y, "pi").withFieldConst(_.z._1, 0.0).transform
          """
-      ).check("", "Invalid selector expression")
+      ) check ("Invalid selector expression")
 
       compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.y + "abc", "pi").transform
-        """).check("", "Invalid selector expression")
+        """) check ("Invalid selector expression")
 
       compileErrorsFixed("""
           val haveY = HaveY("")
           Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(cc => haveY.y, "pi").transform
-        """).check("", "Invalid selector expression")
+        """) check ("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -126,7 +126,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
             .withFieldConstPartial(_.z._1, partial.Result.fromValue(0.0))
             .transform
           """
-      ).check("", "Invalid selector expression")
+      ) check ("Invalid selector expression")
 
       compileErrorsFixed(
         """
@@ -135,7 +135,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
             .withFieldConstPartial(_.y + "abc", partial.Result.fromValue("pi"))
             .transform
           """
-      ).check("", "Invalid selector expression")
+      ) check ("Invalid selector expression")
 
       compileErrorsFixed(
         """
@@ -145,7 +145,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
             .withFieldConstPartial(cc => haveY.y, partial.Result.fromValue("pi"))
             .transform
           """
-      ).check("", "Invalid selector expression")
+      ) check ("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -205,7 +205,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
             .withFieldComputed(_.z._1, _.x.toDouble)
             .transform
           """
-      ).check("", "Invalid selector expression")
+      ) check ("Invalid selector expression")
 
       compileErrorsFixed(
         """
@@ -214,7 +214,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
             .withFieldComputed(_.y + "abc", _.toString)
             .transform
           """
-      ).check("", "Invalid selector expression")
+      ) check ("Invalid selector expression")
 
       compileErrorsFixed(
         """
@@ -224,7 +224,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
             .withFieldComputed(cc => haveY.y, _.toString)
             .transform
           """
-      ).check("", "Invalid selector expression")
+      ) check ("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -275,16 +275,16 @@ class PartialTransformerProductSpec extends ChimneySpec {
             .withFieldComputed(_.z._1, _.x.toDouble)
             .transform
           """
-      ).check("", "Invalid selector expression")
+      ) check ("Invalid selector expression")
 
       compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.y + "abc", _.toString).transform
-        """).check("", "Invalid selector expression")
+        """) check ("Invalid selector expression")
 
       compileErrorsFixed("""
           val haveY = HaveY("")
           Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
-        """).check("", "Invalid selector expression")
+        """) check ("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -1152,7 +1152,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
           (new Source).intoPartial[Target].disableOptionDefaultsToNone.transform
         """)
         .check(
-          "",
           "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Source to io.scalaland.chimney.PartialTransformerProductSpec.Target"
         )
     }
