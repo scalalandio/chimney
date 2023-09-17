@@ -148,7 +148,6 @@ class TotalTransformerEnumSpec extends ChimneySpec {
       """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""
     ) {
       compileErrorsFixed("""(colors2enums.Color.Black: colors2enums.Color).transformInto[colors1enums.Color]""").check(
-        "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors2enums.Color to io.scalaland.chimney.fixtures.colors1enums.Color",
         "io.scalaland.chimney.fixtures.colors1enums.Color",
         "can't transform coproduct instance io.scalaland.chimney.fixtures.colors2enums.Color.Black to io.scalaland.chimney.fixtures.colors1enums.Color",

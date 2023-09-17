@@ -71,7 +71,7 @@ class IssuesSpec extends ChimneySpec {
             .into[Foo2]
             .withFieldConst(_.x, "xyz")
           """)
-        .check("", "Cannot prove that String <:< Int")
+        .check("Cannot prove that String <:< Int")
     }
 
     test("fix for `withFieldComputed`") {
@@ -81,7 +81,7 @@ class IssuesSpec extends ChimneySpec {
             .into[Foo2]
             .withFieldComputed(_.x, _ => "xyz")
         """)
-        .check("", "Cannot prove that String <:< Int")
+        .check("Cannot prove that String <:< Int")
     }
 
     test("fix for `withFieldRenamed`") {

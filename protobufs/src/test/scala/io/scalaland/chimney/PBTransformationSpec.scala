@@ -19,19 +19,16 @@ class PBTransformationSpec extends ChimneySpec {
 
     compileErrorsFixed(""" addressbook.PersonName("John").transformInto[Int] """)
       .check(
-        "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.PersonName to scala.Int"
       )
 
     compileErrorsFixed(""" addressbook.PersonId(5).transformInto[String] """)
       .check(
-        "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.PersonId to java.lang.String"
       )
 
     compileErrorsFixed(""" addressbook.Email("john@example.com").transformInto[Float] """)
       .check(
-        "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.Email to scala.Float"
       )
   }

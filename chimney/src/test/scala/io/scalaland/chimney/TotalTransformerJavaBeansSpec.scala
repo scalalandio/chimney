@@ -98,7 +98,6 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
              new MistypedSource(1).into[MistypedTarget].enableBeanGetters.transform
           """)
         .check(
-          "",
           "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedSource to io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedTarget"
         )
 
@@ -113,7 +112,6 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
                new MistypedSource(1).into[MistypedTarget].transform
             """)
           .check(
-            "",
             "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedSource to io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedTarget"
           )
       }
@@ -133,7 +131,6 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
               .transform
           """
       ).check(
-        "",
         "id: java.lang.String - no accessor named id in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
         "name: java.lang.String - no accessor named name in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
         "flag: scala.Boolean - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag"
@@ -183,7 +180,6 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
                 .transform
             """)
           .check(
-            "",
             "setFlag(flag: scala.Boolean) - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.CaseClassNoFlag"
           )
       }
@@ -213,7 +209,6 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
                 .transform
             """)
           .check(
-            "",
             "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
             "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
             "setFlag(flag: scala.Boolean) - no accessor named flag in source type io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlagMethod",

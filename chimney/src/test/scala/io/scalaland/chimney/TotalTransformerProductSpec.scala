@@ -45,16 +45,16 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y, "pi").withFieldConst(_.z._1, 0.0).transform
-         """).check("", "Invalid selector expression")
+         """) check ("Invalid selector expression")
 
       compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y + "abc", "pi").transform
-        """).check("", "Invalid selector expression")
+        """) check ("Invalid selector expression")
 
       compileErrorsFixed("""
           val haveY = HaveY("")
           Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(cc => haveY.y, "pi").transform
-        """).check("", "Invalid selector expression")
+        """) check ("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -82,16 +82,16 @@ class TotalTransformerProductSpec extends ChimneySpec {
             .withFieldComputed(_.z._1, _.x.toDouble)
             .transform
           """
-      ).check("", "Invalid selector expression")
+      ) check ("Invalid selector expression")
 
       compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.y + "abc", _.toString).transform
-        """).check("", "Invalid selector expression")
+        """) check ("Invalid selector expression")
 
       compileErrorsFixed("""
           val haveY = HaveY("")
           Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
-        """).check("", "Invalid selector expression")
+        """) check ("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -116,7 +116,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
       import products.Renames.*
 
       compileErrorsFixed("""User(1, "Kuba", Some(28)).transformInto[UserPL]""").check(
-        "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
@@ -125,7 +124,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
       )
 
       compileErrorsFixed("""User(1, "Kuba", Some(28)).into[UserPL].transform""").check(
-        "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
@@ -140,7 +138,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
       compileErrorsFixed("""
           User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age.get, _.wiek.right.get).transform
         """).check(
-        "",
         "Invalid selector expression"
       )
 
@@ -152,7 +149,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
           val str = "string"
           User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(u => str, _.toString).transform
         """).check(
-        "",
         "Invalid selector expression"
       )
     }
@@ -192,7 +188,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
             .transform
           """
       ).check(
-        "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "wiek: scala.util.Either[scala.Unit, scala.Int] - can't derive transformation from wiek: scala.Option[scala.Int] in source type io.scalaland.chimney.fixtures.products.Renames.User",
@@ -223,7 +218,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
       import products.Defaults.*
 
       compileErrorsFixed("""Source(1, "yy", 1.0).transformInto[Target]""").check(
-        "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -232,7 +226,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
       )
 
       compileErrorsFixed("""Source(1, "yy", 1.0).into[Target].transform""").check(
-        "",
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -566,7 +559,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
           method5: String
       )
       compileErrorsFixed("""Foobar("param").into[Foobar5].transform""").check(
-        "",
         "method1: java.lang.String - no accessor named method1 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
         "method2: java.lang.String - no accessor named method2 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
         "method3: java.lang.String - no accessor named method3 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
@@ -589,7 +581,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
       @unused case class Foo2(param: String, protect: String, priv: String)
 
       compileErrorsFixed("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
-        "",
         "protect: java.lang.String - no accessor named protect in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
         "priv: java.lang.String - no accessor named priv in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar"
       )
@@ -719,7 +710,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       compileErrorsFixed("""
           (10.5, "abc", 6).transformInto[Foo]
         """)
-        .check("", "can't derive transformation")
+        .check("can't derive transformation")
 
       compileErrorsFixed("""
           Foo(10, 36.6, "test").transformInto[(Double, String, Int, Float, Boolean)]
@@ -731,7 +722,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       compileErrorsFixed("""
           Foo(10, 36.6, "test").transformInto[(Int, Double, Boolean)]
         """)
-        .check("", "can't derive transformation")
+        .check("can't derive transformation")
     }
   }
 
