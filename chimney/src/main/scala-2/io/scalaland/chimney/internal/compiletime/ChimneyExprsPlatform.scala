@@ -83,12 +83,12 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         ): Expr[partial.Result.Errors] =
           c.Expr[partial.Result.Errors](q"_root_.io.scalaland.chimney.partial.Result.Errors.merge($errors1, $errors2)")
 
-        def mergeResultNullable[T: Type](
+        def mergeResultNullable[A: Type](
             errorsNullable: Expr[partial.Result.Errors],
-            result: Expr[partial.Result[T]]
+            result: Expr[partial.Result[A]]
         ): Expr[partial.Result.Errors] =
           c.Expr[partial.Result.Errors](
-            q"_root_.io.scalaland.chimney.partial.Result.Errors.__mergeResultNullable[${Type[T]}]($errorsNullable, $result)"
+            q"_root_.io.scalaland.chimney.partial.Result.Errors.__mergeResultNullable[${Type[A]}]($errorsNullable, $result)"
           )
       }
 

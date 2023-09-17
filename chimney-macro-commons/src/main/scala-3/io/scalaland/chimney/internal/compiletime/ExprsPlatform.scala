@@ -13,8 +13,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     object platformSpecific {
 
       // Required by -Xcheck-macros to pass.
-      def resetOwner[T: Type](a: Expr[T]): Expr[T] =
-        a.asTerm.changeOwner(Symbol.spliceOwner).asExprOf[T]
+      def resetOwner[A: Type](a: Expr[A]): Expr[A] =
+        a.asTerm.changeOwner(Symbol.spliceOwner).asExprOf[A]
     }
     import platformSpecific.resetOwner
 

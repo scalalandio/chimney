@@ -87,7 +87,7 @@ extension [From](source: From) {
   *
   * @since 0.1.3
   */
-extension [T](obj: T) {
+extension [A](obj: A) {
 
   /** Performs in-place patching of wrapped object with provided value.
     *
@@ -95,13 +95,13 @@ extension [T](obj: T) {
     * [[io.scalaland.chimney.dsl.PatcherOps#using using]] method.
     *
     * @see [[io.scalaland.chimney.Patcher#deriveAutomatic]] for default implicit instance
-    * @tparam P type of patch object
+    * @tparam Patch type of patch object
     * @param patch   patch object value
     * @param patcher implicit instance of [[io.scalaland.chimney.Patcher]] type class
     * @return patched value
     *
     * @since 0.4.0
     */
-  transparent inline def patchUsing[P](patch: P)(implicit patcher: Patcher.AutoDerived[T, P]): T =
+  transparent inline def patchUsing[Patch](patch: Patch)(implicit patcher: Patcher.AutoDerived[A, Patch]): A =
     patcher.patch(obj, patch)
 }

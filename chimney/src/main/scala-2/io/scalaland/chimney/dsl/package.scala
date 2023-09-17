@@ -110,11 +110,11 @@ package object dsl {
   /** Provides patcher operations on values of any type
     *
     * @param obj wrapped object to patch
-    * @tparam T type of object to patch
+    * @tparam A type of object to patch
     *
     * @since 0.1.3
     */
-  implicit class PatcherOps[T](private val obj: T) extends AnyVal {
+  implicit class PatcherOps[A](private val obj: A) extends AnyVal {
 
     /** Performs in-place patching of wrapped object with provided value.
       *
@@ -122,14 +122,14 @@ package object dsl {
       * [[io.scalaland.chimney.dsl.PatcherOps#using using]] method.
       *
       * @see [[io.scalaland.chimney.Patcher.AutoDerived#deriveAutomatic]] for default implicit instance
-      * @tparam P type of patch object
+      * @tparam Patch type of patch object
       * @param patch   patch object value
       * @param patcher implicit instance of [[io.scalaland.chimney.Patcher]] type class
       * @return patched value
       *
       * @since 0.4.0
       */
-    final def patchUsing[P](patch: P)(implicit patcher: Patcher.AutoDerived[T, P]): T =
+    final def patchUsing[Patch](patch: Patch)(implicit patcher: Patcher.AutoDerived[A, Patch]): A =
       patcher.patch(obj, patch)
   }
 }
