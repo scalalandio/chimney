@@ -14,8 +14,8 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
       def fromUntyped[A](untyped: TypeRepr): Type[A] = untyped.asType.asInstanceOf[Type[A]]
 
-      /** Applies type arguments obtained from tpe to the type parameters in method's parameters' types */
       // TODO: assumes each parameter list is made completely out of types OR completely out of values
+      /** Applies type arguments obtained from tpe to the type parameters in method's parameters' types */
       def paramListsOf(tpe: TypeRepr, method: Symbol): List[List[Symbol]] =
         method.paramSymss.filterNot(_.exists(_.isType))
 
@@ -183,7 +183,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def isSubtypeOf[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) <:< TypeRepr.of(using B)
     def isSameAs[A, B](A: Type[A], B: Type[B]): Boolean = TypeRepr.of(using A) =:= TypeRepr.of(using B)
 
-    def prettyPrint[T: Type]: String = {
+    def prettyPrint[A: Type]: String = {
       // In Scala 3 typeRepr.dealias dealiases only the "main" type but not types applied as type parameters,
       // while in Scala 2 macros it dealiases everything - to keep the same behavior between them we need to
       // apply recursiv dealiasing ourselved.
@@ -192,7 +192,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
           case AppliedType(tycon, args) => AppliedType(dealiasAll(tycon), args.map(dealiasAll(_)))
           case _                        => tpe.dealias
 
-      val repr = dealiasAll(TypeRepr.of[T])
+      val repr = dealiasAll(TypeRepr.of[A])
 
       scala.util
         .Try {

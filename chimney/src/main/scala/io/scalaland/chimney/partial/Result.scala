@@ -368,13 +368,13 @@ object Result {
 
   /** Converts Either to Result, using an error message from Left as failed result.
     *
-    * @tparam T type of successful result
+    * @tparam A type of successful result
     * @param value Either to convert
     * @return successful result if [[scala.Right]], failed result with an error message if [[scala.Left]]
     *
     * @since 0.7.0
     */
-  final def fromEitherString[T](value: Either[String, T]): Result[T] =
+  final def fromEitherString[A](value: Either[String, A]): Result[A] =
     fromEither(value.left.map(Errors.fromString))
 
   /** Converts Try to Result, using Throwable from Failure as failed result.
