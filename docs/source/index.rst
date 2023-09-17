@@ -3,6 +3,118 @@ Welcome to Chimney's documentation!
 
 **Chimney** is a Scala library for boilerplate-free data transformations.
 
+Imagine you have strict domain definition of a ``User`` and much less strict
+API definition of a ``UserAPI``:
+
+.. code-block:: scala
+
+  case class User(name: User.Name, surname: User.Surname)
+  object User {
+    case class Name(value: String) extends AnyVal
+    case class Surname(value: String) extends AnyVal
+  }
+
+  case class UserAPI(name: Option[String], surname: Option[String])
+
+Converting the strict representation to less strict is obvious and boring:
+
+.. code-block:: scala
+
+  val user = User(User.Name("John"), User.Surname("Smith"))
+
+  // encoding domain to API by hand
+  val userApi = UserAPI(Some(user.name.value), Some(user.surname.value))
+
+Converting the less strict representation to strict is also obvious and boring,
+and additionally long:
+
+.. code-block:: scala
+
+  val userApi = UserAPI(Some(user.name.value), Some(user.surname.value))
+
+  // decoding API to domain by hand
+  val userOpt = for {
+    name <- user.name.map(User.Name)
+    surname <- user.surname.map(User.Surname)
+  } yield User(name, surname)
+
+The good news is that this obvious and boring code could be generated for you:
+
+.. code-block:: scala
+
+  import io.scalaland.chimney.dsl._
+
+  user.transformInto[UserAPI]
+  // UserAPI("John", "Smith")
+
+  userApi.transformIntoPartial[User].asOption
+  // Some(User(Name(John, Surname(Smith))))
+
+Simple and easy! And no need to worry that you forgot to change something
+as you copy-pasted pieces of the transformation ad nauseam!
+
+It can also be generated for you when you works with sealed hierarchies
+(including Scala 3's enum):
+
+.. code-block:: scala
+
+  sealed trait UserStatusAPI
+  object UserStatusAPI {
+    case object Active extends UserStatusAPI
+    case class Inactive(cause: String) extends UserStatusAPI
+  }
+
+  enum UserStatus:
+    case Active
+    case Inactive(cause: String)
+
+  val userStatusAPI: UserStatusAPI = UserStatusAPI.Active
+  val userStatus: UserStatus = UserStatus.Inactive("banned")
+
+.. code-block:: scala
+
+  import io.scalaland.chimney.dsl._
+
+  userStatusApi.transformInto[UserStatus]
+  // UserStatus.Active
+
+  userStatus.transformInto[UserStatusAPI]
+  // UserStatusAPI.Inactive(banned)
+
+and Java Beans:
+
+.. code-block:: scala
+
+  class UserBean {
+    private var name: String = _
+    private var surname: String = _
+
+    def getName: String = name
+    def setName(name: String): Unit = this.name = name
+
+    def getSurname: String = surname
+    def setSurname(surname: String): Unit = this.surname = surname
+
+    override def toString(): String = s"UserBean($name, $surname)"
+  }
+
+  val userBean = new UserBean()
+  userBean.setName("John")
+  userBean.setSurname("Smith")
+
+.. code-block:: scala
+
+  import io.scalaland.chimney.dsl._
+
+  user.into[UserBean].enableBeanSetters.transform
+  // UserBean(John, Smith)
+
+  userBean.into[User].enableBeanGetters.transform
+  // User(John, Smith)
+
+With Chimney, this and much more can be safely generated for you by the compiler -
+the more repetitive transformation you have the more boilerplate you will shrug off!
+
 Transformers
 ------------
 

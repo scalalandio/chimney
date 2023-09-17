@@ -36,6 +36,33 @@ transformer: ``Transformer[T, U]``.
   (new Car(180, 5)).transformInto[Vehicle]
   // Vehicle(180.0)
 
+
+Case classes
+------------
+
+Given types ``T`` and ``U`` such that both are case classes,
+and that each field in ``U`` type has a corresponding field in ``T``,
+Chimney is able to use fields in ``T`` as sources for values in ``U`` fields
+to generate transformer: ``Transformer[T, U]``.
+
+.. code-block:: scala
+
+  case class User(name: String, surname: String, age: Int)
+  case class AgelessUser(name: String, surname: String)
+
+  User("John", "Smith", 21).transformInto[AgelessUser]
+  // AgelessUser(John, Smith)
+
+.. note::
+
+  Actually, Chimney doesn't restrict itself only to case classes -
+  what it actually requires is that ``T`` type has public ``val`` s
+  (so they can be read) and ``U`` type has a public primary constructor
+  (so it can be called). If you want to customize transformation, then
+  the constructor's arguments matching names and types of its ``val`` s
+  (so that you could refer to them in DSL).
+
+
 Value classes
 -------------
 
@@ -58,6 +85,31 @@ them in a special way, supporting automatic value class field extraction and wra
   // plain.Person(10, "Bill", 30)
   val richPerson2 = plainPerson.transformInto[rich.Person]
   // rich.Person(PersonId(10), PersonName("Bill"), 30)
+
+
+Sealed hierarchies and enums
+----------------------------
+
+Given types ``T`` and ``U`` such that both are sealed traits/abstract classes,
+where each ``T`` subtype has a corresponding ``U`` subtype, and for each such
+pair transformation can be generated, Chimney is able to pattern-match each value
+from ``T`` and transform it to a corresponding ``U`` 's subtype value, while
+creating ``transformer: Transformer[T, U]``.
+
+.. code-block:: scala
+
+  sealed trait UserStatusAPI
+  object UserStatusAPI {
+    case object Active extends UserStatusAPI
+    case class Inactive(cause: String) extends UserStatusAPI
+    case object Unknown extends UserStatusAPI
+  }
+
+  enum UserStatus:
+    case Active
+    case Inactive(cause: String)
+
+  (UserStatus.Inactive("banned"): UserStatus).transformInto[UserStatusAPI]
 
 
 Options
