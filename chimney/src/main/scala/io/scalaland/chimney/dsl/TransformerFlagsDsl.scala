@@ -15,7 +15,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * By default only values defined directly in the type are considered. With this flag supertype methods would not be filtered out
     *
-    * @see TODO
+    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#using-inherited-accessors]] for more details
     *
     * @since 0.8.0
     */
@@ -24,7 +24,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable inherited accessors lookup that was previously enabled by `enableInheritedAccessors`
     *
-    * @see TODO
+    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#using-inherited-accessors]] for more details
     *
     * @since 0.8.0
     */
