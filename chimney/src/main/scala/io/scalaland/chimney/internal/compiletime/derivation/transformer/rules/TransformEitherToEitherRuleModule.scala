@@ -14,88 +14,97 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
       (Type[From], Type[To]) match {
         case (Type.Either.Left(fromL, fromR), Type.Either(toL, toR)) if !Type[To].isRight =>
           import fromL.Underlying as FromL, fromR.Underlying as FromR, toL.Underlying as ToL, toR.Underlying as ToR
-          deriveRecursiveTransformationExpr[fromL.Underlying, toL.Underlying](
-            ctx.src.upcastExpr[Left[fromL.Underlying, fromR.Underlying]].value
-          ).flatMap { (derivedToL: TransformationExpr[toL.Underlying]) =>
-            // We're constructing:
-            // '{ Left( ${ derivedToL } ) // from ${ src }.value }
-            DerivationResult.expanded(
-              derivedToL.map(Expr.Either.Left[toL.Underlying, toR.Underlying](_).upcastExpr[To])
-            )
-          }
+          mapLeft[From, To, FromL, FromR, ToL, ToR]
         case (Type.Either.Right(fromL, fromR), Type.Either(toL, toR)) if !Type[To].isLeft =>
           import fromL.Underlying as FromL, fromR.Underlying as FromR, toL.Underlying as ToL, toR.Underlying as ToR
-          deriveRecursiveTransformationExpr[fromR.Underlying, toR.Underlying](
-            ctx.src.upcastExpr[Right[fromL.Underlying, fromR.Underlying]].value
-          ).flatMap { (derivedToR: TransformationExpr[toR.Underlying]) =>
-            // We're constructing:
-            // '{ Right( ${ derivedToR } ) // from ${ src }.value }
-            DerivationResult.expanded(
-              derivedToR.map(Expr.Either.Right[toL.Underlying, toR.Underlying](_).upcastExpr[To])
-            )
-          }
+          mapRight[From, To, FromL, FromR, ToL, ToR]
         case (Type.Either(fromL, fromR), Type.Either(toL, toR)) =>
           import fromL.Underlying as FromL, fromR.Underlying as FromR, toL.Underlying as ToL, toR.Underlying as ToR
-          val toLeftResult = ExprPromise
-            .promise[fromL.Underlying](ExprPromise.NameGenerationStrategy.FromPrefix("left"))
-            .traverse { (leftExpr: Expr[fromL.Underlying]) =>
-              deriveRecursiveTransformationExpr[fromL.Underlying, toL.Underlying](leftExpr)
-            }
-
-          val toRightResult = ExprPromise
-            .promise[fromR.Underlying](ExprPromise.NameGenerationStrategy.FromPrefix("right"))
-            .traverse { (rightExpr: Expr[fromR.Underlying]) =>
-              deriveRecursiveTransformationExpr[fromR.Underlying, toR.Underlying](rightExpr)
-            }
-
-          val inLeft =
-            (expr: Expr[toL.Underlying]) => Expr.Either.Left[toL.Underlying, toR.Underlying](expr).upcastExpr[To]
-          val inRight =
-            (expr: Expr[toR.Underlying]) => Expr.Either.Right[toL.Underlying, toR.Underlying](expr).upcastExpr[To]
-
-          toLeftResult
-            .map2(toRightResult) {
-              (
-                  toLeft: ExprPromise[fromL.Underlying, TransformationExpr[toL.Underlying]],
-                  toRight: ExprPromise[fromR.Underlying, TransformationExpr[toR.Underlying]]
-              ) =>
-                (toLeft.exprPartition, toRight.exprPartition) match {
-                  case (Left(totalToLeft), Left(totalToRight)) =>
-                    // We're constructing:
-                    // '{ ${ src }.fold {
-                    //    left: $fromL => Left(${ derivedToL })
-                    // } {
-                    //    right: $fromR => Right(${ derivedToR })
-                    // }
-                    TransformationExpr.fromTotal(
-                      ctx.src
-                        .upcastExpr[Either[fromL.Underlying, fromR.Underlying]]
-                        .fold[To](
-                          totalToLeft.map(inLeft).fulfilAsLambda
-                        )(
-                          totalToRight.map(inRight).fulfilAsLambda
-                        )
-                    )
-                  case _ =>
-                    // We're constructing:
-                    // '{ ${ src }.fold {
-                    //    left: $fromL => ${ derivedToL }.map(Left(_))
-                    // } {
-                    //    right: $fromR => ${ derivedToR }.map(Right(_))
-                    // }
-                    TransformationExpr.fromPartial(
-                      ctx.src
-                        .upcastExpr[Either[fromL.Underlying, fromR.Underlying]]
-                        .fold[partial.Result[To]](
-                          toLeft.map(_.ensurePartial.map[To](Expr.Function1.instance(inLeft))).fulfilAsLambda
-                        )(
-                          toRight.map(_.ensurePartial.map[To](Expr.Function1.instance(inRight))).fulfilAsLambda
-                        )
-                    )
-                }
-            }
-            .flatMap(DerivationResult.expanded)
+          mapEither[From, To, FromL, FromR, ToL, ToR]
         case _ => DerivationResult.attemptNextRule
       }
+
+    private def mapLeft[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[Rule.ExpansionResult[To]] =
+      deriveRecursiveTransformationExpr[FromL, ToL](
+        ctx.src.upcastExpr[Left[FromL, FromR]].value
+      ).flatMap { (derivedToL: TransformationExpr[ToL]) =>
+        // We're constructing:
+        // '{ Left( ${ derivedToL } ) // from ${ src }.value }
+        DerivationResult.expanded(derivedToL.map(Expr.Either.Left[ToL, ToR](_).upcastExpr[To]))
+      }
+
+    private def mapRight[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[Rule.ExpansionResult[To]] =
+      deriveRecursiveTransformationExpr[FromR, ToR](
+        ctx.src.upcastExpr[Right[FromL, FromR]].value
+      ).flatMap { (derivedToR: TransformationExpr[ToR]) =>
+        // We're constructing:
+        // '{ Right( ${ derivedToR } ) // from ${ src }.value }
+        DerivationResult.expanded(derivedToR.map(Expr.Either.Right[ToL, ToR](_).upcastExpr[To]))
+      }
+
+    private def mapEither[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[Rule.ExpansionResult[To]] = {
+      val toLeftResult = ExprPromise
+        .promise[FromL](ExprPromise.NameGenerationStrategy.FromPrefix("left"))
+        .traverse { (leftExpr: Expr[FromL]) =>
+          deriveRecursiveTransformationExpr[FromL, ToL](leftExpr)
+        }
+
+      val toRightResult = ExprPromise
+        .promise[FromR](ExprPromise.NameGenerationStrategy.FromPrefix("right"))
+        .traverse { (rightExpr: Expr[FromR]) =>
+          deriveRecursiveTransformationExpr[FromR, ToR](rightExpr)
+        }
+
+      val inLeft =
+        (expr: Expr[ToL]) => Expr.Either.Left[ToL, ToR](expr).upcastExpr[To]
+      val inRight =
+        (expr: Expr[ToR]) => Expr.Either.Right[ToL, ToR](expr).upcastExpr[To]
+
+      toLeftResult
+        .map2(toRightResult) {
+          (toLeft: ExprPromise[FromL, TransformationExpr[ToL]], toRight: ExprPromise[FromR, TransformationExpr[ToR]]) =>
+            (toLeft.exprPartition, toRight.exprPartition) match {
+              case (Left(totalToLeft), Left(totalToRight)) =>
+                // We're constructing:
+                // '{ ${ src }.fold {
+                //    left: $fromL => Left(${ derivedToL })
+                // } {
+                //    right: $fromR => Right(${ derivedToR })
+                // }
+                TransformationExpr.fromTotal(
+                  ctx.src
+                    .upcastExpr[Either[FromL, FromR]]
+                    .fold[To](
+                      totalToLeft.map(inLeft).fulfilAsLambda
+                    )(
+                      totalToRight.map(inRight).fulfilAsLambda
+                    )
+                )
+              case _ =>
+                // We're constructing:
+                // '{ ${ src }.fold {
+                //    left: $fromL => ${ derivedToL }.map(Left(_))
+                // } {
+                //    right: $fromR => ${ derivedToR }.map(Right(_))
+                // }
+                TransformationExpr.fromPartial(
+                  ctx.src
+                    .upcastExpr[Either[FromL, FromR]]
+                    .fold[partial.Result[To]](
+                      toLeft.map(_.ensurePartial.map[To](Expr.Function1.instance(inLeft))).fulfilAsLambda
+                    )(
+                      toRight.map(_.ensurePartial.map[To](Expr.Function1.instance(inRight))).fulfilAsLambda
+                    )
+                )
+            }
+        }
+        .flatMap(DerivationResult.expanded)
+    }
   }
 }
