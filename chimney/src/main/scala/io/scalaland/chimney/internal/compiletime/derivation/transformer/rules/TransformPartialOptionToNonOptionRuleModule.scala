@@ -12,24 +12,28 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       (ctx, Type[From]) match {
-        case (TransformationContext.ForPartial(src, _), Type.Option(from2)) if !Type[To].isOption =>
-          import from2.Underlying
-          DerivationResult
-            .direct { (await: DerivationResult.Await[TransformationExpr[To]]) =>
-              // We're constructing:
-              // ${ src }.map[partial.Result[$To]] { from2Expr: $from2 =>
-              //   ${ derivedResultTo } // wrap if needed
-              // }.getOrElse(partial.Result.empty)
-              src
-                .upcastExpr[Option[from2.Underlying]]
-                .map(Expr.Function1.instance[from2.Underlying, partial.Result[To]] {
-                  (from2Expr: Expr[from2.Underlying]) =>
-                    await(deriveRecursiveTransformationExpr[from2.Underlying, To](from2Expr)).ensurePartial
-                })
-                .getOrElse(ChimneyExpr.PartialResult.fromEmpty[To])
-            }
-            .flatMap(DerivationResult.expandedPartial(_))
+        case (TransformationContext.ForPartial(_, _), Type.Option(from2)) if !Type[To].isOption =>
+          import from2.Underlying as InnerFrom
+          mapOptionToPartial[From, To, InnerFrom]
         case _ => DerivationResult.attemptNextRule
       }
+
+    private def mapOptionToPartial[From, To, InnerFrom: Type](implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[Rule.ExpansionResult[To]] =
+      DerivationResult
+        .direct { (await: DerivationResult.Await[TransformationExpr[To]]) =>
+          // We're constructing:
+          // ${ src }.map[partial.Result[$To]] { innerFrom: $InnerFrom =>
+          //   ${ derivedResultTo } // wrap if needed
+          // }.getOrElse(partial.Result.empty)
+          ctx.src
+            .upcastExpr[Option[InnerFrom]]
+            .map(Expr.Function1.instance[InnerFrom, partial.Result[To]] { (from2Expr: Expr[InnerFrom]) =>
+              await(deriveRecursiveTransformationExpr[InnerFrom, To](from2Expr)).ensurePartial
+            })
+            .getOrElse(ChimneyExpr.PartialResult.fromEmpty[To])
+        }
+        .flatMap(DerivationResult.expandedPartial(_))
   }
 }

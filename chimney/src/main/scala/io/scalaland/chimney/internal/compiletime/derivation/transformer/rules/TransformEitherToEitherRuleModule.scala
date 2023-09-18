@@ -31,7 +31,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
         ctx.src.upcastExpr[Left[FromL, FromR]].value
       ).flatMap { (derivedToL: TransformationExpr[ToL]) =>
         // We're constructing:
-        // '{ Left( ${ derivedToL } ) // from ${ src }.value }
+        // '{ Left( ${ derivedToL } ) /* from ${ src }.value */ }
         DerivationResult.expanded(derivedToL.map(Expr.Either.Left[ToL, ToR](_).upcastExpr[To]))
       }
 
@@ -42,7 +42,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
         ctx.src.upcastExpr[Right[FromL, FromR]].value
       ).flatMap { (derivedToR: TransformationExpr[ToR]) =>
         // We're constructing:
-        // '{ Right( ${ derivedToR } ) // from ${ src }.value }
+        // '{ Right( ${ derivedToR } ) /* from ${ src }.value */ }
         DerivationResult.expanded(derivedToR.map(Expr.Either.Right[ToL, ToR](_).upcastExpr[To]))
       }
 
@@ -73,9 +73,9 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
               case (Left(totalToLeft), Left(totalToRight)) =>
                 // We're constructing:
                 // '{ ${ src }.fold {
-                //    left: $fromL => Left(${ derivedToL })
+                //    left: $FromL => Left(${ derivedToL })
                 // } {
-                //    right: $fromR => Right(${ derivedToR })
+                //    right: $FromR => Right(${ derivedToR })
                 // }
                 TransformationExpr.fromTotal(
                   ctx.src
@@ -89,9 +89,9 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
               case _ =>
                 // We're constructing:
                 // '{ ${ src }.fold {
-                //    left: $fromL => ${ derivedToL }.map(Left(_))
+                //    left: $FromL => ${ derivedToL }.map(Left(_))
                 // } {
-                //    right: $fromR => ${ derivedToR }.map(Right(_))
+                //    right: $FromR => ${ derivedToR }.map(Right(_))
                 // }
                 TransformationExpr.fromPartial(
                   ctx.src

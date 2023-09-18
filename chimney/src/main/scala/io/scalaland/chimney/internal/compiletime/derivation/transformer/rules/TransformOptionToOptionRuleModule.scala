@@ -15,54 +15,56 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
         case _ if Type[From].isOption && Type[To] <:< Type[None.type] =>
           DerivationResult
             .notSupportedTransformerDerivation(ctx)
-            .log(
-              s"Discovered that target type is ${Type.prettyPrint[None.type]} which we explicitly reject"
-            )
+            .log(s"Discovered that target type is ${Type.prettyPrint[None.type]} which we explicitly reject")
         case (Type.Option(from2), Type.Option(to2)) =>
-          import from2.Underlying as From2, to2.Underlying as To2
-          ExprPromise
-            .promise[from2.Underlying](ExprPromise.NameGenerationStrategy.FromType)
-            .traverse { (newFromExpr: Expr[from2.Underlying]) =>
-              deriveRecursiveTransformationExpr[from2.Underlying, to2.Underlying](newFromExpr)
-            }
-            .flatMap { (derivedToExprPromise: ExprPromise[from2.Underlying, TransformationExpr[to2.Underlying]]) =>
-              derivedToExprPromise.foldTransformationExpr {
-                (totalP: ExprPromise[from2.Underlying, Expr[to2.Underlying]]) =>
-                  // We're constructing:
-                  // '{ ${ src }.map(from2: $from2 => ${ derivedTo2 }) }
-                  DerivationResult.expandedTotal(
-                    ctx.src
-                      .upcastExpr[Option[from2.Underlying]]
-                      .map(totalP.fulfilAsLambda[to2.Underlying])
-                      .upcastExpr[To]
-                  )
-              } { (partialP: ExprPromise[from2.Underlying, Expr[partial.Result[to2.Underlying]]]) =>
-                // We're constructing:
-                // ${ src }.fold[$To](partial.Result.Value(None)) { from2: $from2 =>
-                //   ${ derivedResultTo2 }.map(Option(_))
-                // }
-                DerivationResult.expandedPartial(
-                  ctx.src
-                    .upcastExpr[Option[from2.Underlying]]
-                    .fold(
-                      ChimneyExpr.PartialResult
-                        .Value(Expr.Option.None)
-                        .upcastExpr[partial.Result[Option[to2.Underlying]]]
-                    )(
-                      partialP
-                        .map { (derivedResultTo2: Expr[partial.Result[to2.Underlying]]) =>
-                          derivedResultTo2.map(Expr.Function1.instance { (param: Expr[to2.Underlying]) =>
-                            Expr.Option(param)
-                          })
-                        }
-                        .fulfilAsLambda[partial.Result[Option[to2.Underlying]]]
-                    )
-                    .upcastExpr[partial.Result[To]]
-                )
-              }
-            }
+          import from2.Underlying as InnerFrom, to2.Underlying as InnerTo
+          mapOptions[From, To, InnerFrom, InnerTo]
         case _ =>
           DerivationResult.attemptNextRule
       }
+
+    private def mapOptions[From, To, InnerFrom: Type, InnerTo: Type](implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[Rule.ExpansionResult[To]] =
+      ExprPromise
+        .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromType)
+        .traverse { (newFromExpr: Expr[InnerFrom]) =>
+          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromExpr)
+        }
+        .flatMap { (derivedToExprPromise: ExprPromise[InnerFrom, TransformationExpr[InnerTo]]) =>
+          derivedToExprPromise.foldTransformationExpr { (totalP: ExprPromise[InnerFrom, Expr[InnerTo]]) =>
+            // We're constructing:
+            // '{ ${ src }.map(innerFrom: $InnerFrom => ${ derivedInnerTo }) }
+            DerivationResult.expandedTotal(
+              ctx.src
+                .upcastExpr[Option[InnerFrom]]
+                .map(totalP.fulfilAsLambda[InnerTo])
+                .upcastExpr[To]
+            )
+          } { (partialP: ExprPromise[InnerFrom, Expr[partial.Result[InnerTo]]]) =>
+            // We're constructing:
+            // ${ src }.fold[$To](partial.Result.Value(None)) { innerFrom: $InnerFrom =>
+            //   ${ derivedResultInnerTo }.map(Option(_))
+            // }
+            DerivationResult.expandedPartial(
+              ctx.src
+                .upcastExpr[Option[InnerFrom]]
+                .fold(
+                  ChimneyExpr.PartialResult
+                    .Value(Expr.Option.None)
+                    .upcastExpr[partial.Result[Option[InnerTo]]]
+                )(
+                  partialP
+                    .map { (derivedResultTo2: Expr[partial.Result[InnerTo]]) =>
+                      derivedResultTo2.map(Expr.Function1.instance { (param: Expr[InnerTo]) =>
+                        Expr.Option(param)
+                      })
+                    }
+                    .fulfilAsLambda[partial.Result[Option[InnerTo]]]
+                )
+                .upcastExpr[partial.Result[To]]
+            )
+          }
+        }
   }
 }
