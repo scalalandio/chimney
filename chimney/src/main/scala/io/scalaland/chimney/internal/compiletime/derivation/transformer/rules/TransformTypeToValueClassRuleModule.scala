@@ -12,24 +12,30 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[To] match {
         case ValueClassType(to2) =>
-          import to2.{Underlying, value as valueTo}
-          deriveRecursiveTransformationExpr[From, to2.Underlying](ctx.src)
-            .flatMap { derivedTo2 =>
-              // We're constructing:
-              // '{ new $To(${ derivedTo2 }) }
-              DerivationResult.expanded(derivedTo2.map(valueTo.wrap))
-            }
-            // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
-            .orElse(TransformProductToProductRule.expand(ctx))
-            .orElse(
-              DerivationResult
-                .notSupportedTransformerDerivationForField(valueTo.fieldName)(ctx)
-                .log(
-                  s"Failed to resolve derivation from ${Type.prettyPrint[From]} to ${Type
-                      .prettyPrint[to2.Underlying]} (wrapped by ${Type.prettyPrint[To]})"
-                )
-            )
+          import to2.{Underlying as InnerTo, value as valueTo}
+          transformToInnerToAndWrap[From, To, InnerTo](valueTo.wrap, valueTo.fieldName)
         case _ => DerivationResult.attemptNextRule
       }
   }
+
+  private def transformToInnerToAndWrap[From, To, InnerTo: Type](
+      wrap: Expr[InnerTo] => Expr[To],
+      fieldName: String
+  )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+    deriveRecursiveTransformationExpr[From, InnerTo](ctx.src)
+      .flatMap { derivedInnerTo =>
+        // We're constructing:
+        // '{ new $To(${ derivedInnerTo }) }
+        DerivationResult.expanded(derivedInnerTo.map(wrap))
+      }
+      // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
+      .orElse(TransformProductToProductRule.expand(ctx))
+      .orElse(
+        DerivationResult
+          .notSupportedTransformerDerivationForField(fieldName)(ctx)
+          .log(
+            s"Failed to resolve derivation from ${Type.prettyPrint[From]} to ${Type
+                .prettyPrint[InnerTo]} (wrapped by ${Type.prettyPrint[To]})"
+          )
+      )
 }

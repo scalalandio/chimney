@@ -17,10 +17,15 @@ private[compiletime] trait TransformToOptionRuleModule { this: Derivation & Tran
       else if (Type[To].isOption)
         DerivationResult.namedScope(s"Lifting ${Type.prettyPrint[From]} -> ${Type
             .prettyPrint[To]} transformation into ${Type.prettyPrint[Option[From]]} -> ${Type.prettyPrint[To]}") {
-          // We're constructing:
-          // '{ Option(${ derivedTo2 }) } }
-          TransformOptionToOptionRule.expand(ctx.updateFromTo[Option[From], To](Expr.Option(ctx.src)))
+          wrapInOptionAndTransform[From, To]
         }
       else DerivationResult.attemptNextRule
   }
+
+  private def wrapInOptionAndTransform[From, To](implicit
+      ctx: TransformationContext[From, To]
+  ): DerivationResult[Rule.ExpansionResult[To]] =
+    // We're constructing:
+    // '{ Option(${ derivedTo2 }) } }
+    TransformOptionToOptionRule.expand(ctx.updateFromTo[Option[From], To](Expr.Option(ctx.src)))
 }
