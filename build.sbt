@@ -213,12 +213,13 @@ val publishSettings = Seq(
 
 val mimaSettings = Seq(
   mimaPreviousArtifacts := {
-    name.value match {
-      case nameValue =>
-        Set(
-          organization.value %% moduleName.value % "0.7.5"
-        )
+    val previousVersions = moduleName.value match {
+      case "chimney"               => Set("0.8.0-RC1")
+      case "chimney-cats"          => Set("0.8.0-RC1")
+      case "chimney-macro-commons" => Set() // we're not guaranteeing stability of this library just yet
+      case _                       => Set()
     }
+    previousVersions.map(organization.value %% moduleName.value % _)
   }
 )
 
@@ -237,9 +238,11 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
   def tasksOf(name: String): Vector[String] = projects.map(project => s"$project/$name")
 
   val tasks = if (isJVM) {
-    (clean :+ "scalafmtCheck" :+ "Test/scalafmtCheck") ++ tasksOf("compile") ++ withCoverage(
-      (tasksOf("test") ++ tasksOf("coverageReport"))*
-    ) :+ "benchmarks/compile"
+    clean ++
+      Vector("scalafmtCheck", "Test/scalafmtCheck") ++
+      withCoverage((tasksOf("compile") ++ tasksOf("test") ++ tasksOf("coverageReport")).toSeq*) ++
+      Vector("benchmarks/compile") ++
+      tasksOf("mimaReportBinaryIssues")
   } else {
     clean ++ tasksOf("test")
   }
@@ -317,6 +320,9 @@ lazy val chimneyMacroCommons = projectMatrix
   .settings(versionSchemeSettings*)
   .settings(publishSettings*)
   .settings(dependencies*)
+  .settings(
+    mimaFailOnNoPrevious := false
+  )
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
@@ -374,6 +380,7 @@ lazy val protobufs = projectMatrix
   )
   .settings(settings*)
   .settings(noPublishSettings*)
+  .settings(mimaSettings*)
   .settings(
     scalacOptions := {
       // protobufs Compile contains only generated classes, and scalacOptions from settings:* breaks Scala 3 compilation
@@ -381,7 +388,8 @@ lazy val protobufs = projectMatrix
       else Seq.empty
     },
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
-    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
+    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
+    mimaFailOnNoPrevious := false
   )
   .dependsOn(chimney % "test->test;compile->compile")
 
