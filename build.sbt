@@ -409,8 +409,15 @@ lazy val chimneyProtobufs = projectMatrix
   .settings(
     scalacOptions := {
       // protobufs Compile contains only generated classes, and scalacOptions from settings:* breaks Scala 3 compilation
-      if (scalacOptions.value.contains("-scalajs")) Seq("-scalajs")
-      else Seq.empty
+      val resetOptions = if (scalacOptions.value.contains("-scalajs")) Seq("-scalajs") else Seq.empty
+      val reAddNecessary = CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 12)) =>
+          Seq(
+            "-language:higherKinds"
+          )
+        case _ => Seq.empty
+      }
+      resetOptions ++ reAddNecessary
     },
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
     Test / PB.protoSources += PB.externalSourcePath.value,
