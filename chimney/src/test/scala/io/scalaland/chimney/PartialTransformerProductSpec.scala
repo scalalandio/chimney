@@ -66,6 +66,20 @@ class PartialTransformerProductSpec extends ChimneySpec {
     result.asOption.map(_.x) ==> Some(100)
     result.asEither.map(_.x) ==> Right(100)
     result.asErrorPathMessageStrings ==> Iterable.empty
+
+    val result2 = CaseBar(100).intoPartial[BaseFoo].transform
+
+    result2.asOption.map(_.x) ==> Some(100)
+    result2.asEither.map(_.x) ==> Right(100)
+    result2.asErrorPathMessageStrings ==> Iterable.empty
+  }
+
+  test("""transform from a subtype to a non-abstract supertype with modifiers""") {
+    val result = CaseBar(100).intoPartial[BaseFoo].withFieldConst(_.x, 200).transform
+
+    result.asOption.map(_.x) ==> Some(200)
+    result.asEither.map(_.x) ==> Right(200)
+    result.asErrorPathMessageStrings ==> Iterable.empty
   }
 
   group("setting .withFieldConst(_.field, value)") {
