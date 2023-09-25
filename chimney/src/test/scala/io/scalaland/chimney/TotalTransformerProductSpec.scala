@@ -36,6 +36,11 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
   test("""transform from a subtype to a non-abstract supertype without modifiers""") {
     CaseBar(100).transformInto[BaseFoo].x ==> 100
+    CaseBar(100).into[BaseFoo].transform.x ==> 100
+  }
+
+  test("""transform from a subtype to a non-abstract supertype without modifiers""") {
+    CaseBar(100).into[BaseFoo].withFieldConst(_.x, 200).transform.x ==> 200
   }
 
   group("setting .withFieldConst(_.field, value)") {
