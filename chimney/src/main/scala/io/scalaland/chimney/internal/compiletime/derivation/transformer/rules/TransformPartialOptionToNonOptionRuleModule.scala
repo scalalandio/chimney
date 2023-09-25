@@ -11,10 +11,17 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
   protected object TransformPartialOptionToNonOptionRule extends Rule("PartialOptionToNonOption") {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-      (ctx, Type[From]) match {
-        case (TransformationContext.ForPartial(_, _), Type.Option(from2)) if !Type[To].isOption =>
-          import from2.Underlying as InnerFrom
-          mapOptionToPartial[From, To, InnerFrom]
+      Type[From] match {
+        case (Type.Option(from2)) if !Type[To].isOption =>
+          ctx match {
+            case TransformationContext.ForPartial(_, _) =>
+              import from2.Underlying as InnerFrom
+              mapOptionToPartial[From, To, InnerFrom]
+            case _ =>
+              DerivationResult.attemptNextRuleBecause(
+                "Safe Option unwrapping is available only for PartialTransformers"
+              )
+          }
         case _ => DerivationResult.attemptNextRule
       }
 

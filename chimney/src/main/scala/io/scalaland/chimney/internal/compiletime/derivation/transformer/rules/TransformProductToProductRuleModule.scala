@@ -18,7 +18,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       (Type[From], Type[To]) match {
         case (Product.Extraction(fromExtractors), Product.Constructor(parameters, constructor)) =>
           mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, parameters, constructor)
-        case _ => DerivationResult.attemptNextRule
+        case _ =>
+          DerivationResult.attemptNextRuleBecause(
+            s"Type ${Type.prettyPrint[To]} does not have a public primary constructor"
+          )
       }
 
     private def mapOverridesAndExtractorsToConstructorArguments[From, To](

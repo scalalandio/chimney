@@ -25,10 +25,10 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     sealed trait ExpansionResult[+A]
     object ExpansionResult {
       // successfully expanded TransformationExpr
-      case class Expanded[A](transformationExpr: TransformationExpr[A]) extends ExpansionResult[A]
+      final case class Expanded[A](transformationExpr: TransformationExpr[A]) extends ExpansionResult[A]
 
       // continue expansion with another rule on the list
-      case object AttemptNextRule extends ExpansionResult[Nothing]
+      final case class AttemptNextRule(reason: Option[String]) extends ExpansionResult[Nothing]
     }
 
     /** Attempt to apply rules in order in which they are on list. The first match wins. */
@@ -47,7 +47,12 @@ private[compiletime] trait TransformationRules { this: Derivation =>
               DerivationResult
                 .log(s"Rule ${rule.name} expanded successfully: ${transformationExpr.prettyPrint}")
                 .as(transformationExpr.asInstanceOf[TransformationExpr[To]])
-            case ExpansionResult.AttemptNextRule =>
+            case ExpansionResult.AttemptNextRule(Some(reason)) =>
+              DerivationResult.log(
+                s"Rule ${rule.name} decided to pass on to the next rule - some conditions were fulfilled but at least one failed: $reason"
+              ) >>
+                expandRules[From, To](nextRules)
+            case ExpansionResult.AttemptNextRule(None) =>
               DerivationResult.log(s"Rule ${rule.name} decided to pass on to the next rule") >>
                 expandRules[From, To](nextRules)
           }

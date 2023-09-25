@@ -31,7 +31,9 @@ private[compiletime] trait ResultOps { this: Derivation =>
       DerivationResult.pure(Rule.ExpansionResult.Expanded(TransformationExpr.PartialExpr[To](expr)))
 
     def attemptNextRule[A]: DerivationResult[Rule.ExpansionResult[A]] =
-      DerivationResult.pure(Rule.ExpansionResult.AttemptNextRule)
+      DerivationResult.pure(Rule.ExpansionResult.AttemptNextRule(None))
+    def attemptNextRuleBecause[A](reason: String): DerivationResult[Rule.ExpansionResult[A]] =
+      DerivationResult.pure(Rule.ExpansionResult.AttemptNextRule(Some(reason)))
 
     def missingAccessor[From, To, Field: Type, A](fieldName: String, isAccessorAvailable: Boolean)(implicit
         ctx: TransformationContext[From, To]
