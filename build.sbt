@@ -234,7 +234,7 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
   def withCoverage(tasks: String*): Vector[String] =
     "coverage" +: tasks.toVector :+ "coverageAggregate" :+ "coverageOff"
 
-  val projects = Vector("chimney", "chimneyCats", "protobufs")
+  val projects = Vector("chimney", "chimneyCats", "chimneyProtobufs")
     .map(name => s"$name${if (isJVM) "" else platform}$scalaSuffix")
   def tasksOf(name: String): Vector[String] = projects.map(project => s"$project/$name")
 
@@ -260,7 +260,7 @@ lazy val root = project
   .settings(publishSettings)
   .settings(noPublishSettings)
   .aggregate(
-    (chimneyMacroCommons.projectRefs ++ chimney.projectRefs ++ chimneyCats.projectRefs ++ protobufs.projectRefs)*
+    (chimneyMacroCommons.projectRefs ++ chimney.projectRefs ++ chimneyCats.projectRefs ++ chimneyProtobufs.projectRefs)*
   )
   .settings(
     moduleName := "chimney-build",
@@ -371,8 +371,8 @@ lazy val chimneyCats = projectMatrix
   .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0" % "provided")
   .dependsOn(chimney % "test->test;compile->compile")
 
-lazy val protobufs = projectMatrix
-  .in(file("protobufs"))
+lazy val chimneyProtobufs = projectMatrix
+  .in(file("chimney-protobufs"))
   .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin)
@@ -391,6 +391,8 @@ lazy val protobufs = projectMatrix
       else Seq.empty
     },
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
+    Test / PB.protoSources += PB.externalSourcePath.value,
+    Test / PB.targets := Seq(scalapb.gen() -> (Test / sourceManaged).value / "scalapb"),
     libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
     mimaFailOnNoPrevious := false
   )
