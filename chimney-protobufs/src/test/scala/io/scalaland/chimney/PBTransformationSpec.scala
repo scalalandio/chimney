@@ -175,13 +175,6 @@ class PBTransformationSpec extends ChimneySpec {
 
   group("transformer sealed traits generated from oneof") {
 
-    object HandleEmptyAutomatically {
-      // TODO: consider creating some protobuf integration module in the future
-      type IsEmpty = scalapb.GeneratedOneof { type ValueType = Nothing }
-      implicit def handleEmptyInstance[From <: IsEmpty, To]: PartialTransformer[From, To] =
-        PartialTransformer(_ => partial.Result.fromEmpty)
-    }
-
     test("AddressBookType (oneof value - sealed contains single-value wrappers around actual products)") {
       val domainType: addressbook.AddressBookType = addressbook.AddressBookType.Private("test")
       val pbType: pb.addressbook.AddressBookType =
@@ -198,7 +191,7 @@ class PBTransformationSpec extends ChimneySpec {
         .asOption ==> Some(domainType)
       locally {
         // format: off
-        import HandleEmptyAutomatically._
+        import protobufs._
         // format: on
         pbType.value.intoPartial[addressbook.AddressBookType].transform.asOption ==> Some(domainType)
       }
