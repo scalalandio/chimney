@@ -1,3 +1,4 @@
+import com.typesafe.tools.mima.core.{Problem, ProblemFilters}
 import commandmatrix.extra.*
 
 lazy val isCI = sys.env.get("CI").contains("true")
@@ -346,7 +347,9 @@ lazy val chimney = projectMatrix
         case Some((2, _)) => Seq("-skip-packages", "io.scalaland.chimney.internal")
         case _            => Seq.empty
       }
-    }
+    },
+    // changes to macros should not cause any runtime problems
+    mimaBinaryIssueFilters := Seq(ProblemFilters.exclude[Problem]("io.scalaland.chimney.internal.compiletime.*"))
   )
   .dependsOn(chimneyMacroCommons)
 
