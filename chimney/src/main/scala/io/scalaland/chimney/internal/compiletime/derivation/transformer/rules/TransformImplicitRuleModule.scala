@@ -10,9 +10,7 @@ private[compiletime] trait TransformImplicitRuleModule { this: Derivation =>
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       if (ctx.config.areOverridesEmpty) transformWithImplicitIfAvailable[From, To]
-      else
-        DerivationResult.log("Configuration has defined overrides - attempt to summon implicits is skipped") >>
-          DerivationResult.attemptNextRule
+      else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
 
     private def transformWithImplicitIfAvailable[From, To](implicit
         ctx: TransformationContext[From, To]

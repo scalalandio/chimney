@@ -10,9 +10,7 @@ private[compiletime] trait TransformSubtypesRuleModule { this: Derivation =>
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       if (Type[From] <:< Type[To]) {
         if (ctx.config.areOverridesEmpty) transformByUpcasting[From, To]
-        else
-          DerivationResult.log("Configuration has defined overrides - attempt to upcast source is skipped") >>
-            DerivationResult.attemptNextRule
+        else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
       } else DerivationResult.attemptNextRule
 
     private def transformByUpcasting[From, To](implicit
