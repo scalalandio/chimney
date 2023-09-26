@@ -41,17 +41,50 @@ object JavaFactory {
   implicit def javaFactoryForLinkedList[A]: JavaFactory[A, java.util.LinkedList[A]] =
     new SeqImpl[A, java.util.LinkedList](new java.util.LinkedList[A], (r, a) => r.add(a))
 
+  /** @since 0.8.1 */
+  implicit def javaFactoryForVector[A]: JavaFactory[A, java.util.Vector[A]] =
+    new SeqImpl[A, java.util.Vector](new java.util.Vector[A], (r, a) => r.add(a))
+
+  // Queues
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForArrayDeque[A]: JavaFactory[A, java.util.ArrayDeque[A]] =
+    new SeqImpl[A, java.util.ArrayDeque](new java.util.ArrayDeque[A], (r, a) => r.add(a))
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForPriorityQueue[A]: JavaFactory[A, java.util.PriorityQueue[A]] =
+    new SeqImpl[A, java.util.PriorityQueue](new java.util.PriorityQueue[A], (r, a) => r.add(a))
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForStack[A]: JavaFactory[A, java.util.Stack[A]] =
+    new SeqImpl[A, java.util.Stack](new java.util.Stack[A], (r, a) => r.add(a))
+
   // Sets
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForEnumSet[A <: java.lang.Enum[A]: ClassTag]: JavaFactory[A, java.util.EnumSet[A]] =
+    new SeqImpl[A, java.util.Set](
+      java.util.EnumSet.noneOf[A](classTag[A].runtimeClass.asInstanceOf[Class[A]]),
+      (r, a) => r.add(a)
+    ).asInstanceOf[JavaFactory[A, java.util.EnumSet[A]]]
 
   /** @since 0.8.1 */
   implicit def javaFactoryForHashSet[A]: JavaFactory[A, java.util.HashSet[A]] =
     new SeqImpl[A, java.util.HashSet](new java.util.HashSet[A], (r, a) => r.add(a))
 
   /** @since 0.8.1 */
+  implicit def javaFactoryForLinkedHashSet[A]: JavaFactory[A, java.util.LinkedHashSet[A]] =
+    new SeqImpl[A, java.util.LinkedHashSet](new java.util.LinkedHashSet[A], (r, a) => r.add(a))
+
+  /** @since 0.8.1 */
   implicit def javaFactoryForTreeSet[A]: JavaFactory[A, java.util.TreeSet[A]] =
     new SeqImpl[A, java.util.TreeSet](new java.util.TreeSet[A], (r, a) => r.add(a))
 
   // Maps
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForHashtable[K, V]: JavaFactory[(K, V), java.util.Hashtable[K, V]] =
+    new MapImpl[K, V, java.util.Hashtable](new java.util.Hashtable[K, V], (m, k, v) => m.put(k, v))
 
   /** @since 0.8.1 */
   implicit def javaFactoryForEnumMap[K <: java.lang.Enum[K]: ClassTag, V]
@@ -67,8 +100,22 @@ object JavaFactory {
     new MapImpl[K, V, java.util.HashMap](new java.util.HashMap[K, V], (m, k, v) => m.put(k, v))
 
   /** @since 0.8.1 */
+  implicit def javaFactoryForIdentityHashMap[K, V]: JavaFactory[(K, V), java.util.IdentityHashMap[K, V]] =
+    new MapImpl[K, V, java.util.IdentityHashMap](new java.util.IdentityHashMap[K, V], (m, k, v) => m.put(k, v))
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForLinkedHashMap[K, V]: JavaFactory[(K, V), java.util.LinkedHashMap[K, V]] =
+    new MapImpl[K, V, java.util.LinkedHashMap](new java.util.LinkedHashMap[K, V], (m, k, v) => m.put(k, v))
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForWeakHashMap[K, V]: JavaFactory[(K, V), java.util.WeakHashMap[K, V]] =
+    new MapImpl[K, V, java.util.WeakHashMap](new java.util.WeakHashMap[K, V], (m, k, v) => m.put(k, v))
+
+  /** @since 0.8.1 */
   implicit def javaFactoryForTreeMap[K, V]: JavaFactory[(K, V), java.util.TreeMap[K, V]] =
     new MapImpl[K, V, java.util.TreeMap](new java.util.TreeMap[K, V], (m, k, v) => m.put(k, v))
+
+  // implementations
 
   final private class IteratorImpl[A] extends JavaFactory[A, java.util.Iterator[A]] {
 
@@ -80,8 +127,6 @@ object JavaFactory {
       def result(): java.util.Iterator[A] = collection.iterator()
     }
   }
-
-  // implementations
 
   final private class SeqImpl[A, CC[A1] <: java.lang.Iterable[A1]](
       create: => CC[A],
