@@ -396,7 +396,13 @@ lazy val chimneyJavaCollections = projectMatrix
 
 lazy val chimneyProtobufs = projectMatrix
   .in(file("chimney-protobufs"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
+  .someVariations(versions.scalas, versions.platforms)(
+    (only1VersionInIDE :+ MatrixAction
+      .ForPlatforms(VirtualAxis.js, VirtualAxis.native)
+      .Settings(
+        libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+      ))*
+  )
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin)
   .settings(
