@@ -215,10 +215,11 @@ val publishSettings = Seq(
 val mimaSettings = Seq(
   mimaPreviousArtifacts := {
     val previousVersions = moduleName.value match {
+      case "chimney-macro-commons"    => Set() // we're not guaranteeing stability of this library just yet
       case "chimney"                  => Set("0.8.0-RC1")
       case "chimney-cats"             => Set("0.8.0-RC1")
-      case "chimney-macro-commons"    => Set() // we're not guaranteeing stability of this library just yet
       case "chimney-java-collections" => Set() // not yet published
+      case "chimney-protobufs"        => Set() // not yet published
       case _                          => Set()
     }
     previousVersions.map(organization.value %% moduleName.value % _)
@@ -401,10 +402,10 @@ lazy val chimneyProtobufs = projectMatrix
   .settings(
     moduleName := "chimney-protobufs",
     name := "chimney-protobufs",
-    description := "Protobufs used for conversion testing"
+    description := "Integrations with selected Protobufs build-in types"
   )
   .settings(settings*)
-  .settings(noPublishSettings*)
+  .settings(publishSettings*)
   .settings(mimaSettings*)
   .settings(
     scalacOptions := {
