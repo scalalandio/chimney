@@ -1,6 +1,6 @@
 package io.scalaland.chimney.fixtures.wrappers
 
-import scala.collection.immutable.ArraySeq
+import scala.collection.compat.immutable.ArraySeq
 
 final case class Wrappers(
     wrapper1: Boolean,
