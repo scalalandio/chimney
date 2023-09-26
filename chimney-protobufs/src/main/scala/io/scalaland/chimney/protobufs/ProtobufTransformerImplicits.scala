@@ -88,7 +88,18 @@ private[protobufs] trait ProtobufTransformerImplicitsLowPriorityImplicits1 { thi
   implicit val totalTransformerFromBooleanToBoolValue: Transformer[Boolean, com.google.protobuf.wrappers.BoolValue] =
     bool => com.google.protobuf.wrappers.BoolValue.of(bool)
 
-  // TODO: BytesValue?
+  // com.google.protobuf.wrappers.BytesValue
+
+  /** @since 0.8.1 */
+  implicit def totalTransformerFromBytesValueToByteCollection[Coll[A] <: IterableOnce[A]](implicit
+      factory: Factory[Byte, Coll[Byte]]
+  ): Transformer[com.google.protobuf.wrappers.BytesValue, Coll[Byte]] =
+    wrapper => totalTransformerFromByteStringToByteCollection[Coll].transform(wrapper.value)
+
+  /** @since 0.8.1 */
+  implicit def totalTransformerFromByteCollectionToBytesValue[Coll[A] <: IterableOnce[A]]
+      : Transformer[Coll[Byte], com.google.protobuf.wrappers.BytesValue] =
+    bytes => com.google.protobuf.wrappers.BytesValue.of(totalTransformerFromByteCollectionToByteString.transform(bytes))
 
   // com.google.protobuf.wrappers.DoubleValue
 
