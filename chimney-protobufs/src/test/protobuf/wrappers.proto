@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package io.scalaland.chimney.examples.pb;
+
+import "scalapb/scalapb.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
+
+option (scalapb.options) = {
+  no_primitive_wrappers: true
+  preserve_unknown_fields: false
+};
+
+message WithEmpty {
+  google.protobuf.Empty empty_value = 1;
+}
+
+message Wrappers {
+  google.protobuf.BoolValue wrapper1 = 1;
+  google.protobuf.BytesValue wrapper2 = 2;
+  google.protobuf.DoubleValue wrapper3 = 3;
+  google.protobuf.FloatValue wrapper4 = 4;
+  google.protobuf.Int32Value wrapper5 = 5;
+  google.protobuf.Int64Value wrapper6 = 6;
+  google.protobuf.UInt32Value wrapper7 = 7;
+  google.protobuf.UInt64Value wrapper8 = 8;
+  google.protobuf.StringValue wrapper9 = 9;
+}
+
+message TimeInstances {
+  google.protobuf.Duration duration1 = 1;
+  google.protobuf.Duration duration2 = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}

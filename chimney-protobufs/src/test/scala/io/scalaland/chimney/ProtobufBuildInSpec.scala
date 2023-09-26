@@ -2,34 +2,76 @@ package io.scalaland.chimney
 
 // format: off
 import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.protobufs._
 // format: on
+
 import io.scalaland.chimney.examples.pb
-import io.scalaland.chimney.fixtures.{addressbook, order}
+import io.scalaland.chimney.fixtures.wrappers
+
+import scala.collection.compat.immutable.ArraySeq
 
 class ProtobufBuildInSpec extends ChimneySpec {
 
-  test("transform value classes between their primitive representations") {
+  test("transform com.google.protobuf.empty to Unit") {
+    val protobuf = pb.wrappers
+      .WithEmpty(Some(com.google.protobuf.empty.Empty.of()))
+    val domain = wrappers.WithEmpty(())
 
-    addressbook.PersonName("John").transformInto[String] ==> "John"
-    addressbook.PersonId(5).transformInto[Int] ==> 5
-    addressbook.Email("john@example.com").transformInto[String] ==> "john@example.com"
+    locally {
+      implicit val cfg = TransformerConfiguration.default.enableImplicitConflictResolution(PreferTotalTransformer)
+      protobuf.transformIntoPartial[wrappers.WithEmpty].asOption ==> Some(domain)
+    }
+    locally {
+      implicit val cfg = TransformerConfiguration.default.enableImplicitConflictResolution(PreferPartialTransformer)
+      protobuf.transformIntoPartial[wrappers.WithEmpty].asOption ==> None
+    }
+    domain.transformInto[pb.wrappers.WithEmpty] ==> protobuf
   }
 
-  test("not compile if target type is wrong for value class") {
+  test("transform com.google.protobuf.wrappers to unwrapped values") {
+    val bytes = ArraySeq(0.toByte, 1.toByte)
+    val protobuf = pb.wrappers.Wrappers.of(
+      Some(com.google.protobuf.wrappers.BoolValue.of(true)),
+      Some(
+        com.google.protobuf.wrappers.BytesValue
+          .of(com.google.protobuf.ByteString.copyFrom(bytes.toArray))
+      ),
+      Some(com.google.protobuf.wrappers.DoubleValue.of(4.0)),
+      Some(com.google.protobuf.wrappers.FloatValue.of(5.0f)),
+      Some(com.google.protobuf.wrappers.Int32Value.of(10)),
+      Some(com.google.protobuf.wrappers.Int64Value.of(20L)),
+      Some(com.google.protobuf.wrappers.UInt32Value.of(100)),
+      Some(com.google.protobuf.wrappers.UInt64Value.of(200L)),
+      Some(com.google.protobuf.wrappers.StringValue.of("value"))
+    )
+    val domain = wrappers.Wrappers(
+      true,
+      bytes,
+      4.0,
+      5.0f,
+      10,
+      20L,
+      100,
+      200L,
+      "value"
+    )
+    protobuf.transformIntoPartial[wrappers.Wrappers].asOption ==> Some(domain)
+    domain.transformInto[pb.wrappers.Wrappers] ==> protobuf
+  }
 
-    compileErrorsFixed(""" addressbook.PersonName("John").transformInto[Int] """)
-      .check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.PersonName to scala.Int"
-      )
+  test("transform com.google.protobuf.duration to Duration and com.google.protobuf.timestamp to Instant") {
+    val protobuf = pb.wrappers.TimeInstances.of(
+      Some(com.google.protobuf.duration.Duration.of(10L, 0)),
+      Some(com.google.protobuf.duration.Duration.of(0L, 100)),
+      Some(com.google.protobuf.timestamp.Timestamp.of(12L, 34))
+    )
+    val domain = wrappers.TimeInstances(
+      scala.concurrent.duration.Duration.fromNanos(10000000000L),
+      scala.concurrent.duration.Duration.fromNanos(100L),
+      java.time.Instant.ofEpochSecond(12L, 34L)
+    )
 
-    compileErrorsFixed(""" addressbook.PersonId(5).transformInto[String] """)
-      .check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.PersonId to java.lang.String"
-      )
-
-    compileErrorsFixed(""" addressbook.Email("john@example.com").transformInto[Float] """)
-      .check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.addressbook.Email to scala.Float"
-      )
+    protobuf.transformIntoPartial[wrappers.TimeInstances].asOption ==> Some(domain)
+    domain.transformIntoPartial[pb.wrappers.TimeInstances].asOption ==> Some(protobuf)
   }
 }
