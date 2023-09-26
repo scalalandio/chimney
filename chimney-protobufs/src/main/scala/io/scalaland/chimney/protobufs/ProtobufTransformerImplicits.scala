@@ -71,7 +71,7 @@ private[protobufs] trait ProtobufTransformerImplicitsLowPriorityImplicits1 { thi
   implicit def totalTransformerFromByteStringToByteCollection[Coll[A] <: IterableOnce[A]](implicit
       factory: Factory[Byte, Coll[Byte]]
   ): Transformer[com.google.protobuf.ByteString, Coll[Byte]] =
-    byteString => byteString.toByteArray.to(factory)
+    byteString => byteString.toByteArray().to(factory)
 
   /** @since 0.8.1 */
   implicit def totalTransformerFromByteCollectionToByteString[Coll[A] <: IterableOnce[A]]
