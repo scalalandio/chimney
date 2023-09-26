@@ -7,6 +7,32 @@ import scala.collection.compat.*
 /** @since 0.8.1 */
 trait JavaCollectionsTotalTransformerImplicits {
 
+  // Optionals
+
+  /** @since 0.8.1 */
+  implicit def totalTransformerFromJavaOptionalToScalaOption[A, B](implicit
+      aToB: Transformer[A, B]
+  ): Transformer[java.util.Optional[A], Option[B]] =
+    optional => optional.map[Option[B]](a => Some(aToB.transform(a))).orElseGet(() => None)
+
+  /** @since 0.8.1 */
+  implicit def totalTransformerFromScalaOptionToJavaOptional[A, B](implicit
+      aToB: Transformer[A, B]
+  ): Transformer[Option[A], java.util.Optional[B]] =
+    option => option.fold(java.util.Optional.empty[B]())(a => java.util.Optional.of(aToB.transform(a)))
+
+  /** @since 0.8.1 */
+  implicit def totalTransformerFromJavaOptionalToJavaOptional[A, B](implicit
+      aToB: Transformer[A, B]
+  ): Transformer[java.util.Optional[A], java.util.Optional[B]] =
+    optional => optional.map(a => aToB.transform(a))
+
+  /** @since 0.8.1 */
+  implicit def totalTransformerFromNonOptionalToJavaOptional[A, B](implicit
+      aToB: Transformer[A, B]
+  ): Transformer[A, java.util.Optional[B]] =
+    a => java.util.Optional.of(aToB.transform(a))
+
   // non-Map collections
 
   /** @since 0.8.1 */
@@ -124,8 +150,4 @@ trait JavaCollectionsTotalTransformerImplicits {
       }
       builder.result()
     }
-
-  // TODO: Optionals
-
-  // TODO: Streams ?
 }
