@@ -215,10 +215,11 @@ val publishSettings = Seq(
 val mimaSettings = Seq(
   mimaPreviousArtifacts := {
     val previousVersions = moduleName.value match {
-      case "chimney"               => Set("0.8.0-RC1")
-      case "chimney-cats"          => Set("0.8.0-RC1")
-      case "chimney-macro-commons" => Set() // we're not guaranteeing stability of this library just yet
-      case _                       => Set()
+      case "chimney"                  => Set("0.8.0-RC1")
+      case "chimney-cats"             => Set("0.8.0-RC1")
+      case "chimney-macro-commons"    => Set() // we're not guaranteeing stability of this library just yet
+      case "chimney-java-collections" => Set() // we're not guaranteeing stability of this library just yet
+      case _                          => Set()
     }
     previousVersions.map(organization.value %% moduleName.value % _)
   }
@@ -234,7 +235,8 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
   def withCoverage(tasks: String*): Vector[String] =
     "coverage" +: tasks.toVector :+ "coverageAggregate" :+ "coverageOff"
 
-  val projects = Vector("chimney", "chimneyCats", "chimneyProtobufs")
+  val projects = (Vector("chimney", "chimneyCats", "chimneyProtobufs") ++ (if (isJVM) Vector("chimneyJavaCollections")
+                                                                           else Vector.empty))
     .map(name => s"$name${if (isJVM) "" else platform}$scalaSuffix")
   def tasksOf(name: String): Vector[String] = projects.map(project => s"$project/$name")
 
@@ -260,7 +262,7 @@ lazy val root = project
   .settings(publishSettings)
   .settings(noPublishSettings)
   .aggregate(
-    (chimneyMacroCommons.projectRefs ++ chimney.projectRefs ++ chimneyCats.projectRefs ++ chimneyProtobufs.projectRefs)*
+    (chimneyMacroCommons.projectRefs ++ chimney.projectRefs ++ chimneyCats.projectRefs ++ chimneyJavaCollections.projectRefs ++ chimneyProtobufs.projectRefs)*
   )
   .settings(
     moduleName := "chimney-build",
@@ -369,6 +371,24 @@ lazy val chimneyCats = projectMatrix
   .settings(mimaSettings*)
   .settings(dependencies*)
   .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0" % "provided")
+  .dependsOn(chimney % "test->test;compile->compile")
+
+lazy val chimneyJavaCollections = projectMatrix
+  .in(file("chimney-java-collections"))
+  .someVariations(versions.scalas, List(VirtualAxis.jvm))(only1VersionInIDE*)
+  .enablePlugins(GitVersioning, GitBranchPrompt)
+  .disablePlugins(WelcomePlugin)
+  .settings(
+    moduleName := "chimney-java-collections",
+    name := "chimney-java-collections",
+    description := "Integrations with selected Java collections"
+  )
+  .settings(settings*)
+  .settings(publishSettings*)
+  .settings(mimaSettings*)
+  .settings(
+    mimaFailOnNoPrevious := false
+  )
   .dependsOn(chimney % "test->test;compile->compile")
 
 lazy val chimneyProtobufs = projectMatrix
