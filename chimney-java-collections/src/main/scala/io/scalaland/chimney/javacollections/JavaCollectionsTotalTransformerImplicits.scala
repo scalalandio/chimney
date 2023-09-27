@@ -1,6 +1,7 @@
 package io.scalaland.chimney.javacollections
 
 import io.scalaland.chimney.Transformer
+import io.scalaland.chimney.javacollections.internal.TransformOrUpcast
 
 import scala.collection.compat.*
 
@@ -11,25 +12,25 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
 
   /** @since 0.8.1 */
   implicit def totalTransformerFromJavaOptionalToScalaOption[A, B](implicit
-      aToB: Transformer[A, B]
+      aToB: TransformOrUpcast[A, B]
   ): Transformer[java.util.Optional[A], Option[B]] =
     optional => optional.map[Option[B]](a => Some(aToB.transform(a))).orElseGet(() => None)
 
   /** @since 0.8.1 */
   implicit def totalTransformerFromScalaOptionToJavaOptional[A, B](implicit
-      aToB: Transformer[A, B]
+      aToB: TransformOrUpcast[A, B]
   ): Transformer[Option[A], java.util.Optional[B]] =
     option => option.fold(java.util.Optional.empty[B]())(a => java.util.Optional.of(aToB.transform(a)))
 
   /** @since 0.8.1 */
   implicit def totalTransformerFromJavaOptionalToJavaOptional[A, B](implicit
-      aToB: Transformer[A, B]
+      aToB: TransformOrUpcast[A, B]
   ): Transformer[java.util.Optional[A], java.util.Optional[B]] =
     optional => optional.map(a => aToB.transform(a))
 
   /** @since 0.8.1 */
   implicit def totalTransformerFromNonOptionalToJavaOptional[A, B](implicit
-      aToB: Transformer[A, B]
+      aToB: TransformOrUpcast[A, B]
   ): Transformer[A, java.util.Optional[B]] =
     a => java.util.Optional.of(aToB.transform(a))
 
@@ -41,7 +42,7 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
       SColl[A0] <: IterableOnce[A0],
       A,
       B
-  ](implicit aToB: Transformer[A, B], factory: Factory[B, SColl[B]]): Transformer[JColl[A], SColl[B]] =
+  ](implicit aToB: TransformOrUpcast[A, B], factory: Factory[B, SColl[B]]): Transformer[JColl[A], SColl[B]] =
     collection => {
       val builder = factory.newBuilder
       val it = collection.iterator()
@@ -56,7 +57,7 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
       JColl[A0] <: java.lang.Iterable[A0],
       A,
       B
-  ](implicit aToB: Transformer[A, B], factory: JavaFactory[B, JColl[B]]): Transformer[SColl[A], JColl[B]] =
+  ](implicit aToB: TransformOrUpcast[A, B], factory: JavaFactory[B, JColl[B]]): Transformer[SColl[A], JColl[B]] =
     collection => {
       val builder = factory.newBuilder
       val it = collection.iterator
@@ -71,7 +72,7 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
       JColl2[A0] <: java.lang.Iterable[A0],
       A,
       B
-  ](implicit aToB: Transformer[A, B], factory: JavaFactory[B, JColl2[B]]): Transformer[JColl1[A], JColl2[B]] =
+  ](implicit aToB: TransformOrUpcast[A, B], factory: JavaFactory[B, JColl2[B]]): Transformer[JColl1[A], JColl2[B]] =
     collection => {
       val builder = factory.newBuilder
       val it = collection.iterator()
@@ -91,8 +92,8 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
       K2,
       V2
   ](implicit
-      keys: Transformer[K1, K2],
-      values: Transformer[V1, V2],
+      keys: TransformOrUpcast[K1, K2],
+      values: TransformOrUpcast[V1, V2],
       factory: Factory[(K2, V2), SMap[K2, V2]]
   ): Transformer[JMap[K1, V1], SMap[K2, V2]] =
     collection => {
@@ -114,8 +115,8 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
       K2,
       V2
   ](implicit
-      keys: Transformer[K1, K2],
-      values: Transformer[V1, V2],
+      keys: TransformOrUpcast[K1, K2],
+      values: TransformOrUpcast[V1, V2],
       factory: JavaFactory[(K2, V2), JMap[K2, V2]]
   ): Transformer[SMap[K1, V1], JMap[K2, V2]] =
     collection => {
@@ -137,8 +138,8 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
       K2,
       V2
   ](implicit
-      keys: Transformer[K1, K2],
-      values: Transformer[V1, V2],
+      keys: TransformOrUpcast[K1, K2],
+      values: TransformOrUpcast[V1, V2],
       factory: JavaFactory[(K2, V2), JMap2[K2, V2]]
   ): Transformer[JMap1[K1, V1], JMap2[K2, V2]] =
     collection => {
@@ -165,8 +166,8 @@ private[javacollections] trait JavaCollectionsTotalTransformerLowPriorityImplici
       K2,
       V2
   ](implicit
-      keys: Transformer[K1, K2],
-      values: Transformer[V1, V2],
+      keys: TransformOrUpcast[K1, K2],
+      values: TransformOrUpcast[V1, V2],
       factory: Factory[(K2, V2), SMap[K2, V2]]
   ): Transformer[JMap[K1, V1], SMap[K2, V2]] =
     collection => {
@@ -188,8 +189,8 @@ private[javacollections] trait JavaCollectionsTotalTransformerLowPriorityImplici
       K2,
       V2
   ](implicit
-      keys: Transformer[K1, K2],
-      values: Transformer[V1, V2],
+      keys: TransformOrUpcast[K1, K2],
+      values: TransformOrUpcast[V1, V2],
       factory: JavaFactory[(K2, V2), JMap[K2, V2]]
   ): Transformer[SMap[K1, V1], JMap[K2, V2]] =
     collection => {
@@ -211,8 +212,8 @@ private[javacollections] trait JavaCollectionsTotalTransformerLowPriorityImplici
       K2,
       V2
   ](implicit
-      keys: Transformer[K1, K2],
-      values: Transformer[V1, V2],
+      keys: TransformOrUpcast[K1, K2],
+      values: TransformOrUpcast[V1, V2],
       factory: JavaFactory[(K2, V2), JMap2[K2, V2]]
   ): Transformer[JMap1[K1, V1], JMap2[K2, V2]] =
     collection => {
