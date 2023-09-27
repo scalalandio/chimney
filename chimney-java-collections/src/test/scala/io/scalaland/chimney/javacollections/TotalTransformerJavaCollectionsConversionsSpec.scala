@@ -119,7 +119,12 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       val outputUnstable = Set("4", "3", "2", "1")
       val outputSorted = List("1", "2", "3", "4")
 
-      ju.List.of(4, 3, 2, 1).transformInto[List[String]] ==> outputStable
+      // identity transformation of inner type:
+
+      initCollection(new ju.ArrayList[Int]).transformInto[List[Int]] ==> List(4, 3, 2, 1)
+
+      // provided transformation of inner type:
+
       initCollection(new ju.ArrayList[Int]).transformInto[List[String]] ==> outputStable
       initCollection(new ju.LinkedList[Int]).transformInto[List[String]] ==> outputStable
       initCollection(new ju.Vector[Int]).transformInto[List[String]] ==> outputStable
@@ -129,7 +134,6 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
       initCollection(new ju.PriorityQueue[Int]).transformInto[List[String]] ==> outputSorted
 
-      ju.Set.of(4, 3, 2, 1).transformInto[Set[String]] ==> outputUnstable
       initCollection(new ju.HashSet[Int]).transformInto[Set[String]] ==> outputUnstable
       initCollection(new ju.TreeSet[Int]).transformInto[ListSet[String]].toList ==> outputSorted
     }
@@ -144,6 +148,13 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         dict.put(1, 1)
         dict
       }
+
+      // identity transformation of inner type:
+
+      initDictionary(new ju.Hashtable[Int, Int])
+        .transformInto[Map[Int, Int]] ==> Map(4 -> 4, 3 -> 3, 2 -> 2, 1 -> 1)
+
+      // provided transformation of inner type:
 
       initDictionary(new ju.Hashtable[Int, Int])
         .transformInto[Map[String, String]] ==> Map("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
@@ -166,11 +177,10 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
       // identity transformation of inner type:
 
-      ju.Map.of(4, 4, 3, 3, 2, 2, 1, 1).transformInto[Map[Int, Int]] ==> Map(4 -> 4, 3 -> 3, 2 -> 2, 1 -> 1)
+      initMap(new ju.HashMap[Int, Int]).transformInto[Map[Int, Int]] ==> Map(4 -> 4, 3 -> 3, 2 -> 2, 1 -> 1)
 
       // provided transformation of inner type:
 
-      ju.Map.of(4, 4, 3, 3, 2, 2, 1, 1).transformInto[Map[String, String]] ==> unstableOutput
       initMap(new ju.HashMap[Int, Int]).transformInto[Map[String, String]] ==> unstableOutput
       initMap(new ju.LinkedHashMap[Int, Int]).transformInto[ListMap[String, String]].toVector ==> stableOutput.toVector
       initMap(new ju.TreeMap[Int, Int]).transformInto[SortedMap[String, String]].toVector ==> sortedOutput.toVector
