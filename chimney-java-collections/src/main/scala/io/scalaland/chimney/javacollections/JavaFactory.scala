@@ -1,7 +1,6 @@
 package io.scalaland.chimney.javacollections
 
 import java.util as ju
-
 import scala.collection.compat.*
 import scala.jdk.CollectionConverters.*
 import scala.reflect.{classTag, ClassTag}
@@ -45,6 +44,20 @@ object JavaFactory {
     }
   }
 
+  final class EnumerationFactory[A] extends JavaFactory[A, ju.Enumeration[A]] {
+
+    def fromIterator(it: ju.Iterator[A]): ju.Enumeration[A] = new ju.Enumeration[A] {
+      def hasMoreElements: Boolean = it.hasNext()
+      def nextElement(): A = it.next()
+    }
+
+    def newBuilder: Builder[A, ju.Enumeration[A]] = new Builder[A, ju.Enumeration[A]] {
+      private val collection = new ju.ArrayList[A]()
+      def addOne(a: A): Unit = { collection.add(a); () }
+      def result(): ju.Enumeration[A] = fromIterator(collection.iterator())
+    }
+  }
+
   final class CollectionFactory[A, CC[A1] <: ju.Collection[A1]](
       create: => CC[A]
   ) extends JavaFactory[A, CC[A]] {
@@ -84,12 +97,32 @@ object JavaFactory {
     }
   }
 
-  // TODO: Enumeration?
+  final class BitSetFactory extends JavaFactory[Int, ju.BitSet] {
+    def fromIterator(it: ju.Iterator[Int]): ju.BitSet = {
+      val collection = new ju.BitSet()
+      while (it.hasNext()) {
+        collection.set(it.next())
+        ()
+      }
+      collection
+    }
+
+    def newBuilder: Builder[Int, ju.BitSet] = new Builder[Int, ju.BitSet] {
+      private val collection = new ju.BitSet()
+      final def addOne(a: Int): Unit = { collection.set(a); () }
+      final def result(): ju.BitSet = collection
+    }
+  }
 
   // Iterator
 
   /** @since 0.8.1 */
   implicit def javaFactoryForIterator[A]: JavaFactory[A, ju.Iterator[A]] = new IteratorFactory[A]
+
+  // Enumeration
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForEnumeration[A]: JavaFactory[A, ju.Enumeration[A]] = new EnumerationFactory[A]
 
   // Collections
 
@@ -170,11 +203,6 @@ object JavaFactory {
     javaFactoryForTreeSet[A].narrow
 
   /** @since 0.8.1 */
-  implicit def javaFactoryForEnumSet[A <: java.lang.Enum[A]: ClassTag]: JavaFactory[A, ju.EnumSet[A]] =
-    new CollectionFactory[A, ju.Set](ju.EnumSet.noneOf[A](classTag[A].runtimeClass.asInstanceOf[Class[A]]))
-      .asInstanceOf[JavaFactory[A, ju.EnumSet[A]]]
-
-  /** @since 0.8.1 */
   implicit def javaFactoryForHashSet[A]: JavaFactory[A, ju.HashSet[A]] = new CollectionFactory(new ju.HashSet[A])
 
   /** @since 0.8.1 */
@@ -187,7 +215,13 @@ object JavaFactory {
     new ju.TreeSet[A](Ordering[A])
   )
 
-  // TODO: BitSet?
+  /** @since 0.8.1 */
+  implicit def javaFactoryForEnumSet[A <: java.lang.Enum[A]: ClassTag]: JavaFactory[A, ju.EnumSet[A]] =
+    new CollectionFactory[A, ju.Set](ju.EnumSet.noneOf[A](classTag[A].runtimeClass.asInstanceOf[Class[A]]))
+      .asInstanceOf[JavaFactory[A, ju.EnumSet[A]]]
+
+  /** @since 0.8.1 */
+  implicit val javaFactoryForBitSet: JavaFactory[Int, ju.BitSet] = new BitSetFactory
 
   // Dictionaries
 
@@ -219,11 +253,6 @@ object JavaFactory {
     javaFactoryForTreeMap[K, V].narrow
 
   /** @since 0.8.1 */
-  implicit def javaFactoryForEnumMap[K <: java.lang.Enum[K]: ClassTag, V]: JavaFactory[(K, V), ju.EnumMap[K, V]] =
-    new MapFactory[K, V, ju.Map](new ju.EnumMap[K, V](classTag[K].runtimeClass.asInstanceOf[Class[K]]))
-      .asInstanceOf[JavaFactory[(K, V), ju.EnumMap[K, V]]]
-
-  /** @since 0.8.1 */
   implicit def javaFactoryForHashMap[K, V]: JavaFactory[(K, V), ju.HashMap[K, V]] =
     new MapFactory[K, V, ju.HashMap](new ju.HashMap[K, V])
 
@@ -244,4 +273,9 @@ object JavaFactory {
   implicit def javaFactoryForTreeMap[K: Ordering, V]: JavaFactory[(K, V), ju.TreeMap[K, V]] = new MapFactory(
     new ju.TreeMap[K, V](Ordering[K])
   )
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForEnumMap[K <: java.lang.Enum[K]: ClassTag, V]: JavaFactory[(K, V), ju.EnumMap[K, V]] =
+    new MapFactory[K, V, ju.Map](new ju.EnumMap[K, V](classTag[K].runtimeClass.asInstanceOf[Class[K]]))
+      .asInstanceOf[JavaFactory[(K, V), ju.EnumMap[K, V]]]
 }
