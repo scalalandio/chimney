@@ -161,7 +161,7 @@ object JavaFactory {
   /** @since 0.8.1 */
   implicit def javaFactoryForStack[A]: JavaFactory[A, ju.Stack[A]] = new CollectionFactory(new ju.Stack[A])
 
-  // Dequeue
+  // Deque
 
   /** @since 0.8.1 */
   implicit def javaFactoryForDeque[A]: JavaFactory[A, ju.Deque[A]] = javaFactoryForArrayDeque[A].narrow
