@@ -125,7 +125,7 @@ class JavaFactorySpec extends ChimneySpec {
     convertAndVerifySorted[String, Int, ju.TreeMap]("d" -> 10, "c" -> 8, "b" -> 4, "a" -> 0)
   }
 
-  test("java.util.Collection instances should be resolved for java.util.Enum specializations") {
+  test("java.util.Collection instances should be resolved for java.lang.Enum specializations") {
     val enumSet = implicitly[JavaFactory[JavaEnum, ju.EnumSet[JavaEnum]]]
       .fromSpecific(Iterator(JavaEnum.Blue, JavaEnum.Green, JavaEnum.Red))
     val enumMap = implicitly[JavaFactory[(JavaEnum, Int), ju.EnumMap[JavaEnum, Int]]].fromSpecific(
