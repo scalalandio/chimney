@@ -3,21 +3,50 @@ package io.scalaland.chimney.javacollections
 import java.util as ju
 import io.scalaland.chimney.{ChimneySpec, Transformer}
 import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.fixtures.JavaEnum
 
 import scala.collection.immutable.{ListMap, ListSet, SortedMap}
 import scala.jdk.CollectionConverters.*
 
 class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
+  implicit private val intToString: Transformer[Int, String] = _.toString
+
   group("conversion from Scala types to Java types") {
 
-    // TODO: to java.Optional
-    // TODO: to java.util.Iterator
-    // TODO: to java.util.Enumeration
+    test("to java.util.Optional type") {
+      // identity transformation of inner type:
+
+      (Some(1): Option[Int]).transformInto[ju.Optional[Int]] ==> ju.Optional.of(1)
+      (None: Option[Int]).transformInto[ju.Optional[Int]] ==> ju.Optional.empty()
+
+      // provided transformation of inner type:
+
+      (Some(1): Option[Int]).transformInto[ju.Optional[String]] ==> ju.Optional.of("1")
+      (None: Option[Int]).transformInto[ju.Optional[String]] ==> ju.Optional.empty()
+    }
+
+    test("to java.util.Iterator type") {
+      // identity transformation of inner type:
+
+      Iterator(4, 3, 2, 1).transformInto[ju.Iterator[Int]].asScala.toList ==> List(4, 3, 2, 1)
+
+      // provided transformation of inner type:
+
+      Iterator(4, 3, 2, 1).transformInto[ju.Iterator[String]].asScala.toList ==> List("4", "3", "2", "1")
+    }
+
+    test("to java.util.Enumeration type") {
+      // identity transformation of inner type:
+
+      Iterator(4, 3, 2, 1).transformInto[ju.Enumeration[Int]].asScala.toList ==> List(4, 3, 2, 1)
+
+      // provided transformation of inner type:
+
+      Iterator(4, 3, 2, 1).transformInto[ju.Enumeration[String]].asScala.toList ==> List("4", "3", "2", "1")
+    }
 
     test("to java.util.Collection types") {
-      implicit val intToString: Transformer[Int, String] = _.toString
-
       val input = Seq(4, 3, 2, 1)
       val outputStable = List("4", "3", "2", "1")
       val outputUnstable = Set("4", "3", "2", "1")
@@ -57,8 +86,6 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
     }
 
     test("to java.util.Dictionary types") {
-      implicit val intToString: Transformer[Int, String] = _.toString
-
       val input = ListMap(4 -> 4, 3 -> 3, 2 -> 2, 1 -> 1)
       val output = Map("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
 
@@ -73,8 +100,6 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
     }
 
     test("to java.util.Map types") {
-      implicit val intToString: Transformer[Int, String] = _.toString
-
       val input = ListMap(4 -> 4, 3 -> 3, 2 -> 2, 1 -> 1)
       val outputStable = List("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
       val outputUnstable = Map("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
@@ -95,18 +120,78 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       input.transformInto[ju.TreeMap[String, String]].asScala.toList ==> outputSorted
     }
 
-    test("to java.lang.Enum-supporting types".ignore) {} // TODO: how to express type bounds in implicit def?
+    test("to java.lang.Enum-supporting types") {
+      Set(JavaEnum.Blue, JavaEnum.Green, JavaEnum.Red).transformInto[ju.EnumSet[JavaEnum]].asScala ==> Set(
+        JavaEnum.Blue,
+        JavaEnum.Green,
+        JavaEnum.Red
+      )
+
+      // identity transformation of inner type:
+
+      Map(JavaEnum.Blue -> 3, JavaEnum.Green -> 2, JavaEnum.Red -> 1)
+        .transformInto[ju.EnumMap[JavaEnum, Int]]
+        .asScala ==> Map(JavaEnum.Blue -> 3, JavaEnum.Green -> 2, JavaEnum.Red -> 1)
+
+      // provided transformation of inner type:
+
+      Map(JavaEnum.Blue -> 3, JavaEnum.Green -> 2, JavaEnum.Red -> 1)
+        .transformInto[ju.EnumMap[JavaEnum, Int]]
+        .asScala ==> Map(JavaEnum.Blue -> 3, JavaEnum.Green -> 2, JavaEnum.Red -> 1)
+    }
+
+    test("to java.util.BitSet type") {
+      Set(1, 2, 4, 8).transformInto[ju.BitSet].toLongArray ==> Array((1 << 1) + (1 << 2) + (1 << 4) + (1 << 8))
+    }
   }
 
   group("conversion from Java types to Scala types") {
 
-    // TODO: from java.util.Optional
-    // TODO: from java.util.Iterator
-    // TODO: from java.util.Enumeration
+    test("from java.util.Optional type") {
+      // identity transformation of inner type:
 
-    test("from java.util.Collection types".ignore) {
-      implicit val intToString: Transformer[Int, String] = _.toString
+      ju.Optional.of(1).transformInto[Option[Int]] ==> Some(1)
+      ju.Optional.empty[Int]().transformInto[Option[Int]] ==> None
 
+      // provided transformation of inner type:
+
+      ju.Optional.of(1).transformInto[Option[String]] ==> Some("1")
+      ju.Optional.empty[Int]().transformInto[Option[String]] ==> None
+    }
+
+    test("from java.util.Iterator type") {
+      val input = new ju.ArrayList[Int]
+      input.add(4)
+      input.add(3)
+      input.add(2)
+      input.add(1)
+
+      // identity transformation of inner type:
+
+      input.iterator().transformInto[Iterator[Int]].toList ==> List(4, 3, 2, 1)
+
+      // provided transformation of inner type:
+
+      input.iterator().transformInto[Iterator[String]].toList ==> List("4", "3", "2", "1")
+    }
+
+    test("from java.util.Enumeration type") {
+      val input = new ju.Vector[Int]
+      input.add(4)
+      input.add(3)
+      input.add(2)
+      input.add(1)
+
+      // identity transformation of inner type:
+
+      input.elements().transformInto[Iterator[Int]].toList ==> List(4, 3, 2, 1)
+
+      // provided transformation of inner type:
+
+      input.elements().transformInto[Iterator[String]].toList ==> List("4", "3", "2", "1")
+    }
+
+    test("from java.util.Collection types") {
       def initCollection(coll: ju.Collection[Int]): coll.type = {
         coll.add(4)
         coll.add(3)
@@ -139,8 +224,6 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
     }
 
     test("from java.util.Dictionary types") {
-      implicit val intToString: Transformer[Int, String] = _.toString
-
       def initDictionary(dict: ju.Dictionary[Int, Int]): dict.type = {
         dict.put(4, 4)
         dict.put(3, 3)
@@ -161,8 +244,6 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
     }
 
     test("from java.util.Map types") {
-      implicit val intToString: Transformer[Int, String] = _.toString
-
       def initMap(map: ju.Map[Int, Int]): map.type = {
         map.put(4, 4)
         map.put(3, 3)
@@ -185,19 +266,77 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       initMap(new ju.LinkedHashMap[Int, Int]).transformInto[ListMap[String, String]].toVector ==> stableOutput.toVector
       initMap(new ju.TreeMap[Int, Int]).transformInto[SortedMap[String, String]].toVector ==> sortedOutput.toVector
     }
+
+    test("from java.lang.Enum-supporting type".ignore) {} // TODO: I am not sure if it can be easily done
+
+    test("from java.util.BitSet type") {
+      val input = new ju.BitSet
+      input.set(1)
+      input.set(2)
+      input.set(3)
+      input.set(4)
+
+      // identity transformation of inner type:
+
+      input.transformInto[Set[Int]] ==> Set(1, 2, 3, 4)
+
+      // provided transformation of inner type:
+
+      input.transformInto[Set[String]] ==> Set("1", "2", "3", "4")
+    }
   }
 
   group("conversion from Java types to Java types") {
 
-    // TODO: for java.util.Optional
+    test("for java.util.Optional type") {
+      // identity transformation of inner type:
+
+      ju.Optional.of(1).transformInto[ju.Optional[Int]] ==> ju.Optional.of(1)
+      ju.Optional.empty[Int]().transformInto[ju.Optional[Int]] ==> ju.Optional.empty[String]()
+
+      // provided transformation of inner type:
+
+      ju.Optional.of(1).transformInto[ju.Optional[String]] ==> ju.Optional.of("1")
+      ju.Optional.empty[Int]().transformInto[ju.Optional[String]] ==> ju.Optional.empty[String]()
+    }
+
+    test("for java.util.Iterator type") {
+      val input = new ju.ArrayList[Int]
+      input.add(4)
+      input.add(3)
+      input.add(2)
+      input.add(1)
+
+      // identity transformation of inner type:
+
+      input.transformInto[ju.Iterator[Int]].asScala.toList ==> List(4, 3, 2, 1)
+      input.iterator().transformInto[ju.List[Int]].asScala.toList ==> List(4, 3, 2, 1)
+
+      // provided transformation of inner type:
+
+      input.iterator().transformInto[ju.Iterator[String]].asScala.toList ==> List("4", "3", "2", "1")
+    }
+
+    test("for java.util.Enumeration type") {
+      val input = new ju.Vector[Int]
+      input.add(4)
+      input.add(3)
+      input.add(2)
+      input.add(1)
+
+      // identity transformation of inner type:
+
+      input.transformInto[ju.List[Int]].asScala.toList ==> List(4, 3, 2, 1)
+      input.elements().transformInto[ju.List[Int]].asScala.toList ==> List(4, 3, 2, 1)
+
+      // provided transformation of inner type:
+
+      input.elements().transformInto[ju.Enumeration[String]].asScala.toList ==> List("4", "3", "2", "1")
+    }
+
     test("for java.util.Collection types".ignore) {} // TODO
     test("for java.util.Dictionary types".ignore) {} // TODO
     test("for java.util.Map types".ignore) {} // TODO
-  }
-
-  group("java.util.BitSet conversions") {
-
-    test("from Scala types".ignore) {} // TODO
-    test("to Scala types".ignore) {} // TODO
+    test("for java.util.BitSet type".ignore) {} // TODO
   }
 }
