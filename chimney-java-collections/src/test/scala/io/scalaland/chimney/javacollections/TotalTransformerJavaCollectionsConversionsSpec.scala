@@ -334,9 +334,90 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       input.elements().transformInto[ju.Enumeration[String]].asScala.toList ==> List("4", "3", "2", "1")
     }
 
-    test("for java.util.Collection types".ignore) {} // TODO
-    test("for java.util.Dictionary types".ignore) {} // TODO
-    test("for java.util.Map types".ignore) {} // TODO
-    test("for java.util.BitSet type".ignore) {} // TODO
+    test("for java.util.Collection types") {
+      val input = new ju.ArrayList[Int]
+      input.add(4)
+      input.add(3)
+      input.add(2)
+      input.add(1)
+      val outputStable = List("4", "3", "2", "1")
+      val outputUnstable = Set("4", "3", "2", "1")
+      val outputSorted = List("1", "2", "3", "4")
+
+      // identity transformation of inner type:
+
+      input.transformInto[ju.Collection[Int]].asScala.toList ==> List(4, 3, 2, 1)
+
+      // provided transformation of inner type:
+
+      input.transformInto[ju.Collection[String]].asScala.toSet ==> outputUnstable
+      input.transformInto[ju.AbstractCollection[String]].asScala.toSet ==> outputUnstable
+
+      input.transformInto[ju.List[String]].asScala.toList ==> outputStable
+      input.transformInto[ju.AbstractList[String]].asScala.toList ==> outputStable
+      input.transformInto[ju.AbstractSequentialList[String]].asScala.toList ==> outputStable
+      input.transformInto[ju.ArrayList[String]].asScala.toList ==> outputStable
+      input.transformInto[ju.LinkedList[String]].asScala.toList ==> outputStable
+      input.transformInto[ju.Vector[String]].asScala.toList ==> outputStable
+      input.transformInto[ju.Stack[String]].asScala.toList ==> outputStable
+
+      input.transformInto[ju.Deque[String]].asScala.toList ==> outputStable
+      input.transformInto[ju.ArrayDeque[String]].asScala.toList ==> outputStable
+
+      input.transformInto[ju.Queue[String]].asScala.toList ==> outputSorted
+      input.transformInto[ju.AbstractQueue[String]].asScala.toList ==> outputSorted
+      input.transformInto[ju.PriorityQueue[String]].asScala.toList ==> outputSorted
+
+      input.transformInto[ju.Set[String]].asScala.toSet ==> outputUnstable
+      input.transformInto[ju.AbstractSet[String]].asScala.toSet ==> outputUnstable
+      input.transformInto[ju.SortedSet[String]].asScala.toList ==> outputSorted
+      input.transformInto[ju.NavigableSet[String]].asScala.toList ==> outputSorted
+      input.transformInto[ju.HashSet[String]].asScala.toSet ==> outputUnstable
+      input.transformInto[ju.LinkedHashSet[String]].asScala.toList ==> outputStable
+      input.transformInto[ju.TreeSet[String]].asScala.toList ==> outputSorted
+    }
+
+    test("for java.util.Dictionary types") {
+      val input = new ju.LinkedHashMap[Int, Int]
+      input.put(4, 4)
+      input.put(3, 3)
+      input.put(2, 2)
+      input.put(1, 1)
+      val output = Map("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
+
+      // identity transformation of inner type:
+
+      input.transformInto[ju.Dictionary[Int, Int]].asScala ==> input.asScala.toMap
+
+      // provided transformation of inner type:
+
+      input.transformInto[ju.Dictionary[String, String]].asScala ==> output
+      (input.transformInto[ju.Hashtable[String, String]]: ju.Dictionary[String, String]).asScala ==> output
+    }
+
+    test("for java.util.Map types") {
+      val input = new ju.LinkedHashMap[Int, Int]
+      input.put(4, 4)
+      input.put(3, 3)
+      input.put(2, 2)
+      input.put(1, 1)
+      val outputStable = List("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
+      val outputUnstable = Map("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
+      val outputSorted = List("1" -> "1", "2" -> "2", "3" -> "3", "4" -> "4")
+
+      // identity transformation of inner type:
+
+      input.transformInto[ju.Map[Int, Int]].asScala ==> input.asScala.toMap
+
+      // provided transformation of inner type:
+
+      input.transformInto[ju.Map[String, String]].asScala ==> outputUnstable
+      input.transformInto[ju.AbstractMap[String, String]].asScala ==> outputUnstable
+      input.transformInto[ju.SortedMap[String, String]].asScala.toList ==> outputSorted
+      input.transformInto[ju.NavigableMap[String, String]].asScala.toList ==> outputSorted
+      input.transformInto[ju.HashMap[String, String]].asScala ==> outputUnstable
+      input.transformInto[ju.LinkedHashMap[String, String]].asScala.toList ==> outputStable
+      input.transformInto[ju.TreeMap[String, String]].asScala.toList ==> outputSorted
+    }
   }
 }
