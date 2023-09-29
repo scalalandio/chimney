@@ -236,6 +236,11 @@ object JavaFactory {
     new ju.Hashtable[K, V]
   )
 
+  /** @since 0.8.1 */
+  implicit val javaFactoryForProperties: JavaFactory[(String, String), ju.Properties] = new MapFactory(
+    new ju.Properties()
+  ).asInstanceOf[JavaFactory[(String, String), ju.Properties]]
+
   // java.util.Map
 
   /** @since 0.8.1 */
