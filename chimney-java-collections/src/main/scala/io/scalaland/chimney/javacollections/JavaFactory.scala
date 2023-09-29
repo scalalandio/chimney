@@ -114,17 +114,17 @@ object JavaFactory {
     }
   }
 
-  // Iterator
+  // java.util.Iterator
 
   /** @since 0.8.1 */
   implicit def javaFactoryForIterator[A]: JavaFactory[A, ju.Iterator[A]] = new IteratorFactory[A]
 
-  // Enumeration
+  // java.util.Enumeration
 
   /** @since 0.8.1 */
   implicit def javaFactoryForEnumeration[A]: JavaFactory[A, ju.Enumeration[A]] = new EnumerationFactory[A]
 
-  // Collections
+  // java.util.Collection
 
   /** @since 0.8.1 */
   implicit def javaFactoryForCollection[A]: JavaFactory[A, ju.Collection[A]] =
@@ -134,7 +134,7 @@ object JavaFactory {
   implicit def javaFactoryForAbstractCollection[A]: JavaFactory[A, ju.AbstractCollection[A]] =
     javaFactoryForArrayList[A].narrow
 
-  // Lists
+  // java.util.List
 
   /** @since 0.8.1 */
   implicit def javaFactoryForList[A]: JavaFactory[A, ju.List[A]] = javaFactoryForAbstractList[A].narrow
@@ -161,7 +161,7 @@ object JavaFactory {
   /** @since 0.8.1 */
   implicit def javaFactoryForStack[A]: JavaFactory[A, ju.Stack[A]] = new CollectionFactory(new ju.Stack[A])
 
-  // Deque
+  // java.util.Deque
 
   /** @since 0.8.1 */
   implicit def javaFactoryForDeque[A]: JavaFactory[A, ju.Deque[A]] = javaFactoryForArrayDeque[A].narrow
@@ -171,7 +171,7 @@ object JavaFactory {
     new ju.ArrayDeque[A]
   )
 
-  // Queues
+  // java.util.Queue
 
   /** @since 0.8.1 */
   implicit def javaFactoryForQueue[A: Ordering]: JavaFactory[A, ju.Queue[A]] =
@@ -186,7 +186,7 @@ object JavaFactory {
     new ju.PriorityQueue[A](Ordering[A])
   )
 
-  // Sets
+  // java.util.Set
 
   /** @since 0.8.1 */
   implicit def javaFactoryForSet[A]: JavaFactory[A, ju.Set[A]] = javaFactoryForAbstractSet[A].narrow
@@ -220,10 +220,12 @@ object JavaFactory {
     new CollectionFactory[A, ju.Set](ju.EnumSet.noneOf[A](classTag[A].runtimeClass.asInstanceOf[Class[A]]))
       .asInstanceOf[JavaFactory[A, ju.EnumSet[A]]]
 
+  // java.util.BitSet
+
   /** @since 0.8.1 */
   implicit val javaFactoryForBitSet: JavaFactory[Int, ju.BitSet] = new BitSetFactory
 
-  // Dictionaries
+  // java.util.Dictionary
 
   /** @since 0.8.1 */
   implicit def javaFactoryForDictionary[K, V]: JavaFactory[(K, V), ju.Dictionary[K, V]] =
@@ -234,7 +236,7 @@ object JavaFactory {
     new ju.Hashtable[K, V]
   )
 
-  // Maps
+  // java.util.Map
 
   /** @since 0.8.1 */
   implicit def javaFactoryForMap[K, V]: JavaFactory[(K, V), ju.Map[K, V]] =
