@@ -33,6 +33,7 @@ object JavaFactory {
   /** @since 0.8.1 */
   trait Builder[A, CC] {
     def addOne(a: A): Unit
+
     def result(): CC
   }
 
@@ -48,7 +49,11 @@ object JavaFactory {
 
     def newBuilder: Builder[A, ju.Iterator[A]] = new Builder[A, ju.Iterator[A]] {
       private val collection = new ju.ArrayList[A]()
-      def addOne(a: A): Unit = { collection.add(a); () }
+
+      def addOne(a: A): Unit = {
+        collection.add(a); ()
+      }
+
       def result(): ju.Iterator[A] = collection.iterator()
     }
   }
@@ -57,12 +62,17 @@ object JavaFactory {
 
     def fromIterator(it: ju.Iterator[A]): ju.Enumeration[A] = new ju.Enumeration[A] {
       def hasMoreElements: Boolean = it.hasNext()
+
       def nextElement(): A = it.next()
     }
 
     def newBuilder: Builder[A, ju.Enumeration[A]] = new Builder[A, ju.Enumeration[A]] {
       private val collection = new ju.ArrayList[A]()
-      def addOne(a: A): Unit = { collection.add(a); () }
+
+      def addOne(a: A): Unit = {
+        collection.add(a); ()
+      }
+
       def result(): ju.Enumeration[A] = fromIterator(collection.iterator())
     }
   }
@@ -81,7 +91,11 @@ object JavaFactory {
 
     def newBuilder: Builder[A, CC[A]] = new Builder[A, CC[A]] {
       private val collection = create
-      final def addOne(a: A): Unit = { collection.add(a); () }
+
+      final def addOne(a: A): Unit = {
+        collection.add(a); ()
+      }
+
       final def result(): CC[A] = collection
     }
   }
@@ -101,7 +115,11 @@ object JavaFactory {
 
     def newBuilder: Builder[(K, V), CC[K, V]] = new Builder[(K, V), CC[K, V]] {
       private val collection = create
-      final def addOne(pair: (K, V)): Unit = { collection.put(pair._1, pair._2); () }
+
+      final def addOne(pair: (K, V)): Unit = {
+        collection.put(pair._1, pair._2); ()
+      }
+
       final def result(): CC[K, V] = collection
     }
   }
@@ -118,8 +136,72 @@ object JavaFactory {
 
     def newBuilder: Builder[Int, ju.BitSet] = new Builder[Int, ju.BitSet] {
       private val collection = new ju.BitSet()
-      final def addOne(a: Int): Unit = { collection.set(a); () }
+
+      final def addOne(a: Int): Unit = {
+        collection.set(a); ()
+      }
+
       final def result(): ju.BitSet = collection
+    }
+  }
+
+  final class StreamBuilder[A] extends JavaFactory[A, ju.stream.Stream[A]] {
+    def fromIterator(it: ju.Iterator[A]): ju.stream.Stream[A] =
+      ju.stream.StreamSupport.stream(ju.Spliterators.spliteratorUnknownSize(it, 0), false)
+
+    def newBuilder: Builder[A, ju.stream.Stream[A]] = new Builder[A, ju.stream.Stream[A]] {
+      private val inner = ju.stream.Stream.builder[A]()
+
+      final def addOne(a: A): Unit = {
+        inner.add(a); ()
+      }
+
+      final def result(): ju.stream.Stream[A] = inner.build()
+    }
+  }
+
+  final class IntStreamBuilder extends JavaFactory[Int, ju.stream.IntStream] {
+    def fromIterator(it: ju.Iterator[Int]): ju.stream.IntStream =
+      ju.stream.StreamSupport.stream(ju.Spliterators.spliteratorUnknownSize(it, 0), false).mapToInt(a => a)
+
+    def newBuilder: Builder[Int, ju.stream.IntStream] = new Builder[Int, ju.stream.IntStream] {
+      private val inner = ju.stream.IntStream.builder()
+
+      final def addOne(a: Int): Unit = {
+        inner.add(a); ()
+      }
+
+      final def result(): ju.stream.IntStream = inner.build()
+    }
+  }
+
+  final class LongStreamBuilder extends JavaFactory[Long, ju.stream.LongStream] {
+    def fromIterator(it: ju.Iterator[Long]): ju.stream.LongStream =
+      ju.stream.StreamSupport.stream(ju.Spliterators.spliteratorUnknownSize(it, 0), false).mapToLong(a => a)
+
+    def newBuilder: Builder[Long, ju.stream.LongStream] = new Builder[Long, ju.stream.LongStream] {
+      private val inner = ju.stream.LongStream.builder()
+
+      final def addOne(a: Long): Unit = {
+        inner.add(a); ()
+      }
+
+      final def result(): ju.stream.LongStream = inner.build()
+    }
+  }
+
+  final class DoubleStreamBuilder extends JavaFactory[Double, ju.stream.DoubleStream] {
+    def fromIterator(it: ju.Iterator[Double]): ju.stream.DoubleStream =
+      ju.stream.StreamSupport.stream(ju.Spliterators.spliteratorUnknownSize(it, 0), false).mapToDouble(a => a)
+
+    def newBuilder: Builder[Double, ju.stream.DoubleStream] = new Builder[Double, ju.stream.DoubleStream] {
+      private val inner = ju.stream.DoubleStream.builder()
+
+      final def addOne(a: Double): Unit = {
+        inner.add(a); ()
+      }
+
+      final def result(): ju.stream.DoubleStream = inner.build()
     }
   }
 
@@ -294,4 +376,18 @@ object JavaFactory {
   implicit def javaFactoryForEnumMap[K <: java.lang.Enum[K]: ClassTag, V]: JavaFactory[(K, V), ju.EnumMap[K, V]] =
     new MapFactory[K, V, ju.Map](new ju.EnumMap[K, V](classTag[K].runtimeClass.asInstanceOf[Class[K]]))
       .asInstanceOf[JavaFactory[(K, V), ju.EnumMap[K, V]]]
+
+  // java.util.stream.BaseStream
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForStream[A]: JavaFactory[A, ju.stream.Stream[A]] = new StreamBuilder[A]
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForIntStream: JavaFactory[Int, ju.stream.IntStream] = new IntStreamBuilder
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForLongStream: JavaFactory[Long, ju.stream.LongStream] = new LongStreamBuilder
+
+  /** @since 0.8.1 */
+  implicit def javaFactoryForDoubleStream: JavaFactory[Double, ju.stream.DoubleStream] = new DoubleStreamBuilder
 }
