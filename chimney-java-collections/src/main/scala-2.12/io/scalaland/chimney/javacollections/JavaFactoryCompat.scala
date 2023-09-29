@@ -2,25 +2,14 @@ package io.scalaland.chimney.javacollections
 
 import scala.collection.compat.*
 import scala.collection.mutable
+import scala.language.implicitConversions
 
-private[javacollections] trait JavaCollectionsCompat {
+private[javacollections] trait JavaFactoryCompat {
 
-  implicit protected class IteratorOps(private val it: Iterator.type) {
+  implicit def convertJavaFactoryToScalaFactory[A, CC](javaFactory: JavaFactory[A, CC]): Factory[A, CC] =
+    new FactoryImpl(javaFactory)
 
-    def unfold[A, S](init: S)(f: S => Option[(A, S)]): Iterator[A] =
-      it
-        .iterate(Option(null.asInstanceOf[A] -> init)) {
-          case Some((_, s)) => f(s)
-          case _            => None
-        }
-        .drop(1)
-        .takeWhile(_.isDefined)
-        .collect { case Some((a, _)) =>
-          a
-        }
-  }
-
-  implicit protected def javaFactoryToScalaFactory[A, CC](implicit javaFactory: JavaFactory[A, CC]): Factory[A, CC] =
+  implicit def provideScalaFactoryFromJavaFactory[A, CC](implicit javaFactory: JavaFactory[A, CC]): Factory[A, CC] =
     new FactoryImpl(javaFactory)
 
   final private class FactoryImpl[From, A, CC](javaFactory: JavaFactory[A, CC])

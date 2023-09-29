@@ -154,4 +154,19 @@ class JavaFactorySpec extends ChimneySpec {
 
     bitSet.toLongArray ==> Array((1L << 10) + (1L << 8) + (1L << 4) + (1L << 2) + (1L << 0))
   }
+
+  test("JavaFactory with conversions can be used as scala.collection.compat.Factory") {
+    val javaFactory: JavaFactory[(String, Int), ju.Map[String, Int]] = implicitly
+
+    import scala.collection.compat.*
+    import JavaFactory.ConversionToScalaFactory.*
+    val scalaFactory: Factory[(String, Int), ju.Map[String, Int]] = javaFactory
+
+    // the code below doesn't work on 2.12 even with scala.collection.compat:
+    //   List[(String, Int)]("1" -> 2, "3" -> 4).to(factory)
+    // because CanBuildFrom cannot into Map
+
+    import scala.jdk.CollectionConverters.*
+    scalaFactory.fromSpecific(Iterator("a" -> 1, "b" -> 2)).asScala ==> Map("a" -> 1, "b" -> 2)
+  }
 }

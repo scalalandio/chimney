@@ -2,13 +2,12 @@ package io.scalaland.chimney.javacollections
 
 import io.scalaland.chimney.{partial, PartialTransformer}
 import io.scalaland.chimney.javacollections.internal.PartialTransformOrUpcast
+import io.scalaland.chimney.javacollections.JavaFactory.ConversionToScalaFactory.*
 
 import scala.collection.compat.*
 
 /** @since 0.8.1 */
-trait JavaCollectionsPartialTransformerImplicits
-    extends JavaCollectionsCompat
-    with JavaCollectionsPartialTransformerImplicitsLowPriority {
+trait JavaCollectionsPartialTransformerImplicits extends JavaCollectionsPartialTransformerImplicitsLowPriority {
 
   // from/to java.util.Optional
 
@@ -108,7 +107,7 @@ trait JavaCollectionsPartialTransformerImplicits
       )
 }
 
-private[javacollections] trait JavaCollectionsPartialTransformerImplicitsLowPriority extends JavaCollectionsCompat {
+private[javacollections] trait JavaCollectionsPartialTransformerImplicitsLowPriority {
 
   /** @since 0.8.1 */
   implicit def partialTransformerFromJavaMapToScalaMap[

@@ -2,10 +2,14 @@ package io.scalaland.chimney.javacollections
 
 import scala.collection.compat.*
 import scala.collection.mutable
+import scala.language.implicitConversions
 
-private[javacollections] trait JavaCollectionsCompat {
+private[javacollections] trait JavaFactoryCompat {
 
-  implicit protected def javaFactoryToScalaFactory[A, CC](implicit javaFactory: JavaFactory[A, CC]): Factory[A, CC] =
+  implicit def convertJavaFactoryToScalaFactory[A, CC](javaFactory: JavaFactory[A, CC]): Factory[A, CC] =
+    new FactoryImpl(javaFactory)
+
+  implicit def provideScalaFactoryFromJavaFactory[A, CC](implicit javaFactory: JavaFactory[A, CC]): Factory[A, CC] =
     new FactoryImpl(javaFactory)
 
   final private class FactoryImpl[A, CC](javaFactory: JavaFactory[A, CC]) extends scala.collection.Factory[A, CC] {
