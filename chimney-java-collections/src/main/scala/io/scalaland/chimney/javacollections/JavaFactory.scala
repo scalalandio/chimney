@@ -13,6 +13,9 @@ import scala.reflect.{classTag, ClassTag}
   * Contrary to Scala's `Factory` it is invariant, because we have no possibility to put instances in companion objects
   * and implicit priorities didn't work as a mechanism of preventing ambiguities when upcasting.
   *
+  * @tparam A  collection's element's type
+  * @tparam CC collection's type with applied type parameters
+  *
   * @since 0.8.1
   */
 trait JavaFactory[A, CC] {
