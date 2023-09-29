@@ -12,10 +12,6 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
   implicit private val stringToInt: PartialTransformer[String, Int] = PartialTransformer.fromFunction(_.toInt)
 
-  // TODO: update PartialImplicits
-  // TODO: add Optional to non-optional test
-  // TODO: add
-
   group("conversion from Scala types to Java types") {
 
     test("to java.util.Optional type") {
@@ -23,11 +19,13 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
       (Some("1"): Option[String]).transformIntoPartial[ju.Optional[String]].asOption.get ==> ju.Optional.of("1")
       (None: Option[String]).transformIntoPartial[ju.Optional[String]].asOption.get ==> ju.Optional.empty()
+      "1".transformIntoPartial[ju.Optional[String]].asOption.get ==> ju.Optional.of("1")
 
       // provided transformation of inner type:
 
       (Some("1"): Option[String]).transformIntoPartial[ju.Optional[Int]].asOption.get ==> ju.Optional.of(1)
       (None: Option[String]).transformIntoPartial[ju.Optional[Int]].asOption.get ==> ju.Optional.empty()
+      "1".transformIntoPartial[ju.Optional[Int]].asOption.get ==> ju.Optional.of(1)
     }
 
     test("to java.util.Iterator type") {
@@ -352,11 +350,16 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
       ju.Optional.of("1").transformIntoPartial[ju.Optional[String]].asOption.get ==> ju.Optional.of("1")
       ju.Optional.empty[String]().transformIntoPartial[ju.Optional[String]].asOption.get ==> ju.Optional.empty[Int]()
+      ju.Optional.of("1").transformIntoPartial[String].asOption ==> Some("1")
+      ju.Optional.empty[String]().transformIntoPartial[String].asOption ==> None
 
       // provided transformation of inner type:
 
       ju.Optional.of("1").transformIntoPartial[ju.Optional[Int]].asOption.get ==> ju.Optional.of(1)
       ju.Optional.empty[String]().transformIntoPartial[ju.Optional[Int]].asOption.get ==> ju.Optional.empty[Int]()
+      ju.Optional.of("1").transformIntoPartial[Int].asOption ==> Some(1)
+      ju.Optional.of("A").transformIntoPartial[Int].asOption ==> None
+      ju.Optional.empty[String]().transformIntoPartial[Int].asOption ==> None
     }
 
     test("for java.util.Iterator type") {

@@ -19,11 +19,13 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
       (Some(1): Option[Int]).transformInto[ju.Optional[Int]] ==> ju.Optional.of(1)
       (None: Option[Int]).transformInto[ju.Optional[Int]] ==> ju.Optional.empty()
+      1.transformInto[ju.Optional[Int]] ==> ju.Optional.of(1)
 
       // provided transformation of inner type:
 
       (Some(1): Option[Int]).transformInto[ju.Optional[String]] ==> ju.Optional.of("1")
       (None: Option[Int]).transformInto[ju.Optional[String]] ==> ju.Optional.empty()
+      1.transformInto[ju.Optional[String]] ==> ju.Optional.of("1")
     }
 
     test("to java.util.Iterator type") {
