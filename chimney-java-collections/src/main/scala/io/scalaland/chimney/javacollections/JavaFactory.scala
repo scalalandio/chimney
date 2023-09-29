@@ -36,6 +36,12 @@ object JavaFactory {
     def result(): CC
   }
 
+  /** Import content to allow using JavaFactory as [[scala.collection.compat.Factory]].
+    *
+    * @since 0.8.1
+    */
+  object ConversionToScalaFactory extends JavaFactoryCompat
+
   final class IteratorFactory[A] extends JavaFactory[A, ju.Iterator[A]] {
 
     def fromIterator(it: ju.Iterator[A]): ju.Iterator[A] = it
