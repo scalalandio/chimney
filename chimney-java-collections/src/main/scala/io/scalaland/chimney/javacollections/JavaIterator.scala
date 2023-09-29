@@ -42,6 +42,10 @@ object JavaIterator extends JavaIteratorLowPriorityImplicits {
     def iterator(collection: ju.BitSet): Iterator[Int] = (0 to collection.size()).filter(collection.get).iterator
   }
 
+  final class StreamIterator[A, CC <: ju.stream.BaseStream[A, CC]] extends JavaIterator[A, CC] {
+    def iterator(collection: CC): Iterator[A] = collection.iterator().asScala
+  }
+
   // java.util.Iterator
 
   /** @since 0.8.1 */
@@ -77,6 +81,25 @@ object JavaIterator extends JavaIteratorLowPriorityImplicits {
   /** @since 0.8.1 */
   implicit val javaIteratorForProperties: JavaIterator[(String, String), ju.Properties] =
     javaIteratorForDictionary[String, String, ju.Hashtable].asInstanceOf[JavaIterator[(String, String), ju.Properties]]
+
+  // java.util.stream.BaseStream
+
+  /** @since 0.8.1 */
+  implicit def javaIteratorForStream[A]: JavaIterator[A, ju.stream.Stream[A]] =
+    new StreamIterator[A, ju.stream.Stream[A]]
+
+  /** @since 0.8.1 */
+  implicit def javaIteratorForIntStream: JavaIterator[Int, ju.stream.IntStream] =
+    new StreamIterator[java.lang.Integer, ju.stream.IntStream].asInstanceOf[JavaIterator[Int, ju.stream.IntStream]]
+
+  /** @since 0.8.1 */
+  implicit def javaIteratorForLongStream: JavaIterator[Long, ju.stream.LongStream] =
+    new StreamIterator[java.lang.Long, ju.stream.LongStream].asInstanceOf[JavaIterator[Long, ju.stream.LongStream]]
+
+  /** @since 0.8.1 */
+  implicit def javaIteratorForDoubleStream: JavaIterator[Double, ju.stream.DoubleStream] =
+    new StreamIterator[java.lang.Double, ju.stream.DoubleStream]
+      .asInstanceOf[JavaIterator[Double, ju.stream.DoubleStream]]
 }
 
 private[javacollections] trait JavaIteratorLowPriorityImplicits {
