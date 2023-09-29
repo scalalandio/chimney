@@ -136,8 +136,8 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       // provided transformation of inner type:
 
       Map(JavaEnum.Blue -> 3, JavaEnum.Green -> 2, JavaEnum.Red -> 1)
-        .transformInto[ju.EnumMap[JavaEnum, Int]]
-        .asScala ==> Map(JavaEnum.Blue -> 3, JavaEnum.Green -> 2, JavaEnum.Red -> 1)
+        .transformInto[ju.EnumMap[JavaEnum, String]]
+        .asScala ==> Map(JavaEnum.Blue -> "3", JavaEnum.Green -> "2", JavaEnum.Red -> "1")
     }
 
     test("to java.util.BitSet type") {
