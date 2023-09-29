@@ -22,7 +22,7 @@ class JavaFactorySpec extends ChimneySpec {
     iterator.asScala.toVector ==> Vector("d", "c", "b", "a")
   }
 
-  test("java.util.Collection instances should be resolved for both concrete and abstract types for non-Map types") {
+  test("java.util.Collection instances should be resolved for both concrete and abstract types") {
     def convertAndVerifyStable[A, CC[A1] <: ju.Collection[A1]](values: A*)(implicit
         factory: JavaFactory[A, CC[A]]
     ): Unit = {
@@ -71,9 +71,7 @@ class JavaFactorySpec extends ChimneySpec {
     convertAndVerifySorted[String, ju.TreeSet]("d", "c", "b", "a")
   }
 
-  test(
-    "java.util.Collection instances should be resolved for both concrete and abstract types for java.util.Dictionary types"
-  ) {
+  test("java.util.Dictionary instances should be resolved for both concrete and abstract types") {
     def convertAndVerifyUnstable[K: Ordering, V, CC[K1, V1] <: ju.Dictionary[K1, V1]](values: (K, V)*)(implicit
         factory: JavaFactory[(K, V), CC[K, V]]
     ): Unit = {
@@ -85,9 +83,7 @@ class JavaFactorySpec extends ChimneySpec {
     convertAndVerifyUnstable[String, Int, ju.Hashtable]("d" -> 10, "c" -> 8, "b" -> 4, "a" -> 0)
   }
 
-  test(
-    "java.util.Collection instances should be resolved for both concrete and abstract types for java.util.Map types"
-  ) {
+  test("java.util.Map instances should be resolved for both concrete and abstract types") {
     def convertAndVerifyStable[K, V, CC[K1, V1] <: ju.Map[K1, V1]](values: (K, V)*)(implicit
         factory: JavaFactory[(K, V), CC[K, V]]
     ): Unit = {
@@ -145,7 +141,15 @@ class JavaFactorySpec extends ChimneySpec {
     )
   }
 
-  test("java.util.Collection instances should be resolved for java.util.BitSet specialization") {
+  test("java.util.Collection instances should be resolved for java.util.Properties specialization") {
+    val properties =
+      implicitly[JavaFactory[(String, String), ju.Properties]].fromSpecific(Iterator("a" -> "1", "b" -> "2"))
+
+    import scala.jdk.CollectionConverters.*
+    properties.asScala ==> Map("a" -> "1", "b" -> "2")
+  }
+
+  test("java.util.BitSet instance should be resolved") {
     val bitSet = implicitly[JavaFactory[Int, ju.BitSet]].fromSpecific(Iterator(10, 8, 4, 2, 0))
 
     bitSet.toLongArray ==> Array((1L << 10) + (1L << 8) + (1L << 4) + (1L << 2) + (1L << 0))
