@@ -61,7 +61,7 @@ trait JavaCollectionsPartialTransformerImplicits
       A,
       B
   ](implicit
-      iterator: JavaIterator.Aux[A, JColl],
+      iterator: JavaIterator[A, JColl],
       factory: Factory[B, SColl[B]],
       aToB: PartialTransformOrUpcast[A, B]
   ): PartialTransformer[JColl, SColl[B]] =
@@ -96,7 +96,7 @@ trait JavaCollectionsPartialTransformerImplicits
       A,
       B
   ](implicit
-      iterator: JavaIterator.Aux[A, JColl1],
+      iterator: JavaIterator[A, JColl1],
       factory: JavaFactory[B, JColl2],
       aToB: PartialTransformOrUpcast[A, B]
   ): PartialTransformer[JColl1, JColl2] =
@@ -119,7 +119,7 @@ private[javacollections] trait JavaCollectionsPartialTransformerImplicitsLowPrio
       K2,
       V2
   ](implicit
-      iterator: JavaIterator.Aux[(K1, V1), JMap],
+      iterator: JavaIterator[(K1, V1), JMap],
       factory: Factory[(K2, V2), SMap[K2, V2]],
       keys: PartialTransformOrUpcast[K1, K2],
       values: PartialTransformOrUpcast[V1, V2]
@@ -176,7 +176,7 @@ private[javacollections] trait JavaCollectionsPartialTransformerImplicitsLowPrio
       K2,
       V2
   ](implicit
-      iterator: JavaIterator.Aux[(K1, V1), JMap1],
+      iterator: JavaIterator[(K1, V1), JMap1],
       factory: JavaFactory[(K2, V2), JMap2],
       keys: PartialTransformOrUpcast[K1, K2],
       values: PartialTransformOrUpcast[V1, V2]

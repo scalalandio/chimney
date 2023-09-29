@@ -43,7 +43,7 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
       A,
       B
   ](implicit
-      iterator: JavaIterator.Aux[A, JColl],
+      iterator: JavaIterator[A, JColl],
       factory: Factory[B, SColl[B]],
       aToB: TransformOrUpcast[A, B]
   ): Transformer[JColl, SColl[B]] =
@@ -77,7 +77,7 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
       A,
       B
   ](implicit
-      iterator: JavaIterator.Aux[A, JColl1],
+      iterator: JavaIterator[A, JColl1],
       factory: JavaFactory[B, JColl2],
       aToB: TransformOrUpcast[A, B]
   ): Transformer[JColl1, JColl2] =
@@ -101,7 +101,7 @@ private[javacollections] trait JavaCollectionsTotalTransformerImplicitsLowPriori
       K2,
       V2
   ](implicit
-      iterator: JavaIterator.Aux[(K1, V1), JMap],
+      iterator: JavaIterator[(K1, V1), JMap],
       factory: Factory[(K2, V2), SMap[K2, V2]],
       keys: TransformOrUpcast[K1, K2],
       values: TransformOrUpcast[V1, V2]
@@ -144,7 +144,7 @@ private[javacollections] trait JavaCollectionsTotalTransformerImplicitsLowPriori
       K2,
       V2
   ](implicit
-      iterator: JavaIterator.Aux[(K1, V1), JMap1],
+      iterator: JavaIterator[(K1, V1), JMap1],
       factory: JavaFactory[(K2, V2), JMap2],
       keys: TransformOrUpcast[K1, K2],
       values: TransformOrUpcast[V1, V2]
