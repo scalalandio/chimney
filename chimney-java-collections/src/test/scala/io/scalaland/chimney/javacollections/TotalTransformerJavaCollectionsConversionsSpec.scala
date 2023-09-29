@@ -94,6 +94,7 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       // identity transformation of inner type:
 
       input.transformInto[ju.Dictionary[Int, Int]].asScala ==> input.toMap
+      input.transformInto[ju.Properties].asScala ==> output.toMap
 
       // provided transformation of inner type:
 
@@ -238,6 +239,15 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
       initDictionary(new ju.Hashtable[Int, Int])
         .transformInto[Map[Int, Int]] ==> Map(4 -> 4, 3 -> 3, 2 -> 2, 1 -> 1)
+      locally {
+        val p = new ju.Properties()
+        p.put("4", "4")
+        p.put("3", "3")
+        p.put("2", "2")
+        p.put("1", "1")
+        p
+      }
+        .transformInto[Map[Any, Any]] ==> Map("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
 
       // provided transformation of inner type:
 

@@ -12,6 +12,8 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
   implicit private val stringToInt: PartialTransformer[String, Int] = PartialTransformer.fromFunction(_.toInt)
 
+  // TODO: test error messages (index/key preservation)
+
   group("conversion from Scala types to Java types") {
 
     test("to java.util.Optional type") {
@@ -114,6 +116,7 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       // identity transformation of inner type:
 
       input.transformIntoPartial[ju.Dictionary[String, String]].asOption.get.asScala ==> input.toMap
+      input.transformIntoPartial[ju.Properties].asOption.get.asScala ==> input.toMap
 
       // provided transformation of inner type:
 
@@ -275,6 +278,17 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
       initDictionary(new ju.Hashtable[String, String])
         .transformIntoPartial[Map[String, String]]
+        .asOption
+        .get ==> Map("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
+      locally {
+        val p = new ju.Properties()
+        p.put("4", "4")
+        p.put("3", "3")
+        p.put("2", "2")
+        p.put("1", "1")
+        p
+      }
+        .transformIntoPartial[Map[Any, Any]]
         .asOption
         .get ==> Map("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
 

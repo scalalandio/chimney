@@ -67,7 +67,14 @@ object JavaIterator extends JavaIteratorLowPriorityImplicits {
   // java.util.BitSet
 
   /** @since 0.8.1 */
-  implicit def bitSet: Aux[Int, java.util.BitSet] = new BitSetIterator
+  implicit def javaIteratorForBitSet: Aux[Int, ju.BitSet] = new BitSetIterator
+
+  // java.util.Properties
+
+  /** @since 0.8.1 */
+  implicit val javaIteratorForProperties: Aux[(String, String), ju.Properties] =
+    javaIteratorForDictionary[String, String, ju.Hashtable[String, String]]
+      .asInstanceOf[Aux[(String, String), ju.Properties]]
 }
 
 private[javacollections] trait JavaIteratorLowPriorityImplicits {
