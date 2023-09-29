@@ -50,11 +50,19 @@ object JavaIterator extends JavaIteratorLowPriorityImplicits {
   implicit def javaIteratorForIterable[A, CC[A0] <: java.lang.Iterable[A0]]: JavaIterator[A, CC[A]] =
     new IterableIterator[A, CC]
 
+  /** @since 0.8.1 */
+  implicit def javaIteratorForEnumSet[E <: java.lang.Enum[E]]: JavaIterator[E, ju.EnumSet[E]] =
+    new IterableIterator[E, ju.Set].asInstanceOf[JavaIterator[E, ju.EnumSet[E]]]
+
   // java.util.Map
 
   /** @since 0.8.1 */
   implicit def javaIteratorForMap[K, V, CC[K0, V0] <: ju.Map[K0, V0]]: JavaIterator[(K, V), CC[K, V]] =
     new MapIterator[K, V, CC]
+
+  /** @since 0.8.1 */
+  implicit def javaIteratorForEnumMap[K <: java.lang.Enum[K], V]: JavaIterator[(K, V), ju.EnumMap[K, V]] =
+    new MapIterator[K, V, ju.Map].asInstanceOf[JavaIterator[(K, V), ju.EnumMap[K, V]]]
 
   // java.util.BitSet
 
