@@ -218,7 +218,7 @@ val mimaSettings = Seq(
       case "chimney"                  => Set("0.8.0-RC1")
       case "chimney-cats"             => Set("0.8.0-RC1")
       case "chimney-macro-commons"    => Set() // we're not guaranteeing stability of this library just yet
-      case "chimney-java-collections" => Set() // we're not guaranteeing stability of this library just yet
+      case "chimney-java-collections" => Set() // not yet published
       case _                          => Set()
     }
     previousVersions.map(organization.value %% moduleName.value % _)
