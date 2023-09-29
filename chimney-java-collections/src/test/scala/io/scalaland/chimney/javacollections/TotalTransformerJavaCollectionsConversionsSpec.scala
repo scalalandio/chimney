@@ -279,7 +279,22 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       initMap(new ju.TreeMap[Int, Int]).transformInto[SortedMap[String, String]].toVector ==> sortedOutput.toVector
     }
 
-    test("from java.lang.Enum-supporting type".ignore) {} // TODO: I am not sure if it can be easily done
+    test("from java.lang.Enum-supporting type") {
+      val enumSet = ju.EnumSet.allOf(classOf[JavaEnum])
+      enumSet.transformInto[Set[JavaEnum]] ==> Set(JavaEnum.Red, JavaEnum.Green, JavaEnum.Blue)
+
+      val enumMap = new ju.EnumMap[JavaEnum, Int](classOf[JavaEnum])
+      JavaEnum.values().foreach(e => enumMap.put(e, e.ordinal()))
+
+      // identity transformation of inner type:
+
+      enumMap.transformInto[Map[JavaEnum, Int]] ==> Map(JavaEnum.Red -> 0, JavaEnum.Green -> 1, JavaEnum.Blue -> 2)
+
+      // provided transformation of inner type:
+
+      enumMap
+        .transformInto[Map[JavaEnum, String]] ==> Map(JavaEnum.Red -> "0", JavaEnum.Green -> "1", JavaEnum.Blue -> "2")
+    }
 
     test("from java.util.BitSet type") {
       val input = new ju.BitSet

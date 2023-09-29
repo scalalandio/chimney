@@ -12,8 +12,6 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
   implicit private val stringToInt: PartialTransformer[String, Int] = PartialTransformer.fromFunction(_.toInt)
 
-  // TODO: test error messages (index/key preservation)
-
   group("conversion from Scala types to Java types") {
 
     test("to java.util.Optional type") {
@@ -28,6 +26,13 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       (Some("1"): Option[String]).transformIntoPartial[ju.Optional[Int]].asOption.get ==> ju.Optional.of(1)
       (None: Option[String]).transformIntoPartial[ju.Optional[Int]].asOption.get ==> ju.Optional.empty()
       "1".transformIntoPartial[ju.Optional[Int]].asOption.get ==> ju.Optional.of(1)
+
+      // failed parsing of inner type:
+
+      Option("a").transformIntoPartial[ju.Optional[Int]].asErrorPathMessageStrings ==> Iterable(
+        "" -> "For input string: \"a\""
+      )
+      "a".transformIntoPartial[ju.Optional[Int]].asErrorPathMessageStrings ==> Iterable("" -> "For input string: \"a\"")
     }
 
     test("to java.util.Iterator type") {
@@ -48,6 +53,13 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         2,
         1
       )
+
+      // failed parsing of inner type:
+
+      Iterator("a", "3", "b", "1").transformIntoPartial[ju.Iterator[Int]].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
     }
 
     test("to java.util.Enumeration type") {
@@ -67,6 +79,13 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         3,
         2,
         1
+      )
+
+      // failed parsing of inner type:
+
+      Iterator("a", "3", "b", "1").transformIntoPartial[ju.Enumeration[Int]].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
       )
     }
 
@@ -107,6 +126,25 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       input.transformIntoPartial[ju.HashSet[Int]].asOption.get.asScala.toSet ==> outputUnstable
       input.transformIntoPartial[ju.LinkedHashSet[Int]].asOption.get.asScala.toList ==> outputStable
       input.transformIntoPartial[ju.TreeSet[Int]].asOption.get.asScala.toList ==> outputSorted
+
+      // failed parsing of inner type:
+
+      Seq("a", "3", "b", "1").transformIntoPartial[ju.List[Int]].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+      Seq("a", "3", "b", "1").transformIntoPartial[ju.Deque[Int]].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+      Seq("a", "3", "b", "1").transformIntoPartial[ju.Queue[Int]].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+      Seq("a", "3", "b", "1").transformIntoPartial[ju.Set[Int]].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
     }
 
     test("to java.util.Dictionary types") {
@@ -124,6 +162,17 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       (input.transformIntoPartial[ju.Hashtable[Int, Int]]: partial.Result[
         ju.Dictionary[Int, Int]
       ]).asOption.get.asScala ==> output
+
+      // failed parsing of inner type:
+
+      ListMap("a" -> "4", "3" -> "b", "c" -> "d", "1" -> "1")
+        .transformIntoPartial[ju.Dictionary[Int, Int]]
+        .asErrorPathMessageStrings ==> Iterable(
+        "(a).keys(a)" -> "For input string: \"a\"",
+        "(3)" -> "For input string: \"b\"",
+        "(c).keys(c)" -> "For input string: \"c\"",
+        "(c)" -> "For input string: \"d\""
+      )
     }
 
     test("to java.util.Map types") {
@@ -145,6 +194,17 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       input.transformIntoPartial[ju.HashMap[Int, Int]].asOption.get.asScala ==> outputUnstable
       input.transformIntoPartial[ju.LinkedHashMap[Int, Int]].asOption.get.asScala.toList ==> outputStable
       input.transformIntoPartial[ju.TreeMap[Int, Int]].asOption.get.asScala.toList ==> outputSorted
+
+      // failed parsing of inner type:
+
+      ListMap("a" -> "4", "3" -> "b", "c" -> "d", "1" -> "1")
+        .transformIntoPartial[ju.Map[Int, Int]]
+        .asErrorPathMessageStrings ==> Iterable(
+        "(a).keys(a)" -> "For input string: \"a\"",
+        "(3)" -> "For input string: \"b\"",
+        "(c).keys(c)" -> "For input string: \"c\"",
+        "(c)" -> "For input string: \"d\""
+      )
     }
 
     test("to java.lang.Enum-supporting types") {
@@ -173,11 +233,36 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         .asOption
         .get
         .asScala ==> Map(JavaEnum.Blue -> 3, JavaEnum.Green -> 2, JavaEnum.Red -> 1)
+
+      // failed parsing of inner type:
+
+      ListMap(JavaEnum.Red -> "a", JavaEnum.Green -> "b", JavaEnum.Blue -> "c")
+        .transformIntoPartial[ju.EnumMap[JavaEnum, Int]]
+        .asErrorPathMessageStrings ==> Iterable(
+        "(Red)" -> "For input string: \"a\"",
+        "(Green)" -> "For input string: \"b\"",
+        "(Blue)" -> "For input string: \"c\""
+      )
     }
 
     test("to java.util.BitSet type") {
+      // identity transformation of inner type:
+
+      Set(1, 2, 4, 8).transformIntoPartial[ju.BitSet].asOption.get.toLongArray ==> Array(
+        (1 << 1) + (1 << 2) + (1 << 4) + (1 << 8)
+      )
+
+      // provided transformation of inner type:
+
       Set("1", "2", "4", "8").transformIntoPartial[ju.BitSet].asOption.get.toLongArray ==> Array(
         (1 << 1) + (1 << 2) + (1 << 4) + (1 << 8)
+      )
+
+      // failed parsing of inner type:
+
+      Set("a", "2", "b", "8").transformIntoPartial[ju.BitSet].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
       )
     }
   }
@@ -194,6 +279,12 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
       ju.Optional.of("1").transformIntoPartial[Option[Int]].asOption.get ==> Some(1)
       ju.Optional.empty[String]().transformIntoPartial[Option[Int]].asOption.get ==> None
+
+      // failed parsing of inner type:
+
+      ju.Optional.of("a").transformIntoPartial[Option[Int]].asErrorPathMessageStrings ==> Iterable(
+        "" -> "For input string: \"a\""
+      )
     }
 
     test("from java.util.Iterator type") {
@@ -210,6 +301,18 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       // provided transformation of inner type:
 
       input.iterator().transformIntoPartial[Iterator[Int]].asOption.get.toList ==> List(4, 3, 2, 1)
+
+      // failed parsing of inner type:
+
+      val input2 = new ju.ArrayList[String]
+      input2.add("a")
+      input2.add("3")
+      input2.add("b")
+      input2.add("1")
+      input2.iterator().transformIntoPartial[Iterator[Int]].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
     }
 
     test("from java.util.Enumeration type") {
@@ -226,6 +329,18 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       // provided transformation of inner type:
 
       input.elements().transformIntoPartial[Iterator[Int]].asOption.get.toList ==> List(4, 3, 2, 1)
+
+      // failed parsing of inner type:
+
+      val input2 = new ju.Vector[String]
+      input2.add("a")
+      input2.add("3")
+      input2.add("b")
+      input2.add("1")
+      input2.elements().transformIntoPartial[Iterator[Int]].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
     }
 
     test("from java.util.Collection types") {
@@ -233,6 +348,13 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         coll.add("4")
         coll.add("3")
         coll.add("2")
+        coll.add("1")
+        coll
+      }
+      def initBadCollection(coll: ju.Collection[String]): coll.type = {
+        coll.add("a")
+        coll.add("3")
+        coll.add("b")
         coll.add("1")
         coll
       }
@@ -263,6 +385,36 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
       initCollection(new ju.HashSet[String]).transformIntoPartial[Set[Int]].asOption.get ==> outputUnstable
       initCollection(new ju.TreeSet[String]).transformIntoPartial[ListSet[Int]].asOption.get.toList ==> outputSorted
+
+      // failed parsing of inner type:
+
+      initBadCollection(new ju.ArrayList[String])
+        .transformIntoPartial[List[Int]]
+        .asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+      initBadCollection(new ju.LinkedList[String])
+        .transformIntoPartial[List[Int]]
+        .asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+      initBadCollection(new ju.Vector[String]).transformIntoPartial[List[Int]].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+      initBadCollection(new ju.Stack[String]).transformIntoPartial[List[Int]].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+
+      initBadCollection(new ju.ArrayDeque[String])
+        .transformIntoPartial[List[Int]]
+        .asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
     }
 
     test("from java.util.Dictionary types") {
@@ -298,6 +450,22 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         .transformIntoPartial[Map[Int, Int]]
         .asOption
         .get ==> Map(4 -> 4, 3 -> 3, 2 -> 2, 1 -> 1)
+
+      // failed parsing of inner type:
+
+      locally {
+        val p = new ju.Properties()
+        p.put("a", "4")
+        p.put("3", "b")
+        p.put("c", "d")
+        p.put("1", "1")
+        p
+      }.transformIntoPartial[Map[Int, Int]].asErrorPathMessageStrings ==> Iterable(
+        "(a).keys(a)" -> "For input string: \"a\"",
+        "(3)" -> "For input string: \"b\"",
+        "(c).keys(c)" -> "For input string: \"c\"",
+        "(c)" -> "For input string: \"d\""
+      )
     }
 
     test("from java.util.Map types") {
@@ -305,6 +473,13 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         map.put("4", "4")
         map.put("3", "3")
         map.put("2", "2")
+        map.put("1", "1")
+        map
+      }
+      def initBadMap(map: ju.Map[String, String]): map.type = {
+        map.put("a", "4")
+        map.put("3", "b")
+        map.put("c", "d")
         map.put("1", "1")
         map
       }
@@ -335,9 +510,54 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         .asOption
         .get
         .toVector ==> sortedOutput.toVector
+
+      // failed parsing of inner type:
+
+      initBadMap(new ju.LinkedHashMap[String, String])
+        .transformIntoPartial[ListMap[Int, Int]]
+        .asErrorPathMessageStrings ==> Iterable(
+        "(a).keys(a)" -> "For input string: \"a\"",
+        "(3)" -> "For input string: \"b\"",
+        "(c).keys(c)" -> "For input string: \"c\"",
+        "(c)" -> "For input string: \"d\""
+      )
     }
 
-    test("from java.lang.Enum-supporting type".ignore) {} // TODO: I am not sure if it can be easily done
+    test("from java.lang.Enum-supporting type") {
+      val enumSet = ju.EnumSet.allOf(classOf[JavaEnum])
+      enumSet.transformIntoPartial[Set[JavaEnum]].asOption.get ==> Set(JavaEnum.Red, JavaEnum.Green, JavaEnum.Blue)
+
+      val enumMap = new ju.EnumMap[JavaEnum, String](classOf[JavaEnum])
+      JavaEnum.values().foreach(e => enumMap.put(e, e.ordinal().toString))
+
+      // identity transformation of inner type:
+
+      enumMap.transformIntoPartial[Map[JavaEnum, String]].asOption.get ==> Map(
+        JavaEnum.Red -> "0",
+        JavaEnum.Green -> "1",
+        JavaEnum.Blue -> "2"
+      )
+
+      // provided transformation of inner type:
+
+      enumMap
+        .transformIntoPartial[Map[JavaEnum, Int]]
+        .asOption
+        .get ==> Map(JavaEnum.Red -> 0, JavaEnum.Green -> 1, JavaEnum.Blue -> 2)
+
+      // failed parsing of inner type:
+
+      val enumMap2 = new ju.EnumMap[JavaEnum, String](classOf[JavaEnum])
+      enumMap2.put(JavaEnum.Red, "a")
+      enumMap2.put(JavaEnum.Green, "1")
+      enumMap2.put(JavaEnum.Blue, "b")
+      enumMap2
+        .transformIntoPartial[Map[JavaEnum, Int]]
+        .asErrorPathMessageStrings ==> Iterable(
+        "(Red)" -> "For input string: \"a\"",
+        "(Blue)" -> "For input string: \"b\""
+      )
+    }
 
     test("from java.util.BitSet type") {
       val input = new ju.BitSet
