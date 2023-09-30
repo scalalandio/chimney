@@ -48,6 +48,16 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         def param_<[U](idx: Int): ?<[U] = fromUntyped[U](A.tpe.typeArgs(idx)).as_?<[U]
         def param_>?<[L, U >: L](idx: Int): L >?< U = fromUntyped[L](A.tpe.typeArgs(idx)).as_>?<[L, U]
       }
+
+      // It is surprisingly ridiculous but I've found no other way of telling whether I am looking at enum abstract
+      // class or its value, since EVERYTHING else looks the same: parent is not abstract, everyone is static,
+      // everyone has the same baseClasses, everyone reports to have public primaryConstructor (which is <none>).
+      // The only different in behavior is that one prints com.my.Enum and another com.my.Enum(MyValue).
+      val javaEnumRegexpFormat = raw"^(.+)\((.+)\)$$".r
+      def isJavaEnumValue(tpe: c.Type): Boolean =
+        tpe.typeSymbol.isJavaEnum && javaEnumRegexpFormat.pattern
+          .matcher(tpe.toString)
+          .matches() // 2.12 doesn't have .matches
     }
 
     import platformSpecific.*
@@ -153,10 +163,15 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def isSameAs[A, B](A: Type[A], B: Type[B]): Boolean = A.tpe =:= B.tpe
 
     def prettyPrint[A: Type]: String = {
-      def helper(tpe: c.Type): String = {
-        val tpes = tpe.typeArgs.map(helper)
-        tpe.dealias.typeSymbol.fullName + (if (tpes.isEmpty) "" else s"[${tpes.mkString(", ")}]")
-      }
+      def helper(tpe: c.Type): String =
+        tpe.toString match {
+          case javaEnumRegexpFormat(enumName, valueName) if tpe.typeSymbol.isJavaEnum => s"$enumName.$valueName"
+          case _ =>
+            val tpes = tpe.typeArgs.map(helper)
+            val tpeArgs = if (tpes.isEmpty) "" else s"[${tpes.mkString(", ")}]"
+            tpe.dealias.typeSymbol.fullName + tpeArgs
+        }
+
       Console.MAGENTA + helper(Type[A].tpe) + Console.RESET
     }
   }

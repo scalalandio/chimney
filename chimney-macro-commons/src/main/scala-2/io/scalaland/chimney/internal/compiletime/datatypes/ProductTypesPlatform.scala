@@ -38,6 +38,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
       def isJavaSetterOrVar(setter: Symbol): Boolean =
         (setter.isMethod && isJavaSetter(setter.asMethod)) || isVar(setter)
+
     }
 
     import platformSpecific.*
@@ -47,7 +48,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       val sym = A.tpe.typeSymbol
       !A.isPrimitive && !(A <:< Type[
         String
-      ]) && sym.isClass && !sym.isAbstract && sym.asClass.primaryConstructor.isPublic
+      ]) && !sym.isJavaEnum && sym.isClass && !sym.isAbstract && sym.asClass.primaryConstructor.isPublic
     }
     def isCaseClass[A](implicit A: Type[A]): Boolean =
       isPOJO[A] && A.tpe.typeSymbol.asClass.isCaseClass
@@ -55,7 +56,8 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       val sym = A.tpe.typeSymbol
       def isScala2Enum = sym.asClass.isCaseClass
       def isScala3Enum = sym.isStatic && sym.isFinal // parameterless case in S3 cannot be checked for "case"
-      sym.isPublic && sym.isModuleClass && (isScala2Enum || isScala3Enum)
+      def isScalaEnum = sym.isModuleClass && (isScala2Enum || isScala3Enum)
+      sym.isPublic && (isScalaEnum || isJavaEnumValue(A.tpe))
     }
     def isJavaBean[A](implicit A: Type[A]): Boolean = {
       val mem = A.tpe.members
@@ -103,7 +105,9 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       val A = Type[A].tpe
       val sym = A.typeSymbol
 
-      if (isCaseObject[A]) {
+      if (isJavaEnumValue(A)) {
+        Some(Product.Constructor(ListMap.empty, _ => c.Expr[A](q"$A")))
+      } else if (isCaseObject[A]) {
         Some(Product.Constructor(ListMap.empty, _ => c.Expr[A](q"${sym.asClass.module}")))
       } else if (isPOJO[A]) {
         val primaryConstructor =
