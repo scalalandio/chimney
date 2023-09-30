@@ -400,6 +400,8 @@ lazy val chimneyProtobufs = projectMatrix
     (only1VersionInIDE :+ MatrixAction
       .ForPlatforms(VirtualAxis.js, VirtualAxis.native)
       .Settings(
+        // Scala.js and Scala Native decided to not implement java.time as let external library do it
+        // while we want to provide some type class instances for types in java.time
         libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
       ))*
   )
