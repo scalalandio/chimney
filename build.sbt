@@ -387,6 +387,7 @@ lazy val chimneyJavaCollections = projectMatrix
   .settings(publishSettings*)
   .settings(mimaSettings*)
   .settings(
+    // Scala 2.12 doesn't have scala.jdk.StreamConverters and we use it in test of java.util.stream type class instances
     libraryDependencies += "org.scala-lang.modules" %%% "scala-java8-compat" % "1.0.2" % Test,
     mimaFailOnNoPrevious := false
   )
