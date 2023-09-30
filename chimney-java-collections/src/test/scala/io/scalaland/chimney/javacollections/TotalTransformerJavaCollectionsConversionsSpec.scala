@@ -5,8 +5,10 @@ import io.scalaland.chimney.{ChimneySpec, Transformer}
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.JavaEnum
 
+import scala.collection.compat.*
 import scala.collection.immutable.{ListMap, ListSet, SortedMap}
 import scala.jdk.CollectionConverters.*
+import scala.compat.java8.StreamConverters.* // Scala 2.12 doesn't have scala.jdk.StreamConverters
 
 class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
@@ -145,6 +147,43 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
     test("to java.util.BitSet type") {
       Set(1, 2, 4, 8).transformInto[ju.BitSet].toLongArray ==> Array((1 << 1) + (1 << 2) + (1 << 4) + (1 << 8))
+    }
+
+    test("to java.util.stream.BaseStream types") {
+      val strings = List("4", "3", "2", "1")
+      val ints = List(4, 3, 2, 1)
+      val longs = List(4L, 3L, 2L, 1L)
+      val doubles = List(4.0, 3.0, 2.0, 1.0)
+
+      // identity transformation of inner type:
+
+      strings.transformInto[ju.stream.Stream[String]].toScala(List) ==> strings
+      ints.transformInto[ju.stream.IntStream].toScala(List) ==> ints
+      longs.transformInto[ju.stream.LongStream].toScala(List) ==> longs
+      doubles.transformInto[ju.stream.DoubleStream].toScala(List) ==> doubles
+
+      // provided transformation of inner type:
+
+      implicit def longToString: Transformer[Long, String] = _.toInt.toString
+      implicit def doubleToString: Transformer[Double, String] = _.toInt.toString
+      ints.transformInto[ju.stream.Stream[String]].toScala(List) ==> strings
+      longs.transformInto[ju.stream.Stream[String]].toScala(List) ==> strings
+      doubles.transformInto[ju.stream.Stream[String]].toScala(List) ==> strings
+
+      implicit def longToInt: Transformer[Long, Int] = _.toInt
+      implicit def doubleToInt: Transformer[Double, Int] = _.toInt
+      longs.transformInto[ju.stream.IntStream].toScala(List) ==> ints
+      doubles.transformInto[ju.stream.IntStream].toScala(List) ==> ints
+
+      implicit def intToLong: Transformer[Int, Long] = _.toLong
+      implicit def doubleToLong: Transformer[Double, Long] = _.toLong
+      ints.transformInto[ju.stream.LongStream].toScala(List) ==> longs
+      doubles.transformInto[ju.stream.LongStream].toScala(List) ==> longs
+
+      implicit def intToDouble: Transformer[Int, Double] = _.toDouble
+      implicit def longToDouble: Transformer[Long, Double] = _.toDouble
+      ints.transformInto[ju.stream.DoubleStream].toScala(List) ==> doubles
+      longs.transformInto[ju.stream.DoubleStream].toScala(List) ==> doubles
     }
   }
 
@@ -311,6 +350,22 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
       input.transformInto[Set[String]] ==> Set("1", "2", "3", "4")
     }
+
+    test("from java.util.stream.BaseStream types") {
+      // identity transformation of inner type:
+
+      ju.stream.Stream.of("4", "3", "2", "1").transformInto[List[String]] ==> List("4", "3", "2", "1")
+      ju.stream.IntStream.of(4, 3, 2, 1).transformInto[List[Int]] ==> List(4, 3, 2, 1)
+      ju.stream.LongStream.of(4L, 3L, 2L, 1L).transformInto[List[Long]] ==> List(4L, 3L, 2L, 1L)
+      ju.stream.DoubleStream.of(4.0, 3.0, 2.0, 1.0).transformInto[List[Double]] ==> List(4.0, 3.0, 2.0, 1.0)
+
+      // provided transformation of inner type:
+
+      implicit def longToInt: Transformer[Long, Int] = _.toInt
+      implicit def doubleToInt: Transformer[Double, Int] = _.toInt
+      ju.stream.LongStream.of(4L, 3L, 2L, 1L).transformInto[List[Int]] ==> List(4, 3, 2, 1)
+      ju.stream.DoubleStream.of(4.0, 3.0, 2.0, 1.0).transformInto[List[Int]] ==> List(4, 3, 2, 1)
+    }
   }
 
   group("conversion from Java types to Java types") {
@@ -445,6 +500,98 @@ class TotalTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       input.transformInto[ju.HashMap[String, String]].asScala ==> outputUnstable
       input.transformInto[ju.LinkedHashMap[String, String]].asScala.toList ==> outputStable
       input.transformInto[ju.TreeMap[String, String]].asScala.toList ==> outputSorted
+    }
+
+    test("for java.util.Dictionary types") {
+      val input = new ju.LinkedHashMap[Int, Int]
+      input.put(4, 4)
+      input.put(3, 3)
+      input.put(2, 2)
+      input.put(1, 1)
+      val output = Map("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
+
+      // identity transformation of inner type:
+
+      input.transformInto[ju.Dictionary[Int, Int]].asScala ==> input.asScala.toMap
+
+      // provided transformation of inner type:
+
+      input.transformInto[ju.Dictionary[String, String]].asScala ==> output
+      (input.transformInto[ju.Hashtable[String, String]]: ju.Dictionary[String, String]).asScala ==> output
+    }
+
+    test("for java.util.Map types") {
+      val input = new ju.LinkedHashMap[Int, Int]
+      input.put(4, 4)
+      input.put(3, 3)
+      input.put(2, 2)
+      input.put(1, 1)
+      val outputStable = List("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
+      val outputUnstable = Map("4" -> "4", "3" -> "3", "2" -> "2", "1" -> "1")
+      val outputSorted = List("1" -> "1", "2" -> "2", "3" -> "3", "4" -> "4")
+
+      // identity transformation of inner type:
+
+      input.transformInto[ju.Map[Int, Int]].asScala ==> input.asScala.toMap
+
+      // provided transformation of inner type:
+
+      input.transformInto[ju.Map[String, String]].asScala ==> outputUnstable
+      input.transformInto[ju.AbstractMap[String, String]].asScala ==> outputUnstable
+      input.transformInto[ju.SortedMap[String, String]].asScala.toList ==> outputSorted
+      input.transformInto[ju.NavigableMap[String, String]].asScala.toList ==> outputSorted
+      input.transformInto[ju.HashMap[String, String]].asScala ==> outputUnstable
+      input.transformInto[ju.LinkedHashMap[String, String]].asScala.toList ==> outputStable
+      input.transformInto[ju.TreeMap[String, String]].asScala.toList ==> outputSorted
+    }
+
+    test("for java.util.stream.BaseStream types") {
+      // identity transformation of inner type:
+
+      ju.stream.Stream.of(4, 3, 2, 1).transformInto[ju.stream.IntStream].toScala(List) ==> List(4, 3, 2, 1)
+      ju.stream.Stream.of(4L, 3L, 2L, 1L).transformInto[ju.stream.LongStream].toScala(List) ==> List(4L, 3L, 2L, 1L)
+      ju.stream.Stream.of(4.0, 3.0, 2.0, 1.0).transformInto[ju.stream.DoubleStream].toScala(List) ==> List(
+        4.0,
+        3.0,
+        2.0,
+        1.0
+      )
+      ju.stream.IntStream.of(4, 3, 2, 1).transformInto[ju.stream.Stream[Int]].toScala(List) ==> List(4, 3, 2, 1)
+      ju.stream.LongStream.of(4L, 3L, 2L, 1L).transformInto[ju.stream.Stream[Long]].toScala(List) ==> List(
+        4L,
+        3L,
+        2L,
+        1L
+      )
+      ju.stream.DoubleStream.of(4.0, 3.0, 2.0, 1.0).transformInto[ju.stream.Stream[Double]].toScala(List) ==> List(
+        4.0,
+        3.0,
+        2.0,
+        1.0
+      )
+
+      // provided transformation of inner type:
+
+      implicit def longToString: Transformer[Long, Int] = _.toInt
+      implicit def doubleToString: Transformer[Double, Int] = _.toInt
+      ju.stream.IntStream.of(4, 3, 2, 1).transformInto[ju.stream.Stream[String]].toScala(List) ==> List(
+        "4",
+        "3",
+        "2",
+        "1"
+      )
+      ju.stream.LongStream.of(4L, 3L, 2L, 1L).transformInto[ju.stream.Stream[Int]].toScala(List) ==> List(
+        4,
+        3,
+        2,
+        1
+      )
+      ju.stream.DoubleStream.of(4.0, 3.0, 2.0, 1.0).transformInto[ju.stream.Stream[Int]].toScala(List) ==> List(
+        4,
+        3,
+        2,
+        1
+      )
     }
   }
 }

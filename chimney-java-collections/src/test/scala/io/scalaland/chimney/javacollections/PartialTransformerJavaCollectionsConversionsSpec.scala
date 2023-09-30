@@ -1,12 +1,14 @@
 package io.scalaland.chimney.javacollections
 
 import java.util as ju
-import io.scalaland.chimney.{partial, ChimneySpec, PartialTransformer}
+import io.scalaland.chimney.{partial, ChimneySpec, PartialTransformer, Transformer}
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.JavaEnum
 
+import scala.collection.compat.*
 import scala.collection.immutable.{ListMap, ListSet, SortedMap}
 import scala.jdk.CollectionConverters.*
+import scala.compat.java8.StreamConverters.* // Scala 2.12 doesn't have scala.jdk.StreamConverters
 
 class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
 
@@ -261,6 +263,64 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       // failed parsing of inner type:
 
       Set("a", "2", "b", "8").transformIntoPartial[ju.BitSet].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+    }
+
+    test("to java.util.stream.BaseStream types") {
+      val strings = List("4", "3", "2", "1")
+      val ints = List(4, 3, 2, 1)
+      val longs = List(4L, 3L, 2L, 1L)
+      val doubles = List(4.0, 3.0, 2.0, 1.0)
+
+      // identity transformation of inner type:
+
+      strings.transformIntoPartial[ju.stream.Stream[String]].asOption.get.toScala(List) ==> strings
+      ints.transformIntoPartial[ju.stream.IntStream].asOption.get.toScala(List) ==> ints
+      longs.transformIntoPartial[ju.stream.LongStream].asOption.get.toScala(List) ==> longs
+      doubles.transformIntoPartial[ju.stream.DoubleStream].asOption.get.toScala(List) ==> doubles
+
+      // provided transformation of inner type:
+
+      implicit def intToString: Transformer[Int, String] = _.toString
+      implicit def longToString: Transformer[Long, String] = _.toInt.toString
+      implicit def doubleToString: Transformer[Double, String] = _.toInt.toString
+      ints.transformIntoPartial[ju.stream.Stream[String]].asOption.get.toScala(List) ==> strings
+      longs.transformIntoPartial[ju.stream.Stream[String]].asOption.get.toScala(List) ==> strings
+      doubles.transformIntoPartial[ju.stream.Stream[String]].asOption.get.toScala(List) ==> strings
+
+      implicit def longToInt: Transformer[Long, Int] = _.toInt
+      implicit def doubleToInt: Transformer[Double, Int] = _.toInt
+      strings.transformIntoPartial[ju.stream.IntStream].asOption.get.toScala(List) ==> ints
+      longs.transformIntoPartial[ju.stream.IntStream].asOption.get.toScala(List) ==> ints
+      doubles.transformIntoPartial[ju.stream.IntStream].asOption.get.toScala(List) ==> ints
+
+      implicit val stringToLong: PartialTransformer[String, Long] = PartialTransformer.fromFunction(_.toLong)
+      implicit def intToLong: Transformer[Int, Long] = _.toLong
+      implicit def doubleToLong: Transformer[Double, Long] = _.toLong
+      strings.transformIntoPartial[ju.stream.LongStream].asOption.get.toScala(List) ==> longs
+      ints.transformIntoPartial[ju.stream.LongStream].asOption.get.toScala(List) ==> longs
+      doubles.transformIntoPartial[ju.stream.LongStream].asOption.get.toScala(List) ==> longs
+
+      implicit val stringToDouble: PartialTransformer[String, Double] = PartialTransformer.fromFunction(_.toDouble)
+      implicit def intToDouble: Transformer[Int, Double] = _.toDouble
+      implicit def longToDouble: Transformer[Long, Double] = _.toDouble
+      strings.transformIntoPartial[ju.stream.DoubleStream].asOption.get.toScala(List) ==> doubles
+      ints.transformIntoPartial[ju.stream.DoubleStream].asOption.get.toScala(List) ==> doubles
+      longs.transformIntoPartial[ju.stream.DoubleStream].asOption.get.toScala(List) ==> doubles
+
+      // failed parsing of inner type:
+
+      Seq("a", "1", "b", "2").transformIntoPartial[ju.stream.IntStream].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+      Seq("a", "1", "b", "2").transformIntoPartial[ju.stream.LongStream].asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+      Seq("a", "1", "b", "2").transformIntoPartial[ju.stream.DoubleStream].asErrorPathMessageStrings ==> Iterable(
         "(0)" -> "For input string: \"a\"",
         "(2)" -> "For input string: \"b\""
       )
@@ -575,6 +635,43 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       implicit val intToString: io.scalaland.chimney.Transformer[Int, String] = _.toString
       input.transformIntoPartial[Set[String]].asOption.get ==> Set("1", "2", "3", "4")
     }
+
+    test("from java.util.stream.BaseStream types") {
+      // identity transformation of inner type:
+
+      ju.stream.Stream.of("4", "3", "2", "1").transformIntoPartial[List[String]].asOption.get ==> List(
+        "4",
+        "3",
+        "2",
+        "1"
+      )
+      ju.stream.IntStream.of(4, 3, 2, 1).transformIntoPartial[List[Int]].asOption.get ==> List(4, 3, 2, 1)
+      ju.stream.LongStream.of(4L, 3L, 2L, 1L).transformIntoPartial[List[Long]].asOption.get ==> List(4L, 3L, 2L, 1L)
+      ju.stream.DoubleStream.of(4.0, 3.0, 2.0, 1.0).transformIntoPartial[List[Double]].asOption.get ==> List(
+        4.0,
+        3.0,
+        2.0,
+        1.0
+      )
+
+      // provided transformation of inner type:
+
+      implicit def longToInt: Transformer[Long, Int] = _.toInt
+      implicit def doubleToInt: Transformer[Double, Int] = _.toInt
+      ju.stream.Stream.of("4", "3", "2", "1").transformIntoPartial[List[Int]].asOption.get ==> List(4, 3, 2, 1)
+      ju.stream.LongStream.of(4L, 3L, 2L, 1L).transformIntoPartial[List[Int]].asOption.get ==> List(4, 3, 2, 1)
+      ju.stream.DoubleStream.of(4.0, 3.0, 2.0, 1.0).transformIntoPartial[List[Int]].asOption.get ==> List(4, 3, 2, 1)
+
+      // failed parsing of inner type:
+
+      ju.stream.Stream
+        .of("a", "3", "b", "1")
+        .transformIntoPartial[List[Int]]
+        .asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+    }
   }
 
   group("conversion from Java types to Java types") {
@@ -716,6 +813,105 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       input.transformIntoPartial[ju.HashMap[Int, Int]].asOption.get.asScala ==> outputUnstable
       input.transformIntoPartial[ju.LinkedHashMap[Int, Int]].asOption.get.asScala.toList ==> outputStable
       input.transformIntoPartial[ju.TreeMap[Int, Int]].asOption.get.asScala.toList ==> outputSorted
+    }
+
+    test("for java.util.stream.BaseStream types") {
+      // identity transformation of inner type:
+
+      ju.stream.Stream.of(4, 3, 2, 1).transformIntoPartial[ju.stream.IntStream].asOption.get.toScala(List) ==> List(
+        4,
+        3,
+        2,
+        1
+      )
+      ju.stream.Stream
+        .of(4L, 3L, 2L, 1L)
+        .transformIntoPartial[ju.stream.LongStream]
+        .asOption
+        .get
+        .toScala(List) ==> List(4L, 3L, 2L, 1L)
+      ju.stream.Stream
+        .of(4.0, 3.0, 2.0, 1.0)
+        .transformIntoPartial[ju.stream.DoubleStream]
+        .asOption
+        .get
+        .toScala(List) ==> List(4.0, 3.0, 2.0, 1.0)
+      ju.stream.IntStream
+        .of(4, 3, 2, 1)
+        .transformIntoPartial[ju.stream.Stream[Int]]
+        .asOption
+        .get
+        .toScala(List) ==> List(4, 3, 2, 1)
+      ju.stream.LongStream
+        .of(4L, 3L, 2L, 1L)
+        .transformIntoPartial[ju.stream.Stream[Long]]
+        .asOption
+        .get
+        .toScala(List) ==> List(4L, 3L, 2L, 1L)
+      ju.stream.DoubleStream
+        .of(4.0, 3.0, 2.0, 1.0)
+        .transformIntoPartial[ju.stream.Stream[Double]]
+        .asOption
+        .get
+        .toScala(List) ==> List(4.0, 3.0, 2.0, 1.0)
+
+      // provided transformation of inner type:
+
+      implicit def longToInt: Transformer[Long, Int] = _.toInt
+      implicit def doubleToInt: Transformer[Double, Int] = _.toInt
+      ju.stream.Stream
+        .of("4", "3", "2", "1")
+        .transformIntoPartial[ju.stream.Stream[Int]]
+        .asOption
+        .get
+        .toScala(List) ==> List(4, 3, 2, 1)
+      ju.stream.Stream
+        .of("4", "3", "2", "1")
+        .transformIntoPartial[ju.stream.IntStream]
+        .asOption
+        .get
+        .toScala(List) ==> List(4, 3, 2, 1)
+      ju.stream.LongStream
+        .of(4L, 3L, 2L, 1L)
+        .transformIntoPartial[ju.stream.Stream[Int]]
+        .asOption
+        .get
+        .toScala(List) ==> List(4, 3, 2, 1)
+      ju.stream.LongStream
+        .of(4L, 3L, 2L, 1L)
+        .transformIntoPartial[ju.stream.IntStream]
+        .asOption
+        .get
+        .toScala(List) ==> List(4, 3, 2, 1)
+      ju.stream.DoubleStream
+        .of(4.0, 3.0, 2.0, 1.0)
+        .transformIntoPartial[ju.stream.Stream[Int]]
+        .asOption
+        .get
+        .toScala(List) ==> List(4, 3, 2, 1)
+      ju.stream.DoubleStream
+        .of(4.0, 3.0, 2.0, 1.0)
+        .transformIntoPartial[ju.stream.IntStream]
+        .asOption
+        .get
+        .toScala(List) ==> List(4, 3, 2, 1)
+
+      // failed parsing of inner type:
+
+      ju.stream.Stream
+        .of("a", "3", "b", "1")
+        .transformIntoPartial[ju.stream.Stream[Int]]
+        .asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
+      ju.stream.Stream
+        .of("a", "3", "b", "1")
+        .transformIntoPartial[ju.stream.IntStream]
+        .asErrorPathMessageStrings ==> Iterable(
+        "(0)" -> "For input string: \"a\"",
+        "(2)" -> "For input string: \"b\""
+      )
     }
   }
 }
