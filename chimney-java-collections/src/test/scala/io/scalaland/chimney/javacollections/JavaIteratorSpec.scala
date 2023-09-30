@@ -109,7 +109,7 @@ class JavaIteratorSpec extends ChimneySpec {
     counter ==> 6
   }
 
-  test("java.util.Collection instances should be resolved for java.util.Properties specialization") {
+  test("java.util.Dictionary instances should be resolved for java.util.Properties specialization") {
     val properties = new ju.Properties()
     (0 to 10).foreach(i => properties.put(i.toString, i.toString))
     var counter = 0
@@ -125,5 +125,20 @@ class JavaIteratorSpec extends ChimneySpec {
     var counter = 0
     implicitly[JavaIterator[Int, ju.BitSet]].foreach(bitSet)(counter += _)
     counter ==> 55
+  }
+
+  test("java.util.stream.BaseStream instances should be resolved for concrete types") {
+    def iterateOverAndVerify[A, CC <: ju.stream.BaseStream[?, CC]](size: Int, collection: CC)(implicit
+        iterator: JavaIterator[A, CC]
+    ): Unit = {
+      var counter = 0
+      iterator.foreach(collection)(_ => counter += 1)
+      counter ==> size
+    }
+
+    iterateOverAndVerify(5, ju.stream.Stream.of("e", "d", "c", "b", "a"))
+    iterateOverAndVerify(5, ju.stream.IntStream.range(0, 5))
+    iterateOverAndVerify(5, ju.stream.LongStream.range(0, 5))
+    iterateOverAndVerify(5, ju.stream.DoubleStream.of(5.0, 4.0, 3.0, 2.0, 1.0))
   }
 }

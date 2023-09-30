@@ -141,7 +141,7 @@ class JavaFactorySpec extends ChimneySpec {
     )
   }
 
-  test("java.util.Collection instances should be resolved for java.util.Properties specialization") {
+  test("java.util.Dictionary instances should be resolved for java.util.Properties specialization") {
     val properties =
       implicitly[JavaFactory[(String, String), ju.Properties]].fromSpecific(Iterator("a" -> "1", "b" -> "2"))
 
@@ -153,6 +153,24 @@ class JavaFactorySpec extends ChimneySpec {
     val bitSet = implicitly[JavaFactory[Int, ju.BitSet]].fromSpecific(Iterator(10, 8, 4, 2, 0))
 
     bitSet.toLongArray ==> Array((1L << 10) + (1L << 8) + (1L << 4) + (1L << 2) + (1L << 0))
+  }
+
+  test("java.util.stream.BaseStream instances should be resolved for concrete types") {
+    def convertAndVerifyStable[A, CC <: ju.stream.BaseStream[?, CC]](values: A*)(implicit
+        factory: JavaFactory[A, CC]
+    ): Unit = {
+      import scala.jdk.CollectionConverters.*
+      factory
+        .fromSpecific(values)
+        .iterator()
+        .asScala
+        .toVector ==> values.iterator.toVector
+    }
+
+    convertAndVerifyStable[String, ju.stream.Stream[String]]("d", "c", "b", "a")
+    convertAndVerifyStable[Int, ju.stream.IntStream](4, 3, 2, 1)
+    convertAndVerifyStable[Long, ju.stream.LongStream](4L, 3L, 2L, 1L)
+    convertAndVerifyStable[Double, ju.stream.DoubleStream](4.0, 3.0, 2.0, 1.0)
   }
 
   test("JavaFactory with conversions can be used as scala.collection.compat.Factory") {
