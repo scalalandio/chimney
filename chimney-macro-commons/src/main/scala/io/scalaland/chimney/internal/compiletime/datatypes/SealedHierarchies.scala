@@ -21,7 +21,9 @@ trait SealedHierarchies { this: Definitions =>
     def parse[A: Type]: Option[Enum[A]]
     final def unapply[A](tpe: Type[A]): Option[Enum[A]] = parse(tpe)
 
-    def isSealed[A](A: Type[A]): Boolean
+    def isJavaEnum[A: Type]: Boolean
+
+    def isSealed[A: Type]: Boolean
   }
 
   implicit class SealedHierarchyOps[A](private val tpe: Type[A]) {

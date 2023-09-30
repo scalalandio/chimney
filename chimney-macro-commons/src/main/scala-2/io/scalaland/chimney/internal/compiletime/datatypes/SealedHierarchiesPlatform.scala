@@ -9,33 +9,42 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
 
   protected object SealedHierarchy extends SealedHierarchyModule {
 
-    def isSealed[A](A: Type[A]): Boolean = {
-      val sym = A.tpe.typeSymbol
+    def isJavaEnum[A: Type]: Boolean =
+      Type[A].tpe.typeSymbol.isJavaEnum
+
+    def isSealed[A: Type]: Boolean = {
+      val sym = Type[A].tpe.typeSymbol
       sym.isClass && sym.asClass.isSealed
     }
 
-    def isJavaEnum[A](A: Type[A]): Boolean = A.tpe.typeSymbol.isJavaEnum
-
     def parse[A: Type]: Option[Enum[A]] =
-      if (isSealed(Type[A])) Some(symbolsToEnum(extractSubclasses(Type[A].tpe.typeSymbol.asType)))
-      else if (isJavaEnum(Type[A])) Some(symbolsToEnum(extractJavaEnumInstances(Type[A].tpe)))
+      if (isJavaEnum[A]) Some(symbolsToEnum(extractJavaEnumInstances[A]))
+      else if (isSealed[A]) Some(symbolsToEnum(extractSealedSubtypes[A]))
       else None
 
-    private def extractSubclasses(t: TypeSymbol): List[TypeSymbol] =
-      if (t.asClass.isSealed) t.asClass.knownDirectSubclasses.toList.map(_.asType).flatMap(extractSubclasses)
-      else List(t)
+    private def extractJavaEnumInstances[A: Type]: List[(String, ?<[A])] =
+      Type[A].tpe.companion.decls
+        .filter(_.isJavaEnum)
+        .map(termSymbol => termSymbol.name.toString -> fromUntyped[A](termSymbol.asTerm.typeSignature).as_?<[A])
+        .toList
 
-    private def extractJavaEnumInstances(t: c.Type): List[TypeSymbol] =
-      t.companion.decls.filter(_.isJavaEnum).map(_.asType).toList
+    private def extractSealedSubtypes[A: Type]: List[(String, ?<[A])] = {
+      def extractRecursively(t: TypeSymbol): List[TypeSymbol] =
+        if (t.asClass.isSealed) t.asClass.knownDirectSubclasses.toList.map(_.asType).flatMap(extractRecursively)
+        else List(t)
 
-    private def symbolsToEnum[A: Type](subtypes: List[TypeSymbol]): Enum[A] =
+      // calling .distinct here as `knownDirectSubclasses` returns duplicates for multiply-inherited types
+      extractRecursively(Type[A].tpe.typeSymbol.asType).distinct.map(typeSymbol =>
+        subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol)
+      )
+    }
+
+    private def symbolsToEnum[A: Type](subtypes: List[(String, ?<[A])]): Enum[A] =
       Enum(
-        // calling .distinct here as `knownDirectSubclasses` returns duplicates for multiply-inherited types
-        subtypes.distinct
-          .map { (subtype: TypeSymbol) =>
-            val subtypeA = subtypeTypeOf[A](subtype)
+        subtypes
+          .map { case (name, subtypeA: ?<[A]) =>
             subtypeA.mapK[Enum.Element[A, *]] { implicit Subtype: Type[subtypeA.Underlying] => _ =>
-              Enum.Element(name = subtypeName(subtype), upcast = _.upcastExpr[A])
+              Enum.Element(name = name, upcast = _.upcastExpr[A])
             }
           }
           // with GADT we can have subtypes that shouldn't appear in pattern matching

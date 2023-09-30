@@ -40,6 +40,9 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
       def isJavaSetterOrVar(setter: Symbol): Boolean =
         isJavaSetter(setter) || isVar(setter)
+
+      def isJavaEnumValue[A: Type]: Boolean =
+        Type[A] <:< scala.quoted.Type.of[java.lang.Enum[?]] && !isAbstract(TypeRepr.of[A].typeSymbol)
     }
 
     import platformSpecific.*
@@ -58,7 +61,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       val sym = TypeRepr.of(using A).typeSymbol
       def isScala2Enum = sym.flags.is(Flags.Case | Flags.Module)
       def isScala3Enum = sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic)
-      isPublic(sym) && (isScala2Enum || isScala3Enum)
+      isPublic(sym) && (isScala2Enum || isScala3Enum || isJavaEnumValue[A])
     }
     def isJavaBean[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
@@ -128,12 +131,11 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         val A = TypeRepr.of[A]
         val sym = A.typeSymbol
 
-        if sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic) then
-          // Scala 3 case object (enum's case without parameters)
-          Some(Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A]))
-        else
-          // Scala 2 case object
-          Some(Product.Constructor(ListMap.empty, _ => Ref(sym.companionModule).asExprOf[A]))
+        def isScala3ParameterlessCase = sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic)
+
+        if isScala3ParameterlessCase then Some(Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A]))
+        else if isJavaEnumValue[A] then Some(Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A]))
+        else Some(Product.Constructor(ListMap.empty, _ => Ref(sym.companionModule).asExprOf[A]))
       } else if isPOJO[A] then {
         val A = TypeRepr.of[A]
         val sym = A.typeSymbol
