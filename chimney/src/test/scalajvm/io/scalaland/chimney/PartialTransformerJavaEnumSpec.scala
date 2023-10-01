@@ -33,116 +33,45 @@ class PartialTransformerJavaEnumSpec extends ChimneySpec {
     (jcolors1.Color.Blue: jcolors1.Color).transformIntoPartial[jcolors2.Color].asOption ==> Some(jcolors2.Color.Blue)
   }
 
-//  test(
-//    """transform nested sealed hierarchies between flat and nested hierarchies of case objects without modifiers"""
-//  ) {
-//    (colors2.Red: colors2.Color).transformIntoPartial[colors3.Color].asOption ==> Some(colors3.Red)
-//    (colors2.Green: colors2.Color).transformIntoPartial[colors3.Color].asOption ==> Some(colors3.Green)
-//    (colors2.Blue: colors2.Color).transformIntoPartial[colors3.Color].asOption ==> Some(colors3.Blue)
-//    (colors2.Black: colors2.Color).transformIntoPartial[colors3.Color].asOption ==> Some(colors3.Black)
-//
-//    (colors3.Red: colors3.Color).transformIntoPartial[colors2.Color].asOption ==> Some(colors2.Red)
-//    (colors3.Green: colors3.Color).transformIntoPartial[colors2.Color].asOption ==> Some(colors2.Green)
-//    (colors3.Blue: colors3.Color).transformIntoPartial[colors2.Color].asOption ==> Some(colors2.Blue)
-//    (colors3.Black: colors3.Color).transformIntoPartial[colors2.Color].asOption ==> Some(colors2.Black)
-//  }
-//
-//  test(
-//    """transforming flat hierarchies from "subset" of case classes to "superset" of case classes without modifiers when common corresponding types are transformable with Total Transformer"""
-//  ) {
-//    implicit val intToDoubleTransformer: Transformer[Int, Double] = (_: Int).toDouble
-//
-//    (shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
-//      .transformIntoPartial[shapes3.Shape]
-//      .asOption ==>
-//      Some(shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0)))
-//    (shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4)): shapes1.Shape)
-//      .transformIntoPartial[shapes3.Shape]
-//      .asOption ==>
-//      Some(shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0)))
-//
-//    implicit val intToStringTransformer: Transformer[Int, String] = (_: Int).toString
-//    import numbers.*, ScalesPartialTransformer.shortToLongTotalInner
-//
-//    (short.Zero: short.NumScale[Int, Nothing])
-//      .transformIntoPartial[long.NumScale[String]]
-//      .asOption ==> Some(long.Zero)
-//    (short.Million(4): short.NumScale[Int, Nothing])
-//      .transformIntoPartial[long.NumScale[String]]
-//      .asOption ==> Some(long.Million("4"))
-//    (short.Billion(2): short.NumScale[Int, Nothing])
-//      .transformIntoPartial[long.NumScale[String]]
-//      .asOption ==> Some(long.Milliard("2"))
-//    (short.Trillion(100): short.NumScale[Int, Nothing])
-//      .transformIntoPartial[long.NumScale[String]]
-//      .asOption ==> Some(long.Billion("100"))
-//  }
-//
-//  test(
-//    """transforming flat hierarchies from "subset" of case classes to "superset" of case classes without modifiers when common corresponding types are transformable with Partial Transformer"""
-//  ) {
-//    implicit val intToDoubleTransformer: PartialTransformer[Int, Double] =
-//      (a: Int, _) => partial.Result.fromValue(a.toDouble)
-//
-//    (shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
-//      .transformIntoPartial[shapes3.Shape]
-//      .asOption ==>
-//      Some(shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0)))
-//    (shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4)): shapes1.Shape)
-//      .transformIntoPartial[shapes3.Shape]
-//      .asOption ==>
-//      Some(shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0)))
-//
-//    implicit val intParserOpt: PartialTransformer[String, Int] =
-//      PartialTransformer(_.parseInt.toPartialResult)
-//    import numbers.*, ScalesPartialTransformer.shortToLongPartialInner
-//
-//    (short.Zero: short.NumScale[String, Nothing])
-//      .transformIntoPartial[long.NumScale[Int]]
-//      .asOption ==> Some(long.Zero)
-//    (short.Million("4"): short.NumScale[String, Nothing])
-//      .transformIntoPartial[long.NumScale[Int]]
-//      .asOption ==> Some(long.Million(4))
-//    (short.Billion("2"): short.NumScale[String, Nothing])
-//      .transformIntoPartial[long.NumScale[Int]]
-//      .asOption ==> Some(long.Milliard(2))
-//    (short.Trillion("100"): short.NumScale[String, Nothing])
-//      .transformIntoPartial[long.NumScale[Int]]
-//      .asOption ==> Some(long.Billion(100))
-//
-//    (short.Million("x"): short.NumScale[String, Nothing])
-//      .transformIntoPartial[long.NumScale[Int]]
-//      .asOption ==> None
-//    (short.Billion("x"): short.NumScale[String, Nothing])
-//      .transformIntoPartial[long.NumScale[Int]]
-//      .asOption ==> None
-//    (short.Trillion("x"): short.NumScale[String, Nothing])
-//      .transformIntoPartial[long.NumScale[Int]]
-//      .asOption ==> None
-//  }
-//
-//  test(
-//    """transforming nested sealed hierarchies from "subset" of case classes to "superset" of case classes without modifiers when common corresponding types are transformable"""
-//  ) {
-//    (shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0)): shapes3.Shape)
-//      .transformIntoPartial[shapes4.Shape]
-//      .asOption ==>
-//      Some(shapes4.Triangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0), shapes4.Point(0.0, 0.0)))
-//    (shapes3.Rectangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0)): shapes3.Shape)
-//      .transformIntoPartial[shapes4.Shape]
-//      .asOption ==>
-//      Some(shapes4.Rectangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0)))
-//    (shapes4.Triangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0), shapes4.Point(0.0, 0.0)): shapes4.Shape)
-//      .transformIntoPartial[shapes3.Shape]
-//      .asOption ==>
-//      Some(shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0)))
-//    (shapes4.Rectangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0)): shapes4.Shape)
-//      .transformIntoPartial[shapes3.Shape]
-//      .asOption ==>
-//      Some(shapes3.Rectangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0)))
-//  }
-//
-//  group("setting .withCoproductInstance(mapping)") {
+  test(
+    """transform between Java Enums flat and nested hierarchies of case objects without modifiers"""
+  ) {
+    (jcolors2.Color.Red: jcolors2.Color).transformIntoPartial[colors3.Color].asOption ==> Some(colors3.Red)
+    (jcolors2.Color.Green: jcolors2.Color).transformIntoPartial[colors3.Color].asOption ==> Some(colors3.Green)
+    (jcolors2.Color.Blue: jcolors2.Color).transformIntoPartial[colors3.Color].asOption ==> Some(colors3.Blue)
+    (jcolors2.Color.Black: jcolors2.Color).transformIntoPartial[colors3.Color].asOption ==> Some(colors3.Black)
+
+    (colors3.Red: colors3.Color).transformIntoPartial[jcolors2.Color].asOption ==> Some(jcolors2.Color.Red)
+    (colors3.Green: colors3.Color).transformIntoPartial[jcolors2.Color].asOption ==> Some(jcolors2.Color.Green)
+    (colors3.Blue: colors3.Color).transformIntoPartial[jcolors2.Color].asOption ==> Some(jcolors2.Color.Blue)
+    (colors3.Black: colors3.Color).transformIntoPartial[jcolors2.Color].asOption ==> Some(jcolors2.Color.Black)
+  }
+
+  test(
+    "not allow transformation of of sealed hierarchies when the transformation would be ambiguous".withTags(
+      if (isScala3) Set(munit.Ignore)
+      else Set.empty // ignore only on Scala 3 until https://github.com/lampepfl/dotty/issues/18484 is fixed
+    )
+  ) {
+    val error = compileErrorsScala2(
+      """(jcolors2.Color.Black: jcolors2.Color).transformIntoPartial[colors4.Color]"""
+    )
+
+    error.check(
+      "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jcolors2.Color to io.scalaland.chimney.fixtures.colors4.Color",
+      "io.scalaland.chimney.fixtures.colors4.Color",
+      "coproduct instance Green of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
+      "coproduct instance Black of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
+      "Consult https://chimney.readthedocs.io for usage examples."
+    )
+
+    error.checkNot(
+      "coproduct instance Red of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
+      "coproduct instance Blue of io.scalaland.chimney.fixtures.colors4.Color is ambiguous"
+    )
+  }
+
+//  group("setting .withCoproductInstance[Subtype](mapping)") {
 //
 //    test(
 //      """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""

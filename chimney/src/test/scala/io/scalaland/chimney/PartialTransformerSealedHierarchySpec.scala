@@ -125,7 +125,33 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       Some(shapes3.Rectangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0)))
   }
 
-  group("setting .withCoproductInstance(mapping)") {
+  test(
+    "not allow transformation of of sealed hierarchies when the transformation would be ambiguous".withTags(
+      if (isScala3) Set(munit.Ignore)
+      else Set.empty // ignore only on Scala 3 until https://github.com/lampepfl/dotty/issues/18484 is fixed
+    )
+  ) {
+    val error = compileErrorsScala2(
+      """
+           (shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
+             .transformIntoPartial[shapes5.Shape]
+        """
+    )
+
+    error.check(
+      "Chimney can't derive transformation from io.scalaland.chimney.fixtures.shapes1.Shape to io.scalaland.chimney.fixtures.shapes5.Shape",
+      "io.scalaland.chimney.fixtures.shapes5.Shape",
+      "coproduct instance Triangle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous",
+      "coproduct instance Rectangle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous",
+      "Consult https://chimney.readthedocs.io for usage examples."
+    )
+
+    error.checkNot(
+      "coproduct instance Circle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous"
+    )
+  }
+
+  group("setting .withCoproductInstance[Subtype](mapping)") {
 
     test(
       """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""
