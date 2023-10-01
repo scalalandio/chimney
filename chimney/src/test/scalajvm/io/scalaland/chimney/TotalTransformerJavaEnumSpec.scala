@@ -32,105 +32,44 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
     (jcolors1.Color.Blue: jcolors1.Color).transformInto[jcolors2.Color] ==> jcolors2.Color.Blue
   }
 
-//  test(
-//    """transform nested sealed hierarchies between flat and nested hierarchies of case objects without modifiers"""
-//  ) {
-//    (colors2.Red: colors2.Color).transformInto[colors3.Color] ==> colors3.Red
-//    (colors2.Green: colors2.Color).transformInto[colors3.Color] ==> colors3.Green
-//    (colors2.Blue: colors2.Color).transformInto[colors3.Color] ==> colors3.Blue
-//    (colors2.Black: colors2.Color).transformInto[colors3.Color] ==> colors3.Black
-//
-//    (colors3.Red: colors3.Color).transformInto[colors2.Color] ==> colors2.Red
-//    (colors3.Green: colors3.Color).transformInto[colors2.Color] ==> colors2.Green
-//    (colors3.Blue: colors3.Color).transformInto[colors2.Color] ==> colors2.Blue
-//    (colors3.Black: colors3.Color).transformInto[colors2.Color] ==> colors2.Black
-//  }
-//
-//  test(
-//    """transforming flat hierarchies from "subset" of case classes to "superset" of case classes without modifiers when common corresponding types are transformable with Total Transformers"""
-//  ) {
-//    implicit val intToDoubleTransformer: Transformer[Int, Double] = (_: Int).toDouble
-//
-//    (shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
-//      .transformInto[shapes3.Shape] ==>
-//      shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0))
-//
-//    (shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(6, 4)): shapes1.Shape)
-//      .transformInto[shapes3.Shape] ==>
-//      shapes3.Rectangle(shapes3.Point(0.0, 0.0), shapes3.Point(6.0, 4.0))
-//  }
-//
-//  test(
-//    """transforming nested sealed hierarchies from "subset" of case classes to "superset" of case classes without modifiers when common corresponding types are transformable"""
-//  ) {
-//    (shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0)): shapes3.Shape)
-//      .transformInto[shapes4.Shape] ==>
-//      shapes4.Triangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0), shapes4.Point(0.0, 0.0))
-//
-//    (shapes3.Rectangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0)): shapes3.Shape)
-//      .transformInto[shapes4.Shape] ==>
-//      shapes4.Rectangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0))
-//
-//    (shapes4.Triangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0), shapes4.Point(0.0, 0.0)): shapes4.Shape)
-//      .transformInto[shapes3.Shape] ==>
-//      shapes3.Triangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0), shapes3.Point(0.0, 0.0))
-//
-//    (shapes4.Rectangle(shapes4.Point(2.0, 0.0), shapes4.Point(2.0, 2.0)): shapes4.Shape)
-//      .transformInto[shapes3.Shape] ==>
-//      shapes3.Rectangle(shapes3.Point(2.0, 0.0), shapes3.Point(2.0, 2.0))
-//  }
-//
-//  test(
-//    "transform sealed hierarchies of single value wrapping case classes to sealed hierarchy of flat case classes subtypes"
-//  ) {
-//    val triangle: shapes1.Shape = shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0))
-//    triangle.transformInto[shapes6.Shape] ==>
-//      shapes6.Triangle(shapes6.Shape.Triangle(shapes6.Point(0, 0), shapes6.Point(2, 2), shapes6.Point(2, 0)))
-//
-//    val rectangle: shapes1.Shape = shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(2, 2))
-//    rectangle.transformInto[shapes6.Shape] ==>
-//      shapes6.Rectangle(shapes6.Shape.Rectangle(shapes6.Point(0, 0), shapes6.Point(2, 2)))
-//  }
-//
-//  test(
-//    "transform sealed hierarchies of flat case classes subtypes to sealed hierarchy of single value wrapping case classes"
-//  ) {
-//    val triangle: shapes6.Shape =
-//      shapes6.Triangle(shapes6.Shape.Triangle(shapes6.Point(0, 0), shapes6.Point(2, 2), shapes6.Point(2, 0)))
-//    triangle.transformInto[shapes1.Shape] ==>
-//      shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0))
-//
-//    val rectangle: shapes6.Shape = shapes6.Rectangle(shapes6.Shape.Rectangle(shapes6.Point(0, 0), shapes6.Point(2, 2)))
-//    rectangle.transformInto[shapes1.Shape] ==>
-//      shapes1.Rectangle(shapes1.Point(0, 0), shapes1.Point(2, 2))
-//  }
-//
-//  test(
-//    "not allow transformation of of sealed hierarchies when the transformation would be ambiguous".withTags(
-//      if (isScala3) Set(munit.Ignore)
-//      else Set.empty // ignore only on Scala 3 until https://github.com/lampepfl/dotty/issues/18484 is fixed
-//    )
-//  ) {
-//    val error = compileErrorsScala2(
-//      """
-//           (shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
-//             .transformInto[shapes5.Shape]
-//        """
-//    )
-//
-//    error.check(
-//      "Chimney can't derive transformation from io.scalaland.chimney.fixtures.shapes1.Shape to io.scalaland.chimney.fixtures.shapes5.Shape",
-//      "io.scalaland.chimney.fixtures.shapes5.Shape",
-//      "coproduct instance Triangle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous",
-//      "coproduct instance Rectangle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous",
-//      "Consult https://chimney.readthedocs.io for usage examples."
-//    )
-//
-//    error.checkNot(
-//      "coproduct instance Circle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous"
-//    )
-//  }
-//
+  test(
+    """transform between Java Enums flat and nested hierarchies of case objects without modifiers"""
+  ) {
+    (jcolors2.Color.Red: jcolors2.Color).transformInto[colors3.Color] ==> colors3.Red
+    (jcolors2.Color.Green: jcolors2.Color).transformInto[colors3.Color] ==> colors3.Green
+    (jcolors2.Color.Blue: jcolors2.Color).transformInto[colors3.Color] ==> colors3.Blue
+    (jcolors2.Color.Black: jcolors2.Color).transformInto[colors3.Color] ==> colors3.Black
+
+    (colors3.Red: colors3.Color).transformInto[jcolors2.Color] ==> jcolors2.Color.Red
+    (colors3.Green: colors3.Color).transformInto[jcolors2.Color] ==> jcolors2.Color.Green
+    (colors3.Blue: colors3.Color).transformInto[jcolors2.Color] ==> jcolors2.Color.Blue
+    (colors3.Black: colors3.Color).transformInto[jcolors2.Color] ==> jcolors2.Color.Black
+  }
+
+  test(
+    "not allow transformation of of sealed hierarchies when the transformation would be ambiguous".withTags(
+      if (isScala3) Set(munit.Ignore)
+      else Set.empty // ignore only on Scala 3 until https://github.com/lampepfl/dotty/issues/18484 is fixed
+    )
+  ) {
+    val error = compileErrorsScala2(
+      """(jcolors2.Color.Black: jcolors2.Color).transformInto[colors4.Color]"""
+    )
+
+    error.check(
+      "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jcolors2.Color to io.scalaland.chimney.fixtures.colors4.Color",
+      "io.scalaland.chimney.fixtures.colors4.Color",
+      "coproduct instance Green of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
+      "coproduct instance Black of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
+      "Consult https://chimney.readthedocs.io for usage examples."
+    )
+
+    error.checkNot(
+      "coproduct instance Red of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
+      "coproduct instance Blue of io.scalaland.chimney.fixtures.colors4.Color is ambiguous"
+    )
+  }
+
 //  group("setting .withCoproductInstance[Subtype](mapping)") {
 //
 //    test(
