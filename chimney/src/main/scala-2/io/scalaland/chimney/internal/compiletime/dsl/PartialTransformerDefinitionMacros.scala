@@ -91,13 +91,11 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       Cfg <: TransformerCfg: WeakTypeTag,
       Flags <: TransformerFlags: WeakTypeTag,
       Inst: WeakTypeTag
-  ](f: Tree): Tree = fixJavaEnumType[Inst](f) {
-    new ApplyFixedCoproductType {
-      def apply[FixedInstance: WeakTypeTag]: Tree = c.prefix.tree
-        .addOverride(f)
-        .asInstanceOfExpr[PartialTransformerDefinition[From, To, CoproductInstance[FixedInstance, To, Cfg], Flags]]
-    }
-  }
+  ](f: Tree): Tree = new ApplyFixedCoproductType {
+    def apply[FixedInstance: WeakTypeTag]: Tree = c.prefix.tree
+      .addOverride(f)
+      .asInstanceOfExpr[PartialTransformerDefinition[From, To, CoproductInstance[FixedInstance, To, Cfg], Flags]]
+  }.applyJavaEnumFixFromClosureSignature[Inst](f)
 
   def withCoproductInstancePartialImpl[
       From: WeakTypeTag,
@@ -105,7 +103,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       Cfg <: TransformerCfg: WeakTypeTag,
       Flags <: TransformerFlags: WeakTypeTag,
       Inst: WeakTypeTag
-  ](f: Tree): Tree = fixJavaEnumType[Inst](f) {
+  ](f: Tree): Tree =
     new ApplyFixedCoproductType {
       def apply[FixedInstance: WeakTypeTag]: Tree = c.prefix.tree
         .addOverride(f)
@@ -115,6 +113,5 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
           CoproductInstancePartial[FixedInstance, To, Cfg],
           Flags
         ]]
-    }
-  }
+    }.applyJavaEnumFixFromClosureSignature[Inst](f)
 }
