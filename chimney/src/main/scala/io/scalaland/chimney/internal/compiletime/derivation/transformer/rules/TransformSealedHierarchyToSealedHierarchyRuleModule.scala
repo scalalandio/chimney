@@ -63,6 +63,14 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
           ExprPromise
             .promise[someFrom.Underlying](ExprPromise.NameGenerationStrategy.FromType)
             .map { (someFromExpr: Expr[someFrom.Underlying]) =>
+              // Ideally we would use here (someFrom => ...) types and pass down someFromExpr,
+              // unfortunately on Scala 2 we end up with situations like:
+              //   case javaEnum: JavaEnum.Value =>
+              //      val _ = javaEnum
+              //     runtimeDataStore(x).asInstanceOf[JavaEnum.Value => To](javaEnum)
+              // complaining that javaEnum.type is not equal to expected JavaEnum.Value.type.
+              val fromExpr = someFromExpr.upcastExpr[From]
+
               runtimeCoproductOverride match {
                 case RuntimeCoproductOverride.CoproductInstance(idx) =>
                   // We're constructing:
@@ -70,8 +78,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                   TransformationExpr.fromTotal(
                     ctx
                       .runtimeDataStore(idx)
-                      .asInstanceOfExpr[someFrom.Underlying => To]
-                      .apply(someFromExpr)
+                      .asInstanceOfExpr[From => To]
+                      .apply(fromExpr)
                   )
                 case RuntimeCoproductOverride.CoproductInstancePartial(idx) =>
                   // We're constructing:
@@ -79,8 +87,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                   TransformationExpr.fromPartial(
                     ctx
                       .runtimeDataStore(idx)
-                      .asInstanceOfExpr[someFrom.Underlying => partial.Result[To]]
-                      .apply(someFromExpr)
+                      .asInstanceOfExpr[From => partial.Result[To]]
+                      .apply(fromExpr)
                   )
               }
             }

@@ -13,6 +13,26 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
 
     import Type.platformSpecific.*
 
+    object platformSpecific {
+
+      /** Workaround for Java Enums, see [[io.scalaland.chimney.internal.runtime.RefinedJavaEnum]]. */
+      def fixJavaEnums(inst: ??): ?? =
+        if (inst.Underlying.isCtor[runtime.RefinedJavaEnum[?, ?]]) {
+          val javaEnum = inst.Underlying.param(0).Underlying.tpe
+          val instance = inst.Underlying.param(1).Underlying.asInstanceOf[Type[String]].extractStringSingleton
+
+          javaEnum.companion.decls
+            .filter(_.isJavaEnum)
+            .collectFirst {
+              case sym if sym.name.decodedName.toString == instance => fromUntyped[Any](sym.asTerm.typeSignature).as_??
+            }
+            .getOrElse {
+              reportError("Failed at encoding Java Enum instance type")
+            }
+        } else inst
+    }
+    import platformSpecific.fixJavaEnums
+
     def Transformer[From: Type, To: Type]: Type[Transformer[From, To]] = weakTypeTag[Transformer[From, To]]
 
     def PartialTransformer[From: Type, To: Type]: Type[PartialTransformer[From, To]] =
@@ -100,7 +120,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           weakTypeTag[runtime.TransformerCfg.CoproductInstance[InstType, TargetType, Cfg]]
         def unapply[A](A: Type[A]): Option[(??, ??, ?<[runtime.TransformerCfg])] =
           if (A.isCtor[runtime.TransformerCfg.CoproductInstance[?, ?, ?]])
-            Some((A.param(0), A.param(1), A.param_<[runtime.TransformerCfg](2)))
+            Some((fixJavaEnums(A.param(0)), A.param(1), A.param_<[runtime.TransformerCfg](2)))
           else scala.None
       }
       object CoproductInstancePartial extends CoproductInstancePartialModule {
@@ -109,7 +129,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           weakTypeTag[runtime.TransformerCfg.CoproductInstancePartial[InstType, TargetType, Cfg]]
         def unapply[A](A: Type[A]): Option[(??, ??, ?<[runtime.TransformerCfg])] =
           if (A.isCtor[runtime.TransformerCfg.CoproductInstancePartial[?, ?, ?]])
-            Some((A.param(0), A.param(1), A.param_<[runtime.TransformerCfg](2)))
+            Some((fixJavaEnums(A.param(0)), A.param(1), A.param_<[runtime.TransformerCfg](2)))
           else scala.None
       }
     }
