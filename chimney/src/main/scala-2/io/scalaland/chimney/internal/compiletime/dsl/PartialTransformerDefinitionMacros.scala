@@ -103,15 +103,14 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       Cfg <: TransformerCfg: WeakTypeTag,
       Flags <: TransformerFlags: WeakTypeTag,
       Inst: WeakTypeTag
-  ](f: Tree): Tree =
-    new ApplyFixedCoproductType {
-      def apply[FixedInstance: WeakTypeTag]: Tree = c.prefix.tree
-        .addOverride(f)
-        .asInstanceOfExpr[PartialTransformerDefinition[
-          From,
-          To,
-          CoproductInstancePartial[FixedInstance, To, Cfg],
-          Flags
-        ]]
-    }.applyJavaEnumFixFromClosureSignature[Inst](f)
+  ](f: Tree): Tree = new ApplyFixedCoproductType {
+    def apply[FixedInstance: WeakTypeTag]: Tree = c.prefix.tree
+      .addOverride(f)
+      .asInstanceOfExpr[PartialTransformerDefinition[
+        From,
+        To,
+        CoproductInstancePartial[FixedInstance, To, Cfg],
+        Flags
+      ]]
+  }.applyJavaEnumFixFromClosureSignature[Inst](f)
 }
