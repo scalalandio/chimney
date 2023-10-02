@@ -17,6 +17,26 @@ private[chimney] trait DslMacroUtils {
       q"$tree.asInstanceOf[${weakTypeOf[A]}]"
   }
 
+  private trait ExistentialString {
+    type Underlying <: String
+    val Underlying: c.WeakTypeTag[Underlying]
+  }
+  private object ExistentialString {
+
+    def unapply(t: Tree): Option[ExistentialString] = t match {
+      case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: TermName}" if vd.name == idt.name =>
+        Some(new ExistentialString {
+          type Underlying = String
+          val Underlying: WeakTypeTag[String] =
+            c.WeakTypeTag(c.internal.constantType(Constant(fieldName.decodedName.toString)))
+        })
+      case _ =>
+        None
+    }
+
+    def invalidSelectorErrorMessage(selectorTree: Tree): String = s"Invalid selector expression: $selectorTree"
+  }
+
   // If we try to do:
   //
   //   implicit val fieldNameT = fieldName.Underlying
@@ -29,92 +49,73 @@ private[chimney] trait DslMacroUtils {
   //   If you have troubles tracking free term variables, consider using -Xlog-free-terms
   //
   // Using type parameters instead of path-dependent types make compiler use the implicit as intended.
-  trait ApplyFieldNameType {
+  protected trait ApplyFieldNameType {
     def apply[A <: String: WeakTypeTag]: WeakTypeTag[?]
 
     final def applyFromSelector(t: c.Tree): WeakTypeTag[?] = apply(extractSelectorAsType(t).Underlying)
+
+    private def extractSelectorAsType(t: Tree): ExistentialString = ExistentialString.unapply(t).getOrElse {
+      c.abort(c.enclosingPosition, ExistentialString.invalidSelectorErrorMessage(t))
+    }
   }
-  trait ApplyFieldNameTypes {
+  protected trait ApplyFieldNameTypes {
     def apply[A <: String: WeakTypeTag, B <: String: WeakTypeTag]: WeakTypeTag[?]
 
     final def applyFromSelectors(t1: c.Tree, t2: c.Tree): WeakTypeTag[?] = {
       val (e1, e2) = extractSelectorsAsTypes(t1, t2)
       apply(e1.Underlying, e2.Underlying)
     }
+
+    private def extractSelectorsAsTypes(t1: Tree, t2: Tree): (ExistentialString, ExistentialString) =
+      (t1, t2) match {
+        case (ExistentialString(fieldName1), ExistentialString(fieldName2)) =>
+          (fieldName1, fieldName2)
+        case (_, ExistentialString(_)) =>
+          c.abort(c.enclosingPosition, ExistentialString.invalidSelectorErrorMessage(t1))
+        case (ExistentialString(_), _) =>
+          c.abort(c.enclosingPosition, ExistentialString.invalidSelectorErrorMessage(t2))
+        case (_, _) =>
+          val err1 = ExistentialString.invalidSelectorErrorMessage(t1)
+          val err2 = ExistentialString.invalidSelectorErrorMessage(t2)
+          c.abort(c.enclosingPosition, s"Invalid selectors:\n$err1\n$err2")
+      }
   }
-
-  private trait ExistentialString {
-    type Underlying <: String
-    val Underlying: c.WeakTypeTag[Underlying]
-  }
-
-  private def extractSelectorAsType(t: Tree): ExistentialString = extractSelectorAsTypeOpt(t).getOrElse {
-    c.abort(c.enclosingPosition, invalidSelectorErrorMessage(t))
-  }
-
-  private def extractSelectorsAsTypes(t1: Tree, t2: Tree): (ExistentialString, ExistentialString) =
-    (extractSelectorAsTypeOpt(t1), extractSelectorAsTypeOpt(t2)) match {
-      case (Some(fieldName1), Some(fieldName2)) =>
-        (fieldName1, fieldName2)
-      case (None, Some(_)) =>
-        c.abort(c.enclosingPosition, invalidSelectorErrorMessage(t1))
-      case (Some(_), None) =>
-        c.abort(c.enclosingPosition, invalidSelectorErrorMessage(t2))
-      case (None, None) =>
-        val err1 = invalidSelectorErrorMessage(t1)
-        val err2 = invalidSelectorErrorMessage(t2)
-        c.abort(c.enclosingPosition, s"Invalid selectors:\n$err1\n$err2")
-    }
-
-  private def extractSelectorAsTypeOpt(t: Tree): Option[ExistentialString] = t match {
-    case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: TermName}" if vd.name == idt.name =>
-      Some(new ExistentialString {
-        type Underlying = String
-        val Underlying: WeakTypeTag[String] =
-          c.WeakTypeTag(c.internal.constantType(Constant(fieldName.decodedName.toString)))
-      })
-    case _ =>
-      None
-  }
-
-  private def invalidSelectorErrorMessage(selectorTree: Tree): String =
-    s"Invalid selector expression: $selectorTree"
 
   /** Workaround for Java Enums, see [[io.scalaland.chimney.internal.runtime.RefinedJavaEnum]]. */
-  def fixJavaEnumType[Inst: WeakTypeTag](f: Tree)(fixedCoproductType: ApplyFixedCoproductType): Tree =
-    if (weakTypeOf[Inst].typeSymbol.isJavaEnum) {
-      val Inst = weakTypeOf[Inst]
-      val Function(List(ValDef(_, _, lhs: TypeTree, _)), _) = f
-      lhs.original match {
-        // java enum value in Scala 2.13
-        case SingletonTypeTree(Literal(Constant(t: TermSymbol))) => fixedCoproductType(refineJavaEnum[Inst](t))
-        // java enum value in Scala 2.12
-        case SingletonTypeTree(Select(t, n)) if t.isTerm =>
-          val t = Inst.companion.decls
-            .find(_.name == n)
-            .getOrElse(
-              c.abort(
-                c.enclosingPosition,
-                s"Can't find symbol `$n` among the declarations of `${Inst.typeSymbol.fullName}`"
-              )
-            )
-          fixedCoproductType(refineJavaEnum[Inst](t))
-        case _ => fixedCoproductType(weakTypeTag[Inst])
-      }
-    } else fixedCoproductType(weakTypeTag[Inst])
-
-  private def refineJavaEnum[Inst: WeakTypeTag](t: Symbol): WeakTypeTag[?] = {
-    object ApplyInstanceName {
-      def apply[InstanceName <: String: WeakTypeTag]
-          : WeakTypeTag[io.scalaland.chimney.internal.runtime.RefinedJavaEnum[Inst, InstanceName]] =
-        weakTypeTag[io.scalaland.chimney.internal.runtime.RefinedJavaEnum[Inst, InstanceName]]
-    }
-
-    ApplyInstanceName(c.WeakTypeTag(c.internal.constantType(Constant(t.name.decodedName.toString))))
-  }
-
-  trait ApplyFixedCoproductType {
+  protected trait ApplyFixedCoproductType {
 
     def apply[FixedInstance: WeakTypeTag]: Tree
+
+    def applyJavaEnumFixFromClosureSignature[Inst: WeakTypeTag](f: Tree): Tree =
+      if (weakTypeOf[Inst].typeSymbol.isJavaEnum) {
+        val Inst = weakTypeOf[Inst]
+        val Function(List(ValDef(_, _, lhs: TypeTree, _)), _) = f
+        lhs.original match {
+          // java enum value in Scala 2.13
+          case SingletonTypeTree(Literal(Constant(t: TermSymbol))) => apply(refineJavaEnum[Inst](t))
+          // java enum value in Scala 2.12
+          case SingletonTypeTree(Select(t, n)) if t.isTerm =>
+            val t = Inst.companion.decls
+              .find(_.name == n)
+              .getOrElse(
+                c.abort(
+                  c.enclosingPosition,
+                  s"Can't find symbol `$n` among the declarations of `${Inst.typeSymbol.fullName}`"
+                )
+              )
+            apply(refineJavaEnum[Inst](t))
+          case _ => apply(weakTypeTag[Inst])
+        }
+      } else apply(weakTypeTag[Inst])
+
+    private def refineJavaEnum[Inst: WeakTypeTag](t: Symbol): WeakTypeTag[?] = {
+      object ApplyInstanceName {
+        def apply[InstanceName <: String: WeakTypeTag]
+            : WeakTypeTag[io.scalaland.chimney.internal.runtime.RefinedJavaEnum[Inst, InstanceName]] =
+          weakTypeTag[io.scalaland.chimney.internal.runtime.RefinedJavaEnum[Inst, InstanceName]]
+      }
+
+      ApplyInstanceName(c.WeakTypeTag(c.internal.constantType(Constant(t.name.decodedName.toString))))
+    }
   }
 }
