@@ -79,4 +79,42 @@ private[chimney] trait DslMacroUtils {
 
   private def invalidSelectorErrorMessage(selectorTree: Tree): String =
     s"Invalid selector expression: $selectorTree"
+
+  /** Workaround for Java Enums, see [[io.scalaland.chimney.internal.runtime.RefinedJavaEnum]]. */
+  def fixJavaEnumType[Inst: WeakTypeTag](f: Tree)(fixedCoproductType: ApplyFixedCoproductType): Tree =
+    if (weakTypeOf[Inst].typeSymbol.isJavaEnum) {
+      val Inst = weakTypeOf[Inst]
+      val Function(List(ValDef(_, _, lhs: TypeTree, _)), _) = f
+      lhs.original match {
+        // java enum value in Scala 2.13
+        case SingletonTypeTree(Literal(Constant(t: TermSymbol))) => fixedCoproductType(refineJavaEnum[Inst](t))
+        // java enum value in Scala 2.12
+        case SingletonTypeTree(Select(t, n)) if t.isTerm =>
+          val t = Inst.companion.decls
+            .find(_.name == n)
+            .getOrElse(
+              c.abort(
+                c.enclosingPosition,
+                s"Can't find symbol `$n` among the declarations of `${Inst.typeSymbol.fullName}`"
+              )
+            )
+          fixedCoproductType(refineJavaEnum[Inst](t))
+        case _ => fixedCoproductType(weakTypeTag[Inst])
+      }
+    } else fixedCoproductType(weakTypeTag[Inst])
+
+  private def refineJavaEnum[Inst: WeakTypeTag](t: Symbol): WeakTypeTag[?] = {
+    object ApplyInstanceName {
+      def apply[InstanceName <: String: WeakTypeTag]
+          : WeakTypeTag[io.scalaland.chimney.internal.runtime.RefinedJavaEnum[Inst, InstanceName]] =
+        weakTypeTag[io.scalaland.chimney.internal.runtime.RefinedJavaEnum[Inst, InstanceName]]
+    }
+
+    ApplyInstanceName(c.WeakTypeTag(c.internal.constantType(Constant(t.name.decodedName.toString))))
+  }
+
+  trait ApplyFixedCoproductType {
+
+    def apply[FixedInstance: WeakTypeTag]: Tree
+  }
 }
