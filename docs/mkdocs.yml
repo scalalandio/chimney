@@ -1,0 +1,13 @@
+site_name: Chimney documentation
+docs_dir: '.'
+theme:
+  name: material
+  palette:
+    scheme: slate
+nav:
+  - 'Welcome': 'index.md'
+  - 'Quickstart': 'quickstart.md'
+  - 'Supported Transformations': 'supported-transformations.md'
+  - 'Supported Patching': 'supported-patching.md'
+  - 'Cookbook': 'cookbook.md'
+  - 'Troubleshooting': 'troubleshooting.md'
