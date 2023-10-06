@@ -1,0 +1,5 @@
+build:
+  docker build . -t mkdocs-chimney-docs
+
+serve: build
+  docker run --rm -it -p 8000:8000 -v ${PWD}:/docs mkdocs-chimney-docs
