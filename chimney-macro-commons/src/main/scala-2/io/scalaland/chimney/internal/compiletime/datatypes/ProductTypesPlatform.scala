@@ -16,7 +16,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       def isParameterless(method: MethodSymbol): Boolean = method.paramLists.flatten.isEmpty
 
       def isDefaultConstructor(ctor: Symbol): Boolean =
-        ctor.isPublic && ctor.isConstructor && isParameterless(ctor.asMethod)
+        ctor != NoSymbol && ctor.isPublic && ctor.isConstructor && isParameterless(ctor.asMethod)
 
       def isAccessor(accessor: MethodSymbol): Boolean =
         accessor.isPublic && isParameterless(accessor)
@@ -38,7 +38,6 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
       def isJavaSetterOrVar(setter: Symbol): Boolean =
         (setter.isMethod && isJavaSetter(setter.asMethod)) || isVar(setter)
-
     }
 
     import platformSpecific.*
@@ -46,9 +45,8 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
     def isPOJO[A](implicit A: Type[A]): Boolean = {
       val sym = A.tpe.typeSymbol
-      !A.isPrimitive && !(A <:< Type[
-        String
-      ]) && !sym.isJavaEnum && sym.isClass && !sym.isAbstract && sym.asClass.primaryConstructor.isPublic
+      !A.isPrimitive && !(A <:< Type[String]) && !sym.isJavaEnum && sym.isClass && !sym.isAbstract &&
+      sym.asClass.primaryConstructor != NoSymbol && sym.asClass.primaryConstructor.isPublic
     }
     def isCaseClass[A](implicit A: Type[A]): Boolean =
       isPOJO[A] && A.tpe.typeSymbol.asClass.isCaseClass
