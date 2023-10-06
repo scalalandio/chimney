@@ -1,9 +1,22 @@
-site_name: Chimney documentation
-docs_dir: '.'
+site_name: 'Chimney documentation'
+repo_url: https://github.com/scalalandio/chimney
+docs_dir: 'docs'
 theme:
   name: material
   palette:
     scheme: slate
+    primary: black
+  features:
+    - navigation.expand
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.path
+    - toc.integrate
+  font:
+    code: Fira Code
+  icon:
+    repo: fontawesome/brands/github
+  logo: assets/images/logo.svg
 nav:
   - 'Welcome': 'index.md'
   - 'Quickstart': 'quickstart.md'
@@ -11,3 +24,14 @@ nav:
   - 'Supported Patching': 'supported-patching.md'
   - 'Cookbook': 'cookbook.md'
   - 'Troubleshooting': 'troubleshooting.md'
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+      use_pygments: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+plugins:
+  - macros

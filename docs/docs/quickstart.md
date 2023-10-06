@@ -8,15 +8,17 @@
 
 ```scala
 // if you use Scala on JVM-only
-libraryDependencies += "io.scalaland" %% "chimney" % chimneyVersion
+libraryDependencies += "io.scalaland" %% "chimney" % "{{ git.raw }}"
 // if you cross-compile to Scala.js and/or Scala Native
-libraryDependencies += "io.scalaland" %%% "chimney" % chimneyVersion
+libraryDependencies += "io.scalaland" %%% "chimney" % "{{ git.raw }}"
 ```
+
 ```scala
 import io.scalaland.chimney.dsl._
 ```
 
-TODO: see semiauto vs auto
+If you are advanced used who want to learn about the difference about automatic derivation and semiautomatic derivation
+see [Automatic, semiautomatic and inlined derivation](/cookbook/#automatic-semiautomatic-and-inlined-derivation).
 
 TODO: cats-integration
 
