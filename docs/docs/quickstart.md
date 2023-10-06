@@ -8,9 +8,9 @@
 
 ```scala
 // if you use Scala on JVM-only
-libraryDependencies += "io.scalaland" %% "chimney" % "{{ git.raw }}"
+libraryDependencies += "io.scalaland" %% "chimney" % "{{ git.tag }}"
 // if you cross-compile to Scala.js and/or Scala Native
-libraryDependencies += "io.scalaland" %%% "chimney" % "{{ git.raw }}"
+libraryDependencies += "io.scalaland" %%% "chimney" % "{{ git.tag }}"
 ```
 
 ```scala
@@ -20,8 +20,47 @@ import io.scalaland.chimney.dsl._
 If you are advanced used who want to learn about the difference about automatic derivation and semiautomatic derivation
 see [Automatic, semiautomatic and inlined derivation](/cookbook/#automatic-semiautomatic-and-inlined-derivation).
 
-TODO: cats-integration
+## Java collections integration
 
-TODO: java-collections
+TODO
 
-TODO: protobufs
+```scala
+// if you use Scala on JVM-only
+libraryDependencies += "io.scalaland" %% "chimney-java-collections" % "{{ git.tag }}"
+// if you cross-compile to Scala.js and/or Scala Native
+libraryDependencies += "io.scalaland" %%% "chimney-java-collections" % "{{ git.tag }}"
+```
+
+```scala
+import io.scalaland.chimney.javacollections._
+```
+
+## Cats integration
+
+TODO
+
+```scala
+// if you use Scala on JVM-only
+libraryDependencies += "io.scalaland" %% "chimney-cats" % "{{ git.tag }}"
+// if you cross-compile to Scala.js and/or Scala Native
+libraryDependencies += "io.scalaland" %%% "chimney-cats" % "{{ git.tag }}"
+```
+
+```scala
+import io.scalaland.chimney.cats._
+```
+
+## Protocol Buffers integration
+
+TODO
+
+```scala
+// if you use Scala on JVM-only
+libraryDependencies += "io.scalaland" %% "chimney-protobufs" % "{{ git.tag }}"
+// if you cross-compile to Scala.js and/or Scala Native
+libraryDependencies += "io.scalaland" %%% "chimney-protobufs" % "{{ git.tag }}"
+```
+
+```scala
+import io.scalaland.chimney.protobufs._
+```
