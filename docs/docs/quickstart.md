@@ -45,7 +45,7 @@ scala-cli repl --scala "3.3.1" --dependency "io.scalaland::chimney:{{ git.tag or
 ```
 
 If you are advanced used who want to learn about the difference about automatic derivation and semiautomatic derivation
-see [Automatic, semiautomatic and inlined derivation](/cookbook/#automatic-semiautomatic-and-inlined-derivation).
+see [Automatic, semiautomatic and inlined derivation](../cookbook/#automatic-semiautomatic-and-inlined-derivation).
 
 ## Java collections integration
 
@@ -65,7 +65,7 @@ and then import:
 import io.scalaland.chimney.javacollections._
 ```
 
-See [Java collections integration cookbook](/cookbook/#java-collections-integration) for more information.
+See [Java collections integration cookbook](../cookbook/#java-collections-integration) for more information.
 
 ## Cats integration
 
@@ -99,4 +99,4 @@ libraryDependencies += "io.scalaland" %%% "chimney-protobufs" % "{{ git.tag or s
 import io.scalaland.chimney.protobufs._
 ```
 
-See [Protocol Buffers integration cookbook](/cookbook/#protocol-buffers-integration) for more information.
+See [Protocol Buffers integration cookbook](../cookbook/#protocol-buffers-integration) for more information.
