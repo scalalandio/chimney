@@ -83,8 +83,8 @@ UserPB(
 // Left(List("recovery" -> EmptyValue))
 ```
 
-Also done! And if a field cannot be converted, you'll get the path to problematic value!
+Also done! And if a field cannot be converted, you'll get the path to the problematic value!
 
-Now, go to the [quick start section](/quickstart/) to learn how to get Chimney and move on
-to [supported transformations section](/supported-transformations/) to learn about a plenty of transformations
+Now, go to the [quick start section](../quickstart/) to learn how to get Chimney and move on
+to [supported transformations section](../supported-transformations/) to learn about a plenty of transformations
 supported out of the box and even more enabled with easy customizations.
