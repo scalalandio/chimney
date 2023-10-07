@@ -4,7 +4,7 @@
 
 TODO
 
-## Java collection integration
+## Java collections integration
 
 TODO
 
@@ -12,7 +12,7 @@ TODO
 
 TODO
 
-## Protocol buffers integration
+## Protocol Buffers integration
 
 TODO
 

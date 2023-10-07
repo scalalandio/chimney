@@ -2,4 +2,4 @@ build:
   docker build . -t mkdocs-chimney-docs
 
 serve: build
-  docker run --rm -it -p 8000:8000 -v ${PWD}:/docs mkdocs-chimney-docs
+  docker run --rm -it -p 8000:8000 -v ${PWD}:/docs --env "CI_LATEST_TAG=$(git describe --tags)" mkdocs-chimney-docs

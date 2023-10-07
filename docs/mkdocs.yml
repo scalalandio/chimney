@@ -35,3 +35,6 @@ markdown_extensions:
   - pymdownx.superfences
 plugins:
   - macros
+extra:
+  scm:
+    latest: !ENV [CI_LATEST_TAG, 'latest']
