@@ -1,5 +1,6 @@
 site_name: 'Chimney documentation'
 repo_url: https://github.com/scalalandio/chimney
+edit_uri: edit/master/docs/docs/
 docs_dir: 'docs'
 theme:
   name: material
@@ -7,10 +8,17 @@ theme:
     scheme: slate
     primary: black
   features:
+    - content.action.edit
+    - content.code.copy
+    - content.code.select
     - navigation.expand
+    - navigation.footer
     - navigation.instant
     - navigation.instant.progress
     - navigation.path
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
     - toc.integrate
   font:
     code: Fira Code
@@ -24,7 +32,11 @@ nav:
   - 'Supported Patching': 'supported-patching.md'
   - 'Cookbook': 'cookbook.md'
   - 'Troubleshooting': 'troubleshooting.md'
+  - 'Benchmarks': 'benchmarks.md'
 markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -35,6 +47,15 @@ markdown_extensions:
   - pymdownx.superfences
 plugins:
   - macros
+copyright: 'Copyright © 2017 - 2023, <a href="https://scalaland.io">scalaland.io</a>.'
 extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/scalalandio/chimney
+    - icon: fontawesome/solid/book-bookmark
+      link: https://index.scala-lang.org/scalalandio/chimney
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/@scalaland
   scm:
     latest: !ENV [CI_LATEST_TAG, 'latest']

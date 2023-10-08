@@ -1,78 +1,11 @@
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-    <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chimney JMH benchmarks!</title>
-    <link rel="stylesheet" href="pygments.css" type="text/css" />
-    <link rel="stylesheet" href="css/theme.css" type="text/css" />
-    <!--[if lt IE 9]>
-    <script src="js/html5shiv.min.js"></script>
-    <![endif]-->
-
-    <script data-url_root="./" id="documentation_options" src="documentation_options.js"></script>
-    <script src="jquery.js"></script>
-    <script src="underscore.js"></script>
-    <script src="_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="doctools.js"></script>
-    <script src="sphinx_highlight.js"></script>
-    <script src="js/theme.js"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Index" href="index.html" />
-    <style>
-        .benchmarks-content {
-            min-width: 100%;
-        }
-    </style>
-</head>
-
-<body class="wy-body-for-nav">
-<div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-        <div class="wy-side-scroll">
-            <div class="wy-side-nav-search" >
-                <a href="#" class="icon icon-home">Chimney</a>
-                <div role="search">
-                    <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-                        <input type="text" name="q" placeholder="Search docs" />
-                        <input type="hidden" name="check_keywords" value="yes" />
-                        <input type="hidden" name="area" value="default" />
-                    </form>
-                </div>
-            </div>
-            <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-                <p class="caption" role="heading"><span class="caption-text">Navigation</span></p>
-                <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="../index.html">Back to docs</a></li>
-                </ul>
-            </div>
-            <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-                <p class="caption" role="heading"><span class="caption-text">Benchmarks</span></p>
-                <ul>
-                    <li class="toctree-l1" id="latest-builds-holder">
-                        <a id="latest-benchmarks" class="reference internal">Latest master build benchmarks</a>
-                    </li>
-                    <li class="toctree-l1" id="master-branch-holder">
-                        <a id="master-benchmarks" class="reference internal">Master branch benchmarks</a>
-                        <ul id="master-benchmarks-menu">
-
-                        </ul>
-                    </li>
-                    <li class="toctree-l1" id="pr-benchmarks-holder">
-                        <a id="pr-benchmarks" class="reference internal">Pull request benchmarks</a>
-                        <ul id="pr-benchmarks-menu">
-
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <iframe id="benchmarks-window" class="wy-nav-content-wrap benchmarks-content"></iframe>
-</div>
+<style>
+    .benchmarks-content {
+        min-width: 100%;
+        height: 100vh;
+    }
+</style>
+<script src="../jquery.js"></script>
+<iframe id="benchmarks-window" class="wy-nav-content-wrap benchmarks-content"></iframe>
 <script>
 
     function sliding(l, xs, i = 0, out = []) {
@@ -187,17 +120,3 @@
             })
     })()
 </script>
-<!-- Theme Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-116165806-1"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'UA-116165806-1', {
-        'anonymize_ip': false,
-    });
-</script>
-
-</body>
-</html>

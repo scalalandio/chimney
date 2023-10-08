@@ -1,7 +1,8 @@
 # Quickstart
 
-Chimney is supported for Scala 2.12, 2.13, 3.3+ on JVM, Scala.js and Scala Native with full feature parity between each
-version.
+Chimney is supported for Scala **2.12**, **2.13**, **3.3+** on [**JVM**](https://www.scala-lang.org/),
+[**Scala.js**](https://www.scala-js.org/) and [**Scala Native**](https://scala-native.org/) with full feature parity
+between each version.
 
 Newest versions on each platform are:
 
@@ -44,8 +45,10 @@ scala-cli repl --scala "2.13.12" --dependency "io.scalaland::chimney:{{ git.tag 
 scala-cli repl --scala "3.3.1" --dependency "io.scalaland::chimney:{{ git.tag or scm.latest }}"
 ```
 
-If you are advanced used who want to learn about the difference about automatic derivation and semiautomatic derivation
-see [Automatic, semiautomatic and inlined derivation](../cookbook/#automatic-semiautomatic-and-inlined-derivation).
+!!! tip
+
+    If you are advanced user, who want to learn the difference about automatic derivation and semiautomatic derivation
+    in Chimney, see [Automatic, semiautomatic and inlined derivation](cookbook.md#automatic-semiautomatic-and-inlined-derivation).
 
 ## Java collections integration
 
@@ -65,7 +68,9 @@ and then import:
 import io.scalaland.chimney.javacollections._
 ```
 
-See [Java collections integration cookbook](../cookbook/#java-collections-integration) for more information.
+!!! tip
+
+    See [Java collections integration cookbook](cookbook.md#java-collections-integration) for more information.
 
 ## Cats integration
 
@@ -82,7 +87,9 @@ libraryDependencies += "io.scalaland" %%% "chimney-cats" % "{{ git.tag or scm.la
 import io.scalaland.chimney.cats._
 ```
 
-See [Cats integration cookbook](/cookbook/#cats-integration) for more information.
+!!! tip
+
+    See [Cats integration cookbook](cookbook.md#cats-integration) for more information.
 
 ## Protocol Buffers integration
 
@@ -99,4 +106,6 @@ libraryDependencies += "io.scalaland" %%% "chimney-protobufs" % "{{ git.tag or s
 import io.scalaland.chimney.protobufs._
 ```
 
-See [Protocol Buffers integration cookbook](../cookbook/#protocol-buffers-integration) for more information.
+!!! tip
+
+    See [Protocol Buffers integration cookbook](cookbook.md#protocol-buffers-integration) for more information.
