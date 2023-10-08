@@ -61,5 +61,9 @@ extra:
       link: https://index.scala-lang.org/scalalandio/chimney
     - icon: fontawesome/brands/twitter
       link: https://twitter.com/@scalaland
-  scm:
-    latest: !ENV [CI_LATEST_TAG, 'latest']
+  scala:
+    2_12: "2.12.18"
+    2_13: "2.13.12"
+    3:    "3.3.1"
+  local:
+    tag: !ENV [CI_LATEST_TAG, 'latest'] # used as git.tag fallback in Docker container
