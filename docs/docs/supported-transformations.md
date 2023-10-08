@@ -134,10 +134,43 @@ show what to do if that isn't the case.
 
 ### Reading from Bean getters
 
-```scala
-// TODO example
-bean.into[CaseClass].enableBeanGetters.transform
-```
+If we want to read `def getName(): A` as if it was `val name: A` - which would allow reading from Java Beans (or Plain
+Old Java Objects), you need to enable a flag: 
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    class Source(a: String, b: Int) {
+    
+      def getA(): String = a
+      def getB(): Int = b
+    }
+    
+    class Target(a: String, b: Int)
+    
+    (new Source("value", 512)).into[Target].enableBeanGetters.transform
+    // val source = new Source("value", 512)
+    // new Target(source.getA(), source.getB())
+    
+    locally {
+      implicit val cfg = TransformerConfig.default.enableBeanGetters
+      
+      (new Source("value", 512)).transformInto[Target]
+      // val source = new Source("value", 512)
+      // new Target(source.getA(), source.getB())
+    }
+    ```
+
+Flag `.enableBeanGetters` will allow macros to consider methods which are:
+
+  - nullary (take 0 value arguments)
+  - have no type parameters
+  - have names starting with `get`
+
+If it was enabled in implicit config it can be disabled with `.disableBeanGetters`.
 
 ### Writing to Bean setters
 
