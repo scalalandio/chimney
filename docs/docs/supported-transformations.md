@@ -168,6 +168,8 @@ TODO
 
 TODO
 
+TODO tip about fallback behavior, non configurability and private constructor 
+
 ## Between `sealed`/`enum`s
 
 TODO

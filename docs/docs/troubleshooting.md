@@ -1,5 +1,7 @@
 # Troubleshooting
 
+Already using Chimney and you've got some issue? This page might help you with it.
+
 ## Migration from 0.7.x to 0.8.0
 
 Version 0.8.0 is the first version which cleaned up the API. It introduced
@@ -58,15 +60,15 @@ In order to migrate your code from Lifted Transformers to Partial Transformers, 
     - etc.
   - adjust the types passed to the customization methods. In Lifted Transformers they were expecting values of
     your custom type `F[T]`, while in Partial Transformers they work with `partial.Result[T]`. See the
-   `partial.Result` companion object for ways of constructing `success` and `failure` instances, for example:
+    `partial.Result` companion object for ways of constructing `success` and `failure` instances, for example:
     - `partial.Result.fromValue`
     - `partial.Result.fromOption`
     - `partial.Result.fromEither`
     - `partial.Result.fromTry`
     - and so on...
   - the resulting type of a call to `.transform` is also a `partial.Result[T]`. If you don't want to work with
-   `partial.Result` directly, figure out ways how to convert it to other, more familiar data structures.
-   Some of the ways may include:
+    `partial.Result` directly, figure out ways how to convert it to other, more familiar data structures.
+    Some of the ways may include:
 
     - `result.asOption`
     - `result.asEither`
@@ -75,7 +77,7 @@ In order to migrate your code from Lifted Transformers to Partial Transformers, 
 
 ### Removal of `.enableUnsafeOption`
 
-`.enableUnsafeOption`was removed - if `Option` unwrapping is  needed, it is recommended to use `PartialTransformer`
+`.enableUnsafeOption`was removed - if `Option` unwrapping is needed, it is recommended to use `PartialTransformer`
 
 TODO
 
@@ -168,10 +170,10 @@ The difference is shown in this example:
 
 If:
 
-- default values were enabled,
-- source and target had a field defined
-- this field had default value defined
-- macro couldn't derive transformation from source field type to target field type
+  - default values were enabled,
+  - source and target had a field defined
+  - this field had default value defined
+  - macro couldn't derive transformation from source field type to target field type
 
 Chimney used to use the default value.
 
@@ -404,3 +406,9 @@ would generate:
     | }
     + Derivation took 0.064756000 s
     ```
+
+## Ideas, questions or bug reports
+
+If you haven't found a solution to your question try asking
+at [GitHub discussions](https://github.com/scalalandio/chimney/discussions) page. If your idea looks like a
+feature request or a bug, open an issue at [GitHub issues](https://github.com/scalalandio/chimney/issues) page.
