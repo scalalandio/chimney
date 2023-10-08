@@ -1,29 +1,32 @@
-# Chimney
+<h1 style="margin-bottom:0">Chimney</h1>
+<h2 style="margin-top:0">The battle-tested Scala library for data transformations</h2>
 
-**The battle-tested Scala library. Removing boilerplate from data transformations since 2017.**
+**Removing boilerplate since 2017.**
 
-What does it mean? Imagine you'd have to convert between this Protobuf definitions:
+<br/>
+
+What does it mean? Imagine you'd have to convert between this Protobuf-like definitions:
 
 !!! example
 
     ```scala
-    case class UserPB(
+    case class UserDTO(
         name: String, // 1. primitive
-        addresses: Seq[AddressPB], // 2. Seq collection
-        recovery: Option[RecoveryMethodPB] // 3. Option type
+        addresses: Seq[AddressDTO], // 2. Seq collection
+        recovery: Option[RecoveryMethodDTO] // 3. Option type
     )
     
-    case class AddressPB(street: String, city: String)
+    case class AddressDTO(street: String, city: String)
     
-    // 4. ADT is not flat - each oneOf message crated 2 case classes
-    sealed trait RecoveryMethodPB
-    object RecoveryMethodPB {
-      case class Phone(value: PhonePB) extends RecoveryMethodPB
-      case class Email(value: EmailPB) extends RecoveryMethodPB
+    // 4. ADT is not flat - each oneOf message created 2 case classes
+    sealed trait RecoveryMethodDTO
+    object RecoveryMethodDTO {
+      case class Phone(value: PhoneDTO) extends RecoveryMethodDTO
+      case class Email(value: EmailDTO) extends RecoveryMethodDTO
     }
     
-    case class PhonePB(number: String)
-    case class EmailPB(email: String)
+    case class PhoneDTO(number: String)
+    case class EmailDTO(email: String)
     ```
 
 and this domain model:
@@ -46,26 +49,32 @@ and this domain model:
       case Email(email: String)
     ```
 
-Can you imagine all the code you'd have to write? And the necessity to update carefully when the model changes? The
-silly mistakes with wrong field you inevitably make while copy-pasting a lot of repetitive, boring and dumb code?
+  - you'd have to wrap and unwrap `AnyVal`
+  - you'd have to convert collection
+  - in transformation in one way you'd have to wrap with `Option`, on way back handle `None`
+  - in one transformation you'd have to manually flatten ADT, on way back you have to unflatten it
 
-From now on, forget about it. Encoding domain object with an infallible transformation, like a total function?
+Can you imagine all the code you'd have to write? For now! And the necessity to carefully update when the model changes?
+The silly mistakes with using the wrong field you'll inevitably make while copy-pasting a lot of repetitive, boring
+and dumb code?
+
+From now on, forget about it! Encoding domain object with an infallible transformation, like a total function?
 
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     User(
       Username("John"),
       List(Address("Paper St", "Somewhere")),
       RecoveryMethod.Email("john@example.com")
-    ).transformInto[UserPB]
-    // UserPB(
+    ).transformInto[UserDTO]
+    // UserDTO(
     //   "John",
-    //   Seq(AddressPB("Paper St", "Somewhere")),
-    //   Some(RecoveryMethodPB.Email(EmailPB("john@example.com")))
+    //   Seq(AddressDTO("Paper St", "Somewhere")),
+    //   Some(RecoveryMethodDTO.Email(EmailDTO("john@example.com")))
     // )
     ```
 
@@ -74,13 +83,13 @@ Done! Decoding protobuf into domain object with a fallible transformation, like 
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
 
-    UserPB(
+    UserDTO(
       "John",
-      Seq(AddressPB("Paper St", "Somewhere")),
-      Option(RecoveryMethodPB.Email(EmailPB("john@example.com")))
+      Seq(AddressDTO("Paper St", "Somewhere")),
+      Option(RecoveryMethodDTO.Email(EmailDTO("john@example.com")))
     ).transformIntoPartial[User].asEither
     // Right(User(
     //   Username("John"),
@@ -88,11 +97,12 @@ Done! Decoding protobuf into domain object with a fallible transformation, like 
     //   RecoveryMethod.Email("john@example.com")
     // ))
     
-    UserPB(
+    UserDTO(
       "John",
-      Seq(AddressPB("Paper St", "Somewhere")),
+      Seq(AddressDTO("Paper St", "Somewhere")),
       None
-    ).transformIntoPartial[User].asEither
+    )
+      .transformIntoPartial[User].asEither
       .left.map(_.asErrorPathMessages)
     // Left(List("recovery" -> EmptyValue))
     ```

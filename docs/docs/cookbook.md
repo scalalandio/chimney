@@ -138,7 +138,7 @@ You can use [`.enableMacrosLogging`](troubleshooting.md#debugging-macros) to see
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(baz: Foo.Baz)
@@ -207,9 +207,32 @@ For the reasons above the recommendations are as follows:
 
 ## Java collections integration
 
-TODO
+If you need support for:
 
-TODO warning about performance difference betwen Chimney and `jdk.converters`
+  - `java.util.Optional` and convert to/from it as if it was `scala.Option`
+  - `java.util.Collection`/`java.lang.Iterable`/`java.util.Enumerable` and convert to/from it as if it was
+    `scala.collection.IterableOnce` with a dedicated `Factory` (or `CanBuildFrom`)
+  - `java.util.Map`/`java.util.Dictionary`/`java.util.Properties` and convert to/from `scala.collection.Map`
+  - `java.util.stream`s and convert them to/from all sorts of Scala collections
+
+Then you can use one simple import to enable it:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney-java-collections:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.javacollections._
+    ```
+
+!!! warning
+
+    There is an important performance difference betwen Chimney conversion and `scala.jdk.converions`.
+    
+    While `asJava` and `asScala` attempt to be O(1) operations, by creating a cheap wrapper around the original
+    collection, Chimney creates a full copy. It is the only way to
+    
+      - target various different specific implementations of target type
+      - guarantee that you don't merly wrap a mutable type which could be mutated right after you wrap it 
 
 ## Cats integration
 
@@ -227,7 +250,7 @@ Cats integration module contains the following stuff:
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     
     case class RegistrationForm(email: String,
                                 username: String,
@@ -300,7 +323,7 @@ However, there are 2 concepts specific to PBs and their implementation in
 ScalaPB: storing unencoded values in an additional case class field and
 wrapping done by sealed traits' cases in `oneof` values.
 
-### UnknownFieldSet
+### `UnknownFieldSet`
 
 By default, ScalaPB would generate in a case class an additional field
 `unknownFields: UnknownFieldSet = UnknownFieldSet()`. This field
@@ -313,7 +336,7 @@ The automatic conversion into a protobuf with such field can be problematic:
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     object domain {
@@ -344,7 +367,7 @@ There are 2 ways in which Chimney could handle this issue:
     !!! example
   
         ```scala
-        //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+        //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
 
          domain.Address("a", "b").into[protobuf.Address]
@@ -357,7 +380,7 @@ There are 2 ways in which Chimney could handle this issue:
     !!! example
 
         ```scala
-        //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+        //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
     
         domain.Address("a", "b").into[protobuf.Address]
@@ -485,7 +508,7 @@ Encoding (with `Transformer`s) is pretty straightforward:
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     val domainType: addressbook.AddressBookType = addressbook.AddressBookType.Private("test")
@@ -506,7 +529,7 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
     !!! example
     
         ```scala
-        //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+        //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
   
         pbType.value
@@ -523,9 +546,9 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
     !!! example
   
         ```scala
-        //> using dep "io.scalaland::chimney-protobufs:{{ git.tag or local.tag }}"
+        //> using dep io.scalaland::chimney-protobufs:{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
-        import io.scalaland.chimney.protobufs._ // inclides support for empty scalapb.GeneratedMessage
+        import io.scalaland.chimney.protobufs._ // includes support for empty scalapb.GeneratedMessage
       
         pbType.value.intoPartial[addressbook.AddressBookType].transform.asOption == Some(domainType)
         ```
@@ -604,7 +627,7 @@ could be done with:
 !!! example
   
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered
@@ -687,7 +710,32 @@ partial transformers).
 
 ### Build-in ScalaPB types
 
-TODO
+There are several datatypes provided by ScalaBP (or Google PB) which are not automatically converted into Scala's types,
+that Chimney could convert for you:
+
+  - `com.google.protobuf.empty.Empty` into `scala.Unit`
+  - anything into `com.google.protobuf.empty.Empty`
+  - `com.google.protobuf.duration.Duration` from/into `java.time.Duration`/`java.time.FiniteDuration`
+  - `com.google.protobuf.timestamp.Timestamp` from/to `java.time.Instant`
+  - `com.google.protobuf.ByteString` from/to any Scala collections of `Byte`s
+  - wrapping/unwrapping Scala primitives with/from: 
+    - `com.google.protobuf.wrappers.BoolValue` (`Boolean`)
+    - `com.google.protobuf.wrappers.BytesValue` (collection of `Byte`s)
+    - `com.google.protobuf.wrappers.DoubleValue` (`Double`)
+    - `com.google.protobuf.wrappers.Int32Value` (`Int`)
+    - `com.google.protobuf.wrappers.Int64Value` (`Long`)
+    - `com.google.protobuf.wrappers.UInt32Value` (`Int`)
+    - `com.google.protobuf.wrappers.UInt64Value` (`Long`)
+    - `com.google.protobuf.wrappers.StringValue` (`String`)
+
+Each of these transformations is provided by the same import:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney-protobufs:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.protobufs._
+    ```
 
 ## Libraries with smart constructors
 
@@ -700,13 +748,26 @@ performing smart construction:
 
 !!! example
 
+    Assuming Scala 3 or `-Xsource:3` for fixed `private` constructors so that `Username.apply` and `.copy` would
+    be private.
+
     ```scala
-    // assuming Scala 3 or -Xsource:3 for fixed private constructors
-    // so that Username.apply and .copy would be private
+    //> using scala {{ scala.2_13 }}
+    //> using options -Xsource:3
     final case class Username private (value: String)
     object Username {
       def parse(value: String): Either[String, Username] =
         if (value.isEmpty) Left("Username cannot be empty")
+        else Right(Username(value))
+    }
+    ```
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    final case class Username private (value: String)
+    object Username {
+      def parse(value: String): Either[String, Username] =
+        if value.isEmpty then Left("Username cannot be empty")
         else Right(Username(value))
     }
     ```
@@ -716,7 +777,7 @@ then Partial Transformer would have to be created manually:
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.partial
   
@@ -749,7 +810,7 @@ we could use it to construct `PartialTransformer` automatically:
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.partial
   
@@ -775,6 +836,9 @@ library which attempts to remove runtime overhead from user's types.
 !!! example
 
     ```scala
+    //> using scala {{ scala.2_13 }}
+    //> using options -Ymacro-annotations
+    //> using dep io.estatico::newtype:0.4.4
     import io.estatico.newtype.macros.newtype
   
     @newtype case class Username(value: String)
@@ -791,6 +855,10 @@ as a wrapper around another type which performs this validation e.g. Refined Typ
 !!! example
 
     ```scala
+    //> using scala {{ scala.2_13 }}
+    //> using options -Ymacro-annotations
+    //> using dep io.estatico::newtype:0.4.4
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.estatico.newtype.Coercible
     import io.scalaland.chimney.Transformer
     
@@ -808,6 +876,7 @@ it tries to remove wrapping in runtime. However, it uses different tricks
 !!! example
 
     ```scala
+    //> using dep io.monix::newtypes-core:0.2.3
     import monix.newtypes._
     
     type Username = Username.Type
@@ -826,7 +895,8 @@ We can use them to provide unwrapping `Transformer` and wrapping
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep io.monix::newtypes-core:0.2.3
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.{PartialTransformer, Transformer}
     import io.scalaland.chimney.partial
     import monix.newtypes._
@@ -852,6 +922,7 @@ popular constraints as long as we express them in value's type.
 !!! example
 
     ```scala
+    //> using dep eu.timepit::refined:0.11.0
     import eu.timepit.refined._
     import eu.timepit.refined.api.Refined
     import eu.timepit.refined.auto._
@@ -866,7 +937,8 @@ is a simple accessor:
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep eu.timepit::refined:0.11.0
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import eu.timepit.refined.api.{Refined, Validate}
     import io.scalaland.chimney.{PartialTransformer, Transformer}
     import io.scalaland.chimney.partial
@@ -901,7 +973,7 @@ It could look like this:
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney._
     
     sealed trait MyOptional[+A]
@@ -944,7 +1016,8 @@ These 5 implicits are bare minimum to make sure that:
   - your types will be automatically wrapped (always) and unwrapped (only with `PartialTransformer`s which can do it
     safely)
   - you can convert all kinds of values wrapped in your optional type
-  - your can convert to and `from scala.Option`
+  - your can convert to and from `scala.Option`
 
-An example of this approach can be seen in Java collections integration implementation where it was used to provide
-support for `java.util.Optional`.  
+An example of this approach can be seen in
+[Java collections integration implementation](https://github.com/scalalandio/chimney/tree/master/chimney-java-collections/src/main/scala/io/scalaland/chimney/javacollections)
+where it was used to provide support for `java.util.Optional`.  
