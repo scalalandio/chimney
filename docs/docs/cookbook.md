@@ -138,6 +138,9 @@ You can use [`.enableMacrosLogging`](troubleshooting.md#debugging-macros) to see
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney.dsl._
+    
     case class Foo(baz: Foo.Baz)
     object Foo {
       case class Baz(a: String)
@@ -224,6 +227,8 @@ Cats integration module contains the following stuff:
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    
     case class RegistrationForm(email: String,
                                 username: String,
                                 password: String,
@@ -308,6 +313,9 @@ The automatic conversion into a protobuf with such field can be problematic:
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney.dsl._
+    
     object domain {
       case class Address(line1: String, line2: String)
     }
@@ -336,6 +344,9 @@ There are 2 ways in which Chimney could handle this issue:
     !!! example
   
         ```scala
+        //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+        import io.scalaland.chimney.dsl._
+
          domain.Address("a", "b").into[protobuf.Address]
            .enableDefaultValues
            .transform
@@ -345,11 +356,14 @@ There are 2 ways in which Chimney could handle this issue:
 
     !!! example
 
-       ```scala
-       domain.Address("a", "b").into[protobuf.Address]
-         .withFieldConst(_.unknownFields, UnknownFieldSet())
-         .transform
-       ```
+        ```scala
+        //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+        import io.scalaland.chimney.dsl._
+    
+        domain.Address("a", "b").into[protobuf.Address]
+          .withFieldConst(_.unknownFields, UnknownFieldSet())
+          .transform
+        ```
 
 However, if you have a control over the ScalaPB generation process, you could configure it
 to simply not generate this field, either
@@ -372,7 +386,7 @@ At this point, one might also consider option:
 
     ```protobuf
     option (scalapb.options) = {
-    no_default_values_in_constructor: true
+      no_default_values_in_constructor: true
     };
     ```
 
@@ -471,6 +485,9 @@ Encoding (with `Transformer`s) is pretty straightforward:
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney.dsl._
+    
     val domainType: addressbook.AddressBookType = addressbook.AddressBookType.Private("test")
     val pbType: pb.addressbook.AddressBookType =
       pb.addressbook.AddressBookType.of(
@@ -489,6 +506,9 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
     !!! example
     
         ```scala
+        //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+        import io.scalaland.chimney.dsl._
+  
         pbType.value
           .intoPartial[addressbook.AddressBookType]
           .withCoproductInstancePartial[pb.addressbook.AddressBookType.Value.Empty.type](
@@ -503,6 +523,8 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
     !!! example
   
         ```scala
+        //> using dep "io.scalaland::chimney-protobufs:{{ git.tag or local.tag }}"
+        import io.scalaland.chimney.dsl._
         import io.scalaland.chimney.protobufs._ // inclides support for empty scalapb.GeneratedMessage
       
         pbType.value.intoPartial[addressbook.AddressBookType].transform.asOption == Some(domainType)
@@ -582,6 +604,9 @@ could be done with:
 !!! example
   
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney.dsl._
+    
     val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered
     val pbStatus: pb.order.CustomerStatus = pb.order.CustomerRegistered()
     
@@ -691,6 +716,7 @@ then Partial Transformer would have to be created manually:
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.partial
   
@@ -723,6 +749,7 @@ we could use it to construct `PartialTransformer` automatically:
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.partial
   
@@ -799,6 +826,7 @@ We can use them to provide unwrapping `Transformer` and wrapping
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import io.scalaland.chimney.{PartialTransformer, Transformer}
     import io.scalaland.chimney.partial
     import monix.newtypes._
@@ -838,6 +866,7 @@ is a simple accessor:
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import eu.timepit.refined.api.{Refined, Validate}
     import io.scalaland.chimney.{PartialTransformer, Transformer}
     import io.scalaland.chimney.partial
@@ -858,4 +887,64 @@ is a simple accessor:
 
 ## Custom optional types
 
-TODO
+In case your library/domain defines custom Optional types, you can provide your own handling of such types through
+implicits. Implicits we suggest you consider for implementation are:
+
+  - non-optional type into optional-type of your option (`Transformer`)
+  - optional-type into another optional-type of your option (`Transformer`)
+  - optional-type into non-optional-type of your type (`PartialTransformer`)
+  - optional-type of your option into `scala.Option` (`Transformer`)
+  - `scala.Option` into optional-type of your option (`Transformer`)
+
+It could look like this:
+
+!!! example
+
+    ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney._
+    
+    sealed trait MyOptional[+A]
+    object MyOptional {
+      case class Present[+A](value: A) extends MyOptional[A]
+      case object Absent extends MyOptional[Nothing]
+    }
+    
+    implicit def nonOptionalToOptional[A, B](implicit aToB: Transformer[A, B]):
+        Transformer[A, MyOptional[B]] =
+      a => MyOptional.Present(aToB.transform(a))
+      
+    implicit def optionalToOptional[A, B](implicit aToB: Transformer[A, B]):
+        Transformer[MyOptional[A], MyOptional[B]] = {
+      case MyOptional.Present(a) => My.Optional(aToB.transform(a))
+      case MyOptional.Absent     => MyOptional.Absent
+    }
+      
+    implicit def optionalToNonOptional[A, B](implicit aToB: Transformer[A, B]):
+        PartialTransformer[MyOptional[A], B] = PartialTransformer {
+      case MyOptional.Present(a) => partial.Result.fromValue(aToB.transform(a))
+      case MyOptional.Absent     => partial.Result.fromEmpty
+    }
+    
+    implicit def optionalToOption[A, B](implicit aToB: Transformer[A, B]):
+        Transformer[MyOptional[A], Option[B]] = {
+      case MyOptional.Present(a) => Some(aToB.transform(a))
+      case MyOptional.Absent     => None
+    }
+    
+    implicit def optionToOptional[A, B](implicit aToB: Transformer[A, B]):
+        Transformer[Option[A], MyOptional[B]] = {
+      case Some(a) => My.Optional(aToB.transform(a))
+      case None    => MyOptional.Absent
+    }
+    ```
+    
+These 5 implicits are bare minimum to make sure that:
+
+  - your types will be automatically wrapped (always) and unwrapped (only with `PartialTransformer`s which can do it
+    safely)
+  - you can convert all kinds of values wrapped in your optional type
+  - your can convert to and `from scala.Option`
+
+An example of this approach can be seen in Java collections integration implementation where it was used to provide
+support for `java.util.Optional`.  

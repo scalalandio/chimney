@@ -23,9 +23,9 @@ To start using the library add to your sbt config:
 
 ```scala
 // if you use Scala on JVM-only
-libraryDependencies += "io.scalaland" %% "chimney" % "{{ git.tag or scm.latest }}"
+libraryDependencies += "io.scalaland" %% "chimney" % "{{ git.tag or local.tag }}"
 // if you cross-compile to Scala.js and/or Scala Native
-libraryDependencies += "io.scalaland" %%% "chimney" % "{{ git.tag or scm.latest }}"
+libraryDependencies += "io.scalaland" %%% "chimney" % "{{ git.tag or local.tag }}"
 ```
 
 and then import in your codebase:
@@ -34,15 +34,15 @@ and then import in your codebase:
 import io.scalaland.chimney.dsl._
 ```
 
-or try it in Scala CLI:
+or try it in [Scala CLI](https://scala-cli.virtuslab.org/):
 
 ```bash
 # Scala 2.12
-scala-cli repl --scala "2.12.18" --dependency "io.scalaland::chimney:{{ git.tag or scm.latest }}"
+scala-cli repl --scala "{{ scala.2_12 }}" --dependency "io.scalaland::chimney:{{ git.tag or local.tag }}"
 # Scala 2.13
-scala-cli repl --scala "2.13.12" --dependency "io.scalaland::chimney:{{ git.tag or scm.latest }}"
+scala-cli repl --scala "{{ scala.2_13 }}" --dependency "io.scalaland::chimney:{{ git.tag or local.tag }}"
 # Scala 3
-scala-cli repl --scala "3.3.1" --dependency "io.scalaland::chimney:{{ git.tag or scm.latest }}"
+scala-cli repl --scala "{{ scala.3 }}" --dependency "io.scalaland::chimney:{{ git.tag or local.tag }}"
 ```
 
 !!! tip
@@ -56,10 +56,8 @@ If you are interested in using `java.util.Optional`, `java.util.Collection`s, `j
 other Java's types, you need to add integration to your project:
 
 ```scala
-// if you use Scala on JVM-only
-libraryDependencies += "io.scalaland" %% "chimney-java-collections" % "{{ git.tag or scm.latest }}"
-// if you cross-compile to Scala.js and/or Scala Native
-libraryDependencies += "io.scalaland" %%% "chimney-java-collections" % "{{ git.tag or scm.latest }}"
+// Java collections integrations is released only on JVM Scala!
+libraryDependencies += "io.scalaland" %% "chimney-java-collections" % "{{ git.tag or local.tag }}"
 ```
 
 and then import:
@@ -78,9 +76,9 @@ If you are interested in Cats integrations for Partial Transformers, you need ad
 
 ```scala
 // if you use Scala on JVM-only
-libraryDependencies += "io.scalaland" %% "chimney-cats" % "{{ git.tag or scm.latest }}"
+libraryDependencies += "io.scalaland" %% "chimney-cats" % "{{ git.tag or local.tag }}"
 // if you cross-compile to Scala.js and/or Scala Native
-libraryDependencies += "io.scalaland" %%% "chimney-cats" % "{{ git.tag or scm.latest }}"
+libraryDependencies += "io.scalaland" %%% "chimney-cats" % "{{ git.tag or local.tag }}"
 ```
 
 ```scala
@@ -97,9 +95,9 @@ If you want to improve support for types defined in ScalaPB, you need to add to 
 
 ```scala
 // if you use Scala on JVM-only
-libraryDependencies += "io.scalaland" %% "chimney-protobufs" % "{{ git.tag or scm.latest }}"
+libraryDependencies += "io.scalaland" %% "chimney-protobufs" % "{{ git.tag or local.tag }}"
 // if you cross-compile to Scala.js and/or Scala Native
-libraryDependencies += "io.scalaland" %%% "chimney-protobufs" % "{{ git.tag or scm.latest }}"
+libraryDependencies += "io.scalaland" %%% "chimney-protobufs" % "{{ git.tag or local.tag }}"
 ```
 
 ```scala

@@ -10,7 +10,7 @@ from the types, you need to provide it with a hint, but nothing more.
     and compile by running a command in the file's folder:
 
     ```bash
-    # scala_version - e.g. 2.12.18, 2.13.12 or 3.3.1
+    # scala_version - e.g. {{ scala.2_12 }}, {{ scala.2_13 }} or {{ scala.3 }}
     # platform      - e.g. jvm, scala-js or scala-native
     scala-cli compile --scala $scala_version --platform $platform .
     ```
@@ -22,7 +22,7 @@ If you transform one type into itself or into its supertype, it will be upcasted
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or scm.latest }}"
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import io.scalaland.chimney.dsl._
 
     trait A
@@ -49,7 +49,7 @@ The obvious example are `case class`es with the same fields:
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or scm.latest }}"
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import io.scalaland.chimney.dsl._
 
     case class Source(a: Int, b: Double)
@@ -66,7 +66,7 @@ However, original value might have fields absent in target type, and appearing i
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or scm.latest }}"
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import io.scalaland.chimney.dsl._
 
     case class Source(a: Int, b: Double, c: String)
@@ -83,7 +83,7 @@ It doesn't even have to be a `case class`:
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or scm.latest }}"
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import io.scalaland.chimney.dsl._
     
     class Source {
@@ -104,7 +104,7 @@ recursively:
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or scm.latest }}"
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import io.scalaland.chimney.dsl._
     
     case class Foo(baz: Foo.Baz)

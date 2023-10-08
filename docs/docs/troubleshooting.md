@@ -79,14 +79,46 @@ In order to migrate your code from Lifted Transformers to Partial Transformers, 
 
 `.enableUnsafeOption`was removed - if `Option` unwrapping is needed, it is recommended to use `PartialTransformer`
 
-TODO
+This option allowed calling `.get` on `Option` to enable conversion from `Option` to non-`Option:
+
+!!! example
+
+    ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo(a: Option[String])
+    case class Bar(a: String)
+    
+    Foo(Some("value")).into[Bar].enableUnsafeOption.transform // Bar("value")
+    Foo(None).into[Bar].enableUnsafeOption.transform // throws Exception
+    ```
+
+Throwing exceptions made sense as a workaround in simpler times, when `Transformer`s were the only option. However,
+now we have `PartialTransformer`s. They have build-in ability to unwrap `Option` as failed result.
+
+!!! example
+
+    ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo(a: Option[String])
+    case class Bar(a: String)
+    
+    Foo(Some("value")).transformIntoPartial[Bar](failFast = true).asOption // Some(Bar("value"))
+    Foo(None).transformIntoPartial[Bar](failFast = true).asOption // None
+    ```
+
+With `failFast = true` and `.asOption` Partial Transformers have similar semantics to `Transformer` with unsafe `Option`
+but the result is an explicit `Option` instead of implied exception handling. 
 
 ### Changes to automatic derivation logic
 
 Types returned by automatic derivation got split from types that are used
 for user-provided transformations and configured (semiautomatic) derivation:
 `Transformer` got split into `Transformer` and `Transformer.AutoDerived`
-while `PartialTransformer` got split into `PartialTransformer``and
+while `PartialTransformer` got split into `PartialTransformer` and
 `PartialTransformer.AutoDerived`.
 
 It was caused be the change in mechanism for recursive derivation: since Chimney
@@ -106,6 +138,9 @@ another implicit `Transformer`.
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney._
+    
     class MyType[A](private val a: A) {
       def map[B](f: A => B): MyType[B] =
         new MyType(f(a))
@@ -117,13 +152,16 @@ another implicit `Transformer`.
       myA => myA.map(_.transformInto[B])
     ```
 
-After changes in 0.8.x ``implicit Transformer[A, B]`` means "instance provided by user",
+After changes in 0.8.x `implicit Transformer[A, B]` means "instance provided by user",
 either manually or through semiautomatic derivation. If users want to allow summoning
-there automatic instances as well, they need to use ``Transformer.AutoDerived``:
+there automatic instances as well, they need to use `Transformer.AutoDerived`:
 
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney._
+    
     class MyOtherType[A](private val a: A) {
       def map[B](f: A => B): MyOtherType[B] =
         new MyOtherType(f(a))
@@ -135,12 +173,15 @@ there automatic instances as well, they need to use ``Transformer.AutoDerived``:
       myA => myA.map(_.transformInto[B])
     ```
 
-which would summon both automatically derived instances as well as manually provided.
+which would summon both automatically derived instances and manually provided ones.
 The difference is shown in this example:
 
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney.dsl._
+    
     // implicit provided by user
     implicit val int2str: Transformer[Int, String] = _.toString
   
@@ -238,6 +279,7 @@ In such cases, we can use a dedicated flag, `.enableMacrosLogging`:
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import io.scalaland.chimney.dsl._
 
     case class Foo(x: String, y: Int, z: Boolean = true)
@@ -327,14 +369,20 @@ above, or with a shared implicit config:
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney.dsl._
+    
     implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
     ```
 
-The flag is also available to `Patcher`\s, this code:
+The flag is also available to `Patcher`s, this code:
 
 !!! example
 
     ```scala
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
+    import io.scalaland.chimney.dsl._
+    
     case class Email(address: String) extends AnyVal
     case class Phone(number: Long) extends AnyVal
 

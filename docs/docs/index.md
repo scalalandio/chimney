@@ -54,7 +54,7 @@ From now on, forget about it. Encoding domain object with an infallible transfor
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or scm.latest }}"
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import io.scalaland.chimney.dsl._
     
     User(
@@ -74,7 +74,7 @@ Done! Decoding protobuf into domain object with a fallible transformation, like 
 !!! example
 
     ```scala
-    //> using dep "io.scalaland::chimney:{{ git.tag or scm.latest }}"
+    //> using dep "io.scalaland::chimney:{{ git.tag or local.tag }}"
     import io.scalaland.chimney.dsl._
 
     UserPB(
