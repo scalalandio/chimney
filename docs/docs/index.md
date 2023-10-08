@@ -1,6 +1,6 @@
 # Chimney
 
-Battle tested library for boilerplate-free data transformations in Scala.
+**The battle-tested Scala library. Removing boilerplate from data transformations since 2017.**
 
 What does it mean? Imagine you'd have to convert between this Protobuf definitions:
 
@@ -15,7 +15,7 @@ What does it mean? Imagine you'd have to convert between this Protobuf definitio
     
     case class AddressPB(street: String, city: String)
     
-    // 4. ADT is not flat - each oneOf message 2 case classes
+    // 4. ADT is not flat - each oneOf message crated 2 case classes
     sealed trait RecoveryMethodPB
     object RecoveryMethodPB {
       case class Phone(value: PhonePB) extends RecoveryMethodPB
@@ -102,3 +102,9 @@ Also done! And if a field cannot be converted, you'll get the path to the proble
 Now, visit the [quick start section](quickstart.md) to learn how to get Chimney and the move
 to the [supported transformations section](supported-transformations.md) to learn about a plethora of transformations
 supported out of the box and even more enabled with easy customizations!
+
+!!! tip
+
+    If you have any questions don't forget to look at [cookbook](cookbook.md) for new usage
+    ideas, [troubleshooting](troubleshooting.md) for solving problems and
+    our [GitHub discussions](https://github.com/scalalandio/chimney/discussions) page! 
