@@ -20,6 +20,8 @@ theme:
     - navigation.tracking
     - navigation.tabs
     - navigation.tabs.sticky
+    - search.highlight
+    - search.suggest
     - toc.integrate
   font:
     code: Fira Code
@@ -48,6 +50,7 @@ markdown_extensions:
   - pymdownx.superfences
 plugins:
   - macros
+  - search
 copyright: 'Copyright © 2017—2023, <a href="https://scalaland.io">Scalaland.io</a>.<br />Chimney is FOSS released with Apache 2.0 licence'
 extra:
   generator: false
