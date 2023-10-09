@@ -15,8 +15,9 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
       val A = Type[A].tpe
 
       val getterOpt: Option[Symbol] = A.decls.to(List).find(m => m.isPublic && m.isMethod && m.asMethod.isGetter)
-      val primaryConstructorOpt: Option[Symbol] = A.decls
-        .to(List)
+      val primaryConstructorOpt: Option[Symbol] = Option(A.typeSymbol)
+        .filter(_.isClass)
+        .map(_.asClass.primaryConstructor)
         .find(m => m.isPublic && m.isConstructor && m.asMethod.paramLists.flatten.size == 1)
       val argumentOpt: Option[Symbol] = primaryConstructorOpt.flatMap(_.asMethod.paramLists.flatten.headOption)
 

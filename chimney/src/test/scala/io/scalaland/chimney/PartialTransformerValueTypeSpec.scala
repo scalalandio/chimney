@@ -24,6 +24,23 @@ class PartialTransformerValueTypeSpec extends ChimneySpec {
     )
   }
 
+  test("AnyVals with private private constructor are not considered value classes") {
+    @unused val transformer: Transformer[String, Int] = (src: String) => src.length
+
+    compileErrorsFixed("AlsoNotAValueType.create(100).transformIntoPartial[UserName]").check(
+      "derivation from value: io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType to io.scalaland.chimney.fixtures.valuetypes.UserName is not supported in Chimney!"
+    )
+    compileErrorsFixed("AlsoNotAValueType.create(100).transformIntoPartial[UserId]").check(
+      "derivation from alsonotavaluetype: io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType to scala.Int is not supported in Chimney!"
+    )
+    compileErrorsFixed("""UserName("Batman").transformIntoPartial[AlsoNotAValueType]""").check(
+      "derivation from username: io.scalaland.chimney.fixtures.valuetypes.UserName to io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType is not supported in Chimney!"
+    )
+    compileErrorsFixed("UserId(100).transformIntoPartial[AlsoNotAValueType]").check(
+      "derivation from userid: io.scalaland.chimney.fixtures.valuetypes.UserId to io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType is not supported in Chimney!"
+    )
+  }
+
   test("transform from a value class(member type 'T') into a value(type 'T')") {
     UserName("Batman").transformIntoPartial[String].asOption ==> Some("Batman")
     User("100", UserName("abc")).transformIntoPartial[UserDTO].asOption ==> Some(UserDTO("100", "abc"))

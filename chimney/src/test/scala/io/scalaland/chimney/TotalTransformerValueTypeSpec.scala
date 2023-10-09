@@ -24,6 +24,23 @@ class TotalTransformerValueTypeSpec extends ChimneySpec {
     )
   }
 
+  test("AnyVals with private private constructor are not considered value classes") {
+    @unused val transformer: Transformer[String, Int] = (src: String) => src.length
+
+    compileErrorsFixed("AlsoNotAValueType.create(100).transformInto[UserName]").check(
+      "derivation from value: io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType to io.scalaland.chimney.fixtures.valuetypes.UserName is not supported in Chimney!"
+    )
+    compileErrorsFixed("AlsoNotAValueType.create(100).transformInto[UserId]").check(
+      "derivation from alsonotavaluetype: io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType to scala.Int is not supported in Chimney!"
+    )
+    compileErrorsFixed("""UserName("Batman").transformInto[AlsoNotAValueType]""").check(
+      "derivation from username: io.scalaland.chimney.fixtures.valuetypes.UserName to io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType is not supported in Chimney!"
+    )
+    compileErrorsFixed("UserId(100).transformInto[AlsoNotAValueType]").check(
+      "derivation from userid: io.scalaland.chimney.fixtures.valuetypes.UserId to io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType is not supported in Chimney!"
+    )
+  }
+
   test("transform from a value class(member type: 'T') into a value(type 'T')") {
     UserName("Batman").transformInto[String] ==> "Batman"
     User("100", UserName("abc")).transformInto[UserDTO] ==> UserDTO("100", "abc")
