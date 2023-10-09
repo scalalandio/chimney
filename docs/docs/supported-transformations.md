@@ -521,7 +521,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
 ### Wiring the constructor's parameter to a raw value
 
 Another way of handling the missing source field - or overriding existing one - is providing the value for 
-the constructor's argument/setter yourself. The successful value can be provided with `.withFieldConst`:
+the constructor's argument/setter yourself. The successful value can be provided using `.withFieldConst`:
 
 !!! example 
 
@@ -626,7 +626,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
 
 Yet another way of handling the missing source field - or overriding existing one - is computing the value for 
 the constructor's argument/setter out from a whole transformed value. The always-succeeding transformation can be provided
-with `.withFieldComputed`:
+using `.withFieldComputed`:
 
 !!! example 
 
@@ -828,7 +828,7 @@ type's subtype needs to have a corresponding subtype in target type with a match
     }
     sealed trait Bar
     object Bar {
-      case class Baz(a: Int) extends Bar
+      case class Baz(b: Int) extends Bar
       case object Fizz extends Bar  
       case object Buzz extends Bar
     }
@@ -859,7 +859,7 @@ It works also with Scala 3's `enum`:
       case class Baz(a: String, b: Int) extends Foo
       case object Buzz extends Foo
     enum Bar:
-      case Baz(a: Int)
+      case Baz(b: Int)
       case Fizz  
       case Buzz
     
@@ -881,7 +881,7 @@ It works also with Scala 3's `enum`:
       case Buzz
     sealed trait Bar
     object Bar:
-      case class Baz(a: Int) extends Bar
+      case class Baz(b: Int) extends Bar
       case object Fizz extends Bar  
       case object Buzz extends Bar
     
@@ -902,7 +902,7 @@ It works also with Scala 3's `enum`:
       case Baz(a: String, b: Int)
       case Buzz
     enum Bar:
-      case Baz(a: Int)
+      case Baz(b: Int)
       case Fizz  
       case Buzz
     
@@ -1004,17 +1004,152 @@ However, Java's `enum` can also be converted this way to/from `sealed`/Scala 3's
     (ColorE.Blue: ColorS).transformInto[ColorS] // ColorJ.Blue
     ```
 
-### Handling a specific `sealed` subtype with a raw value
-
-TODO
-
-TODO java enums limitations
-
 ### Handling a specific `sealed` subtype with a computed value
 
-TODO
+Sometimes we are missing a corresponding subtype of target type. Or we might want to override it with our own
+computation. This can be done using `.withCoproductInstance`:
 
-TODO java enums limitations
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    sealed trait Foo
+    object Foo {
+      case class Baz(a: String) extends Foo
+      case object Buzz extends Foo  
+    }
+    sealed trait Bar
+    object Bar {
+      case class Baz(a: String) extends Bar
+      case object Fizz extends Bar  
+      case object Buzz extends Bar
+    }
+    
+    (Bar.Baz("value"): Bar).into[Foo].withCoproductInstance[Bar.Fizz.type] {
+      fizz => Foo.Baz(fizz.toString)
+    }.transform // Foo.Baz("value")
+    (Bar.Fizz: Bar).into[Foo].withCoproductInstance[Bar.Fizz.type] {
+      fizz => Foo.Baz(fizz.toString)
+    }.transform // Foo.Baz("Fizz")
+    (Bar.Buzz: Bar).into[Foo].withCoproductInstance[Bar.Fizz.type] {
+      fizz => Foo.Baz(fizz.toString)
+    }.transform // Foo.Buzz
+    ```
+
+If the computation needs to allow failure, there is `.withCoproductInstancePartial`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+    
+    sealed trait Foo
+    object Foo {
+      case class Baz(a: String) extends Foo
+      case object Buzz extends Foo  
+    }
+    sealed trait Bar
+    object Bar {
+      case class Baz(a: String) extends Bar
+      case object Fizz extends Bar  
+      case object Buzz extends Bar
+    }
+    
+    (Bar.Baz("value"): Bar).intoPartial[Foo].withCoproductInstancePartial[Bar.Fizz.type] {
+      fizz => partial.Result.fromEmpty
+    }.transform.asEither // Right(Foo.Baz("value"))
+    (Bar.Fizz: Bar).intoPartial[Foo].withCoproductInstancePartial[Bar.Fizz.type] {
+      fizz => partial.Result.fromEmpty
+    }.transform.asEither // Left(...)
+    (Bar.Buzz: Bar).intoPartial[Foo].withCoproductInstancePartial[Bar.Fizz.type] {
+      fizz => partial.Result.fromEmpty
+    }.transform.asEither // Right(Foo.Buzz)
+    ```
+
+!!! warning
+
+    Due to limitations of Scala 2, when you want to use `.withCoproductInstance` or `.withCoproductInstancePartial` with
+    Java's `enum`s, the enum instance's exact type will always be upcasted/lost, turning the handler into "catch all":
+
+    ```java
+    // in Java
+    enum ColorJ {
+      Red, Blue, Greed, Black;
+    }
+    ```
+
+    ```scala
+    //> using scala {{ scala.2_13 }}
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    sealed trait ColorS
+    object ColorS {
+      case object Red extends ColorS
+      case object Green extends ColorS
+      case object Blue extends ColorS
+    }
+    
+    def blackIsRed(black: ColorJ.Black.type): ColorS = ColorS.Red
+    
+    ColorJ.Red.into[ColorS].withCoproductInstance[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
+    ColorJ.Green.into[ColorS].withCoproductInstance[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
+    ColorJ.Blue.into[ColorS].withCoproductInstance[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
+    ColorJ.Black.into[ColorS].withCoproductInstance[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
+    ```
+    
+    There is nothing we can do about the type, however, we can analyze the code and, if it preserves the exact Java enum
+    we can use type refinement of sort to remember the selected instance:
+    
+    ```scala
+    //> using scala {{ scala.2_13 }}
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    sealed trait ColorS
+    object ColorS {
+      case object Red extends ColorS
+      case object Green extends ColorS
+      case object Blue extends ColorS
+    }
+    
+    def blackIsRed(black: ColorJ.Black.type): ColorS = ColorS.Red
+    
+    ColorJ.Red.into[ColorS].withCoproductInstance { (black: ColorJ.Black.type) =>
+      blackIsRed(black)
+    }.transform // ColorS.Red
+    ColorJ.Green.into[ColorS].withCoproductInstance { (black: ColorJ.Black.type) =>
+      blackIsRed(black)
+    }.transform // ColorS.Green
+    ColorJ.Blue.into[ColorS].withCoproductInstance { (black: ColorJ.Black.type) =>
+      blackIsRed(black)
+    }.transform // ColorS.Blue
+    ColorJ.Black.into[ColorS].withCoproductInstance { (black: ColorJ.Black.type) =>
+      blackIsRed(black)
+    }.transform // ColorS.Black
+    ```
+    
+    This issue doesn't occur on Scala 3, which infers types correctly:
+    
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl.*
+    
+    enum ColorS:
+      case Red, Green, Blue
+    
+    def blackIsRed(black: ColorJ.Black.type): ColorS = ColorS.Red
+    
+    ColorJ.Red.into[ColorS].withCoproductInstance(blackIsRed).transform // ColorS.Red
+    ColorJ.Green.into[ColorS].withCoproductInstance(blackIsRed).transform // ColorS.Green
+    ColorJ.Blue.into[ColorS].withCoproductInstance(blackIsRed).transform // ColorS.Blue
+    ColorJ.Black.into[ColorS].withCoproductInstance(blackIsRed).transform // ColorS.Black
+    ```
 
 ## From/into an `Option`
 
