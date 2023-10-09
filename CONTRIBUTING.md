@@ -34,7 +34,7 @@ Additionally, we would like to:
 * for any new feature we need a documentation:
     * Scaladoc documenting: what is does, what are its type parameters, what are its value parameters
     * Sphinx documentation describing new functionality
-    * linking Scaladoc entries to corresponding Sphinx documentation (https://chimney.readthedocs.io/ subpage)
+    * linking Scaladoc entries to corresponding MkDocs documentation (https://chimney.readthedocs.io/ subpage)
     * it might be good to discuss whether put this information into a new page or as a section of an existing page
 
 ### How to start working on Chimney
@@ -63,5 +63,27 @@ to sbt-projectmatrix.
 Some details of this setup along with useful commands you would be able to see in the welcome prompt when you start sbt
 shell.
 
+Information about Scala macros can be found on:
+
+ * after loading project with Scala 2, using _Go to Symbol_ on `Context` values
+ * after loading project with Scala 3, opening `Quotes.scala` source
+ * [Scala 2 macros documentation](https://docs.scala-lang.org/overviews/macros/overview.html)
+ * [Scala 3 macros documentation](https://docs.scala-lang.org/scala3/guides/macros/macros.html)
+ * [EPFL papers](https://infoscience.epfl.ch/search?ln=en&as=1&m1=p&p1=macros&f1=keyword&op1=a&m2=p&p2=scala&f2=&op2=a&m3=a&p3=&f3=&dt=&d1d=&d1m=&d1y=&d2d=&d2m=&d2y=&rm=&action_search=Search&sf=title&so=a&rg=10&c=Infoscience&of=hb)
+
 Very basic introduction can be found in [design doc](DESIGN.md). From then on we suggest looking at tests, and using
 `.enableMacrosLogging` to see how some branches are triggered. If still at doubt, you can ask us on GH discussions.
+
+## Contributing to the documentation
+
+Documentation is hosted on [Read the Docs](https://docs.readthedocs.io/) using their versioning system. It uses
+[MkDocs](https://www.mkdocs.org/) with [Material](https://squidfunk.github.io/mkdocs-material/) and 
+[Macros](https://mkdocs-macros-plugin.readthedocs.io/) plugins.
+
+To develop locally it is recommended to install [Just](https://github.com/casey/just) and Docker:
+
+ * `cd docs`
+ * `just serve`
+ * open http://0.0.0.0:8000/
+
+Site will reload and update as you edit the markdown files in docs/docs directory.

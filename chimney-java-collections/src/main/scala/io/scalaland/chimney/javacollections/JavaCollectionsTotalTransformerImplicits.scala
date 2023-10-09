@@ -5,30 +5,30 @@ import io.scalaland.chimney.javacollections.internal.TransformOrUpcast
 
 import scala.collection.compat.*
 
-/** @since 0.8.1 */
+/** @since 0.8.0 */
 trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTransformerImplicitsLowPriority {
 
   // from/to java.util.Optional
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def totalTransformerFromJavaOptionalToScalaOption[A, B](implicit
       aToB: TransformOrUpcast[A, B]
   ): Transformer[java.util.Optional[A], Option[B]] =
     optional => optional.map[Option[B]](a => Some(aToB.transform(a))).orElseGet(() => None)
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def totalTransformerFromScalaOptionToJavaOptional[A, B](implicit
       aToB: TransformOrUpcast[A, B]
   ): Transformer[Option[A], java.util.Optional[B]] =
     option => option.fold(java.util.Optional.empty[B]())(a => java.util.Optional.of(aToB.transform(a)))
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def totalTransformerFromJavaOptionalToJavaOptional[A, B](implicit
       aToB: TransformOrUpcast[A, B]
   ): Transformer[java.util.Optional[A], java.util.Optional[B]] =
     optional => optional.map(a => aToB.transform(a))
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def totalTransformerFromNonOptionalToJavaOptional[A, B](implicit
       aToB: TransformOrUpcast[A, B]
   ): Transformer[A, java.util.Optional[B]] =
@@ -36,7 +36,7 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
 
   // from types with JavaIterator/to types with JavaFactory
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def totalTransformerFromJavaCollectionToScalaCollection[
       JColl,
       SColl[A0] <: IterableOnce[A0],
@@ -55,7 +55,7 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
       builder.result()
     }
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def totalTransformerFromScalaCollectionToJavaCollection[
       SColl[A0] <: IterableOnce[A0],
       JColl,
@@ -70,7 +70,7 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
       builder.result()
     }
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def totalTransformerFromJavaCollectionToJavaCollection[
       JColl1,
       JColl2,
@@ -92,7 +92,7 @@ trait JavaCollectionsTotalTransformerImplicits extends JavaCollectionsTotalTrans
 
 private[javacollections] trait JavaCollectionsTotalTransformerImplicitsLowPriority {
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def totalTransformerFromJavaMapToScalaMap[
       JMap,
       SMap[K0, V0] <: IterableOnce[(K0, V0)],
@@ -114,7 +114,7 @@ private[javacollections] trait JavaCollectionsTotalTransformerImplicitsLowPriori
       builder.result()
     }
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def totalTransformerFromScalaMapToJavaMap[
       SMap[K0, V0] <: IterableOnce[(K0, V0)],
       JMap,
@@ -135,7 +135,7 @@ private[javacollections] trait JavaCollectionsTotalTransformerImplicitsLowPriori
       builder.result()
     }
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def totalTransformerFromJavaMapToJavaMap[
       JMap1,
       JMap2,
