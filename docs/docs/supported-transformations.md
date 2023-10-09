@@ -811,13 +811,204 @@ If `AnyVal` is the source, Chimney would attempt to unwrap it, and if it's the t
 
 ## Between `sealed`/`enum`s
 
-TODO
+When both the source type and the target type of the transformation are `sealed` (`trait`, `abstract class`), Chimney
+will convert the source type's subtypes into the target type's subtypes. To make it work out of the box, every source
+type's subtype needs to have a corresponding subtype in target type with a matching name:
 
-TODO java enums
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    sealed trait Foo
+    object Foo {
+      case class Baz(a: String, b: Int) extends Foo
+      case object Buzz extends Foo  
+    }
+    sealed trait Bar
+    object Bar {
+      case class Baz(a: Int) extends Bar
+      case object Fizz extends Bar  
+      case object Buzz extends Bar
+    }
+    
+    (Foo.Baz("value", 10): Foo).transformInto[Bar] // Bar.Baz(10)
+    (Foo.Baz("value", 10): Foo).into[Bar].transform // Bar.Baz(10)
+    (Foo.Buzz: Foo).transformInto[Bar] // Bar.Buzz
+    (Foo.Buzz: Foo).into[Bar].transform // Bar.Buzz
+    (Foo.Baz("value", 10): Foo).transformIntoPartial[Bar] // Bar.Baz(10)
+    (Foo.Baz("value", 10): Foo).intoPartial[Bar].transform // Bar.Baz(10)
+    (Foo.Buzz: Foo).transformIntoPartial[Bar] // Bar.Buzz
+    (Foo.Buzz: Foo).intoPartial[Bar].transform // Bar.Buzz
+    ```
+
+It works also with Scala 3's `enum`:
+
+!!! example
+
+    `sealed trait` into `enum`
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl.*
+    
+    sealed trait Foo
+    object Foo:
+      case class Baz(a: String, b: Int) extends Foo
+      case object Buzz extends Foo
+    enum Bar:
+      case Baz(a: Int)
+      case Fizz  
+      case Buzz
+    
+    (Foo.Baz("value", 10): Foo).transformInto[Bar] // Bar.Baz(10)
+    (Foo.Buzz: Foo).transformInto[Bar] // Bar.Buzz
+    ```
+    
+!!! example
+
+    `enum` into `sealed trait` 
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl.*
+    
+    enum Foo:
+      case Baz(a: String, b: Int)
+      case Buzz
+    sealed trait Bar
+    object Bar:
+      case class Baz(a: Int) extends Bar
+      case object Fizz extends Bar  
+      case object Buzz extends Bar
+    
+    (Foo.Baz("value", 10): Foo).transformInto[Bar] // Bar.Baz(10)
+    (Foo.Buzz: Foo).transformInto[Bar] // Bar.Buzz
+    ```
+    
+!!! example
+
+    `enum` into `enum` 
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl.*
+    
+    enum Foo:
+      case Baz(a: String, b: Int)
+      case Buzz
+    enum Bar:
+      case Baz(a: Int)
+      case Fizz  
+      case Buzz
+    
+    (Foo.Baz("value", 10): Foo).transformInto[Bar] // Bar.Baz(10)
+    (Foo.Buzz: Foo).transformInto[Bar] // Bar.Buzz
+    ```
+
+To enable seamless work with [Protocol Buffers](cookbook.md#protocol-buffers-integration), there is also a special
+handling for non-flat ADTs, where each subtype of a `sealed`/`enum` is a single-parameter wrapper around a `case class`.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    object protobuf {
+      sealed trait Foo
+      object Foo {
+        case class A(a: String, b: Int)
+        case class B()
+      }
+      case class A(value: Foo.A) extends Foo
+      case class B(value: Foo.B) extends Foo
+    }
+    
+    object domain {
+      sealed trait Bar
+      object Bar {
+        case class A(a: String, b: Int) extends Bar
+        case object B extends Bar
+      }
+    }
+    
+    // flattening
+    (protobuf.A(Foo.A("value", 42)) : protobuf.Foo).transformInto[domain.Bar] // domain.Bar.A("value", 42)
+    (protobuf.B(Foo.B()) : protobuf.Foo).transformInto[domain.Bar] // domain.Bar.B
+    // unflattening
+    (domain.Bar.A("value", 42): domain.Bar).transformInto[protobuf.Foo] // protobuf.A(Foo.A("value", 42)
+    (domain.Bar.B : domain.Bar).transformInto[protobuf.Foo] // protobuf.B(Foo.B())
+    ```
+
+However, Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/another Java's `enum`:
+
+!!! example
+
+    Java's `enum` to/from `sealed`
+
+    ```java
+    // in Java
+    enum ColorJ {
+      Red, Green, Blue;
+    }
+    ```
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    sealed trait ColorS
+    object ColorS {
+      case object Red extends ColorS
+      case object Green extends ColorS
+      case object Blue extends ColorS
+    }
+    
+    ColorJ.Red.transformInto[ColorS] // ColorS.Red
+    ColorJ.Green.transformInto[ColorS] // ColorS.Green
+    ColorJ.Blue.transformInto[ColorS] // ColorS.Blue
+    (ColorS.Red: ColorS).transformInto[ColorS] // ColorJ.Red
+    (ColorS.Green: ColorS).transformInto[ColorS] // ColorJ.Green
+    (ColorS.Blue: ColorS).transformInto[ColorS] // ColorJ.Blue
+    ```
+
+!!! example
+
+    Java's `enum` to/from Scala's `enum`
+
+    ```java
+    // in Java
+    enum ColorJ {
+      Red, Green, Blue;
+    }
+    ```
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    enum ColorE:
+      case Red, Green, Blue
+    
+    ColorJ.Red.transformInto[ColorE] // ColorE.Red
+    ColorJ.Green.transformInto[ColorE] // ColorE.Green
+    ColorJ.Blue.transformInto[ColorE] // ColorE.Blue
+    (ColorE.Red: ColorS).transformInto[ColorS] // ColorJ.Red
+    (ColorE.Green: ColorS).transformInto[ColorS] // ColorJ.Green
+    (ColorE.Blue: ColorS).transformInto[ColorS] // ColorJ.Blue
+    ```
 
 ### Handling a specific `sealed` subtype with a raw value
 
 TODO
+
+TODO java enums limitations
 
 ### Handling a specific `sealed` subtype with a computed value
 
