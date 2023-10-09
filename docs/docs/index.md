@@ -90,7 +90,9 @@ Done! Decoding protobuf into domain object with a fallible transformation, like 
       "John",
       Seq(AddressDTO("Paper St", "Somewhere")),
       Option(RecoveryMethodDTO.Email(EmailDTO("john@example.com")))
-    ).transformIntoPartial[User].asEither
+    )
+      .transformIntoPartial[User].asEither
+      .left.map(_.asErrorPathMessages)
     // Right(User(
     //   Username("John"),
     //   List(Address("Paper St", "Somewhere")),
