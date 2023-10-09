@@ -14,7 +14,8 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
       val sym: Symbol = A.typeSymbol
 
       val getterOpt: Option[Symbol] = sym.declarations.filter(isPublic).headOption
-      val primaryConstructorOpt: Option[Symbol] = Option(sym.primaryConstructor).filter(_.isClassConstructor)
+      val primaryConstructorOpt: Option[Symbol] =
+        Option(sym.primaryConstructor).filterNot(_.isNoSymbol).filter(_.isClassConstructor).filter(isPublic)
       val argumentOpt: Option[Symbol] = primaryConstructorOpt.flatMap { primaryConstructor =>
         paramListsOf(A, primaryConstructor).flatten match {
           case argument :: Nil => Some(argument)
@@ -52,6 +53,7 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
     }
 
     private def isPublic(sym: Symbol): Boolean =
-      !(sym.flags.is(Flags.Private) || sym.flags.is(Flags.PrivateLocal) || sym.flags.is(Flags.Protected))
+      !sym.isNoSymbol &&
+        (!(sym.flags.is(Flags.Private) || sym.flags.is(Flags.PrivateLocal) || sym.flags.is(Flags.Protected)))
   }
 }

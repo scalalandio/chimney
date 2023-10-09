@@ -16,3 +16,9 @@ case class UserWithId(id: Int)
 class NotAValueType(private val integer: Int) extends AnyVal {
   def string: String = integer.toString
 }
+class AlsoNotAValueType private (val integer: Int) extends AnyVal {
+  def string: String = integer.toString
+}
+object AlsoNotAValueType {
+  def create(int: Int): AlsoNotAValueType = new AlsoNotAValueType(int)
+}
