@@ -2,14 +2,6 @@
 
 Examples af various use cases already handled by the Chimney.
 
-## Using `PartialTransformer`s to their fullest potential
-
-TODO
-
-## Reusing flags for several transformations
-
-TODO
-
 ## Automatic, Semiautomatic and Inlined derivation
 
 When you use the standard way of working with Chimney, but `import io.scalaland.chimney.dsl._`
