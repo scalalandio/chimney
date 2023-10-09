@@ -6,12 +6,12 @@ import io.scalaland.chimney.javacollections.JavaFactory.ConversionToScalaFactory
 
 import scala.collection.compat.*
 
-/** @since 0.8.1 */
+/** @since 0.8.0 */
 trait JavaCollectionsPartialTransformerImplicits extends JavaCollectionsPartialTransformerImplicitsLowPriority {
 
   // from/to java.util.Optional
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def partialTransformerFromJavaOptionalToScalaOption[A, B](implicit
       aToB: PartialTransformOrUpcast[A, B]
   ): PartialTransformer[java.util.Optional[A], Option[B]] =
@@ -20,7 +20,7 @@ trait JavaCollectionsPartialTransformerImplicits extends JavaCollectionsPartialT
         .map[partial.Result[Option[B]]](a => aToB.transform(a, failFast).map(Option(_)))
         .orElseGet(() => partial.Result.fromValue(None))
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def partialTransformerFromScalaOptionToJavaOptional[A, B](implicit
       aToB: PartialTransformOrUpcast[A, B]
   ): PartialTransformer[Option[A], java.util.Optional[B]] =
@@ -29,7 +29,7 @@ trait JavaCollectionsPartialTransformerImplicits extends JavaCollectionsPartialT
         aToB.transform(a, failFast).map(java.util.Optional.of(_))
       }
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def partialTransformerFromJavaOptionalToJavaOptional[A, B](implicit
       aToB: PartialTransformOrUpcast[A, B]
   ): PartialTransformer[java.util.Optional[A], java.util.Optional[B]] =
@@ -38,13 +38,13 @@ trait JavaCollectionsPartialTransformerImplicits extends JavaCollectionsPartialT
         .map[partial.Result[java.util.Optional[B]]](a => aToB.transform(a, failFast).map(java.util.Optional.of(_)))
         .orElseGet(() => partial.Result.fromValue(java.util.Optional.empty()))
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def partialTransformerFromNonOptionalToJavaOptional[A, B](implicit
       aToB: PartialTransformOrUpcast[A, B]
   ): PartialTransformer[A, java.util.Optional[B]] =
     (a, failFast) => aToB.transform(a, failFast).map(java.util.Optional.of(_))
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def partialTransformerFromJavaOptionalToNonOptional[A, B](implicit
       aToB: PartialTransformOrUpcast[A, B]
   ): PartialTransformer[java.util.Optional[A], B] =
@@ -53,7 +53,7 @@ trait JavaCollectionsPartialTransformerImplicits extends JavaCollectionsPartialT
 
   // from types with JavaIterator/to types with JavaFactory
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def partialTransformerFromJavaCollectionToScalaCollection[
       JColl,
       SColl[A0] <: IterableOnce[A0],
@@ -71,7 +71,7 @@ trait JavaCollectionsPartialTransformerImplicits extends JavaCollectionsPartialT
         failFast
       )
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def partialTransformerFromScalaCollectionToJavaCollection[
       SColl[A0] <: IterableOnce[A0],
       JColl,
@@ -88,7 +88,7 @@ trait JavaCollectionsPartialTransformerImplicits extends JavaCollectionsPartialT
         failFast
       )
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def partialTransformerFromJavaCollectionToJavaCollection[
       JColl1,
       JColl2,
@@ -109,7 +109,7 @@ trait JavaCollectionsPartialTransformerImplicits extends JavaCollectionsPartialT
 
 private[javacollections] trait JavaCollectionsPartialTransformerImplicitsLowPriority {
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def partialTransformerFromJavaMapToScalaMap[
       JMap,
       SMap[K0, V0] <: IterableOnce[(K0, V0)],
@@ -138,7 +138,7 @@ private[javacollections] trait JavaCollectionsPartialTransformerImplicitsLowPrio
         failFast
       )
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def partialTransformerFromScalaMapToJavaMap[
       SMap[K0, V0] <: IterableOnce[(K0, V0)],
       JMap,
@@ -166,7 +166,7 @@ private[javacollections] trait JavaCollectionsPartialTransformerImplicitsLowPrio
         failFast
       )
 
-  /** @since 0.8.1 */
+  /** @since 0.8.0 */
   implicit def partialTransformerFromJavaMapToJavaMap[
       JMap1,
       JMap2,
