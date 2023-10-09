@@ -12,37 +12,38 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
     object platformSpecific {
 
-      def isAbstract(sym: Symbol): Boolean =
-        sym.flags.is(Flags.Abstract) || sym.flags.is(Flags.Trait)
+      // to align API between Scala versions
+      extension (sym: Symbol)
+        def isAbstract: Boolean = !sym.isNoSymbol && sym.flags.is(Flags.Abstract) || sym.flags.is(Flags.Trait)
 
-      def isPublic(sym: Symbol): Boolean =
-        !(sym.flags.is(Flags.Private) || sym.flags.is(Flags.PrivateLocal) || sym.flags.is(Flags.Protected) ||
-          sym.privateWithin.isDefined || sym.protectedWithin.isDefined)
+        def isPublic: Boolean = !sym.isNoSymbol &&
+          !(sym.flags.is(Flags.Private) || sym.flags.is(Flags.PrivateLocal) || sym.flags.is(Flags.Protected) ||
+            sym.privateWithin.isDefined || sym.protectedWithin.isDefined)
 
       def isParameterless(method: Symbol): Boolean =
         method.paramSymss.filterNot(_.exists(_.isType)).flatten.isEmpty
 
       def isDefaultConstructor(ctor: Symbol): Boolean =
-        isPublic(ctor) && ctor.isClassConstructor && isParameterless(ctor)
+        ctor.isPublic && ctor.isClassConstructor && isParameterless(ctor)
 
       def isAccessor(accessor: Symbol): Boolean =
-        isPublic(accessor) && accessor.isDefDef && isParameterless(accessor)
+        accessor.isPublic && accessor.isDefDef && isParameterless(accessor)
 
       // assuming isAccessor was tested earlier
       def isJavaGetter(getter: Symbol): Boolean =
         isGetterName(getter.name)
 
       def isJavaSetter(setter: Symbol): Boolean =
-        isPublic(setter) && setter.isDefDef && setter.paramSymss.flatten.size == 1 && isSetterName(setter.name)
+        setter.isPublic && setter.isDefDef && setter.paramSymss.flatten.size == 1 && isSetterName(setter.name)
 
       def isVar(setter: Symbol): Boolean =
-        isPublic(setter) && setter.isValDef && setter.flags.is(Flags.Mutable)
+        setter.isPublic && setter.isValDef && setter.flags.is(Flags.Mutable)
 
       def isJavaSetterOrVar(setter: Symbol): Boolean =
         isJavaSetter(setter) || isVar(setter)
 
       def isJavaEnumValue[A: Type]: Boolean =
-        Type[A] <:< scala.quoted.Type.of[java.lang.Enum[?]] && !isAbstract(TypeRepr.of[A].typeSymbol)
+        Type[A] <:< scala.quoted.Type.of[java.lang.Enum[?]] && !TypeRepr.of[A].typeSymbol.isAbstract
     }
 
     import platformSpecific.*
@@ -51,17 +52,17 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
     def isPOJO[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
-      !A.isPrimitive && !(A <:< Type[String]) && sym.isClassDef && !isAbstract(sym) && isPublic(sym.primaryConstructor)
+      !A.isPrimitive && !(A <:< Type[String]) && sym.isClassDef && !sym.isAbstract && sym.primaryConstructor.isPublic
     }
     def isCaseClass[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
-      sym.isClassDef && sym.flags.is(Flags.Case) && !isAbstract(sym) && isPublic(sym.primaryConstructor)
+      sym.isClassDef && sym.flags.is(Flags.Case) && !sym.isAbstract && sym.primaryConstructor.isPublic
     }
     def isCaseObject[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
       def isScala2Enum = sym.flags.is(Flags.Case | Flags.Module)
       def isScala3Enum = sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic)
-      isPublic(sym) && (isScala2Enum || isScala3Enum || isJavaEnumValue[A])
+      sym.isPublic && (isScala2Enum || isScala3Enum || isJavaEnumValue[A])
     }
     def isJavaBean[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
@@ -103,7 +104,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         val localDefinitions = (sym.declaredMethods ++ sym.declaredFields).toSet
 
         // if we are taking caseFields but then we also are using ALL fieldMembers shouldn't we just use fieldMembers?
-        (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).filter(isPublic).distinct.map { getter =>
+        (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).filter(_.isPublic).distinct.map { getter =>
           val name = getter.name
           val tpe = ExistentialType(returnTypeOf[Any](A, getter))
           def conformToIsGetters = !name.take(2).equalsIgnoreCase("is") || tpe.Underlying <:< Type[Boolean]
@@ -141,7 +142,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         val sym = A.typeSymbol
 
         val primaryConstructor =
-          Option(sym.primaryConstructor).filterNot(_.isNoSymbol).filter(isPublic).getOrElse {
+          Option(sym.primaryConstructor).filter(_.isPublic).getOrElse {
             assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
           }
         val paramss = paramListsOf(A, primaryConstructor)
