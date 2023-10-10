@@ -26,7 +26,7 @@ If you transform one type into itself or into its supertype, it will be upcasted
     import io.scalaland.chimney.dsl._
 
     trait A
-    class B
+    class B extends A
     val b = new B
    
     b.transformInto[A]  // == (b: A)
@@ -36,6 +36,26 @@ If you transform one type into itself or into its supertype, it will be upcasted
     ```
 
 In particular, when the source type `=:=` the target type, you will end up with an identity transformation.
+
+!!! warning
+
+    Checking if value can be upcasted is the second thing Chimney attempts (right after
+    [looking for an implicit](#custom-transformations)).
+    
+    This attempts is only skipped if we customised the transformation:
+    
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    class A(a: String)
+    class B extends A("value")
+    val b = new B
+    
+    b.into[A].withFieldConst(_.a, "copied").transform // new A("copied")
+    ```
+    
+    since that customization couldn't be applied if we only upcasted the value. 
 
 ## Into a `case class` (or POJO)
 
@@ -1355,11 +1375,29 @@ stored within these collections can also be converted.
     ```scala
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
+    import scala.collection.immutable.ListMap
      
-    TODO
+    case class Foo(a: String)
+    case class Bar(a: Option[String])
+    
+    List(Foo("value")).transformInto[Vector[Bar]] // Vector(Bar(Some("value")))
+    Map(Foo("key") -> Foo("value")).transformInto[Array[(Bar, Bar)]] // Array(Bar(Some("key")) -> Bar(Some("value")))
+    Vector(Foo("key") -> Foo("value")).transformInto[ListMap[Bar, Bar]] // ListMap(Bar(Some("key")) -> Bar(Some("value")))
     ```
 
-TODO: partial examples for iterables and maps
+With `PartialTransformer`s ware able to handle fallible conversions, tracing at which key/index the failure occurred:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    List(Bar(Some("value")), Bar(None)).transformIntoPartial[Vector[Foo]]
+      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("(1)" -> EmptyValue))
+    Map(Bar(Some("value")) -> Bar(None), Bar(None) -> Bar(Some("value"))).transformIntoPartial[Vector[(Foo, Foo)]]
+      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("(1)" -> EmptyValue, "keys(Bar(None))" -> EmptyValue))
+    ```
 
 !!! tip
 
@@ -1373,9 +1411,100 @@ TODO: partial examples for iterables and maps
 
 ## Custom transformations
 
-TODO
+For virtually, every 2 types that you want, you can define your own `Transformer` or `PartialTransformer` as `implicit`.
 
-TODO total -> partial (partial can use total)
+`Transformer`s are best suited for conversions that have to succeed, because there is no value (of the transformed type)
+for which they would not have a reasonable mapping:
+
+!!! example
+
+    From the moment you define an `implicit` `Transformer` it can be used any every other kind of transformations we
+    described: 
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+    
+    implicit val int2string: Transformer[Int, String] = int => int.toString
+    
+    case class Foo(a: Int)
+    case class Bar(a: String)
+
+    12.transformInto[Option[String]] // Some("12")
+    Option(12).transformInto[Option[String]] // Some("12")
+    Foo(12).transformInto[Bar] // Bar("12")
+    List(Foo(10) -> 20).transformInto[Map[Bar, String]] // Map(Bar("10") -> "20")
+    ``` 
+
+!!! warning
+
+    Looking for an implicit `Transformer` and `PartialTransformer` is the first thing that Chimney does, to let you
+    override any of the mechanics it uses.
+    
+    The only exception is a situation like:
+    
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a: Int)
+    case class Bar(a: String)    
+
+    implicit val foo2bar: Transformer[Foo, Bar] = foo => Bar((foo.a * 2).toString) 
+    
+    Foo(10).into[Bar].withFieldConst(_.a, "value").transform // Bar("value")
+    ```
+    
+    If you pass field or coproduct overrides, they could not be applied if we used the implicit, so in such case Chimney
+    assumed that user wants to ignore the implicit. 
+
+Total `Transformer`s can be utilized by `PartialTransformer`s as well - handling every input is a stronger guarantee
+than handling only some of them, so we can always relax it:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}    
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+    
+    implicit val int2string: Transformer[Int, String] = int => int.toString
+    
+    case class Foo(a: Int)
+    case class Bar(a: String)
+    
+    Option(Foo(100)).transformInto[Bar].asEither // Right(Bar("100"))
+    (None : Option[Foo]).transformInto[Bar].asEither.left.map(_.asErrorPathMessages) // Left(Iterable("" -> EmptyValue)) 
+    ```
+
+Defining custom `PartialTransformer` might be a necessity when the type we want to transform have only some values which
+can be safely converted, and some which have no reasonable mapping in the target type:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}    
+    import io.scalaland.chimney.{PartialTransformer, partial}
+    import io.scalaland.chimney.dsl._
+    
+    implicit val string2int: PartialTransformer[String, Int] = PartialTransformer[String, Int] { string =>
+      partial.Result.fromCatching(string.toInt) // catches exception which can be thrown by .toInt
+    }
+    
+    case class Foo(a: Int)
+    case class Bar(a: String)
+    
+    "12".transformIntoPartial[Int].asEither.left.map(_.asErrorPathMessages) // Right(12)
+    "bad".transformIntoPartial[Int].asEither.left.map(_.asErrorPathMessages) // Left(Iterable("" -> ThrowingMessage(...)))
+    Bar("20").transformIntoPartial[Foo].asEither.left.map(_.asErrorPathMessages) // Right(Foo(20))
+    Bar("wrong").transformIntoPartial[Foo].asEither.left.map(_.asErrorPathMessages) // Left("a" -> ThrowingMessage(...))
+    ```
+
+!!! tip
+
+    Partial Transformers are much more powerful than that! Be sure to read TODO TODO TODO
 
 ### Resolving priority of implicit Total vs Partial Transformers
 
@@ -1399,9 +1528,5 @@ The conditions for terminating the recursion are:
     haven't provided their own via implicits)
   - the finding of user-provided `implicit` which handles the transformation between resolved types
   - proving that the source type is a subtype of the target type, so we can just upcast it.
-
-TODO: check if we reject implicit/upcast on override
-
-TODO if we do add warning to the sections above
 
 TODO: recursive types and .define and .derive
