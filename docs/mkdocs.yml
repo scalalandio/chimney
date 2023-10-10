@@ -35,6 +35,7 @@ nav:
   - 'Supported Patching': 'supported-patching.md'
   - 'Cookbook': 'cookbook.md'
   - 'Troubleshooting': 'troubleshooting.md'
+  - 'Under the Hood': 'under-the-hood.md'
   - 'Benchmarks': 'benchmarks.md'
 markdown_extensions:
   - admonition
