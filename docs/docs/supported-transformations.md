@@ -1530,7 +1530,7 @@ can be safely converted, and some which have no reasonable mapping in the target
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}    
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}   
     import io.scalaland.chimney.{PartialTransformer, partial}
     import io.scalaland.chimney.dsl._
     
@@ -1549,13 +1549,42 @@ can be safely converted, and some which have no reasonable mapping in the target
 
 !!! tip
 
-    Partial Transformers are much more powerful than that! Be sure to read TODO TODO TODO
-
-TODO some example with opaque type and smart constructor
+    Partial Transformers are much more powerful than that! For other examples take a look at
+    [Protocol Buffer integrations](cookbook.md#protocol-buffers-integration) and
+    [Libraries with smart constructors](cookbook.md#libraries-with-smart-constructors).
 
 ### Resolving priority of implicit Total vs Partial Transformers
 
-TODO implicit conflict resolution
+When you use Partial Transformers Chimney will try to:
+
+   - summon the user-provided implicit - either `PartialTransformer` or `Transformer`
+   - derive `PartialTransformer`
+
+Under normal circumstances infallible transformation would be defined as `Transformer` and `PartialTransformer`s
+would still be able to use it, so there is hardly ever the need for 2 instances for the same types.
+
+However, it is possible that you might write some generic `Transformer` another generic `PartialTransformer`
+and for some types both of them would exist. Since we have 2 types, we cannot use implicit priorities. Should
+Chimney assume that you might want infallible version if there are 2? Or maybe you defined `Transformer` to do some
+unsafe behavior (for whatever reason) and use `PartialTransformer` for safe implementation, and you prefer Partial.
+
+The Chimney does not decide and in the presence of 2 implicits it will fail and ask you for preference:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}   
+    import io.scalaland.chimney.{Transformer, PartialTransformer, partial}
+    import io.scalaland.chimney.dsl._
+    
+    implicig val stringToIntUnsafe: Transformer[String, Int] = _.toInt // throws!!!
+    implicig val stringToIntSafe: PartialTransformer[String, Int] =
+      PartialTransformer(str => partial.Result.fromCatching(_.toInt))
+      
+    "10".transformInto[String] // compilation error
+    "10".into[String].enableImplicitConflictResolution(PreferTotalTransformer).transform // throws
+    "10".into[String].enableImplicitConflictResolution(PreferPartialTransformer).transform.asOption // None
+    ```
 
 ## Recursive transformation
 
@@ -1576,4 +1605,59 @@ The conditions for terminating the recursion are:
   - the finding of user-provided `implicit` which handles the transformation between resolved types
   - proving that the source type is a subtype of the target type, so we can just upcast it.
 
-TODO: recursive types and .define and .derive
+### Recursive data types
+
+Since we are talking about recursion then there is one troublesome issue - recursive data types.
+
+!!! example
+
+    ```scala
+    case class Foo(a: Int, Option[Foo])
+    case class Bar(a: Int, Option[Bar])
+    
+    val foo = Foo(10, Some(Foo(20, None)))
+    val bar = ... // ???
+    ``` 
+
+We cannot derive an expression which would handle such data without any recursion (or other for of backtracking).
+
+But we can use Chimney's semiautomatic derivation.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}   
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo(a: Int, Option[Foo])
+    case class Bar(a: Int, Option[Bar])
+    
+    implicit val foobar: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
+    
+    val foo = Foo(10, Some(Foo(20, None)))
+    val bar = foo.transformInto[Bar]
+    ```
+
+This is a smart method preventing cyclical dependencies during implicit resolution (`foobar = foobar`), but
+will be able to call `foobar` within `foobar`'s definition in such a way that it won't cause issues.
+
+If we need to customize it, we can use `.define.buildTransformer`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}   
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo(a: Int, Option[Foo])
+    case class Bar(a: Int, Option[Bar])
+    
+    implicit val foobar: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
+      .withFieldComputed(_.a, foo => foo.a * 2)
+      .buildTransformer
+    
+    val foo = Foo(10, Some(Foo(20, None)))
+    val bar = foo.transformInto[Bar]
+    ```
