@@ -66,6 +66,15 @@ And every class with a public primary constructor can be the target of the trans
 To make it work out of the box, every argument of a constructor needs to be paired with a matching field (`val`) in the
 transformed value.
 
+!!! tip
+
+    The intuition is that we are matching fields of a source `case class` with fields of a target `case class` by their
+    name. And if for every field in the target `case class` there is a field of the same name in the source, we will use
+    it.
+    
+    However, Chimney is **not** limited to `case class`-to-`case class` mappings and you can target **every** class (with
+    a public constructor) as if it was a `case class`.
+
 The obvious example are `case class`es with the same fields:
 
 !!! example
@@ -83,7 +92,7 @@ The obvious example are `case class`es with the same fields:
     Source(42, 0.07).intoPartial[Target].transform.asEither // == Right(Target(42, 0.07))
     ```
 
-However, original value might have fields absent in target type, and appearing in different order:
+However, the original value might have fields absent in the target type and/or appearing in a different order:
 
 !!! example
 
@@ -120,10 +129,12 @@ It doesn't even have to be a `case class`:
     // new Target(source.a, source.b)
     ```
 
-nor have the same types of fields as long as transformation for each pair field-constructor's argument can be resolved
+nor have the same types of fields - as long as transformation for each pair field-constructor's argument can be resolved
 recursively:
 
 !!! example
+
+    During conversion from `Foo` to `Bar` we are automatically converting `Foo.Baz` into `Bar.Baz` 
 
     ```scala
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
@@ -141,13 +152,13 @@ recursively:
     Foo(Foo.Baz("baz")).intoPartial[Bar].transform.asEither // Right(Baz(Bar.Baz("baz")))
     ```
 
-As we see, for infallible transformations there is very little difference in behavior between total and partial
-transformers. For "products" the difference shows when transformation for any field/constructor fails. One such fallible
+As we see, for infallible transformations there is very little difference in behavior between Total and Partial
+Transformers. For "products" the difference shows up when transformation for any field/constructor fails. One such fallible
 transformation, available only in partial transformers, is unwrapping `Option` fields.
 
 !!! example
 
-    Partial Transformers preserve path (with nestings!) to the failed transformation
+    Partial Transformers preserve the path (with nestings!) to the failed transformation
 
     ```scala
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
@@ -490,6 +501,14 @@ it with another field. Since the usual cause of such cases is a _rename_, we can
     Foo("value", 1248).intoPartial[Bar].withFieldRenamed(_.b, _.c).transform.asEither // Right(Bar("value", 1248))
     ```
 
+!!! tip
+
+    The intution is that we are pointing at a field in a source `case class` then a field in target `case class`, and
+    Chimney will use the value from former to provide it to the latter.
+    
+    However, Chimney is **not** limited to `case class`es and we can provide a value for **every** constructor's
+    argument as long as it has a matching `val`, that we can use in `_.targetName` hint.
+
 The requirements to use a rename are as following:
 
   - you have to pass `_.fieldName` directly, it cannot be done with a reference to function
@@ -591,6 +610,13 @@ These cases can be handled only with `PartialTransformer` using `.withFieldConst
     ``` 
 
 As you can see, the transformed value will automatically preserve the field name for which failure happened.
+
+!!! tip
+
+    The intution is that we are pointing at a field in a `case class` and provide a value for it.
+    
+    However, Chimney is **not** limited to `case class`es and we can provide a value for **every** constructor's
+    argument as long as it has a matching `val`, that we can use in `_.targetName` hint.
 
 The requirements to use a value provision are as following:
 
@@ -707,6 +733,13 @@ These cases can be handled only with `PartialTransformer` using `.withFieldCompu
     ``` 
 
 As you can see, the transformed value will automatically preserve the field name for which failure happened.
+
+!!! tip
+
+    The intution is that we are pointing at a field in a `case class` and computing a value for it.
+    
+    However, Chimney is **not** limited to `case class`es and we can compute a value for **every** constructor's
+    argument as long as it has a matching `val`, that we can use in `_.targetName` hint.
 
 The requirements to use a value computation are as following:
 
@@ -863,6 +896,12 @@ type's subtype needs to have a corresponding subtype in target type with a match
     (Foo.Buzz: Foo).intoPartial[Bar].transform // Bar.Buzz
     ```
 
+!!! tip
+
+    You can remember that each `sealed`/`enum` would have to implement an exhaustive pattern matching to handle a whole
+    input, and subtypes are matched by their names. So you can have more subtypes in the target type than there are in
+    the source type. What you cannot have is a missing matching.
+
 It works also with Scala 3's `enum`:
 
 !!! example
@@ -930,8 +969,12 @@ It works also with Scala 3's `enum`:
     (Foo.Buzz: Foo).transformInto[Bar] // Bar.Buzz
     ```
 
+### Non-flat ADTs
+
 To enable seamless work with [Protocol Buffers](cookbook.md#protocol-buffers-integration), there is also a special
-handling for non-flat ADTs, where each subtype of a `sealed`/`enum` is a single-parameter wrapper around a `case class`.
+handling for non-flat ADTs, where each subtype of a `sealed`/`enum` is a single-value wrapper around a `case class`.
+In such cases Chimney is able to automatically wrap/unwrap these inner values as if they were `AnyVal`s
+(even though they are not!):
 
 !!! example
 
@@ -965,7 +1008,9 @@ handling for non-flat ADTs, where each subtype of a `sealed`/`enum` is a single-
     (domain.Bar.B : domain.Bar).transformInto[protobuf.Foo] // protobuf.B(Foo.B())
     ```
 
-However, Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/another Java's `enum`:
+### Java's `enum`s
+
+Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/another Java's `enum`:
 
 !!! example
 
@@ -1505,6 +1550,8 @@ can be safely converted, and some which have no reasonable mapping in the target
 !!! tip
 
     Partial Transformers are much more powerful than that! Be sure to read TODO TODO TODO
+
+TODO some example with opaque type and smart constructor
 
 ### Resolving priority of implicit Total vs Partial Transformers
 
