@@ -33,7 +33,7 @@ In such case macros use `Transformer`s logic under the hood to convert a patch i
 
     Currently `Patcher`s are flat - they cannot perform a nested update. 
 
-## Ignoring fields in patches
+### Ignoring fields in patches
 
 When patch case class contains a field that does not exist in patched object, Chimney will not be able to generate
 patcher.
@@ -72,7 +72,7 @@ But there is a way to ignore redundant patcher fields explicitly with `.ignoreRe
 Patching succeeded using only relevant fields that appears in patched object and ignoring address: `String` field from
 the patch.
 
-## Treating `None` as no-update instead of "set to `None`"
+### Treating `None` as no-update instead of "set to `None`"
 
 It is possible to patch using optional values of type `Option[T]` as long as the `Transformer` is available for `T`.
 If the value is present (`Some`), it’s used for patching a field in the target object; otherwise (`None`) it’s ignored
@@ -98,7 +98,7 @@ Let’s consider the following patch:
 
 Field `phone` remained the same as in the original `user`, while the optional e-mail string got updated from a patch object.
 
-### `Option[T]` on both sides
+#### `Option[T]` on both sides
 
 An interesting case appears when both patch case class and patched object define fields `f: Option[T]`. Depending on values of `f` in patched object and patch, we would like to apply following semantic table.
 

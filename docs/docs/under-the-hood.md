@@ -3,7 +3,8 @@
 If you think that what Chimney does is magic, it might help you if you learn how exactly expressions are generated.
 
 This section aims to explain some mechanics of Chimney, at least those that might affect users and aren't just
-implementation detail.
+implementation detail. It might explain some of the output you'll see if you
+[enable logging from macros](troubleshooting.md#debugging-macros).
 
 ## Introduction
 
@@ -126,7 +127,7 @@ this:
   - then attempts to find an implicit `Transformer` provided by the user and lift it to a `PartialTransformer`
   - finally attempts automatic derivation with a macro
 
-### How customization works
+### How DSL manages customizations
 
 The API call to customize the derivation could like this:
 
@@ -257,6 +258,9 @@ And since it is an implicit, it can be shared between several different macro ex
 !!! example
 
     ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
     implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
     
     "test".transformInto[Option[String]]
@@ -266,27 +270,112 @@ And since it is an implicit, it can be shared between several different macro ex
 `PartialTransformer`s are virtually identical to `Transformers` when it comes to this mechanics. They have a few more
 configs, meaning that they need a separate builder, but they use the same `TransformerCfg` and `TransformerFlags`. 
 
-### Semiautomatic derivation
+### How DSL allows semiautomatic derivation
 
-TODO
+`Transformer.derive[From, To]` works the same way as the automatic derivation - a macro is called, and internally it
+generates expression of type `To`. Before returning the expression the macro wraps it with a type class. The only
+differences between automatic and semiautomatic is `implicit` keyword and upcasting `Transformer` to
+`Transformer.Autoderived`. 
 
-## How macros generate output
+`Transformer.define[From, To].buildTransformer` works like a mix of `Transformer.derive[From, To]` and
+`from.into[To].transform`: it carries around `RuntimeDataStore` like `into.transform`, but don't need to store
+`source: From` (it will be provided to the type class via argument). Then it derives expression of type `To` and wraps
+it with a type class. 
 
-TODO
+## Derivation
 
-### Setup
+Once DSL gather's all user's inputs and requirements (in the form of: input value, source and target types, flags and
+overrides), it can pass these information to macros and let them compute the final expression (or error message). 
 
-TODO config parsing
+### Initializing macro
 
-TODO expr calculation
+In the beginning macros would perform several tasks which unblock all the future work:
 
-TODO context - total vs partial
+  - if we are deriving inlined expression, macro will need `Expr[From]` (if this is `PartialTransformer` it will **also**
+    require `Expr[Boolean]` representing fail fast flag)
+  - if we are deriving type class, macro would need to create a type class body (of sort), which would create `Expr[From]`
+    coming from `Transformer`'s parameter
+  - if we are using overrides, macro needs to figure out `Expr[RuntimeDataStore]`
+  - finally macro needs to parse type-level representations of config and flags
+
+All of these data would be put into a single object which would be passed around (`TransformationContext`) - macros do
+not use globals since every time macros needs to do a recursive derivation we are creating modified copy of this object.
+
+### Total vs Partial
+
+If we only worked with `Transformer`s and `PartialTransformer`s were not a thing, we would always assume that computed
+expression is `Expr[To]`. If we only derived `PartialTransformer`s then... we could end up with either `Expr[To]` or
+`Expr[partial.Result[To]]`. With Partial derivation we do not need to always lift values from `A` to `partial.Result[A]`
+as soon as we get it - by delaying the wrapping as long as possible we are avoiding allocations.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo(a: Int, b: Int, c: Int)
+    case class Bar(a: String, b: String, c: String)
+    
+    implicit val int2string: Transformer[Int, String] = _.toString
+    
+    Foo(1, 2, 3).into[Bar].transform
+    ```
+    
+    would NOT generate anything similar to
+    
+    ```scala
+    val foo = Foo(1, 2, 3)
+    for {
+      a <- partial.Result.fromValue(int2string.transform(foo.a))
+      b <- partial.Result.fromValue(int2string.transform(foo.b))
+      c <- partial.Result.fromValue(int2string.transform(foo.c))
+    } new Bar(a, b, c)
+    ```
+    
+    but rather:
+    
+    ```scala
+    val foo = Foo(1, 2, 3)
+    partial.Result.fromValue(
+      new Bar(
+        int2string.transform(foo.a),
+        int2string.transform(foo.b),
+        int2string.transform(foo.c)
+      )
+    )
+    ```
+
+This is very important property, allowing us to avoid many allocations, but it also means that hardly ever we can
+**assume** inside a macro what is the type of the computed expression. Most of the time it's something like a
+`Either[Expr[To], Expr[partial.Result[To]]]`, where we will compute some transformation and then check if it's
+Total or Partial expression to decide what to do with it.
 
 ### Derivation rules
 
 TODO
 
-### Recursion
+#### Summoning implicits
+
+TODO
+
+#### Upcasting
+
+TODO
+
+#### Special cases
+
+TODO
+
+#### Product types
+
+TODO
+
+#### Sealed hierarchies
+
+TODO
+
+#### Recursion
 
 TODO
 
