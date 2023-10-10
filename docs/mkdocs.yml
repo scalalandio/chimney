@@ -30,7 +30,7 @@ theme:
   logo: assets/images/logo.svg
 nav:
   - 'Welcome': 'index.md'
-  - 'Quickstart': 'quickstart.md'
+  - 'Quick Start': 'quickstart.md'
   - 'Supported Transformations': 'supported-transformations.md'
   - 'Supported Patching': 'supported-patching.md'
   - 'Cookbook': 'cookbook.md'

@@ -493,7 +493,8 @@ Meanwhile, we would like to extract it into a flat:
     }
     ```
 
-Luckily for us, since 0.8.x Chimney supports automatic (un)wrapping of sealed hierarchy cases.
+Luckily for us, since 0.8.x Chimney supports
+[automatic (un)wrapping of sealed hierarchy cases](supported-transformations.md#non-flat-adts).
 
 Encoding (with `Transformer`s) is pretty straightforward:
 

@@ -1,4 +1,4 @@
-# Quickstart
+# Quick Start
 
 Chimney is supported for Scala **2.12**, **2.13**, **3.3+** on [**JVM**](https://www.scala-lang.org/),
 [**Scala.js**](https://www.scala-js.org/) and [**Scala Native**](https://scala-native.org/) with full feature parity
