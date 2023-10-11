@@ -15,7 +15,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * By default only values defined directly in the type are considered. With this flag supertype methods would not be filtered out
     *
-    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#using-inherited-accessors]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#reading-from-inherited-valuesmethods]] for more details
     *
     * @since 0.8.0
     */
@@ -24,7 +24,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable inherited accessors lookup that was previously enabled by `enableInheritedAccessors`
     *
-    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#using-inherited-accessors]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#reading-from-inherited-valuesmethods]] for more details
     *
     * @since 0.8.0
     */
@@ -35,7 +35,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * By default this is disabled because method calls may perform side effects (e.g. mutations)
     *
-    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#using-method-accessors]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#reading-from-methods]] for more details
     *
     * @since 0.6.0
     */
@@ -44,7 +44,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable method accessors lookup that was previously enabled by `enableMethodAccessors`
     *
-    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#using-method-accessors]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#reading-from-methods]] for more details
     *
     * @since 0.5.0
     */
@@ -55,7 +55,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * By default in such case derivation will fail. By enabling this flag, derivation will fallback to default value.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/default-values.html#enabling-default-values-in-generated-transformer]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-the-constructors-default-values]] for more details
     *
     * @since 0.6.0
     */
@@ -64,7 +64,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Fail derivation if `From` type is missing field even if `To` has default value for it.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/default-values.html#enabling-default-values-in-generated-transformer]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-the-constructors-default-values]] for more details
     *
     * @since 0.1.9
     */
@@ -75,7 +75,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * By default only Scala conversions (`.name`) are allowed.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/java-beans.html#reading-from-java-beans]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#reading-from-bean-getters]] for more details
     *
     * @since 0.2.1
     */
@@ -84,7 +84,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable Java Beans naming convention (`.getName`, `.isName`) on `From`.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/java-beans.html#reading-from-java-beans]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#reading-from-bean-getters]] for more details
     *
     * @since 0.6.0
     */
@@ -95,7 +95,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * By default only Scala conversions (`.copy(name = value)`) are allowed.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/java-beans.html#writing-to-java-beans]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#writing-to-bean-setters]] for more details
     *
     * @since 0.2.1
     */
@@ -104,7 +104,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable Java Beans naming convention (`.setName(value)`) on `To`.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/java-beans.html#writing-to-java-beans]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#writing-to-bean-setters]] for more details
     *
     * @since 0.6.0
     */
@@ -115,7 +115,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * By default in such case compilation fails.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/default-values.html#default-values-for-option-fields]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-none-as-the-constructors-arguments-fallback]] for more details
     *
     * @since 0.2.1
     */
@@ -124,7 +124,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable `None` fallback value for optional fields in `To`.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/default-values.html#default-values-for-option-fields]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-none-as-the-constructors-arguments-fallback]] for more details
     *
     * @since 0.6.0
     */
@@ -135,7 +135,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * @param preference parameter specifying which implicit transformer to pick in case of conflict
     *
-    * @see [[https://chimney.readthedocs.io/partial-transformers/total-vs-partial-conflicts.html]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#resolving-priority-of-implicit-total-vs-partial-transformers]] for more details
     *
     * @since 0.7.0
     */
@@ -146,7 +146,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable any implicit conflict resolution preference that was set previously.
     *
-    * @see [[https://chimney.readthedocs.io/partial-transformers/total-vs-partial-conflicts.html]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#resolving-priority-of-implicit-total-vs-partial-transformers]] for more details
     *
     * @since 0.7.0
     */
@@ -155,7 +155,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Enable printing the logs from the derivation process.
     *
-    * @see [[https://chimney.readthedocs.io/troubleshooting/debugging-macros.html]] for more details
+    * @see [[https://chimney.readthedocs.io/troubleshooting/#debugging-macros]] for more details
     *
     * @since 0.8.0
     */
@@ -164,7 +164,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable printing the logs from the derivation process.
     *
-    * @see [[https://chimney.readthedocs.io/troubleshooting/debugging-macros.html]] for more details
+    * @see [[https://chimney.readthedocs.io/troubleshooting/#debugging-macros]] for more details
     *
     * @since 0.8.0
     */
