@@ -299,7 +299,7 @@ You can work around this by slightly longer incantation:
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
-    transparent inline implicit def cfg: TransformerConfiguration[?] =
+    transparent inline given TransformerConfiguration[?] =
       TransformerConfiguration.default.enableMacrosLogging
     ```
    
