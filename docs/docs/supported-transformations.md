@@ -1860,8 +1860,8 @@ If we need to customize it, we can use `.define.buildTransformer`:
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
     
-    case class Foo(a: Int, Option[Foo])
-    case class Bar(a: Int, Option[Bar])
+    case class Foo(a: Int, b: Option[Foo])
+    case class Bar(a: Int, b: Option[Bar])
     
     implicit val foobar: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
       .withFieldComputed(_.a, foo => foo.a * 2)
