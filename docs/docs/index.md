@@ -81,22 +81,26 @@ From now on, forget about it! Encoding domain object with an infallible transfor
 ??? example "Curious about the generated code?"
 
     ```scala
-    // macro outputs code like this (cleaned up a bit for readability):
+    // macro outputs code like this (reformatted a bit for readability):
     final class $anon() extends Transformer[User, UserDTO] {
       def transform(src: User): UserDTO = {
         val user: User = src
-        new UserDTO(user.name.name, user.addresses.iterator.map[AddressDTO](((param: Address) => {
-          val `user.addresses`: Address = param
-          new AddressDTO(`user.addresses`.street, `user.addresses`.city)
-        })).to[Seq[AddressDTO]](Seq.iterableFactory[AddressDTO]), Option[RecoveryMethod](user.recovery).map[RecoveryMethodDTO](((`param₂`: RecoveryMethod) => {
-          val recoverymethod: RecoveryMethod = `param₂`
-          (recoverymethod: RecoveryMethod) match {
-            case phone: RecoveryMethod.Phone =>
-              new RecoveryMethodDTO.Phone(new PhoneDTO(phone.number))
-            case email: RecoveryMethod.Email =>
-              new RecoveryMethodDTO.Email(new EmailDTO(email.email))
-          }
-        })))
+        new UserDTO(
+          user.name.name,
+          user.addresses.iterator.map[AddressDTO](((param: Address) => {
+            val `user.addresses`: Address = param
+            new AddressDTO(`user.addresses`.street, `user.addresses`.city)
+          })).to[Seq[AddressDTO]](Seq.iterableFactory[AddressDTO]),
+          Option[RecoveryMethod](user.recovery).map[RecoveryMethodDTO](((`param₂`: RecoveryMethod) => {
+            val recoverymethod: RecoveryMethod = `param₂`
+            (recoverymethod: RecoveryMethod) match {
+              case phone: RecoveryMethod.Phone =>
+                new RecoveryMethodDTO.Phone(new PhoneDTO(phone.number))
+              case email: RecoveryMethod.Email =>
+                new RecoveryMethodDTO.Email(new EmailDTO(email.email))
+            }
+          }))
+        )
       }
     }
  
@@ -134,12 +138,10 @@ Done! Decoding protobuf into domain object with a fallible transformation, like 
     // Left(List("recovery" -> EmptyValue))
     ```
 
-Also done! And if a field cannot be converted, you'll get the path to the problematic value!
-
 ??? example "Curious about the generated code?"
 
     ```scala
-    // macro outputs code like this (cleaned up a bit for readability): 
+    // macro outputs code like this (reformatted a bit for readability): 
     final class $anon() extends PartialTransformer[UserDTO, User] {
       def transform(src: UserDTO, failFast: Boolean): partial.Result[User] = {
         val userdto: UserDTO = src
@@ -150,19 +152,28 @@ Also done! And if a field cannot be converted, you'll get the path to the proble
               new RecoveryMethod.Phone(phone.value.number)
             case email: RecoveryMethodDTO.Email =>
               new RecoveryMethod.Email(email.value.email)
-          }).asInstanceOf[io.scalaland.chimney.partial.Result[RecoveryMethod]]
-        })).getOrElse[partial.Result[RecoveryMethod]](partial.Result.fromEmpty[RecoveryMethod]).prependErrorPath(partial.PathElement.Accessor("recovery")).map[User](((`param₂`: RecoveryMethod) => {
-          val recoverymethod: RecoveryMethod = `param₂`
-          new User(new Username(userdto.name), userdto.addresses.iterator.map[Address](((`param₃`: AddressDTO) => {
-            val `userdto.addresses`: AddressDTO = `param₃`
-            new Address(`userdto.addresses`.street, `userdto.addresses`.city)
-          })).to[List[Address]](List.iterableFactory[Address]), recoverymethod)
+          })
         }))
+          .getOrElse[partial.Result[RecoveryMethod]](partial.Result.fromEmpty[RecoveryMethod])
+          .prependErrorPath(partial.PathElement.Accessor("recovery"))
+          .map[User](((`param₂`: RecoveryMethod) => {
+            val recoverymethod: RecoveryMethod = `param₂`
+            new User(
+              new Username(userdto.name),
+              userdto.addresses.iterator.map[Address](((`param₃`: AddressDTO) => {
+                val `userdto.addresses`: AddressDTO = `param₃`
+                new Address(`userdto.addresses`.street, `userdto.addresses`.city)
+              })).to[List[Address]](List.iterableFactory[Address]),
+              recoverymethod
+            )
+          }))
       }
     }
  
     (new $anon(): PartialTransformer[UserDTO, User])
     ```
+
+Also done! And if a field cannot be converted, you'll get the path to the problematic value!
 
 Now, visit the [quick start section](quickstart.md) to learn how to get Chimney and the move
 to the [supported transformations section](supported-transformations.md) to learn about a plethora of transformations
