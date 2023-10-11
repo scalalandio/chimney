@@ -27,10 +27,10 @@ If we do not want to enable the same flag(s) in several places, we can define sh
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
-    transparent inline given: TransformerConfiguration[?] =
+    transparent inline given TransformerConfiguration[?] =
       TransformerConfiguration.default.enableMethodAccessors.enableMacrosLogging
     
-    transparent inline given: PatcherConfiguration[?] =
+    transparent inline given PatcherConfiguration[?] =
       PatcherConfiguration.ignoreNoneInPatch.enableMacrosLogging
     ```  
 
@@ -213,8 +213,8 @@ if user provided an implicit, and if they did, it should be used instead.
 
 In case of the automatic derivation, it means that every single branching
 in the code - derivation for a field of a case class, or a subtype of a
-sealed hierarchy - will trigger a macro, which may or mey not succeed
-and it it will succeed it will introduce an allocation.
+sealed hierarchy - will trigger a macro, which may or may not succeed
+and if it will succeed it will introduce an allocation.
 
 When using `import io.scalaland.chimney.dsl._` this is countered by the usage of
 a `Transformer.AutoDerived` as a supertype of `Transformer` - automatic
@@ -285,24 +285,30 @@ Cats integration module contains the following stuff:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney-cats:{{ git.tag or local.tag }}
     
-    case class RegistrationForm(email: String,
-                                username: String,
-                                password: String,
-                                age: String)
+    case class RegistrationForm(
+        email: String,
+        username: String,
+        password: String,
+        age: String
+    )
   
-    case class RegisteredUser(email: String,
-                              username: String,
-                              passwordHash: String,
-                              age: Int)
+    case class RegisteredUser(
+        email: String,
+        username: String,
+        passwordHash: String,
+        age: Int
+    )
   
+    import cats.data._
     import io.scalaland.chimney._
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
     import io.scalaland.chimney.cats._
-    import cats.data._
-  
+
+    def hashpw(pw: String): String = "trust me bro, $pw is hashed"
+
     def validateEmail(form: RegistrationForm): ValidatedNec[String, String] = {
       if(form.email.contains('@')) {
         Validated.valid(form.email)
@@ -1024,7 +1030,7 @@ It could look like this:
       
     implicit def optionalToOptional[A, B](implicit aToB: Transformer[A, B]):
         Transformer[MyOptional[A], MyOptional[B]] = {
-      case MyOptional.Present(a) => My.Optional(aToB.transform(a))
+      case MyOptional.Present(a) => MyOptional.Present(aToB.transform(a))
       case MyOptional.Absent     => MyOptional.Absent
     }
       
@@ -1042,7 +1048,7 @@ It could look like this:
     
     implicit def optionToOptional[A, B](implicit aToB: Transformer[A, B]):
         Transformer[Option[A], MyOptional[B]] = {
-      case Some(a) => My.Optional(aToB.transform(a))
+      case Some(a) => MyOptional.Present(aToB.transform(a))
       case None    => MyOptional.Absent
     }
     ```
