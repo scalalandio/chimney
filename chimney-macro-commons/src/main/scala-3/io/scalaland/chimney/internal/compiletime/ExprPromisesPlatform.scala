@@ -73,7 +73,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
       freshTermName(repr.show(using Printer.TypeReprShortCode).toLowerCase, usageHint)
     }
     private def freshTermName[A: Type](expr: Expr[?], usageHint: UsageHint): ExprPromiseName =
-      freshTermName[A](expr.asTerm.toString, usageHint)
+      freshTermName[A](expr.asTerm.show(using Printer.TreeCode), usageHint)
   }
 
   protected object PrependDefinitionsTo extends PrependDefinitionsToModule {
