@@ -37,7 +37,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-a-raw-value]] for more details
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     *
     * @since 0.1.5
@@ -52,7 +52,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#providing-missing-values]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-computed-value]] for more details
     * @tparam T type of target field
     * @tparam U type of computed value
     * @param selector target field in `To`, defined like `_.name`
@@ -71,7 +71,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     *
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#fields-renaming]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-its-source-field]] for more details
     * @tparam T type of source field
     * @tparam U type of target field
     * @param selectorFrom source field in `From`, defined like `_.originalName`
@@ -93,7 +93,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it will fail.
     *
-    * @see [[https://chimney.readthedocs.io/transformers/customizing-transformers.html#transforming-coproducts]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     * @tparam Inst type of coproduct instance@param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
     *
