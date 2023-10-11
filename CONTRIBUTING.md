@@ -25,9 +25,9 @@ Additionally, we would like to:
     * test them on the default setting (including failing compilation)
     * testing them flipped in in-place derivation (e.g. `foo.into[Bar].enableFlag.transform`)
     * testing them flipped in implicit `TransformerConfig` (
-      e.g. `implicit val cfg = TransformerConfig.default.enableFlag`)
+      e.g. `implicit val cfg = TransformerConfiguration.default.enableFlag`)
     * testing them overriding in in-place derivation the implicit config (
-      e.g. `implicit val cfg = TransformerConfig.default.enableFlag` AND `foo.into[Bar].disbleFlag.transform`)
+      e.g. `implicit val cfg = TransformerConfiguration.default.enableFlag` AND `foo.into[Bar].disbleFlag.transform`)
 * for new modifiers:
     * test them on the default setting (including failing compilation)
     * testing them flipped in in-place derivation (e.g. `foo.into[Bar].modifier(_.bar, something).transform`)

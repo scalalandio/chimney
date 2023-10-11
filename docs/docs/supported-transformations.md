@@ -69,8 +69,8 @@ function was not defined, "empty value" when something was expected) and even th
     class MyOtherType(val a: Int)
 
     val transformer: PartialTransformer[MyType, MyOtherType] = PartialTransformer[MyType, MyOtherType] { (src: MyType) =>
-      partial.Result.fromCatching(src.a.toInt)
-        .prependErrorPath(partial.PathElement.Accessor("a"))
+      partial.Result.fromCatching(src.b.toInt)
+        .prependErrorPath(partial.PathElement.Accessor("b"))
         .map { a =>
           new MyOtherType(a)
         }
@@ -79,7 +79,7 @@ function was not defined, "empty value" when something was expected) and even th
     transformer.transform(new MyType("10")).asEither
       .left.map(_.asErrorPathMessages) // Right(new MyOtherType(10))
     transformer.transform(new MyType("NaN")).asEither
-      .left.map(_.asErrorPathMessages) // Left(Iterable("a" -> ThrowableMessage(e: NumberFormatException)))
+      .left.map(_.asErrorPathMessages) // Left(Iterable("b" -> ThrowableMessage(NumberFormatException: For input string: NaN)))
     
     import io.scalaland.chimney.dsl._
     
@@ -87,10 +87,10 @@ function was not defined, "empty value" when something was expected) and even th
     implicit val transformerAsImplicit: PartialTransformer[MyType, MyOtherType] = transformer
     
     // we can use this extension method to call it
-    (new MyType("10")).transformIntoPartial[MyotherType].asEither
+    (new MyType("10")).transformIntoPartial[MyOtherType].asEither
       .left.map(_.asErrorPathMessages) // Right(new MyOtherType(10))
     (new MyType("NaN")).transformIntoPartial[MyOtherType].asEither
-      .left.map(_.asErrorPathMessages) // Left(Iterable("a" -> ThrowableMessage(e: NumberFormatException)))
+      .left.map(_.asErrorPathMessages) // Left(Iterable("b" -> ThrowableMessage(NumberFormatException: For input string: NaN)))
     ```
 
 As you can see `partial.Result` contains `Iterable` as a structure for holding its errors. Thanks to that:
@@ -135,7 +135,7 @@ If you transform one type into itself or into its supertype, it will be upcasted
     val b = new B
    
     b.transformInto[A]  // == (b: A)
-    b.into.transform[A] // == (b: A)
+    b.into[A].transform // == (b: A)
     b.transformIntoPartial[A].asEither  // == Right(b: A)
     b.intoPartial[A].transform.asEither // == Right(b: A)
     ```
@@ -153,7 +153,7 @@ In particular, when the source type `=:=` the target type, you will end up with 
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
-    class A(a: String)
+    class A(val a: String)
     class B extends A("value")
     val b = new B
     
@@ -191,9 +191,9 @@ The obvious example are `case class`es with the same fields:
     case class Source(a: Int, b: Double)
     case class Target(a: Int, b: Double)
 
-    Source(42, 0.07).trasnformInto[Target]  // == Target(42, 0.07)
+    Source(42, 0.07).transformInto[Target]  // == Target(42, 0.07)
     Source(42, 0.07).into[Target].transform // == Target(42, 0.07)
-    Source(42, 0.07).trasnformIntoPartial[Target].asEither  // == Right(Target(42, 0.07))
+    Source(42, 0.07).transformIntoPartial[Target].asEither  // == Right(Target(42, 0.07))
     Source(42, 0.07).intoPartial[Target].transform.asEither // == Right(Target(42, 0.07))
     ```
 
@@ -208,10 +208,10 @@ However, the original value might have fields absent in the target type and/or a
     case class Source(a: Int, b: Double, c: String)
     case class Target(b: Double, a: Int)
 
-    Source(42, 0.07).trasnformInto[Target]  // == Target(42, 0.07)
-    Source(42, 0.07).into[Target].transform // == Target(42, 0.07)
-    Source(42, 0.07).trasnformIntoPartial[Target].asEither  // == Right(Target(42, 0.07))
-    Source(42, 0.07).intoPartial[Target].transform.asEither // == Right(Target(42, 0.07))
+    Source(42, 0.07, "value").transformInto[Target]  // == Target(42, 0.07)
+    Source(42, 0.07, "value").into[Target].transform // == Target(42, 0.07)
+    Source(42, 0.07, "value").transformIntoPartial[Target].asEither  // == Right(Target(42, 0.07))
+    Source(42, 0.07, "value").intoPartial[Target].transform.asEither // == Right(Target(42, 0.07))
     ```
 
 It doesn't even have to be a `case class`:
@@ -228,7 +228,7 @@ It doesn't even have to be a `case class`:
     }
     class Target(a: String, b: Int)
 
-    (new Source).trasnformInto[Target]
+    (new Source).transformInto[Target]
     // like:
     // val source = new Source
     // new Target(source.a, source.b)
@@ -308,7 +308,7 @@ side effects - you need to enable the `.enableMethodAccessors` flag:
     
     locally {
       // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-      implicit val cfg = TransformerConfig.default.enableMethodAccessors
+      implicit val cfg = TransformerConfiguration.default.enableMethodAccessors
       
       (new Source("value", 512)).transformInto[Target]
       // val source = new Source("value", 512)
@@ -340,9 +340,18 @@ If the flag was enabled in implicit config it can be disabled with `.disableMeth
     class Target(a: String, b: Int)
     
     // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-    implicit val cfg = TransformerConfig.default.enableMethodAccessors
+    implicit val cfg = TransformerConfiguration.default.enableMethodAccessors
     
-    (new Source("value", 512)).into[Target].disableMethodAccessors.transform // compilation fails
+    (new Source("value", 512)).into[Target].disableMethodAccessors.transform
+    // Chimney can't derive transformation from Source to Target
+    //
+    // Playground.Target
+    //   a: java.lang.String - no accessor named a in source type Playground.Source
+    //   b: scala.Int - no accessor named b in source type Playground.Source
+    //
+    // There are methods in Source that might be used as accessors for `a`, `b` fields in Target. Consider using `.enableMethodAccessors`.
+    //
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 ### Reading from inherited values/methods
@@ -362,15 +371,15 @@ inherited from a source value's supertype, you need to enable the `.enableInheri
     case class Source(b: Int) extends Parent
     case class Target(a: String, b: Int)
     
-    Source(10).into[Target].enableInheritedAccessors.transform // Bar("value", 10)
-    Source(10).intoPartial[Target].enableInheritedAccessors.transform.asEither // Right(Bar("value", 10))
+    Source(10).into[Target].enableInheritedAccessors.transform // Target("value", 10)
+    Source(10).intoPartial[Target].enableInheritedAccessors.transform.asEither // Right(Target("value", 10))
     
     locally {
       // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-      implicit val cfg = TransformerConfig.default.enableInheritedAccessors
+      implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
       
-      Source(10).transformInto[Target] // Bar("value", 10)
-      Source(10).transformIntoPartial[Target].asEither // Right(Bar("value", 10))
+      Source(10).transformInto[Target] // Target("value", 10)
+      Source(10).transformIntoPartial[Target].asEither // Right(Target("value", 10))
     }
     ```
 
@@ -394,9 +403,17 @@ If the flag was enabled in implicit config it can be disabled with `.enableInher
     case class Target(a: String, b: Int)
     
     // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-    implicit val cfg = TransformerConfig.default.enableInheritedAccessors
+    implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
     
     Source(10).into[Target].disableInheritedAccessors.transform
+    // Chimney can't derive transformation from Source to Target
+    // 
+    // Target
+    //   a: java.lang.String - no accessor named a in source type Source
+    // 
+    // There are methods in Source that might be used as accessors for `a` fields in Target. Consider using `.enableMethodAccessors`.
+    // 
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 ### Reading from Bean getters
@@ -425,7 +442,7 @@ If we want to read `def getFieldName(): A` as if it was `val fieldName: A` - whi
     
     locally {
       // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-      implicit val cfg = TransformerConfig.default.enableBeanGetters
+      implicit val cfg = TransformerConfiguration.default.enableBeanGetters
       
       (new Source("value", 512)).transformInto[Target]
       // val source = new Source("value", 512)
@@ -461,9 +478,18 @@ If the flag was enabled in implicit config it can be disabled with `.disableBean
     class Target(a: String, b: Int)
     
     // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-    implicit val cfg = TransformerConfig.default.enableBeanGetters
+    implicit val cfg = TransformerConfiguration.default.enableBeanGetters
     
-    (new Source("value", 512)).into[Target].disableBeanGetters.transform // compilation fails
+    (new Source("value", 512)).into[Target].disableBeanGetters.transform
+    // Chimney can't derive transformation from Source to Target
+    // 
+    // Target
+    //   a: java.lang.String - no accessor named a in source type Source
+    //   b: scala.Int - no accessor named b in source type Source
+    // 
+    // There are methods in Source that might be used as accessors for `a`, `b` fields in Target. Consider using `.enableMethodAccessors`.
+    // 
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 ### Writing to Bean setters
@@ -481,7 +507,9 @@ flag:
     class Source(val a: String, val b: Int)
     class Target() {
       private var a = ""
+      def setA(a_: String): Unit = a = a_
       private var b = 0
+      def setB(b_: Int): Unit = b = b_
     }
     
     (new Source("value", 512)).into[Target].enableBeanSetters.transform
@@ -499,7 +527,7 @@ flag:
     
     locally {
       // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-      implicit val cfg = TransformerConfig.default.enableBeanSetters
+      implicit val cfg = TransformerConfiguration.default.enableBeanSetters
       
       (new Source("value", 512)).transformInto[Target]
       // val source = new Source("value", 512)
@@ -536,13 +564,24 @@ If the flag was enabled in implicit config it can be disabled with `.disableBean
     class Source(val a: String, val b: Int)
     class Target() {
       private var a = ""
+      def getA: String = a
+      def setA(aa: String): Unit = a = aa
       private var b = 0
+      def getB(): Int = b
+      def setB(bb : Int): Unit = b = bb
     }
     
     // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-    implicit val cfg = TransformerConfig.default.enableBeanSetters
+    implicit val cfg = TransformerConfiguration.default.enableBeanSetters
     
-    (new Source("value", 512)).into[Target].disableBeanSetters.transform // compilation fails
+    (new Source("value", 512)).into[Target].disableBeanSetters.transform
+    // Chimney can't derive transformation from Source to Target
+    //
+    // Target
+    //   derivation from source: Source to Target is not supported in Chimney!
+    // 
+    // 
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 ### `Unit` as the constructor's parameter
@@ -559,7 +598,7 @@ If a class' constructor takes `Unit` as a parameter it is always provided withou
     case class Target(value: Unit)
     
     Source().transformInto[Target] // Target(())
-    Source().into[Target.transform // Target(())
+    Source().into[Target].transform // Target(())
     Source().transformIntoPartial[Target].asEither // Right(Target(()))
     Source().intoPartial[Target].transform.asEither // Right(Target(()))
     ```
@@ -610,9 +649,15 @@ If the flag was enabled in implicit config it can be disabled with `.disableDefa
     case class Target(a: String, b: Int = 0, c: Long = 0L)
     
     // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-    implicit val cfg = TransformerConfig.default.enableDefaultValues
+    implicit val cfg = TransformerConfiguration.default.enableDefaultValues
     
-    (new Source("value", 512)).into[Target].disableDefaultValues.transform // compilation fails
+    (new Source("value", 512)).into[Target].disableDefaultValues.transform
+    // Chimney can't derive transformation from Source to Target
+    // 
+    // Target
+    //   c: scala.Long - no accessor named c in source type Source
+    //  
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 ### Wiring the constructor's parameter to its source field
@@ -732,14 +777,14 @@ These cases can be handled only with `PartialTransformer` using `.withFieldConst
     case class Bar(a: String, b: Int, c: Long)
     
     // successful partial.Result constant
-    Foo("value", 10).into[Bar].withFieldConstPartial(_.c, partial.Result.fromValue(100L)).transform
+    Foo("value", 10).intoPartial[Bar].withFieldConstPartial(_.c, partial.Result.fromValue(100L)).transform
       .asEither.left.map(_.asErrorPathMessages) // Right(Bar("value", 10, 1000L))
     // a few different partial.Result failures constants
-    Foo("value", 10).into[Bar].withFieldConstPartial(_.c, partial.Result.fromEmpty).transform
+    Foo("value", 10).intoPartial[Bar].withFieldConstPartial(_.c, partial.Result.fromEmpty).transform
       .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("c", partial.Error.EmptyMessage))
-    Foo("value", 10).into[Bar].withFieldConstPartial(_.c, partial.Result.fromThrowable(new NullPoinerException)).transform
-      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("c", partial.Error.ThrowableMessage(e: NullPoinerException)))
-    Foo("value", 10).into[Bar].withFieldConstPartial(_.c, partial.Result.fromErrorString("bad value")).transform
+    Foo("value", 10).intoPartial[Bar].withFieldConstPartial(_.c, partial.Result.fromErrorThrowable(new NullPointerException)).transform
+      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("c", partial.Error.ThrowableMessage(e: NullPointerException)))
+    Foo("value", 10).intoPartial[Bar].withFieldConstPartial(_.c, partial.Result.fromErrorString("bad value")).transform
       .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("c", partial.Error.StringMessage("bad value")))
     ``` 
 
@@ -787,7 +832,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
     
-    (new Foo()).into[Bar].withFieldConst(_.getC, 100L).transform
+    (new Foo()).into[Bar].withFieldConst(_.getC, 100).transform
     // val foo = new Foo()
     // val bar = new Bar()
     // bar.setA(foo.getA) 
@@ -857,14 +902,14 @@ These cases can be handled only with `PartialTransformer` using `.withFieldCompu
     // always failing with a partial.Result.fromErrorString
     Foo("value", 10).intoPartial[Bar]
       .withFieldComputedPartial(_.c, foo => partial.Result.fromErrorString("bad value"))
-      .transform.asEither.left.map(_.asErrorPathMessages)// Left(Iterable("c", partial.Error.StringMessage("bad value")))
+      .transform.asEither.left.map(_.asErrorPathMessages)// Left(Iterable("c" -> StringMessage("bad value")))
     // failure depends on the input (whether .toLong throws or not)
     Foo("20", 10).intoPartial[Bar]
       .withFieldComputedPartial(_.c, foo => partial.Result.fromCatching(foo.a.toLong))
       .transform.asEither.left.map(_.asErrorPathMessages)// Right(Bar("20", 10, 20L))
     Foo("value", 10).intoPartial[Bar]
       .withFieldComputedPartial(_.c, foo => partial.Result.fromCatching(foo.a.toLong))
-      .transform.asEither.left.map(_.asErrorPathMessages)// Left(Iterable("c", partial.Error.ThrowableMessage(e: NumberFormatException)))
+      .transform.asEither.left.map(_.asErrorPathMessages)// Left(Iterable("c" -> ThrowableMessage(NumberFormatException: For input string: "value")))
     ``` 
 
 As you can see, the transformed value will automatically preserve the field name for which failure happened.
@@ -903,9 +948,9 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
       private var a = ""
       def getA(): String = a
       def setA(aa: String): Unit = a = aa
-      private var c = 0
-      def getC: Int = c
-      def setC(cc: Int): Unit = c = cc
+      private var c = 0L
+      def getC: Long = c
+      def setC(cc: Long): Unit = c = cc
     }
 
     // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
@@ -917,7 +962,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     // bar.setA(foo.getA) 
     // bar.setC(100L)
     // bar
-    (new Foo()).intoPartial[Bar].withFieldComputedPartial(_.getC, foo => partial.Result.fromCatched(foo.getA.toLong)).transform
+    (new Foo()).intoPartial[Bar].withFieldComputedPartial(_.getC, foo => partial.Result.fromCatching(foo.getA.toLong)).transform
     // val foo = new Foo()
     // partial.Result.fromCatched(foo.getA.toLong).map { c =>
     //   val bar = new Bar()
@@ -966,7 +1011,7 @@ If `AnyVal` is the source, Chimney would attempt to unwrap it, and if it's the t
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: Int) extends AnyVal
-    case class Bar(b: String) extends AnyVal
+    case class Bar(b: Int) extends AnyVal
     
     Foo(10).into[Bar].transform // Bar(10)
     Foo(10).transformInto[Bar] // Bar(10)
@@ -987,10 +1032,16 @@ If `AnyVal` is the source, Chimney would attempt to unwrap it, and if it's the t
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
-    case class Foo(private a: Int) extends AnyVal // cannot be automatically unwrapped
+    case class Foo(private val a: Int) extends AnyVal // cannot be automatically unwrapped
     case class Bar private (b: String) extends AnyVal // cannot be automatically wrapped
     
-    Foo(10).transformInto[Bar] // compilation fails
+    Foo(10).transformInto[Bar]
+    // Chimney can't derive transformation from Foo to Bar
+    // 
+    // Bar
+    //   derivation from foo: Foo to Bar is not supported in Chimney!
+    //  
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 !!! tip
@@ -1026,10 +1077,10 @@ type's subtype needs to have a corresponding subtype in target type with a match
     (Foo.Baz("value", 10): Foo).into[Bar].transform // Bar.Baz(10)
     (Foo.Buzz: Foo).transformInto[Bar] // Bar.Buzz
     (Foo.Buzz: Foo).into[Bar].transform // Bar.Buzz
-    (Foo.Baz("value", 10): Foo).transformIntoPartial[Bar] // Bar.Baz(10)
-    (Foo.Baz("value", 10): Foo).intoPartial[Bar].transform // Bar.Baz(10)
-    (Foo.Buzz: Foo).transformIntoPartial[Bar] // Bar.Buzz
-    (Foo.Buzz: Foo).intoPartial[Bar].transform // Bar.Buzz
+    (Foo.Baz("value", 10): Foo).transformIntoPartial[Bar].asEither // Right(Bar.Baz(10))
+    (Foo.Baz("value", 10): Foo).intoPartial[Bar].transform.asEither // Right(Bar.Baz(10))
+    (Foo.Buzz: Foo).transformIntoPartial[Bar].asEither // Right(Bar.Buzz)
+    (Foo.Buzz: Foo).intoPartial[Bar].transform.asEither // Right(Bar.Buzz)
     ```
 
 !!! tip
@@ -1137,8 +1188,8 @@ In such cases Chimney is able to automatically wrap/unwrap these inner values as
     }
     
     // flattening
-    (protobuf.A(Foo.A("value", 42)) : protobuf.Foo).transformInto[domain.Bar] // domain.Bar.A("value", 42)
-    (protobuf.B(Foo.B()) : protobuf.Foo).transformInto[domain.Bar] // domain.Bar.B
+    (protobuf.A(protobuf.Foo.A("value", 42)) : protobuf.Foo).transformInto[domain.Bar] // domain.Bar.A("value", 42)
+    (protobuf.B(protobuf.Foo.B()) : protobuf.Foo).transformInto[domain.Bar] // domain.Bar.B
     // unflattening
     (domain.Bar.A("value", 42): domain.Bar).transformInto[protobuf.Foo] // protobuf.A(Foo.A("value", 42)
     (domain.Bar.B : domain.Bar).transformInto[protobuf.Foo] // protobuf.B(Foo.B())
@@ -1391,7 +1442,7 @@ Additionally, an automatic wrapping with `Option` is also considered safe and al
     Foo("value").transformInto[Option[Bar]] // Some(Bar("value"))
     Foo("value").into[Option[Bar]].transform // Some(Bar("value"))
     Foo("value").transformIntoPartial[Option[Bar]].asEither // Right(Some(Bar("value")))
-    Foo("value").intoPartial[Option[Bar]Bar].transform.asEither // Right(Some(Bar("value")))
+    Foo("value").intoPartial[Option[Bar]].transform.asEither // Right(Some(Bar("value")))
     ```
 
 However, unwrapping of an `Option` is impossible without handling `None` case, that's why Chimney handles it
@@ -1406,10 +1457,10 @@ automatically only with `PartialTransformer`:
     case class Foo(a: String)
     case class Bar(a: String)
     
-    Option(Foo("value")).transformIntoPartial[Bar].asEither // Right(Bar("value"))
-    (None : Option[Foo]).transformIntoPartial[Bar].asEither // Left(...) TODO
-    Option(Foo("value")).intoPartial[Bar].transform.asEither // Right(Bar("value"))
-    (None : Option[Foo]).intoPartial[Bar].transform.asEither // Left(...) TODO
+    Option(Foo("value")).transformIntoPartial[Bar].asEither.left.map(_.asErrorPathMessages) // Right(Bar("value"))
+    (None : Option[Foo]).transformIntoPartial[Bar].asEither.left.map(_.asErrorPathMessages) // Left(Iterable("" -> EmptyValue))
+    Option(Foo("value")).intoPartial[Bar].transform.asEither.left.map(_.asErrorPathMessages) // Right(Bar("value"))
+    (None : Option[Foo]).intoPartial[Bar].transform.asEither.left.map(_.asErrorPathMessages) // Left(Iterable("" -> EmptyValue))
     ```
 
 !!! tip
@@ -1444,7 +1495,7 @@ similar reasons to default values support, but we can enable it with the `.enabl
     
     locally {
       // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-      implicit val cfg = TransformerConfig.default.enableOptionDefaultsToNone
+      implicit val cfg = TransformerConfiguration.default.enableOptionDefaultsToNone
       
       Foo("value").transformInto[Bar] // Bar("value", None)
       Foo("value").transformIntoPartial[Bar].asOption // Some(Bar("value", None))
@@ -1479,7 +1530,7 @@ The `None` value is used as a fallback, meaning:
     
     locally {
       // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-      implicit val cfg = TransformerConfig.default.enableOptionDefaultsToNone.enableDefaultValues
+      implicit val cfg = TransformerConfiguration.default.enableOptionDefaultsToNone.enableDefaultValues
       
       Foo("value").transformInto[Bar] // Bar("value", Some("a"))
       Foo("value").transformIntoPartial[Bar].asOption // Some(Bar("value", Some("a")))
@@ -1500,9 +1551,15 @@ If the flag was enabled in implicit config it can be disabled with `.disableOpti
     case class Bar(a: String, b: Option[String] = Some("a"))
 
     // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
-    implicit val cfg = TransformerConfig.default.enableOptionDefaultsToNone
+    implicit val cfg = TransformerConfiguration.default.enableOptionDefaultsToNone
     
-    Foo("value").into[Bar].disableOptionDefaultsToNone.transform // compilation error
+    Foo("value").into[Bar].disableOptionDefaultsToNone.transform
+    // Chimney can't derive transformation from Foo to Bar
+    // 
+    // Bar
+    //   b: scala.Option[java.lang.String] - no accessor named b in source type Foo
+    //  
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 ## Between `Either`s
@@ -1539,8 +1596,8 @@ know for sure is inside to their corresponding type in target `Either`:
 
     // Foo -> Bar - can be derived
     // Foo -> Baz - cannot be derived without providing c
-    (Left(Foo("value"))).transformInto[Either[Bar, Baz]] // Left(Bar("value"))
-    (Right(Foo("value"))).transformInto[Either[Baz, Bar]] // Right(Bar("value"))
+    (Left(Foo("value", 10))).transformInto[Either[Bar, Baz]] // Left(Bar("value"))
+    (Right(Foo("value", 10))).transformInto[Either[Baz, Bar]] // Right(Bar("value"))
     ```
 
 ## Between Scala's collections/`Array`s
@@ -1577,10 +1634,13 @@ With `PartialTransformer`s ware able to handle fallible conversions, tracing at 
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
+    case class Foo(a: String)
+    case class Bar(a: Option[String])
+
     List(Bar(Some("value")), Bar(None)).transformIntoPartial[Vector[Foo]]
-      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("(1)" -> EmptyValue))
+      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("(1).a" -> EmptyValue))
     Map(Bar(Some("value")) -> Bar(None), Bar(None) -> Bar(Some("value"))).transformIntoPartial[Vector[(Foo, Foo)]]
-      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("(1)" -> EmptyValue, "keys(Bar(None))" -> EmptyValue))
+      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("(Bar(Some(value))).a" -> EmptyValue, "keys(Bar(None))" -> EmptyValue))
     ```
 
 !!! tip
@@ -1659,8 +1719,8 @@ than handling only some of them, so we can always relax it:
     case class Foo(a: Int)
     case class Bar(a: String)
     
-    Option(Foo(100)).transformInto[Bar].asEither // Right(Bar("100"))
-    (None : Option[Foo]).transformInto[Bar].asEither.left.map(_.asErrorPathMessages) // Left(Iterable("" -> EmptyValue)) 
+    Option(Foo(100)).transformIntoPartial[Bar].asEither // Right(Bar("100"))
+    (None : Option[Foo]).transformIntoPartial[Bar].asEither.left.map(_.asErrorPathMessages) // Left(Iterable("" -> EmptyValue)) 
     ```
 
 Defining custom `PartialTransformer` might be a necessity when the type we want to transform have only some values which
@@ -1680,10 +1740,14 @@ can be safely converted, and some which have no reasonable mapping in the target
     case class Foo(a: Int)
     case class Bar(a: String)
     
-    "12".transformIntoPartial[Int].asEither.left.map(_.asErrorPathMessages) // Right(12)
-    "bad".transformIntoPartial[Int].asEither.left.map(_.asErrorPathMessages) // Left(Iterable("" -> ThrowingMessage(...)))
-    Bar("20").transformIntoPartial[Foo].asEither.left.map(_.asErrorPathMessages) // Right(Foo(20))
-    Bar("wrong").transformIntoPartial[Foo].asEither.left.map(_.asErrorPathMessages) // Left("a" -> ThrowingMessage(...))
+    "12".transformIntoPartial[Int].asEither
+      .left.map(_.asErrorPathMessages) // Right(12)
+    "bad".transformIntoPartial[Int].asEither
+      .left.map(_.asErrorPathMessages) // Left(Iterable("" -> ThrowableMessage(NumberFormatException: For input string: "bad")))
+    Bar("20").transformIntoPartial[Foo] .asEither
+      .left.map(_.asErrorPathMessages) // Right(Foo(20))
+    Bar("wrong").transformIntoPartial[Foo] .asEither
+      .left.map(_.asErrorPathMessages) // Left("a" -> ThrowableMessage(NumberFormatException: For input string: "bad"))
     ```
 
 !!! tip
@@ -1716,13 +1780,19 @@ The Chimney does not decide and in the presence of 2 implicits it will fail and 
     import io.scalaland.chimney.{Transformer, PartialTransformer, partial}
     import io.scalaland.chimney.dsl._
     
-    implicig val stringToIntUnsafe: Transformer[String, Int] = _.toInt // throws!!!
-    implicig val stringToIntSafe: PartialTransformer[String, Int] =
-      PartialTransformer(str => partial.Result.fromCatching(_.toInt))
+    implicit val stringToIntUnsafe: Transformer[String, Int] = _.toInt // throws!!!
+    implicit val stringToIntSafe: PartialTransformer[String, Int] =
+      PartialTransformer(str => partial.Result.fromCatching(str.toInt))
       
-    "10".transformInto[String] // compilation error
-    "10".into[String].enableImplicitConflictResolution(PreferTotalTransformer).transform // throws
-    "10".into[String].enableImplicitConflictResolution(PreferPartialTransformer).transform.asOption // None
+    "aa".intoPartial[Int].transform
+    // Ambiguous implicits while resolving Chimney recursive transformation:
+    // 
+    // PartialTransformer[java.lang.String, scala.Int]: stringToIntSafe
+    // Transformer[java.lang.String, scala.Int]: stringToIntUnsafe
+    // 
+    // Please eliminate ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used
+    "aa".intoPartial[Int].enableImplicitConflictResolution(PreferTotalTransformer).transform // throws NumberFormatException: For input string: "aa"
+    "aa".intoPartial[Int].enableImplicitConflictResolution(PreferPartialTransformer).transform.asOption // None
     ```
 
 ## Recursive transformation
@@ -1751,8 +1821,8 @@ Since we are talking about recursion then there is one troublesome issue - recur
 !!! example
 
     ```scala
-    case class Foo(a: Int, Option[Foo])
-    case class Bar(a: Int, Option[Bar])
+    case class Foo(a: Int, b: Option[Foo])
+    case class Bar(a: Int, b: Option[Bar])
     
     val foo = Foo(10, Some(Foo(20, None)))
     val bar = ... // ???
@@ -1769,8 +1839,8 @@ But we can use Chimney's semiautomatic derivation.
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
     
-    case class Foo(a: Int, Option[Foo])
-    case class Bar(a: Int, Option[Bar])
+    case class Foo(a: Int, b: Option[Foo])
+    case class Bar(a: Int, b: Option[Bar])
     
     implicit val foobar: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
     
