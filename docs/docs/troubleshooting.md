@@ -268,6 +268,41 @@ the compiler to provide it with this data, and compiler fails to do so.
 On Scala 2.12.0 it failed [in other cases as well](https://github.com/scala/bug/issues/7046),
 so it is recommended to update 2.12 to at least 2.12.1.
 
+## Scala 3 complains that `implicit`/`given` `TransformerConfiguration` needs an explicit return type
+
+In Scala 2 syntax like
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    implicit def cfg = TransformerConfiguration.default.enableMacrosLogging
+    ```
+
+was perfectly OK. Using implicits without a type was a bad practice but not an error. 
+
+This changes in Scala 3 where you'll get an error:
+
+!!! example
+    
+    ```scala
+    result type of implicit definition needs to be given explicitly
+    ```
+
+You can work around this by slightly longer incantation:
+
+!!! example
+ 
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    transparent inline implicit def cfg: TransformerConfiguration[?] =
+      TransformerConfiguration.default.enableMacrosLogging
+    ```
+   
 ## Debugging macros
 
 In some cases it could be helpful to preview what is the expression generated

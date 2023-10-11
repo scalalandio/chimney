@@ -353,6 +353,8 @@ Total or Partial expression to decide what to do with it.
 
 ### Derivation rules
 
+TODO suppressing unused
+
 TODO
 
 #### Summoning implicits
