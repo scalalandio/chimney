@@ -181,11 +181,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           }
           .filter { case (name, _) => !paramTypes.keySet.exists(areNamesMatching(_, name)) }
           .map { case (name, setter) =>
-            val tpe = ExistentialType(paramsWithTypes(A, setter, isConstructor = false).collectFirst {
-              // `name` might be e.g. `setValue` while key in returned Map might be `value` - we want to return
-              // "setName" as the name of the setter but we don't want to throw exception when accessing Map.
-              case (searchedName, tpe) if areNamesMatching(searchedName, name) => fromUntyped[Any](tpe)
-            }.get)
+            val tpe = ExistentialType(fromUntyped[Any](paramsWithTypes(A, setter, isConstructor = false).head._2))
             (
               name,
               setter,
