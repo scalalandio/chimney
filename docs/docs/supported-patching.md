@@ -50,7 +50,10 @@ patcher.
     val user = User(10, "abc@@domain.com", 1234567890L)
     
     user.patchUsing(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
-    // Field named 'address' not found in target patching type User
+    // Chimney can't derive patcher for User with patch type UserUpdateForm
+    // 
+    // Field named 'address' not found in target patching type User!
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 This default behavior is intentional to prevent silent oversight of typos in patcher field names.
@@ -69,7 +72,7 @@ But there is a way to ignore redundant patcher fields explicitly with `.ignoreRe
     val user = User(10, "abc@@domain.com", 1234567890L)
 
     user
-      .using(UserUpdateForm2("xyz@@domain.com", 123123123L, "some address"))
+      .using(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
       .ignoreRedundantPatcherFields
       .patch
     // User(10, "xyz@@domain.com", 123123123L)
@@ -78,7 +81,7 @@ But there is a way to ignore redundant patcher fields explicitly with `.ignoreRe
       // all patching derived in this scope will see these new flags
       implicit val cfg = PatcherConfiguration.default.ignoreRedundantPatcherFields
       
-      user.patchUsing(UserUpdateForm2("xyz@@domain.com", 123123123L, "some address"))
+      user.patchUsing(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
       // User(10, "xyz@@domain.com", 123123123L)
     }
     ```
@@ -103,9 +106,13 @@ If the flag was enabled in implicit config it can be disabled with `.failRedunda
     implicit val cfg = PatcherConfiguration.default.ignoreRedundantPatcherFields
     
     user
-      .using(UserUpdateForm2("xyz@@domain.com", 123123123L, "some address"))
+      .using(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
       .failRedundantPatcherFields
-      .patch // compilation error
+      .patch
+    // Chimney can't derive patcher for Playground.User with patch type Playground.UserUpdateForm
+    // 
+    // Field named 'address' not found in target patching type Playground.User!
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 ### Treating `None` as no-update instead of "set to `None`"
@@ -129,7 +136,7 @@ Let’s consider the following patch:
     val update = UserPatch(email = Some("updated@@example.com"), phone = None)
     
     user.patchUsing(update)
-    //  User(10, "updated@@example.com", 1234567890L)
+    // User(10, "updated@@example.com", 1234567890L)
     ```
 
 Field `phone` remained the same as in the original `user`, while the optional e-mail string got updated from a patch object.
