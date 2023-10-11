@@ -2,6 +2,49 @@
 
 Examples af various use cases already handled by the Chimney.
 
+## Reusing flags for several transformations/patchings
+
+If we do not want to enable the same flag(s) in several places, we can define shared flag configuration as an implicit:
+
+!!! example
+
+    Scala 2
+
+    ```scala
+    //> using scala {{ scala.2_13 }}
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    implicit val transformerCfg = TransformerConfiguration.default.enableMethodAccessors.enableMacrosLogging
+    
+    implicit val patcherCfg = PatcherConfiguration.ignoreNoneInPatch.enableMacrosLogging
+    ```  
+
+    Scala 3
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    transparent inline given: TransformerConfiguration[?] =
+      TransformerConfiguration.default.enableMethodAccessors.enableMacrosLogging
+    
+    transparent inline given: PatcherConfiguration[?] =
+      PatcherConfiguration.ignoreNoneInPatch.enableMacrosLogging
+    ```  
+
+!!! tip
+
+    As we can see, on Scala 3 we can skip useless name, but we are required to provide the type. Since we want it to
+    be inferred (for our convenience), we can use `transparent inline` to provide this time as a wildcard type but still
+    let Scala figure it out.
+    
+!!! tip
+
+    These configs will be shared by all derivations triggered in the scope that this `implicit`/`given` was defined.
+    This include automatic derivation as well, so summoning autoderived Transformer would adhere to these flags.
+
 ## Automatic, Semiautomatic and Inlined derivation
 
 When you use the standard way of working with Chimney, but `import io.scalaland.chimney.dsl._`

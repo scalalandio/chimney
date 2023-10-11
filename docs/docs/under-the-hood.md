@@ -261,6 +261,7 @@ And since it is an implicit, it can be shared between several different macro ex
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
+    // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
     
     "test".transformInto[Option[String]]
@@ -281,6 +282,19 @@ differences between automatic and semiautomatic is `implicit` keyword and upcast
 `from.into[To].transform`: it carries around `RuntimeDataStore` like `into.transform`, but don't need to store
 `source: From` (it will be provided to the type class via argument). Then it derives expression of type `To` and wraps
 it with a type class. 
+
+### Scala 2 vs Scala 3 in DSL
+
+Definitions of data that have to be accessed in runtime are shared between Scala 2 and Scala 3. Differences requireing
+separate implementations are mostly about:
+
+  - extension methods (`implicit class` + `AnyVal` for Scala 2, `extension` for Scala 3) - distinct implementations
+  - calling macros (`def` `macro` for Scala 2, `inline def` and `transparent inline def` for Scala 3) - either
+    distinct implementations or some `trait ClassNamePlatform` mixins
+
+However, both Scala 2 and Scala 3 use `implicit`s, Scala 3 doesn't use `given`s since they could introduce a difference
+in the behavior (e.g. Scala 2 could still `import module._` while Scala 3 would require `import module{*, given}` -
+in general such separation is a good idea, but not when it comes to cross-compilation). 
 
 ## Derivation
 
@@ -348,39 +362,319 @@ as soon as we get it - by delaying the wrapping as long as possible we are avoid
 
 This is very important property, allowing us to avoid many allocations, but it also means that hardly ever we can
 **assume** inside a macro what is the type of the computed expression. Most of the time it's something like a
-`Either[Expr[To], Expr[partial.Result[To]]]`, where we will compute some transformation and then check if it's
-Total or Partial expression to decide what to do with it.
+`Either[Expr[To], Expr[partial.Result[To]]]` (let's call it `TransformationExpr[To]`.), where we will compute some
+transformation and then check if it's Total or Partial expression to decide what to do with it. 
+
+It might happen that after a whole derivation for Partial the `TransformationExpr[To]` is still Total. In such case
+it will be wrapped with `partial.Result` as a last step, creating only 1 wrapping in the whole expression. 
 
 ### Derivation rules
 
-TODO suppressing unused
+Once we create the `TransformationContext[From, To]` we have all data in one place to start doing the actual
+`TransformationExpr[To]` derivation. We can define a set of `Rule`s stating
+_if this and this conditions are met, this rule applies_ (the conditions can be about `From`/`To` types, whether
+the derivation was triggered by Total or Partial, or a presence of a particular config). If a `Rule` would be matched,
+it would attempt to derive the expression. This attempt can either succeed or fail. The `Rule`'s failure fails also
+the whole derivation.
 
-TODO
+But the `Rule` might decide that this particular case should not be handled and pass. This is not considered an error 
+on its own. When a `Rule` does not apply another `Rule` is tested, and then another, until one of them decided to handle
+the case. Only after all `Rule`s decide to pass we are failing compilation with an error telling user that it is not 
+a case handled by Chimney.
+
+How Chimney group/split different `Rule`s use cases into separate values is an implementation details that could
+evolve as new use cases (and bugs) are discovered. Their order is also separately (and deterministically!) defined for
+each platform (perhaps some cases would only appear on a single Scala version or a single platform?). Nonetheless,
+there are some intuitions about the order in which `Rule`s are tried, which should not change:
+
+  - the first `Rule` to attempt is checking if the user provided us with an `implicit` and if there are any reasons to
+    ignore it
+  - the second `rule` to attempt is whether value has to be converted at all, perhaps it is already at the right type
+    or could be with just upcasting
+  - then we have a whole much of special cases for: value classes, `Option`s, `Either`s, `Array`s, collections, which
+    could handle more edge cases than a generic rule for product types or sealed hierarchies. Their order is defined
+    empirically - you throw a lot of tests and see if there is some Feature Interaction Bug coming from the current
+    order of `Rule`s, which could be fixed with adding some guard to one of them or by changing their order (because one
+    is more specific than the other, and so the generic one would catch all the cases that we would prefer to be handled
+    by a special casing one)
+  - finally, we have 2 most generic rules: one rewriting classes into classes with public constructors (that includes:
+    `case class`es, Java Beans, Plain Old Java Objects, and much more!) and one rewriting sealed hierarchies (sealed
+    either by Scala or Java, so that includes `sealed trait`s, `sealed abstract class`es, Scala 3's `enum`s and Java's
+    `enum`s)
+
+A bit more information about each of these `Rule`s (without getting into details that could change over time) is
+presented below.
 
 #### Summoning implicits
 
-TODO
+Before attempting to summon any `implicit`, the `Rule` checks if it should do it in the first place:
+
+  - if we provided overrides then the conversion for which we provided it should not use `implicit` (because how then
+    we would use them?)
+  - semiautomatic derivation has a guard against summoning implicit for itself. It prevents issues like
+
+    !!! example
+  
+        ```scala
+        implicit val transformerFromTo: Transformer[From, To] = Transformer.derive[From, To] // implicit[Transformer[From, To]]
+                                                                                       // = transformerFromTo - cyclic dependency
+        ```
+
+    This guard is removed derivation enters into recursive mapping of fields/subtypes/inner elements, because there the
+    recursion is wanted.
+
+If there are no reasons to pass, `Rule` attempts summoning.
+
+For `Transformer`s it could only summon `Transformer` instance, so if it finds it, we are done.
+
+For `PartialTransformer`s we have 4 possible cases:
+
+  - there is only `PartialTransformer[From, To]` - then we are using it and create `partial.Result` value
+  - there is only `Transformer[From, To]` - then we will use it, and it will help us avoid wrapping with `partial.Result`
+    a little bit longer
+  - there are both `PartialTransformer[From, To]` and `Transformer[From, To]`, and no configuration telling us which to
+    pick - this is considered ambiguous and fails the derivation
+  - there are both `PartialTransformer[From, To]` and `Transformer[From, To]`, configuration telling us which to pick
+
+This rule is special in that if no `implicit` is found, then `Rule` recovers to "passing on " rather than "failing". 
 
 #### Upcasting
 
-TODO
+Before attempting to upcast, the `Rule` checks if it should do it in the first place:
+
+  - if we provided overrides then the conversion for which we provided it should not upcast (because how then we would
+    use them?)
+
+If `From` is a subtype of `To` and there are no reasons to pass, the rule upcasts `From` expression and returns success.
 
 #### Special cases
 
-TODO
+Chimney would have specialized expression generation for things like:
+
+  - `AnyVal`s - we might check if wrapping/unwrapping/rewrapping is needed, and trigger a recursive derivation for
+    the wrapped types
+  - `Option`s - we might check if wrapping/unwrapping (only in Partials)/mapping is needed and trigger a recursive
+    derivation for the inner types
+  - `Option`s - we might check if wrapping/rewrapping is needed and trigger a recursive derivation for the inner types
+  - `Array`s and collections - since the type of "outer" type (collection type/array) can change, we not only need to
+    map elements but also potentially covert the collection. In case of `PartialTransformer`s we also need to traverse
+    these collections to accumulate errors and add indices/keys to the error information
+
+For each of these `Rule` might decide whether the case should be handled. Some of these rules needs to be tested before
+some other rules (e.g. there might be several `Rule`s for `AnyVal`s with specific order) and have no requirements about
+other rules (e.g. `Rule`s handling `Option`s might be unrelated to `Rule`s handling `AnyVal`s and not affect each other).  
 
 #### Product types
 
-TODO
+A Product Rule is an umbrella name for transformations which initially only handled product types (`case class`es and
+`case class`-like), but currently handle every case when we extract fields or methods, transform them, and put the
+results in the constructor (and maybe also setters).
+
+This rule is very generic which is why is tested as last-but-one. To qualify for this rule the target type needs to have
+a public primary constructor and be non-abstract. If it is, the rule is applied and failure to successfully map
+fields and methods of the source type into constructor's arguments and setters of the target type fails derivation.
+
+The derivation has a few stages:
+
+  - lists of possible getters (the source type) and the possible arguments (constructor + setters, the target type)
+    are made
+  - manual overrides are applied
+  - arguments/setters which didn't have a manual override are being resolved by macro: if either type is s tuple,
+    matching is done by the position, if neither is, matching is done by name
+    - during matching we're checking if inherited definitions should be used, if methods are allowed, if Bean
+      getters/setters are allowed, etc
+    - for each matching we are triggering a recursive derivation of an expression (from the source field type into
+      the target argument type)
+  - if no derivation failed, we can combine expressions for each argument into an expression building a whole
+    constructor call
+    - if the transformation is Total (or all expressions are Total), we can just pass them to the constructor and
+      return the computed Total expression
+    - if at least one expression is Partial, the whole returned expression also needs to be Partial, but its
+      construction depends on how many Partial expressions we need to combine:
+      - 1 Partial argument - can be `map`ped
+      - 2 Partial arguments - can use `partial.Result.map2` or similar
+      - 3 or more Partial arguments - in order to be fast and avoid unnecessary allocations we need to build ourselves
+        and expression which would respect `failFast` flag and avoid allocation of intermediate results using e.g.
+        `null`s and mutability (this is safe since the user cannot observe that nor break it)
+
+This is the most complex `Rule` that Chimney has to consider.
 
 #### Sealed hierarchies
 
-TODO
+The last rule is the transformation of `sealed` hierarchies (and/or Java's `enum`s). This rule applies when both
+types are Scala's `sealed` (Scala's `enum` including) or Java's `enum`s.
 
-#### Recursion
+This rule is also very generic, although not as generic as Products Rule, which is why it has to be the last. To succeed
+this `Rule` has to pattern-match in the source type, and for each of its subtypes (exhaustive pattern-matching) find
+a mapping.
 
-TODO
+The derivation has a few stages:
+ 
+  - list of subtypes of both the source type and the target type are made
+  - manual overrides are applied
+  - the source type's subtypes which didn't have a manual override are being resolved by macro, matching is done by name
+  - if no derivation failed, we can combine expressions for each argument into an exhaustive pattern-matching
+    - if the transformation is Total (or all expressions are Total), we only need to upcast each result to
+      the target type
+    - if at least 1 transformation is Partial we need to lift all the other expressions to `partial.Result`
+
+!!! note
+
+    To make sure that there are no "unused" warnings that user could not fix (we **have to** name the value during
+    pattern-matching to start derivation **and then** we learn if it's needed), we have to mark each variable as used.
+    
+    This is done with:
+    
+    ```scala
+    val _ = value
+    ```
+    
+    syntax. However, if you log from macro, you might notice that the compiler presents it differenty:
+    
+    ```scala
+    (value: ValueType @scala.unchecked) match {
+      case _ =>
+        ()
+    }
+    ```
+    
+    which looks much more disturbing and suggest performance penalty. However in the bytecode you can find 1 extra
+    `istore_1` (tested on Scala 3), so it is not slow nor unsafe, only ugly.
+    
+!!! note
+
+    In case there are type parameters in `sealed trait`, you will have a pattern-match (or specifically a type-match in
+    our case) which is either:
+    
+      - not using type parameters and passing `?` instead (potentially making compiler complain that types do not match)
+      - using type parameters and making compiler complain that types cannot be checked in the runtime
+      
+    To prevent both issues we are passing type parameters (to have the correct types of extracted values) and annotating
+    the matched value with `@scala.unchecked`.
 
 ### Error handling and logging
 
-TODO
+Each macro expansion can emit only 1 message of each of these logging levels: info, warn, error, trace. Each next call
+will be treated as no-op. There are `println`s, but they do not work in: Scastie and build servers (`println`s happen on
+a server which only sends you "proper" logs from the compilation).
+
+Meanwhile, Chimney users should receive a list of all aggregated errors that failed the derivation. The only way we
+could do it (considering above) is by gathering all the information to log with something similar to `WriterT` and
+collect all the errors with something similar to `EitherT` of some error semigroup. Internally there is a structure
+called `DerivationResult` which does exactly that, and also stores logs in a structured way. 
+
+Thanks to that, we can both print error information about each tested failed derivation with an exact cause, and
+print a structured log of a whole derivation process.
+
+### Scala 2 vs Scala 3 in derivation
+
+As much code as possible (but not more) is shared between Scala 2 and Scala 3. This way we want to avoid 2 separate
+codebases that would inevitably diverge through time, with different conventions, trade-offs, etc. Differences in
+behavior between 2 and 3 should be justifiable and documented, and never accidental.
+
+The way we achieved this is by using similar pattern to
+[C. Hofer et al. **Polymorphic Embedding of DSLs**, GPCE, 2008](https://www.informatik.uni-marburg.de/~rendel/hofer08polymorphic.pdf)
+used in Endpoints4s and Endless4s:
+
+!!! example "Shared codebase"
+
+    ```scala
+    trait Definitions extends Types with Exprs
+    ```
+    
+    ```scala
+    trait Types {
+       type Type[A] // abstract type
+    
+       val Type: TypeModule
+       trait TypeModule { this: Type.type =>
+         // abstract companion object
+       }
+     }
+    ```
+    
+    ```scala
+    trait Exprs { this: Types =>
+      type Expr[A] // abstract type
+    
+      val Expr: ExprModule
+      trait ExprModule { this: Expr.type =>
+        // abstract companion object
+      }
+    }
+    ```
+ 
+!!! example "Scala 2-only codebase"
+
+    ```scala
+    trait DefinitionsPlatform
+        extends Definitions
+        with TypesPlatform
+        with ExprsPlatform {
+      val c: scala.reflect.macros.blackbox.Context
+    }
+    ```
+    
+    ```scala
+    trait TypesPlatform { this: DefinitionsPlatform =>
+       type Type[A] = c.WeakTypeTag[A]
+    
+       object Type extends TypeModule {
+         // ...
+       }
+     }
+    ```
+    
+    ```scala
+    trait Exprs { this: Types =>
+      type Expr[A] = c.Expr[A]
+    
+      object Expr extends ExprModule {
+        // ...
+      }
+    }
+    ```
+ 
+!!! example "Scala 3-only codebase"
+
+    ```scala
+    abstract class DefinitionsPlatform(using val quotes: scala.quoted.Quotes)
+        extends Definitions
+        with TypesPlatform
+        with ExprsPlatform
+    ```
+    
+    ```scala
+    trait TypesPlatform { this: DefinitionsPlatform =>
+       type Type[A] = scala.quoted.Type[A]
+    
+       object Type extends TypeModule {
+         // ...
+       }
+     }
+    ```
+    
+    ```scala
+    trait Exprs { this: Types =>
+      type Expr[A] = scala.quoted.Expr[A]
+    
+      object Expr extends ExprModule {
+        // ...
+      }
+    }
+    ```
+
+This simplified code shows the general idea behind Chimney's multiplatform architecture. For every feature we needed
+in macros we had to create an interface and then 2 platform specific implementations. The biggest challenge was getting
+abstractions right enough, but that was done iteratively. However, those are implementation details which shouldn't
+matter to the user.
+
+After defining macro's logic with platform-independent code the only platform-specific code that has to be written
+for each platform separately is plugging in the platform-specific implementations and the entrypoint to the macro:
+
+  - Scala 2 has a concept of `c.prefix` storing expression with the content of whatever was before the dot
+    (e.g. for `object.macroMethod` it would be expression with `object`)
+  - Scala 3 requires passing each expression explicitly, no exception (so we would often pass `'{ this }` )
+
+These adjustments are required to extract `source: From`, possibly `failFast: Boolean` and `RuntimeDataStore`, to be
+able to pass them into macro.

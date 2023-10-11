@@ -15,6 +15,111 @@ from the types, you need to provide it with a hint, but nothing more.
     scala-cli compile --scala $scala_version --platform $platform .
     ```
 
+## Total `Transformer`s vs `PartialTransformer`s
+
+While looking at code examples you're going to see these 2 terms: **Total Transformers** and **Partial Transformers**.
+
+Chimney's job is to generate the code which will convert value of one type (often called a **source** type, or `From`)
+into another type (often called a **target** type, or `To`). When Chimney has enough information to generate
+the transformation, most of the time it could do it for **every** value of the source type. In Chimney we called such
+transformations Total (because they are virtually **total functions**). One way in which Chimney allows you to use such
+transformation is through `Transformer[From, To]`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.Transformer
+
+    class MyType(val a: Int)
+    class MyOtherType(val b: String)    
+
+    val transformer: Transformer[MyType, MyOtherType] = (src: MyType) => new MyOtherType(src.a.toString)
+        
+    transformer.transform(new MyType(10)) // new MyOtherType("10")
+    
+    import io.scalaland.chimney.dsl._
+    
+    // when the compiler can find an implicit Transformer
+    implicit val transformerAsImplicit: Transformer[MyType, MyOtherType] = transformer
+    
+    // we can use this extension method to call it
+    (new MyType(10)).transformInto[MyOtherType] // new MyOtherType("10")
+    ```
+
+For many cases Chimney can generate this `Transformer` for you, without you having to do anything. As a matter of the
+fact, the majority of this page describes exactly that. In some cases Chimney might not know how to generate a total
+transformation - but you would know, and you [could provide it yourself](#custom-transformations). But what if
+converting one type into another cannot be described with a total function?
+
+Partial Transformers owe their name to **partial functions**. They might successfully convert only some values of
+the source type. However, contrary to Scala's `PartialFunction` they do not throw an `Exception` when you pass a "wrong"
+input into it. Instead, they return `partial.Result[To]`, which can store both successful and failed conversions and,
+in case of failure, give you some information about the cause (an error message, an exception, value for which partial
+function was not defined, "empty value" when something was expected) and even the path to the failed conversion
+(a field name, an index of a collection, a key of a map).
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.{PartialTransformer, partial}
+
+    class MyType(val b: String)
+    class MyOtherType(val a: Int)
+
+    val transformer: PartialTransformer[MyType, MyOtherType] = PartialTransformer[MyType, MyOtherType] { (src: MyType) =>
+      partial.Result.fromCatching(src.a.toInt)
+        .prependErrorPath(partial.PathElement.Accessor("a"))
+        .map { a =>
+          new MyOtherType(a)
+        }
+    }
+    
+    transformer.transform(new MyType("10")).asEither
+      .left.map(_.asErrorPathMessages) // Right(new MyOtherType(10))
+    transformer.transform(new MyType("NaN")).asEither
+      .left.map(_.asErrorPathMessages) // Left(Iterable("a" -> ThrowableMessage(e: NumberFormatException)))
+    
+    import io.scalaland.chimney.dsl._
+    
+    // when the compiler can find an implicit Transformer
+    implicit val transformerAsImplicit: PartialTransformer[MyType, MyOtherType] = transformer
+    
+    // we can use this extension method to call it
+    (new MyType("10")).transformIntoPartial[MyotherType].asEither
+      .left.map(_.asErrorPathMessages) // Right(new MyOtherType(10))
+    (new MyType("NaN")).transformIntoPartial[MyOtherType].asEither
+      .left.map(_.asErrorPathMessages) // Left(Iterable("a" -> ThrowableMessage(e: NumberFormatException)))
+    ```
+
+As you can see `partial.Result` contains `Iterable` as a structure for holding its errors. Thanks to that:
+
+  - errors are aggregated - after partial transformation you have access to all failures that happened, so that you
+    could fix them at once, rather than rerunning transformation several times
+    - you can turn this off with a runtime flag, just call `.transformIntoPartial[To](failFast = true)`
+  - errors are lazy - if their computation is expensive and they aren't used, you are not paying for it
+  - there are some build-in conversion from `partial.Result` (e.g. to `Option` or `Either`), and there are
+    [conversions to Cats types](cookbook.md#cats-integration) but you encouraged to convert them yourself
+    to whatever data format you use to representing errors
+
+!!! tip
+
+    If you are wondering whether your case is for `Transformer` or `PartialTransformer` you can use the following rule
+    of thumb:
+    
+      - quite often Chimney is used to convert to and from the domain model. The other side of the transformation might
+        be a model generated by Protocol Buffers, an ADT used as to generating JSON codecs, a model used to read/write
+        from the database, etc.
+      - then you almost always can convert a domain model into a DTO model - you can the use `Transformer` and consider
+        it a **domain encoder** of sort
+      - however when converting into domain model you might guard against different invalid inputs: empty `Option`s,
+        empty `String`s, values out of range - in such cases even if you wanted to be able to fail at one field, nested
+        somewhere in ADT, Partial Transformers can be considered **domain decoders**
+    
+    In both of these cases, you might need to provide transformations for some types, buried in deep nesting, but often
+    Chimney would be able to use them to generate a conversion of a whole model.
+
 ## Upcasting and identity transformation
 
 If you transform one type into itself or into its supertype, it will be upcasted without any change.
@@ -202,6 +307,7 @@ side effects - you need to enable the `.enableMethodAccessors` flag:
     // partial.Result.fromValue(new Target(source.a, source.b()))
     
     locally {
+      // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfig.default.enableMethodAccessors
       
       (new Source("value", 512)).transformInto[Target]
@@ -233,6 +339,7 @@ If the flag was enabled in implicit config it can be disabled with `.disableMeth
     }
     class Target(a: String, b: Int)
     
+    // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfig.default.enableMethodAccessors
     
     (new Source("value", 512)).into[Target].disableMethodAccessors.transform // compilation fails
@@ -259,6 +366,7 @@ inherited from a source value's supertype, you need to enable the `.enableInheri
     Source(10).intoPartial[Target].enableInheritedAccessors.transform.asEither // Right(Bar("value", 10))
     
     locally {
+      // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfig.default.enableInheritedAccessors
       
       Source(10).transformInto[Target] // Bar("value", 10)
@@ -285,6 +393,7 @@ If the flag was enabled in implicit config it can be disabled with `.enableInher
     case class Source(b: Int) extends Parent
     case class Target(a: String, b: Int)
     
+    // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfig.default.enableInheritedAccessors
     
     Source(10).into[Target].disableInheritedAccessors.transform
@@ -315,6 +424,7 @@ If we want to read `def getFieldName(): A` as if it was `val fieldName: A` - whi
     // partial.Result.fromValue(new Target(source.getA(), source.getB()))
     
     locally {
+      // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfig.default.enableBeanGetters
       
       (new Source("value", 512)).transformInto[Target]
@@ -350,6 +460,7 @@ If the flag was enabled in implicit config it can be disabled with `.disableBean
     }
     class Target(a: String, b: Int)
     
+    // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfig.default.enableBeanGetters
     
     (new Source("value", 512)).into[Target].disableBeanGetters.transform // compilation fails
@@ -387,6 +498,7 @@ flag:
     // partial.Result.fromValue(target)
     
     locally {
+      // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfig.default.enableBeanSetters
       
       (new Source("value", 512)).transformInto[Target]
@@ -427,9 +539,29 @@ If the flag was enabled in implicit config it can be disabled with `.disableBean
       private var b = 0
     }
     
+    // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfig.default.enableBeanSetters
     
     (new Source("value", 512)).into[Target].disableBeanSetters.transform // compilation fails
+    ```
+
+### `Unit` as the constructor's parameter
+
+If a class' constructor takes `Unit` as a parameter it is always provided without any configuration.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    case class Source()
+    case class Target(value: Unit)
+    
+    Source().transformInto[Target] // Target(())
+    Source().into[Target.transform // Target(())
+    Source().transformIntoPartial[Target].asEither // Right(Target(()))
+    Source().intoPartial[Target].transform.asEither // Right(Target(()))
     ```
 
 ### Allowing the constructor's default values
@@ -477,6 +609,7 @@ If the flag was enabled in implicit config it can be disabled with `.disableDefa
     case class Source(a: String, b: Int)
     case class Target(a: String, b: Int = 0, c: Long = 0L)
     
+    // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfig.default.enableDefaultValues
     
     (new Source("value", 512)).into[Target].disableDefaultValues.transform // compilation fails
@@ -541,6 +674,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
       def setC(cc: Int): Unit = c = cc
     }
 
+    // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
     
     (new Foo()).into[Bar].withFieldRenamed(_.getB, _.getC).transform
@@ -649,7 +783,8 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
       def getC: Int = c
       def setC(cc: Int): Unit = c = cc
     }
-
+    
+    // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
     
     (new Foo()).into[Bar].withFieldConst(_.getC, 100L).transform
@@ -773,6 +908,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
       def setC(cc: Int): Unit = c = cc
     }
 
+    // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
     
     (new Foo()).into[Bar].withFieldComputed(_.getC, foo => foo.getB().toLong).transform
@@ -1307,6 +1443,7 @@ similar reasons to default values support, but we can enable it with the `.enabl
     Foo("value").intoPartial[Bar].enableOptionDefaultsToNone.transform.asOption // Some(Bar("value", None))
     
     locally {
+      // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfig.default.enableOptionDefaultsToNone
       
       Foo("value").transformInto[Bar] // Bar("value", None)
@@ -1341,6 +1478,7 @@ The `None` value is used as a fallback, meaning:
     Foo("value").intoPartial[Bar].enableDefaultValues.enableOptionDefaultsToNone.transform.asOption // Some(Bar("value", Some("a")))
     
     locally {
+      // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfig.default.enableOptionDefaultsToNone.enableDefaultValues
       
       Foo("value").transformInto[Bar] // Bar("value", Some("a"))
@@ -1361,6 +1499,7 @@ If the flag was enabled in implicit config it can be disabled with `.disableOpti
     case class Foo(a: String)
     case class Bar(a: String, b: Option[String] = Some("a"))
 
+    // all transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfig.default.enableOptionDefaultsToNone
     
     Foo("value").into[Bar].disableOptionDefaultsToNone.transform // compilation error

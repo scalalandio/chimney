@@ -43,6 +43,7 @@ patcher.
     ```scala
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
+    
     case class User(id: Int, email: String, phone: Long)
     case class UserUpdateForm(email: String, phone: Long, address: String)
     
@@ -62,15 +63,50 @@ But there is a way to ignore redundant patcher fields explicitly with `.ignoreRe
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
+    case class User(id: Int, email: String, phone: Long)
+    case class UserUpdateForm(email: String, phone: Long, address: String)
+    
+    val user = User(10, "abc@@domain.com", 1234567890L)
+
     user
       .using(UserUpdateForm2("xyz@@domain.com", 123123123L, "some address"))
       .ignoreRedundantPatcherFields
       .patch
     // User(10, "xyz@@domain.com", 123123123L)
+    
+    locally {
+      // all patching derived in this scope will see these new flags
+      implicit val cfg = PatcherConfiguration.default.ignoreRedundantPatcherFields
+      
+      user.patchUsing(UserUpdateForm2("xyz@@domain.com", 123123123L, "some address"))
+      // User(10, "xyz@@domain.com", 123123123L)
+    }
     ```
 
 Patching succeeded using only relevant fields that appears in patched object and ignoring address: `String` field from
 the patch.
+
+If the flag was enabled in implicit config it can be disabled with `.failRedundantPatcherFields`.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+
+    case class User(id: Int, email: String, phone: Long)
+    case class UserUpdateForm(email: String, phone: Long, address: String)
+    
+    val user = User(10, "abc@@domain.com", 1234567890L)
+    
+    // all patching derived in this scope will see these new flags
+    implicit val cfg = PatcherConfiguration.default.ignoreRedundantPatcherFields
+    
+    user
+      .using(UserUpdateForm2("xyz@@domain.com", 123123123L, "some address"))
+      .failRedundantPatcherFields
+      .patch // compilation error
+    ```
 
 ### Treating `None` as no-update instead of "set to `None`"
 
@@ -140,4 +176,37 @@ but it also gives a simple way to always ignore `None` from patch with `.ignoreN
       .ignoreNoneInPatch
       .patch
     // ignores updating both fields: User(Some("John"), Some(30))
+    
+    locally {
+      // all patching derived in this scope will see these new flags
+      implicit val cfg = PatcherConfiguration.default.ignoreNoneInPatch
+      
+      user.patchUsing(userPatch)
+      // ignores updating both fields: User(Some("John"), Some(30))
+    }
     ```
+
+If the flag was enabled in implicit config it can be disabled with `.clearOnNoneInPatch`.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+        
+    case class User(name: Option[String], age: Option[Int])
+    case class UserPatch(name: Option[String], age: Option[Int])
+    
+    val user = User(Some("John"), Some(30))
+    val userPatch = UserPatch(None, None)
+    
+    // all patching derived in this scope will see these new flags
+    implicit val cfg = PatcherConfiguration.default.ignoreNoneInPatch
+    
+    user
+      .using(userPatch)
+      .clearOnNoneInPatch
+      .patch
+    // clears both fields: User(None, None)
+    ```
+ 
