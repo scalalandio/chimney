@@ -55,7 +55,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * By default in such case derivation will fail. By enabling this flag, derivation will fallback to default value.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-the-constructors-default-values]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-fallback-to-the-constructors-default-values]] for more details
     *
     * @since 0.6.0
     */
@@ -64,7 +64,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Fail derivation if `From` type is missing field even if `To` has default value for it.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-the-constructors-default-values]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-fallback-to-the-constructors-default-values]] for more details
     *
     * @since 0.1.9
     */
@@ -115,7 +115,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * By default in such case compilation fails.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-none-as-the-constructors-arguments-fallback]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-fallback-to-none-as-the-constructors-argument]] for more details
     *
     * @since 0.2.1
     */
@@ -124,7 +124,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable `None` fallback value for optional fields in `To`.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-none-as-the-constructors-arguments-fallback]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#allowing-fallback-to-none-as-the-constructors-argument]] for more details
     *
     * @since 0.6.0
     */
