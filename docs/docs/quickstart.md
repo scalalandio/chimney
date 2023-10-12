@@ -38,11 +38,11 @@ or try it in [Scala CLI](https://scala-cli.virtuslab.org/):
 
 ```bash
 # Scala 2.12
-scala-cli repl --scala "{{ scala.2_12 }}" --dependency "io.scalaland::chimney:{{ git.tag or local.tag }}"
+scala-cli repl --scala "{{ scala.2_12 }}" --dependency "io.scalaland::chimney::{{ git.tag or local.tag }}"
 # Scala 2.13
-scala-cli repl --scala "{{ scala.2_13 }}" --dependency "io.scalaland::chimney:{{ git.tag or local.tag }}"
+scala-cli repl --scala "{{ scala.2_13 }}" --dependency "io.scalaland::chimney::{{ git.tag or local.tag }}"
 # Scala 3
-scala-cli repl --scala "{{ scala.3 }}" --dependency "io.scalaland::chimney:{{ git.tag or local.tag }}"
+scala-cli repl --scala "{{ scala.3 }}" --dependency "io.scalaland::chimney::{{ git.tag or local.tag }}"
 ```
 
 !!! tip

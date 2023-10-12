@@ -10,7 +10,7 @@ Currently, the only supported case is updating one `case class` with another:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     case class Email(address: String) extends AnyVal
@@ -41,7 +41,7 @@ When the patch `case class` contains a field that does not exist in patched obje
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     case class User(id: Int, email: String, phone: Long)
@@ -63,7 +63,7 @@ But there is a way to ignore redundant patcher fields explicitly with `.ignoreRe
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     case class User(id: Int, email: String, phone: Long)
@@ -94,7 +94,7 @@ If the flag was enabled in the implicit config it can be disabled with `.failRed
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
 
     case class User(id: Int, email: String, phone: Long)
@@ -126,7 +126,7 @@ Let’s consider the following patch:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     case class User(id: Int, email: String, phone: Long)
@@ -168,7 +168,7 @@ but it also gives a simple way to always ignore `None` from the patch with `.ign
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
         
     case class User(name: Option[String], age: Option[Int])
@@ -200,7 +200,7 @@ If the flag was enabled in the implicit config it can be disabled with `.clearOn
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
         
     case class User(name: Option[String], age: Option[Int])
