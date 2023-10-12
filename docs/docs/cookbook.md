@@ -12,7 +12,7 @@ If we do not want to enable the same flag(s) in several places, we can define sh
 
     ```scala
     //> using scala {{ scala.2_13 }}
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     implicit val transformerCfg = TransformerConfiguration.default.enableMethodAccessors.enableMacrosLogging
@@ -24,7 +24,7 @@ If we do not want to enable the same flag(s) in several places, we can define sh
 
     ```scala
     //> using scala {{ scala.3 }}
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     transparent inline given TransformerConfiguration[?] =
@@ -174,7 +174,7 @@ You can use [`.enableMacrosLogging`](troubleshooting.md#debugging-macros) to see
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(baz: Foo.Baz)
@@ -256,7 +256,7 @@ Then you can use one simple import to enable it:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney-java-collections:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney-java-collections::{{ git.tag or local.tag }}
     import io.scalaland.chimney.javacollections._
     ```
 
@@ -286,7 +286,7 @@ Cats integration module contains the following stuff:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney-cats:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney-cats::{{ git.tag or local.tag }}
     
     case class RegistrationForm(
         email: String,
@@ -378,7 +378,7 @@ The automatic conversion into a protobuf with such a field can be problematic:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     object domain {
@@ -409,7 +409,7 @@ There are 2 ways in which Chimney could handle this issue:
     !!! example
   
         ```scala
-        //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+        //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
 
          domain.Address("a", "b").into[protobuf.Address]
@@ -422,7 +422,7 @@ There are 2 ways in which Chimney could handle this issue:
     !!! example
 
         ```scala
-        //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+        //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
     
         domain.Address("a", "b").into[protobuf.Address]
@@ -551,7 +551,7 @@ Encoding (with `Transformer`s) is pretty straightforward:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     val domainType: addressbook.AddressBookType = addressbook.AddressBookType.Private("test")
@@ -572,7 +572,7 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
     !!! example
     
         ```scala
-        //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+        //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
   
         pbType.value
@@ -589,7 +589,7 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
     !!! example
   
         ```scala
-        //> using dep io.scalaland::chimney-protobufs:{{ git.tag or local.tag }}
+        //> using dep io.scalaland::chimney-protobufs::{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
         import io.scalaland.chimney.protobufs._ // includes support for empty scalapb.GeneratedMessage
       
@@ -670,7 +670,7 @@ could be done with:
 !!! example
   
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered
@@ -776,7 +776,7 @@ Each of these transformations is provided by the same import:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney-protobufs:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney-protobufs::{{ git.tag or local.tag }}
     import io.scalaland.chimney.protobufs._
     ```
 
@@ -818,7 +818,7 @@ then Partial Transformer would have to be created manually:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.partial
   
@@ -851,7 +851,7 @@ we could use it to construct `PartialTransformer` automatically:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.partial
   
@@ -879,7 +879,7 @@ library which attempts to remove runtime overhead from user's types.
     ```scala
     //> using scala {{ scala.2_13 }}
     //> using options -Ymacro-annotations
-    //> using dep io.estatico::newtype:0.4.4
+    //> using dep io.estatico::newtype::0.4.4
     import io.estatico.newtype.macros.newtype
   
     @newtype case class Username(value: String)
@@ -898,8 +898,8 @@ as a wrapper around another type that performs this validation e.g. Refined Type
     ```scala
     //> using scala {{ scala.2_13 }}
     //> using options -Ymacro-annotations
-    //> using dep io.estatico::newtype:0.4.4
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.estatico::newtype::0.4.4
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.estatico.newtype.Coercible
     import io.scalaland.chimney.Transformer
     
@@ -917,7 +917,7 @@ it tries to remove wrapping in runtime. However, it uses different tricks
 !!! example
 
     ```scala
-    //> using dep io.monix::newtypes-core:0.2.3
+    //> using dep io.monix::newtypes-core::0.2.3
     import monix.newtypes._
     
     type Username = Username.Type
@@ -936,8 +936,8 @@ We can use them to provide unwrapping `Transformer` and wrapping
 !!! example
 
     ```scala
-    //> using dep io.monix::newtypes-core:0.2.3
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.monix::newtypes-core::0.2.3
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.{PartialTransformer, Transformer}
     import io.scalaland.chimney.partial
     import monix.newtypes._
@@ -963,7 +963,7 @@ popular constraints as long as we express them in the value's type.
 !!! example
 
     ```scala
-    //> using dep eu.timepit::refined:0.11.0
+    //> using dep eu.timepit::refined::0.11.0
     import eu.timepit.refined._
     import eu.timepit.refined.api.Refined
     import eu.timepit.refined.auto._
@@ -977,8 +977,8 @@ We can validate using the dedicated type class (`Validate`), while extraction is
 !!! example
 
     ```scala
-    //> using dep eu.timepit::refined:0.11.0
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep eu.timepit::refined::0.11.0
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import eu.timepit.refined.api.{Refined, Validate}
     import io.scalaland.chimney.{PartialTransformer, Transformer}
     import io.scalaland.chimney.partial
@@ -1013,7 +1013,7 @@ It could look like this:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney._
     
     sealed trait MyOptional[+A]
