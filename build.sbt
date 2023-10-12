@@ -216,10 +216,10 @@ val mimaSettings = Seq(
   mimaPreviousArtifacts := {
     val previousVersions = moduleName.value match {
       case "chimney-macro-commons"    => Set() // we're not guaranteeing stability of this library just yet
-      case "chimney"                  => Set("0.8.0-RC1")
-      case "chimney-cats"             => Set("0.8.0-RC1")
-      case "chimney-java-collections" => Set() // not yet published
-      case "chimney-protobufs"        => Set() // not yet published
+      case "chimney"                  => Set("0.8.0-RC1", "0.8.0")
+      case "chimney-cats"             => Set("0.8.0-RC1", "0.8.0")
+      case "chimney-java-collections" => Set("0.8.0")
+      case "chimney-protobufs"        => Set("0.8.0")
       case _                          => Set()
     }
     previousVersions.map(organization.value %% moduleName.value % _)
@@ -325,7 +325,7 @@ lazy val chimneyMacroCommons = projectMatrix
   .settings(publishSettings*)
   .settings(dependencies*)
   .settings(
-    mimaFailOnNoPrevious := false
+    mimaFailOnNoPrevious := false // we're not guaranteeing stability of this library just yet
   )
 
 lazy val chimney = projectMatrix
@@ -389,8 +389,7 @@ lazy val chimneyJavaCollections = projectMatrix
   .settings(mimaSettings*)
   .settings(
     // Scala 2.12 doesn't have scala.jdk.StreamConverters and we use it in test of java.util.stream type class instances
-    libraryDependencies += "org.scala-lang.modules" %%% "scala-java8-compat" % "1.0.2" % Test,
-    mimaFailOnNoPrevious := false
+    libraryDependencies += "org.scala-lang.modules" %%% "scala-java8-compat" % "1.0.2" % Test
   )
   .dependsOn(chimney % "test->test;compile->compile")
 
@@ -431,8 +430,7 @@ lazy val chimneyProtobufs = projectMatrix
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
     Test / PB.protoSources += PB.externalSourcePath.value,
     Test / PB.targets := Seq(scalapb.gen() -> (Test / sourceManaged).value / "scalapb"),
-    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
-    mimaFailOnNoPrevious := false
+    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
   )
   .dependsOn(chimney % "test->test;compile->compile")
 

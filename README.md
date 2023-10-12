@@ -15,7 +15,7 @@
 
 The battle-tested Scala library for data transformations. Supported for (2.12, 2.13, 3.3+) x (JVM, Scala.js, Scala Native)
 
-Chimney documentation is available at https://chimney.readthedocs.io. Read the Docs keeps is versioned in case you need
+Chimney documentation is available at https://chimney.readthedocs.io. Read the Docs keeps it versioned in case you need
 to access documentation for older versions.
 
 ## Contribution
