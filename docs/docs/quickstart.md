@@ -4,7 +4,7 @@ Chimney is supported for Scala **2.12**, **2.13**, **3.3+** on [**JVM**](https:/
 [**Scala.js**](https://www.scala-js.org/) and [**Scala Native**](https://scala-native.org/) with full feature parity
 between each version.
 
-Newest versions on each platform are:
+The newest versions on each platform are:
 
 [![Chimney JVM versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=jvm)](https://search.maven.org/artifact/io.scalaland/chimney_2.13) <br>
 [![Chimney Scala.js 1.x versions](https://index.scala-lang.org/scalalandio/chimney/chimney/latest-by-scala-version.svg?platform=sjs1)](https://search.maven.org/artifact/io.scalaland/chimney_sjs1_2.13) <br>
@@ -47,7 +47,7 @@ scala-cli repl --scala "{{ scala.3 }}" --dependency "io.scalaland::chimney:{{ gi
 
 !!! tip
 
-    If you are advanced user, who want to learn the difference about automatic derivation and semiautomatic derivation
+    If you are a advanced user, who wants to learn the difference between automatic derivation and semiautomatic derivation
     in Chimney, see [Automatic, semiautomatic and inlined derivation](cookbook.md#automatic-semiautomatic-and-inlined-derivation).
 
 ## Java collections integration
@@ -72,7 +72,7 @@ import io.scalaland.chimney.javacollections._
 
 ## Cats integration
 
-If you are interested in Cats integrations for Partial Transformers, you need add to your project:
+If you are interested in Cats integrations for Partial Transformers, you need to add to your project:
 
 ```scala
 // if you use Scala on JVM-only

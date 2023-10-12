@@ -1,6 +1,6 @@
 # Cookbook
 
-Examples af various use cases already handled by the Chimney.
+Examples of various use cases already handled by Chimney.
 
 ## Reusing flags for several transformations/patchings
 
@@ -36,19 +36,20 @@ If we do not want to enable the same flag(s) in several places, we can define sh
 
 !!! tip
 
-    As we can see, on Scala 3 we can skip useless name, but we are required to provide the type. Since we want it to
+    As we can see, on Scala 3 we can skip useless names, but we are required to provide the type. Since we want it to
     be inferred (for our convenience), we can use `transparent inline` to provide this time as a wildcard type but still
     let Scala figure it out.
     
 !!! tip
 
     These configs will be shared by all derivations triggered in the scope that this `implicit`/`given` was defined.
-    This include automatic derivation as well, so summoning autoderived Transformer would adhere to these flags.
+    This includes automatic derivation as well, so summoning automatically derived Transformer would adhere to these
+    flags.
 
 ## Automatic, Semiautomatic and Inlined derivation
 
 When you use the standard way of working with Chimney, but `import io.scalaland.chimney.dsl._`
-you might notice that it is very convenient approach, making a lot of things easy:
+you might notice that it is a very convenient approach, making a lot of things easy:
 
   - when you want to trivially convert `val from: From` into `To` you can do
     it with `from.transformInto[To]`
@@ -60,19 +61,19 @@ you might notice that it is very convenient approach, making a lot of things eas
     `Transformer.define.customisationMethod.buildTransformer` or
     `from.into[To].customisationMethod.transform`
 
-However, sometime you may want to restrict this behavior. It might be too easy to:
+However, sometimes you may want to restrict this behavior. It might be too easy to:
 
   - derive the same transformation again and again
   - define some customized `Transformer`, not import it by accident and still
-    end up with compiling code since Chimney could derive a new one on the spot
+    end up with the compiling code since Chimney could derive a new one on the spot
 
 ### Automatic vs semiautomatic
 
-In other libraries this issue is addressed by providing 2 flavours of derivation:
+In other libraries this issue is addressed by providing 2 flavors of derivation:
 
   - automatic derivation: usually requires some `import library.auto._`, allows you
     to get a derived instance just by summoning it e.g. with `implicitly[TypeClass[A]]`
-    or calling any other method which would take it as `implicit` parameter.
+    or calling any other method that would take it as an `implicit` parameter.
   
     Usually, it is convenient to use, but has a downside of re-deriving the same instance
     each time you need it. Additionally, you cannot write
@@ -83,12 +84,12 @@ In other libraries this issue is addressed by providing 2 flavours of derivation
         implicit val typeclass: TypeClass[A] = implicitly[TypeClass[A]]
         ```
   
-    since that generates circular dependency on a value initialisation. This makes it hard
-    to cache this instance in e.g. companion object. In some libraries it also makes it hard
+    since that generates circular dependency on a value initialization. This makes it hard
+    to cache this instance in e.g. companion object. In some libraries, it also makes it hard
     to use automatic derivation to work with recursive data structures.
 
-  - semiautomatic derivation: require you to explicitly call some method which will provide
-    a derived instance. It has the downside that each instance that you would like to summon
+  - semiautomatic derivation: requires you to explicitly call some method that will provide
+    a derived instance. It has the downside that for each instance that you would like to summon
     you need to manually derive and assign to an `implicit val` or `def`
 
     !!! example
@@ -98,12 +99,12 @@ In other libraries this issue is addressed by providing 2 flavours of derivation
         ```
 
     However, it gives you certainty that each time you need an instance of a type class
-    it will be the one you manually created. It reduces compile time, and make it easier
+    it will be the one you manually created. It reduces compile time, and makes it easier
     to limit the places where error can happen (if you reuse the same instance everywhere
     and there is a bug in an instance, there is only one place to look for it).
 
-The last property is a reason many projects encourage usage of semiautomatic derivation
-and many libraries provide automatic derivation as quick and dirty way of doing things
+The last property is a reason many projects encourage the usage of semiautomatic derivation
+and many libraries provide automatic derivation as a quick and dirty way of doing things
 requiring an opt-in.
 
 Chimney's defaults for (good) historical reasons mix these 2 modes (and one more, which
@@ -131,11 +132,11 @@ instead of `io.scalaland.chimney.dsl` to achieve a similar behavior:
     !!! example
 
         ```scala
-        // defaults only
+        // Defaults only:
         Transformer.derive[From, To]
         PartialTransformer.derive[From, To]
         Patcher.derive[A, Patch]
-        // allow customisation
+        // Allows customization:
         Transformer.define[From, To].buildTransformer
         PartialTransformer.define[From, To].buildTransformer
         Patcher.define[A, Patch].buildPatcher
@@ -151,21 +152,21 @@ instead of `io.scalaland.chimney.dsl` to achieve a similar behavior:
         from.using[To].patch
         ```
 
-    At a first glance, all they do is generate a customized type class before calling it, but
+    At the first glance, all they do is generate a customized type class before calling it, but
     what actually happens is that it generates an inlined expression, with no type class
-    instantiation - if user provided type class for top-level or nested transformation it
-    will be used, but wherever Chimney have to generate code ad hoc, it will generate inlined
-    code. For that reason this could be considered a third mode, one where generated code
+    instantiation - if the user provided a type class for top-level or nested transformation it
+    will be used, but wherever Chimney has to generate code ad hoc, it will generate inlined
+    code. For that reason, this could be considered a third mode, one where generated code
     is non-reusable, but optimized to avoid any type class allocation and deferring
     `partial.Result` wrapping (in case of `PartialTransformer` s) as long as possible.
 
 ### Performance concerns
 
-When Chimney derives an expression, whether that is an expression directly inlined at call site
-or as body of the `transform`/`patch` method inside a type class instance, it attempts
+When Chimney derives an expression, whether that is an expression directly inlined at a call site
+or as the body of the `transform`/`patch` method inside a type class instance, it attempts
 to generate a fast code.
 
-It contains a special cases for `Option` s, `Either` s, it attempt to avoid boxing with
+It contains special cases for `Option` s, `Either` s, it attempts to avoid boxing with
 `partial.Result` and creating type classes if it can help it.
 
 You can use [`.enableMacrosLogging`](troubleshooting.md#debugging-macros) to see the code generated by
@@ -208,13 +209,13 @@ Similarly, when deriving a type class it would be
     }
     ```
 
-However, Chimney is only able to do it when given a free rein. It checks
-if user provided an implicit, and if they did, it should be used instead.
+However, Chimney is only able to do it when given free rein. It checks
+if the user provided an implicit, and if they did, it should be used instead.
 
 In case of the automatic derivation, it means that every single branching
 in the code - derivation for a field of a case class, or a subtype of a
 sealed hierarchy - will trigger a macro, which may or may not succeed
-and if it will succeed it will introduce an allocation.
+and if it succeeds it will introduce an allocation.
 
 When using `import io.scalaland.chimney.dsl._` this is countered by the usage of
 a `Transformer.AutoDerived` as a supertype of `Transformer` - automatic
@@ -237,7 +238,7 @@ For the reasons above the recommendations are as follows:
     semiautomatic derivation (`.derive`/`.define.build*` + `syntax._`)
   - only use `import auto._` when you want predictable behavior similar to other libraries
     (predictably bad)
-  - if you use unit test to ensure that you code does what it should and benchmarks to
+  - if you use unit tests to ensure that your code does what it should and benchmarks to
     ensure it is reasonably fast keep on using `import dsl._`
 
 ## Java collections integration
@@ -261,13 +262,13 @@ Then you can use one simple import to enable it:
 
 !!! warning
 
-    There is an important performance difference betwen Chimney conversion and `scala.jdk.converions`.
+    There is an important performance difference between Chimney conversion and `scala.jdk.converions`.
     
     While `asJava` and `asScala` attempt to be O(1) operations, by creating a cheap wrapper around the original
     collection, Chimney creates a full copy. It is the only way to
     
-      - target various different specific implementations of target type
-      - guarantee that you don't merly wrap a mutable type which could be mutated right after you wrap it 
+      - target various specific implementations of the target type
+      - guarantee that you don't merely wrap a mutable type which could be mutated right after you wrap it 
 
 ## Cats integration
 
@@ -280,7 +281,7 @@ Cats integration module contains the following stuff:
 
 !!! important
 
-    You need to import ``io.scalaland.chimney.cats._`` in order to have all the above in scope.
+    You need to import ``io.scalaland.chimney.cats._`` to have all of the above in scope.
 
 !!! example
 
@@ -368,11 +369,11 @@ wrapping done by sealed traits' cases in `oneof` values.
 
 By default, ScalaPB would generate in a case class an additional field
 `unknownFields: UnknownFieldSet = UnknownFieldSet()`. This field
-could be used if you want to somehow log/trace that some extra values -
+could be used if you want to somehow log/trace some extra values -
 perhaps from another version of the schema - were passed but your current
 version's parser didn't need it.
 
-The automatic conversion into a protobuf with such field can be problematic:
+The automatic conversion into a protobuf with such a field can be problematic:
 
 !!! example
 
@@ -429,7 +430,7 @@ There are 2 ways in which Chimney could handle this issue:
           .transform
         ```
 
-However, if you have a control over the ScalaPB generation process, you could configure it
+However, if you have the control over the ScalaPB generation process, you could configure it
 to simply not generate this field, either
 by [editing the protobuf](https://scalapb.github.io/docs/customizations#file-level-options):
 
@@ -444,7 +445,7 @@ by [editing the protobuf](https://scalapb.github.io/docs/customizations#file-lev
 or adding to [package-scoped options](https://scalapb.github.io/docs/customizations#package-scoped-options).
 If the field won't be generated in the first place, there will be no issues with providing values to it.
 
-At this point, one might also consider option:
+At this point, one might also consider another option:
 
 !!! example
 
@@ -525,7 +526,7 @@ would generate scala code similar to (some parts removed for brevity):
 As we can see:
 
   - there is an extra `Value.Empty` type
-  - this is not "flat" `sealed` hierarchy - `AddressBookType` wraps sealed hierarchy `AddressBookType.Value`,
+  - this is not a "flat" `sealed` hierarchy - `AddressBookType` wraps sealed hierarchy `AddressBookType.Value`,
     where each `case class` wraps the actual message
 
 Meanwhile, we would like to extract it into a flat:
@@ -597,9 +598,9 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
 
 ### `sealed_value oneof` fields
 
-In case we are able to edit out the protobuf definition, we can arrange the generated code
-to be flat `sealed` hierarchy. It requires fulfilling [several conditions defined by ScalaPB](https://scalapb.github.io/docs/sealed-oneofs#sealed-oneof-rules).
-For instance, the code below following the mentioned requirements:
+In case we can edit our protobuf definition, we can arrange the generated code
+to be a flat `sealed` hierarchy. It requires fulfilling [several conditions defined by ScalaPB](https://scalapb.github.io/docs/sealed-oneofs#sealed-oneof-rules).
+For instance, the code below follows the mentioned requirements:
 
 !!! example
   
@@ -615,7 +616,7 @@ For instance, the code below following the mentioned requirements:
     message CustomerOneTime {}
     ```
 
-would generate something like (again, some parts omitted for brevity):
+and it would generate something like (again, some parts omitted for brevity):
 
 !!! example
   
@@ -693,8 +694,8 @@ As you can see, we have to manually handle decoding the `Empty` value.
 
 ### `sealed_value_optional oneof` fields
 
-If instead of non-nullable type with `.Empty` subtype, we prefer `Option`al type without `.Empty` subtype, there is
-optional sealed hierarchy available. Similarly to non-optional it requires [several conditions](https://scalapb.github.io/docs/sealed-oneofs#optional-sealed-oneof).
+If instead of a non-nullable type with `.Empty` subtype, we prefer `Option`al type without `.Empty` subtype, there is
+an optional sealed hierarchy available. Similarly to a non-optional it requires [several conditions](https://scalapb.github.io/docs/sealed-oneofs#optional-sealed-oneof).
 
 When you define message according to them:
 
@@ -734,7 +735,7 @@ and try to map it to and from:
     }
     ```
 
-the transformation is pretty straightforward both directions:
+the transformation is pretty straightforward in both directions:
 
 !!! example
   
@@ -781,12 +782,10 @@ Each of these transformations is provided by the same import:
 
 ## Libraries with smart constructors
 
-Any type which uses a smart constructor (returning parsed result rather than
-throwing an exception) would require Partial Transformer rather than Total
-Transformer to convert.
+Any type that uses a smart constructor (returning parsed result rather than throwing an exception) would require
+Partial Transformer rather than Total Transformer to convert.
 
-If there is no common interface which could be summoned as implicit for
-performing smart construction:
+If there is no common interface that could be summoned as implicit for performing smart construction:
 
 !!! example
 
@@ -864,7 +863,7 @@ we could use it to construct `PartialTransformer` automatically:
        }
     ```
 
-The same would be true about extracting values from smart constructed types
+The same would be true about extracting values from smart-constructed types
 (if they are not ``AnyVal``\s, handled by Chimney out of the box).
 
 Let's see how we could implement support for automatic transformations of
@@ -891,8 +890,8 @@ mixing `Username` values with other `String`s accidentally.
 
 NewType provides `Coercible` type
 class [to allow generic wrapping and unwrapping](https://github.com/estatico/scala-newtype#coercible-instance-trick)
-of `@newtype` values. This type class is not able to validate the casted type, so it safe to use only if NewType is used
-as a wrapper around another type which performs this validation e.g. Refined Type.
+of `@newtype` values. This type class is not able to validate the cast type, so it is safe to use only if NewType is used
+as a wrapper around another type that performs this validation e.g. Refined Type.
 
 !!! example
 
@@ -959,7 +958,7 @@ We can use them to provide unwrapping `Transformer` and wrapping
 ### Refined Types
 
 [Refined Types](https://github.com/fthomas/refined) is a library aiming to provide automatic validation of some
-popular constraints as long as we express them in value's type.
+popular constraints as long as we express them in the value's type.
 
 !!! example
 
@@ -973,8 +972,7 @@ popular constraints as long as we express them in value's type.
     type Username = String Refined NonEmpty
     ```
 
-We can validate using dedicated type class (`Validate`), while extraction
-is a simple accessor:
+We can validate using the dedicated type class (`Validate`), while extraction is a simple accessor:
 
 !!! example
 
@@ -1053,12 +1051,12 @@ It could look like this:
     }
     ```
     
-These 5 implicits are bare minimum to make sure that:
+These 5 implicits are the bare minimum to make sure that:
 
   - your types will be automatically wrapped (always) and unwrapped (only with `PartialTransformer`s which can do it
     safely)
   - you can convert all kinds of values wrapped in your optional type
-  - your can convert to and from `scala.Option`
+  - you can convert to and from `scala.Option`
 
 An example of this approach can be seen in
 [Java collections integration implementation](https://github.com/scalalandio/chimney/tree/master/chimney-java-collections/src/main/scala/io/scalaland/chimney/javacollections)

@@ -1,7 +1,7 @@
 # Supported Patching
 
 Besides transforming Chimney is also able to perform patching - take a "patched" value, a "patch" value, and compute
-updated version of patched value.
+the updated version of the patched value.
 
 ## Updating `case class`
 
@@ -26,8 +26,8 @@ Currently, the only supported case is updating one `case class` with another:
     // User(10, Email("xyz@@domain.com"), Phone(123123123L))
     ```
 
-As we see the values from the "patch" aren't always of the same type as values they are supposed to update.
-In such case macros use `Transformer`s logic under the hood to convert a patch into a patched value. 
+As we see the values from the "patch" aren't always of the same type as the values they are supposed to update.
+In such case, macros use `Transformer`s logic under the hood to convert a patch into a patched value. 
 
 !!! notice
 
@@ -35,8 +35,8 @@ In such case macros use `Transformer`s logic under the hood to convert a patch i
 
 ### Ignoring fields in patches
 
-When patch case class contains a field that does not exist in patched object, Chimney will not be able to generate
-patcher.
+When the patch `case class` contains a field that does not exist in patched object, Chimney will not be able to generate
+`Patcher`.
 
 !!! example
 
@@ -78,7 +78,7 @@ But there is a way to ignore redundant patcher fields explicitly with `.ignoreRe
     // User(10, "xyz@@domain.com", 123123123L)
     
     locally {
-      // all patching derived in this scope will see these new flags
+      // All patching derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = PatcherConfiguration.default.ignoreRedundantPatcherFields
       
       user.patchUsing(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
@@ -86,10 +86,10 @@ But there is a way to ignore redundant patcher fields explicitly with `.ignoreRe
     }
     ```
 
-Patching succeeded using only relevant fields that appears in patched object and ignoring address: `String` field from
-the patch.
+Patching succeeded using only relevant fields that appear in the patched object and ignoring address: `String` field 
+from the patch.
 
-If the flag was enabled in implicit config it can be disabled with `.failRedundantPatcherFields`.
+If the flag was enabled in the implicit config it can be disabled with `.failRedundantPatcherFields`.
 
 !!! example
 
@@ -102,7 +102,7 @@ If the flag was enabled in implicit config it can be disabled with `.failRedunda
     
     val user = User(10, "abc@@domain.com", 1234567890L)
     
-    // all patching derived in this scope will see these new flags
+    // All patching derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = PatcherConfiguration.default.ignoreRedundantPatcherFields
     
     user
@@ -139,11 +139,13 @@ Let’s consider the following patch:
     // User(10, "updated@@example.com", 1234567890L)
     ```
 
-Field `phone` remained the same as in the original `user`, while the optional e-mail string got updated from a patch object.
+The field `phone` remained the same as in the original `user`, while the optional e-mail string got updated from
+a patch object.
 
 #### `Option[T]` on both sides
 
-An interesting case appears when both patch case class and patched object define fields `f: Option[T]`. Depending on values of `f` in patched object and patch, we would like to apply following semantic table.
+An interesting case appears when both the patch `case class` and the patched object define fields `f: Option[T]`
+Depending on the values of `f` in the patched object and patch, we would like to apply the following semantic table:
 
 | `patchedObject.f` | `patch.f`      | patching result |
 |-------------------|----------------|-----------------|
@@ -152,16 +154,16 @@ An interesting case appears when both patch case class and patched object define
 | `None`            | `None`         | `None`          |
 | `Some(value)`     | `None`         | **???**         |
 
-When a `patch.f` contains some value, it’s immediately used for replacing field in target object (rows 1 and 2), 
-regardless of original object field value. When both field are `None`, patching result is also `None` (row 3).
+When a `patch.f` contains some value, it’s immediately used for replacing a field in the target object (rows 1 and 2), 
+regardless of the original object field value. When both field are `None`, the patching result is also `None` (row 3).
 
-But if original object contains a some value, but patch comes with a `None`, we can do two things:
+But if the original object contains a some value, but the patch comes with a `None`, we can do two things:
 
   - clear value in target object (replace it with None)
-  - or ignore updating this particular field (as in previous section)
+  - or ignore updating this particular field (as in the previous section)
 
-Both choices may have perfect sense, depending on the context. By default, Chimney does the former (clears the value),
-but it also gives a simple way to always ignore `None` from patch with `.ignoreNoneInPatch` operation.
+Both choices may make perfect sense, depending on the context. By default, Chimney does the former (clears the value),
+but it also gives a simple way to always ignore `None` from the patch with `.ignoreNoneInPatch` operation.
 
 !!! example
 
@@ -185,7 +187,7 @@ but it also gives a simple way to always ignore `None` from patch with `.ignoreN
     // ignores updating both fields: User(Some("John"), Some(30))
     
     locally {
-      // all patching derived in this scope will see these new flags
+      // All patching derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = PatcherConfiguration.default.ignoreNoneInPatch
       
       user.patchUsing(userPatch)
@@ -193,7 +195,7 @@ but it also gives a simple way to always ignore `None` from patch with `.ignoreN
     }
     ```
 
-If the flag was enabled in implicit config it can be disabled with `.clearOnNoneInPatch`.
+If the flag was enabled in the implicit config it can be disabled with `.clearOnNoneInPatch`.
 
 !!! example
 

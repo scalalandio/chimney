@@ -1,22 +1,20 @@
 # Troubleshooting
 
-Already using Chimney and you've got some issue? This page might help you with it.
+Already using Chimney and you've got some issues? This page might help you with it.
 
 ## Migration from 0.7.x to 0.8.0
 
-Version 0.8.0 is the first version which cleaned up the API. It introduced
-several breaking changes.
+Version 0.8.0 is the first version that cleaned up the API. It introduced several breaking changes.
 
 ### Replacing Lifted Transformers (`TransformerF`) with `PartialTransformer`s
 
 Lifted Transformers (`TransformerT`), deprecated in 0.7.0, got removed in favor of `PartialTransformer`s
 
 Chimney's Lifted Transformers were historically the first experimental attempt
-to express transformations that may potentially fail. Despite their great expressiveness, they were
-lacking several basic features and had a few design flaws that make them unattractive/difficult
-for wider adoption.
+to express transformations that may potentially fail. Despite their great expressiveness, they lacked several basic
+features and had a few design flaws that make them unattractive/difficult for wider adoption.
 
-Let's have a look at type signatures of both Lifted and Partial Transformers.
+Let's have a look at the type signatures of both Lifted and Partial Transformers.
 
 !!! example
 
@@ -36,29 +34,29 @@ Let's have a look at type signatures of both Lifted and Partial Transformers.
     ```
 
   - Lifted Transformers provided abstraction over the target transformation type container (``F[+_]``), while
-    partial transformers fix resulting type to built-in ``partial.Result[_]``
+    Partial Transformers fix resulting type to built-in ``partial.Result[_]``
     - as a consequence of this abstraction, Lifted Transformers required a type class instance
       (`TransformerFSupport`) in scope for every specific `F[_+]` used
     - Partial Transformers rely on built-in behavior and provide convenience methods to convert between more familiar
       data types (`Option`, `Either`, etc.)
-    - abstraction over the resulting container type in lifted transformer allowed for having custom error types;
-      this is not easily possible with partial transformer, which focuses on few most common error types
-  - Partial Transformer has a built-in support for fail-fast (short-circuiting) semantics by passing `failFast`
-    boolean parameter, while in Lifted Transformers it was barely possible (only by providing supporting type class
+    - abstraction over the resulting container type in the Lifted Transformer allowed for having custom error types;
+      this is not easily possible with Partial Transformer, which focuses on a few most common error types
+  - Partial Transformer has built-in support for fail-fast (short-circuiting) semantics by passing `failFast`
+    boolean parameter, while in Lifted Transformers it was barely possible (only by providing a supporting type class
     that had such a fixed behavior)
   - Error path support in Lifted Transformers required providing another type class instance
-    (`TransformerFErrorPathSupport`) for your errors collection type,
+    (`TransformerFErrorPathSupport`) for your error collection type,
     while in partial transformers it is a built-in feature
 
-In order to migrate your code from Lifted Transformers to Partial Transformers, you may take the following steps.
+To migrate your code from Lifted Transformers to Partial Transformers, you may take the following steps.
 
   - replace all the occurrences of `TransformerF` type with `PartialTransformer` and remove the first type argument
-    (`F[_]`) which is not used for partial transformers.
-  - for your transformations find corresponding DSL methods. Their name usually differ on suffix, for example:
+    (`F[_]`) which is not used for Partial Transformers.
+  - for your transformations find corresponding DSL methods. Their name usually differs on the suffix, for example:
     - replace ``withFieldConstF`` with ``withFieldConstPartial``
     - replace ``withFieldComputedF`` with ``withFieldComputedPartial``
     - etc.
-  - adjust the types passed to the customization methods. In Lifted Transformers they were expecting values of
+  - adjust the types passed to the customization methods. In Lifted Transformers, they were expecting values of
     your custom type `F[T]`, while in Partial Transformers they work with `partial.Result[T]`. See the
     `partial.Result` companion object for ways of constructing `success` and `failure` instances, for example:
     - `partial.Result.fromValue`
@@ -67,9 +65,8 @@ In order to migrate your code from Lifted Transformers to Partial Transformers, 
     - `partial.Result.fromTry`
     - and so on...
   - the resulting type of a call to `.transform` is also a `partial.Result[T]`. If you don't want to work with
-    `partial.Result` directly, figure out ways how to convert it to other, more familiar data structures.
+    `partial.Result` directly, figure out ways to convert it to other, more familiar data structures.
     Some of the ways may include:
-
     - `result.asOption`
     - `result.asEither`
     - `result.asErrorPathMessages`
@@ -95,7 +92,7 @@ This option allowed calling `.get` on `Option` to enable conversion from `Option
     ```
 
 Throwing exceptions made sense as a workaround in simpler times, when `Transformer`s were the only option. However,
-now we have `PartialTransformer`s. They have build-in ability to unwrap `Option` as failed result.
+now we have `PartialTransformer`s. They have a build-in ability to unwrap `Option` as failed result.
 
 !!! example
 
@@ -121,16 +118,16 @@ for user-provided transformations and configured (semiautomatic) derivation:
 while `PartialTransformer` got split into `PartialTransformer` and
 `PartialTransformer.AutoDerived`.
 
-It was caused be the change in mechanism for recursive derivation: since Chimney
-avoid boxing and allocation where possible, it used to check if summoned
+It was caused by the change in the mechanism for recursive derivation: since Chimney
+avoid boxing and allocation where possible, it is used to check if summoned
 implicit was generated by automatic derivation. If implicit came from
 `Transformer.derive` or `PartialTransformer.derive` it was discarded and
 the macro attempted to derive it again without wrapping the result in a type class.
 
 It both complicated code and increased compilation times, as each field
 or subtype would attempt to summon implicit (potentially triggering macro expansion)
-and then discard it if it didn't come from the user. Splitting types allows compiler
-to not summon any implicit if the user haven't provided any.
+and then discard it if it didn't come from the user. Splitting types allows the compiler
+to not summon any implicit if the user hasn't provided any.
 
 The consequence is only visible if there is some `implicit def` which takes
 another implicit `Transformer`.
@@ -153,8 +150,8 @@ another implicit `Transformer`.
     ```
 
 After changes in 0.8.x `implicit Transformer[A, B]` means "instance provided by user",
-either manually or through semiautomatic derivation. If users want to allow summoning
-there automatic instances as well, they need to use `Transformer.AutoDerived`:
+either manually or through semiautomatic derivation. If the user wants to allow summoning
+there the automatic instances as well, they need to use `Transformer.AutoDerived`:
 
 !!! example
 
@@ -182,7 +179,7 @@ The difference is shown in this example:
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
-    // implicit provided by user
+    // implicit provided by the user
     implicit val int2str: Transformer[Int, String] = _.toString
   
     val myType: MyType[Int] = new MyType(10)
@@ -200,25 +197,25 @@ The difference is shown in this example:
     // requires manually provided transformer e.g.
     //   implicit val either2either =
     //     Transformer.derive[Either[Int, Int], Either[String, String]]
-    // without it, compilation fails
+    // without it, the compilation fails
     // myType2.transformInto[MyType[Either[String, String]]]
   
     // uses provideMyOtherType(Transformer.derive):
     myOtherType2.transformInto[Either[String, String]]
     ```
 
-### Default values no longer are used as fallback if source field exists
+### Default values no longer are used as fallback if the source field exists
 
 If:
 
   - default values were enabled,
-  - source and target had a field defined
+  - source and target had fields of the same name
   - this field had default value defined
   - macro couldn't derive transformation from source field type to target field type
 
 Chimney used to use the default value.
 
-However, this was a buggy behavior, and currently it only uses default values
+However, this was a buggy behavior, and currently, it only uses default values
 if there is no source field nor other fallback or override. Although it is
 a bugfix, it is also a breaking change so it has to be documented. The fix would
 be a manual resolution for all fields which now (correctly) fail due to the bugfix.
@@ -227,7 +224,7 @@ be a manual resolution for all fields which now (correctly) fail due to the bugf
 
 Chimney attempts to avoid unnecessary memory allocations for good performance.
 
-It means that the code `foo.into[Bar].transform` would try to avoid creation of
+It means that the code `foo.into[Bar].transform` would try to avoid the creation of
 `Transformer[Foo, Bar]` - if the user provided one it would have to be used, but if
 the only available implicit would come from automatic derivation, it would be ignored so
 that macro would generate an inlined expression.
@@ -259,11 +256,11 @@ The same is true for partial transformers.
 
 ## `sealed trait`s fail to recompile
 
-In case of incremental compilation, Zinc compiler sometimes has issues with
+In the case of incremental compilation, the Zinc compiler sometimes has issues with
 caching certain kind of information and macros don't get proper information
 from `knownDirectSubclasses` method. It usually helps when you `clean`
 and `compile` again. It cannot be fixed in the library as it relies on
-the compiler to provide it with this data, and compiler fails to do so.
+the compiler to provide it with this data, and the compiler fails to do so.
 
 On Scala 2.12.0 it failed [in other cases as well](https://github.com/scala/bug/issues/7046),
 so it is recommended to update 2.12 to at least 2.12.1.
@@ -305,7 +302,7 @@ You can work around this by slightly longer incantation:
    
 ## Debugging macros
 
-In some cases it could be helpful to preview what is the expression generated
+In some cases, it could be helpful to preview what is the expression generated
 by macros, which implicits were used in macro (or not) and what was the exact
 logic that lead to the final expression or compilation errors.
 
@@ -384,18 +381,18 @@ For the snippet above, the macro could print this structured log:
     + Derivation took 0.109828000 s
     ```
 
-With the structured log a user could see e.g.:
+With the structured log, the user could see e.g.:
 
   - that no implicit was summoned during the expansion
   - how `Foo` constructor was called
-  - that default values was used and how it was obtained
+  - that default values were used and how they were obtained
   - what is the final expression and how long it took to compute it
 
 !!! warning
 
     Structured logs from macros are still logs - their role is to help with
-    debugging, but their format evolves over time and log for one macro could
-    look completely different to log from another macro. Examples from this
+    debugging, but their format changes over time and the log for one macro could
+    look completely different from the log from another macro. Examples from this
     page should not be treated as any point of reference.
 
 Enabling logs can be done both on an individual transformation level, like
@@ -407,6 +404,7 @@ above, or with a shared implicit config:
     //> using dep io.scalaland::chimney:{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
+     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
     ```
 

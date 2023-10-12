@@ -26,7 +26,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     *
     * By default if `From` is missing field picked by `selector`, compilation fails.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-a-raw-value]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-a-provided-value]] for more details
     * @tparam T type of target field
     * @tparam U type of provided value
     * @param selector target field in `To`, defined like `_.name`
@@ -45,7 +45,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     *
     * By default if `From` is missing field picked by `selector`, compilation fails.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-a-raw-value]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-a-provided-value]] for more details
     * @tparam T type of target field
     * @tparam U type of computed value
     * @param selector target field in `To`, defined like `_.name`
@@ -124,7 +124,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
+    * @see [[]] for more details
     * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
@@ -143,7 +143,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
+    * @see [[]] for more details
     *
     * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
