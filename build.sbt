@@ -155,6 +155,13 @@ val settings = Seq(
       case _ => Seq.empty
     }
   },
+  doc / scalacOptions ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, _)) =>
+        Seq("-Ygenerate-inkuire") // type-based search for Scala 3, this option cannot go into compile
+      case _ => Seq.empty
+    }
+  },
   Compile / console / scalacOptions --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"),
   Test / compile / scalacOptions --= {
     CrossVersion.partialVersion(scalaVersion.value) match {
