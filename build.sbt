@@ -155,7 +155,7 @@ val settings = Seq(
       case _ => Seq.empty
     }
   },
-  doc / scalacOptions ++= {
+  Compile / doc / scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((3, _)) =>
         Seq("-Ygenerate-inkuire") // type-based search for Scala 3, this option cannot go into compile
@@ -354,6 +354,7 @@ lazy val chimney = projectMatrix
     Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*",
     Compile / doc / scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((3, _)) => Seq("-skip-by-regex:io\\.scalaland\\.chimney\\.internal")
         case Some((2, _)) => Seq("-skip-packages", "io.scalaland.chimney.internal")
         case _            => Seq.empty
       }
@@ -396,7 +397,14 @@ lazy val chimneyJavaCollections = projectMatrix
   .settings(mimaSettings*)
   .settings(
     // Scala 2.12 doesn't have scala.jdk.StreamConverters and we use it in test of java.util.stream type class instances
-    libraryDependencies += "org.scala-lang.modules" %%% "scala-java8-compat" % "1.0.2" % Test
+    libraryDependencies += "org.scala-lang.modules" %%% "scala-java8-compat" % "1.0.2" % Test,
+    Compile / doc / scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((3, _)) => Seq("-skip-by-regex:io\\.scalaland\\.chimney\\.javacollections\\.internal")
+        case Some((2, _)) => Seq("-skip-packages", "io.scalaland.chimney.javacollections.internal")
+        case _            => Seq.empty
+      }
+    },
   )
   .dependsOn(chimney % "test->test;compile->compile")
 
