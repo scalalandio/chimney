@@ -156,7 +156,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
               // We have to drop that suffix to align names, so that comparing is possible.
               val n: String = getDecodedName(setter)
               val name =
-                if (isVar(setter)) n.substring(0, n.length - "_$eq".length) else n
+                if (isVar(setter)) n.stripSuffix("_$eq").stripSuffix("_=") else n
               name -> setter
             }
             .filter { case (name, _) => !paramTypes.keySet.exists(areNamesMatching(_, name)) }
