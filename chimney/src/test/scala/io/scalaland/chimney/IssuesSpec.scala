@@ -672,4 +672,15 @@ class IssuesSpec extends ChimneySpec {
     Bar("b").transformInto[Foo] ==> Foo("b")
     Foo("b").into[Bar2].withFieldConst(_.number, 3).transform ==> Bar2("b", 3)
   }
+
+  test("fix issue #400") {
+    import Issue400.*
+
+    Foo("b").transformInto[Bar] ==> Bar("b")
+    Foo("b").into[Bar].transform ==> Bar("b")
+    Foo("b").transformIntoPartial[Bar].asOption ==> Some(Bar("b"))
+    Foo("b").intoPartial[Bar].transform.asOption ==> Some(Bar("b"))
+    Foo("b").into[Bar2].enableDefaultValues.transform ==> Bar2("b", "ok")
+    Foo("b").intoPartial[Bar2].enableDefaultValues.transform.asOption ==> Some(Bar2("b", "ok"))
+  }
 }
