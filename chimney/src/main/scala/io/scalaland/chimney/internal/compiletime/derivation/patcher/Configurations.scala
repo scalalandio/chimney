@@ -31,8 +31,8 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     def allowAPatchImplicitSearch: PatcherConfig = copy(preventResolutionForTypes = None)
 
-    def withDefinitionScope(defScope: (??, ??)): PatcherConfig =
-      copy(preventResolutionForTypes = Some(defScope))
+    def preventResolutionFor[A: Type, Patch: Type]: PatcherConfig =
+      copy(preventResolutionForTypes = Some(Type[A].as_?? -> Type[Patch].as_??))
   }
 
   protected object PatcherConfigurations {

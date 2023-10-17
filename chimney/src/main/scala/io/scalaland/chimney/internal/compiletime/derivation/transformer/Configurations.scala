@@ -53,15 +53,19 @@ private[compiletime] trait Configurations { this: Derivation =>
       ).flatten.mkString(", ")})"
   }
 
-  sealed abstract protected class RuntimeFieldOverride(val usesRuntimeDataStore: Boolean)
-      extends scala.Product
-      with Serializable
+  sealed abstract protected class FieldPath extends scala.Product with Serializable
+  protected object FieldPath {
+    case object Root extends FieldPath
+    final case class Select(name: String, instance: FieldPath) extends FieldPath
+  }
+
+  sealed abstract protected class RuntimeFieldOverride extends scala.Product with Serializable
   protected object RuntimeFieldOverride {
-    final case class Const(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
-    final case class ConstPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
-    final case class Computed(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
-    final case class ComputedPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride(true)
-    final case class RenamedFrom(sourceName: String) extends RuntimeFieldOverride(false)
+    final case class Const(runtimeDataIdx: Int) extends RuntimeFieldOverride
+    final case class ConstPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride
+    final case class Computed(runtimeDataIdx: Int) extends RuntimeFieldOverride
+    final case class ComputedPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride
+    final case class RenamedFrom(sourceName: String) extends RuntimeFieldOverride
   }
 
   sealed abstract class RuntimeCoproductOverride extends scala.Product with Serializable
@@ -72,13 +76,12 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   final protected case class TransformerConfig(
       flags: TransformerFlags = TransformerFlags(),
-      fieldOverrides: Map[String, RuntimeFieldOverride] = Map.empty,
+      fieldOverrides: Map[String, RuntimeFieldOverride] = Map.empty, // TODO: use Path instead of String
       coproductOverrides: Map[(??, ??), RuntimeCoproductOverride] = Map.empty,
       preventResolutionForTypes: Option[(??, ??)] = None
   ) {
 
-    def allowFromToImplicitSearch: TransformerConfig = copy(preventResolutionForTypes = None)
-
+    // TODO: replace with prepareForRecursiveCallAtField and prepareForRecursiveCallAtCoproduct
     def prepareForRecursiveCall: TransformerConfig =
       // When going recursively we have to:
       // - clear the field overrides since `with*(_.field, *)` might make sense for src, but not for src.field
@@ -99,6 +102,17 @@ private[compiletime] trait Configurations { this: Derivation =>
         coproductOverrides = Map.empty
       )
 
+    // TODO: descend at name for each fieldOverride
+    def prepareForRecursiveCallAtField(nameFilter: String => Boolean): TransformerConfig =
+      prepareForRecursiveCall
+
+    // TODO: remove fieldOverrides
+    def prepareForRecursiveCallAtCoproduct[To: Type]: TransformerConfig =
+      prepareForRecursiveCall
+
+    def allowFromToImplicitSearch: TransformerConfig = copy(preventResolutionForTypes = None)
+
+    // TODO use Path instead of String
     def addFieldOverride(fieldName: String, fieldOverride: RuntimeFieldOverride): TransformerConfig =
       copy(fieldOverrides = fieldOverrides + (fieldName -> fieldOverride))
 
@@ -109,11 +123,31 @@ private[compiletime] trait Configurations { this: Derivation =>
     ): TransformerConfig =
       copy(coproductOverrides = coproductOverrides + ((instanceType, targetType) -> coproductOverride))
 
+    def preventResolutionFor[From: Type, To: Type]: TransformerConfig =
+      copy(preventResolutionForTypes = Some(Type[From].as_?? -> Type[To].as_??))
+
+    // prevents: val t: Transformer[A, B] = a => t.transform(a)
+    def isResolutionPreventedFor[From: Type, To: Type]: Boolean =
+      preventResolutionForTypes.exists { case (someFrom, someTo) =>
+        import someFrom.Underlying as SomeFrom, someTo.Underlying as SomeTo
+        Type[SomeFrom] =:= Type[From] && Type[SomeTo] =:= Type[To]
+      }
+
+    // TODO: replace with areOverridesEmptyForCurrent
     def areOverridesEmpty: Boolean =
       fieldOverrides.isEmpty && coproductOverrides.isEmpty
 
-    def withDefinitionScope(defScope: (??, ??)): TransformerConfig =
-      copy(preventResolutionForTypes = Some(defScope))
+    // TODO: check ONLY coproduct overrides where From <: fromOverride && toOverride <: To
+    def areOverridesEmptyForCurrent[From: Type, To: Type]: Boolean =
+      areOverridesEmpty
+
+    // TODO: use instead of fieldOverrides
+    def filterOverridesForField(nameFilter: String => Boolean): Map[String, RuntimeFieldOverride] =
+      fieldOverrides.view.filterKeys(nameFilter).toMap
+
+    // TODO: use instead of coproductOverrides
+    def filterOverridesForCoproduct(typeFilter: (??, ??) => Boolean): Map[(??, ??), RuntimeCoproductOverride] =
+      coproductOverrides.view.filterKeys(typeFilter.tupled).toMap
 
     override def toString: String = {
       val fieldOverridesString = fieldOverrides.map { case (k, v) => s"$k -> $v" }.mkString(", ")
