@@ -159,6 +159,8 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     /** Upcasts `Expr[A]` to `Expr[B]` in the emitted code: '{ (${ expr }) : B } */
     def upcastExpr[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
+
+    def as_?? : ExistentialExpr = ExistentialExpr(expr)
   }
 
   implicit final protected class Function1[A: Type, B: Type](private val function1Expr: Expr[A => B]) {
