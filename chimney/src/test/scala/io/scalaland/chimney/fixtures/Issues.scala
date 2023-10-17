@@ -170,3 +170,9 @@ object Issue297 {
   case class Bar(value: String)
   case class Bar2(value: String, number: Int)
 }
+
+object Issue400 {
+  case class Foo(value: String)
+  case class Bar(var value: String)
+  case class Bar2(var value: String, var value2: String = "ok")
+}
