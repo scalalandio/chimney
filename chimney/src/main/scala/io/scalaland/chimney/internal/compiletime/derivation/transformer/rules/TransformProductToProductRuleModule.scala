@@ -56,7 +56,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         .parTraverse(
           filterOverridesForField(fromName =>
             !parameters.keys.exists(toName => areNamesMatching(fromName, toName))
-          ).view.keys.toList
+          ).keys.toList
         ) { fromName =>
           val tpeStr = Type.prettyPrint[To]
           val params = parameters.keys.map(n => s"`$n`").mkString(", ")
@@ -94,7 +94,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             // so simple .get(toName) might not be enough
             filterOverridesForField(fromName => areNamesMatching(fromName, toName)).headOption
               .map { case (fromName, value) =>
-                useOverride[From, To, CtorParam](fromExtractors, fromName, toName, value)
+                useOverride[From, To, CtorParam](fromName, toName, value)
               }
               .orElse {
                 val resolvedExtractor =
@@ -152,7 +152,6 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     }
 
     private def useOverride[From, To, CtorParam: Type](
-        fromExtractors: Product.Getters[From],
         fromName: String,
         toName: String,
         runtimeFieldOverride: RuntimeFieldOverride
@@ -236,32 +235,59 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               )
           )
         )
-      case RuntimeFieldOverride.RenamedFrom(sourceName) =>
-        fromExtractors
-          .collectFirst { case (`sourceName`, getter) =>
-            import getter.Underlying as Getter, getter.value.get
+      case RuntimeFieldOverride.RenamedFrom(sourcePath, sourceValue) =>
+        import sourceValue.Underlying as SourceValue, sourceValue.value as srcExpr
+
+        // This (suppressed) error is a case when compiler is simply wrong :)
+        @scala.annotation.nowarn("msg=Unreachable case")
+        def extractSource(fieldPath: FieldPath): Option[ExistentialExpr] = fieldPath match {
+          case FieldPath.Root => None
+          case FieldPath.Select(sourceName, FieldPath.Root) =>
+            Type[SourceValue] match {
+              case Product.Extraction(getters) =>
+                getters.collectFirst { case (`sourceName`, getter) =>
+                  import getter.Underlying as Getter, getter.value.get
+                  get(srcExpr).as_??
+                }
+              case _ => None
+            }
+          case FieldPath.Select(sourceName, instance) =>
+            extractSource(instance).flatMap { extractedSrcValue =>
+              import extractedSrcValue.Underlying as ExtractedSourceValue, extractedSrcValue.value as extractedSrcExpr
+              Type[ExtractedSourceValue] match {
+                case Product.Extraction(getters) =>
+                  getters.collectFirst { case (`sourceName`, getter) =>
+                    import getter.Underlying as Getter, getter.value.get
+                    get(extractedSrcExpr).as_??
+                  }
+                case _ => None
+              }
+            }
+        }
+
+        extractSource(sourcePath)
+          .map { extractedSrc =>
+            import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
             DerivationResult.namedScope(
-              s"Recursive derivation for field `$sourceName`: ${Type
-                  .prettyPrint[Getter]} renamed into `$toName`: ${Type
+              s"Recursive derivation for field `$sourcePath`: ${Type
+                  .prettyPrint[ExtractedSrc]} renamed into `$toName`: ${Type
                   .prettyPrint[CtorParam]}"
             ) {
               // We're constructing:
               // '{ ${ derivedToElement } } // using ${ src.$name }
-              deriveRecursiveTransformationExpr[Getter, CtorParam](get(ctx.src)).transformWith { expr =>
+              deriveRecursiveTransformationExpr[ExtractedSrc, CtorParam](extractedSrcExpr).transformWith { expr =>
                 // If we derived partial.Result[$ctorParam] we are appending
                 //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
-                DerivationResult.existential[TransformationExpr, CtorParam](appendPath(expr, sourceName))
+                DerivationResult.existential[TransformationExpr, CtorParam](appendPath(expr, sourcePath))
               } { errors =>
-                appendMissingTransformer[From, To, Getter, CtorParam](errors, toName)
+                appendMissingTransformer[From, To, ExtractedSrc, CtorParam](errors, toName)
               }
             }
           }
           .getOrElse {
-            val tpeStr = Type.prettyPrint[From]
-            val methods = fromExtractors.keys.map(n => s"`$n`").mkString(", ")
+            val tpeStr = Type.prettyPrint[SourceValue]
             DerivationResult.assertionError(
-              s"""|Assumed that field $sourceName is a part of $tpeStr, but wasn't found
-                  |available methods: $methods""".stripMargin
+              s"""|Assumed that field $sourcePath is a part of $tpeStr, but wasn't found""".stripMargin
             )
           }
     }
@@ -352,7 +378,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           import res.{Underlying as Res, value as resultExpr}
           TransformationExpr.fromPartial(
             resultExpr.map(Expr.Function1.instance { (innerExpr: Expr[Res]) =>
-              constructor(totalConstructorArguments + (name -> ExistentialExpr(innerExpr)))
+              constructor(totalConstructorArguments + (name -> innerExpr.as_??))
             })
           )
         case (name1, res1) :: (name2, res2) :: Nil =>
@@ -372,8 +398,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   Expr.Function2.instance { (inner1Expr: Expr[Res1], inner2Expr: Expr[Res2]) =>
                     constructor(
                       totalConstructorArguments +
-                        (name1 -> ExistentialExpr(inner1Expr)) +
-                        (name2 -> ExistentialExpr(inner2Expr))
+                        (name1 -> inner1Expr.as_??) +
+                        (name2 -> inner2Expr.as_??)
                     )
                   },
                   failFast
@@ -447,7 +473,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     case (name, res) :: Nil =>
                       import res.{Underlying as Res, value as resultToMap}
                       resultToMap.map(Expr.Function1.instance[Res, To] { (innerExpr: Expr[Res]) =>
-                        constructor(constructorArguments + (name -> ExistentialExpr(innerExpr)))
+                        constructor(constructorArguments + (name -> innerExpr.as_??))
                       })
                     // use .flatMap
                     case (name, res) :: tail =>
@@ -528,6 +554,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           )
       }
     }
+
+    // If we derived partial.Result[$ctorParam] we are appending
+    //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
+    private def appendPath[A: Type](expr: TransformationExpr[A], path: FieldPath): TransformationExpr[A] =
+      path match {
+        case FieldPath.Root                   => expr
+        case FieldPath.Select(name, instance) => appendPath(appendPath[A](expr, instance), name)
+      }
 
     // If we derived partial.Result[$ctorParam] we are appending
     //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
