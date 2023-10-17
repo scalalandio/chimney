@@ -7,7 +7,7 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.9")
 addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.9.1")
 addSbtPlugin("com.indoorvivants" % "sbt-commandmatrix" % "0.0.5")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.14.0")
-addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.15")
+addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.16")
 // publishing
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.21")
 // MiMa
