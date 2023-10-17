@@ -76,14 +76,28 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   final protected case class TransformerConfig(
       flags: TransformerFlags = TransformerFlags(),
-      fieldOverrides: Map[String, RuntimeFieldOverride] = Map.empty, // TODO: use Path instead of String
-      coproductOverrides: Map[(??, ??), RuntimeCoproductOverride] = Map.empty,
-      preventResolutionForTypes: Option[(??, ??)] = None
+      private val fieldOverrides: Map[String, RuntimeFieldOverride] = Map.empty, // TODO: use Path instead of String
+      private val coproductOverrides: Map[(??, ??), RuntimeCoproductOverride] = Map.empty,
+      private val preventResolutionForTypes: Option[(??, ??)] = None
   ) {
 
-    // TODO: replace with prepareForRecursiveCallAtField and prepareForRecursiveCallAtCoproduct
-    def prepareForRecursiveCall: TransformerConfig =
-      // When going recursively we have to:
+    // When going recursively we have to:
+    // - clear implicit call prevention:
+    //   - we want to prevent
+    //   {{{
+    //   implicit val foobar: Transformer[Foo, Bar] = foo => summon[Transformer[Foo, Bar]].transform(foo)
+    //   }}}
+    // - but we don't want to prevent:
+    //   {{{
+    //   implicit val foobar: Transformer[Foo, Bar] = foo => Bar(
+    //     foo.x.map(foo2 => summon[Transformer[Foo, Bar]].transform(foo2))
+    //   )
+    //   }}}
+    def prepareForRecursiveCall: TransformerConfig = copy(preventResolutionForTypes = None)
+
+    // TODO: descend at name for each fieldOverride
+    def prepareForRecursiveCallAtField(nameFilter: String => Boolean): TransformerConfig =
+      // When going recursively for field we have to:
       // - clear the field overrides since `with*(_.field, *)` might make sense for src, but not for src.field
       // - clear implicit call prevention:
       //   - we want to prevent
@@ -96,19 +110,13 @@ private[compiletime] trait Configurations { this: Derivation =>
       //     foo.x.map(foo2 => summon[Transformer[Foo, Bar]].transform(foo2))
       //   )
       //   }}}
-      copy(
-        preventResolutionForTypes = None,
-        fieldOverrides = Map.empty,
-        coproductOverrides = Map.empty
+      prepareForRecursiveCall.copy(
+        // TODO: update for FieldPath when available
+        fieldOverrides = fieldOverrides.view.flatMap {
+          case (fieldName, runtimeOverride) if (nameFilter(fieldName)) => Some(fieldName -> runtimeOverride)
+          case _                                                       => None
+        }.toMap
       )
-
-    // TODO: descend at name for each fieldOverride
-    def prepareForRecursiveCallAtField(nameFilter: String => Boolean): TransformerConfig =
-      prepareForRecursiveCall
-
-    // TODO: remove fieldOverrides
-    def prepareForRecursiveCallAtCoproduct[To: Type]: TransformerConfig =
-      prepareForRecursiveCall
 
     def allowFromToImplicitSearch: TransformerConfig = copy(preventResolutionForTypes = None)
 
@@ -133,19 +141,15 @@ private[compiletime] trait Configurations { this: Derivation =>
         Type[SomeFrom] =:= Type[From] && Type[SomeTo] =:= Type[To]
       }
 
-    // TODO: replace with areOverridesEmptyForCurrent
-    def areOverridesEmpty: Boolean =
-      fieldOverrides.isEmpty && coproductOverrides.isEmpty
-
-    // TODO: check ONLY coproduct overrides where From <: fromOverride && toOverride <: To
     def areOverridesEmptyForCurrent[From: Type, To: Type]: Boolean =
-      areOverridesEmpty
+      fieldOverrides.isEmpty && filterOverridesForCoproduct { (someFrom, someTo) =>
+        import someFrom.Underlying as SomeFrom, someTo.Underlying as SomeTo
+        Type[SomeFrom] <:< Type[From] && Type[To] <:< Type[SomeTo]
+      }.isEmpty
 
-    // TODO: use instead of fieldOverrides
     def filterOverridesForField(nameFilter: String => Boolean): Map[String, RuntimeFieldOverride] =
       fieldOverrides.view.filterKeys(nameFilter).toMap
 
-    // TODO: use instead of coproductOverrides
     def filterOverridesForCoproduct(typeFilter: (??, ??) => Boolean): Map[(??, ??), RuntimeCoproductOverride] =
       coproductOverrides.view.filterKeys(typeFilter.tupled).toMap
 
