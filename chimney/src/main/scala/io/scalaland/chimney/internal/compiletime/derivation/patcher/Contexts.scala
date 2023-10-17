@@ -32,7 +32,7 @@ private[compiletime] trait Contexts { this: Derivation =>
       PatcherContext(obj = obj, patch = patch)(
         A = Type[A],
         Patch = Type[Patch],
-        config = config.withDefinitionScope(Type[A].as_?? -> Type[Patch].as_??),
+        config = config.preventResolutionFor[A, Patch],
         derivationStartedAt = java.time.Instant.now()
       )
   }
