@@ -56,13 +56,18 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
 
     private def mapOverriddenElements[From, To](implicit
         ctx: TransformationContext[From, To]
-    ): List[Existential[ExprPromise[*, TransformationExpr[To]]]] = ctx.config.coproductOverrides.toList.collect {
-      case ((someFrom, someTo), runtimeCoproductOverride)
-          if someFrom.Underlying <:< Type[From] && Type[To] =:= someTo.Underlying =>
-        someFrom.mapK[ExprPromise[*, TransformationExpr[To]]] { implicit SomeFrom: Type[someFrom.Underlying] => _ =>
+    ): List[Existential[ExprPromise[*, TransformationExpr[To]]]] = ctx.config
+      .filterOverridesForCoproduct { (someFrom, someTo) =>
+        import someFrom.Underlying as SomeFrom, someTo.Underlying as SomeTo
+        Type[SomeFrom] <:< Type[From] && Type[To] =:= Type[SomeTo]
+      }
+      .toList
+      .collect { case ((someFrom, _), runtimeCoproductOverride) =>
+        import someFrom.Underlying as SomeFrom
+        someFrom.mapK[ExprPromise[*, TransformationExpr[To]]] { _ => _ =>
           ExprPromise
-            .promise[someFrom.Underlying](ExprPromise.NameGenerationStrategy.FromType)
-            .map { (someFromExpr: Expr[someFrom.Underlying]) =>
+            .promise[SomeFrom](ExprPromise.NameGenerationStrategy.FromType)
+            .map { (someFromExpr: Expr[SomeFrom]) =>
               // Ideally we would use here (someFrom => ...) types and pass down someFromExpr,
               // unfortunately on Scala 2 we end up with situations like:
               //   case javaEnum: JavaEnum.Value =>
@@ -93,7 +98,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               }
             }
         }
-    }
+      }
 
     @scala.annotation.nowarn("msg=Unreachable case")
     private def mapElementsMatchedByName[From, To](

@@ -54,9 +54,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
       val verifyNoOverrideUnused = Traverse[List]
         .parTraverse(
-          fieldOverrides.keys
-            .filterNot(fromName => parameters.keys.exists(toName => areNamesMatching(fromName, toName)))
-            .toList
+          filterOverridesForField(fromName =>
+            !parameters.keys.exists(toName => areNamesMatching(fromName, toName))
+          ).view.keys.toList
         ) { fromName =>
           val tpeStr = Type.prettyPrint[To]
           val params = parameters.keys.map(n => s"`$n`").mkString(", ")
@@ -90,10 +90,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             parameters.toList
           ) { case (toName: String, ctorParam: Existential[Product.Parameter]) =>
             import ctorParam.Underlying as CtorParam, ctorParam.value.defaultValue
-            fieldOverrides
-              // user might have used _.getName in modifier, to define target we know as _.setName
-              // so simple .get(toName) might not be enough
-              .collectFirst { case (fromName, value) if areNamesMatching(fromName, toName) => fromName -> value }
+            // user might have used _.getName in modifier, to define target we know as _.setName
+            // so simple .get(toName) might not be enough
+            filterOverridesForField(fromName => areNamesMatching(fromName, toName)).headOption
               .map { case (fromName, value) =>
                 useOverride[From, To, CtorParam](fromExtractors, fromName, toName, value)
               }
