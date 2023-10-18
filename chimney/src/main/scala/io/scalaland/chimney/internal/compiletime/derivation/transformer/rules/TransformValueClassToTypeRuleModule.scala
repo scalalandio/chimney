@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
 private[compiletime] trait TransformValueClassToTypeRuleModule {
-  this: Derivation & TransformProductToProductRuleModule =>
+  this: Derivation with TransformProductToProductRuleModule =>
 
   protected object TransformValueClassToTypeRule extends Rule("ValueClassToType") {
 
@@ -13,23 +13,25 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
       Type[From] match {
         case ValueClassType(from2) =>
           import from2.{Underlying as InnerFrom, value as valueFrom}
-          unwrapAndTransform[From, To, InnerFrom](valueFrom.unwrap, valueFrom.fieldName)
+          unwrapAndTransform[From, To, InnerFrom](valueFrom)
         case _ => DerivationResult.attemptNextRule
       }
 
     private def unwrapAndTransform[From, To, InnerFrom: Type](
-        unwrap: Expr[From] => Expr[InnerFrom],
-        fieldName: String
+        valueFrom: ValueClass[From, InnerFrom]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       // We're constructing:
       // '{ ${ derivedTo } /* using ${ src }.from internally */ }
-      deriveRecursiveTransformationExpr[InnerFrom, To](unwrap(ctx.src))
+      deriveRecursiveTransformationExpr[InnerFrom, To](
+        valueFrom.unwrap(ctx.src),
+        OnRecur(fromField = DownField(valueFrom.fieldName), toField = KeepFieldOverrides)
+      )
         .flatMap(DerivationResult.expanded)
         // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
         .orElse(TransformProductToProductRule.expand(ctx))
         .orElse(
           DerivationResult
-            .notSupportedTransformerDerivationForField(fieldName)(ctx)
+            .notSupportedTransformerDerivationForField(valueFrom.fieldName)(ctx)
             .log(
               s"Failed to resolve derivation from ${Type.prettyPrint[InnerFrom]} (wrapped by ${Type
                   .prettyPrint[From]}) to ${Type.prettyPrint[To]}"

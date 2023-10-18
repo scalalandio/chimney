@@ -70,11 +70,6 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
   }
 
-  sealed abstract class FieldPathUpdate extends scala.Product with Serializable
-  final case class DownField(nameFilter: String => Boolean) extends FieldPathUpdate
-  case object KeepFieldOverrides extends FieldPathUpdate
-  case object CleanFieldOverrides extends FieldPathUpdate
-
   sealed abstract protected class RuntimeFieldOverride extends scala.Product with Serializable
   protected object RuntimeFieldOverride {
     final case class Const(runtimeDataIdx: Int) extends RuntimeFieldOverride
@@ -90,10 +85,19 @@ private[compiletime] trait Configurations { this: Derivation =>
     final case class CoproductInstancePartial(runtimeDataIdx: Int) extends RuntimeCoproductOverride
   }
 
-  final protected case class RecursiveDerivationType(
+  sealed abstract protected class FieldPathUpdate extends scala.Product with Serializable
+  final protected case class DownField(nameFilter: String => Boolean) extends FieldPathUpdate
+  protected object DownField { def apply(name: String): DownField = DownField(_ == name) }
+  protected case object KeepFieldOverrides extends FieldPathUpdate
+  protected case object CleanFieldOverrides extends FieldPathUpdate
+
+  final protected case class OnRecur(
       fromField: FieldPathUpdate = CleanFieldOverrides,
       toField: FieldPathUpdate = CleanFieldOverrides
   )
+  protected object OnRecur {
+    val cleanAll: OnRecur = apply()
+  }
 
   final protected case class TransformerConfig(
       flags: TransformerFlags = TransformerFlags(),
@@ -102,7 +106,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
   ) {
 
-    def prepareForRecursiveCall(tpe: RecursiveDerivationType): TransformerConfig = {
+    def prepareForRecursiveCall(tpe: OnRecur): TransformerConfig = {
       val newFieldOverrides: Map[FieldPath, RuntimeFieldOverride] = tpe.toField match {
         case DownField(nameFilter) =>
           fieldOverrides.view.flatMap {
