@@ -12,19 +12,21 @@ private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Der
       (Type[From], Type[To]) match {
         case (ValueClassType(from2), ValueClassType(to2)) =>
           import from2.{Underlying as InnerFrom, value as valueFrom}, to2.{Underlying as InnerTo, value as valueTo}
-          unwrapTransformAndWrapAgain[From, To, InnerFrom, InnerTo](valueFrom.unwrap, valueTo.wrap)
+          unwrapTransformAndWrapAgain[From, To, InnerFrom, InnerTo](valueFrom, valueTo)
         case _ => DerivationResult.attemptNextRule
       }
   }
 
   private def unwrapTransformAndWrapAgain[From, To, InnerFrom: Type, InnerTo: Type](
-      unwrap: Expr[From] => Expr[InnerFrom],
-      wrap: Expr[InnerTo] => Expr[To]
+      valueFrom: ValueClass[From, InnerFrom],
+      valueTo: ValueClass[To, InnerTo]
   )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-    deriveRecursiveTransformationExpr[InnerFrom, InnerTo](unwrap(ctx.src)).flatMap {
-      (derivedInnerTo: TransformationExpr[InnerTo]) =>
-        // We're constructing:
-        // '{ ${ new $To(${ derivedInnerTo }) } /* using ${ src }.$from internally */ }
-        DerivationResult.expanded(derivedInnerTo.map(wrap))
+    deriveRecursiveTransformationExpr[InnerFrom, InnerTo](
+      valueFrom.unwrap(ctx.src),
+      OnRecur(fromField = DownField(valueFrom.fieldName), toField = DownField(valueTo.fieldName))
+    ).flatMap { (derivedInnerTo: TransformationExpr[InnerTo]) =>
+      // We're constructing:
+      // '{ ${ new $To(${ derivedInnerTo }) } /* using ${ src }.$from internally */ }
+      DerivationResult.expanded(derivedInnerTo.map(valueTo.wrap))
     }
 }

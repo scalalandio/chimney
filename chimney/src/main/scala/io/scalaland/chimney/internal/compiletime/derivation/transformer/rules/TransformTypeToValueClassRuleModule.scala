@@ -13,26 +13,28 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
       Type[To] match {
         case ValueClassType(to2) =>
           import to2.{Underlying as InnerTo, value as valueTo}
-          transformToInnerToAndWrap[From, To, InnerTo](valueTo.wrap, valueTo.fieldName)
+          transformToInnerToAndWrap[From, To, InnerTo](valueTo)
         case _ => DerivationResult.attemptNextRule
       }
   }
 
   private def transformToInnerToAndWrap[From, To, InnerTo: Type](
-      wrap: Expr[InnerTo] => Expr[To],
-      fieldName: String
+      valueTo: ValueClass[To, InnerTo]
   )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-    deriveRecursiveTransformationExpr[From, InnerTo](ctx.src)
+    deriveRecursiveTransformationExpr[From, InnerTo](
+      ctx.src,
+      OnRecur(fromField = KeepFieldOverrides, toField = DownField(valueTo.fieldName))
+    )
       .flatMap { derivedInnerTo =>
         // We're constructing:
         // '{ new $To(${ derivedInnerTo }) }
-        DerivationResult.expanded(derivedInnerTo.map(wrap))
+        DerivationResult.expanded(derivedInnerTo.map(valueTo.wrap))
       }
       // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
       .orElse(TransformProductToProductRule.expand(ctx))
       .orElse(
         DerivationResult
-          .notSupportedTransformerDerivationForField(fieldName)(ctx)
+          .notSupportedTransformerDerivationForField(valueTo.fieldName)(ctx)
           .log(
             s"Failed to resolve derivation from ${Type.prettyPrint[From]} to ${Type
                 .prettyPrint[InnerTo]} (wrapped by ${Type.prettyPrint[To]})"
