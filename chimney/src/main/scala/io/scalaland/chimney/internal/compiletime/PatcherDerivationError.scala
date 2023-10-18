@@ -11,13 +11,14 @@ final case class PatchFieldNotFoundInTargetObj(patchFieldName: String, objTypeNa
 
 object PatcherDerivationError {
 
-  def printError(patcherDerivationError: PatcherDerivationError): String = patcherDerivationError match {
-    case NotSupportedPatcherDerivation(objTypeName, patchTypeName) =>
-      s"Patcher derivation not supported for $objTypeName with patch type $patchTypeName"
-    case PatchFieldNotFoundInTargetObj(patchFieldName, objTypeName) =>
-      s"Field named '$patchFieldName' not found in target patching type $objTypeName!"
-  }
-
   def printErrors(errors: Seq[PatcherDerivationError]): String =
-    errors.map(printError).mkString("\n")
+    errors
+      .map {
+        case NotSupportedPatcherDerivation(objTypeName, patchTypeName) =>
+          s"Patcher derivation not supported for $objTypeName with patch type $patchTypeName"
+        case PatchFieldNotFoundInTargetObj(patchFieldName, objTypeName) =>
+          s"Field named '$patchFieldName' not found in target patching type $objTypeName!"
+      }
+      .map(_ + "\n")
+      .mkString("\n")
 }

@@ -21,6 +21,10 @@ private[compiletime] trait Contexts { this: Derivation =>
         derivationStartedAt = derivationStartedAt
       )
         .asInstanceOf[this.type]
+
+    override def toString: String =
+      s"PatcherContext[A = ${Type.prettyPrint(A)}, Patch = ${Type
+          .prettyPrint(Patch)}](obj = ${Expr.prettyPrint(obj)}, patch = ${Expr.prettyPrint(patch)})($config)"
   }
   object PatcherContext {
 
@@ -32,7 +36,7 @@ private[compiletime] trait Contexts { this: Derivation =>
       PatcherContext(obj = obj, patch = patch)(
         A = Type[A],
         Patch = Type[Patch],
-        config = config.preventResolutionFor[A, Patch],
+        config = config.preventImplicitSummoningFor[A, Patch],
         derivationStartedAt = java.time.Instant.now()
       )
   }

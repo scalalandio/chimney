@@ -433,6 +433,10 @@ would generate:
 !!! example
 
     ```
+    + Start derivation with context: PatcherContext[A = User, Patch = UserUpdateForm](obj = user, patch = userupdateform)(PatcherConfig(
+    |   flags = PatcherFlags(displayMacrosLogging),
+    |   preventImplicitSummoningForTypes = None
+    | ))
     + Deriving Patcher expression for User with patch UserUpdateForm
       + Deriving Total Transformer expression from java.lang.String to Email
         + Attempting expansion of rule Implicit

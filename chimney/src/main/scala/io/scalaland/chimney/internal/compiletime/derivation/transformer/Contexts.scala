@@ -107,7 +107,7 @@ private[compiletime] trait Contexts { this: Derivation =>
           From = Type[From],
           To = Type[To],
           runtimeDataStore = runtimeDataStore,
-          config = config.preventResolutionFor[From, To],
+          config = config.preventImplicitSummoningFor[From, To],
           derivationStartedAt = java.time.Instant.now()
         )
     }
@@ -145,7 +145,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         From = Type[From],
         To = Type[To],
         runtimeDataStore = runtimeDataStore,
-        config = config.preventResolutionFor[From, To],
+        config = config.preventImplicitSummoningFor[From, To],
         derivationStartedAt = java.time.Instant.now()
       )
     }

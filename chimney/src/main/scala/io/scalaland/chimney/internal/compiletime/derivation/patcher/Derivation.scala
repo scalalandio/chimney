@@ -25,50 +25,53 @@ private[compiletime] trait Derivation
   import Type.Implicits.*
 
   final def derivePatcherResultExpr[A, Patch](implicit ctx: PatcherContext[A, Patch]): DerivationResult[Expr[A]] =
-    summonPatcherSafe[A, Patch]
-      .map { patcherExpr =>
-        DerivationResult.pure(patcherExpr.patch(ctx.obj, ctx.patch))
-      }
-      .getOrElse {
-        DerivationResult.namedScope(
-          s"Deriving Patcher expression for ${Type.prettyPrint[A]} with patch ${Type.prettyPrint[Patch]}"
-        ) {
-          (Type[A], Type[Patch]) match {
-            case (
-                  ProductType(
-                    Product(Product.Extraction(objExtractors), Product.Constructor(objParameters, objConstructor))
-                  ),
-                  Product.Extraction(patchExtractors)
-                ) =>
-              val patchGetters =
-                patchExtractors.filter(_._2.value.sourceType == Product.Getter.SourceType.ConstructorVal)
-              val targetParams =
-                objParameters.filter(_._2.value.targetType == Product.Parameter.TargetType.ConstructorParameter)
-              val targetGetters =
-                objExtractors.filter(_._2.value.sourceType == Product.Getter.SourceType.ConstructorVal)
+    DerivationResult.log(s"Start derivation with context: $ctx") >>
+      summonPatcherSafe[A, Patch]
+        .map { patcherExpr =>
+          DerivationResult.pure(patcherExpr.patch(ctx.obj, ctx.patch))
+        }
+        .getOrElse {
+          DerivationResult.namedScope(
+            s"Deriving Patcher expression for ${Type.prettyPrint[A]} with patch ${Type.prettyPrint[Patch]}"
+          ) {
+            (Type[A], Type[Patch]) match {
+              case (
+                    ProductType(
+                      Product(Product.Extraction(objExtractors), Product.Constructor(objParameters, objConstructor))
+                    ),
+                    Product.Extraction(patchExtractors)
+                  ) =>
+                val patchGetters =
+                  patchExtractors.filter(_._2.value.sourceType == Product.Getter.SourceType.ConstructorVal)
+                val targetParams =
+                  objParameters.filter(_._2.value.targetType == Product.Parameter.TargetType.ConstructorParameter)
+                val targetGetters =
+                  objExtractors.filter(_._2.value.sourceType == Product.Getter.SourceType.ConstructorVal)
 
-              patchGetters.toList
-                .parTraverse { case (patchFieldName, patchGetter) =>
-                  resolvePatchMapping[A, Patch](patchFieldName, patchGetter, targetGetters, targetParams)
-                    .map(_.map(patchFieldName -> _))
-                }
-                .map(_.flatten.toMap)
-                .flatMap { patchMapping =>
-                  val patchedArgs = targetParams.map { case (targetParamName, _) =>
-                    targetParamName -> patchMapping.getOrElse(
-                      targetParamName,
-                      targetGetters(targetParamName).mapK[Expr](_ => getter => getter.get(ctx.obj))
-                    )
+                patchGetters.toList
+                  .parTraverse { case (patchFieldName, patchGetter) =>
+                    resolvePatchMapping[A, Patch](patchFieldName, patchGetter, targetGetters, targetParams)
+                      .map(_.map(patchFieldName -> _))
+                  }
+                  .map(_.flatten.toMap)
+                  .flatMap { patchMapping =>
+                    val patchedArgs = targetParams.map { case (targetParamName, _) =>
+                      targetParamName -> patchMapping.getOrElse(
+                        targetParamName,
+                        targetGetters(targetParamName).mapK[Expr](_ => getter => getter.get(ctx.obj))
+                      )
+                    }
+
+                    DerivationResult.pure(objConstructor(patchedArgs))
                   }
 
-                  DerivationResult.pure(objConstructor(patchedArgs))
-                }
-
-            case _ =>
-              DerivationResult.patcherError(NotSupportedPatcherDerivation(Type.prettyPrint[A], Type.prettyPrint[Patch]))
+              case _ =>
+                DerivationResult.patcherError(
+                  NotSupportedPatcherDerivation(Type.prettyPrint[A], Type.prettyPrint[Patch])
+                )
+            }
           }
         }
-      }
 
   private def resolvePatchMapping[A: Type, Patch: Type](
       patchFieldName: String,

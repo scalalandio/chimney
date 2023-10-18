@@ -345,9 +345,9 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     (new Source("value", 512)).into[Target].disableMethodAccessors.transform
     // Chimney can't derive transformation from Source to Target
     //
-    // Playground.Target
-    //   a: java.lang.String - no accessor named a in source type Playground.Source
-    //   b: scala.Int - no accessor named b in source type Playground.Source
+    // Target
+    //   a: java.lang.String - no accessor named a in source type Source
+    //   b: scala.Int - no accessor named b in source type Source
     //
     // There are methods in Source that might be used as accessors for `a`, `b` fields in Target. Consider using `.enableMethodAccessors`.
     //
