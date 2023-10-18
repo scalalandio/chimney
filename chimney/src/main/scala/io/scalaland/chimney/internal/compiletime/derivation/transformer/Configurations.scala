@@ -34,14 +34,14 @@ private[compiletime] trait Configurations { this: Derivation =>
         copy(displayMacrosLogging = value)
       } else {
         // $COVERAGE-OFF$
-        reportError(s"Invalid transformer flag type: ${Type[Flag]}!")
+        reportError(s"Invalid internal TransformerFlag type: ${Type[Flag]}!")
         // $COVERAGE-ON$
       }
 
     def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags =
       copy(implicitConflictResolution = preference)
 
-    override def toString: String = s"Flags(${Vector(
+    override def toString: String = s"TransformerFlags(${Vector(
         if (inheritedAccessors) Vector("inheritedAccessors") else Vector.empty,
         if (methodAccessors) Vector("methodAccessors") else Vector.empty,
         if (processDefaultValues) Vector("processDefaultValues") else Vector.empty,
@@ -99,7 +99,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       flags: TransformerFlags = TransformerFlags(),
       private val fieldOverrides: Map[FieldPath, RuntimeFieldOverride] = Map.empty,
       private val coproductOverrides: Map[(??, ??), RuntimeCoproductOverride] = Map.empty,
-      private val preventResolutionForTypes: Option[(??, ??)] = None
+      private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
   ) {
 
     def prepareForRecursiveCall(tpe: RecursiveDerivationType): TransformerConfig = {
@@ -122,11 +122,11 @@ private[compiletime] trait Configurations { this: Derivation =>
       copy(
         fieldOverrides = newFieldOverrides,
         coproductOverrides = Map.empty,
-        preventResolutionForTypes = None
+        preventImplicitSummoningForTypes = None
       )
     }
 
-    def allowFromToImplicitSearch: TransformerConfig = copy(preventResolutionForTypes = None)
+    def allowFromToImplicitSearch: TransformerConfig = copy(preventImplicitSummoningForTypes = None)
 
     def addFieldOverride(fieldPath: FieldPath, fieldOverride: RuntimeFieldOverride): TransformerConfig =
       copy(fieldOverrides = fieldOverrides + (fieldPath -> fieldOverride))
@@ -136,12 +136,11 @@ private[compiletime] trait Configurations { this: Derivation =>
     ): TransformerConfig =
       copy(coproductOverrides = coproductOverrides + ((Type[Instance].as_??, Type[Target].as_??) -> coproductOverride))
 
-    def preventResolutionFor[From: Type, To: Type]: TransformerConfig =
-      copy(preventResolutionForTypes = Some(Type[From].as_?? -> Type[To].as_??))
+    def preventImplicitSummoningFor[From: Type, To: Type]: TransformerConfig =
+      copy(preventImplicitSummoningForTypes = Some(Type[From].as_?? -> Type[To].as_??))
 
-    // prevents: val t: Transformer[A, B] = a => t.transform(a)
-    def isResolutionPreventedFor[From: Type, To: Type]: Boolean =
-      preventResolutionForTypes.exists { case (someFrom, someTo) =>
+    def isImplicitSummoningPreventedFor[From: Type, To: Type]: Boolean =
+      preventImplicitSummoningForTypes.exists { case (someFrom, someTo) =>
         import someFrom.Underlying as SomeFrom, someTo.Underlying as SomeTo
         Type[SomeFrom] =:= Type[From] && Type[SomeTo] =:= Type[To]
       }
@@ -166,14 +165,14 @@ private[compiletime] trait Configurations { this: Derivation =>
       val coproductOverridesString = coproductOverrides
         .map { case ((f, t), v) => s"(${ExistentialType.prettyPrint(f)}, ${ExistentialType.prettyPrint(t)}) -> $v" }
         .mkString(", ")
-      val preventResolutionForTypesString = preventResolutionForTypes.map { case (f, t) =>
+      val preventImplicitSummoningForTypesString = preventImplicitSummoningForTypes.map { case (f, t) =>
         s"(${ExistentialType.prettyPrint(f)}, ${ExistentialType.prettyPrint(t)})"
       }.toString
       s"""TransformerConfig(
          |  flags = $flags,
          |  fieldOverrides = Map($fieldOverridesString),
          |  coproductOverrides = Map($coproductOverridesString),
-         |  preventResolutionForTypes = $preventResolutionForTypesString
+         |  preventImplicitSummoningForTypes = $preventImplicitSummoningForTypesString
          |)""".stripMargin
     }
   }
@@ -210,7 +209,7 @@ private[compiletime] trait Configurations { this: Derivation =>
               )
             else {
               // $COVERAGE-OFF$
-              reportError("Invalid implicit conflict resolution preference type!!")
+              reportError("Invalid ImplicitTransformerPreference type!!")
               // $COVERAGE-ON$
             }
           case _ =>
@@ -226,7 +225,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         }
       case _ =>
         // $COVERAGE-OFF$
-        reportError(s"Bad internal transformer flags type shape ${Type.prettyPrint[Flags]}!")
+        reportError(s"Invalid internal TransformerFlags type shape: ${Type.prettyPrint[Flags]}!")
       // $COVERAGE-ON$
     }
 
@@ -286,7 +285,7 @@ private[compiletime] trait Configurations { this: Derivation =>
           )
       case _ =>
         // $COVERAGE-OFF$
-        reportError(s"Bad internal transformer config type shape ${Type.prettyPrint[Cfg]}!!")
+        reportError(s"Invalid internal TransformerCfg type shape: ${Type.prettyPrint[Cfg]}!!")
       // $COVERAGE-ON$
     }
 
@@ -300,7 +299,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         FieldPath.Select(Type[FieldName].extractStringSingleton, extractPath[Path])
       case _ =>
         // $COVERAGE-OFF$
-        reportError(s"Bad paths shape ${Type.prettyPrint[Field]}!!")
+        reportError(s"Invalid internal Path shape: ${Type.prettyPrint[Field]}!!")
       // $COVERAGE-ON$
     }
   }

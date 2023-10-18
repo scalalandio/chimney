@@ -19,20 +19,42 @@ private[compiletime] trait Configurations { this: Derivation =>
         copy(displayMacrosLogging = value)
       } else {
         // $COVERAGE-OFF$
-        reportError(s"Invalid patcher flag type: ${Type[Flag]}!")
+        reportError(s"Invalid internal PatcherFlags type shape: ${Type[Flag]}!")
         // $COVERAGE-ON$
       }
+
+    override def toString: String = s"PatcherFlags(${Vector(
+        if (ignoreNoneInPatch) Vector("ignoreNoneInPatch") else Vector.empty,
+        if (ignoreRedundantPatcherFields) Vector("ignoreRedundantPatcherFields") else Vector.empty,
+        if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
+      ).flatten.mkString(", ")})"
   }
 
   final protected case class PatcherConfig(
       flags: PatcherFlags = PatcherFlags(),
-      preventResolutionForTypes: Option[(??, ??)] = None
+      private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
   ) {
 
-    def allowAPatchImplicitSearch: PatcherConfig = copy(preventResolutionForTypes = None)
+    def allowAPatchImplicitSearch: PatcherConfig = copy(preventImplicitSummoningForTypes = None)
 
-    def preventResolutionFor[A: Type, Patch: Type]: PatcherConfig =
-      copy(preventResolutionForTypes = Some(Type[A].as_?? -> Type[Patch].as_??))
+    def preventImplicitSummoningFor[A: Type, Patch: Type]: PatcherConfig =
+      copy(preventImplicitSummoningForTypes = Some(Type[A].as_?? -> Type[Patch].as_??))
+
+    def isImplicitSummoningPreventedFor[A: Type, Patch: Type]: Boolean =
+      preventImplicitSummoningForTypes.exists { case (someA, somePatch) =>
+        import someA.Underlying as SomeA, somePatch.Underlying as SomePatch
+        Type[SomeA] =:= Type[A] && Type[SomePatch] =:= Type[Patch]
+      }
+
+    override def toString: String = {
+      val preventImplicitSummoningForTypesString = preventImplicitSummoningForTypes.map { case (f, t) =>
+        s"(${ExistentialType.prettyPrint(f)}, ${ExistentialType.prettyPrint(t)})"
+      }.toString
+      s"""PatcherConfig(
+         |  flags = $flags,
+         |  preventImplicitSummoningForTypes = $preventImplicitSummoningForTypesString
+         |)""".stripMargin
+    }
   }
 
   protected object PatcherConfigurations {
@@ -60,7 +82,7 @@ private[compiletime] trait Configurations { this: Derivation =>
           extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = false)
         case _ =>
           // $COVERAGE-OFF$
-          reportError(s"Bad internal transformer flags type shape ${Type.prettyPrint[Flags]}!")
+          reportError(s"Invalid internal PatcherFlags type shape: ${Type.prettyPrint[Flags]}!")
         // $COVERAGE-ON$
       }
 
@@ -69,7 +91,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     private def extractPatcherConfig[Cfg <: runtime.PatcherCfg: Type](): PatcherConfig = Type[Cfg] match {
       case empty if empty =:= ChimneyType.PatcherCfg.Empty => PatcherConfig()
       case _ =>
-        reportError(s"Bad internal patcher config type shape ${Type.prettyPrint[Cfg]}!!")
+        reportError(s"Invalid internal PatcherCfg type shape: ${Type.prettyPrint[Cfg]}!!")
     }
   }
 }

@@ -238,35 +238,43 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       case RuntimeFieldOverride.RenamedFrom(sourcePath, sourceValue) =>
         import sourceValue.Underlying as SourceValue, sourceValue.value as srcExpr
 
+        def extractSource[Source: Type](
+            sourceName: String,
+            extractedSrcExpr: Expr[Source]
+        ): Either[String, ExistentialExpr] = Type[Source] match {
+          case Product.Extraction(getters) =>
+            getters
+              .collectFirst[Either[String, ExistentialExpr]] { case (`sourceName`, getter) =>
+                import getter.Underlying as Getter, getter.value.get
+                Right(get(extractedSrcExpr).as_??)
+              }
+              .getOrElse {
+                Left(
+                  s"""|Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found
+                      |available methods: ${getters.keys.map(n => s"`$n`").mkString(", ")}""".stripMargin
+                )
+              }
+          case _ =>
+            Left(
+              s"""Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found"""
+            )
+        }
+
         // This (suppressed) error is a case when compiler is simply wrong :)
         @scala.annotation.nowarn("msg=Unreachable case")
-        def extractSource(fieldPath: FieldPath): Option[ExistentialExpr] = fieldPath match {
-          case FieldPath.Root => None
-          case FieldPath.Select(sourceName, FieldPath.Root) =>
-            Type[SourceValue] match {
-              case Product.Extraction(getters) =>
-                getters.collectFirst { case (`sourceName`, getter) =>
-                  import getter.Underlying as Getter, getter.value.get
-                  get(srcExpr).as_??
-                }
-              case _ => None
-            }
+        def extractNestedSource(fieldPath: FieldPath): Either[String, ExistentialExpr] = fieldPath match {
+          case FieldPath.Root                               => Left(s"Field rename with empty path")
+          case FieldPath.Select(sourceName, FieldPath.Root) => extractSource[SourceValue](sourceName, srcExpr)
           case FieldPath.Select(sourceName, instance) =>
-            extractSource(instance).flatMap { extractedSrcValue =>
+            extractNestedSource(instance).flatMap { extractedSrcValue =>
               import extractedSrcValue.Underlying as ExtractedSourceValue, extractedSrcValue.value as extractedSrcExpr
-              Type[ExtractedSourceValue] match {
-                case Product.Extraction(getters) =>
-                  getters.collectFirst { case (`sourceName`, getter) =>
-                    import getter.Underlying as Getter, getter.value.get
-                    get(extractedSrcExpr).as_??
-                  }
-                case _ => None
-              }
+              extractSource[ExtractedSourceValue](sourceName, extractedSrcExpr)
             }
         }
 
-        extractSource(sourcePath)
-          .map { extractedSrc =>
+        extractNestedSource(sourcePath).fold(
+          errorMsg => DerivationResult.assertionError(errorMsg),
+          extractedSrc => {
             import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
             DerivationResult.namedScope(
               s"Recursive derivation for field `$sourcePath`: ${Type
@@ -284,12 +292,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               }
             }
           }
-          .getOrElse {
-            val tpeStr = Type.prettyPrint[SourceValue]
-            DerivationResult.assertionError(
-              s"""|Assumed that field $sourcePath is a part of $tpeStr, but wasn't found""".stripMargin
-            )
-          }
+        )
     }
 
     private def useExtractor[From, To, CtorParam: Type](

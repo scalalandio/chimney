@@ -109,9 +109,10 @@ If the flag was enabled in the implicit config it can be disabled with `.failRed
       .using(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
       .failRedundantPatcherFields
       .patch
-    // Chimney can't derive patcher for Playground.User with patch type Playground.UserUpdateForm
+    // Chimney can't derive patcher for User with patch type UserUpdateForm
     // 
-    // Field named 'address' not found in target patching type Playground.User!
+    // Field named 'address' not found in target patching type User!
+    //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 

@@ -72,6 +72,6 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   private def extractExprAndLog[A: Type, Patch: Type, Out: Type](result: DerivationResult[Expr[Out]]): Expr[Out] =
     extractExprAndLog[Out](
       result,
-      s"""Chimney can't derive patcher for ${Type.prettyPrint[A]} with patch type ${Type.prettyPrint[Patch]}"""
+      s"""Chimney can't derive patching for ${Type.prettyPrint[A]} with patch type ${Type.prettyPrint[Patch]}"""
     )
 }

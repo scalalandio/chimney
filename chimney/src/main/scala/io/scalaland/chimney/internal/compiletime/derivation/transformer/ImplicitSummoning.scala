@@ -8,14 +8,14 @@ private[compiletime] trait ImplicitSummoning { this: Derivation =>
       ctx: TransformationContext[From, To]
   ): Option[Expr[io.scalaland.chimney.Transformer[From, To]]] =
     // prevents: val t: Transformer[A, B] = a => t.transform(a)
-    if (ctx.config.isResolutionPreventedFor[From, To]) None
+    if (ctx.config.isImplicitSummoningPreventedFor[From, To]) None
     else summonTransformerUnchecked[From, To]
 
   final protected def summonPartialTransformerSafe[From, To](implicit
       ctx: TransformationContext[From, To]
   ): Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
     // prevents: val t: PartialTransformer[A, B] = a => t.transform(a)
-    if (ctx.config.isResolutionPreventedFor[From, To]) None
+    if (ctx.config.isImplicitSummoningPreventedFor[From, To]) None
     else summonPartialTransformerUnchecked[From, To]
 
   final protected def summonTransformerUnchecked[From: Type, To: Type]
