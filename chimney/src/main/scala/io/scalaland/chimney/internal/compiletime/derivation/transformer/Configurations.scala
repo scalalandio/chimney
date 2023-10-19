@@ -14,7 +14,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       beanGetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
-      displayMacrosLogging: Boolean = false
+      displayMacrosLogging: Boolean = false,
+      wasInstanceOverridden: Boolean = false
   ) {
 
     def setBoolFlag[Flag <: runtime.TransformerFlags.Flag: Type](value: Boolean): TransformerFlags =
@@ -41,6 +42,8 @@ private[compiletime] trait Configurations { this: Derivation =>
     def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags =
       copy(implicitConflictResolution = preference)
 
+    def setInstanceOverridden: TransformerFlags = copy(wasInstanceOverridden = true)
+
     override def toString: String = s"TransformerFlags(${Vector(
         if (inheritedAccessors) Vector("inheritedAccessors") else Vector.empty,
         if (methodAccessors) Vector("methodAccessors") else Vector.empty,
@@ -49,7 +52,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (beanGetters) Vector("beanGetters") else Vector.empty,
         if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
-        if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
+        if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty,
+        if (wasInstanceOverridden) Vector("wasInstanceOverriden") else Vector.empty
       ).flatten.mkString(", ")})"
   }
 
@@ -190,7 +194,10 @@ private[compiletime] trait Configurations { this: Derivation =>
     ](fromExpr: ExistentialExpr): TransformerConfig = {
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags())
       val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
-      extractTransformerConfig[Cfg](runtimeDataIdx = 0, fromExpr = fromExpr).copy(flags = allFlags)
+      val flags =
+        if (Type[InstanceFlags] =:= ChimneyType.TransformerFlags.Default) allFlags
+        else allFlags.setInstanceOverridden
+      extractTransformerConfig[Cfg](runtimeDataIdx = 0, fromExpr = fromExpr).copy(flags = flags)
     }
 
     // This (suppressed) error is a case when compiler is simply wrong :)
