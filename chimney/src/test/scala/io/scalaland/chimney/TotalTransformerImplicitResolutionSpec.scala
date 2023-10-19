@@ -39,4 +39,17 @@ class TotalTransformerImplicitResolutionSpec extends ChimneySpec {
 
     Person("John", 10, 140).into[User].withFieldConst(_.name, "Not John").transform ==> User("Not John", 10, 140)
   }
+
+  test("ignore implicit Total Transformer if an local flag is present but not if only implicit flag is present") {
+    import trip.*
+
+    @unused implicit def instance: Transformer[Person, UserWithDefault] =
+      person => UserWithDefault(person.name, person.age, 38)
+
+    @unused implicit val cfg = TransformerConfiguration.default.enableDefaultValues
+
+    Person("John", 10, 140).transformInto[UserWithDefault] ==> UserWithDefault("John", 10, 38)
+    Person("John", 10, 140).into[UserWithDefault].transform ==> UserWithDefault("John", 10, 38)
+    Person("John", 10, 140).into[UserWithDefault].enableDefaultValues.transform ==> UserWithDefault("John", 10)
+  }
 }

@@ -14,8 +14,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       beanGetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
-      displayMacrosLogging: Boolean = false,
-      wasInstanceOverridden: Boolean = false
+      displayMacrosLogging: Boolean = false
   ) {
 
     def setBoolFlag[Flag <: runtime.TransformerFlags.Flag: Type](value: Boolean): TransformerFlags =
@@ -42,8 +41,6 @@ private[compiletime] trait Configurations { this: Derivation =>
     def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags =
       copy(implicitConflictResolution = preference)
 
-    def setInstanceOverridden: TransformerFlags = copy(wasInstanceOverridden = true)
-
     override def toString: String = s"TransformerFlags(${Vector(
         if (inheritedAccessors) Vector("inheritedAccessors") else Vector.empty,
         if (methodAccessors) Vector("methodAccessors") else Vector.empty,
@@ -52,8 +49,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (beanGetters) Vector("beanGetters") else Vector.empty,
         if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
-        if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty,
-        if (wasInstanceOverridden) Vector("wasInstanceOverriden") else Vector.empty
+        if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
       ).flatten.mkString(", ")})"
   }
 
@@ -105,6 +101,7 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   final protected case class TransformerConfig(
       flags: TransformerFlags = TransformerFlags(),
+      private val instanceFlagOverridden: Boolean = false,
       private val fieldOverrides: Map[FieldPath, RuntimeFieldOverride] = Map.empty,
       private val coproductOverrides: Map[(??, ??), RuntimeCoproductOverride] = Map.empty,
       private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
@@ -128,6 +125,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         case CleanFieldOverrides => Map.empty
       }
       copy(
+        instanceFlagOverridden = false,
         fieldOverrides = newFieldOverrides,
         coproductOverrides = Map.empty,
         preventImplicitSummoningForTypes = None
@@ -135,6 +133,8 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
 
     def allowFromToImplicitSearch: TransformerConfig = copy(preventImplicitSummoningForTypes = None)
+
+    def setLocalFlagsOverriden: TransformerConfig = copy(instanceFlagOverridden = true)
 
     def addFieldOverride(fieldPath: FieldPath, fieldOverride: RuntimeFieldOverride): TransformerConfig =
       copy(fieldOverrides = fieldOverrides + (fieldPath -> fieldOverride))
@@ -154,7 +154,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       }
 
     def areOverridesEmptyForCurrent[From: Type, To: Type]: Boolean =
-      fieldOverrides.isEmpty && filterOverridesForCoproduct { (someFrom, someTo) =>
+      !instanceFlagOverridden && fieldOverrides.isEmpty && filterOverridesForCoproduct { (someFrom, someTo) =>
         import someFrom.Underlying as SomeFrom, someTo.Underlying as SomeTo
         Type[SomeFrom] <:< Type[From] && Type[To] <:< Type[SomeTo]
       }.isEmpty
@@ -178,6 +178,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       }.toString
       s"""TransformerConfig(
          |  flags = $flags,
+         |  instanceFlagOverridden = $instanceFlagOverridden,
          |  fieldOverrides = Map($fieldOverridesString),
          |  coproductOverrides = Map($coproductOverridesString),
          |  preventImplicitSummoningForTypes = $preventImplicitSummoningForTypesString
@@ -194,10 +195,8 @@ private[compiletime] trait Configurations { this: Derivation =>
     ](fromExpr: ExistentialExpr): TransformerConfig = {
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags())
       val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
-      val flags =
-        if (Type[InstanceFlags] =:= ChimneyType.TransformerFlags.Default) allFlags
-        else allFlags.setInstanceOverridden
-      extractTransformerConfig[Cfg](runtimeDataIdx = 0, fromExpr = fromExpr).copy(flags = flags)
+      val cfg = extractTransformerConfig[Cfg](runtimeDataIdx = 0, fromExpr = fromExpr).copy(flags = allFlags)
+      if (Type[InstanceFlags] =:= ChimneyType.TransformerFlags.Default) cfg else cfg.setLocalFlagsOverriden
     }
 
     // This (suppressed) error is a case when compiler is simply wrong :)
