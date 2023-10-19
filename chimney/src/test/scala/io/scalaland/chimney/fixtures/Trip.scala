@@ -9,4 +9,6 @@ package trip {
   case class Trip(id: Int, people: Vector[Person])
 
   case class User(name: String, age: Int, height: Double)
+
+  case class UserWithDefault(name: String, age: Int, footSize: Int = 42)
 }
