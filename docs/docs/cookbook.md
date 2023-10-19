@@ -46,6 +46,21 @@ If we do not want to enable the same flag(s) in several places, we can define sh
     This includes automatic derivation as well, so summoning automatically derived Transformer would adhere to these
     flags.
 
+!!! warning
+
+    Since 0.8.0, Chimney assumes that you do NOT want to use the use implicit Transformer if you passed any `withField*`
+    or `withCoproduct*` customization - using an implicit would not make it possible to do so. However, setting any flag
+    with `enable*` or `disable*` would not prevent using implicit. So you could have situation like:
+    
+    ```scala
+    implicit val foo2bar: Transformer[Foo, Bar] = ...
+    foo.into[Bar].enableDefaultValues.transform // uses foo2bar ignoring flags
+    ```
+    
+    Since 0.8.1, Chimney would ignore an implicit if any flag was explicitly used in `.into.transform`. Flags defined in
+    an implicit `TransformerConfiguration` would be considerd new default settings in new derivations, but would not
+    cause `.into.transform` to ignore an implicit if one is present. 
+
 ## Automatic, Semiautomatic and Inlined derivation
 
 When you use the standard way of working with Chimney, but `import io.scalaland.chimney.dsl._`

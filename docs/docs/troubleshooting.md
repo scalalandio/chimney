@@ -254,6 +254,42 @@ and then
 
 The same is true for partial transformers.
 
+## Recursive calls on implicits
+
+Old versions of Chimney in situations like this:
+
+!!! example
+
+    ```scala
+    implicit val t: Transformer[Foo, Bar] = foo => foo.transformInto[Bar] // or
+    implicit val t: Transformer[Foo, Bar] = foo => foo.into[Bar].transform
+    ```
+    
+would result in errors like:
+
+!!! example
+
+    ```scala
+    forward reference extends over definition of value t
+    ```
+
+In newer, it can result in would result in errors like:
+
+!!! example
+
+    ```scala
+    java.lang.StackOverflowError
+    ```
+
+It's a sign of recursion which has to be handled with [semiautomatic derivation](cookbook.md#automatic-vs-semiautomatic).
+
+!!! example
+
+    ```scala
+    implicit val t: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar] // or
+    implicit val t: Transformer[Foo, Bar] = Transformer.define[Foo, Bar].buildTransformer
+    ```
+
 ## `sealed trait`s fail to recompile
 
 In the case of incremental compilation, the Zinc compiler sometimes has issues with
