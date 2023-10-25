@@ -21,7 +21,7 @@ with Scaladoc API documentation available:
 
 To start using the library add to your sbt config:
 
-```scala
+```scala mdoc
 // if you use Scala on JVM-only
 libraryDependencies += "io.scalaland" %% "chimney" % "{{ git.tag or local.tag }}"
 // if you cross-compile to Scala.js and/or Scala Native
@@ -30,7 +30,7 @@ libraryDependencies += "io.scalaland" %%% "chimney" % "{{ git.tag or local.tag }
 
 and then import in your codebase:
 
-```scala
+```scala mdoc
 import io.scalaland.chimney.dsl._
 ```
 
@@ -55,14 +55,14 @@ scala-cli repl --scala "{{ scala.3 }}" --dependency "io.scalaland::chimney::{{ g
 If you are interested in using `java.util.Optional`, `java.util.Collection`s, `java.util.Map`s, `java.util.streams` and
 other Java's types, you need to add integration to your project:
 
-```scala
+```scala mdoc
 // Java collections integrations is released only on JVM Scala!
 libraryDependencies += "io.scalaland" %% "chimney-java-collections" % "{{ git.tag or local.tag }}"
 ```
 
 and then import:
 
-```scala
+```scala mdoc
 import io.scalaland.chimney.javacollections._
 ```
 
@@ -74,14 +74,14 @@ import io.scalaland.chimney.javacollections._
 
 If you are interested in Cats integrations for Partial Transformers, you need to add to your project:
 
-```scala
+```scala mdoc
 // if you use Scala on JVM-only
 libraryDependencies += "io.scalaland" %% "chimney-cats" % "{{ git.tag or local.tag }}"
 // if you cross-compile to Scala.js and/or Scala Native
 libraryDependencies += "io.scalaland" %%% "chimney-cats" % "{{ git.tag or local.tag }}"
 ```
 
-```scala
+```scala mdoc
 import io.scalaland.chimney.cats._
 ```
 
@@ -93,14 +93,14 @@ import io.scalaland.chimney.cats._
 
 If you want to improve support for types defined in ScalaPB, you need to add to your project:
 
-```scala
+```scala mdoc
 // if you use Scala on JVM-only
 libraryDependencies += "io.scalaland" %% "chimney-protobufs" % "{{ git.tag or local.tag }}"
 // if you cross-compile to Scala.js and/or Scala Native
 libraryDependencies += "io.scalaland" %%% "chimney-protobufs" % "{{ git.tag or local.tag }}"
 ```
 
-```scala
+```scala mdoc
 import io.scalaland.chimney.protobufs._
 ```
 

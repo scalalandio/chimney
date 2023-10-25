@@ -33,7 +33,7 @@ Users' expectations start with the attempt to transform a value without any cust
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     import io.scalaland.chimney.dsl._
    
     val source: Source = ...
@@ -53,7 +53,7 @@ libraries with (automatic) derivation.
 
     Passing `Transformer` with short lambda syntax
 
-    ```scala
+    ```scala mdoc
     val customTransformers: List[Transformer[Source, Target]] = ...
     val source: Source = ...
     list.map(source.transformInto(_))
@@ -61,7 +61,7 @@ libraries with (automatic) derivation.
 
     Passing `Transformer` manually
 
-    ```scala
+    ```scala mdoc
     val transformer: Transformer[Source, Target]]
     val source: Source
     source.pipe(_.transformInto(transformer)).pipe(println)
@@ -74,7 +74,7 @@ So, should the extension method look like this?
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     // extension method on [From](from: From)
     def transformInto[To](implicit transformer: Transformer[From, To]): To = transformer.transform(from)
     ```
@@ -88,7 +88,7 @@ them slightly different types:
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     // Transformer is a subtype of Autoderived (is more specific/constrained)
     trait Transformer[From, To] extends Transformer.Autoderived {
       def transform(src: From): To   
@@ -102,7 +102,7 @@ them slightly different types:
     }
     ```
     
-    ```scala
+    ```scala mdoc
     // extension method on [From](from: From)
     def transformInto[To](implicit transformer: Transformer.Autoderived[From, To]): To = transformer.transform(from)
     ``` 
@@ -133,7 +133,7 @@ The API call to customize the derivation could look like this:
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     val source: Source = ...
     source.into[Target].withFieldConst(_.a, value).enableMethodAccessors.transform
     ```
@@ -160,7 +160,7 @@ type class instantiation.
 
     If now you are thinking _"hey, does it mean that they are **NOT** doing this?"_:
     
-    ```scala
+    ```scala mdoc
     // created by .transform macro
     val transformer = new Transformer { /* customized body */ }
     transformer.transform(source)
@@ -172,7 +172,7 @@ type class instantiation.
     `source.into[Target].transform` inlines this generated expression directly, while automatic derivation,
     `Transformer.derive[From, To]` and `Transformer.define[From, To].buildTransformer` additionally:
     
-    ```scala
+    ```scala mdoc
     new Transformer[From, To] {
       def transform(src: From): To = 
         // use `src` as source expression for derivation (Expr[From])
@@ -190,7 +190,7 @@ Well. It appears that runtime values are the easiest to store in runtime. When w
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     class TransformerInto(...) {
       // ...
     }
@@ -209,7 +209,7 @@ to a common supertype: `Any`. So from the JVM perspective, after type erasure, w
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     new TransformerInto(source)
       .methodAppendingValue(constant: Any)
       .methodAppendingValue(function: Any)
@@ -229,7 +229,7 @@ and then you prepend each config similar to how cons works in normal list. You e
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     source.withFieldConst(_.a, ...).withFieldRenamed(_.b, _.c).transform
     // has a Cfg type like
     TransformerCfg.FieldRenamed[fieldBType, fieldCType, TransformerCfg.FieldConst[fieldAType, TransformerCfg.Empty]]
@@ -257,7 +257,7 @@ And since it is an implicit, it can be shared between several different macro ex
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -324,7 +324,7 @@ as soon as we get it - by delaying the wrapping as long as possible we are avoid
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -338,7 +338,7 @@ as soon as we get it - by delaying the wrapping as long as possible we are avoid
     
     would NOT generate anything similar to
     
-    ```scala
+    ```scala mdoc
     val foo = Foo(1, 2, 3)
     for {
       a <- partial.Result.fromValue(int2string.transform(foo.a))
@@ -349,7 +349,7 @@ as soon as we get it - by delaying the wrapping as long as possible we are avoid
     
     but rather:
     
-    ```scala
+    ```scala mdoc
     val foo = Foo(1, 2, 3)
     partial.Result.fromValue(
       new Bar(
@@ -415,7 +415,7 @@ Before attempting to summon any `implicit`, the `Rule` checks if it should do it
 
     !!! example
   
-        ```scala
+        ```scala mdoc
         implicit val transformerFromTo: Transformer[From, To] = Transformer.derive[From, To] // implicit[Transformer[From, To]]
                                                                                        // = transformerFromTo - cyclic dependency
         ```
@@ -527,13 +527,13 @@ The derivation has a few stages:
     
     This is done with:
     
-    ```scala
+    ```scala mdoc
     val _ = value
     ```
     
     syntax. However, if you log from the macro, you might notice that the compiler presents it differently:
     
-    ```scala
+    ```scala mdoc
     (value: ValueType @scala.unchecked) match {
       case _ =>
         ()
@@ -581,11 +581,11 @@ used in Endpoints4s and Endless4s:
 
 !!! example "Shared codebase"
 
-    ```scala
+    ```scala mdoc
     trait Definitions extends Types with Exprs
     ```
     
-    ```scala
+    ```scala mdoc
     trait Types {
        type Type[A] // abstract type
     
@@ -596,7 +596,7 @@ used in Endpoints4s and Endless4s:
      }
     ```
     
-    ```scala
+    ```scala mdoc
     trait Exprs { this: Types =>
       type Expr[A] // abstract type
     

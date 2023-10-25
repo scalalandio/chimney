@@ -8,6 +8,27 @@ on:
     types: ['opened', 'reopened', 'labeled', 'synchronize']
 
 jobs:
+  check-formatting:
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.action != 'labeled' # run for 'opened', 'reopened' and 'synchronize'
+
+    strategy:
+      matrix:
+        jvm: [ 'adopt:1.8.0-292' ]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: coursier/setup-action@v1.3.0
+        with:
+          jvm: ${{ matrix.jvm }}
+          apps: sbt
+      - name: Check code formatting, check documentation formatting, check MiMa
+        run: sbt scalafmtCheck Test/scalafmtCheck
+
   build:
 
     runs-on: ubuntu-latest
@@ -29,7 +50,7 @@ jobs:
         with:
           jvm: ${{ matrix.jvm }}
           apps: sbt
-      - name: Clean, Check code formatting, compile, test, generate coverage report
+      - name: Clean, compile, test, generate coverage report
         run: sbt ci-${{ matrix.platform }}-${{ matrix.scala }}
       - uses: codecov/codecov-action@v3
         with:

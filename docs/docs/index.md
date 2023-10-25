@@ -9,7 +9,7 @@ What does it mean? Imagine you'd have to convert between this Protobuf-like defi
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     case class UserDTO(
         name: String, // 1. primitive
         addresses: Seq[AddressDTO], // 2. Seq collection
@@ -33,7 +33,7 @@ and this domain model:
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     case class User(
         name: Username, // 1. value class
         addresses: List[Address], // 2. List collection
@@ -62,7 +62,7 @@ From now on, forget about it! Encoding domain object with an infallible transfor
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -80,7 +80,7 @@ From now on, forget about it! Encoding domain object with an infallible transfor
 
 ??? example "Curious about the generated code?"
 
-    ```scala
+    ```scala mdoc
     // macro outputs code like this (reformatted a bit for readability):
     final class $anon() extends Transformer[User, UserDTO] {
       def transform(src: User): UserDTO = {
@@ -111,7 +111,7 @@ Done! Decoding Protobuf into domain object with a fallible transformation, like 
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
 
@@ -140,7 +140,7 @@ Done! Decoding Protobuf into domain object with a fallible transformation, like 
 
 ??? example "Curious about the generated code?"
 
-    ```scala
+    ```scala mdoc
     // macro outputs code like this (reformatted a bit for readability): 
     final class $anon() extends PartialTransformer[UserDTO, User] {
       def transform(src: UserDTO, failFast: Boolean): partial.Result[User] = {
