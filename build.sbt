@@ -404,7 +404,7 @@ lazy val chimneyJavaCollections = projectMatrix
         case Some((2, _)) => Seq("-skip-packages", "io.scalaland.chimney.javacollections.internal")
         case _            => Seq.empty
       }
-    },
+    }
   )
   .dependsOn(chimney % "test->test;compile->compile")
 
