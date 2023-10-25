@@ -69,8 +69,6 @@ private[compiletime] trait Configurations { this: Derivation =>
       extractPatcherConfig[Cfg]().copy(flags = allFlags)
     }
 
-    // This (suppressed) error is a case when compiler is simply wrong :)
-    @scala.annotation.nowarn("msg=Unreachable case")
     private def extractTransformerFlags[Flags <: runtime.PatcherFlags: Type](defaultFlags: PatcherFlags): PatcherFlags =
       Type[Flags] match {
         case default if default =:= ChimneyType.PatcherFlags.Default => defaultFlags
@@ -86,8 +84,6 @@ private[compiletime] trait Configurations { this: Derivation =>
         // $COVERAGE-ON$
       }
 
-    // This (suppressed) error is a case when compiler is simply wrong :)
-    @scala.annotation.nowarn("msg=Unreachable case")
     private def extractPatcherConfig[Cfg <: runtime.PatcherCfg: Type](): PatcherConfig = Type[Cfg] match {
       case empty if empty =:= ChimneyType.PatcherCfg.Empty => PatcherConfig()
       case _ =>
