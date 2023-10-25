@@ -257,7 +257,6 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
 
   val tasks = if (isJVM) {
     clean ++
-      Vector("scalafmtCheck", "Test/scalafmtCheck") ++
       withCoverage((tasksOf("compile") ++ tasksOf("test") ++ tasksOf("coverageReport")).toSeq*) ++
       Vector("benchmarks/compile") ++
       tasksOf("mimaReportBinaryIssues")

@@ -18,7 +18,7 @@ Let's have a look at the type signatures of both Lifted and Partial Transformers
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     package io.scalaland.chimney
 
     // Lifted Transformer
@@ -80,7 +80,7 @@ This option allowed calling `.get` on `Option` to enable conversion from `Option
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -96,7 +96,7 @@ now we have `PartialTransformer`s. They have a build-in ability to unwrap `Optio
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -134,7 +134,7 @@ another implicit `Transformer`.
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney._
     
@@ -155,7 +155,7 @@ there the automatic instances as well, they need to use `Transformer.AutoDerived
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney._
     
@@ -175,7 +175,7 @@ The difference is shown in this example:
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -236,7 +236,7 @@ be handled by recursive calls. This can be done with:
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     implicit val foo2bar: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
 
     // or
@@ -248,7 +248,7 @@ and then
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     foo.transformInto[Bar] // uses implicit Transformer (with recursive transformation)
     ```
 
@@ -260,7 +260,7 @@ Old versions of Chimney in situations like this:
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     implicit val t: Transformer[Foo, Bar] = foo => foo.transformInto[Bar] // or
     implicit val t: Transformer[Foo, Bar] = foo => foo.into[Bar].transform
     ```
@@ -269,7 +269,7 @@ would result in errors like:
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     forward reference extends over definition of value t
     ```
 
@@ -277,7 +277,7 @@ In newer, it can result in would result in errors like:
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     java.lang.StackOverflowError
     ```
 
@@ -285,7 +285,7 @@ It's a sign of recursion which has to be handled with [semiautomatic derivation]
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     implicit val t: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar] // or
     implicit val t: Transformer[Foo, Bar] = Transformer.define[Foo, Bar].buildTransformer
     ```
@@ -307,7 +307,7 @@ In Scala 2 syntax like
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -320,7 +320,7 @@ This changes in Scala 3 where you'll get an error:
 
 !!! example
     
-    ```scala
+    ```scala mdoc
     result type of implicit definition needs to be given explicitly
     ```
 
@@ -328,7 +328,7 @@ You can work around this by slightly longer incantation:
 
 !!! example
  
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -346,7 +346,7 @@ In such cases, we can use a dedicated flag, `.enableMacrosLogging`:
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
 
@@ -436,7 +436,7 @@ above, or with a shared implicit config:
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -448,7 +448,7 @@ The flag is also available to `Patcher`s, this code:
 
 !!! example
 
-    ```scala
+    ```scala mdoc
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
