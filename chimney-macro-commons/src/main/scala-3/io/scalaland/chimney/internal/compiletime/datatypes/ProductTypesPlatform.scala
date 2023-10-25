@@ -132,10 +132,10 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         val A = TypeRepr.of[A]
         val sym = A.typeSymbol
 
-        def isScala3ParameterlessCase = sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic)
+        // TODO: actually a duplication of isScala3Enum from isCaseObject
+        def isScala3Enum = sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic)
 
-        if isScala3ParameterlessCase then Some(Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A]))
-        else if isJavaEnumValue[A] then Some(Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A]))
+        if isScala3Enum || isJavaEnumValue[A] then Some(Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A]))
         else Some(Product.Constructor(ListMap.empty, _ => Ref(sym.companionModule).asExprOf[A]))
       } else if isPOJO[A] then {
         val A = TypeRepr.of[A]
