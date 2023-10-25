@@ -3,7 +3,7 @@ project/project
 project/target
 target
 *.class
-# Sphinx documentation
+# Mdocs documentation
 docs/build
 # Scala Metals and BSP
 .bloop
@@ -14,4 +14,5 @@ project/metals.sbt
 .idea
 .vscode
 # other
+.scala-build
 *.log

@@ -13,21 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event.action != 'labeled' # run for 'opened', 'reopened' and 'synchronize'
 
-    strategy:
-      matrix:
-        jvm: [ 'adopt:1.8.0-292' ]
-      fail-fast: false
-
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - uses: coursier/setup-action@v1.3.0
         with:
-          jvm: ${{ matrix.jvm }}
-          apps: sbt
-      - name: Check code formatting, check documentation formatting, check MiMa
-        run: sbt scalafmtCheck Test/scalafmtCheck
+          apps: scalafmt
+      - name: Check code and docs formatting
+        run: scalafmt --check
 
   build:
 
@@ -50,7 +44,7 @@ jobs:
         with:
           jvm: ${{ matrix.jvm }}
           apps: sbt
-      - name: Clean, compile, test, generate coverage report
+      - name: Clean, compile, test, generate coverage report, check MiMa
         run: sbt ci-${{ matrix.platform }}-${{ matrix.scala }}
       - uses: codecov/codecov-action@v3
         with:
