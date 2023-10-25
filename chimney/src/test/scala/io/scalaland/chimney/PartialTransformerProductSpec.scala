@@ -968,7 +968,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         .transform
 
       result.asOption ==> None
-      result.asEither == Left(
+      result.asEither ==> Left(
         partial.Result
           .Errors(
             partial.Error.fromString("abc"),
@@ -990,7 +990,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         .transform
 
       result.asOption ==> None
-      result.asEither == Left(
+      result.asEither ==> Left(
         partial.Result.Errors
           .single(
             partial.Error.fromThrowable(MyException)

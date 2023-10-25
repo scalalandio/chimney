@@ -13,7 +13,7 @@ trait ChimneySpec extends munit.BaseFunSuite with VersionCompat { self =>
   def group(name: String)(body: => Any): Unit = {
     val oldPrefix = prefix
     prefix = appendName(prefix, name)
-    body
+    val _ = body
     prefix = oldPrefix
   }
 

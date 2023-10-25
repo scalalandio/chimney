@@ -199,8 +199,6 @@ private[compiletime] trait Configurations { this: Derivation =>
       if (Type[InstanceFlags] =:= ChimneyType.TransformerFlags.Default) cfg else cfg.setLocalFlagsOverriden
     }
 
-    // This (suppressed) error is a case when compiler is simply wrong :)
-    @scala.annotation.nowarn("msg=Unreachable case")
     private def extractTransformerFlags[Flags <: runtime.TransformerFlags: Type](
         defaultFlags: TransformerFlags
     ): TransformerFlags = Type[Flags] match {
@@ -239,8 +237,6 @@ private[compiletime] trait Configurations { this: Derivation =>
       // $COVERAGE-ON$
     }
 
-    // This (suppressed) error is a case when compiler is simply wrong :)
-    @scala.annotation.nowarn("msg=Unreachable case")
     private def extractTransformerConfig[Cfg <: runtime.TransformerCfg: Type](
         runtimeDataIdx: Int,
         fromExpr: ExistentialExpr
@@ -299,8 +295,6 @@ private[compiletime] trait Configurations { this: Derivation =>
       // $COVERAGE-ON$
     }
 
-    // This (suppressed) error is a case when compiler is simply wrong :)
-    @scala.annotation.nowarn("msg=Unreachable case")
     private def extractPath[Field <: runtime.Path: Type]: FieldPath = Type[Field] match {
       case root if root =:= ChimneyType.Path.Root =>
         FieldPath.Root

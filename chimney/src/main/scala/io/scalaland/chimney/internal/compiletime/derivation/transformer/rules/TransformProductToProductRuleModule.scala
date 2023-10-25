@@ -260,8 +260,6 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             )
         }
 
-        // This (suppressed) error is a case when compiler is simply wrong :)
-        @scala.annotation.nowarn("msg=Unreachable case")
         def extractNestedSource(fieldPath: FieldPath): Either[String, ExistentialExpr] = fieldPath match {
           case FieldPath.Root                               => Left(s"Field rename with empty path")
           case FieldPath.Select(sourceName, FieldPath.Root) => extractSource[SourceValue](sourceName, srcExpr)
