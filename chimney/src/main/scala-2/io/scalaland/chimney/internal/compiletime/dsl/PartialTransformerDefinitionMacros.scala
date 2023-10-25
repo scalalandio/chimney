@@ -1,8 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.dsl.PartialTransformerDefinition
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
-import io.scalaland.chimney.internal.runtime.Path.*
+import io.scalaland.chimney.internal.runtime.{Path, TransformerCfg, TransformerFlags}
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 
 import scala.annotation.unused
@@ -21,8 +20,8 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
     .addOverride(value)
     .asInstanceOfExpr(
       new ApplyFieldNameType {
-        def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerDefinition[From, To, FieldConst[Select[FromField, Root], Cfg], Flags]]
+        def apply[FromField <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[PartialTransformerDefinition[From, To, FieldConst[FromField, Cfg], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -35,8 +34,8 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
     .addOverride(value)
     .asInstanceOfExpr(
       new ApplyFieldNameType {
-        def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerDefinition[From, To, FieldConstPartial[Select[FromField, Root], Cfg], Flags]]
+        def apply[FromField <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[PartialTransformerDefinition[From, To, FieldConstPartial[FromField, Cfg], Flags]]
       }.applyFromSelector(selector)
     )
   def withFieldComputedImpl[
@@ -48,8 +47,8 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
     .addOverride(f)
     .asInstanceOfExpr(
       new ApplyFieldNameType {
-        def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerDefinition[From, To, FieldComputed[Select[FromField, Root], Cfg], Flags]]
+        def apply[FromField <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[PartialTransformerDefinition[From, To, FieldComputed[FromField, Cfg], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -62,8 +61,8 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
     .addOverride(f)
     .asInstanceOfExpr(
       new ApplyFieldNameType {
-        def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerDefinition[From, To, FieldComputedPartial[Select[FromField, Root], Cfg], Flags]]
+        def apply[FromField <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[PartialTransformerDefinition[From, To, FieldComputedPartial[FromField, Cfg], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -75,13 +74,8 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
   ](selectorFrom: Tree, selectorTo: Tree): Tree = c.prefix.tree
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
-        def apply[FromField <: String: WeakTypeTag, ToField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PartialTransformerDefinition[
-            From,
-            To,
-            FieldRelabelled[Select[FromField, Root], Select[ToField, Root], Cfg],
-            Flags
-          ]]
+        def apply[FromField <: Path: WeakTypeTag, ToField <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[PartialTransformerDefinition[From, To, FieldRelabelled[FromField, ToField, Cfg], Flags]]
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 

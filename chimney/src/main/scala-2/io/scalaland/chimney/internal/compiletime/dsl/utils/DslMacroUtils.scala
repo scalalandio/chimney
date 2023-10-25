@@ -1,5 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.dsl.utils
 
+import io.scalaland.chimney.internal.runtime
+
 import scala.reflect.macros.blackbox
 
 private[chimney] trait DslMacroUtils {
@@ -23,13 +25,44 @@ private[chimney] trait DslMacroUtils {
   }
   private object ExistentialString {
 
-    def unapply(t: Tree): Option[ExistentialString] = t match {
-      case q"(${vd: ValDef}) => ${idt: Ident}.${fieldName: TermName}" if vd.name == idt.name =>
-        Some(new ExistentialString {
-          type Underlying = String
-          val Underlying: WeakTypeTag[String] =
-            c.WeakTypeTag(c.internal.constantType(Constant(fieldName.decodedName.toString)))
-        })
+    def unapply(fieldName: TermName): Some[ExistentialString] = Some(new ExistentialString {
+      type Underlying = String
+      val Underlying: WeakTypeTag[String] =
+        c.WeakTypeTag(c.internal.constantType(Constant(fieldName.decodedName.toString)))
+    })
+  }
+
+  private trait ExistentialPath {
+    type Underlying <: runtime.Path
+    val Underlying: c.WeakTypeTag[Underlying]
+  }
+  private object ExistentialPath {
+
+    def unapply(t: Tree): Option[ExistentialPath] = t match {
+      case q"(${vd: ValDef}) => $selects" =>
+        def unpackSelects(selects: Tree): Option[ExistentialPath] = selects match {
+          case idt: Ident if vd.name == idt.name =>
+            Some(new ExistentialPath {
+              type Underlying = runtime.Path.Root
+              val Underlying: WeakTypeTag[runtime.Path.Root] = weakTypeTag[runtime.Path.Root]
+            })
+          case Select(t2, fieldName: TermName) =>
+            for {
+              instance <- unpackSelects(t2)
+              name = ExistentialString.unapply(fieldName).value
+            } yield {
+              def applyTypes[FieldName <: String: c.WeakTypeTag, Instance <: runtime.Path: c.WeakTypeTag] =
+                new ExistentialPath {
+                  type Underlying = runtime.Path.Select[FieldName, Instance]
+                  val Underlying: WeakTypeTag[runtime.Path.Select[FieldName, Instance]] =
+                    weakTypeTag[runtime.Path.Select[FieldName, Instance]]
+                }
+              applyTypes(name.Underlying, instance.Underlying)
+            }
+          case _ => None
+        }
+
+        unpackSelects(selects)
       case _ =>
         None
     }
@@ -50,33 +83,33 @@ private[chimney] trait DslMacroUtils {
   //
   // Using type parameters instead of path-dependent types make compiler use the implicit as intended.
   protected trait ApplyFieldNameType {
-    def apply[A <: String: WeakTypeTag]: WeakTypeTag[?]
+    def apply[A <: runtime.Path: WeakTypeTag]: WeakTypeTag[?]
 
-    final def applyFromSelector(t: c.Tree): WeakTypeTag[?] = apply(extractSelectorAsType(t).Underlying)
+    final def applyFromSelector(t: c.Tree): WeakTypeTag[?] =
+      apply(extractSelectorAsType(t).Underlying)
 
-    private def extractSelectorAsType(t: Tree): ExistentialString = ExistentialString.unapply(t).getOrElse {
-      c.abort(c.enclosingPosition, ExistentialString.invalidSelectorErrorMessage(t))
+    private def extractSelectorAsType(t: Tree): ExistentialPath = ExistentialPath.unapply(t).getOrElse {
+      c.abort(c.enclosingPosition, ExistentialPath.invalidSelectorErrorMessage(t))
     }
   }
   protected trait ApplyFieldNameTypes {
-    def apply[A <: String: WeakTypeTag, B <: String: WeakTypeTag]: WeakTypeTag[?]
+    def apply[A <: runtime.Path: WeakTypeTag, B <: runtime.Path: WeakTypeTag]: WeakTypeTag[?]
 
     final def applyFromSelectors(t1: c.Tree, t2: c.Tree): WeakTypeTag[?] = {
       val (e1, e2) = extractSelectorsAsTypes(t1, t2)
       apply(e1.Underlying, e2.Underlying)
     }
 
-    private def extractSelectorsAsTypes(t1: Tree, t2: Tree): (ExistentialString, ExistentialString) =
+    private def extractSelectorsAsTypes(t1: Tree, t2: Tree): (ExistentialPath, ExistentialPath) =
       (t1, t2) match {
-        case (ExistentialString(fieldName1), ExistentialString(fieldName2)) =>
-          (fieldName1, fieldName2)
-        case (_, ExistentialString(_)) =>
-          c.abort(c.enclosingPosition, ExistentialString.invalidSelectorErrorMessage(t1))
-        case (ExistentialString(_), _) =>
-          c.abort(c.enclosingPosition, ExistentialString.invalidSelectorErrorMessage(t2))
+        case (ExistentialPath(path1), ExistentialPath(path2)) => (path1, path2)
+        case (_, ExistentialPath(_)) =>
+          c.abort(c.enclosingPosition, ExistentialPath.invalidSelectorErrorMessage(t1))
+        case (ExistentialPath(_), _) =>
+          c.abort(c.enclosingPosition, ExistentialPath.invalidSelectorErrorMessage(t2))
         case (_, _) =>
-          val err1 = ExistentialString.invalidSelectorErrorMessage(t1)
-          val err2 = ExistentialString.invalidSelectorErrorMessage(t2)
+          val err1 = ExistentialPath.invalidSelectorErrorMessage(t1)
+          val err2 = ExistentialPath.invalidSelectorErrorMessage(t2)
           c.abort(c.enclosingPosition, s"Invalid selectors:\n$err1\n$err2")
       }
   }

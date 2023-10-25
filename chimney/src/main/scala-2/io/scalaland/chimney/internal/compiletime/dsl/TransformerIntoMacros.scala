@@ -1,8 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.dsl.TransformerInto
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
-import io.scalaland.chimney.internal.runtime.Path.*
+import io.scalaland.chimney.internal.runtime.{Path, TransformerCfg, TransformerFlags}
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 
 import scala.annotation.unused
@@ -21,8 +20,8 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
     .addOverride(value)
     .asInstanceOfExpr(
       new ApplyFieldNameType {
-        def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[TransformerInto[From, To, FieldConst[Select[FromField, Root], Cfg], Flags]]
+        def apply[FromField <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerInto[From, To, FieldConst[FromField, Cfg], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -35,8 +34,8 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
     .addOverride(f)
     .asInstanceOfExpr(
       new ApplyFieldNameType {
-        def apply[FromField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[TransformerInto[From, To, FieldComputed[Select[FromField, Root], Cfg], Flags]]
+        def apply[FromField <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerInto[From, To, FieldComputed[FromField, Cfg], Flags]]
       }.applyFromSelector(selector)
     )
 
@@ -48,10 +47,8 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
   ](selectorFrom: Tree, selectorTo: Tree): Tree = c.prefix.tree
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
-        def apply[FromField <: String: WeakTypeTag, ToField <: String: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[
-            TransformerInto[From, To, FieldRelabelled[Select[FromField, Root], Select[ToField, Root], Cfg], Flags]
-          ]
+        def apply[FromField <: Path: WeakTypeTag, ToField <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerInto[From, To, FieldRelabelled[FromField, ToField, Cfg], Flags]]
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 
