@@ -54,11 +54,16 @@ val settings = Seq(
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((3, _)) =>
         Seq(
-          // "-explain",
-          "-rewrite",
           // format: off
+          "-encoding", "UTF-8",
+          "-rewrite",
           "-source", "3.3-migration",
           // format: on
+          "-unchecked",
+          "-deprecation",
+          "-explain",
+          "-explain-types",
+          "-feature",
           "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
           "-Wnonunit-statement",
           // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is!
