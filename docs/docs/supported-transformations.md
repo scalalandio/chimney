@@ -1795,16 +1795,6 @@ for which they would not have a reasonable mapping:
     List(Foo(10) -> 20).transformInto[Map[Bar, String]] // Map(Bar("10") -> "20")
     ```
 
-    It is true about `sealed` hierarchies/`enum`s' subtypes as well:    
-
-    ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
-    import io.scalaland.chimney.Transformer
-    import io.scalaland.chimney.dsl._
-    
-    // TODO: sealed + enum with implicits between subtypes
-    ```
-
 !!! warning
 
     Looking for an implicit `Transformer` and `PartialTransformer` is the first thing that Chimney does, to let you
@@ -1879,6 +1869,73 @@ can be safely converted, and some which have no reasonable mapping in the target
     Partial Transformers are much more powerful than that! For other examples take a look at
     [Protocol Buffer integrations](cookbook.md#protocol-buffers-integration) and
     [Libraries with smart constructors](cookbook.md#libraries-with-smart-constructors).
+
+### Custom transformers for `sealed`/`enum`s' subtypes
+
+Providing transformations via `implicit`/`given` is possible for `sealed` hierarchies/`enum`s' subtypes as well -
+when Chimney match subtypes by name, you can tell it how to convert them using implicits:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+    
+    sealed trait Foo
+    object Foo {
+      case object A extends Foo
+      case class B(int: Int) extends Foo
+    }
+    
+    sealed trait Bar
+    object Bar {
+      case class A(int: String) extends Bar
+      case object B extends Bar
+    }
+    
+    implicit val aToA: Transformer[Foo.A.type, Bar.A] = _ => Bar.A("10")
+    implicit val bToB: Transformer[Foo.B, Bar.B.type] = _ => Bar.B
+    
+    (Foo.A: Foo).transformInto[Bar] // Bar.A(10)
+    (Foo.B(42): Foo).transformInto[Bar] // Bar.B
+    ```
+    
+However, usually it is easier to provide it via [an override](#handling-a-specific-sealed-subtype-with-a-computed-value)
+instead.
+
+!!! warning
+    
+    There also exist a special fallback rule for `sealed`/`enum` allowing to use a source's subtype to the whole target
+    type:
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+    
+    sealed trait Foo
+    object Foo {
+      case object A extends Foo
+      case class B(int: Int) extends Foo
+    }
+    
+    sealed trait Bar
+    object Bar {
+      case class A(int: String) extends Bar
+      case object C extends Bar
+    }
+    
+    implicit val aToC: Transformer[Foo.A.type, Bar] = _ => Bar.A("a")
+    implicit val bToD: Transformer[Foo.B, Bar] = b =>
+      if (b.int > 0) Bar.A(b.int.toString) else Bar.A("nope")
+    
+    (Foo.A: Foo).transformInto[Bar] // Bar.A(10)
+    (Foo.B(42): Foo).transformInto[Bar] // Bar.B
+    (Foo.B(-100): Foo).transformInto[Bar] // Bar.B
+    ```
+
+    It has to be a fallback, to avoid cycles while resolving derivation.
 
 ### Resolving priority of implicit Total vs Partial Transformers
 
