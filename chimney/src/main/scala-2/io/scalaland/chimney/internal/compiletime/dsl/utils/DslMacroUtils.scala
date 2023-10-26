@@ -25,11 +25,11 @@ private[chimney] trait DslMacroUtils {
   }
   private object ExistentialString {
 
-    def unapply(fieldName: TermName): Some[ExistentialString] = Some(new ExistentialString {
+    def apply(fieldName: TermName): ExistentialString = new ExistentialString {
       type Underlying = String
       val Underlying: WeakTypeTag[String] =
         c.WeakTypeTag(c.internal.constantType(Constant(fieldName.decodedName.toString)))
-    })
+    }
   }
 
   private trait ExistentialPath {
@@ -38,19 +38,20 @@ private[chimney] trait DslMacroUtils {
   }
   private object ExistentialPath {
 
-    def unapply(t: Tree): Option[ExistentialPath] = t match {
+    def parse(t: Tree): Either[String, ExistentialPath] = t match {
       case q"(${vd: ValDef}) => $selects" =>
-        def unpackSelects(selects: Tree): Option[ExistentialPath] = selects match {
+        def unpackSelects(selects: Tree): Either[String, ExistentialPath] = selects match {
           case idt: Ident if vd.name == idt.name =>
-            Some(new ExistentialPath {
+            Right(new ExistentialPath {
               type Underlying = runtime.Path.Root
               val Underlying: WeakTypeTag[runtime.Path.Root] = weakTypeTag[runtime.Path.Root]
             })
+          case _: Ident =>
+            Left("Expected function literal") // TODO
           case Select(t2, fieldName: TermName) =>
-            for {
-              instance <- unpackSelects(t2)
-              name = ExistentialString.unapply(fieldName).value
-            } yield {
+            unpackSelects(t2).map { instance =>
+              val name = ExistentialString(fieldName)
+
               def applyTypes[FieldName <: String: c.WeakTypeTag, Instance <: runtime.Path: c.WeakTypeTag] =
                 new ExistentialPath {
                   type Underlying = runtime.Path.Select[FieldName, Instance]
@@ -59,15 +60,14 @@ private[chimney] trait DslMacroUtils {
                 }
               applyTypes(name.Underlying, instance.Underlying)
             }
-          case _ => None
+          case _ => Left(invalidSelectorErrorMessage(t))
         }
 
         unpackSelects(selects)
-      case _ =>
-        None
+      case _ => Left(invalidSelectorErrorMessage(t))
     }
 
-    def invalidSelectorErrorMessage(selectorTree: Tree): String = s"Invalid selector expression: $selectorTree"
+    private def invalidSelectorErrorMessage(selectorTree: Tree): String = s"Invalid selector expression: $selectorTree"
   }
 
   // If we try to do:
@@ -88,9 +88,8 @@ private[chimney] trait DslMacroUtils {
     final def applyFromSelector(t: c.Tree): WeakTypeTag[?] =
       apply(extractSelectorAsType(t).Underlying)
 
-    private def extractSelectorAsType(t: Tree): ExistentialPath = ExistentialPath.unapply(t).getOrElse {
-      c.abort(c.enclosingPosition, ExistentialPath.invalidSelectorErrorMessage(t))
-    }
+    private def extractSelectorAsType(t: Tree): ExistentialPath =
+      ExistentialPath.parse(t).fold(error => c.abort(c.enclosingPosition, error), path => path)
   }
   protected trait ApplyFieldNameTypes {
     def apply[A <: runtime.Path: WeakTypeTag, B <: runtime.Path: WeakTypeTag]: WeakTypeTag[?]
@@ -101,16 +100,11 @@ private[chimney] trait DslMacroUtils {
     }
 
     private def extractSelectorsAsTypes(t1: Tree, t2: Tree): (ExistentialPath, ExistentialPath) =
-      (t1, t2) match {
-        case (ExistentialPath(path1), ExistentialPath(path2)) => (path1, path2)
-        case (_, ExistentialPath(_)) =>
-          c.abort(c.enclosingPosition, ExistentialPath.invalidSelectorErrorMessage(t1))
-        case (ExistentialPath(_), _) =>
-          c.abort(c.enclosingPosition, ExistentialPath.invalidSelectorErrorMessage(t2))
-        case (_, _) =>
-          val err1 = ExistentialPath.invalidSelectorErrorMessage(t1)
-          val err2 = ExistentialPath.invalidSelectorErrorMessage(t2)
-          c.abort(c.enclosingPosition, s"Invalid selectors:\n$err1\n$err2")
+      (ExistentialPath.parse(t1), ExistentialPath.parse(t2)) match {
+        case (Right(path1), Right(path2)) => (path1, path2)
+        case (Left(error1), Left(error2)) => c.abort(c.enclosingPosition, s"Invalid selectors:\n$error1\n$error2")
+        case (Left(error), _)             => c.abort(c.enclosingPosition, error)
+        case (_, Left(error))             => c.abort(c.enclosingPosition, error)
       }
   }
 

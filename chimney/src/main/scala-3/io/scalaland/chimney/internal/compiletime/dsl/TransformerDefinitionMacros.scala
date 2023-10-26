@@ -3,8 +3,8 @@ package io.scalaland.chimney.internal.compiletime.dsl
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
-import io.scalaland.chimney.internal.runtime.Path.*
+import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
+import io.scalaland.chimney.internal.runtime.{Path, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 
 import scala.quoted.*
@@ -22,17 +22,16 @@ object TransformerDefinitionMacros {
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]],
       selector: Expr[To => T],
       value: Expr[U]
-  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selector)
-    FieldNameUtils.strLiteralType(fieldName).asType match {
-      case '[FieldNameUtils.StringBounded[fieldNameT]] =>
-        '{
-          WithRuntimeDataStore
-            .update($td, $value)
-            .asInstanceOf[TransformerDefinition[From, To, FieldConst[Select[fieldNameT, Root], Cfg], Flags]]
+  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerCfg, Flags]] =
+    DslMacroUtils().applyFieldNameType {
+      [fieldNameT <: Path] =>
+        (_: Type[fieldNameT]) ?=>
+          '{
+            WithRuntimeDataStore
+              .update($td, $value)
+              .asInstanceOf[TransformerDefinition[From, To, FieldConst[fieldNameT, Cfg], Flags]]
         }
-    }
-  }
+    }(selector)
 
   def withFieldComputedImpl[
       From: Type,
@@ -45,17 +44,16 @@ object TransformerDefinitionMacros {
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]],
       selector: Expr[To => T],
       f: Expr[From => U]
-  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    val fieldName = FieldNameUtils.extractSelectorFieldNameOrAbort(selector)
-    FieldNameUtils.strLiteralType(fieldName).asType match {
-      case '[FieldNameUtils.StringBounded[fieldNameT]] =>
-        '{
-          WithRuntimeDataStore
-            .update($td, $f)
-            .asInstanceOf[TransformerDefinition[From, To, FieldComputed[Select[fieldNameT, Root], Cfg], Flags]]
+  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerCfg, Flags]] =
+    DslMacroUtils().applyFieldNameType {
+      [fieldNameT <: Path] =>
+        (_: Type[fieldNameT]) ?=>
+          '{
+            WithRuntimeDataStore
+              .update($td, $f)
+              .asInstanceOf[TransformerDefinition[From, To, FieldComputed[fieldNameT, Cfg], Flags]]
         }
-    }
-  }
+    }(selector)
 
   def withFieldRenamed[
       From: Type,
@@ -68,20 +66,20 @@ object TransformerDefinitionMacros {
       td: Expr[TransformerDefinition[From, To, Cfg, Flags]],
       selectorFrom: Expr[From => T],
       selectorTo: Expr[To => U]
-  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerCfg, Flags]] = {
-    val (fieldNameFrom, fieldNameTo) = FieldNameUtils.extractSelectorFieldNamesOrAbort(selectorFrom, selectorTo)
-    (FieldNameUtils.strLiteralType(fieldNameFrom).asType, FieldNameUtils.strLiteralType(fieldNameTo).asType) match {
-      case ('[FieldNameUtils.StringBounded[fieldNameFromT]], '[FieldNameUtils.StringBounded[fieldNameToT]]) =>
-        '{
-          $td.asInstanceOf[TransformerDefinition[
-            From,
-            To,
-            FieldRelabelled[Select[fieldNameFromT, Root], Select[fieldNameToT, Root], Cfg],
-            Flags
-          ]]
-        }
-    }
-  }
+  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerCfg, Flags]] =
+    DslMacroUtils().applyFieldNameTypes {
+      [fieldNameFromT <: Path, fieldNameToT <: Path] =>
+        (_: Type[fieldNameFromT]) ?=>
+          (_: Type[fieldNameToT]) ?=>
+            '{
+              $td.asInstanceOf[TransformerDefinition[
+                From,
+                To,
+                FieldRelabelled[fieldNameFromT, fieldNameToT, Cfg],
+                Flags
+              ]]
+          }
+    }(selectorFrom, selectorTo)
 
   def withCoproductInstance[
       From: Type,
