@@ -27,7 +27,7 @@ transformation is through `Transformer[From, To]`:
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.Transformer
 
@@ -61,7 +61,7 @@ function was not defined, "empty value" when something was expected) and even th
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.{PartialTransformer, partial}
 
@@ -126,7 +126,7 @@ If you transform one type into itself or its supertype, it will be upcast withou
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
 
@@ -149,7 +149,7 @@ In particular, when the source type is (`=:=`) the target type, you will end up 
     
     This attempt is only skipped if we customised the transformation:
     
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -184,7 +184,7 @@ The obvious examples are `case class`es with the same fields:
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
 

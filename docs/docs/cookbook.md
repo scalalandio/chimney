@@ -10,7 +10,7 @@ If we do not want to enable the same flag(s) in several places, we can define sh
 
     Scala 2
 
-    ```scala mdoc
+    ```scala
     //> using scala {{ scala.2_13 }}
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
@@ -22,7 +22,7 @@ If we do not want to enable the same flag(s) in several places, we can define sh
 
     Scala 3
 
-    ```scala mdoc
+    ```scala
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
@@ -52,7 +52,7 @@ If we do not want to enable the same flag(s) in several places, we can define sh
     or `withCoproduct*` customization - using an implicit would not make it possible to do so. However, setting any flag
     with `enable*` or `disable*` would not prevent using implicit. So you could have situation like:
     
-    ```scala mdoc
+    ```scala
     implicit val foo2bar: Transformer[Foo, Bar] = ...
     foo.into[Bar].enableDefaultValues.transform // uses foo2bar ignoring flags
     ```
@@ -95,7 +95,7 @@ In other libraries this issue is addressed by providing 2 flavors of derivation:
   
     !!! example
   
-        ```scala mdoc
+        ```scala
         implicit val typeclass: TypeClass[A] = implicitly[TypeClass[A]]
         ```
   
@@ -109,7 +109,7 @@ In other libraries this issue is addressed by providing 2 flavors of derivation:
 
     !!! example
 
-        ```scala mdoc
+        ```scala
         implicit val typeclass: TypeClass[A] = deriveTypeClass[A]
         ```
 
@@ -127,7 +127,7 @@ will describe in a moment), but it also allows you to selectively use these impo
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     import io.scalaland.chimney.auto._
     import io.scalaland.chimney.inlined._
     import io.scalaland.chimney.syntax._
@@ -146,7 +146,7 @@ instead of `io.scalaland.chimney.dsl` to achieve a similar behavior:
 
     !!! example
 
-        ```scala mdoc
+        ```scala
         // Defaults only:
         Transformer.derive[From, To]
         PartialTransformer.derive[From, To]
@@ -161,7 +161,7 @@ instead of `io.scalaland.chimney.dsl` to achieve a similar behavior:
 
     !!! example
 
-        ```scala mdoc
+        ```scala
         from.into[To].transform
         from.intoPartial[To].transform
         from.using[To].patch
@@ -188,7 +188,7 @@ You can use [`.enableMacrosLogging`](troubleshooting.md#debugging-macros) to see
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -208,7 +208,7 @@ The generated code (in the absence of implicits) should be
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     val foo = Foo(Foo.Baz("string"))
     new Bar(new Bar.Baz(foo.baz.a))
     ```
@@ -217,7 +217,7 @@ Similarly, when deriving a type class it would be
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     new Transformer[Foo, Bar] {
     def transform(foo: Foo): Bar =
       new Bar(new Bar.Baz(foo.baz.a))
@@ -270,7 +270,7 @@ Then you can use one simple import to enable it:
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney-java-collections::{{ git.tag or local.tag }}
     import io.scalaland.chimney.javacollections._
     ```
@@ -300,7 +300,7 @@ Cats integration module contains the following stuff:
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney-cats::{{ git.tag or local.tag }}
     
     case class RegistrationForm(
@@ -392,7 +392,7 @@ The automatic conversion into a protobuf with such a field can be problematic:
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -423,7 +423,7 @@ There are 2 ways in which Chimney could handle this issue:
   
     !!! example
   
-        ```scala mdoc
+        ```scala
         //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
 
@@ -436,7 +436,7 @@ There are 2 ways in which Chimney could handle this issue:
 
     !!! example
 
-        ```scala mdoc
+        ```scala
         //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
     
@@ -496,7 +496,7 @@ would generate scala code similar to (some parts removed for brevity):
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     package pb.addressbook
 
     final case class AddressBookType(
@@ -548,7 +548,7 @@ Meanwhile, we would like to extract it into a flat:
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     package addressbook
     
     sealed trait AddressBookType
@@ -565,7 +565,7 @@ Encoding (with `Transformer`s) is pretty straightforward:
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -586,7 +586,7 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
   
     !!! example
     
-        ```scala mdoc
+        ```scala
         //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
   
@@ -603,7 +603,7 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
 
     !!! example
   
-        ```scala mdoc
+        ```scala
         //> using dep io.scalaland::chimney-protobufs::{{ git.tag or local.tag }}
         import io.scalaland.chimney.dsl._
         import io.scalaland.chimney.protobufs._ // includes support for empty scalapb.GeneratedMessage
@@ -635,7 +635,7 @@ and it would generate something like (again, some parts omitted for brevity):
 
 !!! example
   
-    ```scala mdoc
+    ```scala
     package pb.order
     
     sealed trait CustomerStatus extends scalapb.GeneratedSealedOneof {
@@ -670,7 +670,7 @@ Transforming to and from:
 
 !!! example
   
-    ```scala mdoc
+    ```scala
     package order
     
     sealed trait CustomerStatus
@@ -684,7 +684,7 @@ could be done with:
 
 !!! example
   
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -738,7 +738,7 @@ and try to map it to and from:
 
 !!! example
   
-    ```scala mdoc
+    ```scala
     package order
     
     sealed trait PaymentStatus
