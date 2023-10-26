@@ -164,7 +164,7 @@ In particular, when the source type is (`=:=`) the target type, you will end up 
 
 ## Into a `case class` (or POJO)
 
-Every type can have its `val`s read as used as data sources for transformation.
+Every type can have its `val`s read and used as data sources for the transformation.
 
 And every class with a public primary constructor can be the target of the transformation.
 
@@ -178,7 +178,7 @@ transformed value.
     it.
     
     However, Chimney is **not** limited to `case class`-to-`case class` mappings and you can target **every** class (with
-    a public constructor) as if it was a `case class`.
+    a public constructor) as if it was a `case class` and read every `val` from source as if it was a case class field.
 
 The obvious examples are `case class`es with the same fields:
 
@@ -1653,6 +1653,68 @@ With `PartialTransformer`s ware able to handle fallible conversions, tracing at 
     
     If you need to provide support for your collection types, you have to write your own implicit methods. 
 
+## Parametric types/generics
+
+The Transformation from/to the parametric type can always be derived, when Chimney know how to transform each value
+defined with a type parameter.
+
+The most obvious case is having all type parameters applied to non-abstract types:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo[A](value: A)
+    case class Bar[A](value: A)
+    
+    case class Baz[A](value: A)
+    
+    Foo(Baz("value")).transformInto[Bar[Baz[String]]] // Bar(Baz("value"))
+    ```
+
+or having type parameter being not used at all:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+
+    type AbstractType1
+    type AbstractType2
+
+    case class Foo[A](value: String)
+    case class Bar[A](value: String)
+    
+    Foo[AbstractType1]("value").transformInto[Bar[AbstractType2]] // Bar[AbstractType2]("value")
+    ```
+
+If the type is `abstract`, used as a value, but contains enough information that one of existing rules
+knows how to apply it, the transformation can still be derived:
+
+!!! example
+ 
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+
+
+    // TODO: subtype, <: { val field }
+    ```
+
+Finally, you can always provide a custom `Transformer` from/to a type containing a type parameter, as an `implicit`:
+
+!!! example
+ 
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    // TODO
+    ```
+
 ## Custom transformations
 
 For virtually, every 2 types that you want, you can define your own `Transformer` or `PartialTransformer` as `implicit`.
@@ -1679,7 +1741,17 @@ for which they would not have a reasonable mapping:
     Option(12).transformInto[Option[String]] // Some("12")
     Foo(12).transformInto[Bar] // Bar("12")
     List(Foo(10) -> 20).transformInto[Map[Bar, String]] // Map(Bar("10") -> "20")
-    ``` 
+    ```
+
+    It is true about `sealed` hierarchies/`enum`s' subtypes as well:    
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+    
+    // TODO: sealed + enum with implicits between subtypes
+    ```
 
 !!! warning
 
