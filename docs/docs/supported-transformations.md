@@ -1,6 +1,6 @@
 # Supported Transformations
 
-Chimney goes an extra mile to provide you will many reasonable transformations out of the box. Only if it isn't obvious
+Chimney goes an extra mile to provide you with many reasonable transformations out of the box. Only if it isn't obvious
 from the types, you need to provide it with a hint, but nothing more.
 
 !!! note
@@ -1696,12 +1696,51 @@ knows how to apply it, the transformation can still be derived:
 
 !!! example
  
+    If Chimney knows that type can be safely upcasted, the upcasting is available to it:
+
     ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
+    
+    case class Foo[A](value: A)
+    case class Bar[A](value: A)
+    
+    def upcastingExample[T, S >: T](foo: Foo[T]): Bar[S] =
+      foo.transformInto[Bar[S]]
+    
+    upcastingExample[Int, AnyVal](Foo(10))
+    ```
+    
+    If we don't know the exact type but we know enough to read the relevant fields, we can also do it:
 
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    trait Baz[A] { val value: A }
+    case class Foo[A](value: A) extends Baz[A]
+    case class Bar[A](value: A)
+    
+    def subtypeExample[T <: Baz[String]](foo: Foo[T]): Bar[Bar[String]] =
+      foo.transformInto[Bar[Bar[String]]]
+    
+    subtypeExample(Foo(Foo("value")))
+    ```
+    
+    On Scala 2, we are even able to use refined types (Scala 3, changed a bit how they works):
 
-    // TODO: subtype, <: { val field }
+    ```scala
+    //> using scala {{ scala.2_12 }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo[A](value: A)
+    case class Bar[A](value: A)
+    
+    def refinedExample[T <: { val value: String }](foo: Foo[T]): Bar[Bar[String]] =
+      foo.into[Bar[Bar[String]]].enableMacrosLogging.transform
+    
+    refinedExample[Foo[String]](Foo(Foo("value")))
     ```
 
 Finally, you can always provide a custom `Transformer` from/to a type containing a type parameter, as an `implicit`:
@@ -1711,13 +1750,26 @@ Finally, you can always provide a custom `Transformer` from/to a type containing
     ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.Transformer
     
-    // TODO
+    case class Foo[A](value: A)
+    case class Bar[A](value: A)
+
+    def conversion[T, S](foo: Foo[T])(implicit transformer: Transformer[T, S]): Bar[S] =
+      foo.transformInto[Bar[S]]
     ```
+
+!!! tip
+
+    For more information about defining custom `Transformer`s and `PartialTransformer`s, you read the section below.
+    
+    If you need to fetch and pass around implicit transformers (both total and partial), read
+    the [Automatic, semiautomatic and inlined derication](cookbook.md#automatic-semiautomatic-and-inlined-derivation)
+    cookbook.
 
 ## Custom transformations
 
-For virtually, every 2 types that you want, you can define your own `Transformer` or `PartialTransformer` as `implicit`.
+For virtually every 2 types that you want, you can define your own `Transformer` or `PartialTransformer` as `implicit`.
 
 `Transformer`s are best suited for conversions that have to succeed because there is no value (of the transformed type)
 for which they would not have a reasonable mapping:
