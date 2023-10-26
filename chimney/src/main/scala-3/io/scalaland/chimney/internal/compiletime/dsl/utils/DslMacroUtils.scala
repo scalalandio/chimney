@@ -46,6 +46,8 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               type Underlying = runtime.Path.Root
               val Underlying: Type[runtime.Path.Root] = Type.of[runtime.Path.Root]
             })
+          case _: Ident =>
+            Left(invalidSelectorErrorMessage(t)) // TODO: error for foo => bar.fieldName
           case SelectLike(t2, fieldName) =>
             unpackSelects(t2).map { instance =>
               val name = ExistentialString(fieldName)

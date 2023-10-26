@@ -47,7 +47,7 @@ private[chimney] trait DslMacroUtils {
               val Underlying: WeakTypeTag[runtime.Path.Root] = weakTypeTag[runtime.Path.Root]
             })
           case _: Ident =>
-            Left("Expected function literal") // TODO
+            Left(invalidSelectorErrorMessage(t)) // TODO: error for foo => bar.fieldName
           case Select(t2, fieldName: TermName) =>
             unpackSelects(t2).map { instance =>
               val name = ExistentialString(fieldName)
