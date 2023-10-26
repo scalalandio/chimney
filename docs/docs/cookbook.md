@@ -17,7 +17,7 @@ If we do not want to enable the same flag(s) in several places, we can define sh
     
     implicit val transformerCfg = TransformerConfiguration.default.enableMethodAccessors.enableMacrosLogging
     
-    implicit val patcherCfg = PatcherConfiguration.ignoreNoneInPatch.enableMacrosLogging
+    implicit val patcherCfg = PatcherConfiguration.default.ignoreNoneInPatch.enableMacrosLogging
     ```  
 
     Scala 3
