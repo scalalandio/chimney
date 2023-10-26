@@ -9,7 +9,7 @@ Currently, the only supported case is updating one `case class` with another:
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -40,7 +40,7 @@ When the patch `case class` contains a field that does not exist in patched obje
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -62,7 +62,7 @@ But there is a way to ignore redundant patcher fields explicitly with `.ignoreRe
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -93,7 +93,7 @@ If the flag was enabled in the implicit config it can be disabled with `.failRed
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
 
@@ -126,7 +126,7 @@ Let’s consider the following patch:
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
@@ -168,7 +168,7 @@ but it also gives a simple way to always ignore `None` from the patch with `.ign
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
         
@@ -200,7 +200,7 @@ If the flag was enabled in the implicit config it can be disabled with `.clearOn
 
 !!! example
 
-    ```scala mdoc
+    ```scala
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
         
