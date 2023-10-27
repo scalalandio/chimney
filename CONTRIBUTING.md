@@ -71,8 +71,10 @@ Information about Scala macros can be found on:
  * [Scala 3 macros documentation](https://docs.scala-lang.org/scala3/guides/macros/macros.html)
  * [EPFL papers](https://infoscience.epfl.ch/search?ln=en&as=1&m1=p&p1=macros&f1=keyword&op1=a&m2=p&p2=scala&f2=&op2=a&m3=a&p3=&f3=&dt=&d1d=&d1m=&d1y=&d2d=&d2m=&d2y=&rm=&action_search=Search&sf=title&so=a&rg=10&c=Infoscience&of=hb)
 
-Very basic introduction can be found in [design doc](DESIGN.md). From then on we suggest looking at tests, and using
-`.enableMacrosLogging` to see how some branches are triggered. If still at doubt, you can ask us on GH discussions.
+Very basic introduction can be found in [design doc](DESIGN.md) and in the
+[Under the hood](https://chimney.readthedocs.io/en/stable/under-the-hood/) section of the documentation.
+From then on we suggest looking at tests, and using`.enableMacrosLogging` to see how some branches are triggered.
+If still at doubt, you can ask us on GH discussions.
 
 ## Contributing to the documentation
 
@@ -87,3 +89,36 @@ To develop locally it is recommended to install [Just](https://github.com/casey/
  * open http://0.0.0.0:8000/
 
 Site will reload and update as you edit the markdown files in docs/docs directory.
+
+## Release checklist
+
+For now, the release is a manual process, so storing the checklist somewhere makes sense.
+
+1. Pre-release checks 
+  - [ ] verify that all task in the milestone are finished (if milestone for the release exists)
+  - [ ] verify that all Scala Steward PRs are merged or manually replaced
+  - [ ] wait for the `master` to build and pass all tests
+  - [ ] search `TODO`s in the code and verify that they are not problematic (no missing documentation links for instance)
+  - [ ] verify that docs from the latest build are rendering correctly (on RTD or `cd docs && just serve`)
+  - [ ] close the milestone (if it exists)
+2. Release
+  - [ ] update Scala versions (if needed) in `docs/docs/mkdocs.yml` and `try-chimney.sh`
+  - [ ] `git commit -m "Release [version]"` these 2 changes (no push!)
+  - [ ] locally run `git tag [version]` (no `v` in the tag, no `-a`) (no push!)
+  - [ ] start `RELEASE=true sbt` (disables `-Xfatal-warnings` for `doc` task)
+  - [ ] run `show version` and verify than version name is correct
+  - [ ] run `publishSigned`
+  - [ ] check if all versions are staged locally
+  - [ ] run `sonatypeBundleRelease`
+  - [ ] verify in oss.sonatype.org that release was successful
+  - [ ] run `git push && git push --tags`
+  - [ ] deploy benchmarks on the tag
+3. Post-release actions
+  - [ ] open https://chimney.readthedocs.io/ and make sure that the version got published (-Mn, -RCn versions might require manual activation!)
+  - [ ] draft a (pre)release on GitHub (don't publish it until Maven lists the new version!)
+  - [ ] await until the version is available on Maven Central
+  - [ ] verify that Scaladex sees it
+  - [ ] force download of Scaladoc (open Scaladoc dor each Scala version, change latest to the new version to force download) 
+  - [ ] run https://github.com/sbts/github-badge-cache-buster to flush GH badge cache (`./github-badge-cache-buster.sh https://github.com/scalalandio/chimney`)
+  - [ ] publish the (pre)release on GitHub
+  - [ ] publish information on Twitter/Mastodon/Reddit/etc
