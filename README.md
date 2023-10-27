@@ -13,7 +13,7 @@
 [![Scaladoc 2.13](https://javadoc.io/badge2/io.scalaland/chimney_2.13/scaladoc%202.13.svg)](https://javadoc.io/doc/io.scalaland/chimney_2.13)
 [![Scaladoc 3](https://javadoc.io/badge2/io.scalaland/chimney_3/scaladoc%203.svg)](https://javadoc.io/doc/io.scalaland/chimney_3)
 
-The battle-tested Scala library for data transformations. Supported for (2.12, 2.13, 3.3+) x (JVM, Scala.js, Scala Native)
+The battle-tested Scala library for data transformations. Supported for (2.12, 2.13, 3.3+) x (JVM, Scala.js, Scala Native).
 
 Chimney documentation is available at https://chimney.readthedocs.io. Read the Docs keeps it versioned in case you need
 to access documentation for older versions.
@@ -21,11 +21,10 @@ to access documentation for older versions.
 ## Contribution
 
 A way to get started is described in [CONTRIBUTING.md](CONTRIBUTING.md) and the general overview of the architecture
-is given in [DESIGN.md](DESIGN.md).
+is given in [DESIGN.md](DESIGN.md) and in [Under the hood](https://chimney.readthedocs.io/en/stable/under-the-hood/)
+section of the documentation.
 
 ## Thanks
 
 Thanks to [JProfiler (Java profiler)](https://www.ej-technologies.com/products/jprofiler/overview.html)
 for helping us develop the library and allowing us to use it during development.
-
-Thanks to [SwissBorg](https://swissborg.com) for sponsoring the development time for this project.
