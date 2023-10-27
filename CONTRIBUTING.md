@@ -92,33 +92,34 @@ Site will reload and update as you edit the markdown files in docs/docs director
 
 ## Release checklist
 
-For now, the release is a manual process, so storing the checklist somewhere makes sense.
+To ensure that there are no silly, easily avoidable issues found right after the release, there is a list of steps we
+would follow to publish a new version of the library:
 
 1. Pre-release checks 
-  - [ ] verify that all task in the milestone are finished (if milestone for the release exists)
+  - [ ] verify that all task in the milestone are finished (if a milestone for the release exists)
   - [ ] verify that all Scala Steward PRs are merged or manually replaced
-  - [ ] wait for the `master` to build and pass all tests
+  - [ ] wait for the `master` to build and pass all tests, ensure that they are all green
   - [ ] search `TODO`s in the code and verify that they are not problematic (no missing documentation links for instance)
   - [ ] verify that docs from the latest build are rendering correctly (on RTD or `cd docs && just serve`)
   - [ ] close the milestone (if it exists)
 2. Release
-  - [ ] update Scala versions (if needed) in `docs/docs/mkdocs.yml` and `try-chimney.sh`
-  - [ ] `git commit -m "Release [version]"` these 2 changes (no push!)
-  - [ ] locally run `git tag [version]` (no `v` in the tag, no `-a`) (no push!)
-  - [ ] start `RELEASE=true sbt` (disables `-Xfatal-warnings` for `doc` task)
-  - [ ] run `show version` and verify than version name is correct
-  - [ ] run `publishSigned`
-  - [ ] check if all versions are staged locally
-  - [ ] run `sonatypeBundleRelease`
-  - [ ] verify in oss.sonatype.org that release was successful
-  - [ ] run `git push && git push --tags`
-  - [ ] deploy benchmarks on the tag
+  - [ ] update Scala versions (if needed!) in `docs/docs/mkdocs.yml` and `try-chimney.sh`
+  - [ ] `git commit -m "Release [version]"` these 2 changes (if needed)
+  - [ ] locally run `git tag [version]` (no `v` in the tag, no `-a`)
+  - [ ] run `git push && git push --tags` to trigger the release action
+  - [ ] approve running benchmarks on the tag
 3. Post-release actions
+  - [ ] verify in https://oss.sonatype.org/ that the release was successful
   - [ ] open https://chimney.readthedocs.io/ and make sure that the version got published (-Mn, -RCn versions might require manual activation!)
   - [ ] draft a (pre)release on GitHub (don't publish it until Maven lists the new version!)
   - [ ] await until the version is available on Maven Central
   - [ ] verify that Scaladex sees it
-  - [ ] force download of Scaladoc (open Scaladoc dor each Scala version, change latest to the new version to force download) 
+  - [ ] force download of Scaladoc (open Scaladoc dor each Scala version, change "latest" to the new version to force download) 
   - [ ] run https://github.com/sbts/github-badge-cache-buster to flush GH badge cache (`./github-badge-cache-buster.sh https://github.com/scalalandio/chimney`)
   - [ ] publish the (pre)release on GitHub
-  - [ ] publish information on Twitter/Mastodon/Reddit/etc
+  - [ ] publish announcements on Twitter/Mastodon/Reddit/etc
+
+While building, testing and deployment are automated, some things have to be verified manually, because they are not
+immediate (library can become visible on Maven Central 15 minutes after publishing or a few hours later), or because
+human needs to tell if things are in good shape (documentation's content, whether all that should go into the release
+was done, etc).
