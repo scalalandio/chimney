@@ -221,7 +221,14 @@ val publishSettings = Seq(
   Test / publishArtifact := false,
   pomIncludeRepository := { _ =>
     false
-  }
+  },
+  // Sonatype ignores isSnapshot setting and only looks at -SNAPSHOT suffix in version:
+  //   https://central.sonatype.org/publish/publish-maven/#performing-a-snapshot-deployment
+  // meanwhile sbt-git used to set up SNAPSHOT if there were uncommitted changes:
+  //   https://github.com/sbt/sbt-git/issues/164
+  // (now this suffix is empty by default) so we need to fix it manually.
+  git.gitUncommittedChanges := git.gitCurrentTags.value.isEmpty,
+  git.uncommittedSignifier := Some("SNAPSHOT")
 ) ++ (if (isRelease) Seq(scalacOptions -= "-Xfatal-warnings") else Seq.empty)
 
 val mimaSettings = Seq(
