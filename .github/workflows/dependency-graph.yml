@@ -1,8 +1,10 @@
 name: Update Dependency Graph
+
 on:
   push:
     branches:
       - master
+
 jobs:
   dependency-graph:
     name: Update Dependency Graph
