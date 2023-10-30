@@ -3,9 +3,10 @@ name: CI build
 on:
   push:
     branches: [ master ]
+    tags: [ '*' ]
   pull_request:
     branches: [ master ]
-    types: ['opened', 'reopened', 'labeled', 'synchronize']
+    types: [ opened, reopened, labeled, synchronize ]
 
 jobs:
   check-formatting:
