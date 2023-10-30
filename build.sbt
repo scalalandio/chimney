@@ -199,31 +199,29 @@ val versionSchemeSettings = Seq(versionScheme := Some("early-semver"))
 
 val publishSettings = Seq(
   organization := "io.scalaland",
-  homepage := Some(url("https://scalaland.io")),
-  licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+  homepage := Some(url("https://scalaland.io/chimney")),
+  organizationHomepage := Some(url("https://scalaland.io")),
+  licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
   scmInfo := Some(
-    ScmInfo(url("https://github.com/scalalandio/chimney"), "scm:git:git@github.com:scalalandio/chimney.git")
+    ScmInfo(url("https://github.com/scalalandio/chimney/"), "scm:git:git@github.com:scalalandio/chimney.git")
+  ),
+  startYear := Some(2017),
+  developers := List(
+    Developer("krzemin", "Piotr Krzemiński", "", url("https://github.com/krzemin")),
+    Developer("MateuszKubuszok", "Mateusz Kubuszok", "", url("https://github.com/MateuszKubuszok"))
+  ),
+  pomExtra := (
+    <issueManagement>
+      <system>GitHub issues</system>
+      <url>https://github.com/scalalandio/chimney/issues</url>
+    </issueManagement>
   ),
   publishTo := sonatypePublishToBundle.value,
   publishMavenStyle := true,
   Test / publishArtifact := false,
   pomIncludeRepository := { _ =>
     false
-  },
-  pomExtra := (
-    <developers>
-      <developer>
-        <id>krzemin</id>
-        <name>Piotr Krzemiński</name>
-        <url>http://github.com/krzemin</url>
-      </developer>
-      <developer>
-        <id>MateuszKubuszok</id>
-        <name>Mateusz Kubuszok</name>
-        <url>http://github.com/MateuszKubuszok</url>
-      </developer>
-    </developers>
-  )
+  }
 ) ++ (if (isRelease) Seq(scalacOptions -= "-Xfatal-warnings") else Seq.empty)
 
 val mimaSettings = Seq(

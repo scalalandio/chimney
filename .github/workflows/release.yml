@@ -2,8 +2,8 @@ name: Sonatype Release
 
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - master
 
 jobs:
   release-tag:
