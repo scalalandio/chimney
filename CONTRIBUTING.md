@@ -103,16 +103,13 @@ would follow to publish a new version of the library:
   - [ ] verify that docs from the latest build are rendering correctly (on RTD or `cd docs && just serve`)
   - [ ] close the milestone (if it exists)
 2. Release
-  - [ ] update Scala versions (if needed!) in `docs/docs/mkdocs.yml` and `try-chimney.sh`
-  - [ ] `git commit -m "Release [version]"` these 2 changes (if needed)
-  - [ ] locally run `git tag [version]` (no `v` in the tag, no `-a`)
-  - [ ] run `git push && git push --tags` to trigger the release action
-  - [ ] approve running benchmarks on the tag
+  - [ ] create tag (no `v` in the tag name, no `-a`)
+  - [ ] approve running benchmarks on the tagged commit
 3. Post-release actions
   - [ ] verify in https://oss.sonatype.org/ that the release was successful
   - [ ] open https://chimney.readthedocs.io/ and make sure that the version got published (-Mn, -RCn versions might require manual activation!)
   - [ ] draft a (pre)release on GitHub (don't publish it until Maven lists the new version!)
-  - [ ] await until the version is available on Maven Central
+  - [ ] wait until the version is available on Maven Central
   - [ ] verify that Scaladex sees it
   - [ ] force download of Scaladoc (open Scaladoc dor each Scala version, change "latest" to the new version to force download) 
   - [ ] run https://github.com/sbts/github-badge-cache-buster to flush GH badge cache (`./github-badge-cache-buster.sh https://github.com/scalalandio/chimney`)

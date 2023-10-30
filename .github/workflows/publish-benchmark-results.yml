@@ -2,9 +2,8 @@ name: Publish benchmark results
 
 on:
   workflow_run:
-    workflows: ["CI build"]
-    types:
-      - completed
+    workflows: [ 'CI build' ]
+    types: [ completed ]
 
 jobs:
   push-to-data-repo:
