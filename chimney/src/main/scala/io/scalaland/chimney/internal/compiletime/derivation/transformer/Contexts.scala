@@ -12,6 +12,7 @@ private[compiletime] trait Contexts { this: Derivation =>
     val From: Type[From]
     val To: Type[To]
 
+    val originalSrc: ExistentialExpr
     val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
     val config: TransformerConfig
     val derivationStartedAt: java.time.Instant
@@ -24,6 +25,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         TransformationContext.ForTotal[NewFrom, NewTo](src = newSrc)(
           From = Type[NewFrom],
           To = Type[NewTo],
+          originalSrc = ctx.originalSrc,
           runtimeDataStore = ctx.runtimeDataStore,
           config = ctx.config,
           ctx.derivationStartedAt
@@ -32,6 +34,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         TransformationContext.ForPartial[NewFrom, NewTo](src = newSrc, failFast = ctx.failFast)(
           From = Type[NewFrom],
           To = Type[NewTo],
+          originalSrc = ctx.originalSrc,
           runtimeDataStore = ctx.runtimeDataStore,
           config = ctx.config,
           ctx.derivationStartedAt
@@ -43,6 +46,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         TransformationContext.ForTotal[From, To](src = ctx.src)(
           From = ctx.From,
           To = ctx.To,
+          originalSrc = ctx.originalSrc,
           runtimeDataStore = ctx.runtimeDataStore,
           config = update(ctx.config),
           derivationStartedAt = ctx.derivationStartedAt
@@ -51,6 +55,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         TransformationContext.ForPartial[From, To](src = ctx.src, failFast = ctx.failFast)(
           From = ctx.From,
           To = ctx.To,
+          originalSrc = ctx.originalSrc,
           runtimeDataStore = ctx.runtimeDataStore,
           config = update(ctx.config),
           derivationStartedAt = ctx.derivationStartedAt
@@ -78,6 +83,7 @@ private[compiletime] trait Contexts { this: Derivation =>
     final case class ForTotal[From, To](src: Expr[From])(
         val From: Type[From],
         val To: Type[To],
+        val originalSrc: ExistentialExpr,
         val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
         val config: TransformerConfig,
         val derivationStartedAt: java.time.Instant
@@ -106,6 +112,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         ForTotal(src = src)(
           From = Type[From],
           To = Type[To],
+          originalSrc = src.as_??,
           runtimeDataStore = runtimeDataStore,
           config = config.preventImplicitSummoningFor[From, To],
           derivationStartedAt = java.time.Instant.now()
@@ -115,6 +122,7 @@ private[compiletime] trait Contexts { this: Derivation =>
     final case class ForPartial[From, To](src: Expr[From], failFast: Expr[Boolean])(
         val From: Type[From],
         val To: Type[To],
+        val originalSrc: ExistentialExpr,
         val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
         val config: TransformerConfig,
         val derivationStartedAt: java.time.Instant
@@ -144,6 +152,7 @@ private[compiletime] trait Contexts { this: Derivation =>
       ): ForPartial[From, To] = ForPartial(src = src, failFast = failFast)(
         From = Type[From],
         To = Type[To],
+        originalSrc = src.as_??,
         runtimeDataStore = runtimeDataStore,
         config = config.preventImplicitSummoningFor[From, To],
         derivationStartedAt = java.time.Instant.now()
