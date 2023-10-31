@@ -186,7 +186,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     def prettyPrint[A: Type]: String = {
       // In Scala 3 typeRepr.dealias dealiases only the "main" type but not types applied as type parameters,
       // while in Scala 2 macros it dealiases everything - to keep the same behavior between them we need to
-      // apply recursiv dealiasing ourselved.
+      // apply recursive dealiasing ourselves.
       def dealiasAll(tpe: TypeRepr): TypeRepr =
         tpe match
           case AppliedType(tycon, args) => AppliedType(dealiasAll(tycon), args.map(dealiasAll(_)))

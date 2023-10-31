@@ -62,6 +62,17 @@ private[compiletime] trait Configurations { this: Derivation =>
       override def toString: String = s"$instance.$name"
     }
 
+    object Prepended {
+      def unapply(path: FieldPath): Option[(String, FieldPath)] = path match {
+        case Select(prependedName, Root) => Some(prependedName -> Root)
+        case Select(name, instance) =>
+          unapply(instance).map { case (prependedName, prependedInstance) =>
+            prependedName -> Select(name, prependedInstance)
+          }
+        case _ => None
+      }
+    }
+
     object CurrentField {
       def unapply(path: FieldPath): Option[String] = path match {
         case Select(name, Root) => Some(name)
@@ -111,9 +122,9 @@ private[compiletime] trait Configurations { this: Derivation =>
       val newFieldOverrides: Map[FieldPath, RuntimeFieldOverride] = tpe.toField match {
         case DownField(nameFilter) =>
           fieldOverrides.view.flatMap {
-            case (FieldPath.Select(toName, toPath), runtimeOverride) if (nameFilter(toName)) =>
+            case (FieldPath.Prepended(toName, toPath), runtimeOverride) if (nameFilter(toName)) =>
               runtimeOverride match {
-                case RuntimeFieldOverride.RenamedFrom(FieldPath.Select(fromName, fromPath), fromExpr)
+                case RuntimeFieldOverride.RenamedFrom(FieldPath.Prepended(fromName, fromPath), fromExpr)
                     if (nameFilter(fromName)) =>
                   Some(toPath -> RuntimeFieldOverride.RenamedFrom(fromPath, fromExpr))
                 case _: RuntimeFieldOverride.RenamedFrom => None
