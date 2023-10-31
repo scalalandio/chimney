@@ -1,3 +1,4 @@
+import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import com.typesafe.tools.mima.core.{Problem, ProblemFilters}
 import commandmatrix.extra.*
 
@@ -10,6 +11,17 @@ ThisBuild / scalafmtOnCompile := !isCI
 // so at least we can remove them ONLY when building a release from a commit which already
 // passed the tests.
 lazy val isRelease = sys.env.get("RELEASE").contains("true")
+
+lazy val ciRelease = taskKey[Unit](
+  "Publish artifacts to release or snapshot (skipping sonatypeBundleRelease which is unnecessary for snapshots)"
+)
+ciRelease := {
+  publishSigned.taskValue
+  if (git.gitCurrentTags.value.nonEmpty) {
+    // sonatypePrepare.value
+    // sonatypeBundleRelease.value
+  }
+}
 
 // versions
 
@@ -272,6 +284,8 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
   tasks.mkString(";")
 }
 
+val releaseCommand = (tag: Seq[String]) => if (tag.nonEmpty) "publishSigned;sonatypeBundleRelease" else "publishSigned"
+
 // modules
 
 lazy val root = project
@@ -309,8 +323,9 @@ lazy val root = project
         .noAlias,
       sbtwelcome.UsefulTask("chimney3/console", "Drop into REPL with Chimney DSL imported (3)").noAlias,
       sbtwelcome.UsefulTask("chimney/console", "Drop into REPL with Chimney DSL imported (2.13)").noAlias,
-      sbtwelcome.UsefulTask("publishSigned", "Stage all versions for publishing").noAlias,
-      sbtwelcome.UsefulTask("sonatypeBundleRelease", "Publish all artifacts staged for release").noAlias,
+      sbtwelcome
+        .UsefulTask(releaseCommand(git.gitCurrentTags.value), "Publish everything to release or snapshot repository")
+        .alias("ci-release"),
       sbtwelcome.UsefulTask("benchmarks/Jmh/run", "Run JMH benchmarks suite").alias("runBenchmarks"),
       sbtwelcome.UsefulTask(ciCommand("JVM", "3"), "CI pipeline for Scala 3 on JVM").alias("ci-jvm-3"),
       sbtwelcome.UsefulTask(ciCommand("JVM", ""), "CI pipeline for Scala 2.13 on JVM").alias("ci-jvm-2_13"),
