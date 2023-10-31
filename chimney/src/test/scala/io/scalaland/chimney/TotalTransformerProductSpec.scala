@@ -63,14 +63,26 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
-      import products.{Foo, Bar}
+      import products.{Foo, Bar}, nestedpath.*
 
       Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y, "pi").transform ==> Foo(3, "pi", (3.14, 3.14))
       Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(cc => cc.y, "pi").transform ==> Foo(3, "pi", (3.14, 3.14))
+      NestedProduct(Bar(3, (3.14, 3.14)))
+        .into[NestedProduct[Foo]]
+        .withFieldConst(_.value.y, "pi")
+        .transform ==> NestedProduct(Foo(3, "pi", (3.14, 3.14)))
+      NestedProduct(Bar(3, (3.14, 3.14)))
+        .into[NestedProduct[Foo]]
+        .withFieldConst(cc => cc.value.y, "pi")
+        .transform ==> NestedProduct(Foo(3, "pi", (3.14, 3.14)))
 
       import trip.*
 
       Person("John", 10, 140).into[User].withFieldConst(_.age, 20).transform ==> User("John", 20, 140)
+      NestedProduct(Person("John", 10, 140))
+        .into[NestedProduct[User]]
+        .withFieldConst(_.value.age, 20)
+        .transform ==> NestedProduct(User("John", 20, 140))
     }
   }
 
