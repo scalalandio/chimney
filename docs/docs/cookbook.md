@@ -544,6 +544,10 @@ As we can see:
   - this is not a "flat" `sealed` hierarchy - `AddressBookType` wraps sealed hierarchy `AddressBookType.Value`,
     where each `case class` wraps the actual message
 
+!!! warning
+
+    This is the default output, there are 2 other (opt-in) possibilities described below!
+
 Meanwhile, we would like to extract it into a flat:
 
 !!! example
@@ -610,6 +614,11 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
       
         pbType.value.intoPartial[addressbook.AddressBookType].transform.asOption == Some(domainType)
         ```
+
+!!! warning
+
+    Importing `import io.scalaland.chimney.protobufs._` works only for the default output. If you used `sealed_value` or
+    `sealed_value_optional` read further sections. 
 
 ### `sealed_value oneof` fields
 
