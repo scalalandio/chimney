@@ -298,7 +298,7 @@ from `knownDirectSubclasses` method. It usually helps when you `clean`
 and `compile` again. It cannot be fixed in the library as it relies on
 the compiler to provide it with this data, and the compiler fails to do so.
 
-On Scala 2.12.0 it failed [in other cases as well](https://github.com/scala/bug/issues/7046),
+On Scala 2.12.0 it failed [in other cases as well (scala/bug#7046)](https://github.com/scala/bug/issues/7046),
 so it is recommended to update 2.12 to at least 2.12.1.
 
 ## Scala 3 complains that `implicit`/`given` `TransformerConfiguration` needs an explicit return type
@@ -335,7 +335,21 @@ You can work around this by slightly longer incantation:
     transparent inline given TransformerConfiguration[?] =
       TransformerConfiguration.default.enableMacrosLogging
     ```
-   
+
+## `java.lang.UnsupportedOperationException: Position.point on NoPosition` error
+
+On Scala 2 `java.lang.UnsupportedOperationException: Position.point on NoPosition` is most commonly seen due to
+[scala/bug#10604](https://github.com/scala/bug/issues/10604) - when JVM used for compilation has a small stack trace
+recursive derivation (not only in Chimney) can overflow this stack trace, but on Scala 2 it can become notorious in
+the form of an empty value used by the macro to report where error happened.
+
+These issues can be addressed by increasing the compiler's JVM stack size, passing it e.g. -Xss64m (to increase the size
+to 64MB).
+
+However, if you are using the compiler's flags to report unused definitions when macros are involved, there can also be
+an error caused by [scala/bug#12895](https://github.com/scala/bug/issues/12895). In such case the workaround would be to
+remove the unused definition reporting.
+
 ## Debugging macros
 
 In some cases, it could be helpful to preview what is the expression generated

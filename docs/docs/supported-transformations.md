@@ -553,6 +553,11 @@ Flag `.enableBeanSetters` will allow macros to write to methods which are:
 _besides_ calling constructor (so you can pass values to _both_ the constructor and setters at once). Without the flag
 macro will fail compilation to avoid creating potentially uninitialized objects.
 
+!!! warning
+
+   0.8.0 dropped the requirement that the setter needs to return `Unit`. It enables targeting mutable builders, which
+   let you chain calls with fluent API, but are still mutating the state internally, making this chaining optional.  
+
 If the flag was enabled in the implicit config it can be disabled with `.disableBeanSetters`.
 
 !!! example
