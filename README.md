@@ -18,6 +18,10 @@ The battle-tested Scala library for data transformations. Supported for (2.12, 2
 Chimney documentation is available at https://chimney.readthedocs.io. Read the Docs keeps it versioned in case you need
 to access documentation for older versions.
 
+If you are looking to up-to-date artifacts versions ready to copy-paste into your build tool, we recommend
+[Scaladex](https://index.scala-lang.org/scalalandio/chimney/artifacts/chimney) or
+[Maven Repository](https://mvnrepository.com/search?q=chimney).
+
 ## Contribution
 
 A way to get started is described in [CONTRIBUTING.md](CONTRIBUTING.md) and the general overview of the architecture
