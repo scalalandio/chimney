@@ -21,7 +21,7 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
       - uses: coursier/setup-action@v1.3.0
         with:
-          jvm: 'adopt:1.8.0-292'
+          jvm: 'temurin:1.8.0-392'
           apps: sbt
       - name: Publish all projects
         run:  sbt ci-release
