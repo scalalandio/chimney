@@ -33,7 +33,7 @@ jobs:
       matrix:
         scala: ["2_12", "2_13", "3"]
         platform: ["jvm", "js", "native"]
-        jvm: ['adopt:1.8.0-292', 'temurin:1.19.0.2']
+        jvm: ['temurin:1.8.0-392', 'temurin:1.21.0.1']
       fail-fast: false
 
     steps:
@@ -71,7 +71,7 @@ jobs:
 
       - uses: coursier/setup-action@v1.3.0
         with:
-          jvm: 'temurin:1.19.0.2' # TODO LB java version from matrix
+          jvm: 'temurin:1.21.0.1' # TODO LB java version from matrix
           apps: sbt
 
       - name: Run Scala 2 benchmarks # TODO: run for Scala 3 too
