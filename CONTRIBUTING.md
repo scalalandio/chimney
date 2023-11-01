@@ -10,7 +10,11 @@ got, really helps us understand the core of the problem faster.
 
 ## Contributing code
 
-We are open to all contributors. Before we'll start reviewing the PRs we would ask however for a few things:
+We are open to all contributors. And Chimney is a complicated library. There are many things that you could
+implement/fix on your own, but also many which might look easy at the first glance, but get harder as you learn more.
+If you find yourself overwhelmed or unsure where to go next, don't hesitate to reach out!
+
+Before we'll start reviewing the PRs we would ask however for a few things:
 
 * linking the PR to the issue describing what it fixes/improves
 * making sure that all tests pass, code is formatted, coverage haven't dropped, docs still compile
