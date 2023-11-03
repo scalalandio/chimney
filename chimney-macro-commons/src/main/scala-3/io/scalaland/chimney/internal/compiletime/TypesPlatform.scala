@@ -48,6 +48,18 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
                 }
                 .toMap
             typeArgumentByName
+          case AppliedType(MethodType(names, types, _), typeRefs) =>
+            val typeArgumentByAlias = typeRefs.zip(tpe.typeArgs).toMap
+            val typeArgumentByName: Map[String, TypeRepr] =
+              names
+                .zip(types)
+                .toMap
+                .view
+                .mapValues { tpe =>
+                  typeArgumentByAlias.getOrElse(tpe, tpe)
+                }
+                .toMap
+            typeArgumentByName
           // unknown
           case out =>
             assertionFailed(

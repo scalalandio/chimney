@@ -97,13 +97,8 @@ trait ProductTypes { this: Definitions =>
       def isMatching(value: String): Boolean = regexp.pattern.matcher(value).matches() // 2.12 doesn't have .matches
     }
 
-    def areNamesMatching(fromName: String, toName: String): Boolean = {
-      def normalizedFromName =
-        if (isGetterName(fromName)) dropGetIs(fromName) else fromName
-      def normalizedToName =
-        if (isGetterName(toName)) dropGetIs(toName) else if (isSetterName(toName)) dropSet(toName) else toName
-      fromName == toName || normalizedFromName == normalizedToName
-    }
+    def areNamesMatching(fromName: String, toName: String): Boolean =
+      fromName == toName || normalize(fromName) == normalize(toName)
 
     private val getAccessor = raw"(?i)get(.)(.*)".r
     private val isAccessor = raw"(?i)is(.)(.*)".r
@@ -120,6 +115,11 @@ trait ProductTypes { this: Definitions =>
       case other                   => other
     }
     val isSetterName: String => Boolean = name => setAccessor.isMatching(name)
+
+    private def normalize(name: String): String =
+      if (isGetterName(name)) dropGetIs(name)
+      else if (isSetterName(name)) dropSet(name)
+      else name
 
     // methods we can drop from searching scope
     private val garbage = Set(
