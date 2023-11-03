@@ -87,4 +87,26 @@ class TotalTransformerValueTypeSpec extends ChimneySpec {
     UserName(batman).transformInto[UserId] ==> UserId(batman.length)
     UserWithUserName(UserName(abc)).transformInto[UserWithUserId] ==> UserWithUserId(UserId(abc.length))
   }
+
+  test("transform value classes with overrides as product types") {
+    UserName("Batman")
+      .into[UserNameAlias]
+      .withFieldConst(_.value, "not Batman")
+      .transform ==> UserNameAlias("not Batman")
+    UserName("Batman")
+      .into[UserNameAlias]
+      .withFieldComputed(_.value, un => un.value.toUpperCase)
+      .transform ==> UserNameAlias("BATMAN")
+
+    import fixtures.nestedpath.*
+
+    NestedProduct(UserName("Batman"))
+      .into[NestedValueClass[UserNameAlias]]
+      .withFieldConst(_.value.value, "not Batman")
+      .transform ==> NestedValueClass(UserNameAlias("not Batman"))
+    NestedValueClass(UserName("Batman"))
+      .into[NestedProduct[UserNameAlias]]
+      .withFieldComputed(_.value.value, un => un.value.value.toUpperCase)
+      .transform ==> NestedProduct(UserNameAlias("BATMAN"))
+  }
 }

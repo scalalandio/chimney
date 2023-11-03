@@ -75,8 +75,8 @@ class PartialTransformerValueTypeSpec extends ChimneySpec {
 
     val batman = "Batman"
     val abc = "abc"
-    batman.transformInto[UserId] ==> UserId(batman.length)
-    UserWithName(abc).transformInto[UserWithUserId] ==> UserWithUserId(UserId(abc.length))
+    batman.transformIntoPartial[UserId].asOption.get ==> UserId(batman.length)
+    UserWithName(abc).transformIntoPartial[UserWithUserId].asOption.get ==> UserWithUserId(UserId(abc.length))
   }
 
   test("transforming value class(member type: `S`) to value class(member type: 'T') if 'T'=>'S' exists") {
@@ -86,7 +86,44 @@ class PartialTransformerValueTypeSpec extends ChimneySpec {
 
     val batman = "Batman"
     val abc = "abc"
-    UserName(batman).transformInto[UserId] ==> UserId(batman.length)
-    UserWithUserName(UserName(abc)).transformInto[UserWithUserId] ==> UserWithUserId(UserId(abc.length))
+    UserName(batman).transformIntoPartial[UserId].asOption.get ==> UserId(batman.length)
+    UserWithUserName(UserName(abc)).transformIntoPartial[UserWithUserId].asOption.get ==> UserWithUserId(
+      UserId(abc.length)
+    )
+  }
+
+  test("transform value classes with overrides as product types") {
+    UserName("Batman")
+      .intoPartial[UserNameAlias]
+      .withFieldConstPartial(_.value, partial.Result.fromValue("not Batman"))
+      .transform
+      .asOption
+      .get ==> UserNameAlias("not Batman")
+    UserName("Batman")
+      .intoPartial[UserNameAlias]
+      .withFieldConstPartial(_.value, partial.Result.fromEmpty)
+      .transform
+      .asOption ==> None
+    UserName("Batman")
+      .intoPartial[UserNameAlias]
+      .withFieldComputedPartial(_.value, un => partial.Result.fromValue(un.value.toUpperCase))
+      .transform
+      .asOption
+      .get ==> UserNameAlias("BATMAN")
+
+    import fixtures.nestedpath.*
+
+    NestedProduct(UserName("Batman"))
+      .intoPartial[NestedValueClass[UserNameAlias]]
+      .withFieldConst(_.value.value, "not Batman")
+      .transform
+      .asOption
+      .get ==> NestedValueClass(UserNameAlias("not Batman"))
+    NestedValueClass(UserName("Batman"))
+      .intoPartial[NestedProduct[UserNameAlias]]
+      .withFieldComputed(_.value.value, un => un.value.value.toUpperCase)
+      .transform
+      .asOption
+      .get ==> NestedProduct(UserNameAlias("BATMAN"))
   }
 }
