@@ -199,7 +199,10 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
-      import products.{Foo, Bar}
+      import products.{Foo, Bar}, nestedpath.*
+
+      implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
+
       val expected = Foo(3, "pi", (3.14, 3.14))
 
       val result = Bar(3, (3.14, 3.14))
@@ -218,27 +221,76 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result2.asEither ==> Right(expected)
       result2.asErrorPathMessageStrings ==> Iterable.empty
 
+      val result3 = NestedProduct(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedValueClass[Foo]]
+        .withFieldConstPartial(_.value.y, partial.Result.fromValue("pi"))
+        .transform
+      result3.asOption ==> Some(NestedValueClass(expected))
+      result3.asEither ==> Right(NestedValueClass(expected))
+      result3.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result4 = NestedValueClass(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedJavaBean[Foo]]
+        .withFieldConstPartial(_.getValue.y, partial.Result.fromValue("pi"))
+        .transform
+      result4.asOption ==> Some(NestedJavaBean(expected))
+      result4.asEither ==> Right(NestedJavaBean(expected))
+      result4.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result5 = NestedJavaBean(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedProduct[Foo]]
+        .withFieldConstPartial(_.value.y, partial.Result.fromValue("pi"))
+        .transform
+      result5.asOption ==> Some(NestedProduct(expected))
+      result5.asEither ==> Right(NestedProduct(expected))
+      result5.asErrorPathMessageStrings ==> Iterable.empty
+
       import trip.*
+
       val expected2 = User("John", 20, 140)
 
-      val result3 = Person("John", 10, 140)
+      val result6 = Person("John", 10, 140)
         .intoPartial[User]
         .withFieldConstPartial(_.age, partial.Result.fromValue(20))
         .transform
-      result3.asOption ==> Some(expected2)
-      result3.asEither ==> Right(expected2)
-      result3.asErrorPathMessageStrings ==> Iterable.empty
+      result6.asOption ==> Some(expected2)
+      result6.asEither ==> Right(expected2)
+      result6.asErrorPathMessageStrings ==> Iterable.empty
 
-      val result4 = Person("John", 10, 140)
+      val result7 = Person("John", 10, 140)
         .intoPartial[User]
         .withFieldConstPartial(_.age, partial.Result.fromEmpty)
         .transform
 
-      result4.asOption ==> None
-      result4.asEither.isLeft ==> true
-      result4.asErrorPathMessageStrings ==> Iterable(
+      result7.asOption ==> None
+      result7.asEither.isLeft ==> true
+      result7.asErrorPathMessageStrings ==> Iterable(
         "age" -> "empty value"
       )
+
+      val result8 = NestedProduct(Person("John", 10, 140))
+        .intoPartial[NestedValueClass[User]]
+        .withFieldConst(_.value.age, 20)
+        .transform
+      result8.asOption ==> Some(NestedValueClass(expected2))
+      result8.asEither ==> Right(NestedValueClass(expected2))
+      result8.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result9 = NestedValueClass(Person("John", 10, 140))
+        .intoPartial[NestedJavaBean[User]]
+        .withFieldConst(_.getValue.age, 20)
+        .transform
+      result9.asOption ==> Some(NestedJavaBean(expected2))
+      result9.asEither ==> Right(NestedJavaBean(expected2))
+      result9.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result10 = NestedJavaBean(Person("John", 10, 140))
+        .intoPartial[NestedProduct[User]]
+        .withFieldConst(_.value.age, 20)
+        .transform
+      result10.asOption ==> Some(NestedProduct(expected2))
+      result10.asEither ==> Right(NestedProduct(expected2))
+      result10.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -268,7 +320,10 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
-      import products.{Foo, Bar}
+      import products.{Foo, Bar}, nestedpath.*
+
+      implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
+
       val expected = Foo(3, "3", (3.14, 3.14))
 
       val result = Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.y, _.x.toString).transform
@@ -281,24 +336,72 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result2.asEither ==> Right(expected)
       result2.asErrorPathMessageStrings ==> Iterable.empty
 
-      import trip.*
-      val expected2 = User("John", 20, 140)
-
-      val result3 = Person("John", 10, 140).intoPartial[User].withFieldComputed(_.age, _.age * 2).transform
-      result3.asOption ==> Some(expected2)
-      result3.asEither ==> Right(expected2)
+      val result3 = NestedProduct(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedValueClass[Foo]]
+        .withFieldComputed(_.value.y, _.value.x.toString)
+        .transform
+      result3.asOption ==> Some(NestedValueClass(expected))
+      result3.asEither ==> Right(NestedValueClass(expected))
       result3.asErrorPathMessageStrings ==> Iterable.empty
 
-      val result4 = Person("John", 10, 140)
-        .intoPartial[User]
-        .withFieldComputedPartial(_.age, _ => partial.Result.fromEmpty)
+      val result4 = NestedValueClass(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedJavaBean[Foo]]
+        .withFieldComputed(_.getValue.y, _.value.x.toString)
         .transform
+      result4.asOption ==> Some(NestedJavaBean(expected))
+      result4.asEither ==> Right(NestedJavaBean(expected))
+      result4.asErrorPathMessageStrings ==> Iterable.empty
 
-      result4.asOption ==> None
-      result4.asEither.isLeft ==> true
-      result4.asErrorPathMessageStrings ==> Iterable(
-        "age" -> "empty value"
+      val result5 = NestedJavaBean(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedProduct[Foo]]
+        .withFieldComputed(_.value.y, _.getValue.x.toString)
+        .transform
+      result5.asOption ==> Some(NestedProduct(expected))
+      result5.asEither ==> Right(NestedProduct(expected))
+      result5.asErrorPathMessageStrings ==> Iterable.empty
+
+      import trip.*
+
+      val expected2 = User("John", 20, 140)
+
+      val result6 = Person("John", 10, 140).intoPartial[User].withFieldComputed(_.age, _.age * 2).transform
+      result6.asOption ==> Some(expected2)
+      result6.asEither ==> Right(expected2)
+      result6.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result7 = Person("John", 10, 140)
+        .intoPartial[User]
+        .withFieldComputed(_.age, _ => throw new Exception("error happened"))
+        .transform
+      result7.asOption ==> None
+      result7.asEither.isLeft ==> true
+      result7.asErrorPathMessageStrings ==> Iterable(
+        "age" -> "error happened"
       )
+
+      val result8 = NestedProduct(Person("John", 10, 140))
+        .intoPartial[NestedValueClass[User]]
+        .withFieldComputed(_.value.age, _.value.age * 2)
+        .transform
+      result8.asOption ==> Some(NestedValueClass(expected2))
+      result8.asEither ==> Right(NestedValueClass(expected2))
+      result8.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result9 = NestedValueClass(Person("John", 10, 140))
+        .intoPartial[NestedJavaBean[User]]
+        .withFieldComputed(_.getValue.age, _.value.age * 2)
+        .transform
+      result9.asOption ==> Some(NestedJavaBean(expected2))
+      result9.asEither ==> Right(NestedJavaBean(expected2))
+      result9.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result10 = NestedJavaBean(Person("John", 10, 140))
+        .intoPartial[NestedProduct[User]]
+        .withFieldComputed(_.value.age, _.getValue.age * 2)
+        .transform
+      result10.asOption ==> Some(NestedProduct(expected2))
+      result10.asEither ==> Right(NestedProduct(expected2))
+      result10.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -318,7 +421,10 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
-      import products.{Foo, Bar}
+      import products.{Foo, Bar}, nestedpath.*
+
+      implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
+
       val expected = Foo(3, "3", (3.14, 3.14))
 
       val result = Bar(3, (3.14, 3.14))
@@ -337,16 +443,75 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result2.asEither ==> Right(expected)
       result2.asErrorPathMessageStrings ==> Iterable.empty
 
+      val result3 = NestedProduct(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedValueClass[Foo]]
+        .withFieldComputedPartial(_.value.y, bar => partial.Result.fromValue(bar.value.x.toString))
+        .transform
+      result3.asOption ==> Some(NestedValueClass(expected))
+      result3.asEither ==> Right(NestedValueClass(expected))
+      result3.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result4 = NestedValueClass(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedJavaBean[Foo]]
+        .withFieldComputedPartial(_.getValue.y, bar => partial.Result.fromValue(bar.value.x.toString))
+        .transform
+      result4.asOption ==> Some(NestedJavaBean(expected))
+      result4.asEither ==> Right(NestedJavaBean(expected))
+      result4.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result5 = NestedJavaBean(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedProduct[Foo]]
+        .withFieldComputedPartial(_.value.y, bar => partial.Result.fromValue(bar.getValue.x.toString))
+        .transform
+      result5.asOption ==> Some(NestedProduct(expected))
+      result5.asEither ==> Right(NestedProduct(expected))
+      result5.asErrorPathMessageStrings ==> Iterable.empty
+
       import trip.*
+
       val expected2 = User("John", 20, 140)
 
-      val result3 = Person("John", 10, 140)
+      val result6 = Person("John", 10, 140)
         .intoPartial[User]
         .withFieldComputedPartial(_.age, bar => partial.Result.fromValue(bar.age * 2))
         .transform
-      result3.asOption ==> Some(expected2)
-      result3.asEither ==> Right(expected2)
-      result3.asErrorPathMessageStrings ==> Iterable.empty
+      result6.asOption ==> Some(expected2)
+      result6.asEither ==> Right(expected2)
+      result6.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result7 = Person("John", 10, 140)
+        .intoPartial[User]
+        .withFieldComputedPartial(_.age, _ => partial.Result.fromEmpty)
+        .transform
+      result7.asOption ==> None
+      result7.asEither.isLeft ==> true
+      result7.asErrorPathMessageStrings ==> Iterable(
+        "age" -> "empty value"
+      )
+
+      val result8 = NestedProduct(Person("John", 10, 140))
+        .intoPartial[NestedValueClass[User]]
+        .withFieldComputed(_.value.age, _.value.age * 2)
+        .transform
+      result8.asOption ==> Some(NestedValueClass(expected2))
+      result8.asEither ==> Right(NestedValueClass(expected2))
+      result8.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result9 = NestedValueClass(Person("John", 10, 140))
+        .intoPartial[NestedJavaBean[User]]
+        .withFieldComputed(_.getValue.age, _.value.age * 2)
+        .transform
+      result9.asOption ==> Some(NestedJavaBean(expected2))
+      result9.asEither ==> Right(NestedJavaBean(expected2))
+      result9.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result10 = NestedJavaBean(Person("John", 10, 140))
+        .intoPartial[NestedProduct[User]]
+        .withFieldComputed(_.value.age, _.getValue.age * 2)
+        .transform
+      result10.asOption ==> Some(NestedProduct(expected2))
+      result10.asEither ==> Right(NestedProduct(expected2))
+      result10.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
