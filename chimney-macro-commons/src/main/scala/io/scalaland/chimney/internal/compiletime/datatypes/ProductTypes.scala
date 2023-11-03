@@ -125,6 +125,7 @@ trait ProductTypes { this: Definitions =>
     private val garbage = Set(
       // constructor
       "<init>",
+      "$init$",
       // case class generated
       "copy",
       // scala.Product methods
