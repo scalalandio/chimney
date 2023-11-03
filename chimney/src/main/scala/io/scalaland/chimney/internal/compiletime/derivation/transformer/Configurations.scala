@@ -96,7 +96,18 @@ private[compiletime] trait Configurations { this: Derivation =>
     final case class CoproductInstancePartial(runtimeDataIdx: Int) extends RuntimeCoproductOverride
   }
 
-  sealed abstract protected class FieldPathUpdate extends scala.Product with Serializable
+  sealed abstract protected class FieldPathUpdate extends scala.Product with Serializable {
+
+    final lazy val update: FieldPath => Option[FieldPath] = this match {
+      case DownField(nameFilter) => {
+        case FieldPath.Prepended(fieldName, remainingPath) if (nameFilter(fieldName)) =>
+          if (remainingPath != FieldPath.Root) Some(remainingPath) else None
+        case _ => None
+      }
+      case KeepFieldOverrides  => path => Some(path)
+      case CleanFieldOverrides => _ => None
+    }
+  }
   final protected case class DownField(nameFilter: String => Boolean) extends FieldPathUpdate
   protected object DownField {
     def apply(name: String): DownField = DownField(n => ProductType.areNamesMatching(n, name))
@@ -121,27 +132,22 @@ private[compiletime] trait Configurations { this: Derivation =>
   ) {
 
     def prepareForRecursiveCall(tpe: OnRecur): TransformerConfig = {
-      val newFieldOverrides: Map[FieldPath, RuntimeFieldOverride] = tpe.toField match {
-        case DownField(nameFilter) =>
-          fieldOverrides.view.flatMap {
-            case (FieldPath.Prepended(toName, toPath), runtimeOverride) if (nameFilter(toName)) =>
-              runtimeOverride match {
-                case RuntimeFieldOverride.RenamedFrom(FieldPath.Prepended(fromName, fromPath), fromExpr)
-                    if (nameFilter(fromName)) =>
-                  Some(toPath -> RuntimeFieldOverride.RenamedFrom(fromPath, fromExpr))
-                case _: RuntimeFieldOverride.RenamedFrom => None
-                case _                                   => Some(toPath -> runtimeOverride)
-              }
-            case (FieldPath.Prepended(toName, _), _) =>
-              if (toName.startsWith("get") || toName.startsWith("set")) {
-                println(s"$toName")
-              }
-              None
-            case _ => None
-          }.toMap
-        case KeepFieldOverrides  => fieldOverrides
-        case CleanFieldOverrides => Map.empty
-      }
+      val newFieldOverrides: Map[FieldPath, RuntimeFieldOverride] = fieldOverrides.view.flatMap {
+        case (toPath, runtimeOverride) =>
+          tpe.toField
+            .update(toPath)
+            .flatMap { newToPath =>
+              (runtimeOverride match {
+                case RuntimeFieldOverride.RenamedFrom(fromPath, fromExpr) =>
+                  tpe.fromField.update(fromPath).map { newFromPath =>
+                    RuntimeFieldOverride.RenamedFrom(newFromPath, fromExpr)
+                  }
+                case _ => Some(runtimeOverride)
+              }).map(newToPath -> _)
+            }
+            .toMap
+      }.toMap
+
       copy(
         instanceFlagOverridden = false,
         fieldOverrides = newFieldOverrides,
