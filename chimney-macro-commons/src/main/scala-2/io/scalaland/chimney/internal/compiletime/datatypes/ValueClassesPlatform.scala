@@ -22,9 +22,10 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
       val argumentOpt: Option[Symbol] = primaryConstructorOpt.flatMap(_.asMethod.paramLists.flatten.headOption)
 
       (getterOpt, primaryConstructorOpt, argumentOpt) match {
-        case (Some(getter), Some(_), Some(argument))
+        case (Some(getter), Some(pCtor), Some(argument))
             if !Type[A].isPrimitive && getDecodedName(getter) == getDecodedName(argument) =>
-          val Argument = fromUntyped[Any](argument.typeSignature)
+          val PCtor = pCtor.typeSignatureIn(A).asInstanceOf[MethodType]
+          val Argument = fromUntyped[Any](PCtor.params.head.typeSignatureIn(PCtor))
           val inner = fromUntyped(returnTypeOf(A, getter)).as_??
           import inner.Underlying as Inner
           assert(

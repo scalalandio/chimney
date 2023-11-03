@@ -27,8 +27,10 @@ private[compiletime] trait Derivation
       ctx: TransformationContext[From, To]
   ): DerivationResult[TransformationExpr[To]] =
     DerivationResult.namedScope(
-      ctx.fold(_ => s"Deriving Total Transformer expression from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]}")(
-        _ => s"Deriving Partial Transformer expression from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]}"
+      ctx.fold(_ =>
+        s"Deriving Total Transformer expression from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]} with context:\n$ctx"
+      )(_ =>
+        s"Deriving Partial Transformer expression from ${Type.prettyPrint[From]} to ${Type.prettyPrint[To]} with context:\n$ctx"
       )
     ) {
       Rule.expandRules[From, To](updateRules(rulesAvailableForPlatform))

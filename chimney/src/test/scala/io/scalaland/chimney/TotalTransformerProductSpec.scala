@@ -65,13 +65,20 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should provide a value for selected target case class field when selector is valid") {
       import products.{Foo, Bar}, nestedpath.*
 
+      implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
+
       Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y, "pi").transform ==> Foo(3, "pi", (3.14, 3.14))
       Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(cc => cc.y, "pi").transform ==> Foo(3, "pi", (3.14, 3.14))
+
       NestedProduct(Bar(3, (3.14, 3.14)))
-        .into[NestedProduct[Foo]]
+        .into[NestedValueClass[Foo]]
         .withFieldConst(_.value.y, "pi")
-        .transform ==> NestedProduct(Foo(3, "pi", (3.14, 3.14)))
-      NestedProduct(Bar(3, (3.14, 3.14)))
+        .transform ==> NestedValueClass(Foo(3, "pi", (3.14, 3.14)))
+      NestedValueClass(Bar(3, (3.14, 3.14)))
+        .into[NestedJavaBean[Foo]]
+        .withFieldConst(cc => cc.getValue.y, "pi")
+        .transform ==> NestedJavaBean(Foo(3, "pi", (3.14, 3.14)))
+      NestedJavaBean(Bar(3, (3.14, 3.14)))
         .into[NestedProduct[Foo]]
         .withFieldConst(cc => cc.value.y, "pi")
         .transform ==> NestedProduct(Foo(3, "pi", (3.14, 3.14)))
@@ -79,7 +86,16 @@ class TotalTransformerProductSpec extends ChimneySpec {
       import trip.*
 
       Person("John", 10, 140).into[User].withFieldConst(_.age, 20).transform ==> User("John", 20, 140)
+
       NestedProduct(Person("John", 10, 140))
+        .into[NestedValueClass[User]]
+        .withFieldConst(_.value.age, 20)
+        .transform ==> NestedValueClass(User("John", 20, 140))
+      NestedValueClass(Person("John", 10, 140))
+        .into[NestedJavaBean[User]]
+        .withFieldConst(_.getValue.age, 20)
+        .transform ==> NestedJavaBean(User("John", 20, 140))
+      NestedJavaBean(Person("John", 10, 140))
         .into[NestedProduct[User]]
         .withFieldConst(_.value.age, 20)
         .transform ==> NestedProduct(User("John", 20, 140))
