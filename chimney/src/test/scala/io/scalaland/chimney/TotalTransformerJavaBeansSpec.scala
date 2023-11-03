@@ -42,6 +42,35 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
 
       target.id ==> source.getId
       target.name ==> source.getName
+
+      val nestedJBTarget = NestedProduct(source)
+        .into[NestedJavaBean[CaseClassNoFlag]]
+        .withFieldRenamed(_.value.getId, _.getValue.id)
+        .withFieldRenamed(_.value.getName, _.getValue.name)
+        .enableBeanSetters
+        .transform
+
+      nestedJBTarget.getValue.id ==> source.getId
+      nestedJBTarget.getValue.name ==> source.getName
+
+      val nestedAVTarget = NestedJavaBean(source)
+        .into[NestedValueClass[CaseClassNoFlag]]
+        .withFieldRenamed(_.getValue.getId, _.value.id)
+        .withFieldRenamed(_.getValue.getName, _.value.name)
+        .enableBeanGetters
+        .transform
+
+      nestedAVTarget.value.id ==> source.getId
+      nestedAVTarget.value.name ==> source.getName
+
+      val nestedPTarget = NestedValueClass(source)
+        .into[NestedProduct[CaseClassNoFlag]]
+        .withFieldRenamed(_.value.getId, _.value.id)
+        .withFieldRenamed(_.value.getName, _.value.name)
+        .transform
+
+      nestedPTarget.value.id ==> source.getId
+      nestedPTarget.value.name ==> source.getName
     }
   }
 
@@ -71,6 +100,30 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
       nestedJBTarget.getValue.getId ==> source.id
       nestedJBTarget.getValue.getName ==> source.name
       nestedJBTarget.getValue.isFlag ==> source.renamedFlag
+
+      val nestedAVTarget = NestedJavaBean(source)
+        .into[NestedValueClass[JavaBeanTarget]]
+        .withFieldConst(_.value.getId, source.id)
+        .withFieldComputed(_.value.getName, _.getValue.name)
+        .withFieldRenamed(_.getValue.renamedFlag, _.value.isFlag)
+        .enableBeanGetters
+        .transform
+
+      nestedAVTarget.value.getId ==> source.id
+      nestedAVTarget.value.getName ==> source.name
+      nestedAVTarget.value.isFlag ==> source.renamedFlag
+
+      val nestedPTarget = NestedValueClass(source)
+        .into[NestedProduct[JavaBeanTarget]]
+        .withFieldConst(_.value.getId, source.id)
+        .withFieldComputed(_.value.getName, _.value.name)
+        .withFieldRenamed(_.value.renamedFlag, _.value.isFlag)
+        .enableBeanSetters
+        .transform
+
+      nestedPTarget.value.getId ==> source.id
+      nestedPTarget.value.getName ==> source.name
+      nestedPTarget.value.isFlag ==> source.renamedFlag
     }
 
     test("should fail to compile when getter is not paired with the right setter") {

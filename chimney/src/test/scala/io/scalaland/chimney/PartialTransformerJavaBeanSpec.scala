@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.javabeans.*
+import io.scalaland.chimney.fixtures.nestedpath.*
 
 import scala.annotation.unused
 
@@ -43,6 +44,41 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
 
       target.id ==> source.getId
       target.name ==> source.getName
+
+      val nestedJBTarget = NestedProduct(source)
+        .intoPartial[NestedJavaBean[CaseClassNoFlag]]
+        .withFieldRenamed(_.value.getId, _.getValue.id)
+        .withFieldRenamed(_.value.getName, _.getValue.name)
+        .enableBeanSetters
+        .transform
+        .asOption
+        .get
+
+      nestedJBTarget.getValue.id ==> source.getId
+      nestedJBTarget.getValue.name ==> source.getName
+
+      val nestedAVTarget = NestedJavaBean(source)
+        .intoPartial[NestedValueClass[CaseClassNoFlag]]
+        .withFieldRenamed(_.getValue.getId, _.value.id)
+        .withFieldRenamed(_.getValue.getName, _.value.name)
+        .enableBeanGetters
+        .transform
+        .asOption
+        .get
+
+      nestedAVTarget.value.id ==> source.getId
+      nestedAVTarget.value.name ==> source.getName
+
+      val nestedPTarget = NestedValueClass(source)
+        .intoPartial[NestedProduct[CaseClassNoFlag]]
+        .withFieldRenamed(_.value.getId, _.value.id)
+        .withFieldRenamed(_.value.getName, _.value.name)
+        .transform
+        .asOption
+        .get
+
+      nestedPTarget.value.id ==> source.getId
+      nestedPTarget.value.name ==> source.getName
     }
   }
 
@@ -62,6 +98,48 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       target.getId ==> source.id
       target.getName ==> source.name
       target.isFlag ==> source.renamedFlag
+
+      val nestedJBTarget = NestedProduct(source)
+        .intoPartial[NestedJavaBean[JavaBeanTarget]]
+        .withFieldConstPartial(_.getValue.getId, partial.Result.fromValue(source.id))
+        .withFieldComputedPartial(_.getValue.getName, cc => partial.Result.fromCatching(cc.value.name))
+        .withFieldRenamed(_.value.renamedFlag, _.getValue.isFlag)
+        .enableBeanSetters
+        .transform
+        .asOption
+        .get
+
+      nestedJBTarget.getValue.getId ==> source.id
+      nestedJBTarget.getValue.getName ==> source.name
+      nestedJBTarget.getValue.isFlag ==> source.renamedFlag
+
+      val nestedAVTarget = NestedJavaBean(source)
+        .intoPartial[NestedValueClass[JavaBeanTarget]]
+        .withFieldConstPartial(_.value.getId, partial.Result.fromValue(source.id))
+        .withFieldComputedPartial(_.value.getName, cc => partial.Result.fromCatching(cc.getValue.name))
+        .withFieldRenamed(_.getValue.renamedFlag, _.value.isFlag)
+        .enableBeanGetters
+        .transform
+        .asOption
+        .get
+
+      nestedAVTarget.value.getId ==> source.id
+      nestedAVTarget.value.getName ==> source.name
+      nestedAVTarget.value.isFlag ==> source.renamedFlag
+
+      val nestedPTarget = NestedValueClass(source)
+        .intoPartial[NestedProduct[JavaBeanTarget]]
+        .withFieldConstPartial(_.value.getId, partial.Result.fromValue(source.id))
+        .withFieldComputedPartial(_.value.getName, cc => partial.Result.fromCatching(cc.value.name))
+        .withFieldRenamed(_.value.renamedFlag, _.value.isFlag)
+        .enableBeanSetters
+        .transform
+        .asOption
+        .get
+
+      nestedPTarget.value.getId ==> source.id
+      nestedPTarget.value.getName ==> source.name
+      nestedPTarget.value.isFlag ==> source.renamedFlag
     }
 
     test("should fail to compile when getter is not paired with the right setter") {

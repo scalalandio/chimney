@@ -48,10 +48,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      /*compileErrorsFixed("""
-          Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y, "pi").withFieldConst(_.z._1, 0.0).transform
-         """) check ("Invalid selector expression")*/
-
       compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y + "abc", "pi").transform
         """) check ("Invalid selector expression")
@@ -107,16 +103,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      /*compileErrorsFixed(
-        """
-          Bar(3, (3.14, 3.14))
-            .into[Foo]
-            .withFieldComputed(_.y, _.x.toString)
-            .withFieldComputed(_.z._1, _.x.toDouble)
-            .transform
-          """
-      ) check ("Invalid selector expression")*/
-
       compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.y + "abc", _.toString).transform
         """) check ("Invalid selector expression")
@@ -167,12 +153,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
     test("should not compile when selector is invalid") {
       import products.Renames.*
-
-      /*compileErrorsFixed("""
-          User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age.get, _.wiek.right.get).transform
-        """).check(
-        "Invalid selector expression"
-      )*/
 
       compileErrorsFixed("""
           User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
