@@ -114,7 +114,9 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
-      import products.{Foo, Bar}
+      import products.{Foo, Bar}, nestedpath.*
+
+      implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
 
       Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.y, _.x.toString).transform ==> Foo(3, "3", (3.14, 3.14))
       Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(cc => cc.y, _.x.toString).transform ==> Foo(
@@ -123,9 +125,35 @@ class TotalTransformerProductSpec extends ChimneySpec {
         (3.14, 3.14)
       )
 
+      NestedProduct(Bar(3, (3.14, 3.14)))
+        .into[NestedValueClass[Foo]]
+        .withFieldComputed(_.value.y, _.value.x.toString)
+        .transform ==> NestedValueClass(Foo(3, "3", (3.14, 3.14)))
+      NestedValueClass(Bar(3, (3.14, 3.14)))
+        .into[NestedJavaBean[Foo]]
+        .withFieldComputed(cc => cc.getValue.y, _.value.x.toString)
+        .transform ==> NestedJavaBean(Foo(3, "3", (3.14, 3.14)))
+      NestedJavaBean(Bar(3, (3.14, 3.14)))
+        .into[NestedProduct[Foo]]
+        .withFieldComputed(cc => cc.value.y, _.getValue.x.toString)
+        .transform ==> NestedProduct(Foo(3, "3", (3.14, 3.14)))
+
       import trip.*
 
       Person("John", 10, 140).into[User].withFieldComputed(_.age, _.age * 2).transform ==> User("John", 20, 140)
+
+      NestedProduct(Person("John", 10, 140))
+        .into[NestedValueClass[User]]
+        .withFieldComputed(_.value.age, _.value.age * 2)
+        .transform ==> NestedValueClass(User("John", 20, 140))
+      NestedValueClass(Person("John", 10, 140))
+        .into[NestedJavaBean[User]]
+        .withFieldComputed(_.getValue.age, _.value.age * 2)
+        .transform ==> NestedJavaBean(User("John", 20, 140))
+      NestedJavaBean(Person("John", 10, 140))
+        .into[NestedProduct[User]]
+        .withFieldComputed(_.value.age, _.getValue.age * 2)
+        .transform ==> NestedProduct(User("John", 20, 140))
     }
   }
 
