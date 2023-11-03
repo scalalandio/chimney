@@ -176,3 +176,15 @@ object Issue400 {
   case class Bar(var value: String)
   case class Bar2(var value: String, var value2: String = "ok")
 }
+
+object Issue403 {
+  class Foo {
+    def baz1(): String = "test"
+  }
+
+  class Bar {
+    private var baz = ""
+    def getBaz2(): String = baz
+    def setBaz2(baz: String): Unit = this.baz = baz
+  }
+}

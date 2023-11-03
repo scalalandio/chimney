@@ -683,4 +683,10 @@ class IssuesSpec extends ChimneySpec {
     Foo("b").into[Bar2].enableDefaultValues.transform ==> Bar2("b", "ok")
     Foo("b").intoPartial[Bar2].enableDefaultValues.transform.asOption ==> Some(Bar2("b", "ok"))
   }
+
+  test("fix issue #403") {
+    import Issue403.*
+
+    (new Foo()).into[Bar].withFieldRenamed(_.baz1(), _.getBaz2()).transform.getBaz2() ==> "test"
+  }
 }

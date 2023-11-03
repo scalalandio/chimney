@@ -12,6 +12,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
   private object SelectLike {
     def unapply(term: Term): Option[(Term, String)] = term match {
       case Select(instance, name)               => Some((instance, name))
+      case Apply(Select(instance, name), Nil)   => Some((instance, name))
       case Block(_, SelectLike(instance, name)) => Some((instance, name))
       case _                                    => None
     }
@@ -39,6 +40,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       "msg=the type test for DslMacroUtils.this.quotes.reflect.ValDef cannot be checked at runtime because it refers to an abstract type member or type parameter"
     )
     def parse(t: Tree): Either[String, ExistentialPath] = t match {
+      // Block(List(DefDef("$anonfun", List(TermParamClause(List(ValDef("_$50", Inferred(), None)))), Inferred(), Some(Apply(Select(Ident("_$50"), "baz1"), Nil)))), Closure(Ident("$anonfun"), None))
       case Block(List(DefDef(_, List(List(ValDef(in, _, _))), _, Some(selects))), _) =>
         def unpackSelects(selects: Tree): Either[String, ExistentialPath] = selects match {
           case Ident(out) if in == out =>
@@ -67,6 +69,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
     }
 
     private def invalidSelectorErrorMessage(t: Tree): String =
+      println(t.show(using Printer.TreeStructure))
       s"Invalid selector expression: ${t.show(using Printer.TreeAnsiCode)}"
   }
 
