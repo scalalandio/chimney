@@ -87,12 +87,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      /*compileErrorsFixed(
-        """
-          Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.y, "pi").withFieldConst(_.z._1, 0.0).transform
-         """
-      ) check ("Invalid selector expression")*/
-
       compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.y + "abc", "pi").transform
         """) check ("Invalid selector expression")
@@ -104,7 +98,10 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
-      import products.{Foo, Bar}
+      import products.{Foo, Bar}, nestedpath.*
+
+      implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
+
       val expected = Foo(3, "pi", (3.14, 3.14))
 
       val result = Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.y, "pi").transform
@@ -117,13 +114,62 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result2.asEither ==> Right(expected)
       result2.asErrorPathMessageStrings ==> Iterable.empty
 
+      val result3 = NestedProduct(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedValueClass[Foo]]
+        .withFieldConst(_.value.y, "pi")
+        .transform
+      result3.asOption ==> Some(NestedValueClass(expected))
+      result3.asEither ==> Right(NestedValueClass(expected))
+      result3.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result4 = NestedValueClass(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedJavaBean[Foo]]
+        .withFieldConst(cc => cc.getValue.y, "pi")
+        .transform
+      result4.asOption ==> Some(NestedJavaBean(expected))
+      result4.asEither ==> Right(NestedJavaBean(expected))
+      result4.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result5 = NestedJavaBean(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedProduct[Foo]]
+        .withFieldConst(cc => cc.value.y, "pi")
+        .transform
+      result5.asOption ==> Some(NestedProduct(expected))
+      result5.asEither ==> Right(NestedProduct(expected))
+      result5.asErrorPathMessageStrings ==> Iterable.empty
+
       import trip.*
+
       val expected2 = User("John", 20, 140)
 
-      val result3 = Person("John", 10, 140).intoPartial[User].withFieldConst(_.age, 20).transform
-      result3.asOption ==> Some(expected2)
-      result3.asEither ==> Right(expected2)
-      result3.asErrorPathMessageStrings ==> Iterable.empty
+      val result6 = Person("John", 10, 140).intoPartial[User].withFieldConst(_.age, 20).transform
+      result6.asOption ==> Some(expected2)
+      result6.asEither ==> Right(expected2)
+      result6.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result7 = NestedProduct(Person("John", 10, 140))
+        .intoPartial[NestedValueClass[User]]
+        .withFieldConst(_.value.age, 20)
+        .transform
+      result7.asOption ==> Some(NestedValueClass(expected2))
+      result7.asEither ==> Right(NestedValueClass(expected2))
+      result7.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result8 = NestedValueClass(Person("John", 10, 140))
+        .intoPartial[NestedJavaBean[User]]
+        .withFieldConst(_.getValue.age, 20)
+        .transform
+      result8.asOption ==> Some(NestedJavaBean(expected2))
+      result8.asEither ==> Right(NestedJavaBean(expected2))
+      result8.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result9 = NestedJavaBean(Person("John", 10, 140))
+        .intoPartial[NestedProduct[User]]
+        .withFieldConst(_.value.age, 20)
+        .transform
+      result9.asOption ==> Some(NestedProduct(expected2))
+      result9.asEither ==> Right(NestedProduct(expected2))
+      result9.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -131,16 +177,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
-
-      /*compileErrorsFixed(
-        """
-          Bar(3, (3.14, 3.14))
-            .intoPartial[Foo]
-            .withFieldConstPartial(_.y, partial.Result.fromValue("pi"))
-            .withFieldConstPartial(_.z._1, partial.Result.fromValue(0.0))
-            .transform
-          """
-      ) check ("Invalid selector expression")*/
 
       compileErrorsFixed(
         """
@@ -211,16 +247,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      /*compileErrorsFixed(
-        """
-          Bar(3, (3.14, 3.14))
-            .intoPartial[Foo]
-            .withFieldComputed(_.y, _.x.toString)
-            .withFieldComputed(_.z._1, _.x.toDouble)
-            .transform
-          """
-      ) check ("Invalid selector expression")*/
-
       compileErrorsFixed(
         """
           Bar(3, (3.14, 3.14))
@@ -280,16 +306,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
-
-      /*compileErrorsFixed(
-        """
-          Bar(3, (3.14, 3.14))
-            .intoPartial[Foo]
-            .withFieldComputed(_.y, _.x.toString)
-            .withFieldComputed(_.z._1, _.x.toDouble)
-            .transform
-          """
-      ) check ("Invalid selector expression")*/
 
       compileErrorsFixed("""
           Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.y + "abc", _.toString).transform
@@ -358,14 +374,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
     test("should not compile when selector is invalid") {
       import products.Renames.*
-
-      /*compileErrorsFixed(
-        """
-          User(1, "Kuba", Some(28)).intoPartial[UserPL].withFieldRenamed(_.age.get, _.wiek.right.get).transform
-        """
-      ).check(
-        "Invalid selector expression"
-      )*/
 
       compileErrorsFixed("""
           User(1, "Kuba", Some(28)).intoPartial[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
