@@ -24,9 +24,13 @@ private[compiletime] object Log {
 
   private val singleIndent = "  "
 
-  private def print(log: Log, indent: String): String = log match {
-    case Entry(msg)                => s"$indent+ ${msg().replaceAll("\n", s"\n$indent| ")}\n"
-    case Scope(scopeName, journal) => s"$indent+ $scopeName\n${print(journal, indent + singleIndent)}"
+  private def print(log: Log, indent: String): String = {
+    def prependIndent(msg: String): String = msg.replaceAll("\n", s"\n$indent| ")
+    log match {
+      case Entry(msg) => s"$indent+ ${prependIndent(msg())}\n"
+      case Scope(scopeName, journal) =>
+        s"$indent+ ${prependIndent(scopeName)}\n${print(journal, indent + singleIndent)}"
+    }
   }
 
   private def print(journal: Journal, indent: String): String =

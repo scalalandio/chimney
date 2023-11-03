@@ -98,7 +98,9 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   sealed abstract protected class FieldPathUpdate extends scala.Product with Serializable
   final protected case class DownField(nameFilter: String => Boolean) extends FieldPathUpdate
-  protected object DownField { def apply(name: String): DownField = DownField(_ == name) }
+  protected object DownField {
+    def apply(name: String): DownField = DownField(n => ProductType.areNamesMatching(n, name))
+  }
   protected case object KeepFieldOverrides extends FieldPathUpdate
   protected case object CleanFieldOverrides extends FieldPathUpdate
 
@@ -130,6 +132,11 @@ private[compiletime] trait Configurations { this: Derivation =>
                 case _: RuntimeFieldOverride.RenamedFrom => None
                 case _                                   => Some(toPath -> runtimeOverride)
               }
+            case (FieldPath.Prepended(toName, _), _) =>
+              if (toName.startsWith("get") || toName.startsWith("set")) {
+                println(s"$toName")
+              }
+              None
             case _ => None
           }.toMap
         case KeepFieldOverrides  => fieldOverrides
