@@ -48,6 +48,7 @@ private[chimney] trait DslMacroUtils {
             })
           case _: Ident =>
             Left(invalidSelectorErrorMessage(t)) // TODO: error for foo => bar.fieldName
+          case Apply(select @ Select(_, _), Nil) => unpackSelects(select)
           case Select(t2, fieldName: TermName) =>
             unpackSelects(t2).map { instance =>
               val name = ExistentialString(fieldName)
