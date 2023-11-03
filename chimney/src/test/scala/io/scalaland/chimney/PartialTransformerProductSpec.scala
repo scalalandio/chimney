@@ -555,7 +555,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test(
       "should provide a value to a selected target field from a selected source field when there is no same-named source field"
     ) {
-      import products.Renames.*
+      import products.Renames.*, nestedpath.*
 
       val expected = UserPLStd(1, "Kuba", Some(28))
 
@@ -567,6 +567,35 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result.asOption ==> Some(expected)
       result.asEither ==> Right(expected)
       result.asErrorPathMessageStrings ==> Iterable.empty
+
+      implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
+
+      val result2 = NestedProduct(User(1, "Kuba", Some(28)))
+        .intoPartial[NestedValueClass[UserPLStd]]
+        .withFieldRenamed(_.value.name, _.value.imie)
+        .withFieldRenamed(_.value.age, _.value.wiek)
+        .transform
+      result2.asOption ==> Some(NestedValueClass(expected))
+      result2.asEither ==> Right(NestedValueClass(expected))
+      result2.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result3 = NestedValueClass(User(1, "Kuba", Some(28)))
+        .intoPartial[NestedJavaBean[UserPLStd]]
+        .withFieldRenamed(_.value.name, _.getValue.imie)
+        .withFieldRenamed(_.value.age, _.getValue.wiek)
+        .transform
+      result3.asOption ==> Some(NestedJavaBean(expected))
+      result3.asEither ==> Right(NestedJavaBean(expected))
+      result3.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result4 = NestedJavaBean(User(1, "Kuba", Some(28)))
+        .intoPartial[NestedProduct[UserPLStd]]
+        .withFieldRenamed(_.getValue.name, _.value.imie)
+        .withFieldRenamed(_.getValue.age, _.value.wiek)
+        .transform
+      result4.asOption ==> Some(NestedProduct(expected))
+      result4.asEither ==> Right(NestedProduct(expected))
+      result4.asErrorPathMessageStrings ==> Iterable.empty
     }
 
     test(
