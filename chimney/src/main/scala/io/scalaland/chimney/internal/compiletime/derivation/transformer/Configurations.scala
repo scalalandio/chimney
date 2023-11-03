@@ -87,7 +87,9 @@ private[compiletime] trait Configurations { this: Derivation =>
     final case class ConstPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride
     final case class Computed(runtimeDataIdx: Int) extends RuntimeFieldOverride
     final case class ComputedPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride
-    final case class RenamedFrom(sourcePath: FieldPath, sourceValue: ExistentialExpr) extends RuntimeFieldOverride
+    final case class RenamedFrom(sourcePath: FieldPath, sourceValue: ExistentialExpr) extends RuntimeFieldOverride {
+      override def toString: String = s"RenamedFrom($sourcePath, ${ExistentialExpr.prettyPrint(sourceValue)})"
+    }
   }
 
   sealed abstract protected class RuntimeCoproductOverride extends scala.Product with Serializable
@@ -100,9 +102,8 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     final lazy val update: FieldPath => Option[FieldPath] = this match {
       case DownField(nameFilter) => {
-        case FieldPath.Prepended(fieldName, remainingPath) if (nameFilter(fieldName)) =>
-          if (remainingPath != FieldPath.Root) Some(remainingPath) else None
-        case _ => None
+        case FieldPath.Prepended(fieldName, remainingPath) if (nameFilter(fieldName)) => Some(remainingPath)
+        case _                                                                        => None
       }
       case KeepFieldOverrides  => path => Some(path)
       case CleanFieldOverrides => _ => None
@@ -115,14 +116,6 @@ private[compiletime] trait Configurations { this: Derivation =>
   protected case object KeepFieldOverrides extends FieldPathUpdate
   protected case object CleanFieldOverrides extends FieldPathUpdate
 
-  final protected case class OnRecur(
-      fromField: FieldPathUpdate = CleanFieldOverrides,
-      toField: FieldPathUpdate = CleanFieldOverrides
-  )
-  protected object OnRecur {
-    val cleanAll: OnRecur = apply()
-  }
-
   final protected case class TransformerConfig(
       flags: TransformerFlags = TransformerFlags(),
       private val instanceFlagOverridden: Boolean = false,
@@ -131,21 +124,11 @@ private[compiletime] trait Configurations { this: Derivation =>
       private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
   ) {
 
-    def prepareForRecursiveCall(tpe: OnRecur): TransformerConfig = {
+    def prepareForRecursiveCall(updateTo: FieldPathUpdate): TransformerConfig = {
       val newFieldOverrides: Map[FieldPath, RuntimeFieldOverride] = fieldOverrides.view.flatMap {
         case (toPath, runtimeOverride) =>
-          tpe.toField
-            .update(toPath)
-            .flatMap { newToPath =>
-              (runtimeOverride match {
-                case RuntimeFieldOverride.RenamedFrom(fromPath, fromExpr) =>
-                  tpe.fromField.update(fromPath).map { newFromPath =>
-                    RuntimeFieldOverride.RenamedFrom(newFromPath, fromExpr)
-                  }
-                case _ => Some(runtimeOverride)
-              }).map(newToPath -> _)
-            }
-            .toMap
+          // path to field is expected to be _.fieldName when matching, _ is unexpected
+          updateTo.update(toPath).filter(_ != FieldPath.Root).map(_ -> runtimeOverride).toMap
       }.toMap
 
       copy(

@@ -22,10 +22,7 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
   private def transformToInnerToAndWrap[From, To, InnerTo: Type](
       valueTo: ValueClass[To, InnerTo]
   )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-    deriveRecursiveTransformationExpr[From, InnerTo](
-      ctx.src,
-      OnRecur(fromField = KeepFieldOverrides, toField = DownField(valueTo.fieldName))
-    )
+    deriveRecursiveTransformationExpr[From, InnerTo](ctx.src, DownField(valueTo.fieldName))
       .flatMap { derivedInnerTo =>
         // We're constructing:
         // '{ new $To(${ derivedInnerTo }) }

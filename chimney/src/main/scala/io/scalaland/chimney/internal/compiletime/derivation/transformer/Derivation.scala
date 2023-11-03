@@ -39,19 +39,19 @@ private[compiletime] trait Derivation
   /** Intended use case: recursive derivation within rules */
   final protected def deriveRecursiveTransformationExpr[NewFrom: Type, NewTo: Type](
       newSrc: Expr[NewFrom],
-      onRecur: OnRecur = OnRecur.cleanAll
+      updateTo: FieldPathUpdate = CleanFieldOverrides
   )(implicit ctx: TransformationContext[?, ?]): DerivationResult[TransformationExpr[NewTo]] =
-    deriveRecursiveTransformationExprUpdatingRules[NewFrom, NewTo](newSrc, onRecur)(identity)
+    deriveRecursiveTransformationExprUpdatingRules[NewFrom, NewTo](newSrc, updateTo)(identity)
 
   /** Intended use case: recursive derivation within rules which should remove some rules from consideration */
   final protected def deriveRecursiveTransformationExprUpdatingRules[NewFrom: Type, NewTo: Type](
       newSrc: Expr[NewFrom],
-      onRecur: OnRecur = OnRecur.cleanAll
+      updateTo: FieldPathUpdate = CleanFieldOverrides
   )(
       updateRules: List[Rule] => List[Rule]
   )(implicit ctx: TransformationContext[?, ?]): DerivationResult[TransformationExpr[NewTo]] = {
     val newCtx: TransformationContext[NewFrom, NewTo] = ctx.updateFromTo[NewFrom, NewTo](newSrc).updateConfig {
-      _.prepareForRecursiveCall(onRecur)
+      _.prepareForRecursiveCall(updateTo)
     }
     deriveTransformationResultExprUpdatingRules(updateRules)(newCtx)
       .logSuccess {
@@ -60,5 +60,4 @@ private[compiletime] trait Derivation
       }
       .logFailure(errors => s"Errors at recursive derivation: ${errors.prettyPrint}")
   }
-
 }

@@ -2,6 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.javabeans.*
+import io.scalaland.chimney.fixtures.nestedpath.*
 
 import scala.annotation.unused
 
@@ -58,6 +59,18 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
       target.getId ==> source.id
       target.getName ==> source.name
       target.isFlag ==> source.renamedFlag
+
+      val nestedJBTarget = NestedProduct(source)
+        .into[NestedJavaBean[JavaBeanTarget]]
+        .withFieldConst(_.getValue.getId, source.id)
+        .withFieldComputed(_.getValue.getName, _.value.name)
+        .withFieldRenamed(_.value.renamedFlag, _.getValue.isFlag)
+        .enableBeanSetters
+        .transform
+
+      nestedJBTarget.getValue.getId ==> source.id
+      nestedJBTarget.getValue.getName ==> source.name
+      nestedJBTarget.getValue.isFlag ==> source.renamedFlag
     }
 
     test("should fail to compile when getter is not paired with the right setter") {
