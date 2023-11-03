@@ -17,8 +17,10 @@ lazy val ciRelease = taskKey[Unit](
 )
 ciRelease := {
   publishSigned.taskValue
-  if (git.gitCurrentTags.value.nonEmpty) {
-     sonatypeBundleRelease.value
+  Def.taskIf {
+    if (git.gitCurrentTags.value.nonEmpty) {
+      sonatypeBundleRelease.taskValue
+    }
   }
 }
 
