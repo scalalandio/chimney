@@ -184,31 +184,32 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           )
         )
       case RuntimeFieldOverride.Computed(runtimeDataIdx) =>
+        import ctx.originalSrc.{Underlying as OriginalFrom, value as originalSrc}
         ctx match {
-          case TransformationContext.ForTotal(src) =>
+          case TransformationContext.ForTotal(_) =>
             // We're constructing:
-            // '{ ${ runtimeDataStore }(idx).asInstanceOf[$From => $ctorParam](${ src }) }
+            // '{ ${ runtimeDataStore }(idx).asInstanceOf[$OriginalFrom => $CtorParam](${ originalSrc }) }
             DerivationResult.existential[TransformationExpr, CtorParam](
               TransformationExpr.fromTotal(
-                ctx.runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[From => CtorParam].apply(src)
+                ctx.runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[OriginalFrom => CtorParam].apply(originalSrc)
               )
             )
-          case TransformationContext.ForPartial(src, _) =>
+          case TransformationContext.ForPartial(_, _) =>
             // We're constructing:
             // '{
             //   partial.Result.fromFunction(
-            //     ${ runtimeDataStore }(idx).asInstanceOf[$From => $ctorParam]
+            //     ${ runtimeDataStore }(idx).asInstanceOf[$OriginalFrom => $CtorParam]
             //   )
-            //   .apply(${ src })
+            //   .apply(${ originalSrc })
             //   .prependErrorPath(PathElement.Accessor("fromName"))
             // }
             DerivationResult.existential[TransformationExpr, CtorParam](
               TransformationExpr.fromPartial(
                 ChimneyExpr.PartialResult
                   .fromFunction(
-                    ctx.runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[From => CtorParam]
+                    ctx.runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[OriginalFrom => CtorParam]
                   )
-                  .apply(src)
+                  .apply(originalSrc)
                   .prependErrorPath(
                     ChimneyExpr.PathElement
                       .Accessor(Expr.String(fromName))
@@ -221,15 +222,16 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         // We're constructing:
         // '{
         //   ${ runtimeDataStore }(idx)
-        //     .asInstanceOf[$From => partial.Result[$ctorParam]](${ src })
+        //     .asInstanceOf[$OriginalFrom => partial.Result[$CtorParam]](${ originalSrc })
         //     .prependErrorPath(PathElement.Accessor("fromName"))
         // }
+        import ctx.originalSrc.{Underlying as OriginalFrom, value as originalSrc}
         DerivationResult.existential[TransformationExpr, CtorParam](
           TransformationExpr.fromPartial(
             ctx
               .runtimeDataStore(runtimeDataIdx)
-              .asInstanceOfExpr[From => partial.Result[CtorParam]]
-              .apply(ctx.src)
+              .asInstanceOfExpr[OriginalFrom => partial.Result[CtorParam]]
+              .apply(originalSrc)
               .prependErrorPath(
                 ChimneyExpr.PathElement.Accessor(Expr.String(fromName)).upcastExpr[partial.PathElement]
               )
