@@ -197,13 +197,33 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test(
       "should provide a value to a selected target field from a selected source field when there is no same-named source field"
     ) {
-      import products.Renames.*
+      import products.Renames.*, nestedpath.*
 
       User(1, "Kuba", Some(28))
         .into[UserPLStd]
         .withFieldRenamed(_.name, _.imie)
         .withFieldRenamed(_.age, _.wiek)
         .transform ==> UserPLStd(1, "Kuba", Some(28))
+
+      implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
+
+      NestedProduct(User(1, "Kuba", Some(28)))
+        .into[NestedValueClass[UserPLStd]]
+        .withFieldRenamed(_.value.name, _.value.imie)
+        .withFieldRenamed(_.value.age, _.value.wiek)
+        .transform ==> NestedValueClass(UserPLStd(1, "Kuba", Some(28)))
+
+      NestedValueClass(User(1, "Kuba", Some(28)))
+        .into[NestedJavaBean[UserPLStd]]
+        .withFieldRenamed(_.value.name, _.getValue.imie)
+        .withFieldRenamed(_.value.age, _.getValue.wiek)
+        .transform ==> NestedJavaBean(UserPLStd(1, "Kuba", Some(28)))
+
+      NestedJavaBean(User(1, "Kuba", Some(28)))
+        .into[NestedProduct[UserPLStd]]
+        .withFieldRenamed(_.getValue.name, _.value.imie)
+        .withFieldRenamed(_.getValue.age, _.value.wiek)
+        .transform ==> NestedProduct(UserPLStd(1, "Kuba", Some(28)))
     }
 
     test(
