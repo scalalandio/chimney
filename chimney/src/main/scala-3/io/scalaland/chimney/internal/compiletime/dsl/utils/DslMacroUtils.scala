@@ -69,7 +69,6 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
     }
 
     private def invalidSelectorErrorMessage(t: Tree): String =
-      println(t.show(using Printer.TreeStructure))
       s"Invalid selector expression: ${t.show(using Printer.TreeAnsiCode)}"
   }
 

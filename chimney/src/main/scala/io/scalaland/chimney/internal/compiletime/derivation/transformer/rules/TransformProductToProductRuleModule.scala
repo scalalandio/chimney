@@ -237,7 +237,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               )
           )
         )
-      case RuntimeFieldOverride.RenamedFrom(sourcePath, sourceValue) =>
+      case RuntimeFieldOverride.RenamedFrom(sourcePath) =>
         def extractSource[Source: Type](
             sourceName: String,
             extractedSrcExpr: Expr[Source]
@@ -255,13 +255,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 )
               }
           case _ =>
-            Left(
-              s"""Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found"""
-            )
+            Left(s"""Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found""")
         }
 
         def extractNestedSource(fieldPath: FieldPath): Either[String, ExistentialExpr] = fieldPath match {
-          case FieldPath.Root => Right(sourceValue)
+          case FieldPath.Root => Right(ctx.originalSrc)
           case FieldPath.Select(sourceName, instance) =>
             extractNestedSource(instance).flatMap { extractedSrcValue =>
               import extractedSrcValue.Underlying as ExtractedSourceValue, extractedSrcValue.value as extractedSrcExpr

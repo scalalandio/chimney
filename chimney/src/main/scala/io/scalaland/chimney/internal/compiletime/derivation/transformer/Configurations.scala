@@ -87,9 +87,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     final case class ConstPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride
     final case class Computed(runtimeDataIdx: Int) extends RuntimeFieldOverride
     final case class ComputedPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride
-    final case class RenamedFrom(sourcePath: FieldPath, sourceValue: ExistentialExpr) extends RuntimeFieldOverride {
-      override def toString: String = s"RenamedFrom($sourcePath, ${ExistentialExpr.prettyPrint(sourceValue)})"
-    }
+    final case class RenamedFrom(sourcePath: FieldPath) extends RuntimeFieldOverride
   }
 
   sealed abstract protected class RuntimeCoproductOverride extends scala.Product with Serializable
@@ -199,10 +197,10 @@ private[compiletime] trait Configurations { this: Derivation =>
         Cfg <: runtime.TransformerCfg: Type,
         InstanceFlags <: runtime.TransformerFlags: Type,
         ImplicitScopeFlags <: runtime.TransformerFlags: Type
-    ](fromExpr: ExistentialExpr): TransformerConfig = {
+    ]: TransformerConfig = {
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags())
       val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
-      val cfg = extractTransformerConfig[Cfg](runtimeDataIdx = 0, fromExpr = fromExpr).copy(flags = allFlags)
+      val cfg = extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
       if (Type[InstanceFlags] =:= ChimneyType.TransformerFlags.Default) cfg else cfg.setLocalFlagsOverriden
     }
 
@@ -245,54 +243,53 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
 
     private def extractTransformerConfig[Cfg <: runtime.TransformerCfg: Type](
-        runtimeDataIdx: Int,
-        fromExpr: ExistentialExpr
+        runtimeDataIdx: Int
     ): TransformerConfig = Type[Cfg] match {
       case empty if empty =:= ChimneyType.TransformerCfg.Empty => TransformerConfig()
       case ChimneyType.TransformerCfg.FieldConst(fieldName, cfg) =>
         import fieldName.Underlying as FieldName, cfg.Underlying as Cfg2
-        extractTransformerConfig[Cfg2](1 + runtimeDataIdx, fromExpr)
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
           .addFieldOverride(
             extractPath[FieldName],
             RuntimeFieldOverride.Const(runtimeDataIdx)
           )
       case ChimneyType.TransformerCfg.FieldConstPartial(fieldName, cfg) =>
         import fieldName.Underlying as FieldName, cfg.Underlying as Cfg2
-        extractTransformerConfig[Cfg2](1 + runtimeDataIdx, fromExpr)
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
           .addFieldOverride(
             extractPath[FieldName],
             RuntimeFieldOverride.ConstPartial(runtimeDataIdx)
           )
       case ChimneyType.TransformerCfg.FieldComputed(fieldName, cfg) =>
         import fieldName.Underlying as FieldName, cfg.Underlying as Cfg2
-        extractTransformerConfig[Cfg2](1 + runtimeDataIdx, fromExpr)
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
           .addFieldOverride(
             extractPath[FieldName],
             RuntimeFieldOverride.Computed(runtimeDataIdx)
           )
       case ChimneyType.TransformerCfg.FieldComputedPartial(fieldName, cfg) =>
         import fieldName.Underlying as FieldName, cfg.Underlying as Cfg2
-        extractTransformerConfig[Cfg2](1 + runtimeDataIdx, fromExpr)
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
           .addFieldOverride(
             extractPath[FieldName],
             RuntimeFieldOverride.ComputedPartial(runtimeDataIdx)
           )
       case ChimneyType.TransformerCfg.FieldRelabelled(fromName, toName, cfg) =>
         import fromName.Underlying as FromName, toName.Underlying as ToName, cfg.Underlying as Cfg2
-        extractTransformerConfig[Cfg2](runtimeDataIdx, fromExpr)
+        extractTransformerConfig[Cfg2](runtimeDataIdx)
           .addFieldOverride(
             extractPath[ToName],
-            RuntimeFieldOverride.RenamedFrom(extractPath[FromName], fromExpr)
+            RuntimeFieldOverride.RenamedFrom(extractPath[FromName])
           )
       case ChimneyType.TransformerCfg.CoproductInstance(instance, target, cfg) =>
         import instance.Underlying as Instance, target.Underlying as Target, cfg.Underlying as Cfg2
-        extractTransformerConfig[Cfg2](1 + runtimeDataIdx, fromExpr)
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
           .addCoproductInstance[Instance, Target](
             RuntimeCoproductOverride.CoproductInstance(runtimeDataIdx)
           )
       case ChimneyType.TransformerCfg.CoproductInstancePartial(instance, target, cfg) =>
         import instance.Underlying as Instance, target.Underlying as Target, cfg.Underlying as Cfg2
-        extractTransformerConfig[Cfg2](1 + runtimeDataIdx, fromExpr)
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
           .addCoproductInstance[Instance, Target](
             RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
           )
