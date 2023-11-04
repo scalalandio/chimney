@@ -109,4 +109,17 @@ class TotalTransformerValueTypeSpec extends ChimneySpec {
       .withFieldComputed(_.value.value, un => un.value.value.toUpperCase)
       .transform ==> NestedProduct(UserNameAlias("BATMAN"))
   }
+
+  test("flags overrides aren't enough to skip on AnyVal rule application") {
+    implicit val transformer = new Transformer[String, Int] {
+      override def transform(src: String): Int = src.length
+    }
+
+    val batman = "Batman"
+    val abc = "abc"
+    UserName(batman).into[UserId].enableMethodAccessors.transform ==> UserId(batman.length)
+    UserWithUserName(UserName(abc)).into[UserWithUserId].enableMethodAccessors.transform ==> UserWithUserId(
+      UserId(abc.length)
+    )
+  }
 }

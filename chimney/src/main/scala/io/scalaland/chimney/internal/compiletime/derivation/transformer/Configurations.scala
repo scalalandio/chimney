@@ -148,11 +148,17 @@ private[compiletime] trait Configurations { this: Derivation =>
         Type[SomeFrom] =:= Type[From] && Type[SomeTo] =:= Type[To]
       }
 
-    def areOverridesEmptyForCurrent[From: Type, To: Type]: Boolean =
-      !instanceFlagOverridden && fieldOverrides.isEmpty && filterOverridesForCoproduct { (someFrom, someTo) =>
+    def areFlagOverridesEmptyForCurrent[From: Type, To: Type]: Boolean =
+      !instanceFlagOverridden
+
+    def areValueOverridesEmptyForCurrent[From: Type, To: Type]: Boolean =
+      fieldOverrides.isEmpty && filterOverridesForCoproduct { (someFrom, someTo) =>
         import someFrom.Underlying as SomeFrom, someTo.Underlying as SomeTo
         Type[SomeFrom] <:< Type[From] && Type[To] <:< Type[SomeTo]
       }.isEmpty
+
+    def areOverridesEmptyForCurrent[From: Type, To: Type]: Boolean =
+      areFlagOverridesEmptyForCurrent[From, To] && areValueOverridesEmptyForCurrent[From, To]
 
     def filterOverridesForField(nameFilter: String => Boolean): Map[String, RuntimeFieldOverride] =
       fieldOverrides.view.collect {

@@ -126,4 +126,20 @@ class PartialTransformerValueTypeSpec extends ChimneySpec {
       .asOption
       .get ==> NestedProduct(UserNameAlias("BATMAN"))
   }
+
+  test("flags overrides aren't enough to skip on AnyVal rule application") {
+    implicit val transformer = new Transformer[String, Int] {
+      override def transform(src: String): Int = src.length
+    }
+
+    val batman = "Batman"
+    val abc = "abc"
+    UserName(batman).intoPartial[UserId].enableMethodAccessors.transform.asOption.get ==> UserId(batman.length)
+    UserWithUserName(UserName(abc))
+      .intoPartial[UserWithUserId]
+      .enableMethodAccessors
+      .transform
+      .asOption
+      .get ==> UserWithUserId(UserId(abc.length))
+  }
 }
