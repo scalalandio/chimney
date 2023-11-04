@@ -92,68 +92,14 @@ trait ProductTypes { this: Definitions =>
     }
     final def unapply[A](tpe: Type[A]): Option[Product[A]] = parse(tpe)
 
-    implicit class RegexpOps(regexp: scala.util.matching.Regex) {
-
-      def isMatching(value: String): Boolean = regexp.pattern.matcher(value).matches() // 2.12 doesn't have .matches
-    }
-
-    def areNamesMatching(fromName: String, toName: String): Boolean =
-      fromName == toName || normalize(fromName) == normalize(toName)
-
-    private val getAccessor = raw"(?i)get(.)(.*)".r
-    private val isAccessor = raw"(?i)is(.)(.*)".r
-    val dropGetIs: String => String = {
-      case getAccessor(head, tail) => head.toLowerCase + tail
-      case isAccessor(head, tail)  => head.toLowerCase + tail
-      case other                   => other
-    }
-    val isGetterName: String => Boolean = name => getAccessor.isMatching(name) || isAccessor.isMatching(name)
-
-    private val setAccessor = raw"(?i)set(.)(.*)".r
-    val dropSet: String => String = {
-      case setAccessor(head, tail) => head.toLowerCase + tail
-      case other                   => other
-    }
-    val isSetterName: String => Boolean = name => setAccessor.isMatching(name)
-
-    private def normalize(name: String): String =
-      if (isGetterName(name)) dropGetIs(name)
-      else if (isSetterName(name)) dropSet(name)
-      else name
-
-    // methods we can drop from searching scope
-    private val garbage = Set(
-      // constructor
-      "<init>",
-      "$init$",
-      // case class generated
-      "copy",
-      // scala.Product methods
-      "##",
-      "canEqual",
-      "productArity",
-      "productElement",
-      "productElementName",
-      "productElementNames",
-      "productIterator",
-      "productPrefix",
-      // java.lang.Object methods
-      "equals",
-      "finalize",
-      "hashCode",
-      "toString",
-      "clone",
-      "synchronized",
-      "wait",
-      "notify",
-      "notifyAll",
-      "getClass",
-      "asInstanceOf",
-      "isInstanceOf"
-    )
-    // default arguments has name method$default$index
-    private val defaultElement = raw"$$default$$"
-    val isGarbage: String => Boolean = name => garbage(name) || name.contains(defaultElement)
+    // cached in companion (regexps are expensive to initialize)
+    def areNamesMatching(fromName: String, toName: String): Boolean = ProductTypes.areNamesMatching(fromName, toName)
+    def isGarbage(name: String): Boolean = ProductTypes.isGarbage(name)
+    def isGetterName(name: String): Boolean = ProductTypes.isGetterName(name)
+    def isSetterName(name: String): Boolean = ProductTypes.isSetterName(name)
+    def dropGetIs(name: String): String = ProductTypes.dropGetIs(name)
+    def dropSet(name: String): String = ProductTypes.dropSet(name)
+    def normalize(name: String): String = ProductTypes.normalize(name)
 
     // defaults methods are 1-indexed
     protected def caseClassApplyDefaultScala2(idx: Int): String = "apply$default$" + idx
@@ -202,4 +148,66 @@ trait ProductTypes { this: Definitions =>
     def isJavaBean: Boolean = ProductType.isJavaBean(tpe)
     def isPOJO: Boolean = ProductType.isPOJO(tpe)
   }
+}
+object ProductTypes {
+
+  implicit private class RegexpOps(regexp: scala.util.matching.Regex) {
+
+    def isMatching(value: String): Boolean = regexp.pattern.matcher(value).matches() // 2.12 doesn't have .matches
+  }
+
+  def areNamesMatching(fromName: String, toName: String): Boolean =
+    fromName == toName || normalize(fromName) == normalize(toName)
+
+  private val getAccessor = raw"(?i)get(.)(.*)".r
+  private val isAccessor = raw"(?i)is(.)(.*)".r
+  val dropGetIs: String => String = {
+    case getAccessor(head, tail) => head.toLowerCase + tail
+    case isAccessor(head, tail)  => head.toLowerCase + tail
+    case other                   => other
+  }
+  val isGetterName: String => Boolean = name => getAccessor.isMatching(name) || isAccessor.isMatching(name)
+
+  private val setAccessor = raw"(?i)set(.)(.*)".r
+  val dropSet: String => String = {
+    case setAccessor(head, tail) => head.toLowerCase + tail
+    case other                   => other
+  }
+  val isSetterName: String => Boolean = name => setAccessor.isMatching(name)
+
+  val normalize: String => String = dropGetIs.andThen(dropSet)
+
+  // methods we can drop from searching scope
+  private val garbage = Set(
+    // constructor
+    "<init>",
+    "$init$",
+    // case class generated
+    "copy",
+    // scala.Product methods
+    "##",
+    "canEqual",
+    "productArity",
+    "productElement",
+    "productElementName",
+    "productElementNames",
+    "productIterator",
+    "productPrefix",
+    // java.lang.Object methods
+    "equals",
+    "finalize",
+    "hashCode",
+    "toString",
+    "clone",
+    "synchronized",
+    "wait",
+    "notify",
+    "notifyAll",
+    "getClass",
+    "asInstanceOf",
+    "isInstanceOf"
+  )
+  // default arguments has name method$default$index
+  private val defaultElement = raw"$$default$$"
+  val isGarbage: String => Boolean = name => garbage(name) || name.contains(defaultElement)
 }
