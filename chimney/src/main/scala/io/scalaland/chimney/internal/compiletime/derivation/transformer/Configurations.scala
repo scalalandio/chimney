@@ -53,32 +53,20 @@ private[compiletime] trait Configurations { this: Derivation =>
       ).flatten.mkString(", ")})"
   }
 
-  sealed abstract protected class FieldPath extends scala.Product with Serializable
+  protected type FieldPath = Vector[String]
   protected object FieldPath {
-    case object Root extends FieldPath {
-      override def toString: String = "_"
+    val Root: FieldPath = Vector()
+    object Select {
+      def apply(name: String, path: FieldPath): FieldPath = path :+ name
+      def unapply(path: FieldPath): Option[(String, FieldPath)] = path.lastOption.map(_ -> path.take(path.size - 1))
     }
-    final case class Select(name: String, instance: FieldPath) extends FieldPath {
-      override def toString: String = s"$instance.$name"
-    }
-
     object Prepended {
-      def unapply(path: FieldPath): Option[(String, FieldPath)] = path match {
-        case Select(prependedName, Root) => Some(prependedName -> Root)
-        case Select(name, instance) =>
-          unapply(instance).map { case (prependedName, prependedInstance) =>
-            prependedName -> Select(name, prependedInstance)
-          }
-        case _ => None
-      }
+      def unapply(path: FieldPath): Option[(String, FieldPath)] = path.headOption.map(_ -> path.drop(1))
     }
-
     object CurrentField {
-      def unapply(path: FieldPath): Option[String] = path match {
-        case Select(name, Root) => Some(name)
-        case _                  => None
-      }
+      def unapply(path: FieldPath): Option[String] = if (path.size == 1) path.headOption else None
     }
+    def print(path: FieldPath): String = "_" + path.map(s => "." + s).mkString
   }
 
   sealed abstract protected class RuntimeFieldOverride extends scala.Product with Serializable
@@ -87,7 +75,9 @@ private[compiletime] trait Configurations { this: Derivation =>
     final case class ConstPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride
     final case class Computed(runtimeDataIdx: Int) extends RuntimeFieldOverride
     final case class ComputedPartial(runtimeDataIdx: Int) extends RuntimeFieldOverride
-    final case class RenamedFrom(sourcePath: FieldPath) extends RuntimeFieldOverride
+    final case class RenamedFrom(sourcePath: FieldPath) extends RuntimeFieldOverride {
+      override def toString: String = s"RenamedFrom(${FieldPath.print(sourcePath)})"
+    }
   }
 
   sealed abstract protected class RuntimeCoproductOverride extends scala.Product with Serializable
@@ -174,7 +164,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       coproductOverrides.view.filter(p => typeFilter.tupled(p._1)).toMap
 
     override def toString: String = {
-      val fieldOverridesString = fieldOverrides.map { case (k, v) => s"$k -> $v" }.mkString(", ")
+      val fieldOverridesString = fieldOverrides.map { case (k, v) => s"${FieldPath.print(k)} -> $v" }.mkString(", ")
       val coproductOverridesString = coproductOverrides
         .map { case ((f, t), v) => s"(${ExistentialType.prettyPrint(f)}, ${ExistentialType.prettyPrint(t)}) -> $v" }
         .mkString(", ")

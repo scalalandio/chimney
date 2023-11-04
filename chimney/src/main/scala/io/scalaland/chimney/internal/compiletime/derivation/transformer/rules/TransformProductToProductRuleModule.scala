@@ -259,12 +259,12 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         }
 
         def extractNestedSource(fieldPath: FieldPath): Either[String, ExistentialExpr] = fieldPath match {
-          case FieldPath.Root => Right(ctx.originalSrc)
           case FieldPath.Select(sourceName, instance) =>
             extractNestedSource(instance).flatMap { extractedSrcValue =>
               import extractedSrcValue.Underlying as ExtractedSourceValue, extractedSrcValue.value as extractedSrcExpr
               extractSource[ExtractedSourceValue](sourceName, extractedSrcExpr)
             }
+          case _ => Right(ctx.originalSrc)
         }
 
         extractNestedSource(sourcePath).fold(
@@ -556,10 +556,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     // If we derived partial.Result[$ctorParam] we are appending
     //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
+    @scala.annotation.tailrec
     private def appendPath[A: Type](expr: TransformationExpr[A], path: FieldPath): TransformationExpr[A] =
       path match {
-        case FieldPath.Root                   => expr
-        case FieldPath.Select(name, instance) => appendPath(appendPath[A](expr, instance), name)
+        case FieldPath.Prepended(name, instance) => appendPath[A](appendPath[A](expr, name), instance)
+        case _                                   => expr
       }
 
     // If we derived partial.Result[$ctorParam] we are appending
