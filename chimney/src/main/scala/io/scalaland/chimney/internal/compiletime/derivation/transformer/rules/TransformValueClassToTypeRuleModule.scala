@@ -4,14 +4,14 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
 private[compiletime] trait TransformValueClassToTypeRuleModule {
-  this: Derivation with TransformProductToProductRuleModule =>
+  this: Derivation & TransformProductToProductRuleModule =>
 
   protected object TransformValueClassToTypeRule extends Rule("ValueClassToType") {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[From] match {
         case ValueClassType(from2) =>
-          if (ctx.config.areOverridesEmptyForCurrent[From, To]) {
+          if (ctx.config.areValueOverridesEmptyForCurrent[From, To]) {
             import from2.{Underlying as InnerFrom, value as valueFrom}
             unwrapAndTransform[From, To, InnerFrom](valueFrom)
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
