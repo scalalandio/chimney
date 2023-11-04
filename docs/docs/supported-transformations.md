@@ -784,7 +784,7 @@ it with another field. Since the usual cause of such cases is a _rename_, we can
 The requirements to use a rename are as follows:
 
   - you have to pass `_.fieldName` directly, it cannot be done with a reference to the function
-  - the field rename is _flat_, you cannot pass `_.foo.bar.baz` there
+  - the field rename can be _nested_, you can pass `_.foo.bar.baz` there
   - you can only use `val`/nullary method/Bean getter as a source field name
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
     setters are enabled)
@@ -894,7 +894,7 @@ As you can see, the transformed value will automatically preserve the field name
 The requirements to use a value provision are as follows:
 
   - you have to pass `_.fieldName` directly, it cannot be done with a reference to the function
-  - the field rename is _flat_, you cannot pass `_.foo.bar.baz` there
+  - the field value provision can be _nested_, you can pass `_.foo.bar.baz` there
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
     setters are enabled)
 
@@ -1018,7 +1018,7 @@ As you can see, the transformed value will automatically preserve the field name
 The requirements to use a value computation are as follows:
 
   - you have to pass `_.fieldName` directly, it cannot be done with a reference to the function
-  - the field rename is _flat_, you cannot pass `_.foo.bar.baz` there
+  - the field value computation can be _nested_, you can pass `_.foo.bar.baz` there
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
     setters are enabled)
 
@@ -1096,7 +1096,7 @@ constructor's argument is made by position instead of name:
 `AnyVal`s can be used both as data sources for derivation as well as the targets of the transformation.
 
 If `AnyVal` is the source, Chimney would attempt to unwrap it, and if it's the target wrap it - we treat `AnyVal`s
-as transparent, similarl to virtually every other Scala library.
+as transparent, similarly to virtually every other Scala library.
 
 !!! example
 
@@ -1142,6 +1142,11 @@ as transparent, similarl to virtually every other Scala library.
 
     When `AnyVal` special handling cannot be used (e.g. because value/constructor is private), then Chimney falls back
     to treat them as a normal class.
+
+!!! warning
+
+    If you use any override (`withFieldConst`) getting value from/to `AnyVal`, it _will_ be treated as just a normal
+    product type.
 
 ## Between `sealed`/`enum`s
 
