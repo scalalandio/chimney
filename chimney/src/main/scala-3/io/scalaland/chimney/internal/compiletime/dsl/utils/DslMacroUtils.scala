@@ -40,7 +40,6 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       "msg=the type test for DslMacroUtils.this.quotes.reflect.ValDef cannot be checked at runtime because it refers to an abstract type member or type parameter"
     )
     def parse(t: Tree): Either[String, ExistentialPath] = t match {
-      // Block(List(DefDef("$anonfun", List(TermParamClause(List(ValDef("_$50", Inferred(), None)))), Inferred(), Some(Apply(Select(Ident("_$50"), "baz1"), Nil)))), Closure(Ident("$anonfun"), None))
       case Block(List(DefDef(_, List(List(ValDef(in, _, _))), _, Some(selects))), _) =>
         def unpackSelects(selects: Tree): Either[String, ExistentialPath] = selects match {
           case Ident(out) if in == out =>
@@ -48,8 +47,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               type Underlying = runtime.Path.Root
               val Underlying: Type[runtime.Path.Root] = Type.of[runtime.Path.Root]
             })
-          case _: Ident =>
-            Left(invalidSelectorErrorMessage(t)) // TODO: error for foo => bar.fieldName
+          case _: Ident => Left(ignoringInputNotAllowed(t))
           case SelectLike(t2, fieldName) =>
             unpackSelects(t2).map { instance =>
               val name = ExistentialString(fieldName)
@@ -61,7 +59,8 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
                   Type.of[runtime.Path.Select[FieldName, Instance]]
               }
             }
-          case _ => Left(invalidSelectorErrorMessage(t))
+          case Apply(_, _) => Left(arbitraryFunctionNotAllowed(t))
+          case _           => Left(invalidSelectorErrorMessage(t))
         }
         unpackSelects(selects)
       case Inlined(_, _, block) => parse(block)
@@ -70,6 +69,12 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
 
     private def invalidSelectorErrorMessage(t: Tree): String =
       s"Invalid selector expression: ${t.show(using Printer.TreeAnsiCode)}"
+
+    private def arbitraryFunctionNotAllowed(t: Tree): String =
+      s"Invalid selector expression - only vals, and nullary defs allowed: ${t.show(using Printer.TreeAnsiCode)}"
+
+    private def ignoringInputNotAllowed(t: Tree): String =
+      s"Invalid selector expression - only input value can be extracted from: ${t.show(using Printer.TreeAnsiCode)}"
   }
 
   def applyFieldNameType[Out](f: [A <: runtime.Path] => Type[A] ?=> Out)(selector: Expr[?]): Out =

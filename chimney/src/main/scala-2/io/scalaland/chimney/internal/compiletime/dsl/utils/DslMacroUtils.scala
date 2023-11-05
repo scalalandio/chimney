@@ -46,9 +46,9 @@ private[chimney] trait DslMacroUtils {
               type Underlying = runtime.Path.Root
               val Underlying: WeakTypeTag[runtime.Path.Root] = weakTypeTag[runtime.Path.Root]
             })
-          case _: Ident =>
-            Left(invalidSelectorErrorMessage(t)) // TODO: error for foo => bar.fieldName
+          case _: Ident                          => Left(ignoringInputNotAllowed(t))
           case Apply(select @ Select(_, _), Nil) => unpackSelects(select)
+          case Apply(_, _)                       => Left(arbitraryFunctionNotAllowed(t))
           case Select(t2, fieldName: TermName) =>
             unpackSelects(t2).map { instance =>
               val name = ExistentialString(fieldName)
@@ -68,7 +68,14 @@ private[chimney] trait DslMacroUtils {
       case _ => Left(invalidSelectorErrorMessage(t))
     }
 
-    private def invalidSelectorErrorMessage(selectorTree: Tree): String = s"Invalid selector expression: $selectorTree"
+    private def invalidSelectorErrorMessage(selectorTree: Tree): String =
+      s"Invalid selector expression: $selectorTree"
+
+    private def arbitraryFunctionNotAllowed(selectorTree: Tree): String =
+      s"Invalid selector expression - only vals, and nullary defs allowed: $selectorTree"
+
+    private def ignoringInputNotAllowed(selectorTree: Tree): String =
+      s"Invalid selector expression - only input value can be extracted from: $selectorTree"
   }
 
   // If we try to do:

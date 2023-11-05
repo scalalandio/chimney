@@ -12,6 +12,7 @@ private[compiletime] trait Contexts { this: Derivation =>
     val From: Type[From]
     val To: Type[To]
 
+    /** When using nested paths (_.foo.bar.baz) and recursive derivation this is the original, "top-level" value */
     val originalSrc: ExistentialExpr
     val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
     val config: TransformerConfig
