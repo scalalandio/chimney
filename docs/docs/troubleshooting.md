@@ -376,14 +376,22 @@ For the snippet above, the macro could print this structured log:
 
     ```
     + Start derivation with context: ForTotal[From = Bar, To = Foo](src = bar)(TransformerConfig(
-    |   flags = Flags(processDefaultValues, displayMacrosLogging),
+    |   flags = TransformerFlags(processDefaultValues, displayMacrosLogging),
+    |   instanceFlagOverridden = true,
     |   fieldOverrides = Map(),
     |   coproductOverrides = Map(),
-    |   preventResolutionForTypes = None
+    |   preventImplicitSummoningForTypes = None
     | ))
-    + Deriving Total Transformer expression from Bar to Foo
+    + Deriving Total Transformer expression from Bar to Foo with context:
+    | ForTotal[From = Bar, To = Foo](src = bar)(TransformerConfig(
+    |   flags = TransformerFlags(processDefaultValues, displayMacrosLogging),
+    |   instanceFlagOverridden = true,
+    |   fieldOverrides = Map(),
+    |   coproductOverrides = Map(),
+    |   preventImplicitSummoningForTypes = None
+    | ))
       + Attempting expansion of rule Implicit
-      + Rule Implicit decided to pass on to the next rule
+      + Rule Implicit decided to pass on to the next rule - some conditions were fulfilled but at least one failed: Configuration has defined overrides
       + Attempting expansion of rule Subtypes
       + Rule Subtypes decided to pass on to the next rule
       + Attempting expansion of rule OptionToOption
@@ -405,9 +413,16 @@ For the snippet above, the macro could print this structured log:
       + Attempting expansion of rule IterableToIterable
       + Rule IterableToIterable decided to pass on to the next rule
       + Attempting expansion of rule ProductToProduct
-        + Resolved Bar getters: (`x`: java.lang.String (ConstructorVal), `y`: scala.Int (ConstructorVal)) and Foo constructor (`x`: java.lang.String (ConstructorParameter, default = None), `y`: scala.Int (ConstructorParameter, default = None), `z`: scala.Boolean (ConstructorParameter, default = Some(Foo.apply$default)))
+        + Resolved Bar getters: (`x`: java.lang.String (ConstructorVal, declared), `y`: scala.Int (ConstructorVal, declared), `_1`: java.lang.String (AccessorMethod, declared), `_2`: scala.Int (AccessorMethod, declared)) and Foo constructor (`x`: java.lang.String (ConstructorParameter, default = None), `y`: scala.Int (ConstructorParameter, default = None), `z`: scala.Boolean (ConstructorParameter, default = Some(Foo.$lessinit$greater$default)))
         + Recursive derivation for field `x`: java.lang.String into matched `x`: java.lang.String
-          + Deriving Total Transformer expression from java.lang.String to java.lang.String
+          + Deriving Total Transformer expression from java.lang.String to java.lang.String with context:
+          | ForTotal[From = java.lang.String, To = java.lang.String](src = bar.x)(TransformerConfig(
+          |   flags = TransformerFlags(processDefaultValues, displayMacrosLogging),
+          |   instanceFlagOverridden = false,
+          |   fieldOverrides = Map(),
+          |   coproductOverrides = Map(),
+          |   preventImplicitSummoningForTypes = None
+          | ))
             + Attempting expansion of rule Implicit
             + Rule Implicit decided to pass on to the next rule
             + Attempting expansion of rule Subtypes
@@ -415,20 +430,26 @@ For the snippet above, the macro could print this structured log:
           + Derived recursively total expression bar.x
         + Resolved `x` field value to bar.x
         + Recursive derivation for field `y`: scala.Int into matched `y`: scala.Int
-        + Deriving Total Transformer expression from scala.Int to scala.Int
-          + Attempting expansion of rule Implicit
-          + Rule Implicit decided to pass on to the next rule
-          + Attempting expansion of rule Subtypes
-          + Rule Subtypes expanded successfully: bar.y
-        + Derived recursively total expression bar.y
+          + Deriving Total Transformer expression from scala.Int to scala.Int with context:
+          | ForTotal[From = scala.Int, To = scala.Int](src = bar.y)(TransformerConfig(
+          |   flags = TransformerFlags(processDefaultValues, displayMacrosLogging),
+          |   instanceFlagOverridden = false,
+          |   fieldOverrides = Map(),
+          |   coproductOverrides = Map(),
+          |   preventImplicitSummoningForTypes = None
+          | ))
+            + Attempting expansion of rule Implicit
+            + Rule Implicit decided to pass on to the next rule
+            + Attempting expansion of rule Subtypes
+            + Rule Subtypes expanded successfully: bar.y
+          + Derived recursively total expression bar.y
         + Resolved `y` field value to bar.y
-        + Resolved `z` field value to Foo.apply$default
+        + Resolved `z` field value to Foo.$lessinit$greater$default
         + Resolved 3 arguments, 3 as total and 0 as partial Expr
-      + Rule ProductToProduct expanded successfully:
-        | new Foo(bar.x, bar.y, Foo.apply$default)
+      + Rule ProductToProduct expanded successfully: new Foo(bar.x, bar.y, Foo.$lessinit$greater$default)
     + Derived final expression is:
-      | new Foo(bar.x, bar.y, Foo.apply$default)
-    + Derivation took 0.109828000 s
+    | new Foo(bar.x, bar.y, Foo.$lessinit$greater$default)
+    + Derivation took 0.072478000 s
     ```
 
 With the structured log, the user could see e.g.:
@@ -488,7 +509,14 @@ would generate:
     |   preventImplicitSummoningForTypes = None
     | ))
     + Deriving Patcher expression for User with patch UserUpdateForm
-      + Deriving Total Transformer expression from java.lang.String to Email
+      + Deriving Total Transformer expression from java.lang.String to Email with context:
+      | ForTotal[From = java.lang.String, To = Email](src = userupdateform.email)(TransformerConfig(
+      |   flags = TransformerFlags(),
+      |   instanceFlagOverridden = false,
+      |   fieldOverrides = Map(),
+      |   coproductOverrides = Map(),
+      |   preventImplicitSummoningForTypes = None
+      | ))
         + Attempting expansion of rule Implicit
         + Rule Implicit decided to pass on to the next rule
         + Attempting expansion of rule Subtypes
@@ -504,14 +532,28 @@ would generate:
         + Attempting expansion of rule ValueClassToType
         + Rule ValueClassToType decided to pass on to the next rule
         + Attempting expansion of rule TypeToValueClass
-          + Deriving Total Transformer expression from java.lang.String to java.lang.String
+          + Deriving Total Transformer expression from java.lang.String to java.lang.String with context:
+          | ForTotal[From = java.lang.String, To = java.lang.String](src = userupdateform.email)(TransformerConfig(
+          |   flags = TransformerFlags(),
+          |   instanceFlagOverridden = false,
+          |   fieldOverrides = Map(),
+          |   coproductOverrides = Map(),
+          |   preventImplicitSummoningForTypes = None
+          | ))
             + Attempting expansion of rule Implicit
             + Rule Implicit decided to pass on to the next rule
             + Attempting expansion of rule Subtypes
             + Rule Subtypes expanded successfully: userupdateform.email
           + Derived recursively total expression userupdateform.email
         + Rule TypeToValueClass expanded successfully: new Email(userupdateform.email)
-      + Deriving Total Transformer expression from scala.Long to Phone
+      + Deriving Total Transformer expression from scala.Long to Phone with context:
+      | ForTotal[From = scala.Long, To = Phone](src = userupdateform.phone)(TransformerConfig(
+      |   flags = TransformerFlags(),
+      |   instanceFlagOverridden = false,
+      |   fieldOverrides = Map(),
+      |   coproductOverrides = Map(),
+      |   preventImplicitSummoningForTypes = None
+      | ))
         + Attempting expansion of rule Implicit
         + Rule Implicit decided to pass on to the next rule
         + Attempting expansion of rule Subtypes
@@ -527,20 +569,24 @@ would generate:
         + Attempting expansion of rule ValueClassToType
         + Rule ValueClassToType decided to pass on to the next rule
         + Attempting expansion of rule TypeToValueClass
-          + Deriving Total Transformer expression from scala.Long to scala.Long
+          + Deriving Total Transformer expression from scala.Long to scala.Long with context:
+          | ForTotal[From = scala.Long, To = scala.Long](src = userupdateform.phone)(TransformerConfig(
+          |   flags = TransformerFlags(),
+          |   instanceFlagOverridden = false,
+          |   fieldOverrides = Map(),
+          |   coproductOverrides = Map(),
+          |   preventImplicitSummoningForTypes = None
+          | ))
             + Attempting expansion of rule Implicit
             + Rule Implicit decided to pass on to the next rule
             + Attempting expansion of rule Subtypes
             + Rule Subtypes expanded successfully: userupdateform.phone
           + Derived recursively total expression userupdateform.phone
         + Rule TypeToValueClass expanded successfully: new Phone(userupdateform.phone)
-    + Derived final expression is:
-    | {
-    |   val user: User = new User(user.id, new Email(userupdateform.email), new Phone(userupdateform.phone));
-    |   user
-    | }
-    + Derivation took 0.064756000 s
-    ```
+      + Derived final expression is:
+      | new User(user.id, new Email(userupdateform.email), new Phone(userupdateform.phone))
+      + Derivation took 0.028971000 s
+      ```
 
 ## Ideas, questions or bug reports
 
