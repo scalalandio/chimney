@@ -830,6 +830,32 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     // partial.Result.fromValue(bar)
     ```
 
+We are also able to rename fields in nested structure:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo(a: String, b: Int)
+    case class Bar(a: String, c: Int)
+    
+    case class NestedFoo(foo: Foo)
+    case class NestedBar(bar: Bar)
+    
+    NestedFoo(Foo("value", 1248))
+      .into[NestedBar]
+      .withFieldRenamed(_.foo, _.bar)
+      .withFieldRenamed(_.foo.b, _.bar.c)
+      .transform // NestedBar(Bar("value", 1248))
+    NestedFoo(Foo("value", 1248))
+      .intoPartial[NestedBar]
+      .withFieldRenamed(_.foo, _.bar)
+      .withFieldRenamed(_.foo.b, _.bar.c)
+      .transform.asEither // Right(NestedBar(Bar("value", 1248)))
+    ```
+
 ### Wiring the constructor's parameter to a provided value
 
 Another way of handling the missing source field - or overriding an existing one - is providing the value for 
@@ -941,6 +967,32 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     //   bar
     // }
     ```
+
+We are also able to provide values in nested structure:
+
+!!! example 
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo(a: String, b: Int)
+    case class Bar(a: String, b: Int, c: Long)
+
+    case class NestedFoo(foo: Foo)
+    case class NestedBar(bar: Bar)
+    
+    NestedFoo(Foo("value", 1248))
+      .into[NestedBar]
+      .withFieldRenamed(_.foo, _.bar)
+      .withFieldConst(_.bar.c, 1000L)
+      .transform // NestedBar(Bar("value", 1248, 1000L))
+    NestedFoo(Foo("value", 1248))
+      .intoPartial[NestedBar]
+      .withFieldRenamed(_.foo, _.bar)
+      .withFieldConst(_.bar.c, 1000L)
+      .transform.asEither // Right(NestedBar(Bar("value", 1248, 1000L)))
+   ```
 
 ### Wiring the constructor's parameter to the computed value
 
@@ -1064,6 +1116,31 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     //   bar.setC(c)
     //   bar
     // }
+    ```
+
+We are also able to compute values in nested structure:
+
+!!! example 
+
+    ```scala
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo(a: String, b: Int)
+    case class Bar(a: String, b: Int, c: Long)
+
+    case class NestedFoo(foo: Foo)
+    case class NestedBar(bar: Bar)
+    
+    NestedFoo(Foo("value", 1248))
+      .into[NestedBar]
+      .withFieldRenamed(_.foo, _.bar)
+      .withFieldComputed(_.bar.c, nestedfoo => nestedfoo.foo.b.toLong * 2)
+      .transform // NestedBar(Bar("value", 1248, 2496L))
+    NestedFoo(Foo("value", 1248))
+      .intoPartial[NestedBar]
+      .withFieldRenamed(_.foo, _.bar)
+      .withFieldComputedPartial(_.bar.c, nestedfoo => partial.Result.fromValue(nestedfoo.foo.b.toLong * 2))
+      .transform.asEither // Right(NestedBar(Bar("value", 1248, 2496L)))
     ```
 
 ## From/into a `Tuple`
@@ -1740,7 +1817,7 @@ knows how to apply it, the transformation can still be derived:
     On Scala 2, we are even able to use refined types (Scala 3, changed a bit how they works):
 
     ```scala
-    //> using scala {{ scala.2_12 }}
+    //> using scala {{ scala.2_13 }}
     //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
