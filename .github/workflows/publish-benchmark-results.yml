@@ -2,11 +2,12 @@ name: Publish benchmark results
 
 on:
   workflow_run:
-    workflows: [ 'CI build' ]
+    workflows: [ 'Benchmark' ]
     types: [ completed ]
 
 jobs:
   push-to-data-repo:
+
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
     steps:

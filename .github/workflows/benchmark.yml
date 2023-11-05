@@ -1,0 +1,65 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [ master ]
+    tags: [ '*' ]
+  pull_request:
+    branches: [ master ]
+    types: [ opened, reopened, labeled, synchronize ]
+
+jobs:
+  benchmark:
+
+    runs-on: benchmarks
+    concurrency: 'benchmark'
+    if: >
+      github.event_name == 'push' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'benchmark') ||
+      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'benchmark'))
+    environment: 'benchmark'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # coursier parallel fetch is faster than cache download+upload on our custom runner machine
+      #      - uses: coursier/cache-action@v6
+
+      - uses: coursier/setup-action@v1.3.0
+        with:
+          jvm: 'temurin:1.21.0.1' # TODO LB java version from matrix
+          apps: sbt
+
+      - name: Run Scala 2 benchmarks # TODO: run for Scala 3 too
+        run: sbt "benchmarks/Jmh/run -rf json -rff $(pwd)/$(git describe --tags --always).json"
+
+      - name: Fetch benchmarks metadata
+        run: curl https://raw.githubusercontent.com/scalalandio/chimney-benchmark-results/main/meta.json -o meta.json
+
+      - name: Get nope.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Process current benchmarks results
+        run: node .github/scripts/process-benchmarks.mjs "$GITHUB_CONTEXT" "$(git describe --tags --always)"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+
+      - name: Save benchmark results
+        run: |
+          SHA=$(cat sha)
+          mkdir -p ./results/${{ github.event_name }}/$SHA
+          mv meta.json ./results
+          mv sha ./results
+          mv $(git describe --tags --always).json ./results/${{ github.event_name }}/$SHA
+          echo "$(git describe --tags --always)" > ./results/version
+          echo "${{ github.event_name }}" > ./results/event
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v2
+        with:
+          name: benchmark-results
+          path: results
