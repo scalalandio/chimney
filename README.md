@@ -2,7 +2,7 @@
 
 [![chimney Scala version support](https://index.scala-lang.org/scalalandio/chimney/chimney/latest.svg)](https://index.scala-lang.org/scalalandio/chimney/chimney)
 
-[![CI build](https://github.com/scalalandio/chimney/workflows/CI%20build/badge.svg)](https://github.com/scalalandio/chimney/actions)
+[![CI build](https://github.com/scalalandio/chimney/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/scalalandio/chimney/actions)
 [![codecov.io](http://codecov.io/github/scalalandio/chimney/coverage.svg?branch=master)](http://codecov.io/github/scalalandio/chimney?branch=master)
 [![License](http://img.shields.io/:license-Apache%202-green.svg)](http://www.apache.org/licenses/LICENSE-2.0.txt) [![Join the discussions at https://github.com/scalalandio/chimney/discussions](https://img.shields.io/github/discussions/scalalandio/chimney
 )](https://github.com/scalalandio/chimney/discussions)
