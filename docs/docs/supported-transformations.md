@@ -816,13 +816,13 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
     
-    (new Foo()).into[Bar].withFieldRenamed(_.getB, _.getC).transform
+    (new Foo()).into[Bar].withFieldRenamed(_.getB(), _.getC).transform
     // val foo = new Foo()
     // val bar = new Bar()
     // bar.setA(foo.getA) 
     // bar.setC(foo.getB())
     // bar
-    (new Foo()).intoPartial[Bar].withFieldRenamed(_.getB, _.getC).transform
+    (new Foo()).intoPartial[Bar].withFieldRenamed(_.getB(), _.getC).transform
     // val foo = new Foo()
     // val bar = new Bar()
     // bar.setA(foo.getA) 
@@ -1112,7 +1112,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     // val foo = new Foo()
     // partial.Result.fromCatched(foo.getA.toLong).map { c =>
     //   val bar = new Bar()
-    //   bar.setA(foo.getA) 
+    //   bar.setA(foo.getA()) 
     //   bar.setC(c)
     //   bar
     // }
