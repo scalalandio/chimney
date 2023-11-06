@@ -461,7 +461,7 @@ Chimney would have specialized expression generation for things like:
     these collections to accumulate errors and add indices/keys to the error information
 
 For each of these `Rule` might decide whether the case should be handled. Some of these rules needs to be tested before
-some other rules (e.g. there might be several `Rule`s for `AnyVal`s with specific order) and have no requirements about
+some other rules (e.g. there might be several `Rule`s for `AnyVal`s with a specific order) and have no requirements about
 other rules (e.g. `Rule`s handling `Option`s might be unrelated to `Rule`s handling `AnyVal`s and not affect each other).  
 
 #### Product types

@@ -2,6 +2,34 @@
 
 Already using Chimney and you've got some issues? This page might help you with it.
 
+## Goals and non-goals
+
+While Chimney is usually used to convert one piece of immutable data into another piece of immutable data, not every
+time you are working with immutable values you need Chimney.
+
+The main goal of Chimney is minimizing the amount of code you have to write to convert a value of one type (known at
+compile time) into a value of another type (also known at compile time). While there are Patchers, their goal is to
+update one value, using another value and nothing more.
+
+If you:
+
+  - receive some unstructured, raw input value (String, InputStream, binary data, ...) you are not looking for Chimney
+    when it comes to parsing it - you need a parser library. Maybe it will be a JSON parser, or something you could
+    build with parser combinators, or a code generated with Interface Description Language (IDL) like Protocol Buffers,
+    Swagger or AsyncAPI.
+    - However, if you parse raw data into some structured data, that structured data can be used by Chimney to convert
+      into e.g. domain model
+  - want to update immutable data by passing some path to the updated field and then provide a value - you need a lens
+    library like Quicklens or Monocle
+  - want to limit the amount of tests written and are wondering if automatic generation of such an important code is
+    safe - you need to ask yourself: would you have the same dilemma if you were asked about generating JSON codecs?
+    Would you wonder if you need to test them? (In our experience, yes). Could you remove the need to test them if you
+    mandated the code to be always/never generated? (In our experience, whether its generated or written by hand you
+    want to test it).
+    - You can however avoid testing someone else's library if you use Chimney in place, in some service, and then test
+      that service's behavior or if you create in your DTO model `def toDomain = this.transformInto[DomainModel]`.
+      You can utilize code generation without making your application's type signatures depend on someone else's types. 
+
 ## Migration from 0.7.x to 0.8.0
 
 Version 0.8.0 is the first version that cleaned up the API. It introduced several breaking changes.
@@ -220,7 +248,15 @@ if there is no source field nor other fallback or override. Although it is
 a bugfix, it is also a breaking change so it has to be documented. The fix would
 be a manual resolution for all fields which now (correctly) fail due to the bugfix.
 
-## Recursive types fail to compile
+## Compilation errors
+
+When some transformation cannot be generated with the information available to the library, it is perfectly normal that
+a macro would generate a compilation error with a message describing the issue.
+
+However, some compilation errors might seem unreasonable as everything seems to be configured correctly for a use case
+that is officially supported.
+
+### Recursive types fail to compile
 
 Chimney attempts to avoid unnecessary memory allocations for good performance.
 
@@ -254,7 +290,7 @@ and then
 
 The same is true for partial transformers.
 
-## Recursive calls on implicits
+### Recursive calls on implicits
 
 Old versions of Chimney in situations like this:
 
@@ -290,7 +326,7 @@ It's a sign of recursion which has to be handled with [semiautomatic derivation]
     implicit val t: Transformer[Foo, Bar] = Transformer.define[Foo, Bar].buildTransformer
     ```
 
-## `sealed trait`s fail to recompile
+### `sealed trait`s fail to recompile
 
 In the case of incremental compilation, the Zinc compiler sometimes has issues with
 caching certain kind of information and macros don't get proper information
@@ -301,7 +337,7 @@ the compiler to provide it with this data, and the compiler fails to do so.
 On Scala 2.12.0 it failed [in other cases as well (scala/bug#7046)](https://github.com/scala/bug/issues/7046),
 so it is recommended to update 2.12 to at least 2.12.1.
 
-## Scala 3 complains that `implicit`/`given` `TransformerConfiguration` needs an explicit return type
+### Scala 3 complains that `implicit`/`given` `TransformerConfiguration` needs an explicit return type
 
 In Scala 2 syntax like
 
@@ -336,7 +372,7 @@ You can work around this by slightly longer incantation:
       TransformerConfiguration.default.enableMacrosLogging
     ```
 
-## `java.lang.UnsupportedOperationException: Position.point on NoPosition` error
+### `java.lang.UnsupportedOperationException: Position.point on NoPosition` error
 
 On Scala 2 `java.lang.UnsupportedOperationException: Position.point on NoPosition` is most commonly seen due to
 [scala/bug#10604](https://github.com/scala/bug/issues/10604) - when JVM used for compilation has a small stack trace
@@ -350,7 +386,7 @@ However, if you are using the compiler's flags to report unused definitions when
 an error caused by [scala/bug#12895](https://github.com/scala/bug/issues/12895). In such case the workaround would be to
 remove the unused definition reporting.
 
-## Debugging macros
+### Debugging macros
 
 In some cases, it could be helpful to preview what is the expression generated
 by macros, which implicits were used in macro (or not) and what was the exact
@@ -583,10 +619,10 @@ would generate:
             + Rule Subtypes expanded successfully: userupdateform.phone
           + Derived recursively total expression userupdateform.phone
         + Rule TypeToValueClass expanded successfully: new Phone(userupdateform.phone)
-      + Derived final expression is:
-      | new User(user.id, new Email(userupdateform.email), new Phone(userupdateform.phone))
-      + Derivation took 0.028971000 s
-      ```
+    + Derived final expression is:
+    | new User(user.id, new Email(userupdateform.email), new Phone(userupdateform.phone))
+    + Derivation took 0.113354000 s
+    ```
 
 ## Ideas, questions or bug reports
 
