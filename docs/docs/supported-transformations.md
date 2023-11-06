@@ -992,7 +992,7 @@ We are also able to provide values in nested structure:
       .withFieldRenamed(_.foo, _.bar)
       .withFieldConst(_.bar.c, 1000L)
       .transform.asEither // Right(NestedBar(Bar("value", 1248, 1000L)))
-   ```
+    ```
 
 ### Wiring the constructor's parameter to the computed value
 
@@ -1075,7 +1075,7 @@ The requirements to use a value computation are as follows:
     setters are enabled)
 
 The last conditions is always met when working with `case class`es with no `private val`s in constructor, and classes
-with all arguments declared as public `val`s, and Java Beans where each setter has corresponding getter defined.
+with all arguments declared as public `val`s, and Java Beans where each setter has a corresponding getter defined.
 
 !!! example
 
@@ -1222,8 +1222,8 @@ as transparent, similarly to virtually every other Scala library.
 
 !!! warning
 
-    If you use any override (`withFieldConst`) getting value from/to `AnyVal`, it _will_ be treated as just a normal
-    product type.
+    If you use any value override (`withFieldConst`, `withFieldComputed`, etc.) getting value from/to `AnyVal`, it
+    _will_ be treated as just a normal product type.
 
 ## Between `sealed`/`enum`s
 
@@ -1778,7 +1778,7 @@ or having type parameter being not used at all:
     Foo[AbstractType1]("value").transformInto[Bar[AbstractType2]] // Bar[AbstractType2]("value")
     ```
 
-If the type is `abstract`, used as a value, but contains enough information that one of existing rules
+If the type is `abstract` and used as a value, but contains enough information that one of existing rules
 knows how to apply it, the transformation can still be derived:
 
 !!! example
