@@ -11,6 +11,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       methodAccessors: Boolean = false,
       processDefaultValues: Boolean = false,
       beanSetters: Boolean = false,
+      beanSettersIgnoreUnmatched: Boolean = false,
       beanGetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
@@ -26,6 +27,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         copy(processDefaultValues = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.BeanSetters) {
         copy(beanSetters = value)
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.BeanSettersIgnoreUnmatched) {
+        copy(beanSettersIgnoreUnmatched = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.BeanGetters) {
         copy(beanGetters = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.OptionDefaultsToNone) {

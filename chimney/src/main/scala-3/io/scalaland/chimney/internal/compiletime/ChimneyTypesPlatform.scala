@@ -153,6 +153,8 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           quoted.Type.of[runtime.TransformerFlags.BeanGetters]
         val BeanSetters: Type[runtime.TransformerFlags.BeanSetters] =
           quoted.Type.of[runtime.TransformerFlags.BeanSetters]
+        val BeanSettersIgnoreUnmatched: Type[runtime.TransformerFlags.BeanSettersIgnoreUnmatched] =
+          quoted.Type.of[runtime.TransformerFlags.BeanSettersIgnoreUnmatched]
         val OptionDefaultsToNone: Type[runtime.TransformerFlags.OptionDefaultsToNone] =
           quoted.Type.of[runtime.TransformerFlags.OptionDefaultsToNone]
         object ImplicitConflictResolution extends ImplicitConflictResolutionModule {

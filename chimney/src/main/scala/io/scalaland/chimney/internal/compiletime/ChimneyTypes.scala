@@ -127,6 +127,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
         val DefaultValues: Type[runtime.TransformerFlags.DefaultValues]
         val BeanGetters: Type[runtime.TransformerFlags.BeanGetters]
         val BeanSetters: Type[runtime.TransformerFlags.BeanSetters]
+        val BeanSettersIgnoreUnmatched: Type[runtime.TransformerFlags.BeanSettersIgnoreUnmatched]
         val OptionDefaultsToNone: Type[runtime.TransformerFlags.OptionDefaultsToNone]
         val ImplicitConflictResolution: ImplicitConflictResolutionModule
         trait ImplicitConflictResolutionModule

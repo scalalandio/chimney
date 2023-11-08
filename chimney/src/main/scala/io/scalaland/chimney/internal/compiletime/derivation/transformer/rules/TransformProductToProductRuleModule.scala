@@ -125,17 +125,24 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           fromExtractors.exists { case (fromName, _) => areNamesMatching(fromName, toName) }
                         )
                     case Product.Parameter.TargetType.SetterParameter =>
-                      // TODO: update this for isLocal
-                      DerivationResult
-                        .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
-                          ProductType.dropSet(toName),
-                          fromExtractors.exists { case (fromName, _) => areNamesMatching(fromName, toName) }
-                        )
+                      if (flags.beanSettersIgnoreUnmatched)
+                        DerivationResult.pure(unmatchedSetter)
+                      else
+                        // TODO: update this for isLocal
+                        DerivationResult
+                          .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
+                            ProductType.dropSet(toName),
+                            fromExtractors.exists { case (fromName, _) => areNamesMatching(fromName, toName) }
+                          )
                   }
               }
-              .logSuccess(expr => s"Resolved `$toName` field value to ${expr.value.prettyPrint}")
+              .logSuccess(expr =>
+                if (expr == unmatchedSetter) s"Setter `$toName` not resolved but ignoring setters is allowed"
+                else s"Resolved `$toName` field value to ${expr.value.prettyPrint}"
+              )
               .map(toName -> _)
           }
+          .map(_.filterNot(_._2 == unmatchedSetter))
           .logSuccess { args =>
             val totals = args.count(_._2.value.isTotal)
             val partials = args.count(_._2.value.isPartial)
@@ -586,5 +593,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       val oldErrors = DerivationResult.fail(errors)
       newError.parTuple(oldErrors).map[Existential[TransformationExpr]](_ => ???)
     }
+
+    private val unmatchedSetter = Existential[TransformationExpr, Null](TransformationExpr.fromTotal(Expr.Null))
   }
 }

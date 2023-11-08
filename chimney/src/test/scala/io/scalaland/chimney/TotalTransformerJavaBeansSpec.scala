@@ -323,6 +323,102 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
     }
   }
 
+  group("""flag .enableIgnoreUnmatchedBeanSetters""") {
+
+    test("should allow creating Java Bean without calling any of its setters if none are matched") {
+      val expected = new JavaBeanTarget
+
+      ()
+        .into[JavaBeanTarget]
+        .enableIgnoreUnmatchedBeanSetters
+        .transform ==> expected
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
+
+        ()
+          .into[JavaBeanTarget]
+          .transform ==> expected
+      }
+    }
+
+    test("should not compile when some setters are unmatched but of them are and they are disabled") {
+      val expected = new JavaBeanTarget
+      expected.setId("100")
+      expected.setName("name")
+
+      compileErrorsFixed("""
+          CaseClassNoFlag("100", "name")
+            .into[JavaBeanTarget]
+            .enableIgnoreUnmatchedBeanSetters
+            .transform
+          """)
+        .check(
+          "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassNoFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+          "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+          "derivation from caseclassnoflag: io.scalaland.chimney.fixtures.javabeans.CaseClassNoFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+
+      locally {
+        @unused implicit val config = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
+
+        compileErrorsFixed("""
+            CaseClassNoFlag("100", "name")
+              .into[JavaBeanTarget]
+              .enableIgnoreUnmatchedBeanSetters
+              .transform
+            """)
+          .check(
+            "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassNoFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+            "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+            "derivation from caseclassnoflag: io.scalaland.chimney.fixtures.javabeans.CaseClassNoFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
+            "Consult https://chimney.readthedocs.io for usage examples."
+          )
+      }
+    }
+
+    test("should allow creating Java Bean while resolving some of its setters when only some are matched and enabled") {
+      val expected = new JavaBeanTarget
+      expected.setId("100")
+      expected.setName("name")
+
+      CaseClassNoFlag("100", "name")
+        .into[JavaBeanTarget]
+        .enableBeanSetters
+        .enableIgnoreUnmatchedBeanSetters
+        .transform ==> expected
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableBeanSetters.enableIgnoreUnmatchedBeanSetters
+
+        CaseClassNoFlag("100", "name")
+          .into[JavaBeanTarget]
+          .transform ==> expected
+      }
+    }
+  }
+
+  group("""flag .disableIgnoreUnmatchedBeanSetters""") {
+
+    test("should disable globally enabled .enableIgnoreUnmatchedBeanSetters") {
+      @unused implicit val config = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
+
+      compileErrorsFixed("""
+            CaseClassWithFlag("100", "name", flag = true)
+              .into[JavaBeanTarget]
+              .disableIgnoreUnmatchedBeanSetters
+              .transform
+          """)
+        .check(
+          "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+          "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+          "derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+    }
+  }
+
   group("""flag .enableMethodAccessors""") {
 
     test(
