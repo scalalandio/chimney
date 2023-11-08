@@ -111,6 +111,27 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
   def disableBeanSetters: UpdateFlag[Disable[BeanSetters, Flags]] =
     disableFlag[BeanSetters]
 
+  /** Enable not failing compilation on unresolved Java Beans naming convention (`.setName(value)`) in `To`.
+    *
+    * By default presence of setters (`.setName(value)`) fails compilation unless setters are enabled and matched with
+    * a source field or provided valued.
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#writing-to-bean-setters]] for more details
+    *
+    * @since 0.8.3
+    */
+  def enableIgnoreUnmatchedBeanSetters: UpdateFlag[Enable[BeanSettersIgnoreUnmatched, Flags]] =
+    enableFlag[BeanSettersIgnoreUnmatched]
+
+  /** Disable not failing compilation on unresolved Java Beans naming convention (`.setName(value)`) in `To`.
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#writing-to-bean-setters]] for more details
+    *
+    * @since 0.8.3
+    */
+  def disableIgnoreUnmatchedBeanSetters: UpdateFlag[Disable[BeanSettersIgnoreUnmatched, Flags]] =
+    disableFlag[BeanSettersIgnoreUnmatched]
+
   /** Sets target value of optional field to None if field is missing from source type `From`.
     *
     * By default in such case compilation fails.

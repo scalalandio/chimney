@@ -105,11 +105,15 @@ trait ProductTypes { this: Definitions =>
     protected def caseClassApplyDefaultScala2(idx: Int): String = "apply$default$" + idx
     protected def caseClassApplyDefaultScala3(idx: Int): String = "$lessinit$greater$default$" + idx
 
+    // skipping on setter should not create a invalid expression, whether or not is should be called depends on caller
+    private val settersCanBeIgnored: ((String, Existential[Product.Parameter])) => Boolean =
+      _._2.value.targetType != Product.Parameter.TargetType.SetterParameter
+
     protected def checkArguments[A: Type](
         parameters: Product.Parameters,
         arguments: Product.Arguments
     ): (Product.Arguments, Product.Arguments) = {
-      val missingArguments = parameters.keySet diff arguments.keySet
+      val missingArguments = parameters.filter(settersCanBeIgnored).keySet diff arguments.keySet
       if (missingArguments.nonEmpty) {
         val missing = missingArguments.mkString(", ")
         val provided = arguments.keys.mkString(", ")
@@ -120,12 +124,14 @@ trait ProductTypes { this: Definitions =>
 
       parameters.foreach { case (name, param) =>
         import param.Underlying as Param
-        val argument = arguments(name)
-        if (!(argument.Underlying <:< Param)) {
-          assertionFailed(
-            s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
-                .prettyPrint[param.Underlying]}, instead got ${Expr.prettyPrint(argument.value)} ${Type.prettyPrint(argument.Underlying)}"
-          )
+        // setter might be absent, so we cannot assume that argument for it is in a map
+        arguments.get(name).foreach { argument =>
+          if (!(argument.Underlying <:< Param)) {
+            assertionFailed(
+              s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
+                  .prettyPrint[param.Underlying]}, instead got ${Expr.prettyPrint(argument.value)} ${Type.prettyPrint(argument.Underlying)}"
+            )
+          }
         }
       }
 
