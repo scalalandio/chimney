@@ -6,7 +6,7 @@ import io.scalaland.chimney.fixtures.nestedpath.*
 
 import scala.annotation.unused
 
-class TotalTransformerJavaBeansSpec extends ChimneySpec {
+class TotalTransformerJavaBeanSpec extends ChimneySpec {
 
   test("automatic reading from Java Bean getters should be disabled by default") {
     compileErrorsFixed(
@@ -164,7 +164,7 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
              new MistypedSource(1).into[MistypedTarget].enableBeanGetters.transform
           """)
         .check(
-          "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedSource to io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedTarget"
+          "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerJavaBeanSpec.MistypedSource to io.scalaland.chimney.TotalTransformerJavaBeanSpec.MistypedTarget"
         )
 
       locally {
@@ -178,7 +178,7 @@ class TotalTransformerJavaBeansSpec extends ChimneySpec {
                new MistypedSource(1).into[MistypedTarget].transform
             """)
           .check(
-            "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedSource to io.scalaland.chimney.TotalTransformerJavaBeansSpec.MistypedTarget"
+            "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerJavaBeanSpec.MistypedSource to io.scalaland.chimney.TotalTransformerJavaBeanSpec.MistypedTarget"
           )
       }
     }
