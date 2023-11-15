@@ -21,6 +21,6 @@ addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.1.0")
 addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.6")
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.14"
 //
-addSbtPlugin("com.github.reibitto" % "sbt-welcome" % "0.3.2")
+addSbtPlugin("com.github.reibitto" % "sbt-welcome" % "0.4.0")
 
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
