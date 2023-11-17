@@ -188,3 +188,7 @@ object Issue403 {
     def setBaz2(baz: String): Unit = this.baz = baz
   }
 }
+
+object Issue434 {
+  case class MyClass(x: Int, y: Int, z: String, zz: Option[Int])
+}
