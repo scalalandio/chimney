@@ -689,4 +689,12 @@ class IssuesSpec extends ChimneySpec {
 
     (new Foo()).into[Bar].withFieldRenamed(_.baz1(), _.getBaz2()).transform.getBaz2() ==> "test"
   }
+
+  test("fix issue #434") {
+    import Issue434.*
+
+    val expected = MyClass(1, 2, "asd", None)
+    val actual = (1, 2, "asd").into[MyClass].enableOptionDefaultsToNone.transform
+    actual ==> expected
+  }
 }
