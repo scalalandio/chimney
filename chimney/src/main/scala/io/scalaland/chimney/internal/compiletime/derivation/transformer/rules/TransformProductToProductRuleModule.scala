@@ -107,35 +107,31 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   .map { case (fromName, toName, getter) =>
                     useExtractor[From, To, CtorParam](ctorParam.value.targetType, fromName, toName, getter)
                   }
-                  .orElse[DerivationResult[Existential[TransformationExpr]]](
-                    if (usePositionBasedMatching)
-                      Option(
-                        DerivationResult.incompatibleSourceTuple(
-                          sourceArity = fromEnabledExtractors.size,
-                          targetArity = parameters.size
-                        )
-                      )
-                    else None
-                  )
               }
               .orElse(useFallbackValues[From, To, CtorParam](defaultValue))
               .getOrElse[DerivationResult[Existential[TransformationExpr]]] {
-                ctorParam.value.targetType match {
-                  case Product.Parameter.TargetType.ConstructorParameter =>
-                    // TODO: update this for isLocal
-                    DerivationResult
-                      .missingAccessor[From, To, CtorParam, Existential[TransformationExpr]](
-                        toName,
-                        fromExtractors.exists { case (fromName, _) => areNamesMatching(fromName, toName) }
-                      )
-                  case Product.Parameter.TargetType.SetterParameter =>
-                    // TODO: update this for isLocal
-                    DerivationResult
-                      .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
-                        ProductType.dropSet(toName),
-                        fromExtractors.exists { case (fromName, _) => areNamesMatching(fromName, toName) }
-                      )
-                }
+                if (usePositionBasedMatching)
+                  DerivationResult.incompatibleSourceTuple(
+                    sourceArity = fromEnabledExtractors.size,
+                    targetArity = parameters.size
+                  )
+                else
+                  ctorParam.value.targetType match {
+                    case Product.Parameter.TargetType.ConstructorParameter =>
+                      // TODO: update this for isLocal
+                      DerivationResult
+                        .missingAccessor[From, To, CtorParam, Existential[TransformationExpr]](
+                          toName,
+                          fromExtractors.exists { case (fromName, _) => areNamesMatching(fromName, toName) }
+                        )
+                    case Product.Parameter.TargetType.SetterParameter =>
+                      // TODO: update this for isLocal
+                      DerivationResult
+                        .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
+                          ProductType.dropSet(toName),
+                          fromExtractors.exists { case (fromName, _) => areNamesMatching(fromName, toName) }
+                        )
+                  }
               }
               .logSuccess(expr => s"Resolved `$toName` field value to ${expr.value.prettyPrint}")
               .map(toName -> _)
