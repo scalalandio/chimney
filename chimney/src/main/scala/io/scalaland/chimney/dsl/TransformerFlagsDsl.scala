@@ -116,7 +116,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     * By default presence of setters (`.setName(value)`) fails compilation unless setters are enabled and matched with
     * a source field or provided valued.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#writing-to-bean-setters]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#ignoring-unmatched-bean-setters]] for more details
     *
     * @since 0.8.3
     */
@@ -125,7 +125,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable not failing compilation on unresolved Java Beans naming convention (`.setName(value)`) in `To`.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#writing-to-bean-setters]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#wignoring-unmatched-bean-setters]] for more details
     *
     * @since 0.8.3
     */
