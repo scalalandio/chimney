@@ -516,13 +516,13 @@ flag:
     // val source = new Source("value", 512)
     // val target = new Target()
     // target.setA(source.a)
-    // target.setA(source.b)
+    // target.setB(source.b)
     // target
     (new Source("value", 512)).intoPartial[Target].enableBeanSetters.transform
     // val source = new Source("value", 512)
     // val target = new Target()
     // target.setA(source.a)
-    // target.setA(source.b)
+    // target.setB(source.b)
     // partial.Result.fromValue(target)
     
     locally {
@@ -533,13 +533,13 @@ flag:
       // val source = new Source("value", 512)
       // val target = new Target()
       // target.setA(source.a)
-      // target.setA(source.b)
+      // target.setB(source.b)
       // target
       (new Source("value", 512)).transformIntoPartial[Target]
       // val source = new Source("value", 512)
       // val target = new Target()
       // target.setA(source.a)
-      // target.setA(source.b)
+      // target.setB(source.b)
       // partial.Result.fromValue(target)
     }
     ```
@@ -587,6 +587,121 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     // 
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
+
+### Ignoring unmatched Bean setters
+
+If the target class has any method that Chimney recognized as a setter, by default it will refuse to generate the code
+unless we explicitly tell it what to do with these setters. If using them is not what we intended, we can also ignore
+them:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    class Target() {
+      private var a = ""
+      def getA: String = a
+      def setA(aa: String): Unit = a = aa
+      private var b = 0
+      def getB(): Int = b
+      def setB(bb : Int): Unit = b = bb
+    }
+    
+    ().into[Target].enableIgnoreUnmatchedBeanSetters.transform // new Target()
+    ().intoPartial[Target].enableIgnoreUnmatchedBeanSetters.transform // partial.Result.fromValue(new Target())
+    
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
+
+      ().transformInto[Target] // new Target()
+      ().transformIntoPartial[Target] // partial.Result.fromValue(new Target())
+    }
+    ```
+
+If the flag was enabled in the implicit config it can be disabled with `.disableIgnoreUnmatchedBeanSetters`.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    class Target() {
+      private var a = ""
+      def getA: String = a
+      def setA(aa: String): Unit = a = aa
+      private var b = 0
+      def getB(): Int = b
+      def setB(bb : Int): Unit = b = bb
+    }
+    
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    implicit val cfg = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
+    
+    ().into[Target].disableIgnoreUnmatchedBeanSetters.transform
+    // Chimney can't derive transformation from Source to Target
+    // 
+    // Target
+    //   setA(a: java.lang.String) - no accessor named a in source type scala.Unit
+    //   setB(b: scala.Int) - no accessor named b in source type scala.Unit
+    // 
+    // Consult https://chimney.readthedocs.io for usage examples.
+    ```
+
+This flag can be combined with [`.enableBeanSetters`](#writing-to-bean-setters), so that:
+
+  - setters will attempt to be matched with fields from source
+  - setters could be overridden manually using `.withField*` methods
+  - those setters which would have no matching fields nor overrides would just be ignored
+
+making this setting sort of a setters' counterpart to a default value in a constructor.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    class Source(val a: String)
+    class Target() {
+      private var a = ""
+      def setA(a_: String): Unit = a = a_
+      private var b = 0
+      def setB(b_: Int): Unit = b = b_
+    }
+    
+    (new Source("value")).into[Target].enableBeanSetters.enableIgnoreUnmatchedBeanSetters.transform
+    // val source = new Source("value", 512)
+    // val target = new Target()
+    // target.setA(source.a)
+    // target
+    (new Source("value")).intoPartial[Target].enableBeanSetters.enableIgnoreUnmatchedBeanSetters.transform
+    // val source = new Source("value", 512)
+    // val target = new Target()
+    // target.setA(source.a)
+    // partial.Result.fromValue(target)
+    
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = TransformerConfiguration.default.enableBeanSetters.enableIgnoreUnmatchedBeanSetters
+      
+      (new Source("value")).transformInto[Target]
+      // val source = new Source("value", 512)
+      // val target = new Target()
+      // target.setA(source.a)
+      // target
+      (new Source("value")).transformIntoPartial[Target]
+      // val source = new Source("value", 512)
+      // val target = new Target()
+      // target.setA(source.a)
+      // partial.Result.fromValue(target)
+    }
+    ```
+
+It is disabled by default for the same reasons as default values - being potentially dangerous.
 
 ### Fallback to `Unit` as the constructor's argument
 
