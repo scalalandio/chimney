@@ -124,6 +124,9 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
       ): Expr[partial.Result[B]] =
         c.Expr[partial.Result[B]](q"$pr.flatMap[${Type[B]}]($f)")
 
+      def flatten[A: Type](pr: Expr[partial.Result[partial.Result[A]]]): Expr[partial.Result[A]] =
+        c.Expr[partial.Result[A]](q"$pr.flatten[${Type[A]}]")
+
       def map[A: Type, B: Type](pr: Expr[partial.Result[A]])(f: Expr[A => B]): Expr[partial.Result[B]] =
         c.Expr[partial.Result[B]](q"$pr.map[${Type[B]}]($f)")
 

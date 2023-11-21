@@ -15,14 +15,55 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     private type PartialExpr[A] = Expr[partial.Result[A]]
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-      (Type[From], Type[To]) match {
-        case (Product.Extraction(fromExtractors), Product.Constructor(parameters, constructor)) =>
+      // From is checked after To, because extraction always succeeds
+      (Type[To], Type[From]) match {
+        case (HasCustomConstructor(constructorOverride), Product.Extraction(fromExtractors)) =>
+          mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, constructorOverride)
+        case (Product.Constructor(parameters, constructor), Product.Extraction(fromExtractors)) =>
           mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, parameters, constructor)
         case _ =>
           DerivationResult.attemptNextRuleBecause(
             s"Type ${Type.prettyPrint[To]} does not have a public primary constructor"
           )
       }
+
+    private object HasCustomConstructor {
+      def unapply[A, From, To](
+          tpe: Type[A]
+      )(implicit ctx: TransformationContext[From, To]): Option[RuntimeConstructorOverride] =
+        ctx.config
+          .filterOverridesForConstructor { someTo =>
+            import someTo.Underlying as SomeTo
+            Type[To] <:< Type[SomeTo]
+          }
+          .collectFirst { case (_, runtimeOverride) => runtimeOverride }
+    }
+
+    private def mapOverridesAndExtractorsToConstructorArguments[From, To](
+        fromExtractors: Product.Getters[From],
+        constructorOverride: RuntimeConstructorOverride
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
+      import Product.Constructor.exprAsInstanceOfMethod as mkCtor
+      constructorOverride match {
+        case RuntimeConstructorOverride.Constructor(idx, args) =>
+          val Product.Constructor(parameters, constructor) = mkCtor[To](args)(ctx.runtimeDataStore(idx))
+          mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, parameters, constructor)
+        case RuntimeConstructorOverride.ConstructorPartial(idx, args) =>
+          val Product.Constructor(params, ctor) = mkCtor[partial.Result[To]](args)(ctx.runtimeDataStore(idx))
+            .asInstanceOf[Product.Constructor[To]] // a hack to avoid weird conversions back and forth, part 1
+          mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, params, ctor).map {
+            case Rule.ExpansionResult.Expanded(transformationExpr) =>
+              val flattenTransformationExpr =
+                // a hack to avoid weird conversions back and forth, part 2
+                (transformationExpr.asInstanceOf[TransformationExpr[partial.Result[To]]]) match {
+                  case TransformationExpr.PartialExpr(expr) => TransformationExpr.PartialExpr(expr.flatten)
+                  case TransformationExpr.TotalExpr(expr)   => TransformationExpr.PartialExpr(expr)
+                }
+              Rule.ExpansionResult.Expanded(flattenTransformationExpr)
+            case Rule.ExpansionResult.AttemptNextRule(reason) => Rule.ExpansionResult.AttemptNextRule(reason)
+          }
+      }
+    }
 
     private def mapOverridesAndExtractorsToConstructorArguments[From, To](
         fromExtractors: Product.Getters[From],

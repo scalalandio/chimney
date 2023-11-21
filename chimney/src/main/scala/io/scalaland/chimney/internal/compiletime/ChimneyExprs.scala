@@ -80,6 +80,8 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
           f: Expr[A => partial.Result[B]]
       ): Expr[partial.Result[B]]
 
+      def flatten[A: Type](pr: Expr[partial.Result[partial.Result[A]]]): Expr[partial.Result[A]]
+
       def map[A: Type, B: Type](pr: Expr[partial.Result[A]])(f: Expr[A => B]): Expr[partial.Result[B]]
 
       def map2[A: Type, B: Type, C: Type](
@@ -159,6 +161,13 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
 
     def prependErrorPath(path: Expr[partial.PathElement]): Expr[partial.Result[A]] =
       ChimneyExpr.PartialResult.prependErrorPath(resultExpr, path)
+  }
+
+  implicit final protected class PartialResultFlattenExprOps[A: Type](
+      private val resultExpr: Expr[partial.Result[partial.Result[A]]]
+  ) {
+
+    def flatten: Expr[partial.Result[A]] = ChimneyExpr.PartialResult.flatten(resultExpr)
   }
 
   implicit final protected class PartialResultValueExprOps[A: Type](

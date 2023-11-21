@@ -74,6 +74,9 @@ trait ProductTypes { this: Definitions =>
     object Constructor {
       def unapply[To](To: Type[To]): Option[(Parameters, Arguments => Expr[To])] =
         ProductType.parseConstructor(To).map(constructor => constructor.parameters -> constructor.constructor)
+
+      def exprAsInstanceOfMethod[To: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Constructor[To] =
+        ProductType.exprAsInstanceOfMethod[To](args)(expr)
     }
   }
 
@@ -91,6 +94,9 @@ trait ProductTypes { this: Definitions =>
       case (getters, constructor) => Product(getters, constructor)
     }
     final def unapply[A](tpe: Type[A]): Option[Product[A]] = parse(tpe)
+
+    def exprAsInstanceOfMethod[A: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Product.Constructor[A] =
+      ??? // TODO: implement in ProductTypesPlatform
 
     // cached in companion (regexps are expensive to initialize)
     def areNamesMatching(fromName: String, toName: String): Boolean = ProductTypes.areNamesMatching(fromName, toName)
