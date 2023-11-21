@@ -10,4 +10,6 @@ object TransformerCfg {
   final class FieldRelabelled[FromField <: Path, ToField <: Path, Cfg <: TransformerCfg] extends TransformerCfg
   final class CoproductInstance[InstType, TargetType, Cfg <: TransformerCfg] extends TransformerCfg
   final class CoproductInstancePartial[InstType, TargetType, Cfg <: TransformerCfg] extends TransformerCfg
+  final class Constructor[Args <: ArgumentLists, TargetType, Cfg <: TransformerCfg] extends TransformerCfg
+  final class ConstructorPartial[Args <: ArgumentLists, TargetType, Cfg <: TransformerCfg] extends TransformerCfg
 }

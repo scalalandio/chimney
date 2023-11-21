@@ -44,6 +44,32 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
       quoted.Type.of[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
+    object ArgumentList extends ArgumentListModule {
+      val Empty: Type[runtime.ArgumentList.Empty] = quoted.Type.of[runtime.ArgumentList.Empty]
+      object Argument extends ArgumentModule {
+        def apply[Name <: String: Type, Tpe: Type, Args <: runtime.ArgumentList: Type]
+            : Type[runtime.ArgumentList.Argument[Name, Tpe, Args]] =
+          quoted.Type.of[runtime.ArgumentList.Argument[Name, Tpe, Args]]
+        def unapply[A](tpe: Type[A]): Option[(?<[String], ??, ?<[runtime.ArgumentList])] = tpe match
+          case '[runtime.ArgumentList.Argument[name, tpe, args]] =>
+            Some((Type[name].as_?<[String], Type[tpe].as_??, Type[args].as_?<[runtime.ArgumentList]))
+          case _ => scala.None
+      }
+    }
+
+    object ArgumentLists extends ArgumentListsModule {
+      val Empty: Type[runtime.ArgumentLists.Empty] = quoted.Type.of[runtime.ArgumentLists.Empty]
+      object List extends ListModule {
+        def apply[Head <: runtime.ArgumentList: Type, Tail <: runtime.ArgumentLists: Type]
+            : Type[runtime.ArgumentLists.List[Head, Tail]] =
+          quoted.Type.of[runtime.ArgumentLists.List[Head, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.ArgumentList], ?<[runtime.ArgumentLists])] = tpe match
+          case '[runtime.ArgumentLists.List[head, tail]] =>
+            Some((Type[head].as_?<[runtime.ArgumentList], Type[tail].as_?<[runtime.ArgumentLists]))
+          case _ => scala.None
+      }
+    }
+
     object TransformerCfg extends TransformerCfgModule {
       val Empty: Type[runtime.TransformerCfg.Empty] = quoted.Type.of[runtime.TransformerCfg.Empty]
       object FieldConst extends FieldConstModule {
