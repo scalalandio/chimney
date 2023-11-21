@@ -4,6 +4,9 @@ import io.scalaland.chimney.dsl.ImplicitTransformerPreference
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.runtime
 
+import scala.collection.compat.*
+import scala.collection.immutable.ListMap
+
 private[compiletime] trait Configurations { this: Derivation =>
 
   final protected case class TransformerFlags(
@@ -89,6 +92,23 @@ private[compiletime] trait Configurations { this: Derivation =>
     final case class CoproductInstancePartial(runtimeDataIdx: Int) extends RuntimeCoproductOverride
   }
 
+  sealed abstract protected class RuntimeConstructorOverride extends scala.Product with Serializable
+  protected object RuntimeConstructorOverride {
+    type Args = List[ListMap[String, ??]]
+
+    final case class Constructor(runtimeDataIdx: Int, args: Args) extends RuntimeConstructorOverride {
+      override def toString: String = s"Constructor($runtimeDataIdx, ${printArgs(args)})"
+    }
+    final case class ConstructorPartial(runtimeDataIdx: Int, args: Args) extends RuntimeConstructorOverride {
+      override def toString: String = s"ConstructorPartial($runtimeDataIdx, ${printArgs(args)})"
+    }
+
+    import ExistentialType.prettyPrint
+    private def printArgs(args: Args): String =
+      if (args.isEmpty) "<no list>"
+      else args.map(list => "(" + list.map { case (n, t) => s"$n: ${prettyPrint(t)}" }.mkString(", ") + ")").mkString
+  }
+
   sealed abstract protected class FieldPathUpdate extends scala.Product with Serializable {
 
     final lazy val update: FieldPath => Option[FieldPath] = this match {
@@ -112,6 +132,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       private val instanceFlagOverridden: Boolean = false,
       private val fieldOverrides: Map[FieldPath, RuntimeFieldOverride] = Map.empty,
       private val coproductOverrides: Map[(??, ??), RuntimeCoproductOverride] = Map.empty,
+      private val constructorOverrides: Map[??, RuntimeConstructorOverride] = Map.empty,
       private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
   ) {
 
@@ -126,6 +147,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         instanceFlagOverridden = false,
         fieldOverrides = newFieldOverrides,
         coproductOverrides = Map.empty,
+        constructorOverrides = Map.empty,
         preventImplicitSummoningForTypes = None
       )
     }
@@ -141,6 +163,9 @@ private[compiletime] trait Configurations { this: Derivation =>
         coproductOverride: RuntimeCoproductOverride
     ): TransformerConfig =
       copy(coproductOverrides = coproductOverrides + ((Type[Instance].as_??, Type[Target].as_??) -> coproductOverride))
+
+    def addConstructor[Target: Type](constructorOverride: RuntimeConstructorOverride): TransformerConfig =
+      copy(constructorOverrides = constructorOverrides + ((Type[Target].as_?? -> constructorOverride)))
 
     def preventImplicitSummoningFor[From: Type, To: Type]: TransformerConfig =
       copy(preventImplicitSummoningForTypes = Some(Type[From].as_?? -> Type[To].as_??))
@@ -158,6 +183,9 @@ private[compiletime] trait Configurations { this: Derivation =>
       fieldOverrides.isEmpty && filterOverridesForCoproduct { (someFrom, someTo) =>
         import someFrom.Underlying as SomeFrom, someTo.Underlying as SomeTo
         Type[SomeFrom] <:< Type[From] && Type[To] <:< Type[SomeTo]
+      }.isEmpty && filterOverridesForConstructor { someTo =>
+        import someTo.Underlying as SomeTo
+        Type[To] <:< Type[SomeTo]
       }.isEmpty
 
     def areOverridesEmptyForCurrent[From: Type, To: Type]: Boolean =
@@ -171,6 +199,9 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     def filterOverridesForCoproduct(typeFilter: (??, ??) => Boolean): Map[(??, ??), RuntimeCoproductOverride] =
       coproductOverrides.view.filter(p => typeFilter.tupled(p._1)).toMap
+
+    def filterOverridesForConstructor(typeFilter: ?? => Boolean): Map[??, RuntimeConstructorOverride] =
+      constructorOverrides.view.filter(p => typeFilter(p._1)).toMap
 
     override def toString: String = {
       val fieldOverridesString = fieldOverrides.map { case (k, v) => s"${FieldPath.print(k)} -> $v" }.mkString(", ")
@@ -202,6 +233,22 @@ private[compiletime] trait Configurations { this: Derivation =>
       val cfg = extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
       if (Type[InstanceFlags] =:= ChimneyType.TransformerFlags.Default) cfg else cfg.setLocalFlagsOverriden
     }
+
+    private def extractArgumentList[Args <: runtime.ArgumentList: Type]: List[(String, ??)] =
+      Type[Args] match {
+        case empty if empty =:= ChimneyType.ArgumentList.Empty => List.empty
+        case ChimneyType.ArgumentList.Argument(name, tpe, args) =>
+          import name.Underlying as Name, args.Underlying as Args2
+          (Type[Name].extractStringSingleton, tpe) :: extractArgumentList[Args2]
+      }
+
+    private def extractArgumentLists[Args <: runtime.ArgumentLists: Type]: List[ListMap[String, ??]] =
+      Type[Args] match {
+        case empty if empty =:= ChimneyType.ArgumentLists.Empty => List.empty
+        case ChimneyType.ArgumentLists.List(head, tail) =>
+          import head.Underlying as Head, tail.Underlying as Tail
+          ListMap.from(extractArgumentList[Head]) :: extractArgumentLists[Tail]
+      }
 
     private def extractTransformerFlags[Flags <: runtime.TransformerFlags: Type](
         defaultFlags: TransformerFlags
@@ -291,6 +338,18 @@ private[compiletime] trait Configurations { this: Derivation =>
         extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
           .addCoproductInstance[Instance, Target](
             RuntimeCoproductOverride.CoproductInstancePartial(runtimeDataIdx)
+          )
+      case ChimneyType.TransformerCfg.Constructor(args, target, cfg) =>
+        import args.Underlying as Args, target.Underlying as Target, cfg.Underlying as Cfg2
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
+          .addConstructor[Target](
+            RuntimeConstructorOverride.Constructor(runtimeDataIdx, extractArgumentLists[Args])
+          )
+      case ChimneyType.TransformerCfg.ConstructorPartial(args, target, cfg) =>
+        import args.Underlying as Args, target.Underlying as Target, cfg.Underlying as Cfg2
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
+          .addConstructor[Target](
+            RuntimeConstructorOverride.ConstructorPartial(runtimeDataIdx, extractArgumentLists[Args])
           )
       case _ =>
         // $COVERAGE-OFF$
