@@ -83,6 +83,12 @@ sealed trait Result[+A] {
     case _: Result.Errors    => this.asInstanceOf[Result[B]]
   }
 
+  // TODO: docs
+  final def flatten[B](implicit ev: A <:< Result[B]): Result[B] = this match {
+    case Result.Value(value) => ev(value)
+    case _: Result.Errors    => this.asInstanceOf[Result[B]]
+  }
+
   /** Prepends a path element to all errors represented by this result.
     *
     * @param pathElement path element to be prepended
