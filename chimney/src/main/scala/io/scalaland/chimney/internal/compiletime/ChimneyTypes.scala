@@ -126,9 +126,23 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerCfg.CoproductInstancePartial
           ] { this: CoproductInstancePartial.type => }
 
-      // TODO: Constructor
+      val Constructor: ConstructorModule
+      trait ConstructorModule
+          extends Type.Ctor3UpperBounded[
+            runtime.ArgumentLists,
+            Any,
+            runtime.TransformerCfg,
+            runtime.TransformerCfg.Constructor
+          ] { this: Constructor.type => }
 
-      // TODO: ConstructorPartial
+      val ConstructorPartial: ConstructorPartialModule
+      trait ConstructorPartialModule
+          extends Type.Ctor3UpperBounded[
+            runtime.ArgumentLists,
+            Any,
+            runtime.TransformerCfg,
+            runtime.TransformerCfg.ConstructorPartial
+          ] { this: ConstructorPartial.type => }
     }
 
     val TransformerFlags: TransformerFlagsModule

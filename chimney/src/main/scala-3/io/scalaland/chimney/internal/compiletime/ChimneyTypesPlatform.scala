@@ -142,6 +142,28 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             Some((Type[instType].as_??, Type[targetType].as_??, Type[c].as_?<[runtime.TransformerCfg]))
           case _ => scala.None
       }
+      object Constructor extends ConstructorModule {
+        def apply[Args <: runtime.ArgumentLists: Type, TargetType: Type, Cfg <: runtime.TransformerCfg: Type]
+            : Type[runtime.TransformerCfg.Constructor[Args, TargetType, Cfg]] =
+          quoted.Type.of[runtime.TransformerCfg.Constructor[Args, TargetType, Cfg]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.ArgumentLists], ??, ?<[runtime.TransformerCfg])] = tpe match
+          case '[runtime.TransformerCfg.Constructor[args, targetType, c]] =>
+            Some(
+              (Type[args].as_?<[runtime.ArgumentLists], Type[targetType].as_??, Type[c].as_?<[runtime.TransformerCfg])
+            )
+          case _ => scala.None
+      }
+      object ConstructorPartial extends ConstructorPartialModule {
+        def apply[Args <: runtime.ArgumentLists: Type, TargetType: Type, Cfg <: runtime.TransformerCfg: Type]
+            : Type[runtime.TransformerCfg.ConstructorPartial[Args, TargetType, Cfg]] =
+          quoted.Type.of[runtime.TransformerCfg.ConstructorPartial[Args, TargetType, Cfg]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.ArgumentLists], ??, ?<[runtime.TransformerCfg])] = tpe match
+          case '[runtime.TransformerCfg.ConstructorPartial[args, targetType, c]] =>
+            Some(
+              (Type[args].as_?<[runtime.ArgumentLists], Type[targetType].as_??, Type[c].as_?<[runtime.TransformerCfg])
+            )
+          case _ => scala.None
+      }
     }
 
     object TransformerFlags extends TransformerFlagsModule {

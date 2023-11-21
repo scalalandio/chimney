@@ -158,6 +158,24 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             Some((fixJavaEnums(A.param(0)), A.param(1), A.param_<[runtime.TransformerCfg](2)))
           else scala.None
       }
+      object Constructor extends ConstructorModule {
+        def apply[Args <: runtime.ArgumentLists: Type, TargetType: Type, Cfg <: runtime.TransformerCfg: Type]
+            : Type[runtime.TransformerCfg.Constructor[Args, TargetType, Cfg]] =
+          weakTypeTag[runtime.TransformerCfg.Constructor[Args, TargetType, Cfg]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.ArgumentLists], ??, ?<[runtime.TransformerCfg])] =
+          if (A.isCtor[runtime.TransformerCfg.Constructor[?, ?, ?]])
+            Some((A.param_<[runtime.ArgumentLists](0), A.param(1), A.param_<[runtime.TransformerCfg](2)))
+          else scala.None
+      }
+      object ConstructorPartial extends ConstructorPartialModule {
+        def apply[Args <: runtime.ArgumentLists: Type, TargetType: Type, Cfg <: runtime.TransformerCfg: Type]
+            : Type[runtime.TransformerCfg.ConstructorPartial[Args, TargetType, Cfg]] =
+          weakTypeTag[runtime.TransformerCfg.ConstructorPartial[Args, TargetType, Cfg]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.ArgumentLists], ??, ?<[runtime.TransformerCfg])] =
+          if (A.isCtor[runtime.TransformerCfg.ConstructorPartial[?, ?, ?]])
+            Some((A.param_<[runtime.ArgumentLists](0), A.param(1), A.param_<[runtime.TransformerCfg](2)))
+          else scala.None
+      }
     }
 
     object TransformerFlags extends TransformerFlagsModule {
