@@ -67,6 +67,32 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
       weakTypeTag[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
+    object ArgumentList extends ArgumentListModule {
+      val Empty: Type[runtime.ArgumentList.Empty] = weakTypeTag[runtime.ArgumentList.Empty]
+      object Argument extends ArgumentModule {
+        def apply[Name <: String: Type, Tpe: Type, Args <: runtime.ArgumentList: Type]
+            : Type[runtime.ArgumentList.Argument[Name, Tpe, Args]] =
+          weakTypeTag[runtime.ArgumentList.Argument[Name, Tpe, Args]]
+        def unapply[A](A: Type[A]): Option[(?<[String], ??, ?<[runtime.ArgumentList])] =
+          if (A.isCtor[runtime.ArgumentList.Argument[?, ?, ?]])
+            Some((A.param_<[String](0), A.param(1), A.param_<[runtime.ArgumentList](2)))
+          else scala.None
+      }
+    }
+
+    object ArgumentLists extends ArgumentListsModule {
+      val Empty: Type[runtime.ArgumentLists.Empty] = weakTypeTag[runtime.ArgumentLists.Empty]
+      object List extends ListModule {
+        def apply[Head <: runtime.ArgumentList: Type, Tail <: runtime.ArgumentLists: Type]
+            : Type[runtime.ArgumentLists.List[Head, Tail]] =
+          weakTypeTag[runtime.ArgumentLists.List[Head, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.ArgumentList], ?<[runtime.ArgumentLists])] =
+          if (A.isCtor[runtime.ArgumentLists.List[?, ?]])
+            Some((A.param_<[runtime.ArgumentList](0), A.param_<[runtime.ArgumentLists](1)))
+          else scala.None
+      }
+    }
+
     object TransformerCfg extends TransformerCfgModule {
       val Empty: Type[runtime.TransformerCfg.Empty] = weakTypeTag[runtime.TransformerCfg.Empty]
       object FieldConst extends FieldConstModule {

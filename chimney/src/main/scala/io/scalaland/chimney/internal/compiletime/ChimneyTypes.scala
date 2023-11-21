@@ -36,8 +36,35 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
 
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
+    val ArgumentList: ArgumentListModule
+    trait ArgumentListModule { this: ArgumentList.type =>
+      val Empty: Type[runtime.ArgumentList.Empty]
+
+      val Argument: ArgumentModule
+      trait ArgumentModule
+          extends Type.Ctor3UpperBounded[
+            String,
+            Any,
+            runtime.ArgumentList,
+            runtime.ArgumentList.Argument
+          ] { this: Argument.type => }
+    }
+
+    val ArgumentLists: ArgumentListsModule
+    trait ArgumentListsModule { this: ArgumentLists.type =>
+      val Empty: Type[runtime.ArgumentLists.Empty]
+
+      val List: ListModule
+      trait ListModule
+          extends Type.Ctor2UpperBounded[
+            runtime.ArgumentList,
+            runtime.ArgumentLists,
+            runtime.ArgumentLists.List
+          ] { this: List.type => }
+    }
+
     val TransformerCfg: TransformerCfgModule
-    trait TransformerCfgModule {
+    trait TransformerCfgModule { this: TransformerCfg.type =>
       val Empty: Type[runtime.TransformerCfg.Empty]
 
       val FieldConst: FieldConstModule
@@ -98,6 +125,10 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerCfg,
             runtime.TransformerCfg.CoproductInstancePartial
           ] { this: CoproductInstancePartial.type => }
+
+      // TODO: Constructor
+
+      // TODO: ConstructorPartial
     }
 
     val TransformerFlags: TransformerFlagsModule
@@ -140,12 +171,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     }
 
     val PatcherCfg: PatcherCfgModule
-    trait PatcherCfgModule {
+    trait PatcherCfgModule { this: PatcherCfg.type =>
       val Empty: Type[runtime.PatcherCfg.Empty]
     }
 
     val PatcherFlags: PatcherFlagsModule
-    trait PatcherFlagsModule {
+    trait PatcherFlagsModule { this: PatcherFlags.type =>
       val Default: Type[runtime.PatcherFlags.Default]
 
       val Enable: EnableModule
