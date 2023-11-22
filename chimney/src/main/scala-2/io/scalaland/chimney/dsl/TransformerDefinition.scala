@@ -111,6 +111,14 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
   def withCoproductInstance[Inst](f: Inst => To): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     macro TransformerDefinitionMacros.withCoproductInstanceImpl[From, To, Cfg, Flags, Inst]
 
+  // TODO: implement me
+  import io.scalaland.chimney.internal.runtime.ArgumentLists
+  def withConstructor[In](
+      f: In => To
+  ): TransformerDefinition[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
+    addOverride(f)
+      .asInstanceOf[TransformerDefinition[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags]]
+
   /** Build Transformer using current configuration.
     *
     * It runs macro that tries to derive instance of `Transformer[From, To]`.

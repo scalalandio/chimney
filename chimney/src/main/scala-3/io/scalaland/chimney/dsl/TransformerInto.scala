@@ -104,6 +104,14 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
   ): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
     ${ TransformerIntoMacros.withCoproductInstanceImpl('this, 'f) }
 
+  // TODO: implement me
+  import io.scalaland.chimney.internal.runtime.ArgumentLists
+  def withConstructor[In](
+      f: In => To
+  ): TransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
+    addOverride(f)
+      .asInstanceOf[TransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags]]
+
   /** Apply configured transformation in-place.
     *
     * It runs macro that tries to derive instance of `Transformer[From, To]`

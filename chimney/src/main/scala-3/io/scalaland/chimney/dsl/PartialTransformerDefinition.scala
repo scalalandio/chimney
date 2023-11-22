@@ -156,6 +156,29 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     ${ PartialTransformerDefinitionMacros.withCoproductInstancePartial('this, 'f) }
 
+  // TODO: implement me
+  import io.scalaland.chimney.internal.runtime.ArgumentLists
+  def withConstructor[In](
+      f: In => To
+  ): PartialTransformerDefinition[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
+    addOverride(f).asInstanceOf[PartialTransformerDefinition[
+      From,
+      To,
+      TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg],
+      Flags
+    ]]
+
+  // TODO: implement me
+  def withConstructorPartial[In](
+      f: In => partial.Result[To]
+  ): PartialTransformerDefinition[From, To, TransformerCfg.ConstructorPartial[ArgumentLists.Empty, To, Cfg], Flags] =
+    addOverride(f).asInstanceOf[PartialTransformerDefinition[
+      From,
+      To,
+      TransformerCfg.ConstructorPartial[ArgumentLists.Empty, To, Cfg],
+      Flags
+    ]]
+
   /** Build Partial Transformer using current configuration.
     *
     * It runs macro that tries to derive instance of `PartialTransformer[From, To]`.

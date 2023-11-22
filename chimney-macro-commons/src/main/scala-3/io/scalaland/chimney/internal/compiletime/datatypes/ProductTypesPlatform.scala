@@ -242,6 +242,21 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         Some(Product.Constructor(parameters, constructor))
       } else None
 
+    def exprAsInstanceOfMethod[A: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Product.Constructor[A] =
+      Product.Constructor[A](
+        ListMap.from(for {
+          list <- args
+          pair <- list.toList
+          (paramName, paramType) = pair
+        } yield {
+          import paramType.Underlying as ParamType
+          paramName -> Existential[Product.Parameter, ParamType](
+            Product.Parameter(Product.Parameter.TargetType.ConstructorParameter, None)
+          )
+        }),
+        _ => Expr.Nothing.asInstanceOfExpr[A] // TODO
+      )
+
     private val isGarbageSymbol = ((s: Symbol) => s.name) andThen isGarbage
   }
 }
