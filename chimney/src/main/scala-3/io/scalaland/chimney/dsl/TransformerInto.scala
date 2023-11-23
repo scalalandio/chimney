@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.TransformerIntoMacros
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
 
 /** Provides DSL for configuring [[io.scalaland.chimney.Transformer]]'s
   * generation and using the result to transform value at the same time
@@ -106,8 +106,8 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
 
   // TODO: implement me
   import io.scalaland.chimney.internal.runtime.ArgumentLists
-  def withConstructor[In](
-      f: In => To
+  def withConstructor[Fn](f: Fn)(implicit
+      ev: IsFunction.Aux[Fn, To]
   ): TransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
     addOverride(f)
       .asInstanceOf[TransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags]]
