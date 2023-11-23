@@ -216,20 +216,30 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       } else None
     }
 
-    def exprAsInstanceOfMethod[A: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Product.Constructor[A] =
-      Product.Constructor[A](
-        ListMap.from(for {
-          list <- args
-          pair <- list.toList
-          (paramName, paramType) = pair
-        } yield {
-          import paramType.Underlying as ParamType
-          paramName -> Existential[Product.Parameter, ParamType](
-            Product.Parameter(Product.Parameter.TargetType.ConstructorParameter, None)
-          )
-        }),
-        _ => Expr.Nothing.asInstanceOfExpr[A] // TODO
-      )
+    def exprAsInstanceOfMethod[A: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Product.Constructor[A] = {
+      val parameters: Product.Parameters = ListMap.from(for {
+        list <- args
+        pair <- list.toList
+        (paramName, paramType) = pair
+      } yield {
+        import paramType.Underlying as ParamType
+        paramName -> Existential[Product.Parameter, ParamType](
+          Product.Parameter(Product.Parameter.TargetType.ConstructorParameter, None)
+        )
+      })
+
+      val constructor: Product.Arguments => Expr[A] = arguments => {
+        val (constructorArguments, _) = checkArguments[A](parameters, arguments)
+        val methodType: ?? = null.asInstanceOf[??] // TODO: figure out the type
+        import methodType.Underlying as MethodType
+        val tree = expr.asInstanceOfExpr[MethodType].tree
+        c.Expr[A](q"$tree(...${(args.map(_.map { case (paramName, _) =>
+            constructorArguments(paramName).value.tree
+          }))})")
+      }
+
+      Product.Constructor[A](parameters, constructor)
+    }
 
     private val getDecodedName = (s: Symbol) => s.name.decodedName.toString
 
