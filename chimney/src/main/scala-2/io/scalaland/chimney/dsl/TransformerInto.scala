@@ -111,7 +111,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
   def withConstructor[Fn](
       f: Fn
   )(implicit
-      ev: IsFunction.Aux[Fn, To]
+      ev: IsFunction.Of[Fn, To]
   ): TransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
     addOverride(f)
       .asInstanceOf[TransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags]]
