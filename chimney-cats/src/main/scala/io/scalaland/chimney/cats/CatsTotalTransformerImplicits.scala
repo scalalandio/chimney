@@ -7,7 +7,7 @@ import io.scalaland.chimney.Transformer
 trait CatsTotalTransformerImplicits {
 
   // TODO: @since
-  implicit val arrowTransformer: Arrow[Transformer] = new Arrow[Transformer] {
+  implicit final val arrowTransformer: Arrow[Transformer] = new Arrow[Transformer] {
     override def lift[A, B](f: A => B): Transformer[A, B] = f(_)
 
     override def first[A, B, C](fa: Transformer[A, B]): Transformer[(A, C), (B, C)] =
@@ -18,7 +18,7 @@ trait CatsTotalTransformerImplicits {
   }
 
   // TODO: @since
-  implicit def monadTransformer[Source]: Monad[Transformer[Source, *]] =
+  implicit final def monadTransformer[Source]: Monad[Transformer[Source, *]] =
     new Monad[Transformer[Source, *]] {
       override def pure[A](x: A): Transformer[Source, A] = _ => x
 
@@ -39,7 +39,7 @@ trait CatsTotalTransformerImplicits {
     }
 
   // TODO: @since
-  implicit def contravariantTransformer[Target]: Contravariant[Transformer[*, Target]] =
+  implicit final def contravariantTransformer[Target]: Contravariant[Transformer[*, Target]] =
     new Contravariant[Transformer[*, Target]] {
       def contramap[A, B](fa: Transformer[A, Target])(f: B => A): Transformer[B, Target] =
         b => fa.transform(f(b))

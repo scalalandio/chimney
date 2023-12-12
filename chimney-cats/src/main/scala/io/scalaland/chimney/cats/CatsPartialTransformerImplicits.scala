@@ -1,9 +1,9 @@
 package io.scalaland.chimney.cats
 
-import _root_.cats.{~>, Applicative, CoflatMap, Contravariant, Eval, Monad, MonadError, Parallel, Traverse}
+import _root_.cats.{~>, Applicative, CoflatMap, Contravariant, Eval, Monad, MonadError, Parallel, Semigroupal, Traverse}
 import _root_.cats.arrow.{Arrow, FunctionK}
 import _root_.cats.data.{Chain, NonEmptyChain, NonEmptyList, Validated, ValidatedNec, ValidatedNel}
-import _root_.cats.kernel.Semigroup
+import _root_.cats.kernel.{Eq, Semigroup}
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.PartialTransformer
 
@@ -13,7 +13,7 @@ import language.implicitConversions
 trait CatsPartialTransformerImplicits extends CatsPartialTransformerLowPriorityImplicits1 {
 
   // TODO: @since
-  implicit val arrowPartialTransformer: Arrow[PartialTransformer] = new Arrow[PartialTransformer] {
+  implicit final val arrowPartialTransformer: Arrow[PartialTransformer] = new Arrow[PartialTransformer] {
     override def lift[A, B](f: A => B): PartialTransformer[A, B] = PartialTransformer.fromFunction(f)
 
     override def first[A, B, C](fa: PartialTransformer[A, B]): PartialTransformer[(A, C), (B, C)] =
@@ -24,7 +24,7 @@ trait CatsPartialTransformerImplicits extends CatsPartialTransformerLowPriorityI
   }
 
   // TODO: @since
-  implicit def monadPartialTransformer[Source]: Monad[PartialTransformer[Source, *]] =
+  implicit final def monadPartialTransformer[Source]: Monad[PartialTransformer[Source, *]] =
     new Monad[PartialTransformer[Source, *]] {
       override def pure[A](x: A): PartialTransformer[Source, A] = (_, _) => partial.Result.Value(x)
 
@@ -49,7 +49,7 @@ trait CatsPartialTransformerImplicits extends CatsPartialTransformerLowPriorityI
     }
 
   // TODO: @since
-  implicit def parallelPartialTransformer[Source]: Parallel[PartialTransformer[Source, *]] =
+  implicit final def parallelPartialTransformer[Source]: Parallel[PartialTransformer[Source, *]] =
     new Parallel[PartialTransformer[Source, *]] {
       override type F[A] = PartialTransformer[Source, A]
 
@@ -75,15 +75,63 @@ trait CatsPartialTransformerImplicits extends CatsPartialTransformerLowPriorityI
     }
 
   // TODO: @since
-  implicit def contravariantPartialTransformer[Target]: Contravariant[PartialTransformer[*, Target]] =
+  implicit final def contravariantPartialTransformer[Target]: Contravariant[PartialTransformer[*, Target]] =
     new Contravariant[PartialTransformer[*, Target]] {
       def contramap[A, B](fa: PartialTransformer[A, Target])(f: B => A): PartialTransformer[B, Target] =
         (b, failFast) => partial.Result.fromCatching(f(b)).flatMap(a => fa.transform(a, failFast))
     }
 
+  // TODO: move partial.Result to separate traitge)
+
+  // TODO: @since
+  implicit final val parallelPartialResult: Parallel[partial.Result] & Semigroupal[partial.Result] =
+    new Parallel[partial.Result] with Semigroupal[partial.Result] {
+      override type F[A] = partial.Result[A]
+
+      override val sequential: partial.Result ~> partial.Result = FunctionK.id
+      override val parallel: partial.Result ~> partial.Result = FunctionK.id
+
+      override val applicative: Applicative[partial.Result] = new Applicative[partial.Result] {
+        override def pure[A](x: A): partial.Result[A] = partial.Result.Value(x)
+
+        override def ap[A, B](ff: partial.Result[A => B])(fa: partial.Result[A]): partial.Result[B] =
+          partial.Result.map2[A => B, A, B](ff, fa, (f, a) => f(a), failFast = false)
+      }
+
+      override val monad: Monad[partial.Result] = applicativePartialResult
+
+      override def product[A, B](
+          fa: partial.Result[A],
+          fb: partial.Result[B]
+      ): partial.Result[(A, B)] = partial.Result.product(fa, fb, failFast = false)
+    }
+
   /** @since 0.7.0 */
   implicit final val semigroupPartialResultErrors: Semigroup[partial.Result.Errors] =
     Semigroup.instance(partial.Result.Errors.merge)
+
+  // TODO: @since
+  implicit final def eqPartialResult[A: Eq]: Eq[partial.Result[A]] = {
+    case (partial.Result.Value(a1), partial.Result.Value(a2)) => Eq[A].eqv(a1, a2)
+    case (e1: partial.Result.Errors, e2: partial.Result.Errors) =>
+      e1.asErrorPathMessages.iterator.sameElements(e2.asErrorPathMessages.iterator)
+    case _ => false
+  }
+
+  /** @since 0.7.0 */
+  implicit final def catsPartialTransformerResultOps[A](
+      ptr: partial.Result[A]
+  ): CatsPartialTransformerResultOps[A] =
+    new CatsPartialTransformerResultOps(ptr)
+
+  /** @since 0.7.0 */
+  implicit final def catsValidatedPartialTransformerOps[E <: partial.Result.Errors, A](
+      validated: Validated[E, A]
+  ): CatsValidatedPartialTransformerOps[E, A] =
+    new CatsValidatedPartialTransformerOps(validated)
+}
+
+private[cats] trait CatsPartialTransformerLowPriorityImplicits1 {
 
   // TODO: rename in 1.0.0
   /** @since 0.7.0 */
@@ -114,7 +162,11 @@ trait CatsPartialTransformerImplicits extends CatsPartialTransformerLowPriorityI
       override def coflatMap[A, B](fa: partial.Result[A])(f: partial.Result[A] => B): partial.Result[B] =
         partial.Result.fromCatching(f(fa))
 
-      override def traverse[G[_]: Applicative, A, B](fa: partial.Result[A])(f: A => G[B]): G[partial.Result[B]] = ???
+      override def traverse[G[_]: Applicative, A, B](fa: partial.Result[A])(f: A => G[B]): G[partial.Result[B]] =
+        fa match {
+          case partial.Result.Value(value) => Applicative[G].map(f(value))(pure)
+          case errors                      => Applicative[G].pure(errors.asInstanceOf[partial.Result[B]])
+        }
 
       override def foldLeft[A, B](fa: partial.Result[A], b: B)(f: (B, A) => B): B = fa match {
         case partial.Result.Value(value) => f(b, value)
@@ -126,38 +178,6 @@ trait CatsPartialTransformerImplicits extends CatsPartialTransformerLowPriorityI
         case _                           => lb
       }
     }
-
-  // TODO: @since
-  implicit val parallelPartialResult: Parallel[partial.Result] = new Parallel[partial.Result] {
-    override type F[A] = partial.Result[A]
-
-    override val sequential: partial.Result ~> partial.Result = FunctionK.id
-    override val parallel: partial.Result ~> partial.Result = FunctionK.id
-
-    override val applicative: Applicative[partial.Result] = new Applicative[partial.Result] {
-      override def pure[A](x: A): partial.Result[A] = partial.Result.Value(x)
-
-      override def ap[A, B](ff: partial.Result[A => B])(fa: partial.Result[A]): partial.Result[B] =
-        partial.Result.map2[A => B, A, B](ff, fa, (f, a) => f(a), failFast = true)
-    }
-
-    override val monad: Monad[partial.Result] = applicativePartialResult
-  }
-
-  /** @since 0.7.0 */
-  implicit final def catsPartialTransformerResultOps[A](
-      ptr: partial.Result[A]
-  ): CatsPartialTransformerResultOps[A] =
-    new CatsPartialTransformerResultOps(ptr)
-
-  /** @since 0.7.0 */
-  implicit final def catsValidatedPartialTransformerOps[E <: partial.Result.Errors, A](
-      validated: Validated[E, A]
-  ): CatsValidatedPartialTransformerOps[E, A] =
-    new CatsValidatedPartialTransformerOps(validated)
-}
-
-private[cats] trait CatsPartialTransformerLowPriorityImplicits1 {
 
   /** @since 0.7.0 */
   implicit final def catsValidatedNelErrorPartialTransformerOps[E <: partial.Error, A](
