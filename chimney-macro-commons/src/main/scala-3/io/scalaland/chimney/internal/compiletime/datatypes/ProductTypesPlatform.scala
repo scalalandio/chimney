@@ -243,6 +243,10 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       } else None
 
     def exprAsInstanceOfMethod[A: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Product.Constructor[A] = {
+
+      println("\n\n\n\nWTF\n\n\n")
+      println(s"Arguments: $args")
+
       val parameters: Product.Parameters = ListMap.from(for {
         list <- args
         pair <- list.toList
@@ -255,24 +259,83 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       })
 
       val constructor: Product.Arguments => Expr[A] = arguments => {
+
+        println("\n\n\n\nWTF\n\n\n")
+        println(s"Arguments: $args")
+        println(s"Arguments: $arguments")
+
         val (constructorArguments, _) = checkArguments[A](parameters, arguments)
-        val methodType: ?? = null.asInstanceOf[??] // TODO: figure out the type
+
+        val methodType: ?? = args.foldRight[??](Type[A].as_??) { (paramList, resultType) =>
+          val fnType = fnTypeByArity.getOrElse(
+            paramList.size,
+            assertionFailed(s"Expected arity between 1 and 22 into ${Type.prettyPrint[A]}, got: ${paramList.size}")
+          )
+          val paramTypes = paramList.view.values.map(p => TypeRepr.of(using p.Underlying)).toVector
+
+          println(
+            s"Constructing: ${fnType.show(using Printer.TypeReprAnsiCode)} -> ${paramTypes
+                .map(_.show(using Printer.TypeReprAnsiCode))} + ${TypeRepr.of(using resultType.Underlying).show(using Printer.TypeReprAnsiCode)}"
+          )
+
+          fromUntyped(
+            fnType.appliedTo((paramTypes :+ TypeRepr.of(using resultType.Underlying)).toList).dealias.simplified
+          ).as_??
+          // fromUntyped(AppliedType(fnType, (paramTypes :+ TypeRepr.of(using resultType.Underlying)).toList)).as_??
+        }
+
         import methodType.Underlying as MethodType
-        val tree = expr
-          .asInstanceOfExpr[MethodType]
-          .asTerm
-        tree
-          .appliedToArgss(
-            args
-              .map(_.map { case (paramName, _) =>
+        println(s"Constructed: ${Type.prettyPrint[MethodType]}")
+        println(s"Expr: ${Expr.prettyPrint(expr.asInstanceOfExpr[MethodType])}")
+        val tree = expr.asInstanceOfExpr[MethodType].asTerm
+        val a = args
+          .foldLeft(tree) { (result, list) =>
+            val method: Symbol = result.tpe.typeSymbol.methodMember("apply").head
+            result
+              .select(method)
+              .appliedToArgs(list.map { (paramName, _) =>
                 constructorArguments(paramName).value.asTerm
               }.toList)
-          )
+          }
           .asExprOf[A]
+
+        println(s"Final result: ${Expr.prettyPrint(a)}")
+
+        a
+//        tree
+//          .appliedToArgss(args.map(_.map { case (paramName, _) =>
+//            constructorArguments(paramName).value.asTerm
+//          }.toList))
+//          .asExprOf[A]
       }
 
       Product.Constructor[A](parameters, constructor)
     }
+
+    private lazy val fnTypeByArity = Map(
+      1 -> TypeRepr.of[scala.Function1],
+      2 -> TypeRepr.of[scala.Function2],
+      3 -> TypeRepr.of[scala.Function3],
+      4 -> TypeRepr.of[scala.Function4],
+      5 -> TypeRepr.of[scala.Function5],
+      6 -> TypeRepr.of[scala.Function6],
+      7 -> TypeRepr.of[scala.Function7],
+      8 -> TypeRepr.of[scala.Function8],
+      9 -> TypeRepr.of[scala.Function9],
+      10 -> TypeRepr.of[scala.Function10],
+      11 -> TypeRepr.of[scala.Function11],
+      12 -> TypeRepr.of[scala.Function12],
+      13 -> TypeRepr.of[scala.Function13],
+      14 -> TypeRepr.of[scala.Function14],
+      15 -> TypeRepr.of[scala.Function15],
+      16 -> TypeRepr.of[scala.Function16],
+      17 -> TypeRepr.of[scala.Function17],
+      18 -> TypeRepr.of[scala.Function18],
+      19 -> TypeRepr.of[scala.Function19],
+      20 -> TypeRepr.of[scala.Function20],
+      21 -> TypeRepr.of[scala.Function21],
+      22 -> TypeRepr.of[scala.Function22]
+    )
 
     private val isGarbageSymbol = ((s: Symbol) => s.name) andThen isGarbage
   }
