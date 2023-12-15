@@ -66,6 +66,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       case Inlined(_, _, block) => parse(block)
       case _                    => Left(invalidSelectorErrorMessage(t))
     }
+    List(1 -> 2).fol
 
     private def invalidSelectorErrorMessage(t: Tree): String =
       s"Invalid selector expression: ${t.show(using Printer.TreeAnsiCode)}"
