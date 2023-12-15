@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.{partial, PartialTransformer}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerDefinitionMacros
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
 
 import scala.language.experimental.macros
 
@@ -161,28 +161,19 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     macro PartialTransformerDefinitionMacros.withCoproductInstancePartialImpl[From, To, Cfg, Flags, Inst]
 
-  // TODO: implement me
-  import io.scalaland.chimney.internal.runtime.ArgumentLists
-  def withConstructor[In](
-      f: In => To
-  ): PartialTransformerDefinition[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
-    addOverride(f).asInstanceOf[PartialTransformerDefinition[
-      From,
-      To,
-      TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg],
-      Flags
-    ]]
+  // TODO: docs
+  def withConstructor[Ctor](
+      f: Ctor
+  )(implicit ev: IsFunction.Of[Ctor, To]): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+    macro PartialTransformerDefinitionMacros.withConstructorImpl[From, To, Cfg, Flags]
 
-  // TODO: implement me
-  def withConstructorPartial[In](
-      f: In => partial.Result[To]
-  ): PartialTransformerDefinition[From, To, TransformerCfg.ConstructorPartial[ArgumentLists.Empty, To, Cfg], Flags] =
-    addOverride(f).asInstanceOf[PartialTransformerDefinition[
-      From,
-      To,
-      TransformerCfg.ConstructorPartial[ArgumentLists.Empty, To, Cfg],
-      Flags
-    ]]
+  // TODO: docs
+  def withConstructorPartial[Ctor](
+      f: Ctor
+  )(implicit
+      ev: IsFunction.Of[Ctor, partial.Result[To]]
+  ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+    macro PartialTransformerDefinitionMacros.withConstructorPartialImpl[From, To, Cfg, Flags]
 
   /** Build Partial Transformer using current configuration.
     *

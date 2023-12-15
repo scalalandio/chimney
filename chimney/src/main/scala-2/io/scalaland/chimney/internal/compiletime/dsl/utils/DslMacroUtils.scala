@@ -121,7 +121,7 @@ private[chimney] trait DslMacroUtils {
 
     def apply[FixedInstance: WeakTypeTag]: Tree
 
-    def applyJavaEnumFixFromClosureSignature[Inst: WeakTypeTag](f: Tree): Tree =
+    final def applyJavaEnumFixFromClosureSignature[Inst: WeakTypeTag](f: Tree): Tree =
       if (weakTypeOf[Inst].typeSymbol.isJavaEnum) {
         val Inst = weakTypeOf[Inst]
         val Function(List(ValDef(_, _, lhs: TypeTree, _)), _) = f
@@ -151,6 +151,29 @@ private[chimney] trait DslMacroUtils {
       }
 
       ApplyInstanceName(c.WeakTypeTag(c.internal.constantType(Constant(t.name.decodedName.toString))))
+    }
+  }
+
+  protected trait ApplyConstructorType {
+
+    def apply[Ctor <: runtime.ArgumentLists: WeakTypeTag]: Tree
+
+    final def applyFromBody(f: Tree): Tree = f match {
+      case Function(params, _) =>
+        println(s"""Expression:
+                 |${show(f)}
+                 |defined as:
+                 |${showRaw(f)}
+                 |""".stripMargin)
+        val x = params.map(param => param.name.decodedName.toString -> param.tpt)
+        println(s"$x")
+        // TODO: analyze the f: Tree and create the right type
+        apply[runtime.ArgumentLists.Empty]
+      case _ =>
+        c.abort(
+          c.enclosingPosition,
+          s"Expected function, instead got: ${showCode(f)}: ${showCode(t.tpt)}"
+        )
     }
   }
 }

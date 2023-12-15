@@ -92,4 +92,12 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       case (Left(error), _) => report.errorAndAbort(error, Position.ofMacroExpansion)
       case (_, Left(error)) => report.errorAndAbort(error, Position.ofMacroExpansion)
     }
+
+  def applyConstructorType[Out](
+      f: [Ctor <: runtime.ArgumentLists] => Type[Ctor] ?=> Out
+  )(ctor: Expr[?]): Out = {
+    // TODO: analyze f and implement the type
+    val _ = ctor
+    f[runtime.ArgumentLists.Empty]
+  }
 }

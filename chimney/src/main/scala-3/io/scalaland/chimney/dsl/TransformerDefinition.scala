@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.dsl.*
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
 
 import scala.quoted.*
 
@@ -108,13 +108,11 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
   ): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     ${ TransformerDefinitionMacros.withCoproductInstance('this, 'f) }
 
-  // TODO: implement me
-  import io.scalaland.chimney.internal.runtime.ArgumentLists
-  def withConstructor[In](
-      f: In => To
-  ): TransformerDefinition[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
-    addOverride(f)
-      .asInstanceOf[TransformerDefinition[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags]]
+  // TODO: docs
+  transparent inline def withConstructor[Ctor](
+      inline f: Ctor
+  )(using IsFunction.Of[Ctor, To]): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+    ${ TransformerDefinitionMacros.withConstructorImpl('this, 'f) }
 
   /** Build Transformer using current configuration.
     *

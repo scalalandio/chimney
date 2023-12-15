@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.{partial, PartialTransformer}
 import io.scalaland.chimney.internal.compiletime.dsl.*
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
 
 /** Allows customization of [[io.scalaland.chimney.PartialTransformer]] derivation.
   *
@@ -156,28 +156,17 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     ${ PartialTransformerDefinitionMacros.withCoproductInstancePartial('this, 'f) }
 
-  // TODO: implement me
-  import io.scalaland.chimney.internal.runtime.ArgumentLists
-  def withConstructor[In](
-      f: In => To
-  ): PartialTransformerDefinition[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
-    addOverride(f).asInstanceOf[PartialTransformerDefinition[
-      From,
-      To,
-      TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg],
-      Flags
-    ]]
+  // TODO: docs
+  transparent inline def withConstructor[Ctor](
+      inline f: Ctor
+  )(using IsFunction.Of[Ctor, To]): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+    ${ PartialTransformerDefinitionMacros.withConstructorImpl('this, 'f) }
 
-  // TODO: implement me
-  def withConstructorPartial[In](
-      f: In => partial.Result[To]
-  ): PartialTransformerDefinition[From, To, TransformerCfg.ConstructorPartial[ArgumentLists.Empty, To, Cfg], Flags] =
-    addOverride(f).asInstanceOf[PartialTransformerDefinition[
-      From,
-      To,
-      TransformerCfg.ConstructorPartial[ArgumentLists.Empty, To, Cfg],
-      Flags
-    ]]
+  // TODO: docs
+  transparent inline def withConstructorPartial[Ctor](
+      inline f: Ctor
+  )(using IsFunction.Of[Ctor, partial.Result[To]]): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+    ${ PartialTransformerDefinitionMacros.withConstructorPartialImpl('this, 'f) }
 
   /** Build Partial Transformer using current configuration.
     *

@@ -5,7 +5,13 @@ import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
-import io.scalaland.chimney.internal.runtime.{Path, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{
+  ArgumentLists,
+  Path,
+  TransformerCfg,
+  TransformerFlags,
+  WithRuntimeDataStore
+}
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 
 import scala.quoted.*
@@ -89,6 +95,25 @@ object TransformerIntoMacros {
         .update($ti, $f)
         .asInstanceOf[TransformerInto[From, To, CoproductInstance[Inst, To, Cfg], Flags]]
     }
+
+  def withConstructorImpl[
+      From: Type,
+      To: Type,
+      Cfg <: TransformerCfg: Type,
+      Flags <: TransformerFlags: Type,
+      Ctor: Type
+  ](
+      ti: Expr[TransformerInto[From, To, Cfg, Flags]],
+      f: Expr[Ctor]
+  )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerCfg, Flags]] = DslMacroUtils().applyConstructorType {
+    [ctor <: ArgumentLists] =>
+      (_: Type[ctor]) ?=>
+        '{
+          WithRuntimeDataStore
+            .update($ti, $f)
+            .asInstanceOf[TransformerInto[From, To, Constructor[ctor, To, Cfg], Flags]]
+      }
+  }(f)
 
   def transform[
       From: Type,

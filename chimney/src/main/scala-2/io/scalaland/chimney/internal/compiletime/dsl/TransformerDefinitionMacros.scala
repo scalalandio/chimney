@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.dsl.TransformerDefinition
-import io.scalaland.chimney.internal.runtime.{Path, TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.{ArgumentLists, Path, TransformerCfg, TransformerFlags}
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 
 import scala.annotation.unused
@@ -63,4 +63,15 @@ class TransformerDefinitionMacros(val c: whitebox.Context) extends utils.DslMacr
       .addOverride(f)
       .asInstanceOfExpr[TransformerDefinition[From, To, CoproductInstance[FixedInstance, To, Cfg], Flags]]
   }.applyJavaEnumFixFromClosureSignature[Inst](f)
+
+  def withConstructorImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: TransformerCfg: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+    def apply[Ctor <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
+      .addOverride(f)
+      .asInstanceOfExpr[TransformerDefinition[From, To, Constructor[Ctor, To, Cfg], Flags]]
+  }.applyFromBody(f)
 }
