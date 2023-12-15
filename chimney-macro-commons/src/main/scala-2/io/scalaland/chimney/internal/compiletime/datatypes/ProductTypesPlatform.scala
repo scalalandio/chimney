@@ -230,7 +230,14 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
       val constructor: Product.Arguments => Expr[A] = arguments => {
         val (constructorArguments, _) = checkArguments[A](parameters, arguments)
-        val methodType: ?? = null.asInstanceOf[??] // TODO: figure out the type
+
+        val methodType: ?? = args.foldRight[??](Type[A].as_??) { (paramList, resultType) =>
+          val paramTypes = paramList.view.values.map(_.Underlying.tpe).toList
+          fromUntyped(c.typecheck(tq"(..$paramTypes) => ${resultType.Underlying.tpe}", mode = c.TYPEmode).tpe).as_??
+        }
+
+        println(methodType.Underlying)
+
         import methodType.Underlying as MethodType
         val tree = expr.asInstanceOfExpr[MethodType].tree
         c.Expr[A](q"$tree(...${(args.map(_.map { case (paramName, _) =>

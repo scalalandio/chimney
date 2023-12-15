@@ -5,10 +5,15 @@ import io.scalaland.chimney.fixtures.*
 
 class TotalTransformerCustomConstructorSpec extends ChimneySpec {
 
+  // TODO: test rejecting non-constructors
+
   test("""transformation from a "superset" of fields into a "subset" of fields without modifiers""") {
     import products.{Foo, Bar}
 
-    // TODO: add tests with multiple parameter lists
+    // TODO: test unary/nulllary - constConstructor
+    // TODO: rename customConstructor -> binaryConstructor
+    // TODO: add tests with multiple parameter lists - paramListsConstructor
+    // TODO: test eta expansion of method with type params - typeParametricConstructor
 
     def customConstructor(x: Int, z: (Double, Double)): Bar = Bar(x * 2, (z._1 * 2, z._2 * 2))
 

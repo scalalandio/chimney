@@ -93,7 +93,7 @@ private[chimney] trait DslMacroUtils {
   protected trait ApplyFieldNameType {
     def apply[A <: runtime.Path: WeakTypeTag]: WeakTypeTag[?]
 
-    final def applyFromSelector(t: c.Tree): WeakTypeTag[?] =
+    final def applyFromSelector(t: Tree): WeakTypeTag[?] =
       apply(extractSelectorAsType(t).Underlying)
 
     private def extractSelectorAsType(t: Tree): ExistentialPath =
@@ -102,7 +102,7 @@ private[chimney] trait DslMacroUtils {
   protected trait ApplyFieldNameTypes {
     def apply[A <: runtime.Path: WeakTypeTag, B <: runtime.Path: WeakTypeTag]: WeakTypeTag[?]
 
-    final def applyFromSelectors(t1: c.Tree, t2: c.Tree): WeakTypeTag[?] = {
+    final def applyFromSelectors(t1: Tree, t2: Tree): WeakTypeTag[?] = {
       val (e1, e2) = extractSelectorsAsTypes(t1, t2)
       apply(e1.Underlying, e2.Underlying)
     }
@@ -160,20 +160,66 @@ private[chimney] trait DslMacroUtils {
 
     final def applyFromBody(f: Tree): Tree = f match {
       case Function(params, _) =>
+        val t = paramsToType(List(params))
+        // TODO: remove once everything works
         println(s"""Expression:
-                 |${show(f)}
+                 |${Console.MAGENTA}${show(f)}${Console.RESET}
                  |defined as:
-                 |${showRaw(f)}
+                 |${Console.MAGENTA}${showRaw(f)}${Console.RESET}
+                 |of type:
+                 |${Console.MAGENTA}${f.tpe}${Console.RESET}
+                 |of type:
+                 |${Console.MAGENTA}${showRaw(f.tpe)}${Console.RESET}
+                 |resolved as:
+                 |${Console.MAGENTA}$t${Console.RESET}
                  |""".stripMargin)
-        val x = params.map(param => param.name.decodedName.toString -> param.tpt)
-        println(s"$x")
-        // TODO: analyze the f: Tree and create the right type
-        apply[runtime.ArgumentLists.Empty]
+        apply(t)
       case _ =>
-        c.abort(
-          c.enclosingPosition,
-          s"Expected function, instead got: ${showCode(f)}: ${showCode(t.tpt)}"
-        )
+        c.abort(c.enclosingPosition, invalidConstructor(f))
     }
+
+    private def paramsToType(paramsLists: List[List[ValDef]]): WeakTypeTag[? <: runtime.ArgumentLists] =
+      paramsLists
+        .map { paramList =>
+          paramList.foldRight[WeakTypeTag[? <: runtime.ArgumentList]](weakTypeTag[runtime.ArgumentList.Empty])(
+            constructArgumentListType
+          )
+        }
+        .foldRight[WeakTypeTag[? <: runtime.ArgumentLists]](weakTypeTag[runtime.ArgumentLists.Empty])(
+          constructArgumentListsType
+        )
+
+    private def constructArgumentListsType(
+        head: WeakTypeTag[? <: runtime.ArgumentList],
+        tail: WeakTypeTag[? <: runtime.ArgumentLists]
+    ): WeakTypeTag[? <: runtime.ArgumentLists] = {
+      object ApplyParams {
+        def apply[Head <: runtime.ArgumentList: WeakTypeTag, Tail <: runtime.ArgumentLists: WeakTypeTag]
+            : WeakTypeTag[runtime.ArgumentLists.List[Head, Tail]] =
+          weakTypeTag[runtime.ArgumentLists.List[Head, Tail]]
+      }
+
+      ApplyParams(head, tail)
+    }
+
+    private def constructArgumentListType(
+        t: ValDef,
+        args: WeakTypeTag[? <: runtime.ArgumentList]
+    ): WeakTypeTag[? <: runtime.ArgumentList] = {
+      object ApplyParam {
+        def apply[ParamName <: String: WeakTypeTag, ParamType: WeakTypeTag, Args <: runtime.ArgumentList: WeakTypeTag]
+            : WeakTypeTag[runtime.ArgumentList.Argument[ParamName, ParamType, Args]] =
+          weakTypeTag[runtime.ArgumentList.Argument[ParamName, ParamType, Args]]
+      }
+
+      ApplyParam(
+        c.WeakTypeTag(c.internal.constantType(Constant(t.name.decodedName.toString))),
+        c.WeakTypeTag(t.tpt.tpe),
+        args
+      )
+    }
+
+    private def invalidConstructor(t: Tree): String =
+      s"Expected function, instead got: ${Console.MAGENTA}$t${Console.RESET}: ${Console.MAGENTA}${t.tpe}${Console.RESET}"
   }
 }
