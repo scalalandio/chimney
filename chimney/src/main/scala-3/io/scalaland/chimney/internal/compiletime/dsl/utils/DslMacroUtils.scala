@@ -66,7 +66,6 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       case Inlined(_, _, block) => parse(block)
       case _                    => Left(invalidSelectorErrorMessage(t))
     }
-    List(1 -> 2).fol
 
     private def invalidSelectorErrorMessage(t: Tree): String =
       s"Invalid selector expression: ${t.show(using Printer.TreeAnsiCode)}"
@@ -76,6 +75,111 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
 
     private def ignoringInputNotAllowed(t: Tree): String =
       s"Invalid selector expression - only input value can be extracted from: ${t.show(using Printer.TreeAnsiCode)}"
+  }
+
+  private trait ExistentialCtor {
+    type Underlying <: runtime.ArgumentLists
+    implicit val Underlying: Type[Underlying]
+  }
+  private object ExistentialCtor {
+
+    def parse(t: Tree): Either[String, ExistentialCtor] = {
+      def extractParams(t: Tree): Either[String, List[List[ValDef]]] = t match {
+        case DefDef(_, params, _, bodyOpt) =>
+          val head = params.map(_.params.asInstanceOf[List[ValDef]])
+
+          // TODO: sprawdzić czy to faktycznie działa
+
+          bodyOpt match {
+            case Some(body) =>
+              extractParams(body) match {
+                case Left(_) =>
+                  println(s"Skipped: $body")
+                  Right(head)
+                case Right(tail) =>
+                  println(s"Prepended: $head to $tail")
+                  Right(head ++ tail)
+              }
+            case None =>
+              println(s"No body")
+              Right(head)
+          }
+        case Block(List(defdef), Closure(_, _)) =>
+          println("Unwrapping single element block")
+          extractParams(defdef)
+        case Block(Nil, singleTerm) =>
+          println("Unwrapping single element block")
+          extractParams(singleTerm)
+        case Inlined(_, _, block) =>
+          println("Unwrapping inlined")
+          extractParams(block)
+        case _ =>
+          println(s"""Expression:
+                     |${t.show(using Printer.TreeAnsiCode)}
+                     |defined as:
+                     |${t.show(using Printer.TreeStructure)}
+                     |of type:
+                     |${t.asInstanceOf[Term].tpe.show(using Printer.TypeReprAnsiCode)}
+                     |of type:
+                     |${t.asInstanceOf[Term].tpe.show(using Printer.TypeReprStructure)}
+                     |""".stripMargin)
+          Left(invalidConstructor(t))
+      }
+
+      extractParams(t).map(params =>
+        new ExistentialCtor {
+          type Underlying = runtime.ArgumentLists
+          implicit val Underlying: Type[runtime.ArgumentLists] = paramsToType(params)
+        }
+      )
+    }
+
+    private def paramsToType(paramsLists: List[List[ValDef]]): Type[runtime.ArgumentLists] =
+      paramsLists
+        .map { paramList =>
+          paramList.foldRight[Type[? <: runtime.ArgumentList]](Type.of[runtime.ArgumentList.Empty])(
+            constructArgumentListType
+          )
+        }
+        .foldRight[Type[? <: runtime.ArgumentLists]](Type.of[runtime.ArgumentLists.Empty])(
+          constructArgumentListsType
+        )
+        .asInstanceOf[Type[runtime.ArgumentLists]]
+
+    private def constructArgumentListsType(
+        head: Type[? <: runtime.ArgumentList],
+        tail: Type[? <: runtime.ArgumentLists]
+    ): Type[? <: runtime.ArgumentLists] = {
+      object ApplyParams {
+        def apply[Head <: runtime.ArgumentList: Type, Tail <: runtime.ArgumentLists: Type]
+            : Type[runtime.ArgumentLists.List[Head, Tail]] =
+          Type.of[runtime.ArgumentLists.List[Head, Tail]]
+      }
+
+      ApplyParams(head, tail)
+    }
+
+    private def constructArgumentListType(
+        t: ValDef,
+        args: Type[? <: runtime.ArgumentList]
+    ): Type[? <: runtime.ArgumentList] = {
+      val ValDef(name, tpe, _) = t
+
+      object ApplyParam {
+        def apply[ParamName <: String: Type, ParamType: Type, Args <: runtime.ArgumentList: Type]
+            : Type[runtime.ArgumentList.Argument[ParamName, ParamType, Args]] =
+          Type.of[runtime.ArgumentList.Argument[ParamName, ParamType, Args]]
+      }
+
+      ApplyParam(
+        ConstantType(StringConstant(name)).asType.asInstanceOf[Type[String]],
+        tpe.tpe.asType.asInstanceOf[Type[Any]],
+        args
+      )
+    }
+
+    private def invalidConstructor(t: Tree): String =
+      s"Expected function, instead got: ${t.show(using Printer.TreeAnsiCode)}: ${t.asInstanceOf[Term].tpe.show(using Printer.TypeReprAnsiCode)}"
   }
 
   def applyFieldNameType[Out](f: [A <: runtime.Path] => Type[A] ?=> Out)(selector: Expr[?]): Out =
@@ -96,9 +200,21 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
 
   def applyConstructorType[Out](
       f: [Ctor <: runtime.ArgumentLists] => Type[Ctor] ?=> Out
-  )(ctor: Expr[?]): Out = {
-    // TODO: analyze f and implement the type
-    val _ = ctor
-    f[runtime.ArgumentLists.Empty]
-  }
+  )(ctor: Expr[?]): Out =
+    ExistentialCtor.parse(ctor.asTerm) match {
+      case Right(ctorType) =>
+        println(s"""Expression:
+                   |${ctor.asTerm.show(using Printer.TreeAnsiCode)}
+                   |defined as:
+                   |${ctor.asTerm.show(using Printer.TreeStructure)}
+                   |of type:
+                   |${ctor.asTerm.tpe.show(using Printer.TypeReprAnsiCode)}
+                   |of type:
+                   |${ctor.asTerm.tpe.show(using Printer.TypeReprStructure)}
+                   |resolved as:
+                   |${TypeRepr.of(using ctorType.Underlying).show(using Printer.TypeReprAnsiCode)}
+                   |""".stripMargin)
+        f(using ctorType.Underlying)
+      case Left(error) => report.errorAndAbort(error, Position.ofMacroExpansion)
+    }
 }

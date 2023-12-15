@@ -31,5 +31,11 @@ class TotalTransformerCustomConstructorSpec extends ChimneySpec {
         customConstructor(x, z)
       })
       .transform ==> Bar(6, (6.28, 6.28))
+    Foo(3, "pi", (3.14, 3.14))
+      .into[Bar]
+      .withConstructor({ (x: Int) => (z: (Double, Double)) =>
+        customConstructor(x, z)
+      })
+      .transform ==> Bar(6, (6.28, 6.28))
   }
 }

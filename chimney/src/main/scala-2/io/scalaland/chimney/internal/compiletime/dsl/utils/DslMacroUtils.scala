@@ -78,6 +78,81 @@ private[chimney] trait DslMacroUtils {
       s"Invalid selector expression - only input value can be extracted from: $selectorTree"
   }
 
+  private trait ExistentialCtor {
+    type Underlying <: runtime.Path
+    implicit val Underlying: Type[Underlying]
+  }
+  private object ExistentialCtor {
+
+    def parse(t: Tree): Either[String, ExistentialCtor] = t match {
+      // TODO: add support for multiple parameter lists
+      case Function(params, _) =>
+        val t = paramsToType(List(params))
+        // TODO: remove once everything works
+        println(s"""Expression:
+                   |${Console.MAGENTA}${show(f)}${Console.RESET}
+                   |defined as:
+                   |${Console.MAGENTA}${showRaw(f)}${Console.RESET}
+                   |of type:
+                   |${Console.MAGENTA}${f.tpe}${Console.RESET}
+                   |of type:
+                   |${Console.MAGENTA}${showRaw(f.tpe)}${Console.RESET}
+                   |resolved as:
+                   |${Console.MAGENTA}$t${Console.RESET}
+                   |""".stripMargin)
+        Right(new ExistentialCtor {
+          type Underlying = runtime.ArgumentLists
+          val Underlying: WeakTypeTag[runtime.ArgumentLists] = t
+        })
+      case _ =>
+        Left(invalidConstructor(f))
+    }
+
+    private def paramsToType(paramsLists: List[List[ValDef]]): WeakTypeTag[runtime.ArgumentLists] =
+      paramsLists
+        .map { paramList =>
+          paramList.foldRight[WeakTypeTag[? <: runtime.ArgumentList]](weakTypeTag[runtime.ArgumentList.Empty])(
+            constructArgumentListType
+          )
+        }
+        .foldRight[WeakTypeTag[? <: runtime.ArgumentLists]](weakTypeTag[runtime.ArgumentLists.Empty])(
+          constructArgumentListsType
+        )
+
+    private def constructArgumentListsType(
+        head: WeakTypeTag[? <: runtime.ArgumentList],
+        tail: WeakTypeTag[? <: runtime.ArgumentLists]
+    ): WeakTypeTag[? <: runtime.ArgumentLists] = {
+      object ApplyParams {
+        def apply[Head <: runtime.ArgumentList: WeakTypeTag, Tail <: runtime.ArgumentLists: WeakTypeTag]
+            : WeakTypeTag[runtime.ArgumentLists.List[Head, Tail]] =
+          weakTypeTag[runtime.ArgumentLists.List[Head, Tail]]
+      }
+
+      ApplyParams(head, tail)
+    }
+
+    private def constructArgumentListType(
+        t: ValDef,
+        args: WeakTypeTag[? <: runtime.ArgumentList]
+    ): WeakTypeTag[? <: runtime.ArgumentList] = {
+      object ApplyParam {
+        def apply[ParamName <: String: WeakTypeTag, ParamType: WeakTypeTag, Args <: runtime.ArgumentList: WeakTypeTag]
+            : WeakTypeTag[runtime.ArgumentList.Argument[ParamName, ParamType, Args]] =
+          weakTypeTag[runtime.ArgumentList.Argument[ParamName, ParamType, Args]]
+      }
+
+      ApplyParam(
+        c.WeakTypeTag(c.internal.constantType(Constant(t.name.decodedName.toString))),
+        c.WeakTypeTag(t.tpt.tpe),
+        args
+      )
+    }
+
+    private def invalidConstructor(t: Tree): String =
+      s"Expected function, instead got: ${Console.MAGENTA}$t${Console.RESET}: ${Console.MAGENTA}${t.tpe}${Console.RESET}"
+  }
+
   // If we try to do:
   //
   //   implicit val fieldNameT = fieldName.Underlying
@@ -158,68 +233,14 @@ private[chimney] trait DslMacroUtils {
 
     def apply[Ctor <: runtime.ArgumentLists: WeakTypeTag]: Tree
 
-    final def applyFromBody(f: Tree): Tree = f match {
-      case Function(params, _) =>
-        val t = paramsToType(List(params))
-        // TODO: remove once everything works
-        println(s"""Expression:
-                 |${Console.MAGENTA}${show(f)}${Console.RESET}
-                 |defined as:
-                 |${Console.MAGENTA}${showRaw(f)}${Console.RESET}
-                 |of type:
-                 |${Console.MAGENTA}${f.tpe}${Console.RESET}
-                 |of type:
-                 |${Console.MAGENTA}${showRaw(f.tpe)}${Console.RESET}
-                 |resolved as:
-                 |${Console.MAGENTA}$t${Console.RESET}
-                 |""".stripMargin)
-        apply(t)
-      case _ =>
-        c.abort(c.enclosingPosition, invalidConstructor(f))
+    final def applyFromBody(f: Tree): Tree = {
+      val ctorType = extractCtorType(f)
+      ctorType.Underlying
     }
 
-    private def paramsToType(paramsLists: List[List[ValDef]]): WeakTypeTag[? <: runtime.ArgumentLists] =
-      paramsLists
-        .map { paramList =>
-          paramList.foldRight[WeakTypeTag[? <: runtime.ArgumentList]](weakTypeTag[runtime.ArgumentList.Empty])(
-            constructArgumentListType
-          )
-        }
-        .foldRight[WeakTypeTag[? <: runtime.ArgumentLists]](weakTypeTag[runtime.ArgumentLists.Empty])(
-          constructArgumentListsType
-        )
-
-    private def constructArgumentListsType(
-        head: WeakTypeTag[? <: runtime.ArgumentList],
-        tail: WeakTypeTag[? <: runtime.ArgumentLists]
-    ): WeakTypeTag[? <: runtime.ArgumentLists] = {
-      object ApplyParams {
-        def apply[Head <: runtime.ArgumentList: WeakTypeTag, Tail <: runtime.ArgumentLists: WeakTypeTag]
-            : WeakTypeTag[runtime.ArgumentLists.List[Head, Tail]] =
-          weakTypeTag[runtime.ArgumentLists.List[Head, Tail]]
-      }
-
-      ApplyParams(head, tail)
+    private def extractCtorType(f: Tree): ExistentialCtor = ExistentialCtor.parse(f) match {
+      case Right(ctor) => ctor
+      case Left(error) => c.abort(c.enclosingPosition, error)
     }
-
-    private def constructArgumentListType(
-        t: ValDef,
-        args: WeakTypeTag[? <: runtime.ArgumentList]
-    ): WeakTypeTag[? <: runtime.ArgumentList] = {
-      object ApplyParam {
-        def apply[ParamName <: String: WeakTypeTag, ParamType: WeakTypeTag, Args <: runtime.ArgumentList: WeakTypeTag]
-            : WeakTypeTag[runtime.ArgumentList.Argument[ParamName, ParamType, Args]] =
-          weakTypeTag[runtime.ArgumentList.Argument[ParamName, ParamType, Args]]
-      }
-
-      ApplyParam(
-        c.WeakTypeTag(c.internal.constantType(Constant(t.name.decodedName.toString))),
-        c.WeakTypeTag(t.tpt.tpe),
-        args
-      )
-    }
-
-    private def invalidConstructor(t: Tree): String =
-      s"Expected function, instead got: ${Console.MAGENTA}$t${Console.RESET}: ${Console.MAGENTA}${t.tpe}${Console.RESET}"
   }
 }
