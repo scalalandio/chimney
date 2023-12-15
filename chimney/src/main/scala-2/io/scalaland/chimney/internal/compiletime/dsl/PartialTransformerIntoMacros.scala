@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.dsl.PartialTransformerInto
-import io.scalaland.chimney.internal.runtime.{Path, TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.{ArgumentLists, Path, TransformerCfg, TransformerFlags}
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 
 import scala.annotation.unused
@@ -103,4 +103,26 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
       .addOverride(f)
       .asInstanceOfExpr[PartialTransformerInto[From, To, CoproductInstancePartial[FixedInstance, To, Cfg], Flags]]
   }.applyJavaEnumFixFromClosureSignature[Inst](f)
+
+  def withConstructorImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: TransformerCfg: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+    def apply[Ctor <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
+      .addOverride(f)
+      .asInstanceOfExpr[PartialTransformerInto[From, To, Constructor[Ctor, To, Cfg], Flags]]
+  }.applyFromBody(f)
+
+  def withConstructorPartialImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Cfg <: TransformerCfg: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+    def apply[Ctor <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
+      .addOverride(f)
+      .asInstanceOfExpr[PartialTransformerInto[From, To, ConstructorPartial[Ctor, To, Cfg], Flags]]
+  }.applyFromBody(f)
 }

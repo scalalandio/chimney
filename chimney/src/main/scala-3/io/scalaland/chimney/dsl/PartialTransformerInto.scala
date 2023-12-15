@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.internal.compiletime.dsl
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerIntoMacros
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
 
 /** Provides DSL for configuring [[io.scalaland.chimney.PartialTransformer]]'s
   * generation and using the result to transform value at the same time
@@ -156,25 +156,17 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
   ): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
     ${ PartialTransformerIntoMacros.withCoproductInstancePartialImpl('this, 'f) }
 
-  // TODO: implement me
-  import io.scalaland.chimney.internal.runtime.ArgumentLists
-  def withConstructor[In](
-      f: In => To
-  ): PartialTransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
-    addOverride(f)
-      .asInstanceOf[PartialTransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags]]
+  // TODO: docs
+  transparent inline def withConstructor[Ctor](
+      inline f: Ctor
+  )(using IsFunction.Of[Ctor, To]): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+    ${ PartialTransformerIntoMacros.withConstructorImpl('this, 'f) }
 
-  // TODO: implement me
-  def withConstructorPartial[In](
-      f: In => partial.Result[To]
-  ): PartialTransformerInto[From, To, TransformerCfg.ConstructorPartial[ArgumentLists.Empty, To, Cfg], Flags] =
-    addOverride(f)
-      .asInstanceOf[PartialTransformerInto[
-        From,
-        To,
-        TransformerCfg.ConstructorPartial[ArgumentLists.Empty, To, Cfg],
-        Flags
-      ]]
+  // TODO: docs
+  transparent inline def withConstructorPartial[Ctor](
+      inline f: Ctor
+  )(using IsFunction.Of[Ctor, partial.Result[To]]): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+    ${ PartialTransformerIntoMacros.withConstructorPartialImpl('this, 'f) }
 
   /** Apply configured partial transformation in-place.
     *

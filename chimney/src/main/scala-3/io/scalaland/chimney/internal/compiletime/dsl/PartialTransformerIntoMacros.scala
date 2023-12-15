@@ -4,7 +4,13 @@ import io.scalaland.chimney.PartialTransformer
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
-import io.scalaland.chimney.internal.runtime.{Path, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{
+  ArgumentLists,
+  Path,
+  TransformerCfg,
+  TransformerFlags,
+  WithRuntimeDataStore
+}
 import io.scalaland.chimney.internal.runtime.TransformerCfg.*
 import io.scalaland.chimney.partial
 
@@ -154,6 +160,46 @@ object PartialTransformerIntoMacros {
         .update($ti, $f)
         .asInstanceOf[PartialTransformerInto[From, To, CoproductInstancePartial[Inst, To, Cfg], Flags]]
     }
+
+  def withConstructorImpl[
+      From: Type,
+      To: Type,
+      Cfg <: TransformerCfg: Type,
+      Flags <: TransformerFlags: Type,
+      Ctor: Type
+  ](
+      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      f: Expr[Ctor]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] =
+    DslMacroUtils().applyConstructorType {
+      [ctor <: ArgumentLists] =>
+        (_: Type[ctor]) ?=>
+          '{
+            WithRuntimeDataStore
+              .update($ti, $f)
+              .asInstanceOf[PartialTransformerInto[From, To, Constructor[ctor, To, Cfg], Flags]]
+        }
+    }(f)
+
+  def withConstructorPartialImpl[
+      From: Type,
+      To: Type,
+      Cfg <: TransformerCfg: Type,
+      Flags <: TransformerFlags: Type,
+      Ctor: Type
+  ](
+      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      f: Expr[Ctor]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerCfg, Flags]] =
+    DslMacroUtils().applyConstructorType {
+      [ctor <: ArgumentLists] =>
+        (_: Type[ctor]) ?=>
+          '{
+            WithRuntimeDataStore
+              .update($ti, $f)
+              .asInstanceOf[PartialTransformerInto[From, To, ConstructorPartial[ctor, To, Cfg], Flags]]
+        }
+    }(f)
 
   def transform[
       From: Type,

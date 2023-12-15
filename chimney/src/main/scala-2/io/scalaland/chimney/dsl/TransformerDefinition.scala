@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.TransformerDefinitionMacros
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
 
 import scala.language.experimental.macros
 
@@ -111,13 +111,11 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
   def withCoproductInstance[Inst](f: Inst => To): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     macro TransformerDefinitionMacros.withCoproductInstanceImpl[From, To, Cfg, Flags, Inst]
 
-  // TODO: implement me
-  import io.scalaland.chimney.internal.runtime.ArgumentLists
-  def withConstructor[In](
-      f: In => To
-  ): TransformerDefinition[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
-    addOverride(f)
-      .asInstanceOf[TransformerDefinition[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags]]
+  // TODO: docs
+  def withConstructor[Ctor](
+      f: Ctor
+  )(implicit ev: IsFunction.Of[Ctor, To]): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+    macro TransformerDefinitionMacros.withConstructorImpl[From, To, Cfg, Flags]
 
   /** Build Transformer using current configuration.
     *

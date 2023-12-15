@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerIntoMacros
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
 
 import scala.language.experimental.macros
 
@@ -164,25 +164,19 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
   ): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
     macro PartialTransformerIntoMacros.withCoproductInstancePartialImpl[From, To, Cfg, Flags, Inst]
 
-  // TODO: implement me
-  import io.scalaland.chimney.internal.runtime.ArgumentLists
-  def withConstructor[In](
-      f: In => To
-  ): PartialTransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
-    addOverride(f)
-      .asInstanceOf[PartialTransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags]]
+  // TODO: docs
+  def withConstructor[Ctor](
+      f: Ctor
+  )(implicit ev: IsFunction.Of[Ctor, To]): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+    macro PartialTransformerIntoMacros.withConstructorImpl[From, To, Cfg, Flags]
 
-  // TODO: implement me
-  def withConstructorPartial[In](
-      f: In => partial.Result[To]
-  ): PartialTransformerInto[From, To, TransformerCfg.ConstructorPartial[ArgumentLists.Empty, To, Cfg], Flags] =
-    addOverride(f)
-      .asInstanceOf[PartialTransformerInto[
-        From,
-        To,
-        TransformerCfg.ConstructorPartial[ArgumentLists.Empty, To, Cfg],
-        Flags
-      ]]
+  // TODO: docs
+  def withConstructorPartial[Ctor](
+      f: Ctor
+  )(implicit
+      ev: IsFunction.Of[Ctor, partial.Result[To]]
+  ): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+    macro PartialTransformerIntoMacros.withConstructorPartialImpl[From, To, Cfg, Flags]
 
   /** Apply configured partial transformation in-place.
     *

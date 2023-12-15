@@ -106,15 +106,11 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
   def withCoproductInstance[Inst](f: Inst => To): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
     macro TransformerIntoMacros.withCoproductInstanceImpl[From, To, Cfg, Flags, Inst]
 
-  // TODO: implement me
-  import io.scalaland.chimney.internal.runtime.ArgumentLists
-  def withConstructor[Fn](
-      f: Fn
-  )(implicit
-      ev: IsFunction.Of[Fn, To]
-  ): TransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags] =
-    addOverride(f)
-      .asInstanceOf[TransformerInto[From, To, TransformerCfg.Constructor[ArgumentLists.Empty, To, Cfg], Flags]]
+  // TODO: docs
+  def withConstructor[Ctor](
+      f: Ctor
+  )(implicit ev: IsFunction.Of[Ctor, To]): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
+    macro TransformerIntoMacros.withConstructorImpl[From, To, Cfg, Flags]
 
   /** Apply configured transformation in-place.
     *
