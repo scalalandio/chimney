@@ -74,7 +74,7 @@ object IsFunction extends IsFunctionLowPriorityImplicits {
       ev: Of[Mid, Out]
   ): Of[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) => Mid, Out] = cast(ev)
 }
-private trait IsFunctionLowPriorityImplicits { this: IsFunction.type =>
+private[runtime] trait IsFunctionLowPriorityImplicits { this: IsFunction.type =>
 
   private val impl = new IsFunction[Any] {}
   private def cast[Fn, Out]: Of[Fn, Out] = impl.asInstanceOf[Of[Fn, Out]]

@@ -79,33 +79,43 @@ private[chimney] trait DslMacroUtils {
   }
 
   private trait ExistentialCtor {
-    type Underlying <: runtime.Path
-    implicit val Underlying: Type[Underlying]
+    type Underlying <: runtime.ArgumentLists
+    implicit val Underlying: WeakTypeTag[Underlying]
   }
   private object ExistentialCtor {
 
-    def parse(t: Tree): Either[String, ExistentialCtor] = t match {
-      // TODO: add support for multiple parameter lists
-      case Function(params, _) =>
-        val t = paramsToType(List(params))
+    def parse(t: Tree): Either[String, ExistentialCtor] = {
+      def extractParams(t: Tree): Either[String, List[List[ValDef]]] = t match {
+        // TODO: add support for multiple parameter lists
+        case Function(params, tail) =>
+          extractParams(tail) match {
+            case Left(_)     => Right(List(params))
+            case Right(tail) => Right(params :: tail)
+          }
         // TODO: remove once everything works
+        case _ =>
+          Left(invalidConstructor(t))
+      }
+
+      extractParams(t).map { params =>
+        val tpe = paramsToType(params)
         println(s"""Expression:
-                   |${Console.MAGENTA}${show(f)}${Console.RESET}
+                   |${Console.MAGENTA}${show(t)}${Console.RESET}
                    |defined as:
-                   |${Console.MAGENTA}${showRaw(f)}${Console.RESET}
+                   |${Console.MAGENTA}${showRaw(t)}${Console.RESET}
                    |of type:
-                   |${Console.MAGENTA}${f.tpe}${Console.RESET}
+                   |${Console.MAGENTA}${t.tpe}${Console.RESET}
                    |of type:
-                   |${Console.MAGENTA}${showRaw(f.tpe)}${Console.RESET}
+                   |${Console.MAGENTA}${showRaw(t.tpe)}${Console.RESET}
                    |resolved as:
-                   |${Console.MAGENTA}$t${Console.RESET}
+                   |${Console.MAGENTA}$tpe${Console.RESET}
                    |""".stripMargin)
-        Right(new ExistentialCtor {
+
+        new ExistentialCtor {
           type Underlying = runtime.ArgumentLists
-          val Underlying: WeakTypeTag[runtime.ArgumentLists] = t
-        })
-      case _ =>
-        Left(invalidConstructor(f))
+          implicit val Underlying: WeakTypeTag[runtime.ArgumentLists] = tpe
+        }
+      }
     }
 
     private def paramsToType(paramsLists: List[List[ValDef]]): WeakTypeTag[runtime.ArgumentLists] =
@@ -118,6 +128,7 @@ private[chimney] trait DslMacroUtils {
         .foldRight[WeakTypeTag[? <: runtime.ArgumentLists]](weakTypeTag[runtime.ArgumentLists.Empty])(
           constructArgumentListsType
         )
+        .asInstanceOf[WeakTypeTag[runtime.ArgumentLists]]
 
     private def constructArgumentListsType(
         head: WeakTypeTag[? <: runtime.ArgumentList],
@@ -235,7 +246,7 @@ private[chimney] trait DslMacroUtils {
 
     final def applyFromBody(f: Tree): Tree = {
       val ctorType = extractCtorType(f)
-      ctorType.Underlying
+      apply(ctorType.Underlying)
     }
 
     private def extractCtorType(f: Tree): ExistentialCtor = ExistentialCtor.parse(f) match {
