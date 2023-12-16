@@ -86,15 +86,13 @@ private[chimney] trait DslMacroUtils {
 
     def parse(t: Tree): Either[String, ExistentialCtor] = {
       def extractParams(t: Tree): Either[String, List[List[ValDef]]] = t match {
-        // TODO: add support for multiple parameter lists
         case Function(params, tail) =>
           extractParams(tail) match {
             case Left(_)     => Right(List(params))
             case Right(tail) => Right(params :: tail)
           }
         // Scala 2.12
-        // case Apply(_, params) =>
-        // TODO: ???
+        case Block(Nil, term) => extractParams(term)
         // TODO: remove once everything works
         case _ =>
           println(s"""Expression:
