@@ -92,8 +92,20 @@ private[chimney] trait DslMacroUtils {
             case Left(_)     => Right(List(params))
             case Right(tail) => Right(params :: tail)
           }
+        // Scala 2.12
+        // case Apply(_, params) =>
+        // TODO: ???
         // TODO: remove once everything works
         case _ =>
+          println(s"""Expression:
+                     |${Console.MAGENTA}${show(t)}${Console.RESET}
+                     |defined as:
+                     |${Console.MAGENTA}${showRaw(t)}${Console.RESET}
+                     |of type:
+                     |${Console.MAGENTA}${t.tpe}${Console.RESET}
+                     |of type:
+                     |${Console.MAGENTA}${showRaw(t.tpe)}${Console.RESET}
+                     |""".stripMargin)
           Left(invalidConstructor(t))
       }
 

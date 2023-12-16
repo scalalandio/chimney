@@ -232,7 +232,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         val (constructorArguments, _) = checkArguments[A](parameters, arguments)
 
         val methodType: ?? = args.foldRight[??](Type[A].as_??) { (paramList, resultType) =>
-          val paramTypes = paramList.view.values.map(_.Underlying.tpe).toList
+          val paramTypes = paramList.values.map(_.Underlying.tpe).toList
           // tq returns c.Tree, to turn it to c.Type we need .tpe, which without a .typecheck is null
           fromUntyped(c.typecheck(tq"(..$paramTypes) => ${resultType.Underlying.tpe}", mode = c.TYPEmode).tpe).as_??
         }
