@@ -44,6 +44,7 @@ val versions = new {
 
 Global / excludeLintKeys += git.useGitDescribe
 Global / excludeLintKeys += ideSkipProject
+Global / excludeLintKeys += sourceDirectories
 val only1VersionInIDE =
   MatrixAction
     .ForPlatform(versions.idePlatform)
@@ -59,6 +60,16 @@ val only1VersionInIDE =
         .ForPlatform(platform)
         .Configure(_.settings(ideSkipProject := true, bspEnabled := false, scalafmtOnCompile := false))
     }
+
+val non212tests =
+  MatrixAction
+    .ForScala(v => (v.value == versions.scala213) || v.isScala3)
+    .Configure(
+      _.settings(
+        // sourceDirectories += sourceDirectory.value.toPath.resolve("./main/scala-2.13+").toFile,
+        Test / sourceDirectories += sourceDirectory.value.toPath.resolve("test/scala-2.13+").toFile
+      )
+    )
 
 val settings = Seq(
   git.useGitDescribe := true,
@@ -364,7 +375,7 @@ lazy val chimneyMacroCommons = projectMatrix
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
+  .someVariations(versions.scalas, versions.platforms)((non212tests +: only1VersionInIDE)*)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
