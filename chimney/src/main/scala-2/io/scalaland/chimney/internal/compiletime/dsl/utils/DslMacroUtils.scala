@@ -91,7 +91,7 @@ private[chimney] trait DslMacroUtils {
             case Left(_)     => Right(List(params))
             case Right(tail) => Right(params :: tail)
           }
-        // Scala 2.12
+        // Eta-expansion wrapper in Scala 2.12
         case Block(Nil, term) => extractParams(term)
         case _                => Left(invalidConstructor(t))
       }
@@ -198,9 +198,9 @@ private[chimney] trait DslMacroUtils {
         val Inst = weakTypeOf[Inst]
         val Function(List(ValDef(_, _, lhs: TypeTree, _)), _) = f
         lhs.original match {
-          // java enum value in Scala 2.13
+          // Java enum value in Scala 2.13
           case SingletonTypeTree(Literal(Constant(t: TermSymbol))) => apply(refineJavaEnum[Inst](t))
-          // java enum value in Scala 2.12
+          // Java enum value in Scala 2.12
           case SingletonTypeTree(Select(t, n)) if t.isTerm =>
             val t = Inst.companion.decls
               .find(_.name == n)
