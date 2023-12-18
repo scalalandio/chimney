@@ -5,9 +5,16 @@ import io.scalaland.chimney.fixtures.*
 
 class TotalTransformerCustomConstructorSpec extends ChimneySpec {
 
-  // TODO: test rejecting non-constructors
+  test("""not allow transformation when passed value is not a function/method""") {
+    import products.{Foo, Bar}
 
-  test("""transformation from a "superset" of fields into a "subset" of fields without modifiers""") {
+    compileErrorsFixed("""Foo(3, "pi", (3.14, 3.14)).into[Bar].withConstructor(Bar(4, (5.0, 5.0))).transform""").check(
+      "Expected function of any arity (scala.Function0, scala.Function1, scala.Function2, ...) that returns a value of ", // difference between Scala 2 and 3
+      ", got io.scalaland.chimney.fixtures.products.Bar"
+    )
+  }
+
+  test("""allow transformation from using Eta-expanded method or lambda""") {
     import products.{Foo, Bar, BarParams}
 
     def nullaryConstructor(): Bar = Bar(0, (0.0, 0.0))

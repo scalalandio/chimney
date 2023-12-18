@@ -94,5 +94,113 @@ class IsFunctionSpec extends ChimneySpec {
       ) => String,
       String
     ]
+
+    resolves[() => (String, String) => String, String]
+    resolves[(Int) => (String, String) => String, String]
+    resolves[(Int, Int) => (String, String) => String, String]
+    resolves[(Int, Int, Int) => (String, String) => String, String]
+    resolves[(Int, Int, Int, Int) => (String, String) => String, String]
+    resolves[(Int, Int, Int, Int, Int) => (String, String) => String, String]
+    resolves[(Int, Int, Int, Int, Int, Int) => (String, String) => String, String]
+    resolves[(Int, Int, Int, Int, Int, Int, Int) => (String, String) => String, String]
+    resolves[(Int, Int, Int, Int, Int, Int, Int, Int) => (String, String) => String, String]
+    resolves[(Int, Int, Int, Int, Int, Int, Int, Int, Int) => (String, String) => String, String]
+    resolves[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) => (String, String) => String, String]
+    resolves[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) => (String, String) => String, String]
+    resolves[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) => (String, String) => String, String]
+    resolves[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) => (String, String) => String, String]
+    resolves[
+      (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) => (String, String) => String,
+      String
+    ]
+    resolves[
+      (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) => (String, String) => String,
+      String
+    ]
+    resolves[
+      (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) => (String, String) => String,
+      String
+    ]
+    resolves[
+      (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) => (
+          String,
+          String
+      ) => String,
+      String
+    ]
+    resolves[
+      (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) => (
+          String,
+          String
+      ) => String,
+      String
+    ]
+    resolves[
+      (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) => (
+          String,
+          String
+      ) => String,
+      String
+    ]
+    resolves[
+      (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) => (
+          String,
+          String
+      ) => String,
+      String
+    ]
+    resolves[
+      (
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int
+      ) => (String, String) => String,
+      String
+    ]
+    resolves[
+      (
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int,
+          Int
+      ) => (String, String) => String,
+      String
+    ]
   }
 }
