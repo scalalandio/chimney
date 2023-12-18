@@ -66,8 +66,8 @@ val non212tests =
     .ForScala(v => (v.value == versions.scala213) || v.isScala3)
     .Configure(
       _.settings(
-        // sourceDirectories += sourceDirectory.value.toPath.resolve("./main/scala-2.13+").toFile,
-        Test / sourceDirectories += sourceDirectory.value.toPath.resolve("test/scala-2.13+").toFile
+        // Compile / unmanagedSourceDirectories += sourceDirectory.value.toPath.resolve("./main/scala-2.13+").toFile,
+        Test / unmanagedSourceDirectories += sourceDirectory.value.toPath.resolve("test/scala-2.13+").toFile
       )
     )
 
