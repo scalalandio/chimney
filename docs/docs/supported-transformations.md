@@ -1969,6 +1969,98 @@ Finally, you can always provide a custom `Transformer` from/to a type containing
     the [Automatic, semiautomatic and inlined derication](cookbook.md#automatic-semiautomatic-and-inlined-derivation)
     cookbook.
 
+## Types with manually provided constructors
+
+If your type cannot be constructed with a public primary constructor, is not a Scala collection, Option, `AnyVal`, etc
+BUT you do know a way of constructing this type using a method - or handwritten lambda - you can point to that method.
+Then Chimney will try to match the source type's getters against the method's parameters by their names:  
+
+!!! example
+ 
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo(value: Int)
+    case class Bar private (value: String)
+    object Bar {
+      def make(value: Int): Bar = Bar(value.toString) 
+    }
+
+    Foo(10).into[Bar].withConstructor(Bar.make).transform // Bar("10")
+    
+    Foo(10).into[Bar].withConstructor { (value: Int) =>
+      Bar.make(value * 100)
+    }.transform // Bar("1000")
+    ```
+
+If your type only has smart a constructor which e.g. validates the input and might fail, you can provide a that smart
+constructor for `PartialTransformer`:
+
+!!! example
+ 
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+    
+    case class Foo(value: String)
+    case class Bar private (value: Int)
+    object Bar {
+      def parse(value: String): Either[String, Bar] =
+        scala.util.Try(value.toInt).toEither.map(new Bar(_)).left.map(_.getMessage) 
+    }
+    
+    def smartConstructor(value: String): partial.Result[Bar] =
+      partial.Result.fromEitherString(Bar.parse(value))
+
+    Foo("10").intoPartial[Bar].withConstructorPartial(smartConstructor).transform.asEither // Right(Bar(10))
+    
+    Foo("10").intoPartial[Bar].withConstructorPartial { (value: String) =>
+      partial.Result.fromEitherString(Bar.parse(value))
+    }.transform.asEither // Right(Bar(1000))
+    ```
+
+You can use this to automatically match the source's getters e.g. against Scala 3's `opaque type`'s constructor's
+arguments - these types would almost always have methods which the user could recognize as constructor's but which might
+be difficult to be automatically recognized as such: 
+
+!!! example
+ 
+    Due to nature of `opaque type`s to work this example needs to have opaque types defined in a different file than
+    where they are being used:
+
+    ```scala
+    package models
+    
+    case class Foo(value: String)
+    
+    opaque type Bar = Int
+    extension (bar: Bar)
+      def value: Int = bar
+    object Bar {
+      def parse(value: String): Either[String, Bar] =
+        scala.util.Try(value.toInt).toEither.left.map(_.getMessage)
+    }
+    ```
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    package example
+    
+    import io.scalaland.chimney.dsl.*
+    import io.scalaland.chimney.{partial, PartialTransformer}
+    import models.{Foo, Bar}
+    
+    given PartialTransformer[Foo, Bar] = PartialTransformer.define[Foo, Bar].withConstructorPa>
+      partial.Result.fromEitherString(Bar.parse(value))
+    }.buildTransformer
+    
+    @main def example: Unit =
+      println(Foo("10").transformIntoPartial[Bar].asEither)
+    ```
+
 ## Custom transformations
 
 For virtually every 2 types that you want, you can define your own `Transformer` or `PartialTransformer` as `implicit`.
