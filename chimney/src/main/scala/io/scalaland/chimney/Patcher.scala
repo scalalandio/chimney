@@ -30,6 +30,7 @@ object Patcher extends PatcherCompanionPlatform {
     * you can customize to derive [[io.scalaland.chimney.Patcher]].
     *
     * @see [[io.scalaland.chimney.dsl.PatcherDefinition]] for available settings
+    *
     * @tparam A     type of object to apply patch to
     * @tparam Patch type of patch object
     * @return [[io.scalaland.chimney.dsl.PatcherDefinition]] with defaults
