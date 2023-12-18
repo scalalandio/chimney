@@ -6,7 +6,7 @@ import io.scalaland.chimney.fixtures.*
 class PartialTransformerCustomConstructor2_13plusSyntaxSpec extends ChimneySpec {
 
   // 2.13+ doesn't require explicit Eta-expansion (no need to "method _")
-  test("""transformation from a "superset" of fields into a "subset" of fields without modifiers""") {
+  test("""allow transformation from using Eta-expanded method or lambda""") {
     import products.{Foo, Bar, BarParams}
 
     val uncurriedExpected = Bar(6, (6.28, 6.28))

@@ -14,6 +14,9 @@ sealed trait IsFunction[Fn] {
   type Out
 }
 object IsFunction extends IsFunctionLowPriorityImplicits {
+  @implicitNotFound(
+    "Expected function of any arity (scala.Function0, scala.Function1, scala.Function2, ...) that returns a value of ${Out0}, got ${Fn}"
+  )
   type Of[Fn, Out0] = IsFunction[Fn] { type Out = Out0 }
 
   private def cast[A, Out](of: Of[?, Out]): Of[A, Out] = of.asInstanceOf[Of[A, Out]]

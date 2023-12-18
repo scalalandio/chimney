@@ -6,7 +6,7 @@ import io.scalaland.chimney.fixtures.*
 class TotalTransformerCustomConstructor2_13plusSyntaxSpec extends ChimneySpec {
 
   // 2.13+ doesn't require explicit Eta-expansion (no need to "method _")
-  test("""transformation from a "superset" of fields into a "subset" of fields without modifiers""") {
+  test("""allow transformation from using Eta-expanded method or lambda""") {
     import products.{Foo, Bar, BarParams}
 
     def uncurriedConstructor(x: Int, z: (Double, Double)): Bar = Bar(x * 2, (z._1 * 2, z._2 * 2))
