@@ -161,13 +161,39 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     macro PartialTransformerDefinitionMacros.withCoproductInstancePartialImpl[From, To, Cfg, Flags, Inst]
 
-  // TODO: docs
+  /** Use `f` instead of the primary constructor to construct the `To` value.
+    *
+    * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.
+    *
+    * Values for each parameter can be provided the same way as if they were normal constructor's arguments.
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#types-with-manually-provided-constructors]] for more details
+    *
+    * @tparam Ctor type of the Eta-expanded method/lambda which should return `To`
+    * @param f method name or lambda which constructs `To`
+    * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *
+    * @since 0.8.4
+    */
   def withConstructor[Ctor](
       f: Ctor
   )(implicit ev: IsFunction.Of[Ctor, To]): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
     macro PartialTransformerDefinitionMacros.withConstructorImpl[From, To, Cfg, Flags]
 
-  // TODO: docs
+  /** Use `f` instead of the primary constructor to parse into `partial.Result[To]` value.
+    *
+    * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.
+    *
+    * Values for each parameter can be provided the same way as if they were normal constructor's arguments.
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#types-with-manually-provided-constructors]] for more details
+    *
+    * @tparam Ctor type of the Eta-expanded method/lambda which should return `partial.Result[To]`
+    * @param f method name or lambda which constructs `partial.Result[To]`
+    * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *
+    * @since 0.8.4
+    */
   def withConstructorPartial[Ctor](
       f: Ctor
   )(implicit
