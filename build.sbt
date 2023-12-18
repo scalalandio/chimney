@@ -44,7 +44,6 @@ val versions = new {
 
 Global / excludeLintKeys += git.useGitDescribe
 Global / excludeLintKeys += ideSkipProject
-Global / excludeLintKeys += sourceDirectories
 val only1VersionInIDE =
   MatrixAction
     .ForPlatform(versions.idePlatform)

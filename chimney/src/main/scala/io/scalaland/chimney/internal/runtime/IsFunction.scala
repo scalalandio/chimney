@@ -2,8 +2,13 @@ package io.scalaland.chimney.internal.runtime
 
 import scala.annotation.implicitNotFound
 
+/** Allow us to provide some better IDE support than just accepting everything as a parameter and waiting for the macro
+  * to scream with compilation error, in the world where different function types have no common ancestor (other and AnyRef).
+  *
+  * @since 0.7.4
+  */
 @implicitNotFound(
-  "Expected function of any arity (Function0, Function1, Function2, ...) that returns a value of the target type, got ${Fn}"
+  "Expected function of any arity (scala.Function0, scala.Function1, scala.Function2, ...) that returns a value of the target type, got ${Fn}"
 )
 sealed trait IsFunction[Fn] {
   type Out
