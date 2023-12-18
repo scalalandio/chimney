@@ -243,10 +243,6 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       } else None
 
     def exprAsInstanceOfMethod[A: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Product.Constructor[A] = {
-
-      println("\n\n\n\nWTF\n\n\n")
-      println(s"Arguments: $args")
-
       val parameters: Product.Parameters = ListMap.from(for {
         list <- args
         pair <- list.toList
@@ -259,36 +255,24 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       })
 
       val constructor: Product.Arguments => Expr[A] = arguments => {
-
-        println("\n\n\n\nWTF\n\n\n")
-        println(s"Arguments: $args")
-        println(s"Arguments: $arguments")
-
         val (constructorArguments, _) = checkArguments[A](parameters, arguments)
 
         val methodType: ?? = args.foldRight[??](Type[A].as_??) { (paramList, resultType) =>
           val fnType = fnTypeByArity.getOrElse(
             paramList.size,
-            assertionFailed(s"Expected arity between 1 and 22 into ${Type.prettyPrint[A]}, got: ${paramList.size}")
+            // TODO: handle FunctionXXL
+            assertionFailed(s"Expected arity between 0 and 22 into ${Type.prettyPrint[A]}, got: ${paramList.size}")
           )
           val paramTypes = paramList.view.values.map(p => TypeRepr.of(using p.Underlying)).toVector
-
-          println(
-            s"Constructing: ${fnType.show(using Printer.TypeReprAnsiCode)} -> ${paramTypes
-                .map(_.show(using Printer.TypeReprAnsiCode))} + ${TypeRepr.of(using resultType.Underlying).show(using Printer.TypeReprAnsiCode)}"
-          )
 
           fromUntyped(
             fnType.appliedTo((paramTypes :+ TypeRepr.of(using resultType.Underlying)).toList).dealias.simplified
           ).as_??
-          // fromUntyped(AppliedType(fnType, (paramTypes :+ TypeRepr.of(using resultType.Underlying)).toList)).as_??
         }
 
         import methodType.Underlying as MethodType
-        println(s"Constructed: ${Type.prettyPrint[MethodType]}")
-        println(s"Expr: ${Expr.prettyPrint(expr.asInstanceOfExpr[MethodType])}")
         val tree = expr.asInstanceOfExpr[MethodType].asTerm
-        val a = args
+        args
           .foldLeft(tree) { (result, list) =>
             val method: Symbol = result.tpe.typeSymbol.methodMember("apply").head
             result
@@ -298,21 +282,13 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
               }.toList)
           }
           .asExprOf[A]
-
-        println(s"Final result: ${Expr.prettyPrint(a)}")
-
-        a
-//        tree
-//          .appliedToArgss(args.map(_.map { case (paramName, _) =>
-//            constructorArguments(paramName).value.asTerm
-//          }.toList))
-//          .asExprOf[A]
       }
 
       Product.Constructor[A](parameters, constructor)
     }
 
     private lazy val fnTypeByArity = Map(
+      0 -> TypeRepr.of[scala.Function0],
       1 -> TypeRepr.of[scala.Function1],
       2 -> TypeRepr.of[scala.Function2],
       3 -> TypeRepr.of[scala.Function3],

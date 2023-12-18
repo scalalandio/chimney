@@ -2,9 +2,8 @@ package io.scalaland.chimney.internal.runtime
 
 import scala.annotation.implicitNotFound
 
-// TODO: move implicit not found to use DSL, to be able to use ${To} in error message
 @implicitNotFound(
-  "Expected function of any arity (Function0, Function1, Function2, ...) that returns a value of the target type"
+  "Expected function of any arity (Function0, Function1, Function2, ...) that returns a value of the target type, got ${Fn}"
 )
 sealed trait IsFunction[Fn] {
   type Out
@@ -14,6 +13,7 @@ object IsFunction extends IsFunctionLowPriorityImplicits {
 
   private def cast[A, Out](of: Of[?, Out]): Of[A, Out] = of.asInstanceOf[Of[A, Out]]
 
+  implicit def curriedFunction0[Mid, Out](implicit ev: Of[Mid, Out]): Of[() => Mid, Out] = cast(ev)
   implicit def curriedFunction1[A, Mid, Out](implicit ev: Of[Mid, Out]): Of[A => Mid, Out] = cast(ev)
   implicit def curriedFunction2[A, B, Mid, Out](implicit ev: Of[Mid, Out]): Of[(A, B) => Mid, Out] = cast(ev)
   implicit def curriedFunction3[A, B, C, Mid, Out](implicit ev: Of[Mid, Out]): Of[(A, B, C) => Mid, Out] = cast(ev)
@@ -79,6 +79,7 @@ private[runtime] trait IsFunctionLowPriorityImplicits { this: IsFunction.type =>
   private val impl = new IsFunction[Any] {}
   private def cast[Fn, Out]: Of[Fn, Out] = impl.asInstanceOf[Of[Fn, Out]]
 
+  implicit def function0[Out]: Of[() => Out, Out] = cast
   implicit def function1[A, Out]: Of[A => Out, Out] = cast
   implicit def function2[A, B, Out]: Of[(A, B) => Out, Out] = cast
   implicit def function3[A, B, C, Out]: Of[(A, B, C) => Out, Out] = cast

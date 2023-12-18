@@ -87,43 +87,18 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       def extractParams(t: Tree): Either[String, List[List[ValDef]]] = t match {
         case DefDef(_, params, _, bodyOpt) =>
           val head = params.map(_.params.asInstanceOf[List[ValDef]])
-
-          // TODO: sprawdzić czy to faktycznie działa
-
           bodyOpt match {
             case Some(body) =>
               extractParams(body) match {
-                case Left(_) =>
-                  println(s"Skipped: $body")
-                  Right(head)
-                case Right(tail) =>
-                  println(s"Prepended: $head to $tail")
-                  Right(head ++ tail)
+                case Left(_)     => Right(head)
+                case Right(tail) => Right(head ++ tail)
               }
-            case None =>
-              println(s"No body")
-              Right(head)
+            case None => Right(head)
           }
-        case Block(List(defdef), Closure(_, _)) =>
-          println("Unwrapping single element block")
-          extractParams(defdef)
-        case Block(Nil, singleTerm) =>
-          println("Unwrapping single element block")
-          extractParams(singleTerm)
-        case Inlined(_, _, block) =>
-          println("Unwrapping inlined")
-          extractParams(block)
-        case _ =>
-          println(s"""Expression:
-                     |${t.show(using Printer.TreeAnsiCode)}
-                     |defined as:
-                     |${t.show(using Printer.TreeStructure)}
-                     |of type:
-                     |${t.asInstanceOf[Term].tpe.show(using Printer.TypeReprAnsiCode)}
-                     |of type:
-                     |${t.asInstanceOf[Term].tpe.show(using Printer.TypeReprStructure)}
-                     |""".stripMargin)
-          Left(invalidConstructor(t))
+        case Block(List(defdef), Closure(_, _)) => extractParams(defdef)
+        case Block(Nil, singleTerm)             => extractParams(singleTerm)
+        case Inlined(_, _, block)               => extractParams(block)
+        case _                                  => Left(invalidConstructor(t))
       }
 
       extractParams(t).map(params =>
@@ -202,19 +177,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       f: [Ctor <: runtime.ArgumentLists] => Type[Ctor] ?=> Out
   )(ctor: Expr[?]): Out =
     ExistentialCtor.parse(ctor.asTerm) match {
-      case Right(ctorType) =>
-        println(s"""Expression:
-                   |${ctor.asTerm.show(using Printer.TreeAnsiCode)}
-                   |defined as:
-                   |${ctor.asTerm.show(using Printer.TreeStructure)}
-                   |of type:
-                   |${ctor.asTerm.tpe.show(using Printer.TypeReprAnsiCode)}
-                   |of type:
-                   |${ctor.asTerm.tpe.show(using Printer.TypeReprStructure)}
-                   |resolved as:
-                   |${TypeRepr.of(using ctorType.Underlying).show(using Printer.TypeReprAnsiCode)}
-                   |""".stripMargin)
-        f(using ctorType.Underlying)
-      case Left(error) => report.errorAndAbort(error, Position.ofMacroExpansion)
+      case Right(ctorType) => f(using ctorType.Underlying)
+      case Left(error)     => report.errorAndAbort(error, Position.ofMacroExpansion)
     }
 }

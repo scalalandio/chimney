@@ -42,6 +42,7 @@ object NonCaseDomain {
 
 case class Foo(x: Int, y: String, z: (Double, Double))
 case class Bar(x: Int, z: (Double, Double))
+case class BarParams[A, B](x: A, z: (B, Double))
 case class HaveY(y: String)
 
 object Renames {

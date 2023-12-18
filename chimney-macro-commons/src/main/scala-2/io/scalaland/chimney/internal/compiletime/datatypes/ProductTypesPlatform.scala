@@ -238,7 +238,6 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         }
 
         import methodType.Underlying as MethodType
-        println(methodType)
         val tree = expr.asInstanceOfExpr[MethodType].tree
         c.Expr[A](q"$tree(...${(args.map(_.map { case (paramName, _) =>
             constructorArguments(paramName).value.tree

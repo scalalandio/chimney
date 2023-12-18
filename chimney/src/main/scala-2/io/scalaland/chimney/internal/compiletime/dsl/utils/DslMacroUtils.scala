@@ -93,37 +93,13 @@ private[chimney] trait DslMacroUtils {
           }
         // Scala 2.12
         case Block(Nil, term) => extractParams(term)
-        // TODO: remove once everything works
-        case _ =>
-          println(s"""Expression:
-                     |${Console.MAGENTA}${show(t)}${Console.RESET}
-                     |defined as:
-                     |${Console.MAGENTA}${showRaw(t)}${Console.RESET}
-                     |of type:
-                     |${Console.MAGENTA}${t.tpe}${Console.RESET}
-                     |of type:
-                     |${Console.MAGENTA}${showRaw(t.tpe)}${Console.RESET}
-                     |""".stripMargin)
-          Left(invalidConstructor(t))
+        case _                => Left(invalidConstructor(t))
       }
 
       extractParams(t).map { params =>
-        val tpe = paramsToType(params)
-        println(s"""Expression:
-                   |${Console.MAGENTA}${show(t)}${Console.RESET}
-                   |defined as:
-                   |${Console.MAGENTA}${showRaw(t)}${Console.RESET}
-                   |of type:
-                   |${Console.MAGENTA}${t.tpe}${Console.RESET}
-                   |of type:
-                   |${Console.MAGENTA}${showRaw(t.tpe)}${Console.RESET}
-                   |resolved as:
-                   |${Console.MAGENTA}$tpe${Console.RESET}
-                   |""".stripMargin)
-
         new ExistentialCtor {
           type Underlying = runtime.ArgumentLists
-          implicit val Underlying: WeakTypeTag[runtime.ArgumentLists] = tpe
+          implicit val Underlying: WeakTypeTag[runtime.ArgumentLists] = paramsToType(params)
         }
       }
     }
