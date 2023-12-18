@@ -176,4 +176,23 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
     result14.asEither ==> Right(typeParametricExpected)
     result14.asErrorPathMessageStrings ==> Iterable.empty
   }
+
+  test("""allow defining transformers with overrides""") {
+    import products.NonCaseDomain.*
+
+    implicit val transformer: PartialTransformer[ClassSource, TraitSource] = PartialTransformer
+      .define[ClassSource, TraitSource]
+      .withConstructorPartial { (name: String, id: String) =>
+        // swap
+        partial.Result.fromValue[TraitSource](new TraitSourceImpl(name = id, id = name))
+      }
+      // another swap
+      .withFieldRenamed(_.id, _.name)
+      .withFieldRenamed(_.name, _.id)
+      .buildTransformer
+
+    val result = (new ClassSource("id", "name")).transformIntoPartial[TraitSource].asOption.get
+    result.id ==> "id"
+    result.name ==> "name"
+  }
 }
