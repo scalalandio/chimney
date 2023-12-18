@@ -1994,6 +1994,14 @@ Then Chimney will try to match the source type's getters against the method's pa
     }.transform // Bar("1000")
     ```
 
+!!! warning
+
+    The current implementation has a limit of 22 arguments even on Scala 3 (it doesn't use `scala.FunctionXXL`).
+    
+    It also requires that you either pass a method (which will be Eta-expanded) or a lambda with _all_ parameters names
+    (to allow matching parameters by name). It allows the method to have multiple parameters list and lambda to be
+    defined as curried (`(a: A, b: B) => (c: C) => { ... }`). 
+
 If your type only has smart a constructor which e.g. validates the input and might fail, you can provide a that smart
 constructor for `PartialTransformer`:
 
