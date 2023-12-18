@@ -96,7 +96,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it will fail.
     *
-    * @see [[]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
     * @tparam Inst type of coproduct instance@param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]

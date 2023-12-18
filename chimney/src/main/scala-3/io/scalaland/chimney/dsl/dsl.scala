@@ -25,6 +25,7 @@ extension [From](source: From) {
     * [[io.scalaland.chimney.dsl.TransformerOps#into]] method.
     *
     * @see [[io.scalaland.chimney.Transformer.AutoDerived#deriveAutomatic]] for default implicit instance
+    *
     * @tparam To target type
     * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
     * @return transformed value of target type `To`
@@ -50,6 +51,7 @@ extension [From](source: From) {
     * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
     *
     * @see [[io.scalaland.chimney.PartialTransformer#deriveAutomatic]] for default implicit instance
+    *
     * @tparam To result target type of partial transformation
     * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
     * @return partial transformation result value of target type `To`
@@ -67,6 +69,7 @@ extension [From](source: From) {
     * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
     *
     * @see [[io.scalaland.chimney.PartialTransformer#deriveAutomatic]] for default implicit instance
+    *
     * @tparam To result target type of partial transformation
     * @param failFast    should fail as early as the first set of errors appear
     * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
@@ -95,6 +98,7 @@ extension [A](obj: A) {
     * [[io.scalaland.chimney.dsl.PatcherOps#using using]] method.
     *
     * @see [[io.scalaland.chimney.Patcher#deriveAutomatic]] for default implicit instance
+    *
     * @tparam Patch type of patch object
     * @param patch   patch object value
     * @param patcher implicit instance of [[io.scalaland.chimney.Patcher]] type class

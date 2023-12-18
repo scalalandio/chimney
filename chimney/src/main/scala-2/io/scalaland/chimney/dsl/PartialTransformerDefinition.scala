@@ -130,7 +130,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
     *
-    * @see [[]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
     * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
@@ -148,7 +148,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
     *
-    * @see [[]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
     * @tparam Inst type of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically

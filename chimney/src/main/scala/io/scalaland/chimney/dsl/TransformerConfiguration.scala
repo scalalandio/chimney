@@ -5,6 +5,7 @@ import io.scalaland.chimney.internal.runtime.TransformerFlags
 /** Type-level set of derivation flags that can be shared between derivations through implicit scope.
   *
   * @see [[https://chimney.readthedocs.io/cookbook/#reusing-flags-for-several-transformationspatchings]] for more details
+  *
   * @tparam Flags type-level encoded flags
   *
   * @since 0.6.0
