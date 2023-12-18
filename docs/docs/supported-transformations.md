@@ -1971,8 +1971,15 @@ Finally, you can always provide a custom `Transformer` from/to a type containing
 
 ## Types with manually provided constructors
 
-If your type cannot be constructed with a public primary constructor, is not a Scala collection, Option, `AnyVal`, etc
-BUT you do know a way of constructing this type using a method - or handwritten lambda - you can point to that method.
+If you cannot use a public primary constructor to create the target type, is NOT a Scala collection, `Option`, `AnyVal`,
+... but is e.g.:
+
+  - a type using a smart constructor
+  - a type which has multiple constructors and you need to point which one you want to use
+  - abstract type defined next to an abstract method that will instantiate it
+  - non-`sealed` `trait` where you want to pick one particular implementation for your transformation
+
+AND you do know a way of constructing this type using a method - or handwritten lambda - you can point to that method.
 Then Chimney will try to match the source type's getters against the method's parameters by their names:  
 
 !!! example
@@ -2034,14 +2041,57 @@ constructor for `PartialTransformer`:
       }.transform.asEither // Right(Bar(1000))
     ```
 
-You can use this to automatically match the source's getters e.g. against Scala 3's `opaque type`'s constructor's
-arguments - these types would almost always have methods which the user could recognize as constructor's but which might
-be difficult to be automatically recognized as such: 
+You can use this to automatically match the source's getters e.g. against smart constructor'sarguments - these types
+would almost always have methods which the user could recognize as constructor's but which might be difficult
+to be automatically recognized as such: 
 
 !!! example
  
-    Due to nature of `opaque type`s to work this example needs to have opaque types defined in a different `.scala`
-    file than where they are being used:
+    Due to the nature of `opaque type`s this example needs to have opaque types defined in a different `.scala` file
+    than where they are being used:
+
+    ```scala
+    package models
+    
+    case class StringIP(s1: String, s2: String, s3: String, s4: String)
+
+    opaque type IP = Int
+    extension (ip: IP)
+      def _1: Byte = ((ip >> 24) & 255).toByte
+      def _2: Byte = ((ip >> 16) & 255).toByte
+      def _3: Byte = ((ip >> 8) & 255).toByte
+      def _4: Byte = ((ip >> 0) & 255).toByte
+      def value: Int = ip
+      def show: String = s"$_1.$_2.$_3.$_4"
+    object IP {
+      def parse(s1: String, s2: String, s3: String, s4: String): Either[String, IP] =
+        scala.util.Try {
+          val i1 = (s1.toInt & 255) << 24
+          val i2 = (s2.toInt & 255) << 16
+          val i3 = (s3.toInt & 255) << 8
+          val i4 = (s4.toInt & 255)
+          i1 + i2 + i3 + i4
+        }.toEither.left.map(_.getMessage)
+    }
+    ```
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    package example
+    
+    import io.scalaland.chimney.dsl.*
+    import io.scalaland.chimney.{partial, PartialTransformer}
+    import models.*
+    
+    given PartialTransformer[StringIP, IP] = PartialTransformer.define[StringIP, IP]
+      .withConstructorPartial { (s1: String, s2: String, s3: String, s4: String) =>
+        partial.Result.fromEitherString(IP.parse(s1, s2, s3, s4))
+      }.buildTransformer
+    
+    @main def example: Unit =
+      println(StringIP("127", "0", "0", "1").transformIntoPartial[IP].asEither.map(_.show))
+    ```
 
     ```scala
     package models
@@ -2077,10 +2127,10 @@ be difficult to be automatically recognized as such:
 
 !!! tip 
 
-    `opaque type`s usually have only one constructor argument and usually it is easier to not transform them that way,
+    `opaque type`s usually have only one constructor argument, and usually it is easier to not transform them that way,
     but rather call their constructor directly. If `opaque type`s are nested in the transformed structure, it might be
     easier to define [a custom transformer](#custom-transformations), perhaps by using a dedicated new type/refined type
-    library and [providing an integration for all of its types](cookbook.md#libraries-with-smart-constructors).  
+    library and [providing an integration for all of its types](cookbook.md#libraries-with-smart-constructors).
 
 ## Custom transformations
 

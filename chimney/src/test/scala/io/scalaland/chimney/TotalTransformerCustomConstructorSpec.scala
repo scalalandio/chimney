@@ -63,4 +63,23 @@ class TotalTransformerCustomConstructorSpec extends ChimneySpec {
       .withConstructor(typeParametricConstructor[Int, Double] _)
       .transform ==> BarParams(3, (3.14, 12.56))
   }
+
+  test("""allow defining transformers with overrides""") {
+    import products.NonCaseDomain.*
+
+    implicit val transformer: Transformer[ClassSource, TraitSource] = Transformer
+      .define[ClassSource, TraitSource]
+      .withConstructor { (name: String, id: String) =>
+        // swap
+        new TraitSourceImpl(name = id, id = name): TraitSource
+      }
+      // another swap
+      .withFieldRenamed(_.id, _.name)
+      .withFieldRenamed(_.name, _.id)
+      .buildTransformer
+
+    val result = (new ClassSource("id", "name")).transformInto[TraitSource]
+    result.id ==> "id"
+    result.name ==> "name"
+  }
 }
