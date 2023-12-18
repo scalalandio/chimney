@@ -2014,11 +2014,16 @@ constructor for `PartialTransformer`:
     def smartConstructor(value: String): partial.Result[Bar] =
       partial.Result.fromEitherString(Bar.parse(value))
 
-    Foo("10").intoPartial[Bar].withConstructorPartial(smartConstructor).transform.asEither // Right(Bar(10))
+    Foo("10")
+      .intoPartial[Bar]
+      .withConstructorPartial(smartConstructor)
+      .transform.asEither // Right(Bar(10))
     
-    Foo("10").intoPartial[Bar].withConstructorPartial { (value: String) =>
-      partial.Result.fromEitherString(Bar.parse(value))
-    }.transform.asEither // Right(Bar(1000))
+    Foo("10")
+      .intoPartial[Bar]
+      .withConstructorPartial { (value: String) =>
+        partial.Result.fromEitherString(Bar.parse(value))
+      }.transform.asEither // Right(Bar(1000))
     ```
 
 You can use this to automatically match the source's getters e.g. against Scala 3's `opaque type`'s constructor's
@@ -2027,8 +2032,8 @@ be difficult to be automatically recognized as such:
 
 !!! example
  
-    Due to nature of `opaque type`s to work this example needs to have opaque types defined in a different file than
-    where they are being used:
+    Due to nature of `opaque type`s to work this example needs to have opaque types defined in a different `.scala`
+    file than where they are being used:
 
     ```scala
     package models
@@ -2053,13 +2058,21 @@ be difficult to be automatically recognized as such:
     import io.scalaland.chimney.{partial, PartialTransformer}
     import models.{Foo, Bar}
     
-    given PartialTransformer[Foo, Bar] = PartialTransformer.define[Foo, Bar].withConstructorPa>
-      partial.Result.fromEitherString(Bar.parse(value))
-    }.buildTransformer
+    given PartialTransformer[Foo, Bar] = PartialTransformer.define[Foo, Bar]
+      .withConstructorPartial { (value: String) =>
+        partial.Result.fromEitherString(Bar.parse(value))
+      }.buildTransformer
     
     @main def example: Unit =
       println(Foo("10").transformIntoPartial[Bar].asEither)
     ```
+
+!!! tip 
+
+    `opaque type`s usually have only one constructor argument and usually it is easier to not transform them that way,
+    but rather call their constructor directly. If `opaque type`s are nested in the transformed structure, it might be
+    easier to define [a custom transformer](#custom-transformations), perhaps by using a dedicated new type/refined type
+    library and [providing an integration for all of its types](cookbook.md#libraries-with-smart-constructors).  
 
 ## Custom transformations
 
