@@ -15,7 +15,7 @@ assignees: ''
   - [ ] I checked the https://github.com/scala/bug/issues and haven't found the issue reported there - relevant for Scala 2 compiler crashes, since it might be a bug in the compiler
   - [ ] I checked the https://github.com/lampepfl/dotty/issues and haven't found the issue reported there - relevant for Scala 3 compiler crashes, since it might be a bug in the compiler 
 - [ ] I confirmed that the bug is not related to functionality that was deprecated: lifted transformers (`TransformerF`s) or `unsafeOption` flags
-- [ ] I believe that this is actual bug, rather than a question how to use existing features
+- [ ] I believe that this is actual bug, rather than [a question how to use existing features](https://github.com/scalalandio/chimney/discussions)
 
 **Describe the bug**
 
