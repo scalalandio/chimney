@@ -2,6 +2,8 @@ package io.scalaland.chimney.partial
 
 /** Data type for representing path element in a (possibly) nested object structure.
   *
+  * @see [[https://chimney.readthedocs.io/supported-transformations/#total-transformers-vs-partialtransformers]]
+  *
   * @since 0.7.0
   */
 sealed trait PathElement {
@@ -13,6 +15,12 @@ sealed trait PathElement {
   def asString: String
 }
 
+/** Companion of [[io.scalaland.chimney.partial.PathElement]].
+  *
+  * @see [[https://chimney.readthedocs.io/supported-transformations/#total-transformers-vs-partialtransformers]]
+  *
+  * @since 0.7.0
+  */
 object PathElement {
 
   /** Object property accessor (e.g case class param name).

@@ -5,7 +5,8 @@ import io.scalaland.chimney.internal.runtime.TransformerFlags
 
 import scala.annotation.unused
 
-/** Type-level representation of derivation flags which can be enabled/disabled for a specific transformation or globally.
+/** Type-level representation of derivation flags which can be enabled/disabled for a specific transformation or
+  * globally.
   *
   * @since 0.6.0
   */
@@ -13,7 +14,8 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Enable lookup in definitions inherited from supertype.
     *
-    * By default only values defined directly in the type are considered. With this flag supertype methods would not be filtered out
+    * By default only values defined directly in the type are considered. With this flag supertype methods would not be
+    * filtered out
     *
     * @see [[https://chimney.readthedocs.io/supported-transformations/#reading-from-inherited-valuesmethods]] for more details
     *
