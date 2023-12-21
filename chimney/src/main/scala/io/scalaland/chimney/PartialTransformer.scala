@@ -3,9 +3,11 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinitionCommons}
 import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
 
-/** Type class expressing partial transformation between
-  * source type `From` and target type `To`, with the ability
+/** Type class expressing partial transformation between source type `From` and target type `To`, with the ability
   * of reporting path-annotated transformation error(s).
+  *
+  * @see [[https://chimney.readthedocs.io/supported-transformations/]]
+  * @see [[https://chimney.readthedocs.io/supported-transformations/#total-transformers-vs-partialtransformers]]
   *
   * @tparam From type of input value
   * @tparam To   type of output value
@@ -17,8 +19,9 @@ trait PartialTransformer[From, To] extends PartialTransformer.AutoDerived[From, 
   /** Run transformation using provided value as a source.
     *
     * @param src source value
-    * @param failFast should fail as early as the first set of errors appear
-    * @return result of transformation
+    * @param failFast whether the transformerion should return as early as the first set of errors appear (`true`),
+    *                 or should it attempt to convert what it can and then aggregate all errors (`false`)
+    * @return [[io.scalaland.chimney.partial.Result]] of the transformation
     *
     * @since 0.7.0
     */
@@ -27,7 +30,7 @@ trait PartialTransformer[From, To] extends PartialTransformer.AutoDerived[From, 
   /** Run transformation using provided value as a source in error accumulation mode.
     *
     * @param src source value
-    * @return result of transformation
+    * @return [[io.scalaland.chimney.partial.Result]] of the transformation
     *
     * @since 0.7.0
     */
@@ -37,7 +40,7 @@ trait PartialTransformer[From, To] extends PartialTransformer.AutoDerived[From, 
   /** Run transformation using provided value as a source in short-circuit (fail fast) mode.
     *
     * @param src source value
-    * @return result of transformation
+    * @return [[io.scalaland.chimney.partial.Result]] of the transformation
     *
     * @since 0.7.0
     */
@@ -45,6 +48,13 @@ trait PartialTransformer[From, To] extends PartialTransformer.AutoDerived[From, 
     transform(src, failFast = true)
 }
 
+/** Companion of [[io.scalaland.chimney.PartialTransformer]].
+  *
+  * @see [[https://chimney.readthedocs.io/supported-transformations/]]
+  * @see [[https://chimney.readthedocs.io/supported-transformations/#total-transformers-vs-partialtransformers]]
+  *
+  * @since 0.7.0
+  */
 object PartialTransformer extends PartialTransformerCompanionPlatform {
 
   /** Construct ad-hoc instance of partial transformer from transforming function returning partial result.
@@ -93,8 +103,8 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
   def liftTotal[From, To](t: Transformer[From, To]): PartialTransformer[From, To] =
     fromFunction[From, To](t.transform)
 
-  /** Creates an empty [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] that
-    * you can customize to derive [[io.scalaland.chimney.PartialTransformer]].
+  /** Creates an empty [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] that you can customize to derive
+    * [[io.scalaland.chimney.PartialTransformer]].
     *
     * @see [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] for available settings
     *
@@ -107,9 +117,23 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
   def define[From, To]: PartialTransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 
+  /** Type class used when you want o allow using automatically derived transformations.
+    *
+    * When we want to only allow semiautomatically derived/manually defined instances you should use
+    * [[io.scalaland.chimney.PartialTransformer]].
+    *
+    * @see [[https://chimney.readthedocs.io/cookbook/#automatic-semiautomatic-and-inlined-derivation]] for more details
+    *
+    * @tparam From type of input value
+    * @tparam To   type of output value
+    *
+    * @since 0.8.0
+    */
   trait AutoDerived[From, To] {
     def transform(src: From, failFast: Boolean): partial.Result[To]
   }
+
+  /** @since 0.8.0 */
   object AutoDerived extends PartialTransformerAutoDerivedCompanionPlatform {
 
     implicit def liftTotal[From, To](implicit total: Transformer[From, To]): AutoDerived[From, To] =

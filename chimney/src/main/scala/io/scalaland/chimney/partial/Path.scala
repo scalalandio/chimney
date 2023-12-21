@@ -37,6 +37,10 @@ final case class Path(private val elems: List[PathElement]) extends AnyVal {
     }
 }
 
+/** Companion of [[io.scalaland.chimney.partial.Path]]
+  *
+  * @since 0.7.0
+  */
 object Path {
 
   /** Empty error path

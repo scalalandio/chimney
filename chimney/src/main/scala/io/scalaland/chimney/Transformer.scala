@@ -3,8 +3,10 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinition, TransformerDefinitionCommons}
 import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
 
-/** Type class expressing total transformation between
-  * source type `From` and target type `To`.
+/** Type class expressing total transformation between source type `From` and target type `To`.
+  *
+  * @see [[https://chimney.readthedocs.io/supported-transformations/]]
+  * @see [[https://chimney.readthedocs.io/supported-transformations/#total-transformers-vs-partialtransformers]]
   *
   * @tparam From type of input value
   * @tparam To   type of output value
@@ -23,10 +25,17 @@ trait Transformer[From, To] extends Transformer.AutoDerived[From, To] {
   def transform(src: From): To
 }
 
+/** Companion of [[io.scalaland.chimney.Transformer]].
+  *
+  * @see [[https://chimney.readthedocs.io/supported-transformations/]]
+  * @see [[https://chimney.readthedocs.io/supported-transformations/#total-transformers-vs-partialtransformers]]
+  *
+  * @since 0.2.0
+  */
 object Transformer extends TransformerCompanionPlatform {
 
-  /** Creates an empty [[io.scalaland.chimney.dsl.TransformerDefinition]] that
-    * you can customize to derive [[io.scalaland.chimney.Transformer]].
+  /** Creates an empty [[io.scalaland.chimney.dsl.TransformerDefinition]] that you can customize to derive
+    * [[io.scalaland.chimney.Transformer]].
     *
     * @see [[io.scalaland.chimney.dsl.TransformerDefinition]] for available settings
     *
@@ -39,8 +48,8 @@ object Transformer extends TransformerCompanionPlatform {
   def define[From, To]: TransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new TransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 
-  /** Creates an empty [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] that
-    * you can customize to derive [[io.scalaland.chimney.PartialTransformer]].
+  /** Creates an empty [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] that you can customize to derive
+    * [[io.scalaland.chimney.PartialTransformer]].
     *
     * @see [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] for available settings
     *
@@ -53,8 +62,22 @@ object Transformer extends TransformerCompanionPlatform {
   def definePartial[From, To]: PartialTransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
     new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 
+  /** Type class used when you want o allow using automatically derived transformations.
+    *
+    * When we want to only allow semiautomatically derived/manually defined instances you should use
+    * [[io.scalaland.chimney.Transformer]].
+    *
+    * @see [[https://chimney.readthedocs.io/cookbook/#automatic-semiautomatic-and-inlined-derivation]] for more details
+    *
+    * @tparam From type of input value
+    * @tparam To   type of output value
+    *
+    * @since 0.8.0
+    */
   trait AutoDerived[From, To] {
     def transform(src: From): To
   }
+
+  /** @since 0.8.0 */
   object AutoDerived extends TransformerAutoDerivedCompanionPlatform
 }

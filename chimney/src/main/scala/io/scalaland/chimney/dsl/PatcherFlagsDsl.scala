@@ -9,12 +9,10 @@ import io.scalaland.chimney.internal.runtime.PatcherFlags
   */
 private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: PatcherFlags] {
 
-  /** In case when both object to patch and patch value contain field
-    * of type `Option[T]`, this option allows to treat `None` value in
-    * patch like the value was not provided.
+  /** In case when both object to patch and patch value contain field of type [[scala.Option]], this option allows
+    * to treat [[scala.None]] value in patch as if the value was not provided.
     *
-    * By default, when `None` is delivered in patch, Chimney clears
-    * the value of such field on patching.
+    * By default, when [[scala.None]] is delivered in patch, Chimney clears the value of such field on patching.
     *
     * @see [[https://chimney.readthedocs.io/supported-patching/#treating-none-as-no-update-instead-of-set-to-none]] for more details
     *
@@ -25,7 +23,7 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
   def ignoreNoneInPatch: UpdateFlag[Enable[IgnoreNoneInPatch, Flags]] =
     enableFlag[IgnoreNoneInPatch]
 
-  /** Then there Option is patching Option, on None value will be cleared.
+  /** Then there [[scala.Option]] is patching [[scala.Option]], on [[scala.None]] value will be cleared.
     *
     * @see [[https://chimney.readthedocs.io/supported-patching/#treating-none-as-no-update-instead-of-set-to-none]] for more details
     *
@@ -36,13 +34,11 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
   def clearOnNoneInPatch: UpdateFlag[Disable[IgnoreNoneInPatch, Flags]] =
     disableFlag[IgnoreNoneInPatch]
 
-  /** In case that patch object contains a redundant field (i.e. field that
-    * is not present in patched object type), this option enables ignoring
-    * value of such fields and generate patch successfully.
+  /** In case that patch object contains a redundant field (i.e. field that is not present in patched object type), this
+    * option enables ignoring value of such fields and generate patch successfully.
     *
-    * By default, when Chimney detects a redundant field in patch object, it
-    * fails the compilation in order to prevent silent oversight of field name
-    * typos.
+    * By default, when Chimney detects a redundant field in patch object, it fails the compilation in order to prevent
+    * silent oversight of field name typos.
     *
     * @see [[https://chimney.readthedocs.io/supported-patching/#ignoring-fields-in-patches]] for more details
     *

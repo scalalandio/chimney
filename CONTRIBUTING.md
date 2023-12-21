@@ -76,7 +76,7 @@ Information about Scala macros can be found on:
  * [EPFL papers](https://infoscience.epfl.ch/search?ln=en&as=1&m1=p&p1=macros&f1=keyword&op1=a&m2=p&p2=scala&f2=&op2=a&m3=a&p3=&f3=&dt=&d1d=&d1m=&d1y=&d2d=&d2m=&d2y=&rm=&action_search=Search&sf=title&so=a&rg=10&c=Infoscience&of=hb)
 
 Very basic introduction can be found in [design doc](DESIGN.md) and in the
-[Under the hood](https://chimney.readthedocs.io/en/stable/under-the-hood/) section of the documentation.
+[Under the hood](https://chimney.readthedocs.io/under-the-hood/) section of the documentation.
 From then on we suggest looking at tests, and using`.enableMacrosLogging` to see how some branches are triggered.
 If still at doubt, you can ask us on GH discussions.
 
