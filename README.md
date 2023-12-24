@@ -1,4 +1,4 @@
-# Chimney <img src="chimney.png" alt="Chimney logo" width="64" />
+# <img src="gfx/chimney-logo.svg" alt="Chimney logo" height="60" />  Chimney
 
 [![chimney Scala version support](https://index.scala-lang.org/scalalandio/chimney/chimney/latest.svg)](https://index.scala-lang.org/scalalandio/chimney/chimney)
 
