@@ -2093,6 +2093,8 @@ to be automatically recognized as such:
       println(StringIP("127", "0", "0", "1").transformIntoPartial[IP].asEither.map(_.show))
     ```
 
+!!! example
+
     ```scala
     package models
     

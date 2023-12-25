@@ -1,3 +1,5 @@
+<p style="text-align: center"><img src="https://raw.githubusercontent.com/scalalandio/chimney/{{ git.commit }}/gfx/chimney-logo-circle-dark.svg" alt="Chimney logo" style="height: 250px" /></p>
+
 <h1 style="margin-bottom:0">Chimney</h1>
 <h2 style="margin-top:0">The battle-tested Scala library for data transformations</h2>
 
