@@ -1,6 +1,8 @@
-# <img src="gfx/chimney-logo.svg" alt="Chimney logo" height="60" />  Chimney
+<p style="text-align: center"><img src="gfx/chimney-logo-circle-dark.svg" alt="Chimney logo" height="250px" /></p>
 
-[![chimney Scala version support](https://index.scala-lang.org/scalalandio/chimney/chimney/latest.svg)](https://index.scala-lang.org/scalalandio/chimney/chimney)
+# Chimney
+
+[![Chimney Scala version support](https://index.scala-lang.org/scalalandio/chimney/chimney/latest.svg)](https://index.scala-lang.org/scalalandio/chimney/chimney)
 
 [![CI build](https://github.com/scalalandio/chimney/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/scalalandio/chimney/actions)
 [![codecov.io](http://codecov.io/github/scalalandio/chimney/coverage.svg?branch=master)](http://codecov.io/github/scalalandio/chimney?branch=master)
