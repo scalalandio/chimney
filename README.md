@@ -1,4 +1,4 @@
-<p align="center"><img src="gfx/chimney-logo-circle-dark.svg" alt="Chimney logo" height="250px" /></p>
+<p align="center"><img src="gfx/chimney-logo-circle-matching.svg" alt="Chimney logo" height="250px" /></p>
 
 # Chimney
 
