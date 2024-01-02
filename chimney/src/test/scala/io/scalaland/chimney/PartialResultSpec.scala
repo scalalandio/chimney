@@ -74,15 +74,17 @@ class PartialResultSpec extends ChimneySpec {
 
   test("fold collapses Result into requested value") {
     partial.Result.fromValue(1).fold(_.toString, _.asErrorPathMessageStrings.mkString(", ")) ==> "1"
-    partial.Result.fromEmpty.fold(_.toString, _.asErrorPathMessageStrings.mkString(", ")) ==> "(, empty value)"
-    partial.Result.fromErrorString("test").fold(_.toString, _.asErrorPathMessageStrings.mkString(", ")) ==> "(, test)"
+    partial.Result.fromEmpty[Int].fold(_.toString, _.asErrorPathMessageStrings.mkString(", ")) ==> "(,empty value)"
+    partial.Result
+      .fromErrorString[Int]("test")
+      .fold(_.toString, _.asErrorPathMessageStrings.mkString(", ")) ==> "(,test)"
     val exception = new NoSuchElementException("test")
     partial.Result
-      .fromErrorThrowable(exception)
-      .fold(_.toString, _.asErrorPathMessageStrings.mkString(", ")) ==> "(, test)"
+      .fromErrorThrowable[Int](exception)
+      .fold(_.toString, _.asErrorPathMessageStrings.mkString(", ")) ==> "(,test)"
     partial.Result
-      .fromErrorNotDefinedAt(100)
-      .fold(_.toString, _.asErrorPathMessageStrings.mkString(", ")) ==> "(, not defined at 100)"
+      .fromErrorNotDefinedAt[Int](100)
+      .fold(_.toString, _.asErrorPathMessageStrings.mkString(", ")) ==> "(,not defined at 100)"
   }
 
   test("map only modifies successful result") {
@@ -705,5 +707,56 @@ class PartialResultSpec extends ChimneySpec {
     result4.asOption ==> None
     result4.asEither.isLeft ==> true
     result4.asErrorPathMessageStrings ==> Iterable("" -> """For input string: "error"""")
+  }
+
+  group("import partial.syntax.* should") {
+
+    import io.scalaland.chimney.partial.syntax.*
+
+    test("allow lifting Option to partial.Result with extension methods") {
+      (Some(1): Option[Int]).asResult.asEitherErrorPathMessageStrings ==> Right(1)
+      (None: Option[Int]).asResult.asEitherErrorPathMessageStrings ==> Left(Iterable("" -> "empty value"))
+
+      (Some(1): Option[Int])
+        .orErrorAsResult(partial.Error.fromString("It was empty"))
+        .asEitherErrorPathMessageStrings ==> Right(1)
+      (None: Option[Int])
+        .orErrorAsResult(partial.Error.fromString("It was empty"))
+        .asEitherErrorPathMessageStrings ==> Left(Iterable("" -> "It was empty"))
+
+      (Some(1): Option[Int])
+        .orStringAsResult("It was empty!")
+        .asEitherErrorPathMessageStrings ==> Right(1)
+      (None: Option[Int])
+        .orStringAsResult("It was empty!")
+        .asEitherErrorPathMessageStrings ==> Left(Iterable("" -> "It was empty!"))
+
+      (Some(1): Option[Int])
+        .orThrowableAsResult(new Throwable("It was empty!!"))
+        .asEitherErrorPathMessageStrings ==> Right(1)
+      (None: Option[Int])
+        .orThrowableAsResult(new Throwable("It was empty!!"))
+        .asEitherErrorPathMessageStrings ==> Left(Iterable("" -> "It was empty!!"))
+    }
+
+    test("allow lifting Either to partial.Result with extension method") {
+      (Right(1): Either[partial.Result.Errors, Int]).asResult.asEitherErrorPathMessageStrings ==> Right(1)
+      (Left(partial.Result.Errors.fromString("some error")): Either[
+        partial.Result.Errors,
+        Int
+      ]).asResult.asEitherErrorPathMessageStrings ==> Left(Iterable("" -> "some error"))
+
+      (Right(1): Either[String, Int]).asResult.asEitherErrorPathMessageStrings ==> Right(1)
+      (Left("some error"): Either[String, Int]).asResult.asEitherErrorPathMessageStrings ==> Left(
+        Iterable("" -> "some error")
+      )
+    }
+
+    test("allow lifting Try to partial.Result with extension methods") {
+      Try(1).asResult.asEitherErrorPathMessageStrings ==> Right(1)
+      Try("error".toInt).asResult.asEitherErrorPathMessageStrings ==> Left(
+        Iterable("" -> """For input string: "error"""")
+      )
+    }
   }
 }
