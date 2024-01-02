@@ -1,3 +1,9 @@
+---
+hide:
+  - navigation
+  - toc
+---
+
 <style>
     .benchmarks-content {
         min-width: 100%;

@@ -1,3 +1,9 @@
+---
+hide:
+  - navigation
+  - toc
+---
+
 <p style="text-align: center"><img src="https://raw.githubusercontent.com/scalalandio/chimney/{{ git.commit }}/gfx/chimney-logo-circle-matching.svg" alt="Chimney logo" style="height: 250px" /></p>
 
 <h1 style="margin-bottom:0">Chimney</h1>
