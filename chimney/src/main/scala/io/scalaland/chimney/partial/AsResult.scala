@@ -7,6 +7,8 @@ import scala.util.Try
   * Should define logic what is considered successful value, what is considered failed value and how to convert it into
   * [[io.scalaland.chimney.partial.Result]].
   *
+  * @see [[https://chimney.readthedocs.io/supported-transformations/#total-transformers-vs-partialtransformers]]
+  * @see [[https://chimney.readthedocs.io/supported-transformations/#partialresult-utilities]]
   * @tparam F generic data type which should be convertible to `Result` for all possible values
   *
   * @since 0.8.5

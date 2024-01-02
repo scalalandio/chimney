@@ -4,6 +4,8 @@ package object syntax {
 
   /** Provides operations lifting [[scala.Option]] to [[io.scalaland.chimney.partial.Result]].
     *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#partialresult-utilities]] for more details
+    *
     * @tparam A successful value type
     * @param option value to convert
     *
@@ -44,6 +46,7 @@ package object syntax {
 
   /** Provides operations lifting `F[A]` to [[io.scalaland.chimney.partial.Result]].
     *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#partialresult-utilities]] for more details
     * @tparam F wrapper type
     * @tparam A successful value type
     * @param fa value to convert
