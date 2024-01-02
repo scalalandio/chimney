@@ -120,6 +120,90 @@ As you can see `partial.Result` contains `Iterable` as a structure for holding i
     In both of these cases, you might need to provide transformations for some types, buried in deep nesting, but often
     Chimney would be able to use them to generate a conversion of a whole model.
 
+### `partial.Result` utilities
+
+When you want to create a `PartialTransformer` you might need to create a `partial.Result`. In some cases you can get
+away with just providing a throwing function, and letting some utility catch the `Exception`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.PartialTransformer
+    import io.scalaland.chimney.dsl._
+
+    val fn: String => Int = str => str.toInt // throws Exception if String is not a number    
+
+    implicit val transformer: PartialTransformer[String, Int] =
+      PartialTransformer.fromFunction(fn) // catches exception
+    
+    "1".transformIntoPartial[Int].asEitherErrorPathMessageStrings // Right(1)
+    "error".transformIntoPartial[Int].asEitherErrorPathMessageStrings // Left(Iterable("" -> """For input string: "error""""))
+    ```
+
+Other times you might need to convert `PartialFunction` into total function with `partial.Result`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.PartialTransformer
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+
+    val fn: PartialFunction[String, Int] = {
+      case str if str.forall(_.isDigit) => str.toInt
+    }
+
+    implicit val transformer: PartialTransformer[String, Int] = 
+      PartialTransformer(partial.Result.fromPartialFunction(fn)) // handled "not defined at" case
+    
+    "1".transformIntoPartial[Int].asEitherErrorPathMessageStrings // Right(1)
+    "error value".transformIntoPartial[Int].asEitherErrorPathMessageStrings // Left(Iterable("" -> "not defined at error value"))
+    ```
+
+However, the most common case would be where you would have to use one of utilities provided in `partial.Result`:
+
+!!! example
+ 
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.PartialTransformer
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+     
+    implicit val transformer: PartialTransformer[String, Int] = PartialTransformer[String, Int] { str =>
+      str match {
+        case ""      => partial.Result.fromEmpty
+        case "msg"   => partial.Result.fromErrorString("error message")
+        case "error" => partial.Result.fromErrorThrowable(new Throwable("an error happened"))
+        case value   => partial.Result.fromCatching(value.toInt)
+      }
+    }
+     
+    List("", "error", "msg", "invaid").transformIntoPartial[List[Int]].asEitherErrorPathMessageStrings
+    // Left(Iterable((0) -> "empty value", (1) -> "an error happened", (2) -> "error message", (3) -> """For input string: "invaid""""))
+    ```
+
+If you are converting from: `Option`s, `Either[String, A]` or `Try` you can use an extension method:
+
+!!! example
+ 
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.partial.syntax._
+     
+    (Some(1): Option[Int]).asResult.asEitherErrorPathMessageStrings // Right(1)
+    (None: Option[Int]).asResult.asEitherErrorPathMessageStrings // Left(Iterable("" -> "empty value))
+     
+    (Right(1): Either[String, Int]).asResult.asEitherErrorPathMessageStrings // Right(1)
+    (Left("invalid"): Either[String, Int]).asResult.asEitherErrorPathMessageStrings // Left(Iterable("" -> "invalid"))
+     
+    import scala.util.Try
+    Try("1".toInt).asResult.asEitherErrorPathMessageStrings // Right(1)
+    Try("invalid".toInt).asResult.asEitherErrorPathMessageStrings // Left(Iterable("" -> """For input string: "invalid""""))
+    ```
+
 ## Upcasting and identity transformation
 
 If you transform one type into itself or its supertype, it will be upcast without any change.
