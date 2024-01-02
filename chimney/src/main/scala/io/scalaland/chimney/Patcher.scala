@@ -4,8 +4,8 @@ import io.scalaland.chimney.dsl.PatcherDefinition
 import io.scalaland.chimney.internal.runtime.{PatcherCfg, PatcherFlags}
 
 /** Type class definition that wraps patching behavior.
- *
- * @see [[https://chimney.readthedocs.io/supported-patching/]]
+  *
+  * @see [[https://chimney.readthedocs.io/supported-patching/]]
   *
   * @tparam A type of object to apply patch to
   * @tparam Patch type of patch object
