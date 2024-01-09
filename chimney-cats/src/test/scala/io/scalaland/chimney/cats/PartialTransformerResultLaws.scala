@@ -1,25 +1,25 @@
 package io.scalaland.chimney.cats
 
-import _root_.cats.syntax.semigroupal.*
 import _root_.cats.laws.discipline.SemigroupalTests
+import _root_.cats.syntax.semigroupal.*
 import io.scalaland.chimney.{partial, ChimneySpec}
 
-class PartialTransformerResultSemigroupalSpec extends ChimneySpec with utils.ArbitraryUtils {
+class PartialTransformerResultLaws extends ChimneySpec with utils.ArbitraryUtils {
 
-  group("Semigroupal[partial.Result] should combine 2 partial.Results") {
+  group("Semigroupal[partial.Result]") {
 
-    group("Results should follow semigroupal laws") {
+    group("should follow Semigroupal laws") {
 
       checkLawsAsTests(SemigroupalTests[partial.Result].semigroupal[Int, String, Double])
     }
 
-    test("successful Results should form Cartesian product") {
+    test("should form Cartesian product for successful values") {
 
       partial.Result.fromValue(1).product(partial.Result.fromValue(2)) ==>
         partial.Result.fromValue((1, 2))
     }
 
-    test("any failed Result component should fail the combined sum Result") {
+    test("should return Errors if either of the partial.Results failed") {
 
       partial.Result.fromValue(1).product(partial.Result.fromErrorString("abc")) ==>
         partial.Result.fromErrorString("abc")
@@ -28,7 +28,7 @@ class PartialTransformerResultSemigroupalSpec extends ChimneySpec with utils.Arb
         partial.Result.fromErrorString("abc")
     }
 
-    test("failures should aggregate") {
+    test("should combine Errors if both of the partial.Results failed") {
 
       partial.Result.fromErrorString("abc").product(partial.Result.fromErrorString("def")) ==>
         partial.Result.fromErrorStrings("abc", "def")
