@@ -32,8 +32,11 @@ class PartialTransformerLaws extends ChimneySpec with utils.ArbitraryUtils {
     )
     checkLawsAsTests(CoflatMapTests[PartialTransformer[String, *]].coflatMap[Int, String, Double])
   }
-  
-  // TODO: Parallel
+
+  group("Parallel[Transformer[From, *]] instance should follow laws") {
+    checkLawsAsTests(NonEmptyParallelTests[PartialTransformer[String, *]].nonEmptyParallel[Int, String])
+    checkLawsAsTests(ParallelTests[PartialTransformer[String, *]].parallel[Int, String])
+  }
 
   group("Contravariant[Transformer[*, To]] instance should follow laws") {
     checkLawsAsTests(ContravariantTests[PartialTransformer[*, String]].contravariant[Int, String, Double])
