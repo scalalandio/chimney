@@ -4,7 +4,7 @@ import cats.Eq
 import cats.syntax.eq.*
 import io.scalaland.chimney.{partial, ChimneySpec, PartialTransformer, Transformer}
 import io.scalaland.chimney.cats.eqPartialResult
-import org.scalacheck.Arbitrary
+import org.scalacheck.{Arbitrary, Cogen}
 import org.scalacheck.Test.check
 import org.scalacheck.Prop.forAll
 import org.typelevel.discipline.Laws
@@ -22,6 +22,16 @@ trait ArbitraryUtils { this: ChimneySpec =>
   implicit def arbitraryResult[A: Arbitrary]: Arbitrary[partial.Result[A]] = Arbitrary {
     Arbitrary.arbitrary[Either[String, A]].map(partial.Result.fromEitherString)
   }
+
+  implicit def arbitraryResultErrors: Arbitrary[partial.Result.Errors] = Arbitrary {
+    Arbitrary.arbitrary[String].map(partial.Result.Errors.fromString)
+  }
+
+  implicit def cogenTransformer[From, To]: Cogen[Transformer[From, To]] = Cogen[Unit].contramap(_ => ())
+
+  implicit def cogenPartialTransformer[From, To]: Cogen[PartialTransformer[From, To]] = Cogen[Unit].contramap(_ => ())
+
+  implicit def cogenPartialResultErrors: Cogen[partial.Result.Errors] = Cogen[Unit].contramap(_ => ())
 
   implicit def eqTransformers[From: Arbitrary, To: Eq]: Eq[Transformer[From, To]] = (t1, t2) => {
     val result = check(forAll { (from: From) =>

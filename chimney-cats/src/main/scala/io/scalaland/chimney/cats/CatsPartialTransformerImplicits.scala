@@ -1,6 +1,6 @@
 package io.scalaland.chimney.cats
 
-import _root_.cats.{~>, Applicative, Contravariant, Monad, Parallel}
+import _root_.cats.{~>, Applicative, CoflatMap, Contravariant, Monad, MonadError, Parallel}
 import _root_.cats.arrow.{ArrowChoice, CommutativeArrow, FunctionK}
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.PartialTransformer
@@ -35,8 +35,9 @@ trait CatsPartialTransformerImplicits {
     }
 
   /** @since 1.0.0 */
-  implicit final def monadForPartialTransformer[Source]: Monad[PartialTransformer[Source, *]] =
-    new Monad[PartialTransformer[Source, *]] {
+  implicit final def monadErrorCoflatMapForPartialTransformer[Source]
+      : MonadError[PartialTransformer[Source, *], partial.Result.Errors] & CoflatMap[PartialTransformer[Source, *]] =
+    new MonadError[PartialTransformer[Source, *], partial.Result.Errors] with CoflatMap[PartialTransformer[Source, *]] {
       override def pure[A](x: A): PartialTransformer[Source, A] = (_, _) => partial.Result.Value(x)
 
       override def flatMap[A, B](fa: PartialTransformer[Source, A])(
@@ -57,6 +58,26 @@ trait CatsPartialTransformerImplicits {
           }
           loop(a)
         }
+
+      override def raiseError[A](e: partial.Result.Errors): PartialTransformer[Source, A] = (_, _) => e
+
+      override def handleErrorWith[A](fa: PartialTransformer[Source, A])(
+          f: partial.Result.Errors => PartialTransformer[Source, A]
+      ): PartialTransformer[Source, A] = (a, failFast) =>
+        try
+          fa.transform(a, failFast) match {
+            case errors: partial.Result.Errors => f(errors).transform(a, failFast)
+            case value                         => value
+          }
+        catch {
+          case err: Throwable => partial.Result.fromErrorThrowable(err)
+        }
+
+      override def coflatMap[A, B](
+          fa: PartialTransformer[Source, A]
+      )(
+          f: PartialTransformer[Source, A] => B
+      ): PartialTransformer[Source, B] = (src, _) => partial.Result.fromCatching(f(fa))
     }
 
   // TODO: @since
@@ -82,12 +103,10 @@ trait CatsPartialTransformerImplicits {
             )
       }
 
-      val monad: Monad[PartialTransformer[Source, *]] = monadForPartialTransformer[Source]
+      val monad: Monad[PartialTransformer[Source, *]] = monadErrorCoflatMapForPartialTransformer[Source]
     }
 
-  // TODO: coflatMap
-
-  // TODO: @since
+  /** @since 1.0.0 */
   implicit final def contravariantForPartialTransformer[Target]: Contravariant[PartialTransformer[*, Target]] =
     new Contravariant[PartialTransformer[*, Target]] {
       def contramap[A, B](fa: PartialTransformer[A, Target])(f: B => A): PartialTransformer[B, Target] =
