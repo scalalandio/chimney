@@ -81,7 +81,9 @@ trait CatsPartialTransformerImplicits {
     }
 
   // TODO: @since
-  implicit final def parallelForPartialTransformer[Source]: Parallel[PartialTransformer[Source, *]] =
+  implicit final def parallelForPartialTransformer[Source]: Parallel[PartialTransformer[Source, *]] {
+    type F[A] = PartialTransformer[Source, A]
+  } =
     new Parallel[PartialTransformer[Source, *]] {
       override type F[A] = PartialTransformer[Source, A]
 
