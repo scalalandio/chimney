@@ -11,8 +11,10 @@ import language.implicitConversions
 /** @since 1.0.0 */
 trait CatsPartialResultImplicits extends CatsPartialResultLowPriorityImplicits1 {
 
-  // TODO: @since
-  implicit final val parallelPartialResult: Parallel[partial.Result] & Semigroupal[partial.Result] =
+  /** @since 1.0.0 */
+  implicit final val parallelPartialResult: Parallel[partial.Result] & Semigroupal[partial.Result] {
+    type F[A] = partial.Result[A]
+  } =
     new Parallel[partial.Result] with Semigroupal[partial.Result] {
       override type F[A] = partial.Result[A]
 
@@ -26,7 +28,7 @@ trait CatsPartialResultImplicits extends CatsPartialResultLowPriorityImplicits1 
           partial.Result.map2[A => B, A, B](ff, fa, (f, a) => f(a), failFast = false)
       }
 
-      override val monad: Monad[partial.Result] = applicativePartialResult
+      override val monad: Monad[partial.Result] = monadErrorCoflatMapTraversePartialResult
 
       override def product[A, B](
           fa: partial.Result[A],
@@ -65,9 +67,8 @@ trait CatsPartialResultImplicits extends CatsPartialResultLowPriorityImplicits1 
 
 private[cats] trait CatsPartialResultLowPriorityImplicits1 {
 
-  // TODO: rename in 1.0.0 - monadErrorCoflatMapTraversePartialResult
   /** @since 0.7.0 */
-  implicit final val applicativePartialResult
+  implicit final val monadErrorCoflatMapTraversePartialResult
       : MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result] =
     new MonadError[partial.Result, partial.Result.Errors] with CoflatMap[partial.Result] with Traverse[partial.Result] {
       override def pure[A](x: A): partial.Result[A] = partial.Result.Value(x)
