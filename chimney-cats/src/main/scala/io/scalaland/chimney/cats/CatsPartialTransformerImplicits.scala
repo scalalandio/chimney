@@ -80,7 +80,7 @@ trait CatsPartialTransformerImplicits {
       ): PartialTransformer[Source, B] = (src, _) => partial.Result.fromCatching(f(fa))
     }
 
-  // TODO: @since
+  /** @since 1.0.0 */
   implicit final def parallelForPartialTransformer[Source]: Parallel[PartialTransformer[Source, *]] {
     type F[A] = PartialTransformer[Source, A]
   } =

@@ -1,6 +1,7 @@
 package io.scalaland.chimney.cats.utils
 
 import cats.Eq
+import cats.data.Const
 import cats.syntax.eq.*
 import io.scalaland.chimney.{partial, ChimneySpec, PartialTransformer, Transformer}
 import io.scalaland.chimney.cats.eqPartialResult
@@ -27,9 +28,15 @@ trait ArbitraryUtils { this: ChimneySpec =>
     Arbitrary.arbitrary[String].map(partial.Result.Errors.fromString)
   }
 
+  implicit def arbitraryConst[A: Arbitrary, B]: Arbitrary[Const[A, B]] = Arbitrary {
+    Arbitrary.arbitrary[A].map(a => Const[A, B](a))
+  }
+
   implicit def cogenTransformer[From, To]: Cogen[Transformer[From, To]] = Cogen[Unit].contramap(_ => ())
 
   implicit def cogenPartialTransformer[From, To]: Cogen[PartialTransformer[From, To]] = Cogen[Unit].contramap(_ => ())
+
+  implicit def cogenPartialResult[A]: Cogen[partial.Result[A]] = Cogen[Unit].contramap(_ => ())
 
   implicit def cogenPartialResultErrors: Cogen[partial.Result.Errors] = Cogen[Unit].contramap(_ => ())
 
