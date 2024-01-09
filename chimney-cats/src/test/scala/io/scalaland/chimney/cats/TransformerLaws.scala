@@ -1,19 +1,19 @@
 package io.scalaland.chimney.cats
 
-import _root_.cats.Eq
-import _root_.cats.laws.discipline.MonadTests
-import _root_.cats.syntax.eq.*
+import _root_.cats.laws.discipline.{ArrowChoiceTests, CommutativeArrowTests, MonadTests}
 import io.scalaland.chimney.{ChimneySpec, Transformer}
 
 class TransformerLaws extends ChimneySpec with utils.ArbitraryUtils {
 
-  group("Monad[Transformer[From, *]]") {
+  group("ArrowChoice[Transformer] should follow arrow choice laws") {
+    checkLawsAsTests(ArrowChoiceTests[Transformer].arrowChoice[Int, Long, Float, Double, String, Byte])
+  }
 
-    group("should follow monadic laws") {
+  group("CommutativeArrow[Transformer] should follow arrow choice laws") {
+    checkLawsAsTests(CommutativeArrowTests[Transformer].commutativeArrow[Int, Long, Float, Double, String, Byte])
+  }
 
-      implicit def eq[A: Eq]: Eq[Transformer[Unit, A]] = (t1, t2) => t1.transform(()) === t2.transform(())
-      
-      checkLawsAsTests(MonadTests[Transformer[Unit, *]].monad[Int, String, Double])
-    }
+  group("Monad[Transformer[From, *]] should follow monadic laws") {
+    checkLawsAsTests(MonadTests[Transformer[Unit, *]].monad[Int, String, Double])
   }
 }
