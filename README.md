@@ -29,8 +29,3 @@ If you are looking to up-to-date artifacts versions ready to copy-paste into you
 A way to get started is described in [CONTRIBUTING.md](CONTRIBUTING.md) and the general overview of the architecture
 is given in [DESIGN.md](DESIGN.md) and in [Under the hood](https://chimney.readthedocs.io/under-the-hood/)
 section of the documentation.
-
-## Thanks
-
-Thanks to [JProfiler (Java profiler)](https://www.ej-technologies.com/products/jprofiler/overview.html)
-for helping us develop the library and allowing us to use it during development.
