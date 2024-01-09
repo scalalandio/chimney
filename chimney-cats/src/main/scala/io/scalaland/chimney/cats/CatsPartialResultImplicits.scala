@@ -38,13 +38,17 @@ trait CatsPartialResultImplicits extends CatsPartialResultLowPriorityImplicits1 
   implicit final val semigroupPartialResultErrors: Semigroup[partial.Result.Errors] =
     Semigroup.instance(partial.Result.Errors.merge)
 
-  // TODO: @since
+  /** @since 1.0.0 */
   implicit final def eqPartialResult[A: Eq]: Eq[partial.Result[A]] = {
     case (partial.Result.Value(a1), partial.Result.Value(a2)) => Eq[A].eqv(a1, a2)
     case (e1: partial.Result.Errors, e2: partial.Result.Errors) =>
       e1.asErrorPathMessages.iterator.sameElements(e2.asErrorPathMessages.iterator)
     case _ => false
   }
+
+  /** @since 1.0.0 */
+  implicit final def eqPartialResultErrors: Eq[partial.Result.Errors] = (e1, e2) =>
+    e1.asErrorPathMessages.iterator.sameElements(e2.asErrorPathMessages.iterator)
 
   /** @since 0.7.0 */
   implicit final def catsPartialTransformerResultOps[A](

@@ -1,6 +1,6 @@
 package io.scalaland.chimney.cats
 
-import _root_.cats.{Contravariant, Monad}
+import _root_.cats.{CoflatMap, Contravariant, Monad}
 import _root_.cats.arrow.{ArrowChoice, CommutativeArrow}
 import io.scalaland.chimney.Transformer
 
@@ -28,8 +28,9 @@ trait CatsTotalTransformerImplicits {
     }
 
   /** @since 1.0.0 */
-  implicit final def monadForTransformer[Source]: Monad[Transformer[Source, *]] =
-    new Monad[Transformer[Source, *]] {
+  implicit final def monadCoflatMapForTransformer[Source]
+      : Monad[Transformer[Source, *]] & CoflatMap[Transformer[Source, *]] =
+    new Monad[Transformer[Source, *]] with CoflatMap[Transformer[Source, *]] {
       override def pure[A](x: A): Transformer[Source, A] = _ => x
 
       override def flatMap[A, B](fa: Transformer[Source, A])(f: A => Transformer[Source, B]): Transformer[Source, B] =
@@ -46,11 +47,15 @@ trait CatsTotalTransformerImplicits {
           }
           loop(a)
         }
+
+      override def coflatMap[A, B](
+          fa: Transformer[Source, A]
+      )(
+          f: Transformer[Source, A] => B
+      ): Transformer[Source, B] = src => f(fa)
     }
 
-  // TODO: coflatMap
-
-  // TODO: @since
+  /** @since 1.0.0 */
   implicit final def contravariantForTransformer[Target]: Contravariant[Transformer[*, Target]] =
     new Contravariant[Transformer[*, Target]] {
       def contramap[A, B](fa: Transformer[A, Target])(f: B => A): Transformer[B, Target] =
