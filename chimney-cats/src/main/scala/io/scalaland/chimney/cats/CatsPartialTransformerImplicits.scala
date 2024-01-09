@@ -1,26 +1,41 @@
 package io.scalaland.chimney.cats
 
 import _root_.cats.{~>, Applicative, Contravariant, Monad, Parallel}
-import _root_.cats.arrow.{Arrow, FunctionK}
+import _root_.cats.arrow.{ArrowChoice, CommutativeArrow, FunctionK}
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.PartialTransformer
 
 /** @since 0.7.0 */
 trait CatsPartialTransformerImplicits {
 
-  // TODO: @since
-  implicit final val arrowPartialTransformer: Arrow[PartialTransformer] = new Arrow[PartialTransformer] {
-    override def lift[A, B](f: A => B): PartialTransformer[A, B] = PartialTransformer.fromFunction(f)
+  /** @since 1.0.0 */
+  implicit final val commutativeArrowChoiceForPartialTransformer
+      : ArrowChoice[PartialTransformer] & CommutativeArrow[PartialTransformer] =
+    new ArrowChoice[PartialTransformer] with CommutativeArrow[PartialTransformer] {
+      override def lift[A, B](f: A => B): PartialTransformer[A, B] = PartialTransformer.fromFunction(f)
 
-    override def first[A, B, C](fa: PartialTransformer[A, B]): PartialTransformer[(A, C), (B, C)] =
-      (pair, failFast) => fa.transform(pair._1, failFast).map(_ -> pair._2)
+      override def first[A, B, C](fa: PartialTransformer[A, B]): PartialTransformer[(A, C), (B, C)] =
+        (pair, failFast) => fa.transform(pair._1, failFast).map(_ -> pair._2)
 
-    override def compose[A, B, C](f: PartialTransformer[B, C], g: PartialTransformer[A, B]): PartialTransformer[A, C] =
-      (a, failFast) => g.transform(a, failFast).flatMap(b => f.transform(b, failFast))
-  }
+      override def compose[A, B, C](
+          f: PartialTransformer[B, C],
+          g: PartialTransformer[A, B]
+      ): PartialTransformer[A, C] =
+        (a, failFast) => g.transform(a, failFast).flatMap(b => f.transform(b, failFast))
 
-  // TODO: @since
-  implicit final def monadPartialTransformer[Source]: Monad[PartialTransformer[Source, *]] =
+      override def choose[A, B, C, D](
+          f: PartialTransformer[A, C]
+      )(
+          g: PartialTransformer[B, D]
+      ): PartialTransformer[Either[A, B], Either[C, D]] = (ab: Either[A, B], failFast: Boolean) =>
+        ab match {
+          case Left(a)  => f.transform(a, failFast).map(Left(_))
+          case Right(b) => g.transform(b, failFast).map(Right(_))
+        }
+    }
+
+  /** @since 1.0.0 */
+  implicit final def monadForPartialTransformer[Source]: Monad[PartialTransformer[Source, *]] =
     new Monad[PartialTransformer[Source, *]] {
       override def pure[A](x: A): PartialTransformer[Source, A] = (_, _) => partial.Result.Value(x)
 
@@ -45,7 +60,7 @@ trait CatsPartialTransformerImplicits {
     }
 
   // TODO: @since
-  implicit final def parallelPartialTransformer[Source]: Parallel[PartialTransformer[Source, *]] =
+  implicit final def parallelForPartialTransformer[Source]: Parallel[PartialTransformer[Source, *]] =
     new Parallel[PartialTransformer[Source, *]] {
       override type F[A] = PartialTransformer[Source, A]
 
@@ -67,11 +82,13 @@ trait CatsPartialTransformerImplicits {
             )
       }
 
-      val monad: Monad[PartialTransformer[Source, *]] = monadPartialTransformer[Source]
+      val monad: Monad[PartialTransformer[Source, *]] = monadForPartialTransformer[Source]
     }
 
+  // TODO: coflatMap
+
   // TODO: @since
-  implicit final def contravariantPartialTransformer[Target]: Contravariant[PartialTransformer[*, Target]] =
+  implicit final def contravariantForPartialTransformer[Target]: Contravariant[PartialTransformer[*, Target]] =
     new Contravariant[PartialTransformer[*, Target]] {
       def contramap[A, B](fa: PartialTransformer[A, Target])(f: B => A): PartialTransformer[B, Target] =
         (b, failFast) => partial.Result.fromCatching(f(b)).flatMap(a => fa.transform(a, failFast))
