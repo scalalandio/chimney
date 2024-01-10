@@ -258,14 +258,15 @@ val mimaSettings = Seq(
   mimaPreviousArtifacts := {
     val previousVersions = moduleName.value match {
       case "chimney-macro-commons"    => Set() // we're not guaranteeing stability of this library just yet
-      case "chimney"                  => Set("0.8.0-RC1", "0.8.0")
-      case "chimney-cats"             => Set("0.8.0-RC1", "0.8.0")
-      case "chimney-java-collections" => Set("0.8.0")
-      case "chimney-protobufs"        => Set("0.8.0")
+      case "chimney"                  => Set()
+      case "chimney-cats"             => Set()
+      case "chimney-java-collections" => Set()
+      case "chimney-protobufs"        => Set()
       case _                          => Set()
     }
     previousVersions.map(organization.value %% moduleName.value % _)
-  }
+  },
+  mimaFailOnNoPrevious := false // 1.0.0-milestone/release candidate mode, remove it once released
 )
 
 val noPublishSettings =
