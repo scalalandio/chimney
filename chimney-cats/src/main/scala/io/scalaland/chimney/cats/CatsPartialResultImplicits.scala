@@ -12,7 +12,7 @@ import language.implicitConversions
 trait CatsPartialResultImplicits extends CatsPartialResultLowPriorityImplicits1 {
 
   /** @since 1.0.0 */
-  implicit final val parallelPartialResult: Parallel[partial.Result] & Semigroupal[partial.Result] {
+  implicit final val parallelSemigroupalPartialResult: Parallel[partial.Result] & Semigroupal[partial.Result] {
     type F[A] = partial.Result[A]
   } =
     new Parallel[partial.Result] with Semigroupal[partial.Result] {
@@ -150,10 +150,8 @@ final class CatsPartialTransformerResultOps[A](private val ptr: partial.Result[A
 
   /** @since 0.7.0 */
   def asValidatedNel: ValidatedNel[partial.Error, A] =
-    asValidated.leftMap { errs =>
-      // errors collection is non-empty by design
-      NonEmptyList.fromListUnsafe(errs.errors.iterator.toList)
-    }
+    // errors collection is non-empty by design
+    asValidated.leftMap(errs => NonEmptyList.fromListUnsafe(errs.errors.iterator.toList))
 
   /** @since 0.7.0 */
   def asValidatedChain: Validated[Chain[partial.Error], A] =
@@ -181,9 +179,7 @@ final class CatsValidatedNecErrorPartialTransformerOps[E <: partial.Error, A](
 
   /** @since 0.7.0 */
   def toPartialResult: partial.Result[A] =
-    validated
-      .leftMap(errs => partial.Result.Errors(errs.head, errs.tail.toList*))
-      .toPartialResult
+    validated.leftMap(errs => partial.Result.Errors(errs.head, errs.tail.toList*)).toPartialResult
 }
 
 /** @since 0.7.0 */
@@ -192,9 +188,7 @@ final class CatsValidatedNecStringPartialTransformerOps[E <: String, A](private 
 
   /** @since 0.7.0 */
   def toPartialResult: partial.Result[A] =
-    validated
-      .leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail.toList*))
-      .toPartialResult
+    validated.leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail.toList*)).toPartialResult
 }
 
 /** @since 0.7.0 */
@@ -213,7 +207,5 @@ final class CatsValidatedNelStringPartialTransformerOps[E <: String, A](private 
 
   /** @since 0.7.0 */
   def toPartialResult: partial.Result[A] =
-    validated
-      .leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail*))
-      .toPartialResult
+    validated.leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail*)).toPartialResult
 }

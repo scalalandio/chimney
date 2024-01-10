@@ -287,16 +287,36 @@ Then you can use one simple import to enable it:
 
 ## Cats integration
 
-Cats integration module contains the following stuff:
+Cats integration module contains the following utilities:
 
-  - type classes instances for partial transformers data structures
-    - `Applicative` instance for `partial.Result`
-    - `Semigroup` instance for `partial.Result.Errors`
-  - integration with `Validated` (and `ValidatedNel`, `ValidatedNec`) data type for `PartialTransformer`s
+  - conversions between `partial.Result`s and `Validated` (and `ValidatedNel`, `ValidatedNec`) data type allowing 
+    e.g. to convert `PartialTransformer`'s result to `Validated`
+  - instances for Chimney types (many combined into single implicit to prevent conflicts):
+    - for `Transformer` type class:
+      - `ArrowChoice[Transformer] & CommutativeArrow[Transformer]` (implementing also `Arrow`, `Choice`, `Category`,
+        `Compose`, `Strong`, `Profunctor`)
+      - `[Source] => Monad[Transformer[Source, *]] with CoflatMap[Transformer[Source, *]]` (implementing also `Monad`,
+        `Applicative`, `Functor`)
+      - `[Target] => Contravariant[Transformer[*, Target]]` (implementing also `Invariant`)
+    - for `PartialTransformer` type class:
+      - `ArrowChoice[PartialTransformer] & CommutativeArrow[PartialTransformer]` (implementing also `Arrow`, `Choice`,
+        `Category`,`Compose`, `Strong`, `Profunctor`)
+      - `[Source] => MonadError[PartialTransformer[Source, *], partial.Result.Errors] with CoflatMap[PartialTransformer[Source, *]]`
+        (implementing also `Monad`, `Applicative`, `Functor`, `ApplicativeError`)
+      - `[Source] => Parallel[PartialTransformer[Source, *]]` (implementing also `NonEmptyParallel`)
+      - `[Target] => Contravariant[Transformer[*, Target]]` (implementing also `Invariant`)
+    - for `partial.Result` data type:
+      - `MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result]`
+        (implementing also `Monad`, `Applicative`, `Functor`, `ApplicativeError`, `UnorderedTraverse`, `Foldable`,
+        `UnorderedFoldable`)
+      - `Parallel[partial.Result] & Semigriupal[partial.Result]` (implementing also`NonEmptyParallel`)
+      - `Semigroup[partial.Result.Errors]`
 
 !!! important
 
     You need to import ``io.scalaland.chimney.cats._`` to have all of the above in scope.
+
+### Conversion into Cats `Validated`
 
 !!! example
 
@@ -369,6 +389,91 @@ Cats integration module contains the following stuff:
     
     Result of the partial transformation is then converted to `ValidatedNel` or `ValidatedNec` using either
     `.asValidatedNel` or `.asValidatedNec` extension method call.
+
+### Cats instances
+
+If you have the experience with Cats and their type classes, then behavior of `Transformer` needs to additional
+explanation:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney-cats::{{ git.tag or local.tag }}
+    import cats.syntax.all._
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.cats._
+    
+    val example: Transformer[Int, String] = _.toString
+    
+    example.map(str => s"valis is $str").transform(10) // "value is 10"
+    example.dimap[Double, String](_.toInt)(str => "value " + str).transform(10.50)
+    // example.contramap[Double](_.toInt).transform(10.50) // Scala has a problem inferring what is F and what is A here
+    cats.arrow.Arrow[Transformer].id[String].transform("value") // "value"
+    ```
+
+However, there is a difference in approach when it comes to "sequential" and "parallel" computations.
+ 
+!!! note
+
+    For this explanation we are assuming there we are using some type which represents computations that can be
+    interrupted - e.g. exception was thrown (`Try`, `cats.effect.IO`), we got `Left` value (`Either`) or `Invalid`
+    (`Validated`). In Chimney such type is `partial.Result`.
+
+How it works in Cats: 
+
+ - when we are using thing like e.g. `map`, `flatMap` to chain the operations if any of these operations "fail", we are
+   not running the operations that would follow
+ - so, `Monad` is usually representing some sequential computations, which (for types representing fallible computations)
+   can "fail fast" or "short circuit"
+   - since `Applicative` extends `Monad` and their behavior should be compatible (= applicative operations are
+     implemented using `flatMap` under the hood) then e.g.
+     `(NonEmptyList.of("error1").asLeft[Int], NonEmptyList.of("error2".asLeft[Int])).tupled` would contain only one
+     error (the first one, `NonEmptyList.of("error1")`), even though we used the type which could aggregate them
+ - for such cases - where we want to always use all partial results - Cats prepared `Parallel` type class which would
+   allow us to `(NonEmptyList.of("error1").asLeft[Int], NonEmptyList.of("error2".asLeft[Int])).parTupled` which would
+   combine the results
+   - it's quite important to remember that `Parallel` here doesn't mean "asynchronous operations that run concurrently"
+     but "failure in one result doesn't discard other results before we start to combine them"
+ - long story short: when seeing `map`, `flatMap`, `tupled`, `mapN` we should expect "sequential" semantics which
+   "fail fast" and for aggregation of errors requires "parallel" semantics with operations like `parTupled`, `parMapN`,
+   `parFlatMapN` - the semantics is chosen at compile time by the choice of operator we used
+
+It makes perfect sense, because - while these type class do NOT have to be used with IO monads - these type classes CAN
+be used with IO monads, and so `map`, `flatMap`, `parMapN`, etc can be used to express the "structured concurrency"
+without introducing separate type classes. The kind of semantics we need is known upfront and hardcoded.
+
+Meanwhile, how it works in Chimney:
+
+ - we have `partial.Result` data type which can aggregate multiple errors into one value
+ - however, this aggregation is costly, so if you don't need it you can pass `failFast: Boolean` parameter to
+   `PartialTransformer` (e.g. `from.transformIntoPartial[To](failFast = true)`) or `partial.Result` utilities
+   (e.g. `partial.Result.traverse(coll.toIterator, a => ..., failFast = true)`)
+ - it means that Chimney decides which semantics to use in runtime, with a flag
+
+And it makes sense for Chimney: during a type class derivation we do not select the semantics, because semantics chosen
+in one place, would not work in another forcing users to derive everything twice. It also allows us to pass this flag
+from some config or context and for better debugging experience (e.g. using fail fast for normal operations, but letting
+us change a switch in the deployed app without recompiling and redeploying everything to test just one call).
+
+It means that `PartialTransformer` (which internally combines results from several smaller partial transformations) has
+to have both semantics implemented internally and switch between them with a flag. If we combine `PartialTransformer`s
+or `partial.Results` using Cats' type classes and extension methods, the type class instance can:
+
+  - pass the `failFast: Boolean` flag on
+  - if it combines several results, use the flag to decide on semantics
+  - however, some operations like `mapN` use `flatMap` under the hood, so while the flag is propagated, some results
+    can still be discarded, and e.g. `parMapN` would have to be used NOT to use parallel semantics but to NOT disable
+    parallel semantics for some transformations when we would pass `failFast = false` later on 
+
+!!! example
+
+    TODO: example with mapN vs parMapN with failFast = true and failFast = false
+
+Another pitfall is `Semigroupal[partial.Result]`. While we would most likely prefer `(result1, result2).product`
+to aggregate possible errors, `MonadError[partial.Result, partial.Result.Errors]` have `Semigroupal[partial.Result]`
+in is parents, so by default `(result1, result2).product` would work like `(result1, result2).tupled` - which would work
+like `result1.flatMap(a => result2.map(b => a -> b))` and provide sequential rather than parallel semantics. For that
+reason there exist an additional `Semigrupal` implicit with a higher priority than the `MonadError`.
 
 ## Protocol Buffers integration
 
