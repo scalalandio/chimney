@@ -419,7 +419,7 @@ lazy val chimneyCats = projectMatrix
   .settings(dependencies*)
   .settings(
     libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0" % Provided,
-    libraryDependencies += "org.typelevel" %% "cats-laws" % "2.10.0" % Test
+    libraryDependencies += "org.typelevel" %%% "cats-laws" % "2.10.0" % Test
   )
   .dependsOn(chimney % "test->test;compile->compile")
 

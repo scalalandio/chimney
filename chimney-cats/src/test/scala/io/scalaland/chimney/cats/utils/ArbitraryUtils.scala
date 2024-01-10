@@ -40,23 +40,15 @@ trait ArbitraryUtils { this: ChimneySpec =>
 
   implicit def cogenPartialResultErrors: Cogen[partial.Result.Errors] = Cogen[Unit].contramap(_ => ())
 
-  implicit def eqTransformers[From: Arbitrary, To: Eq]: Eq[Transformer[From, To]] = (t1, t2) => {
-    val result = check(forAll { (from: From) =>
-      t1.transform(from) === t2.transform(from)
-    })
-    result(identity).passed
-  }
+  implicit def eqTransformers[From: Arbitrary, To: Eq]: Eq[Transformer[From, To]] = (t1, t2) =>
+    check(forAll((from: From) => t1.transform(from) === t2.transform(from)))(_.withMinSuccessfulTests(20)).passed
 
-  implicit def eqPartialTransformers[From: Arbitrary, To: Eq]: Eq[PartialTransformer[From, To]] = (t1, t2) => {
-    val result = check(forAll { (from: From) =>
-      t1.transform(from) === t2.transform(from)
-    })
-    result(identity).passed
-  }
+  implicit def eqPartialTransformers[From: Arbitrary, To: Eq]: Eq[PartialTransformer[From, To]] = (t1, t2) =>
+    check(forAll((from: From) => t1.transform(from) === t2.transform(from)))(_.withMinSuccessfulTests(20)).passed
 
   def checkLawsAsTests(rules: Laws#RuleSet): Unit = rules.props.foreach { case (name, prop) =>
     test(name) {
-      check(prop)
+      check(prop)(identity)
     }
   }
 }

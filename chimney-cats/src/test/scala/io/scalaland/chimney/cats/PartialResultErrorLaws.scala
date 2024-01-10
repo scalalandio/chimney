@@ -3,8 +3,8 @@ package io.scalaland.chimney.cats
 import _root_.cats.kernel.laws.discipline.*
 import _root_.cats.syntax.semigroup.*
 import io.scalaland.chimney.{partial, ChimneySpec}
-import org.scalacheck.Test.check
 import org.scalacheck.Prop.forAll
+import org.scalacheck.Test.check
 
 class PartialResultErrorLaws extends ChimneySpec with utils.ArbitraryUtils {
 
@@ -16,6 +16,6 @@ class PartialResultErrorLaws extends ChimneySpec with utils.ArbitraryUtils {
     check(forAll { (str1: String, str2: String) =>
       (partial.Result.Errors.fromString(str1) |+| partial.Result.Errors.fromString(str2)) ==
         partial.Result.Errors.fromStrings(str1, str2)
-    })
+    })(identity)
   }
 }
