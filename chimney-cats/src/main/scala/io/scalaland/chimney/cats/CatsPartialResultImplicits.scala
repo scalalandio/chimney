@@ -1,6 +1,6 @@
 package io.scalaland.chimney.cats
 
-import _root_.cats.{~>, Applicative, CoflatMap, Eval, Monad, MonadError, Parallel, Semigroupal, Traverse}
+import _root_.cats.{~>, Applicative, CoflatMap, Eval, Monad, MonadError, Parallel, Traverse}
 import _root_.cats.arrow.FunctionK
 import _root_.cats.data.{Chain, NonEmptyChain, NonEmptyList, Validated, ValidatedNec, ValidatedNel}
 import _root_.cats.kernel.{Eq, Semigroup}
@@ -10,32 +10,71 @@ import io.scalaland.chimney.partial.{AsResult, Result}
 import language.implicitConversions
 
 /** @since 1.0.0 */
-trait CatsPartialResultImplicits extends CatsPartialResultLowPriorityImplicits1 {
+trait CatsPartialResultImplicits {
 
-  /** @since 1.0.0 */
-  implicit final val parallelSemigroupalPartialResult: Parallel[partial.Result] & Semigroupal[partial.Result] {
-    type F[A] = partial.Result[A]
-  } =
-    new Parallel[partial.Result] with Semigroupal[partial.Result] {
-      override type F[A] = partial.Result[A]
+  /** @since 0.7.0 */
+  implicit final val monadErrorCoflatMapTraversePartialResult
+      : MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result] =
+    new MonadError[partial.Result, partial.Result.Errors] with CoflatMap[partial.Result] with Traverse[partial.Result] {
+      override def pure[A](x: A): partial.Result[A] = partial.Result.Value(x)
 
-      override val sequential: partial.Result ~> partial.Result = FunctionK.id
-      override val parallel: partial.Result ~> partial.Result = FunctionK.id
+      override def flatMap[A, B](fa: partial.Result[A])(f: A => partial.Result[B]): partial.Result[B] = fa.flatMap(f)
 
-      override val applicative: Applicative[partial.Result] = new Applicative[partial.Result] {
-        override def pure[A](x: A): partial.Result[A] = partial.Result.Value(x)
-
-        override def ap[A, B](ff: partial.Result[A => B])(fa: partial.Result[A]): partial.Result[B] =
-          partial.Result.map2[A => B, A, B](ff, fa, (f, a) => f(a), failFast = false)
+      @scala.annotation.tailrec
+      override def tailRecM[A, B](a: A)(f: A => partial.Result[Either[A, B]]): partial.Result[B] = f(a) match {
+        case partial.Result.Value(Left(a))  => tailRecM(a)(f)
+        case partial.Result.Value(Right(b)) => partial.Result.Value(b)
+        case errors                         => errors.asInstanceOf[partial.Result[B]]
       }
 
-      override val monad: Monad[partial.Result] = monadErrorCoflatMapTraversePartialResult
+      override def raiseError[A](e: partial.Result.Errors): partial.Result[A] = e
 
-      override def product[A, B](
-          fa: partial.Result[A],
-          fb: partial.Result[B]
-      ): partial.Result[(A, B)] = partial.Result.product(fa, fb, failFast = false)
+      override def handleErrorWith[A](
+          fa: partial.Result[A]
+      )(f: partial.Result.Errors => partial.Result[A]): partial.Result[A] =
+        fa match {
+          case ee: partial.Result.Errors => f(ee)
+          case result                    => result
+        }
+
+      override def coflatMap[A, B](fa: partial.Result[A])(f: partial.Result[A] => B): partial.Result[B] =
+        partial.Result.fromCatching(f(fa))
+
+      override def traverse[G[_]: Applicative, A, B](fa: partial.Result[A])(f: A => G[B]): G[partial.Result[B]] =
+        fa match {
+          case partial.Result.Value(value) => Applicative[G].map(f(value))(pure)
+          case errors                      => Applicative[G].pure(errors.asInstanceOf[partial.Result[B]])
+        }
+
+      override def foldLeft[A, B](fa: partial.Result[A], b: B)(f: (B, A) => B): B = fa match {
+        case partial.Result.Value(value) => f(b, value)
+        case _                           => b
+      }
+
+      override def foldRight[A, B](fa: partial.Result[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = fa match {
+        case partial.Result.Value(value) => f(value, lb)
+        case _                           => lb
+      }
     }
+
+  /** @since 1.0.0 */
+  implicit final val parallelSemigroupalPartialResult: Parallel[partial.Result] {
+    type F[A] = partial.Result[A]
+  } = new Parallel[partial.Result] {
+    override type F[A] = partial.Result[A]
+
+    override val sequential: partial.Result ~> partial.Result = FunctionK.id
+    override val parallel: partial.Result ~> partial.Result = FunctionK.id
+
+    override val applicative: Applicative[partial.Result] = new Applicative[partial.Result] {
+      override def pure[A](x: A): partial.Result[A] = partial.Result.Value(x)
+
+      override def ap[A, B](ff: partial.Result[A => B])(fa: partial.Result[A]): partial.Result[B] =
+        partial.Result.map2[A => B, A, B](ff, fa, (f, a) => f(a), failFast = false)
+    }
+
+    override val monad: Monad[partial.Result] = monadErrorCoflatMapTraversePartialResult
+  }
 
   /** @since 0.7.0 */
   implicit final val semigroupPartialResultErrors: Semigroup[partial.Result.Errors] =
@@ -99,54 +138,6 @@ trait CatsPartialResultImplicits extends CatsPartialResultLowPriorityImplicits1 
       def asResult[A](fa: ValidatedNel[E, A]): Result[A] = fa match {
         case Validated.Valid(a)   => partial.Result.fromValue(a)
         case Validated.Invalid(e) => partial.Result.fromErrorStrings(e.head, e.tail*)
-      }
-    }
-}
-
-private[cats] trait CatsPartialResultLowPriorityImplicits1 {
-
-  /** @since 0.7.0 */
-  implicit final val monadErrorCoflatMapTraversePartialResult
-      : MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result] =
-    new MonadError[partial.Result, partial.Result.Errors] with CoflatMap[partial.Result] with Traverse[partial.Result] {
-      override def pure[A](x: A): partial.Result[A] = partial.Result.Value(x)
-
-      override def flatMap[A, B](fa: partial.Result[A])(f: A => partial.Result[B]): partial.Result[B] = fa.flatMap(f)
-
-      @scala.annotation.tailrec
-      override def tailRecM[A, B](a: A)(f: A => partial.Result[Either[A, B]]): partial.Result[B] = f(a) match {
-        case partial.Result.Value(Left(a))  => tailRecM(a)(f)
-        case partial.Result.Value(Right(b)) => partial.Result.Value(b)
-        case errors                         => errors.asInstanceOf[partial.Result[B]]
-      }
-
-      override def raiseError[A](e: partial.Result.Errors): partial.Result[A] = e
-
-      override def handleErrorWith[A](
-          fa: partial.Result[A]
-      )(f: partial.Result.Errors => partial.Result[A]): partial.Result[A] =
-        fa match {
-          case ee: partial.Result.Errors => f(ee)
-          case result                    => result
-        }
-
-      override def coflatMap[A, B](fa: partial.Result[A])(f: partial.Result[A] => B): partial.Result[B] =
-        partial.Result.fromCatching(f(fa))
-
-      override def traverse[G[_]: Applicative, A, B](fa: partial.Result[A])(f: A => G[B]): G[partial.Result[B]] =
-        fa match {
-          case partial.Result.Value(value) => Applicative[G].map(f(value))(pure)
-          case errors                      => Applicative[G].pure(errors.asInstanceOf[partial.Result[B]])
-        }
-
-      override def foldLeft[A, B](fa: partial.Result[A], b: B)(f: (B, A) => B): B = fa match {
-        case partial.Result.Value(value) => f(b, value)
-        case _                           => b
-      }
-
-      override def foldRight[A, B](fa: partial.Result[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = fa match {
-        case partial.Result.Value(value) => f(value, lb)
-        case _                           => lb
       }
     }
 }
