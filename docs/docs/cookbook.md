@@ -308,8 +308,8 @@ Cats integration module contains the following utilities:
      - for `partial.Result` data type:
         - `MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result]`
           (implementing also `Monad`, `Applicative`, `Functor`, `ApplicativeError`, `UnorderedTraverse`, `Foldable`,
-          `UnorderedFoldable`)
-        - `Parallel[partial.Result] & Semigriupal[partial.Result]` (implementing also`NonEmptyParallel`)
+          `UnorderedFoldable`, `Invariant[partial.Result]`, `Semigriupal[partial.Result]`, ...)
+        - `Parallel[partial.Result]` (implementing also`NonEmptyParallel`)
         - `Semigroup[partial.Result.Errors]`
 
 !!! important
