@@ -518,19 +518,30 @@ What does it means for us?
     import io.scalaland.chimney.cats._
 
     val result1 = partial.Result.fromErrorString[Int]("error 1")
-    val result2 = partial.Result.fromErrorString[Int]("error 2")    
+    val result2 = partial.Result.fromErrorString[Double]("error 2")    
 
     // all of these will preserve only the first error ("error 1"):
-    (result1, result2).mapN { (a: Int, b: Int) => a + b }
-    result1.product(result2)
-    result1 <* result2
-    result1 *> result2
+    (result1, result2).mapN { (a: Int, b: Double) => a + b } // partial.Result[Double]
+    result1.product(result2) // partial.Result[(Int, Double)]
+    result1 <* result2 // partial.Result[Int]
+    result1 *> result2 // partial.Result[Double]
     
     // all of these will preserve both errors:
-    (result1, result2).mapN { (a: Int, b: Int) => a + b }
-    result1.parProduct(result2)
-    result1 <& result2
-    result1 &> result2
+    (result1, result2).parMapN { (a: Int, b: Double) => a + b } // partial.Result[Double]
+    result1.parProduct(result2) // partial.Result[(Int, Double)]
+    result1 <& result2 // partial.Result[Int]
+    result1 &> result2 // partial.Result[Double]
+    
+    // same for PartialTransformers:
+    val t0 = PartialTransformer.fromFunction[String, Int](_.toInt)
+    val t1 = t0.map(_.toDouble)
+    val t2 = t0.map(_.toLong)
+    
+    t1.product(t2).transform("aa").asEitherErrorPathMessageStrings
+    // Left(List((,For input string: "aa")))
+
+    t1.parProduct(t2).transform("aa").asEitherErrorPathMessageStrings
+    // Left(List((,For input string: "aa"), (,For input string: "aa")))
     ```
 
 Notice that this is not an issue if we are transforming one value into another value in a non-fallible way, e.g. through
