@@ -327,8 +327,11 @@ Cats integration module contains the following utilities:
  - `NonEmptyChain[String]`
  - `NonEmptyList[String]`
 
+as soon as we import both `io.scalaland.chimney.partial.syntax._` (for extension method) and
+`io.scalaland.chimney.cats._` (instances for `Validated`).
+
 Just like you could run `asOption` or `asEither` on `PartialTransformer` result, you can convert to `Validated` with
-new extension methods `asValidatedNec`, `asValidatedNel`, `asValidatedChain` and `asValidatedList`.
+new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` and `asValidatedList`.
 
 !!! example
 
@@ -452,6 +455,8 @@ computations.
     interrupted - e.g. exception was thrown (`Try`, `cats.effect.IO`), we got `Left` value (`Either`) or `Invalid`
     (`Validated`). In Chimney such type is `partial.Result`.
 
+For starters, let us remember how such distinction is handled in Cats.
+
 !!! info "How it works in Cats" 
 
      - when we are using thing like e.g. `map`, `flatMap` to chain the operations if any of these operations "fail", we
@@ -476,6 +481,8 @@ computations.
     concurrency" without introducing separate type classes. The kind of semantics we need is known upfront and
     hardcoded.
 
+Now, let's take a look what Chimney does, and why the behavior is different.
+
 !!! info "How it works in Chimney"
 
      - we have `partial.Result` data type which can aggregate multiple errors into one value
@@ -489,15 +496,17 @@ computations.
     from some config or context and for better debugging experience (e.g. using fail fast for normal operations, but letting
     us change a switch in the deployed app without recompiling and redeploying everything to test just one call).
 
+What does it means for us?
+
 !!! warning
 
-    It means that `PartialTransformer` (which internally combines results from several smaller partial transformations)
-    has to have both semantics implemented internally and switch between them with a flag. If we combine
+    It means that every `PartialTransformer` which internally combines results from several smaller partial
+    transformations has to have both semantics implemented internally and switch between them with a flag. If we combine
     `PartialTransformer`s or `partial.Results` using Cats' type classes and extension methods, the type class instance
     can:
 
      - pass the `failFast: Boolean` flag on
-     - if it combines several results, use the flag to decide on semantics
+     - use the flag to decide on semantics when combinding several smaller `partial.Result`s
      - however, some operations like `mapN` use `flatMap` under the hood, so while the flag is propagated, some results
        can still be discarded, and e.g. `parMapN` would have to be used NOT to use parallel semantics but to NOT disable
        parallel semantics for some transformations when we would pass `failFast = false` later on 
@@ -507,19 +516,27 @@ computations.
     import cats.syntax.all._
     import io.scalaland.chimney.{PartialTransformer, partial}
     import io.scalaland.chimney.cats._
+
+    val result1 = partial.Result.fromErrorString[Int]("error 1")
+    val result2 = partial.Result.fromErrorString[Int]("error 2")    
+
+    // all of these will preserve only the first error ("error 1"):
+    (result1, result2).mapN { (a: Int, b: Int) => a + b }
+    result1.product(result2)
+    result1 <* result2
+    result1 *> result2
     
-     
+    // all of these will preserve both errors:
+    (result1, result2).mapN { (a: Int, b: Int) => a + b }
+    result1.parProduct(result2)
+    result1 <& result2
+    result1 &> result2
     ```
-    
-    TODO: example with mapN vs parMapN with failFast = true and failFast = false
 
-!!! warning
-
-    Another pitfall is `Semigroupal[partial.Result]`. While we would most likely prefer `(result1, result2).product`
-    to aggregate possible errors, `MonadError[partial.Result, partial.Result.Errors]` have `Semigroupal[partial.Result]`
-    in is parents, so by default `(result1, result2).product` would work like `(result1, result2).tupled` - which would
-    work like `result1.flatMap(a => result2.map(b => a -> b))` and provide sequential rather than parallel semantics.
-    For that reason there exist an additional `Semigrupal` implicit with a higher priority than the `MonadError`.
+Notice that this is not an issue if we are transforming one value into another value in a non-fallible way, e.g. through
+`map`, `contramap`, `dimap`. There is also no issie if we chain sevaral `flatMap`s for something more like Kleisli
+composition (`result.flatMap(f).flatMap(g)`) but becomes an issue when we use `flatMap` and `flatMap`-based operations
+for building products (`result.flatMap(a => result2.map(b => (a, b))`).
 
 ## Protocol Buffers integration
 
