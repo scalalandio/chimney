@@ -5,6 +5,7 @@ import _root_.cats.arrow.FunctionK
 import _root_.cats.data.{Chain, NonEmptyChain, NonEmptyList, Validated, ValidatedNec, ValidatedNel}
 import _root_.cats.kernel.{Eq, Semigroup}
 import io.scalaland.chimney.partial
+import io.scalaland.chimney.partial.{AsResult, Result}
 
 import language.implicitConversions
 
@@ -53,16 +54,53 @@ trait CatsPartialResultImplicits extends CatsPartialResultLowPriorityImplicits1 
     e1.asErrorPathMessages.iterator.sameElements(e2.asErrorPathMessages.iterator)
 
   /** @since 0.7.0 */
-  implicit final def catsPartialTransformerResultOps[A](
-      ptr: partial.Result[A]
-  ): CatsPartialTransformerResultOps[A] =
+  implicit final def catsPartialTransformerResultOps[A](ptr: partial.Result[A]): CatsPartialTransformerResultOps[A] =
     new CatsPartialTransformerResultOps(ptr)
 
-  /** @since 0.7.0 */
-  implicit final def catsValidatedPartialTransformerOps[E <: partial.Result.Errors, A](
-      validated: Validated[E, A]
-  ): CatsValidatedPartialTransformerOps[E, A] =
-    new CatsValidatedPartialTransformerOps(validated)
+  /** @since 1.0.0 */
+  implicit def validatedPartialResultErrorsAsResult[E <: partial.Result.Errors]: AsResult[Validated[E, *]] =
+    new AsResult[Validated[E, *]] {
+      def asResult[A](fa: Validated[E, A]): Result[A] = fa match {
+        case Validated.Valid(a)   => partial.Result.fromValue(a)
+        case Validated.Invalid(e) => e
+      }
+    }
+
+  /** @since 1.0.0 */
+  implicit def validatedNecPartialErrorAsResult[E <: partial.Error]: AsResult[ValidatedNec[E, *]] =
+    new AsResult[ValidatedNec[E, *]] {
+      def asResult[A](fa: ValidatedNec[E, A]): Result[A] = fa match {
+        case Validated.Valid(a)   => partial.Result.fromValue(a)
+        case Validated.Invalid(e) => partial.Result.Errors(e.head, e.tail.toList*)
+      }
+    }
+
+  /** @since 1.0.0 */
+  implicit def validatedNelPartialErrorAsResult[E <: partial.Error]: AsResult[ValidatedNel[E, *]] =
+    new AsResult[ValidatedNel[E, *]] {
+      def asResult[A](fa: ValidatedNel[E, A]): Result[A] = fa match {
+        case Validated.Valid(a)   => partial.Result.fromValue(a)
+        case Validated.Invalid(e) => partial.Result.Errors(e.head, e.tail*)
+      }
+    }
+
+  /** @since 1.0.0 */
+  implicit def validatedNecStringAsResult[E <: String]: AsResult[ValidatedNec[E, *]] =
+    new AsResult[ValidatedNec[E, *]] {
+      def asResult[A](fa: ValidatedNec[E, A]): Result[A] = fa match {
+        case Validated.Valid(a)   => partial.Result.fromValue(a)
+        case Validated.Invalid(e) => partial.Result.fromErrorStrings(e.head, e.tail.toList*)
+      }
+    }
+
+  /** @since 1.0.0 */
+  implicit def validatedNelStringAsResult[E <: String]: AsResult[ValidatedNel[E, *]] =
+    new AsResult[ValidatedNel[E, *]] {
+      def asResult[A](fa: ValidatedNel[E, A]): Result[A] = fa match {
+        case Validated.Valid(a)   => partial.Result.fromValue(a)
+        case Validated.Invalid(e) => partial.Result.fromErrorStrings(e.head, e.tail*)
+      }
+    }
 }
 
 private[cats] trait CatsPartialResultLowPriorityImplicits1 {
@@ -111,30 +149,6 @@ private[cats] trait CatsPartialResultLowPriorityImplicits1 {
         case _                           => lb
       }
     }
-
-  /** @since 0.7.0 */
-  implicit final def catsValidatedNelErrorPartialTransformerOps[E <: partial.Error, A](
-      validated: ValidatedNel[E, A]
-  ): CatsValidatedNelErrorPartialTransformerOps[E, A] =
-    new CatsValidatedNelErrorPartialTransformerOps(validated)
-
-  /** @since 0.7.0 */
-  implicit final def catsValidatedNelStringPartialTransformerOps[E <: String, A](
-      validated: ValidatedNel[E, A]
-  ): CatsValidatedNelStringPartialTransformerOps[E, A] =
-    new CatsValidatedNelStringPartialTransformerOps(validated)
-
-  /** @since 0.7.0 */
-  implicit final def catsValidatedNecErrorPartialTransformerOps[E <: partial.Error, A](
-      validated: ValidatedNec[E, A]
-  ): CatsValidatedNecErrorPartialTransformerOps[E, A] =
-    new CatsValidatedNecErrorPartialTransformerOps(validated)
-
-  /** @since 0.7.0 */
-  implicit final def catsValidatedNecStringPartialTransformerOps[E <: String, A](
-      validated: ValidatedNec[E, A]
-  ): CatsValidatedNecStringPartialTransformerOps[E, A] =
-    new CatsValidatedNecStringPartialTransformerOps(validated)
 }
 
 /** @since 0.7.0 */
@@ -160,52 +174,4 @@ final class CatsPartialTransformerResultOps[A](private val ptr: partial.Result[A
   /** @since 0.7.0 */
   def asValidatedList: Validated[List[partial.Error], A] =
     asValidated.leftMap(_.errors.toList)
-}
-
-/** @since 0.7.0 */
-final class CatsValidatedPartialTransformerOps[E <: partial.Result.Errors, A](
-    private val validated: Validated[E, A]
-) extends AnyVal {
-
-  /** @since 0.7.0 */
-  def toPartialResult: partial.Result[A] =
-    partial.Result.fromEither(validated.toEither)
-}
-
-/** @since 0.7.0 */
-final class CatsValidatedNecErrorPartialTransformerOps[E <: partial.Error, A](
-    private val validated: ValidatedNec[E, A]
-) extends AnyVal {
-
-  /** @since 0.7.0 */
-  def toPartialResult: partial.Result[A] =
-    validated.leftMap(errs => partial.Result.Errors(errs.head, errs.tail.toList*)).toPartialResult
-}
-
-/** @since 0.7.0 */
-final class CatsValidatedNecStringPartialTransformerOps[E <: String, A](private val validated: ValidatedNec[E, A])
-    extends AnyVal {
-
-  /** @since 0.7.0 */
-  def toPartialResult: partial.Result[A] =
-    validated.leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail.toList*)).toPartialResult
-}
-
-/** @since 0.7.0 */
-final class CatsValidatedNelErrorPartialTransformerOps[E <: partial.Error, A](
-    private val validated: ValidatedNel[E, A]
-) extends AnyVal {
-
-  /** @since 0.7.0 */
-  def toPartialResult: partial.Result[A] =
-    validated.leftMap(errs => partial.Result.Errors(errs.head, errs.tail*)).toPartialResult
-}
-
-/** @since 0.7.0 */
-final class CatsValidatedNelStringPartialTransformerOps[E <: String, A](private val validated: ValidatedNel[E, A])
-    extends AnyVal {
-
-  /** @since 0.7.0 */
-  def toPartialResult: partial.Result[A] =
-    validated.leftMap(errs => partial.Result.Errors.fromStrings(errs.head, errs.tail*)).toPartialResult
 }
