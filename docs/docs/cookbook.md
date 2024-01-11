@@ -500,19 +500,40 @@ What does it means for us?
 
     It means that every `PartialTransformer` which internally combines results from several smaller partial
     transformations has to have both semantics implemented internally and switch between them with a flag. If we combine
-    `PartialTransformer`s or `partial.Results` using Cats' type classes and extension methods, the type class instance
+    `PartialTransformer`s using Cats' type classes and extension methods, the type class instance
     can:
 
      - pass the `failFast: Boolean` flag on
      - use the flag to decide on semantics when combinding several smaller `partial.Result`s
      - however, some operations like `mapN` use `flatMap` under the hood, so while the flag is propagated, some results
-       can still be discarded, and e.g. `parMapN` would have to be used NOT to use parallel semantics but to NOT disable
-       parallel semantics for some transformations when we would pass `failFast = false` later on 
+       can still be discarded, and e.g. `parProduct` or `parMapN` would have to be used NOT to use parallel semantics
+       but to NOT disable parallel semantics for some transformations when we would pass `failFast = false` later on
+    
+    ```scala
+    //> using dep io.scalaland::chimney-cats::{{ git.tag or local.tag }}
+    import cats.syntax.all._
+    import io.scalaland.chimney.PartialTransformer
+    import io.scalaland.chimney.cats._
+    
+    val t0 = PartialTransformer.fromFunction[String, Int](_.toInt)
+    val t1 = t0.map(_.toDouble)
+    val t2 = t0.map(_.toLong)
+    
+    // uses 1 input value to create a tuple of 2 values, fails fast on the error for the first
+    t1.product(t2).transform("aa").asEitherErrorPathMessageStrings
+    // Left(List((,For input string: "aa")))
+
+    // uses 1 input value to create a tuple of 2 values, agregates the errors for both
+    t1.parProduct(t2).transform("aa").asEitherErrorPathMessageStrings
+    // Left(List((,For input string: "aa"), (,For input string: "aa")))
+    ```
+
+    And `partial.Result`s have to use explicit combinators to decide whether it's sequential or parallel semantics:
 
     ```scala
     //> using dep io.scalaland::chimney-cats::{{ git.tag or local.tag }}
     import cats.syntax.all._
-    import io.scalaland.chimney.{PartialTransformer, partial}
+    import io.scalaland.chimney.partial
     import io.scalaland.chimney.cats._
 
     val result1 = partial.Result.fromErrorString[Int]("error 1")
@@ -529,17 +550,6 @@ What does it means for us?
     result1.parProduct(result2) // partial.Result[(Int, Double)]
     result1 <& result2 // partial.Result[Int]
     result1 &> result2 // partial.Result[Double]
-    
-    // same for PartialTransformers:
-    val t0 = PartialTransformer.fromFunction[String, Int](_.toInt)
-    val t1 = t0.map(_.toDouble)
-    val t2 = t0.map(_.toLong)
-    
-    t1.product(t2).transform("aa").asEitherErrorPathMessageStrings
-    // Left(List((,For input string: "aa")))
-
-    t1.parProduct(t2).transform("aa").asEitherErrorPathMessageStrings
-    // Left(List((,For input string: "aa"), (,For input string: "aa")))
     ```
 
 Notice that this is not an issue if we are transforming one value into another value in a non-fallible way, e.g. through
