@@ -442,8 +442,6 @@ Similarly, there exists instances for `PartialTransformer` and `partial.Result`:
     example.map(int => int.toDouble).transform("10") // 10.0
     example.dimap[String, Float](str => str + "00")(int => int.toFloat).transform("10") // 100.0f
     cats.arrow.Arrow[PartialTransformer].id[String].transform("value") // partial.Result.Value("value")
-    
-    // TODO mapN/
     ```
 
 However, between Cats and Chimney, there is a difference in approach when it comes to "sequential" and "parallel"
