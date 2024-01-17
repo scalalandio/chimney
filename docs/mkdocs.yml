@@ -11,6 +11,7 @@ theme:
     - content.action.edit
     - content.code.copy
     - content.code.select
+    - content.tooltips
     - navigation.expand
     - navigation.footer
     - navigation.instant
