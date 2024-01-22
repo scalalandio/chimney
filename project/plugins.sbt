@@ -18,7 +18,7 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.7")
 // disabling projects in IDE
 addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.1.0")
 // testing protobufs
-addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.6")
+addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.7")
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.15"
 //
 addSbtPlugin("com.github.reibitto" % "sbt-welcome" % "0.4.0")
