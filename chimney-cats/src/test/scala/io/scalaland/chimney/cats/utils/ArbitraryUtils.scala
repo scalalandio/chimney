@@ -4,7 +4,7 @@ import cats.Eq
 import cats.data.Const
 import cats.syntax.eq.*
 import io.scalaland.chimney.{partial, ChimneySpec, PartialTransformer, Transformer}
-import io.scalaland.chimney.cats.eqPartialResult
+import io.scalaland.chimney.cats.catsEqForPartialResult
 import org.scalacheck.{Arbitrary, Cogen}
 import org.scalacheck.Test.check
 import org.scalacheck.Prop.forAll

@@ -7,7 +7,7 @@ import io.scalaland.chimney.Transformer
 trait CatsTotalTransformerImplicits {
 
   /** @since 1.0.0 */
-  implicit final val commutativeArrowChoiceForTransformer: ArrowChoice[Transformer] & CommutativeArrow[Transformer] =
+  implicit final val catsCategoryForTransformer: ArrowChoice[Transformer] & CommutativeArrow[Transformer] =
     new ArrowChoice[Transformer] with CommutativeArrow[Transformer] {
       override def lift[A, B](f: A => B): Transformer[A, B] = f(_)
 
@@ -28,7 +28,7 @@ trait CatsTotalTransformerImplicits {
     }
 
   /** @since 1.0.0 */
-  implicit final def monadCoflatMapForTransformer[Source]
+  implicit final def catsCovariantForTransformer[Source]
       : Monad[Transformer[Source, *]] & CoflatMap[Transformer[Source, *]] =
     new Monad[Transformer[Source, *]] with CoflatMap[Transformer[Source, *]] {
       override def pure[A](x: A): Transformer[Source, A] = _ => x
@@ -56,7 +56,7 @@ trait CatsTotalTransformerImplicits {
     }
 
   /** @since 1.0.0 */
-  implicit final def contravariantForTransformer[Target]: Contravariant[Transformer[*, Target]] =
+  implicit final def catsContravariantForTransformer[Target]: Contravariant[Transformer[*, Target]] =
     new Contravariant[Transformer[*, Target]] {
       def contramap[A, B](fa: Transformer[A, Target])(f: B => A): Transformer[B, Target] =
         b => fa.transform(f(b))
