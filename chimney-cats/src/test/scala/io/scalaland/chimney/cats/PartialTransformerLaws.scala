@@ -17,9 +17,10 @@ class PartialTransformerLaws extends ChimneySpec with utils.ArbitraryUtils {
   }
 
   group(
-    "MonadError[Transformer[Source, *], partial.Result.Errors] & CoflatMap[Transformer[Source, *]] instance should follow laws"
+    "MonadError[PartialTransformer[Source, *], partial.Result.Errors] & CoflatMap[PartialTransformer[Source, *]] & Alternative[PartialTransformer[Source, *]] instance should follow laws"
   ) {
     checkLawsAsTests(InvariantTests[PartialTransformer[String, *]].invariant[Int, String, Double])
+    checkLawsAsTests(SemigroupalTests[PartialTransformer[String, *]].semigroupal[Int, String, Double])
     checkLawsAsTests(FunctorTests[PartialTransformer[String, *]].functor[Int, String, Double])
     checkLawsAsTests(ApplicativeTests[PartialTransformer[String, *]].applicative[Int, String, Double])
     checkLawsAsTests(FlatMapTests[PartialTransformer[String, *]].flatMap[Int, String, Double])
@@ -31,14 +32,15 @@ class PartialTransformerLaws extends ChimneySpec with utils.ArbitraryUtils {
       MonadErrorTests[PartialTransformer[String, *], partial.Result.Errors].monadError[Int, String, Double]
     )
     checkLawsAsTests(CoflatMapTests[PartialTransformer[String, *]].coflatMap[Int, String, Double])
+    checkLawsAsTests(AlternativeTests[PartialTransformer[String, *]].alternative[Int, String, Double])
   }
 
-  group("Parallel[Transformer[From, *]] instance should follow laws") {
+  group("Parallel[PartialTransformer[From, *]] instance should follow laws") {
     checkLawsAsTests(NonEmptyParallelTests[PartialTransformer[String, *]].nonEmptyParallel[Int, String])
     checkLawsAsTests(ParallelTests[PartialTransformer[String, *]].parallel[Int, String])
   }
 
-  group("Contravariant[Transformer[*, To]] instance should follow laws") {
+  group("Contravariant[PartialTransformer[*, To]] instance should follow laws") {
     checkLawsAsTests(ContravariantTests[PartialTransformer[*, String]].contravariant[Int, String, Double])
   }
 }

@@ -12,7 +12,7 @@ class PartialResultLaws extends ChimneySpec with utils.ArbitraryUtils {
   }
 
   group(
-    "MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result] should follow laws"
+    "MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result] & Alternative[partial.Result] should follow laws"
   ) {
     checkLawsAsTests(InvariantTests[partial.Result].invariant[Int, String, Double])
     checkLawsAsTests(SemigroupalTests[partial.Result].semigroupal[Int, String, Double])
@@ -29,5 +29,6 @@ class PartialResultLaws extends ChimneySpec with utils.ArbitraryUtils {
       UnorderedTraverseTests[partial.Result].unorderedTraverse[Int, Long, Double, Const[Unit, *], Const[Int, *]]
     )
     checkLawsAsTests(TraverseTests[partial.Result].traverse[Int, Long, Double, Byte, Const[Unit, *], Const[Int, *]])
+    checkLawsAsTests(AlternativeTests[partial.Result].alternative[Int, String, Double])
   }
 }

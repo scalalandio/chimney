@@ -1,11 +1,11 @@
 package io.scalaland.chimney.cats
 
-import _root_.cats.{~>, Applicative, CoflatMap, Eval, Monad, MonadError, Parallel, Traverse}
+import _root_.cats.{~>, Alternative, Applicative, CoflatMap, Eval, Monad, MonadError, Parallel, Traverse}
 import _root_.cats.arrow.FunctionK
 import _root_.cats.data.{Chain, NonEmptyChain, NonEmptyList, Validated, ValidatedNec, ValidatedNel}
 import _root_.cats.kernel.{Eq, Semigroup}
 import io.scalaland.chimney.partial
-import io.scalaland.chimney.partial.{AsResult, Result}
+import io.scalaland.chimney.partial.AsResult
 
 import language.implicitConversions
 
@@ -13,9 +13,14 @@ import language.implicitConversions
 trait CatsPartialResultImplicits {
 
   /** @since 0.7.0 */
-  implicit final val monadErrorCoflatMapTraversePartialResult
-      : MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result] =
-    new MonadError[partial.Result, partial.Result.Errors] with CoflatMap[partial.Result] with Traverse[partial.Result] {
+  implicit final val catsCovariantForPartialResult: MonadError[partial.Result, partial.Result.Errors] &
+    CoflatMap[partial.Result] &
+    Traverse[partial.Result] &
+    Alternative[partial.Result] =
+    new MonadError[partial.Result, partial.Result.Errors]
+      with CoflatMap[partial.Result]
+      with Traverse[partial.Result]
+      with Alternative[partial.Result] {
       override def pure[A](x: A): partial.Result[A] = partial.Result.Value(x)
 
       override def flatMap[A, B](fa: partial.Result[A])(f: A => partial.Result[B]): partial.Result[B] = fa.flatMap(f)
@@ -55,10 +60,14 @@ trait CatsPartialResultImplicits {
         case partial.Result.Value(value) => f(value, lb)
         case _                           => lb
       }
+
+      override def empty[A]: partial.Result[A] = partial.Result.fromEmpty[A]
+
+      override def combineK[A](x: partial.Result[A], y: partial.Result[A]): partial.Result[A] = x.orElse(y)
     }
 
   /** @since 1.0.0 */
-  implicit final val parallelSemigroupalPartialResult: Parallel[partial.Result] {
+  implicit final val catsParallelForPartialResult: Parallel[partial.Result] {
     type F[A] = partial.Result[A]
   } = new Parallel[partial.Result] {
     override type F[A] = partial.Result[A]
@@ -73,23 +82,22 @@ trait CatsPartialResultImplicits {
         partial.Result.map2[A => B, A, B](ff, fa, (f, a) => f(a), failFast = false)
     }
 
-    override val monad: Monad[partial.Result] = monadErrorCoflatMapTraversePartialResult
+    override val monad: Monad[partial.Result] = catsCovariantForPartialResult
   }
 
   /** @since 0.7.0 */
-  implicit final val semigroupPartialResultErrors: Semigroup[partial.Result.Errors] =
+  implicit final val catsSemigroupForPartialResultErrors: Semigroup[partial.Result.Errors] =
     Semigroup.instance(partial.Result.Errors.merge)
 
   /** @since 1.0.0 */
-  implicit final def eqPartialResult[A: Eq]: Eq[partial.Result[A]] = {
-    case (partial.Result.Value(a1), partial.Result.Value(a2)) => Eq[A].eqv(a1, a2)
-    case (e1: partial.Result.Errors, e2: partial.Result.Errors) =>
-      e1.asErrorPathMessages.iterator.sameElements(e2.asErrorPathMessages.iterator)
-    case _ => false
+  implicit final def catsEqForPartialResult[A: Eq]: Eq[partial.Result[A]] = {
+    case (partial.Result.Value(a1), partial.Result.Value(a2))   => Eq[A].eqv(a1, a2)
+    case (e1: partial.Result.Errors, e2: partial.Result.Errors) => catsEqForPartialResultErrors.eqv(e1, e2)
+    case _                                                      => false
   }
 
   /** @since 1.0.0 */
-  implicit final def eqPartialResultErrors: Eq[partial.Result.Errors] = (e1, e2) =>
+  implicit final val catsEqForPartialResultErrors: Eq[partial.Result.Errors] = (e1, e2) =>
     e1.asErrorPathMessages.iterator.sameElements(e2.asErrorPathMessages.iterator)
 
   /** @since 0.7.0 */
@@ -97,45 +105,45 @@ trait CatsPartialResultImplicits {
     new CatsPartialTransformerResultOps(ptr)
 
   /** @since 1.0.0 */
-  implicit def validatedPartialResultErrorsAsResult[E <: partial.Result.Errors]: AsResult[Validated[E, *]] =
+  implicit def catsValidatedPartialResultErrorsAsResult[E <: partial.Result.Errors]: AsResult[Validated[E, *]] =
     new AsResult[Validated[E, *]] {
-      def asResult[A](fa: Validated[E, A]): Result[A] = fa match {
+      def asResult[A](fa: Validated[E, A]): partial.Result[A] = fa match {
         case Validated.Valid(a)   => partial.Result.fromValue(a)
         case Validated.Invalid(e) => e
       }
     }
 
   /** @since 1.0.0 */
-  implicit def validatedNecPartialErrorAsResult[E <: partial.Error]: AsResult[ValidatedNec[E, *]] =
+  implicit def catsValidatedNecPartialErrorAsResult[E <: partial.Error]: AsResult[ValidatedNec[E, *]] =
     new AsResult[ValidatedNec[E, *]] {
-      def asResult[A](fa: ValidatedNec[E, A]): Result[A] = fa match {
+      def asResult[A](fa: ValidatedNec[E, A]): partial.Result[A] = fa match {
         case Validated.Valid(a)   => partial.Result.fromValue(a)
         case Validated.Invalid(e) => partial.Result.Errors(e.head, e.tail.toList*)
       }
     }
 
   /** @since 1.0.0 */
-  implicit def validatedNelPartialErrorAsResult[E <: partial.Error]: AsResult[ValidatedNel[E, *]] =
+  implicit def catsValidatedNelPartialErrorAsResult[E <: partial.Error]: AsResult[ValidatedNel[E, *]] =
     new AsResult[ValidatedNel[E, *]] {
-      def asResult[A](fa: ValidatedNel[E, A]): Result[A] = fa match {
+      def asResult[A](fa: ValidatedNel[E, A]): partial.Result[A] = fa match {
         case Validated.Valid(a)   => partial.Result.fromValue(a)
         case Validated.Invalid(e) => partial.Result.Errors(e.head, e.tail*)
       }
     }
 
   /** @since 1.0.0 */
-  implicit def validatedNecStringAsResult[E <: String]: AsResult[ValidatedNec[E, *]] =
+  implicit def catsValidatedNecStringAsResult[E <: String]: AsResult[ValidatedNec[E, *]] =
     new AsResult[ValidatedNec[E, *]] {
-      def asResult[A](fa: ValidatedNec[E, A]): Result[A] = fa match {
+      def asResult[A](fa: ValidatedNec[E, A]): partial.Result[A] = fa match {
         case Validated.Valid(a)   => partial.Result.fromValue(a)
         case Validated.Invalid(e) => partial.Result.fromErrorStrings(e.head, e.tail.toList*)
       }
     }
 
   /** @since 1.0.0 */
-  implicit def validatedNelStringAsResult[E <: String]: AsResult[ValidatedNel[E, *]] =
+  implicit def catsValidatedNelStringAsResult[E <: String]: AsResult[ValidatedNel[E, *]] =
     new AsResult[ValidatedNel[E, *]] {
-      def asResult[A](fa: ValidatedNel[E, A]): Result[A] = fa match {
+      def asResult[A](fa: ValidatedNel[E, A]): partial.Result[A] = fa match {
         case Validated.Valid(a)   => partial.Result.fromValue(a)
         case Validated.Invalid(e) => partial.Result.fromErrorStrings(e.head, e.tail*)
       }
