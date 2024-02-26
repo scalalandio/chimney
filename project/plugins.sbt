@@ -2,7 +2,7 @@
 addSbtPlugin("com.github.sbt" % "sbt-git" % "2.0.1")
 // linters
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.10")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.11")
 // cross-compile
 addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.9.2")
 addSbtPlugin("com.indoorvivants" % "sbt-commandmatrix" % "0.0.5")
