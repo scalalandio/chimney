@@ -64,8 +64,8 @@ extra:
     - icon: fontawesome/brands/twitter
       link: https://twitter.com/@scalaland
   scala:
-    2_12: "2.12.18"
-    2_13: "2.13.12"
-    3:    "3.3.1"
+    2_12: "2.12.19"
+    2_13: "2.13.13"
+    3:    "3.3.3"
   local:
     tag: !ENV [CI_LATEST_TAG, 'latest'] # used as git.tag fallback in Docker container
