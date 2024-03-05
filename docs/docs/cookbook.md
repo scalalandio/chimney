@@ -295,20 +295,21 @@ Cats integration module contains the following utilities:
      - for `Transformer` type class:
         - `ArrowChoice[Transformer] & CommutativeArrow[Transformer]` (implementing also `Arrow`, `Choice`, `Category`,
           `Compose`, `Strong`, `Profunctor`)
-        - `[Source] => Monad[Transformer[Source, *]] with CoflatMap[Transformer[Source, *]]` (implementing also `Monad`,
-          `Applicative`, `Functor`)
+        - `[Source] => Monad[Transformer[Source, *]] & CoflatMap[Transformer[Source, *]]`
+          (implementing also `Monad`, `Applicative`, `Functor`)
         - `[Target] => Contravariant[Transformer[*, Target]]` (implementing also `Invariant`)
      - for `PartialTransformer` type class:
         - `ArrowChoice[PartialTransformer] & CommutativeArrow[PartialTransformer]` (implementing also `Arrow`, `Choice`,
           `Category`,`Compose`, `Strong`, `Profunctor`)
-        - `[Source] => MonadError[PartialTransformer[Source, *], partial.Result.Errors] with CoflatMap[PartialTransformer[Source, *]]`
-          (implementing also `Monad`, `Applicative`, `Functor`, `ApplicativeError`)
+        - `[Source] => MonadError[PartialTransformer[Source, *], partial.Result.Errors] & CoflatMap[PartialTransformer[Source, *]] & Alternative[PartialTransformer[Source, *]]`
+          (implementing also `Monad`, `Applicative`, `Functor`, `ApplicativeError`, `NonEmptyAlternative`, `MonoidK`,
+          `SemigroupK`)
         - `[Source] => Parallel[PartialTransformer[Source, *]]` (implementing also `NonEmptyParallel`)
         - `[Target] => Contravariant[Transformer[*, Target]]` (implementing also `Invariant`)
      - for `partial.Result` data type:
-        - `MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result]`
+        - `MonadError[partial.Result, partial.Result.Errors] & CoflatMap[partial.Result] & Traverse[partial.Result] $ Alternative[partial.Result]`
           (implementing also `Monad`, `Applicative`, `Functor`, `ApplicativeError`, `UnorderedTraverse`, `Foldable`,
-          `UnorderedFoldable`, `Invariant[partial.Result]`, `Semigriupal[partial.Result]`, ...)
+          `UnorderedFoldable`, `Invariant`, `Semigriupal`, `NonEmptyAlternative`, `SemigroupK`, `MonoidK`)
         - `Parallel[partial.Result]` (implementing also`NonEmptyParallel`)
         - `Semigroup[partial.Result.Errors]`
 

@@ -29,6 +29,8 @@ class PartialResultLaws extends ChimneySpec with utils.ArbitraryUtils {
       UnorderedTraverseTests[partial.Result].unorderedTraverse[Int, Long, Double, Const[Unit, *], Const[Int, *]]
     )
     checkLawsAsTests(TraverseTests[partial.Result].traverse[Int, Long, Double, Byte, Const[Unit, *], Const[Int, *]])
+    checkLawsAsTests(SemigroupKTests[partial.Result].semigroupK[Int])
+    checkLawsAsTests(MonoidKTests[partial.Result].monoidK[Int])
     checkLawsAsTests(AlternativeTests[partial.Result].alternative[Int, String, Double])
   }
 }

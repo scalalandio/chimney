@@ -32,6 +32,8 @@ class PartialTransformerLaws extends ChimneySpec with utils.ArbitraryUtils {
       MonadErrorTests[PartialTransformer[String, *], partial.Result.Errors].monadError[Int, String, Double]
     )
     checkLawsAsTests(CoflatMapTests[PartialTransformer[String, *]].coflatMap[Int, String, Double])
+    checkLawsAsTests(SemigroupKTests[PartialTransformer[String, *]].semigroupK[Int])
+    checkLawsAsTests(MonoidKTests[PartialTransformer[String, *]].monoidK[Int])
     checkLawsAsTests(AlternativeTests[PartialTransformer[String, *]].alternative[Int, String, Double])
   }
 

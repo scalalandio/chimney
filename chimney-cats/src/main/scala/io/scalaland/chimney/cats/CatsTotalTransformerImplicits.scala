@@ -7,7 +7,7 @@ import io.scalaland.chimney.Transformer
 trait CatsTotalTransformerImplicits {
 
   /** @since 1.0.0 */
-  implicit final val catsCategoryForTransformer: ArrowChoice[Transformer] & CommutativeArrow[Transformer] =
+  implicit final val catsArrowForTransformer: ArrowChoice[Transformer] & CommutativeArrow[Transformer] =
     new ArrowChoice[Transformer] with CommutativeArrow[Transformer] {
       override def lift[A, B](f: A => B): Transformer[A, B] = f(_)
 

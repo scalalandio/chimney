@@ -142,6 +142,24 @@ sealed trait Result[+A] {
 
   /** Prepends a [[io.scalaland.chimney.partial.PathElement]] to all errors represented by this result.
     *
+    * @tparam B the element type of the returned result
+    * @param result lazy [[io.scalaland.chimney.partial.Result]] to compute as a fallback if this one has errors
+    * @return a [[io.scalaland.chimney.partial.Result]] with the first successful value or a failure combining errors
+    *         from both results
+    *
+    * @since 1.0.0
+    */
+  final def orElse[B >: A](result: => Result[B]): Result[B] = this match {
+    case _: Result.Value[?] => this
+    case e: Result.Errors =>
+      result match {
+        case r: Result.Value[?] => r
+        case e2: Result.Errors  => Result.Errors.merge(e, e2)
+      }
+  }
+
+  /** Prepends a [[io.scalaland.chimney.partial.PathElement]] to all errors represented by this result.
+    *
     * @param pathElement [[io.scalaland.chimney.partial.PathElement]] to be prepended
     * @return a [[io.scalaland.chimney.partial.Result]] with [[io.scalaland.chimney.partial.PathElement]] prepended
     *         to all errors
