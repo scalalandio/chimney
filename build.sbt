@@ -502,7 +502,7 @@ lazy val chimneySandwichTestCases213 = projectMatrix
   .settings(
     moduleName := "chimney-sandwich-test-cases-213",
     name := "chimney-sandwich-test-cases-213",
-    description := "Tests cases compiled with Scala 2.13 to test macros in 2.13+3 cross-compilation",
+    description := "Tests cases compiled with Scala 2.13 to test macros in 2.13x3 cross-compilation",
     mimaFailOnNoPrevious := false // this module is not published
   )
 
@@ -514,7 +514,7 @@ lazy val chimneySandwichTestCases3 = projectMatrix
   .settings(
     moduleName := "chimney-sandwich-test-cases-3",
     name := "chimney-sandwich-test-cases-3",
-    description := "Tests cases compiled with Scala 3 to test macros in 2.13+3 cross-compilation",
+    description := "Tests cases compiled with Scala 3 to test macros in 2.13x3 cross-compilation",
     mimaFailOnNoPrevious := false // this module is not published
   )
 
@@ -552,7 +552,9 @@ lazy val chimneySandwithTests = projectMatrix
               name = s"chimney-sandwich-test-cases-$moduleSuffix$platformSuffix$scalaSuffix"
             )
           }
-        proj.dependsOn(testCases213, testCases3).settings(excludeDependencies ++= exclusions)
+        proj
+          .dependsOn(testCases213 % "test->test;compile->compile", testCases3 % "test->test;compile->compile")
+          .settings(excludeDependencies ++= exclusions)
       }
     } ++ only1VersionInIDE)*
   )
@@ -561,7 +563,7 @@ lazy val chimneySandwithTests = projectMatrix
   .settings(
     moduleName := "chimney-sandwich-tests",
     name := "chimney-sandwich-tests",
-    description := "Tests macros in 2.13+3 cross-compilation",
+    description := "Tests macros in 2.13x3 cross-compilation",
     mimaFailOnNoPrevious := false // this module is not published
   )
   .dependsOn(chimney % "test->test;compile->compile")
