@@ -270,11 +270,11 @@ val publishSettings = Seq(
 val mimaSettings = Seq(
   mimaPreviousArtifacts := {
     val previousVersions = moduleName.value match {
-      case "chimney-macro-commons"    => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0")
-      case "chimney"                  => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0")
-      case "chimney-cats"             => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0")
-      case "chimney-java-collections" => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0")
-      case "chimney-protobufs"        => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0")
+      case "chimney-macro-commons"    => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0")
+      case "chimney"                  => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0")
+      case "chimney-cats"             => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0")
+      case "chimney-java-collections" => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0")
+      case "chimney-protobufs"        => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0")
       case _                          => Set()
     }
     previousVersions.map(organization.value %% moduleName.value % _)
@@ -287,6 +287,7 @@ val noPublishSettings =
 
 val ciCommand = (platform: String, scalaSuffix: String) => {
   val isJVM = platform == "JVM"
+  val isSandwichable = scalaSuffix != "2_12"
 
   val clean = Vector("clean")
   def withCoverage(tasks: String*): Vector[String] =
@@ -298,6 +299,7 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
       "chimneyCats",
       "chimneyProtobufs",
       if (isJVM) "chimneyJavaCollections" else "",
+      if (isSandwichable) "chimneySandwichTests" else "",
       "chimneyEngine"
     )
     if name.nonEmpty
@@ -345,6 +347,7 @@ lazy val root = project
   .aggregate(chimneyJavaCollections.projectRefs *)
   .aggregate(chimneyProtobufs.projectRefs *)
   .aggregate(chimneyEngine.projectRefs *)
+  .aggregate(chimneySandwichTests.projectRefs *)
   .settings(
     moduleName := "chimney-build",
     name := "chimney-build",
@@ -554,6 +557,48 @@ lazy val chimneyEngine = projectMatrix
   )
   .settings(dependencies *)
   .dependsOn(chimney)
+
+lazy val chimneySandwichTestCases213 = projectMatrix
+  .in(file("chimney-sandwich-test-cases-213"))
+  .someVariations(List(versions.scala213), versions.platforms)()
+  .settings(settings *)
+  .settings(publishSettings *)
+  .settings(noPublishSettings *)
+  .settings(
+    moduleName := "chimney-sandwich-test-cases-213",
+    name := "chimney-sandwich-test-cases-213",
+    description := "Tests cases compiled with Scala 2.13 to test macros in 2.13x3 cross-compilation",
+    mimaFailOnNoPrevious := false // this module is not published
+  )
+
+lazy val chimneySandwichTestCases3 = projectMatrix
+  .in(file("chimney-sandwich-test-cases-3"))
+  .someVariations(List(versions.scala3), versions.platforms)()
+  .settings(settings *)
+  .settings(publishSettings *)
+  .settings(noPublishSettings *)
+  .settings(
+    moduleName := "chimney-sandwich-test-cases-3",
+    name := "chimney-sandwich-test-cases-3",
+    description := "Tests cases compiled with Scala 3 to test macros in 2.13x3 cross-compilation",
+    mimaFailOnNoPrevious := false // this module is not published
+  )
+
+lazy val chimneySandwichTests = projectMatrix
+  .in(file("chimney-sandwich-tests"))
+  .someVariations(List(versions.scala213, versions.scala3), versions.platforms)(only1VersionInIDE *)
+  .settings(settings *)
+  .settings(publishSettings *)
+  .settings(noPublishSettings *)
+  .settings(
+    moduleName := "chimney-sandwich-tests",
+    name := "chimney-sandwich-tests",
+    description := "Tests macros in 2.13x3 cross-compilation",
+    mimaFailOnNoPrevious := false // this module is not published
+  )
+  .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
+  .dependsOn(chimneySandwichTestCases213 % s"$Test->$Test;$Compile->$Compile")
+  .dependsOn(chimneySandwichTestCases3 % s"$Test->$Test;$Compile->$Compile")
 
 lazy val benchmarks = projectMatrix
   .in(file("benchmarks"))
