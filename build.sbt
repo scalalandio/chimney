@@ -274,13 +274,17 @@ val noPublishSettings =
 
 val ciCommand = (platform: String, scalaSuffix: String) => {
   val isJVM = platform == "JVM"
+  val isSandwichable = scalaSuffix != "2_12"
 
   val clean = Vector("clean")
   def withCoverage(tasks: String*): Vector[String] =
     "coverage" +: tasks.toVector :+ "coverageAggregate" :+ "coverageOff"
 
-  val projects = (Vector("chimney", "chimneyCats", "chimneyProtobufs") ++ (if (isJVM) Vector("chimneyJavaCollections")
-                                                                           else Vector.empty))
+  val projects = (
+    Vector("chimney", "chimneyCats", "chimneyProtobufs") ++
+      (if (isJVM) Vector("chimneyJavaCollections") else Vector.empty) ++
+      (if (isSandwichable) Vector("chimneySandwithTests") else Vector.empty)
+  )
     .map(name => s"$name${if (isJVM) "" else platform}$scalaSuffix")
   def tasksOf(name: String): Vector[String] = projects.map(project => s"$project/$name")
 
@@ -293,7 +297,7 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
     clean ++ tasksOf("test")
   }
 
-  tasks.mkString(";")
+  tasks.mkString(" ; ")
 }
 
 val releaseCommand = (tag: Seq[String]) => if (tag.nonEmpty) "publishSigned;sonatypeBundleRelease" else "publishSigned"
@@ -487,6 +491,78 @@ lazy val chimneyProtobufs = projectMatrix
     Test / PB.protoSources += PB.externalSourcePath.value,
     Test / PB.targets := Seq(scalapb.gen() -> (Test / sourceManaged).value / "scalapb"),
     libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
+  )
+  .dependsOn(chimney % "test->test;compile->compile")
+
+lazy val chimneySandwichTestCases213 = projectMatrix
+  .in(file("chimney-sandwich-test-cases-213"))
+  .someVariations(List(versions.scala213), versions.platforms)()
+  .settings(publishSettings*)
+  .settings(noPublishSettings*)
+  .settings(
+    moduleName := "chimney-sandwich-test-cases-213",
+    name := "chimney-sandwich-test-cases-213",
+    description := "Tests cases compiled with Scala 2.13 to test macros in 2.13+3 cross-compilation",
+    mimaFailOnNoPrevious := false // this module is not published
+  )
+
+lazy val chimneySandwichTestCases3 = projectMatrix
+  .in(file("chimney-sandwich-test-cases-3"))
+  .someVariations(List(versions.scala3), versions.platforms)()
+  .settings(publishSettings*)
+  .settings(noPublishSettings*)
+  .settings(
+    moduleName := "chimney-sandwich-test-cases-3",
+    name := "chimney-sandwich-test-cases-3",
+    description := "Tests cases compiled with Scala 3 to test macros in 2.13+3 cross-compilation",
+    mimaFailOnNoPrevious := false // this module is not published
+  )
+
+// this whole module as well as its whole MatrixAction.ForPlatform(platform).Configure exists because of
+// unresolved https://github.com/sbt/sbt/issues/7405 issue:
+//  - so called "sbt sandwich" doesn't work, sbt instead of figuring out that 2.13 module should depend on 3 module
+//    or vice versa (within the same build!), attempts to fetch non-existing artifact on "update" (triggered by compile)
+//  - we can workaround that by adding excludeDependencies configuration... which appears in POM and breaks builds
+//    depending on a published artifact instead
+//  - which we must work around, again, by moving the code to a separate repository, so that published artifacts' POMs
+//    will not be affected
+lazy val chimneySandwithTests = projectMatrix
+  .in(file("chimney-sandwich-tests"))
+  .someVariations(List(versions.scala213, versions.scala3), versions.platforms)(
+    (versions.platforms.map { platform =>
+      MatrixAction.ForPlatform(platform).Configure { proj =>
+        val platformSuffix = platform match {
+          case VirtualAxis.js     => "_sjs1"
+          case VirtualAxis.native => "_native0.4"
+          case _ /* jvm */        => ""
+        }
+        val testCases213 = chimneySandwichTestCases213.allProjects.collectFirst {
+          case (p, axis) if axis.contains(platform) => p
+        }.head
+        val testCases3 = chimneySandwichTestCases3.allProjects.collectFirst {
+          case (p, axis) if axis.contains(platform) => p
+        }.head
+        val exclusions =
+          Seq(
+            "213" -> "_3", // name-213 module shot NOT define name_3 artifact
+            "3" -> "_2.13" // name-3 module shot NOT define name_2.13 artifact
+          ).map { case (moduleSuffix, scalaSuffix) =>
+            ExclusionRule(
+              organization = "io.scalaland",
+              name = s"chimney-sandwich-test-cases-$moduleSuffix$platformSuffix$scalaSuffix"
+            )
+          }
+        proj.dependsOn(testCases213, testCases3).settings(excludeDependencies ++= exclusions)
+      }
+    } ++ only1VersionInIDE)*
+  )
+  .settings(publishSettings*)
+  .settings(noPublishSettings*)
+  .settings(
+    moduleName := "chimney-sandwich-tests",
+    name := "chimney-sandwich-tests",
+    description := "Tests macros in 2.13+3 cross-compilation",
+    mimaFailOnNoPrevious := false // this module is not published
   )
   .dependsOn(chimney % "test->test;compile->compile")
 
