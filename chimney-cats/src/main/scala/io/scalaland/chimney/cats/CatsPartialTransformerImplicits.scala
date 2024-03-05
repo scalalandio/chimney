@@ -9,7 +9,7 @@ import io.scalaland.chimney.PartialTransformer
 trait CatsPartialTransformerImplicits {
 
   /** @since 1.0.0 */
-  implicit final val catsCategoryForPartialTransformer
+  implicit final val catsArrowForPartialTransformer
       : ArrowChoice[PartialTransformer] & CommutativeArrow[PartialTransformer] =
     new ArrowChoice[PartialTransformer] with CommutativeArrow[PartialTransformer] {
       override def lift[A, B](f: A => B): PartialTransformer[A, B] = PartialTransformer.fromFunction(f)

@@ -135,6 +135,38 @@ class PartialResultSpec extends ChimneySpec {
     result2.asErrorPathMessageStrings ==> Iterable("" -> """For input string: "error2"""")
   }
 
+  test("orElse fallbacks on another Result on error, aggregating errors if both Results fail") {
+    var used = false
+    val result = partial.Result.fromValue(1).orElse {
+      used = true
+      partial.Result.fromValue(2)
+    }
+    result.asOption ==> Some(1)
+    result.asEither ==> Right(1)
+    result.asErrorPathMessageStrings ==> Iterable()
+    used ==> false
+
+    var used2 = false
+    val result2 = partial.Result.fromEmpty[Int].orElse {
+      used2 = true
+      partial.Result.fromValue(2)
+    }
+    result2.asOption ==> Some(2)
+    result2.asEither ==> Right(2)
+    result2.asErrorPathMessageStrings ==> Iterable()
+    used2 ==> true
+
+    var used3 = false
+    val result3 = partial.Result.fromEmpty[Int].orElse {
+      used3 = true
+      partial.Result.fromEmpty[Int]
+    }
+    result3.asOption ==> None
+    result3.asEither.isLeft ==> true
+    result3.asErrorPathMessageStrings ==> Iterable("" -> """empty value""", "" -> """empty value""")
+    used3 ==> true
+  }
+
   test("fromFunction converts function into function returning Result") {
     partial.Result.fromFunction[Int, Int](_ * 2).apply(3) ==> partial.Result.fromValue(6)
   }
