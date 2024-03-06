@@ -497,6 +497,7 @@ lazy val chimneyProtobufs = projectMatrix
 lazy val chimneySandwichTestCases213 = projectMatrix
   .in(file("chimney-sandwich-test-cases-213"))
   .someVariations(List(versions.scala213), versions.platforms)()
+  .settings(settings*)
   .settings(publishSettings*)
   .settings(noPublishSettings*)
   .settings(
@@ -509,6 +510,7 @@ lazy val chimneySandwichTestCases213 = projectMatrix
 lazy val chimneySandwichTestCases3 = projectMatrix
   .in(file("chimney-sandwich-test-cases-3"))
   .someVariations(List(versions.scala3), versions.platforms)()
+  .settings(settings*)
   .settings(publishSettings*)
   .settings(noPublishSettings*)
   .settings(
@@ -526,7 +528,7 @@ lazy val chimneySandwichTestCases3 = projectMatrix
 //    depending on a published artifact instead
 //  - which we must work around, again, by moving the code to a separate repository, so that published artifacts' POMs
 //    will not be affected
-lazy val chimneySandwithTests = projectMatrix
+lazy val chimneySandwichTests = projectMatrix
   .in(file("chimney-sandwich-tests"))
   .someVariations(List(versions.scala213, versions.scala3), versions.platforms)(
     (versions.platforms.map { platform =>
@@ -558,6 +560,7 @@ lazy val chimneySandwithTests = projectMatrix
       }
     } ++ only1VersionInIDE)*
   )
+  .settings(settings*)
   .settings(publishSettings*)
   .settings(noPublishSettings*)
   .settings(
