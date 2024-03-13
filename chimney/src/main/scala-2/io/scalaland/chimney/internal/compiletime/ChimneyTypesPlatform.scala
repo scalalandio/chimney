@@ -226,6 +226,23 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
               Some(A.param_<[dsls.ImplicitTransformerPreference](0))
             else scala.None
         }
+        object FieldNameComparison extends FieldNameComparisonModule {
+          def apply[C <: dsls.TransformedNamesComparison: Type]: Type[runtime.TransformerFlags.FieldNameComparison[C]] =
+            weakTypeTag[runtime.TransformerFlags.FieldNameComparison[C]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.TransformedNamesComparison]] =
+            if (A.isCtor[runtime.TransformerFlags.FieldNameComparison[?]])
+              Some(A.param_<[dsls.TransformedNamesComparison](0))
+            else scala.None
+        }
+        object SubtypeNameComparison extends SubtypeNameComparisonModule {
+          def apply[C <: dsls.TransformedNamesComparison: Type]
+              : Type[runtime.TransformerFlags.SubtypeNameComparison[C]] =
+            weakTypeTag[runtime.TransformerFlags.SubtypeNameComparison[C]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.TransformedNamesComparison]] =
+            if (A.isCtor[runtime.TransformerFlags.SubtypeNameComparison[?]])
+              Some(A.param_<[dsls.TransformedNamesComparison](0))
+            else scala.None
+        }
         val MacrosLogging: Type[runtime.TransformerFlags.MacrosLogging] =
           weakTypeTag[runtime.TransformerFlags.MacrosLogging]
       }
