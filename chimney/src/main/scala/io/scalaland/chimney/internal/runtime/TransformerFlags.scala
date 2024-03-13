@@ -16,6 +16,7 @@ object TransformerFlags {
   final class BeanSettersIgnoreUnmatched extends Flag
   final class BeanGetters extends Flag
   final class OptionDefaultsToNone extends Flag
+  final class PartialUnwrapsOption extends Flag
   final class ImplicitConflictResolution[R <: ImplicitTransformerPreference] extends Flag
   final class MacrosLogging extends Flag
 }
