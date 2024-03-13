@@ -383,8 +383,8 @@ These issues can be addressed by increasing the compiler's JVM stack size, passi
 to 64MB).
 
 However, if you are using the compiler's flags to report unused definitions when macros are involved, there can also be
-an error caused by [scala/bug#12895](https://github.com/scala/bug/issues/12895). In such case the workaround would be to
-remove the unused definition reporting.
+an error caused by [scala/bug#12895](https://github.com/scala/bug/issues/12895). This bug was fixed in Scala 2.13.14,
+if update is impossible the workaround would be to remove the unused definition reporting.
 
 ### Debugging macros
 
