@@ -215,6 +215,8 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           weakTypeTag[runtime.TransformerFlags.BeanSettersIgnoreUnmatched]
         val OptionDefaultsToNone: Type[runtime.TransformerFlags.OptionDefaultsToNone] =
           weakTypeTag[runtime.TransformerFlags.OptionDefaultsToNone]
+        val PartialUnwrapsOption: Type[runtime.TransformerFlags.PartialUnwrapsOption] =
+          weakTypeTag[runtime.TransformerFlags.PartialUnwrapsOption]
         object ImplicitConflictResolution extends ImplicitConflictResolutionModule {
           def apply[R <: dsls.ImplicitTransformerPreference: Type]
               : Type[runtime.TransformerFlags.ImplicitConflictResolution[R]] =

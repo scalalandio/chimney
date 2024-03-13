@@ -17,6 +17,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       beanSettersIgnoreUnmatched: Boolean = false,
       beanGetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,
+      partialUnwrapsOption: Boolean = true,
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
       displayMacrosLogging: Boolean = false
   ) {
@@ -36,6 +37,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         copy(beanGetters = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.OptionDefaultsToNone) {
         copy(optionDefaultsToNone = value)
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.PartialUnwrapsOption) {
+        copy(partialUnwrapsOption = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.MacrosLogging) {
         copy(displayMacrosLogging = value)
       } else {

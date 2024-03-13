@@ -154,6 +154,26 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
   def disableOptionDefaultsToNone: UpdateFlag[Disable[OptionDefaultsToNone, Flags]] =
     disableFlag[OptionDefaultsToNone]
 
+  /** Enable safe Option unwrapping by `PartialTransformer` - `Option` is automatically unwrapped to non-`Option` values, `None` is treated as empty value errors.
+    *
+    * This is the default behavior.
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @since 1.0.0
+    */
+  def enablePartialUnwrapsOption: UpdateFlag[Enable[PartialUnwrapsOption, Flags]] =
+    enableFlag[PartialUnwrapsOption]
+
+  /** Disable safe `Option` unwrapping by `PartialTransformer` - each `Option` to non-Option` has to be handled manually.
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @since 1.0.0
+    */
+  def disablePartialUnwrapsOption: UpdateFlag[Disable[PartialUnwrapsOption, Flags]] =
+    disableFlag[PartialUnwrapsOption]
+
   /** Enable conflict resolution when both `Transformer` and `PartialTransformer` are available in the implicit scope.
     *
     * @param preference parameter specifying which implicit transformer to pick in case of conflict
