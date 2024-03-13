@@ -456,7 +456,13 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     case class TargetWithOptionAndDefault(x: String, y: Option[Int] = Some(42))
 
     test("should be turned off by default and not allow compiling Option fields with missing source") {
-      compileErrorsFixed("""Source("foo").intoPartial[TargetWithOption].transform.asOption""").check(
+      compileErrorsFixed("""Source("foo").transformIntoPartial[TargetWithOption]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
+        "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
+        "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+      compileErrorsFixed("""Source("foo").intoPartial[TargetWithOption].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
@@ -464,16 +470,27 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       )
     }
 
-    test("use None for fields without source nor default value when enabled") {
+    test("should use None for fields without source nor default value when enabled") {
       Source("foo").intoPartial[TargetWithOption].enableOptionDefaultsToNone.transform.asOption ==> Some(
         TargetWithOption("foo", None)
       )
+      locally {
+        implicit val config = TransformerConfiguration.default.enableOptionDefaultsToNone
+        Source("foo").transformIntoPartial[TargetWithOption].asOption ==> Some(TargetWithOption("foo", None))
+      }
     }
 
-    test("use None for fields without source but with default value when enabled but default values disabled") {
+    test("should use None for fields without source but with default value when enabled but default values disabled") {
       Source("foo").intoPartial[TargetWithOptionAndDefault].enableOptionDefaultsToNone.transform.asOption ==> Some(
         TargetWithOptionAndDefault("foo", None)
       )
+      locally {
+        implicit val config = TransformerConfiguration.default.enableOptionDefaultsToNone
+
+        Source("foo").transformIntoPartial[TargetWithOptionAndDefault].asOption ==> Some(
+          TargetWithOptionAndDefault("foo", None)
+        )
+      }
     }
 
     test("should be ignored when default value is set and default values enabled") {
@@ -496,6 +513,69 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
           Some(42)
         )
       )
+    }
+  }
+
+  group("flag .disableOptionDefaultsToNone") {
+
+    @unused case class Source(x: String)
+    @unused case class TargetWithOption(x: String, y: Option[Int])
+
+    test("should disable globally enabled .enableOptionDefaultsToNone") {
+      @unused implicit val config = TransformerConfiguration.default.enableOptionDefaultsToNone
+
+      compileErrorsFixed("""Source("foo").intoPartial[TargetWithOption].disableOptionDefaultsToNone.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
+        "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
+        "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+  }
+
+  group("flag .enablePartialUnwrapsOption") {
+
+    case class Source(a: Option[String])
+    case class Target(a: String)
+
+    test("should be turned on by default") {
+      Source(Some("value")).transformIntoPartial[Target].asOption ==> Some(Target("value"))
+      Source(Some("value")).intoPartial[Target].transform.asOption ==> Some(Target("value"))
+    }
+
+    test("should re-enable globally disabled .disablePartialUnwrapsOption") {
+      implicit val config = TransformerConfiguration.default.disablePartialUnwrapsOption
+
+      Source(Some("value")).intoPartial[Target].enablePartialUnwrapsOption.transform.asOption ==> Some(Target("value"))
+    }
+  }
+
+  group("flag .disablePartialUnwrapsOption") {
+
+    @unused case class Source(a: Option[String])
+    @unused case class Target(a: String)
+
+    test("should fail compilation if Option unwrapping is not provided when disabled") {
+      compileErrorsFixed("""Source(Some("value")).intoPartial[Target].disablePartialUnwrapsOption.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Target",
+        "java.lang.String",
+        "derivation from source.a: scala.Option[java.lang.String] to java.lang.String is not supported in Chimney!",
+        "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Target",
+        "a: java.lang.String - can't derive transformation from a: scala.Option[java.lang.String] in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+      locally {
+        @unused implicit val config = TransformerConfiguration.default.disablePartialUnwrapsOption
+
+        compileErrorsFixed("""Source(Some("value")).transformIntoPartial[Target]""").check(
+          "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Target",
+          "java.lang.String",
+          "derivation from source.a: scala.Option[java.lang.String] to java.lang.String is not supported in Chimney!",
+          "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Target",
+          "a: java.lang.String - can't derive transformation from a: scala.Option[java.lang.String] in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+      }
     }
   }
 }
