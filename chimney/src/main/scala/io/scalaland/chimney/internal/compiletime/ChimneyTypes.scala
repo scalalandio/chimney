@@ -180,6 +180,18 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
               dsls.ImplicitTransformerPreference,
               runtime.TransformerFlags.ImplicitConflictResolution
             ] { this: ImplicitConflictResolution.type => }
+        val FieldNameComparison: FieldNameComparisonModule
+        trait FieldNameComparisonModule
+            extends Type.Ctor1UpperBounded[
+              dsls.TransformedNamesComparison,
+              runtime.TransformerFlags.FieldNameComparison
+            ] { this: FieldNameComparison.type => }
+        val SubtypeNameComparison: SubtypeNameComparisonModule
+        trait SubtypeNameComparisonModule
+            extends Type.Ctor1UpperBounded[
+              dsls.TransformedNamesComparison,
+              runtime.TransformerFlags.SubtypeNameComparison
+            ] { this: SubtypeNameComparison.type => }
         val MacrosLogging: Type[runtime.TransformerFlags.MacrosLogging]
       }
     }
