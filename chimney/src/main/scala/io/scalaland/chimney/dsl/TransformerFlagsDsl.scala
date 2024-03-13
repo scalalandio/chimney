@@ -196,6 +196,50 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
   def disableImplicitConflictResolution: UpdateFlag[Disable[ImplicitConflictResolution[?], Flags]] =
     disableFlag[ImplicitConflictResolution[?]]
 
+  /** Enable custom way of comparing if source fields' names and target fields' names are matching.
+    *
+    * @param namesComparison parameter specifying how names should be compared by macro
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @since 1.0.0
+    */
+  def enableCustomFieldNameComparison[C <: TransformedNamesComparison & Singleton](
+      @unused namesComparison: C
+  ): UpdateFlag[Enable[FieldNameComparison[C], Flags]] =
+    enableFlag[FieldNameComparison[C]]
+
+  /** Disable any custom way of comparing if source fields' names and target fields' names are matching.
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @since 1.0.0
+    */
+  def disableCustomFieldNameComparison: UpdateFlag[Disable[FieldNameComparison[?], Flags]] =
+    disableFlag[FieldNameComparison[?]]
+
+  /** Enable custom way of comparing if source subtypes' names and target fields' names are matching.
+    *
+    * @param namesComparison parameter specifying how names should be compared by macro
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @since 1.0.0
+    */
+  def enableCustomSubtypeNameComparison[C <: TransformedNamesComparison & Singleton](
+      @unused namesComparison: C
+  ): UpdateFlag[Enable[SubtypeNameComparison[C], Flags]] =
+    enableFlag[SubtypeNameComparison[C]]
+
+  /** Disable any custom way of comparing if source subtypes' names and target fields' names are matching.
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @since 1.0.0
+    */
+  def disableCustomSubtypeNameComparison: UpdateFlag[Disable[SubtypeNameComparison[?], Flags]] =
+    disableFlag[SubtypeNameComparison[?]]
+
   /** Enable printing the logs from the derivation process.
     *
     * @see [[https://chimney.readthedocs.io/troubleshooting/#debugging-macros]] for more details

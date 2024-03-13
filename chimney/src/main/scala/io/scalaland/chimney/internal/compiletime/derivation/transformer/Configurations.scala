@@ -19,6 +19,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       optionDefaultsToNone: Boolean = false,
       partialUnwrapsOption: Boolean = true,
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
+      fieldNameComparison: dsls.TransformedNamesComparison = dsls.TransformedNamesComparison.FieldDefault,
+      subtypeNameComparison: dsls.TransformedNamesComparison = dsls.TransformedNamesComparison.SubtypeDefault,
       displayMacrosLogging: Boolean = false
   ) {
 
@@ -49,6 +51,12 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags =
       copy(implicitConflictResolution = preference)
+
+    def setFieldNameComparison(nameComparison: dsls.TransformedNamesComparison): TransformerFlags =
+      copy(fieldNameComparison = nameComparison)
+
+    def setSubtypeNameComparison(nameComparison: dsls.TransformedNamesComparison): TransformerFlags =
+      copy(subtypeNameComparison = nameComparison)
 
     override def toString: String = s"TransformerFlags(${Vector(
         if (inheritedAccessors) Vector("inheritedAccessors") else Vector.empty,
@@ -274,6 +282,16 @@ private[compiletime] trait Configurations { this: Derivation =>
               reportError("Invalid ImplicitTransformerPreference type!!")
               // $COVERAGE-ON$
             }
+          case ChimneyType.TransformerFlags.Flags.FieldNameComparison(c) =>
+            import c.Underlying as Comparison
+            extractTransformerFlags[Flags2](defaultFlags).setFieldNameComparison(
+              extractNameComparisonObject[Comparison]
+            )
+          case ChimneyType.TransformerFlags.Flags.SubtypeNameComparison(c) =>
+            import c.Underlying as Comparison
+            extractTransformerFlags[Flags2](defaultFlags).setFieldNameComparison(
+              extractNameComparisonObject[Comparison]
+            )
           case _ =>
             extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = true)
         }
@@ -282,6 +300,14 @@ private[compiletime] trait Configurations { this: Derivation =>
         Flag match {
           case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(_) =>
             extractTransformerFlags[Flags2](defaultFlags).setImplicitConflictResolution(None)
+          case ChimneyType.TransformerFlags.Flags.FieldNameComparison(_) =>
+            extractTransformerFlags[Flags2](defaultFlags).setFieldNameComparison(
+              dsls.TransformedNamesComparison.FieldDefault
+            )
+          case ChimneyType.TransformerFlags.Flags.SubtypeNameComparison(_) =>
+            extractTransformerFlags[Flags2](defaultFlags).setSubtypeNameComparison(
+              dsls.TransformedNamesComparison.SubtypeDefault
+            )
           case _ =>
             extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = false)
         }
@@ -371,5 +397,14 @@ private[compiletime] trait Configurations { this: Derivation =>
         reportError(s"Invalid internal Path shape: ${Type.prettyPrint[Field]}!!")
       // $COVERAGE-ON$
     }
+
+    private def extractNameComparisonObject[Comparison <: dsls.TransformedNamesComparison: Type]: Comparison =
+      // TODO: implement this based on https://github.com/MateuszKubuszok/MacroTypeclass ideas
+
+      // $COVERAGE-OFF$
+      reportError(
+        s"Invalid TransformerNamesComparison type - only global objects are allowed: ${Type.prettyPrint[Comparison]}!!"
+      )
+    // $COVERAGE-ON$
   }
 }
