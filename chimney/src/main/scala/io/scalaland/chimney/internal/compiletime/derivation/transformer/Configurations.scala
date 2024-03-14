@@ -395,13 +395,35 @@ private[compiletime] trait Configurations { this: Derivation =>
       // $COVERAGE-ON$
     }
 
-    private def extractNameComparisonObject[Comparison <: dsls.TransformedNamesComparison: Type]: Comparison =
-      // TODO: implement this based on https://github.com/MateuszKubuszok/MacroTypeclass ideas
+    // TODO: consider moving this utils to Type and requiring <: Singleton type-bound
+    private val AnsiControlCode = "\u001b\\[([0-9]+)m".r
+    private def extractNameComparisonObject[Comparison <: dsls.TransformedNamesComparison: Type]: Comparison = {
+      // based on https://github.com/MateuszKubuszok/MacroTypeclass ideas
+      object Comparison {
+        def unapply(className: String): Option[Comparison] =
+          try
+            Option(Class.forName(className).getField("MODULE$").get(null).asInstanceOf[Comparison])
+          catch {
+            case _: Throwable => None
+          }
+      }
 
-      // $COVERAGE-OFF$
-      reportError(
-        s"Invalid TransformerNamesComparison type - only global objects are allowed: ${Type.prettyPrint[Comparison]}!!"
-      )
-    // $COVERAGE-ON$
+      // assuming this is "foo.bar.baz"...
+      val name = AnsiControlCode.replaceAllIn(Type.prettyPrint[Comparison], "")
+
+      Iterator
+        .iterate(name.replace('.', '$') + '$')(_.replaceFirst("\\$", "."))
+        .take(name.count(_ == '.') + 1) // ...then this is: "foo$bar$baz$", "foo.bar$baz$", "foo.bar.baz$"...
+        .toArray
+        .reverse // ...and this is: "foo.bar.baz$", "foo.bar$baz$", "foo$bar$baz$"
+        .collectFirst { case Comparison(value) => value } // attempts: top-level object, object in object, etc
+        .getOrElse {
+          // $COVERAGE-OFF$
+          reportError(
+            s"Invalid TransformerNamesComparison type - only global objects are allowed: ${Type.prettyPrint[Comparison]}!!"
+          )
+          // $COVERAGE-ON$
+        }
+    }
   }
 }
