@@ -107,7 +107,9 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         ctx: TransformationContext[From, To]
     ): DerivationResult[Existential[ExprPromise[*, TransformationExpr[To]]]] = {
       import fromSubtype.Underlying as FromSubtype, fromSubtype.value.name as fromName
-      toElements.filter(toSubtype => enumNamesMatch(fromName, toSubtype.value.name)).toList match {
+      toElements.filter(toSubtype =>
+        ctx.config.flags.subtypeNameComparison.namesMatch(fromName, toSubtype.value.name)
+      ) match {
         // 0 matches - no coproduct with the same name
         case Nil =>
           DerivationResult
@@ -223,7 +225,5 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             }
             .matchOn(ctx.src)
         )
-
-    private def enumNamesMatch(fromName: String, toName: String): Boolean = fromName == toName
   }
 }
