@@ -159,7 +159,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
                 if (isVar(setter)) n.stripSuffix("_$eq").stripSuffix("_=") else n
               name -> setter
             }
-            .filter { case (name, _) => !paramTypes.keySet.exists(areNamesMatching(_, name)) }
+            .filter { case (name, _) => !paramTypes.keySet.contains(name) }
             .map { case (name, setter) =>
               val termName = setter.asTerm.name.toTermName
               val tpe = ExistentialType(fromUntyped(paramListsOf(Type[A].tpe, setter).flatten.head.typeSignature))

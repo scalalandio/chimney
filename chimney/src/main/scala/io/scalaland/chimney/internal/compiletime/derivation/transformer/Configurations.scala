@@ -129,9 +129,6 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
   }
   final protected case class DownField(nameFilter: String => Boolean) extends FieldPathUpdate
-  protected object DownField {
-    def apply(name: String): DownField = DownField(ProductType.areNamesMatching(_, name))
-  }
   protected case object KeepFieldOverrides extends FieldPathUpdate
   protected case object CleanFieldOverrides extends FieldPathUpdate
 

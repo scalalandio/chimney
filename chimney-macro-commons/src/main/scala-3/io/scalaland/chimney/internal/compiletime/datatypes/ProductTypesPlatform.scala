@@ -179,7 +179,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           .map { setter =>
             setter.name -> setter
           }
-          .filter { case (name, _) => !paramTypes.keySet.exists(areNamesMatching(_, name)) }
+          .filter { case (name, _) => !paramTypes.keySet.contains(name) }
           .map { case (name, setter) =>
             val tpe = ExistentialType(fromUntyped[Any](paramsWithTypes(A, setter, isConstructor = false).head._2))
             (
