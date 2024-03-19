@@ -22,10 +22,12 @@ private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Der
       valueFrom: ValueClass[From, InnerFrom],
       valueTo: ValueClass[To, InnerTo]
   )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-    deriveRecursiveTransformationExpr[InnerFrom, InnerTo](valueFrom.unwrap(ctx.src), DownField(valueTo.fieldName))
-      .flatMap { (derivedInnerTo: TransformationExpr[InnerTo]) =>
-        // We're constructing:
-        // '{ ${ new $To(${ derivedInnerTo }) } /* using ${ src }.$from internally */ }
-        DerivationResult.expanded(derivedInnerTo.map(valueTo.wrap))
-      }
+    deriveRecursiveTransformationExpr[InnerFrom, InnerTo](
+      valueFrom.unwrap(ctx.src),
+      new DownField(ctx.config.flags.fieldNameComparison.namesMatch(_, valueTo.fieldName))
+    ).flatMap { (derivedInnerTo: TransformationExpr[InnerTo]) =>
+      // We're constructing:
+      // '{ ${ new $To(${ derivedInnerTo }) } /* using ${ src }.$from internally */ }
+      DerivationResult.expanded(derivedInnerTo.map(valueTo.wrap))
+    }
 }
