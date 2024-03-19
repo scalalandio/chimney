@@ -22,12 +22,14 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
   private def transformToInnerToAndWrap[From, To, InnerTo: Type](
       valueTo: ValueClass[To, InnerTo]
   )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-    deriveRecursiveTransformationExpr[From, InnerTo](ctx.src, DownField(valueTo.fieldName))
-      .flatMap { derivedInnerTo =>
-        // We're constructing:
-        // '{ new $To(${ derivedInnerTo }) }
-        DerivationResult.expanded(derivedInnerTo.map(valueTo.wrap))
-      }
+    deriveRecursiveTransformationExpr[From, InnerTo](
+      ctx.src,
+      new DownField(ctx.config.flags.fieldNameComparison.namesMatch(_, valueTo.fieldName))
+    ).flatMap { derivedInnerTo =>
+      // We're constructing:
+      // '{ new $To(${ derivedInnerTo }) }
+      DerivationResult.expanded(derivedInnerTo.map(valueTo.wrap))
+    }
       // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
       .orElse(TransformProductToProductRule.expand(ctx))
       .orElse(
