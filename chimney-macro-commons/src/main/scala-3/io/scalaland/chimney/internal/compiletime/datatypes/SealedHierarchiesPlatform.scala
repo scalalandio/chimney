@@ -20,9 +20,6 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
     def parse[A: Type]: Option[Enum[A]] =
       // we should have no need for separate java.lang.Enum handling contrary to Scala 2
       // but there is a bug that makes it necessary
-      if isJavaEnum[A] then {
-        println(TypeRepr.of[A].typeSymbol.flags.show)
-      }
       if isSealed[A] || isJavaEnum[A] then Some(symbolsToEnum(extractSealedSubtypes[A]))
       else None
 
@@ -33,8 +30,14 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
         else if sym.flags.is(Flags.Module) then List(sym.typeRef.typeSymbol.moduleClass)
         else List(sym)
 
+      def workaroundForCompilerBug(sym: Symbol): List[Symbol] =
+        // we should have no need for separate java.lang.Enum handling contrary to Scala 2
+        // but there is a bug that makes it necessary
+        if isJavaEnum[A] && !isSealed[A] then sym.children.map(_.typeRef.typeSymbol)
+        else extractRecursively(sym)
+
       // calling .distinct here as `children` returns duplicates for multiply-inherited types
-      extractRecursively(TypeRepr.of[A].typeSymbol).distinct.map(typeSymbol =>
+      workaroundForCompilerBug(TypeRepr.of[A].typeSymbol).distinct.map(typeSymbol =>
         subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol)
       )
     }
