@@ -18,8 +18,12 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
     }
 
     def parse[A: Type]: Option[Enum[A]] =
-      // no need for separate java.lang.Enum handling contrary to Scala 2
-      if isSealed[A] then Some(symbolsToEnum(extractSealedSubtypes[A]))
+      // we should have no need for separate java.lang.Enum handling contrary to Scala 2
+      // but there is a bug that makes it necessary
+      if isJavaEnum[A] then {
+        println(TypeRepr.of[A].typeSymbol.flags.show)
+      }
+      if isSealed[A] || isJavaEnum[A] then Some(symbolsToEnum(extractSealedSubtypes[A]))
       else None
 
     private def extractSealedSubtypes[A: Type]: List[(String, ?<[A])] = {
