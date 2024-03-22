@@ -158,7 +158,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * This is the default behavior.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#controlling-automatic-option-unwrapping]] for more details
     *
     * @since 1.0.0
     */
@@ -167,7 +167,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable safe `Option` unwrapping by `PartialTransformer` - each `Option` to non-Option` has to be handled manually.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#controlling-automatic-option-unwrapping]] for more details
     *
     * @since 1.0.0
     */
