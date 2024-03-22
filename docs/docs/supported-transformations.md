@@ -1848,6 +1848,78 @@ automatically only with `PartialTransformer`:
     If you need to provide support for your optional types, please, read about
     [custom optional types](cookbook.md#custom-optional-types).
     
+### Controlling automatic `Option` unwrapping
+
+Automatic unwrapping of `Option`s by `PartialTransformer`s allows for seemless decoding of many PTO types into domain
+types and provides a nice symmetry with encoding values using `Transformer`s (wrapping values with `Option`).
+
+However, sometimes you might prefer to opt out of such benavior. You can disable it with a flag:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a: Option[Int])
+    case class Bar(a: Int)
+
+    Foo(Some(10)).intoPartial[Bar].disablePartialUnwrapsOption.transform.asOption
+    // error: Chimney can't derive transformation from Foo to Bar
+    //
+    // Bar
+    //   a: scala.Int - can't derive transformation from a: scala.Option[scala.Int] in source type Foo
+    //
+    // scala.Int
+    //   derivation from foo.a: scala.Option[scala.Int] to scala.Int is not supported in Chimney!
+    //
+    // Consult https://chimney.readthedocs.io for usage examples.
+
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = TransformerConfiguration.default.disablePartialUnwrapsOption
+
+      Foo(Some(10)).transformIntoPartial[Bar]
+      // error: Chimney can't derive transformation from Foo to Bar
+      //
+      // Bar
+      //   a: scala.Int - can't derive transformation from a: scala.Option[scala.Int] in source type Foo
+      //
+      // scala.Int
+      //   derivation from foo.a: scala.Option[scala.Int] to scala.Int is not supported in Chimney!
+      //
+      // Consult https://chimney.readthedocs.io for usage examples.
+      Foo(Some(10)).intoPartial[Bar].transform
+      // error: Chimney can't derive transformation from Foo to Bar
+      //
+      // Bar
+      //   a: scala.Int - can't derive transformation from a: scala.Option[scala.Int] in source type Foo
+      //
+      // scala.Int
+      //   derivation from foo.a: scala.Option[scala.Int] to scala.Int is not supported in Chimney!
+      //
+      // Consult https://chimney.readthedocs.io for usage examples.
+    }
+    ```
+
+If the flag was disabled in the implicit config it can be enabled with `.disablePartialUnwrapsOption`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a: Option[Int])
+    case class Bar(a: Int)
+
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    implicit val cfg = TransformerConfiguration.default.disablePartialUnwrapsOption
+
+    Foo(Some(10)).intoPartial[Bar].enablePartialUnwrapsOption.transform.asOption // Some(Bar(10))
+    Foo(None).intoPartial[Bar].enablePartialUnwrapsOption.transform.asOption // None
+    ```
+
 ## Between `Either`s
 
 A transformation from one `Either` to another is supported as long as both left and right types can also be converted:
