@@ -27,11 +27,11 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
       // assuming isAccessor was tested earlier
       def isJavaGetter(getter: MethodSymbol): Boolean =
-        isGetterName(getter.name.toString)
+        ProductTypes.BeanAware.isGetterName(getter.name.toString)
 
       def isJavaSetter(setter: MethodSymbol): Boolean =
         setter.isPublic && setter.paramLists.size == 1 && setter.paramLists.head.size == 1 &&
-          isSetterName(setter.asMethod.name.toString)
+          ProductTypes.BeanAware.isSetterName(setter.asMethod.name.toString)
 
       def isVar(setter: Symbol): Boolean =
         setter.isPublic && setter.isTerm && setter.asTerm.name.toString.endsWith("_$eq")
@@ -159,7 +159,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
                 if (isVar(setter)) n.stripSuffix("_$eq").stripSuffix("_=") else n
               name -> setter
             }
-            .filter { case (name, _) => !paramTypes.keySet.contains(name) }
+            .filter { case (name, _) => !paramTypes.keySet.contains(name) } // _exact_ name match!
             .map { case (name, setter) =>
               val termName = setter.asTerm.name.toTermName
               val tpe = ExistentialType(fromUntyped(paramListsOf(Type[A].tpe, setter).flatten.head.typeSignature))
@@ -249,7 +249,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
     private val getDecodedName = (s: Symbol) => s.name.decodedName.toString
 
-    private val isGarbageSymbol = getDecodedName andThen isGarbage
+    private val isGarbageSymbol = getDecodedName andThen ProductTypes.isGarbageName
 
     // Borrowed from jsoniter-scala: https://github.com/plokhotnyuk/jsoniter-scala/blob/b14dbe51d3ae6752e5a9f90f1f3caf5bceb5e4b0/jsoniter-scala-macros/shared/src/main/scala/com/github/plokhotnyuk/jsoniter_scala/macros/JsonCodecMaker.scala#L462
     private def companionSymbol[A: Type]: Symbol = {

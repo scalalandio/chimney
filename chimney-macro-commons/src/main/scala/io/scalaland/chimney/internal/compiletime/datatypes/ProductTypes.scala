@@ -97,11 +97,6 @@ trait ProductTypes { this: Definitions =>
 
     def exprAsInstanceOfMethod[A: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Product.Constructor[A]
 
-    // cached in companion (regexps are expensive to initialize)
-    def isGarbage(name: String): Boolean = ProductTypes.isGarbage(name)
-    def isGetterName(name: String): Boolean = ProductTypes.isGetterName(name)
-    def isSetterName(name: String): Boolean = ProductTypes.isSetterName(name)
-
     // defaults methods are 1-indexed
     protected def caseClassApplyDefaultScala2(idx: Int): String = "apply$default$" + idx
     protected def caseClassApplyDefaultScala3(idx: Int): String = "$lessinit$greater$default$" + idx
@@ -158,17 +153,31 @@ trait ProductTypes { this: Definitions =>
 }
 object ProductTypes {
 
-  implicit private class RegexpOps(regexp: scala.util.matching.Regex) {
+  object BeanAware {
 
-    def isMatching(value: String): Boolean = regexp.pattern.matcher(value).matches() // 2.12 doesn't have .matches
+    implicit private class RegexpOps(regexp: scala.util.matching.Regex) {
+
+      def isMatching(value: String): Boolean = regexp.pattern.matcher(value).matches() // 2.12 doesn't have .matches
+    }
+
+    private val getAccessor = raw"(?i)get(.)(.*)".r
+    private val isAccessor = raw"(?i)is(.)(.*)".r
+    val isGetterName: String => Boolean = name => getAccessor.isMatching(name) || isAccessor.isMatching(name)
+
+    val dropGetIs: String => String = {
+      case getAccessor(head, tail) => head.toLowerCase + tail
+      case isAccessor(head, tail)  => head.toLowerCase + tail
+      case other                   => other
+    }
+
+    private val setAccessor = raw"(?i)set(.)(.*)".r
+    val isSetterName: String => Boolean = name => setAccessor.isMatching(name)
+
+    val dropSet: String => String = {
+      case setAccessor(head, tail) => head.toLowerCase + tail
+      case other                   => other
+    }
   }
-
-  private val getAccessor = raw"(?i)get(.)(.*)".r
-  private val isAccessor = raw"(?i)is(.)(.*)".r
-  val isGetterName: String => Boolean = name => getAccessor.isMatching(name) || isAccessor.isMatching(name)
-
-  private val setAccessor = raw"(?i)set(.)(.*)".r
-  val isSetterName: String => Boolean = name => setAccessor.isMatching(name)
 
   // methods we can drop from searching scope
   private val garbage = Set(
@@ -202,5 +211,5 @@ object ProductTypes {
   )
   // default arguments has name method$default$index
   private val defaultElement = raw"$$default$$"
-  val isGarbage: String => Boolean = name => garbage(name) || name.contains(defaultElement)
+  val isGarbageName: String => Boolean = name => garbage(name) || name.contains(defaultElement)
 }

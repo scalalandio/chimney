@@ -5,6 +5,7 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
 import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
+import io.scalaland.chimney.internal.compiletime.datatypes.ProductTypes
 
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>
 
@@ -164,9 +165,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       DerivationResult
                         .missingAccessor[From, To, CtorParam, Existential[TransformationExpr]](
                           toName,
-                          fromExtractors.exists { case (fromName, _) =>
-                            flags.fieldNameComparison.namesMatch(fromName, toName)
-                          }
+                          fromExtractors.exists { case (fromName, _) => areFieldNamesMatching(fromName, toName) }
                         )
                     case Product.Parameter.TargetType.SetterParameter =>
                       if (flags.beanSettersIgnoreUnmatched)
@@ -175,10 +174,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         // TODO: update this for isLocal
                         DerivationResult
                           .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
-                            flags.fieldNameComparison.dropSet(toName),
-                            fromExtractors.exists { case (fromName, _) =>
-                              flags.fieldNameComparison.namesMatch(fromName, toName)
-                            }
+                            ProductTypes.BeanAware.dropSet(toName),
+                            fromExtractors.exists { case (fromName, _) => areFieldNamesMatching(fromName, toName) }
                           )
                   }
               }
@@ -329,7 +326,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               // '{ ${ derivedToElement } } // using ${ src.$name }
               deriveRecursiveTransformationExpr[ExtractedSrc, CtorParam](
                 extractedSrcExpr,
-                new DownField(ctx.config.flags.fieldNameComparison.namesMatch(_, toName))
+                new DownField(areFieldNamesMatching(_, toName))
               ).transformWith { expr =>
                 // If we derived partial.Result[$ctorParam] we are appending
                 //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
@@ -364,7 +361,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           // '{ ${ derivedToElement } } // using ${ src.$name }
           deriveRecursiveTransformationExpr[Getter, CtorParam](
             get(ctx.src),
-            new DownField(ctx.config.flags.fieldNameComparison.namesMatch(_, toName))
+            new DownField(areFieldNamesMatching(_, toName))
           ).transformWith { expr =>
             // If we derived partial.Result[$ctorParam] we are appending
             //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))

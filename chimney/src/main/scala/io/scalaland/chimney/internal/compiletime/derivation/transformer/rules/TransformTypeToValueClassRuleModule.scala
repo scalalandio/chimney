@@ -24,7 +24,7 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
   )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
     deriveRecursiveTransformationExpr[From, InnerTo](
       ctx.src,
-      new DownField(ctx.config.flags.fieldNameComparison.namesMatch(_, valueTo.fieldName))
+      new DownField(areFieldNamesMatching(_, valueTo.fieldName))
     ).flatMap { derivedInnerTo =>
       // We're constructing:
       // '{ new $To(${ derivedInnerTo }) }

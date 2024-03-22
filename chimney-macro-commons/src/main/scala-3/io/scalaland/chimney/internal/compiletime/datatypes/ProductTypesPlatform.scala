@@ -31,10 +31,11 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
       // assuming isAccessor was tested earlier
       def isJavaGetter(getter: Symbol): Boolean =
-        isGetterName(getter.name)
+        ProductTypes.BeanAware.isGetterName(getter.name)
 
       def isJavaSetter(setter: Symbol): Boolean =
-        setter.isPublic && setter.isDefDef && setter.paramSymss.flatten.size == 1 && isSetterName(setter.name)
+        setter.isPublic && setter.isDefDef && setter.paramSymss.flatten.size == 1 && ProductTypes.BeanAware
+          .isSetterName(setter.name)
 
       def isVar(setter: Symbol): Boolean =
         setter.isPublic && setter.isValDef && setter.flags.is(Flags.Mutable)
@@ -179,7 +180,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           .map { setter =>
             setter.name -> setter
           }
-          .filter { case (name, _) => !paramTypes.keySet.contains(name) }
+          .filter { case (name, _) => !paramTypes.keySet.contains(name) } // _exact_ name match!
           .map { case (name, setter) =>
             val tpe = ExistentialType(fromUntyped[Any](paramsWithTypes(A, setter, isConstructor = false).head._2))
             (
@@ -313,6 +314,6 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       22 -> TypeRepr.of[scala.Function22]
     )
 
-    private val isGarbageSymbol = ((s: Symbol) => s.name) andThen isGarbage
+    private val isGarbageSymbol = ((s: Symbol) => s.name) andThen ProductTypes.isGarbageName
   }
 }
