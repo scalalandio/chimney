@@ -166,5 +166,14 @@ private[compiletime] trait Contexts { this: Derivation =>
     ctx.From
   implicit final protected def ctx2ToType[From, To](implicit ctx: TransformationContext[From, To]): Type[To] = ctx.To
 
+  implicit def areFieldNamesMatching(fromName: String, toName: String)(implicit
+      ctx: TransformationContext[?, ?]
+  ): Boolean =
+    ctx.config.flags.fieldNameComparison.namesMatch(fromName, toName)
+  implicit def areSubtypeNamesMatching(fromName: String, toName: String)(implicit
+      ctx: TransformationContext[?, ?]
+  ): Boolean =
+    ctx.config.flags.subtypeNameComparison.namesMatch(fromName, toName)
+
   // for unpacking Exprs from Context, pattern matching should be enough
 }
