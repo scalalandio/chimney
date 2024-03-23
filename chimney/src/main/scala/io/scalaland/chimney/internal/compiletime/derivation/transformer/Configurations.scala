@@ -19,8 +19,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       optionDefaultsToNone: Boolean = false,
       partialUnwrapsOption: Boolean = true,
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
-      fieldNameComparison: dsls.TransformedNamesComparison = dsls.TransformedNamesComparison.FieldDefault,
-      subtypeNameComparison: dsls.TransformedNamesComparison = dsls.TransformedNamesComparison.SubtypeDefault,
+      fieldNameComparison: Option[dsls.TransformedNamesComparison] = None,
+      subtypeNameComparison: Option[dsls.TransformedNamesComparison] = None,
       displayMacrosLogging: Boolean = false
   ) {
 
@@ -52,10 +52,10 @@ private[compiletime] trait Configurations { this: Derivation =>
     def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags =
       copy(implicitConflictResolution = preference)
 
-    def setFieldNameComparison(nameComparison: dsls.TransformedNamesComparison): TransformerFlags =
+    def setFieldNameComparison(nameComparison: Option[dsls.TransformedNamesComparison]): TransformerFlags =
       copy(fieldNameComparison = nameComparison)
 
-    def setSubtypeNameComparison(nameComparison: dsls.TransformedNamesComparison): TransformerFlags =
+    def setSubtypeNameComparison(nameComparison: Option[dsls.TransformedNamesComparison]): TransformerFlags =
       copy(subtypeNameComparison = nameComparison)
 
     override def toString: String = s"TransformerFlags(${Vector(
@@ -66,6 +66,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (beanGetters) Vector("beanGetters") else Vector.empty,
         if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
+        fieldNameComparison.map(r => s"fieldNameComparison=$r").toList.toVector,
+        subtypeNameComparison.map(r => s"subtypeNameComparison=$r").toList.toVector,
         if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
       ).flatten.mkString(", ")})"
   }
@@ -282,12 +284,12 @@ private[compiletime] trait Configurations { this: Derivation =>
           case ChimneyType.TransformerFlags.Flags.FieldNameComparison(c) =>
             import c.Underlying as Comparison
             extractTransformerFlags[Flags2](defaultFlags).setFieldNameComparison(
-              extractNameComparisonObject[Comparison]
+              Some(extractNameComparisonObject[Comparison])
             )
           case ChimneyType.TransformerFlags.Flags.SubtypeNameComparison(c) =>
             import c.Underlying as Comparison
-            extractTransformerFlags[Flags2](defaultFlags).setFieldNameComparison(
-              extractNameComparisonObject[Comparison]
+            extractTransformerFlags[Flags2](defaultFlags).setSubtypeNameComparison(
+              Some(extractNameComparisonObject[Comparison])
             )
           case _ =>
             extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = true)
@@ -298,13 +300,9 @@ private[compiletime] trait Configurations { this: Derivation =>
           case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(_) =>
             extractTransformerFlags[Flags2](defaultFlags).setImplicitConflictResolution(None)
           case ChimneyType.TransformerFlags.Flags.FieldNameComparison(_) =>
-            extractTransformerFlags[Flags2](defaultFlags).setFieldNameComparison(
-              dsls.TransformedNamesComparison.FieldDefault
-            )
+            extractTransformerFlags[Flags2](defaultFlags).setFieldNameComparison(None)
           case ChimneyType.TransformerFlags.Flags.SubtypeNameComparison(_) =>
-            extractTransformerFlags[Flags2](defaultFlags).setSubtypeNameComparison(
-              dsls.TransformedNamesComparison.SubtypeDefault
-            )
+            extractTransformerFlags[Flags2](defaultFlags).setSubtypeNameComparison(None)
           case _ =>
             extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = false)
         }

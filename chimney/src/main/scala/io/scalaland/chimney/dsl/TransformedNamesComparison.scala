@@ -8,7 +8,7 @@ abstract class TransformedNamesComparison { this: Singleton =>
 }
 object TransformedNamesComparison {
 
-  object BeanAware extends TransformedNamesComparison {
+  case object BeanAware extends TransformedNamesComparison {
 
     // While it's bad to refer to compiletime package this code should only be used by this compiletime package.
     // Additionally, current module has to rely on chimney-macro-commons, not the other way round.
@@ -19,12 +19,12 @@ object TransformedNamesComparison {
       fromName == toName || normalize(fromName) == normalize(toName)
   }
 
-  object StrictEquality extends TransformedNamesComparison {
+  case object StrictEquality extends TransformedNamesComparison {
 
     def namesMatch(fromName: String, toName: String): Boolean = fromName == toName
   }
 
-  object CaseInsensitiveEquality extends TransformedNamesComparison {
+  case object CaseInsensitiveEquality extends TransformedNamesComparison {
 
     def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
   }
