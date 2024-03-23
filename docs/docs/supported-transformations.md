@@ -1322,6 +1322,7 @@ We are also able to compute values in nested structure:
 !!! example 
 
     ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String, b: Int)
@@ -1340,6 +1341,97 @@ We are also able to compute values in nested structure:
       .withFieldRenamed(_.foo, _.bar)
       .withFieldComputedPartial(_.bar.c, nestedfoo => partial.Result.fromValue(nestedfoo.foo.b.toLong * 2))
       .transform.asEither // Right(NestedBar(Bar("value", 1248, 2496L)))
+    ```
+
+### Customizing field name matching
+
+Be default names are matched in a Java-Bean-aware way - `fieldName` would be considered a match for another `fieldName`
+but also for `isFieldName`, `getFieldName` and `setFieldName`. This allows the macro to read both normal `val`s and
+Bean getters and write into constructor arguments and Bean setters. (Whether such getters/setters would we admited
+for matching is controlled by dedicated flags: [`.enableBeanGetters`](#reading-from-bean-getters) and 
+[`.enableBeanSetters`](#writing-to-bean-setters)).
+
+The field name matching predicate can be overrided with a flag:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(Baz: Foo.Baz, A: Int)
+    object Foo {
+      case class Baz(S: String)
+    }
+
+    case class Bar(baz: Bar.Baz, a: Int)
+    object Bar {
+      case class Baz(s: String)
+    }
+
+    // Foo(Foo.Baz("test"), 1024).transformInto[Bar] or
+    // Foo(Foo.Baz("test"), 1024).into[Bar].transform results in:
+    // Chimney can't derive transformation from Foo to Bar
+    //
+    // Bar
+    //   baz: Bar.Baz - no accessor named baz in source type Foo
+    //   a: scala.Int - no accessor named a in source type Foo
+    //
+    // Consult https://chimney.readthedocs.io for usage examples.
+
+    Foo(Foo.Baz("test"), 1024)
+      .into[Bar]
+      .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+      .transform // Bar(Bar.Baz("test"), 1024)
+    Foo(Foo.Baz("test"), 1024)
+      .intoPartial[Bar]
+      .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+      .transform.asEither // Right(Bar(Bar.Baz("test"), 1024))
+
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = TransformerConfiguration.default
+        .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+
+      Foo(Foo.Baz("test"), 1024).transformInto[Bar] // Bar(Bar.Baz("test"), 1024)
+      Foo(Foo.Baz("test"), 1024).into[Bar].transform // Bar(Bar.Baz("test"), 1024)
+      Foo(Foo.Baz("test"), 1024).transformIntoPartial[Bar].asEither // Right(Bar(Bar.Baz("test"), 1024))
+      Foo(Foo.Baz("test"), 1024).intoPartial[Bar].transform.asEither // Right(Bar(Bar.Baz("test"), 1024))
+    }
+    ```
+
+For details about `TransformedNamesComparison` look at [their dedicated section](#defining-custom-name-matching-predicate).
+
+If the flag was enabled in the implicit config it can be disabled with `.disableCustomFieldNameComparison`.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(Baz: Foo.Baz, A: Int)
+    object Foo {
+      case class Baz(S: String)
+    }
+
+    case class Bar(baz: Bar.Baz, a: Int)
+    object Bar {
+      case class Baz(s: String)
+    }
+
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    implicit val cfg = TransformerConfiguration.default
+      .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+
+    Foo(Foo.Baz("test"), 1024).into[Bar].disableCustomFieldNameComparison.transform
+    // Chimney can't derive transformation from Foo to Bar
+    //
+    // Bar
+    //   baz: Bar.Baz - no accessor named baz in source type Foo
+    //   a: scala.Int - no accessor named a in source type Foo
+    //
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 ## From/into a `Tuple`
@@ -1776,6 +1868,94 @@ If the computation needs to allow failure, there is `.withCoproductInstanceParti
     ColorJ.Green.into[ColorS].withCoproductInstance(blackIsRed).transform // ColorS.Green
     ColorJ.Blue.into[ColorS].withCoproductInstance(blackIsRed).transform // ColorS.Blue
     ColorJ.Black.into[ColorS].withCoproductInstance(blackIsRed).transform // ColorS.Black
+    ```
+
+### Customizing subtype name matching
+
+Be default names are matched with a `String` equality - `Subtype` would be considered a match for another `Subtype`
+but not for `SUBTYPE` or any other capitalization.
+
+The subtype name matching predicate can be overrided with a flag:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+
+    sealed trait Foo
+    object Foo {
+      case object BAZ extends Foo
+    }
+
+    sealed trait Bar
+    object Bar {
+      case object Baz extends Bar
+    }
+
+    // (Foo.BAZ: Foo).transformInto[Bar] or
+    // (Foo.BAZ: Foo).into[Bar].transform results in:
+    // Chimney can't derive transformation from Foo to Bar
+    //
+    // Bar
+    //   derivation from baz: Foo.BAZ to Bar is not supported in Chimney!
+    //
+    // Bar
+    //   can't transform coproduct instance Foo.BAZ to Bar
+    //
+    // Consult https://chimney.readthedocs.io for usage examples.
+
+    (Foo.BAZ: Foo)
+      .into[Bar]
+      .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+      .transform // Bar.Baz
+    (Foo.BAZ: Foo)
+      .intoPartial[Bar]
+      .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+      .transform.asEither // Right(Bar.Baz)
+
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = TransformerConfiguration.default
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+
+      (Foo.BAZ: Foo).transformInto[Bar] // Bar.Baz
+      (Foo.BAZ: Foo).into[Bar].transform // Bar.Baz
+      (Foo.BAZ: Foo).transformIntoPartial[Bar].asEither // Right(Bar.Baz)
+      (Foo.BAZ: Foo).intoPartial[Bar].transform.asEither // Right(Bar.Baz)
+    }
+    ```
+
+For details about `TransformedNamesComparison` look at [their dedicated section](#defining-custom-name-matching-predicate).
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    import io.scalaland.chimney.dsl._
+
+    sealed trait Foo
+    object Foo {
+      case object BAZ extends Foo
+    }
+
+    sealed trait Bar
+    object Bar {
+      case object Baz extends Bar
+    }
+
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    implicit val cfg = TransformerConfiguration.default
+      .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+
+    (Foo.BAZ: Foo).into[Bar].disableCustomSubtypeNameComparison.transform
+    // Chimney can't derive transformation from Foo to Bar
+    //
+    // Bar
+    //   baz: Bar.Baz - no accessor named baz in source type Foo
+    //   a: scala.Int - no accessor named a in source type Foo
+    //
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 ## From/into an `Option`
@@ -2574,3 +2754,7 @@ If we need to customize it, we can use `.define.buildTransformer`:
     val foo = Foo(10, Some(Foo(20, None)))
     val bar = foo.transformInto[Bar]
     ```
+
+## Defining custom name matching predicate
+
+TODO
