@@ -418,7 +418,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         .getOrElse {
           // $COVERAGE-OFF$
           reportError(
-            s"Invalid TransformerNamesComparison type - only global objects are allowed: ${Type.prettyPrint[Comparison]}!!"
+            s"Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: ${Type
+                .prettyPrint[Comparison]}!!!"
           )
           // $COVERAGE-ON$
         }
