@@ -97,7 +97,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       val verifyNoOverrideUnused = Traverse[List]
         .parTraverse(
           filterOverridesForField(fromName =>
-            !parameters.keys.exists(toName => flags.fieldNameComparison.namesMatch(fromName, toName))
+            !parameters.keys.exists(toName => areFieldNamesMatching(fromName, toName))
           ).keys.toList
         ) { fromName =>
           val tpeStr = Type.prettyPrint[To]
@@ -134,7 +134,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             import ctorParam.Underlying as CtorParam, ctorParam.value.defaultValue
             // user might have used _.getName in modifier, to define target we know as _.setName
             // so simple .get(toName) might not be enough
-            filterOverridesForField(fromName => flags.fieldNameComparison.namesMatch(fromName, toName)).headOption
+            filterOverridesForField(fromName => areFieldNamesMatching(fromName, toName)).headOption
               .map { case (fromName, value) =>
                 useOverride[From, To, CtorParam](fromName, toName, value)
               }
@@ -143,7 +143,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   if (usePositionBasedMatching) ctorParamToGetter.get(ctorParam)
                   else
                     fromEnabledExtractors.collectFirst {
-                      case (fromName, getter) if flags.fieldNameComparison.namesMatch(fromName, toName) =>
+                      case (fromName, getter) if areFieldNamesMatching(fromName, toName) =>
                         (fromName, toName, getter)
                     }
                 resolvedExtractor

@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-import io.scalaland.chimney.dsl.TransformerDefinitionCommons
+import io.scalaland.chimney.dsl.{TransformedNamesComparison, TransformerDefinitionCommons}
 import io.scalaland.chimney.partial
 
 private[compiletime] trait Contexts { this: Derivation =>
@@ -169,11 +169,13 @@ private[compiletime] trait Contexts { this: Derivation =>
   implicit def areFieldNamesMatching(fromName: String, toName: String)(implicit
       ctx: TransformationContext[?, ?]
   ): Boolean =
-    ctx.config.flags.fieldNameComparison.namesMatch(fromName, toName)
+    ctx.config.flags.fieldNameComparison.getOrElse(TransformedNamesComparison.FieldDefault).namesMatch(fromName, toName)
   implicit def areSubtypeNamesMatching(fromName: String, toName: String)(implicit
       ctx: TransformationContext[?, ?]
   ): Boolean =
-    ctx.config.flags.subtypeNameComparison.namesMatch(fromName, toName)
+    ctx.config.flags.subtypeNameComparison
+      .getOrElse(TransformedNamesComparison.SubtypeDefault)
+      .namesMatch(fromName, toName)
 
   // for unpacking Exprs from Context, pattern matching should be enough
 }

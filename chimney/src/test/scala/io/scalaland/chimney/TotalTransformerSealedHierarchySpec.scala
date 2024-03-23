@@ -199,4 +199,100 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
       )
     }
   }
+
+  group("flag .enableCustomSubtypeNameComparison") {
+
+    import fixtures.renames.Subtypes.*
+
+    test("should be disabled by default") {
+
+      compileErrorsFixed("""(Foo.BAZ: Foo).transformInto[Bar]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("""(Foo.BAZ: Foo).into[Bar].transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("""(Bar.Baz: Bar).transformInto[Foo]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("""(Bar.Baz: Bar).into[Foo].transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should allow subtypes to be matched using user-provided predicate") {
+      (Foo.BAZ: Foo)
+        .into[Bar]
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform ==> Bar.Baz
+
+      (Bar.Baz: Bar)
+        .into[Foo]
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform ==> Foo.BAZ
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableCustomSubtypeNameComparison(
+          TransformedNamesComparison.CaseInsensitiveEquality
+        )
+
+        (Foo.BAZ: Foo).transformInto[Bar] ==> Bar.Baz
+        (Foo.BAZ: Foo).into[Bar].transform ==> Bar.Baz
+
+        (Bar.Baz: Bar).transformInto[Foo] ==> Foo.BAZ
+        (Bar.Baz: Bar).into[Foo].transform ==> Foo.BAZ
+      }
+    }
+  }
+
+  group("flag .disableCustomSubtypeNameComparison") {
+    import fixtures.renames.Subtypes.*
+
+    test("should disable globally enabled .enableCustomSubtypeNameComparison") {
+      @unused implicit val config = TransformerConfiguration.default.enableCustomSubtypeNameComparison(
+        TransformedNamesComparison.CaseInsensitiveEquality
+      )
+
+      compileErrorsFixed("""(Foo.BAZ: Foo).into[Bar].disableCustomSubtypeNameComparison.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("""(Bar.Baz: Bar).into[Foo].disableCustomSubtypeNameComparison.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+  }
 }
