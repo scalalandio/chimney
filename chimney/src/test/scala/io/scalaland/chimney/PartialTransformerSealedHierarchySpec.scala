@@ -404,6 +404,18 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       )
     }
 
+    test("should inform user if and why the setting cannot be read") {
+      @unused object BadNameComparison extends TransformedNamesComparison {
+
+        def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
+      }
+
+      compileErrorsFixed("""(Foo.BAZ: Foo).into[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform""")
+        .check(
+          "Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: io.scalaland.chimney.PartialTransformerSealedHierarchySpec.BadNameComparison!!!"
+        )
+    }
+
     test("should allow subtypes to be matched using user-provided predicate") {
       val result = (Foo.BAZ: Foo)
         .intoPartial[Bar]

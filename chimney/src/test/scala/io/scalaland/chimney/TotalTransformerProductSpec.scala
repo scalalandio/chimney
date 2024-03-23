@@ -612,6 +612,20 @@ class TotalTransformerProductSpec extends ChimneySpec {
       )
     }
 
+    test("should inform user if and why the setting cannot be read") {
+      @unused object BadNameComparison extends TransformedNamesComparison {
+
+        def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
+      }
+
+      compileErrorsFixed(
+        """Foo(Foo.Baz("test"), 1024).into[Bar].enableCustomFieldNameComparison(BadNameComparison).transform"""
+      )
+        .check(
+          "Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: io.scalaland.chimney.TotalTransformerProductSpec.BadNameComparison!!!"
+        )
+    }
+
     test("should allow fields to be matched using user-provided predicate") {
 
       Foo(Foo.Baz("test"), 1024)
