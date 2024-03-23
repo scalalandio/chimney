@@ -1119,6 +1119,132 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
   }
 
+  group("flag .enableCustomFieldNameComparison") {
+    case class Foo(Baz: Foo.Baz, A: Int)
+    object Foo {
+      case class Baz(S: String)
+    }
+
+    case class Bar(baz: Bar.Baz, a: Int)
+    object Bar {
+      case class Baz(s: String)
+    }
+
+    test("should be disabled by default") {
+
+      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).transformIntoPartial[Bar]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Foo to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "a: scala.Int - no accessor named a in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).intoPartial[Bar].transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Foo to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "a: scala.Int - no accessor named a in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).transformIntoPartial[Foo]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Bar to io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "Baz: io.scalaland.chimney.PartialTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "A: scala.Int - no accessor named A in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).intoPartial[Foo].transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Bar to io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "Baz: io.scalaland.chimney.PartialTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "A: scala.Int - no accessor named A in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should allow fields to be matched using user-provided predicate") {
+
+      val result = Foo(Foo.Baz("test"), 1024)
+        .intoPartial[Bar]
+        .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform
+      result.asOption ==> Some(Bar(Bar.Baz("test"), 1024))
+      result.asEither ==> Right(Bar(Bar.Baz("test"), 1024))
+      result.asErrorPathMessageStrings ==> Iterable()
+
+      val result2 = Bar(Bar.Baz("test"), 1024)
+        .intoPartial[Foo]
+        .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform
+      result2.asOption ==> Some(Foo(Foo.Baz("test"), 1024))
+      result2.asEither ==> Right(Foo(Foo.Baz("test"), 1024))
+      result2.asErrorPathMessageStrings ==> Iterable()
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableCustomFieldNameComparison(
+          TransformedNamesComparison.CaseInsensitiveEquality
+        )
+
+        val result3 = Foo(Foo.Baz("test"), 1024).transformIntoPartial[Bar]
+        result3.asOption ==> Some(Bar(Bar.Baz("test"), 1024))
+        result3.asEither ==> Right(Bar(Bar.Baz("test"), 1024))
+        result3.asErrorPathMessageStrings ==> Iterable()
+        val result4 = Foo(Foo.Baz("test"), 1024).intoPartial[Bar].transform
+        result4.asOption ==> Some(Bar(Bar.Baz("test"), 1024))
+        result4.asEither ==> Right(Bar(Bar.Baz("test"), 1024))
+        result4.asErrorPathMessageStrings ==> Iterable()
+
+        val result5 = Bar(Bar.Baz("test"), 1024).transformIntoPartial[Foo]
+        result5.asOption ==> Some(Foo(Foo.Baz("test"), 1024))
+        result5.asEither ==> Right(Foo(Foo.Baz("test"), 1024))
+        result5.asErrorPathMessageStrings ==> Iterable()
+        val result6 = Bar(Bar.Baz("test"), 1024).intoPartial[Foo].transform
+        result6.asOption ==> Some(Foo(Foo.Baz("test"), 1024))
+        result6.asEither ==> Right(Foo(Foo.Baz("test"), 1024))
+        result6.asErrorPathMessageStrings ==> Iterable()
+      }
+    }
+  }
+
+  group("flag .disableCustomFieldNameComparison") {
+    @unused case class Foo(Baz: Foo.Baz, A: Int)
+    object Foo {
+      case class Baz(S: String)
+    }
+
+    @unused case class Bar(baz: Bar.Baz, a: Int)
+    object Bar {
+      case class Baz(s: String)
+    }
+
+    test("should disable globally enabled .enableCustomFieldNameComparison") {
+      @unused implicit val config = TransformerConfiguration.default.enableCustomFieldNameComparison(
+        TransformedNamesComparison.CaseInsensitiveEquality
+      )
+
+      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).intoPartial[Bar].disableCustomFieldNameComparison.transform""")
+        .check(
+          "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Foo to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+          "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+          "baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+          "a: scala.Int - no accessor named a in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+
+      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).intoPartial[Foo].disableCustomFieldNameComparison.transform""")
+        .check(
+          "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Bar to io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+          "io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+          "Baz: io.scalaland.chimney.PartialTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+          "A: scala.Int - no accessor named A in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+    }
+  }
+
   group("transform always fails") {
 
     import trip.*

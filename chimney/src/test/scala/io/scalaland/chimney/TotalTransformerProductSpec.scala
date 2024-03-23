@@ -566,6 +566,112 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
   }
 
+  group("flag .enableCustomFieldNameComparison") {
+    case class Foo(Baz: Foo.Baz, A: Int)
+    object Foo {
+      case class Baz(S: String)
+    }
+
+    case class Bar(baz: Bar.Baz, a: Int)
+    object Bar {
+      case class Baz(s: String)
+    }
+
+    test("should be disabled by default") {
+
+      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).transformInto[Bar]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foo to io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "baz: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "a: scala.Int - no accessor named a in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).into[Bar].transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foo to io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "baz: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "a: scala.Int - no accessor named a in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).transformInto[Foo]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Bar to io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "Baz: io.scalaland.chimney.TotalTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "A: scala.Int - no accessor named A in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).into[Foo].transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Bar to io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "Baz: io.scalaland.chimney.TotalTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "A: scala.Int - no accessor named A in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should allow fields to be matched using user-provided predicate") {
+
+      Foo(Foo.Baz("test"), 1024)
+        .into[Bar]
+        .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform ==> Bar(Bar.Baz("test"), 1024)
+
+      Bar(Bar.Baz("test"), 1024)
+        .into[Foo]
+        .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform ==> Foo(Foo.Baz("test"), 1024)
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableCustomFieldNameComparison(
+          TransformedNamesComparison.CaseInsensitiveEquality
+        )
+
+        Foo(Foo.Baz("test"), 1024).transformInto[Bar] ==> Bar(Bar.Baz("test"), 1024)
+        Foo(Foo.Baz("test"), 1024).into[Bar].transform ==> Bar(Bar.Baz("test"), 1024)
+
+        Bar(Bar.Baz("test"), 1024).transformInto[Foo] ==> Foo(Foo.Baz("test"), 1024)
+        Bar(Bar.Baz("test"), 1024).into[Foo].transform ==> Foo(Foo.Baz("test"), 1024)
+      }
+    }
+  }
+
+  group("flag .disableCustomFieldNameComparison") {
+    @unused case class Foo(Baz: Foo.Baz, A: Int)
+    object Foo {
+      case class Baz(S: String)
+    }
+
+    @unused case class Bar(baz: Bar.Baz, a: Int)
+    object Bar {
+      case class Baz(s: String)
+    }
+
+    test("should disable globally enabled .enableCustomFieldNameComparison") {
+      @unused implicit val config = TransformerConfiguration.default.enableCustomFieldNameComparison(
+        TransformedNamesComparison.CaseInsensitiveEquality
+      )
+
+      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).into[Bar].disableCustomFieldNameComparison.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foo to io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "baz: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "a: scala.Int - no accessor named a in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).into[Foo].disableCustomFieldNameComparison.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Bar to io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "io.scalaland.chimney.TotalTransformerProductSpec.Foo",
+        "Baz: io.scalaland.chimney.TotalTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "A: scala.Int - no accessor named A in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+  }
+
   group("support using method calls to fill values from target type") {
     case class Foobar(param: String) {
       val valField: String = "valField"
