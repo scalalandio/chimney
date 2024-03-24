@@ -2757,4 +2757,77 @@ If we need to customize it, we can use `.define.buildTransformer`:
 
 ## Defining custom name matching predicate
 
-TODO
+Arguments taken by both `.enableCustomFieldNameComparison` and `.enableCustomSubtypeNameComparison` are values of type
+`TransformedNamesComparison`. Out of the box, Chimney provides:
+
+ * `TransformedNamesComparison.StrictEquality` - 2 names are considered equal only if they are identical `String`s.
+   This is the default matching strategy for subtype names conparison
+ * `TransformedNamesComparison.BeanAware` - 2 names are considered equal if they are identical `String`s OR if they are
+   identical after you convert them from Java Bean naming convention:
+   * if a name starts with `is`/`get`/`set` prefix (e.g. `isField`, `getField`, `setField`) then
+   * strip this name from the prefix (obtaining e.g. `Field`) and
+   * lower case the first letter (obtaining e.g. `field`)
+* `TransformedNamesComparison.CaseInsensitiveEquality` - 2 names are considered equal if `equalsIgnoreCase` returns
+  `true`
+
+However, these 3 does not exhaust all possible comparisons and you might need to provide one yourself. 
+
+!!! warning
+
+    This is an advanced feature! Due to macros' limitations this feature requires several conditions to work.
+
+The challenge is that the function you'd like to provie has to be called within macro, so it has to be defined in such
+a way that the macro will be able to access it. Normally, there is no way to inject a custom login into existing macro,
+but Chimney has a specific solution for this:
+
+ * you need to define your `TransformedNamesComparison` as `object` - objects do not need constructor arguments, so
+   they can be instantiated easily
+ * your have to define this `object` as top-level definition or within another object - object defined within a `class`,
+   a `trait` or locally, does need some logic for instantiation
+ * you have to define your `object` in a module/subproject that is compiled _before_ the module where you need to use
+   it, so that the bytecode would already be accesible on classpath.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    package your.organization
+
+    import io.scalaland.chimney.dsl._
+
+    // Allows matching: UPPERCASE, lowercase, kebab-case, underline_case,
+    // PascalCase, camelCase and Java Beans conventions together
+    //
+    // Object is "case" for better toString output.
+    case object PermissiveNamesComparison extends TransformedNamesComparison {
+
+      private val normalize(name: String): String = {
+        val name2 =
+          if (name.startsWith("is")) name.drop(2)
+          else (name.startsWith("get")) name.drop(3)
+          else (name.startsWith("set")) name.drop(3)
+          else name
+        name2.replaceAll("[-_]", "")
+      }
+
+      def namesMatch(fromName: String, toName: String): Boolean =
+        normalize(fromName).equalsIgnoreCase(normalize(toName))
+    }
+    ```
+
+    If you define this `object` in module A, and you want to use it in module B, where B depends on A, macros would
+    be able to use that value.
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+
+    case class Foo(a_name: String, BName: String)
+    case class Bar(`a-name`: String, getBName: String)
+
+    Foo("value1", "value2")
+      .into[Bar]
+      .enableCustomFieldNameComparison(your.organization.PermissiveNamesComparison)
+      // this would be parsed as well
+      //.enableCustomSubtypeNameComparison(your.organization.PermissiveNamesComparison)
+      .transform
+    ```
