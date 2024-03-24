@@ -200,7 +200,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * @param namesComparison parameter specifying how names should be compared by macro
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#customizing-field-name-matching]] for more details
     *
     * @since 1.0.0
     */
@@ -211,7 +211,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable any custom way of comparing if source fields' names and target fields' names are matching.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#customizing-field-name-matching]] for more details
     *
     * @since 1.0.0
     */
@@ -222,7 +222,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * @param namesComparison parameter specifying how names should be compared by macro
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#customizing-subtype-name-matching]] for more details
     *
     * @since 1.0.0
     */
@@ -233,7 +233,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable any custom way of comparing if source subtypes' names and target fields' names are matching.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#customizing-subtype-name-matching]] for more details
     *
     * @since 1.0.0
     */
