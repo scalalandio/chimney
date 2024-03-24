@@ -410,8 +410,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       val name = AnsiControlCode.replaceAllIn(Type.prettyPrint[Comparison], "")
 
       Iterator
-        .iterate(name.replace('.', '$') + '$')(_.replaceFirst("\\$", "."))
-        .take(name.count(_ == '.') + 1) // ...then this is: "foo$bar$baz$", "foo.bar$baz$", "foo.bar.baz$"...
+        .iterate(name + '$')(_.reverse.replaceFirst("[.]", "\\$").reverse)
+        .take(name.count(_ == '.') + 1) // ...then this is: "foo.bar.baz$", "foo.bar$baz$", "foo$bar$baz$"...
         .toArray
         .reverse // ...and this is: "foo.bar.baz$", "foo.bar$baz$", "foo$bar$baz$"
         .collectFirst { case Comparison(value) => value } // attempts: top-level object, object in object, etc
