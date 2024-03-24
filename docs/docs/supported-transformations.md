@@ -2801,11 +2801,11 @@ but Chimney has a specific solution for this:
     // Object is "case" for better toString output.
     case object PermissiveNamesComparison extends TransformedNamesComparison {
 
-      private val normalize(name: String): String = {
+      private def normalize(name: String): String = {
         val name2 =
           if (name.startsWith("is")) name.drop(2)
-          else (name.startsWith("get")) name.drop(3)
-          else (name.startsWith("set")) name.drop(3)
+          else if (name.startsWith("get")) name.drop(3)
+          else if (name.startsWith("set")) name.drop(3)
           else name
         name2.replaceAll("[-_]", "")
       }
@@ -2831,3 +2831,5 @@ but Chimney has a specific solution for this:
       //.enableCustomSubtypeNameComparison(your.organization.PermissiveNamesComparison)
       .transform
     ```
+
+Since this feature relied on ClassLoaders and class path lookup it, testing it with REPL may not work.
