@@ -296,7 +296,8 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
   tasks.mkString(" ; ")
 }
 
-val releaseCommand = (tag: Seq[String]) => if (tag.nonEmpty) "publishSigned ; sonatypeBundleRelease" else "publishSigned"
+val releaseCommand = (tag: Seq[String]) =>
+  if (tag.nonEmpty) "publishSigned ; sonatypeBundleRelease" else "publishSigned"
 
 // modules
 
