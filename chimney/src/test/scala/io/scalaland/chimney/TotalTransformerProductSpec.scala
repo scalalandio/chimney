@@ -242,12 +242,12 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       compileErrorsFixed(
         """
-          User(1, "Kuba", Some(28))
-            .into[UserPL]
-            .withFieldRenamed(_.name, _.imie)
-            .withFieldRenamed(_.age, _.wiek)
-            .transform
-          """
+        User(1, "Kuba", Some(28))
+          .into[UserPL]
+          .withFieldRenamed(_.name, _.imie)
+          .withFieldRenamed(_.age, _.wiek)
+          .transform
+        """
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",

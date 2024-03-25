@@ -191,11 +191,11 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
 
       compileErrorsFixed(
         """
-            new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
-              .into[CaseClassWithFlag]
-              .disableBeanGetters
-              .transform
-          """
+        new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
+          .into[CaseClassWithFlag]
+          .disableBeanGetters
+          .transform
+        """
       ).check(
         "id: java.lang.String - no accessor named id in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",
         "name: java.lang.String - no accessor named name in source type io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag",

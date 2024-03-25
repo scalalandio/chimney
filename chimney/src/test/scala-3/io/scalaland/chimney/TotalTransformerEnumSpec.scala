@@ -124,9 +124,9 @@ class TotalTransformerEnumSpec extends ChimneySpec {
   test("not allow transformation of of sealed hierarchies when the transformation would be ambiguous") {
     val error = compileErrorsFixed(
       """
-           (shapes1enums.Shape.Triangle(shapes1enums.Point(0, 0), shapes1enums.Point(2, 2), shapes1enums.Point(2, 0)): shapes1enums.Shape)
-             .transformInto[shapes5enums.Shape]
-        """
+      (shapes1enums.Shape.Triangle(shapes1enums.Point(0, 0), shapes1enums.Point(2, 2), shapes1enums.Point(2, 0)): shapes1enums.Shape)
+        .transformInto[shapes5enums.Shape]
+      """
     )
 
     error.check(
