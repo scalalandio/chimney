@@ -204,7 +204,7 @@ val settings = Seq(
 val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang.modules" %%% "scala-collection-compat" % "2.11.0",
-    "org.scalameta" %%% "munit" % "1.0.0-M11" % "test"
+    "org.scalameta" %%% "munit" % "1.0.0-M11" % Test
   ),
   libraryDependencies ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
@@ -293,10 +293,10 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
     clean ++ tasksOf("test")
   }
 
-  tasks.mkString(";")
+  tasks.mkString(" ; ")
 }
 
-val releaseCommand = (tag: Seq[String]) => if (tag.nonEmpty) "publishSigned;sonatypeBundleRelease" else "publishSigned"
+val releaseCommand = (tag: Seq[String]) => if (tag.nonEmpty) "publishSigned ; sonatypeBundleRelease" else "publishSigned"
 
 // modules
 
