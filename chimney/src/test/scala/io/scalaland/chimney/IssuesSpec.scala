@@ -742,12 +742,11 @@ class IssuesSpec extends ChimneySpec {
 
   test("fix issue #461") {
 
-    import java.util.UUID
-    val uuid1 = UUID.randomUUID()
-    val uuid2 = UUID.randomUUID()
+    val uuid1 = "value 1"
+    val uuid2 = "value 2"
 
     case class From(x: String)
-    case class To(uuid: UUID, setUuid: UUID, x: String)
+    case class To(uuid: String, setUuid: String, x: String)
 
     From("test")
       .into[To]
