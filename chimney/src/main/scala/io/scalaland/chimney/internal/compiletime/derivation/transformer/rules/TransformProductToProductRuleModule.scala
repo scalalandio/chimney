@@ -131,11 +131,40 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             parameters.toList
           ) { case (toName: String, ctorParam: Existential[Product.Parameter]) =>
             import ctorParam.Underlying as CtorParam, ctorParam.value.defaultValue
+
+            // .withFieldRenamed(_.isField, _.isField2) has no way if figuring out if user means mapping getter
+            // into Field2 or isField2 if there are multiple matching target arguments/setters
+            object AmbiguousRename {
+
+              def unapply(input: (String, RuntimeFieldOverride)): Option[(String, List[String])] = input match {
+                case (fromName, _ @RuntimeFieldOverride.RenamedFrom(_)) =>
+                  val ambiguousToNames = parameters
+                    .collect {
+                      case (anotherToName, _)
+                          if fromName == anotherToName || areFieldNamesMatching(fromName, anotherToName) =>
+                        anotherToName
+                    }
+                    .toList
+                    .sorted
+                  if (ambiguousToNames.size > 1) Some(fromName -> ambiguousToNames) else None
+                case _ => None
+              }
+            }
+
             // User might have used _.getName in modifier, to define target we know as _.setName so simple .get(toName)
             // might not be enough. However, we DO want to prioritize strict name matches.
             filterOverridesForField(_ == toName).headOption
               .orElse(filterOverridesForField(areFieldNamesMatching(_, toName)).headOption)
-              .map { case (fromName, value) => useOverride[From, To, CtorParam](fromName, toName, value) }
+              .map {
+                case AmbiguousRename(fromName, foundToNames) =>
+                  DerivationResult.ambiguousFieldRenames[From, To, Existential[TransformationExpr]](
+                    fromName,
+                    foundToNames,
+                    flags.getFieldNameComparison.toString
+                  )
+                case (fromName, value) =>
+                  useOverride[From, To, CtorParam](fromName, toName, value)
+              }
               .orElse {
                 val ambiguityOrPossibleSourceField =
                   if (usePositionBasedMatching) Right(ctorParamToGetter.get(ctorParam))

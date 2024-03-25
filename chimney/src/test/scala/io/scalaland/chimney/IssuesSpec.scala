@@ -697,4 +697,44 @@ class IssuesSpec extends ChimneySpec {
     val actual = (1, 2, "asd").into[MyClass].enableOptionDefaultsToNone.transform
     actual ==> expected
   }
+
+  test("fix issue #449") {
+    case class Proto(isSomething: Boolean, somethingDetail: Option[Proto.SomethingDetail])
+    object Proto {
+      case class SomethingDetail(a: String, b: Int)
+    }
+
+    case class Domain(isSomething: Boolean, something: Option[Domain.Something])
+    object Domain {
+      case class Something(a: String, b: Int)
+    }
+
+    compileErrorsFixed(
+      """
+      Proto(isSomething = true, somethingDetail = Some(Proto.SomethingDetail("hello", 1)))
+        .intoPartial[Domain]
+        .withFieldRenamed(_.somethingDetail, _.something)
+        .transform
+      """
+    ).check(
+      "Chimney can't derive transformation from io.scalaland.chimney.IssuesSpec.Proto to io.scalaland.chimney.IssuesSpec.Domain",
+      "io.scalaland.chimney.IssuesSpec.Domain",
+      "currently used BeanAware: TransformedNamedComparison for fields treats the following renames as the same: .withFieldRenamed(_.something, _.isSomething), .withFieldRenamed(_.something, _.something) making it ambiguous - provide the value directly using .withFieldConst, .withFieldConst, ... or change the field name comparator with .enableCustomFieldNameComparison to resolve the ambiguity",
+      "Consult https://chimney.readthedocs.io for usage examples."
+    )
+
+    Proto(isSomething = true, somethingDetail = Some(Proto.SomethingDetail("hello", 1)))
+      .intoPartial[Domain]
+      .withFieldRenamed(_.somethingDetail, _.something)
+      .enableCustomFieldNameComparison(TransformedNamesComparison.StrictEquality)
+      .transform
+      .asOption ==> Some(Domain(isSomething = true, something = Some(Domain.Something("hello", 1))))
+
+    Proto(isSomething = true, somethingDetail = Some(Proto.SomethingDetail("hello", 1)))
+      .intoPartial[Domain]
+      .withFieldConst(_.something, None)
+      .enableCustomFieldNameComparison(TransformedNamesComparison.StrictEquality)
+      .transform
+      .asOption ==> Some(Domain(isSomething = true, something = None))
+  }
 }
