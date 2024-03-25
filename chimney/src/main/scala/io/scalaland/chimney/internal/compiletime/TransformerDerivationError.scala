@@ -90,7 +90,7 @@ object TransformerDerivationError {
             s"  $toField: $toFieldType - can't derive transformation from $toField: $fromFieldType in source type $fromType"
           case AmbiguousFieldSources(foundFromNames, toField, _, _) =>
             s"  field $toField: $toType has ambiguous matches in $fromType: ${foundFromNames.mkString(", ")}"
-          case AmbiguousFieldRenames(fromField, foundToFields, fieldNamesComparator, fromType, toType) =>
+          case AmbiguousFieldRenames(fromField, foundToFields, fieldNamesComparator, _, _) =>
             val renames =
               foundToFields.map(toField => s"$MAGENTA.withFieldRenamed(_.$fromField, _.$toField)$RESET").mkString(", ")
             s"  currently used $MAGENTA$fieldNamesComparator: TransformedNamedComparison$RESET for fields treats the following renames as the same: $renames making it ambiguous - provide the value directly using $MAGENTA.withFieldConst$RESET, $MAGENTA.withFieldConst$RESET, ... or change the field name comparator with $MAGENTA.enableCustomFieldNameComparison$RESET to resolve the ambiguity"
