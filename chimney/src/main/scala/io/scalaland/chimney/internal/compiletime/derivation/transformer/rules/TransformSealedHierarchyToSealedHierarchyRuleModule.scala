@@ -111,9 +111,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         // 0 matches - no coproduct with the same name
         case Nil =>
           DerivationResult
-            .cantFindCoproductInstanceTransformer[From, To, FromSubtype, Existential[
-              ExprPromise[*, TransformationExpr[To]]
-            ]]
+            .missingSubtypeTransformer[From, To, FromSubtype, Existential[ExprPromise[*, TransformationExpr[To]]]]
         // 1 match - unambiguous finding
         case toSubtype :: Nil =>
           import toSubtype.Underlying as ToSubtype, toSubtype.value.upcast as toUpcast
@@ -169,7 +167,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             .map(Existential[ExprPromise[*, TransformationExpr[To]], FromSubtype](_))
         // 2 or more matches - ambiguous coproduct instances
         case toSubtypes =>
-          DerivationResult.ambiguousCoproductInstance[From, To, Existential[ExprPromise[*, TransformationExpr[To]]]](
+          DerivationResult.ambiguousSubtypeTargets[From, To, Existential[ExprPromise[*, TransformationExpr[To]]]](
             ExistentialType(fromSubtype.Underlying),
             toSubtypes.map(to => ExistentialType(to.Underlying))
           )

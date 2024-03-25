@@ -154,16 +154,13 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .orElse(useFallbackValues[From, To, CtorParam](defaultValue))
               .getOrElse[DerivationResult[Existential[TransformationExpr]]] {
                 if (usePositionBasedMatching)
-                  DerivationResult.incompatibleSourceTuple(
-                    sourceArity = fromEnabledExtractors.size,
-                    targetArity = parameters.size
-                  )
+                  DerivationResult.tupleArityMismatch(fromArity = fromEnabledExtractors.size, toArity = parameters.size)
                 else
                   ctorParam.value.targetType match {
                     case Product.Parameter.TargetType.ConstructorParameter =>
                       // TODO: update this for isLocal
                       DerivationResult
-                        .missingAccessor[From, To, CtorParam, Existential[TransformationExpr]](
+                        .missingConstructorArgument[From, To, CtorParam, Existential[TransformationExpr]](
                           toName,
                           fromExtractors.exists { case (fromName, _) => areFieldNamesMatching(fromName, toName) }
                         )
@@ -631,7 +628,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         errors: DerivationErrors,
         toName: String
     )(implicit ctx: TransformationContext[From, To]) = {
-      val newError = DerivationResult.missingTransformer[
+      val newError = DerivationResult.missingFieldTransformer[
         From,
         To,
         SourceField,
