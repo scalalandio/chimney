@@ -132,24 +132,35 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             parameters.toList
           ) { case (toName: String, ctorParam: Existential[Product.Parameter]) =>
             import ctorParam.Underlying as CtorParam, ctorParam.value.defaultValue
-            // user might have used _.getName in modifier, to define target we know as _.setName
-            // so simple .get(toName) might not be enough
-            filterOverridesForField(fromName => areFieldNamesMatching(fromName, toName)).headOption
-              .map { case (fromName, value) =>
-                useOverride[From, To, CtorParam](fromName, toName, value)
-              }
+            // User might have used _.getName in modifier, to define target we know as _.setName so simple .get(toName)
+            // might not be enough. However, we DO want to prioritize strict name matches.
+            filterOverridesForField(_ == toName).headOption
+              .orElse(filterOverridesForField(areFieldNamesMatching(_, toName)).headOption)
+              .map { case (fromName, value) => useOverride[From, To, CtorParam](fromName, toName, value) }
               .orElse {
-                val resolvedExtractor =
-                  if (usePositionBasedMatching) ctorParamToGetter.get(ctorParam)
+                val ambiguityOrPossibleSourceField =
+                  if (usePositionBasedMatching) Right(ctorParamToGetter.get(ctorParam))
                   else
-                    fromEnabledExtractors.collectFirst {
-                      case (fromName, getter) if areFieldNamesMatching(fromName, toName) =>
-                        (fromName, toName, getter)
+                    fromEnabledExtractors.collect {
+                      case (fromName, getter) if areFieldNamesMatching(fromName, toName) => (fromName, toName, getter)
+                    }.toList match {
+                      case Nil                  => Right(None)
+                      case fromFieldData :: Nil => Right(Some(fromFieldData))
+                      case multipleFromNames    => Left(multipleFromNames.map(_._1))
                     }
-                resolvedExtractor
-                  .map { case (fromName, toName, getter) =>
-                    useExtractor[From, To, CtorParam](ctorParam.value.targetType, fromName, toName, getter)
-                  }
+                ambiguityOrPossibleSourceField match {
+                  case Right(possibleSourceField) =>
+                    possibleSourceField.map { case (fromName, toName, getter) =>
+                      useExtractor[From, To, CtorParam](ctorParam.value.targetType, fromName, toName, getter)
+                    }
+                  case Left(foundFromNames) =>
+                    Some(
+                      DerivationResult.ambiguousFieldSources[From, To, Existential[TransformationExpr]](
+                        foundFromNames,
+                        toName
+                      )
+                    )
+                }
               }
               .orElse(useFallbackValues[From, To, CtorParam](defaultValue))
               .getOrElse[DerivationResult[Existential[TransformationExpr]]] {
@@ -158,6 +169,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 else
                   ctorParam.value.targetType match {
                     case Product.Parameter.TargetType.ConstructorParameter =>
+                      // TODO: rename isLocal into isInherited
                       // TODO: update this for isLocal
                       DerivationResult
                         .missingConstructorArgument[From, To, CtorParam, Existential[TransformationExpr]](
