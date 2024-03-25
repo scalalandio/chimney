@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.internal.compiletime.{
-  AmbiguousFieldRenames,
+  AmbiguousFieldOverrides,
   AmbiguousFieldSources,
   AmbiguousSubtypeTargets,
   DerivationResult,
@@ -84,14 +84,14 @@ private[compiletime] trait ResultOps { this: Derivation =>
       )
     )
 
-    def ambiguousFieldRenames[From, To, A](
-        fromField: String,
-        foundToFields: List[String],
+    def ambiguousFieldOverrides[From, To, A](
+        toName: String,
+        foundOverrides: List[String],
         fieldNamesComparator: String
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = DerivationResult.transformerError(
-      AmbiguousFieldRenames(
-        fromField = fromField,
-        foundToFields = foundToFields.sorted,
+      AmbiguousFieldOverrides(
+        toName = toName,
+        foundOverrides = foundOverrides.sorted,
         fieldNamesComparator = fieldNamesComparator,
         fromType = Type.prettyPrint[From],
         toType = Type.prettyPrint[To]
