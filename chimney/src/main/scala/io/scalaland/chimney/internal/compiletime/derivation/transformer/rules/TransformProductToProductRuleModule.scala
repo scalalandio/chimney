@@ -5,7 +5,6 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
 import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
-import io.scalaland.chimney.internal.compiletime.datatypes.ProductTypes
 
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>
 
@@ -183,7 +182,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         // TODO: update this for isLocal
                         DerivationResult
                           .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
-                            ProductTypes.BeanAware.dropSet(toName),
+                            toName,
                             fromExtractors.exists { case (fromName, _) => areFieldNamesMatching(fromName, toName) }
                           )
                   }

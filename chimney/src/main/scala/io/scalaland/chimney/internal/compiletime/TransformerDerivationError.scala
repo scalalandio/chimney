@@ -1,5 +1,8 @@
 package io.scalaland.chimney.internal.compiletime
 
+import Console.*
+import io.scalaland.chimney.internal.compiletime.datatypes.ProductTypes.BeanAware
+
 /** Transformer-specific error related to derivation logic */
 sealed trait TransformerDerivationError extends Product with Serializable {
   def fromType: String
@@ -71,9 +74,10 @@ object TransformerDerivationError {
         // TODO: add suggestions for inherited fields
         val errStrings = errs.distinct.map {
           case MissingConstructorArgument(toField, toFieldType, fromType, _, _) =>
-            s"  $toField: $toFieldType - no accessor named $toField in source type $fromType"
+            s"  $toField: $toFieldType - no accessor named $MAGENTA$toField$RESET in source type $fromType"
           case MissingJavaBeanSetterParam(toSetter, requiredTypeName, fromType, _, _) =>
-            s"  set${toSetter.capitalize}($toSetter: $requiredTypeName) - no accessor named $toSetter in source type $fromType"
+            val toNormalized = BeanAware.dropSet(toSetter)
+            s"  $toSetter($toNormalized: $requiredTypeName) - no accessor named $MAGENTA$toNormalized$RESET in source type $fromType"
           case MissingFieldTransformer(toField, fromFieldType, toFieldType, fromType, _) =>
             s"  $toField: $toFieldType - can't derive transformation from $toField: $fromFieldType in source type $fromType"
           case AmbiguousFieldSources(foundFromNames, toField, _, _) =>
@@ -89,16 +93,18 @@ object TransformerDerivationError {
         }
 
         val fieldsWithMethodAccessor = errors.collect {
-          case MissingConstructorArgument(fieldName, _, _, _, true) => s"`$fieldName`"
-          case MissingJavaBeanSetterParam(fieldName, _, _, _, true) => s"`$fieldName`"
+          case MissingConstructorArgument(toField, _, _, _, true)  => s"$MAGENTA$toField$RESET"
+          case MissingJavaBeanSetterParam(toSetter, _, _, _, true) => s"$MAGENTA$toSetter$RESET"
         }.sorted
         val methodAccessorHint =
           if (fieldsWithMethodAccessor.nonEmpty) {
-            val first3Fields = fieldsWithMethodAccessor.take(3).mkString(", ")
-            val otherFields = fieldsWithMethodAccessor.length - 3
-            val fields = if (otherFields > 0) s"$first3Fields and $otherFields other methods" else first3Fields
+            val fields = fieldsWithMethodAccessor.take(3).mkString(", ") + (fieldsWithMethodAccessor.size match {
+              case 1     => s" constructor argument/setter"
+              case 2 | 3 => s" constructor arguments/setters"
+              case _     => s" and ${fieldsWithMethodAccessor.length - 3} other constructor arguments/setters"
+            })
 
-            s"\nThere are methods in $fromType that might be used as accessors for $fields fields in $toType. Consider using `.enableMethodAccessors`."
+            s"\nThere are methods in $fromType that might be used as accessors for $fields in $toType. Consider using $MAGENTA.enableMethodAccessors$RESET."
           } else ""
 
         s"""$toType
