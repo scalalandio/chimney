@@ -133,9 +133,9 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
   ) {
     val error = compileErrorsScala2(
       """
-           (shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
-             .transformIntoPartial[shapes5.Shape]
-        """
+      (shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
+        .transformIntoPartial[shapes5.Shape]
+      """
     )
 
     error.check(

@@ -66,21 +66,25 @@ class IssuesSpec extends ChimneySpec {
 
     test("fix for `withFieldConst`") {
 
-      compileErrorsFixed("""
-          Foo1("test")
-            .into[Foo2]
-            .withFieldConst(_.x, "xyz")
-          """)
+      compileErrorsFixed(
+        """
+        Foo1("test")
+          .into[Foo2]
+          .withFieldConst(_.x, "xyz")
+        """
+      )
         .check("Cannot prove that String <:< Int")
     }
 
     test("fix for `withFieldComputed`") {
 
-      compileErrorsFixed("""
-          Foo1("test")
-            .into[Foo2]
-            .withFieldComputed(_.x, _ => "xyz")
-        """)
+      compileErrorsFixed(
+        """
+        Foo1("test")
+          .into[Foo2]
+          .withFieldComputed(_.x, _ => "xyz")
+        """
+      )
         .check("Cannot prove that String <:< Int")
     }
 

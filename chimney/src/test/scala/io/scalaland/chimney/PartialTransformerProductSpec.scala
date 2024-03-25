@@ -180,22 +180,22 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       compileErrorsFixed(
         """
-          Bar(3, (3.14, 3.14))
-            .intoPartial[Foo]
-            .withFieldConstPartial(_.y + "abc", partial.Result.fromValue("pi"))
-            .transform
-          """
-      ) check ("Invalid selector expression")
+        Bar(3, (3.14, 3.14))
+          .intoPartial[Foo]
+          .withFieldConstPartial(_.y + "abc", partial.Result.fromValue("pi"))
+          .transform
+        """
+      ).check("Invalid selector expression")
 
       compileErrorsFixed(
         """
-          val haveY = HaveY("")
-          Bar(3, (3.14, 3.14))
-            .intoPartial[Foo]
-            .withFieldConstPartial(cc => haveY.y, partial.Result.fromValue("pi"))
-            .transform
-          """
-      ) check ("Invalid selector expression")
+        val haveY = HaveY("")
+        Bar(3, (3.14, 3.14))
+          .intoPartial[Foo]
+          .withFieldConstPartial(cc => haveY.y, partial.Result.fromValue("pi"))
+          .transform
+        """
+      ).check("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -301,22 +301,22 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       compileErrorsFixed(
         """
-          Bar(3, (3.14, 3.14))
-            .intoPartial[Foo]
-            .withFieldComputed(_.y + "abc", _.toString)
-            .transform
-          """
-      ) check ("Invalid selector expression")
+        Bar(3, (3.14, 3.14))
+          .intoPartial[Foo]
+          .withFieldComputed(_.y + "abc", _.toString)
+          .transform
+        """
+      ).check("Invalid selector expression")
 
       compileErrorsFixed(
         """
-          val haveY = HaveY("")
-          Bar(3, (3.14, 3.14))
-            .intoPartial[Foo]
-            .withFieldComputed(cc => haveY.y, _.toString)
-            .transform
-          """
-      ) check ("Invalid selector expression")
+        val haveY = HaveY("")
+        Bar(3, (3.14, 3.14))
+          .intoPartial[Foo]
+          .withFieldComputed(cc => haveY.y, _.toString)
+          .transform
+        """
+      ).check("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -410,14 +410,18 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrorsFixed("""
-          Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.y + "abc", _.toString).transform
-        """) check ("Invalid selector expression")
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.y + "abc", _.toString).transform
+        """
+      ).check("Invalid selector expression")
 
-      compileErrorsFixed("""
-          val haveY = HaveY("")
-          Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
-        """) check ("Invalid selector expression")
+      compileErrorsFixed(
+        """
+        val haveY = HaveY("")
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
+        """
+      ).check("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -540,14 +544,18 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.Renames.*
 
-      compileErrorsFixed("""
-          User(1, "Kuba", Some(28)).intoPartial[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
-        """).arePresent()
+      compileErrorsFixed(
+        """
+        User(1, "Kuba", Some(28)).intoPartial[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
+        """
+      ).arePresent()
 
-      compileErrorsFixed("""
-          val str = "string"
-          User(1, "Kuba", Some(28)).intoPartial[UserPL].withFieldRenamed(u => str, _.toString).transform
-        """).check(
+      compileErrorsFixed(
+        """
+        val str = "string"
+        User(1, "Kuba", Some(28)).intoPartial[UserPL].withFieldRenamed(u => str, _.toString).transform
+        """
+      ).check(
         "Invalid selector expression"
       )
     }
@@ -619,12 +627,12 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       compileErrorsFixed(
         """
-          User(1, "Kuba", Some(28))
-            .intoPartial[UserPL]
-            .withFieldRenamed(_.name, _.imie)
-            .withFieldRenamed(_.age, _.wiek)
-            .transform
-          """
+        User(1, "Kuba", Some(28))
+          .intoPartial[UserPL]
+          .withFieldRenamed(_.name, _.imie)
+          .withFieldRenamed(_.age, _.wiek)
+          .transform
+        """
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
@@ -1550,11 +1558,13 @@ class PartialTransformerProductSpec extends ChimneySpec {
         Foo("100").transformIntoPartial[Bar].asOption ==> Some(Bar(100))
 
         test("disabled again should not compile") {
-          compileErrors("""
-               Foo("100").intoPartial[Bar]
-                .disableImplicitConflictResolution
-                .transform
-            """).check(
+          compileErrorsFixed(
+            """
+            Foo("100").intoPartial[Bar]
+              .disableImplicitConflictResolution
+              .transform
+            """
+          ).check(
             "Ambiguous implicits while resolving Chimney recursive transformation"
           )
         }
@@ -1577,12 +1587,15 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
         Foo("100").transformIntoPartial[Bar].asOption ==> Some(Bar(200))
 
-        test("disabled again shoult not compile") {
-          compileErrors("""
-              Foo("100").intoPartial[Bar]
-                .disableImplicitConflictResolution
-                .transform
-            """).check(
+        test("disabled again should not compile") {
+
+          compileErrorsFixed(
+            """
+            Foo("100").intoPartial[Bar]
+              .disableImplicitConflictResolution
+              .transform
+            """
+          ).check(
             "Ambiguous implicits while resolving Chimney recursive transformation"
           )
         }
