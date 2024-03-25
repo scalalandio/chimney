@@ -72,8 +72,7 @@ class IssuesSpec extends ChimneySpec {
           .into[Foo2]
           .withFieldConst(_.x, "xyz")
         """
-      )
-        .check("Cannot prove that String <:< Int")
+      ).check("Cannot prove that String <:< Int")
     }
 
     test("fix for `withFieldComputed`") {
@@ -84,8 +83,7 @@ class IssuesSpec extends ChimneySpec {
           .into[Foo2]
           .withFieldComputed(_.x, _ => "xyz")
         """
-      )
-        .check("Cannot prove that String <:< Int")
+      ).check("Cannot prove that String <:< Int")
     }
 
     test("fix for `withFieldRenamed`") {
@@ -740,5 +738,21 @@ class IssuesSpec extends ChimneySpec {
       .enableCustomFieldNameComparison(TransformedNamesComparison.StrictEquality)
       .transform
       .asOption ==> Some(Domain(isSomething = true, something = None))
+  }
+
+  test("fix issue #461") {
+
+    import java.util.UUID
+    val uuid1 = UUID.randomUUID()
+    val uuid2 = UUID.randomUUID()
+
+    case class From(x: String)
+    case class To(uuid: UUID, setUuid: UUID, x: String)
+
+    From("test")
+      .into[To]
+      .withFieldConst(_.uuid, uuid1)
+      .withFieldConst(_.setUuid, uuid2)
+      .transform ==> To(uuid1, uuid2, "test")
   }
 }
