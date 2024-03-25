@@ -426,7 +426,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
         "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
-        "There are methods in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for `value` fields in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using `.enableMethodAccessors`.",
+        "There are methods in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for value constructor argument/setter in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using .enableMethodAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
@@ -434,7 +434,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
         "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
-        "There are methods in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for `value` fields in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using `.enableMethodAccessors`.",
+        "There are methods in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for value constructor argument/setter in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using .enableMethodAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -463,7 +463,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
         "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
-        "There are methods in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for `value` fields in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using `.enableMethodAccessors`.",
+        "There are methods in io.scalaland.chimney.fixtures.products.Inherited.Source that might be used as accessors for value constructor argument/setter in io.scalaland.chimney.fixtures.products.Inherited.Target. Consider using .enableMethodAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -478,7 +478,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
-        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for `z` fields in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using `.enableMethodAccessors`.",
+        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for z constructor argument/setter in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using .enableMethodAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
@@ -486,7 +486,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
-        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for `z` fields in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using `.enableMethodAccessors`.",
+        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for z constructor argument/setter in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using .enableMethodAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -560,7 +560,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
-        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for `z` fields in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using `.enableMethodAccessors`.",
+        "There are methods in io.scalaland.chimney.fixtures.products.Accessors.Source that might be used as accessors for z constructor argument/setter in io.scalaland.chimney.fixtures.products.Accessors.Target2. Consider using .enableMethodAccessors.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -745,7 +745,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "method3: java.lang.String - no accessor named method3 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
         "method4: java.lang.String - no accessor named method4 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
         "method5: java.lang.String - no accessor named method5 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-        "There are methods in io.scalaland.chimney.TotalTransformerProductSpec.Foobar that might be used as accessors for `method1`, `method2`, `method3` and 2 other methods fields in io.scalaland.chimney.TotalTransformerProductSpec.Foobar5. Consider using `.enableMethodAccessors`."
+        "There are methods in io.scalaland.chimney.TotalTransformerProductSpec.Foobar that might be used as accessors for method1, method2, method3 and 2 other constructor arguments/setters in io.scalaland.chimney.TotalTransformerProductSpec.Foobar5. Consider using .enableMethodAccessors."
       )
     }
 
