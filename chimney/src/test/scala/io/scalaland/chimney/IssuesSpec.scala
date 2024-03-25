@@ -721,7 +721,7 @@ class IssuesSpec extends ChimneySpec {
     ).check(
       "Chimney can't derive transformation from io.scalaland.chimney.IssuesSpec.Proto to io.scalaland.chimney.IssuesSpec.Domain",
       "io.scalaland.chimney.IssuesSpec.Domain",
-      "currently used BeanAware: TransformedNamedComparison for fields treats the following renames as the same: .withFieldRenamed(_.something, _.isSomething), .withFieldRenamed(_.something, _.something) making it ambiguous - provide the value directly using .withFieldConst, .withFieldConst, ... or change the field name comparator with .enableCustomFieldNameComparison to resolve the ambiguity",
+      "field something: io.scalaland.chimney.IssuesSpec.Domain could not resolve overrides since the current BeanAware: TransformedNamedComparison treats the following overrides as the same: .withFieldRenamed(_.somethingDetail, _.isSomething}), .withFieldRenamed(_.somethingDetail, _.something}) making it ambiguous - change the field name comparator with .enableCustomFieldNameComparison to resolve the ambiguity",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
@@ -753,6 +753,7 @@ class IssuesSpec extends ChimneySpec {
       .into[To]
       .withFieldConst(_.uuid, uuid1)
       .withFieldConst(_.setUuid, uuid2)
+      .enableCustomFieldNameComparison(TransformedNamesComparison.StrictEquality)
       .transform ==> To(uuid1, uuid2, "test")
   }
 }

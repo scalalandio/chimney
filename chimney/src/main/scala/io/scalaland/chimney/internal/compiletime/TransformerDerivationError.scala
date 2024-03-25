@@ -40,9 +40,9 @@ final case class AmbiguousFieldSources(
     toType: String
 ) extends TransformerDerivationError
 
-final case class AmbiguousFieldRenames(
-    fromField: String,
-    foundToFields: List[String],
+final case class AmbiguousFieldOverrides(
+    toName: String,
+    foundOverrides: List[String],
     fieldNamesComparator: String,
     fromType: String,
     toType: String
@@ -90,10 +90,10 @@ object TransformerDerivationError {
             s"  $toField: $toFieldType - can't derive transformation from $toField: $fromFieldType in source type $fromType"
           case AmbiguousFieldSources(foundFromNames, toField, _, _) =>
             s"  field $toField: $toType has ambiguous matches in $fromType: ${foundFromNames.mkString(", ")}"
-          case AmbiguousFieldRenames(fromField, foundToFields, fieldNamesComparator, _, _) =>
-            val renames =
-              foundToFields.map(toField => s"$MAGENTA.withFieldRenamed(_.$fromField, _.$toField)$RESET").mkString(", ")
-            s"  currently used $MAGENTA$fieldNamesComparator: TransformedNamedComparison$RESET for fields treats the following renames as the same: $renames making it ambiguous - provide the value directly using $MAGENTA.withFieldConst$RESET, $MAGENTA.withFieldConst$RESET, ... or change the field name comparator with $MAGENTA.enableCustomFieldNameComparison$RESET to resolve the ambiguity"
+          case AmbiguousFieldOverrides(toName, foundOverrides, fieldNamesComparator, _, _) =>
+            val overrides =
+              foundOverrides.map(fieldOverride => s"$MAGENTA$fieldOverride$RESET").mkString(", ")
+            s"  field $toName: $toType could not resolve overrides since the current $MAGENTA$fieldNamesComparator: TransformedNamedComparison$RESET treats the following overrides as the same: $overrides making it ambiguous - change the field name comparator with $MAGENTA.enableCustomFieldNameComparison$RESET to resolve the ambiguity"
           case MissingSubtypeTransformer(fromSubtype, _, _) =>
             s"  can't transform coproduct instance $fromSubtype to $toType"
           case AmbiguousSubtypeTargets(fromField, foundToFields, _, _) =>

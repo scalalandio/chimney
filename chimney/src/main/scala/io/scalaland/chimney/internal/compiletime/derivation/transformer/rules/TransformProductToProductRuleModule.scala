@@ -95,8 +95,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
       val verifyNoOverrideUnused = Traverse[List]
         .parTraverse(
-          filterOverridesForField(fromName =>
-            !parameters.keys.exists(toName => areFieldNamesMatching(fromName, toName))
+          filterOverridesForField(usedToName =>
+            !parameters.keys.exists(toName => areFieldNamesMatching(usedToName, toName))
           ).keys.toList
         ) { fromName =>
           val tpeStr = Type.prettyPrint[To]
@@ -134,20 +134,30 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
             // .withFieldRenamed(_.isField, _.isField2) has no way if figuring out if user means mapping getter
             // into Field2 or isField2 if there are multiple matching target arguments/setters
-            object AmbiguousRename {
+            object AmbiguousOverrides {
 
-              def unapply(input: (String, RuntimeFieldOverride)): Option[(String, List[String])] = input match {
-                case (fromName, _ @RuntimeFieldOverride.RenamedFrom(_)) =>
-                  val ambiguousToNames = parameters
-                    .collect {
-                      case (anotherToName, _)
-                          if fromName == anotherToName || areFieldNamesMatching(fromName, anotherToName) =>
-                        anotherToName
-                    }
-                    .toList
-                    .sorted
-                  if (ambiguousToNames.size > 1) Some(fromName -> ambiguousToNames) else None
-                case _ => None
+              def unapply(input: (String, RuntimeFieldOverride)): Option[(String, List[String])] = {
+                val (toName, runtimeField) = input
+                val ambiguousOverrides = parameters
+                  .collect {
+                    case (anotherToName, _)
+                        if toName == anotherToName || areFieldNamesMatching(toName, anotherToName) =>
+                      runtimeField match {
+                        case RuntimeFieldOverride.Const(_) =>
+                          s".withFieldConst(_.$anotherToName, ...)"
+                        case RuntimeFieldOverride.ConstPartial(_) =>
+                          s".withFieldConstPartial(_.$anotherToName, ...)"
+                        case RuntimeFieldOverride.Computed(_) =>
+                          s".withFieldComputed(_.$anotherToName, ...)"
+                        case RuntimeFieldOverride.ComputedPartial(_) =>
+                          s".withFieldComputedPartial(_.$anotherToName, ...)"
+                        case RuntimeFieldOverride.RenamedFrom(sourcePath) =>
+                          s".withFieldRenamed(${FieldPath.print(sourcePath)}, _.$anotherToName})"
+                      }
+                  }
+                  .toList
+                  .sorted
+                if (ambiguousOverrides.size > 1) Some(toName -> ambiguousOverrides) else None
               }
             }
 
@@ -156,10 +166,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             filterOverridesForField(_ == toName).headOption
               .orElse(filterOverridesForField(areFieldNamesMatching(_, toName)).headOption)
               .map {
-                case AmbiguousRename(fromName, foundToNames) =>
-                  DerivationResult.ambiguousFieldRenames[From, To, Existential[TransformationExpr]](
-                    fromName,
-                    foundToNames,
+                case AmbiguousOverrides(overrideName, foundOverrides) =>
+                  DerivationResult.ambiguousFieldOverrides[From, To, Existential[TransformationExpr]](
+                    overrideName,
+                    foundOverrides,
                     flags.getFieldNameComparison.toString
                   )
                 case (fromName, value) =>
