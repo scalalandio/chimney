@@ -36,8 +36,12 @@ final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName
 final case class CantFindCoproductInstanceTransformer(instance: String, sourceTypeName: String, targetTypeName: String)
     extends TransformerDerivationError
 
-final case class AmbiguousCoproductInstance(instance: String, sourceTypeName: String, targetTypeName: String)
-    extends TransformerDerivationError
+final case class AmbiguousCoproductInstance(
+    resolvedFromName: String,
+    foundToNames: List[String],
+    sourceTypeName: String,
+    targetTypeName: String
+) extends TransformerDerivationError
 
 final case class IncompatibleSourceTuple(
     sourceArity: Int,
@@ -68,8 +72,9 @@ object TransformerDerivationError {
             s"  can't find member of value class $sourceTypeName"
           case CantFindCoproductInstanceTransformer(instance, _, _) =>
             s"  can't transform coproduct instance $instance to $targetTypeName"
-          case AmbiguousCoproductInstance(instance, _, _) =>
-            s"  coproduct instance $instance of $targetTypeName is ambiguous"
+          case AmbiguousCoproductInstance(resolvedFromName, foundToNames, _, _) =>
+            s"  coproduct instance $resolvedFromName of $sourceTypeName has ambiguous matches in $targetTypeName: ${foundToNames
+                .mkString(", ")}"
           case IncompatibleSourceTuple(sourceArity, targetArity, sourceTypeName, _) =>
             s"  source tuple $sourceTypeName is of arity $sourceArity, while target type $targetTypeName is of arity $targetArity; they need to be equal!"
           case NotSupportedTransformerDerivation(exprPrettyPrint, sourceTypeName, _) =>
