@@ -168,9 +168,10 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             }
             .map(Existential[ExprPromise[*, TransformationExpr[To]], FromSubtype](_))
         // 2 or more matches - ambiguous coproduct instances
-        case _ =>
+        case toSubtypes =>
           DerivationResult.ambiguousCoproductInstance[From, To, Existential[ExprPromise[*, TransformationExpr[To]]]](
-            fromName
+            ExistentialType(fromSubtype.Underlying),
+            toSubtypes.map(to => ExistentialType(to.Underlying))
           )
       }
     }

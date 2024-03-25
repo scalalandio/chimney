@@ -132,13 +132,17 @@ class TotalTransformerEnumSpec extends ChimneySpec {
     error.check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.shapes1enums.Shape to io.scalaland.chimney.fixtures.shapes5enums.Shape",
       "io.scalaland.chimney.fixtures.shapes5enums.Shape",
-      "coproduct instance Triangle of io.scalaland.chimney.fixtures.shapes5enums.Shape is ambiguous",
-      "coproduct instance Rectangle of io.scalaland.chimney.fixtures.shapes5enums.Shape is ambiguous",
+      "derivation from triangle: io.scalaland.chimney.fixtures.shapes1enums.Shape.Triangle to io.scalaland.chimney.fixtures.shapes5enums.Shape is not supported in Chimney!",
+      "io.scalaland.chimney.fixtures.shapes5enums.Shape",
+      "derivation from rectangle: io.scalaland.chimney.fixtures.shapes1enums.Shape.Rectangle to io.scalaland.chimney.fixtures.shapes5enums.Shape is not supported in Chimney!",
+      "io.scalaland.chimney.fixtures.shapes5enums.Shape",
+      "coproduct instance io.scalaland.chimney.fixtures.shapes1enums.Shape.Triangle of io.scalaland.chimney.fixtures.shapes1enums.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5enums.Shape: io.scalaland.chimney.fixtures.shapes5enums.Inner.Triangle, io.scalaland.chimney.fixtures.shapes5enums.Outer.Triangle",
+      "coproduct instance io.scalaland.chimney.fixtures.shapes1enums.Shape.Rectangle of io.scalaland.chimney.fixtures.shapes1enums.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5enums.Shape: io.scalaland.chimney.fixtures.shapes5enums.Inner.Rectangle, io.scalaland.chimney.fixtures.shapes5enums.Outer.Rectangle",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
     error.checkNot(
-      "coproduct instance Circle of io.scalaland.chimney.fixtures.shapes5enums.Shape is ambiguous"
+      "io.scalaland.chimney.fixtures.shapes5enums.Shape.Circle"
     )
   }
 

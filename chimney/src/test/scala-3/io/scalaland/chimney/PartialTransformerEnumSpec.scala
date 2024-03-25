@@ -310,6 +310,31 @@ class PartialTransformerEnumSpec extends ChimneySpec {
     )
   }
 
+  test("not allow transformation of of sealed hierarchies when the transformation would be ambiguous") {
+    val error = compileErrorsFixed(
+      """
+           (shapes1enums.Shape.Triangle(shapes1enums.Point(0, 0), shapes1enums.Point(2, 2), shapes1enums.Point(2, 0)): shapes1enums.Shape)
+             .transformIntoPartial[shapes5enums.Shape]
+        """
+    )
+
+    error.check(
+      "Chimney can't derive transformation from io.scalaland.chimney.fixtures.shapes1enums.Shape to io.scalaland.chimney.fixtures.shapes5enums.Shape",
+      "io.scalaland.chimney.fixtures.shapes5enums.Shape",
+      "derivation from triangle: io.scalaland.chimney.fixtures.shapes1enums.Shape.Triangle to io.scalaland.chimney.fixtures.shapes5enums.Shape is not supported in Chimney!",
+      "io.scalaland.chimney.fixtures.shapes5enums.Shape",
+      "derivation from rectangle: io.scalaland.chimney.fixtures.shapes1enums.Shape.Rectangle to io.scalaland.chimney.fixtures.shapes5enums.Shape is not supported in Chimney!",
+      "io.scalaland.chimney.fixtures.shapes5enums.Shape",
+      "coproduct instance io.scalaland.chimney.fixtures.shapes1enums.Shape.Triangle of io.scalaland.chimney.fixtures.shapes1enums.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5enums.Shape: io.scalaland.chimney.fixtures.shapes5enums.Inner.Triangle, io.scalaland.chimney.fixtures.shapes5enums.Outer.Triangle",
+      "coproduct instance io.scalaland.chimney.fixtures.shapes1enums.Shape.Rectangle of io.scalaland.chimney.fixtures.shapes1enums.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5enums.Shape: io.scalaland.chimney.fixtures.shapes5enums.Inner.Rectangle, io.scalaland.chimney.fixtures.shapes5enums.Outer.Rectangle",
+      "Consult https://chimney.readthedocs.io for usage examples."
+    )
+
+    error.checkNot(
+      "io.scalaland.chimney.fixtures.shapes5enums.Shape.Circle"
+    )
+  }
+
   group("setting .withCoproductInstancePartial[Subtype](mapping)") {
 
     test(

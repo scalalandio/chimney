@@ -141,13 +141,17 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
     error.check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.shapes1.Shape to io.scalaland.chimney.fixtures.shapes5.Shape",
       "io.scalaland.chimney.fixtures.shapes5.Shape",
-      "coproduct instance Triangle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous",
-      "coproduct instance Rectangle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous",
+      "derivation from rectangle: io.scalaland.chimney.fixtures.shapes1.Rectangle to io.scalaland.chimney.fixtures.shapes5.Shape is not supported in Chimney!",
+      "io.scalaland.chimney.fixtures.shapes5.Shape",
+      "coproduct instance io.scalaland.chimney.fixtures.shapes1.Triangle of io.scalaland.chimney.fixtures.shapes1.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5.Shape: io.scalaland.chimney.fixtures.shapes5.Inner.Triangle, io.scalaland.chimney.fixtures.shapes5.Triangle",
+      "coproduct instance io.scalaland.chimney.fixtures.shapes1.Rectangle of io.scalaland.chimney.fixtures.shapes1.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5.Shape: io.scalaland.chimney.fixtures.shapes5.Inner.Rectangle, io.scalaland.chimney.fixtures.shapes5.Rectangle",
+      "io.scalaland.chimney.fixtures.shapes5.Shape",
+      "derivation from triangle: io.scalaland.chimney.fixtures.shapes1.Triangle to io.scalaland.chimney.fixtures.shapes5.Shape is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
     error.checkNot(
-      "coproduct instance Circle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous"
+      "io.scalaland.chimney.fixtures.shapes1.Circle"
     )
   }
 

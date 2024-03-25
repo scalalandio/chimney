@@ -59,14 +59,18 @@ class PartialTransformerJavaEnumSpec extends ChimneySpec {
     error.check(
       "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jcolors2.Color to io.scalaland.chimney.fixtures.colors4.Color",
       "io.scalaland.chimney.fixtures.colors4.Color",
-      "coproduct instance Green of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
-      "coproduct instance Black of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
+      "coproduct instance io.scalaland.chimney.javafixtures.jcolors2.Color.Green of io.scalaland.chimney.javafixtures.jcolors2.Color has ambiguous matches in io.scalaland.chimney.fixtures.colors4.Color: io.scalaland.chimney.fixtures.colors4.Color.Green, io.scalaland.chimney.fixtures.colors4.Green",
+      "coproduct instance io.scalaland.chimney.javafixtures.jcolors2.Color.Black of io.scalaland.chimney.javafixtures.jcolors2.Color has ambiguous matches in io.scalaland.chimney.fixtures.colors4.Color: io.scalaland.chimney.fixtures.colors4.Black, io.scalaland.chimney.fixtures.colors4.Color.Black",
+      "io.scalaland.chimney.fixtures.colors4.Color",
+      "derivation from color: io.scalaland.chimney.javafixtures.jcolors2.Color.Green to io.scalaland.chimney.fixtures.colors4.Color is not supported in Chimney!",
+      "io.scalaland.chimney.fixtures.colors4.Color",
+      "derivation from color: io.scalaland.chimney.javafixtures.jcolors2.Color.Black to io.scalaland.chimney.fixtures.colors4.Color is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
     error.checkNot(
-      "coproduct instance Red of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
-      "coproduct instance Blue of io.scalaland.chimney.fixtures.colors4.Color is ambiguous"
+      "io.scalaland.chimney.fixtures.colors4.Color.Red",
+      "io.scalaland.chimney.fixtures.colors4.Color.Blue"
     )
   }
 

@@ -90,11 +90,19 @@ private[compiletime] trait ResultOps { this: Derivation =>
       )
     )
 
-    def ambiguousCoproductInstance[From, To, A](ambiguousName: String)(implicit
-        ctx: TransformationContext[From, To]
-    ): DerivationResult[A] = DerivationResult.transformerError(
+    def ambiguousCoproductInstance[From, To, A](
+        resolvedFromSubtype: ExistentialType,
+        foundToSubtypes: List[ExistentialType]
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = DerivationResult.transformerError(
       AmbiguousCoproductInstance(
-        instance = ambiguousName,
+        resolvedFromName = {
+          import resolvedFromSubtype.Underlying as FromSubtype
+          Type.prettyPrint[FromSubtype]
+        },
+        foundToNames = foundToSubtypes.map { foundToSubtype =>
+          import foundToSubtype.Underlying as ToSubtype
+          Type.prettyPrint[ToSubtype]
+        }.sorted,
         sourceTypeName = Type.prettyPrint[From],
         targetTypeName = Type.prettyPrint[To]
       )
