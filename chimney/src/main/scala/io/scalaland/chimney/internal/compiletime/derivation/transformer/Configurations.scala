@@ -52,8 +52,14 @@ private[compiletime] trait Configurations { this: Derivation =>
     def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags =
       copy(implicitConflictResolution = preference)
 
+    def getFieldNameComparison: dsls.TransformedNamesComparison =
+      fieldNameComparison.getOrElse(dsls.TransformedNamesComparison.FieldDefault)
+
     def setFieldNameComparison(nameComparison: Option[dsls.TransformedNamesComparison]): TransformerFlags =
       copy(fieldNameComparison = nameComparison)
+
+    def getSubtypeNameComparison: dsls.TransformedNamesComparison =
+      subtypeNameComparison.getOrElse(dsls.TransformedNamesComparison.SubtypeDefault)
 
     def setSubtypeNameComparison(nameComparison: Option[dsls.TransformedNamesComparison]): TransformerFlags =
       copy(subtypeNameComparison = nameComparison)
