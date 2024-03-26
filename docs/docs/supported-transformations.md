@@ -28,7 +28,7 @@ transformation is through `Transformer[From, To]`:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.Transformer
 
     class MyType(val a: Int)
@@ -62,7 +62,7 @@ function was not defined, "empty value" when something was expected) and even th
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.{PartialTransformer, partial}
 
     class MyType(val b: String)
@@ -128,7 +128,7 @@ away with just providing a throwing function, and letting some utility catch the
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.dsl._
 
@@ -146,7 +146,7 @@ Other times you might need to convert `PartialFunction` into total function with
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
@@ -167,7 +167,7 @@ However, the most common case would be where you would have to use one of utilit
 !!! example
  
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
@@ -190,7 +190,7 @@ If you are converting from: `Option`s, `Either[String, A]` or `Try` you can use 
 !!! example
  
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.partial.syntax._
      
     (Some(1): Option[Int]).asResult.asEitherErrorPathMessageStrings // Right(1)
@@ -211,7 +211,7 @@ If you transform one type into itself or its supertype, it will be upcast withou
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     trait A
@@ -234,7 +234,7 @@ In particular, when the source type is (`=:=`) the target type, you will end up 
     This attempt is only skipped if we customised the transformation:
     
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class A(val a: String)
@@ -269,7 +269,7 @@ The obvious examples are `case class`es with the same fields:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     case class Source(a: Int, b: Double)
@@ -286,7 +286,7 @@ However, the original value might have fields absent in the target type and/or a
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     case class Source(a: Int, b: Double, c: String)
@@ -303,7 +303,7 @@ It doesn't even have to be a `case class`:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class Source {
@@ -326,7 +326,7 @@ be resolved recursively:
     During conversion from `Foo` to `Bar` we are automatically converting `Foo.Baz` into `Bar.Baz` 
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(baz: Foo.Baz)
@@ -350,7 +350,7 @@ transformation, available only in partial transformers, is unwrapping `Option` f
     Partial Transformers preserve the path (with nestings!) to the failed transformation
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(baz: Foo.Baz)
@@ -374,7 +374,7 @@ side effects - you need to enable the `.enableMethodAccessors` flag:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class Source(_a: String, _b: Int) {
@@ -414,7 +414,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class Source(_a: String, _b: Int) {
@@ -446,7 +446,7 @@ inherited from a source value's supertype, you need to enable the `.enableInheri
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     trait Parent {
@@ -477,7 +477,7 @@ If the flag was enabled in the implicit config it can be disabled with `.enableI
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     trait Parent {
@@ -508,7 +508,7 @@ If we want to read `def getFieldName(): A` as if it was `val fieldName: A` - whi
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class Source(a: String, b: Int) {
@@ -552,7 +552,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class Source(a: String, b: Int) {
@@ -585,7 +585,7 @@ flag:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class Source(val a: String, val b: Int)
@@ -647,7 +647,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class Source(val a: String, val b: Int)
@@ -681,7 +681,7 @@ them:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class Target() {
@@ -710,7 +710,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class Target() {
@@ -746,7 +746,7 @@ making this setting sort of a setters' counterpart to a default value in a const
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class Source(val a: String)
@@ -794,7 +794,7 @@ If a class' constructor takes `Unit` as a parameter it is always provided withou
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Source()
@@ -816,7 +816,7 @@ to default values with the `.enableDefaultValues` flag:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Source(a: String, b: Int)
@@ -845,7 +845,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Source(a: String, b: Int)
@@ -874,7 +874,7 @@ similar reasons to default values support, but we can enable it with the `.enabl
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String)
@@ -910,7 +910,7 @@ The `None` value is used as a fallback, meaning:
     Behavior when both [`.enableDefaultValues`](#allowing-the-constructors-default-values) and `.enableOptionDefaultsToNone` are used:
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String)
@@ -935,7 +935,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String)
@@ -962,7 +962,7 @@ it with another field. Since the usual cause of such cases is a _rename_, we can
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String, b: Int)
@@ -996,7 +996,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     Field renaming with Java Beans 
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     class Foo() {
@@ -1034,7 +1034,7 @@ We are also able to rename fields in nested structure:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String, b: Int)
@@ -1063,7 +1063,7 @@ the constructor's argument/setter yourself. The successful value can be provided
 !!! example 
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String, b: Int)
@@ -1088,7 +1088,7 @@ These cases can be handled only with `PartialTransformer` using `.withFieldConst
 !!! example 
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
     
@@ -1131,7 +1131,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     Value provision with Java Beans 
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
     
@@ -1172,7 +1172,7 @@ We are also able to provide values in nested structure:
 !!! example 
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String, b: Int)
@@ -1202,7 +1202,7 @@ using `.withFieldComputed`:
 !!! example 
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String, b: Int)
@@ -1233,7 +1233,7 @@ These cases can be handled only with `PartialTransformer` using `.withFieldCompu
 !!! example 
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
     
@@ -1281,7 +1281,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     Value computation with Java Beans 
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
     
@@ -1322,7 +1322,7 @@ We are also able to compute values in nested structure:
 !!! example 
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String, b: Int)
@@ -1356,7 +1356,7 @@ The field name matching predicate can be overrided with a flag:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     case class Foo(Baz: Foo.Baz, A: Int)
@@ -1407,7 +1407,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     case class Foo(Baz: Foo.Baz, A: Int)
@@ -1443,7 +1443,7 @@ constructor's argument is made by position instead of name:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String, b: Int, c: Long)
@@ -1469,7 +1469,7 @@ as transparent, similarly to virtually every other Scala library.
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: Int) extends AnyVal
@@ -1491,7 +1491,7 @@ as transparent, similarly to virtually every other Scala library.
     have to provide support for your type for each library by yourself.
     
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(private val a: Int) extends AnyVal // cannot be automatically unwrapped
@@ -1525,7 +1525,7 @@ type's subtype needs to have a corresponding subtype with a matching name in the
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     sealed trait Foo
@@ -1564,7 +1564,7 @@ It works also with Scala 3's `enum`:
 
     ```scala
     //> using scala {{ scala.3 }}
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
     
     sealed trait Foo
@@ -1586,7 +1586,7 @@ It works also with Scala 3's `enum`:
 
     ```scala
     //> using scala {{ scala.3 }}
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
     
     enum Foo:
@@ -1608,7 +1608,7 @@ It works also with Scala 3's `enum`:
 
     ```scala
     //> using scala {{ scala.3 }}
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
     
     enum Foo:
@@ -1633,7 +1633,7 @@ In such cases, Chimney is able to automatically wrap/unwrap these inner values a
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     object protobuf {
@@ -1678,7 +1678,7 @@ Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/a
     ```
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     sealed trait ColorS
@@ -1709,7 +1709,7 @@ Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/a
 
     ```scala
     //> using scala {{ scala.3 }}
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     enum ColorE:
@@ -1731,7 +1731,7 @@ computation. This can be done using `.withCoproductInstance`:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     sealed trait Foo
@@ -1762,7 +1762,7 @@ If the computation needs to allow failure, there is `.withCoproductInstanceParti
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
     
@@ -1803,7 +1803,7 @@ If the computation needs to allow failure, there is `.withCoproductInstanceParti
 
     ```scala
     //> using scala {{ scala.2_13 }}
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     sealed trait ColorS
@@ -1826,7 +1826,7 @@ If the computation needs to allow failure, there is `.withCoproductInstanceParti
     
     ```scala
     //> using scala {{ scala.2_13 }}
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     sealed trait ColorS
@@ -1856,7 +1856,7 @@ If the computation needs to allow failure, there is `.withCoproductInstanceParti
     
     ```scala
     //> using scala {{ scala.3 }}
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
     
     enum ColorS:
@@ -1880,7 +1880,7 @@ The subtype name matching predicate can be overrided with a flag:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     sealed trait Foo
@@ -1931,7 +1931,7 @@ For details about `TransformedNamesComparison` look at [their dedicated section]
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     sealed trait Foo
@@ -1967,7 +1967,7 @@ The transformation from one `Option` into another is obviously always supported:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String)
@@ -1988,7 +1988,7 @@ Additionally, an automatic wrapping with `Option` is also considered safe and al
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String)
@@ -2006,7 +2006,7 @@ automatically only with `PartialTransformer`:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String)
@@ -2038,7 +2038,7 @@ However, sometimes you might prefer to opt out of such benavior. You can disable
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     case class Foo(a: Option[Int])
@@ -2087,7 +2087,7 @@ If the flag was disabled in the implicit config it can be enabled with `.disable
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     case class Foo(a: Option[Int])
@@ -2107,7 +2107,7 @@ A transformation from one `Either` to another is supported as long as both left 
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String)
@@ -2125,7 +2125,7 @@ know for sure is inside to their corresponding type in target `Either`:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
      
     case class Foo(a: String, b: Int)
@@ -2152,7 +2152,7 @@ the types stored within these collections can also be converted.
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import scala.collection.immutable.ListMap
      
@@ -2169,7 +2169,7 @@ With `PartialTransformer`s ware able to handle fallible conversions, tracing at 
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: String)
@@ -2201,7 +2201,7 @@ The most obvious case is having all type parameters applied to non-abstract type
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo[A](value: A)
@@ -2217,7 +2217,7 @@ or having type parameter being not used at all:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     type AbstractType1
@@ -2237,7 +2237,7 @@ knows how to apply it, the transformation can still be derived:
     If Chimney knows that type can be safely upcasted, the upcasting is available to it:
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo[A](value: A)
@@ -2252,7 +2252,7 @@ knows how to apply it, the transformation can still be derived:
     If we don't know the exact type but we know enough to read the relevant fields, we can also do it:
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     trait Baz[A] { val value: A }
@@ -2269,7 +2269,7 @@ knows how to apply it, the transformation can still be derived:
 
     ```scala
     //> using scala {{ scala.2_13 }}
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo[A](value: A)
@@ -2286,7 +2286,7 @@ Finally, you can always provide a custom `Transformer` from/to a type containing
 !!! example
  
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.Transformer
     
@@ -2321,7 +2321,7 @@ Then Chimney will try to match the source type's getters against the method's pa
 !!! example
  
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(value: Int)
@@ -2351,7 +2351,7 @@ constructor for `PartialTransformer`:
 !!! example
  
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
     
@@ -2413,7 +2413,7 @@ to be automatically recognized as such:
 
     ```scala
     //> using scala {{ scala.3 }}
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     package example
     
     import io.scalaland.chimney.dsl.*
@@ -2447,7 +2447,7 @@ to be automatically recognized as such:
 
     ```scala
     //> using scala {{ scala.3 }}
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     package example
     
     import io.scalaland.chimney.dsl.*
@@ -2483,7 +2483,7 @@ for which they would not have a reasonable mapping:
     described: 
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
     
@@ -2506,7 +2506,7 @@ for which they would not have a reasonable mapping:
     The only exception is a situation like:
     
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
 
@@ -2527,7 +2527,7 @@ than handling only some of them, so we can always relax it:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}    
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}    
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
     
@@ -2546,7 +2546,7 @@ can be safely converted, and some which have no reasonable mapping in the target
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}   
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}   
     import io.scalaland.chimney.{PartialTransformer, partial}
     import io.scalaland.chimney.dsl._
     
@@ -2581,7 +2581,7 @@ when Chimney match subtypes by name, you can tell it how to convert them using i
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
     
@@ -2613,7 +2613,7 @@ instead.
     type:
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
     
@@ -2660,7 +2660,7 @@ The Chimney does not decide and in the presence of 2 implicits it will fail and 
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}   
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}   
     import io.scalaland.chimney.{Transformer, PartialTransformer, partial}
     import io.scalaland.chimney.dsl._
     
@@ -2719,7 +2719,7 @@ But we can use Chimney's semiautomatic derivation.
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}   
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}   
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
     
@@ -2740,7 +2740,7 @@ If we need to customize it, we can use `.define.buildTransformer`:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}   
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}   
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
     
@@ -2790,7 +2790,7 @@ but Chimney has a specific solution for this:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     package your.organization
 
     import io.scalaland.chimney.dsl._
@@ -2819,7 +2819,7 @@ but Chimney has a specific solution for this:
     be able to use that value.
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
 
     case class Foo(a_name: String, BName: String)
     case class Bar(`a-name`: String, getBName: String)
