@@ -258,7 +258,7 @@ And since it is an implicit, it can be shared between several different macro ex
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
@@ -325,7 +325,7 @@ as soon as we get it - by delaying the wrapping as long as possible we are avoid
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: Int, b: Int, c: Int)

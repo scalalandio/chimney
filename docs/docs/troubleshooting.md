@@ -109,7 +109,7 @@ This option allowed calling `.get` on `Option` to enable conversion from `Option
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: Option[String])
@@ -125,7 +125,7 @@ now we have `PartialTransformer`s. They have a build-in ability to unwrap `Optio
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Foo(a: Option[String])
@@ -163,7 +163,7 @@ another implicit `Transformer`.
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney._
     
     class MyType[A](private val a: A) {
@@ -184,7 +184,7 @@ there the automatic instances as well, they need to use `Transformer.AutoDerived
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney._
     
     class MyOtherType[A](private val a: A) {
@@ -204,7 +204,7 @@ The difference is shown in this example:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     // implicit provided by the user
@@ -344,7 +344,7 @@ In Scala 2 syntax like
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     implicit def cfg = TransformerConfiguration.default.enableMacrosLogging
@@ -365,7 +365,7 @@ You can work around this by slightly longer incantation:
 !!! example
  
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     transparent inline given TransformerConfiguration[?] =
@@ -397,7 +397,7 @@ In such cases, we can use a dedicated flag, `.enableMacrosLogging`:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     case class Foo(x: String, y: Int, z: Boolean = true)
@@ -508,7 +508,7 @@ above, or with a shared implicit config:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
@@ -520,7 +520,7 @@ The flag is also available to `Patcher`s, this code:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ git.tag or local.tag }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     
     case class Email(address: String) extends AnyVal
