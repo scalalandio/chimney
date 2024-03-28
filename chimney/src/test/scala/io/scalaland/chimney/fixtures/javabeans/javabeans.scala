@@ -31,6 +31,15 @@ class JavaBeanSourceWithFlag(private var id: String, private var name: String, p
   def isFlag: Boolean = flag
 }
 
+class JavaBeanSourceWithAmbiguity(var id: String, var name: String, var flag: Boolean, val dupa: Int = 10) {
+
+  def getId: String = id
+
+  def getName: String = name
+
+  def isFlag: Boolean = flag
+}
+
 class JavaBeanTarget {
   private var id: String = _
   private var name: String = _

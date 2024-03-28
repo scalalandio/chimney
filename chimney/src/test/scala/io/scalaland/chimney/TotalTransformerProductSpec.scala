@@ -48,14 +48,16 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrorsFixed("""
-          Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y + "abc", "pi").transform
-        """) check ("Invalid selector expression")
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y + "abc", "pi").transform""").check(
+        "Invalid selector expression"
+      )
 
-      compileErrorsFixed("""
-          val haveY = HaveY("")
-          Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(cc => haveY.y, "pi").transform
-        """) check ("Invalid selector expression")
+      compileErrorsFixed(
+        """
+        val haveY = HaveY("")
+        Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(cc => haveY.y, "pi").transform
+        """
+      ).check("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -103,14 +105,15 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrorsFixed("""
-          Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.y + "abc", _.toString).transform
-        """) check ("Invalid selector expression")
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.y + "abc", _.toString).transform""")
+        .check("Invalid selector expression")
 
-      compileErrorsFixed("""
-          val haveY = HaveY("")
-          Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
-        """) check ("Invalid selector expression")
+      compileErrorsFixed(
+        """
+        val haveY = HaveY("")
+        Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
+        """
+      ).check("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -182,14 +185,16 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.Renames.*
 
-      compileErrorsFixed("""
-          User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
-        """).arePresent()
+      compileErrorsFixed(
+        """User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform"""
+      ).arePresent()
 
-      compileErrorsFixed("""
-          val str = "string"
-          User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(u => str, _.toString).transform
-        """).check(
+      compileErrorsFixed(
+        """
+        val str = "string"
+        User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(u => str, _.toString).transform
+        """
+      ).check(
         "Invalid selector expression"
       )
     }
@@ -626,6 +631,33 @@ class TotalTransformerProductSpec extends ChimneySpec {
         )
     }
 
+    test("should inform user when the matcher they provided results in ambiguities") {
+      case class FooAmbiguous(baz: FooAmbiguous.Baz, a: Int, A: String)
+      object FooAmbiguous {
+        case class Baz(s: String, S: Int)
+      }
+
+      FooAmbiguous(FooAmbiguous.Baz("test", 10), 100, "test2").transformInto[Bar] ==> Bar(Bar.Baz("test"), 100)
+      FooAmbiguous(FooAmbiguous.Baz("test", 10), 100, "test2").into[Bar].transform ==> Bar(Bar.Baz("test"), 100)
+
+      compileErrorsFixed(
+        """
+        FooAmbiguous(FooAmbiguous.Baz("test", 10), 100, "test2").into[Bar]
+          .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+          .transform
+        """
+      )
+        .check(
+          "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.FooAmbiguous to io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+          "io.scalaland.chimney.TotalTransformerProductSpec.Bar",
+          "baz: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz - can't derive transformation from baz: io.scalaland.chimney.TotalTransformerProductSpec.FooAmbiguous.Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.FooAmbiguous",
+          "field a: io.scalaland.chimney.TotalTransformerProductSpec.Bar has ambiguous matches in io.scalaland.chimney.TotalTransformerProductSpec.FooAmbiguous: A, a",
+          "io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz",
+          "field s: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz has ambiguous matches in io.scalaland.chimney.TotalTransformerProductSpec.FooAmbiguous.Baz: S, s",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+    }
+
     test("should allow fields to be matched using user-provided predicate") {
 
       Foo(Foo.Baz("test"), 1024)
@@ -881,29 +913,19 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
     test("handle tuple transformation errors") {
 
-      compileErrorsFixed("""
-          (0, "test").transformInto[Foo]
-        """)
-        .check(
-          "source tuple scala.Tuple2[scala.Int, java.lang.String] is of arity 2, while target type io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3; they need to be equal!"
-        )
+      compileErrorsFixed("""(0, "test").transformInto[Foo]""").check(
+        "source tuple scala.Tuple2[scala.Int, java.lang.String] is of arity 2, while target type io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3; they need to be equal!"
+      )
 
-      compileErrorsFixed("""
-          (10.5, "abc", 6).transformInto[Foo]
-        """)
-        .check("can't derive transformation")
+      compileErrorsFixed("""(10.5, "abc", 6).transformInto[Foo]""").check("can't derive transformation")
 
-      compileErrorsFixed("""
-          Foo(10, 36.6, "test").transformInto[(Double, String, Int, Float, Boolean)]
-        """)
-        .check(
-          "source tuple io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3, while target type scala.Tuple5[scala.Double, java.lang.String, scala.Int, scala.Float, scala.Boolean] is of arity 5; they need to be equal!"
-        )
+      compileErrorsFixed("""Foo(10, 36.6, "test").transformInto[(Double, String, Int, Float, Boolean)]""").check(
+        "source tuple io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3, while target type scala.Tuple5[scala.Double, java.lang.String, scala.Int, scala.Float, scala.Boolean] is of arity 5; they need to be equal!"
+      )
 
-      compileErrorsFixed("""
-          Foo(10, 36.6, "test").transformInto[(Int, Double, Boolean)]
-        """)
-        .check("can't derive transformation")
+      compileErrorsFixed("""Foo(10, 36.6, "test").transformInto[(Int, Double, Boolean)]""").check(
+        "can't derive transformation"
+      )
     }
   }
 

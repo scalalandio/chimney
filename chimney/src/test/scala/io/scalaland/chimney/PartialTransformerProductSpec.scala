@@ -87,14 +87,16 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrorsFixed("""
-          Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.y + "abc", "pi").transform
-        """) check ("Invalid selector expression")
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.y + "abc", "pi").transform""").check(
+        "Invalid selector expression"
+      )
 
-      compileErrorsFixed("""
-          val haveY = HaveY("")
-          Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(cc => haveY.y, "pi").transform
-        """) check ("Invalid selector expression")
+      compileErrorsFixed(
+        """
+        val haveY = HaveY("")
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(cc => haveY.y, "pi").transform
+        """
+      ).check("Invalid selector expression")
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -1187,6 +1189,37 @@ class PartialTransformerProductSpec extends ChimneySpec {
         )
     }
 
+    test("should inform user when the matcher they provided results in ambiguities") {
+      case class FooAmbiguous(baz: FooAmbiguous.Baz, a: Int, A: String)
+      object FooAmbiguous {
+        case class Baz(s: String, S: Int)
+      }
+
+      FooAmbiguous(FooAmbiguous.Baz("test", 10), 100, "test2").transformIntoPartial[Bar].asOption ==> Some(
+        Bar(Bar.Baz("test"), 100)
+      )
+      FooAmbiguous(FooAmbiguous.Baz("test", 10), 100, "test2").intoPartial[Bar].transform.asOption ==> Some(
+        Bar(Bar.Baz("test"), 100)
+      )
+
+      compileErrorsFixed(
+        """
+        FooAmbiguous(FooAmbiguous.Baz("test", 10), 100, "test2").intoPartial[Bar]
+          .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+          .transform
+        """
+      )
+        .check(
+          "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+          "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+          "baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - can't derive transformation from baz: io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous.Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous",
+          "field a: io.scalaland.chimney.PartialTransformerProductSpec.Bar has ambiguous matches in io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous: A, a",
+          "io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz",
+          "field s: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz has ambiguous matches in io.scalaland.chimney.PartialTransformerProductSpec.FooAmbiguous.Baz: S, s",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+    }
+
     test("should allow fields to be matched using user-provided predicate") {
 
       val result = Foo(Foo.Baz("test"), 1024)
@@ -1512,12 +1545,9 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
     test("compile error when optionDefaultsToNone were disabled locally") {
 
-      compileErrorsFixed("""
-          (new Source).intoPartial[Target].disableOptionDefaultsToNone.transform
-        """)
-        .check(
-          "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Source to io.scalaland.chimney.PartialTransformerProductSpec.Target"
-        )
+      compileErrorsFixed("""(new Source).intoPartial[Target].disableOptionDefaultsToNone.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Source to io.scalaland.chimney.PartialTransformerProductSpec.Target"
+      )
     }
   }
 
@@ -1533,9 +1563,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
     test("ambiguous error when not resolved") {
 
-      compileErrorsFixed(
-        """Foo("100").transformIntoPartial[Bar]"""
-      ).check(
+      compileErrorsFixed("""Foo("100").transformIntoPartial[Bar]""").check(
         "Ambiguous implicits while resolving Chimney recursive transformation",
         "Please eliminate ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used"
       )
