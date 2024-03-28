@@ -14,7 +14,7 @@ final case class MissingConstructorArgument(
     toFieldType: String,
     fromType: String,
     toType: String,
-    accessorAvailable: Boolean = false
+    accessorAvailable: Boolean
 ) extends TransformerDerivationError
 
 final case class MissingJavaBeanSetterParam(
@@ -22,7 +22,7 @@ final case class MissingJavaBeanSetterParam(
     toSetterType: String,
     fromType: String,
     toType: String,
-    accessorAvailable: Boolean = false
+    accessorAvailable: Boolean
 ) extends TransformerDerivationError
 
 final case class MissingFieldTransformer(
@@ -35,7 +35,7 @@ final case class MissingFieldTransformer(
 
 final case class AmbiguousFieldSources(
     foundFromFields: List[String],
-    toField: String, // TODO: comparator error
+    toField: String,
     fromType: String,
     toType: String
 ) extends TransformerDerivationError
