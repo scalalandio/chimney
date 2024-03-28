@@ -116,7 +116,11 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         case toSubtype :: Nil =>
           import toSubtype.Underlying as ToSubtype, toSubtype.value.upcast as toUpcast
           ExprPromise
-            .promise[fromSubtype.Underlying](ExprPromise.NameGenerationStrategy.FromType)
+            // Scala 2/3 compatibility: each Java enum value on Scala 3 would have distinct type,
+            // while on Scala 2 they all have the same type, so NameGenerationStrategy.FromType behaves differently
+            .promise[fromSubtype.Underlying](
+              ExprPromise.NameGenerationStrategy.FromPrefix(fromSubtype.value.name.toLowerCase)
+            )
             .traverse { (fromSubtypeExpr: Expr[fromSubtype.Underlying]) =>
               // We're constructing:
               // case fromSubtypeExpr: $fromSubtype => ${ derivedToSubtype } } // or ${ derivedResultToSubtype
@@ -179,7 +183,11 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
     ): DerivationResult[Existential[ExprPromise[*, TransformationExpr[To]]]] = {
       import fromSubtype.Underlying as FromSubtype
       ExprPromise
-        .promise[FromSubtype](ExprPromise.NameGenerationStrategy.FromType)
+        // Scala 2/3 compatibility: each Java enum value on Scala 3 would have distinct type,
+        // while on Scala 2 they all have the same type, so NameGenerationStrategy.FromType behaves differently
+        .promise[fromSubtype.Underlying](
+          ExprPromise.NameGenerationStrategy.FromPrefix(fromSubtype.value.name.toLowerCase)
+        )
         .traverse { (fromSubtypeExpr: Expr[FromSubtype]) =>
           // We're constructing:
           // case fromSubtypeExpr: $fromSubtype => ${ derivedTo } // or ${ derivedResultTo }
