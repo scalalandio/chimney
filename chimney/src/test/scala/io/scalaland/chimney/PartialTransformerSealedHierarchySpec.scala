@@ -133,21 +133,25 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
   ) {
     val error = compileErrorsScala2(
       """
-           (shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
-             .transformIntoPartial[shapes5.Shape]
-        """
+      (shapes1.Triangle(shapes1.Point(0, 0), shapes1.Point(2, 2), shapes1.Point(2, 0)): shapes1.Shape)
+        .transformIntoPartial[shapes5.Shape]
+      """
     )
 
     error.check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.shapes1.Shape to io.scalaland.chimney.fixtures.shapes5.Shape",
       "io.scalaland.chimney.fixtures.shapes5.Shape",
-      "coproduct instance Triangle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous",
-      "coproduct instance Rectangle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous",
+      "derivation from rectangle: io.scalaland.chimney.fixtures.shapes1.Rectangle to io.scalaland.chimney.fixtures.shapes5.Shape is not supported in Chimney!",
+      "io.scalaland.chimney.fixtures.shapes5.Shape",
+      "coproduct instance io.scalaland.chimney.fixtures.shapes1.Triangle of io.scalaland.chimney.fixtures.shapes1.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5.Shape: io.scalaland.chimney.fixtures.shapes5.Inner.Triangle, io.scalaland.chimney.fixtures.shapes5.Triangle",
+      "coproduct instance io.scalaland.chimney.fixtures.shapes1.Rectangle of io.scalaland.chimney.fixtures.shapes1.Shape has ambiguous matches in io.scalaland.chimney.fixtures.shapes5.Shape: io.scalaland.chimney.fixtures.shapes5.Inner.Rectangle, io.scalaland.chimney.fixtures.shapes5.Rectangle",
+      "io.scalaland.chimney.fixtures.shapes5.Shape",
+      "derivation from triangle: io.scalaland.chimney.fixtures.shapes1.Triangle to io.scalaland.chimney.fixtures.shapes5.Shape is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
     error.checkNot(
-      "coproduct instance Circle of io.scalaland.chimney.fixtures.shapes5.Shape is ambiguous"
+      "io.scalaland.chimney.fixtures.shapes1.Circle"
     )
   }
 
@@ -416,6 +420,28 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         )
     }
 
+    test("should inform user when the matcher they provided results in ambiguities") {
+
+      (Foo2.baz: Foo2).transformIntoPartial[BarAmbiguous].asOption ==> Some(BarAmbiguous.baz)
+      (Foo2.baz: Foo2).intoPartial[BarAmbiguous].transform.asOption ==> Some(BarAmbiguous.baz)
+
+      compileErrorsFixed(
+        """
+        (Foo2.baz: Foo2)
+          .intoPartial[BarAmbiguous]
+          .enableCustomSubtypeNameComparison(TransformedNamesComparison.BeanAware)
+          .transform
+        """
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 to io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous",
+        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.baz to io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous",
+        "coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.baz of io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 has ambiguous matches in io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous: io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous.baz, io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous.getBaz",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
     test("should allow subtypes to be matched using user-provided predicate") {
       val result = (Foo.BAZ: Foo)
         .intoPartial[Bar]
@@ -462,6 +488,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
   }
 
   group("flag .disableCustomSubtypeNameComparison") {
+
     import fixtures.renames.Subtypes.*
 
     test("should disable globally enabled .enableCustomSubtypeNameComparison") {

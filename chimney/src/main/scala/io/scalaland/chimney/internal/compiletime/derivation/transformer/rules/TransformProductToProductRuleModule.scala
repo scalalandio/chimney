@@ -5,7 +5,6 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
 import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
-import io.scalaland.chimney.internal.compiletime.datatypes.ProductTypes
 
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>
 
@@ -96,8 +95,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
       val verifyNoOverrideUnused = Traverse[List]
         .parTraverse(
-          filterOverridesForField(fromName =>
-            !parameters.keys.exists(toName => areFieldNamesMatching(fromName, toName))
+          filterOverridesForField(usedToName =>
+            !parameters.keys.exists(toName => areFieldNamesMatching(usedToName, toName))
           ).keys.toList
         ) { fromName =>
           val tpeStr = Type.prettyPrint[To]
@@ -132,38 +131,86 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             parameters.toList
           ) { case (toName: String, ctorParam: Existential[Product.Parameter]) =>
             import ctorParam.Underlying as CtorParam, ctorParam.value.defaultValue
-            // user might have used _.getName in modifier, to define target we know as _.setName
-            // so simple .get(toName) might not be enough
-            filterOverridesForField(fromName => areFieldNamesMatching(fromName, toName)).headOption
-              .map { case (fromName, value) =>
-                useOverride[From, To, CtorParam](fromName, toName, value)
+
+            // .withFieldRenamed(_.isField, _.isField2) has no way if figuring out if user means mapping getter
+            // into Field2 or isField2 if there are multiple matching target arguments/setters
+            object AmbiguousOverrides {
+
+              def unapply(input: (String, RuntimeFieldOverride)): Option[(String, List[String])] = {
+                val (toName, runtimeField) = input
+                val ambiguousOverrides = parameters
+                  .collect {
+                    case (anotherToName, _)
+                        if toName == anotherToName || areFieldNamesMatching(toName, anotherToName) =>
+                      runtimeField match {
+                        case RuntimeFieldOverride.Const(_) =>
+                          s".withFieldConst(_.$anotherToName, ...)"
+                        case RuntimeFieldOverride.ConstPartial(_) =>
+                          s".withFieldConstPartial(_.$anotherToName, ...)"
+                        case RuntimeFieldOverride.Computed(_) =>
+                          s".withFieldComputed(_.$anotherToName, ...)"
+                        case RuntimeFieldOverride.ComputedPartial(_) =>
+                          s".withFieldComputedPartial(_.$anotherToName, ...)"
+                        case RuntimeFieldOverride.RenamedFrom(sourcePath) =>
+                          s".withFieldRenamed(${FieldPath.print(sourcePath)}, _.$anotherToName})"
+                      }
+                  }
+                  .toList
+                  .sorted
+                if (ambiguousOverrides.size > 1) Some(toName -> ambiguousOverrides) else None
+              }
+            }
+
+            // User might have used _.getName in modifier, to define target we know as _.setName so simple .get(toName)
+            // might not be enough. However, we DO want to prioritize strict name matches.
+            filterOverridesForField(_ == toName).headOption
+              .orElse(filterOverridesForField(areFieldNamesMatching(_, toName)).headOption)
+              .map {
+                case AmbiguousOverrides(overrideName, foundOverrides) =>
+                  DerivationResult.ambiguousFieldOverrides[From, To, Existential[TransformationExpr]](
+                    overrideName,
+                    foundOverrides,
+                    flags.getFieldNameComparison.toString
+                  )
+                case (fromName, value) =>
+                  useOverride[From, To, CtorParam](fromName, toName, value)
               }
               .orElse {
-                val resolvedExtractor =
-                  if (usePositionBasedMatching) ctorParamToGetter.get(ctorParam)
+                val ambiguityOrPossibleSourceField =
+                  if (usePositionBasedMatching) Right(ctorParamToGetter.get(ctorParam))
                   else
-                    fromEnabledExtractors.collectFirst {
-                      case (fromName, getter) if areFieldNamesMatching(fromName, toName) =>
-                        (fromName, toName, getter)
+                    fromEnabledExtractors.collect {
+                      case (fromName, getter) if areFieldNamesMatching(fromName, toName) => (fromName, toName, getter)
+                    }.toList match {
+                      case Nil                  => Right(None)
+                      case fromFieldData :: Nil => Right(Some(fromFieldData))
+                      case multipleFromNames    => Left(multipleFromNames.map(_._1))
                     }
-                resolvedExtractor
-                  .map { case (fromName, toName, getter) =>
-                    useExtractor[From, To, CtorParam](ctorParam.value.targetType, fromName, toName, getter)
-                  }
+                ambiguityOrPossibleSourceField match {
+                  case Right(possibleSourceField) =>
+                    possibleSourceField.map { case (fromName, toName, getter) =>
+                      useExtractor[From, To, CtorParam](ctorParam.value.targetType, fromName, toName, getter)
+                    }
+                  case Left(foundFromNames) =>
+                    Some(
+                      DerivationResult.ambiguousFieldSources[From, To, Existential[TransformationExpr]](
+                        foundFromNames,
+                        toName
+                      )
+                    )
+                }
               }
               .orElse(useFallbackValues[From, To, CtorParam](defaultValue))
               .getOrElse[DerivationResult[Existential[TransformationExpr]]] {
                 if (usePositionBasedMatching)
-                  DerivationResult.incompatibleSourceTuple(
-                    sourceArity = fromEnabledExtractors.size,
-                    targetArity = parameters.size
-                  )
+                  DerivationResult.tupleArityMismatch(fromArity = fromEnabledExtractors.size, toArity = parameters.size)
                 else
                   ctorParam.value.targetType match {
                     case Product.Parameter.TargetType.ConstructorParameter =>
+                      // TODO: rename isLocal into isInherited
                       // TODO: update this for isLocal
                       DerivationResult
-                        .missingAccessor[From, To, CtorParam, Existential[TransformationExpr]](
+                        .missingConstructorArgument[From, To, CtorParam, Existential[TransformationExpr]](
                           toName,
                           fromExtractors.exists { case (fromName, _) => areFieldNamesMatching(fromName, toName) }
                         )
@@ -174,7 +221,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         // TODO: update this for isLocal
                         DerivationResult
                           .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
-                            ProductTypes.BeanAware.dropSet(toName),
+                            toName,
                             fromExtractors.exists { case (fromName, _) => areFieldNamesMatching(fromName, toName) }
                           )
                   }
@@ -631,7 +678,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         errors: DerivationErrors,
         toName: String
     )(implicit ctx: TransformationContext[From, To]) = {
-      val newError = DerivationResult.missingTransformer[
+      val newError = DerivationResult.missingFieldTransformer[
         From,
         To,
         SourceField,

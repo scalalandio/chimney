@@ -66,22 +66,24 @@ class IssuesSpec extends ChimneySpec {
 
     test("fix for `withFieldConst`") {
 
-      compileErrorsFixed("""
-          Foo1("test")
-            .into[Foo2]
-            .withFieldConst(_.x, "xyz")
-          """)
-        .check("Cannot prove that String <:< Int")
+      compileErrorsFixed(
+        """
+        Foo1("test")
+          .into[Foo2]
+          .withFieldConst(_.x, "xyz")
+        """
+      ).check("Cannot prove that String <:< Int")
     }
 
     test("fix for `withFieldComputed`") {
 
-      compileErrorsFixed("""
-          Foo1("test")
-            .into[Foo2]
-            .withFieldComputed(_.x, _ => "xyz")
-        """)
-        .check("Cannot prove that String <:< Int")
+      compileErrorsFixed(
+        """
+        Foo1("test")
+          .into[Foo2]
+          .withFieldComputed(_.x, _ => "xyz")
+        """
+      ).check("Cannot prove that String <:< Int")
     }
 
     test("fix for `withFieldRenamed`") {
@@ -696,5 +698,61 @@ class IssuesSpec extends ChimneySpec {
     val expected = MyClass(1, 2, "asd", None)
     val actual = (1, 2, "asd").into[MyClass].enableOptionDefaultsToNone.transform
     actual ==> expected
+  }
+
+  test("fix issue #449") {
+    case class Proto(isSomething: Boolean, somethingDetail: Option[Proto.SomethingDetail])
+    object Proto {
+      case class SomethingDetail(a: String, b: Int)
+    }
+
+    case class Domain(isSomething: Boolean, something: Option[Domain.Something])
+    object Domain {
+      case class Something(a: String, b: Int)
+    }
+
+    compileErrorsFixed(
+      """
+      Proto(isSomething = true, somethingDetail = Some(Proto.SomethingDetail("hello", 1)))
+        .intoPartial[Domain]
+        .withFieldRenamed(_.somethingDetail, _.something)
+        .transform
+      """
+    ).check(
+      "Chimney can't derive transformation from io.scalaland.chimney.IssuesSpec.Proto to io.scalaland.chimney.IssuesSpec.Domain",
+      "io.scalaland.chimney.IssuesSpec.Domain",
+      "field something: io.scalaland.chimney.IssuesSpec.Domain could not resolve overrides since the current BeanAware: TransformedNamedComparison treats the following overrides as the same: .withFieldRenamed(_.somethingDetail, _.isSomething}), .withFieldRenamed(_.somethingDetail, _.something}) making it ambiguous - change the field name comparator with .enableCustomFieldNameComparison to resolve the ambiguity",
+      "Consult https://chimney.readthedocs.io for usage examples."
+    )
+
+    Proto(isSomething = true, somethingDetail = Some(Proto.SomethingDetail("hello", 1)))
+      .intoPartial[Domain]
+      .withFieldRenamed(_.somethingDetail, _.something)
+      .enableCustomFieldNameComparison(TransformedNamesComparison.StrictEquality)
+      .transform
+      .asOption ==> Some(Domain(isSomething = true, something = Some(Domain.Something("hello", 1))))
+
+    Proto(isSomething = true, somethingDetail = Some(Proto.SomethingDetail("hello", 1)))
+      .intoPartial[Domain]
+      .withFieldConst(_.something, None)
+      .enableCustomFieldNameComparison(TransformedNamesComparison.StrictEquality)
+      .transform
+      .asOption ==> Some(Domain(isSomething = true, something = None))
+  }
+
+  test("fix issue #461") {
+
+    val uuid1 = "value 1"
+    val uuid2 = "value 2"
+
+    case class From(x: String)
+    case class To(uuid: String, setUuid: String, x: String)
+
+    From("test")
+      .into[To]
+      .withFieldConst(_.uuid, uuid1)
+      .withFieldConst(_.setUuid, uuid2)
+      .enableCustomFieldNameComparison(TransformedNamesComparison.StrictEquality)
+      .transform ==> To(uuid1, uuid2, "test")
   }
 }

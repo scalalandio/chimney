@@ -1,95 +1,125 @@
 package io.scalaland.chimney.internal.compiletime
 
+import Console.*
+import io.scalaland.chimney.internal.compiletime.datatypes.ProductTypes.BeanAware
+
 /** Transformer-specific error related to derivation logic */
 sealed trait TransformerDerivationError extends Product with Serializable {
-  def sourceTypeName: String
-  def targetTypeName: String
+  def fromType: String
+  def toType: String
 }
 
-final case class MissingAccessor(
-    fieldName: String,
-    fieldTypeName: String,
-    sourceTypeName: String,
-    targetTypeName: String,
-    defAvailable: Boolean = false
+final case class MissingConstructorArgument(
+    toField: String,
+    toFieldType: String,
+    fromType: String,
+    toType: String,
+    accessorAvailable: Boolean
 ) extends TransformerDerivationError
 
 final case class MissingJavaBeanSetterParam(
-    setterName: String,
-    requiredTypeName: String,
-    sourceTypeName: String,
-    targetTypeName: String,
-    defAvailable: Boolean = false
+    toSetter: String,
+    toSetterType: String,
+    fromType: String,
+    toType: String,
+    accessorAvailable: Boolean
 ) extends TransformerDerivationError
 
-final case class MissingTransformer(
-    fieldName: String,
-    sourceFieldTypeName: String,
-    targetFieldTypeName: String,
-    sourceTypeName: String,
-    targetTypeName: String
+final case class MissingFieldTransformer(
+    toField: String,
+    fromFieldType: String,
+    toFieldType: String,
+    fromType: String,
+    toType: String
 ) extends TransformerDerivationError
 
-final case class CantFindValueClassMember(sourceTypeName: String, targetTypeName: String)
-    extends TransformerDerivationError
+final case class AmbiguousFieldSources(
+    foundFromFields: List[String],
+    toField: String,
+    fromType: String,
+    toType: String
+) extends TransformerDerivationError
 
-final case class CantFindCoproductInstanceTransformer(instance: String, sourceTypeName: String, targetTypeName: String)
-    extends TransformerDerivationError
+final case class AmbiguousFieldOverrides(
+    toName: String,
+    foundOverrides: List[String],
+    fieldNamesComparator: String,
+    fromType: String,
+    toType: String
+) extends TransformerDerivationError
 
-final case class AmbiguousCoproductInstance(instance: String, sourceTypeName: String, targetTypeName: String)
-    extends TransformerDerivationError
+final case class MissingSubtypeTransformer(
+    fromSubtype: String,
+    fromType: String,
+    toType: String
+) extends TransformerDerivationError
 
-final case class IncompatibleSourceTuple(
-    sourceArity: Int,
-    targetArity: Int,
-    sourceTypeName: String,
-    targetTypeName: String
+final case class AmbiguousSubtypeTargets(
+    fromSubtype: String,
+    foundToSubtypes: List[String],
+    fromType: String,
+    toType: String
+) extends TransformerDerivationError
+
+final case class TupleArityMismatch(
+    fromArity: Int,
+    toArity: Int,
+    fromType: String,
+    toType: String
 ) extends TransformerDerivationError
 
 final case class NotSupportedTransformerDerivation(
     exprPrettyPrint: String,
-    sourceTypeName: String,
-    targetTypeName: String
+    fromType: String,
+    toType: String
 ) extends TransformerDerivationError
 
 object TransformerDerivationError {
   def printErrors(errors: Seq[TransformerDerivationError]): String =
     errors
-      .groupBy(e => (e.targetTypeName, e.sourceTypeName))
-      .map { case ((targetTypeName, sourceTypeName), errs) =>
+      .groupBy(e => (e.toType, e.fromType))
+      .map { case ((toType, fromType), errs) =>
+        // TODO: add suggestions for inherited fields
         val errStrings = errs.distinct.map {
-          case MissingAccessor(fieldName, fieldTypeName, sourceTypeName, _, _) =>
-            s"  $fieldName: $fieldTypeName - no accessor named $fieldName in source type $sourceTypeName"
-          case MissingJavaBeanSetterParam(setterName, requiredTypeName, sourceTypeName, _, _) =>
-            s"  set${setterName.capitalize}($setterName: $requiredTypeName) - no accessor named $setterName in source type $sourceTypeName"
-          case MissingTransformer(fieldName, sourceFieldTypeName, targetFieldTypeName, sourceTypeName, _) =>
-            s"  $fieldName: $targetFieldTypeName - can't derive transformation from $fieldName: $sourceFieldTypeName in source type $sourceTypeName"
-          case CantFindValueClassMember(sourceTypeName, _) =>
-            s"  can't find member of value class $sourceTypeName"
-          case CantFindCoproductInstanceTransformer(instance, _, _) =>
-            s"  can't transform coproduct instance $instance to $targetTypeName"
-          case AmbiguousCoproductInstance(instance, _, _) =>
-            s"  coproduct instance $instance of $targetTypeName is ambiguous"
-          case IncompatibleSourceTuple(sourceArity, targetArity, sourceTypeName, _) =>
-            s"  source tuple $sourceTypeName is of arity $sourceArity, while target type $targetTypeName is of arity $targetArity; they need to be equal!"
-          case NotSupportedTransformerDerivation(exprPrettyPrint, sourceTypeName, _) =>
-            s"  derivation from $exprPrettyPrint: $sourceTypeName to $targetTypeName is not supported in Chimney!"
+          case MissingConstructorArgument(toField, toFieldType, fromType, _, _) =>
+            s"  $toField: $toFieldType - no accessor named $MAGENTA$toField$RESET in source type $fromType"
+          case MissingJavaBeanSetterParam(toSetter, requiredTypeName, fromType, _, _) =>
+            val toNormalized = BeanAware.dropSet(toSetter)
+            s"  $toSetter($toNormalized: $requiredTypeName) - no accessor named $MAGENTA$toNormalized$RESET in source type $fromType"
+          case MissingFieldTransformer(toField, fromFieldType, toFieldType, fromType, _) =>
+            s"  $toField: $toFieldType - can't derive transformation from $toField: $fromFieldType in source type $fromType"
+          case AmbiguousFieldSources(foundFromNames, toField, _, _) =>
+            s"  field $toField: $toType has ambiguous matches in $fromType: ${foundFromNames.mkString(", ")}"
+          case AmbiguousFieldOverrides(toName, foundOverrides, fieldNamesComparator, _, _) =>
+            val overrides =
+              foundOverrides.map(fieldOverride => s"$MAGENTA$fieldOverride$RESET").mkString(", ")
+            s"  field $toName: $toType could not resolve overrides since the current $MAGENTA$fieldNamesComparator: TransformedNamedComparison$RESET treats the following overrides as the same: $overrides making it ambiguous - change the field name comparator with $MAGENTA.enableCustomFieldNameComparison$RESET to resolve the ambiguity"
+          case MissingSubtypeTransformer(fromSubtype, _, _) =>
+            s"  can't transform coproduct instance $fromSubtype to $toType"
+          case AmbiguousSubtypeTargets(fromField, foundToFields, _, _) =>
+            s"  coproduct instance $fromField of $fromType has ambiguous matches in $toType: ${foundToFields.mkString(", ")}"
+          case TupleArityMismatch(fromArity, toArity, fromType, _) =>
+            s"  source tuple $fromType is of arity $fromArity, while target type $toType is of arity $toArity; they need to be equal!"
+          case NotSupportedTransformerDerivation(exprPrettyPrint, fromType, _) =>
+            s"  derivation from $exprPrettyPrint: $fromType to $toType is not supported in Chimney!"
         }
 
         val fieldsWithMethodAccessor = errors.collect {
-          case MissingAccessor(fieldName, _, _, _, true)            => s"`$fieldName`"
-          case MissingJavaBeanSetterParam(fieldName, _, _, _, true) => s"`$fieldName`"
-        }
+          case MissingConstructorArgument(toField, _, _, _, true)  => s"$MAGENTA$toField$RESET"
+          case MissingJavaBeanSetterParam(toSetter, _, _, _, true) => s"$MAGENTA$toSetter$RESET"
+        }.sorted
         val methodAccessorHint =
           if (fieldsWithMethodAccessor.nonEmpty) {
-            val first3Fields = fieldsWithMethodAccessor.take(3).mkString(", ")
-            val otherFields = fieldsWithMethodAccessor.length - 3
-            val fields = if (otherFields > 0) s"$first3Fields and $otherFields other methods" else first3Fields
+            val fields = fieldsWithMethodAccessor.take(3).mkString(", ") + (fieldsWithMethodAccessor.size match {
+              case 1     => s" constructor argument/setter"
+              case 2 | 3 => s" constructor arguments/setters"
+              case _     => s" and ${fieldsWithMethodAccessor.length - 3} other constructor arguments/setters"
+            })
 
-            s"\nThere are methods in $sourceTypeName that might be used as accessors for $fields fields in $targetTypeName. Consider using `.enableMethodAccessors`."
+            s"\nThere are methods in $fromType that might be used as accessors for $fields in $toType. Consider using $MAGENTA.enableMethodAccessors$RESET."
           } else ""
 
-        s"""$targetTypeName
+        s"""$toType
            |${errStrings.mkString("\n")}
            |$methodAccessorHint
            |""".stripMargin

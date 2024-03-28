@@ -59,14 +59,18 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
     error.check(
       "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jcolors2.Color to io.scalaland.chimney.fixtures.colors4.Color",
       "io.scalaland.chimney.fixtures.colors4.Color",
-      "coproduct instance Green of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
-      "coproduct instance Black of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
+      "coproduct instance io.scalaland.chimney.javafixtures.jcolors2.Color.Green of io.scalaland.chimney.javafixtures.jcolors2.Color has ambiguous matches in io.scalaland.chimney.fixtures.colors4.Color: io.scalaland.chimney.fixtures.colors4.Color.Green, io.scalaland.chimney.fixtures.colors4.Green",
+      "coproduct instance io.scalaland.chimney.javafixtures.jcolors2.Color.Black of io.scalaland.chimney.javafixtures.jcolors2.Color has ambiguous matches in io.scalaland.chimney.fixtures.colors4.Color: io.scalaland.chimney.fixtures.colors4.Black, io.scalaland.chimney.fixtures.colors4.Color.Black",
+      "io.scalaland.chimney.fixtures.colors4.Color",
+      "derivation from green: io.scalaland.chimney.javafixtures.jcolors2.Color.Green to io.scalaland.chimney.fixtures.colors4.Color is not supported in Chimney!",
+      "io.scalaland.chimney.fixtures.colors4.Color",
+      "derivation from black: io.scalaland.chimney.javafixtures.jcolors2.Color.Black to io.scalaland.chimney.fixtures.colors4.Color is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
     error.checkNot(
-      "coproduct instance Red of io.scalaland.chimney.fixtures.colors4.Color is ambiguous",
-      "coproduct instance Blue of io.scalaland.chimney.fixtures.colors4.Color is ambiguous"
+      "io.scalaland.chimney.fixtures.colors4.Color.Red",
+      "io.scalaland.chimney.fixtures.colors4.Color.Blue"
     )
   }
 
@@ -108,6 +112,98 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
         .into[colors1.Color]
         .withCoproductInstance((b: jcolors2.Color.Black.type) => blackIsRed(b))
         .transform ==> colors1.Blue
+    }
+  }
+
+  group("flag .enableCustomSubtypeNameComparison") {
+
+    import jrenames.*
+
+    test("should be disabled by default") {
+
+      compileErrorsFixed("(Foo.bar: Foo).transformInto[Bar]").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jrenames.Foo to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",
+        "io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("(Foo.bar: Foo).into[Bar].transform").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jrenames.Foo to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",
+        "io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should inform user if and why the setting cannot be read") {
+      @unused object BadNameComparison extends TransformedNamesComparison {
+
+        def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
+      }
+
+      compileErrorsFixed("""(Foo.bar: Foo).into[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform""")
+        .check(
+          "Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: io.scalaland.chimney.TotalTransformerJavaEnumSpec.BadNameComparison!!!"
+        )
+    }
+
+    test("should inform user when the matcher they provided results in ambiguities") {
+
+      compileErrorsFixed(
+        """
+          (Foo.bar: Foo)
+            .into[BarAmbiguous]
+            .enableCustomSubtypeNameComparison(TransformedNamesComparison.BeanAware)
+            .transform
+          """
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jrenames.Foo to io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous",
+        "io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous",
+        "coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar of io.scalaland.chimney.javafixtures.jrenames.Foo has ambiguous matches in io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous: io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous.bar, io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous.getBar",
+        "io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous",
+        "derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.BarAmbiguous is not supported in Chimney!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should allow subtypes to be matched using user-provided predicate") {
+      (Foo.bar: Foo)
+        .into[Bar]
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform ==> Bar.Bar
+
+      locally {
+        implicit val config = TransformerConfiguration.default
+          .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+
+        (Foo.bar: Foo).transformInto[Bar] ==> Bar.Bar
+        (Foo.bar: Foo).into[Bar].transform ==> Bar.Bar
+      }
+    }
+  }
+
+  group("flag .disableCustomSubtypeNameComparison") {
+
+    import jrenames.*
+
+    test("should disable globally enabled .enableCustomSubtypeNameComparison") {
+
+      @unused implicit val config = TransformerConfiguration.default
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+
+      compileErrorsFixed("(Foo.bar: Foo).into[Bar].disableCustomSubtypeNameComparison.transform").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jrenames.Foo to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",
+        "io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
     }
   }
 }

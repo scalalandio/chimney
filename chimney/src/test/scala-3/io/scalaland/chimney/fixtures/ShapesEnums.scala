@@ -64,3 +64,15 @@ package shapes6enums {
   case class Triangle(p1: Point, p2: Point, p3: Point)
   case class Rectangle(p1: Point, p2: Point)
 }
+
+package renames {
+
+  enum Foo:
+    case bar
+
+  enum Bar:
+    case Bar
+
+  enum BarAmbiguous:
+    case bar, getBar
+}

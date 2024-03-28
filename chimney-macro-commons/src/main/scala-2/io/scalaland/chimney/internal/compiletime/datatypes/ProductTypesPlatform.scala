@@ -23,7 +23,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
       // assuming isAccessor was tested earlier
       def isCaseClassField(field: MethodSymbol): Boolean =
-        field.isCaseAccessor
+        field.isCaseAccessor || field.toString.startsWith("variable ") // align with Scala 3 (var -> case accessor)
 
       // assuming isAccessor was tested earlier
       def isJavaGetter(getter: MethodSymbol): Boolean =
