@@ -14,7 +14,8 @@ final case class MissingConstructorArgument(
     toFieldType: String,
     fromType: String,
     toType: String,
-    accessorAvailable: Boolean
+    availableMethodAccessors: List[String],
+    availableInheritedAccessors: List[String]
 ) extends TransformerDerivationError
 
 final case class MissingJavaBeanSetterParam(
@@ -22,7 +23,8 @@ final case class MissingJavaBeanSetterParam(
     toSetterType: String,
     fromType: String,
     toType: String,
-    accessorAvailable: Boolean
+    availableMethodAccessors: List[String],
+    availableInheritedAccessors: List[String]
 ) extends TransformerDerivationError
 
 final case class MissingFieldTransformer(
@@ -81,9 +83,9 @@ object TransformerDerivationError {
       .map { case ((toType, fromType), errs) =>
         // TODO: add suggestions for inherited fields
         val errStrings = errs.distinct.map {
-          case MissingConstructorArgument(toField, toFieldType, fromType, _, _) =>
+          case MissingConstructorArgument(toField, toFieldType, fromType, _, _, _) =>
             s"  $toField: $toFieldType - no accessor named $MAGENTA$toField$RESET in source type $fromType"
-          case MissingJavaBeanSetterParam(toSetter, requiredTypeName, fromType, _, _) =>
+          case MissingJavaBeanSetterParam(toSetter, requiredTypeName, fromType, _, _, _) =>
             val toNormalized = BeanAware.dropSet(toSetter)
             s"  $toSetter($toNormalized: $requiredTypeName) - no accessor named $MAGENTA$toNormalized$RESET in source type $fromType"
           case MissingFieldTransformer(toField, fromFieldType, toFieldType, fromType, _) =>
@@ -104,24 +106,39 @@ object TransformerDerivationError {
             s"  derivation from $exprPrettyPrint: $fromType to $toType is not supported in Chimney!"
         }
 
-        val fieldsWithMethodAccessor = errors.collect {
-          case MissingConstructorArgument(toField, _, _, _, true)  => s"$MAGENTA$toField$RESET"
-          case MissingJavaBeanSetterParam(toSetter, _, _, _, true) => s"$MAGENTA$toSetter$RESET"
-        }.sorted
-        val methodAccessorHint =
-          if (fieldsWithMethodAccessor.nonEmpty) {
-            val fields = fieldsWithMethodAccessor.take(3).mkString(", ") + (fieldsWithMethodAccessor.size match {
-              case 1     => s" constructor argument/setter"
-              case 2 | 3 => s" constructor arguments/setters"
-              case _     => s" and ${fieldsWithMethodAccessor.length - 3} other constructor arguments/setters"
-            })
-
-            s"\nThere are methods in $fromType that might be used as accessors for $fields in $toType. Consider using $MAGENTA.enableMethodAccessors$RESET."
+        def prettyFieldList(fields: Seq[String])(use: String => String): String =
+          if (fields.nonEmpty) {
+            use(fields.take(3).mkString(", ") + (fields.size match {
+              case 1     => s", the constructor argument/setter"
+              case 2 | 3 => s", constructor arguments/setters"
+              case _     => s" and ${fields.length - 3} other constructor arguments/setters"
+            }))
           } else ""
 
+        val methodAccessorHint = prettyFieldList(errors.collect {
+          case MissingConstructorArgument(toField, _, _, _, availableMethodAccessors, _)
+              if availableMethodAccessors.nonEmpty =>
+            s"$MAGENTA$toField$RESET (e.g. ${availableMethodAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
+          case MissingJavaBeanSetterParam(toSetter, _, _, _, availableMethodAccessors, _)
+              if availableMethodAccessors.nonEmpty =>
+            s"$MAGENTA$toSetter$RESET (e.g. ${availableMethodAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
+        }.sorted) { fields =>
+          s"\n\nThere are methods in $fromType that might be used as accessors for $fields in $toType. Consider using $MAGENTA.enableMethodAccessors$RESET."
+        }
+
+        val inheritedAccessorHint = prettyFieldList(errors.collect {
+          case MissingConstructorArgument(toField, _, _, _, _, availableInheritedAccessors)
+              if availableInheritedAccessors.nonEmpty =>
+            s"$MAGENTA$toField$RESET (e.g. ${availableInheritedAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
+          case MissingJavaBeanSetterParam(toSetter, _, _, _, _, availableInheritedAccessors)
+              if availableInheritedAccessors.nonEmpty =>
+            s"$MAGENTA$toSetter$RESET (e.g. ${availableInheritedAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
+        }.sorted) { fields =>
+          s"\n\nThere are inherited definitions in $fromType that might be used as accessors for $fields in $toType. Consider using $MAGENTA.enableInheritedAccessors$RESET."
+        }
+
         s"""$toType
-           |${errStrings.mkString("\n")}
-           |$methodAccessorHint
+           |${errStrings.mkString("\n")}$methodAccessorHint$inheritedAccessorHint
            |""".stripMargin
       }
       .mkString("\n")
