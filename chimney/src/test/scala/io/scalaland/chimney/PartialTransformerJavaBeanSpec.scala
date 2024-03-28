@@ -30,6 +30,24 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
     )
   }
 
+  test("var vs setter ambiguities should be reported to the user") {
+    compileErrorsFixed(
+      """
+      new JavaBeanSourceWithAmbiguity("200", "name", flag = true).intoPartial[JavaBeanTarget]
+        .enableBeanGetters
+        .transform
+      """
+    )
+      .check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithAmbiguity to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+        "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+        "field setName: io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget has ambiguous matches in io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithAmbiguity: getName, name",
+        "field setFlag: io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget has ambiguous matches in io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithAmbiguity: flag, isFlag",
+        "field setId: io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget has ambiguous matches in io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithAmbiguity: getId, id",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+  }
+
   group("""setting .withFieldRenamed(_.getFrom, _.to)""") {
 
     test("transform Java Bean to case class when all getters are passed explicitly") {

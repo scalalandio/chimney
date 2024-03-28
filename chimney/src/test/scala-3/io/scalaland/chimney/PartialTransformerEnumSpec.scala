@@ -423,4 +423,99 @@ class PartialTransformerEnumSpec extends ChimneySpec {
       )
     }
   }
+
+  group("flag .enableCustomSubtypeNameComparison") {
+
+    import renames.*
+
+    test("should be disabled by default") {
+
+      compileErrorsFixed("(Foo.bar: Foo).transformIntoPartial[Bar]").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
+        "io.scalaland.chimney.fixtures.renames.Bar",
+        "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("(Foo.bar: Foo).intoPartial[Bar].transform").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
+        "io.scalaland.chimney.fixtures.renames.Bar",
+        "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should inform user if and why the setting cannot be read") {
+      @unused object BadNameComparison extends TransformedNamesComparison {
+
+        def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
+      }
+
+      compileErrorsFixed(
+        """(Foo.bar: Foo).intoPartial[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform"""
+      )
+        .check(
+          "Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: io.scalaland.chimney.PartialTransformerEnumSpec.BadNameComparison!!!"
+        )
+    }
+
+    test("should inform user when the matcher they provided results in ambiguities") {
+
+      compileErrorsFixed(
+        """
+        (Foo.bar: Foo)
+          .intoPartial[BarAmbiguous]
+          .enableCustomSubtypeNameComparison(TransformedNamesComparison.BeanAware)
+          .transform
+        """
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.BarAmbiguous",
+        "io.scalaland.chimney.fixtures.renames.BarAmbiguous",
+        "coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar of io.scalaland.chimney.fixtures.renames.Foo has ambiguous matches in io.scalaland.chimney.fixtures.renames.BarAmbiguous: io.scalaland.chimney.fixtures.renames.BarAmbiguous.bar, io.scalaland.chimney.fixtures.renames.BarAmbiguous.getBar",
+        "io.scalaland.chimney.fixtures.renames.BarAmbiguous",
+        "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.BarAmbiguous is not supported in Chimney!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should allow subtypes to be matched using user-provided predicate") {
+      (Foo.bar: Foo)
+        .intoPartial[Bar]
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform
+        .asOption ==> Some(Bar.Bar)
+
+      locally {
+        implicit val config = TransformerConfiguration.default
+          .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+
+        (Foo.bar: Foo).transformIntoPartial[Bar].asOption ==> Some(Bar.Bar)
+        (Foo.bar: Foo).intoPartial[Bar].transform.asOption ==> Some(Bar.Bar)
+      }
+    }
+  }
+
+  group("flag .disableCustomSubtypeNameComparison") {
+
+    import renames.*
+
+    test("should disable globally enabled .enableCustomSubtypeNameComparison") {
+
+      @unused implicit val config = TransformerConfiguration.default
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+
+      compileErrorsFixed("(Foo.bar: Foo).intoPartial[Bar].disableCustomSubtypeNameComparison.transform").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
+        "io.scalaland.chimney.fixtures.renames.Bar",
+        "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+  }
 }
