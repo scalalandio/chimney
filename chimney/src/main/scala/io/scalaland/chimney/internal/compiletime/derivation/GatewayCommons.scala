@@ -41,7 +41,7 @@ private[compiletime] trait GatewayCommons { this: Definitions =>
           s"""$errorHeader
              |
              |$lines
-             |Consult $chimneyDocUrl for usage examples.
+             |Consult ${Console.MAGENTA}$chimneyDocUrl${Console.RESET} for usage examples.
              |
              |""".stripMargin
 

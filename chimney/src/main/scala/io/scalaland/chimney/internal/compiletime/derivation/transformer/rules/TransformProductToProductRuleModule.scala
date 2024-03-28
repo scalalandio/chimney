@@ -204,27 +204,36 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .getOrElse[DerivationResult[Existential[TransformationExpr]]] {
                 if (usePositionBasedMatching)
                   DerivationResult.tupleArityMismatch(fromArity = fromEnabledExtractors.size, toArity = parameters.size)
-                else
+                else {
+                  lazy val availableGetters = fromExtractors.filter { case (fromName, _) =>
+                    areFieldNamesMatching(fromName, toName)
+                  }.toList
+                  lazy val availableMethodAccessors = availableGetters.collect {
+                    case (fromName, getter) if getter.value.sourceType == Product.Getter.SourceType.AccessorMethod =>
+                      fromName
+                  }
+                  lazy val availableInheritedAccessors = availableGetters.collect {
+                    case (fromName, getter) if !getter.value.isLocal => fromName
+                  }
                   ctorParam.value.targetType match {
                     case Product.Parameter.TargetType.ConstructorParameter =>
-                      // TODO: rename isLocal into isInherited
-                      // TODO: update this for isLocal
                       DerivationResult
                         .missingConstructorArgument[From, To, CtorParam, Existential[TransformationExpr]](
                           toName,
-                          fromExtractors.exists { case (fromName, _) => areFieldNamesMatching(fromName, toName) }
+                          availableMethodAccessors,
+                          availableInheritedAccessors
                         )
+                    case Product.Parameter.TargetType.SetterParameter if (flags.beanSettersIgnoreUnmatched) =>
+                      DerivationResult.pure(unmatchedSetter)
                     case Product.Parameter.TargetType.SetterParameter =>
-                      if (flags.beanSettersIgnoreUnmatched)
-                        DerivationResult.pure(unmatchedSetter)
-                      else
-                        // TODO: update this for isLocal
-                        DerivationResult
-                          .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
-                            toName,
-                            fromExtractors.exists { case (fromName, _) => areFieldNamesMatching(fromName, toName) }
-                          )
+                      DerivationResult
+                        .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
+                          toName,
+                          availableMethodAccessors,
+                          availableInheritedAccessors
+                        )
                   }
+                }
               }
               .logSuccess(expr =>
                 if (expr == unmatchedSetter) s"Setter `$toName` not resolved but ignoring setters is allowed"

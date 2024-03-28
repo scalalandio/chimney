@@ -36,7 +36,11 @@ private[compiletime] trait ResultOps { this: Derivation =>
     def attemptNextRuleBecause[A](reason: String): DerivationResult[Rule.ExpansionResult[A]] =
       DerivationResult.pure(Rule.ExpansionResult.AttemptNextRule(Some(reason)))
 
-    def missingConstructorArgument[From, To, Field: Type, A](toField: String, isAccessorAvailable: Boolean)(implicit
+    def missingConstructorArgument[From, To, Field: Type, A](
+        toField: String,
+        availableMethodAccessors: List[String],
+        availableInheritedAccessors: List[String]
+    )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       MissingConstructorArgument(
@@ -44,11 +48,16 @@ private[compiletime] trait ResultOps { this: Derivation =>
         toFieldType = Type.prettyPrint[Field],
         fromType = Type.prettyPrint[From],
         toType = Type.prettyPrint[To],
-        accessorAvailable = isAccessorAvailable
+        availableMethodAccessors = availableMethodAccessors,
+        availableInheritedAccessors = availableInheritedAccessors
       )
     )
 
-    def missingJavaBeanSetterParam[From, To, Setter: Type, A](toSetter: String, isAccessorAvailable: Boolean)(implicit
+    def missingJavaBeanSetterParam[From, To, Setter: Type, A](
+        toSetter: String,
+        availableMethodAccessors: List[String],
+        availableInheritedAccessors: List[String]
+    )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       MissingJavaBeanSetterParam(
@@ -56,7 +65,8 @@ private[compiletime] trait ResultOps { this: Derivation =>
         toSetterType = Type.prettyPrint[Setter],
         fromType = Type.prettyPrint[From],
         toType = Type.prettyPrint[To],
-        accessorAvailable = isAccessorAvailable
+        availableMethodAccessors = availableMethodAccessors,
+        availableInheritedAccessors = availableInheritedAccessors
       )
     )
 
