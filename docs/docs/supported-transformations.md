@@ -1480,6 +1480,24 @@ The field name matching predicate can be overrided with a flag:
 
 For details about `TransformedNamesComparison` look at [their dedicated section](#defining-custom-name-matching-predicate).
 
+!!! warning
+
+    Using a predicate can result in an ambiguity. For instance, if the source would have `val name` and `def getName`,
+    the target would have a constructor's argument `name`, `BeanAware` matching was used together with Bean getters flag,
+    it would be ambiguous which value shoud be used as a source value.
+
+    However, when a predicate is used for matching the source's values with the target's constructor parameters/setters it
+    is also used for matching manual overrides with parameters/setters.
+
+    For instance `BeanAware` setter is used by defauly to allow using the getter `getName` to provide override for 
+    the `setName` setter (e.g. `.withFieldConst(_.getName(), value)` would provide value for `setName` setter).
+
+    However, if you named your constructor parameters e.g. `names` and `setNames` then it it would create an ambiguity
+    in override matching.
+
+    The former ambiguity can be resolved e.g. by providing value using one of `withField*` overrides. The later requires
+    opting out of any smart matching and only relying on `StrictEquality` and manual overrides.
+
 If the flag was enabled in the implicit config it can be disabled with `.disableCustomFieldNameComparison`.
 
 !!! example
@@ -2005,6 +2023,34 @@ The subtype name matching predicate can be overrided with a flag:
     ```
 
 For details about `TransformedNamesComparison` look at [their dedicated section](#defining-custom-name-matching-predicate).
+
+!!! warning
+
+    Using a predicate can result in an ambiguity. It can usually be resolved by providing manual override for the ambiguous
+    subtypes.
+
+    An ambiguity can also appear, no matter which matcher is used, in cases like:
+
+    ```scala
+    // there are 2 "Name" subtypes!
+    sealed trait Attribute
+    object Attribute {
+      object Person {
+        case object FirstName extends Attribute
+        case object LastName extends Attribute
+        case object Address extends Attribute
+      }
+
+      object Company {
+        case object Name extends Attribute
+        case object Address extends Attribute
+      }
+    }
+    ```
+
+    Such cases always have to be handled manually (`withCoproductInstance(...)`).
+
+If the flag was enabled in the implicit config it can be disabled with `.disableCustomSubtypeNameComparison`.
 
 !!! example
 
