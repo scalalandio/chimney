@@ -15,6 +15,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       processDefaultValues: Boolean = false,
       beanSetters: Boolean = false,
       beanSettersIgnoreUnmatched: Boolean = false,
+      nonUnitBeanSetters: Boolean = false,
       beanGetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,
       partialUnwrapsOption: Boolean = true,
@@ -35,6 +36,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         copy(beanSetters = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.BeanSettersIgnoreUnmatched) {
         copy(beanSettersIgnoreUnmatched = value)
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.NonUnitBeanSetters) {
+        copy(nonUnitBeanSetters = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.BeanGetters) {
         copy(beanGetters = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.OptionDefaultsToNone) {
@@ -69,6 +72,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (methodAccessors) Vector("methodAccessors") else Vector.empty,
         if (processDefaultValues) Vector("processDefaultValues") else Vector.empty,
         if (beanSetters) Vector("beanSetters") else Vector.empty,
+        if (beanSettersIgnoreUnmatched) Vector("beanSettersIgnoreUnmatched") else Vector.empty,
+        if (nonUnitBeanSetters) Vector("nonUnitBeanSetters") else Vector.empty,
         if (beanGetters) Vector("beanGetters") else Vector.empty,
         if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
