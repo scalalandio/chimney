@@ -14,6 +14,7 @@ object TransformerFlags {
   final class DefaultValues extends Flag
   final class BeanSetters extends Flag
   final class BeanSettersIgnoreUnmatched extends Flag
+  final class NonUnitBeanSetters extends Flag
   final class BeanGetters extends Flag
   final class OptionDefaultsToNone extends Flag
   final class PartialUnwrapsOption extends Flag

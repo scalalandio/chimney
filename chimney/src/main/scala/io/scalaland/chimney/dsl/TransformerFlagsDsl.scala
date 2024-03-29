@@ -127,12 +127,32 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Disable not failing compilation on unresolved Java Beans naming convention (`.setName(value)`) in `To`.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#wignoring-unmatched-bean-setters]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#ignoring-unmatched-bean-setters]] for more details
     *
     * @since 0.8.3
     */
   def disableIgnoreUnmatchedBeanSetters: UpdateFlag[Disable[BeanSettersIgnoreUnmatched, Flags]] =
     disableFlag[BeanSettersIgnoreUnmatched]
+
+  /** Enable calling unary non-Unit methods with Java Beans naming convention (`.setName(value)`) in `To`.
+    *
+    * By default only methods returning `Unit` (`setName(value): Unit`) could be considered setters.
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#todo]] for more details
+    *
+    * @since 1.0.0
+    */
+  def enableNonUnitBeanSetters: UpdateFlag[Enable[NonUnitBeanSetters, Flags]] =
+    enableFlag[NonUnitBeanSetters]
+
+  /** Enable calling unary non-Unit methods with Java Beans naming convention (`.setName(value)`) in `To`.
+    *
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#todo]] for more details
+    *
+    * @since 1.0.0
+    */
+  def disableNonUnitBeanSetters: UpdateFlag[Disable[NonUnitBeanSetters, Flags]] =
+    disableFlag[NonUnitBeanSetters]
 
   /** Sets target value of optional field to None if field is missing from source type `From`.
     *

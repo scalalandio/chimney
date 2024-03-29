@@ -203,6 +203,8 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           quoted.Type.of[runtime.TransformerFlags.BeanSetters]
         val BeanSettersIgnoreUnmatched: Type[runtime.TransformerFlags.BeanSettersIgnoreUnmatched] =
           quoted.Type.of[runtime.TransformerFlags.BeanSettersIgnoreUnmatched]
+        val NonUnitBeanSetters: Type[runtime.TransformerFlags.NonUnitBeanSetters] =
+          quoted.Type.of[runtime.TransformerFlags.NonUnitBeanSetters]
         val OptionDefaultsToNone: Type[runtime.TransformerFlags.OptionDefaultsToNone] =
           quoted.Type.of[runtime.TransformerFlags.OptionDefaultsToNone]
         val PartialUnwrapsOption: Type[runtime.TransformerFlags.PartialUnwrapsOption] =
