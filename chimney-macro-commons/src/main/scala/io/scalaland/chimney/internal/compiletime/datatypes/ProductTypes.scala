@@ -25,7 +25,7 @@ trait ProductTypes { this: Definitions =>
   final protected case class Product[A](extraction: Product.Extraction[A], construction: Product.Constructor[A])
   protected object Product {
 
-    final case class Getter[From, A](sourceType: Getter.SourceType, isLocal: Boolean, get: Expr[From] => Expr[A])
+    final case class Getter[From, A](sourceType: Getter.SourceType, isInherited: Boolean, get: Expr[From] => Expr[A])
     object Getter {
 
       /** Let us decide whether or now we can use the getter based on configuration */
@@ -60,7 +60,7 @@ trait ProductTypes { this: Definitions =>
         case object ConstructorParameter extends TargetType
 
         /** When constructing, value will be passed as setter argument */
-        case object SetterParameter extends TargetType
+        final case class SetterParameter(returnedType: ??) extends TargetType
       }
     }
     final type Parameters = ListMap[String, Existential[Parameter]]
@@ -103,7 +103,7 @@ trait ProductTypes { this: Definitions =>
 
     // skipping on setter should not create a invalid expression, whether or not is should be called depends on caller
     private val settersCanBeIgnored: ((String, Existential[Product.Parameter])) => Boolean =
-      _._2.value.targetType != Product.Parameter.TargetType.SetterParameter
+      _._2.value.targetType == Product.Parameter.TargetType.ConstructorParameter
 
     protected def checkArguments[A: Type](
         parameters: Product.Parameters,
@@ -131,12 +131,13 @@ trait ProductTypes { this: Definitions =>
         }
       }
 
-      val constructorParameters =
-        parameters.filter(_._2.value.targetType == Product.Parameter.TargetType.ConstructorParameter).keySet
+      val (params, setters) =
+        parameters.partition(_._2.value.targetType == Product.Parameter.TargetType.ConstructorParameter)
+
+      val constructorParameters = params.keySet
       val constructorArguments = ListMap.from(arguments.view.filterKeys(constructorParameters))
 
-      val setterParameters =
-        parameters.filter(_._2.value.targetType == Product.Parameter.TargetType.SetterParameter).keySet
+      val setterParameters = setters.keySet
       val setterArguments = ListMap.from(arguments.view.filterKeys(setterParameters))
 
       constructorArguments -> setterArguments

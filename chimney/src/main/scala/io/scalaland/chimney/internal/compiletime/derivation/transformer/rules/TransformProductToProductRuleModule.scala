@@ -81,7 +81,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           }
         }
         .filter { getter =>
-          getter._2.value.isLocal || flags.inheritedAccessors
+          !getter._2.value.isInherited || flags.inheritedAccessors
         }
 
       val usePositionBasedMatching = Type[From].isTuple || Type[To].isTuple
@@ -110,7 +110,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       DerivationResult.log {
         val gettersStr = fromExtractors
           .map { case (k, v) =>
-            s"`$k`: ${Type.prettyPrint(v.Underlying)} (${v.value.sourceType}, ${if (v.value.isLocal) "declared"
+            s"`$k`: ${Type.prettyPrint(v.Underlying)} (${v.value.sourceType}, ${if (!v.value.isInherited) "declared"
               else "inherited"})"
           }
           .mkString(", ")
@@ -213,7 +213,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       fromName
                   }
                   lazy val availableInheritedAccessors = availableGetters.collect {
-                    case (fromName, getter) if !getter.value.isLocal => fromName
+                    case (fromName, getter) if getter.value.isInherited => fromName
                   }
                   ctorParam.value.targetType match {
                     case Product.Parameter.TargetType.ConstructorParameter =>
@@ -223,9 +223,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           availableMethodAccessors,
                           availableInheritedAccessors
                         )
-                    case Product.Parameter.TargetType.SetterParameter if (flags.beanSettersIgnoreUnmatched) =>
+                    // TODO: nonUnitBeanSetter
+                    case Product.Parameter.TargetType.SetterParameter(_) if (flags.beanSettersIgnoreUnmatched) =>
                       DerivationResult.pure(unmatchedSetter)
-                    case Product.Parameter.TargetType.SetterParameter =>
+                    case Product.Parameter.TargetType.SetterParameter(_) =>
                       DerivationResult
                         .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
                           toName,
@@ -402,12 +403,12 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         getter: Existential[Product.Getter[From, *]]
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Existential[TransformationExpr]] =
-      if (ctorTargetType == Product.Parameter.TargetType.SetterParameter && !ctx.config.flags.beanSetters)
+    ): DerivationResult[Existential[TransformationExpr]] = ctorTargetType match {
+      case Product.Parameter.TargetType.SetterParameter(_) if !ctx.config.flags.beanSetters =>
         DerivationResult
           .notSupportedTransformerDerivation(ctx)
           .log(s"Matched $fromName to $toName but $toName is setter and they are disabled")
-      else {
+      case _ =>
         import getter.Underlying as Getter, getter.value.get
         DerivationResult.namedScope(
           s"Recursive derivation for field `$fromName`: ${Type
@@ -426,7 +427,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             appendMissingTransformer[From, To, Getter, CtorParam](errors, toName)
           }
         }
-      }
+    }
 
     private def useFallbackValues[From, To, CtorParam: Type](
         defaultValue: Option[Expr[CtorParam]]

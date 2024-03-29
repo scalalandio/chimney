@@ -83,7 +83,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
                     else if (isJavaGetter(getter) && conformToIsGetters) Product.Getter.SourceType.JavaBeanGetter
                     else if (getter.isStable) Product.Getter.SourceType.ConstructorVal // Hmm...
                     else Product.Getter.SourceType.AccessorMethod,
-                  isLocal = localDefinitions(getter),
+                  isInherited = !localDefinitions(getter),
                   get =
                     // TODO: handle pathological cases like getName[Unused]()()()
                     if (getter.asMethod.paramLists.isEmpty) (in: Expr[A]) => c.Expr[tpe.Underlying](q"$in.$termName")
@@ -169,7 +169,8 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
                 tpe.mapK[Product.Parameter](_ =>
                   _ =>
                     Product.Parameter(
-                      targetType = Product.Parameter.TargetType.SetterParameter,
+                      targetType = Product.Parameter.TargetType
+                        .SetterParameter(ExistentialType(fromUntyped(returnTypeOf(Type[A].tpe, setter)))),
                       defaultValue = None
                     )
                 )
