@@ -351,6 +351,26 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
 
   group("""flag .enableIgnoreUnmatchedBeanSetters""") {
 
+    test("should be disabled by default") {
+      compileErrorsFixed("().transformInto[JavaBeanTarget]").check(
+        "Chimney can't derive transformation from scala.Unit to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+        "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+        "setName(name: java.lang.String) - no accessor named name in source type scala.Unit",
+        "setId(id: java.lang.String) - no accessor named id in source type scala.Unit",
+        "setFlag(flag: scala.Boolean) - no accessor named flag in source type scala.Unit",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrorsFixed("().into[JavaBeanTarget].transform").check(
+        "Chimney can't derive transformation from scala.Unit to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+        "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
+        "setName(name: java.lang.String) - no accessor named name in source type scala.Unit",
+        "setId(id: java.lang.String) - no accessor named id in source type scala.Unit",
+        "setFlag(flag: scala.Boolean) - no accessor named flag in source type scala.Unit",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
     test("should allow creating Java Bean without calling any of its setters if none are matched") {
       val expected = new JavaBeanTarget
 
@@ -368,7 +388,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
       }
     }
 
-    test("should not compile when some setters are unmatched but of them are and they are disabled") {
+    test("should not compile when some setters are unmatched but some of them are matched and setters are disabled") {
       val expected = new JavaBeanTarget
       expected.setId("100")
       expected.setName("name")
@@ -445,6 +465,59 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
         "derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
+    }
+  }
+
+  group("flag .enableNonUnitBeanSetters") {
+
+    test("should be disabled by default") {
+      val expected = new JavaBeanTargetNonUnitSetter
+      expected.setId("test1")
+
+      CaseClassWithFlag("test1", "test2", flag = true)
+        .into[JavaBeanTargetNonUnitSetter]
+        .enableBeanSetters
+        .transform ==> expected
+    }
+
+    test("should allow targeting setter method returning non-Unit values") {
+      val expected = new JavaBeanTargetNonUnitSetter
+      expected.setId("test1")
+      // Scala 2.12 does not allow us to define 2 val _ = ... in the same scope :/
+      locally {
+        val _ = expected.setName("test2")
+      }
+      locally {
+        val _ = expected.setFlag(true)
+      }
+
+      CaseClassWithFlag("test1", "test2", flag = true)
+        .into[JavaBeanTargetNonUnitSetter]
+        .enableBeanSetters
+        .enableNonUnitBeanSetters
+        .transform ==> expected
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableBeanSetters.enableNonUnitBeanSetters
+
+        CaseClassWithFlag("test1", "test2", flag = true).transformInto[JavaBeanTargetNonUnitSetter] ==> expected
+        CaseClassWithFlag("test1", "test2", flag = true).into[JavaBeanTargetNonUnitSetter].transform ==> expected
+      }
+    }
+  }
+
+  group("flag .disableNonUnitBeanSetters") {
+
+    test("should disable globally enabled .enableNonUnitBeanSetters") {
+      val expected = new JavaBeanTargetNonUnitSetter
+      expected.setId("test1")
+
+      implicit val config = TransformerConfiguration.default.enableBeanSetters.enableNonUnitBeanSetters
+
+      CaseClassWithFlag("test1", "test2", flag = true)
+        .into[JavaBeanTargetNonUnitSetter]
+        .disableNonUnitBeanSetters
+        .transform ==> expected
     }
   }
 

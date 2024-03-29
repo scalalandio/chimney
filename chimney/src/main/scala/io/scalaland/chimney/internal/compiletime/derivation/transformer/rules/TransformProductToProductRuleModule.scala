@@ -128,7 +128,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             (String, Existential[Product.Parameter]),
             (String, Existential[TransformationExpr])
           ](
-            parameters.toList
+            if (flags.nonUnitBeanSetters) parameters.toList
+            else
+              parameters
+                .filter(to =>
+                  to._2.value.targetType match {
+                    case Product.Parameter.TargetType.SetterParameter(returnedType) =>
+                      returnedType.Underlying =:= Type[Unit]
+                    case Product.Parameter.TargetType.ConstructorParameter => true
+                  }
+                )
+                .toList
           ) { case (toName: String, ctorParam: Existential[Product.Parameter]) =>
             import ctorParam.Underlying as CtorParam, ctorParam.value.defaultValue
 
@@ -223,9 +233,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           availableMethodAccessors,
                           availableInheritedAccessors
                         )
-                    // TODO: nonUnitBeanSetter
-                    case Product.Parameter.TargetType.SetterParameter(_) if (flags.beanSettersIgnoreUnmatched) =>
+                    case Product.Parameter.TargetType.SetterParameter(_) if flags.beanSettersIgnoreUnmatched =>
                       DerivationResult.pure(unmatchedSetter)
+                    case Product.Parameter.TargetType.SetterParameter(returnedType)
+                        if !flags.nonUnitBeanSetters && !(returnedType.Underlying =:= Type[Unit]) =>
+                      DerivationResult.pure(nonUnitSetter)
                     case Product.Parameter.TargetType.SetterParameter(_) =>
                       DerivationResult
                         .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
@@ -236,13 +248,15 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   }
                 }
               }
-              .logSuccess(expr =>
-                if (expr == unmatchedSetter) s"Setter `$toName` not resolved but ignoring setters is allowed"
-                else s"Resolved `$toName` field value to ${expr.value.prettyPrint}"
-              )
+              .logSuccess {
+                case `unmatchedSetter` => s"Setter `$toName` not resolved but ignoring setters is allowed"
+                case `nonUnitSetter` =>
+                  s"Setter `$toName` not resolved it has non-Unit return type and they are ignored"
+                case expr => s"Resolved `$toName` field value to ${expr.value.prettyPrint}"
+              }
               .map(toName -> _)
           }
-          .map(_.filterNot(_._2 == unmatchedSetter))
+          .map(_.filterNot(_._2 == unmatchedSetter).filterNot(_._2 == nonUnitSetter))
           .logSuccess { args =>
             val totals = args.count(_._2.value.isTotal)
             val partials = args.count(_._2.value.isPartial)
@@ -699,6 +713,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       newError.parTuple(oldErrors).map[Existential[TransformationExpr]](_ => ???)
     }
 
+    // stub to use when the setter's return type is not Unit and nonUnitBeanSetters flag is off
+    private val nonUnitSetter = Existential[TransformationExpr, Null](TransformationExpr.fromTotal(Expr.Null))
+
+    // stub to use when the setter's was not matched and beanSettersIgnoreUnmatched flag is on
     private val unmatchedSetter = Existential[TransformationExpr, Null](TransformationExpr.fromTotal(Expr.Null))
   }
 }
