@@ -309,7 +309,7 @@ would result in errors like:
     forward reference extends over definition of value t
     ```
 
-In newer, it can result in would result in errors like:
+In newer, it can result in in errors like:
 
 !!! example
 
