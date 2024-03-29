@@ -181,7 +181,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         val setterExprs = setters.map { case (name, termName, param) =>
           name ->
             param.mapK[Setter] {
-              implicit Param: Type[param.Underlying] => _ => (exprA: Expr[A], exprArg: Expr[param.Underlying]) =>
+              implicit Param: Type[param.Underlying] => setter => (exprA: Expr[A], exprArg: Expr[param.Underlying]) =>
                 c.Expr[Unit](q"$exprA.$termName($exprArg)")
             }
         }.toMap

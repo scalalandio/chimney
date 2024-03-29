@@ -60,7 +60,10 @@ trait ProductTypes { this: Definitions =>
         case object ConstructorParameter extends TargetType
 
         /** When constructing, value will be passed as setter argument */
-        final case class SetterParameter(returnedType: ??) extends TargetType
+        final case class SetterParameter(returnedType: ??) extends TargetType {
+          override def toString: String =
+            s"SetterParameter(returnedType = ${Type.prettyPrint(returnedType.Underlying)})"
+        }
       }
     }
     final type Parameters = ListMap[String, Existential[Parameter]]

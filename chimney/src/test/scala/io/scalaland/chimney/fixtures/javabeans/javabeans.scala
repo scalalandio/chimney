@@ -65,14 +65,12 @@ class JavaBeanTarget {
 
   def isFlag: Boolean = flag
 
-  override def equals(obj: Any): Boolean =
-    obj match {
-      case jbt: JavaBeanTarget =>
-        this.id == jbt.getId && this.name == jbt.getName && this.flag == jbt.isFlag
-      case _ =>
-        false
-    }
+  override def equals(obj: Any): Boolean = obj match {
+    case jbt: JavaBeanTarget => this.id == jbt.getId && this.name == jbt.getName && this.flag == jbt.isFlag
+    case _                   => false
+  }
 }
+
 class JavaBeanTargetNoIdSetter {
   private var id: String = _
 
@@ -86,13 +84,37 @@ class JavaBeanTargetNoIdSetter {
 
   def getId: String = id
 
-  override def equals(obj: Any): Boolean =
-    obj match {
-      case jbt: JavaBeanTarget =>
-        this.id == jbt.getId
-      case _ =>
-        false
-    }
+  override def equals(obj: Any): Boolean = obj match {
+    case jbt: JavaBeanTarget => this.id == jbt.getId
+    case _                   => false
+  }
+}
+
+class JavaBeanTargetNonUnitSetter {
+  private var id: String = _
+  private var name: String = _
+  private var flag: Boolean = _
+
+  def getId(): String = id
+  def setId(id: String): Unit = this.id = id
+
+  def getName(): String = name
+  def setName(name: String): JavaBeanTargetNonUnitSetter = {
+    this.name = name
+    this
+  }
+
+  def isFlag(): Boolean = flag
+  def setFlag(id: Boolean): JavaBeanTargetNonUnitSetter = {
+    this.flag = flag
+    this
+  }
+
+  override def equals(obj: Any): Boolean = obj match {
+    case jbt: JavaBeanTargetNonUnitSetter =>
+      this.id == jbt.getId() && this.name == jbt.getName() && this.flag == jbt.isFlag()
+    case _ => false
+  }
 }
 
 case class EnclosingCaseClass(ccNoFlag: CaseClassNoFlag)
@@ -102,14 +124,10 @@ class EnclosingBean {
 
   def getCcNoFlag: CaseClassNoFlag = ccNoFlag
 
-  def setCcNoFlag(ccNoFlag: CaseClassNoFlag): Unit =
-    this.ccNoFlag = ccNoFlag
+  def setCcNoFlag(ccNoFlag: CaseClassNoFlag): Unit = this.ccNoFlag = ccNoFlag
 
-  override def equals(obj: Any): Boolean =
-    obj match {
-      case eb: EnclosingBean =>
-        this.ccNoFlag == eb.ccNoFlag
-      case _ =>
-        false
-    }
+  override def equals(obj: Any): Boolean = obj match {
+    case eb: EnclosingBean => this.ccNoFlag == eb.ccNoFlag
+    case _                 => false
+  }
 }
