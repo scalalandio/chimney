@@ -433,7 +433,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     //   a: java.lang.String - no accessor named a in source type Source
     //   b: scala.Int - no accessor named b in source type Source
     //
-    // There are methods in Source that might be used as accessors for `a`, `b` fields in Target. Consider using `.enableMethodAccessors`.
+    // There are methods in Source that might be used as accessors for a (e.g. a), b (e.g. b), constructor arguments/setters in Target. Consider using .enableMethodAccessors.
     //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
@@ -495,7 +495,7 @@ If the flag was enabled in the implicit config it can be disabled with `.enableI
     // Target
     //   a: java.lang.String - no accessor named a in source type Source
     // 
-    // There are methods in Source that might be used as accessors for `a` fields in Target. Consider using `.enableMethodAccessors`.
+    // There are inherited definitions in Source that might be used as accessors for a (e.g. a), the constructor argument/setter in Target. Consider using .enableInheritedAccessors.
     // 
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
