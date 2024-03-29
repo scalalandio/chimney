@@ -633,14 +633,18 @@ Flag `.enableBeanSetters` will allow macros to write to methods which are:
   - unary (take 1 value argument)
   - have no type parameters
   - have names starting with `set` - for comparison `set` will be dropped and the first remaining letter lowercased
+  - returning `Unit` (this condition can be turned off)
 
 _besides_ calling constructor (so you can pass values to _both_ the constructor and setters at once). Without the flag
 macro will fail compilation to avoid creating potentially uninitialized objects.
 
 !!! warning
 
-   0.8.0 dropped the requirement that the setter needs to return `Unit`. It enables targeting mutable builders, which
-   let you chain calls with fluent API, but are still mutating the state internally, making this chaining optional.  
+    0.8.0 dropped the requirement that the setter needs to return `Unit`. It enabled targeting mutable builders, which
+    let you chain calls with fluent API, but are still mutating the state internally, making this chaining optional.
+
+    However, it broke code with unary, non-`Unit` `set*` methods that weren't intended to be used as setters, therfore
+    1.0.0 changed it so that non-`Unit` setters are opt-in with `.enableNonUnitBeanSetters` flag.
 
 If the flag was enabled in the implicit config it can be disabled with `.disableBeanSetters`.
 
@@ -781,6 +785,80 @@ making this setting sort of a setters' counterpart to a default value in a const
       // val source = new Source("value", 512)
       // val target = new Target()
       // target.setA(source.a)
+      // partial.Result.fromValue(target)
+    }
+    ```
+
+It is disabled by default for the same reasons as default values - being potentially dangerous.
+
+### Writing to non-`Unit` Bean setters
+
+By default only unary methods returning `Unit` and starting with `set*` are considered setters. But this would exclude
+e.g. some builder methods which return `this.type` despite mutating. Such methods are siently ignored.
+
+To consider such methods (and fail compilation if they are not matched) you can enable them with a flag:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+
+    class Source(val a: String, val b: Int)
+    class Target() {
+      private var a: String = _
+      private var b: Int = _
+
+      def getA(): String = a
+      def setA(a: String): Unit = this.a = a
+
+      def getB(): Int = b
+      def setB(b: Int): Target = {
+        this.a = a
+        this
+      }
+    }
+
+    // setB is silently ignored:
+
+    new Source("value", 128).into[Target].enableBeanSetters.transform
+    // val source = new Source("value", 128)
+    // val target = new Target()
+    // target.setA(source.a)
+    // target
+
+    // setB is considered:
+
+    new Source("value", 128).into[Target].enableBeanSetters.enableNonUnitBeanSetters.transform
+    // val source = new Source("value", 128)
+    // val target = new Target()
+    // target.setA(source.a)
+    // target.setB(source.b)
+    // target
+
+    new Source("value", 128).intoPartial[Target].enableBeanSetters.enableNonUnitBeanSetters.transform
+    // val source = new Source("value", 128)
+    // val target = new Target()
+    // target.setA(source.a)
+    // target.setB(source.b)
+    // partial.Result.fromValue(target)
+
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = TransformerConfiguration.default.enableBeanSetters.enableNonUnitBeanSetters
+
+      new Source("value", 128).transformInto[Target]
+      // val source = new Source("value", 128)
+      // val target = new Target()
+      // target.setA(source.a)
+      // target.setB(source.b)
+      // target
+
+      new Source("value", 128).transformIntoPartial[Target]
+      // val source = new Source("value", 128)
+      // val target = new Target()
+      // target.setA(source.a)
+      // target.setB(source.b)
       // partial.Result.fromValue(target)
     }
     ```

@@ -138,7 +138,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * By default only methods returning `Unit` (`setName(value): Unit`) could be considered setters.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#todo]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#writing-to-non-unit-bean-setters]] for more details
     *
     * @since 1.0.0
     */
@@ -147,7 +147,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Enable calling unary non-Unit methods with Java Beans naming convention (`.setName(value)`) in `To`.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#todo]] for more details
+    * @see [[https://chimney.readthedocs.io/supported-transformations/#writing-to-non-unit-bean-setters]] for more details
     *
     * @since 1.0.0
     */
