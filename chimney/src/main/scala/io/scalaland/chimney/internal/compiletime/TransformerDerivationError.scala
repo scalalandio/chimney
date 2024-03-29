@@ -81,7 +81,6 @@ object TransformerDerivationError {
     errors
       .groupBy(e => (e.toType, e.fromType))
       .map { case ((toType, fromType), errs) =>
-        // TODO: add suggestions for inherited fields
         val errStrings = errs.distinct.map {
           case MissingConstructorArgument(toField, toFieldType, fromType, _, _, _) =>
             s"  $toField: $toFieldType - no accessor named $MAGENTA$toField$RESET in source type $fromType"
