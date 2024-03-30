@@ -288,7 +288,7 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
 
   val tasks = if (isJVM) {
     clean ++
-      withCoverage((tasksOf("compile") ++ tasksOf("test") ++ tasksOf("coverageReport")).toSeq*) ++
+      withCoverage((tasksOf("compile") ++ tasksOf("test") ++ tasksOf("coverageReport")).toSeq *) ++
       Vector("benchmarks/compile") ++
       tasksOf("mimaReportBinaryIssues")
   } else {
@@ -310,7 +310,7 @@ lazy val root = project
   .settings(publishSettings)
   .settings(noPublishSettings)
   .aggregate(
-    (chimneyMacroCommons.projectRefs ++ chimney.projectRefs ++ chimneyCats.projectRefs ++ chimneyJavaCollections.projectRefs ++ chimneyProtobufs.projectRefs)*
+    (chimneyMacroCommons.projectRefs ++ chimney.projectRefs ++ chimneyCats.projectRefs ++ chimneyJavaCollections.projectRefs ++ chimneyProtobufs.projectRefs) *
   )
   .settings(
     moduleName := "chimney-build",
@@ -367,7 +367,7 @@ lazy val root = project
 
 lazy val chimneyMacroCommons = projectMatrix
   .in(file("chimney-macro-commons"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
@@ -375,17 +375,17 @@ lazy val chimneyMacroCommons = projectMatrix
     name := "chimney-macro-commons",
     description := "Utilities for writing cross-platform macro logic"
   )
-  .settings(settings*)
-  .settings(versionSchemeSettings*)
-  .settings(publishSettings*)
-  .settings(dependencies*)
+  .settings(settings *)
+  .settings(versionSchemeSettings *)
+  .settings(publishSettings *)
+  .settings(dependencies *)
   .settings(
     mimaFailOnNoPrevious := false // we're not guaranteeing stability of this library just yet
   )
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
-  .someVariations(versions.scalas, versions.platforms)((non212tests +: only1VersionInIDE)*)
+  .someVariations(versions.scalas, versions.platforms)((non212tests +: only1VersionInIDE) *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
@@ -393,11 +393,11 @@ lazy val chimney = projectMatrix
     name := "chimney",
     description := "Scala library for boilerplate-free data rewriting"
   )
-  .settings(settings*)
-  .settings(versionSchemeSettings*)
-  .settings(publishSettings*)
-  .settings(mimaSettings*)
-  .settings(dependencies*)
+  .settings(settings *)
+  .settings(versionSchemeSettings *)
+  .settings(publishSettings *)
+  .settings(mimaSettings *)
+  .settings(dependencies *)
   .settings(
     Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*",
     Compile / doc / scalacOptions ++= {
@@ -414,7 +414,7 @@ lazy val chimney = projectMatrix
 
 lazy val chimneyCats = projectMatrix
   .in(file("chimney-cats"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE*)
+  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
@@ -422,11 +422,11 @@ lazy val chimneyCats = projectMatrix
     name := "chimney-cats",
     description := "Integrations with selected Cats data types and type classes"
   )
-  .settings(settings*)
-  .settings(versionSchemeSettings*)
-  .settings(publishSettings*)
-  .settings(mimaSettings*)
-  .settings(dependencies*)
+  .settings(settings *)
+  .settings(versionSchemeSettings *)
+  .settings(publishSettings *)
+  .settings(mimaSettings *)
+  .settings(dependencies *)
   .settings(
     libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0" % Provided,
     libraryDependencies += "org.typelevel" %%% "cats-laws" % "2.10.0" % Test
@@ -435,7 +435,7 @@ lazy val chimneyCats = projectMatrix
 
 lazy val chimneyJavaCollections = projectMatrix
   .in(file("chimney-java-collections"))
-  .someVariations(versions.scalas, List(VirtualAxis.jvm))(only1VersionInIDE*)
+  .someVariations(versions.scalas, List(VirtualAxis.jvm))(only1VersionInIDE *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin)
   .settings(
@@ -443,9 +443,9 @@ lazy val chimneyJavaCollections = projectMatrix
     name := "chimney-java-collections",
     description := "Integrations with selected Java collections"
   )
-  .settings(settings*)
-  .settings(publishSettings*)
-  .settings(mimaSettings*)
+  .settings(settings *)
+  .settings(publishSettings *)
+  .settings(mimaSettings *)
   .settings(
     // Scala 2.12 doesn't have scala.jdk.StreamConverters and we use it in test of java.util.stream type class instances
     libraryDependencies += "org.scala-lang.modules" %%% "scala-java8-compat" % "1.0.2" % Test,
@@ -468,7 +468,7 @@ lazy val chimneyProtobufs = projectMatrix
         // Scala.js and Scala Native decided to not implement java.time as let external library do it
         // while we want to provide some type class instances for types in java.time
         libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
-      ))*
+      )) *
   )
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin)
@@ -477,9 +477,9 @@ lazy val chimneyProtobufs = projectMatrix
     name := "chimney-protobufs",
     description := "Integrations with selected Protobufs build-in types"
   )
-  .settings(settings*)
-  .settings(publishSettings*)
-  .settings(mimaSettings*)
+  .settings(settings *)
+  .settings(publishSettings *)
+  .settings(mimaSettings *)
   .settings(
     scalacOptions := {
       // protobufs Compile contains only generated classes, and scalacOptions from settings:* breaks Scala 3 compilation
@@ -502,7 +502,7 @@ lazy val chimneyProtobufs = projectMatrix
 
 lazy val benchmarks = projectMatrix
   .in(file("benchmarks"))
-  .someVariations(List(versions.scala213), List(VirtualAxis.jvm))(only1VersionInIDE*) // only makes sense for JVM
+  .someVariations(List(versions.scala213), List(VirtualAxis.jvm))(only1VersionInIDE *) // only makes sense for JVM
   .settings(
     moduleName := "chimney-benchmarks",
     name := "chimney-benchmarks",
@@ -510,8 +510,8 @@ lazy val benchmarks = projectMatrix
   )
   .enablePlugins(JmhPlugin)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
-  .settings(settings*)
-  .settings(noPublishSettings*)
+  .settings(settings *)
+  .settings(noPublishSettings *)
   .dependsOn(chimney)
 
 //when having memory/GC-related errors during build, uncommenting this may be useful:
