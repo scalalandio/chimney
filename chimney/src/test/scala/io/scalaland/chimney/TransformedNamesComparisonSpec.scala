@@ -79,4 +79,29 @@ class TransformedNamesComparisonSpec extends ChimneySpec {
       TransformedNamesComparison.CaseInsensitiveEquality.namesMatch("SOME_FIELD", "someField") ==> false
     }
   }
+
+  group("TransformedNamesComparison.GeneratedProtobufEnumEquality") {
+
+    test("should match identical names") {
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("someField", "someField") ==> true
+    }
+
+    test("should match names which differ in capitalisation, underscores and prefix") {
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("FIELD_SOME", "some") ==> true
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("SOME_FIELD", "Field") ==> true
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("Field", "SOME_FIELD") ==> true
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("FIELD", "some_Field") ==> true
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("someField", "isSomeField") ==> true
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("isSomeField", "someField") ==> true
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("someField", "getSomeField") ==> true
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("getSomeField", "someField") ==> true
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("someField", "setSomeField") ==> true
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("setSomeField", "someField") ==> true
+    }
+
+    test("should not match names converted with different conventions") {
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("someField", "some-field") ==> false
+      TransformedNamesComparison.GeneratedProtobufEnumEquality.namesMatch("some-field", "someField") ==> false
+    }
+  }
 }

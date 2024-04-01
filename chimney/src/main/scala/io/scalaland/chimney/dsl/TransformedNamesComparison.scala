@@ -44,6 +44,16 @@ object TransformedNamesComparison {
     def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
   }
 
+  case object GeneratedProtobufEnumEquality extends TransformedNamesComparison {
+
+    def namesMatch(fromName: String, toName: String): Boolean = {
+      val fromNameWithoutPrefix = fromName.replace("_", "").reverse.toLowerCase
+      val toNameWithoutPrefix = toName.replace("_", "").reverse.toLowerCase
+
+      fromNameWithoutPrefix.startsWith(toNameWithoutPrefix) || toNameWithoutPrefix.startsWith(fromNameWithoutPrefix)
+    }
+  }
+
   type FieldDefault = BeanAware.type
   val FieldDefault: FieldDefault = BeanAware
 
