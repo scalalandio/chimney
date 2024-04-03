@@ -57,12 +57,12 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
     private def mapOverriddenElements[From, To](implicit
         ctx: TransformationContext[From, To]
     ): List[Existential[ExprPromise[*, TransformationExpr[To]]]] = ctx.config
-      .filterOverridesForCoproduct { (someFrom, someTo) =>
-        import someFrom.Underlying as SomeFrom, someTo.Underlying as SomeTo
-        Type[SomeFrom] <:< Type[From] && Type[To] =:= Type[SomeTo]
+      .filterOverridesForCoproduct { someFrom =>
+        import someFrom.Underlying as SomeFrom
+        Type[SomeFrom] <:< Type[From]
       }
       .toList
-      .collect { case ((someFrom, _), runtimeCoproductOverride) =>
+      .collect { case (someFrom, runtimeCoproductOverride) =>
         import someFrom.Underlying as SomeFrom
         someFrom.mapK[ExprPromise[*, TransformationExpr[To]]] { _ => _ =>
           ExprPromise

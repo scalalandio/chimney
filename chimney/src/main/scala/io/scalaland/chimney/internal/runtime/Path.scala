@@ -4,4 +4,5 @@ sealed abstract class Path
 object Path {
   final class Root extends Path
   final class Select[Name <: String, Instance <: Path] extends Path
+  final class Match[Subtype, Instance <: Path] extends Path
 }

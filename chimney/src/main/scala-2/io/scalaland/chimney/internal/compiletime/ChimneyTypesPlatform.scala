@@ -294,6 +294,13 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           if (A.isCtor[runtime.Path.Select[?, ?]]) Some(A.param_<[String](0) -> A.param_<[runtime.Path](1))
           else scala.None
       }
+      object Match extends MatchModule {
+        def apply[Subtype: Type, Instance <: runtime.Path: Type]: Type[runtime.Path.Match[Subtype, Instance]] =
+          weakTypeTag[runtime.Path.Match[Subtype, Instance]]
+        def unapply[A](A: Type[A]): Option[(??, ?<[runtime.Path])] =
+          if (A.isCtor[runtime.Path.Match[?, ?]]) Some(A.param(0) -> A.param_<[runtime.Path](1))
+          else scala.None
+      }
     }
   }
 }

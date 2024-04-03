@@ -241,6 +241,13 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.Path,
             runtime.Path.Select
           ] { this: Select.type => }
+      val Match: MatchModule
+      trait MatchModule
+          extends Type.Ctor2UpperBounded[
+            Any,
+            runtime.Path,
+            runtime.Path.Match
+          ] { this: Match.type => }
     }
 
     // You can `import ChimneyType.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts
