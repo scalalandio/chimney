@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.TransformerIntoMacros
-import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
 
 import scala.language.experimental.macros
 
@@ -18,7 +18,7 @@ import scala.language.experimental.macros
   *
   * @since 0.1.0
   */
-final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
+final class TransformerInto[From, To, Cfg <: TransformerOverrides, Flags <: TransformerFlags](
     val source: From,
     val td: TransformerDefinition[From, To, Cfg, Flags]
 ) extends TransformerFlagsDsl[Lambda[`Flags1 <: TransformerFlags` => TransformerInto[From, To, Cfg, Flags1]], Flags]
@@ -46,7 +46,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     */
   def withFieldConst[T, U](selector: To => T, value: U)(implicit
       ev: U <:< T
-  ): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withFieldConstImpl[From, To, Cfg, Flags]
 
   /** Use function `f` to compute value of field picked using `selector`.
@@ -66,7 +66,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
   def withFieldComputed[T, U](
       selector: To => T,
       f: From => U
-  )(implicit ev: U <:< T): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  )(implicit ev: U <:< T): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withFieldComputedImpl[From, To, Cfg, Flags]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
@@ -86,7 +86,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
   def withFieldRenamed[T, U](
       selectorFrom: From => T,
       selectorTo: To => U
-  ): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withFieldRenamedImpl[From, To, Cfg, Flags]
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another
@@ -103,7 +103,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     *
     * @since 0.1.2
     */
-  def withCoproductInstance[Inst](f: Inst => To): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  def withCoproductInstance[Inst](f: Inst => To): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withCoproductInstanceImpl[From, To, Cfg, Flags, Inst]
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
@@ -122,7 +122,7 @@ final class TransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Transforme
     */
   def withConstructor[Ctor](
       f: Ctor
-  )(implicit ev: IsFunction.Of[Ctor, To]): TransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  )(implicit ev: IsFunction.Of[Ctor, To]): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withConstructorImpl[From, To, Cfg, Flags]
 
   /** Apply configured transformation in-place.

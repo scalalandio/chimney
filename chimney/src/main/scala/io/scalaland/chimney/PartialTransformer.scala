@@ -1,7 +1,7 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinitionCommons}
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
 
 /** Type class expressing partial transformation between source type `From` and target type `To`, with the ability
   * of reporting path-annotated transformation error(s).
@@ -114,7 +114,7 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
     *
     * @since 0.7.0
     */
-  def define[From, To]: PartialTransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+  def define[From, To]: PartialTransformerDefinition[From, To, TransformerOverrides.Empty, TransformerFlags.Default] =
     new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 
   /** Type class used when you want o allow using automatically derived transformations.

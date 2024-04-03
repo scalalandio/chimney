@@ -1,13 +1,13 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.runtime.TransformerCfg
+import io.scalaland.chimney.internal.runtime.TransformerOverrides
 
 object TransformerDefinitionCommons {
   type RuntimeDataStore = Vector[Any]
   def emptyRuntimeDataStore: RuntimeDataStore = Vector.empty[Any]
 }
 
-private[chimney] trait TransformerDefinitionCommons[UpdateCfg[_ <: TransformerCfg]] {
+private[chimney] trait TransformerDefinitionCommons[UpdateCfg[_ <: TransformerOverrides]] {
 
   import TransformerDefinitionCommons.*
 

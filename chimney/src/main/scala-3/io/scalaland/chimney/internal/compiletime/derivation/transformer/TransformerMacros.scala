@@ -15,7 +15,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
   def deriveTotalTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerCfg: Type,
+      Cfg <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
@@ -32,7 +32,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       deriveTotalTransformer[
         From,
         To,
-        runtime.TransformerCfg.Empty,
+        runtime.TransformerOverrides.Empty,
         runtime.TransformerFlags.Default,
         ImplicitScopeFlags
       ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
@@ -47,7 +47,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       derivePartialTransformer[
         From,
         To,
-        runtime.TransformerCfg.Empty,
+        runtime.TransformerOverrides.Empty,
         runtime.TransformerFlags.Default,
         ImplicitScopeFlags
       ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
@@ -56,7 +56,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
   def derivePartialTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerCfg: Type,
+      Cfg <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
@@ -96,7 +96,7 @@ object TransformerMacros {
   final def deriveTotalTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerCfg: Type,
+      Cfg <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
@@ -107,7 +107,7 @@ object TransformerMacros {
   final def deriveTotalTransformerResultWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerCfg: Type,
+      Cfg <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](source: Expr[From], td: Expr[TransformerDefinition[From, To, Cfg, Flags]])(using quotes: Quotes): Expr[To] =
@@ -125,7 +125,7 @@ object TransformerMacros {
   final def derivePartialTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerCfg: Type,
+      Cfg <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
@@ -136,7 +136,7 @@ object TransformerMacros {
   final def derivePartialTransformerResultWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerCfg: Type,
+      Cfg <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](source: Expr[From], td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]], failFast: Boolean)(using

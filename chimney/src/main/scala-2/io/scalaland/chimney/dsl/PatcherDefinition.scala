@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
-import io.scalaland.chimney.internal.runtime.{PatcherCfg, PatcherFlags}
+import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
 
 import scala.language.experimental.macros
 
@@ -15,7 +15,7 @@ import scala.language.experimental.macros
   *
   * @since 0.8.0
   */
-final class PatcherDefinition[From, To, Cfg <: PatcherCfg, Flags <: PatcherFlags]
+final class PatcherDefinition[From, To, Cfg <: PatcherOverrides, Flags <: PatcherFlags]
     extends PatcherFlagsDsl[Lambda[
       `Flags1 <: PatcherFlags` => PatcherDefinition[From, To, Cfg, Flags1]
     ], Flags] {

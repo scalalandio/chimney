@@ -1,7 +1,7 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
-import io.scalaland.chimney.internal.runtime.{PatcherCfg, PatcherFlags}
+import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
 
 import scala.language.experimental.macros
 
@@ -17,7 +17,7 @@ import scala.language.experimental.macros
   *
   * @since 0.4.0
   */
-final class PatcherUsing[A, Patch, Cfg <: PatcherCfg, Flags <: PatcherFlags](val obj: A, val objPatch: Patch)
+final class PatcherUsing[A, Patch, Cfg <: PatcherOverrides, Flags <: PatcherFlags](val obj: A, val objPatch: Patch)
     extends PatcherFlagsDsl[Lambda[`Flags1 <: PatcherFlags` => PatcherUsing[A, Patch, Cfg, Flags1]], Flags] {
 
   /** Applies configured patching in-place

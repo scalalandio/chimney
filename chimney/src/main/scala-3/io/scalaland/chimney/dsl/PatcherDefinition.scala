@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.dsl.*
-import io.scalaland.chimney.internal.runtime.{PatcherCfg, PatcherFlags}
+import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
 
 /** Allows customization of [[io.scalaland.chimney.Patcher]] derivation.
   *
@@ -14,7 +14,7 @@ import io.scalaland.chimney.internal.runtime.{PatcherCfg, PatcherFlags}
   *
   * @since 0.8.0
   */
-final class PatcherDefinition[A, Patch, Cfg <: PatcherCfg, Flags <: PatcherFlags]
+final class PatcherDefinition[A, Patch, Cfg <: PatcherOverrides, Flags <: PatcherFlags]
     extends PatcherFlagsDsl[[Flags1 <: PatcherFlags] =>> PatcherDefinition[A, Patch, Cfg, Flags1], Flags] {
 
   /** Build Patcher using current configuration.

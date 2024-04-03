@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.dsl.*
-import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
 
 import scala.quoted.*
 
@@ -16,10 +16,10 @@ import scala.quoted.*
   *
   * @since 0.4.0
   */
-final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
+final class TransformerDefinition[From, To, Cfg <: TransformerOverrides, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
 ) extends TransformerFlagsDsl[[Flags1 <: TransformerFlags] =>> TransformerDefinition[From, To, Cfg, Flags1], Flags]
-    with TransformerDefinitionCommons[[Cfg1 <: TransformerCfg] =>> TransformerDefinition[From, To, Cfg1, Flags]]
+    with TransformerDefinitionCommons[[Cfg1 <: TransformerOverrides] =>> TransformerDefinition[From, To, Cfg1, Flags]]
     with WithRuntimeDataStore {
 
   /** Lifts current transformer definition as `PartialTransformer` definition
@@ -49,7 +49,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
   transparent inline def withFieldConst[T, U](
       inline selector: To => T,
       inline value: U
-  )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withFieldConstImpl('this, 'selector, 'value) }
 
   /** Use function `f` to compute value of field picked using `selector`.
@@ -69,7 +69,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
   transparent inline def withFieldComputed[T, U](
       inline selector: To => T,
       inline f: From => U
-  )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withFieldComputedImpl('this, 'selector, 'f) }
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
@@ -89,7 +89,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
   transparent inline def withFieldRenamed[T, U](
       inline selectorFrom: From => T,
       inline selectorTo: To => U
-  ): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withFieldRenamed('this, 'selectorFrom, 'selectorTo) }
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
@@ -109,7 +109,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     */
   transparent inline def withCoproductInstance[Inst](
       inline f: Inst => To
-  ): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withCoproductInstance('this, 'f) }
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
@@ -128,7 +128,7 @@ final class TransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: Tran
     */
   transparent inline def withConstructor[Ctor](
       inline f: Ctor
-  )(using IsFunction.Of[Ctor, To]): TransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  )(using IsFunction.Of[Ctor, To]): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withConstructorImpl('this, 'f) }
 
   /** Build Transformer using current configuration.

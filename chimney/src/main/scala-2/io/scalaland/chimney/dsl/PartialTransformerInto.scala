@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerIntoMacros
-import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
 
 import scala.language.experimental.macros
 
@@ -19,7 +19,7 @@ import scala.language.experimental.macros
   *
   * @since 0.7.0
   */
-final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
+final class PartialTransformerInto[From, To, Cfg <: TransformerOverrides, Flags <: TransformerFlags](
     val source: From,
     val td: PartialTransformerDefinition[From, To, Cfg, Flags]
 ) extends TransformerFlagsDsl[Lambda[
@@ -43,7 +43,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     */
   def withFieldConst[T, U](selector: To => T, value: U)(implicit
       ev: U <:< T
-  ): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withFieldConstImpl[From, To, Cfg, Flags]
 
   /** Use provided partial result `value` for field picked using `selector`.
@@ -63,7 +63,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
   def withFieldConstPartial[T, U](
       selector: To => T,
       value: partial.Result[U]
-  )(implicit ev: U <:< T): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  )(implicit ev: U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withFieldConstPartialImpl[From, To, Cfg, Flags]
 
   /** Use function `f` to compute value of field picked using `selector`.
@@ -83,7 +83,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
   def withFieldComputed[T, U](
       selector: To => T,
       f: From => U
-  )(implicit ev: U <:< T): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  )(implicit ev: U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withFieldComputedImpl[From, To, Cfg, Flags]
 
   /** Use function `f` to compute partial result for field picked using `selector`.
@@ -103,7 +103,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
   def withFieldComputedPartial[T, U](
       selector: To => T,
       f: From => partial.Result[U]
-  )(implicit ev: U <:< T): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  )(implicit ev: U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withFieldComputedPartialImpl[From, To, Cfg, Flags]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
@@ -123,7 +123,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
   def withFieldRenamed[T, U](
       selectorFrom: From => T,
       selectorTo: To => U
-  ): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withFieldRenamedImpl[From, To, Cfg, Flags]
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
@@ -141,7 +141,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     *
     * @since 0.7.0
     */
-  def withCoproductInstance[Inst](f: Inst => To): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  def withCoproductInstance[Inst](f: Inst => To): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withCoproductInstanceImpl[From, To, Cfg, Flags, Inst]
 
   /** Use `f` to calculate the (missing) coproduct instance partial result when mapping one coproduct into another.
@@ -161,7 +161,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     */
   def withCoproductInstancePartial[Inst](
       f: Inst => partial.Result[To]
-  ): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withCoproductInstancePartialImpl[From, To, Cfg, Flags, Inst]
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
@@ -180,7 +180,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
     */
   def withConstructor[Ctor](
       f: Ctor
-  )(implicit ev: IsFunction.Of[Ctor, To]): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  )(implicit ev: IsFunction.Of[Ctor, To]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withConstructorImpl[From, To, Cfg, Flags]
 
   /** Use `f` instead of the primary constructor to parse into `partial.Result[To]` value.
@@ -201,7 +201,7 @@ final class PartialTransformerInto[From, To, Cfg <: TransformerCfg, Flags <: Tra
       f: Ctor
   )(implicit
       ev: IsFunction.Of[Ctor, partial.Result[To]]
-  ): PartialTransformerInto[From, To, ? <: TransformerCfg, Flags] =
+  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withConstructorPartialImpl[From, To, Cfg, Flags]
 
   /** Apply configured partial transformation in-place.

@@ -59,8 +59,10 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   protected object PatcherConfigurations {
 
+    // TODO: rename Config => Configuration
+
     final def readPatcherConfig[
-        Cfg <: runtime.PatcherCfg: Type,
+        Cfg <: runtime.PatcherOverrides: Type,
         Flags <: runtime.PatcherFlags: Type,
         ImplicitScopeFlags <: runtime.PatcherFlags: Type
     ]: PatcherConfiguration = {
@@ -84,10 +86,10 @@ private[compiletime] trait Configurations { this: Derivation =>
         // $COVERAGE-ON$
       }
 
-    private def extractPatcherConfig[Cfg <: runtime.PatcherCfg: Type](): PatcherConfiguration = Type[Cfg] match {
-      case empty if empty =:= ChimneyType.PatcherCfg.Empty => PatcherConfiguration()
+    private def extractPatcherConfig[Cfg <: runtime.PatcherOverrides: Type](): PatcherConfiguration = Type[Cfg] match {
+      case empty if empty =:= ChimneyType.PatcherOverrides.Empty => PatcherConfiguration()
       case _ =>
-        reportError(s"Invalid internal PatcherCfg type shape: ${Type.prettyPrint[Cfg]}!!")
+        reportError(s"Invalid internal PatcherOverrides type shape: ${Type.prettyPrint[Cfg]}!!")
     }
   }
 }

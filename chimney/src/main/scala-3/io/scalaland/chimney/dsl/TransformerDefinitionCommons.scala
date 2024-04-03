@@ -1,6 +1,6 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.runtime.TransformerCfg
+import io.scalaland.chimney.internal.runtime.TransformerOverrides
 import scala.annotation.static
 
 object TransformerDefinitionCommons {
@@ -13,7 +13,7 @@ object TransformerDefinitionCommons {
   // @static final def emptyRuntimeDataStore: RuntimeDataStore = Vector.empty[Any]
 }
 
-private[chimney] trait TransformerDefinitionCommons[UpdateCfg[_ <: TransformerCfg]] {
+private[chimney] trait TransformerDefinitionCommons[UpdateCfg[_ <: TransformerOverrides]] {
 
   import TransformerDefinitionCommons.*
 

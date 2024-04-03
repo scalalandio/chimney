@@ -1,7 +1,7 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinition, TransformerDefinitionCommons}
-import io.scalaland.chimney.internal.runtime.{TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
 
 /** Type class expressing total transformation between source type `From` and target type `To`.
   *
@@ -45,7 +45,7 @@ object Transformer extends TransformerCompanionPlatform {
     *
     * @since 0.4.0
     */
-  def define[From, To]: TransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+  def define[From, To]: TransformerDefinition[From, To, TransformerOverrides.Empty, TransformerFlags.Default] =
     new TransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 
   /** Creates an empty [[io.scalaland.chimney.dsl.PartialTransformerDefinition]] that you can customize to derive
@@ -59,7 +59,8 @@ object Transformer extends TransformerCompanionPlatform {
     *
     * @since 0.7.0
     */
-  def definePartial[From, To]: PartialTransformerDefinition[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+  def definePartial[From, To]
+      : PartialTransformerDefinition[From, To, TransformerOverrides.Empty, TransformerFlags.Default] =
     new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 
   /** Type class used when you want o allow using automatically derived transformations.

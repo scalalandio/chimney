@@ -3,7 +3,7 @@ package io.scalaland.chimney.inlined
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.internal.*
-import io.scalaland.chimney.internal.runtime.{PatcherCfg, PatcherFlags, TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, TransformerFlags, TransformerOverrides}
 import io.scalaland.chimney.partial
 
 import scala.util.Try
@@ -24,7 +24,7 @@ extension [From](source: From) {
     *
     * @since 0.1.0
     */
-  transparent inline def into[To]: TransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+  transparent inline def into[To]: TransformerInto[From, To, TransformerOverrides.Empty, TransformerFlags.Default] =
     new TransformerInto(source, new TransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore))
 }
 
@@ -45,7 +45,7 @@ extension [From](source: From) {
     * @since 0.7.0
     */
   transparent inline def intoPartial[To]
-      : PartialTransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+      : PartialTransformerInto[From, To, TransformerOverrides.Empty, TransformerFlags.Default] =
     new PartialTransformerInto(
       source,
       new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
@@ -69,6 +69,6 @@ extension [T](obj: T) {
     *
     * @since 0.4.0
     */
-  transparent inline def using[P](patch: P): PatcherUsing[T, P, PatcherCfg.Empty, PatcherFlags.Default] =
-    new PatcherUsing[T, P, PatcherCfg.Empty, PatcherFlags.Default](obj, patch)
+  transparent inline def using[P](patch: P): PatcherUsing[T, P, PatcherOverrides.Empty, PatcherFlags.Default] =
+    new PatcherUsing[T, P, PatcherOverrides.Empty, PatcherFlags.Default](obj, patch)
 }

@@ -14,7 +14,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   def deriveTotalTransformationWithConfig[
       From: WeakTypeTag,
       To: WeakTypeTag,
-      Cfg <: runtime.TransformerCfg: WeakTypeTag,
+      Cfg <: runtime.TransformerOverrides: WeakTypeTag,
       InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](
@@ -42,7 +42,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
       deriveTotalTransformer[
         From,
         To,
-        runtime.TransformerCfg.Empty,
+        runtime.TransformerOverrides.Empty,
         runtime.TransformerFlags.Default,
         ImplicitScopeFlags
       ](ChimneyExpr.RuntimeDataStore.empty)
@@ -52,7 +52,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   def deriveTotalTransformerWithConfig[
       From: WeakTypeTag,
       To: WeakTypeTag,
-      Cfg <: runtime.TransformerCfg: WeakTypeTag,
+      Cfg <: runtime.TransformerOverrides: WeakTypeTag,
       InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]): Expr[Transformer[From, To]] =
@@ -69,7 +69,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   def derivePartialTransformationWithConfigNoFailFast[
       From: WeakTypeTag,
       To: WeakTypeTag,
-      Cfg <: runtime.TransformerCfg: WeakTypeTag,
+      Cfg <: runtime.TransformerOverrides: WeakTypeTag,
       InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]): Expr[partial.Result[To]] =
@@ -91,7 +91,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   def derivePartialTransformationWithConfigFailFast[
       From: WeakTypeTag,
       To: WeakTypeTag,
-      Cfg <: runtime.TransformerCfg: WeakTypeTag,
+      Cfg <: runtime.TransformerOverrides: WeakTypeTag,
       InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]): Expr[partial.Result[To]] =
@@ -120,7 +120,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
         derivePartialTransformer[
           From,
           To,
-          runtime.TransformerCfg.Empty,
+          runtime.TransformerOverrides.Empty,
           runtime.TransformerFlags.Default,
           implicitScopeFlagsType.Underlying
         ](ChimneyExpr.RuntimeDataStore.empty)
@@ -130,7 +130,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   def derivePartialTransformerWithConfig[
       From: WeakTypeTag,
       To: WeakTypeTag,
-      Cfg <: runtime.TransformerCfg: WeakTypeTag,
+      Cfg <: runtime.TransformerOverrides: WeakTypeTag,
       InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](

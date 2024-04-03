@@ -140,11 +140,11 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
   }
 
-  sealed protected trait RuntimeOverride extends scala.Product with Serializable
-  protected object RuntimeOverride {
-    sealed trait ForField extends RuntimeOverride
-    sealed trait ForSubtype extends RuntimeOverride
-    sealed trait ForConstructor extends RuntimeOverride
+  sealed protected trait TransformerOverride extends scala.Product with Serializable
+  protected object TransformerOverride {
+    sealed trait ForField extends TransformerOverride
+    sealed trait ForSubtype extends TransformerOverride
+    sealed trait ForConstructor extends TransformerOverride
 
     final case class Const(runtimeDataIdx: Int) extends ForField
     final case class ConstPartial(runtimeDataIdx: Int) extends ForField
@@ -152,8 +152,8 @@ private[compiletime] trait Configurations { this: Derivation =>
     final case class Computed(runtimeDataIdx: Int) extends ForField // with ForSubtype
     final case class ComputedPartial(runtimeDataIdx: Int) extends ForField // with ForSubtype
 
-    final case class ComputedNested(runtimeDataIdx: Int) extends ForSubtype
-    final case class ComputedNestedPartial(runtimeDataIdx: Int) extends ForSubtype
+    final case class CaseComputed(runtimeDataIdx: Int) extends ForSubtype
+    final case class CaseComputedPartial(runtimeDataIdx: Int) extends ForSubtype
 
     type Args = List[ListMap[String, ??]]
     final case class Constructor(runtimeDataIdx: Int, args: Args) extends ForConstructor {
@@ -177,16 +177,16 @@ private[compiletime] trait Configurations { this: Derivation =>
       /** Let us distinct if flags were modified only by implicit TransformerConfiguration or maybe also locally */
       private val instanceFlagOverridden: Boolean = false,
       /** Stores all customizations provided by user */
-      private val runtimeOverrides: Vector[(Path, RuntimeOverride)] = Vector.empty,
+      private val runtimeOverrides: Vector[(Path, TransformerOverride)] = Vector.empty,
       /** Let us prevent `implicit val foo = foo` but allow `implicit val foo = new Foo { def sth = foo }` */
       private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
   ) {
 
     private lazy val runtimeOverridesForCurrent = runtimeOverrides.filter {
-      case (Path.AtField(_, Path.Root), _: RuntimeOverride.ForField)     => true
-      case (Path.AtSubtype(_, Path.Root), _: RuntimeOverride.ForSubtype) => true
-      case (Path.Root, _: RuntimeOverride.ForConstructor)                => true
-      case _                                                             => false
+      case (Path.AtField(_, Path.Root), _: TransformerOverride.ForField)     => true
+      case (Path.AtSubtype(_, Path.Root), _: TransformerOverride.ForSubtype) => true
+      case (Path.Root, _: TransformerOverride.ForConstructor)                => true
+      case _                                                                 => false
     }
 
     def allowFromToImplicitSummoning: TransformerConfiguration =
@@ -204,29 +204,30 @@ private[compiletime] trait Configurations { this: Derivation =>
     def areLocalFlagsOverridesEmptyForCurrent: Boolean =
       !instanceFlagOverridden
 
-    def addRuntimeOverride(path: Path, runtimeOverride: RuntimeOverride): TransformerConfiguration =
+    def addTransformerOverride(path: Path, runtimeOverride: TransformerOverride): TransformerConfiguration =
       copy(runtimeOverrides = runtimeOverrides :+ (path -> runtimeOverride))
     def areValueOverridesEmptyForCurrent: Boolean =
       runtimeOverrides.isEmpty
     def areOverridesEmptyForCurrent: Boolean =
       areLocalFlagsOverridesEmptyForCurrent && areValueOverridesEmptyForCurrent
-    def filterOverridesForField(nameFilter: String => Boolean): Map[String, RuntimeOverride.ForField] =
+    def filterOverridesForField(nameFilter: String => Boolean): Map[String, TransformerOverride.ForField] =
       ListMap.from(
         runtimeOverridesForCurrent.collect {
-          case (Path.AtField(name, _), runtimeFieldOverride: RuntimeOverride.ForField) if nameFilter(name) =>
+          case (Path.AtField(name, _), runtimeFieldOverride: TransformerOverride.ForField) if nameFilter(name) =>
             name -> runtimeFieldOverride
         }
       )
-    def filterOverridesForCoproduct(typeFilter: ?? => Boolean): Map[??, RuntimeOverride.ForSubtype] =
+    def filterOverridesForCoproduct(typeFilter: ?? => Boolean): Map[??, TransformerOverride.ForSubtype] =
       ListMap.from(
         runtimeOverridesForCurrent.collect {
-          case (Path.AtSubtype(tpe, _), runtimeCoproductOverride: RuntimeOverride.ForSubtype) if typeFilter(tpe) =>
+          case (Path.AtSubtype(tpe, _), runtimeCoproductOverride: TransformerOverride.ForSubtype) if typeFilter(tpe) =>
             tpe -> runtimeCoproductOverride
         }
       )
-    def filterOverridesForConstructor: Option[RuntimeOverride.ForConstructor] =
-      runtimeOverridesForCurrent.collectFirst { case (_, runtimeConstructorOverride: RuntimeOverride.ForConstructor) =>
-        runtimeConstructorOverride
+    def filterOverridesForConstructor: Option[TransformerOverride.ForConstructor] =
+      runtimeOverridesForCurrent.collectFirst {
+        case (_, runtimeConstructorOverride: TransformerOverride.ForConstructor) =>
+          runtimeConstructorOverride
       }
 
     def prepareForRecursiveCall(toPath: Path)(implicit ctx: TransformationContext[?, ?]): TransformerConfiguration =
@@ -238,9 +239,9 @@ private[compiletime] trait Configurations { this: Derivation =>
             // Fields are always matched with "_.fieldName" Path while subtypes are always matched with
             // "_ match { case _: Tpe => }" so "_" Paths are useless in their case while they might get in way of
             // checking if there might be some relevant overrides for current/nested values
-            case _: RuntimeOverride.ForField | _: RuntimeOverride.ForSubtype => true
+            case _: TransformerOverride.ForField | _: TransformerOverride.ForSubtype => true
             // Constructor is always matched at "_" Path, and dropped only when going inward
-            case _: RuntimeOverride.ForConstructor => false
+            case _: TransformerOverride.ForConstructor => false
           }
           newPath <- path.drop(toPath)
           if !(newPath == Path.Root && alwaysDropOnRoot)
@@ -265,8 +266,10 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   protected object TransformerConfigurations {
 
+    // TODO: rename Config => Configuration
+
     final def readTransformerConfig[
-        Cfg <: runtime.TransformerCfg: Type,
+        Cfg <: runtime.TransformerOverrides: Type,
         InstanceFlags <: runtime.TransformerFlags: Type,
         ImplicitScopeFlags <: runtime.TransformerFlags: Type
     ]: TransformerConfiguration = {
@@ -344,76 +347,76 @@ private[compiletime] trait Configurations { this: Derivation =>
       // $COVERAGE-ON$
     }
 
-    private def extractTransformerConfig[Cfg <: runtime.TransformerCfg: Type](
+    private def extractTransformerConfig[Cfg <: runtime.TransformerOverrides: Type](
         runtimeDataIdx: Int
     ): TransformerConfiguration = Type[Cfg] match {
-      case empty if empty =:= ChimneyType.TransformerCfg.Empty => TransformerConfiguration()
-      case ChimneyType.TransformerCfg.FieldConst(path, cfg) =>
-        import path.Underlying as PathType, cfg.Underlying as Cfg2
+      case empty if empty =:= ChimneyType.TransformerOverrides.Empty => TransformerConfiguration()
+      case ChimneyType.TransformerOverrides.Const(toPath, cfg) =>
+        import toPath.Underlying as ToPath, cfg.Underlying as Cfg2
         extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
-          .addRuntimeOverride(
-            extractPath[PathType],
-            RuntimeOverride.Const(runtimeDataIdx)
+          .addTransformerOverride(
+            extractPath[ToPath],
+            TransformerOverride.Const(runtimeDataIdx)
           )
-      case ChimneyType.TransformerCfg.FieldConstPartial(path, cfg) =>
-        import path.Underlying as PathType, cfg.Underlying as Cfg2
+      case ChimneyType.TransformerOverrides.ConstPartial(toPath, cfg) =>
+        import toPath.Underlying as ToPath, cfg.Underlying as Cfg2
         extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
-          .addRuntimeOverride(
-            extractPath[PathType],
-            RuntimeOverride.ConstPartial(runtimeDataIdx)
+          .addTransformerOverride(
+            extractPath[ToPath],
+            TransformerOverride.ConstPartial(runtimeDataIdx)
           )
-      case ChimneyType.TransformerCfg.FieldComputed(path, cfg) =>
-        import path.Underlying as PathType, cfg.Underlying as Cfg2
+      case ChimneyType.TransformerOverrides.Computed(toPath, cfg) =>
+        import toPath.Underlying as ToPath, cfg.Underlying as Cfg2
         extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
-          .addRuntimeOverride(
-            extractPath[PathType],
-            RuntimeOverride.Computed(runtimeDataIdx)
+          .addTransformerOverride(
+            extractPath[ToPath],
+            TransformerOverride.Computed(runtimeDataIdx)
           )
-      case ChimneyType.TransformerCfg.FieldComputedPartial(path, cfg) =>
-        import path.Underlying as PathType, cfg.Underlying as Cfg2
+      case ChimneyType.TransformerOverrides.ComputedPartial(toPath, cfg) =>
+        import toPath.Underlying as ToPath, cfg.Underlying as Cfg2
         extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
-          .addRuntimeOverride(
-            extractPath[PathType],
-            RuntimeOverride.ComputedPartial(runtimeDataIdx)
+          .addTransformerOverride(
+            extractPath[ToPath],
+            TransformerOverride.ComputedPartial(runtimeDataIdx)
           )
-      case ChimneyType.TransformerCfg.FieldRelabelled(fromName, toName, cfg) =>
-        import fromName.Underlying as FromName, toName.Underlying as ToName, cfg.Underlying as Cfg2
+      case ChimneyType.TransformerOverrides.CaseComputed(toPath, cfg) =>
+        import toPath.Underlying as ToPath, cfg.Underlying as Cfg2
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
+          .addTransformerOverride(
+            extractPath[ToPath],
+            TransformerOverride.CaseComputed(runtimeDataIdx)
+          )
+      case ChimneyType.TransformerOverrides.CaseComputedPartial(toPath, cfg) =>
+        import toPath.Underlying as ToPath, cfg.Underlying as Cfg2
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
+          .addTransformerOverride(
+            extractPath[ToPath],
+            TransformerOverride.CaseComputedPartial(runtimeDataIdx)
+          )
+      case ChimneyType.TransformerOverrides.Constructor(args, toPath, cfg) =>
+        import args.Underlying as Args, toPath.Underlying as ToPath, cfg.Underlying as Cfg2
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
+          .addTransformerOverride(
+            extractPath[ToPath],
+            TransformerOverride.Constructor(runtimeDataIdx, extractArgumentLists[Args])
+          )
+      case ChimneyType.TransformerOverrides.ConstructorPartial(args, toPath, cfg) =>
+        import args.Underlying as Args, toPath.Underlying as ToPath, cfg.Underlying as Cfg2
+        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
+          .addTransformerOverride(
+            extractPath[ToPath],
+            TransformerOverride.ConstructorPartial(runtimeDataIdx, extractArgumentLists[Args])
+          )
+      case ChimneyType.TransformerOverrides.RenamedFrom(fromPath, toPath, cfg) =>
+        import fromPath.Underlying as FromPath, toPath.Underlying as ToPath, cfg.Underlying as Cfg2
         extractTransformerConfig[Cfg2](runtimeDataIdx)
-          .addRuntimeOverride(
-            extractPath[ToName],
-            RuntimeOverride.RenamedFrom(extractPath[FromName])
-          )
-      case ChimneyType.TransformerCfg.CoproductInstance(instance, _, cfg) =>
-        import instance.Underlying as Instance, cfg.Underlying as Cfg2
-        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
-          .addRuntimeOverride(
-            Path.Root.`match`[Instance],
-            RuntimeOverride.ComputedNested(runtimeDataIdx)
-          )
-      case ChimneyType.TransformerCfg.CoproductInstancePartial(instance, _, cfg) =>
-        import instance.Underlying as Instance, cfg.Underlying as Cfg2
-        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
-          .addRuntimeOverride(
-            Path.Root.`match`[Instance],
-            RuntimeOverride.ComputedNested(runtimeDataIdx)
-          )
-      case ChimneyType.TransformerCfg.Constructor(args, _, cfg) =>
-        import args.Underlying as Args, cfg.Underlying as Cfg2
-        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
-          .addRuntimeOverride(
-            Path.Root,
-            RuntimeOverride.Constructor(runtimeDataIdx, extractArgumentLists[Args])
-          )
-      case ChimneyType.TransformerCfg.ConstructorPartial(args, _, cfg) =>
-        import args.Underlying as Args, cfg.Underlying as Cfg2
-        extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
-          .addRuntimeOverride(
-            Path.Root,
-            RuntimeOverride.ConstructorPartial(runtimeDataIdx, extractArgumentLists[Args])
+          .addTransformerOverride(
+            extractPath[ToPath],
+            TransformerOverride.RenamedFrom(extractPath[FromPath])
           )
       case _ =>
         // $COVERAGE-OFF$
-        reportError(s"Invalid internal TransformerCfg type shape: ${Type.prettyPrint[Cfg]}!!")
+        reportError(s"Invalid internal TransformerOverrides type shape: ${Type.prettyPrint[Cfg]}!!")
       // $COVERAGE-ON$
     }
 
