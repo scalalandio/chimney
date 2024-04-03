@@ -11,7 +11,7 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[To] match {
         case ValueClassType(to2) =>
-          if (ctx.config.areValueOverridesEmptyForCurrent[From, To]) {
+          if (ctx.config.areValueOverridesEmptyForCurrent) {
             import to2.{Underlying as InnerTo, value as valueTo}
             transformToInnerToAndWrap[From, To, InnerTo](valueTo)
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
@@ -24,12 +24,13 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
   )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
     deriveRecursiveTransformationExpr[From, InnerTo](
       ctx.src,
-      new DownField(areFieldNamesMatching(_, valueTo.fieldName))
-    ).flatMap { derivedInnerTo =>
-      // We're constructing:
-      // '{ new $To(${ derivedInnerTo }) }
-      DerivationResult.expanded(derivedInnerTo.map(valueTo.wrap))
-    }
+      Path.Root.select(valueTo.fieldName)
+    )
+      .flatMap { derivedInnerTo =>
+        // We're constructing:
+        // '{ new $To(${ derivedInnerTo }) }
+        DerivationResult.expanded(derivedInnerTo.map(valueTo.wrap))
+      }
       // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
       .orElse(TransformProductToProductRule.expand(ctx))
       .orElse(

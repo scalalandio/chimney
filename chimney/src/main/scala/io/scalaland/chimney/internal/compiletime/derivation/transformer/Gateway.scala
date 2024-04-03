@@ -30,7 +30,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
           TransformerConfigurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
           runtimeDataStore
         )
-        .updateConfig(_.allowFromToImplicitSearch)
+        .updateConfig(_.allowFromToImplicitSummoning)
 
       val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
 
@@ -88,7 +88,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
           TransformerConfigurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
           runtimeDataStore
         )
-        .updateConfig(_.allowFromToImplicitSearch)
+        .updateConfig(_.allowFromToImplicitSummoning)
 
       val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
 

@@ -161,7 +161,7 @@ private[compiletime] trait Derivation
         TransformerConfig(),
         ChimneyExpr.RuntimeDataStore.empty
       )
-      .updateConfig(_.allowFromToImplicitSearch)
+      .updateConfig(_.allowFromToImplicitSummoning)
 
     deriveTransformationResultExpr(context).map(_.ensureTotal)
   }
