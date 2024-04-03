@@ -8,7 +8,7 @@ import io.scalaland.chimney.dsl.{
   TransformerDefinitionCommons,
   TransformerInto
 }
-import io.scalaland.chimney.internal.runtime.{PatcherCfg, PatcherFlags, TransformerCfg, TransformerFlags}
+import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, TransformerFlags, TransformerOverrides}
 
 /** Imports only extension methods for inlined derivation
   *
@@ -32,7 +32,7 @@ package object inlined {
       *
       * @since 0.1.0
       */
-    final def into[To]: TransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+    final def into[To]: TransformerInto[From, To, TransformerOverrides.Empty, TransformerFlags.Default] =
       new TransformerInto(source, new TransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore))
   }
 
@@ -52,7 +52,7 @@ package object inlined {
       *
       * @since 0.7.0
       */
-    final def intoPartial[To]: PartialTransformerInto[From, To, TransformerCfg.Empty, TransformerFlags.Default] =
+    final def intoPartial[To]: PartialTransformerInto[From, To, TransformerOverrides.Empty, TransformerFlags.Default] =
       new PartialTransformerInto(
         source,
         new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
@@ -76,7 +76,7 @@ package object inlined {
       *
       * @since 0.4.0
       */
-    final def using[P](patch: P): PatcherUsing[T, P, PatcherCfg.Empty, PatcherFlags.Default] =
-      new PatcherUsing[T, P, PatcherCfg.Empty, PatcherFlags.Default](obj, patch)
+    final def using[P](patch: P): PatcherUsing[T, P, PatcherOverrides.Empty, PatcherFlags.Default] =
+      new PatcherUsing[T, P, PatcherOverrides.Empty, PatcherFlags.Default](obj, patch)
   }
 }

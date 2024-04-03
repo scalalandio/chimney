@@ -12,7 +12,7 @@ final class PatcherMacros(q: Quotes) extends DerivationPlatform(q) with Gateway 
   def derivePatcherWithConfig[
       A: Type,
       Patch: Type,
-      Cfg <: runtime.PatcherCfg: Type,
+      Cfg <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ]: Expr[Patcher[A, Patch]] =
@@ -24,7 +24,7 @@ final class PatcherMacros(q: Quotes) extends DerivationPlatform(q) with Gateway 
   ]: Expr[Patcher[A, Patch]] =
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
       import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
-      derivePatcher[A, Patch, runtime.PatcherCfg.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
+      derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
     }
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
@@ -53,7 +53,7 @@ object PatcherMacros {
   final def derivePatcherWithConfig[
       A: Type,
       Patch: Type,
-      Cfg <: runtime.PatcherCfg: Type,
+      Cfg <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ](using q: Quotes): Expr[Patcher[A, Patch]] =
@@ -65,7 +65,7 @@ object PatcherMacros {
   final def derivePatcherResultWithConfig[
       A: Type,
       Patch: Type,
-      Cfg <: runtime.PatcherCfg: Type,
+      Cfg <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ](

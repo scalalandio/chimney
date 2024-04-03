@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.{partial, PartialTransformer}
 import io.scalaland.chimney.internal.compiletime.dsl.*
-import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, TransformerFlags, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
 
 /** Allows customization of [[io.scalaland.chimney.PartialTransformer]] derivation.
   *
@@ -13,13 +13,15 @@ import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerCfg, Transf
   *
   * @since 0.7.0
   */
-final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags <: TransformerFlags](
+final class PartialTransformerDefinition[From, To, Cfg <: TransformerOverrides, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
 ) extends TransformerFlagsDsl[
       [Flags1 <: TransformerFlags] =>> PartialTransformerDefinition[From, To, Cfg, Flags1],
       Flags
     ]
-    with TransformerDefinitionCommons[[Cfg1 <: TransformerCfg] =>> PartialTransformerDefinition[From, To, Cfg1, Flags]]
+    with TransformerDefinitionCommons[
+      [Cfg1 <: TransformerOverrides] =>> PartialTransformerDefinition[From, To, Cfg1, Flags]
+    ]
     with WithRuntimeDataStore {
 
   /** Use provided `value` for field picked using `selector`.
@@ -39,7 +41,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   transparent inline def withFieldConst[T, U](
       inline selector: To => T,
       inline value: U
-  )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldConstImpl('this, 'selector, 'value) }
 
   /** Use provided partial result `value` for field picked using `selector`.
@@ -59,7 +61,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   transparent inline def withFieldConstPartial[T, U](
       inline selector: To => T,
       inline value: partial.Result[U]
-  )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldConstPartialImpl('this, 'selector, 'value) }
 
   /** Use function `f` to compute value of field picked using `selector`.
@@ -79,7 +81,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   transparent inline def withFieldComputed[T, U](
       inline selector: To => T,
       inline f: From => U
-  )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedImpl('this, 'selector, 'f) }
 
   /** Use function `f` to compute partial result for field picked using `selector`.
@@ -99,7 +101,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   transparent inline def withFieldComputedPartial[T, U](
       inline selector: To => T,
       inline f: From => partial.Result[U]
-  )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedPartialImpl('this, 'selector, 'f) }
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
@@ -119,7 +121,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
   transparent inline def withFieldRenamed[T, U](
       inline selectorFrom: From => T,
       inline selectorTo: To => U
-  ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldRenamed('this, 'selectorFrom, 'selectorTo) }
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
@@ -139,7 +141,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     */
   transparent inline def withCoproductInstance[Inst](
       inline f: Inst => To
-  ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withCoproductInstance('this, 'f) }
 
   /** Use `f` to calculate the (missing) coproduct instance partial result when mapping one coproduct into another.
@@ -159,7 +161,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     */
   transparent inline def withCoproductInstancePartial[Inst](
       inline f: Inst => partial.Result[To]
-  ): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withCoproductInstancePartial('this, 'f) }
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
@@ -178,7 +180,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     */
   transparent inline def withConstructor[Ctor](
       inline f: Ctor
-  )(using IsFunction.Of[Ctor, To]): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  )(using IsFunction.Of[Ctor, To]): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withConstructorImpl('this, 'f) }
 
   /** Use `f` instead of the primary constructor to parse into `partial.Result[To]` value.
@@ -197,7 +199,9 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerCfg, Flags 
     */
   transparent inline def withConstructorPartial[Ctor](
       inline f: Ctor
-  )(using IsFunction.Of[Ctor, partial.Result[To]]): PartialTransformerDefinition[From, To, ? <: TransformerCfg, Flags] =
+  )(using
+      IsFunction.Of[Ctor, partial.Result[To]]
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withConstructorPartialImpl('this, 'f) }
 
   /** Build Partial Transformer using current configuration.

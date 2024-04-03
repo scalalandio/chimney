@@ -152,8 +152,8 @@ private[chimney] trait DslMacroUtils {
 
   // If we try to do:
   //
-  //   implicit val fieldNameT = fieldName.Underlying
-  //   someMethod[SomeType[fieldNameT.Underlying]
+  //   implicit val toPath = fieldName.Underlying
+  //   someMethod[SomeType[toPath.Underlying]
   //
   // compiler will generate type containing... fieldName.Underlying instead of using implicit, and it'll start printing:
   //

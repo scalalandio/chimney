@@ -12,7 +12,7 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   def derivePatchWithConfig[
       A: WeakTypeTag,
       Patch: WeakTypeTag,
-      Cfg <: runtime.PatcherCfg: WeakTypeTag,
+      Cfg <: runtime.PatcherOverrides: WeakTypeTag,
       Flags <: runtime.PatcherFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.PatcherFlags: WeakTypeTag
   ](
@@ -33,7 +33,7 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   def derivePatcherWithConfig[
       A: WeakTypeTag,
       Patch: WeakTypeTag,
-      Cfg <: runtime.PatcherCfg: WeakTypeTag,
+      Cfg <: runtime.PatcherOverrides: WeakTypeTag,
       InstanceFlags <: runtime.PatcherFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.PatcherFlags: WeakTypeTag
   ](
@@ -53,7 +53,7 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   ]: Expr[Patcher[A, Patch]] = retypecheck(
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
       import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
-      derivePatcher[A, Patch, runtime.PatcherCfg.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
+      derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
     }
   )
 

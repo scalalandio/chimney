@@ -12,7 +12,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def derivePatcherResult[
       A: Type,
       Patch: Type,
-      Cfg <: runtime.PatcherCfg: Type,
+      Cfg <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ](
@@ -40,7 +40,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def derivePatcher[
       A: Type,
       Patch: Type,
-      Cfg <: runtime.PatcherCfg: Type,
+      Cfg <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ]: Expr[Patcher[A, Patch]] = {

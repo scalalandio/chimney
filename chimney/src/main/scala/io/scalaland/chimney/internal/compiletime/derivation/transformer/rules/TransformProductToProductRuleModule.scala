@@ -30,20 +30,20 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     private object HasCustomConstructor {
       def unapply[A, From, To](
           tpe: Type[A]
-      )(implicit ctx: TransformationContext[From, To]): Option[RuntimeOverride.ForConstructor] =
+      )(implicit ctx: TransformationContext[From, To]): Option[TransformerOverride.ForConstructor] =
         ctx.config.filterOverridesForConstructor
     }
 
     private def mapOverridesAndExtractorsToConstructorArguments[From, To](
         fromExtractors: Product.Getters[From],
-        constructorOverride: RuntimeOverride.ForConstructor
+        constructorOverride: TransformerOverride.ForConstructor
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
       import Product.Constructor.exprAsInstanceOfMethod as mkCtor
       constructorOverride match {
-        case RuntimeOverride.Constructor(idx, args) =>
+        case TransformerOverride.Constructor(idx, args) =>
           val Product.Constructor(parameters, constructor) = mkCtor[To](args)(ctx.runtimeDataStore(idx))
           mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, parameters, constructor)
-        case RuntimeOverride.ConstructorPartial(idx, args) =>
+        case TransformerOverride.ConstructorPartial(idx, args) =>
           val Product.Constructor(params, ctor) = mkCtor[partial.Result[To]](args)(ctx.runtimeDataStore(idx))
             .asInstanceOf[Product.Constructor[To]] // a hack to avoid weird conversions back and forth, part 1
           mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, params, ctor).map {
@@ -141,22 +141,22 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             // into Field2 or isField2 if there are multiple matching target arguments/setters
             object AmbiguousOverrides {
 
-              def unapply(input: (String, RuntimeOverride.ForField)): Option[(String, List[String])] = {
+              def unapply(input: (String, TransformerOverride.ForField)): Option[(String, List[String])] = {
                 val (toName, runtimeField) = input
                 val ambiguousOverrides = parameters
                   .collect {
                     case (anotherToName, _)
                         if toName == anotherToName || areFieldNamesMatching(toName, anotherToName) =>
                       runtimeField match {
-                        case RuntimeOverride.Const(_) =>
+                        case TransformerOverride.Const(_) =>
                           s".withFieldConst(_.$anotherToName, ...)"
-                        case RuntimeOverride.ConstPartial(_) =>
+                        case TransformerOverride.ConstPartial(_) =>
                           s".withFieldConstPartial(_.$anotherToName, ...)"
-                        case RuntimeOverride.Computed(_) =>
+                        case TransformerOverride.Computed(_) =>
                           s".withFieldComputed(_.$anotherToName, ...)"
-                        case RuntimeOverride.ComputedPartial(_) =>
+                        case TransformerOverride.ComputedPartial(_) =>
                           s".withFieldComputedPartial(_.$anotherToName, ...)"
-                        case RuntimeOverride.RenamedFrom(sourcePath) =>
+                        case TransformerOverride.RenamedFrom(sourcePath) =>
                           s".withFieldRenamed($sourcePath, _.$anotherToName})"
                       }
                   }
@@ -268,11 +268,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     private def useOverride[From, To, CtorParam: Type](
         fromName: String,
         toName: String,
-        runtimeFieldOverride: RuntimeOverride.ForField
+        runtimeFieldOverride: TransformerOverride.ForField
     )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Existential[TransformationExpr]] = runtimeFieldOverride match {
-      case RuntimeOverride.Const(runtimeDataIdx) =>
+      case TransformerOverride.Const(runtimeDataIdx) =>
         // We're constructing:
         // '{ ${ runtimeDataStore }(idx).asInstanceOf[$ctorParam] }
         DerivationResult.existential[TransformationExpr, CtorParam](
@@ -280,7 +280,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             ctx.runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[CtorParam]
           )
         )
-      case RuntimeOverride.ConstPartial(runtimeDataIdx) =>
+      case TransformerOverride.ConstPartial(runtimeDataIdx) =>
         // We're constructing:
         // '{
         //   ${ runtimeDataStore }(idx)
@@ -297,7 +297,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               )
           )
         )
-      case RuntimeOverride.Computed(runtimeDataIdx) =>
+      case TransformerOverride.Computed(runtimeDataIdx) =>
         import ctx.originalSrc.{Underlying as OriginalFrom, value as originalSrc}
         ctx match {
           case TransformationContext.ForTotal(_) =>
@@ -332,7 +332,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               )
             )
         }
-      case RuntimeOverride.ComputedPartial(runtimeDataIdx) =>
+      case TransformerOverride.ComputedPartial(runtimeDataIdx) =>
         // We're constructing:
         // '{
         //   ${ runtimeDataStore }(idx)
@@ -351,7 +351,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               )
           )
         )
-      case RuntimeOverride.RenamedFrom(sourcePath) =>
+      case TransformerOverride.RenamedFrom(sourcePath) =>
         def extractSource[Source: Type](
             sourceName: String,
             extractedSrcExpr: Expr[Source]
