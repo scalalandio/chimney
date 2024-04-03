@@ -30,14 +30,14 @@ private[compiletime] trait Configurations { this: Derivation =>
       ).flatten.mkString(", ")})"
   }
 
-  final protected case class PatcherConfig(
+  final protected case class PatcherConfiguration(
       flags: PatcherFlags = PatcherFlags(),
       private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
   ) {
 
-    def allowAPatchImplicitSearch: PatcherConfig = copy(preventImplicitSummoningForTypes = None)
+    def allowAPatchImplicitSearch: PatcherConfiguration = copy(preventImplicitSummoningForTypes = None)
 
-    def preventImplicitSummoningFor[A: Type, Patch: Type]: PatcherConfig =
+    def preventImplicitSummoningFor[A: Type, Patch: Type]: PatcherConfiguration =
       copy(preventImplicitSummoningForTypes = Some(Type[A].as_?? -> Type[Patch].as_??))
 
     def isImplicitSummoningPreventedFor[A: Type, Patch: Type]: Boolean =
@@ -63,7 +63,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         Cfg <: runtime.PatcherCfg: Type,
         Flags <: runtime.PatcherFlags: Type,
         ImplicitScopeFlags <: runtime.PatcherFlags: Type
-    ]: PatcherConfig = {
+    ]: PatcherConfiguration = {
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](PatcherFlags())
       val allFlags = extractTransformerFlags[Flags](implicitScopeFlags)
       extractPatcherConfig[Cfg]().copy(flags = allFlags)
@@ -84,8 +84,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         // $COVERAGE-ON$
       }
 
-    private def extractPatcherConfig[Cfg <: runtime.PatcherCfg: Type](): PatcherConfig = Type[Cfg] match {
-      case empty if empty =:= ChimneyType.PatcherCfg.Empty => PatcherConfig()
+    private def extractPatcherConfig[Cfg <: runtime.PatcherCfg: Type](): PatcherConfiguration = Type[Cfg] match {
+      case empty if empty =:= ChimneyType.PatcherCfg.Empty => PatcherConfiguration()
       case _ =>
         reportError(s"Invalid internal PatcherCfg type shape: ${Type.prettyPrint[Cfg]}!!")
     }

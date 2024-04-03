@@ -15,7 +15,7 @@ private[compiletime] trait Contexts { this: Derivation =>
     /** When using nested paths (_.foo.bar.baz) and recursive derivation this is the original, "top-level" value */
     val originalSrc: ExistentialExpr
     val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
-    val config: TransformerConfig
+    val config: TransformerConfiguration
     val derivationStartedAt: java.time.Instant
 
     type Target
@@ -42,7 +42,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         )
       }
 
-    def updateConfig(update: TransformerConfig => TransformerConfig): this.type =
+    def updateConfig(update: TransformerConfiguration => TransformerConfiguration): this.type =
       fold[TransformationContext[From, To]] { (ctx: TransformationContext.ForTotal[From, To]) =>
         TransformationContext.ForTotal[From, To](src = ctx.src)(
           From = ctx.From,
@@ -86,7 +86,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         val To: Type[To],
         val originalSrc: ExistentialExpr,
         val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
-        val config: TransformerConfig,
+        val config: TransformerConfiguration,
         val derivationStartedAt: java.time.Instant
     ) extends TransformationContext[From, To] {
 
@@ -107,7 +107,7 @@ private[compiletime] trait Contexts { this: Derivation =>
 
       def create[From: Type, To: Type](
           src: Expr[From],
-          config: TransformerConfig,
+          config: TransformerConfiguration,
           runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
       ): ForTotal[From, To] =
         ForTotal(src = src)(
@@ -125,7 +125,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         val To: Type[To],
         val originalSrc: ExistentialExpr,
         val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
-        val config: TransformerConfig,
+        val config: TransformerConfiguration,
         val derivationStartedAt: java.time.Instant
     ) extends TransformationContext[From, To] {
 
@@ -148,7 +148,7 @@ private[compiletime] trait Contexts { this: Derivation =>
       def create[From: Type, To: Type](
           src: Expr[From],
           failFast: Expr[Boolean],
-          config: TransformerConfig,
+          config: TransformerConfiguration,
           runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
       ): ForPartial[From, To] = ForPartial(src = src, failFast = failFast)(
         From = Type[From],
