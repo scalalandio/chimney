@@ -6,14 +6,14 @@ private[compiletime] trait Contexts { this: Derivation =>
   final case class PatcherContext[A, Patch](obj: Expr[A], patch: Expr[Patch])(
       val A: Type[A],
       val Patch: Type[Patch],
-      val config: PatcherConfig,
+      val config: PatcherConfiguration,
       val derivationStartedAt: java.time.Instant
   ) {
 
     final type Target = A
     val Target = A
 
-    def updateConfig(update: PatcherConfig => PatcherConfig): this.type =
+    def updateConfig(update: PatcherConfiguration => PatcherConfiguration): this.type =
       PatcherContext(obj, patch)(
         A = A,
         Patch = Patch,
@@ -31,7 +31,7 @@ private[compiletime] trait Contexts { this: Derivation =>
     def create[A: Type, Patch: Type](
         obj: Expr[A],
         patch: Expr[Patch],
-        config: PatcherConfig
+        config: PatcherConfiguration
     ): PatcherContext[A, Patch] =
       PatcherContext(obj = obj, patch = patch)(
         A = Type[A],

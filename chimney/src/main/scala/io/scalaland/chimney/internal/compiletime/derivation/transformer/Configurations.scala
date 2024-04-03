@@ -155,8 +155,6 @@ private[compiletime] trait Configurations { this: Derivation =>
     final case class ComputedNested(runtimeDataIdx: Int) extends ForSubtype
     final case class ComputedNestedPartial(runtimeDataIdx: Int) extends ForSubtype
 
-    final case class RenamedFrom(sourcePath: Path) extends ForField
-
     type Args = List[ListMap[String, ??]]
     final case class Constructor(runtimeDataIdx: Int, args: Args) extends ForConstructor {
       override def toString: String = s"Constructor($runtimeDataIdx, ${printArgs(args)})"
@@ -165,15 +163,16 @@ private[compiletime] trait Configurations { this: Derivation =>
       override def toString: String = s"ConstructorPartial($runtimeDataIdx, ${printArgs(args)})"
     }
 
-    private def printArgs(args: Args): String =
+    final case class RenamedFrom(sourcePath: Path) extends ForField
+
+    private def printArgs(args: Args): String = {
+      import ExistentialType.prettyPrint as printTpe
       if (args.isEmpty) "<no list>"
-      else
-        args
-          .map(list => "(" + list.map { case (n, t) => s"$n: ${ExistentialType.prettyPrint(t)}" }.mkString(", ") + ")")
-          .mkString
+      else args.map(list => "(" + list.map { case (n, t) => s"$n: ${printTpe(t)}" }.mkString(", ") + ")").mkString
+    }
   }
 
-  final protected case class TransformerConfig(
+  final protected case class TransformerConfiguration(
       flags: TransformerFlags = TransformerFlags(),
       /** Let us distinct if flags were modified only by implicit TransformerConfiguration or maybe also locally */
       private val instanceFlagOverridden: Boolean = false,
@@ -190,9 +189,9 @@ private[compiletime] trait Configurations { this: Derivation =>
       case _                                                             => false
     }
 
-    def allowFromToImplicitSummoning: TransformerConfig =
+    def allowFromToImplicitSummoning: TransformerConfiguration =
       copy(preventImplicitSummoningForTypes = None)
-    def preventImplicitSummoningFor[From: Type, To: Type]: TransformerConfig =
+    def preventImplicitSummoningFor[From: Type, To: Type]: TransformerConfiguration =
       copy(preventImplicitSummoningForTypes = Some(Type[From].as_?? -> Type[To].as_??))
     def isImplicitSummoningPreventedFor[From: Type, To: Type]: Boolean =
       preventImplicitSummoningForTypes.exists { case (someFrom, someTo) =>
@@ -200,12 +199,12 @@ private[compiletime] trait Configurations { this: Derivation =>
         Type[SomeFrom] =:= Type[From] && Type[SomeTo] =:= Type[To]
       }
 
-    def setLocalFlagsOverriden: TransformerConfig =
+    def setLocalFlagsOverriden: TransformerConfiguration =
       copy(instanceFlagOverridden = true)
     def areLocalFlagsOverridesEmptyForCurrent: Boolean =
       !instanceFlagOverridden
 
-    def addRuntimeOverride(path: Path, runtimeOverride: RuntimeOverride): TransformerConfig =
+    def addRuntimeOverride(path: Path, runtimeOverride: RuntimeOverride): TransformerConfiguration =
       copy(runtimeOverrides = runtimeOverrides :+ (path -> runtimeOverride))
     def areValueOverridesEmptyForCurrent: Boolean =
       runtimeOverrides.isEmpty
@@ -230,7 +229,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         runtimeConstructorOverride
       }
 
-    def prepareForRecursiveCall(toValuePath: Path)(implicit ctx: TransformationContext[?, ?]): TransformerConfig =
+    def prepareForRecursiveCall(toPath: Path)(implicit ctx: TransformationContext[?, ?]): TransformerConfiguration =
       copy(
         instanceFlagOverridden = false,
         runtimeOverrides = for {
@@ -243,7 +242,7 @@ private[compiletime] trait Configurations { this: Derivation =>
             // Constructor is always matched at "_" Path, and dropped only when going inward
             case _: RuntimeOverride.ForConstructor => false
           }
-          newPath <- path.drop(toValuePath)
+          newPath <- path.drop(toPath)
           if !(newPath == Path.Root && alwaysDropOnRoot)
         } yield newPath -> runtimeOverride,
         preventImplicitSummoningForTypes = None
@@ -270,7 +269,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         Cfg <: runtime.TransformerCfg: Type,
         InstanceFlags <: runtime.TransformerFlags: Type,
         ImplicitScopeFlags <: runtime.TransformerFlags: Type
-    ]: TransformerConfig = {
+    ]: TransformerConfiguration = {
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags())
       val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
       val cfg = extractTransformerConfig[Cfg](runtimeDataIdx = 0).copy(flags = allFlags)
@@ -347,8 +346,8 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     private def extractTransformerConfig[Cfg <: runtime.TransformerCfg: Type](
         runtimeDataIdx: Int
-    ): TransformerConfig = Type[Cfg] match {
-      case empty if empty =:= ChimneyType.TransformerCfg.Empty => TransformerConfig()
+    ): TransformerConfiguration = Type[Cfg] match {
+      case empty if empty =:= ChimneyType.TransformerCfg.Empty => TransformerConfiguration()
       case ChimneyType.TransformerCfg.FieldConst(path, cfg) =>
         import path.Underlying as PathType, cfg.Underlying as Cfg2
         extractTransformerConfig[Cfg2](1 + runtimeDataIdx)
