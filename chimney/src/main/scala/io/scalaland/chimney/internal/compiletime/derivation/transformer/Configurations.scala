@@ -83,18 +83,19 @@ private[compiletime] trait Configurations { this: Derivation =>
       ).flatten.mkString(", ")})"
   }
 
-  protected class Path private (private val segments: Vector[Path.Segment]) {
+  final protected class Path private (private val segments: Vector[Path.Segment]) {
 
     import Path.Segment.*
     def select(name: String): Path = new Path(segments :+ Select(name))
     def `match`[Tpe: Type]: Path = new Path(segments :+ Match(Type[Tpe].as_??))
 
-    def follow(toDrop: Path)(implicit ctx: TransformationContext[?, ?]): Option[Path] = (toDrop, this) match {
+    @scala.annotation.tailrec
+    def drop(prefix: Path)(implicit ctx: TransformationContext[?, ?]): Option[Path] = (prefix, this) match {
       case (Path.Root, result) => Some(result)
-      case (Path.AtField(name1, toDrop2), Path.AtField(name2, path2)) if areFieldNamesMatching(name1, name2) =>
-        path2.follow(toDrop2)
-      case (Path.AtSubtype(tpe1, toDrop2), Path.AtSubtype(tpe2, path2)) if tpe1.Underlying =:= tpe2.Underlying =>
-        path2.follow(toDrop2)
+      case (Path.AtField(name1, prefix2), Path.AtField(name2, path2)) if areFieldNamesMatching(name1, name2) =>
+        path2.drop(prefix2)
+      case (Path.AtSubtype(tpe1, prefix2), Path.AtSubtype(tpe2, path2)) if tpe1.Underlying <:< tpe2.Underlying =>
+        path2.drop(prefix2)
       case _ => None
     }
 
@@ -175,8 +176,11 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   final protected case class TransformerConfig(
       flags: TransformerFlags = TransformerFlags(),
+      /** Let us distinct if flags were modified only by implicit TransformerConfiguration or maybe also locally */
       private val instanceFlagOverridden: Boolean = false,
+      /** Stores all customizations provided by user */
       private val runtimeOverrides: Vector[(Path, RuntimeOverride)] = Vector.empty,
+      /** Let us prevent `implicit val foo = foo` but allow `implicit val foo = new Foo { def sth = foo }` */
       private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
   ) {
 
@@ -227,16 +231,20 @@ private[compiletime] trait Configurations { this: Derivation =>
         runtimeConstructorOverride
       }
 
-    def prepareForRecursiveCall(followToPath: Path)(implicit ctx: TransformationContext[?, ?]): TransformerConfig =
+    def prepareForRecursiveCall(toValuePath: Path)(implicit ctx: TransformationContext[?, ?]): TransformerConfig =
       copy(
         instanceFlagOverridden = false,
         runtimeOverrides = for {
           (path, runtimeOverride) <- runtimeOverrides
           alwaysDropOnRoot = runtimeOverride match {
+            // Fields are always matched with "_.fieldName" Path while subtypes are always matched with
+            // "_ match { case _: Tpe => }" so "_" Paths are useless in their case while they might get in way of
+            // checking if there might be some relevant overrides for current/nested values
             case _: RuntimeFieldOverride | _: RuntimeCoproductOverride => true
-            case _: RuntimeConstructorOverride                         => false
+            // Constructor is always matched at "_" Path, and dropped only when going inward
+            case _: RuntimeConstructorOverride => false
           }
-          newPath <- path.follow(followToPath)
+          newPath <- path.drop(toValuePath)
           if !(newPath == Path.Root && alwaysDropOnRoot)
         } yield newPath -> runtimeOverride,
         preventImplicitSummoningForTypes = None
