@@ -54,10 +54,6 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       // everyone has the same baseClasses, everyone reports to have public primaryConstructor (which is <none>).
       // The only different in behavior is that one prints com.my.Enum and another com.my.Enum(MyValue).
       val javaEnumRegexpFormat = raw"^(.+)\((.+)\)$$".r
-      def isJavaEnumValue(tpe: c.Type): Boolean =
-        tpe.typeSymbol.isJavaEnum && javaEnumRegexpFormat.pattern
-          .matcher(tpe.toString)
-          .matches() // 2.12 doesn't have .matches
     }
 
     import platformSpecific.*
