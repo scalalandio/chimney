@@ -47,7 +47,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
   protected object PatternMatchCase extends PatternMatchCaseModule {
 
     def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = {
-      val casesTrees = cases.map { case PatternMatchCase(someFrom, usage, fromName, _) =>
+      val casesTrees = cases.map { case PatternMatchCase(someFrom, usage, fromName) =>
         import someFrom.Underlying as SomeFrom
         val markUsed = Expr.suppressUnused(c.Expr[someFrom.Underlying](q"$fromName"))
         cq"""$fromName : $SomeFrom => { $markUsed; $usage }"""

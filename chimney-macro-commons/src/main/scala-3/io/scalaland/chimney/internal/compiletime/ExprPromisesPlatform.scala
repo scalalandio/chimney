@@ -100,7 +100,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
     def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = Match(
       '{ ${ src.asTerm.changeOwner(Symbol.spliceOwner).asExprOf[From] }: @scala.unchecked }.asTerm,
-      cases.map { case PatternMatchCase(someFrom, usage, fromName, isCaseObject) =>
+      cases.map { case PatternMatchCase(someFrom, usage, fromName) =>
         import someFrom.Underlying as SomeFrom
         // Unfortunately, we cannot do
         //   case $fromName: $SomeFrom => $using
@@ -126,7 +126,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
           // Scala 3's enums' parameterless cases are vals with type erased, so w have to match them by value
           // case arg @ Enum.Value => ...
           CaseDef(Bind(bindName, Ident(TypeRepr.of[someFrom.Underlying].typeSymbol.termRef)), None, body)
-        else if isCaseObject then
+        else if TypeRepr.of[someFrom.Underlying].typeSymbol.flags.is(Flags.Module) then
           // case objects are also matched by value but the tree for them is generated in a slightly different way
           // case arg @ Enum.Value => ...
           CaseDef(

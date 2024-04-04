@@ -172,8 +172,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         // 2 or more matches - ambiguous coproduct instances
         case toSubtypes =>
           DerivationResult.ambiguousSubtypeTargets[From, To, Existential[ExprPromise[*, TransformationExpr[To]]]](
-            ExistentialType(fromSubtype.Underlying),
-            toSubtypes.map(to => ExistentialType(to.Underlying))
+            fromSubtype.Underlying.as_??,
+            toSubtypes.map(to => to.Underlying.as_??)
           )
       }
     }
@@ -216,7 +216,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               subtypeMappings
                 .map { subtype =>
                   subtype.value.ensurePartial
-                    .fulfillAsPatternMatchCase[partial.Result[To]](isCaseObject = subtype.Underlying.isCaseObject)
+                    .fulfillAsPatternMatchCase[partial.Result[To]]
                 }
                 .matchOn(ctx.src)
             )
@@ -225,8 +225,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         DerivationResult.expandedTotal(
           subtypeMappings
             .map { subtype =>
-              subtype.value.ensureTotal
-                .fulfillAsPatternMatchCase[To](isCaseObject = subtype.Underlying.isCaseObject)
+              subtype.value.ensureTotal.fulfillAsPatternMatchCase[To]
             }
             .matchOn(ctx.src)
         )
