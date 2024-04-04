@@ -20,12 +20,12 @@ object TransformerDefinitionMacros {
   def withFieldConstImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]],
+      td: Expr[TransformerDefinition[From, To, Tail, Flags]],
       selector: Expr[To => T],
       value: Expr[U]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
@@ -35,19 +35,19 @@ object TransformerDefinitionMacros {
           '{
             WithRuntimeDataStore
               .update($td, $value)
-              .asInstanceOf[TransformerDefinition[From, To, Const[toPath, Cfg], Flags]]
+              .asInstanceOf[TransformerDefinition[From, To, Const[toPath, Tail], Flags]]
         }
     }(selector)
 
   def withFieldComputedImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]],
+      td: Expr[TransformerDefinition[From, To, Tail, Flags]],
       selector: Expr[To => T],
       f: Expr[From => U]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
@@ -57,19 +57,19 @@ object TransformerDefinitionMacros {
           '{
             WithRuntimeDataStore
               .update($td, $f)
-              .asInstanceOf[TransformerDefinition[From, To, Computed[toPath, Cfg], Flags]]
+              .asInstanceOf[TransformerDefinition[From, To, Computed[toPath, Tail], Flags]]
         }
     }(selector)
 
   def withFieldRenamed[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]],
+      td: Expr[TransformerDefinition[From, To, Tail, Flags]],
       selectorFrom: Expr[From => T],
       selectorTo: Expr[To => U]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
@@ -81,7 +81,7 @@ object TransformerDefinitionMacros {
               $td.asInstanceOf[TransformerDefinition[
                 From,
                 To,
-                RenamedFrom[fromPath, toPath, Cfg],
+                RenamedFrom[fromPath, toPath, Tail],
                 Flags
               ]]
           }
@@ -90,27 +90,27 @@ object TransformerDefinitionMacros {
   def withCoproductInstance[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
-      Inst: Type
+      Subtype: Type
   ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]],
-      f: Expr[Inst => To]
+      td: Expr[TransformerDefinition[From, To, Tail, Flags]],
+      f: Expr[Subtype => To]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     '{
       WithRuntimeDataStore
         .update($td, $f)
-        .asInstanceOf[TransformerDefinition[From, To, CaseComputed[Path.Match[Inst, Path.Root], Cfg], Flags]]
+        .asInstanceOf[TransformerDefinition[From, To, CaseComputed[Path.Match[Path.Root, Subtype], Tail], Flags]]
     }
 
   def withConstructorImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       Ctor: Type
   ](
-      ti: Expr[TransformerDefinition[From, To, Cfg, Flags]],
+      ti: Expr[TransformerDefinition[From, To, Tail, Flags]],
       f: Expr[Ctor]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -119,18 +119,18 @@ object TransformerDefinitionMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $f)
-              .asInstanceOf[TransformerDefinition[From, To, Constructor[args, Path.Root, Cfg], Flags]]
+              .asInstanceOf[TransformerDefinition[From, To, Constructor[args, Path.Root, Tail], Flags]]
         }
     }(f)
 
   def buildTransformer[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       ImplicitScopeFlags <: TransformerFlags: Type
   ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
+      td: Expr[TransformerDefinition[From, To, Tail, Flags]]
   )(using Quotes): Expr[Transformer[From, To]] =
-    TransformerMacros.deriveTotalTransformerWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](td)
+    TransformerMacros.deriveTotalTransformerWithConfig[From, To, Tail, Flags, ImplicitScopeFlags](td)
 }

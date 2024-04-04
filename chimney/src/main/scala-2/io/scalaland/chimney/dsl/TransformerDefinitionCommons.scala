@@ -7,7 +7,7 @@ object TransformerDefinitionCommons {
   def emptyRuntimeDataStore: RuntimeDataStore = Vector.empty[Any]
 }
 
-private[chimney] trait TransformerDefinitionCommons[UpdateCfg[_ <: TransformerOverrides]] {
+private[chimney] trait TransformerDefinitionCommons[UpdateTail[_ <: TransformerOverrides]] {
 
   import TransformerDefinitionCommons.*
 

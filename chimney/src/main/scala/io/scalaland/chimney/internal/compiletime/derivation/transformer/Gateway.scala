@@ -16,7 +16,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def deriveTotalTransformationResult[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerOverrides: Type,
+      Tail <: runtime.TransformerOverrides: Type,
       InstanceFlags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
@@ -27,7 +27,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       val context = TransformationContext.ForTotal
         .create[From, To](
           src,
-          TransformerConfigurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+          TransformerConfigurations.readTransformerConfig[Tail, InstanceFlags, ImplicitScopeFlags],
           runtimeDataStore
         )
         .updateConfig(_.allowFromToImplicitSummoning)
@@ -44,7 +44,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def deriveTotalTransformer[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerOverrides: Type,
+      Tail <: runtime.TransformerOverrides: Type,
       InstanceFlags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
@@ -55,7 +55,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
         val context = TransformationContext.ForTotal
           .create[From, To](
             src,
-            TransformerConfigurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+            TransformerConfigurations.readTransformerConfig[Tail, InstanceFlags, ImplicitScopeFlags],
             runtimeDataStore
           )
 
@@ -72,7 +72,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def derivePartialTransformationResult[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerOverrides: Type,
+      Tail <: runtime.TransformerOverrides: Type,
       InstanceFlags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
@@ -85,7 +85,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
         .create[From, To](
           src,
           failFast,
-          TransformerConfigurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+          TransformerConfigurations.readTransformerConfig[Tail, InstanceFlags, ImplicitScopeFlags],
           runtimeDataStore
         )
         .updateConfig(_.allowFromToImplicitSummoning)
@@ -102,7 +102,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def derivePartialTransformer[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerOverrides: Type,
+      Tail <: runtime.TransformerOverrides: Type,
       InstanceFlags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
@@ -114,7 +114,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
           .create[From, To](
             src,
             failFast,
-            TransformerConfigurations.readTransformerConfig[Cfg, InstanceFlags, ImplicitScopeFlags],
+            TransformerConfigurations.readTransformerConfig[Tail, InstanceFlags, ImplicitScopeFlags],
             runtimeDataStore
           )
 

@@ -34,15 +34,15 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       def fixJavaEnums(path: ?<[runtime.Path]): ?<[runtime.Path] =
         path.Underlying match {
           case root if root =:= Path.Root => path
-          case Path.Select(name, instance) =>
-            val fixedInstance = fixJavaEnums(instance)
-            import name.Underlying as Name, fixedInstance.Underlying as FixedInstance
-            Path.Select.apply(Name, FixedInstance).as_?<[runtime.Path]
-          case Path.Match(subtype, instance) =>
+          case Path.Select(init, name) =>
+            val fixedInit = fixJavaEnums(init)
+            import name.Underlying as Name, fixedInit.Underlying as FixedInit
+            Path.Select[FixedInit, Name].as_?<[runtime.Path]
+          case Path.Match(init, subtype) =>
             val fixedSubtype = fixJavaEnum(subtype)
-            val fixedInstance = fixJavaEnums(instance)
-            import fixedSubtype.Underlying as FixedSubtype, fixedInstance.Underlying as FixedInstance
-            Path.Match.apply(FixedSubtype, FixedInstance).as_?<[runtime.Path]
+            val fixedInit = fixJavaEnums(init)
+            import fixedSubtype.Underlying as FixedSubtype, fixedInit.Underlying as FixedInit
+            Path.Match[FixedInit, FixedSubtype].as_?<[runtime.Path]
           case _ => reportError(s"Expected valid runtime.Path, got ${Type.prettyPrint(path.Underlying)}")
         }
     }
@@ -111,54 +111,54 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     object TransformerOverrides extends TransformerOverridesModule {
       val Empty: Type[runtime.TransformerOverrides.Empty] = weakTypeTag[runtime.TransformerOverrides.Empty]
       object Const extends ConstModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.Const[ToPath, Cfg]] =
-          weakTypeTag[runtime.TransformerOverrides.Const[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.Const[ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.Const[ToPath, Tail]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           if (A.isCtor[runtime.TransformerOverrides.Const[?, ?]])
             Some(fixJavaEnums(A.param_<[runtime.Path](0)) -> A.param_<[runtime.TransformerOverrides](1))
           else scala.None
       }
       object ConstPartial extends ConstPartialModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.ConstPartial[ToPath, Cfg]] =
-          weakTypeTag[runtime.TransformerOverrides.ConstPartial[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.ConstPartial[ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.ConstPartial[ToPath, Tail]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           if (A.isCtor[runtime.TransformerOverrides.ConstPartial[?, ?]])
             Some(fixJavaEnums(A.param_<[runtime.Path](0)) -> A.param_<[runtime.TransformerOverrides](1))
           else scala.None
       }
       object Computed extends ComputedModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.Computed[ToPath, Cfg]] =
-          weakTypeTag[runtime.TransformerOverrides.Computed[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.Computed[ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.Computed[ToPath, Tail]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           if (A.isCtor[runtime.TransformerOverrides.Computed[?, ?]])
             Some(fixJavaEnums(A.param_<[runtime.Path](0)) -> A.param_<[runtime.TransformerOverrides](1))
           else scala.None
       }
       object ComputedPartial extends ComputedPartialModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.ComputedPartial[ToPath, Cfg]] =
-          weakTypeTag[runtime.TransformerOverrides.ComputedPartial[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.ComputedPartial[ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.ComputedPartial[ToPath, Tail]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           if (A.isCtor[runtime.TransformerOverrides.ComputedPartial[?, ?]])
             Some(fixJavaEnums(A.param_<[runtime.Path](0)) -> A.param_<[runtime.TransformerOverrides](1))
           else scala.None
       }
       object CaseComputed extends CaseComputedModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.CaseComputed[ToPath, Cfg]] =
-          weakTypeTag[runtime.TransformerOverrides.CaseComputed[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.CaseComputed[ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.CaseComputed[ToPath, Tail]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           if (A.isCtor[runtime.TransformerOverrides.CaseComputed[?, ?]])
             Some(fixJavaEnums(A.param_<[runtime.Path](0)) -> A.param_<[runtime.TransformerOverrides](1))
           else scala.None
       }
       object CaseComputedPartial extends CaseComputedPartialModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Cfg]] =
-          weakTypeTag[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Tail]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           if (A.isCtor[runtime.TransformerOverrides.CaseComputedPartial[?, ?]])
             Some(fixJavaEnums(A.param_<[runtime.Path](0)) -> A.param_<[runtime.TransformerOverrides](1))
@@ -168,9 +168,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[
             Args <: runtime.ArgumentLists: Type,
             ToPath <: runtime.Path: Type,
-            Cfg <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.Constructor[Args, ToPath, Cfg]] =
-          weakTypeTag[runtime.TransformerOverrides.Constructor[Args, ToPath, Cfg]]
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.Constructor[Args, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.Constructor[Args, ToPath, Tail]]
         def unapply[A](
             A: Type[A]
         ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
@@ -188,9 +188,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[
             Args <: runtime.ArgumentLists: Type,
             ToPath <: runtime.Path: Type,
-            Cfg <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.ConstructorPartial[Args, ToPath, Cfg]] =
-          weakTypeTag[runtime.TransformerOverrides.ConstructorPartial[Args, ToPath, Cfg]]
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.ConstructorPartial[Args, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.ConstructorPartial[Args, ToPath, Tail]]
         def unapply[A](
             A: Type[A]
         ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
@@ -208,9 +208,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[
             FromPath <: runtime.Path: Type,
             ToPath <: runtime.Path: Type,
-            Cfg <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Cfg]] =
-          weakTypeTag[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Cfg]]
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Tail]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           if (A.isCtor[runtime.TransformerOverrides.RenamedFrom[?, ?, ?]])
             Some(
@@ -334,17 +334,17 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     object Path extends PathModule {
       val Root: Type[runtime.Path.Root] = weakTypeTag[runtime.Path.Root]
       object Select extends SelectModule {
-        def apply[Name <: String: Type, Instance <: runtime.Path: Type]: Type[runtime.Path.Select[Name, Instance]] =
-          weakTypeTag[runtime.Path.Select[Name, Instance]]
-        def unapply[A](A: Type[A]): Option[(?<[String], ?<[runtime.Path])] =
-          if (A.isCtor[runtime.Path.Select[?, ?]]) Some(A.param_<[String](0) -> A.param_<[runtime.Path](1))
+        def apply[Init <: runtime.Path: Type, FieldName <: String: Type]: Type[runtime.Path.Select[Init, FieldName]] =
+          weakTypeTag[runtime.Path.Select[Init, FieldName]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[String])] =
+          if (A.isCtor[runtime.Path.Select[?, ?]]) Some(A.param_<[runtime.Path](0) -> A.param_<[String](1))
           else scala.None
       }
       object Match extends MatchModule {
-        def apply[Subtype: Type, Instance <: runtime.Path: Type]: Type[runtime.Path.Match[Subtype, Instance]] =
-          weakTypeTag[runtime.Path.Match[Subtype, Instance]]
-        def unapply[A](A: Type[A]): Option[(??, ?<[runtime.Path])] =
-          if (A.isCtor[runtime.Path.Match[?, ?]]) Some(A.param(0) -> A.param_<[runtime.Path](1))
+        def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.Match[Init, Subtype]] =
+          weakTypeTag[runtime.Path.Match[Init, Subtype]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ??)] =
+          if (A.isCtor[runtime.Path.Match[?, ?]]) Some(A.param_<[runtime.Path](0) -> A.param(1))
           else scala.None
       }
     }

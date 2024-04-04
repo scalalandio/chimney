@@ -62,13 +62,13 @@ private[compiletime] trait Configurations { this: Derivation =>
     // TODO: rename Config => Configuration
 
     final def readPatcherConfig[
-        Cfg <: runtime.PatcherOverrides: Type,
+        Tail <: runtime.PatcherOverrides: Type,
         Flags <: runtime.PatcherFlags: Type,
         ImplicitScopeFlags <: runtime.PatcherFlags: Type
     ]: PatcherConfiguration = {
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](PatcherFlags())
       val allFlags = extractTransformerFlags[Flags](implicitScopeFlags)
-      extractPatcherConfig[Cfg]().copy(flags = allFlags)
+      extractPatcherConfig[Tail]().copy(flags = allFlags)
     }
 
     private def extractTransformerFlags[Flags <: runtime.PatcherFlags: Type](defaultFlags: PatcherFlags): PatcherFlags =
@@ -86,10 +86,11 @@ private[compiletime] trait Configurations { this: Derivation =>
         // $COVERAGE-ON$
       }
 
-    private def extractPatcherConfig[Cfg <: runtime.PatcherOverrides: Type](): PatcherConfiguration = Type[Cfg] match {
-      case empty if empty =:= ChimneyType.PatcherOverrides.Empty => PatcherConfiguration()
-      case _ =>
-        reportError(s"Invalid internal PatcherOverrides type shape: ${Type.prettyPrint[Cfg]}!!")
-    }
+    private def extractPatcherConfig[Tail <: runtime.PatcherOverrides: Type](): PatcherConfiguration =
+      Type[Tail] match {
+        case empty if empty =:= ChimneyType.PatcherOverrides.Empty => PatcherConfiguration()
+        case _ =>
+          reportError(s"Invalid internal PatcherOverrides type shape: ${Type.prettyPrint[Tail]}!!")
+      }
   }
 }

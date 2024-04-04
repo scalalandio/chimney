@@ -73,36 +73,36 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     object TransformerOverrides extends TransformerOverridesModule {
       val Empty: Type[runtime.TransformerOverrides.Empty] = quoted.Type.of[runtime.TransformerOverrides.Empty]
       object Const extends ConstModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.Const[ToPath, Cfg]] =
-          quoted.Type.of[runtime.TransformerOverrides.Const[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.Const[ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.Const[ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
           case '[runtime.TransformerOverrides.Const[toPath, cfg]] =>
             Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
           case _ => scala.None
       }
       object ConstPartial extends ConstPartialModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.ConstPartial[ToPath, Cfg]] =
-          quoted.Type.of[runtime.TransformerOverrides.ConstPartial[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.ConstPartial[ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.ConstPartial[ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
           case '[runtime.TransformerOverrides.ConstPartial[toPath, cfg]] =>
             Some((Type[toPath].as_>?<[Nothing, runtime.Path], Type[cfg].as_>?<[Nothing, runtime.TransformerOverrides]))
           case _ => scala.None
       }
       object Computed extends ComputedModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.Computed[ToPath, Cfg]] =
-          quoted.Type.of[runtime.TransformerOverrides.Computed[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.Computed[ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.Computed[ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
           case '[runtime.TransformerOverrides.Computed[toPath, cfg]] =>
             Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
           case _ => scala.None
       }
       object ComputedPartial extends ComputedPartialModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.ComputedPartial[ToPath, Cfg]] =
-          quoted.Type.of[runtime.TransformerOverrides.ComputedPartial[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.ComputedPartial[ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.ComputedPartial[ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(Nothing >?< runtime.Path, Nothing >?< runtime.TransformerOverrides)] =
           tpe match
             case '[runtime.TransformerOverrides.ComputedPartial[toPath, cfg]] =>
@@ -110,18 +110,18 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             case _ => scala.None
       }
       object CaseComputed extends CaseComputedModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.CaseComputed[ToPath, Cfg]] =
-          quoted.Type.of[runtime.TransformerOverrides.CaseComputed[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.CaseComputed[ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.CaseComputed[ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
           case '[runtime.TransformerOverrides.CaseComputed[toPath, cfg]] =>
             Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
           case _ => scala.None
       }
       object CaseComputedPartial extends CaseComputedPartialModule {
-        def apply[ToPath <: runtime.Path: Type, Cfg <: runtime.TransformerOverrides: Type]
-            : Type[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Cfg]] =
-          quoted.Type.of[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Cfg]]
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
           case '[runtime.TransformerOverrides.CaseComputedPartial[toPath, cfg]] =>
             Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
@@ -131,9 +131,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[
             Args <: runtime.ArgumentLists: Type,
             ToPath <: runtime.Path: Type,
-            Cfg <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.Constructor[Args, ToPath, Cfg]] =
-          quoted.Type.of[runtime.TransformerOverrides.Constructor[Args, ToPath, Cfg]]
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.Constructor[Args, ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.Constructor[Args, ToPath, Tail]]
         def unapply[A](
             tpe: Type[A]
         ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
@@ -151,9 +151,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[
             Args <: runtime.ArgumentLists: Type,
             ToPath <: runtime.Path: Type,
-            Cfg <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.ConstructorPartial[Args, ToPath, Cfg]] =
-          quoted.Type.of[runtime.TransformerOverrides.ConstructorPartial[Args, ToPath, Cfg]]
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.ConstructorPartial[Args, ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.ConstructorPartial[Args, ToPath, Tail]]
         def unapply[A](
             tpe: Type[A]
         ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
@@ -171,9 +171,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[
             FromPath <: runtime.Path: Type,
             ToPath <: runtime.Path: Type,
-            Cfg <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Cfg]] =
-          quoted.Type.of[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Cfg]]
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           tpe match
             case '[runtime.TransformerOverrides.RenamedFrom[fromPath, toPath, cfg]] =>
@@ -304,19 +304,19 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     object Path extends PathModule {
       val Root: Type[runtime.Path.Root] = quoted.Type.of[runtime.Path.Root]
       object Select extends SelectModule {
-        def apply[Name <: String: Type, Instance <: runtime.Path: Type]: Type[runtime.Path.Select[Name, Instance]] =
-          quoted.Type.of[runtime.Path.Select[Name, Instance]]
-        def unapply[A](tpe: Type[A]): Option[(?<[String], ?<[runtime.Path])] = tpe match
-          case '[runtime.Path.Select[name, instance]] =>
-            Some((Type[name].as_?<[String], Type[instance].as_?<[runtime.Path]))
+        def apply[Init <: runtime.Path: Type, FieldName <: String: Type]: Type[runtime.Path.Select[Init, FieldName]] =
+          quoted.Type.of[runtime.Path.Select[Init, FieldName]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[String])] = tpe match
+          case '[runtime.Path.Select[init, fieldName]] =>
+            Some((Type[init].as_?<[runtime.Path], Type[fieldName].as_?<[String]))
           case _ => scala.None
       }
       object Match extends MatchModule {
-        def apply[Subtype: Type, Instance <: runtime.Path: Type]: Type[runtime.Path.Match[Subtype, Instance]] =
-          quoted.Type.of[runtime.Path.Match[Subtype, Instance]]
-        def unapply[A](tpe: Type[A]): Option[(??, ?<[runtime.Path])] = tpe match
-          case '[runtime.Path.Match[subtype, instance]] =>
-            Some((Type[subtype].as_??, Type[instance].as_?<[runtime.Path]))
+        def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.Match[Init, Subtype]] =
+          quoted.Type.of[runtime.Path.Match[Init, Subtype]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ??)] = tpe match
+          case '[runtime.Path.Match[init, subtype]] =>
+            Some((Type[init].as_?<[runtime.Path], Type[subtype].as_??))
           case _ => scala.None
       }
     }

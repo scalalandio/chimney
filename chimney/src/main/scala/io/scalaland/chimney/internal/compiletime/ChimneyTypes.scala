@@ -235,15 +235,15 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       val Select: SelectModule
       trait SelectModule
           extends Type.Ctor2UpperBounded[
-            String,
             runtime.Path,
+            String,
             runtime.Path.Select
           ] { this: Select.type => }
       val Match: MatchModule
       trait MatchModule
           extends Type.Ctor2UpperBounded[
-            Any,
             runtime.Path,
+            Any,
             runtime.Path.Match
           ] { this: Match.type => }
     }

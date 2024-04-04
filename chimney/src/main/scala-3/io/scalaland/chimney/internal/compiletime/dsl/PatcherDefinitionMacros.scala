@@ -12,9 +12,9 @@ object PatcherDefinitionMacros {
   def buildPatcher[
       A: Type,
       Patch: Type,
-      Cfg <: PatcherOverrides: Type,
+      Tail <: PatcherOverrides: Type,
       Flags <: PatcherFlags: Type,
       ImplicitScopeFlags <: PatcherFlags: Type
   ](using Quotes): Expr[Patcher[A, Patch]] =
-    PatcherMacros.derivePatcherWithConfig[A, Patch, Cfg, Flags, ImplicitScopeFlags]
+    PatcherMacros.derivePatcherWithConfig[A, Patch, Tail, Flags, ImplicitScopeFlags]
 }

@@ -8,16 +8,16 @@ import scala.language.experimental.macros
 
 /** Allows customization of [[io.scalaland.chimney.Patcher]] derivation.
   *
-  * @tparam A     type of object to apply patch to
-  * @tparam Patch type of patch object
-  * @tparam Cfg   type-level encoded config
-  * @tparam Flags type-level encoded flags
+  * @tparam A         type of object to apply patch to
+  * @tparam Patch     type of patch object
+  * @tparam Overrides type-level encoded config
+  * @tparam Flags     type-level encoded flags
   *
   * @since 0.8.0
   */
-final class PatcherDefinition[From, To, Cfg <: PatcherOverrides, Flags <: PatcherFlags]
+final class PatcherDefinition[From, To, Overrides <: PatcherOverrides, Flags <: PatcherFlags]
     extends PatcherFlagsDsl[Lambda[
-      `Flags1 <: PatcherFlags` => PatcherDefinition[From, To, Cfg, Flags1]
+      `Flags1 <: PatcherFlags` => PatcherDefinition[From, To, Overrides, Flags1]
     ], Flags] {
 
   /** Build Patcher using current configuration.
@@ -32,5 +32,5 @@ final class PatcherDefinition[From, To, Cfg <: PatcherOverrides, Flags <: Patche
   def buildPatcher[ImplicitScopeFlags <: PatcherFlags](implicit
       tc: io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]
   ): Patcher[From, To] =
-    macro PatcherMacros.derivePatcherWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags]
+    macro PatcherMacros.derivePatcherWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags]
 }
