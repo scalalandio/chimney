@@ -12,17 +12,17 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   def derivePatchWithConfig[
       A: WeakTypeTag,
       Patch: WeakTypeTag,
-      Cfg <: runtime.PatcherOverrides: WeakTypeTag,
+      Tail <: runtime.PatcherOverrides: WeakTypeTag,
       Flags <: runtime.PatcherFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.PatcherFlags: WeakTypeTag
   ](
       tc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): c.Expr[A] = retypecheck(
     // Called by PatcherUsing => prefix is PatcherUsing
-    cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Cfg, Flags]](c.prefix.tree)) { pu =>
+    cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Tail, Flags]](c.prefix.tree)) { pu =>
       Expr.block(
         List(Expr.suppressUnused(pu)),
-        derivePatcherResult[A, Patch, Cfg, Flags, ImplicitScopeFlags](
+        derivePatcherResult[A, Patch, Tail, Flags, ImplicitScopeFlags](
           obj = c.Expr[A](q"$pu.obj"),
           patch = c.Expr[Patch](q"$pu.objPatch")
         )
@@ -33,16 +33,16 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   def derivePatcherWithConfig[
       A: WeakTypeTag,
       Patch: WeakTypeTag,
-      Cfg <: runtime.PatcherOverrides: WeakTypeTag,
+      Tail <: runtime.PatcherOverrides: WeakTypeTag,
       InstanceFlags <: runtime.PatcherFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.PatcherFlags: WeakTypeTag
   ](
       tc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): Expr[Patcher[A, Patch]] = retypecheck(
-    cacheDefinition(c.Expr[dsl.PatcherDefinition[A, Patch, Cfg, InstanceFlags]](c.prefix.tree)) { pu =>
+    cacheDefinition(c.Expr[dsl.PatcherDefinition[A, Patch, Tail, InstanceFlags]](c.prefix.tree)) { pu =>
       Expr.block(
         List(Expr.suppressUnused(pu)),
-        derivePatcher[A, Patch, Cfg, InstanceFlags, ImplicitScopeFlags]
+        derivePatcher[A, Patch, Tail, InstanceFlags, ImplicitScopeFlags]
       )
     }
   )

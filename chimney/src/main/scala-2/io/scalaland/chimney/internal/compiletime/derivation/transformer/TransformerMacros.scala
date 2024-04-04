@@ -14,7 +14,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   def deriveTotalTransformationWithConfig[
       From: WeakTypeTag,
       To: WeakTypeTag,
-      Cfg <: runtime.TransformerOverrides: WeakTypeTag,
+      Tail <: runtime.TransformerOverrides: WeakTypeTag,
       InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](
@@ -22,10 +22,10 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   ): Expr[To] = retypecheck(
     // Called by TransformerInto => prefix is TransformerInto
     // We're caching it because it is used twice: once for RuntimeDataStore and once for source
-    cacheDefinition(c.Expr[dsl.TransformerInto[From, To, Cfg, InstanceFlags]](c.prefix.tree)) { ti =>
+    cacheDefinition(c.Expr[dsl.TransformerInto[From, To, Tail, InstanceFlags]](c.prefix.tree)) { ti =>
       Expr.block(
         List(Expr.suppressUnused(tc)),
-        deriveTotalTransformationResult[From, To, Cfg, InstanceFlags, ImplicitScopeFlags](
+        deriveTotalTransformationResult[From, To, Tail, InstanceFlags, ImplicitScopeFlags](
           src = c.Expr[From](q"$ti.source"),
           runtimeDataStore = c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"$ti.td.runtimeData")
         )
@@ -52,14 +52,14 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   def deriveTotalTransformerWithConfig[
       From: WeakTypeTag,
       To: WeakTypeTag,
-      Cfg <: runtime.TransformerOverrides: WeakTypeTag,
+      Tail <: runtime.TransformerOverrides: WeakTypeTag,
       InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]): Expr[Transformer[From, To]] =
     retypecheck(
       Expr.block(
         List(Expr.suppressUnused(tc)),
-        deriveTotalTransformer[From, To, Cfg, InstanceFlags, ImplicitScopeFlags](
+        deriveTotalTransformer[From, To, Tail, InstanceFlags, ImplicitScopeFlags](
           // Called by TransformerDefinition => prefix is TransformerDefinition
           c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData")
         )
@@ -69,17 +69,17 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   def derivePartialTransformationWithConfigNoFailFast[
       From: WeakTypeTag,
       To: WeakTypeTag,
-      Cfg <: runtime.TransformerOverrides: WeakTypeTag,
+      Tail <: runtime.TransformerOverrides: WeakTypeTag,
       InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]): Expr[partial.Result[To]] =
     retypecheck(
       // Called by PartialTransformerInto => prefix is PartialTransformerInto
       // We're caching it because it is used twice: once for RuntimeDataStore and once for source
-      cacheDefinition(c.Expr[dsl.PartialTransformerInto[From, To, Cfg, InstanceFlags]](c.prefix.tree)) { pti =>
+      cacheDefinition(c.Expr[dsl.PartialTransformerInto[From, To, Tail, InstanceFlags]](c.prefix.tree)) { pti =>
         Expr.block(
           List(Expr.suppressUnused(tc)),
-          derivePartialTransformationResult[From, To, Cfg, InstanceFlags, ImplicitScopeFlags](
+          derivePartialTransformationResult[From, To, Tail, InstanceFlags, ImplicitScopeFlags](
             src = c.Expr[From](q"$pti.source"),
             failFast = c.Expr[Boolean](q"false"),
             runtimeDataStore = c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"$pti.td.runtimeData")
@@ -91,17 +91,17 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   def derivePartialTransformationWithConfigFailFast[
       From: WeakTypeTag,
       To: WeakTypeTag,
-      Cfg <: runtime.TransformerOverrides: WeakTypeTag,
+      Tail <: runtime.TransformerOverrides: WeakTypeTag,
       InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]): Expr[partial.Result[To]] =
     retypecheck(
       // Called by PartialTransformerInto => prefix is PartialTransformerInto
       // We're caching it because it is used twice: once for RuntimeDataStore and once for source
-      cacheDefinition(c.Expr[dsl.PartialTransformerInto[From, To, Cfg, InstanceFlags]](c.prefix.tree)) { pti =>
+      cacheDefinition(c.Expr[dsl.PartialTransformerInto[From, To, Tail, InstanceFlags]](c.prefix.tree)) { pti =>
         Expr.block(
           List(Expr.suppressUnused(tc)),
-          derivePartialTransformationResult[From, To, Cfg, InstanceFlags, ImplicitScopeFlags](
+          derivePartialTransformationResult[From, To, Tail, InstanceFlags, ImplicitScopeFlags](
             src = c.Expr[From](q"$pti.source"),
             failFast = c.Expr[Boolean](q"true"),
             runtimeDataStore = c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"$pti.td.runtimeData")
@@ -130,7 +130,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   def derivePartialTransformerWithConfig[
       From: WeakTypeTag,
       To: WeakTypeTag,
-      Cfg <: runtime.TransformerOverrides: WeakTypeTag,
+      Tail <: runtime.TransformerOverrides: WeakTypeTag,
       InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](
@@ -138,7 +138,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
   ): Expr[PartialTransformer[From, To]] = retypecheck(
     Expr.block(
       List(Expr.suppressUnused(tc)),
-      derivePartialTransformer[From, To, Cfg, InstanceFlags, ImplicitScopeFlags](
+      derivePartialTransformer[From, To, Tail, InstanceFlags, ImplicitScopeFlags](
         // Called by PartialTransformerDefinition => prefix is PartialTransformerDefinition
         c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData")
       )

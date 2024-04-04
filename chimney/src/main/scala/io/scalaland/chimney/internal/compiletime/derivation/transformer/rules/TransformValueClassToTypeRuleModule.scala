@@ -11,7 +11,7 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[From] match {
         case ValueClassType(from2) =>
-          if (ctx.config.areValueOverridesEmptyForCurrent) {
+          if (ctx.config.areOverridesEmpty) {
             import from2.{Underlying as InnerFrom, value as valueFrom}
             unwrapAndTransform[From, To, InnerFrom](valueFrom)
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")

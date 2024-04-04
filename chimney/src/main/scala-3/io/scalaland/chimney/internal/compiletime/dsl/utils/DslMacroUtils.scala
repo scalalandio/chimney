@@ -49,14 +49,13 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
             })
           case _: Ident => Left(ignoringInputNotAllowed(t))
           case SelectLike(t2, fieldName) =>
-            unpackSelects(t2).map { instance =>
+            unpackSelects(t2).map { init =>
               val name = ExistentialString(fieldName)
-              import instance.Underlying as Instance
-              import name.Underlying as FieldName
+              import init.Underlying as Init, name.Underlying as FieldName
               new ExistentialPath {
-                type Underlying = runtime.Path.Select[FieldName, Instance]
-                val Underlying: Type[runtime.Path.Select[FieldName, Instance]] =
-                  Type.of[runtime.Path.Select[FieldName, Instance]]
+                type Underlying = runtime.Path.Select[Init, FieldName]
+                val Underlying: Type[runtime.Path.Select[Init, FieldName]] =
+                  Type.of[runtime.Path.Select[Init, FieldName]]
               }
             }
           case Apply(_, _) => Left(arbitraryFunctionNotAllowed(t))

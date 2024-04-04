@@ -12,11 +12,11 @@ final class PatcherMacros(q: Quotes) extends DerivationPlatform(q) with Gateway 
   def derivePatcherWithConfig[
       A: Type,
       Patch: Type,
-      Cfg <: runtime.PatcherOverrides: Type,
+      Overrides <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ]: Expr[Patcher[A, Patch]] =
-    derivePatcher[A, Patch, Cfg, Flags, ImplicitScopeFlags]
+    derivePatcher[A, Patch, Overrides, Flags, ImplicitScopeFlags]
 
   def derivePatcherWithDefaults[
       A: Type,
@@ -53,11 +53,11 @@ object PatcherMacros {
   final def derivePatcherWithConfig[
       A: Type,
       Patch: Type,
-      Cfg <: runtime.PatcherOverrides: Type,
+      Overrides <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ](using q: Quotes): Expr[Patcher[A, Patch]] =
-    new PatcherMacros(q).derivePatcherWithConfig[A, Patch, Cfg, Flags, ImplicitScopeFlags]
+    new PatcherMacros(q).derivePatcherWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags]
 
   final def derivePatcherWithDefaults[A: Type, Patch: Type](using q: Quotes): Expr[Patcher[A, Patch]] =
     new PatcherMacros(q).derivePatcherWithDefaults[A, Patch]
@@ -65,12 +65,12 @@ object PatcherMacros {
   final def derivePatcherResultWithConfig[
       A: Type,
       Patch: Type,
-      Cfg <: runtime.PatcherOverrides: Type,
+      Overrides <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ](
       obj: Expr[A],
       patch: Expr[Patch]
   )(using q: Quotes): Expr[A] =
-    new PatcherMacros(q).derivePatcherResult[A, Patch, Cfg, Flags, ImplicitScopeFlags](obj, patch)
+    new PatcherMacros(q).derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](obj, patch)
 }

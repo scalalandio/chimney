@@ -50,16 +50,16 @@ private[chimney] trait DslMacroUtils {
           case Apply(select @ Select(_, _), Nil) => unpackSelects(select)
           case Apply(_, _)                       => Left(arbitraryFunctionNotAllowed(t))
           case Select(t2, fieldName: TermName) =>
-            unpackSelects(t2).map { instance =>
+            unpackSelects(t2).map { init =>
               val name = ExistentialString(fieldName)
 
-              def applyTypes[FieldName <: String: c.WeakTypeTag, Instance <: runtime.Path: c.WeakTypeTag] =
+              def applyTypes[Init <: runtime.Path: c.WeakTypeTag, FieldName <: String: c.WeakTypeTag] =
                 new ExistentialPath {
-                  type Underlying = runtime.Path.Select[FieldName, Instance]
-                  val Underlying: WeakTypeTag[runtime.Path.Select[FieldName, Instance]] =
-                    weakTypeTag[runtime.Path.Select[FieldName, Instance]]
+                  type Underlying = runtime.Path.Select[Init, FieldName]
+                  val Underlying: WeakTypeTag[runtime.Path.Select[Init, FieldName]] =
+                    weakTypeTag[runtime.Path.Select[Init, FieldName]]
                 }
-              applyTypes(name.Underlying, instance.Underlying)
+              applyTypes(init.Underlying, name.Underlying)
             }
           case _ => Left(invalidSelectorErrorMessage(t))
         }
@@ -191,35 +191,35 @@ private[chimney] trait DslMacroUtils {
   /** Workaround for Java Enums, see [[io.scalaland.chimney.internal.runtime.RefinedJavaEnum]]. */
   protected trait ApplyFixedCoproductType {
 
-    def apply[FixedInstance: WeakTypeTag]: Tree
+    def apply[FixedSubtype: WeakTypeTag]: Tree
 
-    final def applyJavaEnumFixFromClosureSignature[Inst: WeakTypeTag](f: Tree): Tree =
-      if (weakTypeOf[Inst].typeSymbol.isJavaEnum) {
-        val Inst = weakTypeOf[Inst]
+    final def applyJavaEnumFixFromClosureSignature[Subtype: WeakTypeTag](f: Tree): Tree =
+      if (weakTypeOf[Subtype].typeSymbol.isJavaEnum) {
+        val Subtype = weakTypeOf[Subtype]
         val Function(List(ValDef(_, _, lhs: TypeTree, _)), _) = f
         lhs.original match {
           // Java enum value in Scala 2.13
-          case SingletonTypeTree(Literal(Constant(t: TermSymbol))) => apply(refineJavaEnum[Inst](t))
+          case SingletonTypeTree(Literal(Constant(t: TermSymbol))) => apply(refineJavaEnum[Subtype](t))
           // Java enum value in Scala 2.12
           case SingletonTypeTree(Select(t, n)) if t.isTerm =>
-            val t = Inst.companion.decls
+            val t = Subtype.companion.decls
               .find(_.name == n)
               .getOrElse(
                 c.abort(
                   c.enclosingPosition,
-                  s"Can't find symbol `$n` among the declarations of `${Inst.typeSymbol.fullName}`"
+                  s"Can't find symbol `$n` among the declarations of `${Subtype.typeSymbol.fullName}`"
                 )
               )
-            apply(refineJavaEnum[Inst](t))
-          case _ => apply(weakTypeTag[Inst])
+            apply(refineJavaEnum[Subtype](t))
+          case _ => apply(weakTypeTag[Subtype])
         }
-      } else apply(weakTypeTag[Inst])
+      } else apply(weakTypeTag[Subtype])
 
-    private def refineJavaEnum[Inst: WeakTypeTag](t: Symbol): WeakTypeTag[?] = {
+    private def refineJavaEnum[Subtype: WeakTypeTag](t: Symbol): WeakTypeTag[?] = {
       object ApplyInstanceName {
         def apply[InstanceName <: String: WeakTypeTag]
-            : WeakTypeTag[io.scalaland.chimney.internal.runtime.RefinedJavaEnum[Inst, InstanceName]] =
-          weakTypeTag[io.scalaland.chimney.internal.runtime.RefinedJavaEnum[Inst, InstanceName]]
+            : WeakTypeTag[io.scalaland.chimney.internal.runtime.RefinedJavaEnum[Subtype, InstanceName]] =
+          weakTypeTag[io.scalaland.chimney.internal.runtime.RefinedJavaEnum[Subtype, InstanceName]]
       }
 
       ApplyInstanceName(c.WeakTypeTag(c.internal.constantType(Constant(t.name.decodedName.toString))))

@@ -15,13 +15,13 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
   def deriveTotalTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerOverrides: Type,
+      Overrides <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
+      td: Expr[TransformerDefinition[From, To, Overrides, Flags]]
   ): Expr[Transformer[From, To]] =
-    deriveTotalTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
+    deriveTotalTransformer[From, To, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
 
   def deriveTotalTransformerWithDefaults[
       From: Type,
@@ -56,13 +56,15 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
   def derivePartialTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerOverrides: Type,
+      Overrides <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
-      td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]]
   ): Expr[PartialTransformer[From, To]] =
-    derivePartialTransformer[From, To, Cfg, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
+    derivePartialTransformer[From, To, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
+      ${ td }.runtimeData
+    })
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
       useImplicitScopeFlags: ?<[runtime.TransformerFlags] => Expr[A]
@@ -96,22 +98,22 @@ object TransformerMacros {
   final def deriveTotalTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerOverrides: Type,
+      Overrides <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
-      td: Expr[TransformerDefinition[From, To, Cfg, Flags]]
+      td: Expr[TransformerDefinition[From, To, Overrides, Flags]]
   )(using quotes: Quotes): Expr[Transformer[From, To]] =
-    new TransformerMacros(quotes).deriveTotalTransformerWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](td)
+    new TransformerMacros(quotes).deriveTotalTransformerWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags](td)
 
   final def deriveTotalTransformerResultWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerOverrides: Type,
+      Overrides <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
-  ](source: Expr[From], td: Expr[TransformerDefinition[From, To, Cfg, Flags]])(using quotes: Quotes): Expr[To] =
-    new TransformerMacros(quotes).deriveTotalTransformationResult[From, To, Cfg, Flags, ImplicitScopeFlags](
+  ](source: Expr[From], td: Expr[TransformerDefinition[From, To, Overrides, Flags]])(using quotes: Quotes): Expr[To] =
+    new TransformerMacros(quotes).deriveTotalTransformationResult[From, To, Overrides, Flags, ImplicitScopeFlags](
       source,
       '{ ${ td }.runtimeData }
     )
@@ -125,24 +127,24 @@ object TransformerMacros {
   final def derivePartialTransformerWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerOverrides: Type,
+      Overrides <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
-      td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]]
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]]
   )(using quotes: Quotes): Expr[PartialTransformer[From, To]] =
-    new TransformerMacros(quotes).derivePartialTransformerWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](td)
+    new TransformerMacros(quotes).derivePartialTransformerWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags](td)
 
   final def derivePartialTransformerResultWithConfig[
       From: Type,
       To: Type,
-      Cfg <: runtime.TransformerOverrides: Type,
+      Overrides <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
-  ](source: Expr[From], td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]], failFast: Boolean)(using
+  ](source: Expr[From], td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]], failFast: Boolean)(using
       quotes: Quotes
   ): Expr[partial.Result[To]] =
-    new TransformerMacros(quotes).derivePartialTransformationResult[From, To, Cfg, Flags, ImplicitScopeFlags](
+    new TransformerMacros(quotes).derivePartialTransformationResult[From, To, Overrides, Flags, ImplicitScopeFlags](
       source,
       Expr(failFast),
       '{ ${ td }.runtimeData }

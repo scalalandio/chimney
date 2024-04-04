@@ -21,12 +21,12 @@ object PartialTransformerIntoMacros {
   def withFieldConstImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      ti: Expr[PartialTransformerInto[From, To, Tail, Flags]],
       selector: Expr[To => T],
       value: Expr[U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
@@ -36,19 +36,19 @@ object PartialTransformerIntoMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $value)
-              .asInstanceOf[PartialTransformerInto[From, To, Const[toPath, Cfg], Flags]]
+              .asInstanceOf[PartialTransformerInto[From, To, Const[toPath, Tail], Flags]]
         }
     }(selector)
 
   def withFieldConstPartialImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      ti: Expr[PartialTransformerInto[From, To, Tail, Flags]],
       selector: Expr[To => T],
       value: Expr[partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
@@ -58,19 +58,19 @@ object PartialTransformerIntoMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $value)
-              .asInstanceOf[PartialTransformerInto[From, To, ConstPartial[toPath, Cfg], Flags]]
+              .asInstanceOf[PartialTransformerInto[From, To, ConstPartial[toPath, Tail], Flags]]
         }
     }(selector)
 
   def withFieldComputedImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      ti: Expr[PartialTransformerInto[From, To, Tail, Flags]],
       selector: Expr[To => T],
       f: Expr[From => U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
@@ -80,19 +80,19 @@ object PartialTransformerIntoMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $f)
-              .asInstanceOf[PartialTransformerInto[From, To, Computed[toPath, Cfg], Flags]]
+              .asInstanceOf[PartialTransformerInto[From, To, Computed[toPath, Tail], Flags]]
         }
     }(selector)
 
   def withFieldComputedPartialImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      ti: Expr[PartialTransformerInto[From, To, Tail, Flags]],
       selector: Expr[To => T],
       f: Expr[From => partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
@@ -102,19 +102,19 @@ object PartialTransformerIntoMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $f)
-              .asInstanceOf[PartialTransformerInto[From, To, ComputedPartial[toPath, Cfg], Flags]]
+              .asInstanceOf[PartialTransformerInto[From, To, ComputedPartial[toPath, Tail], Flags]]
         }
     }(selector)
 
   def withFieldRenamedImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      ti: Expr[PartialTransformerInto[From, To, Tail, Flags]],
       selectorFrom: Expr[From => T],
       selectorTo: Expr[To => U]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
@@ -124,7 +124,7 @@ object PartialTransformerIntoMacros {
           (_: Type[toPath]) ?=>
             '{
               $ti.asInstanceOf[
-                PartialTransformerInto[From, To, RenamedFrom[fromPath, toPath, Cfg], Flags]
+                PartialTransformerInto[From, To, RenamedFrom[fromPath, toPath, Tail], Flags]
               ]
           }
     }(selectorFrom, selectorTo)
@@ -132,43 +132,48 @@ object PartialTransformerIntoMacros {
   def withCoproductInstanceImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
-      Inst: Type
+      Subtype: Type
   ](
-      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      f: Expr[Inst => To]
+      ti: Expr[PartialTransformerInto[From, To, Tail, Flags]],
+      f: Expr[Subtype => To]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
     '{
       WithRuntimeDataStore
         .update($ti, $f)
-        .asInstanceOf[PartialTransformerInto[From, To, CaseComputed[Path.Match[Inst, Path.Root], Cfg], Flags]]
+        .asInstanceOf[PartialTransformerInto[From, To, CaseComputed[Path.Match[Path.Root, Subtype], Tail], Flags]]
     }
 
   def withCoproductInstancePartialImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
-      Inst: Type
+      Subtype: Type
   ](
-      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
-      f: Expr[Inst => partial.Result[To]]
+      ti: Expr[PartialTransformerInto[From, To, Tail, Flags]],
+      f: Expr[Subtype => partial.Result[To]]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
     '{
       WithRuntimeDataStore
         .update($ti, $f)
-        .asInstanceOf[PartialTransformerInto[From, To, CaseComputedPartial[Path.Match[Inst, Path.Root], Cfg], Flags]]
+        .asInstanceOf[PartialTransformerInto[
+          From,
+          To,
+          CaseComputedPartial[Path.Match[Path.Root, Subtype], Tail],
+          Flags
+        ]]
     }
 
   def withConstructorImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       Ctor: Type
   ](
-      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      ti: Expr[PartialTransformerInto[From, To, Tail, Flags]],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -177,18 +182,18 @@ object PartialTransformerIntoMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $f)
-              .asInstanceOf[PartialTransformerInto[From, To, Constructor[args, Path.Root, Cfg], Flags]]
+              .asInstanceOf[PartialTransformerInto[From, To, Constructor[args, Path.Root, Tail], Flags]]
         }
     }(f)
 
   def withConstructorPartialImpl[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       Ctor: Type
   ](
-      ti: Expr[PartialTransformerInto[From, To, Cfg, Flags]],
+      ti: Expr[PartialTransformerInto[From, To, Tail, Flags]],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -197,22 +202,22 @@ object PartialTransformerIntoMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $f)
-              .asInstanceOf[PartialTransformerInto[From, To, ConstructorPartial[args, Path.Root, Cfg], Flags]]
+              .asInstanceOf[PartialTransformerInto[From, To, ConstructorPartial[args, Path.Root, Tail], Flags]]
         }
     }(f)
 
   def transform[
       From: Type,
       To: Type,
-      Cfg <: TransformerOverrides: Type,
+      Tail <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       ImplicitScopeFlags <: TransformerFlags: Type
   ](
       source: Expr[From],
-      td: Expr[PartialTransformerDefinition[From, To, Cfg, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Tail, Flags]],
       failFast: Boolean
   )(using Quotes): Expr[partial.Result[To]] =
-    TransformerMacros.derivePartialTransformerResultWithConfig[From, To, Cfg, Flags, ImplicitScopeFlags](
+    TransformerMacros.derivePartialTransformerResultWithConfig[From, To, Tail, Flags, ImplicitScopeFlags](
       source,
       td,
       failFast

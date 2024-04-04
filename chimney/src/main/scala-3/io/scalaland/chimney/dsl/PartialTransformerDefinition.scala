@@ -6,21 +6,21 @@ import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, Tran
 
 /** Allows customization of [[io.scalaland.chimney.PartialTransformer]] derivation.
   *
-  * @tparam From  type of input value
-  * @tparam To    type of output value
-  * @tparam Cfg   type-level encoded config
-  * @tparam Flags type-level encoded flags
+  * @tparam From      type of input value
+  * @tparam To        type of output value
+  * @tparam Overrides type-level encoded config
+  * @tparam Flags     type-level encoded flags
   *
   * @since 0.7.0
   */
-final class PartialTransformerDefinition[From, To, Cfg <: TransformerOverrides, Flags <: TransformerFlags](
+final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags](
     val runtimeData: TransformerDefinitionCommons.RuntimeDataStore
 ) extends TransformerFlagsDsl[
-      [Flags1 <: TransformerFlags] =>> PartialTransformerDefinition[From, To, Cfg, Flags1],
+      [Flags1 <: TransformerFlags] =>> PartialTransformerDefinition[From, To, Overrides, Flags1],
       Flags
     ]
     with TransformerDefinitionCommons[
-      [Cfg1 <: TransformerOverrides] =>> PartialTransformerDefinition[From, To, Cfg1, Flags]
+      [Overrides1 <: TransformerOverrides] =>> PartialTransformerDefinition[From, To, Overrides1, Flags]
     ]
     with WithRuntimeDataStore {
 
@@ -126,21 +126,20 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerOverrides, 
 
   /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
     *
-    * By default if mapping one coproduct in `From` into another coproduct in `To` derivation
-    * expects that coproducts to have matching names of its components, and for every component
-    * in `To` field's type there is matching component in `From` type. If some component is missing
-    * it fails compilation unless provided replacement with this operation.
+    * By default if mapping one coproduct in `From` into another coproduct in `To` derivation expects that coproducts
+    * to have matching names of its components, and for every component in `To` field's type there is matching component
+    * in `From` type. If some component is missing it fails compilation unless provided replacement with this operation.
     *
     * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
-    * @tparam Inst type of coproduct instance
+    * @tparam Subtypetype of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
     * @since 0.7.0
     */
-  transparent inline def withCoproductInstance[Inst](
-      inline f: Inst => To
+  transparent inline def withCoproductInstance[Subtype](
+      inline f: Subtype => To
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withCoproductInstance('this, 'f) }
 
@@ -153,14 +152,14 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerOverrides, 
     *
     * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
-    * @tparam Inst type of coproduct instance
+    * @tparam Subtypetype of coproduct instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
     * @since 0.7.0
     */
-  transparent inline def withCoproductInstancePartial[Inst](
-      inline f: Inst => partial.Result[To]
+  transparent inline def withCoproductInstancePartial[Subtype](
+      inline f: Subtype => partial.Result[To]
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withCoproductInstancePartial('this, 'f) }
 
@@ -206,8 +205,8 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerOverrides, 
 
   /** Build Partial Transformer using current configuration.
     *
-    * It runs macro that tries to derive instance of `PartialTransformer[From, To]`.
-    * When transformation can't be derived, it results with compilation error.
+    * It runs macro that tries to derive instance of `PartialTransformer[From, To]`. When transformation can't
+    * be derived, it results with compilation error.
     *
     * @return [[io.scalaland.chimney.PartialTransformer]] type class instance
     *
@@ -216,7 +215,7 @@ final class PartialTransformerDefinition[From, To, Cfg <: TransformerOverrides, 
   inline def buildTransformer[ImplicitScopeFlags <: TransformerFlags](using
       tc: TransformerConfiguration[ImplicitScopeFlags]
   ): PartialTransformer[From, To] =
-    ${ PartialTransformerDefinitionMacros.buildTransformer[From, To, Cfg, Flags, ImplicitScopeFlags]('this) }
+    ${ PartialTransformerDefinitionMacros.buildTransformer[From, To, Overrides, Flags, ImplicitScopeFlags]('this) }
 
   private[chimney] def addOverride(overrideData: Any): this.type =
     new PartialTransformerDefinition(overrideData +: runtimeData).asInstanceOf[this.type]

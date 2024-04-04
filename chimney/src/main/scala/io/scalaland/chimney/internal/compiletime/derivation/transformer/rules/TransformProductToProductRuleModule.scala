@@ -31,7 +31,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       def unapply[A, From, To](
           tpe: Type[A]
       )(implicit ctx: TransformationContext[From, To]): Option[TransformerOverride.ForConstructor] =
-        ctx.config.filterOverridesForConstructor
+        ctx.config.currentOverrideForConstructor
     }
 
     private def mapOverridesAndExtractorsToConstructorArguments[From, To](
@@ -90,7 +90,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
       val verifyNoOverrideUnused = Traverse[List]
         .parTraverse(
-          filterOverridesForField(usedToName =>
+          filterCurrentOverridesForField(usedToName =>
             !parameters.keys.exists(toName => areFieldNamesMatching(usedToName, toName))
           ).keys.toList
         ) { fromName =>
@@ -168,8 +168,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
             // User might have used _.getName in modifier, to define target we know as _.setName so simple .get(toName)
             // might not be enough. However, we DO want to prioritize strict name matches.
-            filterOverridesForField(_ == toName).headOption
-              .orElse(filterOverridesForField(areFieldNamesMatching(_, toName)).headOption)
+            filterCurrentOverridesForField(_ == toName).headOption
+              .orElse(filterCurrentOverridesForField(areFieldNamesMatching(_, toName)).headOption)
               .map {
                 case AmbiguousOverrides(overrideName, foundOverrides) =>
                   DerivationResult.ambiguousFieldOverrides[From, To, Existential[TransformationExpr]](
