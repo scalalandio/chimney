@@ -86,9 +86,22 @@ trait ProductTypes { this: Definitions =>
   protected val ProductType: ProductTypesModule
   protected trait ProductTypesModule { this: ProductType.type =>
 
+    /** Any class with a public constructor... explicitly excluding: primitives, String and Java enums */
     def isPOJO[A](implicit A: Type[A]): Boolean
+
+    /** Class defined with "case class" */
     def isCaseClass[A](implicit A: Type[A]): Boolean
+
+    /** Class defined with "case object" */
     def isCaseObject[A](implicit A: Type[A]): Boolean
+
+    /** Scala 3 enum's case without parameters (a "val" under the hood, NOT an "object") */
+    def isCaseVal[A](implicit A: Type[A]): Boolean
+
+    /** Java enum value - not the abstract enum type, but the concrete enum value */
+    def isJavaEnumValue[A](implicit A: Type[A]): Boolean
+
+    /** Any POJO with a public DEFAULT constructor... and at least 1 setter or var */
     def isJavaBean[A](implicit A: Type[A]): Boolean
 
     def parseExtraction[A: Type]: Option[Product.Extraction[A]]

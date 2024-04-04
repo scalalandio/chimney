@@ -52,10 +52,17 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       isPOJO[A] && A.tpe.typeSymbol.asClass.isCaseClass
     def isCaseObject[A](implicit A: Type[A]): Boolean = {
       val sym = A.tpe.typeSymbol
-      def isScala2Enum = sym.asClass.isCaseClass
-      def isScala3Enum = sym.isStatic && sym.isFinal // parameterless case in S3 cannot be checked for "case"
-      def isScalaEnum = sym.isModuleClass && (isScala2Enum || isScala3Enum)
-      sym.isPublic && (isScalaEnum || isJavaEnumValue(A.tpe))
+      sym.isPublic && sym.isModuleClass && sym.asClass.isCaseClass
+    }
+    def isCaseVal[A](implicit A: Type[A]): Boolean = {
+      val sym = A.tpe.typeSymbol
+      sym.isPublic && sym.isModuleClass && sym.isStatic && sym.isFinal // parameterless case in S3 cannot be checked for "case"
+    }
+    def isJavaEnumValue[A](implicit A: Type[A]): Boolean = {
+      val sym = A.tpe.typeSymbol
+      sym.isPublic && sym.isJavaEnum && javaEnumRegexpFormat.pattern
+        .matcher(A.tpe.toString)
+        .matches() // 2.12 doesn't have .matches
     }
     def isJavaBean[A](implicit A: Type[A]): Boolean = {
       val mem = A.tpe.members
@@ -103,9 +110,9 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       val A = Type[A].tpe
       val sym = A.typeSymbol
 
-      if (isJavaEnumValue(A)) {
+      if (isJavaEnumValue[A]) {
         Some(Product.Constructor(ListMap.empty, _ => c.Expr[A](q"$A")))
-      } else if (isCaseObject[A]) {
+      } else if (isCaseObject[A] || isCaseVal[A]) {
         Some(Product.Constructor(ListMap.empty, _ => c.Expr[A](q"${sym.asClass.module}")))
       } else if (isPOJO[A]) {
         val primaryConstructor =

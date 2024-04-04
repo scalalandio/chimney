@@ -43,8 +43,6 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       def isJavaSetterOrVar(setter: Symbol): Boolean =
         isJavaSetter(setter) || isVar(setter)
 
-      def isJavaEnumValue[A: Type]: Boolean =
-        Type[A] <:< scala.quoted.Type.of[java.lang.Enum[?]] && !TypeRepr.of[A].typeSymbol.isAbstract
     }
 
     import platformSpecific.*
@@ -61,10 +59,14 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
     }
     def isCaseObject[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
-      def isScala2Enum = sym.flags.is(Flags.Case | Flags.Module)
-      def isScala3Enum = sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic)
-      sym.isPublic && (isScala2Enum || isScala3Enum || isJavaEnumValue[A])
+      sym.isPublic && sym.flags.is(Flags.Case | Flags.Module)
     }
+    def isCaseVal[A](implicit A: Type[A]): Boolean = {
+      val sym = TypeRepr.of(using A).typeSymbol
+      sym.isPublic && sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic)
+    }
+    def isJavaEnumValue[A: Type]: Boolean =
+      Type[A] <:< scala.quoted.Type.of[java.lang.Enum[?]] && !TypeRepr.of[A].typeSymbol.isAbstract
     def isJavaBean[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
       val mem = sym.declarations
@@ -129,14 +131,11 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
     )
 
     def parseConstructor[A: Type]: Option[Product.Constructor[A]] =
-      if isCaseObject[A] then {
+      if isCaseObject[A] || isCaseVal[A] || isJavaEnumValue[A] then {
         val A = TypeRepr.of[A]
         val sym = A.typeSymbol
 
-        // TODO: actually a duplication of isScala3Enum from isCaseObject
-        def isScala3Enum = sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic)
-
-        if isScala3Enum || isJavaEnumValue[A] then Some(Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A]))
+        if isCaseVal[A] || isJavaEnumValue[A] then Some(Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A]))
         else Some(Product.Constructor(ListMap.empty, _ => Ref(sym.companionModule).asExprOf[A]))
       } else if isPOJO[A] then {
         val A = TypeRepr.of[A]
