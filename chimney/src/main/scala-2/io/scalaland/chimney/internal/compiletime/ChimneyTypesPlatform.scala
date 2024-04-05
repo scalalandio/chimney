@@ -347,6 +347,27 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           if (A.isCtor[runtime.Path.Match[?, ?]]) Some(A.param_<[runtime.Path](0) -> A.param(1))
           else scala.None
       }
+      object EachItem extends EachItemModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachItem[Init]] =
+          weakTypeTag[runtime.Path.EachItem[Init]]
+        def unapply[A](A: Type[A]): Option[?<[runtime.Path]] =
+          if (A.isCtor[runtime.Path.EachItem[?]]) Some(A.param_<[runtime.Path](0))
+          else scala.None
+      }
+      object EachMapKey extends EachMapKeyModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachMapKey[Init]] =
+          weakTypeTag[runtime.Path.EachMapKey[Init]]
+        def unapply[A](A: Type[A]): Option[?<[runtime.Path]] =
+          if (A.isCtor[runtime.Path.EachMapKey[?]]) Some(A.param_<[runtime.Path](0))
+          else scala.None
+      }
+      object EachMapValue extends EachMapValueModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachMapValue[Init]] =
+          weakTypeTag[runtime.Path.EachMapValue[Init]]
+        def unapply[A](A: Type[A]): Option[?<[runtime.Path]] =
+          if (A.isCtor[runtime.Path.EachMapValue[?]]) Some(A.param_<[runtime.Path](0))
+          else scala.None
+      }
     }
   }
 }

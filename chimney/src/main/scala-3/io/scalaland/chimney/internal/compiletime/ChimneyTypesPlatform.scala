@@ -319,6 +319,30 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             Some((Type[init].as_?<[runtime.Path], Type[subtype].as_??))
           case _ => scala.None
       }
+      object EachItem extends EachItemModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachItem[Init]] =
+          quoted.Type.of[runtime.Path.EachItem[Init]]
+        def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
+          case '[runtime.Path.EachItem[init]] =>
+            Some(Type[init].as_?<[runtime.Path])
+          case _ => scala.None
+      }
+      object EachMapKey extends EachMapKeyModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachMapKey[Init]] =
+          quoted.Type.of[runtime.Path.EachMapKey[Init]]
+        def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
+          case '[runtime.Path.EachMapKey[init]] =>
+            Some(Type[init].as_?<[runtime.Path])
+          case _ => scala.None
+      }
+      object EachMapValue extends EachMapValueModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachMapValue[Init]] =
+          quoted.Type.of[runtime.Path.EachMapValue[Init]]
+        def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
+          case '[runtime.Path.EachMapValue[init]] =>
+            Some(Type[init].as_?<[runtime.Path])
+          case _ => scala.None
+      }
     }
   }
 }

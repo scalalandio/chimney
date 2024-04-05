@@ -246,6 +246,24 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             Any,
             runtime.Path.Match
           ] { this: Match.type => }
+      val EachItem: EachItemModule
+      trait EachItemModule
+          extends Type.Ctor1UpperBounded[
+            runtime.Path,
+            runtime.Path.EachItem
+          ] { this: EachItem.type => }
+      val EachMapKey: EachMapKeyModule
+      trait EachMapKeyModule
+          extends Type.Ctor1UpperBounded[
+            runtime.Path,
+            runtime.Path.EachMapKey
+          ] { this: EachMapKey.type => }
+      val EachMapValue: EachMapValueModule
+      trait EachMapValueModule
+          extends Type.Ctor1UpperBounded[
+            runtime.Path,
+            runtime.Path.EachMapValue
+          ] { this: EachMapValue.type => }
     }
 
     // You can `import ChimneyType.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts

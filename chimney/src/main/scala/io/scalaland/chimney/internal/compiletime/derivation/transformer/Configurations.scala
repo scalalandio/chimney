@@ -85,22 +85,22 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   final protected class Path private (private val segments: Vector[Path.Segment]) {
 
-    import Path.Segment.*
+    import Path.*, Path.Segment.*
     def select(name: String): Path = new Path(segments :+ Select(name))
     def `match`[Tpe: Type]: Path = new Path(segments :+ Match(Type[Tpe].as_??))
-    // TODO: implement these
-    def eachItem: Path = Path.clean
-    def eachMapKey: Path = Path.clean
-    def eachMapValue: Path = Path.clean
+    def eachItem: Path = new Path(segments :+ EachItem)
+    def eachMapKey: Path = new Path(segments :+ EachMapKey)
+    def eachMapValue: Path = new Path(segments :+ EachMapValue)
 
     @scala.annotation.tailrec
     def drop(prefix: Path)(implicit ctx: TransformationContext[?, ?]): Option[Path] = (prefix, this) match {
-      case (Path.Root, result) => Some(result)
-      case (Path.AtField(name1, prefix2), Path.AtField(name2, path2)) if areFieldNamesMatching(name1, name2) =>
-        path2.drop(prefix2)
-      case (Path.AtSubtype(tpe1, prefix2), Path.AtSubtype(tpe2, path2)) if tpe1.Underlying <:< tpe2.Underlying =>
-        path2.drop(prefix2)
-      case _ => None
+      case (Root, result)                                                                         => Some(result)
+      case (AtField(name, prefix2), AtField(name2, tail)) if areFieldNamesMatching(name, name2)   => tail.drop(prefix2)
+      case (AtSubtype(tpe, prefix2), AtSubtype(tpe2, tail)) if tpe.Underlying <:< tpe2.Underlying => tail.drop(prefix2)
+      case (AtItem(prefix2), AtItem(tail))                                                        => tail.drop(prefix2)
+      case (AtMapKey(prefix2), AtMapKey(tail))                                                    => tail.drop(prefix2)
+      case (AtMapValue(prefix2), AtMapValue(tail))                                                => tail.drop(prefix2)
+      case _                                                                                      => None
     }
 
     override def equals(obj: Any): Boolean = obj match {
@@ -114,8 +114,6 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     val Root = new Path(Vector())
 
-    val clean = new Path(Vector(Segment.Clean))
-
     object AtField {
       def unapply(path: Path): Option[(String, Path)] =
         path.segments.headOption.collect { case Segment.Select(name) => name -> new Path(path.segments.tail) }
@@ -126,21 +124,43 @@ private[compiletime] trait Configurations { this: Derivation =>
         path.segments.headOption.collect { case Segment.Match(tpe) => tpe -> new Path(path.segments.tail) }
     }
 
+    object AtItem {
+      def unapply(path: Path): Option[Path] =
+        path.segments.headOption.collect { case Segment.EachItem => new Path(path.segments.tail) }
+    }
+
+    object AtMapKey {
+      def unapply(path: Path): Option[Path] =
+        path.segments.headOption.collect { case Segment.EachMapKey => new Path(path.segments.tail) }
+    }
+
+    object AtMapValue {
+      def unapply(path: Path): Option[Path] =
+        path.segments.headOption.collect { case Segment.EachMapValue => new Path(path.segments.tail) }
+    }
+
     sealed private trait Segment extends scala.Product with Serializable
     private object Segment {
       final case class Select(name: String) extends Segment {
         override def toString: String = s".$name"
       }
       final case class Match(tpe: ??) extends Segment {
-
         override def equals(obj: Any): Boolean = obj match {
           case Match(tpe2) => tpe.Underlying =:= tpe2.Underlying
           case _           => false
         }
-        // TODO: figure out a better name
+
         override def toString: String = s".whenSubtype[${Type.prettyPrint(tpe.Underlying)}]"
       }
-      case object Clean extends Segment
+      case object EachItem extends Segment {
+        override def toString: String = ".eachItem"
+      }
+      case object EachMapKey extends Segment {
+        override def toString: String = ".eachMapKey"
+      }
+      case object EachMapValue extends Segment {
+        override def toString: String = ".eachMapValue"
+      }
     }
   }
 
@@ -432,6 +452,15 @@ private[compiletime] trait Configurations { this: Derivation =>
       case ChimneyType.Path.Match(init, subtype) =>
         import init.Underlying as PathType2, subtype.Underlying as Subtype
         extractPath[PathType2].`match`[Subtype]
+      case ChimneyType.Path.EachItem(init) =>
+        import init.Underlying as PathType2
+        extractPath[PathType2].eachItem
+      case ChimneyType.Path.EachMapKey(init) =>
+        import init.Underlying as PathType2
+        extractPath[PathType2].eachMapKey
+      case ChimneyType.Path.EachMapValue(init) =>
+        import init.Underlying as PathType2
+        extractPath[PathType2].eachMapValue
       case _ =>
         // $COVERAGE-OFF$
         reportError(s"Invalid internal Path shape: ${Type.prettyPrint[PathType]}!!")
