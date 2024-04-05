@@ -25,53 +25,53 @@ trait IterableOrArrays { this: Definitions =>
     def unapply[M](implicit tpe: Type[M]): Option[Existential[IterableOrArray[M, *]]] = tpe match {
       case Type.Map(k, v) =>
         import k.Underlying as K, v.Underlying as V
-        val a = ExistentialType[(k.Underlying, v.Underlying)]
+        val a = ExistentialType[(K, V)]
         import a.Underlying as Inner
         Some(
-          Existential[IterableOrArray[M, *], a.Underlying](
-            new IterableOrArray[M, a.Underlying] {
+          Existential[IterableOrArray[M, *], Inner](
+            new IterableOrArray[M, Inner] {
 
-              def iterator(m: Expr[M]): Expr[Iterator[a.Underlying]] =
-                m.widenExpr[Iterable[a.Underlying]].iterator
+              def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
+                m.widenExpr[Iterable[Inner]].iterator
 
-              def map[B: Type](m: Expr[M])(f: Expr[a.Underlying => B]): ExistentialExpr =
-                ExistentialExpr.withoutType(m.widenExpr[Iterable[a.Underlying]].map(f))
+              def map[B: Type](m: Expr[M])(f: Expr[Inner => B]): ExistentialExpr =
+                ExistentialExpr.withoutType(m.widenExpr[Iterable[Inner]].map(f))
 
-              def to[C: Type](m: Expr[M])(factory: Expr[Factory[a.Underlying, C]]): Expr[C] =
-                m.widenExpr[Iterable[a.Underlying]].to(factory)
+              def to[C: Type](m: Expr[M])(factory: Expr[Factory[Inner, C]]): Expr[C] =
+                m.widenExpr[Iterable[Inner]].to(factory)
             }
           )
         )
       case Type.Iterable(a) =>
         import a.Underlying as Inner
         Some(
-          Existential[IterableOrArray[M, *], a.Underlying](
-            new IterableOrArray[M, a.Underlying] {
+          Existential[IterableOrArray[M, *], Inner](
+            new IterableOrArray[M, Inner] {
 
-              def iterator(m: Expr[M]): Expr[Iterator[a.Underlying]] =
-                m.widenExpr[Iterable[a.Underlying]].iterator
+              def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
+                m.widenExpr[Iterable[Inner]].iterator
 
-              def map[B: Type](m: Expr[M])(f: Expr[a.Underlying => B]): ExistentialExpr =
-                ExistentialExpr.withoutType(m.widenExpr[Iterable[a.Underlying]].map(f))
+              def map[B: Type](m: Expr[M])(f: Expr[Inner => B]): ExistentialExpr =
+                ExistentialExpr.withoutType(m.widenExpr[Iterable[Inner]].map(f))
 
-              def to[C: Type](m: Expr[M])(factory: Expr[Factory[a.Underlying, C]]): Expr[C] =
-                m.widenExpr[Iterable[a.Underlying]].to(factory)
+              def to[C: Type](m: Expr[M])(factory: Expr[Factory[Inner, C]]): Expr[C] =
+                m.widenExpr[Iterable[Inner]].to(factory)
             }
           )
         )
       case Type.Array(a) =>
         import a.Underlying as Inner
         Some(
-          Existential[IterableOrArray[M, *], a.Underlying](
-            new IterableOrArray[M, a.Underlying] {
-              def iterator(m: Expr[M]): Expr[Iterator[a.Underlying]] =
-                m.widenExpr[Array[a.Underlying]].iterator
+          Existential[IterableOrArray[M, *], Inner](
+            new IterableOrArray[M, Inner] {
+              def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
+                m.widenExpr[Array[Inner]].iterator
 
-              def map[B: Type](m: Expr[M])(f: Expr[a.Underlying => B]): ExistentialExpr =
-                ExistentialExpr.withoutType(m.widenExpr[Array[a.Underlying]].map(f))
+              def map[B: Type](m: Expr[M])(f: Expr[Inner => B]): ExistentialExpr =
+                ExistentialExpr.withoutType(m.widenExpr[Array[Inner]].map(f))
 
-              def to[C: Type](m: Expr[M])(factory: Expr[Factory[a.Underlying, C]]): Expr[C] =
-                m.widenExpr[Array[a.Underlying]].to(factory)
+              def to[C: Type](m: Expr[M])(factory: Expr[Factory[Inner, C]]): Expr[C] =
+                m.widenExpr[Array[Inner]].to(factory)
             }
           )
         )

@@ -49,7 +49,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     def matchOn[From: Type, To: Type](src: Expr[From], cases: List[PatternMatchCase[To]]): Expr[To] = {
       val casesTrees = cases.map { case PatternMatchCase(someFrom, usage, fromName) =>
         import someFrom.Underlying as SomeFrom
-        val markUsed = Expr.suppressUnused(c.Expr[someFrom.Underlying](q"$fromName"))
+        val markUsed = Expr.suppressUnused(c.Expr[SomeFrom](q"$fromName"))
         cq"""$fromName : $SomeFrom => { $markUsed; $usage }"""
       }
       c.Expr[To](q"$src match { case ..$casesTrees }")

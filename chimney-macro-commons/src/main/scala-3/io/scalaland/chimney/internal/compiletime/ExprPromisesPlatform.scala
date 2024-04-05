@@ -117,26 +117,26 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         val body = Block(
           List(
             ValDef(fromName, Some(Ref(bindName))), // not a Term, so we cannot use Expr.block
-            Expr.suppressUnused(Ref(fromName).asExprOf[someFrom.Underlying]).asTerm
+            Expr.suppressUnused(Ref(fromName).asExprOf[SomeFrom]).asTerm
           ),
           usage.asTerm
         )
 
-        if TypeRepr.of[someFrom.Underlying].typeSymbol.flags.is(Flags.Enum | Flags.JavaStatic) then
+        if TypeRepr.of[SomeFrom].typeSymbol.flags.is(Flags.Enum | Flags.JavaStatic) then
           // Scala 3's enums' parameterless cases are vals with type erased, so w have to match them by value
           // case arg @ Enum.Value => ...
-          CaseDef(Bind(bindName, Ident(TypeRepr.of[someFrom.Underlying].typeSymbol.termRef)), None, body)
-        else if TypeRepr.of[someFrom.Underlying].typeSymbol.flags.is(Flags.Module) then
+          CaseDef(Bind(bindName, Ident(TypeRepr.of[SomeFrom].typeSymbol.termRef)), None, body)
+        else if TypeRepr.of[SomeFrom].typeSymbol.flags.is(Flags.Module) then
           // case objects are also matched by value but the tree for them is generated in a slightly different way
           // case arg @ Enum.Value => ...
           CaseDef(
-            Bind(bindName, Ident(TypeRepr.of[someFrom.Underlying].typeSymbol.companionModule.termRef)),
+            Bind(bindName, Ident(TypeRepr.of[SomeFrom].typeSymbol.companionModule.termRef)),
             None,
             body
           )
         else
           // case arg : Enum.Value => ...
-          CaseDef(Bind(bindName, Typed(Wildcard(), TypeTree.of[someFrom.Underlying])), None, body)
+          CaseDef(Bind(bindName, Typed(Wildcard(), TypeTree.of[SomeFrom])), None, body)
       }
     ).asExprOf[To]
   }

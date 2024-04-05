@@ -81,10 +81,11 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
             .map { getter =>
               val name = getDecodedName(getter)
               val tpe = ExistentialType(fromUntyped(returnTypeOf(Type[A].tpe, getter)))
-              def conformToIsGetters = !name.take(2).equalsIgnoreCase("is") || tpe.Underlying <:< Type[Boolean]
+              import tpe.Underlying as Tpe
+              def conformToIsGetters = !name.take(2).equalsIgnoreCase("is") || Tpe <:< Type[Boolean]
               name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
                 val termName = getter.asMethod.name.toTermName
-                Product.Getter[A, tpe.Underlying](
+                Product.Getter[A, Tpe](
                   sourceType =
                     if (isCaseClassField(getter)) Product.Getter.SourceType.ConstructorVal
                     else if (isJavaGetter(getter) && conformToIsGetters) Product.Getter.SourceType.JavaBeanGetter
@@ -93,12 +94,10 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
                   isInherited = !localDefinitions(getter),
                   get =
                     // TODO: handle pathological cases like getName[Unused]()()()
-                    if (getter.asMethod.paramLists.isEmpty) (in: Expr[A]) => c.Expr[tpe.Underlying](q"$in.$termName")
+                    if (getter.asMethod.paramLists.isEmpty) (in: Expr[A]) => c.Expr[Tpe](q"$in.$termName")
                     else
                       (in: Expr[A]) =>
-                        c.Expr[tpe.Underlying](
-                          q"$in.$termName(...${getter.paramLists.map(_.map(_.asInstanceOf[Tree]))})"
-                        )
+                        c.Expr[Tpe](q"$in.$termName(...${getter.paramLists.map(_.map(_.asInstanceOf[Tree]))})")
                 )
               }
             }

@@ -118,29 +118,28 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
           ExprPromise
             // Scala 2/3 compatibility: each Java enum value on Scala 3 would have distinct type,
             // while on Scala 2 they all have the same type, so NameGenerationStrategy.FromType behaves differently
-            .promise[fromSubtype.Underlying](
+            .promise[FromSubtype](
               ExprPromise.NameGenerationStrategy.FromPrefix(fromSubtype.value.name.toLowerCase)
             )
-            .traverse { (fromSubtypeExpr: Expr[fromSubtype.Underlying]) =>
+            .traverse { (fromSubtypeExpr: Expr[FromSubtype]) =>
               // We're constructing:
               // case fromSubtypeExpr: $fromSubtype => ${ derivedToSubtype } } // or ${ derivedResultToSubtype
               lazy val fromSubtypeIntoToSubtype =
-                deriveRecursiveTransformationExpr[fromSubtype.Underlying, toSubtype.Underlying](
+                deriveRecursiveTransformationExpr[FromSubtype, ToSubtype](
                   fromSubtypeExpr,
                   Path.Root.`match`[ToSubtype]
                 ).map(_.map(toUpcast))
               // We're constructing:
               // case fromSubtypeExpr: $fromSubtype => ${ derivedToSubtype } } // or ${ derivedResultToSubtype }; using fromSubtypeExpr.value
               lazy val fromSubtypeUnwrappedIntoToSubtype =
-                fromSubtype.Underlying match {
+                FromSubtype match {
                   case WrapperClassType(fromSubtypeInner) =>
                     import fromSubtypeInner.{Underlying as FromSubtypeInner, value as wrapper}
                     Some(
                       DerivationResult.log(
-                        s"Falling back on ${Type.prettyPrint[fromSubtypeInner.Underlying]} to ${Type
-                            .prettyPrint[toSubtype.Underlying]} (source subtype unwrapped)"
+                        s"Falling back on ${Type.prettyPrint[FromSubtypeInner]} to ${Type.prettyPrint[ToSubtype]} (source subtype unwrapped)"
                       ) >>
-                        deriveRecursiveTransformationExpr[fromSubtypeInner.Underlying, toSubtype.Underlying](
+                        deriveRecursiveTransformationExpr[FromSubtypeInner, ToSubtype](
                           wrapper.unwrap(fromSubtypeExpr),
                           Path.Root
                         ).map(_.map(toUpcast))
@@ -151,12 +150,12 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               // case fromSubtypeExpr: $fromSubtype => Subtype(${ derivedToSubtypeInner } // or ${ derivedResultToSubtypeInner }.map(Subtype)
               lazy val fromSubtypeIntoToSubtypeUnwrapped = toSubtype.Underlying match {
                 case WrapperClassType(toSubtypeInner) =>
-                  import toSubtypeInner.{Underlying as FromSubtypeInner, value as wrapper}
+                  import toSubtypeInner.{Underlying as ToSubtypeInner, value as wrapper}
                   Some(
                     DerivationResult.log(
-                      s"Falling back on ${Type.prettyPrint[fromSubtype.Underlying]} to ${Type.prettyPrint[toSubtypeInner.Underlying]} (target subtype unwrapped)"
+                      s"Falling back on ${Type.prettyPrint[FromSubtype]} to ${Type.prettyPrint[ToSubtypeInner]} (target subtype unwrapped)"
                     ) >>
-                      deriveRecursiveTransformationExpr[fromSubtype.Underlying, toSubtypeInner.Underlying](
+                      deriveRecursiveTransformationExpr[FromSubtype, ToSubtypeInner](
                         fromSubtypeExpr,
                         Path.Root.select(wrapper.fieldName)
                       ).map(_.map(wrapper.wrap)).map(_.map(toUpcast))
@@ -172,8 +171,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         // 2 or more matches - ambiguous coproduct instances
         case toSubtypes =>
           DerivationResult.ambiguousSubtypeTargets[From, To, Existential[ExprPromise[*, TransformationExpr[To]]]](
-            fromSubtype.Underlying.as_??,
-            toSubtypes.map(to => to.Underlying.as_??)
+            FromSubtype.as_??,
+            toSubtypes.map(toSubtype => toSubtype.Underlying.as_??)
           )
       }
     }
@@ -185,17 +184,15 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
       ExprPromise
         // Scala 2/3 compatibility: each Java enum value on Scala 3 would have distinct type,
         // while on Scala 2 they all have the same type, so NameGenerationStrategy.FromType behaves differently
-        .promise[fromSubtype.Underlying](
-          ExprPromise.NameGenerationStrategy.FromPrefix(fromSubtype.value.name.toLowerCase)
-        )
+        .promise[FromSubtype](ExprPromise.NameGenerationStrategy.FromPrefix(fromSubtype.value.name.toLowerCase))
         .traverse { (fromSubtypeExpr: Expr[FromSubtype]) =>
           // We're constructing:
           // case fromSubtypeExpr: $fromSubtype => ${ derivedTo } // or ${ derivedResultTo }
           DerivationResult.log(
             s"Falling back on ${Type.prettyPrint[FromSubtype]} to ${Type.prettyPrint[To]} (target upcasted)"
           ) >>
-            deriveRecursiveTransformationExprUpdatingRules[fromSubtype.Underlying, To](fromSubtypeExpr, Path.Root)(
-              rules => rules.filter(rule => rule.name == "Implicit")
+            deriveRecursiveTransformationExprUpdatingRules[FromSubtype, To](fromSubtypeExpr, Path.Root)(rules =>
+              rules.filter(rule => rule.name == "Implicit")
             )
         }
         .map(Existential[ExprPromise[*, TransformationExpr[To]], FromSubtype](_))
