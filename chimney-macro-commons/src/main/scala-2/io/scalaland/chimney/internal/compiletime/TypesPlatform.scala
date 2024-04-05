@@ -93,10 +93,15 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     object Option extends OptionModule {
       def apply[A: Type]: Type[Option[A]] = weakTypeTag[Option[A]]
       def unapply[A](A: Type[A]): Option[??] =
-        if (A <:< None) Some(ExistentialType(Nothing))
-        else if (A.isCtor[Option[?]]) Some(A.param(0))
+        if (A <:< None) scala.Some(ExistentialType(Nothing))
+        else if (A.isCtor[Option[?]]) scala.Some(A.param(0))
         else scala.None
-
+      object Some extends SomeModule {
+        def apply[A: Type]: Type[Some[A]] = weakTypeTag[Some[A]]
+        def unapply[A](A: Type[A]): Option[??] =
+          if (A.isCtor[Some[?]]) scala.Some(A.param(0))
+          else scala.None
+      }
       val None: Type[scala.None.type] = weakTypeTag[scala.None.type]
     }
 

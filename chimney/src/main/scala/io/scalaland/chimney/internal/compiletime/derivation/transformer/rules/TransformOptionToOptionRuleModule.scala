@@ -29,7 +29,7 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
       ExprPromise
         .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromType)
         .traverse { (newFromExpr: Expr[InnerFrom]) =>
-          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromExpr)
+          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromExpr, Path.Root.`match`[Some[InnerTo]])
         }
         .flatMap { (derivedToExprPromise: ExprPromise[InnerFrom, TransformationExpr[InnerTo]]) =>
           derivedToExprPromise.foldTransformationExpr { (totalP: ExprPromise[InnerFrom, Expr[InnerTo]]) =>

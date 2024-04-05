@@ -80,6 +80,8 @@ private[compiletime] trait Types { this: Existentials =>
 
     val Option: OptionModule
     trait OptionModule extends Ctor1[Option] { this: Option.type =>
+      val Some: SomeModule
+      trait SomeModule extends Ctor1[Some] { this: Some.type => }
       val None: Type[scala.None.type]
     }
 
@@ -130,6 +132,7 @@ private[compiletime] trait Types { this: Existentials =>
       implicit def ArrayType[A: Type]: Type[Array[A]] = Array[A]
 
       implicit def OptionType[A: Type]: Type[Option[A]] = Option[A]
+      implicit def SomeType[A: Type]: Type[Some[A]] = Option.Some[A]
       implicit val NoneType: Type[None.type] = Option.None
 
       implicit def EitherType[L: Type, R: Type]: Type[Either[L, R]] = Either[L, R]

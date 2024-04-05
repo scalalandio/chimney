@@ -88,6 +88,10 @@ private[compiletime] trait Configurations { this: Derivation =>
     import Path.Segment.*
     def select(name: String): Path = new Path(segments :+ Select(name))
     def `match`[Tpe: Type]: Path = new Path(segments :+ Match(Type[Tpe].as_??))
+    // TODO: implement these
+    def eachItem: Path = Path.clean
+    def eachMapKey: Path = Path.clean
+    def eachMapValue: Path = Path.clean
 
     @scala.annotation.tailrec
     def drop(prefix: Path)(implicit ctx: TransformationContext[?, ?]): Option[Path] = (prefix, this) match {
