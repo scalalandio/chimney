@@ -23,10 +23,7 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       // We're constructing:
       // '{ ${ derivedTo } /* using ${ src }.from internally */ }
-      deriveRecursiveTransformationExpr[InnerFrom, To](
-        valueFrom.unwrap(ctx.src),
-        followTo = Path.Root
-      )
+      deriveRecursiveTransformationExpr[InnerFrom, To](valueFrom.unwrap(ctx.src), Path.Root)
         .flatMap(DerivationResult.expanded)
         // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
         .orElse(TransformProductToProductRule.expand(ctx))

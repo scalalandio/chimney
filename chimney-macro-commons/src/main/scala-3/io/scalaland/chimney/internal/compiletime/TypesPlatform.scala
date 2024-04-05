@@ -126,11 +126,18 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     }
 
     object Option extends OptionModule {
-
       def apply[A: Type]: Type[Option[A]] = quoted.Type.of[Option[A]]
       def unapply[A](A: Type[A]): Option[??] = A match {
-        case '[Option[inner]] => Some(Type[inner].as_??)
+        case '[Option[inner]] => scala.Some(Type[inner].as_??)
         case _                => scala.None
+      }
+
+      object Some extends SomeModule {
+        def apply[A: Type]: Type[Some[A]] = quoted.Type.of[Some[A]]
+        def unapply[A](A: Type[A]): Option[??] = A match {
+          case '[Some[inner]] => scala.Some(Type[inner].as_??)
+          case _              => scala.None
+        }
       }
 
       val None: Type[scala.None.type] = quoted.Type.of[scala.None.type]

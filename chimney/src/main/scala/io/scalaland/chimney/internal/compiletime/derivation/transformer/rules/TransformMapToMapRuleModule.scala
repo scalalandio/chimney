@@ -34,12 +34,12 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
       val toKeyResult = ExprPromise
         .promise[FromK](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
         .traverse { key =>
-          deriveRecursiveTransformationExpr[FromK, ToK](key).map(_.ensurePartial -> key)
+          deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.eachMapKey).map(_.ensurePartial -> key)
         }
       val toValueResult = ExprPromise
         .promise[FromV](ExprPromise.NameGenerationStrategy.FromPrefix("value"))
         .traverse { value =>
-          deriveRecursiveTransformationExpr[FromV, ToV](value).map(_.ensurePartial)
+          deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.eachMapValue).map(_.ensurePartial)
         }
 
       val factoryResult = DerivationResult.summonImplicit[Factory[(ToK, ToV), To]]

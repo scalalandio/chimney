@@ -43,7 +43,7 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
           ctx.src
             .upcastExpr[Option[InnerFrom]]
             .map(Expr.Function1.instance[InnerFrom, partial.Result[To]] { (from2Expr: Expr[InnerFrom]) =>
-              await(deriveRecursiveTransformationExpr[InnerFrom, To](from2Expr)).ensurePartial
+              await(deriveRecursiveTransformationExpr[InnerFrom, To](from2Expr, Path.Root)).ensurePartial
             })
             .getOrElse(ChimneyExpr.PartialResult.fromEmpty[To])
         }

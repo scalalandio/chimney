@@ -28,7 +28,8 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] =
       deriveRecursiveTransformationExpr[FromL, ToL](
-        ctx.src.upcastExpr[Left[FromL, FromR]].value
+        ctx.src.upcastExpr[Left[FromL, FromR]].value,
+        Path.Root.`match`[Left[ToL, ToR]]
       ).flatMap { (derivedToL: TransformationExpr[ToL]) =>
         // We're constructing:
         // '{ Left( ${ derivedToL } ) /* from ${ src }.value */ }
@@ -39,7 +40,8 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] =
       deriveRecursiveTransformationExpr[FromR, ToR](
-        ctx.src.upcastExpr[Right[FromL, FromR]].value
+        ctx.src.upcastExpr[Right[FromL, FromR]].value,
+        Path.Root.`match`[Right[ToL, ToR]]
       ).flatMap { (derivedToR: TransformationExpr[ToR]) =>
         // We're constructing:
         // '{ Right( ${ derivedToR } ) /* from ${ src }.value */ }
@@ -52,13 +54,13 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
       val toLeftResult = ExprPromise
         .promise[FromL](ExprPromise.NameGenerationStrategy.FromPrefix("left"))
         .traverse { (leftExpr: Expr[FromL]) =>
-          deriveRecursiveTransformationExpr[FromL, ToL](leftExpr)
+          deriveRecursiveTransformationExpr[FromL, ToL](leftExpr, Path.Root.`match`[Left[ToL, ToR]])
         }
 
       val toRightResult = ExprPromise
         .promise[FromR](ExprPromise.NameGenerationStrategy.FromPrefix("right"))
         .traverse { (rightExpr: Expr[FromR]) =>
-          deriveRecursiveTransformationExpr[FromR, ToR](rightExpr)
+          deriveRecursiveTransformationExpr[FromR, ToR](rightExpr, Path.Root.`match`[Right[ToL, ToR]])
         }
 
       val inLeft =

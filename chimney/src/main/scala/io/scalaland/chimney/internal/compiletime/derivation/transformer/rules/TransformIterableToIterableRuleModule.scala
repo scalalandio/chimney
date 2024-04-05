@@ -39,12 +39,12 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
       val toKeyResult = ExprPromise
         .promise[FromK](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
         .traverse { key =>
-          deriveRecursiveTransformationExpr[FromK, ToK](key).map(_.ensurePartial -> key)
+          deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.eachMapKey).map(_.ensurePartial -> key)
         }
       val toValueResult = ExprPromise
         .promise[FromV](ExprPromise.NameGenerationStrategy.FromPrefix("value"))
         .traverse { value =>
-          deriveRecursiveTransformationExpr[FromV, ToV](value).map(_.ensurePartial)
+          deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.eachMapValue).map(_.ensurePartial)
         }
 
       toKeyResult.parTuple(toValueResult).parTuple(toIorA.factory).flatMap { case ((toKeyP, toValueP), factory) =>
@@ -91,7 +91,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
       ExprPromise
         .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromExpr(ctx.src))
         .traverse { (newFromSrc: Expr[InnerFrom]) =>
-          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromSrc)
+          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromSrc, Path.Root.eachItem)
         }
         .flatMap { (to2P: ExprPromise[InnerFrom, TransformationExpr[InnerTo]]) =>
           to2P.foldTransformationExpr { (totalP: ExprPromise[InnerFrom, Expr[InnerTo]]) =>
