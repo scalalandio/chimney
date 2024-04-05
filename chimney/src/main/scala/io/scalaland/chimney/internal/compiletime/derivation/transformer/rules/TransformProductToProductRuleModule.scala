@@ -682,6 +682,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       path match {
         case Path.AtField(name, path2) => appendPath[A](appendPath[A](expr, name), path2)
         case Path.AtSubtype(_, path2)  => appendPath[A](expr, path2)
+        case Path.AtItem(path2)        => appendPath[A](expr, path2) // TODO: ?
+        case Path.AtMapKey(path2)      => appendPath[A](expr, path2) // TODO: ?
+        case Path.AtMapValue(path2)    => appendPath[A](expr, path2) // TODO: ?
         case _                         => expr
       }
 
