@@ -81,70 +81,66 @@ private[compiletime] trait Derivation
   )(implicit
       ctx: PatcherContext[A, Patch]
   ): DerivationResult[Option[ExistentialExpr]] = {
+    import patchGetter.Underlying as PatchGetter
 
     def patchGetterExpr: ExistentialExpr =
       patchGetter.mapK[Expr](_ => getter => getter.get(ctx.patch))
 
     targetParams.get(patchFieldName) match {
-      case Some(targetParam)
-          if ctx.config.flags.ignoreNoneInPatch && patchGetter.Underlying.isOption && targetParam.Underlying.isOption =>
-        (patchGetter.Underlying, targetParam.Underlying) match {
-          case (Type.Option(getterInner), Type.Option(targetInner)) =>
-            val targetGetter = targetGetters(patchFieldName)
-            import patchGetter.Underlying as PatchGetter, targetGetter.Underlying as TargetGetter,
-              getterInner.Underlying as GetterInner, targetInner.Underlying as TargetInner
-            deriveTransformerForPatcherField[Option[GetterInner], Option[TargetInner]](src =
-              patchGetter.value.get(ctx.patch).asInstanceOfExpr[Option[GetterInner]]
-            )
-              .map { (transformedExpr: Expr[Option[TargetInner]]) =>
-                Some(
-                  transformedExpr
-                    .orElse(
-                      targetGetter.value.get(ctx.obj).upcastExpr[Option[TargetInner]]
-                    )
-                    .as_??
-                )
-              }
-          case _ =>
-            assertionFailed(s"Expected both types to be options, got ${Type
-                .prettyPrint(patchGetter.Underlying)} and ${Type.prettyPrint(targetParam.Underlying)}")
-        }
-
-      case Some(targetParam) if patchGetter.Underlying <:< targetParam.Underlying =>
-        DerivationResult.pure(Some(patchGetterExpr))
-
       case Some(targetParam) =>
-        import patchGetter.Underlying as PatchGetter, targetParam.Underlying as TargetParam
-        deriveTransformerForPatcherField[PatchGetter, TargetParam](src = patchGetter.value.get(ctx.patch))
-          .map { (transformedExpr: Expr[TargetParam]) =>
-            Some(transformedExpr.as_??)
+        import targetParam.Underlying as TargetParam
+
+        if (ctx.config.flags.ignoreNoneInPatch && PatchGetter.isOption && TargetParam.isOption) {
+          (PatchGetter, TargetParam) match {
+            case (Type.Option(getterInner), Type.Option(targetInner)) =>
+              val targetGetter = targetGetters(patchFieldName)
+              import targetGetter.Underlying as TargetGetter, getterInner.Underlying as GetterInner,
+                targetInner.Underlying as TargetInner
+              deriveTransformerForPatcherField[Option[GetterInner], Option[TargetInner]](src =
+                patchGetter.value.get(ctx.patch).asInstanceOfExpr[Option[GetterInner]]
+              )
+                .map { (transformedExpr: Expr[Option[TargetInner]]) =>
+                  Some(transformedExpr.orElse(targetGetter.value.get(ctx.obj).upcastExpr[Option[TargetInner]]).as_??)
+                }
+            case _ =>
+              assertionFailed(
+                s"Expected both types to be options, got ${Type.prettyPrint[PatchGetter]} and ${Type.prettyPrint[TargetParam]}"
+              )
           }
-          .recoverWith { (errors: DerivationErrors) =>
-            patchGetter.Underlying match {
-              case Type.Option(inner) =>
-                val targetGetter = targetGetters(patchFieldName)
-                import inner.Underlying as Inner, targetGetter.Underlying as TargetGetter
-                PrependDefinitionsTo
-                  .prependVal[Option[Inner]](
-                    patchGetter.value.get(ctx.patch).upcastExpr[Option[Inner]],
-                    ExprPromise.NameGenerationStrategy.FromPrefix(patchFieldName)
-                  )
-                  .traverse { (option: Expr[Option[Inner]]) =>
-                    deriveTransformerForPatcherField[Inner, TargetParam](
-                      src = option.get
-                    ).map { (transformedExpr: Expr[TargetParam]) =>
-                      Expr.ifElse(option.isDefined)(transformedExpr)(
-                        targetGetter.value.get(ctx.obj).widenExpr[TargetParam]
-                      )
-                    }
-                  }
-                  .map { (targetExprBlock: PrependDefinitionsTo[Expr[TargetParam]]) =>
-                    Some(targetExprBlock.closeBlockAsExprOf[TargetParam].as_??)
-                  }
-              case _ =>
-                DerivationResult.fail(errors)
+        } else if (PatchGetter <:< TargetParam) {
+          DerivationResult.pure(Some(patchGetterExpr))
+        } else {
+          deriveTransformerForPatcherField[PatchGetter, TargetParam](src = patchGetter.value.get(ctx.patch))
+            .map { (transformedExpr: Expr[TargetParam]) =>
+              Some(transformedExpr.as_??)
             }
-          }
+            .recoverWith { (errors: DerivationErrors) =>
+              PatchGetter match {
+                case Type.Option(inner) =>
+                  val targetGetter = targetGetters(patchFieldName)
+                  import inner.Underlying as Inner, targetGetter.Underlying as TargetGetter
+                  PrependDefinitionsTo
+                    .prependVal[Option[Inner]](
+                      patchGetter.value.get(ctx.patch).upcastExpr[Option[Inner]],
+                      ExprPromise.NameGenerationStrategy.FromPrefix(patchFieldName)
+                    )
+                    .traverse { (option: Expr[Option[Inner]]) =>
+                      deriveTransformerForPatcherField[Inner, TargetParam](
+                        src = option.get
+                      ).map { (transformedExpr: Expr[TargetParam]) =>
+                        Expr.ifElse(option.isDefined)(transformedExpr)(
+                          targetGetter.value.get(ctx.obj).widenExpr[TargetParam]
+                        )
+                      }
+                    }
+                    .map { (targetExprBlock: PrependDefinitionsTo[Expr[TargetParam]]) =>
+                      Some(targetExprBlock.closeBlockAsExprOf[TargetParam].as_??)
+                    }
+                case _ =>
+                  DerivationResult.fail(errors)
+              }
+            }
+        }
 
       case None =>
         if (ctx.config.flags.ignoreRedundantPatcherFields)
