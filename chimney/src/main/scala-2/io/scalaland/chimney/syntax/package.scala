@@ -1,5 +1,8 @@
 package io.scalaland.chimney
 
+import io.scalaland.chimney.internal.runtime.{IsCollection, IsEither, IsMap, IsOption}
+
+import scala.annotation.unused
 import scala.util.Try
 
 /** Imports only extension methods for summoning and using Transformer, PartialTransformer or Patcher
@@ -176,5 +179,30 @@ package object syntax {
       */
     def toPartialResult: partial.Result[A] =
       partial.Result.fromTry(`try`)
+  }
+
+  // TODO: docs
+  implicit final class TransformationPathOps[A](@unused private val a: A) extends AnyVal {
+
+    def onSubtype[B <: A]: B =
+      sys.error(".onSubtype should be only called within Chimney DSL")
+
+    def onSome[B](implicit @unused ev: IsOption.Of[A, B]): B =
+      sys.error(".onSome should be only called within Chimney DSL")
+
+    def onLeft[L, R](implicit @unused ev: IsEither.Of[A, L, R]): L =
+      sys.error(".onLeft should be only called within Chimney DSL")
+
+    def onRight[L, R](implicit @unused ev: IsEither.Of[A, L, R]): R =
+      sys.error(".onRight should be only called within Chimney DSL")
+
+    def eachItem[B](implicit @unused ev: IsCollection.Of[A, B]): B =
+      sys.error(".eachItem should be only called within Chimney DSL")
+
+    def eachMapKey[K, V](implicit @unused ev: IsMap.Of[K, V, A]): K =
+      sys.error(".eachMapKey should be only called within Chimney DSL")
+
+    def eachMapValue[K, V](implicit @unused ev: IsMap.Of[K, V, A]): V =
+      sys.error(".eachMapValue should be only called within Chimney DSL")
   }
 }

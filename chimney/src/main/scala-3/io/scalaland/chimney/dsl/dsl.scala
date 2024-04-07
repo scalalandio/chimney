@@ -5,7 +5,17 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Transfor
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 
 export io.scalaland.chimney.inlined.{into, intoPartial, using}
-export io.scalaland.chimney.syntax.{toPartialResult, toPartialResultOrString}
+export io.scalaland.chimney.syntax.{
+  eachItem,
+  eachMapKey,
+  eachMapValue,
+  onLeft,
+  onRight,
+  onSome,
+  onSubtype,
+  toPartialResult,
+  toPartialResultOrString
+}
 
 // Extension methods in dsl.* summon TypeClass.AutoDerived while extension methods in syntax.* summon TypeClass.
 // This help us preserve legacy behavior in dsl code while keeping stricter separation in auto/syntax imports.

@@ -104,10 +104,10 @@ object fixtures {
       }
 
       object nonFunhappy {
-        def validateA(a: Int): Int = throw new Exception("a not nice")
+        def validateA(a: Int): Int = sys.error("a not nice")
         def validateB(b: Double): Double = b
-        def validateC(c: String): String = throw new Exception("c not pretty")
-        def validateD(d: Option[String]): Option[String] = throw new Exception("I don't like this d")
+        def validateC(c: String): String = sys.error("c not pretty")
+        def validateD(d: Option[String]): Option[String] = sys.error("I don't like this d")
       }
 
       object happy {
