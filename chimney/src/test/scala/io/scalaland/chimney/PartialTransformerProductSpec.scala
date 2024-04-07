@@ -373,7 +373,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       val result7 = Person("John", 10, 140)
         .intoPartial[User]
-        .withFieldComputed(_.age, _ => throw new Exception("error happened"))
+        .withFieldComputed(_.age, _ => sys.error("error happened"))
         .transform
       result7.asOption ==> None
       result7.asEither.isLeft ==> true

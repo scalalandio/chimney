@@ -150,7 +150,7 @@ private[compiletime] trait Configurations { this: Derivation =>
           case _           => false
         }
 
-        override def toString: String = s".whenSubtype[${Type.prettyPrint(tpe.Underlying)}]"
+        override def toString: String = s".onSubtype[${Type.prettyPrint(tpe.Underlying)}]"
       }
       case object EachItem extends Segment {
         override def toString: String = ".eachItem"
