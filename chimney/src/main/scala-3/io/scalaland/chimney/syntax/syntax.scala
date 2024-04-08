@@ -175,26 +175,27 @@ extension [T](`try`: Try[T]) {
     partial.Result.fromTry(`try`)
 }
 
+// TODO docs
 extension [A](@unused a: A) {
 
-  def onSubtype[B <: A]: B =
-    sys.error(".onSubtype should be only called within Chimney DSL")
+  def matching[B <: A]: B =
+    sys.error(".matching should be only called within Chimney DSL")
 
-  def onSome[B](implicit @unused ev: IsOption.Of[A, B]): B =
-    sys.error(".onSome should be only called within Chimney DSL")
+  def matchingSome[SV, S](implicit @unused ev: IsOption.Of[A, SV, S]): SV =
+    sys.error(".matchingSome should be only called within Chimney DSL")
 
-  def onLeft[L, R](implicit @unused ev: IsEither.Of[A, L, R]): L =
-    sys.error(".onLeft should be only called within Chimney DSL")
+  def matchingLeft[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): LV =
+    sys.error(".matchingLeft should be only called within Chimney DSL")
 
-  def onRight[L, R](implicit @unused ev: IsEither.Of[A, L, R]): R =
-    sys.error(".onRight should be only called within Chimney DSL")
+  def matchingRight[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): RV =
+    sys.error(".matchingRight should be only called within Chimney DSL")
 
-  def eachItem[B](implicit @unused ev: IsCollection.Of[A, B]): B =
-    sys.error(".eachItem should be only called within Chimney DSL")
+  def everyItem[I](implicit @unused ev: IsCollection.Of[A, I]): I =
+    sys.error(".everyItem should be only called within Chimney DSL")
 
-  def eachMapKey[K, V](implicit @unused ev: IsMap.Of[K, V, A]): K =
-    sys.error(".eachMapKey should be only called within Chimney DSL")
+  def everyMapKey[K, V](implicit @unused ev: IsMap.Of[K, V, A]): K =
+    sys.error(".everyMapKey should be only called within Chimney DSL")
 
-  def eachMapValue[K, V](implicit @unused ev: IsMap.Of[K, V, A]): V =
-    sys.error(".eachMapValue should be only called within Chimney DSL")
+  def everyMapValue[K, V](implicit @unused ev: IsMap.Of[K, V, A]): V =
+    sys.error(".everyMapValue should be only called within Chimney DSL")
 }

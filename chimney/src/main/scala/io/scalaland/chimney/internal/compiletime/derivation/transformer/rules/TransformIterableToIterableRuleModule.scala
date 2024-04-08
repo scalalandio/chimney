@@ -15,15 +15,17 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
 
     @scala.annotation.nowarn
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-      (Type[From], Type[To], ctx) match {
-        case (Type.Map(fromK, fromV), IterableOrArray(to2), TransformationContext.ForPartial(_, failFast))
+      (ctx, Type[From], Type[To]) match {
+        // Map/Iterable/Array to Map with Partial was already handled in MapToMap - here we're handling prepending errors by key
+        case (TransformationContext.ForPartial(_, failFast), Type.Map(fromK, fromV), IterableOrArray(to2))
             if to2.Underlying.isTuple =>
           // val Type.Tuple2(toK, toV) = to2: @unchecked
           val (toK, toV) = Type.Tuple2.unapply(to2.Underlying).get
           import to2.Underlying as InnerTo, fromK.Underlying as FromK, fromV.Underlying as FromV, toV.Underlying as ToV,
             toK.Underlying as ToK
           mapPartialMaps[From, To, InnerTo, FromK, FromV, ToK, ToV](to2.value, failFast)
-        case (IterableOrArray(from2), IterableOrArray(to2), _) =>
+        // neither side has a Map, or it can be handled with ProductToProduct rule for tuple to tuple
+        case (_, IterableOrArray(from2), IterableOrArray(to2)) =>
           import from2.{Underlying as InnerFrom, value as fromIorA}, to2.{Underlying as InnerTo, value as toIorA}
           mapIterables[From, To, InnerFrom, InnerTo](fromIorA, toIorA)
         case _ =>
@@ -39,12 +41,12 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
       val toKeyResult = ExprPromise
         .promise[FromK](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
         .traverse { key =>
-          deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.eachMapKey).map(_.ensurePartial -> key)
+          deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.everyMapKey).map(_.ensurePartial -> key)
         }
       val toValueResult = ExprPromise
         .promise[FromV](ExprPromise.NameGenerationStrategy.FromPrefix("value"))
         .traverse { value =>
-          deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.eachMapValue).map(_.ensurePartial)
+          deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue).map(_.ensurePartial)
         }
 
       toKeyResult.parTuple(toValueResult).parTuple(toIorA.factory).flatMap { case ((toKeyP, toValueP), factory) =>
@@ -91,7 +93,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
       ExprPromise
         .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromExpr(ctx.src))
         .traverse { (newFromSrc: Expr[InnerFrom]) =>
-          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromSrc, Path.Root.eachItem)
+          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromSrc, Path.Root.everyItem)
         }
         .flatMap { (to2P: ExprPromise[InnerFrom, TransformationExpr[InnerTo]]) =>
           to2P.foldTransformationExpr { (totalP: ExprPromise[InnerFrom, Expr[InnerTo]]) =>

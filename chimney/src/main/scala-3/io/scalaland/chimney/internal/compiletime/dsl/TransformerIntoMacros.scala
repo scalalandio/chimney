@@ -96,7 +96,7 @@ object TransformerIntoMacros {
     '{
       WithRuntimeDataStore
         .update($ti, $f)
-        .asInstanceOf[TransformerInto[From, To, CaseComputed[Path.Match[Path.Root, Subtype], Tail], Flags]]
+        .asInstanceOf[TransformerInto[From, To, CaseComputed[Path.Matching[Path.Root, Subtype], Tail], Flags]]
     }
 
   def withConstructorImpl[

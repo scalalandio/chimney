@@ -311,35 +311,35 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             Some((Type[init].as_?<[runtime.Path], Type[fieldName].as_?<[String]))
           case _ => scala.None
       }
-      object Match extends MatchModule {
-        def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.Match[Init, Subtype]] =
-          quoted.Type.of[runtime.Path.Match[Init, Subtype]]
+      object Matching extends MatchingModule {
+        def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.Matching[Init, Subtype]] =
+          quoted.Type.of[runtime.Path.Matching[Init, Subtype]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ??)] = tpe match
-          case '[runtime.Path.Match[init, subtype]] =>
+          case '[runtime.Path.Matching[init, subtype]] =>
             Some((Type[init].as_?<[runtime.Path], Type[subtype].as_??))
           case _ => scala.None
       }
-      object EachItem extends EachItemModule {
-        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachItem[Init]] =
-          quoted.Type.of[runtime.Path.EachItem[Init]]
+      object EveryItem extends EveryItemModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryItem[Init]] =
+          quoted.Type.of[runtime.Path.EveryItem[Init]]
         def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
-          case '[runtime.Path.EachItem[init]] =>
+          case '[runtime.Path.EveryItem[init]] =>
             Some(Type[init].as_?<[runtime.Path])
           case _ => scala.None
       }
-      object EachMapKey extends EachMapKeyModule {
-        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachMapKey[Init]] =
-          quoted.Type.of[runtime.Path.EachMapKey[Init]]
+      object EveryMapKey extends EveryMapKeyModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryMapKey[Init]] =
+          quoted.Type.of[runtime.Path.EveryMapKey[Init]]
         def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
-          case '[runtime.Path.EachMapKey[init]] =>
+          case '[runtime.Path.EveryMapKey[init]] =>
             Some(Type[init].as_?<[runtime.Path])
           case _ => scala.None
       }
-      object EachMapValue extends EachMapValueModule {
-        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachMapValue[Init]] =
-          quoted.Type.of[runtime.Path.EachMapValue[Init]]
+      object EveryMapValue extends EveryMapValueModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryMapValue[Init]] =
+          quoted.Type.of[runtime.Path.EveryMapValue[Init]]
         def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
-          case '[runtime.Path.EachMapValue[init]] =>
+          case '[runtime.Path.EveryMapValue[init]] =>
             Some(Type[init].as_?<[runtime.Path])
           case _ => scala.None
       }

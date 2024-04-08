@@ -157,6 +157,41 @@ class TotalTransformerProductSpec extends ChimneySpec {
         .into[NestedProduct[User]]
         .withFieldComputed(_.value.age, _.getValue.age * 2)
         .transform ==> NestedProduct(User("John", 20, 140))
+
+      NestedComplex(
+        Some(Person("John", 10, 140)),
+        Right(Person("John", 10, 140)),
+        List(Person("John", 10, 140)),
+        scala.collection.immutable.ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
+      ).into[NestedComplex[User]]
+        .withFieldComputed(_.option.matchingSome.age, _ => 15)
+        .withFieldComputed(_.either.matchingLeft.age, _ => 20)
+        .withFieldComputed(_.either.matchingRight.age, _ => 30)
+        .withFieldComputed(_.collection.everyItem.age, _ => 40)
+        .withFieldComputed(_.map.everyMapKey.age, _ => 50)
+        .withFieldComputed(_.map.everyMapValue.age, _ => 60)
+        .transform ==> NestedComplex(
+        Some(User("John", 15, 140)),
+        Right(User("John", 30, 140)),
+        List(User("John", 40, 140)),
+        scala.collection.immutable.ListMap(User("John", 50, 140) -> User("John", 60, 140))
+      )
+
+      NestedComplex(
+        Some(Person("John", 10, 140)),
+        Right(Person("John", 10, 140)),
+        List(Person("John", 10, 140)),
+        scala.collection.immutable.ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
+      ).into[NestedComplex[User]]
+        .withFieldComputed(_.option.matching[Some[User]].value.age, _ => 15)
+        .withFieldComputed(_.either.matching[Left[User, User]].value.age, _ => 20)
+        .withFieldComputed(_.either.matching[Right[User, User]].value.age, _ => 30)
+        .transform ==> NestedComplex(
+        Some(User("John", 15, 140)),
+        Right(User("John", 30, 140)),
+        List(User("John", 10, 140)),
+        scala.collection.immutable.ListMap(User("John", 10, 140) -> User("John", 10, 140))
+      )
     }
   }
 

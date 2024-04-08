@@ -100,7 +100,7 @@ object TransformerDefinitionMacros {
     '{
       WithRuntimeDataStore
         .update($td, $f)
-        .asInstanceOf[TransformerDefinition[From, To, CaseComputed[Path.Match[Path.Root, Subtype], Tail], Flags]]
+        .asInstanceOf[TransformerDefinition[From, To, CaseComputed[Path.Matching[Path.Root, Subtype], Tail], Flags]]
     }
 
   def withConstructorImpl[

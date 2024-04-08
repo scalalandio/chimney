@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.runtime
 
 import scala.annotation.unused
 
+// TODO @implicitNotFound
 sealed trait IsCollection[C] {
   type Item
 }

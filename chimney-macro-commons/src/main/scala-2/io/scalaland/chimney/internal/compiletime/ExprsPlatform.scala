@@ -14,6 +14,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     def Int(value: Int): Expr[Int] = c.Expr[Int](q"$value")
     def String(value: String): Expr[String] = c.Expr[String](q"$value")
 
+    def Tuple2[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[(A, B)] = c.Expr[(A, B)](q"($a, $b)")
+
     object Function1 extends Function1Module {
       def apply[A: Type, B: Type](fn: Expr[A => B])(a: Expr[A]): Expr[B] = c.Expr[B](q"$fn.apply($a)")
     }
@@ -49,8 +51,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       val None: Expr[scala.None.type] = c.Expr[scala.None.type](q"_root_.scala.None")
       def map[A: Type, B: Type](opt: Expr[Option[A]])(f: Expr[A => B]): Expr[Option[B]] =
         c.Expr[Option[B]](q"$opt.map[${Type[B]}]($f)")
-      def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(onSome: Expr[A => B]): Expr[B] =
-        c.Expr[B](q"$opt.fold[${Type[B]}]($onNone)($onSome)")
+      def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(matchingSome: Expr[A => B]): Expr[B] =
+        c.Expr[B](q"$opt.fold[${Type[B]}]($onNone)($matchingSome)")
       def orElse[A: Type](opt1: Expr[Option[A]], opt2: Expr[Option[A]]): Expr[Option[A]] =
         c.Expr[Option[A]](q"$opt1.orElse[${Type[A]}]($opt2)")
       def getOrElse[A: Type](opt: Expr[Option[A]])(orElse: Expr[A]): Expr[A] =

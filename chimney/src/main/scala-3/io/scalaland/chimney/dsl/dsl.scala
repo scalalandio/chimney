@@ -6,13 +6,13 @@ import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacro
 
 export io.scalaland.chimney.inlined.{into, intoPartial, using}
 export io.scalaland.chimney.syntax.{
-  eachItem,
-  eachMapKey,
-  eachMapValue,
-  onLeft,
-  onRight,
-  onSome,
-  onSubtype,
+  everyItem,
+  everyMapKey,
+  everyMapValue,
+  matching,
+  matchingLeft,
+  matchingRight,
+  matchingSome,
   toPartialResult,
   toPartialResultOrString
 }
