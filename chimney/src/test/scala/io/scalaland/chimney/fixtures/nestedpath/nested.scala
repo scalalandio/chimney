@@ -33,3 +33,9 @@ case class NestedComplex[A](
     collection: List[A],
     map: ListMap[A, A]
 )
+
+sealed trait NestedADT[A]
+object NestedADT {
+  case class Foo[A](foo: A) extends NestedADT[A]
+  case class Bar[A](bar: A) extends NestedADT[A]
+}
