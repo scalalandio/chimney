@@ -88,12 +88,15 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
     def parse(t: Tree): Either[String, ExistentialPath] = t match {
       case Block(List(DefDef(_, List(List(ValDef(in, _, _))), _, Some(selects))), _) =>
         def unpackSelects(selects: Tree): Either[String, ExistentialPath] = selects match {
+          // matches `_` part in `_.foo.bar.baz...`
           case Ident(out) if in == out =>
             Right(new ExistentialPath {
               type Underlying = runtime.Path.Root
               val Underlying: Type[runtime.Path.Root] = Type.of[runtime.Path.Root]
             })
+          // matches `_ => something unrelated` - not allowed
           case _: Ident => Left(ignoringInputNotAllowed(t))
+          // matches `.fieldName` AND `.fieldName()`
           case SelectLike(t2, fieldName) =>
             unpackSelects(t2).map { init =>
               val name = ExistentialString(fieldName)
@@ -104,6 +107,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
                   Type.of[runtime.Path.Select[Init, FieldName]]
               }
             }
+          // matches `.matching[Subtype]`
           case TypeApply(Apply(TypeApply(Ident("matching"), _), List(t2)), List(subtypeA)) =>
             unpackSelects(t2).map { init =>
               val subtype = ExistentialType(subtypeA.tpe.asType.asInstanceOf[Type[Any]])
@@ -114,6 +118,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
                   Type.of[runtime.Path.Matching[Init, Subtype]]
               }
             }
+          // matches `.matchingSome`
           case Apply(
                 TypeApply(Apply(TypeApply(Ident("matchingSome"), _), List(t2)), _),
                 List(IsOptionOf(_, _, someA))
@@ -125,6 +130,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
                 val Underlying: Type[runtime.Path.Matching[Init, SomeA]] = Type.of[runtime.Path.Matching[Init, SomeA]]
               }
             }
+          // matches `.matchingLeft`
           case Apply(
                 TypeApply(Apply(TypeApply(Ident("matchingLeft"), _), List(t2)), _),
                 List(IsEitherOf(_, _, _, left, _))
@@ -136,6 +142,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
                 val Underlying: Type[runtime.Path.Matching[Init, Left]] = Type.of[runtime.Path.Matching[Init, Left]]
               }
             }
+          // matches `.matchingRight`
           case Apply(
                 TypeApply(Apply(TypeApply(Ident("matchingRight"), _), List(t2)), _),
                 List(IsEitherOf(_, _, _, _, right))
@@ -147,6 +154,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
                 val Underlying: Type[runtime.Path.Matching[Init, Right]] = Type.of[runtime.Path.Matching[Init, Right]]
               }
             }
+          // matches `.everyItem`
           case Apply(TypeApply(Apply(TypeApply(Ident("everyItem"), _), List(t2)), _), List(IsCollectionOf(_, _))) =>
             unpackSelects(t2).map { init =>
               import init.Underlying as Init
@@ -155,6 +163,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
                 val Underlying: Type[runtime.Path.EveryItem[Init]] = Type.of[runtime.Path.EveryItem[Init]]
               }
             }
+          // matches `.everyMapKey`
           case Apply(TypeApply(Apply(TypeApply(Ident("everyMapKey"), _), List(t2)), _), List(IsMapOf(_, _, _))) =>
             unpackSelects(t2).map { init =>
               import init.Underlying as Init
@@ -163,6 +172,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
                 val Underlying: Type[runtime.Path.EveryMapKey[Init]] = Type.of[runtime.Path.EveryMapKey[Init]]
               }
             }
+          // matches `.everyMapValue`
           case Apply(TypeApply(Apply(TypeApply(Ident("everyMapValue"), _), List(t2)), _), List(IsMapOf(_, _, _))) =>
             unpackSelects(t2).map { init =>
               import init.Underlying as Init
@@ -171,6 +181,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
                 val Underlying: Type[runtime.Path.EveryMapValue[Init]] = Type.of[runtime.Path.EveryMapValue[Init]]
               }
             }
+          // matches `someFunctionName` - not allowed
           case Apply(_, _) => Left(arbitraryFunctionNotAllowed(t))
           case _           => Left(invalidSelectorErrorMessage(t))
         }

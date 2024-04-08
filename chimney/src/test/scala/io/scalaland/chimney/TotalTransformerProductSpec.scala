@@ -158,13 +158,17 @@ class TotalTransformerProductSpec extends ChimneySpec {
         .withFieldComputed(_.value.age, _.getValue.age * 2)
         .transform ==> NestedProduct(User("John", 20, 140))
 
+      val _ = implicitly[io.scalaland.chimney.internal.runtime.IsOption[Option[User]]]
       NestedComplex(
         Some(Person("John", 10, 140)),
         Right(Person("John", 10, 140)),
         List(Person("John", 10, 140)),
         scala.collection.immutable.ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
       ).into[NestedComplex[User]]
-        .withFieldComputed(_.option.matchingSome.age, _ => 15)
+        .withFieldComputed(
+          _.option.matchingSome(io.scalaland.chimney.internal.runtime.IsOption.optionIsOption).age,
+          _ => 15
+        )
         .withFieldComputed(_.either.matchingLeft.age, _ => 20)
         .withFieldComputed(_.either.matchingRight.age, _ => 30)
         .withFieldComputed(_.collection.everyItem.age, _ => 40)

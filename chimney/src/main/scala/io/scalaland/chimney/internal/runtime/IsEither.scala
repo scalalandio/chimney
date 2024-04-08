@@ -12,6 +12,12 @@ object IsEither {
 
   private object Impl extends IsEither[Nothing]
 
-  implicit def eitherOsEither[LV, RV, E <: Either[LV, RV]]: IsEither.Of[E, LV, RV, Left[LV, RV], Right[LV, RV]] =
-    Impl.asInstanceOf[IsEither.Of[E, LV, RV, Left[LV, RV], Right[LV, RV]]]
+  implicit def eitherIsEither[LV, RV]: IsEither.Of[Either[LV, RV], LV, RV, Left[LV, RV], Right[LV, RV]] =
+    Impl.asInstanceOf[IsEither.Of[Either[LV, RV], LV, RV, Left[LV, RV], Right[LV, RV]]]
+
+  implicit def leftIsEither[LV, RV]: IsEither.Of[Left[LV, RV], LV, RV, Left[LV, RV], Right[LV, RV]] =
+    Impl.asInstanceOf[IsEither.Of[Left[LV, RV], LV, RV, Left[LV, RV], Right[LV, RV]]]
+
+  implicit def rightIsEither[LV, RV]: IsEither.Of[Right[LV, RV], LV, RV, Left[LV, RV], Right[LV, RV]] =
+    Impl.asInstanceOf[IsEither.Of[Right[LV, RV], LV, RV, Left[LV, RV], Right[LV, RV]]]
 }

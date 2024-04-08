@@ -11,6 +11,9 @@ object IsOption {
 
   private object Impl extends IsOption[Nothing]
 
-  implicit def optionIsOption[A, O <: Option[A]]: IsOption.Of[O, A, Some[A]] =
-    Impl.asInstanceOf[IsOption.Of[O, A, Some[A]]]
+  implicit def optionIsOption[A]: IsOption.Of[Option[A], A, Some[A]] =
+    Impl.asInstanceOf[IsOption.Of[Option[A], A, Some[A]]]
+
+  implicit def someIsOption[A]: IsOption.Of[Some[A], A, Some[A]] =
+    Impl.asInstanceOf[IsOption.Of[Some[A], A, Some[A]]]
 }

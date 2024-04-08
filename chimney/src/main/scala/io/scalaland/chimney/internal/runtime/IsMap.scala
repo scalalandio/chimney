@@ -14,5 +14,5 @@ object IsMap {
   // build-in Chimney support for maps assumes that they are BOTH Map and have a Factory
   implicit def scalaMapIsMap[K, V, M <: Map[K, V]](implicit
       @unused ev: scala.collection.compat.Factory[(K, V), M]
-  ): IsMap.Of[K, V, M] = Impl.asInstanceOf[IsMap.Of[K, V, M]]
+  ): IsMap.Of[M, K, V] = Impl.asInstanceOf[IsMap.Of[M, K, V]]
 }

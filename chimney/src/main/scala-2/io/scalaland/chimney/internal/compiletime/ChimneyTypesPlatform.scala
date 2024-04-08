@@ -43,6 +43,18 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             val fixedInit = fixJavaEnums(init)
             import fixedSubtype.Underlying as FixedSubtype, fixedInit.Underlying as FixedInit
             Path.Matching[FixedInit, FixedSubtype].as_?<[runtime.Path]
+          case Path.EveryItem(init) =>
+            val fixedInit = fixJavaEnums(init)
+            import fixedInit.Underlying as FixedInit
+            Path.EveryItem[FixedInit].as_?<[runtime.Path]
+          case Path.EveryMapKey(init) =>
+            val fixedInit = fixJavaEnums(init)
+            import fixedInit.Underlying as FixedInit
+            Path.EveryMapKey[FixedInit].as_?<[runtime.Path]
+          case Path.EveryMapValue(init) =>
+            val fixedInit = fixJavaEnums(init)
+            import fixedInit.Underlying as FixedInit
+            Path.EveryMapValue[FixedInit].as_?<[runtime.Path]
           case _ => reportError(s"Expected valid runtime.Path, got ${Type.prettyPrint(path.Underlying)}")
         }
     }
