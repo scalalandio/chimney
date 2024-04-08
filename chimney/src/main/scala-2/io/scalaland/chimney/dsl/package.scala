@@ -34,8 +34,14 @@ package object dsl {
   implicit def TryPartialTransformerOps[A](`try`: Try[A]): syntax.TryPartialTransformerOps[A] =
     syntax.TryPartialTransformerOps(`try`)
 
-  implicit def TransformationPathOps[A](a: A): syntax.TransformationPathOps[A] =
-    syntax.TransformationPathOps(a)
+  implicit def TransformationMatchingPathOps[A](a: A): syntax.TransformationMatchingPathOps[A] =
+    syntax.TransformationMatchingPathOps(a)
+
+  implicit def TransformationCollectionPathOps[C[_], A](a: C[A]): syntax.TransformationCollectionPathOps[C, A] =
+    syntax.TransformationCollectionPathOps(a)
+
+  implicit def TransformationMapPathOps[M[_, _], K, V](a: M[K, V]): syntax.TransformationMapPathOps[M, K, V] =
+    syntax.TransformationMapPathOps(a)
 
   // Extension methods in dsl.* summon TypeClass.AutoDerived while extension methods in syntax.* summon TypeClass.
   // This help us preserve legacy behavior in dsl code while keeping stricter separation in auto/syntax imports.

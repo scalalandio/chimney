@@ -182,7 +182,7 @@ package object syntax {
   }
 
   // TODO: docs
-  implicit final class TransformationPathOps[A](@unused private val a: A) extends AnyVal {
+  implicit final class TransformationMatchingPathOps[A](@unused private val a: A) extends AnyVal {
 
     def matching[B <: A]: B =
       sys.error(".matching should be only called within Chimney DSL")
@@ -195,14 +195,20 @@ package object syntax {
 
     def matchingRight[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): RV =
       sys.error(".matchingRight should be only called within Chimney DSL")
+  }
 
-    def everyItem[I](implicit @unused ev: IsCollection.Of[A, I]): I =
+  implicit final class TransformationCollectionPathOps[C[_], I](@unused private val cc: C[I]) extends AnyVal {
+
+    def everyItem(implicit @unused ev: IsCollection.Of[C[I], I]): I =
       sys.error(".everyItem should be only called within Chimney DSL")
+  }
 
-    def everyMapKey[K, V](implicit @unused ev: IsMap.Of[K, V, A]): K =
+  implicit final class TransformationMapPathOps[M[_, _], K, V](@unused private val cc: M[K, V]) extends AnyVal {
+
+    def everyMapKey(implicit @unused ev: IsMap.Of[M[K, V], K, V]): K =
       sys.error(".everyMapKey should be only called within Chimney DSL")
 
-    def everyMapValue[K, V](implicit @unused ev: IsMap.Of[K, V, A]): V =
+    def everyMapValue(implicit @unused ev: IsMap.Of[M[K, V], K, V]): V =
       sys.error(".everyMapValue should be only called within Chimney DSL")
   }
 }

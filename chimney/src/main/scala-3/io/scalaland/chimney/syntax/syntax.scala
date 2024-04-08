@@ -193,9 +193,9 @@ extension [A](@unused a: A) {
   def everyItem[I](implicit @unused ev: IsCollection.Of[A, I]): I =
     sys.error(".everyItem should be only called within Chimney DSL")
 
-  def everyMapKey[K, V](implicit @unused ev: IsMap.Of[K, V, A]): K =
+  def everyMapKey[K, V](implicit @unused ev: IsMap.Of[A, K, V]): K =
     sys.error(".everyMapKey should be only called within Chimney DSL")
 
-  def everyMapValue[K, V](implicit @unused ev: IsMap.Of[K, V, A]): V =
+  def everyMapValue[K, V](implicit @unused ev: IsMap.Of[A, K, V]): V =
     sys.error(".everyMapValue should be only called within Chimney DSL")
 }

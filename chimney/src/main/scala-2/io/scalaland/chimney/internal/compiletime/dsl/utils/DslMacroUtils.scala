@@ -19,6 +19,18 @@ private[chimney] trait DslMacroUtils {
       q"$tree.asInstanceOf[${weakTypeOf[A]}]"
   }
 
+  private trait ExistentialType {
+    type Underlying
+    val Underlying: c.WeakTypeTag[Underlying]
+  }
+  private object ExistentialType {
+
+    def apply[A](implicit tpe: c.WeakTypeTag[A]): ExistentialType = new ExistentialType {
+      type Underlying = A
+      val Underlying: WeakTypeTag[A] = tpe
+    }
+  }
+
   private trait ExistentialString {
     type Underlying <: String
     val Underlying: c.WeakTypeTag[Underlying]
@@ -41,14 +53,31 @@ private[chimney] trait DslMacroUtils {
     def parse(t: Tree): Either[String, ExistentialPath] = t match {
       case q"(${vd: ValDef}) => $selects" =>
         def unpackSelects(selects: Tree): Either[String, ExistentialPath] = selects match {
+          // matches `_` part in `_.foo.bar.baz...`
           case idt: Ident if vd.name == idt.name =>
             Right(new ExistentialPath {
               type Underlying = runtime.Path.Root
               val Underlying: WeakTypeTag[runtime.Path.Root] = weakTypeTag[runtime.Path.Root]
             })
-          case _: Ident                          => Left(ignoringInputNotAllowed(t))
+          // matches `_ => something unrelated` - not allowed
+          case _: Ident => Left(ignoringInputNotAllowed(t))
+          // matches `...()`
           case Apply(select @ Select(_, _), Nil) => unpackSelects(select)
-          case Apply(_, _)                       => Left(arbitraryFunctionNotAllowed(t))
+          // matches `.matching[Subtype]`
+          case TypeApply(Select(Apply(_, List(t2)), TermName("matching")), List(subtypeA)) =>
+            unpackSelects(t2)
+              .map { init =>
+                val subtype = ExistentialType(c.WeakTypeTag(subtypeA.tpe))
+
+                def applyTypes[Init <: runtime.Path: c.WeakTypeTag, Subtype: c.WeakTypeTag] =
+                  new ExistentialPath {
+                    type Underlying = runtime.Path.Matching[Init, Subtype]
+                    val Underlying: WeakTypeTag[runtime.Path.Matching[Init, Subtype]] =
+                      weakTypeTag[runtime.Path.Matching[Init, Subtype]]
+                  }
+                applyTypes(init.Underlying, subtype.Underlying)
+              }
+          // matches `.fieldName` (`.fieldName()` is handled together with the rule above)
           case Select(t2, fieldName: TermName) =>
             unpackSelects(t2).map { init =>
               val name = ExistentialString(fieldName)
@@ -61,7 +90,90 @@ private[chimney] trait DslMacroUtils {
                 }
               applyTypes(init.Underlying, name.Underlying)
             }
-          case _ => Left(invalidSelectorErrorMessage(t))
+          // matches `.matchingSome`
+          case Apply(TypeApply(Select(Apply(_, List(t2)), TermName("matchingSome")), List(_, tpeSomeA)), _) =>
+            unpackSelects(t2).map { init =>
+              val someA = ExistentialType(c.WeakTypeTag(tpeSomeA.tpe))
+
+              def applyTypes[Init <: runtime.Path: c.WeakTypeTag, SomeA: c.WeakTypeTag] =
+                new ExistentialPath {
+                  type Underlying = runtime.Path.Matching[Init, SomeA]
+                  val Underlying: WeakTypeTag[runtime.Path.Matching[Init, SomeA]] =
+                    weakTypeTag[runtime.Path.Matching[Init, SomeA]]
+                }
+
+              applyTypes(init.Underlying, someA.Underlying)
+            }
+          // matches `.matchingLeft`
+          case Apply(TypeApply(Select(Apply(_, List(t2)), TermName("matchingLeft")), List(_, _, tpeLeftL, _)), _) =>
+            unpackSelects(t2).map { init =>
+              val leftL = ExistentialType(c.WeakTypeTag(tpeLeftL.tpe))
+
+              def applyTypes[Init <: runtime.Path: c.WeakTypeTag, LeftL: c.WeakTypeTag] =
+                new ExistentialPath {
+                  type Underlying = runtime.Path.Matching[Init, LeftL]
+                  val Underlying: WeakTypeTag[runtime.Path.Matching[Init, LeftL]] =
+                    weakTypeTag[runtime.Path.Matching[Init, LeftL]]
+                }
+
+              applyTypes(init.Underlying, leftL.Underlying)
+            }
+          // matches `.matchingRight`
+          case Apply(TypeApply(Select(Apply(_, List(t2)), TermName("matchingRight")), List(_, _, _, tpeRightR)), _) =>
+            unpackSelects(t2).map { init =>
+              val rightR = ExistentialType(c.WeakTypeTag(tpeRightR.tpe))
+
+              def applyTypes[Init <: runtime.Path: c.WeakTypeTag, RightR: c.WeakTypeTag] =
+                new ExistentialPath {
+                  type Underlying = runtime.Path.Matching[Init, RightR]
+                  val Underlying: WeakTypeTag[runtime.Path.Matching[Init, RightR]] =
+                    weakTypeTag[runtime.Path.Matching[Init, RightR]]
+                }
+
+              applyTypes(init.Underlying, rightR.Underlying)
+            }
+          // matches `.everyItem`
+          case Apply(Select(Apply(_, List(t2)), TermName("everyItem")), _) =>
+            // case Apply(TypeApply(Select(Apply(_, List(t2)), TermName("everyItem")), List(_)), _) =>
+            unpackSelects(t2).map { init =>
+              def applyTypes[Init <: runtime.Path: c.WeakTypeTag] =
+                new ExistentialPath {
+                  type Underlying = runtime.Path.EveryItem[Init]
+                  val Underlying: WeakTypeTag[runtime.Path.EveryItem[Init]] =
+                    weakTypeTag[runtime.Path.EveryItem[Init]]
+                }
+
+              applyTypes(init.Underlying)
+            }
+          // matches `.everyMapKey`
+          case Apply(Select(Apply(_, List(t2)), TermName("everyMapKey")), _) =>
+            // case Apply(TypeApply(Select(Apply(_, List(t2)), TermName("everyMapKey")), List(_, _)), _) =>
+            unpackSelects(t2).map { init =>
+              def applyTypes[Init <: runtime.Path: c.WeakTypeTag] =
+                new ExistentialPath {
+                  type Underlying = runtime.Path.EveryMapKey[Init]
+                  val Underlying: WeakTypeTag[runtime.Path.EveryMapKey[Init]] =
+                    weakTypeTag[runtime.Path.EveryMapKey[Init]]
+                }
+
+              applyTypes(init.Underlying)
+            }
+          // matches `.everyMapValue`
+          case Apply(Select(Apply(_, List(t2)), TermName("everyMapValue")), _) =>
+            // case Apply(TypeApply(Select(Apply(_, List(t2)), TermName("everyMapValue")), List(_, _)), _) =>
+            unpackSelects(t2).map { init =>
+              def applyTypes[Init <: runtime.Path: c.WeakTypeTag] =
+                new ExistentialPath {
+                  type Underlying = runtime.Path.EveryMapValue[Init]
+                  val Underlying: WeakTypeTag[runtime.Path.EveryMapValue[Init]] =
+                    weakTypeTag[runtime.Path.EveryMapValue[Init]]
+                }
+
+              applyTypes(init.Underlying)
+            }
+          // matches `someFunctionName` - not allowed
+          case Apply(_, _) => Left(arbitraryFunctionNotAllowed(t))
+          case _           => Left(invalidSelectorErrorMessage(t))
         }
 
         unpackSelects(selects)
@@ -72,7 +184,7 @@ private[chimney] trait DslMacroUtils {
       s"Invalid selector expression: $selectorTree"
 
     private def arbitraryFunctionNotAllowed(selectorTree: Tree): String =
-      s"Invalid selector expression - only vals, and nullary defs allowed: $selectorTree"
+      s"Invalid selector expression - only vals, and nullary defs allowed: $selectorTree\n${showRaw(selectorTree)}"
 
     private def ignoringInputNotAllowed(selectorTree: Tree): String =
       s"Invalid selector expression - only input value can be extracted from: $selectorTree"
