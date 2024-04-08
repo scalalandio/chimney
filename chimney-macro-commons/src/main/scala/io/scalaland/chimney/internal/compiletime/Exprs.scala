@@ -16,6 +16,8 @@ private[compiletime] trait Exprs { this: Definitions =>
     def Int(value: Int): Expr[Int]
     def String(value: String): Expr[String]
 
+    def Tuple2[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[(A, B)]
+
     val Function1: Function1Module
     trait Function1Module { this: Function1.type =>
       def apply[A: Type, B: Type](fn: Expr[A => B])(a: Expr[A]): Expr[B]
@@ -194,8 +196,8 @@ private[compiletime] trait Exprs { this: Definitions =>
 
   implicit final protected class EitherExprOps[L: Type, R: Type](private val eitherExpr: Expr[Either[L, R]]) {
 
-    def fold[B: Type](onLeft: Expr[L => B])(onRight: Expr[R => B]): Expr[B] =
-      Expr.Either.fold(eitherExpr)(onLeft)(onRight)
+    def fold[B: Type](matchingLeft: Expr[L => B])(matchingRight: Expr[R => B]): Expr[B] =
+      Expr.Either.fold(eitherExpr)(matchingLeft)(matchingRight)
   }
 
   implicit final protected class LeftExprOps[L: Type, R: Type](private val leftExpr: Expr[Left[L, R]]) {

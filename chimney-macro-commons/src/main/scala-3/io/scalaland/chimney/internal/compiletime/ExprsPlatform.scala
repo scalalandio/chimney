@@ -25,6 +25,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     def Int(value: Int): Expr[Int] = scala.quoted.Expr(value)
     def String(value: String): Expr[String] = scala.quoted.Expr(value)
 
+    def Tuple2[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[(A, B)] = '{ (${ a }, ${ b }) }
+
     object Function1 extends Function1Module {
       def apply[A: Type, B: Type](fn: Expr[A => B])(a: Expr[A]): Expr[B] = '{
         ${ resetOwner(fn) }.apply(${ resetOwner(a) })
@@ -57,8 +59,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def map[A: Type, B: Type](opt: Expr[Option[A]])(f: Expr[A => B]): Expr[Option[B]] = '{
         ${ resetOwner(opt) }.map(${ f })
       }
-      def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(onSome: Expr[A => B]): Expr[B] =
-        '{ ${ resetOwner(opt) }.fold(${ onNone })(${ onSome }) }
+      def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(matchingSome: Expr[A => B]): Expr[B] =
+        '{ ${ resetOwner(opt) }.fold(${ onNone })(${ matchingSome }) }
       def orElse[A: Type](opt1: Expr[Option[A]], opt2: Expr[Option[A]]): Expr[Option[A]] =
         '{ ${ opt1 }.orElse(${ opt2 }) }
       def getOrElse[A: Type](opt: Expr[Option[A]])(orElse: Expr[A]): Expr[A] =

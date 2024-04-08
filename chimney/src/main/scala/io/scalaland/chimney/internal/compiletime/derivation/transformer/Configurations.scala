@@ -87,10 +87,10 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     import Path.*, Path.Segment.*
     def select(name: String): Path = new Path(segments :+ Select(name))
-    def `match`[Tpe: Type]: Path = new Path(segments :+ Match(Type[Tpe].as_??))
-    def eachItem: Path = new Path(segments :+ EachItem)
-    def eachMapKey: Path = new Path(segments :+ EachMapKey)
-    def eachMapValue: Path = new Path(segments :+ EachMapValue)
+    def matching[Tpe: Type]: Path = new Path(segments :+ Matching(Type[Tpe].as_??))
+    def everyItem: Path = new Path(segments :+ EveryItem)
+    def everyMapKey: Path = new Path(segments :+ EveryMapKey)
+    def everyMapValue: Path = new Path(segments :+ EveryMapValue)
 
     @scala.annotation.tailrec
     def drop(prefix: Path)(implicit ctx: TransformationContext[?, ?]): Option[Path] = (prefix, this) match {
@@ -121,22 +121,22 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     object AtSubtype {
       def unapply(path: Path): Option[(??, Path)] =
-        path.segments.headOption.collect { case Segment.Match(tpe) => tpe -> new Path(path.segments.tail) }
+        path.segments.headOption.collect { case Segment.Matching(tpe) => tpe -> new Path(path.segments.tail) }
     }
 
     object AtItem {
       def unapply(path: Path): Option[Path] =
-        path.segments.headOption.collect { case Segment.EachItem => new Path(path.segments.tail) }
+        path.segments.headOption.collect { case Segment.EveryItem => new Path(path.segments.tail) }
     }
 
     object AtMapKey {
       def unapply(path: Path): Option[Path] =
-        path.segments.headOption.collect { case Segment.EachMapKey => new Path(path.segments.tail) }
+        path.segments.headOption.collect { case Segment.EveryMapKey => new Path(path.segments.tail) }
     }
 
     object AtMapValue {
       def unapply(path: Path): Option[Path] =
-        path.segments.headOption.collect { case Segment.EachMapValue => new Path(path.segments.tail) }
+        path.segments.headOption.collect { case Segment.EveryMapValue => new Path(path.segments.tail) }
     }
 
     sealed private trait Segment extends scala.Product with Serializable
@@ -144,22 +144,22 @@ private[compiletime] trait Configurations { this: Derivation =>
       final case class Select(name: String) extends Segment {
         override def toString: String = s".$name"
       }
-      final case class Match(tpe: ??) extends Segment {
+      final case class Matching(tpe: ??) extends Segment {
         override def equals(obj: Any): Boolean = obj match {
-          case Match(tpe2) => tpe.Underlying =:= tpe2.Underlying
-          case _           => false
+          case Matching(tpe2) => tpe.Underlying =:= tpe2.Underlying
+          case _              => false
         }
 
-        override def toString: String = s".onSubtype[${Type.prettyPrint(tpe.Underlying)}]"
+        override def toString: String = s".matching[${Type.prettyPrint(tpe.Underlying)}]"
       }
-      case object EachItem extends Segment {
-        override def toString: String = ".eachItem"
+      case object EveryItem extends Segment {
+        override def toString: String = ".everyItem"
       }
-      case object EachMapKey extends Segment {
-        override def toString: String = ".eachMapKey"
+      case object EveryMapKey extends Segment {
+        override def toString: String = ".everyMapKey"
       }
-      case object EachMapValue extends Segment {
-        override def toString: String = ".eachMapValue"
+      case object EveryMapValue extends Segment {
+        override def toString: String = ".everyMapValue"
       }
     }
   }
@@ -449,18 +449,18 @@ private[compiletime] trait Configurations { this: Derivation =>
       case ChimneyType.Path.Select(init, fieldName) =>
         import init.Underlying as PathType2, fieldName.Underlying as FieldName
         extractPath[PathType2].select(Type[FieldName].extractStringSingleton)
-      case ChimneyType.Path.Match(init, subtype) =>
+      case ChimneyType.Path.Matching(init, subtype) =>
         import init.Underlying as PathType2, subtype.Underlying as Subtype
-        extractPath[PathType2].`match`[Subtype]
-      case ChimneyType.Path.EachItem(init) =>
+        extractPath[PathType2].matching[Subtype]
+      case ChimneyType.Path.EveryItem(init) =>
         import init.Underlying as PathType2
-        extractPath[PathType2].eachItem
-      case ChimneyType.Path.EachMapKey(init) =>
+        extractPath[PathType2].everyItem
+      case ChimneyType.Path.EveryMapKey(init) =>
         import init.Underlying as PathType2
-        extractPath[PathType2].eachMapKey
-      case ChimneyType.Path.EachMapValue(init) =>
+        extractPath[PathType2].everyMapKey
+      case ChimneyType.Path.EveryMapValue(init) =>
         import init.Underlying as PathType2
-        extractPath[PathType2].eachMapValue
+        extractPath[PathType2].everyMapValue
       case _ =>
         // $COVERAGE-OFF$
         reportError(s"Invalid internal Path shape: ${Type.prettyPrint[PathType]}!!")

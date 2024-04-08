@@ -127,7 +127,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               lazy val fromSubtypeIntoToSubtype =
                 deriveRecursiveTransformationExpr[FromSubtype, ToSubtype](
                   fromSubtypeExpr,
-                  Path.Root.`match`[ToSubtype]
+                  Path.Root.matching[ToSubtype]
                 ).map(_.map(toUpcast))
               // We're constructing:
               // case fromSubtypeExpr: $fromSubtype => ${ derivedToSubtype } } // or ${ derivedResultToSubtype }; using fromSubtypeExpr.value

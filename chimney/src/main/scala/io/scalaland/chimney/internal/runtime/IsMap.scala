@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.runtime
 import scala.annotation.unused
 
+// TODO @implicitNotFound
 sealed trait IsMap[M] {
   type Key
   type Value

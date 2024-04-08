@@ -38,11 +38,11 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             val fixedInit = fixJavaEnums(init)
             import name.Underlying as Name, fixedInit.Underlying as FixedInit
             Path.Select[FixedInit, Name].as_?<[runtime.Path]
-          case Path.Match(init, subtype) =>
+          case Path.Matching(init, subtype) =>
             val fixedSubtype = fixJavaEnum(subtype)
             val fixedInit = fixJavaEnums(init)
             import fixedSubtype.Underlying as FixedSubtype, fixedInit.Underlying as FixedInit
-            Path.Match[FixedInit, FixedSubtype].as_?<[runtime.Path]
+            Path.Matching[FixedInit, FixedSubtype].as_?<[runtime.Path]
           case _ => reportError(s"Expected valid runtime.Path, got ${Type.prettyPrint(path.Underlying)}")
         }
     }
@@ -340,32 +340,32 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           if (A.isCtor[runtime.Path.Select[?, ?]]) Some(A.param_<[runtime.Path](0) -> A.param_<[String](1))
           else scala.None
       }
-      object Match extends MatchModule {
-        def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.Match[Init, Subtype]] =
-          weakTypeTag[runtime.Path.Match[Init, Subtype]]
+      object Matching extends MatchingModule {
+        def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.Matching[Init, Subtype]] =
+          weakTypeTag[runtime.Path.Matching[Init, Subtype]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ??)] =
-          if (A.isCtor[runtime.Path.Match[?, ?]]) Some(A.param_<[runtime.Path](0) -> A.param(1))
+          if (A.isCtor[runtime.Path.Matching[?, ?]]) Some(A.param_<[runtime.Path](0) -> A.param(1))
           else scala.None
       }
-      object EachItem extends EachItemModule {
-        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachItem[Init]] =
-          weakTypeTag[runtime.Path.EachItem[Init]]
+      object EveryItem extends EveryItemModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryItem[Init]] =
+          weakTypeTag[runtime.Path.EveryItem[Init]]
         def unapply[A](A: Type[A]): Option[?<[runtime.Path]] =
-          if (A.isCtor[runtime.Path.EachItem[?]]) Some(A.param_<[runtime.Path](0))
+          if (A.isCtor[runtime.Path.EveryItem[?]]) Some(A.param_<[runtime.Path](0))
           else scala.None
       }
-      object EachMapKey extends EachMapKeyModule {
-        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachMapKey[Init]] =
-          weakTypeTag[runtime.Path.EachMapKey[Init]]
+      object EveryMapKey extends EveryMapKeyModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryMapKey[Init]] =
+          weakTypeTag[runtime.Path.EveryMapKey[Init]]
         def unapply[A](A: Type[A]): Option[?<[runtime.Path]] =
-          if (A.isCtor[runtime.Path.EachMapKey[?]]) Some(A.param_<[runtime.Path](0))
+          if (A.isCtor[runtime.Path.EveryMapKey[?]]) Some(A.param_<[runtime.Path](0))
           else scala.None
       }
-      object EachMapValue extends EachMapValueModule {
-        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EachMapValue[Init]] =
-          weakTypeTag[runtime.Path.EachMapValue[Init]]
+      object EveryMapValue extends EveryMapValueModule {
+        def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryMapValue[Init]] =
+          weakTypeTag[runtime.Path.EveryMapValue[Init]]
         def unapply[A](A: Type[A]): Option[?<[runtime.Path]] =
-          if (A.isCtor[runtime.Path.EachMapValue[?]]) Some(A.param_<[runtime.Path](0))
+          if (A.isCtor[runtime.Path.EveryMapValue[?]]) Some(A.param_<[runtime.Path](0))
           else scala.None
       }
     }

@@ -18,6 +18,52 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
     }
   }
 
+  private object IsOptionOf {
+    def unapply(term: Term): Option[(ExistentialType, ExistentialType, ExistentialType)] = term.tpe.asType match {
+      case '[runtime.IsOption.Of[o, sv, s]] => Some((ExistentialType[o], ExistentialType[sv], ExistentialType[s]))
+      case _                                => None
+    }
+  }
+
+  private object IsEitherOf {
+    def unapply(
+        term: Term
+    ): Option[(ExistentialType, ExistentialType, ExistentialType, ExistentialType, ExistentialType)] =
+      term.tpe.asType match {
+        case '[runtime.IsEither.Of[e, lv, rv, l, r]] =>
+          Some((ExistentialType[e], ExistentialType[lv], ExistentialType[rv], ExistentialType[l], ExistentialType[r]))
+        case _ => None
+      }
+  }
+
+  private object IsCollectionOf {
+    def unapply(term: Term): Option[(ExistentialType, ExistentialType)] =
+      term.tpe.asType match {
+        case '[runtime.IsCollection.Of[c, a]] => Some((ExistentialType[c], ExistentialType[a]))
+        case _                                => None
+      }
+  }
+
+  private object IsMapOf {
+    def unapply(term: Term): Option[(ExistentialType, ExistentialType, ExistentialType)] =
+      term.tpe.asType match {
+        case '[runtime.IsMap.Of[m, k, v]] => Some((ExistentialType[m], ExistentialType[k], ExistentialType[v]))
+        case _                            => None
+      }
+  }
+
+  private trait ExistentialType {
+    type Underlying
+    implicit val Underlying: Type[Underlying]
+  }
+  private object ExistentialType {
+
+    def apply[A](implicit tpe: Type[A]): ExistentialType = new ExistentialType {
+      type Underlying = A
+      val Underlying: Type[A] = tpe
+    }
+  }
+
   private trait ExistentialString {
     type Underlying <: String
     implicit val Underlying: Type[Underlying]
@@ -58,6 +104,73 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
                   Type.of[runtime.Path.Select[Init, FieldName]]
               }
             }
+          case TypeApply(Apply(TypeApply(Ident("matching"), _), List(t2)), List(subtypeA)) =>
+            unpackSelects(t2).map { init =>
+              val subtype = ExistentialType(subtypeA.tpe.asType.asInstanceOf[Type[Any]])
+              import init.Underlying as Init, subtype.Underlying as Subtype
+              new ExistentialPath {
+                type Underlying = runtime.Path.Matching[Init, Subtype]
+                val Underlying: Type[runtime.Path.Matching[Init, Subtype]] =
+                  Type.of[runtime.Path.Matching[Init, Subtype]]
+              }
+            }
+          case Apply(
+                TypeApply(Apply(TypeApply(Ident("matchingSome"), _), List(t2)), _),
+                List(IsOptionOf(_, _, someA))
+              ) =>
+            unpackSelects(t2).map { init =>
+              import init.Underlying as Init, someA.Underlying as SomeA
+              new ExistentialPath {
+                type Underlying = runtime.Path.Matching[Init, SomeA]
+                val Underlying: Type[runtime.Path.Matching[Init, SomeA]] = Type.of[runtime.Path.Matching[Init, SomeA]]
+              }
+            }
+          case Apply(
+                TypeApply(Apply(TypeApply(Ident("matchingLeft"), _), List(t2)), _),
+                List(IsEitherOf(_, _, _, left, _))
+              ) =>
+            unpackSelects(t2).map { init =>
+              import init.Underlying as Init, left.Underlying as Left
+              new ExistentialPath {
+                type Underlying = runtime.Path.Matching[Init, Left]
+                val Underlying: Type[runtime.Path.Matching[Init, Left]] = Type.of[runtime.Path.Matching[Init, Left]]
+              }
+            }
+          case Apply(
+                TypeApply(Apply(TypeApply(Ident("matchingRight"), _), List(t2)), _),
+                List(IsEitherOf(_, _, _, _, right))
+              ) =>
+            unpackSelects(t2).map { init =>
+              import init.Underlying as Init, right.Underlying as Right
+              new ExistentialPath {
+                type Underlying = runtime.Path.Matching[Init, Right]
+                val Underlying: Type[runtime.Path.Matching[Init, Right]] = Type.of[runtime.Path.Matching[Init, Right]]
+              }
+            }
+          case Apply(TypeApply(Apply(TypeApply(Ident("everyItem"), _), List(t2)), _), List(IsCollectionOf(_, _))) =>
+            unpackSelects(t2).map { init =>
+              import init.Underlying as Init
+              new ExistentialPath {
+                type Underlying = runtime.Path.EveryItem[Init]
+                val Underlying: Type[runtime.Path.EveryItem[Init]] = Type.of[runtime.Path.EveryItem[Init]]
+              }
+            }
+          case Apply(TypeApply(Apply(TypeApply(Ident("everyMapKey"), _), List(t2)), _), List(IsMapOf(_, _, _))) =>
+            unpackSelects(t2).map { init =>
+              import init.Underlying as Init
+              new ExistentialPath {
+                type Underlying = runtime.Path.EveryMapKey[Init]
+                val Underlying: Type[runtime.Path.EveryMapKey[Init]] = Type.of[runtime.Path.EveryMapKey[Init]]
+              }
+            }
+          case Apply(TypeApply(Apply(TypeApply(Ident("everyMapValue"), _), List(t2)), _), List(IsMapOf(_, _, _))) =>
+            unpackSelects(t2).map { init =>
+              import init.Underlying as Init
+              new ExistentialPath {
+                type Underlying = runtime.Path.EveryMapValue[Init]
+                val Underlying: Type[runtime.Path.EveryMapValue[Init]] = Type.of[runtime.Path.EveryMapValue[Init]]
+              }
+            }
           case Apply(_, _) => Left(arbitraryFunctionNotAllowed(t))
           case _           => Left(invalidSelectorErrorMessage(t))
         }
@@ -67,6 +180,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
     }
 
     private def invalidSelectorErrorMessage(t: Tree): String =
+      println(t.show(using Printer.TreeStructure))
       s"Invalid selector expression: ${t.show(using Printer.TreeAnsiCode)}"
 
     private def arbitraryFunctionNotAllowed(t: Tree): String =

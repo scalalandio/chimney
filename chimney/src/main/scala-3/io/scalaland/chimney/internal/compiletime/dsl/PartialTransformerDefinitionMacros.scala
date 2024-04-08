@@ -152,7 +152,12 @@ object PartialTransformerDefinitionMacros {
     '{
       WithRuntimeDataStore
         .update($td, $f)
-        .asInstanceOf[PartialTransformerDefinition[From, To, CaseComputed[Path.Match[Path.Root, Subtype], Tail], Flags]]
+        .asInstanceOf[PartialTransformerDefinition[
+          From,
+          To,
+          CaseComputed[Path.Matching[Path.Root, Subtype], Tail],
+          Flags
+        ]]
     }
 
   def withCoproductInstancePartial[
@@ -171,7 +176,7 @@ object PartialTransformerDefinitionMacros {
         .asInstanceOf[PartialTransformerDefinition[
           From,
           To,
-          CaseComputedPartial[Path.Match[Path.Root, Subtype], Tail],
+          CaseComputedPartial[Path.Matching[Path.Root, Subtype], Tail],
           Flags
         ]]
     }

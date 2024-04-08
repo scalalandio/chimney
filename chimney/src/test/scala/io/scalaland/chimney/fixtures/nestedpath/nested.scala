@@ -1,5 +1,7 @@
 package io.scalaland.chimney.fixtures.nestedpath
 
+import scala.collection.immutable.ListMap
+
 case class NestedProduct[A](value: A)
 
 class NestedValueClass[A](val value: A) extends AnyVal
@@ -24,3 +26,10 @@ object NestedJavaBean {
     jb
   }
 }
+
+case class NestedComplex[A](
+    option: Option[A],
+    either: Either[A, A],
+    collection: List[A],
+    map: ListMap[A, A]
+)

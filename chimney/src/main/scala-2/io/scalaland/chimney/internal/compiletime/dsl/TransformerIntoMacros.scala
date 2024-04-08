@@ -61,7 +61,12 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
   ](f: Tree): Tree = new ApplyFixedCoproductType {
     def apply[FixedSubtype: WeakTypeTag]: Tree = c.prefix.tree
       .addOverride(f)
-      .asInstanceOfExpr[TransformerInto[From, To, CaseComputed[Path.Match[Path.Root, FixedSubtype], Overrides], Flags]]
+      .asInstanceOfExpr[TransformerInto[
+        From,
+        To,
+        CaseComputed[Path.Matching[Path.Root, FixedSubtype], Overrides],
+        Flags
+      ]]
   }.applyJavaEnumFixFromClosureSignature[Subtype](f)
 
   def withConstructorImpl[
