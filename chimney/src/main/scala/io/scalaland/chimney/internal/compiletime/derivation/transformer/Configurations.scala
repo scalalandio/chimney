@@ -266,8 +266,13 @@ private[compiletime] trait Configurations { this: Derivation =>
             // Constructor is always matched at "_" Path, and dropped only when going inward
             case _: TransformerOverride.ForConstructor => false
           }
-          newPath <- path.drop(toPath)
+          newPath <- path.drop(toPath).to(Vector)
           if !(newPath == Path.Root && alwaysDropOnRoot)
+//          newPathWorkaround <- newPath match {
+//            case Path.AtSubtype(_, tail) => Vector(newPath, tail)
+//            case _                       => Vector(newPath)
+//          }
+//        } yield newPathWorkaround -> runtimeOverride,
         } yield newPath -> runtimeOverride,
         preventImplicitSummoningForTypes = None
       )

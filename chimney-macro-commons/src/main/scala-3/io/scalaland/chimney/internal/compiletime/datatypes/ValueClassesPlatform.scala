@@ -30,7 +30,7 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
           val inner = returnTypeOf[Any](A, getter).as_??
           import inner.Underlying as Inner
           assert(
-            Argument =:= Inner,
+            Argument <:< Inner,
             s"Wrapper/AnyVal ${Type.prettyPrint[A]} only property's type (${Type
                 .prettyPrint(Argument)}) was expected to be the same as only constructor argument's type (${Type
                 .prettyPrint(Inner)})"

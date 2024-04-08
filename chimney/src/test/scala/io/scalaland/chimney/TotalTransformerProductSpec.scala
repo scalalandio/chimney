@@ -177,21 +177,11 @@ class TotalTransformerProductSpec extends ChimneySpec {
         scala.collection.immutable.ListMap(User("John", 50, 140) -> User("John", 60, 140))
       )
 
-      NestedComplex(
-        Some(Person("John", 10, 140)),
-        Right(Person("John", 10, 140)),
-        List(Person("John", 10, 140)),
-        scala.collection.immutable.ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
-      ).into[NestedComplex[User]]
-        .withFieldComputed(_.option.matching[Some[User]].value.age, _ => 15)
-        .withFieldComputed(_.either.matching[Left[User, User]].value.age, _ => 20)
-        .withFieldComputed(_.either.matching[Right[User, User]].value.age, _ => 30)
-        .transform ==> NestedComplex(
-        Some(User("John", 15, 140)),
-        Right(User("John", 30, 140)),
-        List(User("John", 10, 140)),
-        scala.collection.immutable.ListMap(User("John", 10, 140) -> User("John", 10, 140))
-      )
+      List[NestedADT[Person]](NestedADT.Foo(Person("John", 10, 140)), NestedADT.Bar(Person("John", 10, 140)))
+        .into[Vector[NestedADT[User]]]
+        .withFieldComputed(_.everyItem.matching[NestedADT.Foo[User]].foo.age, _ => 20)
+        .withFieldComputed(_.everyItem.matching[NestedADT.Bar[User]].bar.age, _ => 30)
+        .transform ==> Vector(NestedADT.Foo(User("John", 20, 140)), NestedADT.Bar(User("John", 30, 140)))
     }
   }
 
