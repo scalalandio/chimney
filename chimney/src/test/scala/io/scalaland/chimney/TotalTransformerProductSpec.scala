@@ -4,6 +4,7 @@ import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
 import scala.annotation.unused
+import scala.collection.immutable.ListMap
 
 class TotalTransformerProductSpec extends ChimneySpec {
 
@@ -158,17 +159,13 @@ class TotalTransformerProductSpec extends ChimneySpec {
         .withFieldComputed(_.value.age, _.getValue.age * 2)
         .transform ==> NestedProduct(User("John", 20, 140))
 
-      val _ = implicitly[io.scalaland.chimney.internal.runtime.IsOption[Option[User]]]
       NestedComplex(
         Some(Person("John", 10, 140)),
         Right(Person("John", 10, 140)),
         List(Person("John", 10, 140)),
-        scala.collection.immutable.ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
+        ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
       ).into[NestedComplex[User]]
-        .withFieldComputed(
-          _.option.matchingSome(io.scalaland.chimney.internal.runtime.IsOption.optionIsOption).age,
-          _ => 15
-        )
+        .withFieldComputed(_.option.matchingSome.age, _ => 15)
         .withFieldComputed(_.either.matchingLeft.age, _ => 20)
         .withFieldComputed(_.either.matchingRight.age, _ => 30)
         .withFieldComputed(_.collection.everyItem.age, _ => 40)
@@ -178,7 +175,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         Some(User("John", 15, 140)),
         Right(User("John", 30, 140)),
         List(User("John", 40, 140)),
-        scala.collection.immutable.ListMap(User("John", 50, 140) -> User("John", 60, 140))
+        ListMap(User("John", 50, 140) -> User("John", 60, 140))
       )
 
       List[NestedADT[Person]](NestedADT.Foo(Person("John", 10, 140)), NestedADT.Bar(Person("John", 10, 140)))

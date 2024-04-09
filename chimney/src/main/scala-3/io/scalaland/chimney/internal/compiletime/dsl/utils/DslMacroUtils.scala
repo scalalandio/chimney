@@ -155,7 +155,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               }
             }
           // matches `.everyItem`
-          case Apply(TypeApply(Apply(TypeApply(Ident("everyItem"), _), List(t2)), _), List(IsCollectionOf(_, _))) =>
+          case Apply(Apply(TypeApply(Ident("everyItem"), _), List(t2)), List(IsCollectionOf(_, _))) =>
             unpackSelects(t2).map { init =>
               import init.Underlying as Init
               new ExistentialPath {
@@ -164,7 +164,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               }
             }
           // matches `.everyMapKey`
-          case Apply(TypeApply(Apply(TypeApply(Ident("everyMapKey"), _), List(t2)), _), List(IsMapOf(_, _, _))) =>
+          case Apply(Apply(TypeApply(Ident("everyMapKey"), _), List(t2)), List(IsMapOf(_, _, _))) =>
             unpackSelects(t2).map { init =>
               import init.Underlying as Init
               new ExistentialPath {
@@ -173,7 +173,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               }
             }
           // matches `.everyMapValue`
-          case Apply(TypeApply(Apply(TypeApply(Ident("everyMapValue"), _), List(t2)), _), List(IsMapOf(_, _, _))) =>
+          case Apply(Apply(TypeApply(Ident("everyMapValue"), _), List(t2)), List(IsMapOf(_, _, _))) =>
             unpackSelects(t2).map { init =>
               import init.Underlying as Init
               new ExistentialPath {
@@ -191,7 +191,6 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
     }
 
     private def invalidSelectorErrorMessage(t: Tree): String =
-      println(t.show(using Printer.TreeStructure))
       s"Invalid selector expression: ${t.show(using Printer.TreeAnsiCode)}"
 
     private def arbitraryFunctionNotAllowed(t: Tree): String =
