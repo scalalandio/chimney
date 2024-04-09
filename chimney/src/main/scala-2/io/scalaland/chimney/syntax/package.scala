@@ -2,7 +2,7 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.internal.runtime.{IsCollection, IsEither, IsMap, IsOption}
 
-import scala.annotation.unused
+import scala.annotation.{compileTimeOnly, unused}
 import scala.util.Try
 
 /** Imports only extension methods for summoning and using Transformer, PartialTransformer or Patcher
@@ -181,34 +181,38 @@ package object syntax {
       partial.Result.fromTry(`try`)
   }
 
+  // $COVERAGE-OFF$methods used only within macro-erased expressions
+
   // TODO: docs
   implicit final class TransformationMatchingPathOps[A](@unused private val a: A) extends AnyVal {
 
-    def matching[B <: A]: B =
-      sys.error(".matching should be only called within Chimney DSL")
+    @compileTimeOnly(".matching should be only called within Chimney DSL")
+    def matching[B <: A]: B = sys.error("")
 
-    def matchingSome[SV, S](implicit @unused ev: IsOption.Of[A, SV, S]): SV =
-      sys.error(".matchingSome should be only called within Chimney DSL")
+    @compileTimeOnly(".matchingSome should be only called within Chimney DSL")
+    def matchingSome[SV, S](implicit @unused ev: IsOption.Of[A, SV, S]): SV = sys.error("")
 
-    def matchingLeft[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): LV =
-      sys.error(".matchingLeft should be only called within Chimney DSL")
+    @compileTimeOnly(".matchingLeft should be only called within Chimney DSL")
+    def matchingLeft[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): LV = sys.error("")
 
-    def matchingRight[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): RV =
-      sys.error(".matchingRight should be only called within Chimney DSL")
+    @compileTimeOnly(".matchingRight should be only called within Chimney DSL")
+    def matchingRight[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): RV = sys.error("")
   }
 
   implicit final class TransformationCollectionPathOps[C[_], I](@unused private val cc: C[I]) extends AnyVal {
 
-    def everyItem(implicit @unused ev: IsCollection.Of[C[I], I]): I =
-      sys.error(".everyItem should be only called within Chimney DSL")
+    @compileTimeOnly(".everyItem should be only called within Chimney DSL")
+    def everyItem(implicit @unused ev: IsCollection.Of[C[I], I]): I = sys.error("")
   }
 
   implicit final class TransformationMapPathOps[M[_, _], K, V](@unused private val cc: M[K, V]) extends AnyVal {
 
-    def everyMapKey(implicit @unused ev: IsMap.Of[M[K, V], K, V]): K =
-      sys.error(".everyMapKey should be only called within Chimney DSL")
+    @compileTimeOnly(".everyMapKey should be only called within Chimney DSL")
+    def everyMapKey(implicit @unused ev: IsMap.Of[M[K, V], K, V]): K = sys.error("")
 
-    def everyMapValue(implicit @unused ev: IsMap.Of[M[K, V], K, V]): V =
-      sys.error(".everyMapValue should be only called within Chimney DSL")
+    @compileTimeOnly(".everyMapValue should be only called within Chimney DSL")
+    def everyMapValue(implicit @unused ev: IsMap.Of[M[K, V], K, V]): V = sys.error("")
   }
+
+  // $COVERAGE-ON$
 }
