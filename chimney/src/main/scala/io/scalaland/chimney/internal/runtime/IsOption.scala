@@ -1,12 +1,14 @@
 package io.scalaland.chimney.internal.runtime
 
-// TODO: @implicitNotFound
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Expected Option (type extending scala.Option), got ${O}")
 sealed trait IsOption[O] {
   type SomeValue
   type Some
 }
 object IsOption {
-
+  @implicitNotFound("Expected Option (type extending scala.Option), got ${O}")
   type Of[O, SV, S] = IsOption[O] { type SomeValue = SV; type Some = S }
 
   private object Impl extends IsOption[Nothing]

@@ -1,12 +1,17 @@
 package io.scalaland.chimney.internal.runtime
 
-import scala.annotation.unused
+import scala.annotation.{implicitNotFound, unused}
 
-// TODO @implicitNotFound
+@implicitNotFound(
+  "Expected collection (type extending scala.Iterable which has scala.collection.compat.Factory instance), got ${C}"
+)
 sealed trait IsCollection[C] {
   type Item
 }
 object IsCollection {
+  @implicitNotFound(
+    "Expected collection (type extending scala.Iterable which has scala.collection.compat.Factory instance), got ${C}"
+  )
   type Of[C, A] = IsCollection[C] { type Item = A }
 
   private object Impl extends IsCollection[Nothing]

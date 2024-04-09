@@ -1,6 +1,8 @@
 package io.scalaland.chimney.internal.runtime
 
-// TODO @implicitNotFound
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Expected Either (type extending scala.Either), got ${E}")
 sealed trait IsEither[E] {
   type LeftValue
   type RightValue
@@ -8,6 +10,7 @@ sealed trait IsEither[E] {
   type Right
 }
 object IsEither {
+  @implicitNotFound("Expected Either (type extending scala.Either), got ${E}")
   type Of[E, LV, RV, L, R] = IsEither[E] { type LeftValue = LV; type RightValue = RV; type Left = L; type Right = R }
 
   private object Impl extends IsEither[Nothing]
