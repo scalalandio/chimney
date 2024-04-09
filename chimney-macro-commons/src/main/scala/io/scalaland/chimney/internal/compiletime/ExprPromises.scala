@@ -8,7 +8,7 @@ private[compiletime] trait ExprPromises { this: Definitions =>
   /** Allow us to use `Expr[A]` before we would either: know how we would initiate it, or: what the final shape of
     * a whole expression would be.
     *
-    * In situations like `'{ val a = sth; ${ useA('{ a }) } } ` you know both how `a` would be created as well as
+    * In situations like `'{ val a = sth; ${ useA('{ a }) } }` you know both how `a` would be created as well as
     * the shape of the final tree. In cases when you would e.g. use expression in some context-dependent derivation
     * which could return `Either[Expr[B], Expr[F[B]]`, ExprPromise allows you to calculate that result and THEN decide
     * how to turn it into final Expr value.

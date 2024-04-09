@@ -7,13 +7,6 @@ import commandmatrix.extra.*
 lazy val isCI = sys.env.get("CI").contains("true")
 ThisBuild / scalafmtOnCompile := !isCI
 
-// publishSigned emits
-//   Could not find any member to link for "scala.None".
-// and similar, and we cannot turn them off in any other way than by removing -Xfatal-warnings
-// so at least we can remove them ONLY when building a release from a commit which already
-// passed the tests.
-lazy val isRelease = sys.env.get("RELEASE").contains("true")
-
 lazy val ciRelease = taskKey[Unit](
   "Publish artifacts to release or snapshot (skipping sonatypeBundleRelease which is unnecessary for snapshots)"
 )
@@ -118,6 +111,9 @@ val settings = Seq(
           "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
           "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
           "-Wconf:src=io/scalaland/chimney/cats/package.scala:s", // silence package object inheritance deprecation
+          "-Wconf:msg=discarding unmoored doc comment:s", // silence errors when scaladoc cannot comprehend nested vals
+          "-Wconf:msg=Could not find any member to link for:s", // since errors when scaladoc cannot link to stdlib types or nested types
+          "-Wconf:msg=Variable .+ undefined in comment for:s", // silence errors when there we're showing a buggy Expr in scaladoc comment
           "-Wunused:patvars",
           "-Xfatal-warnings",
           "-Xlint:adapted-args",
@@ -154,6 +150,9 @@ val settings = Seq(
           "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
           "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
           "-Wconf:src=io/scalaland/chimney/cats/package.scala:s", // silence package object inheritance deprecation
+          "-Wconf:msg=discarding unmoored doc comment:s", // silence errors when scaladoc cannot comprehend nested vals
+          "-Wconf:msg=Could not find any member to link for:s", // since errors when scaladoc cannot link to stdlib types or nested types
+          "-Wconf:msg=Variable .+ undefined in comment for:s", // silence errors when there we're showing a buggy Expr in scaladoc comment
           "-Xexperimental",
           "-Xfatal-warnings",
           "-Xfuture",
@@ -254,7 +253,7 @@ val publishSettings = Seq(
   // (now this suffix is empty by default) so we need to fix it manually.
   git.gitUncommittedChanges := git.gitCurrentTags.value.isEmpty,
   git.uncommittedSignifier := Some("SNAPSHOT")
-) ++ (if (isRelease) Seq(scalacOptions -= "-Xfatal-warnings") else Seq.empty)
+)
 
 val mimaSettings = Seq(
   mimaPreviousArtifacts := {
@@ -329,7 +328,7 @@ lazy val root = project
          |
          |When working with IntelliJ or Scala Metals, edit "val ideScala = ..." and "val idePlatform = ..." within "val versions" in build.sbt to control which Scala version you're currently working with.
          |
-         |If you need to test library locally in a different project, restart sbt with "RELEASE=true sbt". Then publishLocal:
+         |If you need to test library locally in a different project, use publishLocal:
          | - chimney-macro-commons (obligatory)
          | - chimney
          | - cats/java-collections/protobufs integration (optional)
