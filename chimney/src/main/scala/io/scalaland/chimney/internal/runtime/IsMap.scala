@@ -1,12 +1,18 @@
 package io.scalaland.chimney.internal.runtime
-import scala.annotation.unused
 
-// TODO @implicitNotFound
+import scala.annotation.{implicitNotFound, unused}
+
+@implicitNotFound(
+  "Expected map (type extending scala.collection.immutable.Map which has scala.collection.compat.Factory instance), got ${M}"
+)
 sealed trait IsMap[M] {
   type Key
   type Value
 }
 object IsMap {
+  @implicitNotFound(
+    "Expected map (type extending scala.collection.immutable.Map which has scala.collection.compat.Factory instance), got ${M}"
+  )
   type Of[M, K, V] = IsMap[M] { type Key = K; type Value = V }
 
   private object Impl extends IsMap[Nothing]
