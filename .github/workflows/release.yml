@@ -26,6 +26,5 @@ jobs:
       - name: Publish all projects
         run:  sbt ci-release
         env:
-          RELEASE: true
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
