@@ -28,6 +28,7 @@ object NestedJavaBean {
 }
 
 case class NestedComplex[A](
+    id: A,
     option: Option[A],
     either: Either[A, A],
     collection: List[A],
