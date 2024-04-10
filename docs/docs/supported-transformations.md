@@ -1061,10 +1061,18 @@ it with another field. Since the usual cause of such cases is a _rename_, we can
 The requirements to use a rename are as follows:
 
   - you have to pass `_.fieldName` directly, it cannot be done with a reference to the function
-  - the field rename can be _nested_, you can pass `_.foo.bar.baz` there
   - you can only use `val`/nullary method/Bean getter as a source field name
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
-    setters are enabled)
+    setters are enabled) to point which argument you are targeting
+  - the field rename can be _nested_, you can pass `_.foo.bar.baz` there, and on the constructor's arguments side
+    additionally you can use:
+     - `.matched[Subtype]` to select just one subtype of ADT e.g `_.adt.matched[Subtype].subtypeField`
+     - `.matchedSome` to select values inside `Option` e.g. `_.option.matchedSome.field
+     - `.matchedLeft` and `.matchedRight` to select values inside `Either` e.g. `_.either.matchedLeft.field` or
+       `_.either.matchedRight.field`
+     - `.everyItem` to select items inside collection or array e.g. `_.list.everyItem.field`, `_.array.everyItem.field`
+     - `.everyMapKey` and `.everyMapValue` to select keys/values inside maps e.g. `_.map.everyMapKey.field`,
+       `_.map.everyMapValue.field`
  
 The last 2 conditions are always met when working with `case class`es with no `private val`s in constructor, and classes
 with all arguments declared as public `val`s, and Java Beans where each setter has a corresponding getter defined.
@@ -1197,11 +1205,18 @@ As you can see, the transformed value will automatically preserve the field name
 The requirements to use a value provision are as follows:
 
   - you have to pass `_.fieldName` directly, it cannot be done with a reference to the function
-  - the field value provision can be _nested_, you can pass `_.foo.bar.baz` there
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
     setters are enabled)
+  - the path can be _nested_, you can pass `_.foo.bar.baz` there, and additionally you can use:
+     - `.matched[Subtype]` to select just one subtype of ADT e.g `_.adt.matched[Subtype].subtypeField`
+     - `.matchedSome` to select values inside `Option` e.g. `_.option.matchedSome.field
+     - `.matchedLeft` and `.matchedRight` to select values inside `Either` e.g. `_.either.matchedLeft.field` or
+       `_.either.matchedRight.field`
+     - `.everyItem` to select items inside collection or array e.g. `_.list.everyItem.field`, `_.array.everyItem.field`
+     - `.everyMapKey` and `.everyMapValue` to select keys/values inside maps e.g. `_.map.everyMapKey.field`,
+       `_.map.everyMapValue.field`
 
-The last conditions is always met when working with `case class`es with no `private val`s in constructor, and classes
+The second condition is always met when working with `case class`es with no `private val`s in constructor, and classes
 with all arguments declared as public `val`s, and Java Beans where each setter has a corresponding getter defined.
 
 !!! example
@@ -1347,11 +1362,18 @@ As you can see, the transformed value will automatically preserve the field name
 The requirements to use a value computation are as follows:
 
   - you have to pass `_.fieldName` directly, it cannot be done with a reference to the function
-  - the field value computation can be _nested_, you can pass `_.foo.bar.baz` there
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
     setters are enabled)
+  - the path can be _nested_, you can pass `_.foo.bar.baz` there, and additionally you can use:
+     - `.matched[Subtype]` to select just one subtype of ADT e.g `_.adt.matched[Subtype].subtypeField`
+     - `.matchedSome` to select values inside `Option` e.g. `_.option.matchedSome.field
+     - `.matchedLeft` and `.matchedRight` to select values inside `Either` e.g. `_.either.matchedLeft.field` or
+       `_.either.matchedRight.field`
+     - `.everyItem` to select items inside collection or array e.g. `_.list.everyItem.field`, `_.array.everyItem.field`
+     - `.everyMapKey` and `.everyMapValue` to select keys/values inside maps e.g. `_.map.everyMapKey.field`,
+       `_.map.everyMapValue.field`
 
-The last conditions is always met when working with `case class`es with no `private val`s in constructor, and classes
+The second condition is always met when working with `case class`es with no `private val`s in constructor, and classes
 with all arguments declared as public `val`s, and Java Beans where each setter has a corresponding getter defined.
 
 !!! example
@@ -2884,14 +2906,15 @@ If we need to customize it, we can use `.define.buildTransformer`:
 Arguments taken by both `.enableCustomFieldNameComparison` and `.enableCustomSubtypeNameComparison` are values of type
 `TransformedNamesComparison`. Out of the box, Chimney provides:
 
- * `TransformedNamesComparison.StrictEquality` - 2 names are considered equal only if they are identical `String`s.
+ - `TransformedNamesComparison.StrictEquality` - 2 names are considered equal only if they are identical `String`s.
    This is the default matching strategy for subtype names conparison
- * `TransformedNamesComparison.BeanAware` - 2 names are considered equal if they are identical `String`s OR if they are
-   identical after you convert them from Java Bean naming convention:
-   * if a name starts with `is`/`get`/`set` prefix (e.g. `isField`, `getField`, `setField`) then
-   * strip this name from the prefix (obtaining e.g. `Field`) and
-   * lower case the first letter (obtaining e.g. `field`)
-* `TransformedNamesComparison.CaseInsensitiveEquality` - 2 names are considered equal if `equalsIgnoreCase` returns
+ - `TransformedNamesComparison.BeanAware` - 2 names are considered equal if they are identical `String`s OR if they are
+   identical after you convert them from Java Bean naming convention: 
+    - if a name starts with `is`/`get`/`set` prefix (e.g. `isField`, `getField`, `setField`) then
+    - strip this name from the prefix (obtaining e.g. `Field`) and
+    - lower case the first letter (obtaining e.g. `field`)
+    
+ - `TransformedNamesComparison.CaseInsensitiveEquality` - 2 names are considered equal if `equalsIgnoreCase` returns
   `true`
 
 However, these 3 does not exhaust all possible comparisons and you might need to provide one yourself. 
@@ -2904,11 +2927,11 @@ The challenge is that the function you'd like to provie has to be called within 
 a way that the macro will be able to access it. Normally, there is no way to inject a custom login into existing macro,
 but Chimney has a specific solution for this:
 
- * you need to define your `TransformedNamesComparison` as `object` - objects do not need constructor arguments, so
+ - you need to define your `TransformedNamesComparison` as `object` - objects do not need constructor arguments, so
    they can be instantiated easily
- * your have to define this `object` as top-level definition or within another object - object defined within a `class`,
+ - your have to define this `object` as top-level definition or within another object - object defined within a `class`,
    a `trait` or locally, does need some logic for instantiation
- * you have to define your `object` in a module/subproject that is compiled _before_ the module where you need to use
+ - you have to define your `object` in a module/subproject that is compiled _before_ the module where you need to use
    it, so that the bytecode would already be accesible on classpath.
 
 !!! example
