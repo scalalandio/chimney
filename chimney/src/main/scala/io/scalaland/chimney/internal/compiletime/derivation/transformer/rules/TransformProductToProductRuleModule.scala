@@ -681,11 +681,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     private def appendPath[A: Type](expr: TransformationExpr[A], path: Path): TransformationExpr[A] =
       path match {
         case Path.AtField(name, path2) => appendPath[A](appendPath[A](expr, name), path2)
-        case Path.AtSubtype(_, path2)  => appendPath[A](expr, path2)
-        case Path.AtItem(path2)        => appendPath[A](expr, path2) // TODO: ?
-        case Path.AtMapKey(path2)      => appendPath[A](expr, path2) // TODO: ?
-        case Path.AtMapValue(path2)    => appendPath[A](expr, path2) // TODO: ?
-        case _                         => expr
+        case _                         => expr // Path.Root - other values are not possible in from Path for renames
       }
 
     // If we derived partial.Result[$ctorParam] we are appending

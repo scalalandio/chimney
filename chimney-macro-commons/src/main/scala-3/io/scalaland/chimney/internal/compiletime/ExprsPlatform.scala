@@ -59,8 +59,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def map[A: Type, B: Type](opt: Expr[Option[A]])(f: Expr[A => B]): Expr[Option[B]] = '{
         ${ resetOwner(opt) }.map(${ f })
       }
-      def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(matchingSome: Expr[A => B]): Expr[B] =
-        '{ ${ resetOwner(opt) }.fold(${ onNone })(${ matchingSome }) }
+      def fold[A: Type, B: Type](opt: Expr[Option[A]])(onNone: Expr[B])(onSome: Expr[A => B]): Expr[B] =
+        '{ ${ resetOwner(opt) }.fold(${ onNone })(${ onSome }) }
       def orElse[A: Type](opt1: Expr[Option[A]], opt2: Expr[Option[A]]): Expr[Option[A]] =
         '{ ${ opt1 }.orElse(${ opt2 }) }
       def getOrElse[A: Type](opt: Expr[Option[A]])(orElse: Expr[A]): Expr[A] =

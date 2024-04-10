@@ -13,5 +13,4 @@ class BasicHuge extends CommonBenchmarkSettings {
   @Benchmark
   def hugeByHand: HugeOutput =
     doHugeByHand(samples.hugeSample)
-
 }
