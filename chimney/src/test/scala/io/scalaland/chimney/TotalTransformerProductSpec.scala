@@ -50,7 +50,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       import products.{Foo, Bar, HaveY}
 
       compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y + "abc", "pi").transform""").check(
-        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+        "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
       compileErrorsFixed(
@@ -148,7 +148,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.y + "abc", _.toString).transform""")
         .check(
-          "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+          "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
         )
 
       compileErrorsFixed(
@@ -273,7 +273,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       compileErrorsFixed(
         """User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform"""
       ).check(
-        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+        "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
       compileErrorsFixed(
