@@ -89,7 +89,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       import products.{Foo, Bar, HaveY}
 
       compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.y + "abc", "pi").transform""").check(
-        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+        "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
       compileErrorsFixed(
@@ -242,7 +242,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
           .transform
         """
       ).check(
-        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+        "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
       compileErrorsFixed(
@@ -420,7 +420,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.y + "abc", _.toString).transform
         """
       ).check(
-        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+        "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
       compileErrorsFixed(
@@ -601,7 +601,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.y + "abc", _ => ???).transform
         """
       ).check(
-        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+        "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
       compileErrorsFixed(
@@ -817,7 +817,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         User(1, "Kuba", Some(28)).intoPartial[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
         """
       ).check(
-        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+        "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
       compileErrorsFixed(

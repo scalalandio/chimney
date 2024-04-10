@@ -60,7 +60,7 @@ private[chimney] trait DslMacroUtils {
               val Underlying: WeakTypeTag[runtime.Path.Root] = weakTypeTag[runtime.Path.Root]
             })
           // matches `_ => something unrelated` - not allowed
-          case _: Ident => Left(ignoringInputNotAllowed(t))
+          case i: Ident => Left(ignoringInputNotAllowed(i, t))
           // matches `...()`
           case Apply(select @ Select(_, _), Nil) => unpackSelects(select)
           // matches `.matching[Subtype]`
@@ -172,22 +172,24 @@ private[chimney] trait DslMacroUtils {
               applyTypes(init.Underlying)
             }
           // matches `someFunctionName` - not allowed
-          case Apply(_, _) => Left(arbitraryFunctionNotAllowed(t))
-          case _           => Left(invalidSelectorErrorMessage(t))
+          case f @ Apply(_, _) => Left(arbitraryFunctionNotAllowed(f, t))
+          case _               => Left(invalidSelectorErrorMessage(t))
         }
 
         unpackSelects(selects)
       case _ => Left(invalidSelectorErrorMessage(t))
     }
 
-    private def invalidSelectorErrorMessage(selectorTree: Tree): String =
-      s"Invalid selector expression: $selectorTree"
+    import Console.*
 
-    private def arbitraryFunctionNotAllowed(selectorTree: Tree): String =
-      s"The path expression has to be a single chain of calls on the original input, operation other than value extraction: $selectorTree\n${showRaw(selectorTree)}"
+    private def invalidSelectorErrorMessage(t: Tree): String =
+      s"The path expression has to be a single chain of calls on the original input, got: $MAGENTA$t$RESET"
 
-    private def ignoringInputNotAllowed(selectorTree: Tree): String =
-      s"The path expression has to be a single chain of calls on the original input, got external identifier: $selectorTree"
+    private def arbitraryFunctionNotAllowed(f: Tree, t: Tree): String =
+      s"The path expression has to be a single chain of calls on the original input, got operation other than value extraction: $MAGENTA$f$RESET in $MAGENTA$t$RESET"
+
+    private def ignoringInputNotAllowed(i: Tree, t: Tree): String =
+      s"The path expression has to be a single chain of calls on the original input, got external identifier: $MAGENTA$i$RESET in: $MAGENTA$t$RESET"
   }
 
   private trait ExistentialCtor {
@@ -258,8 +260,10 @@ private[chimney] trait DslMacroUtils {
       )
     }
 
+    import Console.*
+
     private def invalidConstructor(t: Tree): String =
-      s"Expected function, instead got: ${Console.MAGENTA}$t${Console.RESET}: ${Console.MAGENTA}${t.tpe}${Console.RESET}"
+      s"Expected function, instead got: $MAGENTA$t$RESET: $MAGENTA${t.tpe}$RESET"
   }
 
   // If we try to do:

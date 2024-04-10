@@ -95,7 +95,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               val Underlying: Type[runtime.Path.Root] = Type.of[runtime.Path.Root]
             })
           // matches `_ => something unrelated` - not allowed
-          case _: Ident => Left(ignoringInputNotAllowed(t))
+          case i: Ident => Left(ignoringInputNotAllowed(i, t))
           // matches `.fieldName` AND `.fieldName()`
           case SelectLike(t2, fieldName) =>
             unpackSelects(t2).map { init =>
@@ -182,8 +182,8 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
               }
             }
           // matches `someFunctionName` - not allowed
-          case Apply(_, _) => Left(arbitraryFunctionNotAllowed(t))
-          case _           => Left(invalidSelectorErrorMessage(t))
+          case f @ Apply(_, _) => Left(arbitraryFunctionNotAllowed(f, t))
+          case _               => Left(invalidSelectorErrorMessage(t))
         }
         unpackSelects(selects)
       case Inlined(_, _, block) => parse(block)
@@ -191,14 +191,17 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
     }
 
     private def invalidSelectorErrorMessage(t: Tree): String =
-      s"Invalid selector expression: ${t.show(using Printer.TreeAnsiCode)}"
+      s"The path expression has to be a single chain of calls on the original input, got: ${t.show(using Printer.TreeAnsiCode)}"
 
-    private def arbitraryFunctionNotAllowed(t: Tree): String =
-      s"The path expression has to be a single chain of calls on the original input, operation other than value extraction: ${t
+    private def arbitraryFunctionNotAllowed(f: Tree, t: Tree): String =
+      s"The path expression has to be a single chain of calls on the original input, got operation other than value extraction: ${f
+          .show(using Printer.TreeAnsiCode)} in: ${t
           .show(using Printer.TreeAnsiCode)}"
 
-    private def ignoringInputNotAllowed(t: Tree): String =
-      s"The path expression has to be a single chain of calls on the original input, got external identifier: ${t.show(using Printer.TreeAnsiCode)}"
+    private def ignoringInputNotAllowed(i: Tree, t: Tree): String =
+      s"The path expression has to be a single chain of calls on the original input, got external identifier: ${i.show(
+          using Printer.TreeAnsiCode
+        )} in: ${t.show(using Printer.TreeAnsiCode)}"
   }
 
   private trait ExistentialCtor {
