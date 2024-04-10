@@ -133,10 +133,10 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
                   .fulfilAsLambda2(toValueP) { case ((keyResult, key), valueResult) =>
                     ChimneyExpr.PartialResult.product(
                       keyResult.prependErrorPath(
-                        ChimneyExpr.PathElement.MapKey(key.upcastExpr[Any]).upcastExpr[partial.PathElement]
+                        ChimneyExpr.PathElement.MapKey(key.upcastExpr[Any]).widenExpr[partial.PathElement]
                       ),
                       valueResult.prependErrorPath(
-                        ChimneyExpr.PathElement.MapValue(key.upcastExpr[Any]).upcastExpr[partial.PathElement]
+                        ChimneyExpr.PathElement.MapValue(key.upcastExpr[Any]).widenExpr[partial.PathElement]
                       ),
                       failFast
                     )
@@ -169,31 +169,30 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
             ChimneyExpr.PartialResult
               .traverse[To, ((FromK, FromV), Int), (ToK, ToV)](
                 iterator.zipWithIndex,
-                ExprPromise
-                  .promise[(FromK, FromV)](ExprPromise.NameGenerationStrategy.FromPrefix("pair"))
-                  .fulfilAsLambda2(
-                    ExprPromise.promise[Int](ExprPromise.NameGenerationStrategy.FromPrefix("idx"))
-                  ) { (pairExpr, indexExpr) =>
+                Expr.Function2
+                  .instance[(FromK, FromV), Int, partial.Result[(ToK, ToV)]] { (pairExpr, indexExpr) =>
                     val pairGetters = ProductType.parseExtraction[(FromK, FromV)].get.extraction
+                    val _1 = pairGetters("_1")
+                    val _2 = pairGetters("_2")
+                    import _1.{Underlying as From_1, value as getter_1}, _2.{Underlying as From_2, value as getter_2}
                     ChimneyExpr.PartialResult.product(
                       toKeyP
-                        .fulfilAsVal(pairGetters("_1").value.get(pairExpr).asInstanceOf[Expr[FromK]])
-                        .map(_._1)
-                        .closeBlockAsExprOf[partial.Result[ToK]]
+                        .fulfilAsVal(getter_1.get(pairExpr).upcastExpr[FromK])
+                        .use(_._1) // "key" (here: _1 value) is not needed
                         .prependErrorPath(
-                          ChimneyExpr.PathElement.Accessor(Expr.String("_1")).upcastExpr[partial.PathElement]
+                          ChimneyExpr.PathElement.Accessor(Expr.String("_1")).widenExpr[partial.PathElement]
                         )
                         .prependErrorPath(
-                          ChimneyExpr.PathElement.Index(indexExpr).upcastExpr[partial.PathElement]
+                          ChimneyExpr.PathElement.Index(indexExpr).widenExpr[partial.PathElement]
                         ),
                       toValueP
-                        .fulfilAsVal(pairGetters("_2").value.get(pairExpr).asInstanceOf[Expr[FromV]])
+                        .fulfilAsVal(getter_2.get(pairExpr).upcastExpr[FromV])
                         .closeBlockAsExprOf[partial.Result[ToV]]
                         .prependErrorPath(
-                          ChimneyExpr.PathElement.Accessor(Expr.String("_2")).upcastExpr[partial.PathElement]
+                          ChimneyExpr.PathElement.Accessor(Expr.String("_2")).widenExpr[partial.PathElement]
                         )
                         .prependErrorPath(
-                          ChimneyExpr.PathElement.Index(indexExpr).upcastExpr[partial.PathElement]
+                          ChimneyExpr.PathElement.Index(indexExpr).widenExpr[partial.PathElement]
                         ),
                       failFast
                     )

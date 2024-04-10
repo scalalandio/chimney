@@ -132,16 +132,13 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B] = c.Expr[B](q"$expr.asInstanceOf[${Type[B]}]")
 
-    def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] = {
-      val wideningChecked = expr.widenExpr[B]
-      if (Type[A] =:= Type[B]) wideningChecked
-      else c.Expr[B](q"($expr : ${Type[B]})")
-    }
+    def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] =
+      if (Type[A] =:= Type[B]) expr.asInstanceOf[Expr[B]] // types are identical in practice, we can just cast
+      else c.Expr[B](q"(${expr.widenExpr[B]} : ${Type[B]})") // check A <:< B AND add a syntax to force upcasting
 
     def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] =
       // In Scala 2.12 suppressing two variables at once resulted in "_ is already defined as value _" error
-      if (scala.util.Properties.versionNumberString < "2.13")
-        c.Expr[Unit](q"_root_.scala.Predef.locally { val _ = $expr }")
+      if (isScala212) c.Expr[Unit](q"_root_.scala.Predef.locally { val _ = $expr }")
       else c.Expr[Unit](q"val _ = $expr")
 
     def prettyPrint[A](expr: Expr[A]): String =

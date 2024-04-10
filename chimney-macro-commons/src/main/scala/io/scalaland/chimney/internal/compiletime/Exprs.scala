@@ -156,10 +156,10 @@ private[compiletime] trait Exprs { this: Definitions =>
         Type[A] <:< Type[B],
         s"Upcasting can only be done to type proved to be super type! Failed ${Type.prettyPrint[A]} <:< ${Type.prettyPrint[B]} check"
       )
-      expr.asInstanceOf[Expr[B]]
+      expr.asInstanceOf[Expr[B]] // same as expr.asExprOf[B] on Scala 3 but without expr.isExprOf[B] type checking
     }
 
-    /** Upcasts `Expr[A]` to `Expr[B]` in the emitted code: '{ (${ expr }) : B } */
+    /** Upcasts `Expr[A]` to `Expr[B]` in the emitted code: '{ (${ expr }) : B } (unless it's unnecessary) */
     def upcastExpr[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
 
     def as_?? : ExistentialExpr = ExistentialExpr(expr)
