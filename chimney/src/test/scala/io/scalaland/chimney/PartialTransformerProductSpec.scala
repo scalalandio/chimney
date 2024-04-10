@@ -5,6 +5,7 @@ import io.scalaland.chimney.fixtures.*
 import io.scalaland.chimney.utils.OptionUtils.*
 
 import scala.annotation.unused
+import scala.collection.immutable.ListMap
 
 class PartialTransformerProductSpec extends ChimneySpec {
 
@@ -172,6 +173,44 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result9.asOption ==> Some(NestedProduct(expected2))
       result9.asEither ==> Right(NestedProduct(expected2))
       result9.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected3 = NestedComplex(
+        User("John", 10, 140),
+        Some(User("John", 15, 140)),
+        Right(User("John", 30, 140)),
+        List(User("John", 40, 140)),
+        ListMap(User("John", 50, 140) -> User("John", 60, 140))
+      )
+
+      val result10 = NestedComplex(
+        Person("John", 10, 140),
+        Some(Person("John", 10, 140)),
+        Right(Person("John", 10, 140)),
+        List(Person("John", 10, 140)),
+        ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
+      ).intoPartial[NestedComplex[User]]
+        .withFieldConst(_.option.matchingSome.age, 15)
+        .withFieldConst(_.either.matchingLeft.age, 20)
+        .withFieldConst(_.either.matchingRight.age, 30)
+        .withFieldConst(_.collection.everyItem.age, 40)
+        .withFieldConst(_.map.everyMapKey.age, 50)
+        .withFieldConst(_.map.everyMapValue.age, 60)
+        .transform
+      result10.asOption ==> Some(expected3)
+      result10.asEither ==> Right(expected3)
+      result10.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected4 = Vector(NestedADT.Foo(User("John", 20, 140)), NestedADT.Bar(User("John", 30, 140)))
+
+      val result11 =
+        List[NestedADT[Person]](NestedADT.Foo(Person("John", 10, 140)), NestedADT.Bar(Person("John", 10, 140)))
+          .intoPartial[Vector[NestedADT[User]]]
+          .withFieldConst(_.everyItem.matching[NestedADT.Foo[User]].foo.age, 20)
+          .withFieldConst(_.everyItem.matching[NestedADT.Bar[User]].bar.age, 30)
+          .transform
+      result11.asOption ==> Some(expected4)
+      result11.asEither ==> Right(expected4)
+      result11.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -272,7 +311,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       val result8 = NestedProduct(Person("John", 10, 140))
         .intoPartial[NestedValueClass[User]]
-        .withFieldConst(_.value.age, 20)
+        .withFieldConstPartial(_.value.age, partial.Result.fromValue(20))
         .transform
       result8.asOption ==> Some(NestedValueClass(expected2))
       result8.asEither ==> Right(NestedValueClass(expected2))
@@ -280,7 +319,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       val result9 = NestedValueClass(Person("John", 10, 140))
         .intoPartial[NestedJavaBean[User]]
-        .withFieldConst(_.getValue.age, 20)
+        .withFieldConstPartial(_.getValue.age, partial.Result.fromValue(20))
         .transform
       result9.asOption ==> Some(NestedJavaBean(expected2))
       result9.asEither ==> Right(NestedJavaBean(expected2))
@@ -288,11 +327,49 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       val result10 = NestedJavaBean(Person("John", 10, 140))
         .intoPartial[NestedProduct[User]]
-        .withFieldConst(_.value.age, 20)
+        .withFieldConstPartial(_.value.age, partial.Result.fromValue(20))
         .transform
       result10.asOption ==> Some(NestedProduct(expected2))
       result10.asEither ==> Right(NestedProduct(expected2))
       result10.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected3 = NestedComplex(
+        User("John", 10, 140),
+        Some(User("John", 15, 140)),
+        Right(User("John", 30, 140)),
+        List(User("John", 40, 140)),
+        ListMap(User("John", 50, 140) -> User("John", 60, 140))
+      )
+
+      val result11 = NestedComplex(
+        Person("John", 10, 140),
+        Some(Person("John", 10, 140)),
+        Right(Person("John", 10, 140)),
+        List(Person("John", 10, 140)),
+        ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
+      ).intoPartial[NestedComplex[User]]
+        .withFieldConstPartial(_.option.matchingSome.age, partial.Result.fromValue(15))
+        .withFieldConstPartial(_.either.matchingLeft.age, partial.Result.fromValue(20))
+        .withFieldConstPartial(_.either.matchingRight.age, partial.Result.fromValue(30))
+        .withFieldConstPartial(_.collection.everyItem.age, partial.Result.fromValue(40))
+        .withFieldConstPartial(_.map.everyMapKey.age, partial.Result.fromValue(50))
+        .withFieldConstPartial(_.map.everyMapValue.age, partial.Result.fromValue(60))
+        .transform
+      result11.asOption ==> Some(expected3)
+      result11.asEither ==> Right(expected3)
+      result11.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected4 = Vector(NestedADT.Foo(User("John", 20, 140)), NestedADT.Bar(User("John", 30, 140)))
+
+      val result12 =
+        List[NestedADT[Person]](NestedADT.Foo(Person("John", 10, 140)), NestedADT.Bar(Person("John", 10, 140)))
+          .intoPartial[Vector[NestedADT[User]]]
+          .withFieldConstPartial(_.everyItem.matching[NestedADT.Foo[User]].foo.age, partial.Result.fromValue(20))
+          .withFieldConstPartial(_.everyItem.matching[NestedADT.Bar[User]].bar.age, partial.Result.fromValue(30))
+          .transform
+      result12.asOption ==> Some(expected4)
+      result12.asEither ==> Right(expected4)
+      result12.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -404,6 +481,44 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result10.asOption ==> Some(NestedProduct(expected2))
       result10.asEither ==> Right(NestedProduct(expected2))
       result10.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected3 = NestedComplex(
+        User("John", 10, 140),
+        Some(User("John", 15, 140)),
+        Right(User("John", 30, 140)),
+        List(User("John", 40, 140)),
+        ListMap(User("John", 50, 140) -> User("John", 60, 140))
+      )
+
+      val result11 = NestedComplex(
+        Person("John", 10, 140),
+        Some(Person("John", 10, 140)),
+        Right(Person("John", 10, 140)),
+        List(Person("John", 10, 140)),
+        ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
+      ).intoPartial[NestedComplex[User]]
+        .withFieldComputed(_.option.matchingSome.age, _.id.age + 5)
+        .withFieldComputed(_.either.matchingLeft.age, _.id.age * 2)
+        .withFieldComputed(_.either.matchingRight.age, _.id.age * 3)
+        .withFieldComputed(_.collection.everyItem.age, _.id.age * 4)
+        .withFieldComputed(_.map.everyMapKey.age, _.id.age * 5)
+        .withFieldComputed(_.map.everyMapValue.age, _.id.age * 6)
+        .transform
+      result11.asOption ==> Some(expected3)
+      result11.asEither ==> Right(expected3)
+      result11.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected4 = Vector(NestedADT.Foo(User("John", 20, 140)), NestedADT.Bar(User("John", 30, 140)))
+
+      val result12 =
+        List[NestedADT[Person]](NestedADT.Foo(Person("John", 10, 140)), NestedADT.Bar(Person("John", 10, 140)))
+          .intoPartial[Vector[NestedADT[User]]]
+          .withFieldComputed(_.everyItem.matching[NestedADT.Foo[User]].foo.age, _ => 20)
+          .withFieldComputed(_.everyItem.matching[NestedADT.Bar[User]].bar.age, _ => 30)
+          .transform
+      result12.asOption ==> Some(expected4)
+      result12.asEither ==> Right(expected4)
+      result12.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -497,7 +612,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       val result8 = NestedProduct(Person("John", 10, 140))
         .intoPartial[NestedValueClass[User]]
-        .withFieldComputed(_.value.age, _.value.age * 2)
+        .withFieldComputedPartial(_.value.age, nested => partial.Result.fromValue(nested.value.age * 2))
         .transform
       result8.asOption ==> Some(NestedValueClass(expected2))
       result8.asEither ==> Right(NestedValueClass(expected2))
@@ -505,7 +620,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       val result9 = NestedValueClass(Person("John", 10, 140))
         .intoPartial[NestedJavaBean[User]]
-        .withFieldComputed(_.getValue.age, _.value.age * 2)
+        .withFieldComputedPartial(_.getValue.age, nested => partial.Result.fromValue(nested.value.age * 2))
         .transform
       result9.asOption ==> Some(NestedJavaBean(expected2))
       result9.asEither ==> Right(NestedJavaBean(expected2))
@@ -513,11 +628,55 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       val result10 = NestedJavaBean(Person("John", 10, 140))
         .intoPartial[NestedProduct[User]]
-        .withFieldComputed(_.value.age, _.getValue.age * 2)
+        .withFieldComputedPartial(_.value.age, nested => partial.Result.fromValue(nested.getValue.age * 2))
         .transform
       result10.asOption ==> Some(NestedProduct(expected2))
       result10.asEither ==> Right(NestedProduct(expected2))
       result10.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected3 = NestedComplex(
+        User("John", 10, 140),
+        Some(User("John", 15, 140)),
+        Right(User("John", 30, 140)),
+        List(User("John", 40, 140)),
+        ListMap(User("John", 50, 140) -> User("John", 60, 140))
+      )
+
+      val result11 = NestedComplex(
+        Person("John", 10, 140),
+        Some(Person("John", 10, 140)),
+        Right(Person("John", 10, 140)),
+        List(Person("John", 10, 140)),
+        ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
+      ).intoPartial[NestedComplex[User]]
+        .withFieldComputedPartial(_.option.matchingSome.age, c => partial.Result.fromValue(c.id.age + 5))
+        .withFieldComputedPartial(_.either.matchingLeft.age, c => partial.Result.fromValue(c.id.age * 2))
+        .withFieldComputedPartial(_.either.matchingRight.age, c => partial.Result.fromValue(c.id.age * 3))
+        .withFieldComputedPartial(_.collection.everyItem.age, c => partial.Result.fromValue(c.id.age * 4))
+        .withFieldComputedPartial(_.map.everyMapKey.age, c => partial.Result.fromValue(c.id.age * 5))
+        .withFieldComputedPartial(_.map.everyMapValue.age, c => partial.Result.fromValue(c.id.age * 6))
+        .transform
+      result11.asOption ==> Some(expected3)
+      result11.asEither ==> Right(expected3)
+      result11.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected4 = Vector(NestedADT.Foo(User("John", 20, 140)), NestedADT.Bar(User("John", 30, 140)))
+
+      val result12 =
+        List[NestedADT[Person]](NestedADT.Foo(Person("John", 10, 140)), NestedADT.Bar(Person("John", 10, 140)))
+          .intoPartial[Vector[NestedADT[User]]]
+          .withFieldComputedPartial(
+            _.everyItem.matching[NestedADT.Foo[User]].foo.age,
+            _ => partial.Result.fromValue(20)
+          )
+          .withFieldComputedPartial(
+            _.everyItem.matching[NestedADT.Bar[User]].bar.age,
+            _ => partial.Result.fromValue(30)
+          )
+          .transform
+      result12.asOption ==> Some(expected4)
+      result12.asEither ==> Right(expected4)
+      result12.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -606,6 +765,40 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result4.asOption ==> Some(NestedProduct(expected))
       result4.asEither ==> Right(NestedProduct(expected))
       result4.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected2 = NestedComplex(
+        UserPLStrict(1, "Kuba", 28),
+        Some(UserPLStrict(2, "Kuba", 28)),
+        Right(UserPLStrict(3, "Kuba", 28)),
+        List(UserPLStrict(4, "Kuba", 28)),
+        ListMap(UserPLStrict(5, "Kuba", 28) -> UserPLStrict(6, "Kuba", 28))
+      )
+
+      val result5 = NestedComplex(
+        UserStrict(1, "Kuba", 28),
+        Some(UserStrict(2, "Kuba", 28)),
+        Right(UserStrict(3, "Kuba", 28)),
+        List(UserStrict(4, "Kuba", 28)),
+        ListMap(UserStrict(5, "Kuba", 28) -> UserStrict(6, "Kuba", 28))
+      ).intoPartial[NestedComplex[UserPLStrict]]
+        .withFieldRenamed(_.id.name, _.id.imie)
+        .withFieldRenamed(_.id.age, _.id.wiek)
+        .withFieldRenamed(_.id.name, _.option.matchingSome.imie)
+        .withFieldRenamed(_.id.age, _.option.matchingSome.wiek)
+        .withFieldRenamed(_.id.name, _.either.matchingLeft.imie)
+        .withFieldRenamed(_.id.age, _.either.matchingLeft.wiek)
+        .withFieldRenamed(_.id.name, _.either.matchingRight.imie)
+        .withFieldRenamed(_.id.age, _.either.matchingRight.wiek)
+        .withFieldRenamed(_.id.name, _.collection.everyItem.imie)
+        .withFieldRenamed(_.id.age, _.collection.everyItem.wiek)
+        .withFieldRenamed(_.id.name, _.map.everyMapKey.imie)
+        .withFieldRenamed(_.id.age, _.map.everyMapKey.wiek)
+        .withFieldRenamed(_.id.name, _.map.everyMapValue.imie)
+        .withFieldRenamed(_.id.age, _.map.everyMapValue.wiek)
+        .transform
+      result5.asOption ==> Some(expected2)
+      result5.asEither ==> Right(expected2)
+      result5.asErrorPathMessageStrings ==> Iterable.empty
     }
 
     test(
