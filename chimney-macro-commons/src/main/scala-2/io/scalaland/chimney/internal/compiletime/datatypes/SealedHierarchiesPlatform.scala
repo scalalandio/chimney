@@ -44,7 +44,7 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
         subtypes
           .map { case (name, subtypeA: ?<[A]) =>
             subtypeA.mapK[Enum.Element[A, *]] { implicit Subtype: Type[subtypeA.Underlying] => _ =>
-              Enum.Element(name = name, upcast = _.upcastExpr[A])
+              Enum.Element(name = name, upcast = _.upcastToExprOf[A])
             }
           }
           // with GADT we can have subtypes that shouldn't appear in pattern matching

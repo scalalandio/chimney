@@ -293,7 +293,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .runtimeDataStore(runtimeDataIdx)
               .asInstanceOfExpr[partial.Result[CtorParam]]
               .prependErrorPath(
-                ChimneyExpr.PathElement.Accessor(Expr.String(fromName)).widenExpr[partial.PathElement]
+                ChimneyExpr.PathElement.Accessor(Expr.String(fromName)).upcastToExprOf[partial.PathElement]
               )
           )
         )
@@ -327,7 +327,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   .prependErrorPath(
                     ChimneyExpr.PathElement
                       .Accessor(Expr.String(fromName))
-                      .widenExpr[partial.PathElement]
+                      .upcastToExprOf[partial.PathElement]
                   )
               )
             )
@@ -347,7 +347,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .asInstanceOfExpr[OriginalFrom => partial.Result[CtorParam]]
               .apply(originalSrc)
               .prependErrorPath(
-                ChimneyExpr.PathElement.Accessor(Expr.String(fromName)).widenExpr[partial.PathElement]
+                ChimneyExpr.PathElement.Accessor(Expr.String(fromName)).upcastToExprOf[partial.PathElement]
               )
           )
         )
@@ -461,7 +461,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               // We're constructing:
               // '{ None }
               DerivationResult.existential[TransformationExpr, CtorParam](
-                TransformationExpr.fromTotal(value.upcastExpr[CtorParam])
+                TransformationExpr.fromTotal(value.upcastToExprOf[CtorParam])
               )
             )
 
@@ -471,7 +471,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             // We're constructing:
             // '{ () }
             DerivationResult.existential[TransformationExpr, CtorParam](
-              TransformationExpr.fromTotal(value.upcastExpr[CtorParam])
+              TransformationExpr.fromTotal(value.upcastToExprOf[CtorParam])
             )
           }
         }
@@ -651,9 +651,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                 }
                               )
                             )
-                            .upcastExpr[partial.Result[To]]
+                            .upcastToExprOf[partial.Result[To]]
                         } {
-                          allerrors.upcastExpr[partial.Result[To]]
+                          allerrors.upcastToExprOf[partial.Result[To]]
                         }
                       )
                     }
@@ -692,7 +692,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           partialE.prependErrorPath(
             ChimneyExpr.PathElement
               .Accessor(Expr.String(path))
-              .widenExpr[partial.PathElement]
+              .upcastToExprOf[partial.PathElement]
           )
         )
       )

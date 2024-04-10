@@ -109,7 +109,7 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     }
     final def ensurePartial: Expr[partial.Result[A]] = fold { expr =>
       implicit val A: Type[A] = Expr.typeOf(expr)
-      ChimneyExpr.PartialResult.Value(expr).upcastExpr[partial.Result[A]]
+      ChimneyExpr.PartialResult.Value(expr).upcastToExprOf[partial.Result[A]]
     }(identity)
 
     def prettyPrint: String = fold(Expr.prettyPrint)(Expr.prettyPrint)

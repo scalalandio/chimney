@@ -41,7 +41,7 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
           //   ${ derivedResultTo } // wrap if needed
           // }.getOrElse(partial.Result.empty)
           ctx.src
-            .upcastExpr[Option[InnerFrom]]
+            .upcastToExprOf[Option[InnerFrom]]
             .map(Expr.Function1.instance[InnerFrom, partial.Result[To]] { (from2Expr: Expr[InnerFrom]) =>
               await(deriveRecursiveTransformationExpr[InnerFrom, To](from2Expr, Path.Root)).ensurePartial
             })

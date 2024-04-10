@@ -37,9 +37,9 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
             // '{ ${ src }.map(innerFrom: $InnerFrom => ${ derivedInnerTo }) }
             DerivationResult.expandedTotal(
               ctx.src
-                .upcastExpr[Option[InnerFrom]]
+                .upcastToExprOf[Option[InnerFrom]]
                 .map(totalP.fulfilAsLambda[InnerTo])
-                .upcastExpr[To]
+                .upcastToExprOf[To]
             )
           } { (partialP: ExprPromise[InnerFrom, Expr[partial.Result[InnerTo]]]) =>
             // We're constructing:
@@ -48,11 +48,11 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
             // }
             DerivationResult.expandedPartial(
               ctx.src
-                .upcastExpr[Option[InnerFrom]]
+                .upcastToExprOf[Option[InnerFrom]]
                 .fold(
                   ChimneyExpr.PartialResult
                     .Value(Expr.Option.None)
-                    .upcastExpr[partial.Result[Option[InnerTo]]]
+                    .upcastToExprOf[partial.Result[Option[InnerTo]]]
                 )(
                   partialP
                     .map { (derivedResultTo2: Expr[partial.Result[InnerTo]]) =>
@@ -62,7 +62,7 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
                     }
                     .fulfilAsLambda[partial.Result[Option[InnerTo]]]
                 )
-                .upcastExpr[partial.Result[To]]
+                .upcastToExprOf[partial.Result[To]]
             )
           }
         }

@@ -18,6 +18,6 @@ private[compiletime] trait TransformSubtypesRuleModule { this: Derivation =>
     ): DerivationResult[Rule.ExpansionResult[To]] =
       // We're constructing:
       // '{ ${ src } : $To } }
-      DerivationResult.expandedTotal(ctx.src.upcastExpr[To])
+      DerivationResult.expandedTotal(ctx.src.upcastToExprOf[To])
   }
 }
