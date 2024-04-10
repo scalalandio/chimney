@@ -68,10 +68,10 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
                 .fulfilAsLambda2(toValueP) { case ((keyResult, key), valueResult) =>
                   ChimneyExpr.PartialResult.product(
                     keyResult.prependErrorPath(
-                      ChimneyExpr.PathElement.MapKey(key.upcastExpr[Any]).upcastExpr[partial.PathElement]
+                      ChimneyExpr.PathElement.MapKey(key.upcastExpr[Any]).widenExpr[partial.PathElement]
                     ),
                     valueResult.prependErrorPath(
-                      ChimneyExpr.PathElement.MapValue(key.upcastExpr[Any]).upcastExpr[partial.PathElement]
+                      ChimneyExpr.PathElement.MapValue(key.upcastExpr[Any]).widenExpr[partial.PathElement]
                     ),
                     failFast
                   )
@@ -142,7 +142,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
                           ExprPromise.promise[Int](ExprPromise.NameGenerationStrategy.FromPrefix("idx"))
                         ) { (result: Expr[partial.Result[InnerTo]], idx: Expr[Int]) =>
                           result.prependErrorPath(
-                            ChimneyExpr.PathElement.Index(idx).upcastExpr[partial.PathElement]
+                            ChimneyExpr.PathElement.Index(idx).widenExpr[partial.PathElement]
                           )
                         }
                         .tupled,
