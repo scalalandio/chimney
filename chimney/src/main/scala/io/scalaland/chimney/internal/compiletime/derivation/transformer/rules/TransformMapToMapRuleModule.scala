@@ -108,7 +108,7 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
       val toValueResult = ExprPromise
         .promise[FromV](ExprPromise.NameGenerationStrategy.FromPrefix("value"))
         .traverse { value =>
-          deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue).map(_.ensurePartial)
+          deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue).map(_.ensurePartial -> value)
         }
 
       val factoryResult = DerivationResult.summonImplicit[Factory[(ToK, ToV), To]]
@@ -119,6 +119,8 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
           // '{ partial.Result.traverse[To, ($FromK, $FromV), ($ToK, $ToV)](
           //   ${ iterator },
           //   { case (key, value) =>
+          //     val _ = key
+          //     val _ = value
           //     partial.Result.product(
           //       ${ resultToKey }.prependErrorPath(partial.PathElement.MapKey(key)),
           //       ${ resultToValue }.prependErrorPath(partial.PathElement.MapValue(key),
@@ -132,15 +134,21 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
               .traverse[To, (FromK, FromV), (ToK, ToV)](
                 iterator,
                 toKeyP
-                  .fulfilAsLambda2(toValueP) { case ((keyResult, key), valueResult) =>
-                    ChimneyExpr.PartialResult.product(
-                      keyResult.prependErrorPath(
-                        ChimneyExpr.PathElement.MapKey(key.upcastToExprOf[Any]).upcastToExprOf[partial.PathElement]
+                  .fulfilAsLambda2(toValueP) { case ((keyResult, key), (valueResult, value)) =>
+                    Expr.block(
+                      List(
+                        Expr.suppressUnused(key),
+                        Expr.suppressUnused(value)
                       ),
-                      valueResult.prependErrorPath(
-                        ChimneyExpr.PathElement.MapValue(key.upcastToExprOf[Any]).upcastToExprOf[partial.PathElement]
-                      ),
-                      failFast
+                      ChimneyExpr.PartialResult.product(
+                        keyResult.prependErrorPath(
+                          ChimneyExpr.PathElement.MapKey(key.upcastToExprOf[Any]).upcastToExprOf[partial.PathElement]
+                        ),
+                        valueResult.prependErrorPath(
+                          ChimneyExpr.PathElement.MapValue(key.upcastToExprOf[Any]).upcastToExprOf[partial.PathElement]
+                        ),
+                        failFast
+                      )
                     )
                   }
                   .tupled,
@@ -153,15 +161,19 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
           // '{ partial.Result.traverse[To, (($FromK, $FromV), Int), ($ToK, $ToV)](
           //   ${ iterator }.zipWithIndex,
           //   { case (pair, idx) =>
-          //     val key = pair._1
-          //     val value = pair._2
           //     partial.Result.product(
-          //       ${ resultToKey }
-          //         .prependErrorPath(partial.PathElement.Accessor("_1"))}
-          //         .prependErrorPath(partial.PathElement.Index(idx)),
-          //       ${ resultToValue }
-          //          .prependErrorPath(partial.PathElement.Accessor("_2"))}
-          //          .prependErrorPath(partial.PathElement.Index(idx)),
+          //       {
+          //         val key = pair._1
+          //         ${ resultToKey }
+          //           .prependErrorPath(partial.PathElement.Accessor("_1"))}
+          //           .prependErrorPath(partial.PathElement.Index(idx))
+          //       },
+          //       {
+          //         val value = pair._2
+          //         ${ resultToValue }
+          //           .prependErrorPath(partial.PathElement.Accessor("_2"))}
+          //           .prependErrorPath(partial.PathElement.Index(idx))
+          //       },
           //       ${ failFast }
           //     )
           //   },
@@ -180,7 +192,7 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
                     ChimneyExpr.PartialResult.product(
                       toKeyP
                         .fulfilAsVal(getter_1.get(pairExpr).upcastToExprOf[FromK])
-                        .use(_._1) // "key" (here: _1 value) is not needed
+                        .use { case (keyResult, key) => Expr.block(List(Expr.suppressUnused(key)), keyResult) }
                         .prependErrorPath(
                           ChimneyExpr.PathElement.Accessor(Expr.String("_1")).upcastToExprOf[partial.PathElement]
                         )
@@ -189,7 +201,7 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
                         ),
                       toValueP
                         .fulfilAsVal(getter_2.get(pairExpr).upcastToExprOf[FromV])
-                        .closeBlockAsExprOf[partial.Result[ToV]]
+                        .use { case (valueResult, value) => Expr.block(List(Expr.suppressUnused(value)), valueResult) }
                         .prependErrorPath(
                           ChimneyExpr.PathElement.Accessor(Expr.String("_2")).upcastToExprOf[partial.PathElement]
                         )

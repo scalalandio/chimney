@@ -84,11 +84,11 @@ extension [From](source: From) {
 /** Provides patcher operations on values of any type
   *
   * @param obj wrapped object to patch
-  * @tparam T type of object to patch
+  * @tparam A type of object to patch
   *
   * @since 0.1.3
   */
-extension [T](obj: T) {
+extension [A](obj: A) {
 
   /** Performs in-place patching of wrapped object with provided value.
     *
@@ -104,18 +104,18 @@ extension [T](obj: T) {
     *
     * @since 0.4.0
     */
-  transparent inline def patchUsing[P](patch: P)(implicit patcher: Patcher[T, P]): T =
+  transparent inline def patchUsing[P](patch: P)(implicit patcher: Patcher[A, P]): A =
     patcher.patch(obj, patch)
 }
 
 /** Lifts [[scala.Option]] into [[io.scalaland.chimney.partial.Result]].
   *
-  * @tparam T type of value inside Option
+  * @tparam A type of value inside Option
   * @param option value to convert
   *
   * @since 0.7.0
   */
-extension [T](option: Option[T]) {
+extension [A](option: Option[A]) {
 
   /** Converts Option to Result, using EmptyValue error if None.
     *
@@ -123,7 +123,7 @@ extension [T](option: Option[T]) {
     *
     * @since 0.7.0
     */
-  transparent inline def toPartialResult: partial.Result[T] =
+  transparent inline def toPartialResult: partial.Result[A] =
     partial.Result.fromOption(option)
 
   /** Converts Option to Result, using provided error message if None.
@@ -133,18 +133,18 @@ extension [T](option: Option[T]) {
     *
     * @since 0.7.0
     */
-  transparent inline def toPartialResultOrString(ifEmpty: => String): partial.Result[T] =
+  transparent inline def toPartialResultOrString(ifEmpty: => String): partial.Result[A] =
     partial.Result.fromOptionOrString(option, ifEmpty)
 }
 
 /** Lifts [[scala.Either]] into [[io.scalaland.chimney.partial.Result]].
   *
-  * @tparam T type of value inside Option
+  * @tparam A type of value inside Option
   * @param either value to convert
   *
   * @since 0.7.0
   */
-extension [T](either: Either[String, T]) {
+extension [A](either: Either[String, A]) {
 
   /** Converts Either to Result, using an error message from Left as failed result.
     *
@@ -152,18 +152,18 @@ extension [T](either: Either[String, T]) {
     *
     * @since 0.7.0
     */
-  transparent inline def toPartialResult: partial.Result[T] =
+  transparent inline def toPartialResult: partial.Result[A] =
     partial.Result.fromEitherString(either)
 }
 
 /** Lifts [[scala.util.Try]] into [[io.scalaland.chimney.partial.Result]].
   *
-  * @tparam T type of value inside Option
+  * @tparam A type of value inside Option
   * @param `try` value to convert
   *
   * @since 0.7.0
   */
-extension [T](`try`: Try[T]) {
+extension [A](`try`: Try[A]) {
 
   /** Converts Try to Result, using Throwable from Failure as failed result.
     *
@@ -171,38 +171,115 @@ extension [T](`try`: Try[T]) {
     *
     * @since 0.7.0
     */
-  transparent inline def toPartialResult: partial.Result[T] =
+  transparent inline def toPartialResult: partial.Result[A] =
     partial.Result.fromTry(`try`)
 }
 
 // $COVERAGE-OFF$methods used only within macro-erased expressions
 
-// TODO docs
+/** Allows subtype matching when selecting path to override in Chimney DSL.
+  *
+  * @tparam A type to match
+  *
+  * @since 1.0.0
+  */
 extension [A](@unused a: A) {
 
+  /** Allows paths like `_.adt.matching[Subtype].field` when selecting the target fields to override in Chimney DSL.
+    *
+    * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+    *
+    * @tparam B subtype for which override should be provided
+    * @return   stubs a value of selected subtype
+    *
+    * @since 1.0.0
+    */
   inline def matching[B <: A]: B = compiletime.error(".matching should be only called within Chimney DSL")
 
+  /** Allows paths like `_.optional.matchingSome.field` when selecting the target fields to override in Chimney DSL.
+    *
+    * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+    *
+    * @return stubs a value extracted from `Some`
+    *
+    * @since 1.0.0
+    */
   inline def matchingSome[SV, S](implicit @unused ev: IsOption.Of[A, SV, S]): SV =
     compiletime.error(".matchingSome should be only called within Chimney DSL")
 
+  /** Allows paths like `_.either.matchingLeft.field` when selecting the target fields to override in Chimney DSL.
+    *
+    * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+    *
+    * @return stubs a value extracted from `Left`
+    *
+    * @since 1.0.0
+    */
   inline def matchingLeft[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): LV =
     compiletime.error(".matchingLeft should be only called within Chimney DSL")
 
+  /** Allows paths like `_.either.matchingRight.field` when selecting the target fields to override in Chimney DSL.
+    *
+    * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+    *
+    * @return stubs a value extracted from `Right`
+    *
+    * @since 1.0.0
+    */
   inline def matchingRight[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): RV =
     compiletime.error(".matchingRight should be only called within Chimney DSL")
 }
 
+/** Allow item extraction from collections when selecting path to override in Chimney DSL.
+  *
+  * @tparam C type of the collection
+  * @tparam I type of items in the collection
+  *
+  * @since 1.0.0
+  */
 extension [C[_], I](@unused cc: C[I]) {
 
+  /** Allows paths like `_.collection.everyItem.field` when selecting the target fields to override in Chimney DSL.
+    *
+    * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+    *
+    * @return stubs an item extracted from the collection
+    *
+    * @since 1.0.0
+    */
   inline def everyItem(implicit @unused ev: IsCollection.Of[C[I], I]): I =
     compiletime.error(".everyItem should be only called within Chimney DSL")
 }
 
+/** Allow key/value extraction from maps when selecting path to override in Chimney DSL.
+  *
+  * @tparam M type of the map
+  * @tparam K type of keys in the map
+  * @tparam V type of values in the map
+  *
+  * @since 1.0.0
+  */
 extension [M[_, _], K, V](@unused cc: M[K, V]) {
 
+  /** Allows paths like `_.map.everyMapKey.field` when selecting the target fields to override in Chimney DSL.
+    *
+    * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+    *
+    * @return stubs a key extracted from the map
+    *
+    * @since 1.0.0
+    */
   inline def everyMapKey(implicit @unused ev: IsMap.Of[M[K, V], K, V]): K =
     compiletime.error(".everyMapKey should be only called within Chimney DSL")
 
+  /** Allows paths like `_.map.everyMapValue.field` when selecting the target fields to override in Chimney DSL.
+    *
+    * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+    *
+    * @return stubs a value extracted from the map
+    *
+    * @since 1.0.0
+    */
   inline def everyMapValue(implicit @unused ev: IsMap.Of[M[K, V], K, V]): V =
     compiletime.error(".everyMapValue should be only called within Chimney DSL")
 }

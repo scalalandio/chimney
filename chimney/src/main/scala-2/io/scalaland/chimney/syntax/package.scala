@@ -183,33 +183,110 @@ package object syntax {
 
   // $COVERAGE-OFF$methods used only within macro-erased expressions
 
-  // TODO: docs
+  /** Allows subtype matching when selecting path to override in Chimney DSL.
+    *
+    * @tparam A type to match
+    *
+    * @since 1.0.0
+    */
   implicit final class TransformationMatchingPathOps[A](@unused private val a: A) extends AnyVal {
 
+    /** Allows paths like `_.adt.matching[Subtype].field` when selecting the target fields to override in Chimney DSL.
+      *
+      * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+      *
+      * @tparam B subtype for which override should be provided
+      * @return   stubs value of selected subtype
+      *
+      * @since 1.0.0
+      */
     @compileTimeOnly(".matching should be only called within Chimney DSL")
     def matching[B <: A]: B = sys.error("")
 
+    /** Allows paths like `_.optional.matchingSome.field` when selecting the target fields to override in Chimney DSL.
+      *
+      * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+      *
+      * @return stubs a value extracted from `Some`
+      *
+      * @since 1.0.0
+      */
     @compileTimeOnly(".matchingSome should be only called within Chimney DSL")
     def matchingSome[SV, S](implicit @unused ev: IsOption.Of[A, SV, S]): SV = sys.error("")
 
+    /** Allows paths like `_.either.matchingLeft` when selecting the target fields to override in Chimney DSL.
+      *
+      * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+      *
+      * @return stubs a value extracted from `Left`
+      *
+      * @since 1.0.0
+      */
     @compileTimeOnly(".matchingLeft should be only called within Chimney DSL")
     def matchingLeft[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): LV = sys.error("")
 
+    /** Allows paths like `_.either.matchingRight.field` when selecting the target fields to override in Chimney DSL.
+      *
+      * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+      *
+      * @return stubs a value extracted from `Right`
+      *
+      * @since 1.0.0
+      */
     @compileTimeOnly(".matchingRight should be only called within Chimney DSL")
     def matchingRight[LV, RV, L, R](implicit @unused ev: IsEither.Of[A, LV, RV, L, R]): RV = sys.error("")
   }
 
+  /** Allow item extraction when selecting path to override in Chimney DSL.
+    *
+    * @tparam C type of the collection
+    * @tparam I type of items in the collection
+    *
+    * @since 1.0.0
+    */
   implicit final class TransformationCollectionPathOps[C[_], I](@unused private val cc: C[I]) extends AnyVal {
 
+    /** Allows paths like `_.collection.everyItem.field` when selecting the target fields to override in Chimney DSL.
+      *
+      * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+      *
+      * @return stubs an item extracted from the collection
+      *
+      * @since 1.0.0
+      */
     @compileTimeOnly(".everyItem should be only called within Chimney DSL")
     def everyItem(implicit @unused ev: IsCollection.Of[C[I], I]): I = sys.error("")
   }
 
+  /** Allow key/value extraction from maps when selecting path to override in Chimney DSL.
+    *
+    * @tparam M type of the map
+    * @tparam K type of keys in the map
+    * @tparam V type of values in the map
+    *
+    * @since 1.0.0
+    */
   implicit final class TransformationMapPathOps[M[_, _], K, V](@unused private val cc: M[K, V]) extends AnyVal {
 
+    /** Allows paths like `_.map.everyMapKey.field` when selecting the target fields to override in Chimney DSL.
+      *
+      * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+      *
+      * @return stubs a key extracted from the map
+      *
+      * @since 1.0.0
+      */
     @compileTimeOnly(".everyMapKey should be only called within Chimney DSL")
     def everyMapKey(implicit @unused ev: IsMap.Of[M[K, V], K, V]): K = sys.error("")
 
+    /** Allows paths like `_.map.everyMapValue.field` when selecting the target fields to override in Chimney DSL.
+      *
+      * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
+      *
+      * @return stubs a value extracted from the map
+      *
+      * @since 1.0.0
+      */
     @compileTimeOnly(".everyMapValue should be only called within Chimney DSL")
     def everyMapValue(implicit @unused ev: IsMap.Of[M[K, V], K, V]): V = sys.error("")
   }
