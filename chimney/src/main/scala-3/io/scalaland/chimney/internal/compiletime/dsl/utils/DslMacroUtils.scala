@@ -194,10 +194,11 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       s"Invalid selector expression: ${t.show(using Printer.TreeAnsiCode)}"
 
     private def arbitraryFunctionNotAllowed(t: Tree): String =
-      s"Invalid selector expression - only vals, and nullary defs allowed: ${t.show(using Printer.TreeAnsiCode)}"
+      s"The path expression has to be a single chain of calls on the original input, operation other than value extraction: ${t
+          .show(using Printer.TreeAnsiCode)}"
 
     private def ignoringInputNotAllowed(t: Tree): String =
-      s"Invalid selector expression - only input value can be extracted from: ${t.show(using Printer.TreeAnsiCode)}"
+      s"The path expression has to be a single chain of calls on the original input, got external identifier: ${t.show(using Printer.TreeAnsiCode)}"
   }
 
   private trait ExistentialCtor {

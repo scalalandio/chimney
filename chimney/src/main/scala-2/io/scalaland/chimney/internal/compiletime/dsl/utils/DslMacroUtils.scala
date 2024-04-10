@@ -184,10 +184,10 @@ private[chimney] trait DslMacroUtils {
       s"Invalid selector expression: $selectorTree"
 
     private def arbitraryFunctionNotAllowed(selectorTree: Tree): String =
-      s"Invalid selector expression - only vals, and nullary defs allowed: $selectorTree\n${showRaw(selectorTree)}"
+      s"The path expression has to be a single chain of calls on the original input, operation other than value extraction: $selectorTree\n${showRaw(selectorTree)}"
 
     private def ignoringInputNotAllowed(selectorTree: Tree): String =
-      s"Invalid selector expression - only input value can be extracted from: $selectorTree"
+      s"The path expression has to be a single chain of calls on the original input, got external identifier: $selectorTree"
   }
 
   private trait ExistentialCtor {
