@@ -318,6 +318,30 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .asErrorPathMessageStrings ==> Iterable("(1)" -> "empty value")
   }
 
+  test("transform into sequential type with an override") {
+    import TotalTransformerStdLibTypesSpec.*
+
+    Iterable(Foo("a")).intoPartial[Seq[Bar]].withFieldConst(_.everyItem.value, "override").transform.asOption ==>
+      Some(Seq(Bar("override")))
+    Iterable(Foo("a")).intoPartial[List[Bar]].withFieldConst(_.everyItem.value, "override").transform.asOption ==> Some(
+      List(Bar("override"))
+    )
+    Iterable(Foo("a"))
+      .intoPartial[Vector[Bar]]
+      .withFieldConst(_.everyItem.value, "override")
+      .transform
+      .asOption ==> Some(Vector(Bar("override")))
+    Iterable(Foo("a")).intoPartial[Set[Bar]].withFieldConst(_.everyItem.value, "override").transform.asOption ==> Some(
+      Set(Bar("override"))
+    )
+    Iterable(Foo("a"))
+      .intoPartial[Array[Bar]]
+      .withFieldConst(_.everyItem.value, "override")
+      .transform
+      .asOption
+      .get ==> Array(Bar("override"))
+  }
+
   test("transform Map-type to Map-type, using Total Transformer for inner type transformation") {
     implicit val intPrinter: Transformer[Int, String] = _.toString
 
@@ -447,6 +471,17 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     Map("x" -> "10", "y" -> "20")
       .transformIntoPartial[Array[(Int, String)]](failFast = true)
       .asErrorPathMessageStrings ==> Iterable("keys(x)" -> "empty value")
+  }
+
+  test("transform into map type with an override") {
+    import TotalTransformerStdLibTypesSpec.*
+
+    Iterable(Foo("a") -> Foo("b"))
+      .intoPartial[Map[Bar, Bar]]
+      .withFieldConst(_.everyMapKey.value, "ov1")
+      .withFieldConst(_.everyMapValue.value, "ov2")
+      .transform
+      .asOption ==> Some(Map(Bar("ov1") -> Bar("ov2")))
   }
 
   group("flag .enableOptionDefaultsToNone") {

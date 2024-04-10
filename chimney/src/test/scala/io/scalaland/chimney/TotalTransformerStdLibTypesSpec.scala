@@ -115,6 +115,18 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     Seq(Bar("x"), Bar("y")).transformInto[Array[Foo]] ==> Array(Foo("x"), Foo("y"))
   }
 
+  test("transform into sequential type with an override") {
+    Iterable(Foo("a")).into[Seq[Bar]].withFieldConst(_.everyItem.value, "override").transform ==> Seq(Bar("override"))
+    Iterable(Foo("a")).into[List[Bar]].withFieldConst(_.everyItem.value, "override").transform ==> List(Bar("override"))
+    Iterable(Foo("a")).into[Vector[Bar]].withFieldConst(_.everyItem.value, "override").transform ==> Vector(
+      Bar("override")
+    )
+    Iterable(Foo("a")).into[Set[Bar]].withFieldConst(_.everyItem.value, "override").transform ==> Set(Bar("override"))
+    Iterable(Foo("a")).into[Array[Bar]].withFieldConst(_.everyItem.value, "override").transform ==> Array(
+      Bar("override")
+    )
+  }
+
   test("transform from Map-type to Map-type") {
     Map("test" -> Foo("a")).transformInto[Map[String, Bar]] ==> Map("test" -> Bar("a"))
     Map("test" -> "a").transformInto[Map[String, String]] ==> Map("test" -> "a")
@@ -134,6 +146,14 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
       Map(Bar("10") -> Foo("20"), Bar("20") -> Foo("40"))
     Map(Foo("10") -> Bar("20"), Foo("20") -> Bar("40")).transformInto[Array[(Bar, Foo)]] ==>
       Array(Bar("10") -> Foo("20"), Bar("20") -> Foo("40"))
+  }
+
+  test("transform into map type with an override") {
+    Iterable(Foo("a") -> Foo("b"))
+      .into[Map[Bar, Bar]]
+      .withFieldConst(_.everyMapKey.value, "ov1")
+      .withFieldConst(_.everyMapValue.value, "ov2")
+      .transform ==> Map(Bar("ov1") -> Bar("ov2"))
   }
 
   group("flag .enableOptionDefaultsToNone") {
