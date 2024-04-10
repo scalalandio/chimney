@@ -89,7 +89,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       import products.{Foo, Bar, HaveY}
 
       compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.y + "abc", "pi").transform""").check(
-        "Invalid selector expression"
+        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
       )
 
       compileErrorsFixed(
@@ -97,7 +97,22 @@ class PartialTransformerProductSpec extends ChimneySpec {
         val haveY = HaveY("")
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(cc => haveY.y, "pi").transform
         """
-      ).check("Invalid selector expression")
+      ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
+
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matching, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matchingSome, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matchingLeft, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matchingRight, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.everyItem, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.everyMapKey, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.everyMapValue, "pi").transform""")
+        .arePresent()
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -226,7 +241,9 @@ class PartialTransformerProductSpec extends ChimneySpec {
           .withFieldConstPartial(_.y + "abc", partial.Result.fromValue("pi"))
           .transform
         """
-      ).check("Invalid selector expression")
+      ).check(
+        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+      )
 
       compileErrorsFixed(
         """
@@ -236,7 +253,27 @@ class PartialTransformerProductSpec extends ChimneySpec {
           .withFieldConstPartial(cc => haveY.y, partial.Result.fromValue("pi"))
           .transform
         """
-      ).check("Invalid selector expression")
+      ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
+
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.matching, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed(
+        """Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.matchingSome, "pi").transform"""
+      ).arePresent()
+      compileErrorsFixed(
+        """Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.matchingLeft, "pi").transform"""
+      ).arePresent()
+      compileErrorsFixed(
+        """Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.matchingRight, "pi").transform"""
+      ).arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.everyItem, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed(
+        """Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.everyMapKey, "pi").transform"""
+      ).arePresent()
+      compileErrorsFixed(
+        """Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.everyMapValue, "pi").transform"""
+      ).arePresent()
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -380,22 +417,54 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       compileErrorsFixed(
         """
-        Bar(3, (3.14, 3.14))
-          .intoPartial[Foo]
-          .withFieldComputed(_.y + "abc", _.toString)
-          .transform
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.y + "abc", _.toString).transform
         """
-      ).check("Invalid selector expression")
+      ).check(
+        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+      )
 
       compileErrorsFixed(
         """
         val haveY = HaveY("")
-        Bar(3, (3.14, 3.14))
-          .intoPartial[Foo]
-          .withFieldComputed(cc => haveY.y, _.toString)
-          .transform
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
         """
-      ).check("Invalid selector expression")
+      ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
+
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.matching, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.matchingSome, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.matchingLeft, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.matchingRight, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.everyItem, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.everyMapKey, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.everyMapValue, _.toString).transform
+        """
+      ).arePresent()
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -529,16 +598,54 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       compileErrorsFixed(
         """
-        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.y + "abc", _.toString).transform
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.y + "abc", _ => ???).transform
         """
-      ).check("Invalid selector expression")
+      ).check(
+        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+      )
 
       compileErrorsFixed(
         """
         val haveY = HaveY("")
-        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(cc => haveY.y, _ => ???).transform
         """
-      ).check("Invalid selector expression")
+      ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
+
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.matching, _ => ???).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.matchingSome, _ => ???).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.matchingLeft, _ => ???).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.matchingRight, _ => ???).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.everyItem, _ => ???).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.everyMapKey, _ => ???).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.everyMapValue, _ => ???).transform
+        """
+      ).arePresent()
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -709,16 +816,52 @@ class PartialTransformerProductSpec extends ChimneySpec {
         """
         User(1, "Kuba", Some(28)).intoPartial[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
         """
-      ).arePresent()
+      ).check(
+        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+      )
 
       compileErrorsFixed(
         """
         val str = "string"
         User(1, "Kuba", Some(28)).intoPartial[UserPL].withFieldRenamed(u => str, _.toString).transform
         """
-      ).check(
-        "Invalid selector expression"
-      )
+      ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
+
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.matching, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.matchingSome, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.matchingLeft, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.matchingRight, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.everyItem, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.everyMapKey, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.everyMapValue, _.toString).transform
+        """
+      ).arePresent()
     }
 
     test(

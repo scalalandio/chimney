@@ -50,7 +50,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       import products.{Foo, Bar, HaveY}
 
       compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y + "abc", "pi").transform""").check(
-        "Invalid selector expression"
+        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
       )
 
       compileErrorsFixed(
@@ -58,7 +58,20 @@ class TotalTransformerProductSpec extends ChimneySpec {
         val haveY = HaveY("")
         Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(cc => haveY.y, "pi").transform
         """
-      ).check("Invalid selector expression")
+      ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
+
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matching, "pi").transform""").arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matchingSome, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matchingLeft, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matchingRight, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.everyItem, "pi").transform""").arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.everyMapKey, "pi").transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.everyMapValue, "pi").transform""")
+        .arePresent()
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -134,14 +147,31 @@ class TotalTransformerProductSpec extends ChimneySpec {
       import products.{Foo, Bar, HaveY}
 
       compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.y + "abc", _.toString).transform""")
-        .check("Invalid selector expression")
+        .check(
+          "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+        )
 
       compileErrorsFixed(
         """
         val haveY = HaveY("")
         Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
         """
-      ).check("Invalid selector expression")
+      ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
+
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matching, _.toString).transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matchingSome, _.toString).transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matchingLeft, _.toString).transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matchingRight, _.toString).transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.everyItem, _.toString).transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.everyMapKey, _.toString).transform""")
+        .arePresent()
+      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.everyMapValue, _.toString).transform""")
+        .arePresent()
     }
 
     test("should provide a value for selected target case class field when selector is valid") {
@@ -242,7 +272,9 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       compileErrorsFixed(
         """User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform"""
-      ).arePresent()
+      ).check(
+        "The path expression has to be a single chain of calls on the original input, operation other than value extraction:"
+      )
 
       compileErrorsFixed(
         """
@@ -250,8 +282,44 @@ class TotalTransformerProductSpec extends ChimneySpec {
         User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(u => str, _.toString).transform
         """
       ).check(
-        "Invalid selector expression"
+        "The path expression has to be a single chain of calls on the original input, got external identifier:"
       )
+
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.matching, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.matchingSome, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.matchingLeft, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.matchingRight, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.everyItem, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.everyMapKey, _.toString).transform
+        """
+      ).arePresent()
+      compileErrorsFixed(
+        """
+        Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.everyMapValue, _.toString).transform
+        """
+      ).arePresent()
     }
 
     test(
