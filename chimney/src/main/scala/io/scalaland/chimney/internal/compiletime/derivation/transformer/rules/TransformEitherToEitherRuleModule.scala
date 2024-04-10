@@ -28,24 +28,24 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] =
       deriveRecursiveTransformationExpr[FromL, ToL](
-        ctx.src.upcastExpr[Left[FromL, FromR]].value,
+        ctx.src.upcastToExprOf[Left[FromL, FromR]].value,
         Path.Root.matching[Left[ToL, ToR]]
       ).flatMap { (derivedToL: TransformationExpr[ToL]) =>
         // We're constructing:
         // '{ Left( ${ derivedToL } ) /* from ${ src }.value */ }
-        DerivationResult.expanded(derivedToL.map(Expr.Either.Left[ToL, ToR](_).upcastExpr[To]))
+        DerivationResult.expanded(derivedToL.map(Expr.Either.Left[ToL, ToR](_).upcastToExprOf[To]))
       }
 
     private def mapRight[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] =
       deriveRecursiveTransformationExpr[FromR, ToR](
-        ctx.src.upcastExpr[Right[FromL, FromR]].value,
+        ctx.src.upcastToExprOf[Right[FromL, FromR]].value,
         Path.Root.matching[Right[ToL, ToR]]
       ).flatMap { (derivedToR: TransformationExpr[ToR]) =>
         // We're constructing:
         // '{ Right( ${ derivedToR } ) /* from ${ src }.value */ }
-        DerivationResult.expanded(derivedToR.map(Expr.Either.Right[ToL, ToR](_).upcastExpr[To]))
+        DerivationResult.expanded(derivedToR.map(Expr.Either.Right[ToL, ToR](_).upcastToExprOf[To]))
       }
 
     private def mapEither[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
@@ -64,9 +64,9 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
         }
 
       val inLeft =
-        (expr: Expr[ToL]) => Expr.Either.Left[ToL, ToR](expr).upcastExpr[To]
+        (expr: Expr[ToL]) => Expr.Either.Left[ToL, ToR](expr).upcastToExprOf[To]
       val inRight =
-        (expr: Expr[ToR]) => Expr.Either.Right[ToL, ToR](expr).upcastExpr[To]
+        (expr: Expr[ToR]) => Expr.Either.Right[ToL, ToR](expr).upcastToExprOf[To]
 
       toLeftResult
         .map2(toRightResult) {
@@ -81,7 +81,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
                 // }
                 TransformationExpr.fromTotal(
                   ctx.src
-                    .upcastExpr[Either[FromL, FromR]]
+                    .upcastToExprOf[Either[FromL, FromR]]
                     .fold[To](
                       totalToLeft.map(inLeft).fulfilAsLambda
                     )(
@@ -97,7 +97,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
                 // }
                 TransformationExpr.fromPartial(
                   ctx.src
-                    .upcastExpr[Either[FromL, FromR]]
+                    .upcastToExprOf[Either[FromL, FromR]]
                     .fold[partial.Result[To]](
                       toLeft.map(_.ensurePartial.map[To](Expr.Function1.instance(inLeft))).fulfilAsLambda
                     )(

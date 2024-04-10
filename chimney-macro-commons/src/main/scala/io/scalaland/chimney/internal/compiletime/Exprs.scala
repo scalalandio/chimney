@@ -138,29 +138,17 @@ private[compiletime] trait Exprs { this: Definitions =>
     /** Creates '{ $expr == $other } expression, which would compare both expressions in runtime */
     def eqExpr[B: Type](other: Expr[B]): Expr[Boolean] = Expr.eq(expr, other)
 
-    // All of methods below change Expr[A] to Expr[B], but they differ in checks ans how it affects the underlying code:
-    // - asInstanceOfExpr should be used when we want to generate .asInstanceOf in generated code, because we need to
-    //   perform the check in the runtime
-    // - widenExpr should be used when we e.g. have List[A] and we want to use .map method from Iterable to create
-    //   List[B] but without loosing information about concrete type in the generated code, because we proved ourselves
-    //   that the generated code matches our expectations, but it would be PITA to juggle F[_] around
-    // - upcastExpr should be used in simple cases when we can get away with just doing '{ a : B } to access methods
-    //   we have defined for super type without juggling type constructors around
+    // Both methods below change Expr[A] to Expr[B], but they differ in checks ans how it affects the underlying code:
+    // - asInstanceOfExpr[B] should be used when we want to have .asInstanceOf[B] in the generated code, because we need
+    //   to perform the cast in the runtime - WE know what we can perform it but the JVN does not
+    // - upcastToExprOf[B] should be used when WE know that A <: B, but it is not obvious to Scala compiler - in such
+    //   case Type[A] <:< Type[B] assertion will be checked and the expression upcasted
 
     /** Creates '{ ${ expr }.asInstanceOf[B] } expression in emitted code, moving check to the runtime */
     def asInstanceOfExpr[B: Type]: Expr[B] = Expr.asInstanceOf[A, B](expr)
 
     /** Upcasts `Expr[A]` to `Expr[B]` if `A <:< B`, without upcasting the underlying code */
-    def widenExpr[B: Type]: Expr[B] = {
-      Predef.assert(
-        Type[A] <:< Type[B],
-        s"Upcasting can only be done to type proved to be super type! Failed ${Type.prettyPrint[A]} <:< ${Type.prettyPrint[B]} check"
-      )
-      expr.asInstanceOf[Expr[B]] // same as expr.asExprOf[B] on Scala 3 but without expr.isExprOf[B] type checking
-    }
-
-    /** Upcasts `Expr[A]` to `Expr[B]` in the emitted code: '{ (${ expr }) : B } (unless it's unnecessary) */
-    def upcastExpr[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
+    def upcastToExprOf[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
 
     def as_?? : ExistentialExpr = ExistentialExpr(expr)
   }

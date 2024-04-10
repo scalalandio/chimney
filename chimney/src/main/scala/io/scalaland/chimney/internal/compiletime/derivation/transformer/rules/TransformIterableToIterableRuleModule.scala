@@ -63,22 +63,22 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
         DerivationResult.expandedPartial(
           ChimneyExpr.PartialResult
             .traverse[To, (FromK, FromV), (ToK, ToV)](
-              ctx.src.widenExpr[Map[FromK, FromV]].iterator,
+              ctx.src.upcastToExprOf[Map[FromK, FromV]].iterator,
               toKeyP
                 .fulfilAsLambda2(toValueP) { case ((keyResult, key), valueResult) =>
                   ChimneyExpr.PartialResult.product(
                     keyResult.prependErrorPath(
-                      ChimneyExpr.PathElement.MapKey(key.upcastExpr[Any]).widenExpr[partial.PathElement]
+                      ChimneyExpr.PathElement.MapKey(key.upcastToExprOf[Any]).upcastToExprOf[partial.PathElement]
                     ),
                     valueResult.prependErrorPath(
-                      ChimneyExpr.PathElement.MapValue(key.upcastExpr[Any]).widenExpr[partial.PathElement]
+                      ChimneyExpr.PathElement.MapValue(key.upcastToExprOf[Any]).upcastToExprOf[partial.PathElement]
                     ),
                     failFast
                   )
                 }
                 .tupled,
               failFast,
-              factory.widenExpr[Factory[(ToK, ToV), To]]
+              factory.upcastToExprOf[Factory[(ToK, ToV), To]]
             )
         )
       }
@@ -105,14 +105,14 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
                 // We're constructing:
                 // '{ ${ src }.to(Factory[$To, $InnerTo]) }
                 DerivationResult.expandedTotal(
-                  fromIorA.to[To](ctx.src)(factory.upcastExpr[Factory[InnerFrom, To]])
+                  fromIorA.to[To](ctx.src)(factory.upcastToExprOf[Factory[InnerFrom, To]])
                 )
               }
             } else if (mappedFrom.Underlying =:= Type[To]) {
               // We're constructing:
               // '{ ${ src }.map(from2 => ${ derivedInnerTo }) }
               import mappedFrom.{Underlying, value as expr}
-              DerivationResult.expandedTotal(expr.upcastExpr[To])
+              DerivationResult.expandedTotal(expr.upcastToExprOf[To])
             } else {
               // We're constructing
               // '{ ${ src }.iterator.map(from2 => ${ derivedInnerTo }).to(Factory[$To, $InnerTo]) }
@@ -142,7 +142,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
                           ExprPromise.promise[Int](ExprPromise.NameGenerationStrategy.FromPrefix("idx"))
                         ) { (result: Expr[partial.Result[InnerTo]], idx: Expr[Int]) =>
                           result.prependErrorPath(
-                            ChimneyExpr.PathElement.Index(idx).widenExpr[partial.PathElement]
+                            ChimneyExpr.PathElement.Index(idx).upcastToExprOf[partial.PathElement]
                           )
                         }
                         .tupled,

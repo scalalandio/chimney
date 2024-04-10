@@ -50,7 +50,13 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             mapElementsMatchedByName[From, To](fromSubtype, toElements).orElse(mapWholeTo[From, To](fromSubtype))
           }
           .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
-            combineElementsMappings[From, To](overrideMappings ++ nameMatchedMappings)
+            combineElementsMappings[From, To](overrideMappings ++ nameMatchedMappings).logSuccess { exp =>
+              exp match {
+                case Rule.ExpansionResult.Expanded(TransformationExpr.TotalExpr(value)) =>
+                  "we've got " + value.toString + value.asInstanceOf[Expr[Any]].tpe
+                case _ => "nope"
+              }
+            }
           }
     }
 
@@ -74,7 +80,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               //      val _ = javaEnum
               //     runtimeDataStore(x).asInstanceOf[JavaEnum.Value => To](javaEnum)
               // complaining that javaEnum.type is not equal to expected JavaEnum.Value.type.
-              val fromExpr = someFromExpr.upcastExpr[From]
+              val fromExpr = someFromExpr.upcastToExprOf[From]
 
               runtimeCoproductOverride match {
                 case TransformerOverride.CaseComputed(idx) =>

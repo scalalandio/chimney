@@ -132,9 +132,13 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B] = '{ ${ resetOwner(expr) }.asInstanceOf[B] }
 
-    def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] =
-      if Type[A] =:= Type[B] then expr.asExprOf[B] // types are identical in practice, we can just cast
-      else expr.widenExpr[B] // check that A <:< B but without upcasting (Scala 3 should get away without it)
+    def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] = {
+      Predef.assert(
+        Type[A] <:< Type[B],
+        s"Upcasting can only be done to type proved to be super type! Failed ${Type.prettyPrint[A]} <:< ${Type.prettyPrint[B]} check"
+      )
+      expr.asInstanceOf[Expr[B]] // check that A <:< B without upcasting in code (Scala 3 should get away without it)
+    }
 
     def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] = '{ val _ = ${ expr } }
 

@@ -17,7 +17,9 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
         case (TransformationContext.ForTotal(_), Type.Map(fromK, fromV), Type.Map(toK, toV))
             if !ctx.config.areOverridesEmpty =>
           import fromK.Underlying as FromK, fromV.Underlying as FromV, toK.Underlying as ToK, toV.Underlying as ToV
-          mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](ctx.src.upcastExpr[Map[FromK, FromV]].iterator)
+          mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](
+            ctx.src.upcastToExprOf[Map[FromK, FromV]].iterator
+          )
         case (TransformationContext.ForTotal(_), IterableOrArray(from2), Type.Map(toK, toV))
             if !ctx.config.areOverridesEmpty =>
           // val Type.Tuple2(fromK, fromV) = from2: @unchecked
@@ -25,12 +27,12 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
           import from2.{Underlying as InnerFrom, value as fromIorA}, fromK.Underlying as FromK,
             fromV.Underlying as FromV, toK.Underlying as ToK, toV.Underlying as ToV
           mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](
-            fromIorA.iterator(ctx.src).upcastExpr[Iterator[(FromK, FromV)]]
+            fromIorA.iterator(ctx.src).upcastToExprOf[Iterator[(FromK, FromV)]]
           )
         case (TransformationContext.ForPartial(_, failFast), Type.Map(fromK, fromV), Type.Map(toK, toV)) =>
           import fromK.Underlying as FromK, fromV.Underlying as FromV, toK.Underlying as ToK, toV.Underlying as ToV
           mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
-            ctx.src.upcastExpr[Map[FromK, FromV]].iterator,
+            ctx.src.upcastToExprOf[Map[FromK, FromV]].iterator,
             failFast,
             isConversionFromMap = true
           )
@@ -40,7 +42,7 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
           import from2.{Underlying as InnerFrom, value as fromIorA}, fromK.Underlying as FromK,
             fromV.Underlying as FromV, toK.Underlying as ToK, toV.Underlying as ToV
           mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
-            fromIorA.iterator(ctx.src).upcastExpr[Iterator[(FromK, FromV)]],
+            fromIorA.iterator(ctx.src).upcastToExprOf[Iterator[(FromK, FromV)]],
             failFast,
             isConversionFromMap = false
           )
@@ -133,10 +135,10 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
                   .fulfilAsLambda2(toValueP) { case ((keyResult, key), valueResult) =>
                     ChimneyExpr.PartialResult.product(
                       keyResult.prependErrorPath(
-                        ChimneyExpr.PathElement.MapKey(key.upcastExpr[Any]).widenExpr[partial.PathElement]
+                        ChimneyExpr.PathElement.MapKey(key.upcastToExprOf[Any]).upcastToExprOf[partial.PathElement]
                       ),
                       valueResult.prependErrorPath(
-                        ChimneyExpr.PathElement.MapValue(key.upcastExpr[Any]).widenExpr[partial.PathElement]
+                        ChimneyExpr.PathElement.MapValue(key.upcastToExprOf[Any]).upcastToExprOf[partial.PathElement]
                       ),
                       failFast
                     )
@@ -177,22 +179,22 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
                     import _1.{Underlying as From_1, value as getter_1}, _2.{Underlying as From_2, value as getter_2}
                     ChimneyExpr.PartialResult.product(
                       toKeyP
-                        .fulfilAsVal(getter_1.get(pairExpr).upcastExpr[FromK])
+                        .fulfilAsVal(getter_1.get(pairExpr).upcastToExprOf[FromK])
                         .use(_._1) // "key" (here: _1 value) is not needed
                         .prependErrorPath(
-                          ChimneyExpr.PathElement.Accessor(Expr.String("_1")).widenExpr[partial.PathElement]
+                          ChimneyExpr.PathElement.Accessor(Expr.String("_1")).upcastToExprOf[partial.PathElement]
                         )
                         .prependErrorPath(
-                          ChimneyExpr.PathElement.Index(indexExpr).widenExpr[partial.PathElement]
+                          ChimneyExpr.PathElement.Index(indexExpr).upcastToExprOf[partial.PathElement]
                         ),
                       toValueP
-                        .fulfilAsVal(getter_2.get(pairExpr).upcastExpr[FromV])
+                        .fulfilAsVal(getter_2.get(pairExpr).upcastToExprOf[FromV])
                         .closeBlockAsExprOf[partial.Result[ToV]]
                         .prependErrorPath(
-                          ChimneyExpr.PathElement.Accessor(Expr.String("_2")).widenExpr[partial.PathElement]
+                          ChimneyExpr.PathElement.Accessor(Expr.String("_2")).upcastToExprOf[partial.PathElement]
                         )
                         .prependErrorPath(
-                          ChimneyExpr.PathElement.Index(indexExpr).widenExpr[partial.PathElement]
+                          ChimneyExpr.PathElement.Index(indexExpr).upcastToExprOf[partial.PathElement]
                         ),
                       failFast
                     )

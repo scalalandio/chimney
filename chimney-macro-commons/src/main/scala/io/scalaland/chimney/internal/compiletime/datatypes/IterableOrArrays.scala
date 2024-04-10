@@ -32,13 +32,13 @@ trait IterableOrArrays { this: Definitions =>
             new IterableOrArray[M, Inner] {
 
               def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
-                m.widenExpr[Iterable[Inner]].iterator
+                m.upcastToExprOf[Iterable[Inner]].iterator
 
               def map[B: Type](m: Expr[M])(f: Expr[Inner => B]): ExistentialExpr =
-                ExistentialExpr.withoutType(m.widenExpr[Iterable[Inner]].map(f))
+                ExistentialExpr.withoutType(m.upcastToExprOf[Iterable[Inner]].map(f))
 
               def to[C: Type](m: Expr[M])(factory: Expr[Factory[Inner, C]]): Expr[C] =
-                m.widenExpr[Iterable[Inner]].to(factory)
+                m.upcastToExprOf[Iterable[Inner]].to(factory)
             }
           )
         )
@@ -49,13 +49,13 @@ trait IterableOrArrays { this: Definitions =>
             new IterableOrArray[M, Inner] {
 
               def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
-                m.widenExpr[Iterable[Inner]].iterator
+                m.upcastToExprOf[Iterable[Inner]].iterator
 
               def map[B: Type](m: Expr[M])(f: Expr[Inner => B]): ExistentialExpr =
-                ExistentialExpr.withoutType(m.widenExpr[Iterable[Inner]].map(f))
+                ExistentialExpr.withoutType(m.upcastToExprOf[Iterable[Inner]].map(f))
 
               def to[C: Type](m: Expr[M])(factory: Expr[Factory[Inner, C]]): Expr[C] =
-                m.widenExpr[Iterable[Inner]].to(factory)
+                m.upcastToExprOf[Iterable[Inner]].to(factory)
             }
           )
         )
@@ -65,13 +65,13 @@ trait IterableOrArrays { this: Definitions =>
           Existential[IterableOrArray[M, *], Inner](
             new IterableOrArray[M, Inner] {
               def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
-                m.widenExpr[Array[Inner]].iterator
+                m.upcastToExprOf[Array[Inner]].iterator
 
               def map[B: Type](m: Expr[M])(f: Expr[Inner => B]): ExistentialExpr =
-                ExistentialExpr.withoutType(m.widenExpr[Array[Inner]].map(f))
+                ExistentialExpr.withoutType(m.upcastToExprOf[Array[Inner]].map(f))
 
               def to[C: Type](m: Expr[M])(factory: Expr[Factory[Inner, C]]): Expr[C] =
-                m.widenExpr[Array[Inner]].to(factory)
+                m.upcastToExprOf[Array[Inner]].to(factory)
             }
           )
         )

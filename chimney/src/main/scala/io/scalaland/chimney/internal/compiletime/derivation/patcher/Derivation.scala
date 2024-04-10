@@ -100,7 +100,9 @@ private[compiletime] trait Derivation
                 patchGetter.value.get(ctx.patch).asInstanceOfExpr[Option[GetterInner]]
               )
                 .map { (transformedExpr: Expr[Option[TargetInner]]) =>
-                  Some(transformedExpr.orElse(targetGetter.value.get(ctx.obj).upcastExpr[Option[TargetInner]]).as_??)
+                  Some(
+                    transformedExpr.orElse(targetGetter.value.get(ctx.obj).upcastToExprOf[Option[TargetInner]]).as_??
+                  )
                 }
             case _ =>
               assertionFailed(
@@ -121,7 +123,7 @@ private[compiletime] trait Derivation
                   import inner.Underlying as Inner, targetGetter.Underlying as TargetGetter
                   PrependDefinitionsTo
                     .prependVal[Option[Inner]](
-                      patchGetter.value.get(ctx.patch).upcastExpr[Option[Inner]],
+                      patchGetter.value.get(ctx.patch).upcastToExprOf[Option[Inner]],
                       ExprPromise.NameGenerationStrategy.FromPrefix(patchFieldName)
                     )
                     .traverse { (option: Expr[Option[Inner]]) =>
@@ -129,7 +131,7 @@ private[compiletime] trait Derivation
                         src = option.get
                       ).map { (transformedExpr: Expr[TargetParam]) =>
                         Expr.ifElse(option.isDefined)(transformedExpr)(
-                          targetGetter.value.get(ctx.obj).widenExpr[TargetParam]
+                          targetGetter.value.get(ctx.obj).upcastToExprOf[TargetParam]
                         )
                       }
                     }
