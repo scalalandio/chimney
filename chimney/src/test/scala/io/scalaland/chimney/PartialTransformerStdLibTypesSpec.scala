@@ -384,7 +384,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
     ArrayBuffer("1" -> "x", "2" -> "y")
       .transformIntoPartial[Map[String, Int]]
-      .asErrorPathMessageStrings ==> Iterable("(1)" -> "empty value", "(2)" -> "empty value")
+      .asErrorPathMessageStrings ==> Iterable("(0)._2" -> "empty value", "(1)._2" -> "empty value")
     Map("x" -> "10", "y" -> "z")
       .transformIntoPartial[List[(Int, Int)]]
       .asErrorPathMessageStrings ==> Iterable(
@@ -395,7 +395,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
     ArrayBuffer("1" -> "x", "2" -> "y")
       .transformIntoPartial[Map[String, Int]](failFast = true)
-      .asErrorPathMessageStrings ==> Iterable("(1)" -> "empty value")
+      .asErrorPathMessageStrings ==> Iterable("(0)._2" -> "empty value")
     Map("x" -> "10", "y" -> "z")
       .transformIntoPartial[List[(Int, Int)]](failFast = true)
       .asErrorPathMessageStrings ==> Iterable("keys(x)" -> "empty value")
@@ -436,14 +436,14 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
     Array("1" -> "x", "2" -> "y")
       .transformIntoPartial[Map[String, Int]]
-      .asErrorPathMessageStrings ==> Iterable("(1)" -> "empty value", "(2)" -> "empty value")
+      .asErrorPathMessageStrings ==> Iterable("(0)._2" -> "empty value", "(1)._2" -> "empty value")
     Map("x" -> "10", "y" -> "20")
       .transformIntoPartial[Array[(Int, String)]]
       .asErrorPathMessageStrings ==> Iterable("keys(x)" -> "empty value", "keys(y)" -> "empty value")
 
     Array("1" -> "x", "2" -> "y")
       .transformIntoPartial[Map[String, Int]](failFast = true)
-      .asErrorPathMessageStrings ==> Iterable("(1)" -> "empty value")
+      .asErrorPathMessageStrings ==> Iterable("(0)._2" -> "empty value")
     Map("x" -> "10", "y" -> "20")
       .transformIntoPartial[Array[(Int, String)]](failFast = true)
       .asErrorPathMessageStrings ==> Iterable("keys(x)" -> "empty value")

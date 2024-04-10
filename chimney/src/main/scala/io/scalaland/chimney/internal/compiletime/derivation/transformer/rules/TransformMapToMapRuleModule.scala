@@ -31,7 +31,8 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
           import fromK.Underlying as FromK, fromV.Underlying as FromV, toK.Underlying as ToK, toV.Underlying as ToV
           mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
             ctx.src.upcastExpr[Map[FromK, FromV]].iterator,
-            failFast
+            failFast,
+            isConversionFromMap = true
           )
         case (TransformationContext.ForPartial(_, failFast), IterableOrArray(from2), Type.Map(toK, toV)) =>
           // val Type.Tuple2(fromK, fromV) = from2: @unchecked
@@ -40,7 +41,8 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
             fromV.Underlying as FromV, toK.Underlying as ToK, toV.Underlying as ToV
           mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
             fromIorA.iterator(ctx.src).upcastExpr[Iterator[(FromK, FromV)]],
-            failFast
+            failFast,
+            isConversionFromMap = false
           )
         case (_, _, Type.Map(_, _)) | (_, Type.Map(_, _), _) =>
           DerivationResult.namedScope(
@@ -91,7 +93,8 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
 
     private def mapMapForPartialTransformers[From, To, FromK: Type, FromV: Type, ToK: Type, ToV: Type](
         iterator: Expr[Iterator[(FromK, FromV)]],
-        failFast: Expr[Boolean]
+        failFast: Expr[Boolean],
+        isConversionFromMap: Boolean // or from any sequence of tuples
     )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] = {
@@ -109,39 +112,98 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
       val factoryResult = DerivationResult.summonImplicit[Factory[(ToK, ToV), To]]
 
       toKeyResult.parTuple(toValueResult).parTuple(factoryResult).flatMap { case ((toKeyP, toValueP), factory) =>
-        // We're constructing:
-        // '{ partial.Result.traverse[To, ($FromK, $FromV), ($ToK, $ToV)](
-        //   ${ iterator },
-        //   { case (key, value) =>
-        //     partial.Result.product(
-        //       ${ resultToKey }.prependErrorPath(partial.PathElement.MapKey(key)),
-        //       ${ resultToValue }.prependErrorPath(partial.PathElement.MapValue(key),
-        //       ${ failFast }
-        //     )
-        //   },
-        //   ${ failFast }
-        // )(${ factory })
-        DerivationResult.expandedPartial(
-          ChimneyExpr.PartialResult
-            .traverse[To, (FromK, FromV), (ToK, ToV)](
-              iterator,
-              toKeyP
-                .fulfilAsLambda2(toValueP) { case ((keyResult, key), valueResult) =>
-                  ChimneyExpr.PartialResult.product(
-                    keyResult.prependErrorPath(
-                      ChimneyExpr.PathElement.MapKey(key.upcastExpr[Any]).upcastExpr[partial.PathElement]
-                    ),
-                    valueResult.prependErrorPath(
-                      ChimneyExpr.PathElement.MapValue(key.upcastExpr[Any]).upcastExpr[partial.PathElement]
-                    ),
-                    failFast
-                  )
-                }
-                .tupled,
-              failFast,
-              factory
-            )
-        )
+        if (isConversionFromMap) {
+          // We're constructing:
+          // '{ partial.Result.traverse[To, ($FromK, $FromV), ($ToK, $ToV)](
+          //   ${ iterator },
+          //   { case (key, value) =>
+          //     partial.Result.product(
+          //       ${ resultToKey }.prependErrorPath(partial.PathElement.MapKey(key)),
+          //       ${ resultToValue }.prependErrorPath(partial.PathElement.MapValue(key),
+          //       ${ failFast }
+          //     )
+          //   },
+          //   ${ failFast }
+          // )(${ factory })
+          DerivationResult.expandedPartial(
+            ChimneyExpr.PartialResult
+              .traverse[To, (FromK, FromV), (ToK, ToV)](
+                iterator,
+                toKeyP
+                  .fulfilAsLambda2(toValueP) { case ((keyResult, key), valueResult) =>
+                    ChimneyExpr.PartialResult.product(
+                      keyResult.prependErrorPath(
+                        ChimneyExpr.PathElement.MapKey(key.upcastExpr[Any]).upcastExpr[partial.PathElement]
+                      ),
+                      valueResult.prependErrorPath(
+                        ChimneyExpr.PathElement.MapValue(key.upcastExpr[Any]).upcastExpr[partial.PathElement]
+                      ),
+                      failFast
+                    )
+                  }
+                  .tupled,
+                failFast,
+                factory
+              )
+          )
+        } else {
+          // We're constructing:
+          // '{ partial.Result.traverse[To, (($FromK, $FromV), Int), ($ToK, $ToV)](
+          //   ${ iterator }.zipWithIndex,
+          //   { case (pair, idx) =>
+          //     val key = pair._1
+          //     val value = pair._2
+          //     partial.Result.product(
+          //       ${ resultToKey }
+          //         .prependErrorPath(partial.PathElement.Accessor("_1"))}
+          //         .prependErrorPath(partial.PathElement.Index(idx)),
+          //       ${ resultToValue }
+          //          .prependErrorPath(partial.PathElement.Accessor("_2"))}
+          //          .prependErrorPath(partial.PathElement.Index(idx)),
+          //       ${ failFast }
+          //     )
+          //   },
+          //   ${ failFast }
+          // )(${ factory })
+          DerivationResult.expandedPartial(
+            ChimneyExpr.PartialResult
+              .traverse[To, ((FromK, FromV), Int), (ToK, ToV)](
+                iterator.zipWithIndex,
+                ExprPromise
+                  .promise[(FromK, FromV)](ExprPromise.NameGenerationStrategy.FromPrefix("pair"))
+                  .fulfilAsLambda2(
+                    ExprPromise.promise[Int](ExprPromise.NameGenerationStrategy.FromPrefix("idx"))
+                  ) { (pairExpr, indexExpr) =>
+                    val pairGetters = ProductType.parseExtraction[(FromK, FromV)].get.extraction
+                    ChimneyExpr.PartialResult.product(
+                      toKeyP
+                        .fulfilAsVal(pairGetters("_1").value.get(pairExpr).asInstanceOf[Expr[FromK]])
+                        .map(_._1)
+                        .closeBlockAsExprOf[partial.Result[ToK]]
+                        .prependErrorPath(
+                          ChimneyExpr.PathElement.Accessor(Expr.String("_1")).upcastExpr[partial.PathElement]
+                        )
+                        .prependErrorPath(
+                          ChimneyExpr.PathElement.Index(indexExpr).upcastExpr[partial.PathElement]
+                        ),
+                      toValueP
+                        .fulfilAsVal(pairGetters("_2").value.get(pairExpr).asInstanceOf[Expr[FromV]])
+                        .closeBlockAsExprOf[partial.Result[ToV]]
+                        .prependErrorPath(
+                          ChimneyExpr.PathElement.Accessor(Expr.String("_2")).upcastExpr[partial.PathElement]
+                        )
+                        .prependErrorPath(
+                          ChimneyExpr.PathElement.Index(indexExpr).upcastExpr[partial.PathElement]
+                        ),
+                      failFast
+                    )
+                  }
+                  .tupled,
+                failFast,
+                factory
+              )
+          )
+        }
       }
     }
   }
