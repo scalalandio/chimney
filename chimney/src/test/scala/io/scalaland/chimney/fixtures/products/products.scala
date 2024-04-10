@@ -48,6 +48,7 @@ case class HaveY(y: String)
 object Renames {
 
   case class User(id: Int, name: String, age: Option[Int])
+  case class UserStrict(id: Int, name: String, age: Int)
   case class UserPL(id: Int, imie: String, wiek: Either[Unit, Int])
   case class UserPLStd(id: Int, imie: String, wiek: Option[Int])
   case class User2ID(id: Int, name: String, age: Option[Int], extraID: Int)
