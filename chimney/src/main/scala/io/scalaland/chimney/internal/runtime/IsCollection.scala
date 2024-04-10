@@ -2,6 +2,12 @@ package io.scalaland.chimney.internal.runtime
 
 import scala.annotation.{implicitNotFound, unused}
 
+// $COVERAGE-OFF$evidence used only within macro-erased expressions
+
+/** Allow us to provide `.everyItem` extension method only for the types where macros would actually handle it.
+  *
+  * @since 1.0.0
+  */
 @implicitNotFound(
   "Expected collection (type extending scala.Iterable which has scala.collection.compat.Factory instance), got ${C}"
 )
