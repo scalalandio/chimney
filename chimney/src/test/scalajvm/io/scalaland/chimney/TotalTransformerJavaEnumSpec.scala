@@ -115,6 +115,36 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
     }
   }
 
+  group("setting .withEnumCaseHandled[Subtype](mapping)") {
+
+    test(
+      """transform from Java Enum "superset" instances to sealed hierarchy "subset" of case objects when user-provided mapping handled additional cases"""
+    ) {
+      def blackIsRed(@unused b: jcolors2.Color.Black.type): colors1.Color =
+        colors1.Red
+
+      (jcolors2.Color.Black: jcolors2.Color)
+        .into[colors1.Color]
+        .withEnumCaseHandled((b: jcolors2.Color.Black.type) => blackIsRed(b))
+        .transform ==> colors1.Red
+
+      (jcolors2.Color.Red: jcolors2.Color)
+        .into[colors1.Color]
+        .withEnumCaseHandled((b: jcolors2.Color.Black.type) => blackIsRed(b))
+        .transform ==> colors1.Red
+
+      (jcolors2.Color.Green: jcolors2.Color)
+        .into[colors1.Color]
+        .withEnumCaseHandled((b: jcolors2.Color.Black.type) => blackIsRed(b))
+        .transform ==> colors1.Green
+
+      (jcolors2.Color.Blue: jcolors2.Color)
+        .into[colors1.Color]
+        .withEnumCaseHandled((b: jcolors2.Color.Black.type) => blackIsRed(b))
+        .transform ==> colors1.Blue
+    }
+  }
+
   group("flag .enableCustomSubtypeNameComparison") {
 
     import jrenames.*
