@@ -32,10 +32,10 @@ object ScalesEnumsPartialTransformer {
   ): PartialTransformer[shortEnums.NumScale[A, Nothing], longEnums.NumScale[B]] =
     Transformer
       .definePartial[shortEnums.NumScale[A, Nothing], longEnums.NumScale[B]]
-      .withCoproductInstancePartial { (billion: shortEnums.NumScale.Billion[A]) =>
+      .withSealedSubtypeHandledPartial { (billion: shortEnums.NumScale.Billion[A]) =>
         billion.transformIntoPartial[longEnums.NumScale.Milliard[B]]
       }
-      .withCoproductInstancePartial { (trillion: shortEnums.NumScale.Trillion[A]) =>
+      .withSealedSubtypeHandledPartial { (trillion: shortEnums.NumScale.Trillion[A]) =>
         trillion.transformIntoPartial[longEnums.NumScale.Billion[B]]
       }
       .buildTransformer
@@ -45,10 +45,10 @@ object ScalesEnumsPartialTransformer {
   ): PartialTransformer[shortEnums.NumScale[A, Nothing], longEnums.NumScale[B]] =
     Transformer
       .definePartial[shortEnums.NumScale[A, Nothing], longEnums.NumScale[B]]
-      .withCoproductInstancePartial { (billion: shortEnums.NumScale.Billion[A]) =>
+      .withSealedSubtypeHandledPartial { (billion: shortEnums.NumScale.Billion[A]) =>
         billion.transformIntoPartial[longEnums.NumScale.Milliard[B]]
       }
-      .withCoproductInstancePartial { (trillion: shortEnums.NumScale.Trillion[A]) =>
+      .withSealedSubtypeHandledPartial { (trillion: shortEnums.NumScale.Trillion[A]) =>
         trillion.transformIntoPartial[longEnums.NumScale.Billion[B]]
       }
       .buildTransformer

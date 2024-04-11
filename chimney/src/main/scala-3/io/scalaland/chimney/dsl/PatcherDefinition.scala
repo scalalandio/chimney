@@ -2,7 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.*
-import io.scalaland.chimney.internal.compiletime.dsl.*
+import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
 
 /** Allows customization of [[io.scalaland.chimney.Patcher]] derivation.
@@ -29,5 +29,5 @@ final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: 
   inline def buildPatcher[ImplicitScopeFlags <: PatcherFlags](using
       tc: PatcherConfiguration[ImplicitScopeFlags]
   ): Patcher[A, Patch] =
-    ${ PatcherDefinitionMacros.buildPatcher[A, Patch, Overrides, Flags, ImplicitScopeFlags] }
+    ${ PatcherMacros.derivePatcherWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags] }
 }

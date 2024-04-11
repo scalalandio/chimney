@@ -1844,7 +1844,7 @@ Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/a
 ### Handling a specific `sealed` subtype with a computed value
 
 Sometimes we are missing a corresponding subtype of the target type. Or we might want to override it with our
-computation. This can be done using `.withCoproductInstance`:
+computation. This can be done using `.withSealedSubtypeHandled`:
 
 !!! example
 
@@ -1864,18 +1864,18 @@ computation. This can be done using `.withCoproductInstance`:
       case object Buzz extends Bar
     }
     
-    (Bar.Baz("value"): Bar).into[Foo].withCoproductInstance[Bar.Fizz.type] {
+    (Bar.Baz("value"): Bar).into[Foo].withSealedSubtypeHandled[Bar.Fizz.type] {
       fizz => Foo.Baz(fizz.toString)
     }.transform // Foo.Baz("value")
-    (Bar.Fizz: Bar).into[Foo].withCoproductInstance[Bar.Fizz.type] {
+    (Bar.Fizz: Bar).into[Foo].withSealedSubtypeHandled[Bar.Fizz.type] {
       fizz => Foo.Baz(fizz.toString)
     }.transform // Foo.Baz("Fizz")
-    (Bar.Buzz: Bar).into[Foo].withCoproductInstance[Bar.Fizz.type] {
+    (Bar.Buzz: Bar).into[Foo].withSealedSubtypeHandled[Bar.Fizz.type] {
       fizz => Foo.Baz(fizz.toString)
     }.transform // Foo.Buzz
     ```
 
-If the computation needs to allow failure, there is `.withCoproductInstancePartial`:
+If the computation needs to allow failure, there is `.withSealedSubtypeHandledPartial`:
 
 !!! example
 
@@ -1896,20 +1896,20 @@ If the computation needs to allow failure, there is `.withCoproductInstanceParti
       case object Buzz extends Bar
     }
     
-    (Bar.Baz("value"): Bar).intoPartial[Foo].withCoproductInstancePartial[Bar.Fizz.type] {
+    (Bar.Baz("value"): Bar).intoPartial[Foo].withSealedSubtypeHandledPartial[Bar.Fizz.type] {
       fizz => partial.Result.fromEmpty
     }.transform.asEither // Right(Foo.Baz("value"))
-    (Bar.Fizz: Bar).intoPartial[Foo].withCoproductInstancePartial[Bar.Fizz.type] {
+    (Bar.Fizz: Bar).intoPartial[Foo].withSealedSubtypeHandledPartial[Bar.Fizz.type] {
       fizz => partial.Result.fromEmpty
     }.transform.asEither // Left(...)
-    (Bar.Buzz: Bar).intoPartial[Foo].withCoproductInstancePartial[Bar.Fizz.type] {
+    (Bar.Buzz: Bar).intoPartial[Foo].withSealedSubtypeHandledPartial[Bar.Fizz.type] {
       fizz => partial.Result.fromEmpty
     }.transform.asEither // Right(Foo.Buzz)
     ```
 
 !!! warning
 
-    Due to limitations of Scala 2, when you want to use `.withCoproductInstance` or `.withCoproductInstancePartial` with
+    Due to limitations of Scala 2, when you want to use `.withSealedSubtypeHandled` or `.withSealedSubtypeHandledPartial` with
     Java's `enum`s, the enum instance's exact type will always be upcasted/lost, turning the handler into "catch-all":
 
     ```java
@@ -1933,10 +1933,10 @@ If the computation needs to allow failure, there is `.withCoproductInstanceParti
     
     def blackIsRed(black: ColorJ.Black.type): ColorS = ColorS.Red
     
-    ColorJ.Red.into[ColorS].withCoproductInstance[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
-    ColorJ.Green.into[ColorS].withCoproductInstance[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
-    ColorJ.Blue.into[ColorS].withCoproductInstance[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
-    ColorJ.Black.into[ColorS].withCoproductInstance[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
+    ColorJ.Red.into[ColorS].withSealedSubtypeHandled[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
+    ColorJ.Green.into[ColorS].withSealedSubtypeHandled[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
+    ColorJ.Blue.into[ColorS].withSealedSubtypeHandled[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
+    ColorJ.Black.into[ColorS].withSealedSubtypeHandled[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
     ```
     
     There is nothing we can do about the type, however, we can analyze the code and, if it preserves the exact Java enum
@@ -1956,16 +1956,16 @@ If the computation needs to allow failure, there is `.withCoproductInstanceParti
     
     def blackIsRed(black: ColorJ.Black.type): ColorS = ColorS.Red
     
-    ColorJ.Red.into[ColorS].withCoproductInstance { (black: ColorJ.Black.type) =>
+    ColorJ.Red.into[ColorS].withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
       blackIsRed(black)
     }.transform // ColorS.Red
-    ColorJ.Green.into[ColorS].withCoproductInstance { (black: ColorJ.Black.type) =>
+    ColorJ.Green.into[ColorS].withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
       blackIsRed(black)
     }.transform // ColorS.Green
-    ColorJ.Blue.into[ColorS].withCoproductInstance { (black: ColorJ.Black.type) =>
+    ColorJ.Blue.into[ColorS].withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
       blackIsRed(black)
     }.transform // ColorS.Blue
-    ColorJ.Black.into[ColorS].withCoproductInstance { (black: ColorJ.Black.type) =>
+    ColorJ.Black.into[ColorS].withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
       blackIsRed(black)
     }.transform // ColorS.Black
     ```
@@ -1982,10 +1982,10 @@ If the computation needs to allow failure, there is `.withCoproductInstanceParti
     
     def blackIsRed(black: ColorJ.Black.type): ColorS = ColorS.Red
     
-    ColorJ.Red.into[ColorS].withCoproductInstance(blackIsRed).transform // ColorS.Red
-    ColorJ.Green.into[ColorS].withCoproductInstance(blackIsRed).transform // ColorS.Green
-    ColorJ.Blue.into[ColorS].withCoproductInstance(blackIsRed).transform // ColorS.Blue
-    ColorJ.Black.into[ColorS].withCoproductInstance(blackIsRed).transform // ColorS.Black
+    ColorJ.Red.into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Red
+    ColorJ.Green.into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Green
+    ColorJ.Blue.into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Blue
+    ColorJ.Black.into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Black
     ```
 
 ### Customizing subtype name matching
@@ -2070,7 +2070,7 @@ For details about `TransformedNamesComparison` look at [their dedicated section]
     }
     ```
 
-    Such cases always have to be handled manually (`withCoproductInstance(...)`).
+    Such cases always have to be handled manually (`withSealedSubtypeHandled(...)`).
 
 If the flag was enabled in the implicit config it can be disabled with `.disableCustomSubtypeNameComparison`.
 

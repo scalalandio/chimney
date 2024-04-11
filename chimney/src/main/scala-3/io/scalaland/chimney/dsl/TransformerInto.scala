@@ -88,7 +88,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
   ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerIntoMacros.withFieldRenamedImpl('this, 'selectorFrom, 'selectorTo) }
 
-  /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another
+  /** Use `f` to calculate the unmatched subtype when mapping one sealed/enum into another.
     *
     * By default if mapping one coproduct in `From` into another coproduct in `To` derivation expects that coproducts
     * will have matching names of its components, and for every component in `To` field's type there is matching
@@ -96,15 +96,35 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     *
     * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
-    * @tparam Subtypetype of coproduct instance@param f function to calculate values of components that cannot be mapped automatically
+    * @tparam Subtype type of sealed/enum instance
+    * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
+    *
+    * @since 1.0.0
+    */
+  transparent inline def withSealedSubtypeHandled[Subtype](
+      inline f: Subtype => To
+  ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    ${ TransformerIntoMacros.withSealedSubtypeHandledImpl('this, 'f) }
+
+  /** Alias to [[withSealedSubtypeHandled]].
+    *
+    * @since 1.0.0
+    */
+  transparent inline def withEnumCaseHandled[Subtype](
+      inline f: Subtype => To
+  ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    ${ TransformerIntoMacros.withSealedSubtypeHandledImpl('this, 'f) }
+
+  /** Renamed to [[withSealedSubtypeHandled]].
     *
     * @since 0.1.2
     */
+  @deprecated("Use .withSealedSubtypeHandled or .withEnumCaseHandled for more clarity", "1.0.0")
   transparent inline def withCoproductInstance[Subtype](
       inline f: Subtype => To
   ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
-    ${ TransformerIntoMacros.withCoproductInstanceImpl('this, 'f) }
+    ${ TransformerIntoMacros.withSealedSubtypeHandledImpl('this, 'f) }
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *
@@ -137,7 +157,12 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
   inline def transform[ImplicitScopeFlags <: TransformerFlags](using
       tc: TransformerConfiguration[ImplicitScopeFlags]
   ): To =
-    ${ TransformerIntoMacros.transform[From, To, Overrides, Flags, ImplicitScopeFlags]('source, 'td) }
+    ${
+      TransformerMacros.deriveTotalTransformerResultWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags](
+        'source,
+        'td
+      )
+    }
 
   private[chimney] def addOverride(overrideData: Any): this.type =
     new TransformerInto(source, td.addOverride(overrideData)).asInstanceOf[this.type]

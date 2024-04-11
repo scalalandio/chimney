@@ -11,7 +11,7 @@ class Coproduct extends CommonBenchmarkSettings {
   private val color2ChannelT = Transformer.derive[Color, Channel]
   private val channel2ColorT = Transformer
     .define[Channel, Color]
-    .withCoproductInstance { (_: Channel.Alpha.type) =>
+    .withSealedSubtypeHandled { (_: Channel.Alpha.type) =>
       Color.Blue
     }
     .buildTransformer
@@ -31,7 +31,7 @@ class Coproduct extends CommonBenchmarkSettings {
     color
       .transformInto[Channel]
       .into[Color]
-      .withCoproductInstance { (_: Channel.Alpha.type) =>
+      .withSealedSubtypeHandled { (_: Channel.Alpha.type) =>
         Color.Blue
       }
       .transform

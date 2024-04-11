@@ -21,7 +21,7 @@ class ProtobufOneOfSpec extends ChimneySpec {
 
       pbType.value
         .intoPartial[addressbook.AddressBookType]
-        .withCoproductInstancePartial[pb.addressbook.AddressBookType.Value.Empty.type](_ => partial.Result.fromEmpty)
+        .withSealedSubtypeHandledPartial[pb.addressbook.AddressBookType.Value.Empty.type](_ => partial.Result.fromEmpty)
         .transform
         .asOption ==> Some(domainType)
       locally {
@@ -40,8 +40,8 @@ class ProtobufOneOfSpec extends ChimneySpec {
 
       pbStatus
         .intoPartial[order.CustomerStatus]
-        .withCoproductInstancePartial[pb.order.CustomerStatus.Empty.type](_ => partial.Result.fromEmpty)
-        .withCoproductInstance[pb.order.CustomerStatus.NonEmpty](_.transformInto[order.CustomerStatus])
+        .withSealedSubtypeHandledPartial[pb.order.CustomerStatus.Empty.type](_ => partial.Result.fromEmpty)
+        .withSealedSubtypeHandled[pb.order.CustomerStatus.NonEmpty](_.transformInto[order.CustomerStatus])
         .transform
         .asOption ==> Some(domainStatus)
     }

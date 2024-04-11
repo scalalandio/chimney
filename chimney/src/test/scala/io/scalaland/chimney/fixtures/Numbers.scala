@@ -32,10 +32,10 @@ object ScalesPartialTransformer {
   ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] =
     Transformer
       .definePartial[short.NumScale[A, Nothing], long.NumScale[B]]
-      .withCoproductInstancePartial { (billion: short.Billion[A]) =>
+      .withSealedSubtypeHandledPartial { (billion: short.Billion[A]) =>
         billion.transformIntoPartial[long.Milliard[B]]
       }
-      .withCoproductInstancePartial { (trillion: short.Trillion[A]) =>
+      .withSealedSubtypeHandledPartial { (trillion: short.Trillion[A]) =>
         trillion.transformIntoPartial[long.Billion[B]]
       }
       .buildTransformer
@@ -45,10 +45,10 @@ object ScalesPartialTransformer {
   ): PartialTransformer[short.NumScale[A, Nothing], long.NumScale[B]] =
     Transformer
       .definePartial[short.NumScale[A, Nothing], long.NumScale[B]]
-      .withCoproductInstancePartial { (billion: short.Billion[A]) =>
+      .withSealedSubtypeHandledPartial { (billion: short.Billion[A]) =>
         billion.transformIntoPartial[long.Milliard[B]]
       }
-      .withCoproductInstancePartial { (trillion: short.Trillion[A]) =>
+      .withSealedSubtypeHandledPartial { (trillion: short.Trillion[A]) =>
         trillion.transformIntoPartial[long.Billion[B]]
       }
       .buildTransformer

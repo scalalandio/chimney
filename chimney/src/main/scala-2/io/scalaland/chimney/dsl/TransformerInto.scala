@@ -99,13 +99,29 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     *
     * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
-    * @tparam Subtypetype of coproduct instance@param f function to calculate values of components that cannot be mapped automatically
+    * @tparam Subtype type of sealed/enum instance
+    * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerInto]]
+    *
+    * @since 1.0.0
+    */
+  def withSealedSubtypeHandled[Subtype](f: Subtype => To): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerIntoMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
+
+  /** Alias to [[withSealedSubtypeHandled]].
+    *
+    * @since 1.0.0
+    */
+  def withEnumCaseHandled[Subtype](f: Subtype => To): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerIntoMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
+
+  /** Renamed to [[withSealedSubtypeHandled]].
     *
     * @since 0.1.2
     */
+  @deprecated("Use .withSealedSubtypeHandled or .withEnumCaseHandled for more clarity", "1.0.0")
   def withCoproductInstance[Subtype](f: Subtype => To): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
-    macro TransformerIntoMacros.withCoproductInstanceImpl[From, To, Overrides, Flags, Subtype]
+    macro TransformerIntoMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *
@@ -121,9 +137,9 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     *
     * @since 0.8.4
     */
-  def withConstructor[Ctor](
-      f: Ctor
-  )(implicit ev: IsFunction.Of[Ctor, To]): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+  def withConstructor[Ctor](f: Ctor)(implicit
+      ev: IsFunction.Of[Ctor, To]
+  ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withConstructorImpl[From, To, Overrides, Flags]
 
   /** Apply configured transformation in-place.

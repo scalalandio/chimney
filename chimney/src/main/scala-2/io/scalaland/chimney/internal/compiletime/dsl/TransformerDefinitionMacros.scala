@@ -52,7 +52,7 @@ class TransformerDefinitionMacros(val c: whitebox.Context) extends utils.DslMacr
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 
-  def withCoproductInstanceImpl[
+  def withSealedSubtypeHandledImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,
       Overrides <: TransformerOverrides: WeakTypeTag,
