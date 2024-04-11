@@ -130,6 +130,11 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
     *
+    * For convenience/readability [[withEnumCaseHandled]] alias can be used (e.g. for Scala 3 enums or Java enums).
+    *
+    * It differs from `withFieldComputed(_.matching[Subtype], src => ...)`, since `withSealedSubtypeHandled` matches on
+    * `From` subtype, while `.matching[Subtype]` matches on `To` value's piece.
+    *
     * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
     * @tparam Subtype type of sealed/enum instance
@@ -168,6 +173,11 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * expects that coproducts to have matching names of its components, and for every component
     * in `To` field's type there is matching component in `From` type. If some component is missing
     * it fails compilation unless provided replacement with this operation.
+    *
+    * For convenience/readability [[withEnumCaseHandledPartial]] alias can be used (e.g. for Scala 3 enums or Java enums).
+    *
+    * It differs from `withFieldComputedPartial(_.matching[Subtype], src => ...)`, since `withSealedSubtypeHandled` matches on
+    * `From` subtype, while `.matching[Subtype]` matches on `To` value's piece.
     *
     * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *

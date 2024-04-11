@@ -275,6 +275,91 @@ class PartialTransformerEnumSpec extends ChimneySpec {
     }
   }
 
+  group("setting .withEnumCaseHandled(mapping)") {
+
+    test(
+      """transform sealed hierarchies from "superset" of case objects to "subset" of case objects when user-provided mapping handled additional cases"""
+    ) {
+      def blackIsRed(@unused b: colors2enums.Color.Black.type): colors1enums.Color =
+        colors1enums.Color.Red
+
+      (colors2enums.Color.Black: colors2enums.Color)
+        .intoPartial[colors1enums.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .transform
+        .asOption ==> Some(colors1enums.Color.Red)
+
+      (colors2enums.Color.Red: colors2enums.Color)
+        .intoPartial[colors1enums.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .transform
+        .asOption ==> Some(colors1enums.Color.Red)
+
+      (colors2enums.Color.Green: colors2enums.Color)
+        .intoPartial[colors1enums.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .transform
+        .asOption ==> Some(colors1enums.Color.Green)
+
+      (colors2enums.Color.Blue: colors2enums.Color)
+        .intoPartial[colors1enums.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .transform
+        .asOption ==> Some(colors1enums.Color.Blue)
+    }
+
+    test(
+      """transform sealed hierarchies from "superset" of case classes to "subset" of case classes when user-provided mapping handled non-trivial cases"""
+    ) {
+      def triangleToPolygon(t: shapes1enums.Shape.Triangle): shapes2enums.Shape =
+        shapes2enums.Shape.Polygon(
+          List(
+            t.p1.transformInto[shapes2enums.Point],
+            t.p2.transformInto[shapes2enums.Point],
+            t.p3.transformInto[shapes2enums.Point]
+          )
+        )
+
+      def rectangleToPolygon(r: shapes1enums.Shape.Rectangle): shapes2enums.Shape =
+        shapes2enums.Shape.Polygon(
+          List(
+            r.p1.transformInto[shapes2enums.Point],
+            shapes2enums.Point(r.p1.x, r.p2.y),
+            r.p2.transformInto[shapes2enums.Point],
+            shapes2enums.Point(r.p2.x, r.p1.y)
+          )
+        )
+
+      val triangle: shapes1enums.Shape =
+        shapes1enums.Shape.Triangle(shapes1enums.Point(0, 0), shapes1enums.Point(2, 2), shapes1enums.Point(2, 0))
+
+      triangle
+        .intoPartial[shapes2enums.Shape]
+        .withEnumCaseHandled(triangleToPolygon)
+        .withEnumCaseHandled(rectangleToPolygon)
+        .transform
+        .asOption ==> Some(
+        shapes2enums.Shape.Polygon(List(shapes2enums.Point(0, 0), shapes2enums.Point(2, 2), shapes2enums.Point(2, 0)))
+      )
+
+      val rectangle: shapes1enums.Shape =
+        shapes1enums.Shape.Rectangle(shapes1enums.Point(0, 0), shapes1enums.Point(6, 4))
+
+      rectangle
+        .intoPartial[shapes2enums.Shape]
+        .withEnumCaseHandled[shapes1enums.Shape] {
+          case r: shapes1enums.Shape.Rectangle => rectangleToPolygon(r)
+          case t: shapes1enums.Shape.Triangle  => triangleToPolygon(t)
+        }
+        .transform
+        .asOption ==> Some(
+        shapes2enums.Shape.Polygon(
+          List(shapes2enums.Point(0, 0), shapes2enums.Point(0, 4), shapes2enums.Point(6, 4), shapes2enums.Point(6, 0))
+        )
+      )
+    }
+  }
+
   test(
     "transform sealed hierarchies of single value wrapping case classes to sealed hierarchy of flat case classes subtypes"
   ) {
@@ -412,6 +497,95 @@ class PartialTransformerEnumSpec extends ChimneySpec {
       rectangle
         .intoPartial[shapes2enums.Shape]
         .withSealedSubtypeHandledPartial[shapes1enums.Shape] {
+          case r: shapes1enums.Shape.Rectangle => rectangleToPolygon(r)
+          case t: shapes1enums.Shape.Triangle  => triangleToPolygon(t)
+        }
+        .transform
+        .asOption ==> Some(
+        shapes2enums.Shape.Polygon(
+          List(shapes2enums.Point(0, 0), shapes2enums.Point(0, 4), shapes2enums.Point(6, 4), shapes2enums.Point(6, 0))
+        )
+      )
+    }
+  }
+
+  group("setting .withEnumCaseHandledPartial[Subtype](mapping)") {
+
+    test(
+      """transform sealed hierarchies from "superset" of case objects to "subset" of case objects when user-provided mapping handled additional cases"""
+    ) {
+      def blackIsRed(b: colors2enums.Color.Black.type): partial.Result[colors1enums.Color] =
+        partial.Result.fromEmpty
+
+      (colors2enums.Color.Black: colors2enums.Color)
+        .intoPartial[colors1enums.Color]
+        .withEnumCaseHandledPartial(blackIsRed)
+        .transform
+        .asOption ==> None
+
+      (colors2enums.Color.Red: colors2enums.Color)
+        .intoPartial[colors1enums.Color]
+        .withEnumCaseHandledPartial(blackIsRed)
+        .transform
+        .asOption ==> Some(colors1enums.Color.Red)
+
+      (colors2enums.Color.Green: colors2enums.Color)
+        .intoPartial[colors1enums.Color]
+        .withEnumCaseHandledPartial(blackIsRed)
+        .transform
+        .asOption ==> Some(colors1enums.Color.Green)
+
+      (colors2enums.Color.Blue: colors2enums.Color)
+        .intoPartial[colors1enums.Color]
+        .withEnumCaseHandledPartial(blackIsRed)
+        .transform
+        .asOption ==> Some(colors1enums.Color.Blue)
+    }
+
+    test(
+      """transform sealed hierarchies from "superset" of case classes to "subset" of case classes when user-provided mapping handled non-trivial cases"""
+    ) {
+      def triangleToPolygon(t: shapes1enums.Shape.Triangle): partial.Result[shapes2enums.Shape] =
+        partial.Result.fromValue(
+          shapes2enums.Shape.Polygon(
+            List(
+              t.p1.transformInto[shapes2enums.Point],
+              t.p2.transformInto[shapes2enums.Point],
+              t.p3.transformInto[shapes2enums.Point]
+            )
+          )
+        )
+
+      def rectangleToPolygon(r: shapes1enums.Shape.Rectangle): partial.Result[shapes2enums.Shape] =
+        partial.Result.fromValue(
+          shapes2enums.Shape.Polygon(
+            List(
+              r.p1.transformInto[shapes2enums.Point],
+              shapes2enums.Point(r.p1.x, r.p2.y),
+              r.p2.transformInto[shapes2enums.Point],
+              shapes2enums.Point(r.p2.x, r.p1.y)
+            )
+          )
+        )
+
+      val triangle: shapes1enums.Shape =
+        shapes1enums.Shape.Triangle(shapes1enums.Point(0, 0), shapes1enums.Point(2, 2), shapes1enums.Point(2, 0))
+
+      triangle
+        .intoPartial[shapes2enums.Shape]
+        .withEnumCaseHandledPartial(triangleToPolygon)
+        .withEnumCaseHandledPartial(rectangleToPolygon)
+        .transform
+        .asOption ==> Some(
+        shapes2enums.Shape.Polygon(List(shapes2enums.Point(0, 0), shapes2enums.Point(2, 2), shapes2enums.Point(2, 0)))
+      )
+
+      val rectangle: shapes1enums.Shape =
+        shapes1enums.Shape.Rectangle(shapes1enums.Point(0, 0), shapes1enums.Point(6, 4))
+
+      rectangle
+        .intoPartial[shapes2enums.Shape]
+        .withEnumCaseHandledPartial[shapes1enums.Shape] {
           case r: shapes1enums.Shape.Rectangle => rectangleToPolygon(r)
           case t: shapes1enums.Shape.Triangle  => triangleToPolygon(t)
         }
