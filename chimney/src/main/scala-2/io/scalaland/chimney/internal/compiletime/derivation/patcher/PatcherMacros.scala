@@ -18,16 +18,18 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   ](
       tc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): c.Expr[A] = retypecheck(
-    // Called by PatcherUsing => prefix is PatcherUsing
-    cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Tail, Flags]](c.prefix.tree)) { pu =>
-      Expr.block(
-        List(Expr.suppressUnused(pu)),
-        derivePatcherResult[A, Patch, Tail, Flags, ImplicitScopeFlags](
-          obj = c.Expr[A](q"$pu.obj"),
-          patch = c.Expr[Patch](q"$pu.objPatch")
+    suppressWarnings(
+      // Called by PatcherUsing => prefix is PatcherUsing
+      cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Tail, Flags]](c.prefix.tree)) { pu =>
+        Expr.block(
+          List(Expr.suppressUnused(pu)),
+          derivePatcherResult[A, Patch, Tail, Flags, ImplicitScopeFlags](
+            obj = c.Expr[A](q"$pu.obj"),
+            patch = c.Expr[Patch](q"$pu.objPatch")
+          )
         )
-      )
-    }
+      }
+    )
   )
 
   def derivePatcherWithConfig[
@@ -39,22 +41,26 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   ](
       tc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): Expr[Patcher[A, Patch]] = retypecheck(
-    cacheDefinition(c.Expr[dsl.PatcherDefinition[A, Patch, Tail, InstanceFlags]](c.prefix.tree)) { pu =>
-      Expr.block(
-        List(Expr.suppressUnused(pu)),
-        derivePatcher[A, Patch, Tail, InstanceFlags, ImplicitScopeFlags]
-      )
-    }
+    suppressWarnings(
+      cacheDefinition(c.Expr[dsl.PatcherDefinition[A, Patch, Tail, InstanceFlags]](c.prefix.tree)) { pu =>
+        Expr.block(
+          List(Expr.suppressUnused(pu)),
+          derivePatcher[A, Patch, Tail, InstanceFlags, ImplicitScopeFlags]
+        )
+      }
+    )
   )
 
   def derivePatcherWithDefaults[
       A: WeakTypeTag,
       Patch: WeakTypeTag
   ]: Expr[Patcher[A, Patch]] = retypecheck(
-    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
-      import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
-      derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
-    }
+    suppressWarnings(
+      resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
+        import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
+        derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
+      }
+    )
   )
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
@@ -97,5 +103,17 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
     c.Expr[A](c.typecheck(tree = c.untypecheck(expr.tree)))
   catch {
     case scala.reflect.macros.TypecheckException(_, msg) => c.abort(c.enclosingPosition, msg)
+  }
+
+  private def suppressWarnings[A: Type](expr: c.Expr[A]): c.Expr[A] = {
+    // Scala 3 generate prefix$macro$[n] while Scala 2 prefix[n] and we want to align the behavior
+    val result = c.internal.reificationSupport.freshTermName("result$macro$")
+    c.Expr[A](
+      q"""{
+        @_root_.java.lang.SuppressWarnings(_root_.scala.Array("org.wartremover.warts.All", "all"))
+        val $result = $expr
+        $result
+      }"""
+    )
   }
 }
