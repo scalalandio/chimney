@@ -6,7 +6,7 @@ import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
-import scala.quoted.{Expr, Quotes, Type}
+import scala.quoted.{Expr, Quotes, Type, Varargs}
 
 final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
 
@@ -20,13 +20,14 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       td: Expr[TransformerDefinition[From, To, Overrides, Flags]]
-  ): Expr[Transformer[From, To]] =
+  ): Expr[Transformer[From, To]] = suppressWarnings {
     deriveTotalTransformer[From, To, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ td }.runtimeData })
+  }
 
   def deriveTotalTransformerWithDefaults[
       From: Type,
       To: Type
-  ]: Expr[Transformer[From, To]] =
+  ]: Expr[Transformer[From, To]] = suppressWarnings {
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
       import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
       deriveTotalTransformer[
@@ -37,11 +38,12 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
         ImplicitScopeFlags
       ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
     }
+  }
 
   def derivePartialTransformerWithDefaults[
       From: Type,
       To: Type
-  ]: Expr[PartialTransformer[From, To]] =
+  ]: Expr[PartialTransformer[From, To]] = suppressWarnings {
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
       import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
       derivePartialTransformer[
@@ -52,6 +54,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
         ImplicitScopeFlags
       ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
     }
+  }
 
   def derivePartialTransformerWithConfig[
       From: Type,
@@ -61,10 +64,11 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]]
-  ): Expr[PartialTransformer[From, To]] =
+  ): Expr[PartialTransformer[From, To]] = suppressWarnings {
     derivePartialTransformer[From, To, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
       ${ td }.runtimeData
     })
+  }
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
       useImplicitScopeFlags: ?<[runtime.TransformerFlags] => Expr[A]
@@ -84,6 +88,12 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       List(Expr.suppressUnused(implicitScopeConfig)),
       useImplicitScopeFlags(implicitScopeFlagsType)
     )
+  }
+
+  private def suppressWarnings[A: Type](expr: Expr[A]): Expr[A] = '{
+    @SuppressWarnings(Array("org.wartremover.warts.All", "all"))
+    val result = ${ expr }
+    result
   }
 }
 
