@@ -2,6 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.internal.*
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.*
 import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
 
@@ -94,9 +95,9 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
       inline selectorFrom: From => T,
       inline selectorTo: To => U
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
-    ${ TransformerDefinitionMacros.withFieldRenamed('this, 'selectorFrom, 'selectorTo) }
+    ${ TransformerDefinitionMacros.withFieldRenamedImpl('this, 'selectorFrom, 'selectorTo) }
 
-  /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
+  /** Use `f` to calculate the unmatched subtype when mapping one sealed/enum into another.
     *
     * By default if mapping one coproduct in `From` into another coproduct in `To` derivation expects that coproducts
     * to have matching names of its components, and for every component in `To` field's type there is matching component
@@ -104,16 +105,35 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     *
     * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
-    * @tparam Subtypetype of coproduct instance
+    * @tparam Subtype type of sealed/enum instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     *
+    * @since 1.0.0
+    */
+  transparent inline def withSealedSubtypeHandled[Subtype](
+      inline f: Subtype => To
+  ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${ TransformerDefinitionMacros.withSealedSubtypeHandledImpl('this, 'f) }
+
+  /** Alias to [[withSealedSubtypeHandled]].
+    *
+    * @since 1.0.0
+    */
+  transparent inline def withEnumCaseHandled[Subtype](
+      inline f: Subtype => To
+  ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${ TransformerDefinitionMacros.withSealedSubtypeHandledImpl('this, 'f) }
+
+  /** Renamed to [[withSealedSubtypeHandled]].
+    *
     * @since 0.4.0
     */
+  @deprecated("Use .withSealedSubtypeHandled or .withEnumCaseHandled for more clarity", "1.0.0")
   transparent inline def withCoproductInstance[Subtype](
       inline f: Subtype => To
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
-    ${ TransformerDefinitionMacros.withCoproductInstance('this, 'f) }
+    ${ TransformerDefinitionMacros.withSealedSubtypeHandledImpl('this, 'f) }
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *
@@ -146,7 +166,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   inline def buildTransformer[ImplicitScopeFlags <: TransformerFlags](using
       tc: TransformerConfiguration[ImplicitScopeFlags]
   ): Transformer[From, To] =
-    ${ TransformerDefinitionMacros.buildTransformer[From, To, Overrides, Flags, ImplicitScopeFlags]('this) }
+    ${ TransformerMacros.deriveTotalTransformerWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags]('this) }
 
   private[chimney] def addOverride(overrideData: Any): this.type =
     new TransformerDefinition(overrideData +: runtimeData).asInstanceOf[this.type]

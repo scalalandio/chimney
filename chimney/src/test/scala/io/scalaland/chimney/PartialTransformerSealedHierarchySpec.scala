@@ -155,7 +155,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
     )
   }
 
-  group("setting .withCoproductInstance[Subtype](mapping)") {
+  group("setting .withSealedSubtypeHandled[Subtype](mapping)") {
 
     test(
       """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""
@@ -176,25 +176,25 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
 
       (colors2.Black: colors2.Color)
         .intoPartial[colors1.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform
         .asOption ==> Some(colors1.Red)
 
       (colors2.Red: colors2.Color)
         .intoPartial[colors1.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform
         .asOption ==> Some(colors1.Red)
 
       (colors2.Green: colors2.Color)
         .intoPartial[colors1.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform
         .asOption ==> Some(colors1.Green)
 
       (colors2.Blue: colors2.Color)
         .intoPartial[colors1.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform
         .asOption ==> Some(colors1.Blue)
     }
@@ -226,8 +226,8 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
 
       triangle
         .intoPartial[shapes2.Shape]
-        .withCoproductInstance(triangleToPolygon)
-        .withCoproductInstance(rectangleToPolygon)
+        .withSealedSubtypeHandled(triangleToPolygon)
+        .withSealedSubtypeHandled(rectangleToPolygon)
         .transform
         .asOption ==> Some(shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0))))
 
@@ -236,7 +236,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
 
       rectangle
         .intoPartial[shapes2.Shape]
-        .withCoproductInstance[shapes1.Shape] {
+        .withSealedSubtypeHandled[shapes1.Shape] {
           case r: shapes1.Rectangle => rectangleToPolygon(r)
           case t: shapes1.Triangle  => triangleToPolygon(t)
         }
@@ -278,7 +278,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
     )
   }
 
-  group("setting .withCoproductInstancePartial[Subtype](mapping)") {
+  group("setting .withSealedSubtypeHandledPartial[Subtype](mapping)") {
 
     test(
       """transform sealed hierarchies from "superset" of case objects to "subset" of case objects when user-provided mapping handled additional cases"""
@@ -288,25 +288,25 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
 
       (colors2.Black: colors2.Color)
         .intoPartial[colors1.Color]
-        .withCoproductInstancePartial(blackIsRed)
+        .withSealedSubtypeHandledPartial(blackIsRed)
         .transform
         .asOption ==> None
 
       (colors2.Red: colors2.Color)
         .intoPartial[colors1.Color]
-        .withCoproductInstancePartial(blackIsRed)
+        .withSealedSubtypeHandledPartial(blackIsRed)
         .transform
         .asOption ==> Some(colors1.Red)
 
       (colors2.Green: colors2.Color)
         .intoPartial[colors1.Color]
-        .withCoproductInstancePartial(blackIsRed)
+        .withSealedSubtypeHandledPartial(blackIsRed)
         .transform
         .asOption ==> Some(colors1.Green)
 
       (colors2.Blue: colors2.Color)
         .intoPartial[colors1.Color]
-        .withCoproductInstancePartial(blackIsRed)
+        .withSealedSubtypeHandledPartial(blackIsRed)
         .transform
         .asOption ==> Some(colors1.Blue)
     }
@@ -342,8 +342,8 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
 
       triangle
         .intoPartial[shapes2.Shape]
-        .withCoproductInstancePartial(triangleToPolygon)
-        .withCoproductInstancePartial(rectangleToPolygon)
+        .withSealedSubtypeHandledPartial(triangleToPolygon)
+        .withSealedSubtypeHandledPartial(rectangleToPolygon)
         .transform
         .asOption ==> Some(shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0))))
 
@@ -352,7 +352,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
 
       rectangle
         .intoPartial[shapes2.Shape]
-        .withCoproductInstancePartial[shapes1.Shape] {
+        .withSealedSubtypeHandledPartial[shapes1.Shape] {
           case r: shapes1.Rectangle => rectangleToPolygon(r)
           case t: shapes1.Triangle  => triangleToPolygon(t)
         }

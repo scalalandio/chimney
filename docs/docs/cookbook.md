@@ -784,7 +784,7 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
   
         pbType.value
           .intoPartial[addressbook.AddressBookType]
-          .withCoproductInstancePartial[pb.addressbook.AddressBookType.Value.Empty.type](
+          .withSealedSubtypeHandledPartial[pb.addressbook.AddressBookType.Value.Empty.type](
             _ => partial.Result.fromEmpty
           )
           .transform
@@ -892,10 +892,10 @@ could be done with:
     
     pbStatus
       .intoPartial[order.CustomerStatus]
-      .withCoproductInstancePartial[pb.order.CustomerStatus.Empty.type](
+      .withSealedSubtypeHandledPartial[pb.order.CustomerStatus.Empty.type](
         _ => partial.Result.fromEmpty
       )
-      .withCoproductInstance[pb.order.CustomerStatus.NonEmpty](
+      .withSealedSubtypeHandled[pb.order.CustomerStatus.NonEmpty](
         _.transformInto[order.CustomerStatus]
       )
       .transform

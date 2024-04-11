@@ -28,7 +28,6 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
     */
   inline def patch[ImplicitScopeFlags <: PatcherFlags](using
       tc: PatcherConfiguration[ImplicitScopeFlags]
-  ): A = ${
-    PatcherMacros.derivePatcherResultWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags]('obj, 'objPatch)
-  }
+  ): A =
+    ${ PatcherMacros.derivePatcherResultWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags]('obj, 'objPatch) }
 }

@@ -94,7 +94,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withFieldRenamedImpl[From, To, Overrides, Flags]
 
-  /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
+  /** Use `f` to calculate the unmatched subtype when mapping one sealed/enum into another.
     *
     * By default if mapping one coproduct in `From` into another coproduct in `To` derivation
     * expects that coproducts to have matching names of its components, and for every component
@@ -103,16 +103,35 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     *
     * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
-    * @tparam Subtypetype of coproduct instance
+    * @tparam Subtype type of sealed/enum instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.TransformerDefinition]]
     *
+    * @since 1.0.0
+    */
+  def withSealedSubtypeHandled[Subtype](
+      f: Subtype => To
+  ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerDefinitionMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
+
+  /** Alias to [[withSealedSubtypeHandled]].
+    *
+    * @since 1.0.0
+    */
+  def withEnumCaseHandled[Subtype](
+      f: Subtype => To
+  ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerDefinitionMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
+
+  /** Renamed to [[withSealedSubtypeHandled]].
+    *
     * @since 0.4.0
     */
+  @deprecated("Use .withSealedSubtypeHandled or .withEnumCaseHandled for more clarity", "1.0.0")
   def withCoproductInstance[Subtype](
       f: Subtype => To
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
-    macro TransformerDefinitionMacros.withCoproductInstanceImpl[From, To, Overrides, Flags, Subtype]
+    macro TransformerDefinitionMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *

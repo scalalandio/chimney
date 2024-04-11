@@ -74,7 +74,7 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
     )
   }
 
-  group("setting .withCoproductInstance[Subtype](mapping)") {
+  group("setting .withSealedSubtypeHandled[Subtype](mapping)") {
 
     test(
       """should be absent by default and not allow transforming Java Enum "superset" instances to sealed hierarchy "subset" of case objects"""
@@ -95,22 +95,22 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
 
       (jcolors2.Color.Black: jcolors2.Color)
         .into[colors1.Color]
-        .withCoproductInstance((b: jcolors2.Color.Black.type) => blackIsRed(b))
+        .withSealedSubtypeHandled((b: jcolors2.Color.Black.type) => blackIsRed(b))
         .transform ==> colors1.Red
 
       (jcolors2.Color.Red: jcolors2.Color)
         .into[colors1.Color]
-        .withCoproductInstance((b: jcolors2.Color.Black.type) => blackIsRed(b))
+        .withSealedSubtypeHandled((b: jcolors2.Color.Black.type) => blackIsRed(b))
         .transform ==> colors1.Red
 
       (jcolors2.Color.Green: jcolors2.Color)
         .into[colors1.Color]
-        .withCoproductInstance((b: jcolors2.Color.Black.type) => blackIsRed(b))
+        .withSealedSubtypeHandled((b: jcolors2.Color.Black.type) => blackIsRed(b))
         .transform ==> colors1.Green
 
       (jcolors2.Color.Blue: jcolors2.Color)
         .into[colors1.Color]
-        .withCoproductInstance((b: jcolors2.Color.Black.type) => blackIsRed(b))
+        .withSealedSubtypeHandled((b: jcolors2.Color.Black.type) => blackIsRed(b))
         .transform ==> colors1.Blue
     }
   }

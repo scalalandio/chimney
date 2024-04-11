@@ -118,7 +118,7 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
     )
   }
 
-  group("setting .withCoproductInstance[Subtype](mapping)") {
+  group("setting .withSealedSubtypeHandled[Subtype](mapping)") {
 
     test(
       """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""
@@ -139,22 +139,22 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
 
       (colors2.Black: colors2.Color)
         .into[colors1.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform ==> colors1.Red
 
       (colors2.Red: colors2.Color)
         .into[colors1.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform ==> colors1.Red
 
       (colors2.Green: colors2.Color)
         .into[colors1.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform ==> colors1.Green
 
       (colors2.Blue: colors2.Color)
         .into[colors1.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform ==> colors1.Blue
     }
 
@@ -185,8 +185,8 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
 
       triangle
         .into[shapes2.Shape]
-        .withCoproductInstance(triangleToPolygon)
-        .withCoproductInstance(rectangleToPolygon)
+        .withSealedSubtypeHandled(triangleToPolygon)
+        .withSealedSubtypeHandled(rectangleToPolygon)
         .transform ==> shapes2.Polygon(List(shapes2.Point(0, 0), shapes2.Point(2, 2), shapes2.Point(2, 0)))
 
       val rectangle: shapes1.Shape =
@@ -194,7 +194,7 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
 
       rectangle
         .into[shapes2.Shape]
-        .withCoproductInstance[shapes1.Shape] {
+        .withSealedSubtypeHandled[shapes1.Shape] {
           case r: shapes1.Rectangle => rectangleToPolygon(r)
           case t: shapes1.Triangle  => triangleToPolygon(t)
         }

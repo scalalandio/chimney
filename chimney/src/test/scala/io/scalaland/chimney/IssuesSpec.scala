@@ -297,7 +297,7 @@ class IssuesSpec extends ChimneySpec {
       val v1: Version1 = Instance1
       val v2: Version2 = v1
         .into[Version2]
-        .withCoproductInstance { (_: Instance1.type) =>
+        .withSealedSubtypeHandled { (_: Instance1.type) =>
           Instance2
         }
         .transform
@@ -314,7 +314,7 @@ class IssuesSpec extends ChimneySpec {
       val v1: Version1 = Instance1(10)
       val v2: Version2 = v1
         .into[Version2]
-        .withCoproductInstance { (i: Instance1) =>
+        .withSealedSubtypeHandled { (i: Instance1) =>
           Instance2(i.p / 2, i.p / 2)
         }
         .transform
@@ -332,36 +332,36 @@ class IssuesSpec extends ChimneySpec {
     case object Bar2 extends Foo2
     case object Baz2 extends Foo2
 
-    test("withCoproductInstancePartial twice") {
+    test("withSealedSubtypeHandledPartial twice") {
       implicit val fooFoo2PartialTransformer: PartialTransformer[Foo, Foo2] =
         PartialTransformer
           .define[Foo, Foo2]
-          .withCoproductInstancePartial((_: Bar.type) => partial.Result.fromValue(Bar2))
-          .withCoproductInstancePartial((_: Baz.type) => partial.Result.fromValue(Baz2))
+          .withSealedSubtypeHandledPartial((_: Bar.type) => partial.Result.fromValue(Bar2))
+          .withSealedSubtypeHandledPartial((_: Baz.type) => partial.Result.fromValue(Baz2))
           .buildTransformer
 
       (Bar: Foo).transformIntoPartial[Foo2].asOption ==> Some(Bar2)
       (Baz: Foo).transformIntoPartial[Foo2].asOption ==> Some(Baz2)
     }
 
-    test("withCoproductInstance followed by withCoproductInstancePartial") {
+    test("withSealedSubtypeHandled followed by withSealedSubtypeHandledPartial") {
       implicit val fooFoo2PartialTransformer: PartialTransformer[Foo, Foo2] =
         PartialTransformer
           .define[Foo, Foo2]
-          .withCoproductInstance((_: Bar.type) => Bar2)
-          .withCoproductInstancePartial((_: Baz.type) => partial.Result.fromValue(Baz2))
+          .withSealedSubtypeHandled((_: Bar.type) => Bar2)
+          .withSealedSubtypeHandledPartial((_: Baz.type) => partial.Result.fromValue(Baz2))
           .buildTransformer
 
       (Bar: Foo).transformIntoPartial[Foo2].asOption ==> Some(Bar2)
       (Baz: Foo).transformIntoPartial[Foo2].asOption ==> Some(Baz2)
     }
 
-    test("withCoproductInstancePartial followed by withCoproductInstance") {
+    test("withSealedSubtypeHandledPartial followed by withSealedSubtypeHandled") {
       implicit val fooFoo2PartialTransformer: PartialTransformer[Foo, Foo2] =
         PartialTransformer
           .define[Foo, Foo2]
-          .withCoproductInstancePartial((_: Bar.type) => partial.Result.fromValue(Bar2))
-          .withCoproductInstance((_: Baz.type) => Baz2)
+          .withSealedSubtypeHandledPartial((_: Bar.type) => partial.Result.fromValue(Bar2))
+          .withSealedSubtypeHandled((_: Baz.type) => Baz2)
           .buildTransformer
 
       (Bar: Foo).transformIntoPartial[Foo2].asOption ==> Some(Bar2)
@@ -421,25 +421,25 @@ class IssuesSpec extends ChimneySpec {
 
     (colors2.Black: colors2.Color)
       .intoPartial[colors1.Color]
-      .withCoproductInstance(blackIsRed)
+      .withSealedSubtypeHandled(blackIsRed)
       .transform
       .asOption ==> Some(colors1.Red)
 
     (colors2.Red: colors2.Color)
       .intoPartial[colors1.Color]
-      .withCoproductInstance(blackIsRed)
+      .withSealedSubtypeHandled(blackIsRed)
       .transform
       .asOption ==> Some(colors1.Red)
 
     (colors2.Green: colors2.Color)
       .intoPartial[colors1.Color]
-      .withCoproductInstance(blackIsRed)
+      .withSealedSubtypeHandled(blackIsRed)
       .transform
       .asOption ==> Some(colors1.Green)
 
     (colors2.Blue: colors2.Color)
       .intoPartial[colors1.Color]
-      .withCoproductInstance(blackIsRed)
+      .withSealedSubtypeHandled(blackIsRed)
       .transform
       .asOption ==> Some(colors1.Blue)
   }
@@ -492,7 +492,7 @@ class IssuesSpec extends ChimneySpec {
       implicit val oneOfPartialTransformer: PartialTransformer[proto.OneOf, OneOf] =
         PartialTransformer
           .define[proto.OneOf, OneOf]
-          .withCoproductInstancePartial[proto.Empty.type](_ => partial.Result.fromErrorString("proto.OneOf.Empty"))
+          .withSealedSubtypeHandledPartial[proto.Empty.type](_ => partial.Result.fromErrorString("proto.OneOf.Empty"))
           .buildTransformer
 
       (proto.Something(proto.SomethingMessage(42)): proto.OneOf)
@@ -563,17 +563,17 @@ class IssuesSpec extends ChimneySpec {
     // make sure the other way around is fine with partial transformers
     (A.Foo: A)
       .intoPartial[B]
-      .withCoproductInstancePartial[A.Unrecognized](_ => partial.Result.fromEmpty)
+      .withSealedSubtypeHandledPartial[A.Unrecognized](_ => partial.Result.fromEmpty)
       .transform
       .asOption ==> Some(B.Foo)
     (A.Bar: A)
       .intoPartial[B]
-      .withCoproductInstancePartial[A.Unrecognized](_ => partial.Result.fromEmpty)
+      .withSealedSubtypeHandledPartial[A.Unrecognized](_ => partial.Result.fromEmpty)
       .transform
       .asOption ==> Some(B.Bar)
     (A.Unrecognized(100): A)
       .intoPartial[B]
-      .withCoproductInstancePartial[A.Unrecognized](_ => partial.Result.fromEmpty)
+      .withSealedSubtypeHandledPartial[A.Unrecognized](_ => partial.Result.fromEmpty)
       .transform
       .asOption ==> None
   }
@@ -646,7 +646,7 @@ class IssuesSpec extends ChimneySpec {
 
     implicit val sourceToTarget: PartialTransformer[Source, Target] = PartialTransformer
       .define[Source, Target]
-      .withCoproductInstancePartial[Source.Empty.type](_ => partial.Result.fromErrorString("Error"))
+      .withSealedSubtypeHandledPartial[Source.Empty.type](_ => partial.Result.fromErrorString("Error"))
       .buildTransformer
 
     (Source.Value1(100): Source).transformIntoPartial[Target].asEither ==> Right(Target.Value1(100))

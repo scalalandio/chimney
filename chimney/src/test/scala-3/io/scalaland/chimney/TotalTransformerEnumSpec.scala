@@ -146,7 +146,7 @@ class TotalTransformerEnumSpec extends ChimneySpec {
     )
   }
 
-  group("setting .withCoproductInstance[Subtype](mapping)") {
+  group("setting .withSealedSubtypeHandled[Subtype](mapping)") {
 
     test(
       """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""
@@ -167,22 +167,22 @@ class TotalTransformerEnumSpec extends ChimneySpec {
 
       (colors2enums.Color.Black: colors2enums.Color)
         .into[colors1enums.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform ==> colors1enums.Color.Red
 
       (colors2enums.Color.Red: colors2enums.Color)
         .into[colors1enums.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform ==> colors1enums.Color.Red
 
       (colors2enums.Color.Green: colors2enums.Color)
         .into[colors1enums.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform ==> colors1enums.Color.Green
 
       (colors2enums.Color.Blue: colors2enums.Color)
         .into[colors1enums.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform ==> colors1enums.Color.Blue
     }
 
@@ -213,8 +213,8 @@ class TotalTransformerEnumSpec extends ChimneySpec {
 
       triangle
         .into[shapes2enums.Shape]
-        .withCoproductInstance(triangleToPolygon)
-        .withCoproductInstance(rectangleToPolygon)
+        .withSealedSubtypeHandled(triangleToPolygon)
+        .withSealedSubtypeHandled(rectangleToPolygon)
         .transform ==> shapes2enums.Shape.Polygon(
         List(shapes2enums.Point(0, 0), shapes2enums.Point(2, 2), shapes2enums.Point(2, 0))
       )
@@ -224,7 +224,7 @@ class TotalTransformerEnumSpec extends ChimneySpec {
 
       rectangle
         .into[shapes2enums.Shape]
-        .withCoproductInstance[shapes1enums.Shape] {
+        .withSealedSubtypeHandled[shapes1enums.Shape] {
           case r: shapes1enums.Shape.Rectangle => rectangleToPolygon(r)
           case t: shapes1enums.Shape.Triangle  => triangleToPolygon(t)
         }

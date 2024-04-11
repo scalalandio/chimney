@@ -79,7 +79,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 
-  def withCoproductInstanceImpl[
+  def withSealedSubtypeHandledImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,
       Overrides <: TransformerOverrides: WeakTypeTag,
@@ -96,7 +96,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       ]]
   }.applyJavaEnumFixFromClosureSignature[Subtype](f)
 
-  def withCoproductInstancePartialImpl[
+  def withSealedSubtypeHandledPartialImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,
       Overrides <: TransformerOverrides: WeakTypeTag,

@@ -1,5 +1,6 @@
 package io.scalaland.chimney.dsl
 
+import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.{partial, PartialTransformer}
 import io.scalaland.chimney.internal.compiletime.dsl.*
 import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
@@ -122,9 +123,9 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
       inline selectorFrom: From => T,
       inline selectorTo: To => U
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
-    ${ PartialTransformerDefinitionMacros.withFieldRenamed('this, 'selectorFrom, 'selectorTo) }
+    ${ PartialTransformerDefinitionMacros.withFieldRenamedImpl('this, 'selectorFrom, 'selectorTo) }
 
-  /** Use `f` to calculate the (missing) coproduct instance when mapping one coproduct into another.
+  /** Use `f` to calculate the unmatched subtype when mapping one sealed/enum into another.
     *
     * By default if mapping one coproduct in `From` into another coproduct in `To` derivation expects that coproducts
     * to have matching names of its components, and for every component in `To` field's type there is matching component
@@ -132,18 +133,37 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     *
     * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
-    * @tparam Subtypetype of coproduct instance
+    * @tparam Subtype type of sealed/enum instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
-    * @since 0.7.0
+    * @since 1.0.0
     */
+  transparent inline def withSealedSubtypeHandled[Subtype](
+      inline f: Subtype => To
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerDefinitionMacros.withSealedSubtypeHandledImpl('this, 'f) }
+
+  /** Alias to [[withSealedSubtypeHandled]].
+    *
+    * @since 1.0.0
+    */
+  transparent inline def withEnumCaseHandled[Subtype](
+      inline f: Subtype => To
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerDefinitionMacros.withSealedSubtypeHandledImpl('this, 'f) }
+
+  /** Renamed to [[withSealedSubtypeHandled]].
+    *
+    * @since 0.1.2
+    */
+  @deprecated("Use .withSealedSubtypeHandled or .withEnumCaseHandled for more clarity", "1.0.0")
   transparent inline def withCoproductInstance[Subtype](
       inline f: Subtype => To
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
-    ${ PartialTransformerDefinitionMacros.withCoproductInstance('this, 'f) }
+    ${ PartialTransformerDefinitionMacros.withSealedSubtypeHandledImpl('this, 'f) }
 
-  /** Use `f` to calculate the (missing) coproduct instance partial result when mapping one coproduct into another.
+  /** Use `f` to calculate the unmatched subtype's partial.Result when mapping one sealed/enum into another.
     *
     * By default if mapping one coproduct in `From` into another coproduct in `To` derivation
     * expects that coproducts to have matching names of its components, and for every component
@@ -152,16 +172,35 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     *
     * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
     *
-    * @tparam Subtypetype of coproduct instance
+    * @tparam Subtype type of sealed/enum instance
     * @param f function to calculate values of components that cannot be mapped automatically
     * @return [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
+    * @since 1.0.0
+    */
+  transparent inline def withSealedSubtypeHandledPartial[Subtype](
+      inline f: Subtype => partial.Result[To]
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerDefinitionMacros.withSealedSubtypeHandledPartialImpl('this, 'f) }
+
+  /** Alias to [[withSealedSubtypeHandledPartial]].
+    *
+    * @since 1.0.0
+    */
+  transparent inline def withEnumCaseHandledPartial[Subtype](
+      inline f: Subtype => partial.Result[To]
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerDefinitionMacros.withSealedSubtypeHandledPartialImpl('this, 'f) }
+
+  /** Renamed to [[withSealedSubtypeHandledPartial]].
+    *
     * @since 0.7.0
     */
+  @deprecated("Use .withSealedSubtypeHandledPartial or .withEnumCaseHandledPartial for more clarity", "1.0.0")
   transparent inline def withCoproductInstancePartial[Subtype](
       inline f: Subtype => partial.Result[To]
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
-    ${ PartialTransformerDefinitionMacros.withCoproductInstancePartial('this, 'f) }
+    ${ PartialTransformerDefinitionMacros.withSealedSubtypeHandledPartialImpl('this, 'f) }
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *
@@ -215,7 +254,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   inline def buildTransformer[ImplicitScopeFlags <: TransformerFlags](using
       tc: TransformerConfiguration[ImplicitScopeFlags]
   ): PartialTransformer[From, To] =
-    ${ PartialTransformerDefinitionMacros.buildTransformer[From, To, Overrides, Flags, ImplicitScopeFlags]('this) }
+    ${ TransformerMacros.derivePartialTransformerWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags]('this) }
 
   private[chimney] def addOverride(overrideData: Any): this.type =
     new PartialTransformerDefinition(overrideData +: runtimeData).asInstanceOf[this.type]

@@ -178,7 +178,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
       Some(shapes3enums.Shape.Rectangle(shapes3enums.Point(2.0, 0.0), shapes3enums.Point(2.0, 2.0)))
   }
 
-  group("setting .withCoproductInstance(mapping)") {
+  group("setting .withSealedSubtypeHandled(mapping)") {
 
     test(
       """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""
@@ -200,25 +200,25 @@ class PartialTransformerEnumSpec extends ChimneySpec {
 
       (colors2enums.Color.Black: colors2enums.Color)
         .intoPartial[colors1enums.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform
         .asOption ==> Some(colors1enums.Color.Red)
 
       (colors2enums.Color.Red: colors2enums.Color)
         .intoPartial[colors1enums.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform
         .asOption ==> Some(colors1enums.Color.Red)
 
       (colors2enums.Color.Green: colors2enums.Color)
         .intoPartial[colors1enums.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform
         .asOption ==> Some(colors1enums.Color.Green)
 
       (colors2enums.Color.Blue: colors2enums.Color)
         .intoPartial[colors1enums.Color]
-        .withCoproductInstance(blackIsRed)
+        .withSealedSubtypeHandled(blackIsRed)
         .transform
         .asOption ==> Some(colors1enums.Color.Blue)
     }
@@ -250,8 +250,8 @@ class PartialTransformerEnumSpec extends ChimneySpec {
 
       triangle
         .intoPartial[shapes2enums.Shape]
-        .withCoproductInstance(triangleToPolygon)
-        .withCoproductInstance(rectangleToPolygon)
+        .withSealedSubtypeHandled(triangleToPolygon)
+        .withSealedSubtypeHandled(rectangleToPolygon)
         .transform
         .asOption ==> Some(
         shapes2enums.Shape.Polygon(List(shapes2enums.Point(0, 0), shapes2enums.Point(2, 2), shapes2enums.Point(2, 0)))
@@ -262,7 +262,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
 
       rectangle
         .intoPartial[shapes2enums.Shape]
-        .withCoproductInstance[shapes1enums.Shape] {
+        .withSealedSubtypeHandled[shapes1enums.Shape] {
           case r: shapes1enums.Shape.Rectangle => rectangleToPolygon(r)
           case t: shapes1enums.Shape.Triangle  => triangleToPolygon(t)
         }
@@ -335,7 +335,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
     )
   }
 
-  group("setting .withCoproductInstancePartial[Subtype](mapping)") {
+  group("setting .withSealedSubtypeHandledPartial[Subtype](mapping)") {
 
     test(
       """transform sealed hierarchies from "superset" of case objects to "subset" of case objects when user-provided mapping handled additional cases"""
@@ -345,25 +345,25 @@ class PartialTransformerEnumSpec extends ChimneySpec {
 
       (colors2enums.Color.Black: colors2enums.Color)
         .intoPartial[colors1enums.Color]
-        .withCoproductInstancePartial(blackIsRed)
+        .withSealedSubtypeHandledPartial(blackIsRed)
         .transform
         .asOption ==> None
 
       (colors2enums.Color.Red: colors2enums.Color)
         .intoPartial[colors1enums.Color]
-        .withCoproductInstancePartial(blackIsRed)
+        .withSealedSubtypeHandledPartial(blackIsRed)
         .transform
         .asOption ==> Some(colors1enums.Color.Red)
 
       (colors2enums.Color.Green: colors2enums.Color)
         .intoPartial[colors1enums.Color]
-        .withCoproductInstancePartial(blackIsRed)
+        .withSealedSubtypeHandledPartial(blackIsRed)
         .transform
         .asOption ==> Some(colors1enums.Color.Green)
 
       (colors2enums.Color.Blue: colors2enums.Color)
         .intoPartial[colors1enums.Color]
-        .withCoproductInstancePartial(blackIsRed)
+        .withSealedSubtypeHandledPartial(blackIsRed)
         .transform
         .asOption ==> Some(colors1enums.Color.Blue)
     }
@@ -399,8 +399,8 @@ class PartialTransformerEnumSpec extends ChimneySpec {
 
       triangle
         .intoPartial[shapes2enums.Shape]
-        .withCoproductInstancePartial(triangleToPolygon)
-        .withCoproductInstancePartial(rectangleToPolygon)
+        .withSealedSubtypeHandledPartial(triangleToPolygon)
+        .withSealedSubtypeHandledPartial(rectangleToPolygon)
         .transform
         .asOption ==> Some(
         shapes2enums.Shape.Polygon(List(shapes2enums.Point(0, 0), shapes2enums.Point(2, 2), shapes2enums.Point(2, 0)))
@@ -411,7 +411,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
 
       rectangle
         .intoPartial[shapes2enums.Shape]
-        .withCoproductInstancePartial[shapes1enums.Shape] {
+        .withSealedSubtypeHandledPartial[shapes1enums.Shape] {
           case r: shapes1enums.Shape.Rectangle => rectangleToPolygon(r)
           case t: shapes1enums.Shape.Triangle  => triangleToPolygon(t)
         }
