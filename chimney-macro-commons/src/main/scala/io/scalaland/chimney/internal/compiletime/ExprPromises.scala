@@ -120,6 +120,25 @@ private[compiletime] trait ExprPromises { this: Definitions =>
       final case class FromExpr[A](expr: Expr[A]) extends NameGenerationStrategy
     }
 
+    /** An artifact of a leaky abstraction.
+      *
+      * In Scala 2 we can create new identifier as s `String`, pass it around and wrap it with `Ident`/`TermName` to use
+      * the value. Whether it would become val, var, lazy val, def etc could be deferred with no consequences.
+      *
+      * On Scala `Ident` takes `Symbol`, this `Symbol` has to be created with the flags and a type. And flags decide
+      * whether it would become : var (Flags.Mutable), lazy val (Flags.Lazy), binding on pattern matching, parameter...
+      *
+      * For normal val, def, binding, method parameter - we can get away with something like:
+      *
+      * {{{
+      * (methodParameterWithNewIdentifier: Type) => {
+      *   val nameGeneratedBefore = methodParameterWithNewIdentifier
+      *   // code using nameGeneratedBefore
+      * }
+      * }}}
+      *
+      * but it cannot be used for `lazy val`s or `var`s.
+      */
     sealed trait UsageHint extends Product with Serializable
     object UsageHint {
       case object None extends UsageHint
