@@ -155,7 +155,7 @@ object PartialTransformerDefinitionMacros {
         .asInstanceOf[PartialTransformerDefinition[
           From,
           To,
-          CaseComputed[Path.Matching[Path.Root, Subtype], Overrides],
+          CaseComputed[Path.SourceMatching[Path.Root, Subtype], Overrides],
           Flags
         ]]
     }
@@ -176,7 +176,7 @@ object PartialTransformerDefinitionMacros {
         .asInstanceOf[PartialTransformerDefinition[
           From,
           To,
-          CaseComputedPartial[Path.Matching[Path.Root, Subtype], Overrides],
+          CaseComputedPartial[Path.SourceMatching[Path.Root, Subtype], Overrides],
           Flags
         ]]
     }

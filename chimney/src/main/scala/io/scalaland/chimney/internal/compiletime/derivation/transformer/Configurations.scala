@@ -88,6 +88,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     import Path.*, Path.Segment.*
     def select(name: String): Path = new Path(segments :+ Select(name))
     def matching[Tpe: Type]: Path = new Path(segments :+ Matching(Type[Tpe].as_??))
+    def sourceMatching[Tpe: Type]: Path = new Path(segments :+ SourceMatching(Type[Tpe].as_??))
     def everyItem: Path = new Path(segments :+ EveryItem)
     def everyMapKey: Path = new Path(segments :+ EveryMapKey)
     def everyMapValue: Path = new Path(segments :+ EveryMapValue)
@@ -124,6 +125,11 @@ private[compiletime] trait Configurations { this: Derivation =>
         path.segments.headOption.collect { case Segment.Matching(tpe) => tpe -> new Path(path.segments.tail) }
     }
 
+    object AtSourceSubtype {
+      def unapply(path: Path): Option[(??, Path)] =
+        path.segments.headOption.collect { case Segment.SourceMatching(tpe) => tpe -> new Path(path.segments.tail) }
+    }
+
     object AtItem {
       def unapply(path: Path): Option[Path] =
         path.segments.headOption.collect { case Segment.EveryItem => new Path(path.segments.tail) }
@@ -151,6 +157,14 @@ private[compiletime] trait Configurations { this: Derivation =>
         }
 
         override def toString: String = s".matching[${Type.prettyPrint(tpe.Underlying)}]"
+      }
+      final case class SourceMatching(tpe: ??) extends Segment {
+        override def equals(obj: Any): Boolean = obj match {
+          case Matching(tpe2) => tpe.Underlying =:= tpe2.Underlying
+          case _              => false
+        }
+
+        override def toString: String = s" if src.isInstanceOf[${Type.prettyPrint(tpe.Underlying)}]"
       }
       case object EveryItem extends Segment {
         override def toString: String = ".everyItem"
@@ -207,10 +221,11 @@ private[compiletime] trait Configurations { this: Derivation =>
   ) {
 
     private lazy val runtimeOverridesForCurrent = runtimeOverrides.filter {
-      case (Path.AtField(_, Path.Root), _: TransformerOverride.ForField)     => true
-      case (Path.AtSubtype(_, Path.Root), _: TransformerOverride.ForSubtype) => true
-      case (Path.Root, _: TransformerOverride.ForConstructor)                => true
-      case _                                                                 => false
+      case (Path.AtField(_, Path.Root), _: TransformerOverride.ForField)           => true
+      case (Path.AtSubtype(_, Path.Root), _: TransformerOverride.ForSubtype)       => true
+      case (Path.AtSourceSubtype(_, Path.Root), _: TransformerOverride.ForSubtype) => true
+      case (Path.Root, _: TransformerOverride.ForConstructor)                      => true
+      case _                                                                       => false
     }
 
     def allowFromToImplicitSummoning: TransformerConfiguration =
@@ -241,11 +256,15 @@ private[compiletime] trait Configurations { this: Derivation =>
             name -> runtimeFieldOverride
         }
       )
-    def filterCurrentOverridesForSubtype(typeFilter: ?? => Boolean): Map[??, TransformerOverride.ForSubtype] =
+    def filterCurrentOverridesForSubtype(
+        sourceTypeFilter: ?? => Boolean,
+        @scala.annotation.unused targetTypeFilter: ?? => Boolean
+    ): Map[Option[??], TransformerOverride.ForSubtype] =
       ListMap.from(
         runtimeOverridesForCurrent.collect {
-          case (Path.AtSubtype(tpe, _), runtimeCoproductOverride: TransformerOverride.ForSubtype) if typeFilter(tpe) =>
-            tpe -> runtimeCoproductOverride
+          case (Path.AtSourceSubtype(tpe, _), runtimeCoproductOverride: TransformerOverride.ForSubtype)
+              if sourceTypeFilter(tpe) =>
+            Some(tpe) -> runtimeCoproductOverride
         }
       )
     def currentOverrideForConstructor: Option[TransformerOverride.ForConstructor] =
@@ -457,6 +476,9 @@ private[compiletime] trait Configurations { this: Derivation =>
       case ChimneyType.Path.Matching(init, subtype) =>
         import init.Underlying as PathType2, subtype.Underlying as Subtype
         extractPath[PathType2].matching[Subtype]
+      case ChimneyType.Path.SourceMatching(init, sourceSubtype) =>
+        import init.Underlying as PathType2, sourceSubtype.Underlying as SourceSubtype
+        extractPath[PathType2].sourceMatching[SourceSubtype]
       case ChimneyType.Path.EveryItem(init) =>
         import init.Underlying as PathType2
         extractPath[PathType2].everyItem

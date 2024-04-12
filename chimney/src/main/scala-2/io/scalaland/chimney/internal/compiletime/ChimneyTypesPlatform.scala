@@ -43,6 +43,11 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             val fixedInit = fixJavaEnums(init)
             import fixedSubtype.Underlying as FixedSubtype, fixedInit.Underlying as FixedInit
             Path.Matching[FixedInit, FixedSubtype].as_?<[runtime.Path]
+          case Path.SourceMatching(init, subtype) =>
+            val fixedSubtype = fixJavaEnum(subtype)
+            val fixedInit = fixJavaEnums(init)
+            import fixedSubtype.Underlying as FixedSubtype, fixedInit.Underlying as FixedInit
+            Path.SourceMatching[FixedInit, FixedSubtype].as_?<[runtime.Path]
           case Path.EveryItem(init) =>
             val fixedInit = fixJavaEnums(init)
             import fixedInit.Underlying as FixedInit
@@ -357,6 +362,13 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           weakTypeTag[runtime.Path.Matching[Init, Subtype]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ??)] =
           if (A.isCtor[runtime.Path.Matching[?, ?]]) Some(A.param_<[runtime.Path](0) -> A.param(1))
+          else scala.None
+      }
+      object SourceMatching extends SourceMatchingModule {
+        def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.SourceMatching[Init, Subtype]] =
+          weakTypeTag[runtime.Path.SourceMatching[Init, Subtype]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ??)] =
+          if (A.isCtor[runtime.Path.SourceMatching[?, ?]]) Some(A.param_<[runtime.Path](0) -> A.param(1))
           else scala.None
       }
       object EveryItem extends EveryItemModule {

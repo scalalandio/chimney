@@ -92,7 +92,7 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
       .asInstanceOfExpr[PartialTransformerInto[
         From,
         To,
-        CaseComputed[Path.Matching[Path.Root, FixedSubtype], Overrides],
+        CaseComputed[Path.SourceMatching[Path.Root, FixedSubtype], Overrides],
         Flags
       ]]
   }.applyJavaEnumFixFromClosureSignature[Subtype](f)
@@ -109,7 +109,7 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
       .asInstanceOfExpr[PartialTransformerInto[
         From,
         To,
-        CaseComputedPartial[Path.Matching[Path.Root, FixedSubtype], Overrides],
+        CaseComputedPartial[Path.SourceMatching[Path.Root, FixedSubtype], Overrides],
         Flags
       ]]
   }.applyJavaEnumFixFromClosureSignature[Subtype](f)
