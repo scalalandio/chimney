@@ -246,6 +246,13 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             Any,
             runtime.Path.Matching
           ] { this: Matching.type => }
+      val SourceMatching: SourceMatchingModule
+      trait SourceMatchingModule
+          extends Type.Ctor2UpperBounded[
+            runtime.Path,
+            Any,
+            runtime.Path.SourceMatching
+          ] { this: SourceMatching.type => }
       val EveryItem: EveryItemModule
       trait EveryItemModule
           extends Type.Ctor1UpperBounded[

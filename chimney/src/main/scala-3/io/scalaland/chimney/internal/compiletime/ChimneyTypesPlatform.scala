@@ -319,6 +319,14 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             Some((Type[init].as_?<[runtime.Path], Type[subtype].as_??))
           case _ => scala.None
       }
+      object SourceMatching extends SourceMatchingModule {
+        def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.SourceMatching[Init, Subtype]] =
+          quoted.Type.of[runtime.Path.SourceMatching[Init, Subtype]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ??)] = tpe match
+          case '[runtime.Path.SourceMatching[init, subtype]] =>
+            Some((Type[init].as_?<[runtime.Path], Type[subtype].as_??))
+          case _ => scala.None
+      }
       object EveryItem extends EveryItemModule {
         def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryItem[Init]] =
           quoted.Type.of[runtime.Path.EveryItem[Init]]

@@ -103,7 +103,7 @@ object TransformerDefinitionMacros {
         .asInstanceOf[TransformerDefinition[
           From,
           To,
-          CaseComputed[Path.Matching[Path.Root, Subtype], Overrides],
+          CaseComputed[Path.SourceMatching[Path.Root, Subtype], Overrides],
           Flags
         ]]
     }

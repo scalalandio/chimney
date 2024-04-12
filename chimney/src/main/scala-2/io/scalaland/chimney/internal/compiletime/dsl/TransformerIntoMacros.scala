@@ -64,7 +64,7 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       .asInstanceOfExpr[TransformerInto[
         From,
         To,
-        CaseComputed[Path.Matching[Path.Root, FixedSubtype], Overrides],
+        CaseComputed[Path.SourceMatching[Path.Root, FixedSubtype], Overrides],
         Flags
       ]]
   }.applyJavaEnumFixFromClosureSignature[Subtype](f)
