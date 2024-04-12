@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.dsl as dsls
+import io.scalaland.chimney.integrations
 import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
@@ -271,6 +272,19 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.Path,
             runtime.Path.EveryMapValue
           ] { this: EveryMapValue.type => }
+    }
+
+    val OptionalValueOf: OptionalValueOfModule
+    trait OptionalValueOfModule extends Type.Ctor2[integrations.OptionalValue.Of] { this: OptionalValueOf.type => }
+
+    val PartiallyBuildIterableOf: PartiallyBuildIterableOfModule
+    trait PartiallyBuildIterableOfModule extends Type.Ctor2[integrations.PartiallyBuildIterable.Of] {
+      this: PartiallyBuildIterableOf.type =>
+    }
+
+    val TotallyBuildIterableOf: TotallyBuildIterableOfModule
+    trait TotallyBuildIterableOfModule extends Type.Ctor2[integrations.TotallyBuildIterable.Of] {
+      this: TotallyBuildIterableOf.type =>
     }
 
     // You can `import ChimneyType.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts
