@@ -1907,6 +1907,66 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     }.transform.asEither // Right(Foo.Buzz)
     ```
 
+!!! notice
+
+    While `sealed` hierarchies, Scala 3 `enum`s and Java `enum`s fall into the same category of Algebraic Data Types,
+    manu users might consider them different things and e.g. not look for methods starting with `withSealedSubtype`
+    when dealing with `enum`s. For that reason we provide an aliases to both of these methods - `withEnumCaseHandled`
+    and `withEnumCaseHandledPartial`:
+    
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+    
+    enum Foo {
+      case Baz(a: String)
+      case Buzz  
+    }
+    enum Bar {
+      case Baz(a: String)
+      case Fizz  
+      case Buzz
+    }
+    
+    (Bar.Baz("value"): Bar).into[Foo].withEnumCaseHandled[Bar.Fizz.type] {
+      fizz => Foo.Baz(fizz.toString)
+    }.transform // Foo.Baz("value")
+    (Bar.Fizz: Bar).into[Foo].withEnumCaseHandled[Bar.Fizz.type] {
+      fizz => Foo.Baz(fizz.toString)
+    }.transform // Foo.Baz("Fizz")
+    (Bar.Buzz: Bar).into[Foo].withEnumCaseHandled[Bar.Fizz.type] {
+      fizz => Foo.Baz(fizz.toString)
+    }.transform // Foo.Buzz
+    
+    (Bar.Baz("value"): Bar).intoPartial[Foo].withEnumCaseHandledPartial[Bar.Fizz.type] {
+      fizz => partial.Result.fromEmpty
+    }.transform.asEither // Right(Foo.Baz("value"))
+    (Bar.Fizz: Bar).intoPartial[Foo].withEnumCaseHandledPartial[Bar.Fizz.type] {
+      fizz => partial.Result.fromEmpty
+    }.transform.asEither // Left(...)
+    (Bar.Buzz: Bar).intoPartial[Foo].withEnumCaseHandledPartial[Bar.Fizz.type] {
+      fizz => partial.Result.fromEmpty
+    }.transform.asEither // Right(Foo.Buzz)
+    ```
+    
+    These methods are only aliases and there is no difference in behavior between `withSealedCaseHandled` and
+    `withEnumCaseHandled` - the difference in names exist only for the sake of readability and discoverability.
+    For similar reason the only name of this method - `withCoproductInstance` - was deprecated (although it was left as
+    an alias to let the old code work, while encourage users to use newer, more understanable names).
+
+!!! notice
+
+     `withSealedSubtypeHandled[Subtype](...)` might look similar to `withFieldComputed(_.matching[Subtype], ...)` but
+     the difference becomes clear when we provide the types:
+     
+      * `foo.into[Bar].withSealedSubtypeHandled[Foo.Baz](subtype => ...).transform` matches the subtype on the **source**
+        value, while
+      * `foo.into[Bar].withFieldComputed(_.matching[Bar.Baz], foo => ...)` - provides an override on the **target**
+        type's value
+       
+     so these 2 pieces of code covers difference use cases.
+
 !!! warning
 
     Due to limitations of Scala 2, when you want to use `.withSealedSubtypeHandled` or `.withSealedSubtypeHandledPartial` with
