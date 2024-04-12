@@ -10,9 +10,12 @@ private[chimney] trait TransformerCompanionPlatform { this: Transformer.type =>
     *
     * When transformation can't be derived, it results with compilation error.
     *
-    * @tparam From type of input value
-    * @tparam To   type of output value
-    * @return [[io.scalaland.chimney.Transformer]] type class instance
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    * @return
+    *   [[io.scalaland.chimney.Transformer]] type class instance
     *
     * @since 0.2.0
     */
@@ -24,12 +27,15 @@ private[chimney] trait TransformerAutoDerivedCompanionPlatform { this: Transform
 
   /** Provides [[io.scalaland.chimney.Transformer]] derived with the default settings.
     *
-    * This instance WILL NOT be visible for recursive derivation (automatic, semiautomatic, inlined),
-    * which is how it differs from [[io.scalaland.chimney.auto#deriveAutomaticTransformer]].
+    * This instance WILL NOT be visible for recursive derivation (automatic, semiautomatic, inlined), which is how it
+    * differs from [[io.scalaland.chimney.auto#deriveAutomaticTransformer]].
     *
-    * @tparam From type of input value
-    * @tparam To   type of output value
-    * @return [[io.scalaland.chimney.Transformer.AutoDerived]] type class instance
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    * @return
+    *   [[io.scalaland.chimney.Transformer.AutoDerived]] type class instance
     *
     * @since 0.8.0
     */

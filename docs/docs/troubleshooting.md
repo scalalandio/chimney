@@ -85,14 +85,14 @@ To migrate your code from Lifted Transformers to Partial Transformers, you may t
     - replace ``withFieldComputedF`` with ``withFieldComputedPartial``
     - etc.
   - adjust the types passed to the customization methods. In Lifted Transformers, they were expecting values of
-    your custom type `F[T]`, while in Partial Transformers they work with `partial.Result[T]`. See the
+    your custom type `F[A]`, while in Partial Transformers they work with `partial.Result[A]`. See the
     `partial.Result` companion object for ways of constructing `success` and `failure` instances, for example:
     - `partial.Result.fromValue`
     - `partial.Result.fromOption`
     - `partial.Result.fromEither`
     - `partial.Result.fromTry`
     - and so on...
-  - the resulting type of a call to `.transform` is also a `partial.Result[T]`. If you don't want to work with
+  - the resulting type of a call to `.transform` is also a `partial.Result[A]`. If you don't want to work with
     `partial.Result` directly, figure out ways to convert it to other, more familiar data structures.
     Some of the ways may include:
     - `result.asOption`

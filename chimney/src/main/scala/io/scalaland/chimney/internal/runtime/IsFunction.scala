@@ -3,8 +3,8 @@ package io.scalaland.chimney.internal.runtime
 import scala.annotation.implicitNotFound
 
 /** Allow us to provide some better IDE support than just accepting everything as a parameter and waiting for the macro
-  * to scream with compilation error, in the world where different function types have no common ancestor
-  * (other than AnyRef).
+  * to scream with compilation error, in the world where different function types have no common ancestor (other than
+  * AnyRef).
   *
   * @since 0.8.4
   */

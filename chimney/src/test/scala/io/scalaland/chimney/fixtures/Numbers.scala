@@ -4,21 +4,21 @@ package numbers
 // following https://en.wikipedia.org/wiki/Names_of_large_numbers
 
 package short {
-  sealed trait NumScale[+T, Dummy]
+  sealed trait NumScale[+A, Dummy]
   case object Zero extends NumScale[Nothing, Nothing]
-  case class Million[T](count: T) extends NumScale[T, Nothing] // 10^6
-  case class Billion[T](count: T) extends NumScale[T, Nothing] // 10^9
-  case class Trillion[T](count: T) extends NumScale[T, Nothing] // 10^12
+  case class Million[A](count: A) extends NumScale[A, Nothing] // 10^6
+  case class Billion[A](count: A) extends NumScale[A, Nothing] // 10^9
+  case class Trillion[A](count: A) extends NumScale[A, Nothing] // 10^12
 }
 
 package long {
-  sealed trait NumScale[+T]
+  sealed trait NumScale[+A]
   case object Zero extends NumScale[Nothing]
-  case class Million[T](count: T) extends NumScale[T] // 10^6
-  case class Milliard[T](count: T) extends NumScale[T] // 10^9
-  case class Billion[T](count: T) extends NumScale[T] // 10^12
-  case class Billiard[T](count: T) extends NumScale[T] // 10^15
-  case class Trillion[T](count: T) extends NumScale[T] // 10^18
+  case class Million[A](count: A) extends NumScale[A] // 10^6
+  case class Milliard[A](count: A) extends NumScale[A] // 10^9
+  case class Billion[A](count: A) extends NumScale[A] // 10^12
+  case class Billiard[A](count: A) extends NumScale[A] // 10^15
+  case class Trillion[A](count: A) extends NumScale[A] // 10^18
 }
 
 import io.scalaland.chimney.{PartialTransformer, Transformer}

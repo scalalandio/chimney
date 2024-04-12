@@ -21,13 +21,13 @@ object foo {
 case class VC(x: String) extends AnyVal
 
 object tag {
-  def apply[U] = new Tagger[U]
+  def apply[Tag] = new Tagger[Tag]
 
-  trait Tagged[U]
-  type @@[+T, U] = T with Tagged[U]
+  trait Tagged[Tag]
+  type @@[+A, Tag] = A with Tagged[Tag]
 
-  class Tagger[U] {
-    def apply[T](t: T): T @@ U = t.asInstanceOf[T @@ U]
+  class Tagger[Tag] {
+    def apply[A](a: A): A @@ Tag = a.asInstanceOf[A @@ Tag]
   }
 }
 
@@ -109,7 +109,7 @@ object Issue199 {
     C.Bar(keys = keys.toSeq, values = values.toSeq)
   }
 
-  case class Bag[T](xs: Seq[T])
+  case class Bag[A0](xs: Seq[A0])
 }
 
 object Issue210 {
@@ -159,7 +159,7 @@ object Issue228 {
 }
 
 object Issue291 {
-  final class GenericValueClass[T](val value: T) extends AnyVal
+  final class GenericValueClass[A](val value: A) extends AnyVal
 
   case class Bar(address: GenericValueClass[String])
   case class Foo(address: Option[GenericValueClass[String]])

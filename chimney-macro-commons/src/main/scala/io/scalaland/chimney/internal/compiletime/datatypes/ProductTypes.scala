@@ -10,14 +10,14 @@ trait ProductTypes { this: Definitions =>
   /** Describes all types which could be considered products in a very loose way.
     *
     * For type to be considered "product" it has to be:
-    * - non abstract
-    * - have a public (primary) constructor
+    *   - non abstract
+    *   - have a public (primary) constructor
     *
     * If it's a "product" then we are able to provide both a way to construct it as well as a way to extract its
     * properties. This is rather unrestricted since:
-    * - our "constructor" allows passing arguments to Java Bean setters
-    * - our properties include: `def`s without arguments, Java Bean getters
-    * and it's the code using the extractors and constructors that should check the type of getter/constructor argument.
+    *   - our "constructor" allows passing arguments to Java Bean setters
+    *   - our properties include: `def`s without arguments, Java Bean getters and it's the code using the extractors and
+    *     constructors that should check the type of getter/constructor argument.
     *
     * In case we don't need a "product" per se, but rather any instantiable type to instantiate or any type to obtain
     * its methods, we can use `unapply` from `Extraction` or `Construction`.
@@ -70,8 +70,8 @@ trait ProductTypes { this: Definitions =>
 
     final type Arguments = Map[String, ExistentialExpr]
 
-    /** Let us obtain a list of primary constructor's parameters as well as setter parameters, as well as a method
-      * of taking all computed arguments and turning it into constructed value.
+    /** Let us obtain a list of primary constructor's parameters as well as setter parameters, as well as a method of
+      * taking all computed arguments and turning it into constructed value.
       */
     final case class Constructor[To](parameters: Parameters, constructor: Arguments => Expr[To])
     object Constructor {

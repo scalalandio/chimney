@@ -6,9 +6,12 @@ private[chimney] trait PatcherCompanionPlatform { this: Patcher.type =>
 
   /** Provides [[io.scalaland.chimney.Patcher]] instance for arbitrary types.
     *
-    * @tparam A     type of object to apply patch to
-    * @tparam Patch type of patch object
-    * @return [[io.scalaland.chimney.Patcher]] type class instance
+    * @tparam A
+    *   type of object to apply patch to
+    * @tparam Patch
+    *   type of patch object
+    * @return
+    *   [[io.scalaland.chimney.Patcher]] type class instance
     *
     * @since 0.8.0
     */
@@ -20,12 +23,15 @@ private[chimney] trait PatcherAutoDerivedCompanionPlatform { this: Patcher.AutoD
 
   /** Provides [[io.scalaland.chimney.Patcher]] derived with the default settings.
     *
-    * This instance WILL NOT be visible for recursive derivation (automatic, semiautomatic, inlined),
-    * which is how it differs from [[io.scalaland.chimney.auto#deriveAutomaticPatcher]].
+    * This instance WILL NOT be visible for recursive derivation (automatic, semiautomatic, inlined), which is how it
+    * differs from [[io.scalaland.chimney.auto#deriveAutomaticPatcher]].
     *
-    * @tparam A     type of object to apply patch to
-    * @tparam Patch type of patch object
-    * @return [[io.scalaland.chimney.Patcher]] type class instance
+    * @tparam A
+    *   type of object to apply patch to
+    * @tparam Patch
+    *   type of patch object
+    * @return
+    *   [[io.scalaland.chimney.Patcher]] type class instance
     *
     * @since 0.8.0
     */

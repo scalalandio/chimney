@@ -2449,8 +2449,8 @@ knows how to apply it, the transformation can still be derived:
     case class Foo[A](value: A)
     case class Bar[A](value: A)
     
-    def upcastingExample[T, S >: T](foo: Foo[T]): Bar[S] =
-      foo.transformInto[Bar[S]]
+    def upcastingExample[A, B >: A](foo: Foo[A]): Bar[B] =
+      foo.transformInto[Bar[B]]
     
     upcastingExample[Int, AnyVal](Foo(10))
     ```
@@ -2465,7 +2465,7 @@ knows how to apply it, the transformation can still be derived:
     case class Foo[A](value: A) extends Baz[A]
     case class Bar[A](value: A)
     
-    def subtypeExample[T <: Baz[String]](foo: Foo[T]): Bar[Bar[String]] =
+    def subtypeExample[A <: Baz[String]](foo: Foo[A]): Bar[Bar[String]] =
       foo.transformInto[Bar[Bar[String]]]
     
     subtypeExample(Foo(Foo("value")))
@@ -2481,7 +2481,7 @@ knows how to apply it, the transformation can still be derived:
     case class Foo[A](value: A)
     case class Bar[A](value: A)
     
-    def refinedExample[T <: { val value: String }](foo: Foo[T]): Bar[Bar[String]] =
+    def refinedExample[A <: { val value: String }](foo: Foo[A]): Bar[Bar[String]] =
       foo.into[Bar[Bar[String]]].enableMacrosLogging.transform
     
     refinedExample[Foo[String]](Foo(Foo("value")))
@@ -2499,8 +2499,8 @@ Finally, you can always provide a custom `Transformer` from/to a type containing
     case class Foo[A](value: A)
     case class Bar[A](value: A)
 
-    def conversion[T, S](foo: Foo[T])(implicit transformer: Transformer[T, S]): Bar[S] =
-      foo.transformInto[Bar[S]]
+    def conversion[A, B](foo: Foo[A])(implicit transformer: Transformer[A, B]): Bar[B] =
+      foo.transformInto[Bar[B]]
     ```
 
 !!! tip

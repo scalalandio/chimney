@@ -11,8 +11,10 @@ import scala.util.Try
 
 /** Provides transformer operations on values of any type.
   *
-  * @tparam From type of source value
-  * @param source wrapped source value
+  * @tparam From
+  *   type of source value
+  * @param source
+  *   wrapped source value
   *
   * @since 0.4.0
   */
@@ -20,14 +22,18 @@ extension [From](source: From) {
 
   /** Performs in-place transformation of captured source value to target type.
     *
-    * If you want to customize transformer behavior, consider using
-    * [[io.scalaland.chimney.dsl.TransformerOps#into]] method.
+    * If you want to customize transformer behavior, consider using [[io.scalaland.chimney.dsl.TransformerOps#into]]
+    * method.
     *
-    * @see [[io.scalaland.chimney.auto#deriveAutomaticTransformer]] for default implicit instance
+    * @see
+    *   [[io.scalaland.chimney.auto#deriveAutomaticTransformer]] for default implicit instance
     *
-    * @tparam To target type
-    * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
-    * @return transformed value of target type `To`
+    * @tparam To
+    *   target type
+    * @param transformer
+    *   implicit instance of [[io.scalaland.chimney.Transformer]] type class
+    * @return
+    *   transformed value of target type `To`
     * @since 0.1.0
     */
   transparent inline def transformInto[To](implicit transformer: Transformer[From, To]): To =
@@ -36,8 +42,10 @@ extension [From](source: From) {
 
 /** Provides partial transformer operations on values of any type.
   *
-  * @tparam From type of source value
-  * @param source wrapped source value
+  * @tparam From
+  *   type of source value
+  * @param source
+  *   wrapped source value
   *
   * @since 0.7.0
   */
@@ -48,11 +56,15 @@ extension [From](source: From) {
     * If you want to customize transformer behavior, consider using
     * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
     *
-    * @see [[io.scalaland.chimney.auto#deriveAutomaticPartialTransformer]] for default implicit instance
+    * @see
+    *   [[io.scalaland.chimney.auto#deriveAutomaticPartialTransformer]] for default implicit instance
     *
-    * @tparam To result target type of partial transformation
-    * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
-    * @return partial transformation result value of target type `To`
+    * @tparam To
+    *   result target type of partial transformation
+    * @param transformer
+    *   implicit instance of [[io.scalaland.chimney.Transformer]] type class
+    * @return
+    *   partial transformation result value of target type `To`
     *
     * @since 0.7.0
     */
@@ -66,12 +78,17 @@ extension [From](source: From) {
     * If you want to customize transformer behavior, consider using
     * [[io.scalaland.chimney.dsl.PartialTransformerOps#intoPartial]] method.
     *
-    * @see [[io.scalaland.chimney.auto#deriveAutomaticPartialTransformer]] for default implicit instance
+    * @see
+    *   [[io.scalaland.chimney.auto#deriveAutomaticPartialTransformer]] for default implicit instance
     *
-    * @tparam To result target type of partial transformation
-    * @param failFast    should fail as early as the first set of errors appear
-    * @param transformer implicit instance of [[io.scalaland.chimney.Transformer]] type class
-    * @return partial transformation result value of target type `To`
+    * @tparam To
+    *   result target type of partial transformation
+    * @param failFast
+    *   should fail as early as the first set of errors appear
+    * @param transformer
+    *   implicit instance of [[io.scalaland.chimney.Transformer]] type class
+    * @return
+    *   partial transformation result value of target type `To`
     *
     * @since 0.7.0
     */
@@ -83,8 +100,10 @@ extension [From](source: From) {
 
 /** Provides patcher operations on values of any type
   *
-  * @param obj wrapped object to patch
-  * @tparam A type of object to patch
+  * @param obj
+  *   wrapped object to patch
+  * @tparam A
+  *   type of object to patch
   *
   * @since 0.1.3
   */
@@ -92,26 +111,33 @@ extension [A](obj: A) {
 
   /** Performs in-place patching of wrapped object with provided value.
     *
-    * If you want to customize patching behavior, consider using
-    * [[io.scalaland.chimney.dsl.PatcherOps#using using]] method.
+    * If you want to customize patching behavior, consider using [[io.scalaland.chimney.dsl.PatcherOps#using using]]
+    * method.
     *
-    * @see [[io.scalaland.chimney.auto#deriveAutomaticPatcher]] for default implicit instance
+    * @see
+    *   [[io.scalaland.chimney.auto#deriveAutomaticPatcher]] for default implicit instance
     *
-    * @tparam P type of patch object
-    * @param patch   patch object value
-    * @param patcher implicit instance of [[io.scalaland.chimney.Patcher]] type class
-    * @return patched value
+    * @tparam Patch
+    *   type of patch object
+    * @param patch
+    *   patch object value
+    * @param patcher
+    *   implicit instance of [[io.scalaland.chimney.Patcher]] type class
+    * @return
+    *   patched value
     *
     * @since 0.4.0
     */
-  transparent inline def patchUsing[P](patch: P)(implicit patcher: Patcher[A, P]): A =
+  transparent inline def patchUsing[Patch](patch: Patch)(implicit patcher: Patcher[A, Patch]): A =
     patcher.patch(obj, patch)
 }
 
 /** Lifts [[scala.Option]] into [[io.scalaland.chimney.partial.Result]].
   *
-  * @tparam A type of value inside Option
-  * @param option value to convert
+  * @tparam A
+  *   type of value inside Option
+  * @param option
+  *   value to convert
   *
   * @since 0.7.0
   */
@@ -119,7 +145,8 @@ extension [A](option: Option[A]) {
 
   /** Converts Option to Result, using EmptyValue error if None.
     *
-    * @return successful result if [[scala.Some]], failed result with EmptyValue error if [[None]]
+    * @return
+    *   successful result if [[scala.Some]], failed result with EmptyValue error if [[None]]
     *
     * @since 0.7.0
     */
@@ -128,8 +155,10 @@ extension [A](option: Option[A]) {
 
   /** Converts Option to Result, using provided error message if None.
     *
-    * @param ifEmpty lazy error message for [[scala.None]]
-    * @return successful result if [[scala.Some]], failed result with provided error message if [[scala.None]]
+    * @param ifEmpty
+    *   lazy error message for [[scala.None]]
+    * @return
+    *   successful result if [[scala.Some]], failed result with provided error message if [[scala.None]]
     *
     * @since 0.7.0
     */
@@ -139,8 +168,10 @@ extension [A](option: Option[A]) {
 
 /** Lifts [[scala.Either]] into [[io.scalaland.chimney.partial.Result]].
   *
-  * @tparam A type of value inside Option
-  * @param either value to convert
+  * @tparam A
+  *   type of value inside Option
+  * @param either
+  *   value to convert
   *
   * @since 0.7.0
   */
@@ -148,7 +179,8 @@ extension [A](either: Either[String, A]) {
 
   /** Converts Either to Result, using an error message from Left as failed result.
     *
-    * @return successful result if [[scala.Right]], failed result with an error message if [[scala.Left]]
+    * @return
+    *   successful result if [[scala.Right]], failed result with an error message if [[scala.Left]]
     *
     * @since 0.7.0
     */
@@ -158,8 +190,10 @@ extension [A](either: Either[String, A]) {
 
 /** Lifts [[scala.util.Try]] into [[io.scalaland.chimney.partial.Result]].
   *
-  * @tparam A type of value inside Option
-  * @param `try` value to convert
+  * @tparam A
+  *   type of value inside Option
+  * @param `try`
+  *   value to convert
   *
   * @since 0.7.0
   */
@@ -167,7 +201,8 @@ extension [A](`try`: Try[A]) {
 
   /** Converts Try to Result, using Throwable from Failure as failed result.
     *
-    * @return successful result if [[scala.util.Success]], failed result with Throwable if [[scala.util.Failure]]
+    * @return
+    *   successful result if [[scala.util.Success]], failed result with Throwable if [[scala.util.Failure]]
     *
     * @since 0.7.0
     */
@@ -179,7 +214,8 @@ extension [A](`try`: Try[A]) {
 
 /** Allows subtype matching when selecting path to override in Chimney DSL.
   *
-  * @tparam A type to match
+  * @tparam A
+  *   type to match
   *
   * @since 1.0.0
   */
@@ -189,8 +225,10 @@ extension [A](@unused a: A) {
     *
     * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
     *
-    * @tparam B subtype for which override should be provided
-    * @return   stubs a value of selected subtype
+    * @tparam B
+    *   subtype for which override should be provided
+    * @return
+    *   stubs a value of selected subtype
     *
     * @since 1.0.0
     */
@@ -200,7 +238,8 @@ extension [A](@unused a: A) {
     *
     * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
     *
-    * @return stubs a value extracted from `Some`
+    * @return
+    *   stubs a value extracted from `Some`
     *
     * @since 1.0.0
     */
@@ -211,7 +250,8 @@ extension [A](@unused a: A) {
     *
     * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
     *
-    * @return stubs a value extracted from `Left`
+    * @return
+    *   stubs a value extracted from `Left`
     *
     * @since 1.0.0
     */
@@ -222,7 +262,8 @@ extension [A](@unused a: A) {
     *
     * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
     *
-    * @return stubs a value extracted from `Right`
+    * @return
+    *   stubs a value extracted from `Right`
     *
     * @since 1.0.0
     */
@@ -232,8 +273,10 @@ extension [A](@unused a: A) {
 
 /** Allow item extraction from collections when selecting path to override in Chimney DSL.
   *
-  * @tparam C type of the collection
-  * @tparam I type of items in the collection
+  * @tparam C
+  *   type of the collection
+  * @tparam I
+  *   type of items in the collection
   *
   * @since 1.0.0
   */
@@ -243,7 +286,8 @@ extension [C[_], I](@unused cc: C[I]) {
     *
     * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
     *
-    * @return stubs an item extracted from the collection
+    * @return
+    *   stubs an item extracted from the collection
     *
     * @since 1.0.0
     */
@@ -253,9 +297,12 @@ extension [C[_], I](@unused cc: C[I]) {
 
 /** Allow key/value extraction from maps when selecting path to override in Chimney DSL.
   *
-  * @tparam M type of the map
-  * @tparam K type of keys in the map
-  * @tparam V type of values in the map
+  * @tparam M
+  *   type of the map
+  * @tparam K
+  *   type of keys in the map
+  * @tparam V
+  *   type of values in the map
   *
   * @since 1.0.0
   */
@@ -265,7 +312,8 @@ extension [M[_, _], K, V](@unused cc: M[K, V]) {
     *
     * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
     *
-    * @return stubs a key extracted from the map
+    * @return
+    *   stubs a key extracted from the map
     *
     * @since 1.0.0
     */
@@ -276,7 +324,8 @@ extension [M[_, _], K, V](@unused cc: M[K, V]) {
     *
     * It can only be used within `.withField*` methods where the macros reads it and erases it from the final code!
     *
-    * @return stubs a value extracted from the map
+    * @return
+    *   stubs a value extracted from the map
     *
     * @since 1.0.0
     */

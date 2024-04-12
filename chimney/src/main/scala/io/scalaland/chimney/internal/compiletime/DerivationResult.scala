@@ -6,9 +6,9 @@ import scala.util.control.NonFatal
 /** Representations of a ongoing computation.
   *
   * Features:
-  * - handles errors
-  * - catches exceptions
-  * - provides sequential and parallel combinators
+  *   - handles errors
+  *   - catches exceptions
+  *   - provides sequential and parallel combinators
   *
   * Intended to simplify how we express our logic during the derivation without long types and boilerplate.
   */

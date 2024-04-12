@@ -6,12 +6,18 @@ import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
 
 /** Provides operations to customize [[io.scalaland.chimney.Patcher]] logic for specific object value and patch value.
   *
-  * @tparam A         type of object to apply patch to
-  * @tparam Patch     type of patch object
-  * @tparam Overrides type-level encoded config
-  * @tparam Flags     type-level encoded flags
-  * @param obj      object to patch
-  * @param objPatch patch object
+  * @tparam A
+  *   type of object to apply patch to
+  * @tparam Patch
+  *   type of patch object
+  * @tparam Overrides
+  *   type-level encoded config
+  * @tparam Flags
+  *   type-level encoded flags
+  * @param obj
+  *   object to patch
+  * @param objPatch
+  *   patch object
   *
   * @since 0.4.0
   */
@@ -22,7 +28,8 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
 
   /** Applies configured patching in-place.
     *
-    * @return patched value
+    * @return
+    *   patched value
     *
     * @since 0.4.0
     */

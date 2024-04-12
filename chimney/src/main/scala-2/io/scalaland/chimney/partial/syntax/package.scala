@@ -4,10 +4,13 @@ package object syntax {
 
   /** Provides operations lifting [[scala.Option]] to [[io.scalaland.chimney.partial.Result]].
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#partialresult-utilities]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#partialresult-utilities]] for more details
     *
-    * @tparam A successful value type
-    * @param option value to convert
+    * @tparam A
+    *   successful value type
+    * @param option
+    *   value to convert
     *
     * @since 0.8.5
     */
@@ -16,8 +19,10 @@ package object syntax {
     /** Converts [[scala.Some]] to [[io.scalaland.chimney.partial.Result.Value]] and uses user-provided
       * [[io.scalaland.chimney.partial.Error]] on [[scala.None]].
       *
-      * @param onEmpty thunk creating error on [[scala.None]]
-      * @return        result with [[scala.None]] handled
+      * @param onEmpty
+      *   thunk creating error on [[scala.None]]
+      * @return
+      *   result with [[scala.None]] handled
       *
       * @since 0.8.5
       */
@@ -26,8 +31,10 @@ package object syntax {
     /** Converts [[scala.Some]] to [[io.scalaland.chimney.partial.Result.Value]] and uses user-provided
       * [[java.lang.String]] on [[scala.None]].
       *
-      * @param onEmpty thunk creating error message on [[scala.None]]
-      * @return        result with [[scala.None]] handled
+      * @param onEmpty
+      *   thunk creating error message on [[scala.None]]
+      * @return
+      *   result with [[scala.None]] handled
       *
       * @since 0.8.5
       */
@@ -36,8 +43,10 @@ package object syntax {
     /** Converts [[scala.Some]] to [[io.scalaland.chimney.partial.Result.Value]] and uses user-provided
       * [[java.lang.Throwable]] on [[scala.None]].
       *
-      * @param onEmpty thunk creating exception on [[scala.None]]
-      * @return        result with [[scala.None]] handled
+      * @param onEmpty
+      *   thunk creating exception on [[scala.None]]
+      * @return
+      *   result with [[scala.None]] handled
       *
       * @since 0.8.5
       */
@@ -46,10 +55,14 @@ package object syntax {
 
   /** Provides operations lifting `F[A]` to [[io.scalaland.chimney.partial.Result]].
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#partialresult-utilities]] for more details
-    * @tparam F wrapper type
-    * @tparam A successful value type
-    * @param fa value to convert
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#partialresult-utilities]] for more details
+    * @tparam F
+    *   wrapper type
+    * @tparam A
+    *   successful value type
+    * @param fa
+    *   value to convert
     *
     * @since 0.8.5
     */
@@ -57,7 +70,8 @@ package object syntax {
 
     /** Converts `F[A]` to [[io.scalaland.chimney.partial.Result]].
       *
-      * @return result with error values handled
+      * @return
+      *   result with error values handled
       *
       * @since 0.8.5
       */

@@ -2,7 +2,8 @@ package io.scalaland.chimney.partial
 
 /** Data type for representing path element in a (possibly) nested object structure.
   *
-  * @see [[https://chimney.readthedocs.io/supported-transformations/#total-transformers-vs-partialtransformers]]
+  * @see
+  *   [[https://chimney.readthedocs.io/supported-transformations/#total-transformers-vs-partialtransformers]]
   *
   * @since 0.7.0
   */
@@ -17,7 +18,8 @@ sealed trait PathElement {
 
 /** Companion of [[io.scalaland.chimney.partial.PathElement]].
   *
-  * @see [[https://chimney.readthedocs.io/supported-transformations/#total-transformers-vs-partialtransformers]]
+  * @see
+  *   [[https://chimney.readthedocs.io/supported-transformations/#total-transformers-vs-partialtransformers]]
   *
   * @since 0.7.0
   */
@@ -25,7 +27,8 @@ object PathElement {
 
   /** Object property accessor (e.g case class param name).
     *
-    * @param name field name
+    * @param name
+    *   field name
     *
     * @since 0.7.0
     */
@@ -35,7 +38,8 @@ object PathElement {
 
   /** Index in a collection.
     *
-    * @param index index of an element
+    * @param index
+    *   index of an element
     *
     * @since 0.7.0
     */
@@ -45,7 +49,8 @@ object PathElement {
 
   /** Value in the map.
     *
-    * @param key key in the map
+    * @param key
+    *   key in the map
     *
     * @since 0.7.0
     */
@@ -55,7 +60,8 @@ object PathElement {
 
   /** Key in the map.
     *
-    * @param key key in the map
+    * @param key
+    *   key in the map
     *
     * @since 0.7.0
     */
@@ -65,7 +71,8 @@ object PathElement {
 
   /** Specifies if path element in conventional string representation should be prepended with a dot.
     *
-    * @param pathElement path element
+    * @param pathElement
+    *   path element
     *
     * @since 0.7.0
     */

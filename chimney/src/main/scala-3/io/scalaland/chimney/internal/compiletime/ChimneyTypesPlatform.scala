@@ -16,15 +16,15 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     def Transformer[From: Type, To: Type]: Type[Transformer[From, To]] = quoted.Type.of[Transformer[From, To]]
     def PartialTransformer[From: Type, To: Type]: Type[PartialTransformer[From, To]] =
       quoted.Type.of[PartialTransformer[From, To]]
-    def Patcher[T: Type, Patch: Type]: Type[Patcher[T, Patch]] = quoted.Type.of[Patcher[T, Patch]]
+    def Patcher[A: Type, Patch: Type]: Type[Patcher[A, Patch]] = quoted.Type.of[Patcher[A, Patch]]
 
     object PartialResult extends PartialResultModule {
-      def apply[T: Type]: Type[partial.Result[T]] = quoted.Type.of[partial.Result[T]]
-      def unapply[T](tpe: Type[T]): Option[??] = tpe match
+      def apply[A: Type]: Type[partial.Result[A]] = quoted.Type.of[partial.Result[A]]
+      def unapply[A](tpe: Type[A]): Option[??] = tpe match
         case '[partial.Result[inner]] => Some(Type[inner].as_??)
         case _                        => scala.None
 
-      def Value[T: Type]: Type[partial.Result.Value[T]] = quoted.Type.of[partial.Result.Value[T]]
+      def Value[A: Type]: Type[partial.Result.Value[A]] = quoted.Type.of[partial.Result.Value[A]]
       val Errors: Type[partial.Result.Errors] = quoted.Type.of[partial.Result.Errors]
     }
 

@@ -18,8 +18,10 @@ package object inlined {
 
   /** Provides transformer operations on values of any type.
     *
-    * @tparam From type of source value
-    * @param source wrapped source value
+    * @tparam From
+    *   type of source value
+    * @param source
+    *   wrapped source value
     *
     * @since 0.4.0
     */
@@ -27,8 +29,10 @@ package object inlined {
 
     /** Allows to customize transformer generation to your target type.
       *
-      * @tparam To target type
-      * @return [[io.scalaland.chimney.dsl.TransformerInto]]
+      * @tparam To
+      *   target type
+      * @return
+      *   [[io.scalaland.chimney.dsl.TransformerInto]]
       *
       * @since 0.1.0
       */
@@ -38,8 +42,10 @@ package object inlined {
 
   /** Provides partial transformer operations on values of any type.
     *
-    * @tparam From type of source value
-    * @param source wrapped source value
+    * @tparam From
+    *   type of source value
+    * @param source
+    *   wrapped source value
     *
     * @since 0.7.0
     */
@@ -47,8 +53,10 @@ package object inlined {
 
     /** Allows to customize partial transformer generation to your target type.
       *
-      * @tparam To target success type
-      * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+      * @tparam To
+      *   target success type
+      * @return
+      *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
       *
       * @since 0.7.0
       */
@@ -61,22 +69,27 @@ package object inlined {
 
   /** Provides patcher operations on values of any type
     *
-    * @param obj wrapped object to patch
-    * @tparam T type of object to patch
+    * @param obj
+    *   wrapped object to patch
+    * @tparam A
+    *   type of object to patch
     *
     * @since 0.1.3
     */
-  implicit class PatchingOps[T](private val obj: T) extends AnyVal {
+  implicit class PatchingOps[A](private val obj: A) extends AnyVal {
 
     /** Allows to customize patcher generation
       *
-      * @tparam P type of patch object
-      * @param patch patch object value
-      * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
+      * @tparam Patch
+      *   type of patch object
+      * @param patch
+      *   patch object value
+      * @return
+      *   [[io.scalaland.chimney.dsl.PatcherUsing]]
       *
       * @since 0.4.0
       */
-    final def using[P](patch: P): PatcherUsing[T, P, PatcherOverrides.Empty, PatcherFlags.Default] =
-      new PatcherUsing[T, P, PatcherOverrides.Empty, PatcherFlags.Default](obj, patch)
+    final def using[Patch](patch: Patch): PatcherUsing[A, Patch, PatcherOverrides.Empty, PatcherFlags.Default] =
+      new PatcherUsing[A, Patch, PatcherOverrides.Empty, PatcherFlags.Default](obj, patch)
   }
 }
