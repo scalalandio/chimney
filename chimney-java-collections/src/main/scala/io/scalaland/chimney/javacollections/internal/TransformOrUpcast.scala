@@ -2,8 +2,8 @@ package io.scalaland.chimney.javacollections.internal
 
 import io.scalaland.chimney.Transformer
 
-/** Since [[io.scalaland.chimney.Transformer]] is NOT automatically provided for identity/subtype transformation,
-  * and we want to allow such things without enabling whole recursive auto-derivation we use this trick.
+/** Since [[io.scalaland.chimney.Transformer]] is NOT automatically provided for identity/subtype transformation, and we
+  * want to allow such things without enabling whole recursive auto-derivation we use this trick.
   */
 trait TransformOrUpcast[From, To] {
   def transform(src: From): To

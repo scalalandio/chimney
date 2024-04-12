@@ -966,15 +966,15 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       monoSource.transformInto[PolyTarget[String]] ==> polyTarget
 
-      def transform[T]: (String => T) => MonoSource => PolyTarget[T] =
-        fun => _.into[PolyTarget[T]].withFieldComputed(_.poly, src => fun(src.poly)).transform
+      def transform[A]: (String => A) => MonoSource => PolyTarget[A] =
+        fun => _.into[PolyTarget[A]].withFieldComputed(_.poly, src => fun(src.poly)).transform
 
       transform[String](identity)(monoSource) ==> polyTarget
     }
 
     test("polymorphic source to monomorphic target") {
 
-      def transform[T]: PolySource[T] => MonoTarget =
+      def transform[A]: PolySource[A] => MonoTarget =
         _.into[MonoTarget].withFieldComputed(_.poly, _.poly.toString).transform
 
       transform[String](polySource) ==> monoTarget
@@ -982,17 +982,17 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
     test("polymorphic source to polymorphic target") {
 
-      def transform[T]: PolySource[T] => PolyTarget[T] =
-        _.transformInto[PolyTarget[T]]
+      def transform[A]: PolySource[A] => PolyTarget[A] =
+        _.transformInto[PolyTarget[A]]
 
       transform[String](polySource) ==> polyTarget
     }
 
     test("handle type-inference for polymorphic computation") {
 
-      def fun[T]: PolySource[T] => String = _.poly.toString
+      def fun[A]: PolySource[A] => String = _.poly.toString
 
-      def transform[T]: PolySource[T] => MonoTarget =
+      def transform[A]: PolySource[A] => MonoTarget =
         _.into[MonoTarget].withFieldComputed(_.poly, fun).transform
 
       transform[String](polySource) ==> monoTarget
@@ -1117,7 +1117,6 @@ class TotalTransformerProductSpec extends ChimneySpec {
   test("support macro dependent transformers") {
 
     test("Option[List[A]] -> List[B]") {
-      // FIXME: this isn't exactly intuitive :/
       implicit def optListT[A, B](implicit
           underlying: Transformer.AutoDerived[A, B]
       ): Transformer[Option[List[A]], List[B]] =

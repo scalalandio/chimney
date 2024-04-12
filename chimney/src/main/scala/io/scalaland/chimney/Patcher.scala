@@ -5,10 +5,13 @@ import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
 
 /** Type class definition that wraps patching behavior.
   *
-  * @see [[https://chimney.readthedocs.io/supported-patching/]]
+  * @see
+  *   [[https://chimney.readthedocs.io/supported-patching/]]
   *
-  * @tparam A type of object to apply patch to
-  * @tparam Patch type of patch object
+  * @tparam A
+  *   type of object to apply patch to
+  * @tparam Patch
+  *   type of patch object
   *
   * @since 0.1.3
   */
@@ -16,9 +19,12 @@ trait Patcher[A, Patch] extends Patcher.AutoDerived[A, Patch] {
 
   /** Modifies a copy of one object using values from another object.
     *
-    * @param obj object to modify
-    * @param patch object with modified values
-    * @return patched copy
+    * @param obj
+    *   object to modify
+    * @param patch
+    *   object with modified values
+    * @return
+    *   patched copy
     *
     * @since 0.1.3
     */
@@ -27,7 +33,8 @@ trait Patcher[A, Patch] extends Patcher.AutoDerived[A, Patch] {
 
 /** Companion of [[io.scalaland.chimney.Patcher]].
   *
-  * @see [[https://chimney.readthedocs.io/supported-patching/]]
+  * @see
+  *   [[https://chimney.readthedocs.io/supported-patching/]]
   *
   * @since 0.1.3
   */
@@ -36,11 +43,15 @@ object Patcher extends PatcherCompanionPlatform {
   /** Creates an empty [[io.scalaland.chimney.dsl.PatcherDefinition]] that you can customize to derive
     * [[io.scalaland.chimney.Patcher]].
     *
-    * @see [[io.scalaland.chimney.dsl.PatcherDefinition]] for available settings
+    * @see
+    *   [[io.scalaland.chimney.dsl.PatcherDefinition]] for available settings
     *
-    * @tparam A     type of object to apply patch to
-    * @tparam Patch type of patch object
-    * @return [[io.scalaland.chimney.dsl.PatcherDefinition]] with defaults
+    * @tparam A
+    *   type of object to apply patch to
+    * @tparam Patch
+    *   type of patch object
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherDefinition]] with defaults
     *
     * @since 0.8.0
     */
@@ -52,10 +63,13 @@ object Patcher extends PatcherCompanionPlatform {
     * When we want to only allow semiautomatically derived/manually defined instances you should use
     * [[io.scalaland.chimney.Patcher]].
     *
-    * @see [[https://chimney.readthedocs.io/cookbook/#automatic-semiautomatic-and-inlined-derivation]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/cookbook/#automatic-semiautomatic-and-inlined-derivation]] for more details
     *
-    * @tparam A type of object to apply patch to
-    * @tparam Patch type of patch object
+    * @tparam A
+    *   type of object to apply patch to
+    * @tparam Patch
+    *   type of patch object
     *
     * @since 0.8.0
     */

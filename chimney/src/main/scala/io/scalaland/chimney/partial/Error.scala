@@ -2,8 +2,10 @@ package io.scalaland.chimney.partial
 
 /** Data structure for representing path-annotated error
   *
-  * @param message error message
-  * @param path error path annotation
+  * @param message
+  *   error message
+  * @param path
+  *   error path annotation
   *
   * @since 0.7.0
   */
@@ -17,8 +19,10 @@ final case class Error(message: ErrorMessage, path: Path = Path.Empty) {
 
   /** Prepends path with a given path element
     *
-    * @param pathElement path element to be prepended
-    * @return error with a path prepended with provided path element
+    * @param pathElement
+    *   path element to be prepended
+    * @return
+    *   error with a path prepended with provided path element
     *
     * @since 0.7.0
     */
@@ -36,7 +40,8 @@ object Error {
 
   /** Partial function not defined at given argument error with an empty path
     *
-    * @param arg argument where partial function is not defined for
+    * @param arg
+    *   argument where partial function is not defined for
     *
     * @since 0.7.0
     */
@@ -45,7 +50,8 @@ object Error {
 
   /** Custom string error with an empty path
     *
-    * @param message custom string error message
+    * @param message
+    *   custom string error message
     *
     * @since 0.7.0
     */
@@ -54,7 +60,8 @@ object Error {
 
   /** Throwable error with an empty path
     *
-    * @param throwable custom throwable object
+    * @param throwable
+    *   custom throwable object
     *
     * @since 0.7.0
     */

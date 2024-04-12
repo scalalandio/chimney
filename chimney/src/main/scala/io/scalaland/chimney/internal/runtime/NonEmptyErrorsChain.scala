@@ -5,8 +5,8 @@ import io.scalaland.chimney.partial
 import scala.collection.compat.*
 import scala.util.hashing.MurmurHash3
 
-/** Specialized chain-like data structure for efficient representation of path-annotated errors,
-  * guaranteed to be non-empty.
+/** Specialized chain-like data structure for efficient representation of path-annotated errors, guaranteed to be
+  * non-empty.
   *
   * @since 0.7.0
   */
@@ -14,8 +14,10 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
 
   /** Prepends path of all the errors in collection with a given path element.
     *
-    * @param pathElement path element to be prepended
-    * @return instance of [[NonEmptyErrorsChain]]
+    * @param pathElement
+    *   path element to be prepended
+    * @return
+    *   instance of [[NonEmptyErrorsChain]]
     *
     * @since 0.7.0
     */
@@ -24,7 +26,8 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
 
   /** Tests whether collections is empty.
     *
-    * @return always false, as the collection is guaraneed to be non-empty
+    * @return
+    *   always false, as the collection is guaranteed to be non-empty
     *
     * @since 0.7.0
     */
@@ -44,8 +47,10 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
 
   /** Returns a new errors collection containing elements from this, followed by elements of other collection.
     *
-    * @param other errors collection
-    * @return instance of [[NonEmptyErrorsChain]]
+    * @param other
+    *   errors collection
+    * @return
+    *   instance of [[NonEmptyErrorsChain]]
     *
     * @since 0.7.0
     */
@@ -66,8 +71,10 @@ object NonEmptyErrorsChain {
 
   /** Creates a singleton errors collection from an error.
     *
-    * @param error error
-    * @return instance of [[NonEmptyErrorsChain]]
+    * @param error
+    *   error
+    * @return
+    *   instance of [[NonEmptyErrorsChain]]
     * @since 0.7.0
     */
   final def single(error: partial.Error): NonEmptyErrorsChain =
@@ -75,9 +82,12 @@ object NonEmptyErrorsChain {
 
   /** Creates errors collection from head and tail.
     *
-    * @param head error
-    * @param tail errors
-    * @return instance of [[NonEmptyErrorsChain]]
+    * @param head
+    *   error
+    * @param tail
+    *   errors
+    * @return
+    *   instance of [[NonEmptyErrorsChain]]
     *
     * @since 0.7.0
     */

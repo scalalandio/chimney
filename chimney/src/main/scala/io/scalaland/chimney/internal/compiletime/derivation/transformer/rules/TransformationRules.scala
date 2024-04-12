@@ -12,9 +12,9 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     *
     * Since we cannot restrict how condition is checked (running some predicate or using PartialFunction is too
     * restrictive), we have to express matching or not with the result:
-    * - `Expanded` means that rule applied and created `Expr` value
-    * - `AttemptNextRule` means that rule decided that conditions aren't met
-    * The `DerivationResult` as a whole might also fail, which means that rule did apply but couldn't derive expression.
+    *   - `Expanded` means that rule applied and created `Expr` value
+    *   - `AttemptNextRule` means that rule decided that conditions aren't met The `DerivationResult` as a whole might
+    *     also fail, which means that rule did apply but couldn't derive expression.
     */
   abstract protected class Rule(val name: String) {
 

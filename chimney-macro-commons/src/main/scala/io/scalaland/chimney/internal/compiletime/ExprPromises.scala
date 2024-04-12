@@ -5,16 +5,18 @@ private[compiletime] trait ExprPromises { this: Definitions =>
   /** In Scala 2 it's `c.universe.TermName`, in Scala 3 `Symbol` of a val */
   protected type ExprPromiseName
 
-  /** Allow us to use `Expr[A]` before we would either: know how we would initiate it, or: what the final shape of
-    * a whole expression would be.
+  /** Allow us to use `Expr[A]` before we would either: know how we would initiate it, or: what the final shape of a
+    * whole expression would be.
     *
-    * In situations like `'{ val a = sth; ${ useA('{ a }) } }` you know both how `a` would be created as well as
-    * the shape of the final tree. In cases when you would e.g. use expression in some context-dependent derivation
-    * which could return `Either[Expr[B], Expr[F[B]]`, ExprPromise allows you to calculate that result and THEN decide
-    * how to turn it into final Expr value.
+    * In situations like `'{ val a = sth; ${ useA('{ a }) } }` you know both how `a` would be created as well as the
+    * shape of the final tree. In cases when you would e.g. use expression in some context-dependent derivation which
+    * could return `Either[Expr[B], Expr[F[B]]`, ExprPromise allows you to calculate that result and THEN decide how to
+    * turn it into final Expr value.
     *
-    * @tparam From type of the promised expression
-    * @tparam A type of the current result we created using Expr[From]
+    * @tparam From
+    *   type of the promised expression
+    * @tparam A
+    *   type of the current result we created using Expr[From]
     */
   final protected class ExprPromise[From: Type, A](private val usage: A, private val fromName: ExprPromiseName) {
 
@@ -80,10 +82,13 @@ private[compiletime] trait ExprPromises { this: Definitions =>
 
     /** Creates the expression promise.
       *
-      * @param nameGenerationStrategy to avoid accidental name clashing, we are using fresh name generator which
-      *                               assures us that the name would be unique, we are only choosing the prefix
-      * @param usageHint if we'll fulfil promise as val/lazy val/var it let us decide as which
-      * @tparam From type of promised expression
+      * @param nameGenerationStrategy
+      *   to avoid accidental name clashing, we are using fresh name generator which assures us that the name would be
+      *   unique, we are only choosing the prefix
+      * @param usageHint
+      *   if we'll fulfil promise as val/lazy val/var it let us decide as which
+      * @tparam From
+      *   type of promised expression
       */
     final def promise[From: Type](
         nameGenerationStrategy: NameGenerationStrategy,
@@ -133,9 +138,9 @@ private[compiletime] trait ExprPromises { this: Definitions =>
         fa.traverse(f)
     }
 
-  /** When we decide that promised expression would be used as val/lazy val/var/def, we receive this wrapper around
-    * the results, which would ensure that: initialization of a definition would happen before its use, you can only use
-    * the definition inside its scope.
+  /** When we decide that promised expression would be used as val/lazy val/var/def, we receive this wrapper around the
+    * results, which would ensure that: initialization of a definition would happen before its use, you can only use the
+    * definition inside its scope.
     */
   final protected class PrependDefinitionsTo[A](
       private val usage: A,
@@ -210,9 +215,9 @@ private[compiletime] trait ExprPromises { this: Definitions =>
         fa.traverse(f)
     }
 
-  /** When we decide that expression would be crated in patter-match binding, we would receive this wrapper around
-    * the results, which would ensure that definition is only used inside the scope and allow combining several cases
-    * into a single pattern matching.
+  /** When we decide that expression would be crated in patter-match binding, we would receive this wrapper around the
+    * results, which would ensure that definition is only used inside the scope and allow combining several cases into a
+    * single pattern matching.
     */
   final protected class PatternMatchCase[To](
       val someFrom: ??,

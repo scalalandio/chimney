@@ -56,8 +56,8 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
 
     object PartialResult extends PartialResultModule {
       object Value extends ValueModule {
-        def apply[T: Type](value: Expr[T]): Expr[partial.Result.Value[T]] =
-          '{ partial.Result.Value[T](${ value }) }
+        def apply[A: Type](value: Expr[A]): Expr[partial.Result.Value[A]] =
+          '{ partial.Result.Value[A](${ value }) }
 
         def value[A: Type](valueExpr: Expr[partial.Result.Value[A]]): Expr[A] =
           '{ ${ valueExpr }.value }
@@ -70,17 +70,17 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         ): Expr[partial.Result.Errors] =
           '{ partial.Result.Errors.merge(${ errors1 }, ${ errors2 }) }
 
-        def mergeResultNullable[T: Type](
+        def mergeResultNullable[A: Type](
             errorsNullable: Expr[partial.Result.Errors],
-            result: Expr[partial.Result[T]]
+            result: Expr[partial.Result[A]]
         ): Expr[partial.Result.Errors] =
-          '{ partial.Result.Errors.__mergeResultNullable[T](${ errorsNullable }, ${ result }) }
+          '{ partial.Result.Errors.__mergeResultNullable[A](${ errorsNullable }, ${ result }) }
       }
 
-      def fromEmpty[T: Type]: Expr[partial.Result[T]] = '{ partial.Result.fromEmpty[T] }
+      def fromEmpty[A: Type]: Expr[partial.Result[A]] = '{ partial.Result.fromEmpty[A] }
 
-      def fromFunction[S: Type, T: Type](f: Expr[S => T]): Expr[S => partial.Result[T]] =
-        '{ partial.Result.fromFunction[S, T](${ f }) }
+      def fromFunction[A: Type, B: Type](f: Expr[A => B]): Expr[A => partial.Result[B]] =
+        '{ partial.Result.fromFunction[A, B](${ f }) }
 
       def traverse[M: Type, A: Type, B: Type](
           it: Expr[Iterator[A]],

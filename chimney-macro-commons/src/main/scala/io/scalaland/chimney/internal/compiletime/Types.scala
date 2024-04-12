@@ -151,8 +151,8 @@ private[compiletime] trait Types { this: Existentials =>
 
     def isTuple[A](A: Type[A]): Boolean
 
-    def isSubtypeOf[A, B](S: Type[A], T: Type[B]): Boolean
-    def isSameAs[A, B](S: Type[A], T: Type[B]): Boolean
+    def isSubtypeOf[A, B](A: Type[A], B: Type[B]): Boolean
+    def isSameAs[A, B](A: Type[A], B: Type[B]): Boolean
 
     def prettyPrint[A: Type]: String
   }

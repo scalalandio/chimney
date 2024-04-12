@@ -6,8 +6,10 @@ import scala.jdk.CollectionConverters.*
 
 /** Interface dedicated to Java collections allowing iterating over types with unrelated interfaces.
   *
-  * @tparam A  collection's element's type
-  * @tparam CC collection's type with applied type parameters
+  * @tparam A
+  *   collection's element's type
+  * @tparam CC
+  *   collection's type with applied type parameters
   *
   * @since 0.8.0
   */

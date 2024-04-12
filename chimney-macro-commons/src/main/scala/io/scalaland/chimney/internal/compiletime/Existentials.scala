@@ -44,7 +44,8 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
   final protected type ExistentialType = ExistentialType.Bounded[Nothing, Any]
   protected object ExistentialType {
 
-    /** Convenient utility to represent `Type[? >: L <: U]` with erased inner type, but without any accompanying value. */
+    /** Convenient utility to represent `Type[? >: L <: U]` with erased inner type, but without any accompanying value.
+      */
     type Bounded[L, U >: L] = Existential.Bounded[L, U, Type]
     object Bounded {
       def apply[L, U >: L, A >: L <: U](implicit A: Type[A]): Bounded[L, U] = Existential.Bounded[L, U, Type, A](A)

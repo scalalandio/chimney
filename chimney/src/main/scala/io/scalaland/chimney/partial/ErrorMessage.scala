@@ -28,7 +28,8 @@ object ErrorMessage {
 
   /** Represents partial function is not defined for specific argument error
     *
-    * @param arg argument where partial function is not defined for
+    * @param arg
+    *   argument where partial function is not defined for
     *
     * @since 0.7.0
     */
@@ -36,7 +37,8 @@ object ErrorMessage {
 
   /** Represents custom string error
     *
-    * @param message custom string error message
+    * @param message
+    *   custom string error message
     *
     * @since 0.7.0
     */
@@ -44,7 +46,8 @@ object ErrorMessage {
 
   /** Represents throwable error
     *
-    * @param throwable custom throwable object
+    * @param throwable
+    *   custom throwable object
     *
     * @since 0.7.0
     */

@@ -8,12 +8,18 @@ import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, Tran
 /** Provides DSL for configuring [[io.scalaland.chimney.Transformer]]'s generation and using the result to transform
   * value at the same time
   *
-  * @tparam From      type of input value
-  * @tparam To        type of output value
-  * @tparam Overrides type-level encoded config
-  * @tparam Flags     type-level encoded flags
-  * @param  source object to transform
-  * @param  td     transformer definition
+  * @tparam From
+  *   type of input value
+  * @tparam To
+  *   type of output value
+  * @tparam Overrides
+  *   type-level encoded config
+  * @tparam Flags
+  *   type-level encoded flags
+  * @param source
+  *   object to transform
+  * @param td
+  *   transformer definition
   *
   * @since 0.1.0
   */
@@ -27,7 +33,8 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     *
     * It keeps all the configuration, provided missing values, renames, coproduct instances etc.
     *
-    * @return [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
     */
   def partial: PartialTransformerInto[From, To, Overrides, Flags] =
     new PartialTransformerInto[From, To, Overrides, Flags](source, td.partial)
@@ -36,9 +43,12 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-a-provided-value]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-a-provided-value]]
+    *   for more details
     *
-    * @return [[io.scalaland.chimney.dsl.TransformerInto]]
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerInto]]
     *
     * @since 0.1.5
     */
@@ -52,13 +62,20 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-computed-value]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-computed-value]]
+    *   for more details
     *
-    * @tparam T type of target field
-    * @tparam U type of computed value
-    * @param selector target field in `To`, defined like `_.name`
-    * @param f        function used to compute value of the target field
-    * @return [[io.scalaland.chimney.dsl.TransformerInto]]
+    * @tparam T
+    *   type of target field
+    * @tparam U
+    *   type of computed value
+    * @param selector
+    *   target field in `To`, defined like `_.name`
+    * @param f
+    *   function used to compute value of the target field
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerInto]]
     *
     * @since 0.1.5
     */
@@ -72,13 +89,20 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     *
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-its-source-field]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-its-source-field]]
+    *   for more details
     *
-    * @tparam T type of source field
-    * @tparam U type of target field
-    * @param selectorFrom source field in `From`, defined like `_.originalName`
-    * @param selectorTo   target field in `To`, defined like `_.newName`
-    * @return [[io.scalaland.chimney.dsl.TransformerInto]]
+    * @tparam T
+    *   type of source field
+    * @tparam U
+    *   type of target field
+    * @param selectorFrom
+    *   source field in `From`, defined like `_.originalName`
+    * @param selectorTo
+    *   target field in `To`, defined like `_.newName`
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerInto]]
     *
     * @since 0.1.5
     */
@@ -99,11 +123,16 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     * It differs from `withFieldComputed(_.matching[Subtype], src => ...)`, since `withSealedSubtypeHandled` matches on
     * `From` subtype, while `.matching[Subtype]` matches on `To` value's piece.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]]
+    *   for more details
     *
-    * @tparam Subtype type of sealed/enum instance
-    * @param f function to calculate values of components that cannot be mapped automatically
-    * @return [[io.scalaland.chimney.dsl.TransformerInto]]
+    * @tparam Subtype
+    *   type of sealed/enum instance
+    * @param f
+    *   function to calculate values of components that cannot be mapped automatically
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerInto]]
     *
     * @since 1.0.0
     */
@@ -137,11 +166,16 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     *
     * Values for each parameter can be provided the same way as if they were normal constructor's arguments.
     *
-    * @see [[https://chimney.readthedocs.io/supported-transformations/#types-with-manually-provided-constructors]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#types-with-manually-provided-constructors]] for more
+    *   details
     *
-    * @tparam Ctor type of the Eta-expanded method/lambda which should return `To`
-    * @param f method name or lambda which constructs `To`
-    * @return [[io.scalaland.chimney.dsl.TransformerInto]]
+    * @tparam Ctor
+    *   type of the Eta-expanded method/lambda which should return `To`
+    * @param f
+    *   method name or lambda which constructs `To`
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerInto]]
     *
     * @since 0.8.4
     */
@@ -155,7 +189,8 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     * It runs macro that tries to derive instance of `Transformer[From, To]` and immediately apply it to captured
     * `source` value. When transformation can't be derived, it results with compilation error.
     *
-    * @return transformed value of type `To`
+    * @return
+    *   transformed value of type `To`
     *
     * @since 0.1.0
     */

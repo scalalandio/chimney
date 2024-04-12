@@ -7,7 +7,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
   import quotes.*, quotes.reflect.*
 
-  final override protected type Type[T] = quoted.Type[T]
+  final override protected type Type[A] = quoted.Type[A]
   protected object Type extends TypeModule {
 
     object platformSpecific {

@@ -1,6 +1,5 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 
@@ -14,12 +13,15 @@ private[chimney] trait LowPriorityAutoInstances { this: auto.type =>
 
   /** Provides [[io.scalaland.chimney.Transformer]] derived with the default settings.
     *
-    * This instance WILL be visible for recursive derivation (automatic, semiautomatic, inlined),
-    * which is how it differs from [[io.scalaland.chimney.Transformer.AutoDerived#deriveAutomatic]].
+    * This instance WILL be visible for recursive derivation (automatic, semiautomatic, inlined), which is how it
+    * differs from [[io.scalaland.chimney.Transformer.AutoDerived#deriveAutomatic]].
     *
-    * @tparam From type of input value
-    * @tparam To   type of output value
-    * @return [[io.scalaland.chimney.Transformer]] type class instance
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    * @return
+    *   [[io.scalaland.chimney.Transformer]] type class instance
     *
     * @since 0.8.0
     */
@@ -28,12 +30,15 @@ private[chimney] trait LowPriorityAutoInstances { this: auto.type =>
 
   /** Provides [[io.scalaland.chimney.PartialTransformer]] derived with the default settings.
     *
-    * This instance WILL be visible for recursive derivation (automatic, semiautomatic, inlined),
-    * which is how it differs from [[io.scalaland.chimney.PartialTransformer.AutoDerived#deriveAutomatic]].
+    * This instance WILL be visible for recursive derivation (automatic, semiautomatic, inlined), which is how it
+    * differs from [[io.scalaland.chimney.PartialTransformer.AutoDerived#deriveAutomatic]].
     *
-    * @tparam From type of input value
-    * @tparam To   type of output value
-    * @return [[io.scalaland.chimney.PartialTransformer]] type class instance
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    * @return
+    *   [[io.scalaland.chimney.PartialTransformer]] type class instance
     *
     * @since 0.8.0
     */
@@ -42,15 +47,18 @@ private[chimney] trait LowPriorityAutoInstances { this: auto.type =>
 
   /** Provides [[io.scalaland.chimney.Patcher]] derived with the default settings.
     *
-    * This instance WILL be visible for recursive derivation (automatic, semiautomatic, inlined),
-    * which is how it differs from [[io.scalaland.chimney.Patcher.AutoDerived#deriveAutomatic]].
+    * This instance WILL be visible for recursive derivation (automatic, semiautomatic, inlined), which is how it
+    * differs from [[io.scalaland.chimney.Patcher.AutoDerived#deriveAutomatic]].
     *
-    * @tparam A     type of object to apply patch to
-    * @tparam Patch type of patch object
-    * @return [[io.scalaland.chimney.Patcher]] type class instance
+    * @tparam A
+    *   type of object to apply patch to
+    * @tparam Patch
+    *   type of patch object
+    * @return
+    *   [[io.scalaland.chimney.Patcher]] type class instance
     *
     * @since 0.8.0
     */
-  implicit inline def deriveAutomaticPatcher[From, To]: Patcher[From, To] =
-    ${ PatcherMacros.derivePatcherWithDefaults[From, To] }
+  implicit inline def deriveAutomaticPatcher[A, Patch]: Patcher[A, Patch] =
+    ${ PatcherMacros.derivePatcherWithDefaults[A, Patch] }
 }

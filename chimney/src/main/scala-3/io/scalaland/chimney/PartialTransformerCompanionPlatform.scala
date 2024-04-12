@@ -8,9 +8,12 @@ private[chimney] trait PartialTransformerCompanionPlatform { this: PartialTransf
     *
     * When transformation can't be derived, it results with compilation error.
     *
-    * @tparam From type of input value
-    * @tparam To   type of output value
-    * @return [[io.scalaland.chimney.PartialTransformer]] type class definition
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    * @return
+    *   [[io.scalaland.chimney.PartialTransformer]] type class definition
     *
     * @since 0.8.0
     */
@@ -22,12 +25,15 @@ private[chimney] trait PartialTransformerAutoDerivedCompanionPlatform { this: Pa
 
   /** Provides [[io.scalaland.chimney.PartialTransformer.AutoDerived]] derived with the default settings.
     *
-    * This instance WILL NOT be visible for recursive derivation (automatic, semiautomatic, inlined),
-    * which is how it differs from [[io.scalaland.chimney.auto#deriveAutomaticPartialTransformer]].
+    * This instance WILL NOT be visible for recursive derivation (automatic, semiautomatic, inlined), which is how it
+    * differs from [[io.scalaland.chimney.auto#deriveAutomaticPartialTransformer]].
     *
-    * @tparam From type of input value
-    * @tparam To   type of output value
-    * @return [[io.scalaland.chimney.PartialTransformer.AutoDerived]] type class instance
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    * @return
+    *   [[io.scalaland.chimney.PartialTransformer.AutoDerived]] type class instance
     *
     * @since 0.8.0
     */

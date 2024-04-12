@@ -9,14 +9,17 @@ import io.scalaland.chimney.internal.runtime.PatcherFlags
   */
 private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: PatcherFlags] {
 
-  /** In case when both object to patch and patch value contain field of type [[scala.Option]], this option allows
-    * to treat [[scala.None]] value in patch as if the value was not provided.
+  /** In case when both object to patch and patch value contain field of type [[scala.Option]], this option allows to
+    * treat [[scala.None]] value in patch as if the value was not provided.
     *
     * By default, when [[scala.None]] is delivered in patch, Chimney clears the value of such field on patching.
     *
-    * @see [[https://chimney.readthedocs.io/supported-patching/#treating-none-as-no-update-instead-of-set-to-none]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-patching/#treating-none-as-no-update-instead-of-set-to-none]] for
+    *   more details
     *
-    * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
     * @since 0.4.0
     */
@@ -25,9 +28,12 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
 
   /** Then there [[scala.Option]] is patching [[scala.Option]], on [[scala.None]] value will be cleared.
     *
-    * @see [[https://chimney.readthedocs.io/supported-patching/#treating-none-as-no-update-instead-of-set-to-none]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-patching/#treating-none-as-no-update-instead-of-set-to-none]] for
+    *   more details
     *
-    * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
     * @since 0.8.0
     */
@@ -40,9 +46,11 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
     * By default, when Chimney detects a redundant field in patch object, it fails the compilation in order to prevent
     * silent oversight of field name typos.
     *
-    * @see [[https://chimney.readthedocs.io/supported-patching/#ignoring-fields-in-patches]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-patching/#ignoring-fields-in-patches]] for more details
     *
-    * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
     * @since 0.4.0
     */
@@ -51,9 +59,11 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
 
   /** Fail the compilation if there is a redundant field in patching object.
     *
-    * @see [[https://chimney.readthedocs.io/supported-patching/#ignoring-fields-in-patches]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-patching/#ignoring-fields-in-patches]] for more details
     *
-    * @return [[io.scalaland.chimney.dsl.PatcherUsing]]
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
     * @since 0.8.0
     */
@@ -62,7 +72,8 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
 
   /** Enable printing the logs from the derivation process.
     *
-    * @see [[https://chimney.readthedocs.io/troubleshooting/#debugging-macros]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/troubleshooting/#debugging-macros]] for more details
     *
     * @since 0.8.0
     */
@@ -71,7 +82,8 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
 
   /** Disable printing the logs from the derivation process.
     *
-    * @see [[https://chimney.readthedocs.io/troubleshooting/#debugging-macros]] for more details
+    * @see
+    *   [[https://chimney.readthedocs.io/troubleshooting/#debugging-macros]] for more details
     *
     * @since 0.8.0
     */

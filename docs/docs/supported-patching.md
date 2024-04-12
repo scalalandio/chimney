@@ -118,7 +118,7 @@ If the flag was enabled in the implicit config it can be disabled with `.failRed
 
 ### Treating `None` as no-update instead of "set to `None`"
 
-It is possible to patch using optional values of type `Option[T]` as long as the `Transformer` is available for `T`.
+It is possible to patch using optional values of type `Option[A]` as long as the `Transformer` is available for `A`.
 If the value is present (`Some`), it’s used for patching a field in the target object; otherwise (`None`) it’s ignored
 and the field value is copied from the original object.
 
@@ -143,9 +143,9 @@ Let’s consider the following patch:
 The field `phone` remained the same as in the original `user`, while the optional e-mail string got updated from
 a patch object.
 
-#### `Option[T]` on both sides
+#### `Option[A]` on both sides
 
-An interesting case appears when both the patch `case class` and the patched object define fields `f: Option[T]`
+An interesting case appears when both the patch `case class` and the patched object define fields `f: Option[A]`
 Depending on the values of `f` in the patched object and patch, we would like to apply the following semantic table:
 
 | `patchedObject.f` | `patch.f`      | patching result |

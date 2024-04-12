@@ -18,9 +18,9 @@ object Domain1 {
 object Poly {
 
   case class MonoSource(poly: String, other: String)
-  case class PolySource[T](poly: T, other: String)
+  case class PolySource[A](poly: A, other: String)
   case class MonoTarget(poly: String, other: String)
-  case class PolyTarget[T](poly: T, other: String)
+  case class PolyTarget[A](poly: A, other: String)
 
   val monoSource = MonoSource("test", "test")
   val polySource = PolySource("test", "test")
