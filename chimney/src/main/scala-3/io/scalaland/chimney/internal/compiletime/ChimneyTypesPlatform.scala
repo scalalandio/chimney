@@ -2,6 +2,7 @@ package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.dsl as dsls
+import io.scalaland.chimney.integrations
 import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
@@ -315,9 +316,8 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.Matching[Init, Subtype]] =
           quoted.Type.of[runtime.Path.Matching[Init, Subtype]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ??)] = tpe match
-          case '[runtime.Path.Matching[init, subtype]] =>
-            Some((Type[init].as_?<[runtime.Path], Type[subtype].as_??))
-          case _ => scala.None
+          case '[runtime.Path.Matching[init, subtype]] => Some((Type[init].as_?<[runtime.Path], Type[subtype].as_??))
+          case _                                       => scala.None
       }
       object SourceMatching extends SourceMatchingModule {
         def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.SourceMatching[Init, Subtype]] =
@@ -331,26 +331,47 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryItem[Init]] =
           quoted.Type.of[runtime.Path.EveryItem[Init]]
         def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
-          case '[runtime.Path.EveryItem[init]] =>
-            Some(Type[init].as_?<[runtime.Path])
-          case _ => scala.None
+          case '[runtime.Path.EveryItem[init]] => Some(Type[init].as_?<[runtime.Path])
+          case _                               => scala.None
       }
       object EveryMapKey extends EveryMapKeyModule {
         def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryMapKey[Init]] =
           quoted.Type.of[runtime.Path.EveryMapKey[Init]]
         def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
-          case '[runtime.Path.EveryMapKey[init]] =>
-            Some(Type[init].as_?<[runtime.Path])
-          case _ => scala.None
+          case '[runtime.Path.EveryMapKey[init]] => Some(Type[init].as_?<[runtime.Path])
+          case _                                 => scala.None
       }
       object EveryMapValue extends EveryMapValueModule {
         def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryMapValue[Init]] =
           quoted.Type.of[runtime.Path.EveryMapValue[Init]]
         def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
-          case '[runtime.Path.EveryMapValue[init]] =>
-            Some(Type[init].as_?<[runtime.Path])
-          case _ => scala.None
+          case '[runtime.Path.EveryMapValue[init]] => Some(Type[init].as_?<[runtime.Path])
+          case _                                   => scala.None
       }
+    }
+
+    object OptionalValueOf extends OptionalValueOfModule {
+      def apply[Optional: Type, Value: Type]: Type[integrations.OptionalValue.Of[Optional, Value]] =
+        quoted.Type.of[integrations.OptionalValue.Of[Optional, Value]]
+      def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match
+        case '[integrations.OptionalValue.Of[optional, value]] => Some((Type[optional].as_??, Type[value].as_??))
+        case _                                                 => scala.None
+    }
+    object PartiallyBuildIterableOf extends PartiallyBuildIterableOfModule {
+      def apply[Collection: Type, Item: Type]: Type[integrations.PartiallyBuildIterable.Of[Collection, Item]] =
+        quoted.Type.of[integrations.PartiallyBuildIterable.Of[Collection, Item]]
+      def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match
+        case '[integrations.PartiallyBuildIterable.Of[collection, item]] =>
+          Some((Type[collection].as_??, Type[item].as_??))
+        case _ => scala.None
+    }
+    object TotallyBuildIterableOf extends TotallyBuildIterableOfModule {
+      def apply[Collection: Type, Item: Type]: Type[integrations.TotallyBuildIterable.Of[Collection, Item]] =
+        quoted.Type.of[integrations.TotallyBuildIterable.Of[Collection, Item]]
+      def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match
+        case '[integrations.TotallyBuildIterable.Of[collection, item]] =>
+          Some((Type[collection].as_??, Type[item].as_??))
+        case _ => scala.None
     }
   }
 }

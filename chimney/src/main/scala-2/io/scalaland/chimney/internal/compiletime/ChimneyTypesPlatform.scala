@@ -3,6 +3,7 @@ package io.scalaland.chimney.internal.compiletime
 import io.scalaland.chimney.{PartialTransformer, Patcher, Transformer}
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.runtime
+import io.scalaland.chimney.integrations
 import io.scalaland.chimney.partial
 
 private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: ChimneyDefinitionsPlatform =>
@@ -392,6 +393,28 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           if (A.isCtor[runtime.Path.EveryMapValue[?]]) Some(A.param_<[runtime.Path](0))
           else scala.None
       }
+    }
+
+    object OptionalValueOf extends OptionalValueOfModule {
+      def apply[Optional: Type, Value: Type]: Type[integrations.OptionalValue.Of[Optional, Value]] =
+        weakTypeTag[integrations.OptionalValue.Of[Optional, Value]]
+      def unapply[A](A: Type[A]): Option[(??, ??)] =
+        if (A.isCtor[integrations.OptionalValue.Of[?, ?]]) Some(A.param(0) -> A.param(1))
+        else scala.None
+    }
+    object PartiallyBuildIterableOf extends PartiallyBuildIterableOfModule {
+      def apply[Collection: Type, Item: Type]: Type[integrations.PartiallyBuildIterable.Of[Collection, Item]] =
+        weakTypeTag[integrations.PartiallyBuildIterable.Of[Collection, Item]]
+      def unapply[A](A: Type[A]): Option[(??, ??)] =
+        if (A.isCtor[integrations.PartiallyBuildIterable.Of[?, ?]]) Some(A.param(0) -> A.param(1))
+        else scala.None
+    }
+    object TotallyBuildIterableOf extends TotallyBuildIterableOfModule {
+      def apply[Collection: Type, Item: Type]: Type[integrations.TotallyBuildIterable.Of[Collection, Item]] =
+        weakTypeTag[integrations.TotallyBuildIterable.Of[Collection, Item]]
+      def unapply[A](A: Type[A]): Option[(??, ??)] =
+        if (A.isCtor[integrations.TotallyBuildIterable.Of[?, ?]]) Some(A.param(0) -> A.param(1))
+        else scala.None
     }
   }
 }
