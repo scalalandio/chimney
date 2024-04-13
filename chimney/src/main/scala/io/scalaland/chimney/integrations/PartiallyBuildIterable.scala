@@ -2,7 +2,7 @@ package io.scalaland.chimney.integrations
 
 import io.scalaland.chimney.partial
 
-import scala.collection.compat.Factory
+import scala.collection.compat.*
 
 trait PartiallyBuildIterable[Collection] {
   type Item

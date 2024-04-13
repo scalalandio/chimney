@@ -356,6 +356,8 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match
         case '[integrations.OptionalValue.Of[optional, value]] => Some((Type[optional].as_??, Type[value].as_??))
         case _                                                 => scala.None
+      def inferred[Optional: Type]: ExistentialType =
+        quoted.Type.of[integrations.OptionalValue[Optional]].as_??
     }
     object PartiallyBuildIterableOf extends PartiallyBuildIterableOfModule {
       def apply[Collection: Type, Item: Type]: Type[integrations.PartiallyBuildIterable.Of[Collection, Item]] =
@@ -364,6 +366,8 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         case '[integrations.PartiallyBuildIterable.Of[collection, item]] =>
           Some((Type[collection].as_??, Type[item].as_??))
         case _ => scala.None
+      def inferred[Collection: Type]: ExistentialType =
+        quoted.Type.of[integrations.PartiallyBuildIterable[Collection]].as_??
     }
     object TotallyBuildIterableOf extends TotallyBuildIterableOfModule {
       def apply[Collection: Type, Item: Type]: Type[integrations.TotallyBuildIterable.Of[Collection, Item]] =
@@ -372,6 +376,8 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         case '[integrations.TotallyBuildIterable.Of[collection, item]] =>
           Some((Type[collection].as_??, Type[item].as_??))
         case _ => scala.None
+      def inferred[Collection: Type]: ExistentialType =
+        quoted.Type.of[integrations.TotallyBuildIterable[Collection]].as_??
     }
   }
 }

@@ -401,6 +401,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       def unapply[A](A: Type[A]): Option[(??, ??)] =
         if (A.isCtor[integrations.OptionalValue.Of[?, ?]]) Some(A.param(0) -> A.param(1))
         else scala.None
+      def inferred[Optional: Type]: ExistentialType = weakTypeTag[integrations.OptionalValue[Optional]].as_??
     }
     object PartiallyBuildIterableOf extends PartiallyBuildIterableOfModule {
       def apply[Collection: Type, Item: Type]: Type[integrations.PartiallyBuildIterable.Of[Collection, Item]] =
@@ -408,6 +409,8 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       def unapply[A](A: Type[A]): Option[(??, ??)] =
         if (A.isCtor[integrations.PartiallyBuildIterable.Of[?, ?]]) Some(A.param(0) -> A.param(1))
         else scala.None
+      def inferred[Collection: Type]: ExistentialType =
+        weakTypeTag[integrations.PartiallyBuildIterable[Collection]].as_??
     }
     object TotallyBuildIterableOf extends TotallyBuildIterableOfModule {
       def apply[Collection: Type, Item: Type]: Type[integrations.TotallyBuildIterable.Of[Collection, Item]] =
@@ -415,6 +418,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       def unapply[A](A: Type[A]): Option[(??, ??)] =
         if (A.isCtor[integrations.TotallyBuildIterable.Of[?, ?]]) Some(A.param(0) -> A.param(1))
         else scala.None
+      def inferred[Collection: Type]: ExistentialType = weakTypeTag[integrations.TotallyBuildIterable[Collection]].as_??
     }
   }
 }
