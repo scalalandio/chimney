@@ -275,16 +275,20 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     }
 
     val OptionalValueOf: OptionalValueOfModule
-    trait OptionalValueOfModule extends Type.Ctor2[integrations.OptionalValue.Of] { this: OptionalValueOf.type => }
+    trait OptionalValueOfModule extends Type.Ctor2[integrations.OptionalValue.Of] { this: OptionalValueOf.type =>
+      def inferred[Optional: Type]: ExistentialType
+    }
 
     val PartiallyBuildIterableOf: PartiallyBuildIterableOfModule
     trait PartiallyBuildIterableOfModule extends Type.Ctor2[integrations.PartiallyBuildIterable.Of] {
       this: PartiallyBuildIterableOf.type =>
+      def inferred[Optional: Type]: ExistentialType
     }
 
     val TotallyBuildIterableOf: TotallyBuildIterableOfModule
     trait TotallyBuildIterableOfModule extends Type.Ctor2[integrations.TotallyBuildIterable.Of] {
       this: TotallyBuildIterableOf.type =>
+      def inferred[Optional: Type]: ExistentialType
     }
 
     // You can `import ChimneyType.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts
@@ -311,6 +315,13 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       implicit val PathElementMapValue: Type[partial.PathElement.MapValue] = PathElement.MapValue
 
       implicit val RuntimeDataStoreType: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] = RuntimeDataStore
+
+      implicit def OptionalValueOfType[Optional: Type, Value: Type]
+          : Type[integrations.OptionalValue.Of[Optional, Value]] = OptionalValueOf[Optional, Value]
+      implicit def PartiallyBuildIterableOfType[Optional: Type, Value: Type]
+          : Type[integrations.PartiallyBuildIterable.Of[Optional, Value]] = PartiallyBuildIterableOf[Optional, Value]
+      implicit def TotallyBuildIterableOfType[Optional: Type, Value: Type]
+          : Type[integrations.TotallyBuildIterable.Of[Optional, Value]] = TotallyBuildIterableOf[Optional, Value]
     }
   }
 }
