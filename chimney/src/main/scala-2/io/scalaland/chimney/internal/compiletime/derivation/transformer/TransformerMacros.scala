@@ -163,35 +163,29 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
       useImplicitScopeFlags: ?<[runtime.TransformerFlags] => Expr[A]
   ): Expr[A] = {
     val implicitScopeConfig = {
-      import c.universe.*
+      val transformerConfigurationType = Type.platformSpecific
+        .fromUntyped[io.scalaland.chimney.dsl.TransformerConfiguration[? <: runtime.TransformerFlags]](
+          c.typecheck(
+            tree = tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[? <: runtime.TransformerFlags]]}",
+            silent = true,
+            mode = c.TYPEmode,
+            withImplicitViewsDisabled = true,
+            withMacrosDisabled = false
+          ).tpe
+        )
 
-      val searchTypeTree =
-        tq"${typeOf[io.scalaland.chimney.dsl.TransformerConfiguration[? <: runtime.TransformerFlags]]}"
-      val typedTpeTree = c.typecheck(
-        tree = searchTypeTree,
-        silent = true,
-        mode = c.TYPEmode,
-        withImplicitViewsDisabled = true,
-        withMacrosDisabled = false
-      )
-
-      // TODO: use Expr.summonImplicit
-      scala.util
-        .Try(c.inferImplicitValue(typedTpeTree.tpe, silent = true, withMacrosDisabled = false))
-        .toOption
-        .filterNot(_ == c.universe.EmptyTree)
-        .getOrElse {
-          // $COVERAGE-OFF$
-          reportError("Can't locate implicit TransformerConfiguration!")
-          // $COVERAGE-ON$
-        }
+      Expr.summonImplicit(transformerConfigurationType).getOrElse {
+        // $COVERAGE-OFF$
+        reportError("Can't locate implicit TransformerConfiguration!")
+        // $COVERAGE-ON$
+      }
     }
     val implicitScopeFlagsType = Type.platformSpecific
-      .fromUntyped[runtime.TransformerFlags](implicitScopeConfig.tpe.typeArgs.head)
+      .fromUntyped[runtime.TransformerFlags](implicitScopeConfig.tpe.tpe.typeArgs.head)
       .as_?<[runtime.TransformerFlags]
 
     Expr.block(
-      List(Expr.suppressUnused(c.Expr(implicitScopeConfig)(implicitScopeFlagsType.Underlying))),
+      List(Expr.suppressUnused(implicitScopeConfig)),
       useImplicitScopeFlags(implicitScopeFlagsType)
     )
   }

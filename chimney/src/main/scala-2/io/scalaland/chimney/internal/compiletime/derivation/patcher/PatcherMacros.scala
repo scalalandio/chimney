@@ -67,35 +67,29 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
       useImplicitScopeFlags: ?<[runtime.PatcherFlags] => Expr[A]
   ): Expr[A] = {
     val implicitScopeConfig = {
-      import c.universe.*
+      val patcherConfigurationType = Type.platformSpecific
+        .fromUntyped[io.scalaland.chimney.dsl.PatcherConfiguration[? <: runtime.PatcherFlags]](
+          c.typecheck(
+            tree = tq"${typeOf[io.scalaland.chimney.dsl.PatcherConfiguration[? <: runtime.PatcherFlags]]}",
+            silent = true,
+            mode = c.TYPEmode,
+            withImplicitViewsDisabled = true,
+            withMacrosDisabled = false
+          ).tpe
+        )
 
-      val searchTypeTree =
-        tq"${typeOf[io.scalaland.chimney.dsl.PatcherConfiguration[? <: runtime.PatcherFlags]]}"
-      val typedTpeTree = c.typecheck(
-        tree = searchTypeTree,
-        silent = true,
-        mode = c.TYPEmode,
-        withImplicitViewsDisabled = true,
-        withMacrosDisabled = false
-      )
-
-      // TODO: use Expr.summonImplicit
-      scala.util
-        .Try(c.inferImplicitValue(typedTpeTree.tpe, silent = true, withMacrosDisabled = false))
-        .toOption
-        .filterNot(_ == c.universe.EmptyTree)
-        .getOrElse {
-          // $COVERAGE-OFF$
-          reportError("Can't locate implicit PatcherConfiguration!")
-          // $COVERAGE-ON$
-        }
+      Expr.summonImplicit(patcherConfigurationType).getOrElse {
+        // $COVERAGE-OFF$
+        reportError("Can't locate implicit PatcherConfiguration!")
+        // $COVERAGE-ON$
+      }
     }
     val implicitScopeFlagsType = Type.platformSpecific
-      .fromUntyped[runtime.PatcherFlags](implicitScopeConfig.tpe.typeArgs.head)
+      .fromUntyped[runtime.PatcherFlags](implicitScopeConfig.tpe.tpe.typeArgs.head)
       .as_?<[runtime.PatcherFlags]
 
     Expr.block(
-      List(Expr.suppressUnused(c.Expr(implicitScopeConfig)(implicitScopeFlagsType.Underlying))),
+      List(Expr.suppressUnused(implicitScopeConfig)),
       useImplicitScopeFlags(implicitScopeFlagsType)
     )
   }
