@@ -79,6 +79,7 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
         withMacrosDisabled = false
       )
 
+      // TODO: use Expr.summonImplicit
       scala.util
         .Try(c.inferImplicitValue(typedTpeTree.tpe, silent = true, withMacrosDisabled = false))
         .toOption

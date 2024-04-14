@@ -4,8 +4,7 @@ import io.scalaland.chimney.partial
 
 import scala.collection.compat.*
 
-trait PartiallyBuildIterable[Collection] {
-  type Item
+trait PartiallyBuildIterableOf[Collection, Item] {
 
   def partialFactory: Factory[Item, partial.Result[Collection]]
 
@@ -13,7 +12,4 @@ trait PartiallyBuildIterable[Collection] {
 
   def to[Collection2](collection: Collection, factory: Factory[Item, Collection2]): Collection2 =
     iterable(collection).to(factory)
-}
-object PartiallyBuildIterable {
-  type Of[Collection, Item0] = PartiallyBuildIterable[Collection] { type Item = Item0 }
 }

@@ -175,6 +175,7 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
         withMacrosDisabled = false
       )
 
+      // TODO: use Expr.summonImplicit
       scala.util
         .Try(c.inferImplicitValue(typedTpeTree.tpe, silent = true, withMacrosDisabled = false))
         .toOption

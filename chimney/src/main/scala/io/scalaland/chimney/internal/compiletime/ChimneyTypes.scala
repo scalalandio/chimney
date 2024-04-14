@@ -275,18 +275,18 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     }
 
     val OptionalValueOf: OptionalValueOfModule
-    trait OptionalValueOfModule extends Type.Ctor2[integrations.OptionalValue.Of] { this: OptionalValueOf.type =>
+    trait OptionalValueOfModule extends Type.Ctor2[integrations.OptionalValueOf] { this: OptionalValueOf.type =>
       def inferred[Optional: Type]: ExistentialType
     }
 
     val PartiallyBuildIterableOf: PartiallyBuildIterableOfModule
-    trait PartiallyBuildIterableOfModule extends Type.Ctor2[integrations.PartiallyBuildIterable.Of] {
+    trait PartiallyBuildIterableOfModule extends Type.Ctor2[integrations.PartiallyBuildIterableOf] {
       this: PartiallyBuildIterableOf.type =>
       def inferred[Optional: Type]: ExistentialType
     }
 
     val TotallyBuildIterableOf: TotallyBuildIterableOfModule
-    trait TotallyBuildIterableOfModule extends Type.Ctor2[integrations.TotallyBuildIterable.Of] {
+    trait TotallyBuildIterableOfModule extends Type.Ctor2[integrations.TotallyBuildIterableOf] {
       this: TotallyBuildIterableOf.type =>
       def inferred[Optional: Type]: ExistentialType
     }
@@ -317,11 +317,11 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       implicit val RuntimeDataStoreType: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] = RuntimeDataStore
 
       implicit def OptionalValueOfType[Optional: Type, Value: Type]
-          : Type[integrations.OptionalValue.Of[Optional, Value]] = OptionalValueOf[Optional, Value]
+          : Type[integrations.OptionalValueOf[Optional, Value]] = OptionalValueOf[Optional, Value]
       implicit def PartiallyBuildIterableOfType[Optional: Type, Value: Type]
-          : Type[integrations.PartiallyBuildIterable.Of[Optional, Value]] = PartiallyBuildIterableOf[Optional, Value]
+          : Type[integrations.PartiallyBuildIterableOf[Optional, Value]] = PartiallyBuildIterableOf[Optional, Value]
       implicit def TotallyBuildIterableOfType[Optional: Type, Value: Type]
-          : Type[integrations.TotallyBuildIterable.Of[Optional, Value]] = TotallyBuildIterableOf[Optional, Value]
+          : Type[integrations.TotallyBuildIterableOf[Optional, Value]] = TotallyBuildIterableOf[Optional, Value]
     }
   }
 }
