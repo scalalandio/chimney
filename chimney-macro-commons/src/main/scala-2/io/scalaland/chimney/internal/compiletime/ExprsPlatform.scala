@@ -157,6 +157,12 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         .map(line => Console.MAGENTA + line + Console.RESET)
         .mkString("\n")
 
-    def typeOf[A](expr: Expr[A]): Type[A] = Type.platformSpecific.fromUntyped(expr.staticType.finalResultType)
+    def typeOf[A](expr: Expr[A]): Type[A] = Type.platformSpecific.fromUntyped {
+      try
+        expr.actualType.finalResultType
+      catch {
+        case _: Throwable => expr.staticType.finalResultType
+      }
+    }
   }
 }

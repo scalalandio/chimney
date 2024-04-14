@@ -12,6 +12,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
 
   import quotes.*, quotes.reflect.*
 
+  // TODO: align names with Scala 2 (Transformer vs Transformation
   def deriveTotalTransformerWithConfig[
       From: Type,
       To: Type,
