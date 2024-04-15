@@ -285,11 +285,17 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       def inferred[Optional: Type]: ExistentialType
     }
 
+    val PartiallyBuildMap: PartiallyBuildMapModule
+    trait PartiallyBuildMapModule extends Type.Ctor3[integrations.PartiallyBuildMap] { this: PartiallyBuildMap.type => }
+
     val TotallyBuildIterable: TotallyBuildIterableModule
     trait TotallyBuildIterableModule extends Type.Ctor2[integrations.TotallyBuildIterable] {
       this: TotallyBuildIterable.type =>
       def inferred[Optional: Type]: ExistentialType
     }
+
+    val TotallyBuildMap: TotallyBuildMapModule
+    trait TotallyBuildMapModule extends Type.Ctor3[integrations.TotallyBuildMap] { this: TotallyBuildMap.type => }
 
     // You can `import ChimneyType.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts
     // with implicit types seen in platform-specific scopes (which would happen if those implicits were always used).

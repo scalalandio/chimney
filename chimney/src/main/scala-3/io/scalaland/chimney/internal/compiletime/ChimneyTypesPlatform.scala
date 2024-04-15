@@ -369,6 +369,14 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       def inferred[Collection: Type]: ExistentialType =
         quoted.Type.of[integrations.PartiallyBuildIterable[Collection, ?]].as_??
     }
+    object PartiallyBuildMap extends PartiallyBuildMapModule {
+      def apply[Map: Type, Key: Type, Value: Type]: Type[integrations.PartiallyBuildMap[Map, Key, Value]] =
+        quoted.Type.of[integrations.PartiallyBuildMap[Map, Key, Value]]
+      def unapply[A](tpe: Type[A]): Option[(??, ??, ??)] = tpe match
+        case '[integrations.PartiallyBuildMap[map, key, value]] =>
+          Some((Type[map].as_??, Type[key].as_??, Type[value].as_??))
+        case _ => scala.None
+    }
     object TotallyBuildIterable extends TotallyBuildIterableModule {
       def apply[Collection: Type, Item: Type]: Type[integrations.TotallyBuildIterable[Collection, Item]] =
         quoted.Type.of[integrations.TotallyBuildIterable[Collection, Item]]
@@ -378,6 +386,14 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         case _ => scala.None
       def inferred[Collection: Type]: ExistentialType =
         quoted.Type.of[integrations.TotallyBuildIterable[Collection, ?]].as_??
+    }
+    object TotallyBuildMap extends TotallyBuildMapModule {
+      def apply[Map: Type, Key: Type, Value: Type]: Type[integrations.TotallyBuildMap[Map, Key, Value]] =
+        quoted.Type.of[integrations.TotallyBuildMap[Map, Key, Value]]
+      def unapply[A](tpe: Type[A]): Option[(??, ??, ??)] = tpe match
+        case '[integrations.TotallyBuildMap[map, key, value]] =>
+          Some((Type[map].as_??, Type[key].as_??, Type[value].as_??))
+        case _ => scala.None
     }
   }
 }
