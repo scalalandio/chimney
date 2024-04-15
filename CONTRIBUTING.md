@@ -24,20 +24,20 @@ Before we'll start reviewing the PRs we would ask however for a few things:
 
 Additionally, we would like to:
 
-* add bug fixes test cases to `IssuesSpec`
+* add bug fixes' test cases to `IssuesSpec`
 * for new flags:
     * test them on the default setting (including failing compilation)
     * testing them flipped in in-place derivation (e.g. `foo.into[Bar].enableFlag.transform`)
     * testing them flipped in implicit `TransformerConfig` (
       e.g. `implicit val cfg = TransformerConfiguration.default.enableFlag`)
     * testing them overriding in in-place derivation the implicit config (
-      e.g. `implicit val cfg = TransformerConfiguration.default.enableFlag` AND `foo.into[Bar].disbleFlag.transform`)
+      e.g. `implicit val cfg = TransformerConfiguration.default.enableFlag` AND `foo.into[Bar].disableFlag.transform`)
 * for new modifiers:
     * test them on the default setting (including failing compilation)
     * testing them flipped in in-place derivation (e.g. `foo.into[Bar].modifier(_.bar, something).transform`)
 * for any new feature we need a documentation:
     * Scaladoc documenting: what is does, what are its type parameters, what are its value parameters
-    * Sphinx documentation describing new functionality
+    * MkDocs documentation describing new functionality
     * linking Scaladoc entries to corresponding MkDocs documentation (https://chimney.readthedocs.io/ subpage)
     * it might be good to discuss whether put this information into a new page or as a section of an existing page
 
@@ -70,10 +70,24 @@ shell.
 Information about Scala macros can be found on:
 
  * after loading project with Scala 2, using _Go to Symbol_ on `Context` values
+   * alternatively opening [it in a browser](https://github.com/scala/scala/tree/2.13.x/src/reflect/scala/reflect/api)
+     API directory and keeping the tab opened (might be a good idea since in my IDE sources are NOT imported so I see no
+     documentation)
  * after loading project with Scala 3, opening `Quotes.scala` source
+   * alternatively opening [it in a browser](https://github.com/scala/scala3/blob/3.3.3/library/src/scala/quoted/Quotes.scala)
+     and keeping the tab opened 
  * [Scala 2 macros documentation](https://docs.scala-lang.org/overviews/macros/overview.html)
  * [Scala 3 macros documentation](https://docs.scala-lang.org/scala3/guides/macros/macros.html)
- * [EPFL papers](https://infoscience.epfl.ch/search?ln=en&as=1&m1=p&p1=macros&f1=keyword&op1=a&m2=p&p2=scala&f2=&op2=a&m3=a&p3=&f3=&dt=&d1d=&d1m=&d1y=&d2d=&d2m=&d2y=&rm=&action_search=Search&sf=title&so=a&rg=10&c=Infoscience&of=hb)
+ * [EPFL papers](https://infoscience.epfl.ch/search?ln=en&as=1&m1=p&p1=macros&f1=keyword&op1=a&m2=p&p2=scala&f2=&op2=a&m3=a&p3=&f3=&dt=&d1d=&d1m=&d1y=&d2d=&d2m=&d2y=&rm=&action_search=Search&sf=title&so=a&rg=10&c=Infoscience&of=hb),
+   in particular:
+   * [**Scala Macros, a Technical Report**](https://infoscience.epfl.ch/record/183862?ln=en) (Scala 2 macros)
+   * [**Quasiquotes for Scala**](https://infoscience.epfl.ch/record/185242?ln=en) (Scala 2 macros)
+   * [**Scalable Metaprogramming in Scala 3**](https://infoscience.epfl.ch/record/299370?ln=en) (Scala 3 macros)
+ * [**Scala 2 vs Scala 3 macros** presentation](https://kubuszok.com/presentations/#scala-2-vs-scala-3-macros-presentation)
+   made by one of library's coauthors 
+
+Additionally, [**Polymorphic Embedding of DSLs** paper](https://www.informatik.uni-marburg.de/~rendel/hofer08polymorphic.pdf)
+is useful to understanding how compatibility layer between Scala 2 macros and Scala 3 macros was created.
 
 Very basic introduction can be found in [design doc](DESIGN.md) and in the
 [Under the hood](https://chimney.readthedocs.io/under-the-hood/) section of the documentation.
@@ -93,6 +107,25 @@ To develop locally it is recommended to install [Just](https://github.com/casey/
  * open http://0.0.0.0:8000/
 
 Site will reload and update as you edit the markdown files in docs/docs directory.
+
+## Testing snapshots
+
+Every commit merged on `master` which was not tagged, will be released as a snapshot to Sonatype snapshot repository.
+
+You can check its name in:
+
+ * **Sonatype Release / release-tag** GitHub Action [log](https://github.com/scalalandio/chimney/actions/workflows/release.yml)
+ * newest commit will be available on https://chimney.readthedocs.io/ as the [latest version](https://chimney.readthedocs.io/en/latest/)
+ * sbt after starting it for selected commit and checking which version will be printed by welcome prompt
+
+If you want to test changes that were not merged to `master` you can publish them you for yourself locally. For that
+open sbt and run `publishLocal` task for every artifact that you want to publish as a snapshot. Keep in mind that:
+
+ * `chimney-macro-commons` is required for `chimney` to work
+ * `chimney-cats`, `chimney-java-collections` and `chimney-protobufs` rely on `chimney`
+ * `chimneyMacroCommons`, `chimney`, `chimneyCats`, etc are versions with Scala 2.13 on JVM
+ * versions for Scala 2.12, Scala 3, Scala.js and Scala Native are NOT published by prepending `++` but by
+   using a different suffix (`2_12`, `3`, `JS`, `Native`, see `projects` task to get a full list of projects) 
 
 ## Release checklist
 
@@ -119,6 +152,7 @@ would follow to publish a new version of the library:
   - [ ] run https://github.com/sbts/github-badge-cache-buster to flush GH badge cache (`./github-badge-cache-buster.sh https://github.com/scalalandio/chimney`)
   - [ ] publish the (pre)release on GitHub
   - [ ] publish announcements on Twitter/Mastodon/Reddit/etc
+  - [ ] add published versions to `mimaPreviousArtifacts` value in `build.sbt`  
 
 While building, testing and deployment are automated, some things have to be verified manually, because they are not
 immediate (library can become visible on Maven Central 15 minutes after publishing or a few hours later), or because
