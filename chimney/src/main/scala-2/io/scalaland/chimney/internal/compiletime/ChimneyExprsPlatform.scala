@@ -239,5 +239,42 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           optional2: Expr[Optional]
       ): Expr[Optional] = c.Expr[Optional](q"$optionalValue.fold($optional, $optional2)")
     }
+
+    object PartiallyBuildIterable extends PartiallyBuildIterableModule {
+
+      def partialFactory[Collection: Type, Item: Type](
+          partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]]
+      ): Expr[Factory[Item, partial.Result[Collection]]] =
+        c.Expr[Factory[Item, partial.Result[Collection]]](q"${partiallyBuildIterable.partialFactory}")
+
+      def iterable[Collection: Type, Item: Type](
+          partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]],
+          collection: Expr[Collection]
+      ): Expr[Iterable[Item]] = c.Expr[Iterable[Item]](q"$partiallyBuildIterable.iterable($collection)")
+
+      def to[Collection: Type, Item: Type, Collection2: Type](
+          partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]],
+          collection: Expr[Collection],
+          factory: Expr[Factory[Item, Collection2]]
+      ): Expr[Collection2] = c.Expr[Collection2](q"$partiallyBuildIterable.to($collection, $factory)")
+    }
+
+    object TotallyBuildIterable extends TotallyBuildIterableModule {
+
+      def totalFactory[Collection: Type, Item: Type](
+          totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]]
+      ): Expr[Factory[Item, Collection]] = c.Expr[Factory[Item, Collection]](q"${totallyBuildIterable.totalFactory}")
+
+      def iterable[Collection: Type, Item: Type](
+          totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]],
+          collection: Expr[Collection]
+      ): Expr[Iterable[Item]] = c.Expr[Iterable[Item]](q"$totallyBuildIterable.iterable($collection)")
+
+      def to[Collection: Type, Item: Type, Collection2: Type](
+          totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]],
+          collection: Expr[Collection],
+          factory: Expr[Factory[Item, Collection2]]
+      ): Expr[Collection2] = c.Expr[Collection2](q"$totallyBuildIterable.to($collection, $factory)")
+    }
   }
 }

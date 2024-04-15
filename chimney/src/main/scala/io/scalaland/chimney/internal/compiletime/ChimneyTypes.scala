@@ -279,15 +279,15 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       def inferred[Optional: Type]: ExistentialType
     }
 
-    val PartiallyBuildIterableOf: PartiallyBuildIterableOfModule
-    trait PartiallyBuildIterableOfModule extends Type.Ctor2[integrations.PartiallyBuildIterableOf] {
-      this: PartiallyBuildIterableOf.type =>
+    val PartiallyBuildIterable: PartiallyBuildIterableModule
+    trait PartiallyBuildIterableModule extends Type.Ctor2[integrations.PartiallyBuildIterable] {
+      this: PartiallyBuildIterable.type =>
       def inferred[Optional: Type]: ExistentialType
     }
 
-    val TotallyBuildIterableOf: TotallyBuildIterableOfModule
-    trait TotallyBuildIterableOfModule extends Type.Ctor2[integrations.TotallyBuildIterableOf] {
-      this: TotallyBuildIterableOf.type =>
+    val TotallyBuildIterable: TotallyBuildIterableModule
+    trait TotallyBuildIterableModule extends Type.Ctor2[integrations.TotallyBuildIterable] {
+      this: TotallyBuildIterable.type =>
       def inferred[Optional: Type]: ExistentialType
     }
 
@@ -318,10 +318,10 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
 
       implicit def OptionalValueType[Optional: Type, Value: Type]: Type[integrations.OptionalValue[Optional, Value]] =
         OptionalValue[Optional, Value]
-      implicit def PartiallyBuildIterableOfType[Optional: Type, Value: Type]
-          : Type[integrations.PartiallyBuildIterableOf[Optional, Value]] = PartiallyBuildIterableOf[Optional, Value]
-      implicit def TotallyBuildIterableOfType[Optional: Type, Value: Type]
-          : Type[integrations.TotallyBuildIterableOf[Optional, Value]] = TotallyBuildIterableOf[Optional, Value]
+      implicit def PartiallyBuildIterableType[Optional: Type, Value: Type]
+          : Type[integrations.PartiallyBuildIterable[Optional, Value]] = PartiallyBuildIterable[Optional, Value]
+      implicit def TotallyBuildIterableType[Optional: Type, Value: Type]
+          : Type[integrations.TotallyBuildIterable[Optional, Value]] = TotallyBuildIterable[Optional, Value]
     }
   }
 }

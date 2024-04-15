@@ -39,6 +39,8 @@ trait IterableOrArrays { this: Definitions =>
 
               def to[C: Type](m: Expr[M])(factory: Expr[Factory[Inner, C]]): Expr[C] =
                 m.upcastToExprOf[Iterable[Inner]].to(factory)
+
+              override def toString: String = s"support build-in for map-type ${Type.prettyPrint[M]}"
             }
           )
         )
@@ -56,6 +58,8 @@ trait IterableOrArrays { this: Definitions =>
 
               def to[C: Type](m: Expr[M])(factory: Expr[Factory[Inner, C]]): Expr[C] =
                 m.upcastToExprOf[Iterable[Inner]].to(factory)
+
+              override def toString: String = s"support build-in for iterable-type ${Type.prettyPrint[M]}"
             }
           )
         )
@@ -72,6 +76,8 @@ trait IterableOrArrays { this: Definitions =>
 
               def to[C: Type](m: Expr[M])(factory: Expr[Factory[Inner, C]]): Expr[C] =
                 m.upcastToExprOf[Array[Inner]].to(factory)
+
+              override def toString: String = s"support build-in for array-type ${Type.prettyPrint[M]}"
             }
           )
         )

@@ -168,6 +168,44 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
           optional2: Expr[Optional]
       ): Expr[Optional]
     }
+
+    val PartiallyBuildIterable: PartiallyBuildIterableModule
+    trait PartiallyBuildIterableModule { this: PartiallyBuildIterable.type =>
+
+      def partialFactory[Collection: Type, Item: Type](
+          partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]]
+      ): Expr[Factory[Item, partial.Result[Collection]]]
+
+      def iterable[Collection: Type, Item: Type](
+          partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]],
+          collection: Expr[Collection]
+      ): Expr[Iterable[Item]]
+
+      def to[Collection: Type, Item: Type, Collection2: Type](
+          partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]],
+          collection: Expr[Collection],
+          factory: Expr[Factory[Item, Collection2]]
+      ): Expr[Collection2]
+    }
+
+    val TotallyBuildIterable: TotallyBuildIterableModule
+    trait TotallyBuildIterableModule { this: TotallyBuildIterable.type =>
+
+      def totalFactory[Collection: Type, Item: Type](
+          totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]]
+      ): Expr[Factory[Item, Collection]]
+
+      def iterable[Collection: Type, Item: Type](
+          totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]],
+          collection: Expr[Collection]
+      ): Expr[Iterable[Item]]
+
+      def to[Collection: Type, Item: Type, Collection2: Type](
+          totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]],
+          collection: Expr[Collection],
+          factory: Expr[Factory[Item, Collection2]]
+      ): Expr[Collection2]
+    }
   }
 
   implicit final protected class TransformerExprOps[From: Type, To: Type](
@@ -242,4 +280,37 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
       ChimneyExpr.OptionalValue.orElse(optionalValueExpr, optional, optional2)
   }
 
+  implicit final protected class PartiallyBuildIterableOps[Collection: Type, Item: Type](
+      private val partiallyBuildIterableExpr: Expr[integrations.PartiallyBuildIterable[Collection, Item]]
+  ) {
+
+    def partialFactory: Expr[Factory[Item, partial.Result[Collection]]] =
+      ChimneyExpr.PartiallyBuildIterable.partialFactory(partiallyBuildIterableExpr)
+
+    def iterable(collection: Expr[Collection]): Expr[Iterable[Item]] =
+      ChimneyExpr.PartiallyBuildIterable.iterable(partiallyBuildIterableExpr, collection)
+
+    def to[Collection2: Type](
+        collection: Expr[Collection],
+        factory: Expr[Factory[Item, Collection2]]
+    ): Expr[Collection2] =
+      ChimneyExpr.PartiallyBuildIterable.to(partiallyBuildIterableExpr, collection, factory)
+  }
+
+  implicit final protected class TotallyBuildIterableOps[Collection: Type, Item: Type](
+      private val totallyBuildIterableExpr: Expr[integrations.TotallyBuildIterable[Collection, Item]]
+  ) {
+
+    def totalFactory: Expr[Factory[Item, Collection]] =
+      ChimneyExpr.TotallyBuildIterable.totalFactory(totallyBuildIterableExpr)
+
+    def iterable(collection: Expr[Collection]): Expr[Iterable[Item]] =
+      ChimneyExpr.TotallyBuildIterable.iterable(totallyBuildIterableExpr, collection)
+
+    def to[Collection2: Type](
+        collection: Expr[Collection],
+        factory: Expr[Factory[Item, Collection2]]
+    ): Expr[Collection2] =
+      ChimneyExpr.TotallyBuildIterable.to(totallyBuildIterableExpr, collection, factory)
+  }
 }
