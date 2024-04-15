@@ -35,8 +35,7 @@ Users' expectations start with the attempt to transform a value without any cust
 
     ```scala
     import io.scalaland.chimney.dsl._
-   
-    val source: Source = ...
+    val source: Source = ??? // stub for what is actually here
     source.transformInto[Target]
     ```
     
@@ -54,16 +53,16 @@ libraries with (automatic) derivation.
     Passing `Transformer` with short lambda syntax
 
     ```scala
-    val customTransformers: List[Transformer[Source, Target]] = ...
-    val source: Source = ...
+    val customTransformers: List[Transformer[Source, Target]] = ??? // stub for what is actually here
+    val source: Source = ??? // stub for what is actually here
     list.map(source.transformInto(_))
     ```
 
     Passing `Transformer` manually
 
     ```scala
-    val transformer: Transformer[Source, Target]]
-    val source: Source
+    val transformer: Transformer[Source, Target] = ??? // stub for what is actually here
+    val source: Source = ??? // stub for what is actually here
     source.pipe(_.transformInto(transformer)).pipe(println)
     ```
 
@@ -91,11 +90,11 @@ them slightly different types:
     ```scala
     // Transformer is a subtype of Autoderived (is more specific/constrained)
     trait Transformer[From, To] extends Transformer.Autoderived {
-      def transform(src: From): To   
+      def transform(src: From): To
     }
     object Transformer {
       trait Autoderived[From, To] {
-        def transform(src: From): To   
+    def transform(src: From): To
       }
       // Somewhere in the companion object we would define an implicit derivation of Autoderived,
       // making it a low-priority(!!!) implicit and a macro.
@@ -134,7 +133,7 @@ The API call to customize the derivation could look like this:
 !!! example
 
     ```scala
-    val source: Source = ...
+    val source: Source = ??? // stub for what is actually here
     source.into[Target].withFieldConst(_.a, value).enableMethodAccessors.transform
     ```
 
@@ -174,7 +173,7 @@ type class instantiation.
     
     ```scala
     new Transformer[From, To] {
-      def transform(src: From): To = 
+      def transform(src: From): To =
         // use `src` as source expression for derivation (Expr[From])
         ${ derivedToExpression: Expr[To] } // paste the derived expression as Transformer's `transform` body
     }
@@ -191,11 +190,11 @@ Well. It appears that runtime values are the easiest to store in runtime. When w
 !!! example
 
     ```scala
-    class TransformerInto(...) {
+    class TransformerInto[From, To]( /* ... */ ) {
       // ...
     }
     // extension method on [From](source: From)
-    def into[To]: TransformerInto[From, To] = new TransformerInto[From, To](...)
+    def into[To]: TransformerInto[From, To] = new TransformerInto[From, To]( /* ... */ )
     ```
 
     (`PartialTransformer` has its own `PartialTransformerInto`).
@@ -213,7 +212,7 @@ to a common supertype: `Any`. So from the JVM perspective, after type erasure, w
     new TransformerInto(source)
       .methodAppendingValue(constant: Any)
       .methodAppendingValue(function: Any)
-      ...
+    // ...
     ```
 
 At the end of this chain is an object which the macro (from `.transform`) can access to extract from it a `From` value
@@ -230,10 +229,10 @@ and then you prepend each config similar to how cons works in normal list. You e
 !!! example
 
     ```scala
-    source.withFieldConst(_.a, ...).withFieldRenamed(_.b, _.c).transform
+    source.withFieldConst(_.a, ???).withFieldRenamed(_.b, _.c).transform
     // has a Cfg type like
     TransformerCfg.FieldRenamed[fieldBType, fieldCType, TransformerCfg.FieldConst[fieldAType, TransformerCfg.Empty]]
-    // Let's not dive into how field names are represented. 
+    // Let's not dive into how field names are represented.
     ```
 
 This type is built by whitebox macros (on Scala 2) or transparent inline def (Scala 3) - macros would read the tree of
@@ -260,10 +259,10 @@ And since it is an implicit, it can be shared between several different macro ex
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
-    
+
     "test".transformInto[Option[String]]
     "test".into[Option[String]].transform
     ```
@@ -327,12 +326,12 @@ as soon as we get it - by delaying the wrapping as long as possible we are avoid
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: Int, b: Int, c: Int)
     case class Bar(a: String, b: String, c: String)
-    
+
     implicit val int2string: Transformer[Int, String] = _.toString
-    
+
     Foo(1, 2, 3).into[Bar].transform
     ```
     
@@ -417,7 +416,7 @@ Before attempting to summon any `implicit`, the `Rule` checks if it should do it
   
         ```scala
         implicit val transformerFromTo: Transformer[From, To] = Transformer.derive[From, To] // implicit[Transformer[From, To]]
-                                                                                       // = transformerFromTo - cyclic dependency
+        // = transformerFromTo - cyclic dependency
         ```
 
     This guard is removed when derivation enters into a recursive mapping of fields/subtypes/inner elements because
@@ -587,19 +586,19 @@ used in Endpoints4s and Endless4s:
     
     ```scala
     trait Types {
-       type Type[A] // abstract type
-    
-       val Type: TypeModule
-       trait TypeModule { this: Type.type =>
-         // abstract companion object
-       }
-     }
+      type Type[A] // abstract type
+
+      val Type: TypeModule
+      trait TypeModule { this: Type.type =>
+        // abstract companion object
+      }
+    }
     ```
     
     ```scala
     trait Exprs { this: Types =>
       type Expr[A] // abstract type
-    
+
       val Expr: ExprModule
       trait ExprModule { this: Expr.type =>
         // abstract companion object
@@ -610,28 +609,25 @@ used in Endpoints4s and Endless4s:
 !!! example "Scala 2-only codebase"
 
     ```scala
-    trait DefinitionsPlatform
-        extends Definitions
-        with TypesPlatform
-        with ExprsPlatform {
+    trait DefinitionsPlatform extends Definitions with TypesPlatform with ExprsPlatform {
       val c: scala.reflect.macros.blackbox.Context
     }
     ```
     
     ```scala
     trait TypesPlatform { this: DefinitionsPlatform =>
-       type Type[A] = c.WeakTypeTag[A]
-    
-       object Type extends TypeModule {
-         // ...
-       }
-     }
+      type Type[A] = c.WeakTypeTag[A]
+
+      object Type extends TypeModule {
+        // ...
+      }
+    }
     ```
     
     ```scala
     trait Exprs { this: Types =>
       type Expr[A] = c.Expr[A]
-    
+
       object Expr extends ExprModule {
         // ...
       }
@@ -642,25 +638,25 @@ used in Endpoints4s and Endless4s:
 
     ```scala
     abstract class DefinitionsPlatform(using val quotes: scala.quoted.Quotes)
-        extends Definitions
-        with TypesPlatform
-        with ExprsPlatform
+    extends Definitions
+    with TypesPlatform
+    with ExprsPlatform
     ```
     
     ```scala
     trait TypesPlatform { this: DefinitionsPlatform =>
-       type Type[A] = scala.quoted.Type[A]
-    
-       object Type extends TypeModule {
-         // ...
-       }
-     }
+      type Type[A] = scala.quoted.Type[A]
+
+      object Type extends TypeModule {
+        // ...
+      }
+    }
     ```
     
     ```scala
     trait Exprs { this: Types =>
       type Expr[A] = scala.quoted.Expr[A]
-    
+
       object Expr extends ExprModule {
         // ...
       }

@@ -57,7 +57,7 @@ Let's have a look at the type signatures of both Lifted and Partial Transformers
     // Partial Transformer
     // partial comes from io.scalaland.chimney.partial
     trait PartialTransformer[From, To] {
-       def transform(src: From, failFast: Boolean): partial.Result[To]
+      def transform(src: From, failFast: Boolean): partial.Result[To]
     }
     ```
 
@@ -111,10 +111,10 @@ This option allowed calling `.get` on `Option` to enable conversion from `Option
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: Option[String])
     case class Bar(a: String)
-    
+
     Foo(Some("value")).into[Bar].enableUnsafeOption.transform // Bar("value")
     Foo(None).into[Bar].enableUnsafeOption.transform // throws Exception
     ```
@@ -127,10 +127,10 @@ now we have `PartialTransformer`s. They have a build-in ability to unwrap `Optio
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: Option[String])
     case class Bar(a: String)
-    
+
     Foo(Some("value")).transformIntoPartial[Bar](failFast = true).asOption // Some(Bar("value"))
     Foo(None).transformIntoPartial[Bar](failFast = true).asOption // None
     ```
@@ -165,14 +165,14 @@ another implicit `Transformer`.
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney._
-    
+
     class MyType[A](private val a: A) {
       def map[B](f: A => B): MyType[B] =
         new MyType(f(a))
     }
 
-    implicit def provideMyType[A, B](
-        implicit a2b: Transformer[A, B]
+    implicit def provideMyType[A, B](implicit
+        a2b: Transformer[A, B]
     ): Transformer[MyType[A], MyType[B]] =
       myA => myA.map(_.transformInto[B])
     ```
@@ -186,14 +186,14 @@ there the automatic instances as well, they need to use `Transformer.AutoDerived
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney._
-    
+
     class MyOtherType[A](private val a: A) {
       def map[B](f: A => B): MyOtherType[B] =
         new MyOtherType(f(a))
     }
-  
-    implicit def provideMyOtherType[A, B](
-        implicit a2b: Transformer.AutoDerived[A, B]
+
+    implicit def provideMyOtherType[A, B](implicit
+        a2b: Transformer.AutoDerived[A, B]
     ): Transformer[MyOtherType[A], MyOtherType[B]] =
       myA => myA.map(_.transformInto[B])
     ```
@@ -206,28 +206,28 @@ The difference is shown in this example:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     // implicit provided by the user
     implicit val int2str: Transformer[Int, String] = _.toString
-  
+
     val myType: MyType[Int] = new MyType(10)
     val myOtherType: MyOtherType[Int] = new MyOtherType(10)
-  
+
     // uses provideMyType(int2str):
     myType.transformInto[MyType[String]]
-  
+
     // uses provideMyOtherType(int2str):
-    myOtherType.transformInto[MyOtherType[String]
-  
+    myOtherType.transformInto[MyOtherType[String]]
+
     val myType2: MyType[Either[Int, Int]] = new MyType(Right(10))
-    val myOtherType2: MyOtherType[Either[Int, Int]] = new MyOtherType(Right(10)
-  
+    val myOtherType2: MyOtherType[Either[Int, Int]] = new MyOtherType(Right(10))
+
     // requires manually provided transformer e.g.
     //   implicit val either2either =
     //     Transformer.derive[Either[Int, Int], Either[String, String]]
     // without it, the compilation fails
     // myType2.transformInto[MyType[Either[String, String]]]
-  
+
     // uses provideMyOtherType(Transformer.derive):
     myOtherType2.transformInto[Either[String, String]]
     ```
@@ -305,7 +305,7 @@ would result in errors like:
 
 !!! example
 
-    ```scala
+    ```
     forward reference extends over definition of value t
     ```
 
@@ -346,7 +346,7 @@ In Scala 2 syntax like
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     implicit def cfg = TransformerConfiguration.default.enableMacrosLogging
     ```
 
@@ -356,7 +356,7 @@ This changes in Scala 3 where you'll get an error:
 
 !!! example
     
-    ```scala
+    ```
     result type of implicit definition needs to be given explicitly
     ```
 
@@ -365,9 +365,10 @@ You can work around this by slightly longer incantation:
 !!! example
  
     ```scala
+    //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     transparent inline given TransformerConfiguration[?] =
       TransformerConfiguration.default.enableMacrosLogging
     ```
@@ -449,39 +450,39 @@ For the snippet above, the macro could print this structured log:
       + Attempting expansion of rule IterableToIterable
       + Rule IterableToIterable decided to pass on to the next rule
       + Attempting expansion of rule ProductToProduct
-        + Resolved Bar getters: (`x`: java.lang.String (ConstructorVal, declared), `y`: scala.Int (ConstructorVal, declared), `_1`: java.lang.String (AccessorMethod, declared), `_2`: scala.Int (AccessorMethod, declared)) and Foo constructor (`x`: java.lang.String (ConstructorParameter, default = None), `y`: scala.Int (ConstructorParameter, default = None), `z`: scala.Boolean (ConstructorParameter, default = Some(Foo.$lessinit$greater$default)))
-        + Recursive derivation for field `x`: java.lang.String into matched `x`: java.lang.String
-          + Deriving Total Transformer expression from java.lang.String to java.lang.String with context:
-          | ForTotal[From = java.lang.String, To = java.lang.String](src = bar.x)(TransformerConfig(
-          |   flags = TransformerFlags(processDefaultValues, displayMacrosLogging),
-          |   instanceFlagOverridden = false,
-          |   fieldOverrides = Map(),
-          |   coproductOverrides = Map(),
-          |   preventImplicitSummoningForTypes = None
-          | ))
-            + Attempting expansion of rule Implicit
-            + Rule Implicit decided to pass on to the next rule
-            + Attempting expansion of rule Subtypes
-            + Rule Subtypes expanded successfully: bar.x
-          + Derived recursively total expression bar.x
-        + Resolved `x` field value to bar.x
-        + Recursive derivation for field `y`: scala.Int into matched `y`: scala.Int
-          + Deriving Total Transformer expression from scala.Int to scala.Int with context:
-          | ForTotal[From = scala.Int, To = scala.Int](src = bar.y)(TransformerConfig(
-          |   flags = TransformerFlags(processDefaultValues, displayMacrosLogging),
-          |   instanceFlagOverridden = false,
-          |   fieldOverrides = Map(),
-          |   coproductOverrides = Map(),
-          |   preventImplicitSummoningForTypes = None
-          | ))
-            + Attempting expansion of rule Implicit
-            + Rule Implicit decided to pass on to the next rule
-            + Attempting expansion of rule Subtypes
-            + Rule Subtypes expanded successfully: bar.y
-          + Derived recursively total expression bar.y
-        + Resolved `y` field value to bar.y
-        + Resolved `z` field value to Foo.$lessinit$greater$default
-        + Resolved 3 arguments, 3 as total and 0 as partial Expr
+    + Resolved Bar getters: (`x`: java.lang.String (ConstructorVal, declared), `y`: scala.Int (ConstructorVal, declared), `_1`: java.lang.String (AccessorMethod, declared), `_2`: scala.Int (AccessorMethod, declared)) and Foo constructor (`x`: java.lang.String (ConstructorParameter, default = None), `y`: scala.Int (ConstructorParameter, default = None), `z`: scala.Boolean (ConstructorParameter, default = Some(Foo.$lessinit$greater$default)))
+    + Recursive derivation for field `x`: java.lang.String into matched `x`: java.lang.String
+      + Deriving Total Transformer expression from java.lang.String to java.lang.String with context:
+      | ForTotal[From = java.lang.String, To = java.lang.String](src = bar.x)(TransformerConfig(
+      |   flags = TransformerFlags(processDefaultValues, displayMacrosLogging),
+      |   instanceFlagOverridden = false,
+      |   fieldOverrides = Map(),
+      |   coproductOverrides = Map(),
+      |   preventImplicitSummoningForTypes = None
+      | ))
+    + Attempting expansion of rule Implicit
+    + Rule Implicit decided to pass on to the next rule
+    + Attempting expansion of rule Subtypes
+    + Rule Subtypes expanded successfully: bar.x
+      + Derived recursively total expression bar.x
+    + Resolved `x` field value to bar.x
+    + Recursive derivation for field `y`: scala.Int into matched `y`: scala.Int
+      + Deriving Total Transformer expression from scala.Int to scala.Int with context:
+      | ForTotal[From = scala.Int, To = scala.Int](src = bar.y)(TransformerConfig(
+      |   flags = TransformerFlags(processDefaultValues, displayMacrosLogging),
+      |   instanceFlagOverridden = false,
+      |   fieldOverrides = Map(),
+      |   coproductOverrides = Map(),
+      |   preventImplicitSummoningForTypes = None
+      | ))
+    + Attempting expansion of rule Implicit
+    + Rule Implicit decided to pass on to the next rule
+    + Attempting expansion of rule Subtypes
+    + Rule Subtypes expanded successfully: bar.y
+      + Derived recursively total expression bar.y
+    + Resolved `y` field value to bar.y
+    + Resolved `z` field value to Foo.$lessinit$greater$default
+    + Resolved 3 arguments, 3 as total and 0 as partial Expr
       + Rule ProductToProduct expanded successfully: new Foo(bar.x, bar.y, Foo.$lessinit$greater$default)
     + Derived final expression is:
     | new Foo(bar.x, bar.y, Foo.$lessinit$greater$default)
@@ -510,8 +511,8 @@ above, or with a shared implicit config:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
-     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
     ```
 
@@ -522,16 +523,16 @@ The flag is also available to `Patcher`s, this code:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Email(address: String) extends AnyVal
     case class Phone(number: Long) extends AnyVal
 
     case class User(id: Int, email: Email, phone: Phone)
     case class UserUpdateForm(email: String, phone: Long)
-    
+
     val user = User(10, Email("abc@@domain.com"), Phone(1234567890L))
     val updateForm = UserUpdateForm("xyz@@domain.com", 123123123L)
-    
+
     user.using(updateForm).enableMacrosLogging.patch
     ```
 
@@ -553,35 +554,35 @@ would generate:
       |   coproductOverrides = Map(),
       |   preventImplicitSummoningForTypes = None
       | ))
-        + Attempting expansion of rule Implicit
-        + Rule Implicit decided to pass on to the next rule
-        + Attempting expansion of rule Subtypes
-        + Rule Subtypes decided to pass on to the next rule
-        + Attempting expansion of rule OptionToOption
-        + Rule OptionToOption decided to pass on to the next rule
-        + Attempting expansion of rule PartialOptionToNonOption
-        + Rule PartialOptionToNonOption decided to pass on to the next rule
-        + Attempting expansion of rule ToOption
-        + Rule ToOption decided to pass on to the next rule
-        + Attempting expansion of rule ValueClassToValueClass
-        + Rule ValueClassToValueClass decided to pass on to the next rule
-        + Attempting expansion of rule ValueClassToType
-        + Rule ValueClassToType decided to pass on to the next rule
-        + Attempting expansion of rule TypeToValueClass
-          + Deriving Total Transformer expression from java.lang.String to java.lang.String with context:
-          | ForTotal[From = java.lang.String, To = java.lang.String](src = userupdateform.email)(TransformerConfig(
-          |   flags = TransformerFlags(),
-          |   instanceFlagOverridden = false,
-          |   fieldOverrides = Map(),
-          |   coproductOverrides = Map(),
-          |   preventImplicitSummoningForTypes = None
-          | ))
-            + Attempting expansion of rule Implicit
-            + Rule Implicit decided to pass on to the next rule
-            + Attempting expansion of rule Subtypes
-            + Rule Subtypes expanded successfully: userupdateform.email
-          + Derived recursively total expression userupdateform.email
-        + Rule TypeToValueClass expanded successfully: new Email(userupdateform.email)
+    + Attempting expansion of rule Implicit
+    + Rule Implicit decided to pass on to the next rule
+    + Attempting expansion of rule Subtypes
+    + Rule Subtypes decided to pass on to the next rule
+    + Attempting expansion of rule OptionToOption
+    + Rule OptionToOption decided to pass on to the next rule
+    + Attempting expansion of rule PartialOptionToNonOption
+    + Rule PartialOptionToNonOption decided to pass on to the next rule
+    + Attempting expansion of rule ToOption
+    + Rule ToOption decided to pass on to the next rule
+    + Attempting expansion of rule ValueClassToValueClass
+    + Rule ValueClassToValueClass decided to pass on to the next rule
+    + Attempting expansion of rule ValueClassToType
+    + Rule ValueClassToType decided to pass on to the next rule
+    + Attempting expansion of rule TypeToValueClass
+      + Deriving Total Transformer expression from java.lang.String to java.lang.String with context:
+      | ForTotal[From = java.lang.String, To = java.lang.String](src = userupdateform.email)(TransformerConfig(
+      |   flags = TransformerFlags(),
+      |   instanceFlagOverridden = false,
+      |   fieldOverrides = Map(),
+      |   coproductOverrides = Map(),
+      |   preventImplicitSummoningForTypes = None
+      | ))
+    + Attempting expansion of rule Implicit
+    + Rule Implicit decided to pass on to the next rule
+    + Attempting expansion of rule Subtypes
+    + Rule Subtypes expanded successfully: userupdateform.email
+      + Derived recursively total expression userupdateform.email
+    + Rule TypeToValueClass expanded successfully: new Email(userupdateform.email)
       + Deriving Total Transformer expression from scala.Long to Phone with context:
       | ForTotal[From = scala.Long, To = Phone](src = userupdateform.phone)(TransformerConfig(
       |   flags = TransformerFlags(),
@@ -590,35 +591,35 @@ would generate:
       |   coproductOverrides = Map(),
       |   preventImplicitSummoningForTypes = None
       | ))
-        + Attempting expansion of rule Implicit
-        + Rule Implicit decided to pass on to the next rule
-        + Attempting expansion of rule Subtypes
-        + Rule Subtypes decided to pass on to the next rule
-        + Attempting expansion of rule OptionToOption
-        + Rule OptionToOption decided to pass on to the next rule
-        + Attempting expansion of rule PartialOptionToNonOption
-        + Rule PartialOptionToNonOption decided to pass on to the next rule
-        + Attempting expansion of rule ToOption
-        + Rule ToOption decided to pass on to the next rule
-        + Attempting expansion of rule ValueClassToValueClass
-        + Rule ValueClassToValueClass decided to pass on to the next rule
-        + Attempting expansion of rule ValueClassToType
-        + Rule ValueClassToType decided to pass on to the next rule
-        + Attempting expansion of rule TypeToValueClass
-          + Deriving Total Transformer expression from scala.Long to scala.Long with context:
-          | ForTotal[From = scala.Long, To = scala.Long](src = userupdateform.phone)(TransformerConfig(
-          |   flags = TransformerFlags(),
-          |   instanceFlagOverridden = false,
-          |   fieldOverrides = Map(),
-          |   coproductOverrides = Map(),
-          |   preventImplicitSummoningForTypes = None
-          | ))
-            + Attempting expansion of rule Implicit
-            + Rule Implicit decided to pass on to the next rule
-            + Attempting expansion of rule Subtypes
-            + Rule Subtypes expanded successfully: userupdateform.phone
-          + Derived recursively total expression userupdateform.phone
-        + Rule TypeToValueClass expanded successfully: new Phone(userupdateform.phone)
+    + Attempting expansion of rule Implicit
+    + Rule Implicit decided to pass on to the next rule
+    + Attempting expansion of rule Subtypes
+    + Rule Subtypes decided to pass on to the next rule
+    + Attempting expansion of rule OptionToOption
+    + Rule OptionToOption decided to pass on to the next rule
+    + Attempting expansion of rule PartialOptionToNonOption
+    + Rule PartialOptionToNonOption decided to pass on to the next rule
+    + Attempting expansion of rule ToOption
+    + Rule ToOption decided to pass on to the next rule
+    + Attempting expansion of rule ValueClassToValueClass
+    + Rule ValueClassToValueClass decided to pass on to the next rule
+    + Attempting expansion of rule ValueClassToType
+    + Rule ValueClassToType decided to pass on to the next rule
+    + Attempting expansion of rule TypeToValueClass
+      + Deriving Total Transformer expression from scala.Long to scala.Long with context:
+      | ForTotal[From = scala.Long, To = scala.Long](src = userupdateform.phone)(TransformerConfig(
+      |   flags = TransformerFlags(),
+      |   instanceFlagOverridden = false,
+      |   fieldOverrides = Map(),
+      |   coproductOverrides = Map(),
+      |   preventImplicitSummoningForTypes = None
+      | ))
+    + Attempting expansion of rule Implicit
+    + Rule Implicit decided to pass on to the next rule
+    + Attempting expansion of rule Subtypes
+    + Rule Subtypes expanded successfully: userupdateform.phone
+      + Derived recursively total expression userupdateform.phone
+    + Rule TypeToValueClass expanded successfully: new Phone(userupdateform.phone)
     + Derived final expression is:
     | new User(user.id, new Email(userupdateform.email), new Phone(userupdateform.phone))
     + Derivation took 0.113354000 s

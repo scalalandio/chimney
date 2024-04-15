@@ -32,17 +32,17 @@ transformation is through `Transformer[From, To]`:
     import io.scalaland.chimney.Transformer
 
     class MyType(val a: Int)
-    class MyOtherType(val b: String)    
+    class MyOtherType(val b: String)
 
     val transformer: Transformer[MyType, MyOtherType] = (src: MyType) => new MyOtherType(src.a.toString)
-        
+
     transformer.transform(new MyType(10)) // new MyOtherType("10")
-    
+
     import io.scalaland.chimney.dsl._
-    
+
     // When the compiler can find an implicit Transformer...
     implicit val transformerAsImplicit: Transformer[MyType, MyOtherType] = transformer
-    
+
     // ...we can use this extension method to call it
     (new MyType(10)).transformInto[MyOtherType] // new MyOtherType("10")
     ```
@@ -63,34 +63,43 @@ function was not defined, "empty value" when something was expected) and even th
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
-    import io.scalaland.chimney.{PartialTransformer, partial}
+    import io.scalaland.chimney.{partial, PartialTransformer}
 
     class MyType(val b: String)
     class MyOtherType(val a: Int)
 
-    val transformer: PartialTransformer[MyType, MyOtherType] = PartialTransformer[MyType, MyOtherType] { (src: MyType) =>
-      partial.Result.fromCatching(src.b.toInt)
-        .prependErrorPath(partial.PathElement.Accessor("b"))
-        .map { a =>
-          new MyOtherType(a)
-        }
+    val transformer: PartialTransformer[MyType, MyOtherType] =
+    PartialTransformer[MyType, MyOtherType] { (src: MyType) =>
+      partial.Result
+       .fromCatching(src.b.toInt)
+       .prependErrorPath(partial.PathElement.Accessor("b"))
+       .map(a => new MyOtherType(a))
     }
-    
-    transformer.transform(new MyType("10")).asEither
-      .left.map(_.asErrorPathMessages) // Right(new MyOtherType(10))
-    transformer.transform(new MyType("NaN")).asEither
-      .left.map(_.asErrorPathMessages) // Left(Iterable("b" -> ThrowableMessage(NumberFormatException: For input string: NaN)))
-    
+
+    transformer.transform(new MyType("10")).asEither.left.map(_.asErrorPathMessages) // Right(new MyOtherType(10))
+    transformer
+      .transform(new MyType("NaN"))
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("b" -> ThrowableMessage(NumberFormatException: For input string: NaN)))
+
     import io.scalaland.chimney.dsl._
-    
+
     // When the compiler can find an implicit Transformer...
     implicit val transformerAsImplicit: PartialTransformer[MyType, MyOtherType] = transformer
-    
+
     // ...we can use this extension method to call it
-    (new MyType("10")).transformIntoPartial[MyOtherType].asEither
-      .left.map(_.asErrorPathMessages) // Right(new MyOtherType(10))
-    (new MyType("NaN")).transformIntoPartial[MyOtherType].asEither
-      .left.map(_.asErrorPathMessages) // Left(Iterable("b" -> ThrowableMessage(NumberFormatException: For input string: NaN)))
+    (new MyType("10"))
+      .transformIntoPartial[MyOtherType]
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Right(new MyOtherType(10))
+
+    (new MyType("NaN"))
+      .transformIntoPartial[MyOtherType]
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("b" -> ThrowableMessage(NumberFormatException: For input string: NaN)))
     ```
 
 As you can see `partial.Result` contains `Iterable` as a structure for holding its errors. Thanks to that:
@@ -132,13 +141,15 @@ away with just providing a throwing function, and letting some utility catch the
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.dsl._
 
-    val fn: String => Int = str => str.toInt // throws Exception if String is not a number    
+    val fn: String => Int = str => str.toInt // throws Exception if String is not a number
 
     implicit val transformer: PartialTransformer[String, Int] =
       PartialTransformer.fromFunction(fn) // catches exception
-    
+
     "1".transformIntoPartial[Int].asEitherErrorPathMessageStrings // Right(1)
-    "error".transformIntoPartial[Int].asEitherErrorPathMessageStrings // Left(Iterable("" -> """For input string: "error""""))
+    "error"
+      .transformIntoPartial[Int]
+      .asEitherErrorPathMessageStrings // Left(Iterable("" -> """For input string: "error""""))
     ```
 
 Other times you might need to convert `PartialFunction` into total function with `partial.Result`:
@@ -155,11 +166,13 @@ Other times you might need to convert `PartialFunction` into total function with
       case str if str.forall(_.isDigit) => str.toInt
     }
 
-    implicit val transformer: PartialTransformer[String, Int] = 
+    implicit val transformer: PartialTransformer[String, Int] =
       PartialTransformer(partial.Result.fromPartialFunction(fn)) // handled "not defined at" case
-    
+
     "1".transformIntoPartial[Int].asEitherErrorPathMessageStrings // Right(1)
-    "error value".transformIntoPartial[Int].asEitherErrorPathMessageStrings // Left(Iterable("" -> "not defined at error value"))
+    "error value"
+      .transformIntoPartial[Int]
+      .asEitherErrorPathMessageStrings // Left(Iterable("" -> "not defined at error value"))
     ```
 
 However, the most common case would be where you would have to use one of utilities provided in `partial.Result`:
@@ -171,7 +184,7 @@ However, the most common case would be where you would have to use one of utilit
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
-     
+
     implicit val transformer: PartialTransformer[String, Int] = PartialTransformer[String, Int] { str =>
       str match {
         case ""      => partial.Result.fromEmpty
@@ -180,7 +193,7 @@ However, the most common case would be where you would have to use one of utilit
         case value   => partial.Result.fromCatching(value.toInt)
       }
     }
-     
+
     List("", "error", "msg", "invaid").transformIntoPartial[List[Int]].asEitherErrorPathMessageStrings
     // Left(Iterable((0) -> "empty value", (1) -> "an error happened", (2) -> "error message", (3) -> """For input string: "invaid""""))
     ```
@@ -192,13 +205,19 @@ If you are converting from: `Option`s, `Either[String, A]` or `Try` you can use 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.partial.syntax._
-     
-    (Some(1): Option[Int]).asResult.asEitherErrorPathMessageStrings // Right(1)
-    (None: Option[Int]).asResult.asEitherErrorPathMessageStrings // Left(Iterable("" -> "empty value))
-     
-    (Right(1): Either[String, Int]).asResult.asEitherErrorPathMessageStrings // Right(1)
-    (Left("invalid"): Either[String, Int]).asResult.asEitherErrorPathMessageStrings // Left(Iterable("" -> "invalid"))
-     
+
+    (Some(1): Option[Int]).asResult
+      .asEitherErrorPathMessageStrings // Right(1)
+    (None: Option[Int])
+      .asResult
+      .asEitherErrorPathMessageStrings // Left(Iterable("" -> "empty value))
+
+    (Right(1): Either[String, Int]).asResult
+      .asEitherErrorPathMessageStrings // Right(1)
+    (Left("invalid"): Either[String, Int])
+      .asResult
+      .asEitherErrorPathMessageStrings // Left(Iterable("" -> "invalid"))
+
     import scala.util.Try
     Try("1".toInt).asResult.asEitherErrorPathMessageStrings // Right(1)
     Try("invalid".toInt).asResult.asEitherErrorPathMessageStrings // Left(Iterable("" -> """For input string: "invalid""""))
@@ -217,10 +236,9 @@ If you transform one type into itself or its supertype, it will be upcast withou
     trait A
     class B extends A
     val b = new B
-   
-    b.transformInto[A]  // == (b: A)
+    b.transformInto[A] // == (b: A)
     b.into[A].transform // == (b: A)
-    b.transformIntoPartial[A].asEither  // == Right(b: A)
+    b.transformIntoPartial[A].asEither // == Right(b: A)
     b.intoPartial[A].transform.asEither // == Right(b: A)
     ```
 
@@ -236,11 +254,11 @@ In particular, when the source type is (`=:=`) the target type, you will end up 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class A(val a: String)
     class B extends A("value")
     val b = new B
-    
+
     b.into[A].withFieldConst(_.a, "copied").transform // new A("copied")
     ```
     
@@ -275,9 +293,9 @@ The obvious examples are `case class`es with the same fields:
     case class Source(a: Int, b: Double)
     case class Target(a: Int, b: Double)
 
-    Source(42, 0.07).transformInto[Target]  // == Target(42, 0.07)
+    Source(42, 0.07).transformInto[Target] // == Target(42, 0.07)
     Source(42, 0.07).into[Target].transform // == Target(42, 0.07)
-    Source(42, 0.07).transformIntoPartial[Target].asEither  // == Right(Target(42, 0.07))
+    Source(42, 0.07).transformIntoPartial[Target].asEither // == Right(Target(42, 0.07))
     Source(42, 0.07).intoPartial[Target].transform.asEither // == Right(Target(42, 0.07))
     ```
 
@@ -292,9 +310,9 @@ However, the original value might have fields absent in the target type and/or a
     case class Source(a: Int, b: Double, c: String)
     case class Target(b: Double, a: Int)
 
-    Source(42, 0.07, "value").transformInto[Target]  // == Target(42, 0.07)
+    Source(42, 0.07, "value").transformInto[Target] // == Target(42, 0.07)
     Source(42, 0.07, "value").into[Target].transform // == Target(42, 0.07)
-    Source(42, 0.07, "value").transformIntoPartial[Target].asEither  // == Right(Target(42, 0.07))
+    Source(42, 0.07, "value").transformIntoPartial[Target].asEither // == Right(Target(42, 0.07))
     Source(42, 0.07, "value").intoPartial[Target].transform.asEither // == Right(Target(42, 0.07))
     ```
 
@@ -305,7 +323,7 @@ It doesn't even have to be a `case class`:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class Source {
       val a: String = "a"
       val b: Int = 1024
@@ -328,16 +346,16 @@ be resolved recursively:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(baz: Foo.Baz)
     object Foo { case class Baz(baz: String) }
 
     case class Bar(baz: Bar.Baz)
     object Bar { case class Baz(baz: String) }
 
-    Foo(Foo.Baz("baz")).transformInto[Bar]  // Baz(Bar.Baz("baz"))
+    Foo(Foo.Baz("baz")).transformInto[Bar] // Baz(Bar.Baz("baz"))
     Foo(Foo.Baz("baz")).into[Bar].transform // Baz(Bar.Baz("baz"))
-    Foo(Foo.Baz("baz")).transformIntoPartial[Bar].asEither  // Right(Baz(Bar.Baz("baz")))
+    Foo(Foo.Baz("baz")).transformIntoPartial[Bar].asEither // Right(Baz(Bar.Baz("baz")))
     Foo(Foo.Baz("baz")).intoPartial[Bar].transform.asEither // Right(Baz(Bar.Baz("baz")))
     ```
 
@@ -352,15 +370,23 @@ transformation, available only in partial transformers, is unwrapping `Option` f
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(baz: Foo.Baz)
     object Foo { case class Baz(baz: Option[String]) }
 
     case class Bar(baz: Bar.Baz)
     object Bar { case class Baz(baz: String) }
-    
-    Foo(Foo.Baz(Some("baz"))).transformIntoPartial[Bar].asEither.left.map(_.asErrorPathMessages)  // Right(Baz(Bar.Baz("baz")))
-    Foo(Foo.Baz(None)).transformIntoPartial[Bar].asEither.left.map(_.asErrorPathMessages) // Left(Iterable("baz.bar" -> EmptyValue))
+
+    Foo(Foo.Baz(Some("baz")))
+      .transformIntoPartial[Bar]
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Right(Baz(Bar.Baz("baz")))
+    Foo(Foo.Baz(None))
+      .transformIntoPartial[Bar]
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("baz.bar" -> EmptyValue))
     ```
 
 Examples so far assumed, that each constructor's argument was paired with a field of the same name. So, let's show what
@@ -376,24 +402,30 @@ side effects - you need to enable the `.enableMethodAccessors` flag:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class Source(_a: String, _b: Int) {
       def a: String = _a
       def b(): Int = _b
     }
     class Target(a: String, b: Int)
-    
-    (new Source("value", 512)).into[Target].enableMethodAccessors.transform
+
+    (new Source("value", 512))
+      .into[Target]
+      .enableMethodAccessors
+      .transform
     // val source = new Source("value", 512)
     // new Target(source.a, source.b())
-    (new Source("value", 512)).intoPartial[Target].enableMethodAccessors.transform
+    (new Source("value", 512))
+      .intoPartial[Target]
+      .enableMethodAccessors
+      .transform
     // val source = new Source("value", 512)
     // partial.Result.fromValue(new Target(source.a, source.b()))
-    
+
     locally {
       // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfiguration.default.enableMethodAccessors
-      
+
       (new Source("value", 512)).transformInto[Target]
       // val source = new Source("value", 512)
       // new Target(source.a, source.b())
@@ -416,16 +448,16 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class Source(_a: String, _b: Int) {
       def a: String = _a
       def b(): Int = _b
     }
     class Target(a: String, b: Int)
-    
+
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableMethodAccessors
-    
+
     (new Source("value", 512)).into[Target].disableMethodAccessors.transform
     // Chimney can't derive transformation from Source to Target
     //
@@ -448,20 +480,20 @@ inherited from a source value's supertype, you need to enable the `.enableInheri
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     trait Parent {
       val a = "value"
     }
     case class Source(b: Int) extends Parent
     case class Target(a: String, b: Int)
-    
+
     Source(10).into[Target].enableInheritedAccessors.transform // Target("value", 10)
     Source(10).intoPartial[Target].enableInheritedAccessors.transform.asEither // Right(Target("value", 10))
-    
+
     locally {
       // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
-      
+
       Source(10).transformInto[Target] // Target("value", 10)
       Source(10).transformIntoPartial[Target].asEither // Right(Target("value", 10))
     }
@@ -479,24 +511,24 @@ If the flag was enabled in the implicit config it can be disabled with `.enableI
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     trait Parent {
       val a = "value"
     }
     case class Source(b: Int) extends Parent
     case class Target(a: String, b: Int)
-    
+
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
-    
+
     Source(10).into[Target].disableInheritedAccessors.transform
     // Chimney can't derive transformation from Source to Target
-    // 
+    //
     // Target
     //   a: java.lang.String - no accessor named a in source type Source
-    // 
+    //
     // There are inherited definitions in Source that might be used as accessors for a (e.g. a), the constructor argument/setter in Target. Consider using .enableInheritedAccessors.
-    // 
+    //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
@@ -510,24 +542,30 @@ If we want to read `def getFieldName(): A` as if it was `val fieldName: A` - whi
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class Source(a: String, b: Int) {
       def getA(): String = a
       def getB(): Int = b
     }
     class Target(a: String, b: Int)
-    
-    (new Source("value", 512)).into[Target].enableBeanGetters.transform
+
+    (new Source("value", 512))
+      .into[Target]
+      .enableBeanGetters
+      .transform
     // val source = new Source("value", 512)
     // new Target(source.getA(), source.getB())
-    (new Source("value", 512)).intoPartial[Target].enableBeanGetters.transform
+    (new Source("value", 512))
+      .intoPartial[Target]
+      .enableBeanGetters
+      .transform
     // val source = new Source("value", 512)
     // partial.Result.fromValue(new Target(source.getA(), source.getB()))
-    
+
     locally {
       // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfiguration.default.enableBeanGetters
-      
+
       (new Source("value", 512)).transformInto[Target]
       // val source = new Source("value", 512)
       // new Target(source.getA(), source.getB())
@@ -554,25 +592,25 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class Source(a: String, b: Int) {
       def getA(): String = a
       def getB(): Int = b
     }
     class Target(a: String, b: Int)
-    
+
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters
-    
+
     (new Source("value", 512)).into[Target].disableBeanGetters.transform
     // Chimney can't derive transformation from Source to Target
-    // 
+    //
     // Target
     //   a: java.lang.String - no accessor named a in source type Source
     //   b: scala.Int - no accessor named b in source type Source
-    // 
+    //
     // There are methods in Source that might be used as accessors for `a`, `b` fields in Target. Consider using `.enableMethodAccessors`.
-    // 
+    //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
@@ -587,32 +625,38 @@ flag:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class Source(val a: String, val b: Int)
     class Target() {
       private var a = ""
-      def setA(a_: String): Unit = a = a_
+      def setA(a_ : String): Unit = a = a_
       private var b = 0
-      def setB(b_: Int): Unit = b = b_
+      def setB(b_ : Int): Unit = b = b_
     }
-    
-    (new Source("value", 512)).into[Target].enableBeanSetters.transform
+
+    (new Source("value", 512))
+      .into[Target]
+      .enableBeanSetters
+      .transform
     // val source = new Source("value", 512)
     // val target = new Target()
     // target.setA(source.a)
     // target.setB(source.b)
     // target
-    (new Source("value", 512)).intoPartial[Target].enableBeanSetters.transform
+    (new Source("value", 512))
+      .intoPartial[Target]
+      .enableBeanSetters
+      .transform
     // val source = new Source("value", 512)
     // val target = new Target()
     // target.setA(source.a)
     // target.setB(source.b)
     // partial.Result.fromValue(target)
-    
+
     locally {
       // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfiguration.default.enableBeanSetters
-      
+
       (new Source("value", 512)).transformInto[Target]
       // val source = new Source("value", 512)
       // val target = new Target()
@@ -653,7 +697,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class Source(val a: String, val b: Int)
     class Target() {
       private var a = ""
@@ -661,18 +705,18 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
       def setA(aa: String): Unit = a = aa
       private var b = 0
       def getB(): Int = b
-      def setB(bb : Int): Unit = b = bb
+      def setB(bb: Int): Unit = b = bb
     }
-    
+
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableBeanSetters
-    
+
     (new Source("value", 512)).into[Target].disableBeanSetters.transform
     // Chimney can't derive transformation from Source to Target
     //
     // Target
     //   derivation from source: Source to Target is not supported in Chimney!
-    // 
+    //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
@@ -687,19 +731,24 @@ them:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class Target() {
       private var a = ""
       def getA: String = a
       def setA(aa: String): Unit = a = aa
       private var b = 0
       def getB(): Int = b
-      def setB(bb : Int): Unit = b = bb
+      def setB(bb: Int): Unit = b = bb
     }
-    
-    ().into[Target].enableIgnoreUnmatchedBeanSetters.transform // new Target()
-    ().intoPartial[Target].enableIgnoreUnmatchedBeanSetters.transform // partial.Result.fromValue(new Target())
-    
+
+    ().into[Target]
+      .enableIgnoreUnmatchedBeanSetters
+      .transform // new Target()
+    ()
+      .intoPartial[Target]
+      .enableIgnoreUnmatchedBeanSetters
+      .transform // partial.Result.fromValue(new Target())
+
     locally {
       // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
@@ -716,26 +765,26 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class Target() {
       private var a = ""
       def getA: String = a
       def setA(aa: String): Unit = a = aa
       private var b = 0
       def getB(): Int = b
-      def setB(bb : Int): Unit = b = bb
+      def setB(bb: Int): Unit = b = bb
     }
-    
+
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
-    
+
     ().into[Target].disableIgnoreUnmatchedBeanSetters.transform
     // Chimney can't derive transformation from Source to Target
-    // 
+    //
     // Target
     //   setA(a: java.lang.String) - no accessor named a in source type scala.Unit
     //   setB(b: scala.Int) - no accessor named b in source type scala.Unit
-    // 
+    //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
@@ -752,30 +801,38 @@ making this setting sort of a setters' counterpart to a default value in a const
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class Source(val a: String)
     class Target() {
       private var a = ""
-      def setA(a_: String): Unit = a = a_
+      def setA(a_ : String): Unit = a = a_
       private var b = 0
-      def setB(b_: Int): Unit = b = b_
+      def setB(b_ : Int): Unit = b = b_
     }
-    
-    (new Source("value")).into[Target].enableBeanSetters.enableIgnoreUnmatchedBeanSetters.transform
+
+    (new Source("value"))
+      .into[Target]
+      .enableBeanSetters
+      .enableIgnoreUnmatchedBeanSetters
+      .transform
     // val source = new Source("value", 512)
     // val target = new Target()
     // target.setA(source.a)
     // target
-    (new Source("value")).intoPartial[Target].enableBeanSetters.enableIgnoreUnmatchedBeanSetters.transform
+    (new Source("value"))
+      .intoPartial[Target]
+      .enableBeanSetters
+      .enableIgnoreUnmatchedBeanSetters
+      .transform
     // val source = new Source("value", 512)
     // val target = new Target()
     // target.setA(source.a)
     // partial.Result.fromValue(target)
-    
+
     locally {
       // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfiguration.default.enableBeanSetters.enableIgnoreUnmatchedBeanSetters
-      
+
       (new Source("value")).transformInto[Target]
       // val source = new Source("value", 512)
       // val target = new Target()
@@ -874,10 +931,10 @@ If a class' constructor takes `Unit` as a parameter it is always provided withou
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Source()
     case class Target(value: Unit)
-    
+
     Source().transformInto[Target] // Target(())
     Source().into[Target].transform // Target(())
     Source().transformIntoPartial[Target].asEither // Right(Target(()))
@@ -896,10 +953,10 @@ to default values with the `.enableDefaultValues` flag:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Source(a: String, b: Int)
     case class Target(a: String, b: Int = 0, c: Long = 0L)
-    
+
     Source("value", 128).into[Target].enableDefaultValues.transform
     // val source = Source("value", 128)
     // Target(source.a, source.b /* c is filled by the default value */)
@@ -925,19 +982,19 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Source(a: String, b: Int)
     case class Target(a: String, b: Int = 0, c: Long = 0L)
-    
+
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableDefaultValues
-    
+
     (new Source("value", 512)).into[Target].disableDefaultValues.transform
     // Chimney can't derive transformation from Source to Target
-    // 
+    //
     // Target
     //   c: scala.Long - no accessor named c in source type Source
-    //  
+    //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
@@ -954,18 +1011,18 @@ similar reasons to default values support, but we can enable it with the `.enabl
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String)
     case class Bar(a: String, b: Option[String] = Some("a"))
-    
+
     // without flags -> compilation error
     Foo("value").into[Bar].enableOptionDefaultsToNone.transform // Bar("value", None)
     Foo("value").intoPartial[Bar].enableOptionDefaultsToNone.transform.asOption // Some(Bar("value", None))
-    
+
     locally {
       // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfiguration.default.enableOptionDefaultsToNone
-      
+
       Foo("value").transformInto[Bar] // Bar("value", None)
       Foo("value").transformIntoPartial[Bar].asOption // Some(Bar("value", None))
     }
@@ -990,17 +1047,22 @@ The `None` value is used as a fallback, meaning:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String)
     case class Bar(a: String, b: Option[String] = Some("a"))
-    
+
     Foo("value").into[Bar].enableDefaultValues.enableOptionDefaultsToNone.transform // Bar("value", Some("a"))
-    Foo("value").intoPartial[Bar].enableDefaultValues.enableOptionDefaultsToNone.transform.asOption // Some(Bar("value", Some("a")))
-    
+    Foo("value")
+      .intoPartial[Bar]
+      .enableDefaultValues
+      .enableOptionDefaultsToNone
+      .transform
+      .asOption // Some(Bar("value", Some("a")))
+
     locally {
       // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = TransformerConfiguration.default.enableOptionDefaultsToNone.enableDefaultValues
-      
+
       Foo("value").transformInto[Bar] // Bar("value", Some("a"))
       Foo("value").transformIntoPartial[Bar].asOption // Some(Bar("value", Some("a")))
     }
@@ -1015,19 +1077,19 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String)
     case class Bar(a: String, b: Option[String] = Some("a"))
 
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableOptionDefaultsToNone
-    
+
     Foo("value").into[Bar].disableOptionDefaultsToNone.transform
     // Chimney can't derive transformation from Foo to Bar
-    // 
+    //
     // Bar
     //   b: scala.Option[java.lang.String] - no accessor named b in source type Foo
-    //  
+    //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
@@ -1042,10 +1104,10 @@ it with another field. Since the usual cause of such cases is a _rename_, we can
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String, b: Int)
     case class Bar(a: String, c: Int)
-    
+
     Foo("value", 1248).into[Bar].withFieldRenamed(_.b, _.c).transform // Bar("value", 1248)
     Foo("value", 1248).intoPartial[Bar].withFieldRenamed(_.b, _.c).transform.asEither // Right(Bar("value", 1248))
     ```
@@ -1084,7 +1146,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     class Foo() {
       def getA: String = "value"
       def getB(): Int = 777
@@ -1100,17 +1162,23 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
 
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
-    
-    (new Foo()).into[Bar].withFieldRenamed(_.getB(), _.getC).transform
+
+    (new Foo())
+      .into[Bar]
+      .withFieldRenamed(_.getB(), _.getC)
+      .transform
     // val foo = new Foo()
     // val bar = new Bar()
-    // bar.setA(foo.getA) 
+    // bar.setA(foo.getA)
     // bar.setC(foo.getB())
     // bar
-    (new Foo()).intoPartial[Bar].withFieldRenamed(_.getB(), _.getC).transform
+    (new Foo())
+      .intoPartial[Bar]
+      .withFieldRenamed(_.getB(), _.getC)
+      .transform
     // val foo = new Foo()
     // val bar = new Bar()
-    // bar.setA(foo.getA) 
+    // bar.setA(foo.getA)
     // bar.setC(foo.getB())
     // partial.Result.fromValue(bar)
     ```
@@ -1122,13 +1190,13 @@ We are also able to rename fields in nested structure:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String, b: Int)
     case class Bar(a: String, c: Int)
-    
+
     case class NestedFoo(foo: Foo)
     case class NestedBar(bar: Bar)
-    
+
     NestedFoo(Foo("value", 1248))
       .into[NestedBar]
       .withFieldRenamed(_.foo, _.bar)
@@ -1138,7 +1206,8 @@ We are also able to rename fields in nested structure:
       .intoPartial[NestedBar]
       .withFieldRenamed(_.foo, _.bar)
       .withFieldRenamed(_.foo.b, _.bar.c)
-      .transform.asEither // Right(NestedBar(Bar("value", 1248)))
+      .transform
+      .asEither // Right(NestedBar(Bar("value", 1248)))
     ```
 
 ### Wiring the constructor's parameter to a provided value
@@ -1151,16 +1220,21 @@ the constructor's argument/setter yourself. The successful value can be provided
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String, b: Int)
     case class Bar(a: String, b: Int, c: Long)
-    
+
     // providing missing value...
     Foo("value", 10).into[Bar].withFieldConst(_.c, 1000L).transform // Bar("value", 10, 1000L)
     Foo("value", 10).intoPartial[Bar].withFieldConst(_.c, 1000L).transform.asEither // Right(Bar("value", 10, 1000L))
     // ...and overriding existing value
     Foo("value", 10).into[Bar].withFieldConst(_.c, 1000L).withFieldConst(_.b, 20).transform // Bar("value", 20, 1000L)
-    Foo("value", 10).intoPartial[Bar].withFieldConst(_.c, 1000L).withFieldConst(_.b, 20).transform.asEither // Right(Bar("value", 20, 1000L))
+    Foo("value", 10)
+      .intoPartial[Bar]
+      .withFieldConst(_.c, 1000L)
+      .withFieldConst(_.b, 20)
+      .transform
+      .asEither // Right(Bar("value", 20, 1000L))
     ```
 
 `.withFieldConst` can be used to provide/override only _successful_ values. What if we want to provide a failure, e.g.:
@@ -1177,20 +1251,40 @@ These cases can be handled only with `PartialTransformer` using `.withFieldConst
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
-    
+
     case class Foo(a: String, b: Int)
     case class Bar(a: String, b: Int, c: Long)
-    
+
     // successful partial.Result constant
-    Foo("value", 10).intoPartial[Bar].withFieldConstPartial(_.c, partial.Result.fromValue(100L)).transform
-      .asEither.left.map(_.asErrorPathMessages) // Right(Bar("value", 10, 1000L))
+    Foo("value", 10)
+      .intoPartial[Bar]
+      .withFieldConstPartial(_.c, partial.Result.fromValue(100L))
+      .transform
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Right(Bar("value", 10, 1000L))
     // a few different partial.Result failures constants
-    Foo("value", 10).intoPartial[Bar].withFieldConstPartial(_.c, partial.Result.fromEmpty).transform
-      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("c", partial.Error.EmptyMessage))
-    Foo("value", 10).intoPartial[Bar].withFieldConstPartial(_.c, partial.Result.fromErrorThrowable(new NullPointerException)).transform
-      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("c", partial.Error.ThrowableMessage(e: NullPointerException)))
-    Foo("value", 10).intoPartial[Bar].withFieldConstPartial(_.c, partial.Result.fromErrorString("bad value")).transform
-      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("c", partial.Error.StringMessage("bad value")))
+    Foo("value", 10)
+      .intoPartial[Bar]
+      .withFieldConstPartial(_.c, partial.Result.fromEmpty)
+      .transform
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("c", partial.Error.EmptyMessage))
+    Foo("value", 10)
+      .intoPartial[Bar]
+      .withFieldConstPartial(_.c, partial.Result.fromErrorThrowable(new NullPointerException))
+      .transform
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("c", partial.Error.ThrowableMessage(e: NullPointerException)))
+    Foo("value", 10)
+      .intoPartial[Bar]
+      .withFieldConstPartial(_.c, partial.Result.fromErrorString("bad value"))
+      .transform
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("c", partial.Error.StringMessage("bad value")))
     ``` 
 
 As you can see, the transformed value will automatically preserve the field name for which a failure happened.
@@ -1227,7 +1321,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
-    
+
     class Foo() {
       def getA: String = "value"
       def getB(): Int = 777
@@ -1240,21 +1334,27 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
       def getC: Int = c
       def setC(cc: Int): Unit = c = cc
     }
-    
+
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
-    
-    (new Foo()).into[Bar].withFieldConst(_.getC, 100).transform
+
+    (new Foo())
+      .into[Bar]
+      .withFieldConst(_.getC, 100)
+      .transform
     // val foo = new Foo()
     // val bar = new Bar()
-    // bar.setA(foo.getA) 
+    // bar.setA(foo.getA)
     // bar.setC(100L)
     // bar
-    (new Foo()).intoPartial[Bar].withFieldConstPartial(_.getC, partial.Result.fromEmpty).transform
+    (new Foo())
+      .intoPartial[Bar]
+      .withFieldConstPartial(_.getC, partial.Result.fromEmpty)
+      .transform
     // val foo = new Foo()
     // partial.Result.fromEmpty[Long].map { c =>
     //   val bar = new Bar()
-    //   bar.setA(foo.getA) 
+    //   bar.setA(foo.getA)
     //   bar.setC(c)
     //   bar
     // }
@@ -1267,13 +1367,13 @@ We are also able to provide values in nested structure:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String, b: Int)
     case class Bar(a: String, b: Int, c: Long)
 
     case class NestedFoo(foo: Foo)
     case class NestedBar(bar: Bar)
-    
+
     NestedFoo(Foo("value", 1248))
       .into[NestedBar]
       .withFieldRenamed(_.foo, _.bar)
@@ -1283,7 +1383,8 @@ We are also able to provide values in nested structure:
       .intoPartial[NestedBar]
       .withFieldRenamed(_.foo, _.bar)
       .withFieldConst(_.bar.c, 1000L)
-      .transform.asEither // Right(NestedBar(Bar("value", 1248, 1000L)))
+      .transform
+      .asEither // Right(NestedBar(Bar("value", 1248, 1000L)))
     ```
 
 ### Wiring the constructor's parameter to the computed value
@@ -1297,22 +1398,29 @@ using `.withFieldComputed`:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String, b: Int)
     case class Bar(a: String, b: Int, c: Long)
-    
+
     // providing missing value...
     Foo("value", 10).into[Bar].withFieldComputed(_.c, foo => foo.b.toLong * 2).transform // Bar("value", 10, 20L)
-    Foo("value", 10).intoPartial[Bar].withFieldComputed(_.c, foo => foo.b.toLong * 2).transform.asEither // Right(Bar("value", 10, 20L))
+    Foo("value", 10)
+      .intoPartial[Bar]
+      .withFieldComputed(_.c, foo => foo.b.toLong * 2)
+      .transform
+      .asEither // Right(Bar("value", 10, 20L))
     // ...and overriding existing value
-    Foo("value", 10).into[Bar]
+    Foo("value", 10)
+      .into[Bar]
       .withFieldComputed(_.c, foo => foo.b.toLong * 2)
       .withFieldComputed(_.b, foo => foo.b * 4)
       .transform // Bar("value", 40, 20L)
-    Foo("value", 10).intoPartial[Bar]
+    Foo("value", 10)
+      .intoPartial[Bar]
       .withFieldComputed(_.c, foo => foo.b.toLong * 2)
       .withFieldComputed(_.b, foo => foo.b * 4)
-      .transform.asEither // Right(Bar("value", 40, 20L))
+      .transform
+      .asEither // Right(Bar("value", 40, 20L))
     ```
 
 `.withFieldComputed` can be used to compute only _successful_ values. What if we want to provide a failure, e.g.:
@@ -1329,25 +1437,41 @@ These cases can be handled only with `PartialTransformer` using `.withFieldCompu
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
-    
+
     case class Foo(a: String, b: Int)
     case class Bar(a: String, b: Int, c: Long)
 
     // always successful partial.Result
-    Foo("value", 10).intoPartial[Bar]
+    Foo("value", 10)
+      .intoPartial[Bar]
       .withFieldComputedPartial(_.c, foo => partial.Result.fromValue(foo.b.toLong * 2))
-      .transform.asEither.left.map(_.asErrorPathMessages) // Right(Bar("value", 10, 20L))
+      .transform
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Right(Bar("value", 10, 20L))
     // always failing with a partial.Result.fromErrorString
-    Foo("value", 10).intoPartial[Bar]
+    Foo("value", 10)
+      .intoPartial[Bar]
       .withFieldComputedPartial(_.c, foo => partial.Result.fromErrorString("bad value"))
-      .transform.asEither.left.map(_.asErrorPathMessages)// Left(Iterable("c" -> StringMessage("bad value")))
+      .transform
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("c" -> StringMessage("bad value")))
     // failure depends on the input (whether .toLong throws or not)
-    Foo("20", 10).intoPartial[Bar]
+    Foo("20", 10)
+      .intoPartial[Bar]
       .withFieldComputedPartial(_.c, foo => partial.Result.fromCatching(foo.a.toLong))
-      .transform.asEither.left.map(_.asErrorPathMessages)// Right(Bar("20", 10, 20L))
-    Foo("value", 10).intoPartial[Bar]
+      .transform
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Right(Bar("20", 10, 20L))
+    Foo("value", 10)
+      .intoPartial[Bar]
       .withFieldComputedPartial(_.c, foo => partial.Result.fromCatching(foo.a.toLong))
-      .transform.asEither.left.map(_.asErrorPathMessages)// Left(Iterable("c" -> ThrowableMessage(NumberFormatException: For input string: "value")))
+      .transform
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("c" -> ThrowableMessage(NumberFormatException: For input string: "value")))
     ``` 
 
 As you can see, the transformed value will automatically preserve the field name for which failure happened.
@@ -1384,7 +1508,7 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
-    
+
     class Foo() {
       def getA: String = "value"
       def getB(): Int = 777
@@ -1400,18 +1524,24 @@ with all arguments declared as public `val`s, and Java Beans where each setter h
 
     // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
-    
-    (new Foo()).into[Bar].withFieldComputed(_.getC, foo => foo.getB().toLong).transform
+
+    (new Foo())
+      .into[Bar]
+      .withFieldComputed(_.getC, foo => foo.getB().toLong)
+      .transform
     // val foo = new Foo()
     // val bar = new Bar()
-    // bar.setA(foo.getA) 
+    // bar.setA(foo.getA)
     // bar.setC(100L)
     // bar
-    (new Foo()).intoPartial[Bar].withFieldComputedPartial(_.getC, foo => partial.Result.fromCatching(foo.getA.toLong)).transform
+    (new Foo())
+      .intoPartial[Bar]
+      .withFieldComputedPartial(_.getC, foo => partial.Result.fromCatching(foo.getA.toLong))
+      .transform
     // val foo = new Foo()
     // partial.Result.fromCatched(foo.getA.toLong).map { c =>
     //   val bar = new Bar()
-    //   bar.setA(foo.getA()) 
+    //   bar.setA(foo.getA())
     //   bar.setC(c)
     //   bar
     // }
@@ -1424,13 +1554,13 @@ We are also able to compute values in nested structure:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String, b: Int)
     case class Bar(a: String, b: Int, c: Long)
 
     case class NestedFoo(foo: Foo)
     case class NestedBar(bar: Bar)
-    
+
     NestedFoo(Foo("value", 1248))
       .into[NestedBar]
       .withFieldRenamed(_.foo, _.bar)
@@ -1440,7 +1570,8 @@ We are also able to compute values in nested structure:
       .intoPartial[NestedBar]
       .withFieldRenamed(_.foo, _.bar)
       .withFieldComputedPartial(_.bar.c, nestedfoo => partial.Result.fromValue(nestedfoo.foo.b.toLong * 2))
-      .transform.asEither // Right(NestedBar(Bar("value", 1248, 2496L)))
+      .transform
+      .asEither // Right(NestedBar(Bar("value", 1248, 2496L)))
     ```
 
 ### Customizing field name matching
@@ -1486,7 +1617,8 @@ The field name matching predicate can be overrided with a flag:
     Foo(Foo.Baz("test"), 1024)
       .intoPartial[Bar]
       .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
-      .transform.asEither // Right(Bar(Bar.Baz("test"), 1024))
+      .transform
+      .asEither // Right(Bar(Bar.Baz("test"), 1024))
 
     locally {
       // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
@@ -1563,13 +1695,17 @@ constructor's argument is made by position instead of name:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String, b: Int, c: Long)
-    
-    Foo("value", 42, 1024L).transformInto[(String, Int, Long)] // ("value", 42, 1024L) 
-    ("value", 42, 1024L).transformInto[Foo] // Foo("value", 42, 1024L)
-    Foo("value", 42, 1024L).transformIntoPartial[(String, Int, Long)] // Right(("value", 42, 1024L)) 
-    ("value", 42, 1024L).transformIntoPartial[Foo] // Right(Foo("value", 42, 1024L))
+
+    Foo("value", 42, 1024L)
+      .transformInto[(String, Int, Long)] // ("value", 42, 1024L)
+    ("value", 42, 1024L)
+      .transformInto[Foo] // Foo("value", 42, 1024L)
+    Foo("value", 42, 1024L)
+      .transformIntoPartial[(String, Int, Long)] // Right(("value", 42, 1024L))
+    ("value", 42, 1024L)
+      .transformIntoPartial[Foo] // Right(Foo("value", 42, 1024L))
     ```
 
 !!! tip
@@ -1589,10 +1725,10 @@ as transparent, similarly to virtually every other Scala library.
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: Int) extends AnyVal
     case class Bar(b: Int) extends AnyVal
-    
+
     Foo(10).into[Bar].transform // Bar(10)
     Foo(10).transformInto[Bar] // Bar(10)
     Foo(10).transformIntoPartial[Bar].asEither // Right(Bar(10))
@@ -1611,16 +1747,16 @@ as transparent, similarly to virtually every other Scala library.
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(private val a: Int) extends AnyVal // cannot be automatically unwrapped
     case class Bar private (b: String) extends AnyVal // cannot be automatically wrapped
-    
+
     Foo(10).transformInto[Bar]
     // Chimney can't derive transformation from Foo to Bar
-    // 
+    //
     // Bar
     //   derivation from foo: Foo to Bar is not supported in Chimney!
-    //  
+    //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
@@ -1645,27 +1781,43 @@ type's subtype needs to have a corresponding subtype with a matching name in the
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     sealed trait Foo
     object Foo {
       case class Baz(a: String, b: Int) extends Foo
-      case object Buzz extends Foo  
+      case object Buzz extends Foo
     }
     sealed trait Bar
     object Bar {
       case class Baz(b: Int) extends Bar
-      case object Fizz extends Bar  
+      case object Fizz extends Bar
       case object Buzz extends Bar
     }
-    
-    (Foo.Baz("value", 10): Foo).transformInto[Bar] // Bar.Baz(10)
-    (Foo.Baz("value", 10): Foo).into[Bar].transform // Bar.Baz(10)
-    (Foo.Buzz: Foo).transformInto[Bar] // Bar.Buzz
-    (Foo.Buzz: Foo).into[Bar].transform // Bar.Buzz
-    (Foo.Baz("value", 10): Foo).transformIntoPartial[Bar].asEither // Right(Bar.Baz(10))
-    (Foo.Baz("value", 10): Foo).intoPartial[Bar].transform.asEither // Right(Bar.Baz(10))
-    (Foo.Buzz: Foo).transformIntoPartial[Bar].asEither // Right(Bar.Buzz)
-    (Foo.Buzz: Foo).intoPartial[Bar].transform.asEither // Right(Bar.Buzz)
+
+    (Foo.Baz("value", 10): Foo)
+      .transformInto[Bar] // Bar.Baz(10)
+    (Foo.Baz("value", 10): Foo)
+      .into[Bar]
+      .transform // Bar.Baz(10)
+    (Foo.Buzz: Foo)
+      .transformInto[Bar] // Bar.Buzz
+    (Foo.Buzz: Foo)
+      .into[Bar]
+      .transform // Bar.Buzz
+    (Foo.Baz("value", 10): Foo)
+      .transformIntoPartial[Bar]
+      .asEither // Right(Bar.Baz(10))
+    (Foo.Baz("value", 10): Foo)
+      .intoPartial[Bar]
+      .transform
+      .asEither // Right(Bar.Baz(10))
+    (Foo.Buzz: Foo)
+      .transformIntoPartial[Bar]
+      .asEither // Right(Bar.Buzz)
+    (Foo.Buzz: Foo)
+      .intoPartial[Bar]
+      .transform
+      .asEither // Right(Bar.Buzz)
     ```
 
 !!! tip
@@ -1684,18 +1836,20 @@ It works also with Scala 3's `enum`:
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
-    
+
     sealed trait Foo
     object Foo:
       case class Baz(a: String, b: Int) extends Foo
       case object Buzz extends Foo
     enum Bar:
       case Baz(b: Int)
-      case Fizz  
+      case Fizz
       case Buzz
-    
-    (Foo.Baz("value", 10): Foo).transformInto[Bar] // Bar.Baz(10)
-    (Foo.Buzz: Foo).transformInto[Bar] // Bar.Buzz
+
+    (Foo.Baz("value", 10): Foo)
+      .transformInto[Bar] // Bar.Baz(10)
+    (Foo.Buzz: Foo)
+      .transformInto[Bar] // Bar.Buzz
     ```
     
 !!! example
@@ -1706,18 +1860,20 @@ It works also with Scala 3's `enum`:
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
-    
+
     enum Foo:
       case Baz(a: String, b: Int)
       case Buzz
     sealed trait Bar
     object Bar:
       case class Baz(b: Int) extends Bar
-      case object Fizz extends Bar  
+      case object Fizz extends Bar
       case object Buzz extends Bar
-    
-    (Foo.Baz("value", 10): Foo).transformInto[Bar] // Bar.Baz(10)
-    (Foo.Buzz: Foo).transformInto[Bar] // Bar.Buzz
+
+    (Foo.Baz("value", 10): Foo)
+      .transformInto[Bar] // Bar.Baz(10)
+    (Foo.Buzz: Foo)
+      .transformInto[Bar] // Bar.Buzz
     ```
     
 !!! example
@@ -1728,17 +1884,19 @@ It works also with Scala 3's `enum`:
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
-    
+
     enum Foo:
       case Baz(a: String, b: Int)
       case Buzz
     enum Bar:
       case Baz(b: Int)
-      case Fizz  
+      case Fizz
       case Buzz
-    
-    (Foo.Baz("value", 10): Foo).transformInto[Bar] // Bar.Baz(10)
-    (Foo.Buzz: Foo).transformInto[Bar] // Bar.Buzz
+
+    (Foo.Baz("value", 10): Foo)
+      .transformInto[Bar] // Bar.Baz(10)
+    (Foo.Buzz: Foo)
+      .transformInto[Bar] // Bar.Buzz
     ```
 
 ### Non-flat ADTs
@@ -1753,7 +1911,7 @@ In such cases, Chimney is able to automatically wrap/unwrap these inner values a
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     object protobuf {
       sealed trait Foo
       object Foo {
@@ -1763,7 +1921,7 @@ In such cases, Chimney is able to automatically wrap/unwrap these inner values a
       case class A(value: Foo.A) extends Foo
       case class B(value: Foo.B) extends Foo
     }
-    
+
     object domain {
       sealed trait Bar
       object Bar {
@@ -1771,13 +1929,17 @@ In such cases, Chimney is able to automatically wrap/unwrap these inner values a
         case object B extends Bar
       }
     }
-    
+
     // flattening
-    (protobuf.A(protobuf.Foo.A("value", 42)) : protobuf.Foo).transformInto[domain.Bar] // domain.Bar.A("value", 42)
-    (protobuf.B(protobuf.Foo.B()) : protobuf.Foo).transformInto[domain.Bar] // domain.Bar.B
+    (protobuf.A(protobuf.Foo.A("value", 42)): protobuf.Foo)
+      .transformInto[domain.Bar] // domain.Bar.A("value", 42)
+    (protobuf.B(protobuf.Foo.B()): protobuf.Foo)
+      .transformInto[domain.Bar] // domain.Bar.B
     // unflattening
-    (domain.Bar.A("value", 42): domain.Bar).transformInto[protobuf.Foo] // protobuf.A(Foo.A("value", 42)
-    (domain.Bar.B : domain.Bar).transformInto[protobuf.Foo] // protobuf.B(Foo.B())
+    (domain.Bar.A("value", 42): domain.Bar)
+      .transformInto[protobuf.Foo] // protobuf.A(Foo.A("value", 42)
+    (domain.Bar.B: domain.Bar)
+      .transformInto[protobuf.Foo] // protobuf.B(Foo.B())
     ```
 
 ### Java's `enum`s
@@ -1798,14 +1960,14 @@ Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/a
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     sealed trait ColorS
     object ColorS {
       case object Red extends ColorS
       case object Green extends ColorS
       case object Blue extends ColorS
     }
-    
+
     ColorJ.Red.transformInto[ColorS] // ColorS.Red
     ColorJ.Green.transformInto[ColorS] // ColorS.Green
     ColorJ.Blue.transformInto[ColorS] // ColorS.Blue
@@ -1829,10 +1991,10 @@ Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/a
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     enum ColorE:
       case Red, Green, Blue
-    
+
     ColorJ.Red.transformInto[ColorE] // ColorE.Red
     ColorJ.Green.transformInto[ColorE] // ColorE.Green
     ColorJ.Blue.transformInto[ColorE] // ColorE.Blue
@@ -1851,28 +2013,37 @@ computation. This can be done using `.withSealedSubtypeHandled`:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     sealed trait Foo
     object Foo {
       case class Baz(a: String) extends Foo
-      case object Buzz extends Foo  
+      case object Buzz extends Foo
     }
     sealed trait Bar
     object Bar {
       case class Baz(a: String) extends Bar
-      case object Fizz extends Bar  
+      case object Fizz extends Bar
       case object Buzz extends Bar
     }
-    
-    (Bar.Baz("value"): Bar).into[Foo].withSealedSubtypeHandled[Bar.Fizz.type] {
-      fizz => Foo.Baz(fizz.toString)
-    }.transform // Foo.Baz("value")
-    (Bar.Fizz: Bar).into[Foo].withSealedSubtypeHandled[Bar.Fizz.type] {
-      fizz => Foo.Baz(fizz.toString)
-    }.transform // Foo.Baz("Fizz")
-    (Bar.Buzz: Bar).into[Foo].withSealedSubtypeHandled[Bar.Fizz.type] {
-      fizz => Foo.Baz(fizz.toString)
-    }.transform // Foo.Buzz
+
+    (Bar.Baz("value"): Bar)
+      .into[Foo]
+      .withSealedSubtypeHandled[Bar.Fizz.type] { fizz =>
+        Foo.Baz(fizz.toString)
+      }
+      .transform // Foo.Baz("value")
+    (Bar.Fizz: Bar)
+      .into[Foo]
+      .withSealedSubtypeHandled[Bar.Fizz.type] { fizz =>
+        Foo.Baz(fizz.toString)
+      }
+      .transform // Foo.Baz("Fizz")
+    (Bar.Buzz: Bar)
+      .into[Foo]
+      .withSealedSubtypeHandled[Bar.Fizz.type] { fizz =>
+        Foo.Baz(fizz.toString)
+      }
+      .transform // Foo.Buzz
     ```
 
 If the computation needs to allow failure, there is `.withSealedSubtypeHandledPartial`:
@@ -1883,28 +2054,40 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
-    
+
     sealed trait Foo
     object Foo {
       case class Baz(a: String) extends Foo
-      case object Buzz extends Foo  
+      case object Buzz extends Foo
     }
     sealed trait Bar
     object Bar {
       case class Baz(a: String) extends Bar
-      case object Fizz extends Bar  
+      case object Fizz extends Bar
       case object Buzz extends Bar
     }
-    
-    (Bar.Baz("value"): Bar).intoPartial[Foo].withSealedSubtypeHandledPartial[Bar.Fizz.type] {
-      fizz => partial.Result.fromEmpty
-    }.transform.asEither // Right(Foo.Baz("value"))
-    (Bar.Fizz: Bar).intoPartial[Foo].withSealedSubtypeHandledPartial[Bar.Fizz.type] {
-      fizz => partial.Result.fromEmpty
-    }.transform.asEither // Left(...)
-    (Bar.Buzz: Bar).intoPartial[Foo].withSealedSubtypeHandledPartial[Bar.Fizz.type] {
-      fizz => partial.Result.fromEmpty
-    }.transform.asEither // Right(Foo.Buzz)
+
+    (Bar.Baz("value"): Bar)
+      .intoPartial[Foo]
+      .withSealedSubtypeHandledPartial[Bar.Fizz.type] { fizz =>
+        partial.Result.fromEmpty
+      }
+      .transform
+      .asEither // Right(Foo.Baz("value"))
+    (Bar.Fizz: Bar)
+      .intoPartial[Foo]
+      .withSealedSubtypeHandledPartial[Bar.Fizz.type] { fizz =>
+        partial.Result.fromEmpty
+      }
+      .transform
+      .asEither // Left(...)
+    (Bar.Buzz: Bar)
+      .intoPartial[Foo]
+      .withSealedSubtypeHandledPartial[Bar.Fizz.type] { fizz =>
+        partial.Result.fromEmpty
+      }
+      .transform
+      .asEither // Right(Foo.Buzz)
     ```
 
 !!! notice
@@ -1918,36 +2101,57 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     enum Foo {
       case Baz(a: String)
-      case Buzz  
+      case Buzz
     }
     enum Bar {
       case Baz(a: String)
-      case Fizz  
+      case Fizz
       case Buzz
     }
-    
-    (Bar.Baz("value"): Bar).into[Foo].withEnumCaseHandled[Bar.Fizz.type] {
-      fizz => Foo.Baz(fizz.toString)
-    }.transform // Foo.Baz("value")
-    (Bar.Fizz: Bar).into[Foo].withEnumCaseHandled[Bar.Fizz.type] {
-      fizz => Foo.Baz(fizz.toString)
-    }.transform // Foo.Baz("Fizz")
-    (Bar.Buzz: Bar).into[Foo].withEnumCaseHandled[Bar.Fizz.type] {
-      fizz => Foo.Baz(fizz.toString)
-    }.transform // Foo.Buzz
-    
-    (Bar.Baz("value"): Bar).intoPartial[Foo].withEnumCaseHandledPartial[Bar.Fizz.type] {
-      fizz => partial.Result.fromEmpty
-    }.transform.asEither // Right(Foo.Baz("value"))
-    (Bar.Fizz: Bar).intoPartial[Foo].withEnumCaseHandledPartial[Bar.Fizz.type] {
-      fizz => partial.Result.fromEmpty
-    }.transform.asEither // Left(...)
-    (Bar.Buzz: Bar).intoPartial[Foo].withEnumCaseHandledPartial[Bar.Fizz.type] {
-      fizz => partial.Result.fromEmpty
-    }.transform.asEither // Right(Foo.Buzz)
+
+    (Bar.Baz("value"): Bar)
+      .into[Foo]
+      .withEnumCaseHandled[Bar.Fizz.type] { fizz =>
+        Foo.Baz(fizz.toString)
+      }
+      .transform // Foo.Baz("value")
+    (Bar.Fizz: Bar)
+      .into[Foo]
+      .withEnumCaseHandled[Bar.Fizz.type] { fizz =>
+        Foo.Baz(fizz.toString)
+      }
+      .transform // Foo.Baz("Fizz")
+    (Bar.Buzz: Bar)
+      .into[Foo]
+      .withEnumCaseHandled[Bar.Fizz.type] { fizz =>
+        Foo.Baz(fizz.toString)
+      }
+      .transform // Foo.Buzz
+
+    (Bar.Baz("value"): Bar)
+      .intoPartial[Foo]
+      .withEnumCaseHandledPartial[Bar.Fizz.type] { fizz =>
+        partial.Result.fromEmpty
+      }
+      .transform
+      .asEither // Right(Foo.Baz("value"))
+    (Bar.Fizz: Bar)
+      .intoPartial[Foo]
+      .withEnumCaseHandledPartial[Bar.Fizz.type] { fizz =>
+        partial.Result.fromEmpty
+      }
+      .transform
+      .asEither // Left(...)
+    (Bar.Buzz: Bar)
+      .intoPartial[Foo]
+      .withEnumCaseHandledPartial[Bar.Fizz.type] { fizz =>
+        partial.Result.fromEmpty
+      }
+      .transform
+      .asEither // Right(Foo.Buzz)
     ```
     
     These methods are only aliases and there is no difference in behavior between `withSealedCaseHandled` and
@@ -1983,16 +2187,16 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     //> using scala {{ scala.2_13 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     sealed trait ColorS
     object ColorS {
       case object Red extends ColorS
       case object Green extends ColorS
       case object Blue extends ColorS
     }
-    
+
     def blackIsRed(black: ColorJ.Black.type): ColorS = ColorS.Red
-    
+
     ColorJ.Red.into[ColorS].withSealedSubtypeHandled[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
     ColorJ.Green.into[ColorS].withSealedSubtypeHandled[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
     ColorJ.Blue.into[ColorS].withSealedSubtypeHandled[ColorJ.Black.type](blackIsRed(_)).transform // ColorS.Red
@@ -2006,28 +2210,40 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     //> using scala {{ scala.2_13 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     sealed trait ColorS
     object ColorS {
       case object Red extends ColorS
       case object Green extends ColorS
       case object Blue extends ColorS
     }
-    
+
     def blackIsRed(black: ColorJ.Black.type): ColorS = ColorS.Red
-    
-    ColorJ.Red.into[ColorS].withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
-      blackIsRed(black)
-    }.transform // ColorS.Red
-    ColorJ.Green.into[ColorS].withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
-      blackIsRed(black)
-    }.transform // ColorS.Green
-    ColorJ.Blue.into[ColorS].withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
-      blackIsRed(black)
-    }.transform // ColorS.Blue
-    ColorJ.Black.into[ColorS].withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
-      blackIsRed(black)
-    }.transform // ColorS.Black
+
+    ColorJ.Red
+      .into[ColorS]
+      .withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
+        blackIsRed(black)
+      }
+      .transform // ColorS.Red
+    ColorJ.Green
+      .into[ColorS]
+      .withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
+        blackIsRed(black)
+      }
+      .transform // ColorS.Green
+    ColorJ.Blue
+      .into[ColorS]
+      .withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
+        blackIsRed(black)
+      }
+      .transform // ColorS.Blue
+    ColorJ.Black
+      .into[ColorS]
+      .withSealedSubtypeHandled { (black: ColorJ.Black.type) =>
+        blackIsRed(black)
+      }
+      .transform // ColorS.Black
     ```
     
     This issue doesn't occur on Scala 3, which infers types correctly:
@@ -2036,12 +2252,12 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
-    
+
     enum ColorS:
       case Red, Green, Blue
-    
+
     def blackIsRed(black: ColorJ.Black.type): ColorS = ColorS.Red
-    
+
     ColorJ.Red.into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Red
     ColorJ.Green.into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Green
     ColorJ.Blue.into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Blue
@@ -2090,7 +2306,8 @@ The subtype name matching predicate can be overrided with a flag:
     (Foo.BAZ: Foo)
       .intoPartial[Bar]
       .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
-      .transform.asEither // Right(Bar.Baz)
+      .transform
+      .asEither // Right(Bar.Baz)
 
     locally {
       // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
@@ -2175,18 +2392,34 @@ The transformation from one `Option` into another is obviously always supported:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String)
     case class Bar(a: String)
-    
-    Option(Foo("value")).transformInto[Option[Bar]] // Some(Bar("value"))
-    (None : Option[Foo]).transformInto[Option[Bar]] // None
-    Option(Foo("value")).into[Option[Bar]].transform // Some(Bar("value"))
-    (None : Option[Foo]).into[Option[Bar]].transform // None
-    Option(Foo("value")).transformIntoPartial[Option[Bar]].asEither // Right(Some(Bar("value")))
-    (None : Option[Foo]).transformIntoPartial[Option[Bar]].asEither // Right(None)
-    Option(Foo("value")).intoPartial[Option[Bar]].transform.asEither // Right(Some(Bar("value")))
-    (None : Option[Foo]).intoPartial[Option[Bar]].transform.asEither // Right(None)
+
+    Option(Foo("value"))
+      .transformInto[Option[Bar]] // Some(Bar("value"))
+    (None: Option[Foo])
+      .transformInto[Option[Bar]] // None
+    Option(Foo("value"))
+      .into[Option[Bar]]
+      .transform // Some(Bar("value"))
+    (None: Option[Foo])
+      .into[Option[Bar]]
+      .transform // None
+    Option(Foo("value"))
+      .transformIntoPartial[Option[Bar]]
+      .asEither // Right(Some(Bar("value")))
+    (None: Option[Foo])
+      .transformIntoPartial[Option[Bar]]
+      .asEither // Right(None)
+    Option(Foo("value"))
+      .intoPartial[Option[Bar]]
+      .transform
+      .asEither // Right(Some(Bar("value")))
+    (None: Option[Foo])
+      .intoPartial[Option[Bar]]
+      .transform
+      .asEither // Right(None)
     ```
 
 Additionally, an automatic wrapping with `Option` is also considered safe and always available:
@@ -2196,10 +2429,10 @@ Additionally, an automatic wrapping with `Option` is also considered safe and al
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String)
     case class Bar(a: String)
-    
+
     Foo("value").transformInto[Option[Bar]] // Some(Bar("value"))
     Foo("value").into[Option[Bar]].transform // Some(Bar("value"))
     Foo("value").transformIntoPartial[Option[Bar]].asEither // Right(Some(Bar("value")))
@@ -2214,14 +2447,32 @@ automatically only with `PartialTransformer`:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String)
     case class Bar(a: String)
-    
-    Option(Foo("value")).transformIntoPartial[Bar].asEither.left.map(_.asErrorPathMessages) // Right(Bar("value"))
-    (None : Option[Foo]).transformIntoPartial[Bar].asEither.left.map(_.asErrorPathMessages) // Left(Iterable("" -> EmptyValue))
-    Option(Foo("value")).intoPartial[Bar].transform.asEither.left.map(_.asErrorPathMessages) // Right(Bar("value"))
-    (None : Option[Foo]).intoPartial[Bar].transform.asEither.left.map(_.asErrorPathMessages) // Left(Iterable("" -> EmptyValue))
+
+    Option(Foo("value"))
+      .transformIntoPartial[Bar]
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Right(Bar("value"))
+    (None: Option[Foo])
+      .transformIntoPartial[Bar]
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("" -> EmptyValue))
+    Option(Foo("value"))
+      .intoPartial[Bar]
+      .transform
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Right(Bar("value"))
+    (None: Option[Foo])
+      .intoPartial[Bar]
+      .transform
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("" -> EmptyValue))
     ```
 
 !!! tip
@@ -2315,14 +2566,20 @@ A transformation from one `Either` to another is supported as long as both left 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String)
     case class Bar(a: String)
-    
-    (Left(Foo("value")) : Either[Foo, Bar]).transformInto[Either[Bar, Foo]] // Left(Bar("value"))
-    (Right(Bar("value")) : Either[Foo, Bar]).transformInto[Either[Bar, Foo]] // Right(Foo("value"))
-    (Left(Foo("value")) : Either[Foo, Bar]).transformIntoPartial[Either[Bar, Foo]].asOption // Some(Left(Bar("value")))
-    (Right(Bar("value")) : Either[Foo, Bar]).transformIntoPartial[Either[Bar, Foo]].asOption // Some(Right(Foo("value")))
+
+    (Left(Foo("value")): Either[Foo, Bar])
+      .transformInto[Either[Bar, Foo]] // Left(Bar("value"))
+    (Right(Bar("value")): Either[Foo, Bar])
+      .transformInto[Either[Bar, Foo]] // Right(Foo("value"))
+    (Left(Foo("value")): Either[Foo, Bar])
+      .transformIntoPartial[Either[Bar, Foo]]
+      .asOption // Some(Left(Bar("value")))
+    (Right(Bar("value")): Either[Foo, Bar])
+      .transformIntoPartial[Either[Bar, Foo]]
+      .asOption // Some(Right(Foo("value")))
     ```
 
 A transformation from `Left` and `Right` into `Either` requires existence of only the transformation from the type we
@@ -2333,15 +2590,17 @@ know for sure is inside to their corresponding type in target `Either`:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-     
+
     case class Foo(a: String, b: Int)
     case class Bar(a: String)
     case class Baz(a: String, b: Int, c: Long)
 
     // Foo -> Bar - can be derived
     // Foo -> Baz - cannot be derived without providing c
-    (Left(Foo("value", 10))).transformInto[Either[Bar, Baz]] // Left(Bar("value"))
-    (Right(Foo("value", 10))).transformInto[Either[Baz, Bar]] // Right(Bar("value"))
+    (Left(Foo("value", 10)))
+      .transformInto[Either[Bar, Baz]] // Left(Bar("value"))
+    (Right(Foo("value", 10)))
+      .transformInto[Either[Baz, Bar]] // Right(Bar("value"))
     ```
 
 ## Between Scala's collections/`Array`s
@@ -2361,10 +2620,10 @@ the types stored within these collections can also be converted.
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import scala.collection.immutable.ListMap
-     
+
     case class Foo(a: String)
     case class Bar(a: Option[String])
-    
+
     List(Foo("value")).transformInto[Vector[Bar]] // Vector(Bar(Some("value")))
     Map(Foo("key") -> Foo("value")).transformInto[Array[(Bar, Bar)]] // Array(Bar(Some("key")) -> Bar(Some("value")))
     Vector(Foo("key") -> Foo("value")).transformInto[ListMap[Bar, Bar]] // ListMap(Bar(Some("key")) -> Bar(Some("value")))
@@ -2377,14 +2636,20 @@ With `PartialTransformer`s ware able to handle fallible conversions, tracing at 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: String)
     case class Bar(a: Option[String])
 
-    List(Bar(Some("value")), Bar(None)).transformIntoPartial[Vector[Foo]]
-      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("(1).a" -> EmptyValue))
-    Map(Bar(Some("value")) -> Bar(None), Bar(None) -> Bar(Some("value"))).transformIntoPartial[Vector[(Foo, Foo)]]
-      .asEither.left.map(_.asErrorPathMessages) // Left(Iterable("(Bar(Some(value))).a" -> EmptyValue, "keys(Bar(None))" -> EmptyValue))
+    List(Bar(Some("value")), Bar(None))
+      .transformIntoPartial[Vector[Foo]]
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("(1).a" -> EmptyValue))
+    Map(Bar(Some("value")) -> Bar(None), Bar(None) -> Bar(Some("value")))
+      .transformIntoPartial[Vector[(Foo, Foo)]]
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("(Bar(Some(value))).a" -> EmptyValue, "keys(Bar(None))" -> EmptyValue))
     ```
 
 !!! tip
@@ -2409,12 +2674,12 @@ The most obvious case is having all type parameters applied to non-abstract type
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo[A](value: A)
     case class Bar[A](value: A)
-    
+
     case class Baz[A](value: A)
-    
+
     Foo(Baz("value")).transformInto[Bar[Baz[String]]] // Bar(Baz("value"))
     ```
 
@@ -2431,7 +2696,7 @@ or having type parameter being not used at all:
 
     case class Foo[A](value: String)
     case class Bar[A](value: String)
-    
+
     Foo[AbstractType1]("value").transformInto[Bar[AbstractType2]] // Bar[AbstractType2]("value")
     ```
 
@@ -2445,13 +2710,13 @@ knows how to apply it, the transformation can still be derived:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo[A](value: A)
     case class Bar[A](value: A)
-    
+
     def upcastingExample[A, B >: A](foo: Foo[A]): Bar[B] =
       foo.transformInto[Bar[B]]
-    
+
     upcastingExample[Int, AnyVal](Foo(10))
     ```
     
@@ -2460,14 +2725,14 @@ knows how to apply it, the transformation can still be derived:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     trait Baz[A] { val value: A }
     case class Foo[A](value: A) extends Baz[A]
     case class Bar[A](value: A)
-    
+
     def subtypeExample[A <: Baz[String]](foo: Foo[A]): Bar[Bar[String]] =
       foo.transformInto[Bar[Bar[String]]]
-    
+
     subtypeExample(Foo(Foo("value")))
     ```
     
@@ -2477,13 +2742,13 @@ knows how to apply it, the transformation can still be derived:
     //> using scala {{ scala.2_13 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo[A](value: A)
     case class Bar[A](value: A)
-    
+
     def refinedExample[A <: { val value: String }](foo: Foo[A]): Bar[Bar[String]] =
       foo.into[Bar[Bar[String]]].enableMacrosLogging.transform
-    
+
     refinedExample[Foo[String]](Foo(Foo("value")))
     ```
 
@@ -2495,7 +2760,7 @@ Finally, you can always provide a custom `Transformer` from/to a type containing
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.Transformer
-    
+
     case class Foo[A](value: A)
     case class Bar[A](value: A)
 
@@ -2529,18 +2794,21 @@ Then Chimney will try to match the source type's getters against the method's pa
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(value: Int)
     case class Bar private (value: String)
     object Bar {
-      def make(value: Int): Bar = Bar(value.toString) 
+      def make(value: Int): Bar = Bar(value.toString)
     }
 
     Foo(10).into[Bar].withConstructor(Bar.make).transform // Bar("10")
-    
-    Foo(10).into[Bar].withConstructor { (value: Int) =>
-      Bar.make(value * 100)
-    }.transform // Bar("1000")
+
+    Foo(10)
+      .into[Bar]
+      .withConstructor { (value: Int) =>
+        Bar.make(value * 100)
+      }
+      .transform // Bar("1000")
     ```
 
 !!! warning
@@ -2560,27 +2828,30 @@ constructor for `PartialTransformer`:
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.partial
-    
+
     case class Foo(value: String)
     case class Bar private (value: Int)
     object Bar {
       def parse(value: String): Either[String, Bar] =
-        scala.util.Try(value.toInt).toEither.map(new Bar(_)).left.map(_.getMessage) 
+        scala.util.Try(value.toInt).toEither.map(new Bar(_)).left.map(_.getMessage)
     }
-    
+
     def smartConstructor(value: String): partial.Result[Bar] =
       partial.Result.fromEitherString(Bar.parse(value))
 
     Foo("10")
       .intoPartial[Bar]
       .withConstructorPartial(smartConstructor)
-      .transform.asEither // Right(Bar(10))
-    
+      .transform
+      .asEither // Right(Bar(10))
+
     Foo("10")
       .intoPartial[Bar]
       .withConstructorPartial { (value: String) =>
         partial.Result.fromEitherString(Bar.parse(value))
-      }.transform.asEither // Right(Bar(1000))
+      }
+      .transform
+      .asEither // Right(Bar(1000))
     ```
 
 You can use this to automatically match the source's getters e.g. against smart constructor'sarguments - these types
@@ -2594,7 +2865,7 @@ to be automatically recognized as such:
 
     ```scala
     package models
-    
+
     case class StringIP(s1: String, s2: String, s3: String, s4: String)
 
     opaque type IP = Int
@@ -2604,16 +2875,20 @@ to be automatically recognized as such:
       def _3: Byte = ((ip >> 8) & 255).toByte
       def _4: Byte = ((ip >> 0) & 255).toByte
       def value: Int = ip
-      def show: String = s"$_1.$_2.$_3.$_4"
+      def show: String = s"${_1}.${_2}.${_3}.${_4}"
     object IP {
       def parse(s1: String, s2: String, s3: String, s4: String): Either[String, IP] =
-        scala.util.Try {
-          val i1 = (s1.toInt & 255) << 24
-          val i2 = (s2.toInt & 255) << 16
-          val i3 = (s3.toInt & 255) << 8
-          val i4 = (s4.toInt & 255)
-          i1 + i2 + i3 + i4
-        }.toEither.left.map(_.getMessage)
+        scala.util
+          .Try {
+            val i1 = (s1.toInt & 255) << 24
+            val i2 = (s2.toInt & 255) << 16
+            val i3 = (s3.toInt & 255) << 8
+            val i4 = (s4.toInt & 255)
+            i1 + i2 + i3 + i4
+          }
+          .toEither
+          .left
+          .map(_.getMessage)
     }
     ```
 
@@ -2621,16 +2896,18 @@ to be automatically recognized as such:
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     package example
-    
+
     import io.scalaland.chimney.dsl.*
     import io.scalaland.chimney.{partial, PartialTransformer}
     import models.*
-    
-    given PartialTransformer[StringIP, IP] = PartialTransformer.define[StringIP, IP]
+
+    given PartialTransformer[StringIP, IP] = PartialTransformer
+      .define[StringIP, IP]
       .withConstructorPartial { (s1: String, s2: String, s3: String, s4: String) =>
         partial.Result.fromEitherString(IP.parse(s1, s2, s3, s4))
-      }.buildTransformer
-    
+      }
+      .buildTransformer
+
     @main def example: Unit =
       println(StringIP("127", "0", "0", "1").transformIntoPartial[IP].asEither.map(_.show))
     ```
@@ -2639,12 +2916,11 @@ to be automatically recognized as such:
 
     ```scala
     package models
-    
+
     case class Foo(value: String)
-    
+
     opaque type Bar = Int
-    extension (bar: Bar)
-      def value: Int = bar
+    extension (bar: Bar) def value: Int = bar
     object Bar {
       def parse(value: String): Either[String, Bar] =
         scala.util.Try(value.toInt).toEither.left.map(_.getMessage)
@@ -2655,16 +2931,18 @@ to be automatically recognized as such:
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     package example
-    
+
     import io.scalaland.chimney.dsl.*
     import io.scalaland.chimney.{partial, PartialTransformer}
-    import models.{Foo, Bar}
-    
-    given PartialTransformer[Foo, Bar] = PartialTransformer.define[Foo, Bar]
+    import models.{Bar, Foo}
+
+    given PartialTransformer[Foo, Bar] = PartialTransformer
+      .define[Foo, Bar]
       .withConstructorPartial { (value: String) =>
         partial.Result.fromEitherString(Bar.parse(value))
-      }.buildTransformer
-    
+      }
+      .buildTransformer
+
     @main def example: Unit =
       println(Foo("10").transformIntoPartial[Bar].asEither)
     ```
@@ -2692,9 +2970,9 @@ for which they would not have a reasonable mapping:
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
-    
+
     implicit val int2string: Transformer[Int, String] = int => int.toString
-    
+
     case class Foo(a: Int)
     case class Bar(a: String)
 
@@ -2717,10 +2995,10 @@ for which they would not have a reasonable mapping:
     import io.scalaland.chimney.dsl._
 
     case class Foo(a: Int)
-    case class Bar(a: String)    
+    case class Bar(a: String)
 
-    implicit val foo2bar: Transformer[Foo, Bar] = foo => Bar((foo.a * 2).toString) 
-    
+    implicit val foo2bar: Transformer[Foo, Bar] = foo => Bar((foo.a * 2).toString)
+
     Foo(10).into[Bar].withFieldConst(_.a, "value").transform // Bar("value")
     ```
     
@@ -2733,17 +3011,23 @@ than handling only some of them, so we can always relax it:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ chimney_version() }}    
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
-    
+
     implicit val int2string: Transformer[Int, String] = int => int.toString
-    
+
     case class Foo(a: Int)
     case class Bar(a: String)
-    
-    Option(Foo(100)).transformIntoPartial[Bar].asEither // Right(Bar("100"))
-    (None : Option[Foo]).transformIntoPartial[Bar].asEither.left.map(_.asErrorPathMessages) // Left(Iterable("" -> EmptyValue)) 
+
+    Option(Foo(100))
+      .transformIntoPartial[Bar]
+      .asEither // Right(Bar("100"))
+    (None: Option[Foo])
+      .transformIntoPartial[Bar]
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("" -> EmptyValue))
     ```
 
 Defining custom `PartialTransformer` might be a necessity when the type we want to transform has only some values which
@@ -2752,25 +3036,29 @@ can be safely converted, and some which have no reasonable mapping in the target
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ chimney_version() }}   
-    import io.scalaland.chimney.{PartialTransformer, partial}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.{partial, PartialTransformer}
     import io.scalaland.chimney.dsl._
-    
+
     implicit val string2int: PartialTransformer[String, Int] = PartialTransformer[String, Int] { string =>
       partial.Result.fromCatching(string.toInt) // catches exception which can be thrown by .toInt
     }
-    
+
     case class Foo(a: Int)
     case class Bar(a: String)
-    
-    "12".transformIntoPartial[Int].asEither
-      .left.map(_.asErrorPathMessages) // Right(12)
-    "bad".transformIntoPartial[Int].asEither
-      .left.map(_.asErrorPathMessages) // Left(Iterable("" -> ThrowableMessage(NumberFormatException: For input string: "bad")))
-    Bar("20").transformIntoPartial[Foo] .asEither
-      .left.map(_.asErrorPathMessages) // Right(Foo(20))
-    Bar("wrong").transformIntoPartial[Foo] .asEither
-      .left.map(_.asErrorPathMessages) // Left("a" -> ThrowableMessage(NumberFormatException: For input string: "bad"))
+
+    "12".transformIntoPartial[Int].asEither.left.map(_.asErrorPathMessages) // Right(12)
+    "bad"
+      .transformIntoPartial[Int]
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left(Iterable("" -> ThrowableMessage(NumberFormatException: For input string: "bad")))
+    Bar("20").transformIntoPartial[Foo].asEither.left.map(_.asErrorPathMessages) // Right(Foo(20))
+    Bar("wrong")
+      .transformIntoPartial[Foo]
+      .asEither
+      .left
+      .map(_.asErrorPathMessages) // Left("a" -> ThrowableMessage(NumberFormatException: For input string: "bad"))
     ```
 
 !!! tip
@@ -2790,24 +3078,26 @@ when Chimney match subtypes by name, you can tell it how to convert them using i
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
-    
+
     sealed trait Foo
     object Foo {
       case object A extends Foo
       case class B(int: Int) extends Foo
     }
-    
+
     sealed trait Bar
     object Bar {
       case class A(int: String) extends Bar
       case object B extends Bar
     }
-    
+
     implicit val aToA: Transformer[Foo.A.type, Bar.A] = _ => Bar.A("10")
     implicit val bToB: Transformer[Foo.B, Bar.B.type] = _ => Bar.B
-    
-    (Foo.A: Foo).transformInto[Bar] // Bar.A(10)
-    (Foo.B(42): Foo).transformInto[Bar] // Bar.B
+
+    (Foo.A: Foo)
+      .transformInto[Bar] // Bar.A(10)
+    (Foo.B(42): Foo)
+      .transformInto[Bar] // Bar.B
     ```
     
 However, usually it is easier to provide it via [an override](#handling-a-specific-sealed-subtype-with-a-computed-value)
@@ -2822,26 +3112,28 @@ instead.
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
-    
+
     sealed trait Foo
     object Foo {
       case object A extends Foo
       case class B(int: Int) extends Foo
     }
-    
+
     sealed trait Bar
     object Bar {
       case class A(int: String) extends Bar
       case object C extends Bar
     }
-    
+
     implicit val aToC: Transformer[Foo.A.type, Bar] = _ => Bar.A("a")
-    implicit val bToD: Transformer[Foo.B, Bar] = b =>
-      if (b.int > 0) Bar.A(b.int.toString) else Bar.A("nope")
-    
-    (Foo.A: Foo).transformInto[Bar] // Bar.A(10)
-    (Foo.B(42): Foo).transformInto[Bar] // Bar.B
-    (Foo.B(-100): Foo).transformInto[Bar] // Bar.B
+    implicit val bToD: Transformer[Foo.B, Bar] = b => if (b.int > 0) Bar.A(b.int.toString) else Bar.A("nope")
+
+    (Foo.A: Foo)
+      .transformInto[Bar] // Bar.A(10)
+    (Foo.B(42): Foo)
+      .transformInto[Bar] // Bar.B
+    (Foo.B(-100): Foo)
+      .transformInto[Bar] // Bar.B
     ```
 
     It has to be a fallback, to avoid cycles while resolving derivation.
@@ -2866,22 +3158,25 @@ The Chimney does not decide and in the presence of 2 implicits it will fail and 
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ chimney_version() }}   
-    import io.scalaland.chimney.{Transformer, PartialTransformer, partial}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
     import io.scalaland.chimney.dsl._
-    
+
     implicit val stringToIntUnsafe: Transformer[String, Int] = _.toInt // throws!!!
     implicit val stringToIntSafe: PartialTransformer[String, Int] =
       PartialTransformer(str => partial.Result.fromCatching(str.toInt))
-      
+
     "aa".intoPartial[Int].transform
     // Ambiguous implicits while resolving Chimney recursive transformation:
-    // 
+    //
     // PartialTransformer[java.lang.String, scala.Int]: stringToIntSafe
     // Transformer[java.lang.String, scala.Int]: stringToIntUnsafe
-    // 
+    //
     // Please eliminate ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used
-    "aa".intoPartial[Int].enableImplicitConflictResolution(PreferTotalTransformer).transform // throws NumberFormatException: For input string: "aa"
+    "aa"
+      .intoPartial[Int]
+      .enableImplicitConflictResolution(PreferTotalTransformer)
+      .transform // throws NumberFormatException: For input string: "aa"
     "aa".intoPartial[Int].enableImplicitConflictResolution(PreferPartialTransformer).transform.asOption // None
     ```
 
@@ -2913,9 +3208,9 @@ Since we are talking about recursion then there is one troublesome issue - recur
     ```scala
     case class Foo(a: Int, b: Option[Foo])
     case class Bar(a: Int, b: Option[Bar])
-    
+
     val foo = Foo(10, Some(Foo(20, None)))
-    val bar = ... // ???
+    val bar = ???
     ``` 
 
 We cannot derive an expression that would handle such data without any recursion (or other form of backtracking).
@@ -2925,15 +3220,15 @@ But we can use Chimney's semiautomatic derivation.
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ chimney_version() }}   
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: Int, b: Option[Foo])
     case class Bar(a: Int, b: Option[Bar])
-    
+
     implicit val foobar: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar]
-    
+
     val foo = Foo(10, Some(Foo(20, None)))
     val bar = foo.transformInto[Bar]
     ```
@@ -2946,17 +3241,18 @@ If we need to customize it, we can use `.define.buildTransformer`:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ chimney_version() }}   
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(a: Int, b: Option[Foo])
     case class Bar(a: Int, b: Option[Bar])
-    
-    implicit val foobar: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
+
+    implicit val foobar: Transformer[Foo, Bar] = Transformer
+      .define[Foo, Bar]
       .withFieldComputed(_.a, foo => foo.a * 2)
       .buildTransformer
-    
+
     val foo = Foo(10, Some(Foo(20, None)))
     val bar = foo.transformInto[Bar]
     ```
@@ -3035,7 +3331,7 @@ but Chimney has a specific solution for this:
       .into[Bar]
       .enableCustomFieldNameComparison(your.organization.PermissiveNamesComparison)
       // this would be parsed as well
-      //.enableCustomSubtypeNameComparison(your.organization.PermissiveNamesComparison)
+      // .enableCustomSubtypeNameComparison(your.organization.PermissiveNamesComparison)
       .transform
     ```
 
