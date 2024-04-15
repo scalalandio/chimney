@@ -14,9 +14,9 @@ If we do not want to enable the same flag(s) in several places, we can define sh
     //> using scala {{ scala.2_13 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     implicit val transformerCfg = TransformerConfiguration.default.enableMethodAccessors.enableMacrosLogging
-    
+
     implicit val patcherCfg = PatcherConfiguration.default.ignoreNoneInPatch.enableMacrosLogging
     ```  
 
@@ -26,10 +26,10 @@ If we do not want to enable the same flag(s) in several places, we can define sh
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     transparent inline given TransformerConfiguration[?] =
       TransformerConfiguration.default.enableMethodAccessors.enableMacrosLogging
-    
+
     transparent inline given PatcherConfiguration[?] =
       PatcherConfiguration.ignoreNoneInPatch.enableMacrosLogging
     ```  
@@ -53,7 +53,7 @@ If we do not want to enable the same flag(s) in several places, we can define sh
     with `enable*` or `disable*` would not prevent using implicit. So you could have situation like:
     
     ```scala
-    implicit val foo2bar: Transformer[Foo, Bar] = ...
+    implicit val foo2bar: Transformer[Foo, Bar] = ??? // stub for what is actually here
     foo.into[Bar].enableDefaultValues.transform // uses foo2bar ignoring flags
     ```
     
@@ -191,7 +191,7 @@ You can use [`.enableMacrosLogging`](troubleshooting.md#debugging-macros) to see
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     case class Foo(baz: Foo.Baz)
     object Foo {
       case class Baz(a: String)
@@ -219,8 +219,8 @@ Similarly, when deriving a type class it would be
 
     ```scala
     new Transformer[Foo, Bar] {
-    def transform(foo: Foo): Bar =
-      new Bar(new Bar.Baz(foo.baz.a))
+      def transform(foo: Foo): Bar =
+        new Bar(new Bar.Baz(foo.baz.a))
     }
     ```
 
@@ -338,21 +338,21 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
 
     ```scala
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
-    
+
     case class RegistrationForm(
         email: String,
         username: String,
         password: String,
         age: String
     )
-  
+
     case class RegisteredUser(
         email: String,
         username: String,
         passwordHash: String,
         age: Int
     )
-  
+
     import cats.data._
     import io.scalaland.chimney._
     import io.scalaland.chimney.dsl._
@@ -362,20 +362,19 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
 
     def hashpw(pw: String): String = "trust me bro, $pw is hashed"
 
-    def validateEmail(form: RegistrationForm): ValidatedNec[String, String] = {
-      if(form.email.contains('@')) {
+    def validateEmail(form: RegistrationForm): ValidatedNec[String, String] =
+      if (form.email.contains('@')) {
         Validated.valid(form.email)
       } else {
         Validated.invalid(NonEmptyChain(s"${form.username}'s email: does not contain '@' character"))
       }
-    }
-  
+
     def validateAge(form: RegistrationForm): ValidatedNec[String, Int] = form.age.toIntOption match {
       case Some(value) if value >= 18 => Validated.valid(value)
       case Some(value) => Validated.invalid(NonEmptyChain(s"${form.username}'s age: must have at least 18 years"))
-      case None => Validated.invalid(NonEmptyChain(s"${form.username}'s age: invalid number"))
+      case None        => Validated.invalid(NonEmptyChain(s"${form.username}'s age: invalid number"))
     }
-  
+
     implicit val partialTransformer: PartialTransformer[RegistrationForm, RegisteredUser] =
       PartialTransformer
         .define[RegistrationForm, RegisteredUser]
@@ -383,11 +382,11 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
         .withFieldComputed(_.passwordHash, form => hashpw(form.password))
         .withFieldComputedPartial(_.age, form => validateAge(form).asResult)
         .buildTransformer
-  
+
     val okForm = RegistrationForm("john@example.com", "John", "s3cr3t", "40")
     okForm.transformIntoPartial[RegisteredUser].asValidatedNec
     // Valid(RegisteredUser(email = "john@example.com", username = "John", passwordHash = "...", age = 40))
-  
+
     Array(
       RegistrationForm("john_example.com", "John", "s3cr3t", "10"),
       RegistrationForm("alice@example.com", "Alice", "s3cr3t", "19"),
@@ -419,9 +418,9 @@ explanation:
     import cats.syntax.all._
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.cats._
-    
+
     val example: Transformer[Int, String] = _.toString
-    
+
     example.map(str => s"valis is $str").transform(10) // "value is 10"
     example.dimap[Double, String](_.toInt)(str => "value " + str).transform(10.50)
     // example.contramap[Double](_.toInt).transform(10.50) // Scala has a problem inferring what is F and what is A here
@@ -437,9 +436,9 @@ Similarly, there exists instances for `PartialTransformer` and `partial.Result`:
     import cats.syntax.all._
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.cats._
-    
+
     val example: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
-    
+
     example.map(int => int.toDouble).transform("10") // 10.0
     example.dimap[String, Float](str => str + "00")(int => int.toFloat).transform("10") // 100.0f
     cats.arrow.Arrow[PartialTransformer].id[String].transform("value") // partial.Result.Value("value")
@@ -515,11 +514,11 @@ What does it means for us?
     import cats.syntax.all._
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.cats._
-    
+
     val t0 = PartialTransformer.fromFunction[String, Int](_.toInt)
     val t1 = t0.map(_.toDouble)
     val t2 = t0.map(_.toLong)
-    
+
     // uses 1 input value to create a tuple of 2 values, fails fast on the error for the first
     t1.product(t2).transform("aa").asEitherErrorPathMessageStrings
     // Left(List((,For input string: "aa")))
@@ -538,16 +537,16 @@ What does it means for us?
     import io.scalaland.chimney.cats._
 
     val result1 = partial.Result.fromErrorString[Int]("error 1")
-    val result2 = partial.Result.fromErrorString[Double]("error 2")    
+    val result2 = partial.Result.fromErrorString[Double]("error 2")
 
     // all of these will preserve only the first error ("error 1"):
-    (result1, result2).mapN { (a: Int, b: Double) => a + b } // partial.Result[Double]
+    (result1, result2).mapN((a: Int, b: Double) => a + b) // partial.Result[Double]
     result1.product(result2) // partial.Result[(Int, Double)]
     result1 <* result2 // partial.Result[Int]
     result1 *> result2 // partial.Result[Double]
-    
+
     // all of these will preserve both errors:
-    (result1, result2).parMapN { (a: Int, b: Double) => a + b } // partial.Result[Double]
+    (result1, result2).parMapN((a: Int, b: Double) => a + b) // partial.Result[Double]
     result1.parProduct(result2) // partial.Result[(Int, Double)]
     result1 <& result2 // partial.Result[Int]
     result1 &> result2 // partial.Result[Double]
@@ -583,7 +582,7 @@ The automatic conversion into a protobuf with such a field can be problematic:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     object domain {
       case class Address(line1: String, line2: String)
     }
@@ -594,7 +593,7 @@ The automatic conversion into a protobuf with such a field can be problematic:
         unknownFields: UnknownFieldSet = UnknownFieldSet()
       )
     }
-  
+
     domain.Address("a", "b").transformInto[protobuf.Address]
     // error: Chimney can't derive transformation from domain.Address to protobuf.Address
     //
@@ -615,9 +614,7 @@ There are 2 ways in which Chimney could handle this issue:
         //> using dep io.scalaland::chimney::{{ chimney_version() }}
         import io.scalaland.chimney.dsl._
 
-         domain.Address("a", "b").into[protobuf.Address]
-           .enableDefaultValues
-           .transform
+        domain.Address("a", "b").into[protobuf.Address].enableDefaultValues.transform
         ```
 
   - manually [setting this one field](supported-transformations.md#wiring-constructors-parameter-to-raw-value)_
@@ -627,8 +624,10 @@ There are 2 ways in which Chimney could handle this issue:
         ```scala
         //> using dep io.scalaland::chimney::{{ chimney_version() }}
         import io.scalaland.chimney.dsl._
-    
-        domain.Address("a", "b").into[protobuf.Address]
+
+        domain
+          .Address("a", "b")
+          .into[protobuf.Address]
           .withFieldConst(_.unknownFields, UnknownFieldSet())
           .transform
         ```
@@ -645,12 +644,12 @@ by [editing the protobuf](https://scalapb.github.io/docs/customizations#file-lev
      };
      ```
 
-or adding to [package-scoped options](https://scalapb.github.io/docs/customizations#package-scoped-options).
-If the field won't be generated in the first place, there will be no issues with providing values to it.
+    dding to [package-scoped options](https://scalapb.github.io/docs/customizations#package-scoped-options).
+    he field won't be generated in the first place, there will be no issues with providing values to it.
 
-At this point, one might also consider another option:
+    his point, one might also consider another option:
 
-!!! example
+    example
 
     ```protobuf
     option (scalapb.options) = {
@@ -688,40 +687,36 @@ would generate scala code similar to (some parts removed for brevity):
     package pb.addressbook
 
     final case class AddressBookType(
-      value: AddressBookType.Value = AddressBookType.Value.Empty
+        value: AddressBookType.Value = AddressBookType.Value.Empty
     ) extends scalapb.GeneratedMessage
         with scalapb.lenses.Updatable[AddressBookType] {
       // ...
     }
-    
-    object AddressBookType
-        extends scalapb.GeneratedMessageCompanion[AddressBookType] {
+
+    object AddressBookType extends scalapb.GeneratedMessageCompanion[AddressBookType] {
       sealed trait Value extends scalapb.GeneratedOneof
       object Value {
         case object Empty extends AddressBookType.Value {
           // ...
         }
-        final case class Public(value: AddressBookType.Public)
-            extends AddressBookType.Value {
+        final case class Public(value: AddressBookType.Public) extends AddressBookType.Value {
           // ...
         }
-        final case class Private(value: AddressBookType.Private)
-            extends AddressBookType.Value {
+        final case class Private(value: AddressBookType.Private) extends AddressBookType.Value {
           // ...
         }
       }
       final case class Public(
       ) extends scalapb.GeneratedMessage
-          with scalapb.lenses.Updatable[Public] {
-      }
-    
+          with scalapb.lenses.Updatable[Public] {}
+
       final case class Private(
           owner: _root_.scala.Predef.String = ""
       ) extends scalapb.GeneratedMessage
           with scalapb.lenses.Updatable[Private] {
         // ...
       }
-    
+
       // ...
     }
     ```
@@ -742,7 +737,7 @@ Meanwhile, we would like to extract it into a flat:
 
     ```scala
     package addressbook
-    
+
     sealed trait AddressBookType
     object AddressBookType {
       case object Public extends AddressBookType
@@ -760,7 +755,7 @@ Encoding (with `Transformer`s) is pretty straightforward:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     val domainType: addressbook.AddressBookType = addressbook.AddressBookType.Private("test")
     val pbType: pb.addressbook.AddressBookType =
       pb.addressbook.AddressBookType.of(
@@ -768,7 +763,7 @@ Encoding (with `Transformer`s) is pretty straightforward:
           pb.addressbook.AddressBookType.Private.of("test")
         )
       )
-    
+
     domainType.into[pb.addressbook.AddressBookType.Value].transform == pbType.value
     ```
 
@@ -781,7 +776,7 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
         ```scala
         //> using dep io.scalaland::chimney::{{ chimney_version() }}
         import io.scalaland.chimney.dsl._
-  
+
         pbType.value
           .intoPartial[addressbook.AddressBookType]
           .withSealedSubtypeHandledPartial[pb.addressbook.AddressBookType.Value.Empty.type](
@@ -799,7 +794,7 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
         //> using dep io.scalaland::chimney-protobufs::{{ chimney_version() }}
         import io.scalaland.chimney.dsl._
         import io.scalaland.chimney.protobufs._ // includes support for empty scalapb.GeneratedMessage
-      
+
         pbType.value.intoPartial[addressbook.AddressBookType].transform.asOption == Some(domainType)
         ```
 
@@ -823,7 +818,7 @@ For instance, the code below follows the mentioned requirements:
         CustomerOneTime oneTime = 2;
       }
     }
-    
+
     message CustomerRegistered {}
     message CustomerOneTime {}
     ```
@@ -834,23 +829,23 @@ and it would generate something like (again, some parts omitted for brevity):
   
     ```scala
     package pb.order
-    
+
     sealed trait CustomerStatus extends scalapb.GeneratedSealedOneof {
       type MessageType = CustomerStatusMessage
     }
-    
+
     object CustomerStatus {
       case object Empty extends CustomerStatus
       sealed trait NonEmpty extends CustomerStatus
     }
-    
+
     final case class CustomerRegistered(
     ) extends scalapb.GeneratedMessage
         with CustomerStatus.NonEmpty
         with scalapb.lenses.Updatable[CustomerRegistered] {
       // ...
     }
-    
+
     final case class CustomerOneTime(
     ) extends scalapb.GeneratedMessage
         with CustomerStatus.NonEmpty
@@ -869,7 +864,7 @@ Transforming to and from:
   
     ```scala
     package order
-    
+
     sealed trait CustomerStatus
     object CustomerStatus {
       case object CustomerRegistered extends CustomerStatus
@@ -884,12 +879,12 @@ could be done with:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
-    
+
     val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered
     val pbStatus: pb.order.CustomerStatus = pb.order.CustomerRegistered()
-    
+
     domainStatus.into[pb.order.CustomerStatus].transform == pbStatus
-    
+
     pbStatus
       .intoPartial[order.CustomerStatus]
       .withSealedSubtypeHandledPartial[pb.order.CustomerStatus.Empty.type](
@@ -922,7 +917,7 @@ When you define message according to them:
         PaymentFailed failed = 4;
       }
     }
-    
+
     message PaymentRequested {}
     message PaymentCreated {
       string external_id = 1;
@@ -937,7 +932,7 @@ and try to map it to and from:
   
     ```scala
     package order
-    
+
     sealed trait PaymentStatus
     object PaymentStatus {
       case object PaymentRequested extends PaymentStatus
@@ -954,7 +949,7 @@ the transformation is pretty straightforward in both directions:
     ```scala
     val domainStatus: Option[order.PaymentStatus] = Option(order.PaymentStatus.PaymentRequested)
     val pbStatus: Option[pb.order.PaymentStatus] = Option(pb.order.PaymentRequested())
-    
+
     domainStatus.into[Option[pb.order.PaymentStatus]].transform ==> pbStatus
     pbStatus.into[Option[order.PaymentStatus]].transform ==> domainStatus
     ```
@@ -1033,7 +1028,7 @@ then Partial Transformer would have to be created manually:
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.partial
-  
+
     implicit val usernameParse: PartialTransformer[String, Username] =
       PartialTransformer[String, Username] { value =>
         partial.Result.fromEitherString(Username.parse(value))
@@ -1066,13 +1061,13 @@ we could use it to construct `PartialTransformer` automatically:
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.partial
-  
-    implicit def smartConstructedPartial[From, To](
-      implicit smartConstructor: SmartConstructor[From, To]
+
+    implicit def smartConstructedPartial[From, To](implicit
+        smartConstructor: SmartConstructor[From, To]
     ): PartialTransformer[From, To] =
-       PartialTransformer[From, To] { value =>
-         partial.Result.fromEitherString(smartConstructor.parse(value))
-       }
+      PartialTransformer[From, To] { value =>
+        partial.Result.fromEitherString(smartConstructor.parse(value))
+      }
     ```
 
 The same would be true about extracting values from smart-constructed types
@@ -1093,7 +1088,7 @@ library which attempts to remove runtime overhead from user's types.
     //> using options -Ymacro-annotations
     //> using dep io.estatico::newtype::0.4.4
     import io.estatico.newtype.macros.newtype
-  
+
     @newtype case class Username(value: String)
     ```
 
@@ -1114,9 +1109,9 @@ as a wrapper around another type that performs this validation e.g. Refined Type
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.estatico.newtype.Coercible
     import io.scalaland.chimney.Transformer
-    
-    implicit def newTypeTransformer[From, To](
-        implicit coercible: Coercible[From, To]
+
+    implicit def newTypeTransformer[From, To](implicit
+        coercible: Coercible[From, To]
     ): Transformer[From, To] = coercible(_)
     ```
 
@@ -1131,7 +1126,7 @@ it tries to remove wrapping in runtime. However, it uses different tricks
     ```scala
     //> using dep io.monix::newtypes-core::0.2.3
     import monix.newtypes._
-    
+
     type Username = Username.Type
     object Username extends NewtypeValidated[String] {
       def apply(value: String): Either[BuildFailure[Type], Type] =
@@ -1153,13 +1148,13 @@ We can use them to provide unwrapping `Transformer` and wrapping
     import io.scalaland.chimney.{PartialTransformer, Transformer}
     import io.scalaland.chimney.partial
     import monix.newtypes._
-    
-    implicit def unwrapNewType[Outer, Inner](
-        implicit extractor: HasExtractor.Aux[Outer, Inner]
+
+    implicit def unwrapNewType[Outer, Inner](implicit
+        extractor: HasExtractor.Aux[Outer, Inner]
     ): Transformer[Outer, Inner] = extractor.extract(_)
-    
-    implicit def wrapNewType[Inner, Outer](
-        implicit builder: HasBuilder.Aux[Inner, Outer]
+
+    implicit def wrapNewType[Inner, Outer](implicit
+        builder: HasBuilder.Aux[Inner, Outer]
     ): PartialTransformer[Inner, Outer] = PartialTransformer[Inner, Outer] { value =>
       partial.Result.fromEitherString(
         builder.build(value).left.map(_.toReadableString)
@@ -1180,7 +1175,7 @@ popular constraints as long as we express them in the value's type.
     import eu.timepit.refined.api.Refined
     import eu.timepit.refined.auto._
     import eu.timepit.refined.collections._
-    
+
     type Username = String Refined NonEmpty
     ```
 
@@ -1194,13 +1189,12 @@ We can validate using the dedicated type class (`Validate`), while extraction is
     import eu.timepit.refined.api.{Refined, Validate}
     import io.scalaland.chimney.{PartialTransformer, Transformer}
     import io.scalaland.chimney.partial
-    
-    implicit def extractRefined[Type, Refinement]:
-        Transformer[Type Refined Refinement, Type] =
+
+    implicit def extractRefined[Type, Refinement]: Transformer[Type Refined Refinement, Type] =
       _.value
-    
-    implicit def validateRefined[Type, Refinement](
-        implicit validate: Validate.Plain[Type, Refinement]
+
+    implicit def validateRefined[Type, Refinement](implicit
+      validate: Validate.Plain[Type, Refinement]
     ): PartialTransformer[Type, Type Refined Refinement] =
       PartialTransformer[Type, Type Refined Refinement] { value =>
         partial.Result.fromOption(
@@ -1227,37 +1221,33 @@ It could look like this:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney._
-    
+
     sealed trait MyOptional[+A]
     object MyOptional {
       case class Present[+A](value: A) extends MyOptional[A]
       case object Absent extends MyOptional[Nothing]
     }
-    
-    implicit def nonOptionalToOptional[A, B](implicit aToB: Transformer[A, B]):
-        Transformer[A, MyOptional[B]] =
+
+    implicit def nonOptionalToOptional[A, B](implicit aToB: Transformer[A, B]): Transformer[A, MyOptional[B]] =
       a => MyOptional.Present(aToB.transform(a))
-      
-    implicit def optionalToOptional[A, B](implicit aToB: Transformer[A, B]):
-        Transformer[MyOptional[A], MyOptional[B]] = {
+
+    implicit def optionalToOptional[A, B](implicit aToB: Transformer[A, B]): Transformer[MyOptional[A], MyOptional[B]] = {
       case MyOptional.Present(a) => MyOptional.Present(aToB.transform(a))
       case MyOptional.Absent     => MyOptional.Absent
     }
-      
-    implicit def optionalToNonOptional[A, B](implicit aToB: Transformer[A, B]):
-        PartialTransformer[MyOptional[A], B] = PartialTransformer {
-      case MyOptional.Present(a) => partial.Result.fromValue(aToB.transform(a))
-      case MyOptional.Absent     => partial.Result.fromEmpty
-    }
-    
-    implicit def optionalToOption[A, B](implicit aToB: Transformer[A, B]):
-        Transformer[MyOptional[A], Option[B]] = {
+
+    implicit def optionalToNonOptional[A, B](implicit aToB: Transformer[A, B]): PartialTransformer[MyOptional[A], B] =
+      PartialTransformer {
+        case MyOptional.Present(a) => partial.Result.fromValue(aToB.transform(a))
+        case MyOptional.Absent     => partial.Result.fromEmpty
+      }
+
+    implicit def optionalToOption[A, B](implicit aToB: Transformer[A, B]): Transformer[MyOptional[A], Option[B]] = {
       case MyOptional.Present(a) => Some(aToB.transform(a))
       case MyOptional.Absent     => None
     }
-    
-    implicit def optionToOptional[A, B](implicit aToB: Transformer[A, B]):
-        Transformer[Option[A], MyOptional[B]] = {
+
+    implicit def optionToOptional[A, B](implicit aToB: Transformer[A, B]): Transformer[Option[A], MyOptional[B]] = {
       case Some(a) => MyOptional.Present(aToB.transform(a))
       case None    => MyOptional.Absent
     }

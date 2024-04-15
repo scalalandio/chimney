@@ -35,7 +35,7 @@ The simplified version of how the code above works:
 3. the final `.transform` would generate a code similar to:
    ```scala
    {
-     val transformerInto = ...
+     val transformerInto = ??? // stub for what is actually here
      new Bar(
        transformerInto.source.a,
        transformerInto.source.b,
@@ -46,7 +46,10 @@ The simplified version of how the code above works:
 4. since there might be many overrides in `td.runtimDataStore(0)` and the macro needs to know which field override is on
    which position, **DSL needs to remember somehow what each index in the vector overrides**. For that purpose there
    exist `TransformerCfg`, a phantom type (a type used only in compile time) which acts as a type-level list where each
-   such information could be prepended. (You can think of it as of a tuple, which never get instantiated and only exist as expandable list of types). Each time user adds some override code is generated which would append a value in runtime, but also modify the type of the wrapper. Then when the macro is called it can read configuration from the type and compute which override is stored under which index.
+   such information could be prepended. (You can think of it as of a tuple, which never get instantiated and only exist
+   as expandable list of types). Each time user adds some override code is generated which would append a value in
+   runtime, but also modify the type of the wrapper. Then when the macro is called it can read configuration from
+   the type and compute which override is stored under which index.
 
 > Types computed by `.withField*`, `.withCoproduct*`, `.enable*` and `.disable*` are intended to be inferred, not shown
 > to the user and not used by the user manually. For that reason all `*Cfg` and `*Flags` are defined in `internal`
@@ -65,7 +68,7 @@ Transformer.define[Foo, Bar].withFieldConst(_.c, 3.0).buildTransformer
 3. the final result returned by `.buildTransformer` is something similar to:
    ```scala
    {
-     val transformerDefinition = ...
+     val transformerDefinition = ??? // stub for what is actually here
      new Transformer[Foo, Bar] {
        def transform(src: Foo): Bar = new Bar(
          src.a,
@@ -105,11 +108,13 @@ Bar(1, "test").transformInto(
 
 ### Partial transformation
 
-Partial transformers works on the same principles, when it comes to what is represents in type level, what is stored in runtime, and how DSL is defined. **The true difference lies inside macros being called by the DSL**.
+Partial transformers works on the same principles, when it comes to what is represents in type level, what is stored
+in runtime, and how DSL is defined. **The true difference lies inside macros being called by the DSL**.
 
 ## DSL implementation
 
-Macros make is relatively easy to access the value to which macro is attached. It might be very hard though to obtain the whole expression which built this value. Especially, if you consider that user could do:
+Macros make is relatively easy to access the value to which macro is attached. It might be very hard though to obtain
+the whole expression which built this value. Especially, if you consider that user could do:
 
 ```scala
 val expr = Foo(1, "test").into[Bar]
@@ -139,7 +144,8 @@ contains override for `"fieldName"` to and empty config).
 In Scala 3 the mechanism is similar except whitebox macros are replaced by
 [`transparent inline`](https://docs.scala-lang.org/scala3/guides/macros/inline.html#transparent-inline-methods) macros.
 
-> DSL has a separate macro implementation for Scala 2 and 3 since there was a negligible amount of logic shared between them.
+> DSL has a separate macro implementation for Scala 2 and 3 since there was a negligible amount of logic shared between
+> them.
 
 Flags, since they don't need to extract any data to generate type information, are just "normal" Scala code which
 prepends flags to flag type representation.
@@ -179,8 +185,8 @@ Additionally, there are several implications of how code is generated:
 
 * partial transformers attempts to avoid/delay boxing, so as many expressions as possible would try to wrap in
   `partial.Result` only when absolutely unavoidable. This means that code derived for some part of partial transformer
-  expression doesn't have to be partial - there is a need for something modeling the same idea as `Either[Expr[A], Expr[partial.Result[A]]]` -
-  this resulted in `TransformationExpr[A]`
+  expression doesn't have to be partial - there is a need for something modeling the same idea as
+  `Either[Expr[A], Expr[partial.Result[A]]]` - this resulted in `TransformationExpr[A]`
 * code is derived recursively, and:
    * source and target type
    * location of overrides
@@ -190,8 +196,8 @@ Additionally, there are several implications of how code is generated:
   has to be passed around, so some `TransformationContext` of the derivation is useful to pass everything with a single
   value
 * macros should not fail fast, but rather aggregate all the errors making derivation impossible, so that error message
-  for a single macro could display all known errors at once. Instead of manually combining some `Either[List[TransformerError], TransformationExpr[A]]`
-  a dedicated monad comes handy - `DerivationResult` monad.
+  for a single macro could display all known errors at once. Instead of manually combining some
+  `Either[List[TransformerError], TransformationExpr[A]]` a dedicated monad comes handy - `DerivationResult` monad.
 * this monad can be also used as a `Writer` monad for gathering logs, because both in Scala 2 as well in Scala 3 for
   each macro only the first logging call (for each logging level: info/warn/error) would print, all the following would
   be no-op. With this monad logs could be aggregated in some list and then the final message could be printed at once
