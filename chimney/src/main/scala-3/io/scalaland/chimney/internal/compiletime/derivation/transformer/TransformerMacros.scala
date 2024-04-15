@@ -11,7 +11,7 @@ import scala.quoted.{Expr, Quotes, Type, Varargs}
 final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
 
   import quotes.*, quotes.reflect.*
-  
+
   def deriveTotalTransformerWithConfig[
       From: Type,
       To: Type,
