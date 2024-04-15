@@ -350,14 +350,14 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       }
     }
 
-    object OptionalValueOf extends OptionalValueOfModule {
-      def apply[Optional: Type, Value: Type]: Type[integrations.OptionalValueOf[Optional, Value]] =
-        quoted.Type.of[integrations.OptionalValueOf[Optional, Value]]
+    object OptionalValue extends OptionalValueModule {
+      def apply[Optional: Type, Value: Type]: Type[integrations.OptionalValue[Optional, Value]] =
+        quoted.Type.of[integrations.OptionalValue[Optional, Value]]
       def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match
-        case '[integrations.OptionalValueOf[optional, value]] => Some((Type[optional].as_??, Type[value].as_??))
-        case _                                                => scala.None
+        case '[integrations.OptionalValue[optional, value]] => Some((Type[optional].as_??, Type[value].as_??))
+        case _                                              => scala.None
       def inferred[Optional: Type]: ExistentialType =
-        quoted.Type.of[integrations.OptionalValueOf[Optional, ?]].as_??
+        quoted.Type.of[integrations.OptionalValue[Optional, ?]].as_??
     }
     object PartiallyBuildIterableOf extends PartiallyBuildIterableOfModule {
       def apply[Collection: Type, Item: Type]: Type[integrations.PartiallyBuildIterableOf[Collection, Item]] =

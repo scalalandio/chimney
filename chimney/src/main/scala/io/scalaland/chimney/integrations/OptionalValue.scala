@@ -1,6 +1,6 @@
 package io.scalaland.chimney.integrations
 
-trait OptionalValueOf[Optional, Value] {
+trait OptionalValue[Optional, Value] {
 
   def empty: Optional
 
@@ -12,7 +12,7 @@ trait OptionalValueOf[Optional, Value] {
 
   def orElse(oa: Optional, onNone: => Optional): Optional = fold(oa, onNone, _ => oa)
 }
-object OptionalValueOf {
+object OptionalValue {
 
   sealed trait Experiment[+A] extends Product with Serializable
   object Experiment {
@@ -20,7 +20,7 @@ object OptionalValueOf {
     case object Nope extends Experiment[Nothing]
   }
 
-  implicit def experimentOfA[A]: OptionalValueOf[Experiment[A], A] = new OptionalValueOf[Experiment[A], A] {
+  implicit def experimentOfA[A]: OptionalValue[Experiment[A], A] = new OptionalValue[Experiment[A], A] {
     override def empty: Experiment[A] = Experiment.Nope
     override def of(value: A): Experiment[A] = Experiment.FullOf(value)
     override def fold[A0](

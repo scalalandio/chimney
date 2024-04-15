@@ -26,16 +26,16 @@ private[compiletime] trait ImplicitSummoning { this: Derivation =>
       : Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
     Expr.summonImplicit[io.scalaland.chimney.PartialTransformer[From, To]]
 
-  final protected type OptionalValueOfExpr[Optional, Value] =
-    Expr[io.scalaland.chimney.integrations.OptionalValueOf[Optional, Value]]
-  final protected def summonOptionalValue[Optional: Type]: Option[Existential[OptionalValueOfExpr[Optional, *]]] = {
-    val inferred = ChimneyType.OptionalValueOf.inferred[Optional]
+  final protected type OptionalValueExpr[Optional, Value] =
+    Expr[io.scalaland.chimney.integrations.OptionalValue[Optional, Value]]
+  final protected def summonOptionalValue[Optional: Type]: Option[Existential[OptionalValueExpr[Optional, *]]] = {
+    val inferred = ChimneyType.OptionalValue.inferred[Optional]
     import inferred.Underlying as Inferred
     Expr.summonImplicit[Inferred].map { optionalExpr =>
-      val ChimneyType.OptionalValueOf(_, value) = optionalExpr.tpe: @unchecked
+      val ChimneyType.OptionalValue(_, value) = optionalExpr.tpe: @unchecked
       import value.Underlying as Value
-      Existential[OptionalValueOfExpr[Optional, *], Value](
-        optionalExpr.asInstanceOf[Expr[io.scalaland.chimney.integrations.OptionalValueOf[Optional, Value]]]
+      Existential[OptionalValueExpr[Optional, *], Value](
+        optionalExpr.asInstanceOf[Expr[io.scalaland.chimney.integrations.OptionalValue[Optional, Value]]]
       )
     }
   }
