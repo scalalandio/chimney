@@ -398,6 +398,12 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       def inferred[Collection: Type]: ExistentialType =
         weakTypeTag[integrations.PartiallyBuildIterable[Collection, ?]].as_??
     }
+    object PartiallyBuildMap extends PartiallyBuildMapModule {
+      def apply[Mapp: Type, Key: Type, Value: Type]: Type[integrations.PartiallyBuildMap[Mapp, Key, Value]] =
+        weakTypeTag[integrations.PartiallyBuildMap[Mapp, Key, Value]]
+      def unapply[A](A: Type[A]): Option[(??, ??, ??)] =
+        A.asCtor[integrations.PartiallyBuildMap[?, ?, ?]].map(A0 => (A0.param(0), A0.param(1), A0.param(2)))
+    }
     object TotallyBuildIterable extends TotallyBuildIterableModule {
       def apply[Collection: Type, Item: Type]: Type[integrations.TotallyBuildIterable[Collection, Item]] =
         weakTypeTag[integrations.TotallyBuildIterable[Collection, Item]]
@@ -405,6 +411,12 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         A.asCtor[integrations.TotallyBuildIterable[?, ?]].map(A0 => A0.param(0) -> A0.param(1))
       def inferred[Collection: Type]: ExistentialType =
         weakTypeTag[integrations.TotallyBuildIterable[Collection, ?]].as_??
+    }
+    object TotallyBuildMap extends TotallyBuildMapModule {
+      def apply[Mapp: Type, Key: Type, Value: Type]: Type[integrations.TotallyBuildMap[Mapp, Key, Value]] =
+        weakTypeTag[integrations.TotallyBuildMap[Mapp, Key, Value]]
+      def unapply[A](A: Type[A]): Option[(??, ??, ??)] =
+        A.asCtor[integrations.TotallyBuildMap[?, ?, ?]].map(A0 => (A0.param(0), A0.param(1), A0.param(2)))
     }
   }
 }
