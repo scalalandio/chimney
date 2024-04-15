@@ -40,34 +40,34 @@ private[compiletime] trait ImplicitSummoning { this: Derivation =>
     }
   }
 
-  final protected type PartiallyBuildIterableOfExpr[Collection, Value] =
-    Expr[io.scalaland.chimney.integrations.PartiallyBuildIterableOf[Collection, Value]]
+  final protected type PartiallyBuildIterableExpr[Collection, Value] =
+    Expr[io.scalaland.chimney.integrations.PartiallyBuildIterable[Collection, Value]]
   final protected def summonPartiallyBuildIterable[Collection: Type]
-      : Option[Existential[PartiallyBuildIterableOfExpr[Collection, *]]] = {
-    val inferred = ChimneyType.PartiallyBuildIterableOf.inferred[Collection]
+      : Option[Existential[PartiallyBuildIterableExpr[Collection, *]]] = {
+    val inferred = ChimneyType.PartiallyBuildIterable.inferred[Collection]
     import inferred.Underlying as Inferred
     Expr.summonImplicit[Inferred].map { partiallyBuildIterableExpr =>
-      val ChimneyType.PartiallyBuildIterableOf(_, item) = partiallyBuildIterableExpr.tpe: @unchecked
+      val ChimneyType.PartiallyBuildIterable(_, item) = partiallyBuildIterableExpr.tpe: @unchecked
       import item.Underlying as Item
-      Existential[PartiallyBuildIterableOfExpr[Collection, *], Item](
+      Existential[PartiallyBuildIterableExpr[Collection, *], Item](
         partiallyBuildIterableExpr
-          .asInstanceOf[Expr[io.scalaland.chimney.integrations.PartiallyBuildIterableOf[Collection, Item]]]
+          .asInstanceOf[Expr[io.scalaland.chimney.integrations.PartiallyBuildIterable[Collection, Item]]]
       )
     }
   }
 
-  final protected type TotallyBuildIterableOfExpr[Collection, Value] =
-    Expr[io.scalaland.chimney.integrations.TotallyBuildIterableOf[Collection, Value]]
+  final protected type TotallyBuildIterableExpr[Collection, Value] =
+    Expr[io.scalaland.chimney.integrations.TotallyBuildIterable[Collection, Value]]
   final protected def summonTotallyBuildIterable[Collection: Type]
-      : Option[Existential[TotallyBuildIterableOfExpr[Collection, *]]] = {
-    val inferred = ChimneyType.TotallyBuildIterableOf.inferred[Collection]
+      : Option[Existential[TotallyBuildIterableExpr[Collection, *]]] = {
+    val inferred = ChimneyType.TotallyBuildIterable.inferred[Collection]
     import inferred.Underlying as Inferred
     Expr.summonImplicit[Inferred].map { totallyBuildIterableExpr =>
-      val ChimneyType.TotallyBuildIterableOf(_, item) = totallyBuildIterableExpr.tpe: @unchecked
+      val ChimneyType.TotallyBuildIterable(_, item) = totallyBuildIterableExpr.tpe: @unchecked
       import item.Underlying as Item
-      Existential[TotallyBuildIterableOfExpr[Collection, *], Item](
+      Existential[TotallyBuildIterableExpr[Collection, *], Item](
         totallyBuildIterableExpr
-          .asInstanceOf[Expr[io.scalaland.chimney.integrations.TotallyBuildIterableOf[Collection, Item]]]
+          .asInstanceOf[Expr[io.scalaland.chimney.integrations.TotallyBuildIterable[Collection, Item]]]
       )
     }
   }

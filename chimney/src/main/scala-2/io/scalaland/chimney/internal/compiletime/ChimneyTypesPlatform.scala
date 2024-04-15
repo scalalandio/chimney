@@ -390,21 +390,21 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       def inferred[Optional: Type]: ExistentialType =
         weakTypeTag[integrations.OptionalValue[Optional, ?]].as_??
     }
-    object PartiallyBuildIterableOf extends PartiallyBuildIterableOfModule {
-      def apply[Collection: Type, Item: Type]: Type[integrations.PartiallyBuildIterableOf[Collection, Item]] =
-        weakTypeTag[integrations.PartiallyBuildIterableOf[Collection, Item]]
+    object PartiallyBuildIterable extends PartiallyBuildIterableModule {
+      def apply[Collection: Type, Item: Type]: Type[integrations.PartiallyBuildIterable[Collection, Item]] =
+        weakTypeTag[integrations.PartiallyBuildIterable[Collection, Item]]
       def unapply[A](A: Type[A]): Option[(??, ??)] =
-        A.asCtor[integrations.PartiallyBuildIterableOf[?, ?]].map(A0 => A0.param(0) -> A0.param(1))
+        A.asCtor[integrations.PartiallyBuildIterable[?, ?]].map(A0 => A0.param(0) -> A0.param(1))
       def inferred[Collection: Type]: ExistentialType =
-        weakTypeTag[integrations.PartiallyBuildIterableOf[Collection, ?]].as_??
+        weakTypeTag[integrations.PartiallyBuildIterable[Collection, ?]].as_??
     }
-    object TotallyBuildIterableOf extends TotallyBuildIterableOfModule {
-      def apply[Collection: Type, Item: Type]: Type[integrations.TotallyBuildIterableOf[Collection, Item]] =
-        weakTypeTag[integrations.TotallyBuildIterableOf[Collection, Item]]
+    object TotallyBuildIterable extends TotallyBuildIterableModule {
+      def apply[Collection: Type, Item: Type]: Type[integrations.TotallyBuildIterable[Collection, Item]] =
+        weakTypeTag[integrations.TotallyBuildIterable[Collection, Item]]
       def unapply[A](A: Type[A]): Option[(??, ??)] =
-        A.asCtor[integrations.TotallyBuildIterableOf[?, ?]].map(A0 => A0.param(0) -> A0.param(1))
+        A.asCtor[integrations.TotallyBuildIterable[?, ?]].map(A0 => A0.param(0) -> A0.param(1))
       def inferred[Collection: Type]: ExistentialType =
-        weakTypeTag[integrations.TotallyBuildIterableOf[Collection, ?]].as_??
+        weakTypeTag[integrations.TotallyBuildIterable[Collection, ?]].as_??
     }
   }
 }

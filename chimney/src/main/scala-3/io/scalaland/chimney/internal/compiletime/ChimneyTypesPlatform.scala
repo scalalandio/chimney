@@ -359,25 +359,25 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       def inferred[Optional: Type]: ExistentialType =
         quoted.Type.of[integrations.OptionalValue[Optional, ?]].as_??
     }
-    object PartiallyBuildIterableOf extends PartiallyBuildIterableOfModule {
-      def apply[Collection: Type, Item: Type]: Type[integrations.PartiallyBuildIterableOf[Collection, Item]] =
-        quoted.Type.of[integrations.PartiallyBuildIterableOf[Collection, Item]]
+    object PartiallyBuildIterable extends PartiallyBuildIterableModule {
+      def apply[Collection: Type, Item: Type]: Type[integrations.PartiallyBuildIterable[Collection, Item]] =
+        quoted.Type.of[integrations.PartiallyBuildIterable[Collection, Item]]
       def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match
-        case '[integrations.PartiallyBuildIterableOf[collection, item]] =>
+        case '[integrations.PartiallyBuildIterable[collection, item]] =>
           Some((Type[collection].as_??, Type[item].as_??))
         case _ => scala.None
       def inferred[Collection: Type]: ExistentialType =
-        quoted.Type.of[integrations.PartiallyBuildIterableOf[Collection, ?]].as_??
+        quoted.Type.of[integrations.PartiallyBuildIterable[Collection, ?]].as_??
     }
-    object TotallyBuildIterableOf extends TotallyBuildIterableOfModule {
-      def apply[Collection: Type, Item: Type]: Type[integrations.TotallyBuildIterableOf[Collection, Item]] =
-        quoted.Type.of[integrations.TotallyBuildIterableOf[Collection, Item]]
+    object TotallyBuildIterable extends TotallyBuildIterableModule {
+      def apply[Collection: Type, Item: Type]: Type[integrations.TotallyBuildIterable[Collection, Item]] =
+        quoted.Type.of[integrations.TotallyBuildIterable[Collection, Item]]
       def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match
-        case '[integrations.TotallyBuildIterableOf[collection, item]] =>
+        case '[integrations.TotallyBuildIterable[collection, item]] =>
           Some((Type[collection].as_??, Type[item].as_??))
         case _ => scala.None
       def inferred[Collection: Type]: ExistentialType =
-        quoted.Type.of[integrations.TotallyBuildIterableOf[Collection, ?]].as_??
+        quoted.Type.of[integrations.TotallyBuildIterable[Collection, ?]].as_??
     }
   }
 }

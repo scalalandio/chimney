@@ -6,6 +6,12 @@ trait OptionalValues { this: Derivation =>
 
   import Type.Implicits.*
 
+  /** Something allowing us to share the logic which handles scala.Options, java.util.Optional and whatever we want to
+    * support.
+    *
+    * Tries to use [[io.scalaland.chimney.integrations.OptionalValue]] and then falls back on [[scala.Option]] hardcoded
+    * support, if type is eligible.
+    */
   abstract protected class OptionalValue[Optional, Value] {
     def empty: Expr[Optional]
 
@@ -37,6 +43,8 @@ trait OptionalValues { this: Derivation =>
 
               def orElse(optional: Expr[Optional], optional2: Expr[Optional]): Expr[Optional] =
                 optionalValueExpr.orElse(optional, optional2)
+
+              override def toString: String = s"support provided by ${Expr.prettyPrint(optionalValueExpr)}"
             }
           )
         }
@@ -61,6 +69,8 @@ trait OptionalValues { this: Derivation =>
                       Expr.Option
                         .orElse(optional.upcastToExprOf[Option[Value]], optional2.upcastToExprOf[Option[Value]])
                         .upcastToExprOf[Optional]
+
+                    override def toString: String = s"support build-in for option-type ${Type.prettyPrint[Optional]}"
                   }
                 )
               )

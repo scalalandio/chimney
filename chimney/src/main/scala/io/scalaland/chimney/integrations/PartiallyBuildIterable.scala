@@ -1,10 +1,12 @@
 package io.scalaland.chimney.integrations
 
+import io.scalaland.chimney.partial
+
 import scala.collection.compat.*
 
-trait TotallyBuildIterableOf[Collection, Item] {
+trait PartiallyBuildIterable[Collection, Item] {
 
-  def totalFactory: Factory[Item, Collection]
+  def partialFactory: Factory[Item, partial.Result[Collection]]
 
   def iterable(collection: Collection): Iterable[Item]
 
