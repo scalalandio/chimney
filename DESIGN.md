@@ -3,7 +3,7 @@
 Before one starts looking around the codebase, there might be a few things that are useful to understand first:
 
 * certain things are computed only by the compiler and don't exist in runtime
-* some things has to be instantiated in runtime
+* some things have to be instantiated in runtime
 * how DSL enable passing information to macros
 * what derivation code needs to take into consideration and how it affects the infrastructure
 
