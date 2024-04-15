@@ -382,13 +382,13 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       }
     }
 
-    object OptionalValueOf extends OptionalValueOfModule {
-      def apply[Optional: Type, Value: Type]: Type[integrations.OptionalValueOf[Optional, Value]] =
-        weakTypeTag[integrations.OptionalValueOf[Optional, Value]]
+    object OptionalValue extends OptionalValueModule {
+      def apply[Optional: Type, Value: Type]: Type[integrations.OptionalValue[Optional, Value]] =
+        weakTypeTag[integrations.OptionalValue[Optional, Value]]
       def unapply[A](A: Type[A]): Option[(??, ??)] =
-        A.asCtor[integrations.OptionalValueOf[?, ?]].map(A0 => A0.param(0) -> A0.param(1))
+        A.asCtor[integrations.OptionalValue[?, ?]].map(A0 => A0.param(0) -> A0.param(1))
       def inferred[Optional: Type]: ExistentialType =
-        weakTypeTag[integrations.OptionalValueOf[Optional, ?]].as_??
+        weakTypeTag[integrations.OptionalValue[Optional, ?]].as_??
     }
     object PartiallyBuildIterableOf extends PartiallyBuildIterableOfModule {
       def apply[Collection: Type, Item: Type]: Type[integrations.PartiallyBuildIterableOf[Collection, Item]] =

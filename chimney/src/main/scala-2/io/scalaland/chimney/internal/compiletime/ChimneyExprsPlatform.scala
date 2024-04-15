@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
+import io.scalaland.chimney.integrations
 import io.scalaland.chimney.partial
 
 import scala.collection.compat.Factory
@@ -206,6 +207,37 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
             }"""
         )
       }
+    }
+
+    object OptionalValue extends OptionalValueModule {
+
+      def empty[Optional: Type, Value: Type](
+          optionalValue: Expr[integrations.OptionalValue[Optional, Value]]
+      ): Expr[Optional] = c.Expr[Optional](q"$optionalValue.empty")
+
+      def of[Optional: Type, Value: Type](
+          optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
+          value: Expr[Value]
+      ): Expr[Optional] = c.Expr[Optional](q"$optionalValue.of($value)")
+
+      def fold[Optional: Type, Value: Type, A: Type](
+          optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
+          optional: Expr[Optional],
+          onNone: Expr[A],
+          onSome: Expr[Value => A]
+      ): Expr[A] = c.Expr[A](q"$optionalValue.fold($optional, $onNone, $onSome)")
+
+      def getOrElse[Optional: Type, Value: Type](
+          optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
+          optional: Expr[Optional],
+          onNone: Expr[Value]
+      ): Expr[Value] = c.Expr[Value](q"$optionalValue.getOrElse($optional, $onNone)")
+
+      def orElse[Optional: Type, Value: Type](
+          optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
+          optional: Expr[Optional],
+          optional2: Expr[Optional]
+      ): Expr[Optional] = c.Expr[Optional](q"$optionalValue.fold($optional, $optional2)")
     }
   }
 }

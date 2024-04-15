@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
+import io.scalaland.chimney.integrations
 import io.scalaland.chimney.partial
 
 import scala.collection.compat.Factory
@@ -37,6 +38,7 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
 
     val PartialResult: PartialResultModule
     trait PartialResultModule { this: PartialResult.type =>
+
       val Value: ValueModule
       trait ValueModule { this: Value.type =>
         def apply[A: Type](value: Expr[A]): Expr[partial.Result.Value[A]]
@@ -45,7 +47,6 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
       }
 
       val Errors: ErrorsModule
-
       trait ErrorsModule { this: Errors.type =>
 
         def merge(
@@ -123,8 +124,7 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
     }
 
     val Patcher: PatcherModule
-    trait PatcherModule {
-      this: Patcher.type =>
+    trait PatcherModule { this: Patcher.type =>
 
       def patch[A: Type, Patch: Type](
           patcher: Expr[io.scalaland.chimney.Patcher[A, Patch]],
@@ -135,6 +135,38 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
       def instance[A: Type, Patch: Type](
           f: (Expr[A], Expr[Patch]) => Expr[A]
       ): Expr[io.scalaland.chimney.Patcher[A, Patch]]
+    }
+
+    val OptionalValue: OptionalValueModule
+    trait OptionalValueModule { this: OptionalValue.type =>
+
+      def empty[Optional: Type, Value: Type](
+          optionalValue: Expr[integrations.OptionalValue[Optional, Value]]
+      ): Expr[Optional]
+
+      def of[Optional: Type, Value: Type](
+          optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
+          value: Expr[Value]
+      ): Expr[Optional]
+
+      def fold[Optional: Type, Value: Type, A: Type](
+          optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
+          optional: Expr[Optional],
+          onNone: Expr[A],
+          onSome: Expr[Value => A]
+      ): Expr[A]
+
+      def getOrElse[Optional: Type, Value: Type](
+          optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
+          optional: Expr[Optional],
+          onNone: Expr[Value]
+      ): Expr[Value]
+
+      def orElse[Optional: Type, Value: Type](
+          optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
+          optional: Expr[Optional],
+          optional2: Expr[Optional]
+      ): Expr[Optional]
     }
   }
 
@@ -190,6 +222,24 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
 
     def patch(obj: Expr[A], patch: Expr[Patch]): Expr[A] =
       ChimneyExpr.Patcher.patch(patcherExpr, obj, patch)
+  }
+
+  implicit final protected class OptionalValueOps[Optional: Type, Value: Type](
+      private val optionalValueExpr: Expr[integrations.OptionalValue[Optional, Value]]
+  ) {
+
+    def empty: Expr[Optional] = ChimneyExpr.OptionalValue.empty(optionalValueExpr)
+
+    def of(value: Expr[Value]): Expr[Optional] = ChimneyExpr.OptionalValue.of(optionalValueExpr, value)
+
+    def fold[A: Type](optional: Expr[Optional], onNone: Expr[A], onSome: Expr[Value => A]): Expr[A] =
+      ChimneyExpr.OptionalValue.fold(optionalValueExpr, optional, onNone, onSome)
+
+    def getOrElse(optional: Expr[Optional], onNone: Expr[Value]): Expr[Value] =
+      ChimneyExpr.OptionalValue.getOrElse(optionalValueExpr, optional, onNone)
+
+    def orElse(optional: Expr[Optional], optional2: Expr[Optional]): Expr[Optional] =
+      ChimneyExpr.OptionalValue.orElse(optionalValueExpr, optional, optional2)
   }
 
 }
