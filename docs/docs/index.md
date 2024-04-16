@@ -96,12 +96,12 @@ From now on, forget about it! Encoding domain object with an infallible transfor
         new UserDTO(
           user.name.name,
           user.addresses.iterator
-            .map[AddressDTO](((param: Address) =>
+            .map[AddressDTO](((param: Address) => {
               val `user.addresses`: Address = param
               new AddressDTO(`user.addresses`.street, `user.addresses`.city)
-            ))
+            }))
             .to[Seq[AddressDTO]](Seq.iterableFactory[AddressDTO]),
-          Option[RecoveryMethod](user.recovery).map[RecoveryMethodDTO](((`param₂`: RecoveryMethod) =>
+          Option[RecoveryMethod](user.recovery).map[RecoveryMethodDTO](((`param₂`: RecoveryMethod) => {
             val recoverymethod: RecoveryMethod = `param₂`
             (recoverymethod: RecoveryMethod) match {
               case phone: RecoveryMethod.Phone =>
@@ -109,7 +109,7 @@ From now on, forget about it! Encoding domain object with an infallible transfor
               case email: RecoveryMethod.Email =>
                 new RecoveryMethodDTO.Email(new EmailDTO(email.email))
             }
-          ))
+          }))
         )
       }
     }
@@ -160,7 +160,7 @@ Done! Decoding Protobuf into domain object with a fallible transformation, like 
       def transform(src: UserDTO, failFast: Boolean): partial.Result[User] = {
         val userdto: UserDTO = src
         userdto.recovery
-          .map[partial.Result[RecoveryMethod]](((param: RecoveryMethodDTO) =>
+          .map[partial.Result[RecoveryMethod]](((param: RecoveryMethodDTO) => {
             val recoverymethoddto: RecoveryMethodDTO = param
             partial.Result.Value[RecoveryMethod]((recoverymethoddto: RecoveryMethodDTO) match {
               case phone: RecoveryMethodDTO.Phone =>
@@ -168,23 +168,23 @@ Done! Decoding Protobuf into domain object with a fallible transformation, like 
               case email: RecoveryMethodDTO.Email =>
                 new RecoveryMethod.Email(email.value.email)
             })
-          ))
+          }))
           .getOrElse[partial.Result[RecoveryMethod]](partial.Result.fromEmpty[RecoveryMethod])
           .prependErrorPath(partial.PathElement.Accessor("recovery"))
-          .map[User](((`param₂`: RecoveryMethod) =>
+          .map[User](((`param₂`: RecoveryMethod) => {
             val recoverymethod: RecoveryMethod = `param₂`
             new User(
               new Username(userdto.name),
               userdto.addresses.iterator
-                .map[Address](((`param₃`: AddressDTO) =>
+                .map[Address](((`param₃`: AddressDTO) => {
                   val `userdto.addresses`: AddressDTO = `param₃`
                   new Address(`userdto.addresses`.street, `userdto.addresses`.city)
-                )
+                })
               )
               .to[List[Address]](List.iterableFactory[Address]),
               recoverymethod
             )
-          ))
+          }))
       }
     }
 
