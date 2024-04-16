@@ -415,8 +415,8 @@ Before attempting to summon any `implicit`, the `Rule` checks if it should do it
     !!! example
   
         ```scala
-        implicit val transformerFromTo: Transformer[From, To] = Transformer.derive[From, To] // implicit[Transformer[From, To]]
-        // = transformerFromTo - cyclic dependency
+        implicit val transformerFromTo: Transformer[From, To] =
+            Transformer.derive[From, To] // implicitly[Transformer[From, To]] == transformerFromTo - cyclic dependency
         ```
 
     This guard is removed when derivation enters into a recursive mapping of fields/subtypes/inner elements because
@@ -609,7 +609,10 @@ used in Endpoints4s and Endless4s:
 !!! example "Scala 2-only codebase"
 
     ```scala
-    trait DefinitionsPlatform extends Definitions with TypesPlatform with ExprsPlatform {
+    trait DefinitionsPlatform
+        extends Definitions
+        with TypesPlatform
+        with ExprsPlatform {
       val c: scala.reflect.macros.blackbox.Context
     }
     ```
@@ -638,9 +641,9 @@ used in Endpoints4s and Endless4s:
 
     ```scala
     abstract class DefinitionsPlatform(using val quotes: scala.quoted.Quotes)
-    extends Definitions
-    with TypesPlatform
-    with ExprsPlatform
+        extends Definitions
+        with TypesPlatform
+        with ExprsPlatform
     ```
     
     ```scala
