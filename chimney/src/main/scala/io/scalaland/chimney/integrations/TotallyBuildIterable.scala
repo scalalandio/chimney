@@ -6,8 +6,8 @@ trait TotallyBuildIterable[Collection, Item] {
 
   def totalFactory: Factory[Item, Collection]
 
-  def iterable(collection: Collection): Iterable[Item]
+  def iterator(collection: Collection): Iterator[Item]
 
   def to[Collection2](collection: Collection, factory: Factory[Item, Collection2]): Collection2 =
-    iterable(collection).to(factory)
+    iterator(collection).to(factory)
 }
