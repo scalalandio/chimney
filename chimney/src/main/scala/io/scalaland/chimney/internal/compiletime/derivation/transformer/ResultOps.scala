@@ -166,11 +166,6 @@ private[compiletime] trait ResultOps { this: Derivation =>
       )
     )
 
-    def summonImplicit[A: Type]: DerivationResult[Expr[A]] = Expr
-      .summonImplicit[A]
-      .fold(
-        // TODO: create separate type for missing implicit
-        DerivationResult.assertionError[Expr[A]](s"Implicit not found: ${Type.prettyPrint[A]}")
-      )(DerivationResult.pure[Expr[A]](_))
+    def summonImplicit[A: Type]: DerivationResult[Expr[A]] = DerivationResult(Expr.summonImplicitUnsafe[A])
   }
 }

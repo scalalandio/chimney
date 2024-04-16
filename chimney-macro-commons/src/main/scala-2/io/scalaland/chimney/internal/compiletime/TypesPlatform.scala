@@ -119,8 +119,9 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     }
 
     object Map extends MapModule {
-      def apply[K: Type, V: Type]: Type[Map[K, V]] = weakTypeTag[Map[K, V]]
-      def unapply[A](A: Type[A]): Option[(??, ??)] = A.asCtor[Map[?, ?]].map(A0 => A0.param(0) -> A0.param(1))
+      def apply[K: Type, V: Type]: Type[scala.collection.Map[K, V]] = weakTypeTag[scala.collection.Map[K, V]]
+      def unapply[A](A: Type[A]): Option[(??, ??)] =
+        A.asCtor[scala.collection.Map[?, ?]].map(A0 => A0.param(0) -> A0.param(1))
     }
 
     object Iterator extends IteratorModule {

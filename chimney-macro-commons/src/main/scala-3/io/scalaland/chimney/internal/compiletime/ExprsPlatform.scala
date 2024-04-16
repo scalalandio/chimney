@@ -39,7 +39,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     object Array extends ArrayModule {
       def apply[A: Type](args: Expr[A]*): Expr[Array[A]] =
-        '{ scala.Array.apply[A](${ quoted.Varargs(args.toSeq) }*)(${ summonImplicit[ClassTag[A]].get }) }
+        '{ scala.Array.apply[A](${ quoted.Varargs(args.toSeq) }*)(${ summonImplicitUnsafe[ClassTag[A]] }) }
 
       def map[A: Type, B: Type](array: Expr[Array[A]])(fExpr: Expr[A => B]): Expr[Array[B]] =
         '{ ${ resetOwner(array) }.map(${ resetOwner(fExpr) })(${ summonImplicit[ClassTag[B]].get }) }
@@ -50,6 +50,22 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         '{ ${ resetOwner(array) }.to(${ factoryExpr }) }
 
       def iterator[A: Type](array: Expr[Array[A]]): Expr[Iterator[A]] = '{ ${ resetOwner(array) }.iterator }
+    }
+
+    // Scala-3-specific
+    object IArray {
+      def apply[A: Type](args: Expr[A]*): Expr[IArray[A]] =
+        '{ scala.IArray.apply[A](${ quoted.Varargs(args.toSeq) }*)(using ${ summonImplicitUnsafe[ClassTag[A]] }) }
+
+      def map[A: Type, B: Type](array: Expr[IArray[A]])(fExpr: Expr[A => B]): Expr[IArray[B]] =
+        '{ ${ resetOwner(array) }.map(${ resetOwner(fExpr) })(${ summonImplicit[ClassTag[B]].get }) }
+
+      def to[A: Type, C: Type](array: Expr[IArray[A]])(
+          factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
+      ): Expr[C] =
+        '{ ${ resetOwner(array) }.to(${ factoryExpr }) }
+
+      def iterator[A: Type](array: Expr[IArray[A]]): Expr[Iterator[A]] = '{ ${ resetOwner(array) }.iterator }
     }
 
     object Option extends OptionModule {
@@ -102,7 +118,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     }
 
     object Map extends MapModule {
-      def iterator[K: Type, V: Type](map: Expr[Map[K, V]]): Expr[Iterator[(K, V)]] = '{ ${ resetOwner(map) }.iterator }
+      def iterator[K: Type, V: Type](map: Expr[scala.collection.Map[K, V]]): Expr[Iterator[(K, V)]] =
+        '{ ${ resetOwner(map) }.iterator }
     }
 
     object Iterator extends IteratorModule {

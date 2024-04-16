@@ -63,7 +63,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
         DerivationResult.expandedPartial(
           ChimneyExpr.PartialResult
             .traverse[To, (FromK, FromV), (ToK, ToV)](
-              ctx.src.upcastToExprOf[Map[FromK, FromV]].iterator,
+              ctx.src.upcastToExprOf[scala.collection.Map[FromK, FromV]].iterator,
               toKeyP
                 .fulfilAsLambda2(toValueP) { case ((keyResult, key), valueResult) =>
                   ChimneyExpr.PartialResult.product(

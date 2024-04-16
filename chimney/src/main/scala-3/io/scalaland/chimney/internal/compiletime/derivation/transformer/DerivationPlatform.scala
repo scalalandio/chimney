@@ -6,6 +6,7 @@ import io.scalaland.chimney.internal.compiletime.datatypes
 abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     extends ChimneyDefinitionsPlatform(q)
     with Derivation
+    with datatypes.IterableOrArraysPlatform
     with datatypes.ProductTypesPlatform
     with datatypes.SealedHierarchiesPlatform
     with datatypes.ValueClassesPlatform
