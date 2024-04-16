@@ -8,6 +8,12 @@ trait TotallyBuildIterables { this: Derivation =>
 
   import Type.Implicits.*, ChimneyType.Implicits.*
 
+  /** Something allowing us to share the logic which handles [[scala.collection.Iterable]], [[scala.Array]],
+    * [[java.util.Collection]], ... and whatever we want to support.
+    *
+    * Tries to use [[io.scalaland.chimney.integrations.TotallyBuildIterable]] and then falls back on [[IterableOrArray]]
+    * hardcoded support, if type is eligible.
+    */
   abstract protected class TotallyBuildIterable[Collection, Item] {
 
     def totalFactory: Expr[Factory[Item, Collection]]
@@ -27,8 +33,8 @@ trait TotallyBuildIterables { this: Derivation =>
       providedSupport[M].orElse(buildInSupport[M])
 
     private def providedSupport[Collection: Type]: Option[Existential[TotallyBuildIterable[Collection, *]]] =
-      summonTotallyBuildIterable[Collection].map { partiallyBuildIterable =>
-        import partiallyBuildIterable.{Underlying as Item, value as totallyBuildIterableExpr}
+      summonTotallyBuildIterable[Collection].map { totallyBuildIterable =>
+        import totallyBuildIterable.{Underlying as Item, value as totallyBuildIterableExpr}
         Existential[TotallyBuildIterable[Collection, *], Item](
           new TotallyBuildIterable[Collection, Item] {
 

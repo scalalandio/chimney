@@ -6,8 +6,8 @@ trait OptionalValues { this: Derivation =>
 
   import Type.Implicits.*
 
-  /** Something allowing us to share the logic which handles scala.Options, java.util.Optional and whatever we want to
-    * support.
+  /** Something allowing us to share the logic which handles [[scala.Option]], [[java.util.Optional]] and whatever we
+    * want to support.
     *
     * Tries to use [[io.scalaland.chimney.integrations.OptionalValue]] and then falls back on [[scala.Option]] hardcoded
     * support, if type is eligible.
