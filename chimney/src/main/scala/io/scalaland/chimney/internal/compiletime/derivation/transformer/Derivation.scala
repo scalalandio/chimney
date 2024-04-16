@@ -12,6 +12,9 @@ private[compiletime] trait Derivation
     with datatypes.ProductTypes
     with datatypes.SealedHierarchies
     with datatypes.ValueClasses
+    with integrations.OptionalValues
+    with integrations.PartiallyBuildIterables
+    with integrations.TotallyBuildIterables
     with rules.TransformationRules {
 
   /** Intended use case: starting recursive derivation from Gateway */

@@ -234,10 +234,10 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]]
       ): Expr[Factory[Item, partial.Result[Collection]]] = '{ ${ partiallyBuildIterable }.partialFactory }
 
-      def iterable[Collection: Type, Item: Type](
+      def iterator[Collection: Type, Item: Type](
           partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]],
           collection: Expr[Collection]
-      ): Expr[Iterable[Item]] = '{ ${ partiallyBuildIterable }.iterable(${ collection }) }
+      ): Expr[Iterator[Item]] = '{ ${ partiallyBuildIterable }.iterator(${ collection }) }
 
       def to[Collection: Type, Item: Type, Collection2: Type](
           partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]],
@@ -252,10 +252,10 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]]
       ): Expr[Factory[Item, Collection]] = '{ ${ totallyBuildIterable }.totalFactory }
 
-      def iterable[Collection: Type, Item: Type](
+      def iterator[Collection: Type, Item: Type](
           totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]],
           collection: Expr[Collection]
-      ): Expr[Iterable[Item]] = '{ ${ totallyBuildIterable }.iterable(${ collection }) }
+      ): Expr[Iterator[Item]] = '{ ${ totallyBuildIterable }.iterator(${ collection }) }
 
       def to[Collection: Type, Item: Type, Collection2: Type](
           totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]],

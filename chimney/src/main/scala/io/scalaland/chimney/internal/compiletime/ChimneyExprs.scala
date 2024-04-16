@@ -176,10 +176,10 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
           partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]]
       ): Expr[Factory[Item, partial.Result[Collection]]]
 
-      def iterable[Collection: Type, Item: Type](
+      def iterator[Collection: Type, Item: Type](
           partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]],
           collection: Expr[Collection]
-      ): Expr[Iterable[Item]]
+      ): Expr[Iterator[Item]]
 
       def to[Collection: Type, Item: Type, Collection2: Type](
           partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]],
@@ -195,10 +195,10 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
           totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]]
       ): Expr[Factory[Item, Collection]]
 
-      def iterable[Collection: Type, Item: Type](
+      def iterator[Collection: Type, Item: Type](
           totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]],
           collection: Expr[Collection]
-      ): Expr[Iterable[Item]]
+      ): Expr[Iterator[Item]]
 
       def to[Collection: Type, Item: Type, Collection2: Type](
           totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]],
@@ -287,8 +287,8 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
     def partialFactory: Expr[Factory[Item, partial.Result[Collection]]] =
       ChimneyExpr.PartiallyBuildIterable.partialFactory(partiallyBuildIterableExpr)
 
-    def iterable(collection: Expr[Collection]): Expr[Iterable[Item]] =
-      ChimneyExpr.PartiallyBuildIterable.iterable(partiallyBuildIterableExpr, collection)
+    def iterator(collection: Expr[Collection]): Expr[Iterator[Item]] =
+      ChimneyExpr.PartiallyBuildIterable.iterator(partiallyBuildIterableExpr, collection)
 
     def to[Collection2: Type](
         collection: Expr[Collection],
@@ -304,8 +304,8 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
     def totalFactory: Expr[Factory[Item, Collection]] =
       ChimneyExpr.TotallyBuildIterable.totalFactory(totallyBuildIterableExpr)
 
-    def iterable(collection: Expr[Collection]): Expr[Iterable[Item]] =
-      ChimneyExpr.TotallyBuildIterable.iterable(totallyBuildIterableExpr, collection)
+    def iterator(collection: Expr[Collection]): Expr[Iterator[Item]] =
+      ChimneyExpr.TotallyBuildIterable.iterator(totallyBuildIterableExpr, collection)
 
     def to[Collection2: Type](
         collection: Expr[Collection],
