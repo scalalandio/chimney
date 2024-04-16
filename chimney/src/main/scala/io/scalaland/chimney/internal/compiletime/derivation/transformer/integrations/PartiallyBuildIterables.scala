@@ -9,6 +9,11 @@ trait PartiallyBuildIterables { this: Derivation =>
 
   import ChimneyType.Implicits.*
 
+  /** Something allowing us to share the logic which handles NonEmptyList, NonEmptySet, ... and whatever we want to
+    * support.
+    *
+    * Tries to use [[io.scalaland.chimney.integrations.PartiallyBuildIterable]], if type is eligible.
+    */
   abstract protected class PartiallyBuildIterable[Collection, Item] {
 
     def partialFactory: Expr[Factory[Item, partial.Result[Collection]]]
