@@ -20,7 +20,8 @@ trait IterableOrArrays { this: Definitions =>
 
     def to[C: Type](m: Expr[M])(factory: Expr[Factory[A, C]]): Expr[C]
   }
-  protected object IterableOrArray {
+  protected val IterableOrArray: IterableOrArrayModule
+  protected trait IterableOrArrayModule { this: IterableOrArray.type =>
 
     def unapply[M](implicit M: Type[M]): Option[Existential[IterableOrArray[M, *]]] = M match {
       case Type.Map(k, v) =>
@@ -34,7 +35,7 @@ trait IterableOrArrays { this: Definitions =>
       case Type.Array(a) =>
         import a.Underlying as Inner
         Some(buildInArraySupport[M, Inner])
-      case _ => None
+      case _ => buildInIArraySupport[M]
     }
 
     private def buildInIterableSupport[M: Type, Inner: Type](hint: String): Existential[IterableOrArray[M, *]] =
@@ -68,5 +69,7 @@ trait IterableOrArrays { this: Definitions =>
           override def toString: String = s"support build-in for Array-type ${Type.prettyPrint[M]}"
         }
       )
+
+    protected def buildInIArraySupport[M: Type]: Option[Existential[IterableOrArray[M, *]]]
   }
 }

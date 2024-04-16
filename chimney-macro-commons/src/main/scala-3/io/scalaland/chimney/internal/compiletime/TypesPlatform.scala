@@ -125,6 +125,15 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       }
     }
 
+    // Scala-3-specific
+    object IArray extends Ctor1[IArray] {
+      def apply[A: Type]: Type[IArray[A]] = quoted.Type.of[IArray[A]]
+      def unapply[A](A: Type[A]): Option[??] = A match {
+        case '[IArray[inner]] => Some(Type[inner].as_??)
+        case _                => scala.None
+      }
+    }
+
     object Option extends OptionModule {
       def apply[A: Type]: Type[Option[A]] = quoted.Type.of[Option[A]]
       def unapply[A](A: Type[A]): Option[??] = A match {
@@ -175,10 +184,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     }
 
     object Map extends MapModule {
-      def apply[K: Type, V: Type]: Type[Map[K, V]] = quoted.Type.of[Map[K, V]]
+      def apply[K: Type, V: Type]: Type[scala.collection.Map[K, V]] = quoted.Type.of[scala.collection.Map[K, V]]
       def unapply[A](A: Type[A]): Option[(??, ??)] = A match {
-        case '[Map[innerK, innerV]] => Some(Type[innerK].as_?? -> Type[innerV].as_??)
-        case _                      => scala.None
+        case '[scala.collection.Map[innerK, innerV]] => Some(Type[innerK].as_?? -> Type[innerV].as_??)
+        case _                                       => scala.None
       }
     }
 
@@ -229,5 +238,13 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         }
         .getOrElse(repr.toString)
     }
+  }
+
+  implicit final protected class IArrayExprOps[A: Type](private val iarrayExpr: Expr[IArray[A]]) {
+
+    def map[B: Type](fExpr: Expr[A => B]): Expr[IArray[B]] = Expr.IArray.map(iarrayExpr)(fExpr)
+    def to[C: Type](factoryExpr: Expr[scala.collection.compat.Factory[A, C]]): Expr[C] =
+      Expr.IArray.to(iarrayExpr)(factoryExpr)
+    def iterator: Expr[Iterator[A]] = Expr.IArray.iterator(iarrayExpr)
   }
 }

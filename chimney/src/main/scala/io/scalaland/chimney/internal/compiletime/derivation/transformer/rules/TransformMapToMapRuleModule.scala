@@ -18,7 +18,7 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
             if !ctx.config.areOverridesEmpty =>
           import fromK.Underlying as FromK, fromV.Underlying as FromV, toK.Underlying as ToK, toV.Underlying as ToV
           mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](
-            ctx.src.upcastToExprOf[Map[FromK, FromV]].iterator
+            ctx.src.upcastToExprOf[scala.collection.Map[FromK, FromV]].iterator
           )
         case (TransformationContext.ForTotal(_), IterableOrArray(from2), Type.Map(toK, toV))
             if !ctx.config.areOverridesEmpty =>
@@ -32,7 +32,7 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
         case (TransformationContext.ForPartial(_, failFast), Type.Map(fromK, fromV), Type.Map(toK, toV)) =>
           import fromK.Underlying as FromK, fromV.Underlying as FromV, toK.Underlying as ToK, toV.Underlying as ToV
           mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
-            ctx.src.upcastToExprOf[Map[FromK, FromV]].iterator,
+            ctx.src.upcastToExprOf[scala.collection.Map[FromK, FromV]].iterator,
             failFast,
             isConversionFromMap = true
           )

@@ -98,7 +98,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     }
 
     object Map extends MapModule {
-      def iterator[K: Type, V: Type](map: Expr[Map[K, V]]): Expr[Iterator[(K, V)]] =
+      def iterator[K: Type, V: Type](map: Expr[scala.collection.Map[K, V]]): Expr[Iterator[(K, V)]] =
         c.Expr[Iterator[(K, V)]](q"$map.iterator")
     }
 

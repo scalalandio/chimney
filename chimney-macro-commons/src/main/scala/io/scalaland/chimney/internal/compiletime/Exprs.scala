@@ -95,7 +95,7 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     val Map: MapModule
     trait MapModule { this: Map.type =>
-      def iterator[K: Type, V: Type](map: Expr[Map[K, V]]): Expr[Iterator[(K, V)]]
+      def iterator[K: Type, V: Type](map: Expr[scala.collection.Map[K, V]]): Expr[Iterator[(K, V)]]
     }
 
     val Iterator: IteratorModule
@@ -114,6 +114,9 @@ private[compiletime] trait Exprs { this: Definitions =>
     def block[A: Type](statements: List[Expr[Unit]], expr: Expr[A]): Expr[A]
 
     def summonImplicit[A: Type]: Option[Expr[A]]
+    def summonImplicitUnsafe[A: Type]: Expr[A] = summonImplicit[A].getOrElse {
+      assertionFailed(s"Implicit not found: ${Type.prettyPrint[A]}")
+    }
 
     // Implementations of Expr extension methods
 
@@ -206,7 +209,7 @@ private[compiletime] trait Exprs { this: Definitions =>
     def iterator: Expr[Iterator[A]] = Expr.Iterable.iterator(iterableExpr)
   }
 
-  implicit final protected class MapExprOps[K: Type, V: Type](private val mapExpr: Expr[Map[K, V]]) {
+  implicit final protected class MapExprOps[K: Type, V: Type](private val mapExpr: Expr[scala.collection.Map[K, V]]) {
 
     def iterator: Expr[Iterator[(K, V)]] = Expr.Map.iterator(mapExpr)
   }

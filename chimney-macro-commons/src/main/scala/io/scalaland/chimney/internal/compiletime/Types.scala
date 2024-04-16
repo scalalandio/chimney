@@ -98,7 +98,7 @@ private[compiletime] trait Types { this: Existentials =>
     trait IterableModule extends Ctor1[Iterable] { this: Iterable.type => }
 
     val Map: MapModule
-    trait MapModule extends Ctor2[Map] { this: Map.type => }
+    trait MapModule extends Ctor2[scala.collection.Map] { this: Map.type => }
 
     val Iterator: IteratorModule
     trait IteratorModule extends Ctor1[Iterator] { this: Iterator.type => }
@@ -140,7 +140,7 @@ private[compiletime] trait Types { this: Existentials =>
       implicit def RightType[L: Type, R: Type]: Type[Right[L, R]] = Either.Right[L, R]
 
       implicit def IterableType[A: Type]: Type[Iterable[A]] = Iterable[A]
-      implicit def MapType[K: Type, V: Type]: Type[Map[K, V]] = Map[K, V]
+      implicit def MapType[K: Type, V: Type]: Type[scala.collection.Map[K, V]] = Map[K, V]
       implicit def IteratorType[A: Type]: Type[Iterator[A]] = Iterator[A]
       implicit def FactoryType[A: Type, C: Type]: Type[Factory[A, C]] = Factory[A, C]
     }
