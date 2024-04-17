@@ -14,6 +14,7 @@ trait OptionalValue[Optional, Value] {
 }
 object OptionalValue {
 
+  // TODO: remove/move to tests
   sealed trait Experiment[+A] extends Product with Serializable
   object Experiment {
     final case class FullOf[+A](value: A) extends Experiment[A]
