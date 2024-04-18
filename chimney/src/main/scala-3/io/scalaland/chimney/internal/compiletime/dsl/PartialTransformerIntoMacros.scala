@@ -6,6 +6,7 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Transfor
 import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
 import io.scalaland.chimney.internal.runtime.{
   ArgumentLists,
+  FuncionEitherToResult,
   Path,
   TransformerFlags,
   TransformerOverrides,
@@ -207,6 +208,31 @@ object PartialTransformerIntoMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $f)
+              .asInstanceOf[PartialTransformerInto[From, To, ConstructorPartial[args, Path.Root, Overrides], Flags]]
+        }
+    }(f)
+
+  def withConstructorEitherImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      Ctor: Type
+  ](
+      ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
+      f: Expr[Ctor]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyConstructorType {
+      [args <: ArgumentLists] =>
+        (_: Type[args]) ?=>
+          '{
+            WithRuntimeDataStore
+              .update(
+                $ti,
+                FuncionEitherToResult.lift[Ctor, Any]($f)(
+                  ${ Expr.summon[FuncionEitherToResult[Ctor]].get }.asInstanceOf[FuncionEitherToResult.Aux[Ctor, Any]]
+                )
+              )
               .asInstanceOf[PartialTransformerInto[From, To, ConstructorPartial[args, Path.Root, Overrides], Flags]]
         }
     }(f)
