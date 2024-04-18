@@ -1,6 +1,7 @@
 import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import com.typesafe.tools.mima.core.{Problem, ProblemFilters}
 import commandmatrix.extra.*
+import sbtprotoc.ProtocPlugin.ProtobufConfig
 
 // Used to configure the build so that it would format on compile during development
 // but not on CI.
@@ -211,7 +212,7 @@ val dependencies = Seq(
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, _)) =>
         Seq(
-          "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
+          "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
           compilerPlugin("org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full)
         )
       case _ => Seq.empty
@@ -430,7 +431,7 @@ lazy val chimneyCats = projectMatrix
     libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0" % Provided,
     libraryDependencies += "org.typelevel" %%% "cats-laws" % "2.10.0" % Test
   )
-  .dependsOn(chimney % "test->test;compile->compile")
+  .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
 lazy val chimneyJavaCollections = projectMatrix
   .in(file("chimney-java-collections"))
@@ -456,7 +457,7 @@ lazy val chimneyJavaCollections = projectMatrix
       }
     }
   )
-  .dependsOn(chimney % "test->test;compile->compile")
+  .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
 lazy val chimneyProtobufs = projectMatrix
   .in(file("chimney-protobufs"))
@@ -495,9 +496,9 @@ lazy val chimneyProtobufs = projectMatrix
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
     Test / PB.protoSources += PB.externalSourcePath.value,
     Test / PB.targets := Seq(scalapb.gen() -> (Test / sourceManaged).value / "scalapb"),
-    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf"
+    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % ProtobufConfig
   )
-  .dependsOn(chimney % "test->test;compile->compile")
+  .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
 lazy val benchmarks = projectMatrix
   .in(file("benchmarks"))
