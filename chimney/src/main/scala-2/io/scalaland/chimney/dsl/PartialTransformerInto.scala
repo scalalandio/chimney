@@ -314,6 +314,32 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withConstructorPartialImpl[From, To, Overrides, Flags]
 
+  /** Use `f` instead of the primary constructor to parse into `Either[String, To]` value.
+    *
+    * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.
+    *
+    * Values for each parameter can be provided the same way as if they were normal constructor's arguments.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#types-with-manually-provided-constructors]] for more
+    *   details
+    *
+    * @tparam Ctor
+    *   type of the Eta-expanded method/lambda which should return `Either[String, To]`
+    * @param f
+    *   method name or lambda which constructs `Either[String, To]`
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *
+    * @since 1.0.0
+    */
+  def withConstructorEither[Ctor](
+      f: Ctor
+  )(implicit
+      ev: IsFunction.Of[Ctor, Either[String, To]]
+  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerIntoMacros.withConstructorEitherImpl[From, To, Overrides, Flags]
+
   /** Apply configured partial transformation in-place.
     *
     * It runs macro that tries to derive instance of `PartialTransformer[From, To]` and immediately apply it to captured

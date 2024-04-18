@@ -175,6 +175,17 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
     result14.asOption ==> Some(typeParametricExpected)
     result14.asEither ==> Right(typeParametricExpected)
     result14.asErrorPathMessageStrings ==> Iterable.empty
+
+    def typeParametricConstructorEither[A, B](x: A, z: (B, Double)): Either[String, BarParams[A, B]] =
+      Right(BarParams(x, (z._1, z._2 * 4)))
+
+    val result15 = Foo(3, "pi", (3.14, 3.14))
+      .intoPartial[BarParams[Int, Double]]
+      .withConstructorEither(typeParametricConstructorEither[Int, Double] _)
+      .transform
+    result15.asOption ==> Some(typeParametricExpected)
+    result15.asEither ==> Right(typeParametricExpected)
+    result15.asErrorPathMessageStrings ==> Iterable.empty
   }
 
   test("""allow defining transformers with overrides""") {
