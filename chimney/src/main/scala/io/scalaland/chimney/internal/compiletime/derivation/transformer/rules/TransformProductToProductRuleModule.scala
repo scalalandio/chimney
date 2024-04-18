@@ -20,7 +20,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         case (HasCustomConstructor(constructorOverride), Product.Extraction(fromExtractors)) =>
           mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, constructorOverride)
         case (Product.Constructor(parameters, constructor), Product.Extraction(fromExtractors)) =>
-          mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, parameters, constructor)
+          mapOverridesAndExtractorsToConstructorArguments[From, To, To](fromExtractors, parameters, constructor)
         case _ =>
           DerivationResult.attemptNextRuleBecause(
             s"Type ${Type.prettyPrint[To]} does not have a public primary constructor"
@@ -42,29 +42,28 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       constructorOverride match {
         case TransformerOverride.Constructor(idx, args) =>
           val Product.Constructor(parameters, constructor) = mkCtor[To](args)(ctx.runtimeDataStore(idx))
-          mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, parameters, constructor)
+          mapOverridesAndExtractorsToConstructorArguments[From, To, To](fromExtractors, parameters, constructor)
         case TransformerOverride.ConstructorPartial(idx, args) =>
           val Product.Constructor(params, ctor) = mkCtor[partial.Result[To]](args)(ctx.runtimeDataStore(idx))
-            .asInstanceOf[Product.Constructor[To]] // a hack to avoid weird conversions back and forth, part 1
-          mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, params, ctor).map {
-            case Rule.ExpansionResult.Expanded(transformationExpr) =>
-              val flattenTransformationExpr =
-                // a hack to avoid weird conversions back and forth, part 2
-                (transformationExpr.asInstanceOf[TransformationExpr[partial.Result[To]]]) match {
-                  case TransformationExpr.PartialExpr(expr) => TransformationExpr.PartialExpr(expr.flatten)
-                  case TransformationExpr.TotalExpr(expr)   => TransformationExpr.PartialExpr(expr)
-                }
-              Rule.ExpansionResult.Expanded(flattenTransformationExpr)
-            case Rule.ExpansionResult.AttemptNextRule(reason) => Rule.ExpansionResult.AttemptNextRule(reason)
-          }
+          mapOverridesAndExtractorsToConstructorArguments[From, To, partial.Result[To]](fromExtractors, params, ctor)
+            .map {
+              case Rule.ExpansionResult.Expanded(transformationExpr) =>
+                val flattenTransformationExpr = // no idea why it doesn't figure that out on its own in Scala 3
+                  transformationExpr.asInstanceOf[TransformationExpr[partial.Result[To]]] match {
+                    case TransformationExpr.PartialExpr(expr) => TransformationExpr.PartialExpr(expr.flatten)
+                    case TransformationExpr.TotalExpr(expr)   => TransformationExpr.PartialExpr(expr)
+                  }
+                Rule.ExpansionResult.Expanded(flattenTransformationExpr)
+              case Rule.ExpansionResult.AttemptNextRule(reason) => Rule.ExpansionResult.AttemptNextRule(reason)
+            }
       }
     }
 
-    private def mapOverridesAndExtractorsToConstructorArguments[From, To](
+    private def mapOverridesAndExtractorsToConstructorArguments[From, To, ToOrPartialTo: Type](
         fromExtractors: Product.Getters[From],
         parameters: Product.Parameters,
-        constructor: Product.Arguments => Expr[To]
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
+        constructor: Product.Arguments => Expr[ToOrPartialTo]
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[ToOrPartialTo]] = {
       import ctx.config.*
 
       lazy val fromEnabledExtractors = fromExtractors
@@ -257,8 +256,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             val partials = args.count(_._2.value.isPartial)
             s"Resolved ${args.size} arguments, $totals as total and $partials as partial Expr"
           }
-          .map[TransformationExpr[To]] { (resolvedArguments: List[(String, Existential[TransformationExpr])]) =>
-            wireArgumentsToConstructor[From, To](resolvedArguments, constructor)
+          .map[TransformationExpr[ToOrPartialTo]] {
+            (resolvedArguments: List[(String, Existential[TransformationExpr])]) =>
+              wireArgumentsToConstructor[From, To, ToOrPartialTo](resolvedArguments, constructor)
           }
           .flatMap(DerivationResult.expanded)
     }
@@ -476,10 +476,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           }
         }
 
-    private def wireArgumentsToConstructor[From, To](
+    private def wireArgumentsToConstructor[From, To, ToOrPartialTo: Type](
         resolvedArguments: List[(String, Existential[TransformationExpr])],
-        constructor: Product.Arguments => Expr[To]
-    )(implicit ctx: TransformationContext[From, To]): TransformationExpr[To] = {
+        constructor: Product.Arguments => Expr[ToOrPartialTo]
+    )(implicit ctx: TransformationContext[From, To]): TransformationExpr[ToOrPartialTo] = {
       val totalConstructorArguments: Map[String, ExistentialExpr] = resolvedArguments.collect {
         case (name, exprE) if exprE.value.isTotal => name -> exprE.mapK[Expr](_ => _.ensureTotal)
       }.toMap
@@ -572,7 +572,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     }
               }
               .use { (partialsAsLazy: List[(String, Existential[PartialExpr])]) =>
-                val failFastBranch: Expr[partial.Result[To]] = {
+                val failFastBranch: Expr[partial.Result[ToOrPartialTo]] = {
                   // Here, we're building:
                   // '{
                   //   res1.flatMap { $name1 =>
@@ -586,20 +586,20 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   def nestFlatMaps(
                       unusedPartials: List[(String, Existential[PartialExpr])],
                       constructorArguments: Product.Arguments
-                  ): Expr[partial.Result[To]] = unusedPartials match {
+                  ): Expr[partial.Result[ToOrPartialTo]] = unusedPartials match {
                     // Should never happen
                     case Nil => ???
                     // last result to compose in - use .map instead of .flatMap
                     case (name, res) :: Nil =>
                       import res.{Underlying as Res, value as resultToMap}
-                      resultToMap.map(Expr.Function1.instance[Res, To] { (innerExpr: Expr[Res]) =>
+                      resultToMap.map(Expr.Function1.instance[Res, ToOrPartialTo] { (innerExpr: Expr[Res]) =>
                         constructor(constructorArguments + (name -> innerExpr.as_??))
                       })
                     // use .flatMap
                     case (name, res) :: tail =>
                       import res.{Underlying as Res, value as resultToFlatMap}
                       resultToFlatMap.flatMap(
-                        Expr.Function1.instance[Res, partial.Result[To]] { (innerExpr: Expr[Res]) =>
+                        Expr.Function1.instance[Res, partial.Result[ToOrPartialTo]] { (innerExpr: Expr[Res]) =>
                           nestFlatMaps(tail, constructorArguments + (name -> ExistentialExpr(innerExpr)))
                         }
                       )
@@ -608,7 +608,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   nestFlatMaps(partialsAsLazy.toList, totalConstructorArguments)
                 }
 
-                val fullErrorBranch: Expr[partial.Result[To]] =
+                val fullErrorBranch: Expr[partial.Result[ToOrPartialTo]] =
                   // Here, we're building:
                   // '{
                   //   var allerrors: Errors = null
@@ -637,11 +637,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         },
                         // Here, we're building:
                         // '{ if (allerrors == null) $ifBlock else $elseBock }
-                        Expr.ifElse[partial.Result[To]](allerrors eqExpr Expr.Null) {
+                        Expr.ifElse[partial.Result[ToOrPartialTo]](allerrors eqExpr Expr.Null) {
                           // Here, we're building:
                           // '{ partial.Result.Value(${ constructor }) } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
                           ChimneyExpr.PartialResult
-                            .Value[To](
+                            .Value[ToOrPartialTo](
                               constructor(
                                 totalConstructorArguments ++ partialsAsLazy.map { case (name, result) =>
                                   import result.Underlying as Res
@@ -651,9 +651,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                                 }
                               )
                             )
-                            .upcastToExprOf[partial.Result[To]]
+                            .upcastToExprOf[partial.Result[ToOrPartialTo]]
                         } {
-                          allerrors.upcastToExprOf[partial.Result[To]]
+                          allerrors.upcastToExprOf[partial.Result[ToOrPartialTo]]
                         }
                       )
                     }
@@ -668,7 +668,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     // } else {
                     //   ${ fullErrorBranch }
                     // }
-                    Expr.ifElse[partial.Result[To]](failFast)(failFastBranch)(fullErrorBranch)
+                    Expr.ifElse[partial.Result[ToOrPartialTo]](failFast)(failFastBranch)(fullErrorBranch)
                 }
               }
           )
