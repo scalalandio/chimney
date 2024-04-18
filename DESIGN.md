@@ -39,11 +39,11 @@ The simplified version of how the code above works:
      new Bar(
        transformerInto.source.a,
        transformerInto.source.b,
-       transformerInto.td.runtimDataStore(0).asInstanceOf[Double]
+       transformerInto.td.runtimeDataStore(0).asInstanceOf[Double]
      )
    }
    ```
-4. since there might be many overrides in `td.runtimDataStore(0)` and the macro needs to know which field override is on
+4. since there might be many overrides in `td.runtimeDataStore(0)` and the macro needs to know which field override is on
    which position, **DSL needs to remember somehow what each index in the vector overrides**. For that purpose there
    exist `TransformerCfg`, a phantom type (a type used only in compile time) which acts as a type-level list where each
    such information could be prepended. (You can think of it as of a tuple, which never get instantiated and only exist
@@ -73,7 +73,7 @@ Transformer.define[Foo, Bar].withFieldConst(_.c, 3.0).buildTransformer
        def transform(src: Foo): Bar = new Bar(
          src.a,
          src.b,
-         transformerDefinition.runtimDataStore(0).asInstanceOf[Double]
+         transformerDefinition.runtimeDataStore(0).asInstanceOf[Double]
        )
      }
    }
