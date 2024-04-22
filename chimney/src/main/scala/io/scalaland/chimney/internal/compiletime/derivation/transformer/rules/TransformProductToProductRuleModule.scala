@@ -363,7 +363,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   s"""|Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found
                       |available methods: ${getters.keys.map(n => s"`$n`").mkString(", ")}""".stripMargin
                 )
-              case (fromName, getter) :: Nil =>
+              case (_, getter) :: Nil =>
                 import getter.Underlying as Getter, getter.value.get
                 DerivationResult.pure(get(extractedSrcExpr).as_??)
               case matchingGetters =>
