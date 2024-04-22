@@ -1,6 +1,7 @@
 package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.utils.OptionUtils.*
 
 import scala.annotation.unused
 
@@ -8,17 +9,170 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
 
   import TotalTransformerIntegrationsSpec.*
 
-  // TODO: transform from Option-type into Option-type, using Total Transformer for inner type transformation
+  group("transform from Option-type into Option-type, using Total Transformer for inner type transformation") {
 
-  // TODO: transform from non-Option-type into Option-type, using Partial Transformer for inner type transformation
+    implicit val intPrinter: Transformer[Int, String] = _.toString
 
-  // TODO: transform from non-Option-type into Option-type, using Total Transformer for inner type transformation
+    test("when inner value is non-empty") {
+      val result = Possible(123).transformIntoPartial[Possible[String]]
 
-  // TODO: transform from non-Option-type into Option-type, using Partial Transformer for inner type transformation
+      result.asOption ==> Some(Possible("123"))
+      result.asEither ==> Right(Possible("123"))
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
 
-  // TODO: transform from Option-type into non-Option-type, using Total Transformer for inner type transformation
+    test("when inner value is empty") {
+      val result = (Possible.Nope: Possible[Int]).transformIntoPartial[Possible[String]]
 
-  // TODO: transform from Option-type into non-Option-type, using Partial Transformer for inner type transformation
+      result.asOption ==> Some(Possible.Nope)
+      result.asEither ==> Right(Possible.Nope)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
+  }
+
+  group("transform from OptionalValue into OptionalValue, using Partial Transformer for inner type transformation") {
+
+    implicit val intPartialParser: PartialTransformer[String, Int] =
+      PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
+
+    test("when Result is success") {
+      val result = Possible("123").transformIntoPartial[Possible[Int]]
+
+      result.asOption ==> Some(Possible.Present(123))
+      result.asEither ==> Right(Possible.Present(123))
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
+
+    test("when Result is failure") {
+      val result = Possible("abc").transformIntoPartial[Possible[Int]]
+      result.asOption ==> None
+      result.asEither ==> Left(
+        partial.Result.Errors.fromString("bad int")
+      )
+      result.asErrorPathMessageStrings ==> Iterable(
+        "" -> "bad int"
+      )
+    }
+
+    test("when Result is null") {
+      val result = (Possible.Nope: Possible[String]).transformIntoPartial[Possible[Int]]
+
+      result.asOption ==> Some(Possible.Nope)
+      result.asEither ==> Right(Possible.Nope)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
+  }
+
+  group("transform from non-OptionalValue into OptionalValue, using Total Transformer for inner type transformation") {
+
+    implicit val intPrinter: Transformer[Int, String] = _.toString
+
+    test("when inner value is non-null") {
+      val result = 10.transformIntoPartial[Possible[String]]
+
+      result.asOption ==> Some(Possible.Present("10"))
+      result.asEither ==> Right(Possible.Present("10"))
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
+
+    test("when inner value is null") {
+      implicit val integerPrinter: Transformer[Integer, String] = _.toString
+
+      val result = (null: Integer).transformIntoPartial[Possible[String]]
+
+      result.asOption ==> Some(Possible.Nope)
+      result.asEither ==> Right(Possible.Nope)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
+  }
+
+  group(
+    "transform from non-OptionalValue into OptionalValue, using Partial Transformer for inner type transformation"
+  ) {
+
+    implicit val intPartialParser: PartialTransformer[String, Int] =
+      PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
+
+    test("when Result is success") {
+      val result = "123".transformIntoPartial[Possible[Int]]
+
+      result.asOption ==> Some(Possible.Present(123))
+      result.asEither ==> Right(Possible.Present(123))
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
+
+    test("when Result is failure") {
+      val result = "abc".transformIntoPartial[Possible[Int]]
+      result.asOption ==> None
+      result.asEither ==> Left(
+        partial.Result.Errors.fromString("bad int")
+      )
+      result.asErrorPathMessageStrings ==> Iterable(
+        "" -> "bad int"
+      )
+    }
+
+    test("when Result is null") {
+      val result = (null: String).transformIntoPartial[Possible[Int]]
+
+      result.asOption ==> Some(Possible.Nope)
+      result.asEither ==> Right(Possible.Nope)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
+  }
+
+  group("transform from OptionalValue into non-OptionalValue, using Total Transformer for inner type transformation") {
+
+    implicit val intPrinter: Transformer[Int, String] = _.toString
+
+    test("when option is non-empty") {
+      val result = Possible(10).transformIntoPartial[String]
+
+      result.asOption ==> Some("10")
+      result.asEither ==> Right("10")
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
+
+    test("when option is empty") {
+      val result = Option.empty[Int].transformIntoPartial[String]
+
+      result.asOption ==> None
+      result.asEither ==> Left(partial.Result.fromEmpty)
+      result.asErrorPathMessageStrings ==> Iterable(("", "empty value"))
+    }
+  }
+
+  group(
+    "transform from OptionalValue into non-OptionalValue, using Partial Transformer for inner type transformation"
+  ) {
+
+    implicit val intPartialParser: PartialTransformer[String, Int] =
+      PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
+
+    test("when option is non-empty and inner is success") {
+      val result = Possible("10").transformIntoPartial[Int]
+
+      result.asOption ==> Some(10)
+      result.asEither ==> Right(10)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
+
+    test("when option is non-empty and inner is failure") {
+      val result = Possible("abc").transformIntoPartial[Int]
+
+      result.asOption ==> None
+      result.asEither ==> Left(partial.Result.fromErrorString("bad int"))
+      result.asErrorPathMessageStrings ==> Iterable("" -> "bad int")
+    }
+
+    test("when option is empty") {
+      val result = (Possible.Nope: Possible[String]).transformIntoPartial[Int]
+
+      result.asOption ==> None
+      result.asEither ==> Left(partial.Result.fromEmpty)
+      result.asErrorPathMessageStrings ==> Iterable(("", "empty value"))
+    }
+  }
 
   // TODO: transform Iterable-type to Iterable-type, using Total Transformer for inner type transformation
 

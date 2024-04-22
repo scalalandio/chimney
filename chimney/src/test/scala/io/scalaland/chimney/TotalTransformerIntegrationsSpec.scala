@@ -7,10 +7,28 @@ import scala.annotation.unused
 class TotalTransformerIntegrationsSpec extends ChimneySpec {
 
   import TotalTransformerIntegrationsSpec.*
+  import TotalTransformerStdLibTypesSpec.{Bar, Foo}
 
-  // TODO: transform from Option-type into Option-type
+  test("transform from OptionalValue into OptionalValue") {
+    Possible(Foo("a")).transformInto[Possible[Bar]] ==> Possible(Bar("a"))
+    (Possible.Present(Foo("a")): Possible[Foo]).transformInto[Possible[Bar]] ==> Possible(Bar("a"))
+    (Possible.Nope: Possible[Foo]).transformInto[Possible[Bar]] ==> Possible.Nope
+    (Possible.Nope: Possible[String]).transformInto[Possible[String]] ==> Possible.Nope
+    Possible("abc").transformInto[Possible[String]] ==> Possible.Present("abc")
+    Possible(Foo("a")).transformInto[Option[Bar]] ==> Option(Bar("a"))
+    Option(Foo("a")).transformInto[Possible[Bar]] ==> Possible(Bar("a"))
+    compileErrorsFixed("""Possible("foobar").into[None.type].transform""").check(
+      "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to scala.None",
+      "scala.None",
+      "derivation from possible: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to scala.None is not supported in Chimney!",
+      "Consult https://chimney.readthedocs.io for usage examples."
+    )
+  }
 
-  // TODO: transform from non-Option-type into Option-type
+  test("transform from non-OptionalValue into OptionalValue") {
+    "abc".transformInto[Possible[String]] ==> Possible.Present("abc")
+    (null: String).transformInto[Possible[String]] ==> Possible.Nope
+  }
 
   // TODO: transform from Iterable-type to Iterable-type
 
@@ -93,11 +111,13 @@ object TotalTransformerIntegrationsSpec {
   object Possible {
     case class Present[+A](a: A) extends Possible[A]
     case object Nope extends Possible[Nothing]
+
+    def apply[A](value: A): Possible[A] = if (value != null) Present(value) else Nope
   }
 
   implicit def possibleIsOptionalValue[A]: OptionalValue[Possible[A], A] = new OptionalValue[Possible[A], A] {
     override def empty: Possible[A] = Possible.Nope
-    override def of(value: A): Possible[A] = Possible.Present(value)
+    override def of(value: A): Possible[A] = Possible(value)
     override def fold[A0](oa: Possible[A], onNone: => A0, onSome: A => A0): A0 = oa match {
       case Possible.Present(value) => onSome(value)
       case Possible.Nope           => onNone

@@ -57,7 +57,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     }
   }
 
-  group("transform from non-Option-type into Option-type, using Partial Transformer for inner type transformation") {
+  group("transform from Option-type into Option-type, using Partial Transformer for inner type transformation") {
 
     implicit val intPartialParser: PartialTransformer[String, Int] =
       PartialTransformer(_.parseInt.toPartialResultOrString("bad int"))
