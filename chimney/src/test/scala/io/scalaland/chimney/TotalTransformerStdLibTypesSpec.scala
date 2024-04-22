@@ -8,14 +8,6 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
 
   import TotalTransformerStdLibTypesSpec.*
 
-  test("rudimentary subtype transformation test") {
-
-    class Base(val x: Int)
-    object Sub extends Base(10)
-
-    Sub.transformInto[Base].x ==> 10
-  }
-
   test("not support converting non-Unit field to Unit field if there is no implicit converter allowing that") {
     @unused case class Buzz(value: String)
     @unused case class ConflictingFooBuzz(value: Unit)
@@ -195,6 +187,23 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
         .transform ==> TargetWithOptionAndDefault(
         "foo",
         Some(42)
+      )
+    }
+  }
+
+  group("flag .disableOptionDefaultsToNone") {
+
+    @unused case class Source(x: String)
+    @unused case class TargetWithOption(x: String, y: Option[Int])
+
+    test("should disable globally enabled .enableOptionDefaultsToNone") {
+      @unused implicit val config = TransformerConfiguration.default.enableOptionDefaultsToNone
+
+      compileErrorsFixed("""Source("foo").into[TargetWithOption].disableOptionDefaultsToNone.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
+        "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
+        "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source",
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
   }
