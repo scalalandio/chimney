@@ -130,7 +130,53 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     }
   }
 
-  // TODO: flag .enablePartialUnwrapsOption
+  group("flag .enablePartialUnwrapsOption") {
 
-  // TODO: flag .disablePartialUnwrapsOption
+    case class Source(a: Possible[String])
+    case class Target(a: String)
+
+    test("should be turned on by default") {
+      Source(Possible.Present("value")).transformIntoPartial[Target].asOption ==> Some(Target("value"))
+      Source(Possible.Present("value")).intoPartial[Target].transform.asOption ==> Some(Target("value"))
+    }
+
+    test("should re-enable globally disabled .disablePartialUnwrapsOption") {
+      implicit val config = TransformerConfiguration.default.disablePartialUnwrapsOption
+
+      Source(Possible.Present("value")).intoPartial[Target].enablePartialUnwrapsOption.transform.asOption ==> Some(
+        Target("value")
+      )
+    }
+  }
+
+  group("flag .disablePartialUnwrapsOption") {
+
+    @unused case class Source(a: Possible[String])
+    @unused case class Target(a: String)
+
+    test("should fail compilation if OptionalValue unwrapping is not provided when disabled") {
+      compileErrorsFixed(
+        """Source(Possible.Present("value")).intoPartial[Target].disablePartialUnwrapsOption.transform"""
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.Target",
+        "java.lang.String",
+        "derivation from source.a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to java.lang.String is not supported in Chimney!",
+        "io.scalaland.chimney.PartialTransformerIntegrationsSpec.Target",
+        "a: java.lang.String - can't derive transformation from a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+      locally {
+        @unused implicit val config = TransformerConfiguration.default.disablePartialUnwrapsOption
+
+        compileErrorsFixed("""Source(Possible.Present("value")).transformIntoPartial[Target]""").check(
+          "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.Target",
+          "java.lang.String",
+          "derivation from source.a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to java.lang.String is not supported in Chimney!",
+          "io.scalaland.chimney.PartialTransformerIntegrationsSpec.Target",
+          "a: java.lang.String - can't derive transformation from a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+      }
+    }
+  }
 }
