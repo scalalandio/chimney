@@ -1636,6 +1636,8 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
   }
 
+  // old tests, which could be rewritten into something more structured and better named, but are valuable nonetheless
+
   group("transform always fails") {
 
     import trip.*

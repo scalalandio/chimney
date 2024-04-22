@@ -8,6 +8,13 @@ import scala.collection.immutable.ListMap
 
 class TotalTransformerProductSpec extends ChimneySpec {
 
+  test("transformation should allow upcasting") {
+    class Base(val x: Int)
+    object Sub extends Base(10)
+
+    Sub.transformInto[Base].x ==> 10
+  }
+
   test(
     """not allow transformation from a "subset" of fields into a "superset" of fields when missing values are not provided"""
   ) {
@@ -427,6 +434,88 @@ class TotalTransformerProductSpec extends ChimneySpec {
         .withFieldRenamed(_.name, _.imie)
         .withFieldRenamed(_.age, _.wiek)
         .transform ==> UserPL(1, "Kuba", Left(()))
+    }
+
+    // old test, moved under withFieldRenamed for consistency
+    group("support using method calls to fill values from target type") {
+      case class Foobar(param: String) {
+        val valField: String = "valField"
+        lazy val lazyValField: String = "lazyValField"
+        def method1: String = "method1"
+        def method2: String = "method2"
+        def method3: String = "method3"
+        def method5: String = "method5"
+        def method4: String = "method4"
+        protected def protect: String = "protect"
+        private[chimney] def priv: String = "priv"
+      }
+
+      case class Foobar2(param: String, valField: String, lazyValField: String)
+      case class Foobar3(param: String, valField: String, lazyValField: String, method1: String)
+
+      test("val and lazy vals work") {
+        Foobar("param").into[Foobar2].transform ==> Foobar2("param", "valField", "lazyValField")
+      }
+
+      test("works with rename") {
+        case class FooBar4(p: String, v: String, lv: String, m: String)
+
+        val res = Foobar("param")
+          .into[FooBar4]
+          .withFieldRenamed(_.param, _.p)
+          .withFieldRenamed(_.valField, _.v)
+          .withFieldRenamed(_.lazyValField, _.lv)
+          .withFieldRenamed(_.method1, _.m)
+          .enableMethodAccessors
+          .transform
+
+        res ==> FooBar4(p = "param", v = "valField", lv = "lazyValField", m = "method1")
+      }
+
+      test("method is disabled by default") {
+        @unused case class Foobar5(
+            param: String,
+            valField: String,
+            lazyValField: String,
+            method1: String,
+            method2: String,
+            method3: String,
+            method4: String,
+            method5: String
+        )
+        compileErrorsFixed("""Foobar("param").into[Foobar5].transform""").check(
+          "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foobar to io.scalaland.chimney.TotalTransformerProductSpec.Foobar5",
+          "io.scalaland.chimney.TotalTransformerProductSpec.Foobar5",
+          "method1: java.lang.String - no accessor named method1 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+          "method2: java.lang.String - no accessor named method2 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+          "method3: java.lang.String - no accessor named method3 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+          "method4: java.lang.String - no accessor named method4 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+          "method5: java.lang.String - no accessor named method5 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+          "There are methods in io.scalaland.chimney.TotalTransformerProductSpec.Foobar that might be used as accessors for method1 (e.g. method1), method2 (e.g. method2), method3 (e.g. method3) and 2 other constructor arguments/setters in io.scalaland.chimney.TotalTransformerProductSpec.Foobar5. Consider using .enableMethodAccessors.",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+      }
+
+      test("works if transform is configured with .enableMethodAccessors") {
+        Foobar("param").into[Foobar3].enableMethodAccessors.transform ==> Foobar3(
+          param = "param",
+          valField = "valField",
+          lazyValField = "lazyValField",
+          method1 = "method1"
+        )
+      }
+
+      test("protected and private methods are not considered (even if accessible)") {
+        @unused case class Foo2(param: String, protect: String, priv: String)
+
+        compileErrorsFixed("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
+          "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foobar to io.scalaland.chimney.TotalTransformerProductSpec.Foo2",
+          "io.scalaland.chimney.TotalTransformerProductSpec.Foo2",
+          "protect: java.lang.String - no accessor named protect in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+          "priv: java.lang.String - no accessor named priv in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+      }
     }
   }
 
@@ -870,93 +959,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
   }
 
-  group("support using method calls to fill values from target type") {
-    case class Foobar(param: String) {
-      val valField: String = "valField"
-      lazy val lazyValField: String = "lazyValField"
-
-      def method1: String = "method1"
-
-      def method2: String = "method2"
-
-      def method3: String = "method3"
-
-      def method5: String = "method5"
-
-      def method4: String = "method4"
-
-      protected def protect: String = "protect"
-
-      private[chimney] def priv: String = "priv"
-    }
-
-    case class Foobar2(param: String, valField: String, lazyValField: String)
-    case class Foobar3(param: String, valField: String, lazyValField: String, method1: String)
-
-    test("val and lazy vals work") {
-      Foobar("param").into[Foobar2].transform ==> Foobar2("param", "valField", "lazyValField")
-    }
-
-    test("works with rename") {
-      case class FooBar4(p: String, v: String, lv: String, m: String)
-
-      val res = Foobar("param")
-        .into[FooBar4]
-        .withFieldRenamed(_.param, _.p)
-        .withFieldRenamed(_.valField, _.v)
-        .withFieldRenamed(_.lazyValField, _.lv)
-        .withFieldRenamed(_.method1, _.m)
-        .enableMethodAccessors
-        .transform
-
-      res ==> FooBar4(p = "param", v = "valField", lv = "lazyValField", m = "method1")
-    }
-
-    test("method is disabled by default") {
-      @unused case class Foobar5(
-          param: String,
-          valField: String,
-          lazyValField: String,
-          method1: String,
-          method2: String,
-          method3: String,
-          method4: String,
-          method5: String
-      )
-      compileErrorsFixed("""Foobar("param").into[Foobar5].transform""").check(
-        "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foobar to io.scalaland.chimney.TotalTransformerProductSpec.Foobar5",
-        "io.scalaland.chimney.TotalTransformerProductSpec.Foobar5",
-        "method1: java.lang.String - no accessor named method1 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-        "method2: java.lang.String - no accessor named method2 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-        "method3: java.lang.String - no accessor named method3 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-        "method4: java.lang.String - no accessor named method4 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-        "method5: java.lang.String - no accessor named method5 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-        "There are methods in io.scalaland.chimney.TotalTransformerProductSpec.Foobar that might be used as accessors for method1 (e.g. method1), method2 (e.g. method2), method3 (e.g. method3) and 2 other constructor arguments/setters in io.scalaland.chimney.TotalTransformerProductSpec.Foobar5. Consider using .enableMethodAccessors.",
-        "Consult https://chimney.readthedocs.io for usage examples."
-      )
-    }
-
-    test("works if transform is configured with .enableMethodAccessors") {
-      Foobar("param").into[Foobar3].enableMethodAccessors.transform ==> Foobar3(
-        param = "param",
-        valField = "valField",
-        lazyValField = "lazyValField",
-        method1 = "method1"
-      )
-    }
-
-    test("protected and private methods are not considered (even if accessible)") {
-      @unused case class Foo2(param: String, protect: String, priv: String)
-
-      compileErrorsFixed("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
-        "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foobar to io.scalaland.chimney.TotalTransformerProductSpec.Foo2",
-        "io.scalaland.chimney.TotalTransformerProductSpec.Foo2",
-        "protect: java.lang.String - no accessor named protect in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-        "priv: java.lang.String - no accessor named priv in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
-        "Consult https://chimney.readthedocs.io for usage examples."
-      )
-    }
-  }
+  // old tests, which could be rewritten into something more structured and better named, but are valuable nonetheless
 
   group("support polymorphic source/target objects and modifiers") {
 
