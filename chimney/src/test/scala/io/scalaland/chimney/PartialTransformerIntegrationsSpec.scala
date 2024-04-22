@@ -20,10 +20,6 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
 
   // TODO: transform from Option-type into non-Option-type, using Partial Transformer for inner type transformation
 
-  // TODO: transform from Either-type into Either-type, using Total Transformer for inner types transformation
-
-  // TODO: transform from Either-type into Either-type, using Partial Transformer for inner types transformation
-
   // TODO: transform Iterable-type to Iterable-type, using Total Transformer for inner type transformation
 
   // TODO: transform Iterable-type to Iterable-type, using Partial Transformer for inner type transformation
