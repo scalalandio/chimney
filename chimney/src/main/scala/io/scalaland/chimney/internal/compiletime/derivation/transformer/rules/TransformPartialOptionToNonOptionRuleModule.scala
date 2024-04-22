@@ -40,6 +40,7 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
           // ${ src }.fold[partial.Result[$To]](partial.Result.empty, { innerFrom: $InnerFrom =>
           //   ${ derivedResultTo } // wrap if needed
           // })
+          // but working with every OptionalValue
           optionalValue.fold[partial.Result[To]](
             ctx.src,
             ChimneyExpr.PartialResult.fromEmpty[To],
