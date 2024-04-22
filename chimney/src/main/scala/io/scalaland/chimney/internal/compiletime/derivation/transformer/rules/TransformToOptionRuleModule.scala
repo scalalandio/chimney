@@ -1,6 +1,5 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
-import io.scalaland.chimney.integrations.OptionalValue
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 

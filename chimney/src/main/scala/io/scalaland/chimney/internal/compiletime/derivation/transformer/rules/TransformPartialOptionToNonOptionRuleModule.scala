@@ -6,7 +6,7 @@ import io.scalaland.chimney.partial
 
 private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: Derivation =>
 
-  import Type.Implicits.*, ChimneyType.Implicits.*
+  import ChimneyType.Implicits.*
 
   protected object TransformPartialOptionToNonOptionRule extends Rule("PartialOptionToNonOption") {
 
