@@ -357,7 +357,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             extractedSrcExpr: Expr[Source]
         ): DerivationResult[ExistentialExpr] = Type[Source] match {
           case Product.Extraction(getters) =>
-            getters.filter { case (fromName, getter) => areFieldNamesMatching(fromName, sourceName) }.toList match {
+            getters.filter { case (fromName, _) => areFieldNamesMatching(fromName, sourceName) }.toList match {
               case Nil =>
                 DerivationResult.assertionError(
                   s"""|Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found
