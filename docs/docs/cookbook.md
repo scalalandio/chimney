@@ -1206,60 +1206,290 @@ We can validate using the dedicated type class (`Validate`), while extraction is
 ## Custom optional types
 
 In case your library/domain defines custom Optional types, you can provide your own handling of such types through
-implicits. Implicits we suggest you consider for implementation are:
-
-  - non-optional type into optional-type of your option (`Transformer`)
-  - optional-type into another optional-type of your option (`Transformer`)
-  - optional-type into non-optional-type of your type (`PartialTransformer`)
-  - optional-type of your option into `scala.Option` (`Transformer`)
-  - `scala.Option` into optional-type of your option (`Transformer`)
-
-It could look like this:
+`io.scalaland.chimney.integrations.OptionalValue`. It could look like this:
 
 !!! example
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
-    import io.scalaland.chimney._
 
+    // When you define your own optional...
     sealed trait MyOptional[+A]
     object MyOptional {
       case class Present[+A](value: A) extends MyOptional[A]
       case object Absent extends MyOptional[Nothing]
+      
+      def apply[A](value: A): MyOptional[A] = if (value != null) Present(value) else Absent
     }
+    
+    // ...you can provide Chimney support for it...
+    import io.scalaland.chimney.integrations.OptionalValue
 
-    implicit def nonOptionalToOptional[A, B](implicit aToB: Transformer[A, B]): Transformer[A, MyOptional[B]] =
-      a => MyOptional.Present(aToB.transform(a))
-
-    implicit def optionalToOptional[A, B](implicit aToB: Transformer[A, B]): Transformer[MyOptional[A], MyOptional[B]] = {
-      case MyOptional.Present(a) => MyOptional.Present(aToB.transform(a))
-      case MyOptional.Absent     => MyOptional.Absent
-    }
-
-    implicit def optionalToNonOptional[A, B](implicit aToB: Transformer[A, B]): PartialTransformer[MyOptional[A], B] =
-      PartialTransformer {
-        case MyOptional.Present(a) => partial.Result.fromValue(aToB.transform(a))
-        case MyOptional.Absent     => partial.Result.fromEmpty
+    implicit def myOptionalIsOptionalValue[A]: OptionalValue[MyOptional[A], A] = new OptionalValue[MyOptional[A], A] {
+      override def empty: MyOptional[A] = MyOptional.Absent
+      // to match Option's' behavior, it should handle nulls
+      override def of(value: A): MyOptional[A] = MyOptional(value)
+      override def fold[A0](oa: MyOptional[A], onNone: => A0, onSome: A => A0): A0 = oa match {
+        case MyOptional.Present(value) => onSome(value)
+        case MyOptional.Absent         => onNone
       }
-
-    implicit def optionalToOption[A, B](implicit aToB: Transformer[A, B]): Transformer[MyOptional[A], Option[B]] = {
-      case MyOptional.Present(a) => Some(aToB.transform(a))
-      case MyOptional.Absent     => None
     }
+    
+    // ...so you could use it:
+    import io.scalaland.chimney.dsl._
+    
+    // for converting between Option and custom optional type
+    Option("test").transformInto[MyOptional[String]] // MyOptional.Present("test")
+    MyOptional("test").transformInto[Option[String]] // Some("test")
+    
+    // for automatinc wrapping with custom optional type
+    "test".transformInto[MyOptional[String]] // MyOptional.Present("test")
+    
+    // for safe unwrapping with PartialTransformers
+    MyOptional("test").transformIntoPartial[String].asOption // Option("test")
+    MyOptional("test").transformIntoPartial[String].asOption // Option("test")
+    
+    case class Foo(value: String)
+    case class Bar(value: String, another: Double)
+    
+    // for overriding values with path to optional value like with Option
+    MyOptional(Foo("test"))
+      .into[MyOptional[Bar]]
+      .withFieldConst(_.matchingSome.another, 3.14)
+      .transform // MyOptional(Bar("test", 3.14))
+    ```
 
-    implicit def optionToOptional[A, B](implicit aToB: Transformer[A, B]): Transformer[Option[A], MyOptional[B]] = {
-      case Some(a) => MyOptional.Present(aToB.transform(a))
-      case None    => MyOptional.Absent
+As you can see, once you provide 1 implicit your custom optional type:
+
+ * can be converted to/from `scala.Option` (and other optional types)
+ * can automatically wrap value
+ * can automatically unwrap value in `PartialTransformer`s
+ * can be used with `matchingSome` path in `withFieldConst`/`withFieldComputed`/etc
+
+## Custom collection types
+
+In case your library/domain defines custom collections - which are:
+ * NOT providing `scala.collection.Factory` (2.13/3) or `scala.collection.genric.CanBuildFrom` (2.12)
+ * or NOT extending `Iterable`
+
+you have to provide some configuration to help Chimney work with them.
+
+Most of the time a collection doesn't perform any sort of validations, and you can always put items in it:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    // When you define your own collection...
+    class MyCollection[+A] private (private val impl: Vector[A]) {
+  
+      def iterator: Iterator[A] = impl.iterator
+  
+      override def equals(obj: Any): Boolean = obj match {
+        case myCollection: MyCollection[?] => impl == myCollection.impl
+        case _                             => false
+      }
+      override def hashCode(): Int = impl.hashCode()
     }
+    object MyCollection {
+  
+      def of[A](as: A*): MyCollection[A] = new MyCollection(Vector(as*))
+      def from[A](vector: Vector[A]): MyCollection[A] = new MyCollection(vector)
+    }
+    
+    // ...you can provide Chimney support for it...
+    import io.scalaland.chimney.integrations.{ FactoryCompat, TotallyBuildIterable }
+    import scala.collection.mutable
+
+    implicit def myCollectionIsTotallyBuildIterable[A]: TotallyBuildIterable[MyCollection[A], A] =
+      new TotallyBuildIterable[MyCollection[A], A] {
+        // Factory for your type
+        def totalFactory: Factory[A, MyCollection[A]] = new FactoryCompat[A, MyCollection[A]] {
+  
+          override def newBuilder: mutable.Builder[A, MyCollection[A]] =
+            new FactoryCompat.Builder[A, MyCollection[A]] {
+              private val implBuilder = Vector.newBuilder[A]
+  
+              override def clear(): Unit = implBuilder.clear()
+  
+              override def result(): MyCollection[A] = MyCollection.from(implBuilder.result())
+  
+              override def addOne(elem: A): this.type = { implBuilder += elem; this }
+            }
+        }
+  
+        // your type as Iterator
+        override def iterator(collection: MyCollection[A]): Iterator[A] = collection.iterator
+      }
+      
+    // ...so you could use it:
+    import io.scalaland.chimney.dsl._
+    
+    // for converting to and from standard library collection (or any other type supported this way)
+    MyCollection("a", "b").transformInto[List[String]] // List("a", "b")
+    List("a", "b").transformInto[MyCollection[String]] // MyCollection("a", "b")
+    
+    case class Foo(value: String)
+    case class Bar(value: String, another: Double)
+    
+    // for overriding values with path to items like with standard library's collections
+    List(Foo("test"))
+      .into[MyCollection[Bar]]
+      .withFieldConst(_.everyItem.another, 3.14)
+      .transform // MyCollection(Bar("test", 3.14))
+    ```
+
+If your collection performs some sort of validation, you integrate it with Chimney as well:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    // When you define your own collection...
+    class NonEmptyCollection[+A] private (private val impl: Vector[A]) {
+    
+      def iterator: Iterator[A] = impl.iterator
+  
+      override def equals(obj: Any): Boolean = obj match {
+        case nonEmptyCollection: NonEmptyCollection[?] => impl == nonEmptyCollection.impl
+        case _                                         => false
+      }
+      override def hashCode(): Int = impl.hashCode()
+    }
+    object NonEmptyCollection {
+  
+      def of[A](a: A, as: A*): NonEmptyCollection[A] = new NonEmptyCollection(Vector((a +: as)*))
+      def from[A](vector: Vector[A]): Option[NonEmptyCollection[A]] =
+        if (vector.nonEmpty) Some(new NonEmptyCollection(vector)) else None
+    }
+    
+    // ...you can provide Chimney support for it...
+    import io.scalaland.chimney.integrations.{ FactoryCompat, PartiallyBuildIterable }
+    import io.scalaland.chimney.partial
+    import scala.collection.mutable
+
+    implicit def nonEmptyCollectionIsPartiallyBuildIterable[A]: PartiallyBuildIterable[NonEmptyCollection[A], A] =
+      new PartiallyBuildIterable[NonEmptyCollection[A], A] {
+  
+        // notice, that this Factory returns partial.Result of your collection!
+        def partialFactory: Factory[A, partial.Result[NonEmptyCollection[A]]] =
+          new FactoryCompat[A, partial.Result[NonEmptyCollection[A]]] {
+  
+            override def newBuilder: mutable.Builder[A, partial.Result[NonEmptyCollection[A]]] =
+              new FactoryCompat.Builder[A, partial.Result[NonEmptyCollection[A]]] {
+                private val implBuilder = Vector.newBuilder[A]
+  
+                override def clear(): Unit = implBuilder.clear()
+  
+                override def result(): partial.Result[NonEmptyCollection[A]] =
+                  partial.Result.fromOption(NonEmptyCollection.from(implBuilder.result()))
+  
+                override def addOne(elem: A): this.type = { implBuilder += elem; this }
+              }
+          }
+  
+        override def iterator(collection: NonEmptyCollection[A]): Iterator[A] = collection.iterator
+      }
+      
+    // ...so you could use it:
+    import io.scalaland.chimney.dsl._
+    
+    // for validating that your collection can be created once all items have been put into Builder
+    List("a").transformIntoPartial[NonEmptyCollection[String]].asOption // Some(NonEmptyCollection("a"))
+    List.empty[String].transformIntoPartial[NonEmptyCollection[String]].asOption // None
     ```
     
-These 5 implicits are the bare minimum to make sure that:
+For map types there are specialized versions of these type classes:
 
-  - your types will be automatically wrapped (always) and unwrapped (only with `PartialTransformer`s which can do it
-    safely)
-  - you can convert all kinds of values wrapped in your optional type
-  - you can convert to and from `scala.Option`
+!!! example
 
-An example of this approach can be seen in
-[Java collections integration implementation](https://github.com/scalalandio/chimney/tree/master/chimney-java-collections/src/main/scala/io/scalaland/chimney/javacollections)
-where it was used to provide support for `java.util.Optional`.  
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    import io.scalaland.chimney.integrations._
+    import io.scalaland.chimney.partial
+    import scala.collection.mutable
+
+    class MyMap[+K, +V] private (private val impl: Vector[(K, V)]) {
+  
+      def iterator: Iterator[(K, V)] = impl.iterator
+  
+      override def equals(obj: Any): Boolean = obj match {
+        case customMap: MyMap[?, ?] => impl == customMap.impl
+        case _                          => false
+      }
+      override def hashCode(): Int = impl.hashCode()
+    }
+    object MyMap {
+  
+      def of[K, V](pairs: (K, V)*): MyMap[K, V] = new MyMap(Vector(pairs*))
+      def from[K, V](vector: Vector[(K, V)]): MyMap[K, V] = new MyMap(vector)
+    }
+  
+    implicit def customMapIsTotallyBuildMap[K, V]: TotallyBuildMap[MyMap[K, V], K, V] =
+      new TotallyBuildMap[MyMap[K, V], K, V] {
+  
+        def totalFactory: Factory[(K, V), MyMap[K, V]] = new FactoryCompat[(K, V), MyMap[K, V]] {
+  
+          override def newBuilder: mutable.Builder[(K, V), MyMap[K, V]] =
+            new FactoryCompat.Builder[(K, V), MyMap[K, V]] {
+              private val implBuilder = Vector.newBuilder[(K, V)]
+  
+              override def clear(): Unit = implBuilder.clear()
+  
+              override def result(): MyMap[K, V] = MyMap.from(implBuilder.result())
+  
+              override def addOne(elem: (K, V)): this.type = { implBuilder += elem; this }
+            }
+        }
+  
+        override def iterator(collection: MyMap[K, V]): Iterator[(K, V)] = collection.iterator
+      }
+  
+    class NonEmptyMap[+K, +V] private (private val impl: Vector[(K, V)]) {
+  
+      def iterator: Iterator[(K, V)] = impl.iterator
+  
+      override def equals(obj: Any): Boolean = obj match {
+        case nonEmptyMap: NonEmptyMap[?, ?] => impl == nonEmptyMap.impl
+        case _                              => false
+      }
+      override def hashCode(): Int = impl.hashCode()
+    }
+    object NonEmptyMap {
+  
+      def of[K, V](pair: (K, V), pairs: (K, V)*): NonEmptyMap[K, V] = new NonEmptyMap(Vector((pair +: pairs)*))
+      def from[K, V](vector: Vector[(K, V)]): Option[NonEmptyMap[K, V]] =
+        if (vector.nonEmpty) Some(new NonEmptyMap(vector)) else None
+    }
+  
+    implicit def nonEmptyMapIsPartiallyBuildMap[K, V]: PartiallyBuildMap[NonEmptyMap[K, V], K, V] =
+      new PartiallyBuildMap[NonEmptyMap[K, V], K, V] {
+  
+        def partialFactory: Factory[(K, V), partial.Result[NonEmptyMap[K, V]]] =
+          new FactoryCompat[(K, V), partial.Result[NonEmptyMap[K, V]]] {
+  
+            override def newBuilder: mutable.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] =
+              new FactoryCompat.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] {
+                private val implBuilder = Vector.newBuilder[(K, V)]
+  
+                override def clear(): Unit = implBuilder.clear()
+  
+                override def result(): partial.Result[NonEmptyMap[K, V]] =
+                  partial.Result.fromOption(NonEmptyMap.from(implBuilder.result()))
+  
+                override def addOne(elem: (K, V)): this.type = { implBuilder += elem; this }
+              }
+          }
+  
+        override def iterator(collection: NonEmptyMap[K, V]): Iterator[(K, V)] = collection.iterator
+      }
+    ```
+    
+The only 2 difference they make is that:
+ - when we are converting with `PartialTransformer` failures will be reported on map keys instead of `_1` and `_2` field
+   of a tuple in a sequence (e.g. `keys(myKey)` - if key conversion failed for `myKey` value or `(myKey)` if value
+   conversion failed for `myKey` key, instead of `(0)._1` or `(0)._2`)
+ - they allow usage of `everyMapKey` and `everyMapValue` in paths, just like with standard library's `Maps`.
