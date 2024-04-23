@@ -71,7 +71,8 @@ trait TotallyBuildIterables { this: Derivation =>
         Existential[TotallyBuildIterable[M, *], Item](
           new TotallyBuildIterable[M, Item] {
 
-            def totalFactory: Expr[Factory[Item, M]] = Expr.summonImplicitUnsafe[Factory[Item, M]]
+            def totalFactory: Expr[Factory[Item, M]] =
+              iora.factory
 
             def iterator(collection: Expr[M]): Expr[Iterator[Item]] =
               iora.iterator(collection)

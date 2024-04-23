@@ -93,6 +93,14 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
 
     List("a").transformInto[Seq[String]] ==> Seq("a")
     Vector("a").transformInto[Seq[String]] ==> Seq("a")
+
+    scala.collection.immutable
+      .List("a", "b")
+      .transformInto[scala.collection.mutable.ListBuffer[String]] ==> scala.collection.mutable
+      .ListBuffer[String]("a", "b")
+    scala.collection.mutable
+      .ListBuffer("a", "b")
+      .transformInto[scala.collection.immutable.List[String]] ==> scala.collection.immutable.List[String]("a", "b")
   }
 
   test("transform from Array-type to Array-type") {
@@ -128,6 +136,17 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     Map("test" -> "a").transformInto[Map[String, String]] ==> Map("test" -> "a")
     Map(Foo("test") -> "x").transformInto[Map[Bar, String]] ==> Map(Bar("test") -> "x")
     Map(Foo("test") -> Foo("x")).transformInto[Map[Bar, Bar]] ==> Map(Bar("test") -> Bar("x"))
+
+    scala.collection.immutable
+      .Map("a" -> "b")
+      .transformInto[scala.collection.mutable.Map[String, String]] ==> scala.collection.mutable.Map[String, String](
+      "a" -> "b"
+    )
+    scala.collection.mutable
+      .Map("a" -> "b")
+      .transformInto[scala.collection.immutable.Map[String, String]] ==> scala.collection.immutable.Map[String, String](
+      "a" -> "b"
+    )
   }
 
   test("transform between Iterables and Maps") {

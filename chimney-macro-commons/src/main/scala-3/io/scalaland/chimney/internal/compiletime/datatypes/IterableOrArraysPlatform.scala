@@ -3,6 +3,7 @@ package io.scalaland.chimney.internal.compiletime.datatypes
 import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 
 import scala.collection.compat.*
+import scala.reflect.ClassTag
 
 trait IterableOrArraysPlatform extends IterableOrArrays { this: DefinitionsPlatform =>
 
@@ -13,6 +14,13 @@ trait IterableOrArraysPlatform extends IterableOrArrays { this: DefinitionsPlatf
         import inner.Underlying as Inner
         Existential[IterableOrArray[M, *], Inner](
           new IterableOrArray[M, Inner] {
+            def factory: Expr[Factory[Inner, M]] =
+              '{
+                io.scalaland.chimney.integrations.FactoryCompat.iarrayFactory[Inner](${
+                  Expr.summonImplicitUnsafe[ClassTag[Inner]]
+                })
+              }.asExprOf[Factory[Inner, M]]
+
             def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
               m.upcastToExprOf[IArray[Inner]].iterator
 

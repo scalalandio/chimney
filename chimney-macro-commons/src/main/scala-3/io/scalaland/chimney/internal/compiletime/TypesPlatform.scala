@@ -120,17 +120,29 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     object Array extends ArrayModule {
       def apply[A: Type]: Type[Array[A]] = quoted.Type.of[Array[A]]
       def unapply[A](A: Type[A]): Option[??] = A match {
-        case '[Array[inner]] => Some(Type[inner].as_??)
-        case _               => scala.None
+        // apparently IArray as opaque type is seen as some weird Array-type... sometimes
+        case _ if IArray.unapply(A).isDefined => scala.None
+        case '[scala.Array[inner]]            => Some(Type[inner].as_??)
+        case _                                => scala.None
       }
     }
 
     // Scala-3-specific
     object IArray extends Ctor1[IArray] {
       def apply[A: Type]: Type[IArray[A]] = quoted.Type.of[IArray[A]]
-      def unapply[A](A: Type[A]): Option[??] = A match {
-        case '[IArray[inner]] => Some(Type[inner].as_??)
-        case _                => scala.None
+      def unapply[A](A: Type[A]): Option[??] = {
+        val repr = TypeRepr.of(using A)
+        val code = repr.show(using Printer.TypeReprCode)
+        A match {
+          case '[scala.IArray[inner]] => Some(Type[inner].as_??)
+          // apparently IArray as opaque type is seen as some weird Array-type... sometimes
+          case _ if code.startsWith("$proxy1.IArray[") || code.startsWith("scala.IArray$package.IArray[") =>
+            repr match {
+              case AppliedType(_, List(inner)) => Some(platformSpecific.fromUntyped(inner).as_??)
+              case _                           => None
+            }
+          case _ => scala.None
+        }
       }
     }
 
@@ -238,13 +250,5 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         }
         .getOrElse(repr.toString)
     }
-  }
-
-  implicit final protected class IArrayExprOps[A: Type](private val iarrayExpr: Expr[IArray[A]]) {
-
-    def map[B: Type](fExpr: Expr[A => B]): Expr[IArray[B]] = Expr.IArray.map(iarrayExpr)(fExpr)
-    def to[C: Type](factoryExpr: Expr[scala.collection.compat.Factory[A, C]]): Expr[C] =
-      Expr.IArray.to(iarrayExpr)(factoryExpr)
-    def iterator: Expr[Iterator[A]] = Expr.IArray.iterator(iarrayExpr)
   }
 }

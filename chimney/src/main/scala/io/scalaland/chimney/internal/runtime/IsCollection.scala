@@ -17,7 +17,7 @@ import scala.collection.compat.Factory
 sealed trait IsCollection[C] {
   type Item
 }
-object IsCollection extends IsCollectionImplicits0 {
+object IsCollection extends IsCollectionImplicits0 with IsCollectionImplicitCompat {
   @implicitNotFound(
     "Expected collection (type extending scala.Iterable which has scala.collection.compat.Factory instance), got ${C}"
   )

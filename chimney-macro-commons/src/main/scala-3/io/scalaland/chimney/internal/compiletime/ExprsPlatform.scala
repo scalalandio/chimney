@@ -39,10 +39,10 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     object Array extends ArrayModule {
       def apply[A: Type](args: Expr[A]*): Expr[Array[A]] =
-        '{ scala.Array.apply[A](${ quoted.Varargs(args.toSeq) }*)(${ summonImplicitUnsafe[ClassTag[A]] }) }
+        '{ scala.Array.apply[A](${ quoted.Varargs[A](args.toSeq) }*)(${ summonImplicitUnsafe[ClassTag[A]] }) }
 
       def map[A: Type, B: Type](array: Expr[Array[A]])(fExpr: Expr[A => B]): Expr[Array[B]] =
-        '{ ${ resetOwner(array) }.map(${ resetOwner(fExpr) })(${ summonImplicit[ClassTag[B]].get }) }
+        '{ ${ resetOwner(array) }.map(${ resetOwner(fExpr) })(${ summonImplicitUnsafe[ClassTag[B]] }) }
 
       def to[A: Type, C: Type](array: Expr[Array[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
@@ -55,17 +55,17 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     // Scala-3-specific
     object IArray {
       def apply[A: Type](args: Expr[A]*): Expr[IArray[A]] =
-        '{ scala.IArray.apply[A](${ quoted.Varargs(args.toSeq) }*)(using ${ summonImplicitUnsafe[ClassTag[A]] }) }
+        '{ scala.IArray.apply[A](${ quoted.Varargs[A](args.toSeq) }*)(using ${ summonImplicitUnsafe[ClassTag[A]] }) }
 
-      def map[A: Type, B: Type](array: Expr[IArray[A]])(fExpr: Expr[A => B]): Expr[IArray[B]] =
-        '{ ${ resetOwner(array) }.map(${ resetOwner(fExpr) })(${ summonImplicit[ClassTag[B]].get }) }
+      def map[A: Type, B: Type](iarray: Expr[IArray[A]])(fExpr: Expr[A => B]): Expr[scala.IArray[B]] =
+        '{ ${ resetOwner(iarray) }.map(${ resetOwner(fExpr) })(${ summonImplicitUnsafe[ClassTag[B]] }) }
 
-      def to[A: Type, C: Type](array: Expr[IArray[A]])(
+      def to[A: Type, C: Type](iarray: Expr[IArray[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
       ): Expr[C] =
-        '{ ${ resetOwner(array) }.to(${ factoryExpr }) }
+        '{ ${ resetOwner(iarray) }.to(${ factoryExpr }) }
 
-      def iterator[A: Type](array: Expr[IArray[A]]): Expr[Iterator[A]] = '{ ${ resetOwner(array) }.iterator }
+      def iterator[A: Type](iarray: Expr[IArray[A]]): Expr[Iterator[A]] = '{ ${ resetOwner(iarray) }.iterator }
     }
 
     object Option extends OptionModule {
@@ -167,5 +167,13 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         .replaceAll("\\$\\d+", "")
 
     def typeOf[A](expr: Expr[A]): Type[A] = Type.platformSpecific.fromUntyped[A](expr.asTerm.tpe)
+  }
+
+  implicit final protected class IArrayExprOps[A: Type](private val iarrayExpr: Expr[IArray[A]]) {
+
+    def map[B: Type](fExpr: Expr[A => B]): Expr[IArray[B]] = Expr.IArray.map(iarrayExpr)(fExpr)
+    def to[C: Type](factoryExpr: Expr[scala.collection.compat.Factory[A, C]]): Expr[C] =
+      Expr.IArray.to(iarrayExpr)(factoryExpr)
+    def iterator: Expr[Iterator[A]] = Expr.IArray.iterator(iarrayExpr)
   }
 }
