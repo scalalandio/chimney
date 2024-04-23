@@ -367,7 +367,7 @@ lazy val root = project
 
 lazy val chimneyMacroCommons = projectMatrix
   .in(file("chimney-macro-commons"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE *)
+  .someVariations(versions.scalas, versions.platforms)((preAndPost212 +: only1VersionInIDE) *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
