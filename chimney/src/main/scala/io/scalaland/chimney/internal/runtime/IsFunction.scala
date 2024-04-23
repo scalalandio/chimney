@@ -2,6 +2,8 @@ package io.scalaland.chimney.internal.runtime
 
 import scala.annotation.implicitNotFound
 
+// $COVERAGE-OFF$evidence used only within macro-erased expressions
+
 /** Allow us to provide some better IDE support than just accepting everything as a parameter and waiting for the macro
   * to scream with compilation error, in the world where different function types have no common ancestor (other than
   * AnyRef).
@@ -14,11 +16,14 @@ import scala.annotation.implicitNotFound
 sealed trait IsFunction[Fn] {
   type Out
 }
-object IsFunction extends IsFunctionLowPriorityImplicits {
+object IsFunction extends IsFunctionImplicits0 {
   @implicitNotFound(
     "Expected function of any arity (scala.Function0, scala.Function1, scala.Function2, ...) that returns a value of ${Out0}, got ${Fn}"
   )
   type Of[Fn, Out0] = IsFunction[Fn] { type Out = Out0 }
+}
+
+private[runtime] trait IsFunctionImplicits0 extends IsFunctionImplicits1 { this: IsFunction.type =>
 
   private def cast[A, Out](of: Of[?, Out]): Of[A, Out] = of.asInstanceOf[Of[A, Out]]
 
@@ -83,7 +88,7 @@ object IsFunction extends IsFunctionLowPriorityImplicits {
       ev: Of[Mid, Out]
   ): Of[(A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) => Mid, Out] = cast(ev)
 }
-private[runtime] trait IsFunctionLowPriorityImplicits { this: IsFunction.type =>
+private[runtime] trait IsFunctionImplicits1 { this: IsFunction.type =>
 
   private val impl = new IsFunction[Any] {}
   private def cast[Fn, Out]: Of[Fn, Out] = impl.asInstanceOf[Of[Fn, Out]]

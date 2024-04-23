@@ -10,19 +10,20 @@ import io.scalaland.chimney.partial
   *
   * @since 1.0.0
   */
-trait FuncionEitherToResult[FnE] {
+trait FunctionEitherToResult[FnE] {
   type FnR
 
   def lift(fn: FnE): FnR
 }
+object FunctionEitherToResult extends FunctionEitherToResultImplicits0 {
 
-object FuncionEitherToResult {
-
-  type Aux[FnE, FnR0] = FuncionEitherToResult[FnE] { type FnR = FnR0 }
+  type Aux[FnE, FnR0] = FunctionEitherToResult[FnE] { type FnR = FnR0 }
 
   def lift[FnE, FnR](fn: FnE)(implicit liftFn: Aux[FnE, FnR]): FnR = liftFn.lift(fn)
+}
+private[runtime] trait FunctionEitherToResultImplicits0 { this: FunctionEitherToResult.type =>
 
-  private def make[FnE, FnR0](l: FnE => FnR0): Aux[FnE, FnR0] = new FuncionEitherToResult[FnE] {
+  private def make[FnE, FnR0](l: FnE => FnR0): Aux[FnE, FnR0] = new FunctionEitherToResult[FnE] {
     type FnR = FnR0
     def lift(fn: FnE): FnR = l(fn)
   }

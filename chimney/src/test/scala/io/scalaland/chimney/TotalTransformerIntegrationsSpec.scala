@@ -32,7 +32,11 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
     (null: String).transformInto[Possible[String]] ==> Possible.Nope
   }
 
-  // TODO: transform from Iterable-type to Iterable-type
+  test("transform from TotallyBuildIterable to TotallyBuildIterable") {
+    CustomCollection.of(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))
+    Seq(Foo("a")).transformInto[CustomCollection[Bar]] ==> CustomCollection.of(Bar("a"))
+    CustomCollection.of(Foo("a")).transformInto[CustomCollection[Bar]] ==> CustomCollection.of(Bar("a"))
+  }
 
   // TODO: transform between Array-type and Iterable-type
 

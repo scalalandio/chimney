@@ -6,7 +6,7 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Transfor
 import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
 import io.scalaland.chimney.internal.runtime.{
   ArgumentLists,
-  FuncionEitherToResult,
+  FunctionEitherToResult,
   Path,
   TransformerFlags,
   TransformerOverrides,
@@ -244,8 +244,8 @@ object PartialTransformerDefinitionMacros {
             WithRuntimeDataStore
               .update(
                 $ti,
-                FuncionEitherToResult.lift[Ctor, Any]($f)(
-                  ${ Expr.summon[FuncionEitherToResult[Ctor]].get }.asInstanceOf[FuncionEitherToResult.Aux[Ctor, Any]]
+                FunctionEitherToResult.lift[Ctor, Any]($f)(
+                  ${ Expr.summon[FunctionEitherToResult[Ctor]].get }.asInstanceOf[FunctionEitherToResult.Aux[Ctor, Any]]
                 )
               )
               .asInstanceOf[PartialTransformerDefinition[
