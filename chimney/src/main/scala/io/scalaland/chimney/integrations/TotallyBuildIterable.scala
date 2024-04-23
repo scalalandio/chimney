@@ -25,4 +25,7 @@ trait TotallyBuildIterable[Collection, Item] {
   /** Converts Collection into `Collection2`. */
   def to[Collection2](collection: Collection, factory: Factory[Item, Collection2]): Collection2 =
     FactoryCompat.iteratorTo(iterator(collection), factory)
+    
+  def narrow[Collection2 <: Collection]: TotallyBuildIterable[Collection2, Item] =
+    this.asInstanceOf[TotallyBuildIterable[Collection2, Item]]
 }
