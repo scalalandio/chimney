@@ -39,7 +39,8 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
       ): Expr[C] =
         // on Scala 2.12 .to(Factory[(k, v), M) creates... Iterable[(k, v)]
-        if (isScala212) c.Expr[C](q"$array.to($factoryExpr).asInstanceOf[${Type[C]}]")
+        if (isScala212)
+          c.Expr[C](q"_root_.io.scalaland.chimney.integrations.FactoryCompat.arrayTo($array, $factoryExpr)")
         else c.Expr[C](q"$array.to($factoryExpr)")
 
       def iterator[A: Type](array: Expr[Array[A]]): Expr[Iterator[A]] = c.Expr[Iterator[A]](q"$array.iterator")
@@ -90,8 +91,9 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def to[A: Type, C: Type](iterable: Expr[Iterable[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
       ): Expr[C] =
-        // on Scala 2.12 .to(Factory[(k, v), M) creates... Iterable[(k, v)]
-        if (isScala212) c.Expr[C](q"$iterable.to($factoryExpr).asInstanceOf[${Type[C]}]")
+        // on Scala 2.12 .to(Factory[(k, v), M) creates... Iterable[(k, v)] and Factory[A, Hardcoded] creates... error
+        if (isScala212)
+          c.Expr[C](q"_root_.io.scalaland.chimney.integrations.FactoryCompat.iterableTo($iterable, $factoryExpr)")
         else c.Expr[C](q"$iterable.to($factoryExpr)")
 
       def iterator[A: Type](iterable: Expr[Iterable[A]]): Expr[Iterator[A]] = c.Expr[Iterator[A]](q"$iterable.iterator")
@@ -109,8 +111,9 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       def to[A: Type, C: Type](iterator: Expr[Iterator[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
       ): Expr[C] =
-        // on Scala 2.12 .to(Factory[(k, v), M) creates... Iterable[(k, v)]
-        if (isScala212) c.Expr[C](q"$iterator.to($factoryExpr).asInstanceOf[${Type[C]}]")
+        // on Scala 2.12 .to(Factory[(k, v), M) creates... Iterable[(k, v)] and Factory[A, Hardcoded] creates... error
+        if (isScala212)
+          c.Expr[C](q"_root_.io.scalaland.chimney.integrations.FactoryCompat.iteratorTo($iterator, $factoryExpr)")
         else c.Expr[C](q"$iterator.to($factoryExpr)")
 
       def zipWithIndex[A: Type](it: Expr[Iterator[A]]): Expr[Iterator[(A, Int)]] =
