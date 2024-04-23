@@ -639,17 +639,17 @@ by [editing the protobuf](https://scalapb.github.io/docs/customizations#file-lev
 !!! example
 
     ```protobuf
-     option (scalapb.options) = {
-       preserve_unknown_fields: false
-     };
-     ```
+    option (scalapb.options) = {
+      preserve_unknown_fields: false
+    };
+    ```
 
-    dding to [package-scoped options](https://scalapb.github.io/docs/customizations#package-scoped-options).
-    he field won't be generated in the first place, there will be no issues with providing values to it.
+or adding to [package-scoped options](https://scalapb.github.io/docs/customizations#package-scoped-options).
+If the field won't be generated in the first place, there will be no issues with providing values to it.
 
-    his point, one might also consider another option:
+At this point, one might also consider another option:
 
-    example
+!!! example
 
     ```protobuf
     option (scalapb.options) = {
