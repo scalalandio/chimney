@@ -19,7 +19,10 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
         case (OptionalValue(from2), OptionalValue(to2)) =>
           import from2.{Underlying as InnerFrom, value as optionalFrom},
             to2.{Underlying as InnerTo, value as optionalTo}
-          mapOptions[From, To, InnerFrom, InnerTo](optionalFrom, optionalTo)
+          DerivationResult.log(
+            s"Resolved ${Type.prettyPrint[From]} (${from2.value}) and ${Type.prettyPrint[To]} (${to2.value}) as optional types"
+          ) >>
+            mapOptions[From, To, InnerFrom, InnerTo](optionalFrom, optionalTo)
         case _ =>
           DerivationResult.attemptNextRule
       }

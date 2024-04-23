@@ -17,7 +17,8 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
             case TransformationContext.ForPartial(_, _) =>
               if (ctx.config.flags.partialUnwrapsOption) {
                 import from2.{Underlying as InnerFrom, value as optionalValue}
-                mapOptionToPartial[From, To, InnerFrom](optionalValue)
+                DerivationResult.log(s"Resolved ${Type.prettyPrint[From]} (${from2.value}) as optional type") >>
+                  mapOptionToPartial[From, To, InnerFrom](optionalValue)
               } else {
                 DerivationResult.attemptNextRuleBecause(
                   "Safe Option unwrapping was disabled by a flag"
