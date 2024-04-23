@@ -62,6 +62,8 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     (null: String).transformInto[Option[String]] ==> None
   }
 
+  // TODO: matchingSome
+
   test("transform from Either-type into Either-type") {
     (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Left(Bar("a"))
     (Right(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Right(Bar("a"))
@@ -72,6 +74,8 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     (Left("a"): Either[String, String]).transformInto[Either[String, String]] ==> Left("a")
     (Right("a"): Either[String, String]).transformInto[Either[String, String]] ==> Right("a")
   }
+
+  // TODO: matchingLeft, matchingRight
 
   test("transform from Iterable-type to Iterable-type") {
     Seq(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))

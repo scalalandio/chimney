@@ -8,6 +8,7 @@ import scala.annotation.unused
 class PartialTransformerIntegrationsSpec extends ChimneySpec {
 
   import TotalTransformerIntegrationsSpec.*
+  import TotalTransformerStdLibTypesSpec.{Bar, Foo}
 
   group("transform from Option-type into Option-type, using Total Transformer for inner type transformation") {
 
@@ -174,29 +175,518 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     }
   }
 
-  // TODO: transform Iterable-type to Iterable-type, using Total Transformer for inner type transformation
+  // TODO: matchingSome
 
-  // TODO: transform Iterable-type to Iterable-type, using Partial Transformer for inner type transformation
+  test(
+    "transform TotallyBuildIterable/PartiallyBuildIterable to TotallyBuildIterable/PartiallyBuildIterable, using Total Transformer for inner type transformation"
+  ) {
+    implicit val intPrinter: Transformer[Int, String] = _.toString
 
-  // TODO: transform between Array-type and Iterable-type, using Total Transformer for inner type transformation
+    CustomCollection
+      .of(123, 456)
+      .transformIntoPartial[Seq[String]]
+      .asOption ==> Some(Seq("123", "456"))
+    NonEmptyCollection
+      .of(123, 456)
+      .transformIntoPartial[Seq[String]]
+      .asOption ==> Some(Seq("123", "456"))
 
-  // TODO: transform between Array-type and Iterable-type, using Partial Transformer for inner type transformation
+    Seq(123, 456)
+      .transformIntoPartial[CustomCollection[String]]
+      .asOption ==> Some(CustomCollection.of("123", "456"))
+    Seq(123, 456)
+      .transformIntoPartial[NonEmptyCollection[String]]
+      .asOption ==> Some(NonEmptyCollection.of("123", "456"))
+    Seq
+      .empty[Int]
+      .transformIntoPartial[NonEmptyCollection[String]]
+      .asOption ==> None
 
-  // TODO: transform into sequential type with an override
+    CustomCollection
+      .of(123, 456)
+      .transformIntoPartial[CustomCollection[String]]
+      .asOption ==> Some(CustomCollection.of("123", "456"))
+    CustomCollection
+      .of(123, 456)
+      .transformIntoPartial[NonEmptyCollection[String]]
+      .asOption ==> Some(NonEmptyCollection.of("123", "456"))
+    CustomCollection
+      .of[Int]()
+      .transformIntoPartial[NonEmptyCollection[String]]
+      .asOption ==> None
 
-  // TODO: transform Map-type to Map-type, using Total Transformer for inner type transformation
+    NonEmptyCollection
+      .of(123, 456)
+      .transformIntoPartial[CustomCollection[String]]
+      .asOption ==> Some(CustomCollection.of("123", "456"))
+    NonEmptyCollection
+      .of(123, 456)
+      .transformIntoPartial[NonEmptyCollection[String]]
+      .asOption ==> Some(NonEmptyCollection.of("123", "456"))
+  }
 
-  // TODO: transform Map-type to Map-type, using Partial Transformer for inner type transformation
+  test(
+    "transform TotallyBuildIterable/PartiallyBuildIterable to TotallyBuildIterable/PartiallyBuildIterable, using Partial Transformer for inner type transformation"
+  ) {
+    implicit val intParserOpt: PartialTransformer[String, Int] =
+      PartialTransformer(_.parseInt.toPartialResult)
 
-  // TODO: transform between Iterables and Maps, using Total Transformer for inner type transformation
+    CustomCollection
+      .of("123", "456")
+      .transformIntoPartial[Seq[Int]]
+      .asOption ==> Some(Seq(123, 456))
+    NonEmptyCollection
+      .of("123", "456")
+      .transformIntoPartial[Seq[Int]]
+      .asOption ==> Some(Seq(123, 456))
 
-  // TODO: transform between Iterables and Maps, using Partial Transformer for inner type transformation
+    Seq("123", "456")
+      .transformIntoPartial[CustomCollection[Int]]
+      .asOption ==> Some(CustomCollection.of(123, 456))
+    Seq("123", "456")
+      .transformIntoPartial[NonEmptyCollection[Int]]
+      .asOption ==> Some(NonEmptyCollection.of(123, 456))
+    Seq
+      .empty[Int]
+      .transformIntoPartial[NonEmptyCollection[Int]]
+      .asOption ==> None
 
-  // TODO: transform between Arrays and Maps, using Total Transformer for inner type transformation
+    CustomCollection
+      .of("123", "456")
+      .transformIntoPartial[CustomCollection[Int]]
+      .asOption ==> Some(CustomCollection.of(123, 456))
+    CustomCollection
+      .of("123", "456")
+      .transformIntoPartial[NonEmptyCollection[Int]]
+      .asOption ==> Some(NonEmptyCollection.of(123, 456))
+    CustomCollection
+      .of[Int]()
+      .transformIntoPartial[NonEmptyCollection[Int]]
+      .asOption ==> None
 
-  // TODO: transform between Arrays and Maps, using Partial Transformer for inner type transformation
+    NonEmptyCollection
+      .of("123", "456")
+      .transformIntoPartial[CustomCollection[Int]]
+      .asOption ==> Some(CustomCollection.of(123, 456))
+    NonEmptyCollection
+      .of("123", "456")
+      .transformIntoPartial[NonEmptyCollection[Int]]
+      .asOption ==> Some(NonEmptyCollection.of(123, 456))
 
-  // TODO: transform into map type with an override
+    CustomCollection
+      .of("abc", "123", "ghi")
+      .transformIntoPartial[NonEmptyCollection[Int]](failFast = false)
+      .asErrorPathMessageStrings ==> Iterable("(0)" -> "empty value", "(2)" -> "empty value")
+    NonEmptyCollection
+      .of("abc", "123", "ghi")
+      .transformIntoPartial[Seq[Int]](failFast = false)
+      .asErrorPathMessageStrings ==> Iterable("(0)" -> "empty value", "(2)" -> "empty value")
+    Seq("abc", "123", "ghi")
+      .transformIntoPartial[CustomCollection[Int]](failFast = false)
+      .asErrorPathMessageStrings ==> Iterable("(0)" -> "empty value", "(2)" -> "empty value")
+
+    CustomCollection
+      .of("abc", "123", "ghi")
+      .transformIntoPartial[NonEmptyCollection[Int]](failFast = true)
+      .asErrorPathMessageStrings ==> Iterable("(0)" -> "empty value")
+    NonEmptyCollection
+      .of("abc", "123", "ghi")
+      .transformIntoPartial[Seq[Int]](failFast = true)
+      .asErrorPathMessageStrings ==> Iterable("(0)" -> "empty value")
+    Seq("abc", "123", "ghi")
+      .transformIntoPartial[CustomCollection[Int]](failFast = true)
+      .asErrorPathMessageStrings ==> Iterable("(0)" -> "empty value")
+  }
+
+  test(
+    "transform between Array-type and TotallyBuildIterable/PartiallyBuildIterable, using Total Transformer for inner type transformation"
+  ) {
+    implicit val intPrinter: Transformer[Int, String] = _.toString
+
+    Array(123, 456).transformIntoPartial[CustomCollection[String]].asOption ==> Some(CustomCollection.of("123", "456"))
+    Array(123, 456).transformIntoPartial[NonEmptyCollection[String]].asOption ==> Some(
+      NonEmptyCollection.of("123", "456")
+    )
+
+    CustomCollection.of(123, 456).transformIntoPartial[Array[String]].asOption.get ==> Array("123", "456")
+    NonEmptyCollection.of(123, 456).transformIntoPartial[Array[String]].asOption.get ==> Array("123", "456")
+  }
+
+  test(
+    "transform between Array-type and TotallyBuildIterable/PartiallyBuildIterable, using Partial Transformer for inner type transformation"
+  ) {
+    implicit val intParserOpt: PartialTransformer[String, Int] =
+      PartialTransformer(_.parseInt.toPartialResult)
+
+    Array("123", "456").transformIntoPartial[CustomCollection[Int]].asOption ==> Some(CustomCollection.of(123, 456))
+    Array("123", "456").transformIntoPartial[NonEmptyCollection[Int]].asOption ==> Some(NonEmptyCollection.of(123, 456))
+
+    Array("abc", "456").transformIntoPartial[CustomCollection[Int]].asErrorPathMessageStrings ==> Iterable(
+      "(0)" -> "empty value"
+    )
+    Array("abc", "456").transformIntoPartial[NonEmptyCollection[Int]].asErrorPathMessageStrings ==> Iterable(
+      "(0)" -> "empty value"
+    )
+    Array.empty[String].transformIntoPartial[CustomCollection[Int]].asOption ==> Some(CustomCollection.of[Int]())
+    Array.empty[String].transformIntoPartial[NonEmptyCollection[Int]].asOption ==> None
+
+    CustomCollection.of("123", "456").transformIntoPartial[Array[Int]].asOption.get ==> Array(123, 456)
+    NonEmptyCollection.of("123", "456").transformIntoPartial[Array[Int]].asOption.get ==> Array(123, 456)
+    CustomCollection.of("abc", "456").transformIntoPartial[Array[Int]].asErrorPathMessageStrings ==> Iterable(
+      "(0)" -> "empty value"
+    )
+    NonEmptyCollection.of("abc", "456").transformIntoPartial[Array[Int]].asErrorPathMessageStrings ==> Iterable(
+      "(0)" -> "empty value"
+    )
+  }
+
+  test("transform into sequential type with an override") {
+    Seq(Foo("a"))
+      .intoPartial[CustomCollection[Bar]]
+      .withFieldConst(_.everyItem.value, "b")
+      .transform
+      .asOption ==> Some(CustomCollection.of(Bar("b")))
+    CustomCollection
+      .of(Foo("a"))
+      .intoPartial[CustomCollection[Bar]]
+      .withFieldConst(_.everyItem.value, "b")
+      .transform
+      .asOption ==> Some(CustomCollection.of(Bar("b")))
+    NonEmptyCollection
+      .of(Foo("a"))
+      .intoPartial[CustomCollection[Bar]]
+      .withFieldConst(_.everyItem.value, "b")
+      .transform
+      .asOption ==> Some(CustomCollection.of(Bar("b")))
+
+    Seq(Foo("a"))
+      .intoPartial[NonEmptyCollection[Bar]]
+      .withFieldConst(_.everyItem.value, "b")
+      .transform
+      .asOption ==> Some(NonEmptyCollection.of(Bar("b")))
+    CustomCollection
+      .of(Foo("a"))
+      .intoPartial[NonEmptyCollection[Bar]]
+      .withFieldConst(_.everyItem.value, "b")
+      .transform
+      .asOption ==> Some(NonEmptyCollection.of(Bar("b")))
+    NonEmptyCollection
+      .of(Foo("a"))
+      .intoPartial[NonEmptyCollection[Bar]]
+      .withFieldConst(_.everyItem.value, "b")
+      .transform
+      .asOption ==> Some(NonEmptyCollection.of(Bar("b")))
+  }
+
+  test(
+    "transform TotallyBuildMap/PartiallyBuildMap to TotallyBuildMap/PartiallyBuildMap, using Total Transformer for inner type transformation"
+  ) {
+    implicit val intPrinter: Transformer[Int, String] = _.toString
+
+    CustomMap
+      .of(123 -> 456)
+      .transformIntoPartial[Map[String, String]]
+      .asOption ==> Some(Map("123" -> "456"))
+    NonEmptyMap
+      .of(123 -> 456)
+      .transformIntoPartial[Map[String, String]]
+      .asOption ==> Some(Map("123" -> "456"))
+
+    Map(123 -> 456)
+      .transformIntoPartial[CustomMap[String, String]]
+      .asOption ==> Some(CustomMap.of("123" -> "456"))
+    Map(123 -> 456)
+      .transformIntoPartial[NonEmptyMap[String, String]]
+      .asOption ==> Some(NonEmptyMap.of("123" -> "456"))
+    Map
+      .empty[Int, Int]
+      .transformIntoPartial[NonEmptyMap[String, String]]
+      .asOption ==> None
+
+    CustomMap
+      .of(123 -> 456)
+      .transformIntoPartial[CustomMap[String, String]]
+      .asOption ==> Some(CustomMap.of("123" -> "456"))
+    CustomMap
+      .of(123 -> 456)
+      .transformIntoPartial[NonEmptyMap[String, String]]
+      .asOption ==> Some(NonEmptyMap.of("123" -> "456"))
+    CustomMap
+      .of[Int, Int]()
+      .transformIntoPartial[NonEmptyMap[String, String]]
+      .asOption ==> None
+
+    NonEmptyMap
+      .of(123 -> 456)
+      .transformIntoPartial[CustomMap[String, String]]
+      .asOption ==> Some(CustomMap.of("123" -> "456"))
+    NonEmptyMap
+      .of(123 -> 456)
+      .transformIntoPartial[NonEmptyMap[String, String]]
+      .asOption ==> Some(NonEmptyMap.of("123" -> "456"))
+  }
+
+  test(
+    "transform TotallyBuildMap/PartiallyBuildMap to TotallyBuildMap/PartiallyBuildMap, using Partial Transformer for inner type transformation"
+  ) {
+    implicit val intParserOpt: PartialTransformer[String, Int] =
+      PartialTransformer(_.parseInt.toPartialResult)
+
+    CustomMap
+      .of("123" -> "456")
+      .transformIntoPartial[Map[Int, Int]]
+      .asOption ==> Some(Map(123 -> 456))
+    NonEmptyMap
+      .of("123" -> "456")
+      .transformIntoPartial[Map[Int, Int]]
+      .asOption ==> Some(Map(123 -> 456))
+
+    Map("123" -> "456")
+      .transformIntoPartial[CustomMap[Int, Int]]
+      .asOption ==> Some(CustomMap.of(123 -> 456))
+    Map("123" -> "456")
+      .transformIntoPartial[NonEmptyMap[Int, Int]]
+      .asOption ==> Some(NonEmptyMap.of(123 -> 456))
+    Map
+      .empty[Int, Int]
+      .transformIntoPartial[NonEmptyMap[Int, Int]]
+      .asOption ==> None
+
+    CustomMap
+      .of("123" -> "456")
+      .transformIntoPartial[CustomMap[Int, Int]]
+      .asOption ==> Some(CustomMap.of(123 -> 456))
+    CustomMap
+      .of("123" -> "456")
+      .transformIntoPartial[NonEmptyMap[Int, Int]]
+      .asOption ==> Some(NonEmptyMap.of(123 -> 456))
+    CustomMap
+      .of[Int, Int]()
+      .transformIntoPartial[NonEmptyMap[Int, Int]]
+      .asOption ==> None
+
+    NonEmptyMap
+      .of("123" -> "456")
+      .transformIntoPartial[CustomMap[Int, Int]]
+      .asOption ==> Some(CustomMap.of(123 -> 456))
+    NonEmptyMap
+      .of("123" -> "456")
+      .transformIntoPartial[NonEmptyMap[Int, Int]]
+      .asOption ==> Some(NonEmptyMap.of(123 -> 456))
+
+    CustomMap
+      .of("abc" -> "123", "456" -> "ghi")
+      .transformIntoPartial[NonEmptyMap[Int, Int]](failFast = false)
+      .asErrorPathMessageStrings ==> Iterable("keys(abc)" -> "empty value", "(456)" -> "empty value")
+    NonEmptyMap
+      .of("abc" -> "123", "456" -> "ghi")
+      .transformIntoPartial[Map[Int, Int]](failFast = false)
+      .asErrorPathMessageStrings ==> Iterable("keys(abc)" -> "empty value", "(456)" -> "empty value")
+    Map("abc" -> "123", "456" -> "ghi")
+      .transformIntoPartial[CustomMap[Int, Int]](failFast = false)
+      .asErrorPathMessageStrings ==> Iterable("keys(abc)" -> "empty value", "(456)" -> "empty value")
+
+    CustomMap
+      .of("abc" -> "123", "456" -> "ghi")
+      .transformIntoPartial[NonEmptyMap[Int, Int]](failFast = true)
+      .asErrorPathMessageStrings ==> Iterable("keys(abc)" -> "empty value")
+    NonEmptyMap
+      .of("abc" -> "123", "456" -> "ghi")
+      .transformIntoPartial[Map[Int, Int]](failFast = true)
+      .asErrorPathMessageStrings ==> Iterable("keys(abc)" -> "empty value")
+    Map("abc" -> "123", "456" -> "ghi")
+      .transformIntoPartial[CustomMap[Int, Int]](failFast = true)
+      .asErrorPathMessageStrings ==> Iterable("keys(abc)" -> "empty value")
+  }
+
+  test(
+    "transform between TotallyBuildIterable/PartiallyBuildIterable and TotallyBuildMap/PartiallyBuildMap, using Total Transformer for inner type transformation"
+  ) {
+    implicit val intPrinter: Transformer[Int, String] = _.toString
+
+    CustomCollection
+      .of(1 -> 10, 2 -> 20)
+      .transformIntoPartial[CustomMap[Int, String]]
+      .asOption ==> Some(CustomMap.of(1 -> "10", 2 -> "20"))
+    NonEmptyCollection
+      .of(1 -> 10, 2 -> 20)
+      .transformIntoPartial[CustomMap[String, String]]
+      .asOption ==> Some(CustomMap.of("1" -> "10", "2" -> "20"))
+
+    CustomCollection
+      .of(1 -> 10, 2 -> 20)
+      .transformIntoPartial[NonEmptyMap[Int, String]]
+      .asOption ==> Some(NonEmptyMap.of(1 -> "10", 2 -> "20"))
+    NonEmptyCollection
+      .of(1 -> 10, 2 -> 20)
+      .transformIntoPartial[NonEmptyMap[String, String]]
+      .asOption ==> Some(NonEmptyMap.of("1" -> "10", "2" -> "20"))
+
+    CustomMap
+      .of(1 -> 10, 2 -> 20)
+      .transformIntoPartial[CustomCollection[(Int, String)]]
+      .asOption ==> Some(CustomCollection.of(1 -> "10", 2 -> "20"))
+    NonEmptyMap
+      .of(1 -> 10, 2 -> 20)
+      .transformIntoPartial[CustomCollection[(String, String)]]
+      .asOption ==> Some(CustomCollection.of("1" -> "10", "2" -> "20"))
+
+    CustomMap
+      .of(1 -> 10, 2 -> 20)
+      .transformIntoPartial[NonEmptyCollection[(Int, String)]]
+      .asOption ==> Some(NonEmptyCollection.of(1 -> "10", 2 -> "20"))
+    NonEmptyMap
+      .of(1 -> 10, 2 -> 20)
+      .transformIntoPartial[NonEmptyCollection[(String, String)]]
+      .asOption ==> Some(NonEmptyCollection.of("1" -> "10", "2" -> "20"))
+  }
+
+  test(
+    "transform between TotallyBuildIterable/PartiallyBuildIterable and TotallyBuildMap/PartiallyBuildMap, using Partial Transformer for inner type transformation"
+  ) {
+    implicit val intParserOpt: PartialTransformer[String, Int] =
+      PartialTransformer(_.parseInt.toPartialResult)
+
+    CustomCollection
+      .of("1" -> "10", "2" -> "20")
+      .transformIntoPartial[CustomMap[Int, Int]]
+      .asOption ==> Some(CustomMap.of(1 -> 10, 2 -> 20))
+    NonEmptyCollection
+      .of("1" -> "10", "2" -> "20")
+      .transformIntoPartial[CustomMap[String, Int]]
+      .asOption ==> Some(CustomMap.of("1" -> 10, "2" -> 20))
+    CustomMap
+      .of("1" -> "10", "2" -> "20")
+      .transformIntoPartial[CustomCollection[(Int, Int)]]
+      .asOption ==> Some(CustomCollection.of(1 -> 10, 2 -> 20))
+    CustomMap
+      .of("1" -> "10", "2" -> "20")
+      .transformIntoPartial[NonEmptyCollection[(Int, String)]]
+      .asOption ==> Some(NonEmptyCollection.of(1 -> "10", 2 -> "20"))
+
+    CustomCollection
+      .of("1" -> "10", "2" -> "x")
+      .transformIntoPartial[CustomMap[Int, Int]]
+      .asErrorPathMessageStrings ==> Iterable("(1)._2" -> "empty value")
+    NonEmptyCollection
+      .of("1" -> "x", "2" -> "y")
+      .transformIntoPartial[NonEmptyMap[String, Int]]
+      .asErrorPathMessageStrings ==> Iterable("(0)._2" -> "empty value", "(1)._2" -> "empty value")
+    CustomMap
+      .of("x" -> "10", "y" -> "z")
+      .transformIntoPartial[CustomCollection[(Int, Int)]]
+      .asErrorPathMessageStrings ==> Iterable(
+      "keys(x)" -> "empty value",
+      "keys(y)" -> "empty value",
+      "(y)" -> "empty value"
+    )
+    NonEmptyMap
+      .of("x" -> "10", "y" -> "z")
+      .transformIntoPartial[NonEmptyCollection[(Int, Int)]]
+      .asErrorPathMessageStrings ==> Iterable(
+      "keys(x)" -> "empty value",
+      "keys(y)" -> "empty value",
+      "(y)" -> "empty value"
+    )
+  }
+
+  test(
+    "transform between Array-types and TotallyBuildMap/PartiallyBuildMap, using Total Transformer for inner type transformation"
+  ) {
+    implicit val intPrinter: Transformer[Int, String] = _.toString
+
+    Array(123 -> 456)
+      .transformIntoPartial[CustomMap[String, String]]
+      .asOption ==> Some(CustomMap.of("123" -> "456"))
+    Array(123 -> 456)
+      .transformIntoPartial[NonEmptyMap[String, String]]
+      .asOption ==> Some(NonEmptyMap.of("123" -> "456"))
+
+    CustomMap.of(123 -> 456).transformIntoPartial[Array[(String, String)]].asOption.get ==> Array("123" -> "456")
+    NonEmptyMap.of(123 -> 456).transformIntoPartial[Array[(String, String)]].asOption.get ==> Array("123" -> "456")
+  }
+
+  test(
+    "transform between Array-types and TotallyBuildMap/PartiallyBuildMap, using Partial Transformer for inner type transformation"
+  ) {
+    implicit val intParserOpt: PartialTransformer[String, Int] =
+      PartialTransformer(_.parseInt.toPartialResult)
+
+    Array("123" -> "456").transformIntoPartial[CustomMap[Int, Int]].asOption ==> Some(CustomMap.of(123 -> 456))
+    Array("abc" -> "456")
+      .transformIntoPartial[CustomMap[Int, Int]]
+      .asErrorPathMessageStrings ==> Iterable("(0)._1" -> "empty value")
+    Array("123" -> "456").transformIntoPartial[NonEmptyMap[Int, Int]].asOption ==> Some(NonEmptyMap.of(123 -> 456))
+    Array("abc" -> "456")
+      .transformIntoPartial[NonEmptyMap[Int, Int]]
+      .asErrorPathMessageStrings ==> Iterable("(0)._1" -> "empty value")
+    Array
+      .empty[(String, String)]
+      .transformIntoPartial[NonEmptyMap[Int, Int]]
+      .asErrorPathMessageStrings ==> Iterable("" -> "empty value")
+
+    CustomMap
+      .of("abc" -> "456", "123" -> "ghi")
+      .transformIntoPartial[Array[(Int, Int)]]
+      .asErrorPathMessageStrings ==> Iterable("keys(abc)" -> "empty value", "(123)" -> "empty value")
+    NonEmptyMap
+      .of("abc" -> "456", "123" -> "ghi")
+      .transformIntoPartial[Array[(Int, Int)]]
+      .asErrorPathMessageStrings ==> Iterable("keys(abc)" -> "empty value", "(123)" -> "empty value")
+
+    CustomMap
+      .of("abc" -> "456", "123" -> "ghi")
+      .transformIntoPartial[Array[(Int, Int)]](failFast = true)
+      .asErrorPathMessageStrings ==> Iterable("keys(abc)" -> "empty value")
+    NonEmptyMap
+      .of("abc" -> "456", "123" -> "ghi")
+      .transformIntoPartial[Array[(Int, Int)]](failFast = true)
+      .asErrorPathMessageStrings ==> Iterable("keys(abc)" -> "empty value")
+  }
+
+  test("transform into map type with an override") {
+    Map(Foo("k") -> Foo("v"))
+      .intoPartial[CustomMap[Bar, Bar]]
+      .withFieldConst(_.everyMapKey.value, "k2")
+      .withFieldConst(_.everyMapValue.value, "v2")
+      .transform
+      .asOption ==> Some(CustomMap.of(Bar("k2") -> Bar("v2")))
+    CustomMap
+      .of(Foo("k") -> Foo("v"))
+      .intoPartial[CustomMap[Bar, Bar]]
+      .withFieldConst(_.everyMapKey.value, "k2")
+      .withFieldConst(_.everyMapValue.value, "v2")
+      .transform
+      .asOption ==> Some(CustomMap.of(Bar("k2") -> Bar("v2")))
+    NonEmptyMap
+      .of(Foo("k") -> Foo("v"))
+      .intoPartial[CustomMap[Bar, Bar]]
+      .withFieldConst(_.everyMapKey.value, "k2")
+      .withFieldConst(_.everyMapValue.value, "v2")
+      .transform
+      .asOption ==> Some(CustomMap.of(Bar("k2") -> Bar("v2")))
+
+    Map(Foo("k") -> Foo("v"))
+      .intoPartial[NonEmptyMap[Bar, Bar]]
+      .withFieldConst(_.everyMapKey.value, "k2")
+      .withFieldConst(_.everyMapValue.value, "v2")
+      .transform
+      .asOption ==> Some(NonEmptyMap.of(Bar("k2") -> Bar("v2")))
+    CustomMap
+      .of(Foo("k") -> Foo("v"))
+      .intoPartial[NonEmptyMap[Bar, Bar]]
+      .withFieldConst(_.everyMapKey.value, "k2")
+      .withFieldConst(_.everyMapValue.value, "v2")
+      .transform
+      .asOption ==> Some(NonEmptyMap.of(Bar("k2") -> Bar("v2")))
+    NonEmptyMap
+      .of(Foo("k") -> Foo("v"))
+      .intoPartial[NonEmptyMap[Bar, Bar]]
+      .withFieldConst(_.everyMapKey.value, "k2")
+      .withFieldConst(_.everyMapValue.value, "v2")
+      .transform
+      .asOption ==> Some(NonEmptyMap.of(Bar("k2") -> Bar("v2")))
+  }
 
   group("flag .enableOptionDefaultsToNone") {
 
