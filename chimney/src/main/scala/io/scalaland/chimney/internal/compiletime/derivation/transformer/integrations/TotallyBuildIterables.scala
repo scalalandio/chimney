@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.integrations
 
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
+import io.scalaland.chimney.partial
 
 import scala.collection.compat.Factory
 
@@ -14,7 +15,12 @@ trait TotallyBuildIterables { this: Derivation =>
     * Tries to use [[io.scalaland.chimney.integrations.TotallyBuildIterable]] and then falls back on [[IterableOrArray]]
     * hardcoded support, if type is eligible.
     */
-  abstract protected class TotallyBuildIterable[Collection, Item] {
+  abstract protected class TotallyBuildIterable[Collection, Item]
+      extends TotallyOrPartiallyBuildIterable[Collection, Item] {
+
+    def factory: Either[Expr[Factory[Item, Collection]], Expr[Factory[Item, partial.Result[Collection]]]] = Left(
+      totalFactory
+    )
 
     def totalFactory: Expr[Factory[Item, Collection]]
 
@@ -25,7 +31,7 @@ trait TotallyBuildIterables { this: Derivation =>
         factory: Expr[Factory[Item, Collection2]]
     ): Expr[Collection2]
 
-    def isMap: Boolean
+    val asMap: Option[(ExistentialType, ExistentialType)]
   }
   protected object TotallyBuildIterable {
 
@@ -49,9 +55,9 @@ trait TotallyBuildIterables { this: Derivation =>
                 factory: Expr[Factory[Item, Collection2]]
             ): Expr[Collection2] = totallyBuildIterableExpr.to(collection, factory)
 
-            lazy val isMap: Boolean = totallyBuildIterableExpr.tpe match {
-              case ChimneyType.TotallyBuildMap(_, _, _) => true
-              case _                                    => false
+            val asMap: Option[(ExistentialType, ExistentialType)] = totallyBuildIterableExpr.tpe match {
+              case ChimneyType.TotallyBuildMap(_, key, value) => Some(key -> value)
+              case _                                          => None
             }
 
             override def toString: String = s"support provided by ${Expr.prettyPrint(totallyBuildIterableExpr)}"
@@ -75,9 +81,9 @@ trait TotallyBuildIterables { this: Derivation =>
                 factory: Expr[Factory[Item, Collection2]]
             ): Expr[Collection2] = iora.to(collection)(factory)
 
-            lazy val isMap: Boolean = Type[M] match {
-              case Type.Map(_, _) => true
-              case _              => false
+            val asMap: Option[(ExistentialType, ExistentialType)] = Type[M] match {
+              case Type.Map(key, value) => Some(key -> value)
+              case _                    => None
             }
 
             override def toString: String = iora.toString

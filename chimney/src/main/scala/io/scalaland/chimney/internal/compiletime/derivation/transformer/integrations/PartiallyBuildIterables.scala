@@ -14,7 +14,12 @@ trait PartiallyBuildIterables { this: Derivation =>
     *
     * Tries to use [[io.scalaland.chimney.integrations.PartiallyBuildIterable]], if type is eligible.
     */
-  abstract protected class PartiallyBuildIterable[Collection, Item] {
+  abstract protected class PartiallyBuildIterable[Collection, Item]
+      extends TotallyOrPartiallyBuildIterable[Collection, Item] {
+
+    def factory: Either[Expr[Factory[Item, Collection]], Expr[Factory[Item, partial.Result[Collection]]]] = Right(
+      partialFactory
+    )
 
     def partialFactory: Expr[Factory[Item, partial.Result[Collection]]]
 
@@ -25,7 +30,7 @@ trait PartiallyBuildIterables { this: Derivation =>
         factory: Expr[Factory[Item, Collection2]]
     ): Expr[Collection2]
 
-    def isMap: Boolean
+    val asMap: Option[(ExistentialType, ExistentialType)]
   }
   protected object PartiallyBuildIterable {
 
@@ -49,9 +54,9 @@ trait PartiallyBuildIterables { this: Derivation =>
                 factory: Expr[Factory[Item, Collection2]]
             ): Expr[Collection2] = partiallyBuildIterableExpr.to(collection, factory)
 
-            lazy val isMap: Boolean = partiallyBuildIterableExpr.tpe match {
-              case ChimneyType.PartiallyBuildMap(_, _, _) => true
-              case _                                      => false
+            val asMap: Option[(ExistentialType, ExistentialType)] = partiallyBuildIterableExpr.tpe match {
+              case ChimneyType.PartiallyBuildMap(_, key, value) => Some(key -> value)
+              case _                                            => None
             }
 
             override def toString: String = s"support provided by ${Expr.prettyPrint(partiallyBuildIterableExpr)}"

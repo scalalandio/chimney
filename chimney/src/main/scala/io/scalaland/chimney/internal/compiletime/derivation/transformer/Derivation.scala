@@ -15,6 +15,7 @@ private[compiletime] trait Derivation
     with integrations.OptionalValues
     with integrations.PartiallyBuildIterables
     with integrations.TotallyBuildIterables
+    with integrations.TotallyOrPartiallyBuildIterables
     with rules.TransformationRules {
 
   /** Intended use case: starting recursive derivation from Gateway */
