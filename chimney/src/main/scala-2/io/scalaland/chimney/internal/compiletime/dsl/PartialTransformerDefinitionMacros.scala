@@ -142,7 +142,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       Flags <: TransformerFlags: WeakTypeTag
   ](f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
     def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
-      .addOverride(q"_root_.io.scalaland.chimney.internal.runtime.FuncionEitherToResult.lift($f)")
+      .addOverride(q"_root_.io.scalaland.chimney.internal.runtime.FunctionEitherToResult.lift($f)")
       .asInstanceOfExpr[PartialTransformerDefinition[From, To, ConstructorPartial[Args, Path.Root, Overrides], Flags]]
   }.applyFromBody(f)
 }

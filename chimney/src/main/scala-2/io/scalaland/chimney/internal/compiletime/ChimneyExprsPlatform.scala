@@ -245,7 +245,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
       def partialFactory[Collection: Type, Item: Type](
           partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]]
       ): Expr[Factory[Item, partial.Result[Collection]]] =
-        c.Expr[Factory[Item, partial.Result[Collection]]](q"${partiallyBuildIterable.partialFactory}")
+        c.Expr[Factory[Item, partial.Result[Collection]]](q"$partiallyBuildIterable.partialFactory")
 
       def iterator[Collection: Type, Item: Type](
           partiallyBuildIterable: Expr[integrations.PartiallyBuildIterable[Collection, Item]],
@@ -263,7 +263,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
 
       def totalFactory[Collection: Type, Item: Type](
           totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]]
-      ): Expr[Factory[Item, Collection]] = c.Expr[Factory[Item, Collection]](q"${totallyBuildIterable.totalFactory}")
+      ): Expr[Factory[Item, Collection]] = c.Expr[Factory[Item, Collection]](q"$totallyBuildIterable.totalFactory")
 
       def iterator[Collection: Type, Item: Type](
           totallyBuildIterable: Expr[integrations.TotallyBuildIterable[Collection, Item]],
