@@ -30,6 +30,26 @@ If you:
       that service's behavior or if you create in your DTO model `def toDomain = this.transformInto[DomainModel]`.
       You can utilize code generation without making your application's type signatures depend on someone else's types. 
 
+## Migration from 0.8.x to 1.0.0
+
+As long as you did not:
+
+ - use values stored in `internal` packages
+ - selectively import implicits
+ - use JavaFactories and JavaIterables (in chimney-java-collections package)
+
+you can assume that most changes are source compatible. The only explicit changes to API are:
+
+ - deprecation of `withCoproductInstance` - method is still available but deprecated in favor of `withEnumCaseHandled`
+   and `withSealedSubtypeHandled` 
+ - setters behavior was restored to how it used to work on 0.7.x - unary method not only has to start its name with
+   `set` but also return `Unit`. If needed non-`Unit` setters can be enabled by an opt-in flag.
+
+While most changes are source backward compatible, a lot of internals had to be revamped to fix bugs and unblock
+further development. For that reason these changes are not binary backward compatible, and have to be considered 
+breaking changes when it comes to linking with previously compiled code. However, this cleanup should eliminate the need
+for any such refactors for a long time.
+
 ## Migration from 0.7.x to 0.8.0
 
 Version 0.8.0 is the first version that cleaned up the API. It introduced several breaking changes.
