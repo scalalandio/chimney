@@ -32,21 +32,79 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
     (null: String).transformInto[Possible[String]] ==> Possible.Nope
   }
 
+  // TODO: matchingSome
+
   test("transform from TotallyBuildIterable to TotallyBuildIterable") {
     CustomCollection.of(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))
     Seq(Foo("a")).transformInto[CustomCollection[Bar]] ==> CustomCollection.of(Bar("a"))
     CustomCollection.of(Foo("a")).transformInto[CustomCollection[Bar]] ==> CustomCollection.of(Bar("a"))
   }
 
-  // TODO: transform between Array-type and Iterable-type
+  test("transform between Array-type and TotallyBuildIterable") {
+    CustomCollection.of(Foo("a")).transformInto[Array[Bar]] ==> Array(Bar("a"))
+    Array(Foo("a")).transformInto[CustomCollection[Bar]] ==> CustomCollection.of(Bar("a"))
+  }
 
-  // TODO: transform into sequential type with an override
+  test("read from PartiallyBuildIterable but not write to it") {
+    NonEmptyCollection.of(Foo("a")).transformInto[CustomCollection[Bar]] ==> CustomCollection.of(Bar("a"))
+    compileErrorsFixed("""CustomCollection.of(Foo("a")).transformInto[NonEmptyCollection[Bar]]""").check(
+      "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerIntegrationsSpec.CustomCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
+      "io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
+      "derivation from customcollection: io.scalaland.chimney.TotalTransformerIntegrationsSpec.CustomCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyCollection[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar] is not supported in Chimney!",
+      "Consult https://chimney.readthedocs.io for usage examples."
+    )
+  }
 
-  // TODO: transform from Map-type to Map-type
+  test("transform into sequential type with an override") {
+    Seq(Foo("a"))
+      .into[CustomCollection[Bar]]
+      .withFieldConst(_.everyItem.value, "b")
+      .transform ==> CustomCollection.of(Bar("b"))
+    CustomCollection
+      .of(Foo("a"))
+      .into[CustomCollection[Bar]]
+      .withFieldConst(_.everyItem.value, "b")
+      .transform ==> CustomCollection.of(Bar("b"))
+  }
 
-  // TODO: transform between Iterables and Maps
+  test("transform from TotallyBuildMap to TotallyBuildMap") {
+    CustomMap.of(Foo("k") -> Foo("v")).transformInto[Map[Bar, Bar]] ==> Map(Bar("k") -> Bar("v"))
+    Map(Foo("k") -> Foo("v")).transformInto[CustomMap[Bar, Bar]] ==> CustomMap.of(Bar("k") -> Bar("v"))
+    CustomMap.of(Foo("k") -> Foo("v")).transformInto[CustomMap[Bar, Bar]] ==> CustomMap.of(Bar("k") -> Bar("v"))
+  }
 
-  // TODO transform into map type with an override
+  test("transform between TotallyBuildIterable and TotallyBuildMap") {
+    CustomMap
+      .of(Foo("k") -> Foo("v"))
+      .transformInto[CustomCollection[(Bar, Bar)]] ==> CustomCollection.of(Bar("k") -> Bar("v"))
+    CustomCollection
+      .of(Foo("k") -> Foo("v"))
+      .transformInto[CustomMap[Bar, Bar]] ==> CustomMap.of(Bar("k") -> Bar("v"))
+  }
+
+  test("read from PartiallyBuildIterable but not write to it") {
+    NonEmptyMap.of(Foo("k") -> Foo("v")).transformInto[CustomMap[Bar, Bar]] ==> CustomMap.of(Bar("k") -> Bar("v"))
+    compileErrorsFixed("""CustomMap.of(Foo("k") -> Foo("v")).transformInto[NonEmptyMap[Bar, Bar]]""").check(
+      "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerIntegrationsSpec.CustomMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
+      "io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
+      "derivation from custommap: io.scalaland.chimney.TotalTransformerIntegrationsSpec.CustomMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyMap[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar] is not supported in Chimney!",
+      "Consult https://chimney.readthedocs.io for usage examples."
+    )
+  }
+
+  test("transform into map type with an override") {
+    Map(Foo("k") -> Foo("v"))
+      .into[CustomMap[Bar, Bar]]
+      .withFieldConst(_.everyMapKey.value, "k2")
+      .withFieldConst(_.everyMapValue.value, "v2")
+      .transform ==> CustomMap.of(Bar("k2") -> Bar("v2"))
+    CustomMap
+      .of(Foo("k") -> Foo("v"))
+      .into[CustomMap[Bar, Bar]]
+      .withFieldConst(_.everyMapKey.value, "k2")
+      .withFieldConst(_.everyMapValue.value, "v2")
+      .transform ==> CustomMap.of(Bar("k2") -> Bar("v2"))
+  }
 
   group("flag .enableOptionDefaultsToNone") {
 
@@ -64,10 +122,10 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
     }
 
     test("use OptionalValue.empty for fields without source nor default value when enabled") {
-      Source("foo").into[TargetWithOption].enableOptionDefaultsToNone.transform ==> TargetWithOption(
-        "foo",
-        Possible.Nope
-      )
+      Source("foo")
+        .into[TargetWithOption]
+        .enableOptionDefaultsToNone
+        .transform ==> TargetWithOption("foo", Possible.Nope)
     }
 
     test(

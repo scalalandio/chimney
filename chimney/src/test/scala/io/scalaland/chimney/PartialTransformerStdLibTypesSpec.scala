@@ -197,6 +197,8 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     }
   }
 
+  // TODO: matchingSome
+
   test("transform from Either-type into Either-type, using Total Transformer for inner types transformation") {
     implicit val intPrinter: Transformer[Int, String] = _.toString
 
@@ -226,6 +228,8 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     Left("x").transformIntoPartial[Left[Int, Int]].asOption ==> None
     Right("x").transformIntoPartial[Right[Int, Int]].asOption ==> None
   }
+
+  // TODO: matchingLeft, matchingRight
 
   test("transform Iterable-type to Iterable-type, using Total Transformer for inner type transformation") {
     implicit val intPrinter: Transformer[Int, String] = _.toString
