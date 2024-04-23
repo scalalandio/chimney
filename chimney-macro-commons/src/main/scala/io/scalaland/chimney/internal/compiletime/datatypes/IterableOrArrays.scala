@@ -14,6 +14,8 @@ trait IterableOrArrays { this: Definitions =>
     * methods. Meanwhile, we would like to be able to convert to and from Array easily.
     */
   abstract protected class IterableOrArray[M, A] {
+    def factory: Expr[Factory[A, M]]
+
     def iterator(m: Expr[M]): Expr[Iterator[A]]
 
     def map[B: Type](m: Expr[M])(f: Expr[A => B]): ExistentialExpr
@@ -41,6 +43,8 @@ trait IterableOrArrays { this: Definitions =>
     private def buildInIterableSupport[M: Type, Inner: Type](hint: String): Existential[IterableOrArray[M, *]] =
       Existential[IterableOrArray[M, *], Inner](
         new IterableOrArray[M, Inner] {
+          def factory: Expr[Factory[Inner, M]] = Expr.summonImplicitUnsafe[Factory[Inner, M]]
+
           def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
             m.upcastToExprOf[Iterable[Inner]].iterator
 
@@ -57,6 +61,8 @@ trait IterableOrArrays { this: Definitions =>
     private def buildInArraySupport[M: Type, Inner: Type]: Existential[IterableOrArray[M, *]] =
       Existential[IterableOrArray[M, *], Inner](
         new IterableOrArray[M, Inner] {
+          def factory: Expr[Factory[Inner, M]] = Expr.summonImplicitUnsafe[Factory[Inner, M]]
+
           def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
             m.upcastToExprOf[Array[Inner]].iterator
 
