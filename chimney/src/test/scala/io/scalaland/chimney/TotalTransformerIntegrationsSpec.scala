@@ -3,6 +3,8 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 
 import scala.annotation.unused
+import scala.collection.compat.*
+import scala.collection.mutable
 
 class TotalTransformerIntegrationsSpec extends ChimneySpec {
 
@@ -35,6 +37,10 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
   // TODO: transform between Array-type and Iterable-type
 
   // TODO: transform into sequential type with an override
+
+  // TODO: transform from Map-type to Map-type
+
+  // TODO: transform between Iterables and Maps
 
   // TODO transform into map type with an override
 
@@ -123,4 +129,154 @@ object TotalTransformerIntegrationsSpec {
       case Possible.Nope           => onNone
     }
   }
+
+  class CustomCollection[+A] private (private val impl: Vector[A]) {
+
+    def iterator: Iterator[A] = impl.iterator
+
+    override def equals(obj: Any): Boolean = obj match {
+      case customCollection: CustomCollection[?] => impl == customCollection.impl
+      case _                                     => false
+    }
+    override def hashCode(): Int = impl.hashCode()
+  }
+  object CustomCollection {
+
+    def of[A](as: A*): CustomCollection[A] = new CustomCollection(Vector(as*))
+    def from[A](vector: Vector[A]): CustomCollection[A] = new CustomCollection(vector)
+  }
+
+  implicit def customCollectionIsTotallyBuildIterable[A]: TotallyBuildIterable[CustomCollection[A], A] =
+    new TotallyBuildIterable[CustomCollection[A], A] {
+
+      def totalFactory: Factory[A, CustomCollection[A]] = new FactoryCompat[A, CustomCollection[A]] {
+
+        override def newBuilder: mutable.Builder[A, CustomCollection[A]] =
+          new FactoryCompat.Builder[A, CustomCollection[A]] {
+            private val implBuilder = Vector.newBuilder[A]
+
+            override def clear(): Unit = implBuilder.clear()
+
+            override def result(): CustomCollection[A] = CustomCollection.from(implBuilder.result())
+
+            override def addOne(elem: A): this.type = { implBuilder += elem; this }
+          }
+      }
+
+      override def iterator(collection: CustomCollection[A]): Iterator[A] = collection.iterator
+    }
+
+  class NonEmptyCollection[+A] private (private val impl: Vector[A]) {
+
+    def iterator: Iterator[A] = impl.iterator
+
+    override def equals(obj: Any): Boolean = obj match {
+      case nonEmptyCollection: NonEmptyCollection[?] => impl == nonEmptyCollection.impl
+      case _                                         => false
+    }
+    override def hashCode(): Int = impl.hashCode()
+  }
+  object NonEmptyCollection {
+
+    def of[A](a: A, as: A*): NonEmptyCollection[A] = new NonEmptyCollection(Vector((a +: as)*))
+    def from[A](vector: Vector[A]): Option[NonEmptyCollection[A]] =
+      if (vector.nonEmpty) Some(new NonEmptyCollection(vector)) else None
+  }
+
+  implicit def nonEmptyCollectionIsPartiallyBuildIterable[A]: PartiallyBuildIterable[NonEmptyCollection[A], A] =
+    new PartiallyBuildIterable[NonEmptyCollection[A], A] {
+
+      def partialFactory: Factory[A, partial.Result[NonEmptyCollection[A]]] =
+        new FactoryCompat[A, partial.Result[NonEmptyCollection[A]]] {
+
+          override def newBuilder: mutable.Builder[A, partial.Result[NonEmptyCollection[A]]] =
+            new FactoryCompat.Builder[A, partial.Result[NonEmptyCollection[A]]] {
+              private val implBuilder = Vector.newBuilder[A]
+
+              override def clear(): Unit = implBuilder.clear()
+
+              override def result(): partial.Result[NonEmptyCollection[A]] =
+                partial.Result.fromOption(NonEmptyCollection.from(implBuilder.result()))
+
+              override def addOne(elem: A): this.type = { implBuilder += elem; this }
+            }
+        }
+
+      override def iterator(collection: NonEmptyCollection[A]): Iterator[A] = collection.iterator
+    }
+
+  class CustomMap[+K, +V] private (private val impl: Vector[(K, V)]) {
+
+    def iterator: Iterator[(K, V)] = impl.iterator
+
+    override def equals(obj: Any): Boolean = obj match {
+      case customMap: CustomMap[?, ?] => impl == customMap.impl
+      case _                          => false
+    }
+    override def hashCode(): Int = impl.hashCode()
+  }
+  object CustomMap {
+
+    def of[K, V](pairs: (K, V)*): CustomMap[K, V] = new CustomMap(Vector(pairs*))
+    def from[K, V](vector: Vector[(K, V)]): CustomMap[K, V] = new CustomMap(vector)
+  }
+
+  implicit def customMapIsTotallyBuildMap[K, V]: TotallyBuildMap[CustomMap[K, V], K, V] =
+    new TotallyBuildMap[CustomMap[K, V], K, V] {
+
+      def totalFactory: Factory[(K, V), CustomMap[K, V]] = new FactoryCompat[(K, V), CustomMap[K, V]] {
+
+        override def newBuilder: mutable.Builder[(K, V), CustomMap[K, V]] =
+          new FactoryCompat.Builder[(K, V), CustomMap[K, V]] {
+            private val implBuilder = Vector.newBuilder[(K, V)]
+
+            override def clear(): Unit = implBuilder.clear()
+
+            override def result(): CustomMap[K, V] = CustomMap.from(implBuilder.result())
+
+            override def addOne(elem: (K, V)): this.type = { implBuilder += elem; this }
+          }
+      }
+
+      override def iterator(collection: CustomMap[K, V]): Iterator[(K, V)] = collection.iterator
+    }
+
+  class NonEmptyMap[+K, +V] private (private val impl: Vector[(K, V)]) {
+
+    def iterator: Iterator[(K, V)] = impl.iterator
+
+    override def equals(obj: Any): Boolean = obj match {
+      case nonEmptyMap: NonEmptyMap[?, ?] => impl == nonEmptyMap.impl
+      case _                              => false
+    }
+    override def hashCode(): Int = impl.hashCode()
+  }
+  object NonEmptyMap {
+
+    def of[K, V](pair: (K, V), pairs: (K, V)*): NonEmptyMap[K, V] = new NonEmptyMap(Vector((pair +: pairs)*))
+    def from[K, V](vector: Vector[(K, V)]): Option[NonEmptyMap[K, V]] =
+      if (vector.nonEmpty) Some(new NonEmptyMap(vector)) else None
+  }
+
+  implicit def nonEmptyMapIsPartiallyBuildMap[K, V]: PartiallyBuildMap[NonEmptyMap[K, V], K, V] =
+    new PartiallyBuildMap[NonEmptyMap[K, V], K, V] {
+
+      def partialFactory: Factory[(K, V), partial.Result[NonEmptyMap[K, V]]] =
+        new FactoryCompat[(K, V), partial.Result[NonEmptyMap[K, V]]] {
+
+          override def newBuilder: mutable.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] =
+            new FactoryCompat.Builder[(K, V), partial.Result[NonEmptyMap[K, V]]] {
+              private val implBuilder = Vector.newBuilder[(K, V)]
+
+              override def clear(): Unit = implBuilder.clear()
+
+              override def result(): partial.Result[NonEmptyMap[K, V]] =
+                partial.Result.fromOption(NonEmptyMap.from(implBuilder.result()))
+
+              override def addOne(elem: (K, V)): this.type = { implBuilder += elem; this }
+            }
+        }
+
+      override def iterator(collection: NonEmptyMap[K, V]): Iterator[(K, V)] = collection.iterator
+    }
 }
