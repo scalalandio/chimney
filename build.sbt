@@ -56,12 +56,12 @@ val only1VersionInIDE =
         .Configure(_.settings(ideSkipProject := true, bspEnabled := false, scalafmtOnCompile := false))
     }
 
-val non212tests =
+val preAndPost212 =
   MatrixAction
     .ForScala(v => (v.value == versions.scala213) || v.isScala3)
     .Configure(
       _.settings(
-        // Compile / unmanagedSourceDirectories += sourceDirectory.value.toPath.resolve("./main/scala-2.13+").toFile,
+        Compile / unmanagedSourceDirectories += sourceDirectory.value.toPath.resolve("main/scala-2.13+").toFile,
         Test / unmanagedSourceDirectories += sourceDirectory.value.toPath.resolve("test/scala-2.13+").toFile
       )
     )
@@ -220,7 +220,7 @@ val dependencies = Seq(
   }
 )
 
-val versionSchemeSettings = Seq(versionScheme := Some("early-semver"))
+val versionSchemeSettings = Seq(versionScheme := Some("early-semver")) // TODO: change to semver before 1.0.0
 
 val publishSettings = Seq(
   organization := "io.scalaland",
@@ -385,7 +385,7 @@ lazy val chimneyMacroCommons = projectMatrix
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
-  .someVariations(versions.scalas, versions.platforms)((non212tests +: only1VersionInIDE) *)
+  .someVariations(versions.scalas, versions.platforms)((preAndPost212 +: only1VersionInIDE) *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
