@@ -7,7 +7,7 @@ import scala.collection.compat.Factory
 
 trait TotallyBuildIterables { this: Derivation =>
 
-  import Type.Implicits.*, ChimneyType.Implicits.*
+  import ChimneyType.Implicits.*
 
   /** Something allowing us to share the logic which handles [[scala.collection.Iterable]], [[scala.Array]],
     * [[java.util.Collection]], ... and whatever we want to support.

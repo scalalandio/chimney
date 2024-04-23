@@ -1,8 +1,5 @@
 package io.scalaland.chimney.integrations
 
-import scala.collection.mutable
-import scala.reflect.ClassTag
-
 /** Subtype of [[scala.collection.compat.Factory]].
   *
   * The reason this trait exist is to make it easier to cross-compile Factories - scala.collection.compat contains only
@@ -18,7 +15,7 @@ trait FactoryCompat[-A, +CC] extends scala.collection.Factory[A, CC] {
 
   override def fromSpecific(it: scala.collection.IterableOnce[A]): CC = newBuilder.addAll(it).result()
 }
-object FactoryCompat {
+object FactoryCompat extends FactoryCompatScala3Only {
 
   trait Builder[-A, +CC] extends scala.collection.mutable.Builder[A, CC]
 
@@ -38,9 +35,4 @@ object FactoryCompat {
       iterator: Iterator[Item],
       factory: scala.collection.compat.Factory[Item, Collection]
   ): Collection = iterator.to(factory)
-
-  def iarrayFactory[I: ClassTag]: scala.collection.compat.Factory[I, IArray[I]] = new FactoryCompat[I, IArray[I]] {
-
-    override def newBuilder: mutable.Builder[I, IArray[I]] = IArray.newBuilder[I]
-  }
 }
