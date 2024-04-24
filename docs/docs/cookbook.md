@@ -312,6 +312,16 @@ Cats integration module contains the following utilities:
           `UnorderedFoldable`, `Invariant`, `Semigriupal`, `NonEmptyAlternative`, `SemigroupK`, `MonoidK`)
         - `Parallel[partial.Result]` (implementing also`NonEmptyParallel`)
         - `Semigroup[partial.Result.Errors]`
+  - instances for `cats.data` types allowing Chimney to recognize them as collections:
+    - `cats.data.Chain` (transformation _from_ and _to_ always available)
+    - `cats.data.NonEmptyChain` (transformations: _from_ always available, _to_ only with `PartialTransformer`)
+    - `cats.data.NonEmptyLazyList` (transformation: _from_ always available, _to_ only with `PartialTransformer`,
+      the type is only defined on 2.13+)
+    - `cats.data.NonEmptyList` (transformation: _from_ always available, _to_ only with `PartialTransformer`)
+    - `cats.data.NonEmptyMap` (transformation: _from_ always available, _to_ only with `PartialTransformer`)
+    - `cats.data.NonEmptySeq` (transformation: _from_ always available, _to_ only with `PartialTransformer`)
+    - `cats.data.NonEmptySet` (transformation: _from_ always available, _to_ only with `PartialTransformer`)
+    - `cats.data.NonEmptyVector` (transformation: _from_ always available, _to_ only with `PartialTransformer`)
 
 !!! important
 
@@ -1498,4 +1508,5 @@ The only 2 difference they make is that:
  - they allow usage of `everyMapKey` and `everyMapValue` in paths, just like with standard library's `Maps`.
 
 An example of such collections are `java.util` collections for which support is provided via `TotallyBuildIterable` 
-and `TotallyBuildMap` in [Java collections' integration](#java-collections-integration).
+and `TotallyBuildMap` in [Java collections' integration](#java-collections-integration), or `cats.data` types
+provided in [Cats integration](#cats-integration).
