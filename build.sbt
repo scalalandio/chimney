@@ -259,16 +259,16 @@ val publishSettings = Seq(
 val mimaSettings = Seq(
   mimaPreviousArtifacts := {
     val previousVersions = moduleName.value match {
-      case "chimney-macro-commons"    => Set() // we're not guaranteeing stability of this library just yet
-      case "chimney"                  => Set()
-      case "chimney-cats"             => Set()
-      case "chimney-java-collections" => Set()
-      case "chimney-protobufs"        => Set()
+      case "chimney-macro-commons"    => Set("1.0.0-RC1")
+      case "chimney"                  => Set("1.0.0-RC1")
+      case "chimney-cats"             => Set("1.0.0-RC1")
+      case "chimney-java-collections" => Set("1.0.0-RC1")
+      case "chimney-protobufs"        => Set("1.0.0-RC1")
       case _                          => Set()
     }
     previousVersions.map(organization.value %% moduleName.value % _)
   },
-  mimaFailOnNoPrevious := false // 1.0.0-milestone/release candidate mode, remove it once released
+  mimaFailOnNoPrevious := true
 )
 
 val noPublishSettings =
@@ -379,9 +379,6 @@ lazy val chimneyMacroCommons = projectMatrix
   .settings(versionSchemeSettings *)
   .settings(publishSettings *)
   .settings(dependencies *)
-  .settings(
-    mimaFailOnNoPrevious := false // we're not guaranteeing stability of this library just yet
-  )
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
