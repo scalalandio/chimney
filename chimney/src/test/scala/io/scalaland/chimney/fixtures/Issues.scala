@@ -192,3 +192,19 @@ object Issue403 {
 object Issue434 {
   case class MyClass(x: Int, y: Int, z: String, zz: Option[Int])
 }
+
+object Issue498 {
+  sealed trait Foo
+  object Foo {
+    case class Sub1(a: String) extends Foo
+    case class Sub2(a: String) extends Foo
+  }
+
+  sealed trait Bar {
+    def b: Int
+  }
+  object Bar {
+    case class Sub1(a: String, b: Int) extends Bar
+    case class Sub2(a: String, b: Int) extends Bar
+  }
+}
