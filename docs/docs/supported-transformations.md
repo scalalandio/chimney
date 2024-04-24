@@ -2855,9 +2855,17 @@ constructor for `PartialTransformer`:
       }
       .transform
       .asEither // Right(Bar(1000))
+      
+    // or even shorted if your smart constructor uses Either[String, YourType]
+    
+    Foo("10")
+      .intoPartial[Bar]
+      .withConstructorEither(Bar.parse)
+      .transform
+      .asEither // Right(Bar(1000))
     ```
 
-You can use this to automatically match the source's getters e.g. against smart constructor'sarguments - these types
+You can use this to automatically match the source's getters e.g. against smart constructor's arguments - these types
 would almost always have methods which the user could recognize as constructor's but which might be difficult
 to be automatically recognized as such: 
 
@@ -2910,6 +2918,13 @@ to be automatically recognized as such:
         partial.Result.fromEitherString(IP.parse(s1, s2, s3, s4))
       }
       .buildTransformer
+      
+    // or:
+    
+    // given PartialTransformer[StringIP, IP] = PartialTransformer
+    //  .define[StringIP, IP]
+    //  .withConstructorEither(IP.parse)
+    //  .buildTransformer
 
     @main def example: Unit =
       println(StringIP("127", "0", "0", "1").transformIntoPartial[IP].asEither.map(_.show))
@@ -2945,6 +2960,13 @@ to be automatically recognized as such:
         partial.Result.fromEitherString(Bar.parse(value))
       }
       .buildTransformer
+      
+    // or:
+
+    // given PartialTransformer[Foo, Bar] = PartialTransformer
+    //  .define[Foo, Bar]
+    //  .withConstructorEither(Bar.parse(value))
+    //  .buildTransformer
 
     @main def example: Unit =
       println(Foo("10").transformIntoPartial[Bar].asEither)
