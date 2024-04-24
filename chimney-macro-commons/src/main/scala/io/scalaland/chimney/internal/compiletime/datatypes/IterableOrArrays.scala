@@ -34,6 +34,9 @@ trait IterableOrArrays { this: Definitions =>
       case Type.Iterable(a) =>
         import a.Underlying as Inner
         Some(buildInIterableSupport[M, Inner](s"support build-in for Iterable-type ${Type.prettyPrint[M]}"))
+      case Type.Iterator(a) =>
+        import a.Underlying as Inner
+        Some(buildInIteratorSupport[M, Inner])
       case Type.Array(a) =>
         import a.Underlying as Inner
         Some(buildInArraySupport[M, Inner])
@@ -73,6 +76,24 @@ trait IterableOrArrays { this: Definitions =>
             m.upcastToExprOf[Array[Inner]].to(factory)
 
           override def toString: String = s"support build-in for Array-type ${Type.prettyPrint[M]}"
+        }
+      )
+
+    private def buildInIteratorSupport[M: Type, Inner: Type]: Existential[IterableOrArray[M, *]] =
+      Existential[IterableOrArray[M, *], Inner](
+        new IterableOrArray[M, Inner] {
+          def factory: Expr[Factory[Inner, M]] = Expr.summonImplicitUnsafe[Factory[Inner, M]]
+
+          def iterator(m: Expr[M]): Expr[Iterator[Inner]] =
+            m.upcastToExprOf[Iterator[Inner]]
+
+          def map[B: Type](m: Expr[M])(f: Expr[Inner => B]): ExistentialExpr =
+            ExistentialExpr.withoutType(m.upcastToExprOf[Iterator[Inner]].map(f))
+
+          def to[C: Type](m: Expr[M])(factory: Expr[Factory[Inner, C]]): Expr[C] =
+            m.upcastToExprOf[Iterator[Inner]].to(factory)
+
+          override def toString: String = s"support build-in for Iterator-type ${Type.prettyPrint[M]}"
         }
       )
 

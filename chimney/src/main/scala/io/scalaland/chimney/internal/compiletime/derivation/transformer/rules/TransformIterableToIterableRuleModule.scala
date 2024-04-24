@@ -42,8 +42,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
             s"Resolved ${Type.prettyPrint[From]} (${from2.value}) and ${Type.prettyPrint[To]} (${to2.value}) as iterable types"
           ) >>
             mapIterables[From, To, InnerFrom, InnerTo](fromIterable, toIterable)
-        case _ =>
-          DerivationResult.attemptNextRule
+        case _ => DerivationResult.attemptNextRule
       }
 
     private def mapPartialMaps[From, To, FromK: Type, FromV: Type, ToK: Type, ToV: Type](
