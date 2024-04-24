@@ -65,6 +65,8 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
 
   final override def hashCode(): Int =
     MurmurHash3.orderedHash(iterator)
+
+  override protected[this] def className: String = "NonEmptyErrorsChain"
 }
 
 object NonEmptyErrorsChain {
