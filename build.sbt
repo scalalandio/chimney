@@ -414,7 +414,7 @@ lazy val chimney = projectMatrix
 
 lazy val chimneyCats = projectMatrix
   .in(file("chimney-cats"))
-  .someVariations(versions.scalas, versions.platforms)(only1VersionInIDE *)
+  .someVariations(versions.scalas, versions.platforms)((preAndPost212 +: only1VersionInIDE) *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
