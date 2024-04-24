@@ -542,7 +542,7 @@ and more!
 Chimney, is based on [Shapeless](https://github.com/milessabin/shapeless/). It supports Scala 2.11, 2.12 and 2.13 on
 JVM, Scala.js 0.6 (2.11, 2.12, 2.13), Scala.js 1.x (2.12, 2.13).
 
-Here are some features it shares with Chimney (Henkan's code based on README/examples from the repository):
+Here are some features it shares with Chimney (Henkan's code based on README):
 
 !!! example "Transform between case classes"
 
@@ -651,6 +651,44 @@ Chimney additionally provides:
    and [collections](cookbook.md#custom-collection-types)
 
 and more!
+
+### Ducktape
+
+!!! warning
+
+    The comparison was made against the version `0.2.0`. If it's out-of-date, please let us know, or even better,
+    provide a PR with an update!
+    
+[Ducktape](https://arainko.github.io/ducktape/) was first released in November 2022. Its latest version, similarly to
+Chimney, is based on macros. It supports only Scala 3 on JVM, Scala.js 1.x and Scala Native 0.4.
+
+Here are some features it shares with Chimney (Ducktape's code based on GitHub Pages documentation):
+
+TODO: add examples
+
+Since Ducktape is inspired by Chimney, there is a huge overlap in functionality. However, there are some differences:
+
+ * Ducktape is developed only on Scala 3, while Chimney supports 2.12 and 2.13 as well
+ * Ducktape provides support to arbitrary effect `F[_]` through `Fallible[F]` combined with 2 modes of derivation:
+   `Mode.Accumulating[F]`  (aggregating errors from different fields, basically `Applicative`/`Parallel`) and
+   `Mode.FailFast[F]` (terminating on the first error, basically `Monad`). Chimney supports one, dedicated and optimized
+   result type `partial.Result` which: can be switched between aggregating/fail-fast mode in runtime, stores path to
+   failed field/index/map key, catches `Exception`s and handles `None`
+ * Ducktape takes all overrides as values passed into `inline def` macro which can remove intermediate values from the
+   final code, while Chimney uses fluent API (builder) which comes with a small runtime overhead
+ * Ducktape allows
+   * providing flags overrides on local scope 
+ * Chimney provides Patchers
+ * Chimney supports
+     * conversions to/from tuples
+     * reading to/from Java Bean accessors
+     * Java enums
+ * Chimney allows
+    * providing support to custom optionals and collections in such a way the `_.matchingSome`, `_.everyItem`,
+      `_.everyMapKey` and `_.everyMapValue` would work with them (including Java collections and Cats data)
+    * customizing the field- and subtype-name matching methods
+    * sharing flags overrides between all derivations in the same scope
+    * providing smart constructors, not only custom constructors guaranteed to create the value
 
 ## Compilation errors
 
