@@ -268,6 +268,237 @@ if there is no source field nor other fallback or override. Although it is
 a bugfix, it is also a breaking change so it has to be documented. The fix would
 be a manual resolution for all fields which now (correctly) fail due to the bugfix.
 
+## Coming from other type-mapping libraries
+
+Chimney is not the first type-mapping library, and it doesn't have monopoly over various solutions. The most known are
+probably C#'s AutoMapper and Java's MapStruct.
+
+You might have come here as a user of another solution, and you might be curious how your current use cases translates
+to Chimney, and what are the differences between the libraries.
+
+This section is dedicated to making it easier to migrate or to understand the differences between other solutions
+and Chimney.
+
+### Scala Automapper
+
+!!! warning
+
+    The comparison was made against the version `0.7.0`. If it's out-of-date, please let us know, or even better,
+    provide a PR with an update!
+    
+[Scala Automapper](https://github.com/bfil/scala-automapper) was first released in September 2015. Its latest version,
+similarly to Chimney, is based on macros. It only supports Scala 2.13 and only on JVM. Previous release, `0.6.2`, was
+released for Scala 2.12 and 2.11.
+
+Here are some features it shares with Chimney (Automapper's code based on examples in its README):
+
+!!! example "The simplest in-place mapping"
+
+    ```scala
+    //> using scala {{ scala.213 }}
+    //> using dep io.bfil::automapper::0.7.0
+
+    case class SourceClass(label: String, value: Int)
+    case class TargetClass(label: String, value: Int)
+    
+    import io.bfil.automapper._
+    
+    val source = SourceClass("label", 10)
+    val target = automap(source).to[TargetClass] // Scala Automapper
+    ```
+    
+    Chimney's counterpart:
+    
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    case class SourceClass(label: String, value: Int)
+    case class TargetClass(label: String, value: Int)
+    
+    import io.scalaland.chimney.dsl._
+    
+    val source = SourceClass("label", 10)
+    val target = source.transformInto[TargetClass] // Chimney
+    ```
+
+!!! example "Defining transformation in one place as implicit"
+
+    ```scala
+    //> using scala {{ scala.213 }}
+    //> using dep io.bfil::automapper::0.7.0
+    
+    case class SourceClass(label: String, value: Int)
+    case class TargetClass(label: String, value: Int)
+    
+    import io.bfil.automapper._
+    
+    val source = SourceClass("label", 10)
+    
+    trait MyMappings {
+      implicit val mapping1 = generateMapping[SourceClass, TargetClass]
+      implicit val mapping2 = generateMapping[SourceClass, AnotherClass]
+    }
+    
+    object Example extends MyMappings {
+      val target1 = automap(source).to[TargetClass]
+      val target2 = automap(source).to[AnotherClass]
+    }
+    ```
+    
+    Chimney's counterpart:
+    
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    case class SourceClass(label: String, value: Int)
+    case class TargetClass(label: String, value: Int)
+    
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+    
+    trait MyMappings {
+      implicit val mapping1 = Transformer.derive[SourceClass, TargetClass]
+      implicit val mapping2 = Transformer.derive[SourceClass, AnotherClass]
+    }
+    
+    object Example extends MyMappings {
+      val target1 = source.transformInto[TargetClass]
+      val target2 = source.transformInto[AnotherClass]
+    }
+    ```
+    
+!!! example "Automapper's dynamic mappings"
+
+    ```scala
+    //> using scala {{ scala.213 }}
+    //> using dep io.bfil::automapper::0.7.0
+    
+    case class SourceClass(label: String, field: String, list: List[Int])
+    case class TargetClass(label: String, renamedField: String, total: Int)
+    
+    import io.bfil.automapper._
+    
+    val source = SourceClass("label", "field", List(1, 2, 3))
+    
+    val values = source.list
+    def sum(values: List[Int]) = values.sum
+    
+    val target = automap(source).dynamicallyTo[TargetClass](
+      renamedField = source.field, total = sum(values)
+    )
+    ```
+    
+    Depending on case, in Chimney we would call it rename, value provision, value computation.
+    
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    case class SourceClass(label: String, field: String, list: List[Int])
+    case class TargetClass(label: String, renamedField: String, total: Int)
+    
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+    
+    val source = SourceClass("label", "field", List(1, 2, 3))
+    
+    val values = source.list
+    def sum(values: List[Int]) = values.sum
+    
+    val target = source.into[TargetClass]
+      .withFieldRenamed(_.field, _.renamedField) // rename
+      .withFieldConst(_.total, sum(source.values)) // value provision
+      .transform
+    // alternatively we don't need intermediate `values` and `sum`:
+    val target2 = source.into[TargetClass]
+      .withFieldRenamed(_.field, _.renamedField) // rename
+      .withFieldComputed(_.total, src => src.list.sum) // value computation
+      .transform
+    ```
+
+!!! example "Implicit conversion and polymorphic types"
+
+    ```scala
+    //> using scala {{ scala.213 }}
+    //> using dep io.bfil::automapper::0.7.0
+    
+    trait SourceTrait
+    case class SourceClassA(label: String, value: Int) extends SourceTrait
+    case class SourceClassB(width: Int) extends SourceTrait
+    
+    trait TargetTrait
+    case class TargetClassA(label: String, value: Int) extends TargetTrait
+    case class TargetClassB(width: Int) extends TargetTrait
+    
+    case class SourceClass(field: SourceTrait)
+    case class TargetClass(field: TargetTrait)
+    
+    import io.bfil.automapper._
+    
+    implicit def mapTrait(source: SourceTrait): TargetTrait = source match {
+      case a: SourceClassA => automap(a).to[TargetClassA]
+      case b: SourceClassB => automap(b).to[TargetClassB]
+    }
+    
+    val source = SourceClass(SourceClassA("label", 10))
+    val target = automap(source).to[TargetClass]
+    ```
+    
+    In Chimney we are not relying on implicit conversions - instead we use implicit `Transformer`s when provided
+    or derive transformation recursively:
+    
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    trait SourceTrait
+    case class SourceClassA(label: String, value: Int) extends SourceTrait
+    case class SourceClassB(width: Int) extends SourceTrait
+    
+    trait TargetTrait
+    case class TargetClassA(label: String, value: Int) extends TargetTrait
+    case class TargetClassB(width: Int) extends TargetTrait
+    
+    case class SourceClass(field: SourceTrait)
+    case class TargetClass(field: TargetTrait)
+    
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+    
+    implicit val sourceToTrait: Transformer[SourceTrait, TargetTrait] = {
+      case a: SourceClassA => a.transformInto[TargetClassA]
+      case b: SourceClassB => b.transformInto[TargetClassB]
+    }
+
+    val source = SourceClass(SourceClassA("label", 10))
+    val target = source.transformInto[TargetClass]
+    ```
+
+Additionally, Scala Automapper supports:
+
+ * automatically filling `Option` fields with `None` if there is no other source. For safety Chimney allows this as
+   [opt-in feature](supported-transformations.md#allowing-fallback-to-none-as-the-constructors-argument)
+ * automatically filling `Iterable`/`Map` is there is no other source. There is no direct correspondence in Chimney,
+   as it requires providing such fields using [`withFieldConst`](supported-transformations.md#wiring-the-constructors-parameter-to-a-provided-value)
+ * automatically filling default values if there is no other source. For safety Chimney allows this as
+   [opt-in feature](supported-transformations.md#allowing-fallback-to-the-constructors-default-values)
+
+On the other hand, Chimney additionally provides:
+
+ * automatically mapping between [any class and any class with a public constructor](supported-transformations.md#into-a-case-class-or-pojo)
+    * including [tuples](supported-transformations.md#frominto-a-tuple) 
+ * automatically wrapping/unwrapping [`AnyVals`s](supported-transformations.md#frominto-an-anyval)
+ * automatically mapping between [`sealed` types/Scala 3 `enum`s/Java `enum`s](supported-transformations.md#between-sealedenums)
+ * automatically mapping between [collections](supported-transformations.md#between-scalas-collectionsarrays)
+ * opt-in support for [reading from `def` methods](supported-transformations.md#reading-from-methods) and
+   [inherited `val`s and `def`s](supported-transformations.md#reading-from-inherited-valuesmethods) 
+ * opt-in support for Java Bean [getters](supported-transformations.md#reading-from-bean-getters) and
+   [setters](supported-transformations.md#writing-to-bean-setters)
+ * [`PartialTransformer`](supported-transformations.md#total-transformers-vs-partialtransformers), a type of
+   transformation that might fail - think `Try`/`Either[String, _]`/`Option` all in one, with a full conversion or
+   fail-fast as always available as a runtime flag
+ * integrations to [Java's collections](cookbook.md#java-collections-integration), [Cats](cookbook.md#cats-integration),
+   [Protocol Buffers](cookbook.md#protocol-buffers-integration) and your own [optional types](cookbook.md#custom-optional-types)
+   and [collections](cookbook.md#custom-collection-types)
+
 ## Compilation errors
 
 When some transformation cannot be generated with the information available to the library, it is perfectly normal that
@@ -329,7 +560,7 @@ would result in errors like:
     forward reference extends over definition of value t
     ```
 
-In newer, it can result in in errors like:
+In newer, it can result in errors like:
 
 !!! example
 
