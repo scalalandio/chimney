@@ -66,7 +66,8 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
   final override def hashCode(): Int =
     MurmurHash3.orderedHash(iterator)
 
-  override protected[this] def className: String = "NonEmptyErrorsChain"
+  @scala.annotation.nowarn // suppress deprecation - 2.12 does not have "className" and complains about "override"
+  override def stringPrefix: String = "NonEmptyErrorsChain"
 }
 
 object NonEmptyErrorsChain {
