@@ -9,7 +9,7 @@ import scala.jdk.CollectionConverters.*
 import scala.reflect.{classTag, ClassTag}
 
 /** @since 1.0.0 */
-trait JavaCollectionsImplicits extends JavaCollectionsImplicits1 {
+trait JavaCollectionsImplicits {
 
   // java.util.Optional
 
@@ -36,6 +36,27 @@ trait JavaCollectionsImplicits extends JavaCollectionsImplicits1 {
         }
       }
       def iterator(collection: ju.Iterator[Item]): Iterator[Item] = collection.asScala
+    }
+
+  // java.util.Enumeration
+
+  /** @since 1.0.0 */
+  implicit def javaEnumerationIsTotallyBuildIterable[Item]: TotallyBuildIterable[ju.Enumeration[Item], Item] =
+    new TotallyBuildIterable[ju.Enumeration[Item], Item] {
+      def totalFactory: Factory[Item, ju.Enumeration[Item]] = new FactoryCompat[Item, ju.Enumeration[Item]] {
+        def newBuilder: mutable.Builder[Item, ju.Enumeration[Item]] =
+          new FactoryCompat.Builder[Item, ju.Enumeration[Item]] {
+            private val impl = new ju.ArrayList[Item]()
+            def clear(): Unit = impl.clear()
+            def result(): ju.Enumeration[Item] = new ju.Enumeration[Item] {
+              private val it = impl.iterator()
+              def hasMoreElements: Boolean = it.hasNext()
+              def nextElement(): Item = it.next()
+            }
+            override def addOne(elem: Item): this.type = { impl.add(elem); this }
+          }
+      }
+      def iterator(collection: ju.Enumeration[Item]): Iterator[Item] = collection.asScala
     }
 
   // java.util.Collection
@@ -160,6 +181,10 @@ trait JavaCollectionsImplicits extends JavaCollectionsImplicits1 {
     }
 
   // java.util.Dictionary
+
+  /** @since 1.0.0 */
+  implicit def javaDictionaryIsTotallyBuildMap[Key, Value]: TotallyBuildMap[ju.Dictionary[Key, Value], Key, Value] =
+    javaHashtableIsTotallyBuildMap[Key, Value].widen
 
   /** @since 1.0.0 */
   implicit def javaHashtableIsTotallyBuildMap[Key, Value]: TotallyBuildMap[ju.Hashtable[Key, Value], Key, Value] =
@@ -315,33 +340,4 @@ trait JavaCollectionsImplicits extends JavaCollectionsImplicits1 {
       }
       def iterator(collection: CC): Iterator[(Key, Value)] = collection.asScala.iterator
     }
-}
-private[javacollections] trait JavaCollectionsImplicits1 { this: JavaCollectionsImplicits =>
-
-  // java.util.Enumeration
-
-  /** @since 1.0.0 */
-  implicit def javaEnumerationIsTotallyBuildIterable[Item]: TotallyBuildIterable[ju.Enumeration[Item], Item] =
-    new TotallyBuildIterable[ju.Enumeration[Item], Item] {
-      def totalFactory: Factory[Item, ju.Enumeration[Item]] = new FactoryCompat[Item, ju.Enumeration[Item]] {
-        def newBuilder: mutable.Builder[Item, ju.Enumeration[Item]] =
-          new FactoryCompat.Builder[Item, ju.Enumeration[Item]] {
-            private val impl = new ju.ArrayList[Item]()
-            def clear(): Unit = impl.clear()
-            def result(): ju.Enumeration[Item] = new ju.Enumeration[Item] {
-              private val it = impl.iterator()
-              def hasMoreElements: Boolean = it.hasNext()
-              def nextElement(): Item = it.next()
-            }
-            override def addOne(elem: Item): this.type = { impl.add(elem); this }
-          }
-      }
-      def iterator(collection: ju.Enumeration[Item]): Iterator[Item] = collection.asScala
-    }
-
-  // java.util.Dictionary
-
-  /** @since 1.0.0 */
-  implicit def javaDictionaryIsTotallyBuildMap[Key, Value]: TotallyBuildMap[ju.Dictionary[Key, Value], Key, Value] =
-    javaHashtableIsTotallyBuildMap[Key, Value].widen
 }
