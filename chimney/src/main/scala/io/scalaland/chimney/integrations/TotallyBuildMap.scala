@@ -14,4 +14,8 @@ package io.scalaland.chimney.integrations
   *
   * @since 1.0.0
   */
-trait TotallyBuildMap[Mapp, Key, Value] extends TotallyBuildIterable[Mapp, (Key, Value)]
+trait TotallyBuildMap[Mapp, Key, Value] extends TotallyBuildIterable[Mapp, (Key, Value)] {
+
+  override def widen[Collection2 >: Mapp]: TotallyBuildMap[Collection2, Key, Value] =
+    this.asInstanceOf[TotallyBuildMap[Collection2, Key, Value]]
+}
