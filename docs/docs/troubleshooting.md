@@ -50,6 +50,27 @@ further development. For that reason these changes are not binary backward compa
 breaking changes when it comes to linking with previously compiled code. However, this cleanup should eliminate the need
 for any such refactors for a long time.
 
+### Deprecation of `withCoproductInstance`
+
+Method was marked as `@deprecated` but NOT removed, so you can keep using it (as long as you are not using
+`-Xfatal-warnings`). It ir recommended though to rename each such usage into either `withEnumCaseHandled` or
+`withSealedSubtypeHandled` simple for the sake of readability.
+
+### Handling non-`Unit` method with names beginning with `set`
+
+Prior to 0.8.0 Chimney assumed that setters:
+
+ * has to begin their name with `set`
+ * has to be unary method (1 value parameter, no type parameters, single argument list)
+ * has to return `Unit`
+
+Chimney 0.8.0 relaxed the last condition, to allow targeting setters in builders which might have `set` methods, that
+mutate but return e.g. `this.type`. However, it broke the code for people using `set` as e.g. methods concerning
+mathematical sets.
+
+Since 1.0.0 Chimney makes non-`Unit` setters opt-in - it still allows to use them but requires enabling them
+[with a flag](supported-transformations.md#writing-to-non-unit-bean-setters).
+
 ## Migration from 0.7.x to 0.8.0
 
 Version 0.8.0 is the first version that cleaned up the API. It introduced several breaking changes.
@@ -270,8 +291,10 @@ be a manual resolution for all fields which now (correctly) fail due to the bugf
 
 ## Coming from other type-mapping libraries
 
-Chimney is not the first type-mapping library, and it doesn't have monopoly over various solutions. The most known are
-probably C#'s AutoMapper and Java's MapStruct.
+Chimney is not the first type-mapping library, and it doesn't have a monopoly over various solutions. The best known are
+probably C#'s AutoMapper (the first release on May 2010) and Java's MapStruct (the first release June 2013).
+(For the record, the first Chimney's release was on May 2017, so it's younger than the first 2 Scala libraries described
+below).
 
 You might have come here as a user of another solution, and you might be curious how your current use cases translates
 to Chimney, and what are the differences between the libraries.
@@ -304,7 +327,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     import io.bfil.automapper._
     
     val source = SourceClass("label", 10)
-    val target = automap(source).to[TargetClass] // Scala Automapper
+    val target = automap(source).to[TargetClass] // TargetClass("label", 10)
     ```
     
     Chimney's counterpart:
@@ -318,7 +341,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     import io.scalaland.chimney.dsl._
     
     val source = SourceClass("label", 10)
-    val target = source.transformInto[TargetClass] // Chimney
+    val target = source.transformInto[TargetClass] // TargetClass("label", 10)
     ```
 
 !!! example "Defining transformation in one place as implicit"
@@ -329,6 +352,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     
     case class SourceClass(label: String, value: Int)
     case class TargetClass(label: String, value: Int)
+    case class AnotherClass(label: String, value: Int)
     
     import io.bfil.automapper._
     
@@ -340,7 +364,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     }
     
     object Example extends MyMappings {
-      val target1 = automap(source).to[TargetClass]
+      val target1 = automap(source).to[TargetClass] // 
       val target2 = automap(source).to[AnotherClass]
     }
     ```
@@ -352,7 +376,10 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     
     case class SourceClass(label: String, value: Int)
     case class TargetClass(label: String, value: Int)
+    case class AnotherClass(label: String, value: Int)
     
+    val source = SourceClass("label", 10)
+
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.dsl._
     
@@ -362,8 +389,8 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     }
     
     object Example extends MyMappings {
-      val target1 = source.transformInto[TargetClass]
-      val target2 = source.transformInto[AnotherClass]
+      val target1 = source.transformInto[TargetClass] // TargetClass("label", 10))
+      val target2 = source.transformInto[AnotherClass] // AnotherClass("label", 10))
     }
     ```
     
@@ -380,12 +407,12 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     
     val source = SourceClass("label", "field", List(1, 2, 3))
     
-    val values = source.list
+    val values = source.list // List(1, 2, 3)
     def sum(values: List[Int]) = values.sum
     
     val target = automap(source).dynamicallyTo[TargetClass](
       renamedField = source.field, total = sum(values)
-    )
+    ) // TargetClass("label", "field", 6)
     ```
     
     Depending on case, in Chimney we would call it rename, value provision, value computation.
@@ -401,18 +428,18 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     
     val source = SourceClass("label", "field", List(1, 2, 3))
     
-    val values = source.list
+    val values = source.list // List(1, 2, 3)
     def sum(values: List[Int]) = values.sum
     
     val target = source.into[TargetClass]
       .withFieldRenamed(_.field, _.renamedField) // rename
       .withFieldConst(_.total, sum(source.values)) // value provision
-      .transform
+      .transform // TargetClass("label", "field", 6)
     // alternatively we don't need intermediate `values` and `sum`:
     val target2 = source.into[TargetClass]
       .withFieldRenamed(_.field, _.renamedField) // rename
       .withFieldComputed(_.total, src => src.list.sum) // value computation
-      .transform
+      .transform // TargetClass("label", "field", 6)
     ```
 
 !!! example "Implicit conversion and polymorphic types"
@@ -440,11 +467,11 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     }
     
     val source = SourceClass(SourceClassA("label", 10))
-    val target = automap(source).to[TargetClass]
+    val target = automap(source).to[TargetClass] // TargetClass(TargetClassA("label", 10)))
     ```
     
     In Chimney we are not relying on implicit conversions - instead we use implicit `Transformer`s when provided
-    or derive transformation recursively:
+    or derive the transformation recursively:
     
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
@@ -469,7 +496,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     }
 
     val source = SourceClass(SourceClassA("label", 10))
-    val target = source.transformInto[TargetClass]
+    val target = source.transformInto[TargetClass] // TargetClass(TargetClassA("label", 10)))
     ```
 
 Additionally, Scala Automapper supports:
@@ -484,7 +511,10 @@ Additionally, Scala Automapper supports:
 On the other hand, Chimney additionally provides:
 
  * automatically mapping between [any class and any class with a public constructor](supported-transformations.md#into-a-case-class-or-pojo)
-    * including [tuples](supported-transformations.md#frominto-a-tuple) 
+    * including [tuples](supported-transformations.md#frominto-a-tuple)
+    * and allowing to provide/compute value into a nested field (`_.nested.field`) - including a field in `Option`
+      (`_.matchingSome`), `Either` (`_.matchingLeft`, `_.matchingRight`), `Iterable` (`_.everyItem`) or `Map`
+      (`_.everyMapKey`, `_.everyMapIndex`) 
  * automatically wrapping/unwrapping [`AnyVals`s](supported-transformations.md#frominto-an-anyval)
  * automatically mapping between [`sealed` types/Scala 3 `enum`s/Java `enum`s](supported-transformations.md#between-sealedenums)
  * automatically mapping between [collections](supported-transformations.md#between-scalas-collectionsarrays)
@@ -498,6 +528,129 @@ On the other hand, Chimney additionally provides:
  * integrations to [Java's collections](cookbook.md#java-collections-integration), [Cats](cookbook.md#cats-integration),
    [Protocol Buffers](cookbook.md#protocol-buffers-integration) and your own [optional types](cookbook.md#custom-optional-types)
    and [collections](cookbook.md#custom-collection-types)
+
+and more!
+
+### Henkan
+
+!!! warning
+
+    The comparison was made against the version `0.6.5`. If it's out-of-date, please let us know, or even better,
+    provide a PR with an update!
+    
+[Henkan](https://github.com/kailuowang/henkan) was first released in March 2016. Its latest version, contrary to
+Chimney, is based on [Shapeless](https://github.com/milessabin/shapeless/). It supports Scala 2.11, 2.12 and 2.13 on
+JVM, Scala.js 0.6 (2.11, 2.12, 2.13), Scala.js 1.x (2.12, 2.13).
+
+Here are some features it shares with Chimney (Henkan's code based on README/examples from the repository):
+
+!!! example "Transform between case classes"
+
+    ```scala
+    //> using scala {{ scala.213 }}
+    //> using dep com.kailuowang::henkan-convert::0.6.5
+    
+    import java.time.LocalDate
+    
+    case class Employee(name: String, address: String, dateOfBirth: LocalDate, salary: Double = 50000d)
+    case class UnionMember(name: String, address: String, dateOfBirth: LocalDate)
+    
+    val employee = Employee("George", "123 E 86 St", LocalDate.of(1963, 3, 12), 54000)
+    val unionMember = UnionMember("Micheal", "41 Dunwoody St", LocalDate.of(1994, 7, 29))
+    
+    import henkan.convert.Syntax._
+    
+    employee.to[UnionMember]() // UnionMember("George", "123 E 86 St", LocalDate.of(1963, 3, 12))
+    unionMember.to[Employee]() // Employee("Micheal", "41 Dunwoody St", LocalDate.of(1994, 7, 29), 50000d)
+    unionMember.to[Employee].set(salary = 60000.0) // Employee("Micheal", "41 Dunwoody St", LocalDate.of(1994, 7, 29), 60000.0)
+    ```
+    
+    Chimney counterpart:
+    
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    import java.time.LocalDate
+    
+    case class Employee(name: String, address: String, dateOfBirth: LocalDate, salary: Double = 50000d)
+    case class UnionMember(name: String, address: String, dateOfBirth: LocalDate)
+    
+    val employee = Employee("George", "123 E 86 St", LocalDate.of(1963, 3, 12), 54000)
+    val unionMember = UnionMember("Micheal", "41 Dunwoody St", LocalDate.of(1994, 7, 29))
+    
+    import io.scalaland.chimney.dsl._
+    
+    employee.transformInto[UnionMember] // UnionMember("George", "123 E 86 St", LocalDate.of(1963, 3, 12))
+    unionMember.into[Employee].enableDefaultValues.transform // Employee("Micheal", "41 Dunwoody St", LocalDate.of(1994, 7, 29), 50000d)
+    unionMember.into[Employee].withFieldConst(_.salary, 60000.0).transform // Employee("Micheal", "41 Dunwoody St", LocalDate.of(1994, 7, 29), 60000.0)
+    ```
+
+!!! example "Transform between case classes with optional field"
+
+    ```scala
+    //> using scala {{ scala.213 }}
+    //> using dep com.kailuowang::henkan-optional::0.6.5
+    
+    case class Message(a: Option[String], b: Option[Int])
+    case class Domain(a: String, b: Int)
+    
+    import cats.data.Validated
+    import cats.implicits._
+    import henkan.optional.all._
+    
+    validate(Message(Some("a"), Some(2))).to[Domain] // Valid(Domain(a,2))
+    validate(Message(Some("a"), None)).to[Domain] // Invalid(NonEmptyList(RequiredFieldMissing(b)))
+    
+    from(Domain("a", 2)).toOptional[Message] // Message(Some(a),Some(2))
+    ```
+    
+    For conversions that can fail (e.g. unwrapping `Option` value into non-`Option` field) Chimney provides deficated
+    `PartialTransformer` which returns `partial.Result` - a type handling at once errors represented by:
+    `scala.util.Try`, `scala.Option` and `scala.Either[String, ...]`. This result you can convert into whatever error
+    type you want:
+    
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    
+    case class Message(a: Option[String], b: Option[Int])
+    case class Domain(a: String, b: Int)
+    
+    import io.scalaland.chimney.dsl._
+    
+    Message(Some("a"), Some(2)).transformIntoPartial[Domain].asOption // Some(Domain("a", 2))
+    Message(Some("a"), None).transformIntoPartial[Domain].asOption // None
+    
+    import io.scalaland.chimney.cats._ // provides .asValidated
+    
+    Message(Some("a"), Some(2)).transformIntoPartial[Domain].asValidated // Valid(Domain("a", 2))
+    Message(Some("a"), None).transformIntoPartial[Domain].asValidated
+    // Invalid(Errors(NonEmptyErrorsChain.from(Error.fromEmptyValue.prependErrorPath(PathElement.Accessor("b"))))))
+    ```
+
+Chimney additionally provides:
+
+ * defining whole conversion or its part through [implicits and `Transformer`/`PartialTransformer` type class](supported-transformations.md#custom-transformations)
+ * automatically mapping between [any class and any class with a public constructor](supported-transformations.md#into-a-case-class-or-pojo)
+    * including [tuples](supported-transformations.md#frominto-a-tuple)
+    * and allowing to provide/compute value into a nested field (`_.nested.field`) - including a field in `Option`
+      (`_.matchingSome`), `Either` (`_.matchingLeft`, `_.matchingRight`), `Iterable` (`_.everyItem`) or `Map`
+      (`_.everyMapKey`, `_.everyMapIndex`) 
+ * automatically wrapping/unwrapping [`AnyVals`s](supported-transformations.md#frominto-an-anyval)
+ * automatically mapping between [`sealed` types/Scala 3 `enum`s/Java `enum`s](supported-transformations.md#between-sealedenums)
+ * automatically mapping between [collections](supported-transformations.md#between-scalas-collectionsarrays)
+ * opt-in support for [reading from `def` methods](supported-transformations.md#reading-from-methods) and
+   [inherited `val`s and `def`s](supported-transformations.md#reading-from-inherited-valuesmethods) 
+ * opt-in support for Java Bean [getters](supported-transformations.md#reading-from-bean-getters) and
+   [setters](supported-transformations.md#writing-to-bean-setters)
+ * [`PartialTransformer`](supported-transformations.md#total-transformers-vs-partialtransformers), a type of
+   transformation that might fail - think `Try`/`Either[String, _]`/`Option` all in one, with a full conversion or
+   fail-fast as always available as a runtime flag
+ * integrations to [Java's collections](cookbook.md#java-collections-integration), [Cats](cookbook.md#cats-integration),
+   [Protocol Buffers](cookbook.md#protocol-buffers-integration) and your own [optional types](cookbook.md#custom-optional-types)
+   and [collections](cookbook.md#custom-collection-types)
+
+and more!
 
 ## Compilation errors
 
