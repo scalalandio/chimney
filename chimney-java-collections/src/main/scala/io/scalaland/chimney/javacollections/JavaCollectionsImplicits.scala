@@ -8,8 +8,8 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 import scala.reflect.{classTag, ClassTag}
 
-// TODO: rename once all integrations are migrated
-trait JavaImplicits extends JavaImplicits1 {
+/** @since 1.0.0 */
+trait JavaCollectionsImplicits extends JavaCollectionsImplicits1 {
 
   // java.util.Optional
 
@@ -315,14 +315,8 @@ trait JavaImplicits extends JavaImplicits1 {
       }
       def iterator(collection: CC): Iterator[(Key, Value)] = collection.asScala.iterator
     }
-
-  // TODO: low priority
-
-  // TODO: ju.Enumeration
-
-  // TODO: ju.Dictionary
 }
-private[javacollections] trait JavaImplicits1 { this: JavaImplicits =>
+private[javacollections] trait JavaCollectionsImplicits1 { this: JavaCollectionsImplicits =>
 
   // java.util.Enumeration
 
