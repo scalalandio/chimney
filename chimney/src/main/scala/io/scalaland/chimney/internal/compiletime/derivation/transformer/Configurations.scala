@@ -98,6 +98,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       case (Root, result)                                                                         => Some(result)
       case (AtField(name, prefix2), AtField(name2, tail)) if areFieldNamesMatching(name, name2)   => tail.drop(prefix2)
       case (AtSubtype(tpe, prefix2), AtSubtype(tpe2, tail)) if tpe.Underlying <:< tpe2.Underlying => tail.drop(prefix2)
+      case (AtSubtype(_, prefix2), AtField(_, _))                                                 => this.drop(prefix2)
       case (AtItem(prefix2), AtItem(tail))                                                        => tail.drop(prefix2)
       case (AtMapKey(prefix2), AtMapKey(tail))                                                    => tail.drop(prefix2)
       case (AtMapValue(prefix2), AtMapValue(tail))                                                => tail.drop(prefix2)

@@ -755,4 +755,9 @@ class IssuesSpec extends ChimneySpec {
       .enableCustomFieldNameComparison(TransformedNamesComparison.StrictEquality)
       .transform ==> To(uuid1, uuid2, "test")
   }
+
+  test("fix issue #498") {
+    import Issue498.*
+    (Foo.Sub1("test"): Foo).into[Bar].withFieldConst(_.b, 1).transform ==> Bar.Sub1("test", 1)
+  }
 }
