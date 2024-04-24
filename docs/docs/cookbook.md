@@ -256,7 +256,7 @@ For the reasons above the recommendations are as follows:
   - if you use unit tests to ensure that your code does what it should and benchmarks to
     ensure it is reasonably fast keep on using `import dsl._`
 
-## Java collections integration
+## Java collections' integration
 
 If you need support for:
 
@@ -1266,6 +1266,9 @@ As you can see, once you provide 1 implicit your custom optional type:
  * can automatically unwrap value in `PartialTransformer`s
  * can be used with `matchingSome` path in `withFieldConst`/`withFieldComputed`/etc
 
+An example of such optional type is `java.util.Optional` for which support is provided via `OptionalValue` in
+[Java collections' integration](#java-collections-integration).
+
 ## Custom collection types
 
 In case your library/domain defines custom collections - which are:
@@ -1493,3 +1496,6 @@ The only 2 difference they make is that:
    of a tuple in a sequence (e.g. `keys(myKey)` - if key conversion failed for `myKey` value or `(myKey)` if value
    conversion failed for `myKey` key, instead of `(0)._1` or `(0)._2`)
  - they allow usage of `everyMapKey` and `everyMapValue` in paths, just like with standard library's `Maps`.
+
+An example of such collections are `java.util` collections for which support is provided via `TotallyBuildIterable` 
+and `TotallyBuildMap` in [Java collections' integration](#java-collections-integration).

@@ -170,9 +170,9 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       ListMap("a" -> "4", "3" -> "b", "c" -> "d", "1" -> "1")
         .transformIntoPartial[ju.Dictionary[Int, Int]]
         .asErrorPathMessageStrings ==> Iterable(
-        "(a).keys(a)" -> "For input string: \"a\"",
+        "keys(a)" -> "For input string: \"a\"",
         "(3)" -> "For input string: \"b\"",
-        "(c).keys(c)" -> "For input string: \"c\"",
+        "keys(c)" -> "For input string: \"c\"",
         "(c)" -> "For input string: \"d\""
       )
     }
@@ -202,9 +202,9 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       ListMap("a" -> "4", "3" -> "b", "c" -> "d", "1" -> "1")
         .transformIntoPartial[ju.Map[Int, Int]]
         .asErrorPathMessageStrings ==> Iterable(
-        "(a).keys(a)" -> "For input string: \"a\"",
+        "keys(a)" -> "For input string: \"a\"",
         "(3)" -> "For input string: \"b\"",
-        "(c).keys(c)" -> "For input string: \"c\"",
+        "keys(c)" -> "For input string: \"c\"",
         "(c)" -> "For input string: \"d\""
       )
     }
@@ -521,9 +521,9 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
         p.put("1", "1")
         p
       }.transformIntoPartial[Map[Int, Int]].asErrorPathMessageStrings ==> Iterable(
-        "(a).keys(a)" -> "For input string: \"a\"",
+        "keys(a)" -> "For input string: \"a\"",
         "(3)" -> "For input string: \"b\"",
-        "(c).keys(c)" -> "For input string: \"c\"",
+        "keys(c)" -> "For input string: \"c\"",
         "(c)" -> "For input string: \"d\""
       )
     }
@@ -576,9 +576,9 @@ class PartialTransformerJavaCollectionsConversionsSpec extends ChimneySpec {
       initBadMap(new ju.LinkedHashMap[String, String])
         .transformIntoPartial[ListMap[Int, Int]]
         .asErrorPathMessageStrings ==> Iterable(
-        "(a).keys(a)" -> "For input string: \"a\"",
+        "keys(a)" -> "For input string: \"a\"",
         "(3)" -> "For input string: \"b\"",
-        "(c).keys(c)" -> "For input string: \"c\"",
+        "keys(c)" -> "For input string: \"c\"",
         "(c)" -> "For input string: \"d\""
       )
     }
