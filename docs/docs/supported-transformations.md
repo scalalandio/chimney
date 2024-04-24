@@ -1128,10 +1128,11 @@ The requirements to use a rename are as follows:
     setters are enabled) to point which argument you are targeting
   - the field rename can be _nested_, you can pass `_.foo.bar.baz` there, and on the constructor's arguments side
     additionally you can use:
-     - `.matched[Subtype]` to select just one subtype of ADT e.g `_.adt.matched[Subtype].subtypeField`
-     - `.matchedSome` to select values inside `Option` e.g. `_.option.matchedSome.field
-     - `.matchedLeft` and `.matchedRight` to select values inside `Either` e.g. `_.either.matchedLeft.field` or
-       `_.either.matchedRight.field`
+     - `.matching[Subtype]` to select just one subtype of ADT e.g `_.adt.matching[Subtype].subtypeField` (do not use for
+       matching on `Option` or `Either`! Use dedicated matchers described below)
+     - `.matchingSome` to select values inside `Option` e.g. `_.option.matchingSome.field`
+     - `.matchingLeft` and `.matchingRight` to select values inside `Either` e.g. `_.either.matchingLeft.field` or
+       `_.either.matchingRight.field`
      - `.everyItem` to select items inside collection or array e.g. `_.list.everyItem.field`, `_.array.everyItem.field`
      - `.everyMapKey` and `.everyMapValue` to select keys/values inside maps e.g. `_.map.everyMapKey.field`,
        `_.map.everyMapValue.field`
@@ -1302,10 +1303,11 @@ The requirements to use a value provision are as follows:
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
     setters are enabled)
   - the path can be _nested_, you can pass `_.foo.bar.baz` there, and additionally you can use:
-     - `.matched[Subtype]` to select just one subtype of ADT e.g `_.adt.matched[Subtype].subtypeField`
-     - `.matchedSome` to select values inside `Option` e.g. `_.option.matchedSome.field
-     - `.matchedLeft` and `.matchedRight` to select values inside `Either` e.g. `_.either.matchedLeft.field` or
-       `_.either.matchedRight.field`
+     - `.matching[Subtype]` to select just one subtype of ADT e.g `_.adt.matching[Subtype].subtypeField` (do not use for
+       matching on `Option` or `Either`! Use dedicated matchers described below)
+     - `.matchingSome` to select values inside `Option` e.g. `_.option.matchingSome.field`
+     - `.matchingLeft` and `.matchingRight` to select values inside `Either` e.g. `_.either.matchingLeft.field` or
+       `_.either.matchingRight.field`
      - `.everyItem` to select items inside collection or array e.g. `_.list.everyItem.field`, `_.array.everyItem.field`
      - `.everyMapKey` and `.everyMapValue` to select keys/values inside maps e.g. `_.map.everyMapKey.field`,
        `_.map.everyMapValue.field`
@@ -1489,10 +1491,11 @@ The requirements to use a value computation are as follows:
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
     setters are enabled)
   - the path can be _nested_, you can pass `_.foo.bar.baz` there, and additionally you can use:
-     - `.matched[Subtype]` to select just one subtype of ADT e.g `_.adt.matched[Subtype].subtypeField`
-     - `.matchedSome` to select values inside `Option` e.g. `_.option.matchedSome.field
-     - `.matchedLeft` and `.matchedRight` to select values inside `Either` e.g. `_.either.matchedLeft.field` or
-       `_.either.matchedRight.field`
+     - `.matching[Subtype]` to select just one subtype of ADT e.g `_.adt.matching[Subtype].subtypeField` (do not use for
+       matching on `Option` or `Either`! Use dedicated matchers described below)
+     - `.matchingSome` to select values inside `Option` e.g. `_.option.matchingSome.field`
+     - `.matchingLeft` and `.matchingRight` to select values inside `Either` e.g. `_.either.matchingLeft.field` or
+       `_.either.matchingRight.field`
      - `.everyItem` to select items inside collection or array e.g. `_.list.everyItem.field`, `_.array.everyItem.field`
      - `.everyMapKey` and `.everyMapValue` to select keys/values inside maps e.g. `_.map.everyMapKey.field`,
        `_.map.everyMapValue.field`
