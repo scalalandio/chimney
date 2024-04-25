@@ -93,5 +93,9 @@ extra:
     2_12: "2.12.19"
     2_13: "2.13.13"
     3:    "3.3.3"
+  libraries:
+    scala_automapper: "0.7.0"
+    henkan:           "0.6.5"
+    ducktape:         "0.2.0"
   local:
     tag: !ENV [CI_LATEST_TAG, 'latest'] # used as git.tag fallback in Docker container

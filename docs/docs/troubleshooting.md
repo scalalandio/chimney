@@ -306,8 +306,8 @@ and Chimney.
 
 !!! warning
 
-    The comparison was made against the version `0.7.0`. If it's out-of-date, please let us know, or even better,
-    provide a PR with an update!
+    The comparison was made against the version `{{ libraries.scala_automapper }}`.
+    If it's out-of-date, please let us know, or even better, provide a PR with an update!
     
 [Scala Automapper](https://github.com/bfil/scala-automapper) was first released in September 2015. Its latest version,
 similarly to Chimney, is based on macros. It only supports Scala 2.13 and only on JVM. Previous release, `0.6.2`, was
@@ -319,7 +319,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
 
     ```scala
     //> using scala {{ scala.213 }}
-    //> using dep io.bfil::automapper::0.7.0
+    //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
 
     case class SourceClass(label: String, value: Int)
     case class TargetClass(label: String, value: Int)
@@ -348,7 +348,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
 
     ```scala
     //> using scala {{ scala.213 }}
-    //> using dep io.bfil::automapper::0.7.0
+    //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
     
     case class SourceClass(label: String, value: Int)
     case class TargetClass(label: String, value: Int)
@@ -398,7 +398,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
 
     ```scala
     //> using scala {{ scala.213 }}
-    //> using dep io.bfil::automapper::0.7.0
+    //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
     
     case class SourceClass(label: String, field: String, list: List[Int])
     case class TargetClass(label: String, renamedField: String, total: Int)
@@ -446,7 +446,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
 
     ```scala
     //> using scala {{ scala.213 }}
-    //> using dep io.bfil::automapper::0.7.0
+    //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
     
     trait SourceTrait
     case class SourceClassA(label: String, value: Int) extends SourceTrait
@@ -535,8 +535,8 @@ and more!
 
 !!! warning
 
-    The comparison was made against the version `0.6.5`. If it's out-of-date, please let us know, or even better,
-    provide a PR with an update!
+    The comparison was made against the version `{{ libraries.henkan }}`.
+    If it's out-of-date, please let us know, or even better, provide a PR with an update!
     
 [Henkan](https://github.com/kailuowang/henkan) was first released in March 2016. Its latest version, contrary to
 Chimney, is based on [Shapeless](https://github.com/milessabin/shapeless/). It supports Scala 2.11, 2.12 and 2.13 on
@@ -548,7 +548,7 @@ Here are some features it shares with Chimney (Henkan's code based on README):
 
     ```scala
     //> using scala {{ scala.213 }}
-    //> using dep com.kailuowang::henkan-convert::0.6.5
+    //> using dep com.kailuowang::henkan-convert::{{ libraries.henkan }}
     
     import java.time.LocalDate
     
@@ -589,7 +589,7 @@ Here are some features it shares with Chimney (Henkan's code based on README):
 
     ```scala
     //> using scala {{ scala.213 }}
-    //> using dep com.kailuowang::henkan-optional::0.6.5
+    //> using dep com.kailuowang::henkan-optional::{{ libraries.henkan }}
     
     case class Message(a: Option[String], b: Option[Int])
     case class Domain(a: String, b: Int)
@@ -656,15 +656,632 @@ and more!
 
 !!! warning
 
-    The comparison was made against the version `0.2.0`. If it's out-of-date, please let us know, or even better,
-    provide a PR with an update!
+    The comparison was made against the version `{{ libraries.ducktape }}`.
+    If it's out-of-date, please let us know, or even better, provide a PR with an update!
     
 [Ducktape](https://arainko.github.io/ducktape/) was first released in November 2022. Its latest version, similarly to
 Chimney, is based on macros. It supports only Scala 3 on JVM, Scala.js 1.x and Scala Native 0.4.
 
 Here are some features it shares with Chimney (Ducktape's code based on GitHub Pages documentation):
 
-TODO: add examples
+!!! example "Using total transformations"
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    
+    object wire:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: List[wire.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case Card(name: String, digits: Long)
+        case PayPal(email: String)
+        case Cash
+    
+    object domain:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: Vector[domain.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case PayPal(email: String)
+        case Card(digits: Long, name: String)
+        case Cash
+    
+    val wirePerson = wire.Person(
+      "John",
+      "Doe",
+      List(
+        wire.PaymentMethod.Cash,
+        wire.PaymentMethod.PayPal("john@doe.com"),
+        wire.PaymentMethod.Card("J. Doe", 23232323)
+      )
+    )
+    
+    import io.github.arainko.ducktape.*
+    
+    wirePerson.to[domain.Person]
+    // Person(
+    //   firstName = "John",
+    //   lastName = "Doe",
+    //   paymentMethods = Vector(
+    //     Cash,
+    //     PayPal(email = "john@doe.com"),
+    //     Card(digits = 23232323L, name = "J. Doe")
+    //   )
+    // )
+    
+    wirePerson
+      .into[domain.Person]
+      .transform(
+        Field.const(_.paymentMethods.element.at[domain.PaymentMethod.PayPal].email, "overridden@email.com")
+      )
+    // Person(
+    //   firstName = "John",
+    //   lastName = "Doe",
+    //   paymentMethods = Vector(
+    //     Cash,
+    //     PayPal(email = "overridden@email.com"),
+    //     Card(digits = 23232323L, name = "J. Doe")
+    //   )
+    // )
+    
+    wirePerson.via(domain.Person.apply)
+    // Person(
+    //   firstName = "John",
+    //   lastName = "Doe",
+    //   paymentMethods = Vector(
+    //     Cash,
+    //     PayPal(email = "john@doe.com"),
+    //     Card(digits = 23232323L, name = "J. Doe")
+    //   )
+    // )
+    
+    wirePerson
+      .intoVia(domain.Person.apply)
+      .transform(Field.const(_.paymentMethods.element.at[domain.PaymentMethod.PayPal].email, "overridden@email.com"))
+    // Person = Person(
+    //   firstName = "John",
+    //   lastName = "Doe",
+    //   paymentMethods = Vector(
+    //     Cash,
+    //     PayPal(email = "overridden@email.com"),
+    //     Card(digits = 23232323L, name = "J. Doe")
+    //   )
+    // )
+    ```
+    
+    Chimney's counterpart:
+    
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    object wire:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: List[wire.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case Card(name: String, digits: Long)
+        case PayPal(email: String)
+        case Cash
+    
+    object domain:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: Vector[domain.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case PayPal(email: String)
+        case Card(digits: Long, name: String)
+        case Cash
+    
+    val wirePerson = wire.Person(
+      "John",
+      "Doe",
+      List(
+        wire.PaymentMethod.Cash,
+        wire.PaymentMethod.PayPal("john@doe.com"),
+        wire.PaymentMethod.Card("J. Doe", 23232323)
+      )
+    )
+    
+    import io.scalaland.chimney.dsl.*
+    
+    wirePerson.transformInto[domain.Person]
+    // Person(
+    //   firstName = "John",
+    //   lastName = "Doe",
+    //   paymentMethods = Vector(
+    //     Cash,
+    //     PayPal(email = "john@doe.com"),
+    //     Card(digits = 23232323L, name = "J. Doe")
+    //   )
+    // )
+    
+    wirePerson
+      .into[domain.Person]
+      .withFieldConst(_.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email, "overridden@email.com")
+      .transform
+    // Person(
+    //   firstName = "John",
+    //   lastName = "Doe",
+    //   paymentMethods = Vector(
+    //     Cash,
+    //     PayPal(email = "overridden@email.com"),
+    //     Card(digits = 23232323L, name = "J. Doe")
+    //   )
+    // )
+    
+    wirePerson
+      .into[domain.Person]
+      .withConstructor(domain.Person)
+      .transform
+    // Person(
+    //   firstName = "John",
+    //   lastName = "Doe",
+    //   paymentMethods = Vector(
+    //     Cash,
+    //     PayPal(email = "john@doe.com"),
+    //     Card(digits = 23232323L, name = "J. Doe")
+    //   )
+    // )
+    
+    wirePerson
+      .into[domain.Person]
+      .withConstructor(domain.Person)
+      .withFieldConst(_.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email, "overridden@email.com")
+      .transform
+    // Person = Person(
+    //   firstName = "John",
+    //   lastName = "Doe",
+    //   paymentMethods = Vector(
+    //     Cash,
+    //     PayPal(email = "overridden@email.com"),
+    //     Card(digits = 23232323L, name = "J. Doe")
+    //   )
+    // )
+    ```
+
+!!! example "Nested enum with missing counterpart"
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    
+    object wire:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: List[wire.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case Card(name: String, digits: Long)
+        case PayPal(email: String)
+        case Cash
+        case Transfer(accountNo: String) // <-- additional enum case, not present in the domain model
+    
+    object domain:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: Vector[domain.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case PayPal(email: String)
+        case Card(digits: Long, name: String)
+        case Cash
+    
+    val wirePerson = wire.Person(
+      "John",
+      "Doe",
+      List(
+        wire.PaymentMethod.Cash,
+        wire.PaymentMethod.PayPal("john@doe.com"),
+        wire.PaymentMethod.Card("J. Doe", 23232323)
+      )
+    )
+    
+    import io.github.arainko.ducktape.*
+    
+    wirePerson
+      .into[domain.Person]
+      .transform(
+        Field.const(_.age, 24),
+        Case.const(_.paymentMethods.element.at[wire.PaymentMethod.Transfer], domain.PaymentMethod.Cash)
+      )
+    // Person(
+    //   firstName = "John",
+    //   lastName = "Doe",
+    //   age = 24,
+    //   paymentMethods = Vector(
+    //     Cash,
+    //     PayPal(email = "john@doe.com"),
+    //     Card(name = "J. Doe", digits = 23232323L),
+    //     Cash
+    //   )
+    // )
+    ```
+
+    Chimney doesn't allow handling sealed subtypes/enum cases when nested, and require using implicit `Transformer`
+    which would handle them as top level:
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    object wire:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: List[wire.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case Card(name: String, digits: Long)
+        case PayPal(email: String)
+        case Cash
+        case Transfer(accountNo: String) // <-- additional enum case, not present in the domain model
+    
+    object domain:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: Vector[domain.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case PayPal(email: String)
+        case Card(digits: Long, name: String)
+        case Cash
+    
+    val wirePerson = wire.Person(
+      "John",
+      "Doe",
+      List(
+        wire.PaymentMethod.Cash,
+        wire.PaymentMethod.PayPal("john@doe.com"),
+        wire.PaymentMethod.Card("J. Doe", 23232323)
+      )
+    )
+    
+    import io.scalaland.chimney.dsl.*
+    import io.scalaland.chimney.Transformer
+    
+    locally {
+      // There is no direct analogue to nested:
+      //   Case.const(_.paymentMethods.element.at[wire.PaymentMethod.Transfer], domain.PaymentMethod.Cash)
+      // so this has to be handled "top level" by creating implicit/given.
+      given Transformer[wire.PaymentMethod, domain.PaymentMethod] = Transformer
+        .derive[wire.PaymentMethod, domain.PaymentMethod]
+        .withEnumCaseHandled[wire.PaymentMethod.Transfer](_ => domain.PaymentMethod.Cash)
+        .buildTransformer
+
+      wirePerson
+        .into[domain.Person]
+        .withFieldConst(_.age, 24)
+        // implicit instead of nested handling for withEnumCaseHandled
+        .transform
+    }
+    // Person(
+    //   firstName = "John",
+    //   lastName = "Doe",
+    //   age = 24,
+    //   paymentMethods = Vector(
+    //     Cash,
+    //     PayPal(email = "john@doe.com"),
+    //     Card(name = "J. Doe", digits = 23232323L),
+    //     Cash
+    //   )
+    // )
+    ```
+
+!!! example "Nested enum with missing counterpart"
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    
+    object wire:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: List[wire.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case Card(name: String, digits: Long)
+        case PayPal(email: String)
+        case Cash
+    
+    object domain:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: Vector[domain.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case PayPal(email: String)
+        case Card(digits: Long, name: String)
+        case Cash
+        
+    case class PaymentBand(name: String, digits: Long, color: String = "red")
+    
+    val card: wire.PaymentMethod.Card =
+      wire.PaymentMethod.Card(name = "J. Doe", digits = 213712345)
+      
+    import io.github.arainko.ducktape.*
+    
+    card
+      .into[PaymentBand]
+      .transform(Field.const(_.color, "blue"))
+    // PaymentBand(
+    //   name = "J. Doe",
+    //   digits = 213712345L,
+    //   color = "blue"
+    // )
+    
+    card
+      .into[PaymentBand]
+      .transform(
+        Field.computed(_.color, card => if (card.digits % 2 == 0) "green" else "yellow")
+      )
+    // PaymentBand(
+    //   name = "J. Doe",
+    //   digits = 213712345L,
+    //   color = "yellow"
+    // )
+    
+    card
+      .into[PaymentBand]
+      .transform(Field.default(_.color))
+    // PaymentBand(
+    //   name = "J. Doe",
+    //   digits = 213712345L,
+    //   color = "red"
+    // )
+    
+    card
+      .into[PaymentBand]
+      .transform(Field.fallBackToDefault)
+    // PaymentBand(
+    //   name = "J. Doe",
+    //   digits = 213712345L,
+    //   color = "red"
+    // )
+    
+    case class SourceToplevel(level1: SourceLevel1, transformable: Option[Int])
+    case class SourceLevel1(str: String)
+    
+    case class DestToplevel(level1: DestLevel1, extra: Option[Int], transformable: Option[Int])
+    case class DestLevel1(extra: Option[String], str: String)
+    
+    val source = SourceToplevel(SourceLevel1("str"), Some(400))
+    
+    source
+      .into[DestToplevel]
+      .transform(Field.fallbackToNone)
+    ```
+    
+    Chimney's counterpart:
+    
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    object wire:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: List[wire.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case Card(name: String, digits: Long)
+        case PayPal(email: String)
+        case Cash
+        case Transfer(accountNo: String) // <-- additional enum case, not present in the domain model
+    
+    object domain:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: Vector[domain.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case PayPal(email: String)
+        case Card(digits: Long, name: String)
+        case Cash
+        
+    case class PaymentBand(name: String, digits: Long, color: String = "red")
+    
+    val card: wire.PaymentMethod.Card =
+      wire.PaymentMethod.Card(name = "J. Doe", digits = 213712345)
+      
+    import io.scalaland.chimney.dsl.*
+    
+    card
+      .into[PaymentBand]
+      .withFieldConst(_.color, "blue")
+      .transform
+    // PaymentBand(
+    //   name = "J. Doe",
+    //   digits = 213712345L,
+    //   color = "blue"
+    // )
+    
+    card
+      .into[PaymentBand]
+      .withFieldComputed(_.color, card => if (card.digits % 2 == 0) "green" else "yellow")
+      .transform
+    // PaymentBand(
+    //   name = "J. Doe",
+    //   digits = 213712345L,
+    //   color = "yellow"
+    // )
+    
+    // Default values can only be enabled for a whole derivation, not for a particular field!
+    
+    card
+      .into[PaymentBand]
+      .enableDefaultValues
+      .transform
+    // PaymentBand(
+    //   name = "J. Doe",
+    //   digits = 213712345L,
+    //   color = "red"
+    // )
+    
+    case class SourceToplevel(level1: SourceLevel1, transformable: Option[Int])
+    case class SourceLevel1(str: String)
+    
+    case class DestToplevel(level1: DestLevel1, extra: Option[Int], transformable: Option[Int])
+    case class DestLevel1(extra: Option[String], str: String)
+    
+    val source = SourceToplevel(SourceLevel1("str"), Some(400))
+    
+    source
+      .into[DestToplevel]
+      .enableOptionDefaultsToNone
+      .transform
+    ```
+
+!!! example "Coproduct configurations"
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    
+    object wire:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: List[wire.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case Card(name: String, digits: Long)
+        case PayPal(email: String)
+        case Cash
+        case Transfer(accountNo: String) // <-- additional enum case, not present in the domain model
+    
+    object domain:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: Vector[domain.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case PayPal(email: String)
+        case Card(digits: Long, name: String)
+        case Cash
+    
+    val transfer = wire.PaymentMethod.Transfer("2764262")
+    
+    val wirePerson = wire.Person(
+      "John",
+      "Doe",
+      List(
+        wire.PaymentMethod.Cash,
+        wire.PaymentMethod.PayPal("john@doe.com"),
+        wire.PaymentMethod.Card("J. Doe", 23232323)
+      )
+    )
+    
+    import io.github.arainko.ducktape.*
+    
+    transfer
+      .into[domain.PaymentMethod]
+      .transform(Case.const(_.at[wire.PaymentMethod.Transfer], domain.PaymentMethod.Cash))
+    // PaymentMethod = Cash
+    
+    transfer
+      .into[domain.PaymentMethod]
+      .transform(
+        Case.computed(_.at[wire.PaymentMethod.Transfer], transfer => domain.PaymentMethod.Card("J. Doe", transfer.accountNo.toLong))
+      )
+    // PaymentMethod = Card(name = "J. Doe", digits = 2764262L)
+    ```
+
+    Chimney's counterpart:
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    object wire:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: List[wire.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case Card(name: String, digits: Long)
+        case PayPal(email: String)
+        case Cash
+        case Transfer(accountNo: String) // <-- additional enum case, not present in the domain model
+    
+    object domain:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: Vector[domain.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case PayPal(email: String)
+        case Card(digits: Long, name: String)
+        case Cash
+    
+    val transfer = wire.PaymentMethod.Transfer("2764262")
+    
+    val wirePerson = wire.Person(
+      "John",
+      "Doe",
+      List(
+        wire.PaymentMethod.Cash,
+        wire.PaymentMethod.PayPal("john@doe.com"),
+        wire.PaymentMethod.Card("J. Doe", 23232323)
+      )
+    )
+    
+    import io.scalaland.chimney.dsl.*
+    
+    // Currently, Chimney has no disctintion between "Const" and "Computed" case for handling enum subtypes,
+    // and if a handling of nested cases would ever become available, the "Computed" name could be confusing:
+    // in withFieldComputed(path, src => value) the src is ALWAYS the whole transformed value, while in case handling
+    // we are passing "just" a subtype of a whole value. In nested case handling it would be a subtype of some nested
+    // field as opposed to the whole transformed value, so the name "Computed" would be confusing and inconsistent. 
+
+    transfer
+      .into[domain.PaymentMethod]
+      .withEnumCaseHandled[wire.PaymentMethod.Transfer](_ => domain.PaymentMethod.Cash)
+      .transform
+    // PaymentMethod = Cash
+    
+    transfer
+      .into[domain.PaymentMethod]
+      .withEnumCaseHandled[wire.PaymentMethod.Transfer](transfer => domain.PaymentMethod.Card("J. Doe", transfer.accountNo.toLong))
+      .transform
+    // PaymentMethod = Card(name = "J. Doe", digits = 2764262L)
+    ```
 
 Since Ducktape is inspired by Chimney, there is a huge overlap in functionality. However, there are some differences:
 
@@ -676,19 +1293,28 @@ Since Ducktape is inspired by Chimney, there is a huge overlap in functionality.
    failed field/index/map key, catches `Exception`s and handles `None`
  * Ducktape takes all overrides as values passed into `inline def` macro which can remove intermediate values from the
    final code, while Chimney uses fluent API (builder) which comes with a small runtime overhead
- * Ducktape allows
-   * providing flags overrides on local scope 
- * Chimney provides Patchers
- * Chimney supports
-     * conversions to/from tuples
-     * reading to/from Java Bean accessors
-     * Java enums
- * Chimney allows
-    * providing support to custom optionals and collections in such a way the `_.matchingSome`, `_.everyItem`,
+ * Ducktape provides/allows:
+    * some linting telling the users that they overrode some things twice, or that some config cannot be used because
+      another config provided value for level "above"
+    * `Field.allMatching` which has no direct counterpart in Chimney (in _some_ cases `Patcher`s could fulfill that role
+      but not in all of them)
+    * flags overrides on local scope, for selected fields (it calls it "regional" configs)
+ * Chimney provides/allows:
+    * [conversions to/from tuples](supported-transformations.md#frominto-a-tuple)
+    * reading to/from Java Bean accessors ([getters](supported-transformations.md#reading-from-bean-getters) and
+      [setters](supported-transformations.md#writing-to-non-unit-bean-setters))
+    * [Java enums](supported-transformations.md#javas-enums) support
+    * support to [custom optionals](cookbook.md#custom-optional-types) and
+      [collections](cookbook.md#custom-collection-types) in such a way the `_.matchingSome`, `_.everyItem`,
       `_.everyMapKey` and `_.everyMapValue` would work with them (including Java collections and Cats data)
-    * customizing the field- and subtype-name matching methods
-    * sharing flags overrides between all derivations in the same scope
-    * providing smart constructors, not only custom constructors guaranteed to create the value
+    * customizing the [field-](supported-transformations.md#customizing-field-name-matching) and
+      [subtype-name](supported-transformations.md#customizing-subtype-name-matching) matching methods
+    * [sharing flags overrides between all derivations in the same scope](cookbook.md#reusing-flags-for-several-transformationspatchings)
+    * [smart constructors](supported-transformations.md#types-with-manually-provided-constructors), not only custom
+      constructors guaranteed to create the value
+    * [`Patcher`s](supported-patching.md)
+
+which means each library can bring something unique to the table.
 
 ## Compilation errors
 
