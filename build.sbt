@@ -206,7 +206,7 @@ val settings = Seq(
 val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang.modules" %%% "scala-collection-compat" % "2.11.0",
-    "org.scalameta" %%% "munit" % "1.0.0-M11" % Test
+    "org.scalameta" %%% "munit" % "1.0.0-RC1" % Test
   ),
   libraryDependencies ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
