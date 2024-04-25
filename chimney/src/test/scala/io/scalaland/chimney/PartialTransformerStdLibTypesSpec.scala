@@ -13,7 +13,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     @unused case class Buzz(value: String)
     @unused case class ConflictingFooBuzz(value: Unit)
 
-    compileErrorsFixed("""Buzz("a").transformIntoPartial[ConflictingFooBuzz]""").check(
+    compileErrors("""Buzz("a").transformIntoPartial[ConflictingFooBuzz]""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Buzz to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.ConflictingFooBuzz",
       "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.ConflictingFooBuzz",
       "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Buzz",
@@ -495,13 +495,13 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     case class TargetWithOptionAndDefault(x: String, y: Option[Int] = Some(42))
 
     test("should be turned off by default and not allow compiling Option fields with missing source") {
-      compileErrorsFixed("""Source("foo").transformIntoPartial[TargetWithOption]""").check(
+      compileErrors("""Source("foo").transformIntoPartial[TargetWithOption]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
-      compileErrorsFixed("""Source("foo").intoPartial[TargetWithOption].transform""").check(
+      compileErrors("""Source("foo").intoPartial[TargetWithOption].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
@@ -563,7 +563,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     test("should disable globally enabled .enableOptionDefaultsToNone") {
       @unused implicit val config = TransformerConfiguration.default.enableOptionDefaultsToNone
 
-      compileErrorsFixed("""Source("foo").intoPartial[TargetWithOption].disableOptionDefaultsToNone.transform""").check(
+      compileErrors("""Source("foo").intoPartial[TargetWithOption].disableOptionDefaultsToNone.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
@@ -595,7 +595,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     @unused case class Target(a: String)
 
     test("should fail compilation if Option unwrapping is not provided when disabled") {
-      compileErrorsFixed("""Source(Some("value")).intoPartial[Target].disablePartialUnwrapsOption.transform""").check(
+      compileErrors("""Source(Some("value")).intoPartial[Target].disablePartialUnwrapsOption.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Target",
         "java.lang.String",
         "derivation from source.a: scala.Option[java.lang.String] to java.lang.String is not supported in Chimney!",
@@ -606,7 +606,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.disablePartialUnwrapsOption
 
-        compileErrorsFixed("""Source(Some("value")).transformIntoPartial[Target]""").check(
+        compileErrors("""Source(Some("value")).transformIntoPartial[Target]""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Target",
           "java.lang.String",
           "derivation from source.a: scala.Option[java.lang.String] to java.lang.String is not supported in Chimney!",

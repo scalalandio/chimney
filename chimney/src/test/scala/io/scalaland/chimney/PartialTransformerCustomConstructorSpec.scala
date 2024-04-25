@@ -8,13 +8,13 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
   test("""not allow transformation when passed value is not a function/method""") {
     import products.{Foo, Bar}
 
-    compileErrorsFixed("""Foo(3, "pi", (3.14, 3.14)).intoPartial[Bar].withConstructor(Bar(4, (5.0, 5.0))).transform""")
+    compileErrors("""Foo(3, "pi", (3.14, 3.14)).intoPartial[Bar].withConstructor(Bar(4, (5.0, 5.0))).transform""")
       .check(
         "Expected function of any arity (scala.Function0, scala.Function1, scala.Function2, ...) that returns a value of ", // difference between Scala 2 and 3
         ", got io.scalaland.chimney.fixtures.products.Bar"
       )
 
-    compileErrorsFixed(
+    compileErrors(
       """Foo(3, "pi", (3.14, 3.14)).intoPartial[Bar].withConstructorPartial(partial.Result.fromValue(Bar(4, (5.0, 5.0)))).transform"""
     ).check(
       "Expected function of any arity (scala.Function0, scala.Function1, scala.Function2, ...) that returns a value of ", // difference between Scala 2 and 3

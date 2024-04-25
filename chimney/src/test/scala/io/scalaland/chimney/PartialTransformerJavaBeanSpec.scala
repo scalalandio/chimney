@@ -9,7 +9,7 @@ import scala.annotation.unused
 class PartialTransformerJavaBeanSpec extends ChimneySpec {
 
   test("automatic reading from Java Bean getters should be disabled by default") {
-    compileErrorsFixed(
+    compileErrors(
       """new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).intoPartial[CaseClassWithFlag].transform"""
     ).check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag to io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag",
@@ -22,7 +22,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
   }
 
   test("automatic writing to Java Bean setters should be disabled by default") {
-    compileErrorsFixed("""CaseClassWithFlag("100", "name", flag = true).intoPartial[JavaBeanTarget].transform""").check(
+    compileErrors("""CaseClassWithFlag("100", "name", flag = true).intoPartial[JavaBeanTarget].transform""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
       "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
       "derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
@@ -31,7 +31,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
   }
 
   test("var vs setter ambiguities should be reported to the user") {
-    compileErrorsFixed(
+    compileErrors(
       """
       new JavaBeanSourceWithAmbiguity("200", "name", flag = true).intoPartial[JavaBeanTarget]
         .enableBeanGetters
@@ -161,7 +161,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
     }
 
     test("should fail to compile when getter is not paired with the right setter") {
-      compileErrorsFixed(
+      compileErrors(
         """CaseClassWithFlagRenamed("test-id", "test-name", renamedFlag = true).intoPartial[JavaBeanTargetNoIdSetter].withFieldRenamed(_.id, _.getId).transform"""
       ).check(
         "Assumed that parameter/setter getId is a part of io.scalaland.chimney.fixtures.javabeans.JavaBeanTargetNoIdSetter, but wasn't found"
@@ -194,7 +194,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
     }
 
     test("not compile when matching an is- getter with type other than Boolean") {
-      compileErrorsFixed(
+      compileErrors(
         """
         case class MistypedTarget(flag: Int)
         class MistypedSource(private var flag: Int) {
@@ -209,7 +209,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
-        compileErrorsFixed(
+        compileErrors(
           """
           case class MistypedTarget(flag: Int)
           class MistypedSource(private var flag: Int) {
@@ -229,7 +229,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
     test("should disable globally enabled .enableBeanGetters") {
       @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
-      compileErrorsFixed(
+      compileErrors(
         """
         new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
           .intoPartial[CaseClassWithFlag]
@@ -269,7 +269,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
     }
 
     test("should not compile when accessors are missing") {
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassNoFlag("100", "name")
           .intoPartial[JavaBeanTarget]
@@ -283,7 +283,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
-        compileErrorsFixed(
+        compileErrors(
           """
           CaseClassNoFlag("100", "name")
             .intoPartial[JavaBeanTarget]
@@ -297,7 +297,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
 
     test("should not compile when method accessor is disabled") {
 
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassWithFlagMethod("100", "name")
           .intoPartial[JavaBeanTarget]
@@ -315,7 +315,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
-        compileErrorsFixed(
+        compileErrors(
           """
           CaseClassWithFlagMethod("100", "name")
             .intoPartial[JavaBeanTarget]
@@ -357,7 +357,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
     test("should disable globally enabled .enableBeanSetters") {
       @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassWithFlag("100", "name", flag = true)
           .intoPartial[JavaBeanTarget]
@@ -376,7 +376,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
   group("""flag .enableIgnoreUnmatchedBeanSetters""") {
 
     test("should be disabled by default") {
-      compileErrorsFixed("().transformIntoPartial[JavaBeanTarget]").check(
+      compileErrors("().transformIntoPartial[JavaBeanTarget]").check(
         "Chimney can't derive transformation from scala.Unit to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "setName(name: java.lang.String) - no accessor named name in source type scala.Unit",
@@ -385,7 +385,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("().intoPartial[JavaBeanTarget].transform").check(
+      compileErrors("().intoPartial[JavaBeanTarget].transform").check(
         "Chimney can't derive transformation from scala.Unit to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "setName(name: java.lang.String) - no accessor named name in source type scala.Unit",
@@ -419,7 +419,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       expected.setId("100")
       expected.setName("name")
 
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassNoFlag("100", "name")
           .intoPartial[JavaBeanTarget]
@@ -436,7 +436,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
 
-        compileErrorsFixed(
+        compileErrors(
           """
           CaseClassNoFlag("100", "name")
             .intoPartial[JavaBeanTarget]
@@ -480,7 +480,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
     test("should disable globally enabled .enableIgnoreUnmatchedBeanSetters") {
       @unused implicit val config = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
 
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassWithFlag("100", "name", flag = true)
           .intoPartial[JavaBeanTarget]
@@ -590,7 +590,7 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
     test("should disable globally enabled .enableMethodAccessors") {
       @unused implicit val config = TransformerConfiguration.default.enableMethodAccessors
 
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassWithFlagMethod("100", "name")
           .intoPartial[JavaBeanTarget]
@@ -619,9 +619,9 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       expected.setFlag(false)
 
       // need to enable both setters and getters; only one of them is not enough for this use case!
-      compileErrorsFixed("source.intoPartial[JavaBeanTarget].transform").arePresent()
-      compileErrorsFixed("source.intoPartial[JavaBeanTarget].enableBeanGetters.transform").arePresent()
-      compileErrorsFixed("source.intoPartial[JavaBeanTarget].enableBeanSetters.transform").arePresent()
+      compileErrors("source.intoPartial[JavaBeanTarget].transform").arePresent()
+      compileErrors("source.intoPartial[JavaBeanTarget].enableBeanGetters.transform").arePresent()
+      compileErrors("source.intoPartial[JavaBeanTarget].enableBeanSetters.transform").arePresent()
 
       source
         .intoPartial[JavaBeanTarget]

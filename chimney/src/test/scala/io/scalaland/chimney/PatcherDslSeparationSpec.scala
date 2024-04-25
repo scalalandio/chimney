@@ -39,7 +39,7 @@ class PatcherDslSeparationSpec extends ChimneySpec {
 
     test("should not enable inlined derivation") {
       // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").using(Bar("test2")).patch""").arePresent()
+      compileErrors("""Foo("test").using(Bar("test2")).patch""").arePresent()
     }
 
     test("should not enable summoning declared instances") {
@@ -47,7 +47,7 @@ class PatcherDslSeparationSpec extends ChimneySpec {
         Patcher.derive[Foo, Bar]
 
       // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").patchUsing(Bar("test2"))""").arePresent()
+      compileErrors("""Foo("test").patchUsing(Bar("test2"))""").arePresent()
     }
   }
 
@@ -59,7 +59,7 @@ class PatcherDslSeparationSpec extends ChimneySpec {
 
     test("should not enable automatic derivation") {
       // format of missing implicit differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").patchUsing(Bar("test2"))""").arePresent()
+      compileErrors("""Foo("test").patchUsing(Bar("test2"))""").arePresent()
     }
 
     test("should enable inlined derivation") {
@@ -71,7 +71,7 @@ class PatcherDslSeparationSpec extends ChimneySpec {
         Patcher.define[Foo, Bar].buildPatcher
 
       // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").patchUsing(Bar("test2"))""").arePresent()
+      compileErrors("""Foo("test").patchUsing(Bar("test2"))""").arePresent()
     }
   }
 
@@ -83,12 +83,12 @@ class PatcherDslSeparationSpec extends ChimneySpec {
 
     test("should not enable automatic derivation") {
       // format of missing implicit differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").patchUsing(Bar("test2"))""").arePresent()
+      compileErrors("""Foo("test").patchUsing(Bar("test2"))""").arePresent()
     }
 
     test("should not enable inlined derivation") {
       // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").using(Bar("test2")).patch""").arePresent()
+      compileErrors("""Foo("test").using(Bar("test2")).patch""").arePresent()
     }
 
     test("should enable summoning declared instances") {

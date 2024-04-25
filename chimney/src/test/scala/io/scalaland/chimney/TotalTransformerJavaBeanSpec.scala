@@ -9,7 +9,7 @@ import scala.annotation.unused
 class TotalTransformerJavaBeanSpec extends ChimneySpec {
 
   test("automatic reading from Java Bean getters should be disabled by default") {
-    compileErrorsFixed(
+    compileErrors(
       """new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true).into[CaseClassWithFlag].transform"""
     ).check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.JavaBeanSourceWithFlag to io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag",
@@ -22,7 +22,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
   }
 
   test("automatic writing to Java Bean setters should be disabled by default") {
-    compileErrorsFixed("""CaseClassWithFlag("100", "name", flag = true).into[JavaBeanTarget].transform""").check(
+    compileErrors("""CaseClassWithFlag("100", "name", flag = true).into[JavaBeanTarget].transform""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
       "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
       "derivation from caseclasswithflag: io.scalaland.chimney.fixtures.javabeans.CaseClassWithFlag to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget is not supported in Chimney!",
@@ -31,7 +31,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
   }
 
   test("var vs setter ambiguities should be reported to the user") {
-    compileErrorsFixed(
+    compileErrors(
       """
       new JavaBeanSourceWithAmbiguity("200", "name", flag = true)
         .into[JavaBeanTarget]
@@ -146,7 +146,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
     }
 
     test("should fail to compile when getter is not paired with the right setter") {
-      compileErrorsFixed(
+      compileErrors(
         """CaseClassWithFlagRenamed("test-id", "test-name", renamedFlag = true).into[JavaBeanTargetNoIdSetter].withFieldRenamed(_.id, _.getId).transform"""
       ).check(
         "Assumed that parameter/setter getId is a part of io.scalaland.chimney.fixtures.javabeans.JavaBeanTargetNoIdSetter, but wasn't found"
@@ -175,7 +175,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
     }
 
     test("not compile when matching an is- getter with type other than Boolean") {
-      compileErrorsFixed(
+      compileErrors(
         """
         case class MistypedTarget(flag: Int)
         class MistypedSource(private var flag: Int) {
@@ -190,7 +190,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
-        compileErrorsFixed(
+        compileErrors(
           """
           case class MistypedTarget(flag: Int)
           class MistypedSource(private var flag: Int) {
@@ -210,7 +210,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
     test("should disable globally enabled .enableBeanGetters") {
       @unused implicit val config = TransformerConfiguration.default.enableBeanGetters
 
-      compileErrorsFixed(
+      compileErrors(
         """
         new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
           .into[CaseClassWithFlag]
@@ -248,7 +248,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
     }
 
     test("should not compile when accessors are missing") {
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassNoFlag("100", "name")
           .into[JavaBeanTarget]
@@ -262,7 +262,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
-        compileErrorsFixed(
+        compileErrors(
           """
           CaseClassNoFlag("100", "name")
             .into[JavaBeanTarget]
@@ -275,7 +275,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
     }
 
     test("should not compile when method accessor is disabled") {
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassWithFlagMethod("100", "name")
           .into[JavaBeanTarget]
@@ -293,7 +293,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
-        compileErrorsFixed(
+        compileErrors(
           """
           CaseClassWithFlagMethod("100", "name")
             .into[JavaBeanTarget]
@@ -333,7 +333,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
     test("should disable globally enabled .enableBeanSetters") {
       @unused implicit val config = TransformerConfiguration.default.enableBeanSetters
 
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassWithFlag("100", "name", flag = true)
           .into[JavaBeanTarget]
@@ -352,7 +352,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
   group("""flag .enableIgnoreUnmatchedBeanSetters""") {
 
     test("should be disabled by default") {
-      compileErrorsFixed("().transformInto[JavaBeanTarget]").check(
+      compileErrors("().transformInto[JavaBeanTarget]").check(
         "Chimney can't derive transformation from scala.Unit to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "setName(name: java.lang.String) - no accessor named name in source type scala.Unit",
@@ -361,7 +361,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("().into[JavaBeanTarget].transform").check(
+      compileErrors("().into[JavaBeanTarget].transform").check(
         "Chimney can't derive transformation from scala.Unit to io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "io.scalaland.chimney.fixtures.javabeans.JavaBeanTarget",
         "setName(name: java.lang.String) - no accessor named name in source type scala.Unit",
@@ -393,7 +393,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
       expected.setId("100")
       expected.setName("name")
 
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassNoFlag("100", "name")
           .into[JavaBeanTarget]
@@ -410,7 +410,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
 
-        compileErrorsFixed(
+        compileErrors(
           """
           CaseClassNoFlag("100", "name")
             .into[JavaBeanTarget]
@@ -452,7 +452,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
     test("should disable globally enabled .enableIgnoreUnmatchedBeanSetters") {
       @unused implicit val config = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
 
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassWithFlag("100", "name", flag = true)
           .into[JavaBeanTarget]
@@ -551,7 +551,7 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
     test("should disable globally enabled .MethodAccessors") {
       @unused implicit val config = TransformerConfiguration.default.enableMethodAccessors
 
-      compileErrorsFixed(
+      compileErrors(
         """
         CaseClassWithFlagMethod("100", "name")
           .into[JavaBeanTarget]
@@ -580,9 +580,9 @@ class TotalTransformerJavaBeanSpec extends ChimneySpec {
       expected.setFlag(false)
 
       // need to enable both setters and getters; only one of them is not enough for this use case!
-      compileErrorsFixed("source.into[JavaBeanTarget].transform").arePresent()
-      compileErrorsFixed("source.into[JavaBeanTarget].enableBeanGetters.transform").arePresent()
-      compileErrorsFixed("source.into[JavaBeanTarget].enableBeanSetters.transform").arePresent()
+      compileErrors("source.into[JavaBeanTarget].transform").arePresent()
+      compileErrors("source.into[JavaBeanTarget].enableBeanGetters.transform").arePresent()
+      compileErrors("source.into[JavaBeanTarget].enableBeanSetters.transform").arePresent()
 
       source
         .into[JavaBeanTarget]

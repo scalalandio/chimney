@@ -183,7 +183,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
     test(
       """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""
     ) {
-      compileErrorsFixed("""(colors2enums.Color.Black: colors2enums.Color).transformIntoPartial[colors1enums.Color]""")
+      compileErrors("""(colors2enums.Color.Black: colors2enums.Color).transformIntoPartial[colors1enums.Color]""")
         .check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors2enums.Color to io.scalaland.chimney.fixtures.colors1enums.Color",
           "io.scalaland.chimney.fixtures.colors1enums.Color",
@@ -396,7 +396,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
   }
 
   test("not allow transformation of of sealed hierarchies when the transformation would be ambiguous") {
-    val error = compileErrorsFixed(
+    val error = compileErrors(
       """
       (shapes1enums.Shape.Triangle(shapes1enums.Point(0, 0), shapes1enums.Point(2, 2), shapes1enums.Point(2, 0)): shapes1enums.Shape)
         .transformIntoPartial[shapes5enums.Shape]
@@ -604,7 +604,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
 
     test("should be disabled by default") {
 
-      compileErrorsFixed("(Foo.bar: Foo).transformIntoPartial[Bar]").check(
+      compileErrors("(Foo.bar: Foo).transformIntoPartial[Bar]").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
         "io.scalaland.chimney.fixtures.renames.Bar",
         "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
@@ -613,7 +613,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("(Foo.bar: Foo).intoPartial[Bar].transform").check(
+      compileErrors("(Foo.bar: Foo).intoPartial[Bar].transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
         "io.scalaland.chimney.fixtures.renames.Bar",
         "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
@@ -629,7 +629,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
         def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
       }
 
-      compileErrorsFixed(
+      compileErrors(
         """(Foo.bar: Foo).intoPartial[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform"""
       )
         .check(
@@ -639,7 +639,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
 
     test("should inform user when the matcher they provided results in ambiguities") {
 
-      compileErrorsFixed(
+      compileErrors(
         """
         (Foo.bar: Foo)
           .intoPartial[BarAmbiguous]
@@ -682,7 +682,7 @@ class PartialTransformerEnumSpec extends ChimneySpec {
       @unused implicit val config = TransformerConfiguration.default
         .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
 
-      compileErrorsFixed("(Foo.bar: Foo).intoPartial[Bar].disableCustomSubtypeNameComparison.transform").check(
+      compileErrors("(Foo.bar: Foo).intoPartial[Bar].disableCustomSubtypeNameComparison.transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
         "io.scalaland.chimney.fixtures.renames.Bar",
         "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",

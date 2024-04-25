@@ -20,14 +20,14 @@ class TotalTransformerProductSpec extends ChimneySpec {
   ) {
     import products.{Foo, Bar}
 
-    compileErrorsFixed("Bar(3, (3.14, 3.14)).into[Foo].transform").check(
+    compileErrors("Bar(3, (3.14, 3.14)).into[Foo].transform").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
       "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
-    compileErrorsFixed("Bar(3, (3.14, 3.14)).transformInto[Foo]").check(
+    compileErrors("Bar(3, (3.14, 3.14)).transformInto[Foo]").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
       "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
@@ -56,28 +56,28 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y + "abc", "pi").transform""").check(
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.y + "abc", "pi").transform""").check(
         "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
-      compileErrorsFixed(
+      compileErrors(
         """
         val haveY = HaveY("")
         Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(cc => haveY.y, "pi").transform
         """
       ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
 
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matching, "pi").transform""").arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matchingSome, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matching, "pi").transform""").arePresent()
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matchingSome, "pi").transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matchingLeft, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matchingLeft, "pi").transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matchingRight, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.matchingRight, "pi").transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.everyItem, "pi").transform""").arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.everyMapKey, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.everyItem, "pi").transform""").arePresent()
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.everyMapKey, "pi").transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.everyMapValue, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldConst(_.everyMapValue, "pi").transform""")
         .arePresent()
     }
 
@@ -153,31 +153,31 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.y + "abc", _.toString).transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.y + "abc", _.toString).transform""")
         .check(
           "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
         )
 
-      compileErrorsFixed(
+      compileErrors(
         """
         val haveY = HaveY("")
         Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
         """
       ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
 
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matching, _.toString).transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matching, _.toString).transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matchingSome, _.toString).transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matchingSome, _.toString).transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matchingLeft, _.toString).transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matchingLeft, _.toString).transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matchingRight, _.toString).transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.matchingRight, _.toString).transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.everyItem, _.toString).transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.everyItem, _.toString).transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.everyMapKey, _.toString).transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.everyMapKey, _.toString).transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.everyMapValue, _.toString).transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.everyMapValue, _.toString).transform""")
         .arePresent()
     }
 
@@ -257,7 +257,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not be enabled by default") {
       import products.Renames.*
 
-      compileErrorsFixed("""User(1, "Kuba", Some(28)).transformInto[UserPL]""").check(
+      compileErrors("""User(1, "Kuba", Some(28)).transformInto[UserPL]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
@@ -265,7 +265,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""User(1, "Kuba", Some(28)).into[UserPL].transform""").check(
+      compileErrors("""User(1, "Kuba", Some(28)).into[UserPL].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
@@ -277,13 +277,13 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.Renames.*
 
-      compileErrorsFixed(
+      compileErrors(
         """User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform"""
       ).check(
         "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
-      compileErrorsFixed(
+      compileErrors(
         """
         val str = "string"
         User(1, "Kuba", Some(28)).into[UserPL].withFieldRenamed(u => str, _.toString).transform
@@ -292,37 +292,37 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "The path expression has to be a single chain of calls on the original input, got external identifier:"
       )
 
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.matching, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.matchingSome, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.matchingLeft, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.matchingRight, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.everyItem, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.everyMapKey, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).into[Foo].withFieldRenamed(_.everyMapValue, _.toString).transform
         """
@@ -404,7 +404,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should not compile if renamed value change type but an there is no transformer available") {
       import products.Renames.*
 
-      compileErrorsFixed(
+      compileErrors(
         """
         User(1, "Kuba", Some(28))
           .into[UserPL]
@@ -483,7 +483,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
             method4: String,
             method5: String
         )
-        compileErrorsFixed("""Foobar("param").into[Foobar5].transform""").check(
+        compileErrors("""Foobar("param").into[Foobar5].transform""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foobar to io.scalaland.chimney.TotalTransformerProductSpec.Foobar5",
           "io.scalaland.chimney.TotalTransformerProductSpec.Foobar5",
           "method1: java.lang.String - no accessor named method1 in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
@@ -508,7 +508,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       test("protected and private methods are not considered (even if accessible)") {
         @unused case class Foo2(param: String, protect: String, priv: String)
 
-        compileErrorsFixed("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
+        compileErrors("""Foobar("param").into[Foo2].enableMethodAccessors.transform""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foobar to io.scalaland.chimney.TotalTransformerProductSpec.Foo2",
           "io.scalaland.chimney.TotalTransformerProductSpec.Foo2",
           "protect: java.lang.String - no accessor named protect in source type io.scalaland.chimney.TotalTransformerProductSpec.Foobar",
@@ -524,7 +524,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should be disabled by default") {
       import products.Defaults.*
 
-      compileErrorsFixed("""Source(1, "yy", 1.0).transformInto[Target]""").check(
+      compileErrors("""Source(1, "yy", 1.0).transformInto[Target]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -532,7 +532,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""Source(1, "yy", 1.0).into[Target].transform""").check(
+      compileErrors("""Source(1, "yy", 1.0).into[Target].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -603,7 +603,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     ) {
       import products.Defaults.*
 
-      compileErrorsFixed("""Source(1, "yy", 1.0).into[Target2].enableDefaultValues.transform""").check(
+      compileErrors("""Source(1, "yy", 1.0).into[Target2].enableDefaultValues.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
         "io.scalaland.chimney.fixtures.products.Defaults.Target2",
         "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -613,13 +613,13 @@ class TotalTransformerProductSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableDefaultValues
 
-        compileErrorsFixed("""Source(1, "yy", 1.0).transformInto[Target2]""").check(
+        compileErrors("""Source(1, "yy", 1.0).transformInto[Target2]""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
-        compileErrorsFixed("""Source(1, "yy", 1.0).into[Target2].transform""").check(
+        compileErrors("""Source(1, "yy", 1.0).into[Target2].transform""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -653,7 +653,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       @unused implicit val config = TransformerConfiguration.default.enableDefaultValues
 
-      compileErrorsFixed("""Source(1, "yy", 1.0).into[Target].disableDefaultValues.transform""").check(
+      compileErrors("""Source(1, "yy", 1.0).into[Target].disableDefaultValues.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -668,7 +668,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should be disabled by default") {
       import products.Inherited.*
 
-      compileErrorsFixed("(new Source).transformInto[Target]").check(
+      compileErrors("(new Source).transformInto[Target]").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
         "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
@@ -676,7 +676,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("(new Source).intoPartial[Target].transform").check(
+      compileErrors("(new Source).intoPartial[Target].transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
         "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
@@ -705,7 +705,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       @unused implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
 
-      compileErrorsFixed("(new Source).into[Target].disableInheritedAccessors.transform").check(
+      compileErrors("(new Source).into[Target].disableInheritedAccessors.transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
         "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
@@ -720,7 +720,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("should be disabled by default") {
       import products.Accessors.*
 
-      compileErrorsFixed("Source(10).transformInto[Target2]").check(
+      compileErrors("Source(10).transformInto[Target2]").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
@@ -728,7 +728,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("Source(10).into[Target2].transform").check(
+      compileErrors("Source(10).into[Target2].transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
@@ -802,7 +802,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       @unused implicit val config = TransformerConfiguration.default.enableMethodAccessors
 
-      compileErrorsFixed("""Source(10).into[Target2].disableMethodAccessors.transform""").check(
+      compileErrors("""Source(10).into[Target2].disableMethodAccessors.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
@@ -825,7 +825,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
     test("should be disabled by default") {
 
-      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).transformInto[Bar]""").check(
+      compileErrors("""Foo(Foo.Baz("test"), 1024).transformInto[Bar]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foo to io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "baz: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
@@ -833,7 +833,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).into[Bar].transform""").check(
+      compileErrors("""Foo(Foo.Baz("test"), 1024).into[Bar].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foo to io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "baz: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
@@ -841,7 +841,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).transformInto[Foo]""").check(
+      compileErrors("""Bar(Bar.Baz("test"), 1024).transformInto[Foo]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Bar to io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "Baz: io.scalaland.chimney.TotalTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
@@ -849,7 +849,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).into[Foo].transform""").check(
+      compileErrors("""Bar(Bar.Baz("test"), 1024).into[Foo].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Bar to io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "Baz: io.scalaland.chimney.TotalTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
@@ -864,7 +864,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
       }
 
-      compileErrorsFixed(
+      compileErrors(
         """Foo(Foo.Baz("test"), 1024).into[Bar].enableCustomFieldNameComparison(BadNameComparison).transform"""
       )
         .check(
@@ -881,7 +881,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
       FooAmbiguous(FooAmbiguous.Baz("test", 10), 100, "test2").transformInto[Bar] ==> Bar(Bar.Baz("test"), 100)
       FooAmbiguous(FooAmbiguous.Baz("test", 10), 100, "test2").into[Bar].transform ==> Bar(Bar.Baz("test"), 100)
 
-      compileErrorsFixed(
+      compileErrors(
         """
         FooAmbiguous(FooAmbiguous.Baz("test", 10), 100, "test2").into[Bar]
           .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
@@ -941,7 +941,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         TransformedNamesComparison.CaseInsensitiveEquality
       )
 
-      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).into[Bar].disableCustomFieldNameComparison.transform""").check(
+      compileErrors("""Foo(Foo.Baz("test"), 1024).into[Bar].disableCustomFieldNameComparison.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Foo to io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "io.scalaland.chimney.TotalTransformerProductSpec.Bar",
         "baz: io.scalaland.chimney.TotalTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Foo",
@@ -949,7 +949,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).into[Foo].disableCustomFieldNameComparison.transform""").check(
+      compileErrors("""Bar(Bar.Baz("test"), 1024).into[Foo].disableCustomFieldNameComparison.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerProductSpec.Bar to io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "io.scalaland.chimney.TotalTransformerProductSpec.Foo",
         "Baz: io.scalaland.chimney.TotalTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.TotalTransformerProductSpec.Bar",
@@ -1074,17 +1074,17 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
     test("handle tuple transformation errors") {
 
-      compileErrorsFixed("""(0, "test").transformInto[Foo]""").check(
+      compileErrors("""(0, "test").transformInto[Foo]""").check(
         "source tuple scala.Tuple2[scala.Int, java.lang.String] is of arity 2, while target type io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3; they need to be equal!"
       )
 
-      compileErrorsFixed("""(10.5, "abc", 6).transformInto[Foo]""").check("can't derive transformation")
+      compileErrors("""(10.5, "abc", 6).transformInto[Foo]""").check("can't derive transformation")
 
-      compileErrorsFixed("""Foo(10, 36.6, "test").transformInto[(Double, String, Int, Float, Boolean)]""").check(
+      compileErrors("""Foo(10, 36.6, "test").transformInto[(Double, String, Int, Float, Boolean)]""").check(
         "source tuple io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3, while target type scala.Tuple5[scala.Double, java.lang.String, scala.Int, scala.Float, scala.Boolean] is of arity 5; they need to be equal!"
       )
 
-      compileErrorsFixed("""Foo(10, 36.6, "test").transformInto[(Int, Double, Boolean)]""").check(
+      compileErrors("""Foo(10, 36.6, "test").transformInto[(Int, Double, Boolean)]""").check(
         "can't derive transformation"
       )
     }
