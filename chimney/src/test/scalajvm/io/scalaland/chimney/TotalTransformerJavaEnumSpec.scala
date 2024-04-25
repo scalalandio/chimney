@@ -79,7 +79,7 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
     test(
       """should be absent by default and not allow transforming Java Enum "superset" instances to sealed hierarchy "subset" of case objects"""
     ) {
-      compileErrorsFixed("""(jcolors2.Color.Black: jcolors2.Color).transformInto[colors1.Color]""").check(
+      compileErrors("""(jcolors2.Color.Black: jcolors2.Color).transformInto[colors1.Color]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jcolors2.Color to io.scalaland.chimney.fixtures.colors1.Color",
         "io.scalaland.chimney.fixtures.colors1.Color",
         "can't transform coproduct instance io.scalaland.chimney.javafixtures.jcolors2.Color.Black to io.scalaland.chimney.fixtures.colors1.Color",
@@ -151,7 +151,7 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
 
     test("should be disabled by default") {
 
-      compileErrorsFixed("(Foo.bar: Foo).transformInto[Bar]").check(
+      compileErrors("(Foo.bar: Foo).transformInto[Bar]").check(
         "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jrenames.Foo to io.scalaland.chimney.javafixtures.jrenames.Bar",
         "io.scalaland.chimney.javafixtures.jrenames.Bar",
         "derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",
@@ -160,7 +160,7 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("(Foo.bar: Foo).into[Bar].transform").check(
+      compileErrors("(Foo.bar: Foo).into[Bar].transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jrenames.Foo to io.scalaland.chimney.javafixtures.jrenames.Bar",
         "io.scalaland.chimney.javafixtures.jrenames.Bar",
         "derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",
@@ -176,7 +176,7 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
         def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
       }
 
-      compileErrorsFixed("""(Foo.bar: Foo).into[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform""")
+      compileErrors("""(Foo.bar: Foo).into[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform""")
         .check(
           "Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: io.scalaland.chimney.TotalTransformerJavaEnumSpec.BadNameComparison!!!"
         )
@@ -184,7 +184,7 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
 
     test("should inform user when the matcher they provided results in ambiguities") {
 
-      compileErrorsFixed(
+      compileErrors(
         """
           (Foo.bar: Foo)
             .into[BarAmbiguous]
@@ -226,7 +226,7 @@ class TotalTransformerJavaEnumSpec extends ChimneySpec {
       @unused implicit val config = TransformerConfiguration.default
         .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
 
-      compileErrorsFixed("(Foo.bar: Foo).into[Bar].disableCustomSubtypeNameComparison.transform").check(
+      compileErrors("(Foo.bar: Foo).into[Bar].disableCustomSubtypeNameComparison.transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.javafixtures.jrenames.Foo to io.scalaland.chimney.javafixtures.jrenames.Bar",
         "io.scalaland.chimney.javafixtures.jrenames.Bar",
         "derivation from bar: io.scalaland.chimney.javafixtures.jrenames.Foo.bar to io.scalaland.chimney.javafixtures.jrenames.Bar is not supported in Chimney!",

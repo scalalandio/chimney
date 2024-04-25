@@ -30,14 +30,14 @@ class PartialTransformerProductSpec extends ChimneySpec {
   ) {
     import products.{Foo, Bar}
 
-    compileErrorsFixed("Bar(3, (3.14, 3.14)).intoPartial[Foo].transform").check(
+    compileErrors("Bar(3, (3.14, 3.14)).intoPartial[Foo].transform").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
       "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
 
-    compileErrorsFixed("Bar(3, (3.14, 3.14)).transformIntoPartial[Foo]").check(
+    compileErrors("Bar(3, (3.14, 3.14)).transformIntoPartial[Foo]").check(
       "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Bar to io.scalaland.chimney.fixtures.products.Foo",
       "io.scalaland.chimney.fixtures.products.Foo",
       "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Bar",
@@ -88,30 +88,30 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.y + "abc", "pi").transform""").check(
+      compileErrors("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.y + "abc", "pi").transform""").check(
         "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
-      compileErrorsFixed(
+      compileErrors(
         """
         val haveY = HaveY("")
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(cc => haveY.y, "pi").transform
         """
       ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
 
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matching, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matching, "pi").transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matchingSome, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matchingSome, "pi").transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matchingLeft, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matchingLeft, "pi").transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matchingRight, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.matchingRight, "pi").transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.everyItem, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.everyItem, "pi").transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.everyMapKey, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.everyMapKey, "pi").transform""")
         .arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.everyMapValue, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConst(_.everyMapValue, "pi").transform""")
         .arePresent()
     }
 
@@ -234,7 +234,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14))
           .intoPartial[Foo]
@@ -245,7 +245,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
-      compileErrorsFixed(
+      compileErrors(
         """
         val haveY = HaveY("")
         Bar(3, (3.14, 3.14))
@@ -255,23 +255,23 @@ class PartialTransformerProductSpec extends ChimneySpec {
         """
       ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
 
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.matching, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.matching, "pi").transform""")
         .arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.matchingSome, "pi").transform"""
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.matchingLeft, "pi").transform"""
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.matchingRight, "pi").transform"""
       ).arePresent()
-      compileErrorsFixed("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.everyItem, "pi").transform""")
+      compileErrors("""Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.everyItem, "pi").transform""")
         .arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.everyMapKey, "pi").transform"""
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldConstPartial(_.everyMapValue, "pi").transform"""
       ).arePresent()
     }
@@ -415,7 +415,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.y + "abc", _.toString).transform
         """
@@ -423,44 +423,44 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
-      compileErrorsFixed(
+      compileErrors(
         """
         val haveY = HaveY("")
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(cc => haveY.y, _.toString).transform
         """
       ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
 
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.matching, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.matchingSome, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.matchingLeft, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.matchingRight, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.everyItem, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.everyMapKey, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputed(_.everyMapValue, _.toString).transform
         """
@@ -596,7 +596,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.{Foo, Bar, HaveY}
 
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.y + "abc", _ => ???).transform
         """
@@ -604,44 +604,44 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
-      compileErrorsFixed(
+      compileErrors(
         """
         val haveY = HaveY("")
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(cc => haveY.y, _ => ???).transform
         """
       ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
 
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.matching, _ => ???).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.matchingSome, _ => ???).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.matchingLeft, _ => ???).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.matchingRight, _ => ???).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.everyItem, _ => ???).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.everyMapKey, _ => ???).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedPartial(_.everyMapValue, _ => ???).transform
         """
@@ -792,7 +792,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not be enabled by default") {
       import products.Renames.*
 
-      compileErrorsFixed("""User(1, "Kuba", Some(28)).transformInto[UserPL]""").check(
+      compileErrors("""User(1, "Kuba", Some(28)).transformInto[UserPL]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
@@ -800,7 +800,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""User(1, "Kuba", Some(28)).into[UserPL].transform""").check(
+      compileErrors("""User(1, "Kuba", Some(28)).into[UserPL].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "io.scalaland.chimney.fixtures.products.Renames.UserPL",
         "imie: java.lang.String - no accessor named imie in source type io.scalaland.chimney.fixtures.products.Renames.User",
@@ -812,7 +812,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not compile when selector is invalid") {
       import products.Renames.*
 
-      compileErrorsFixed(
+      compileErrors(
         """
         User(1, "Kuba", Some(28)).intoPartial[UserPL].withFieldRenamed(_.age + "ABC", _.toString).transform
         """
@@ -820,44 +820,44 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
       )
 
-      compileErrorsFixed(
+      compileErrors(
         """
         val str = "string"
         User(1, "Kuba", Some(28)).intoPartial[UserPL].withFieldRenamed(u => str, _.toString).transform
         """
       ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
 
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.matching, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.matchingSome, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.matchingLeft, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.matchingRight, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.everyItem, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.everyMapKey, _.toString).transform
         """
       ).arePresent()
-      compileErrorsFixed(
+      compileErrors(
         """
         Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldRenamed(_.everyMapValue, _.toString).transform
         """
@@ -963,7 +963,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should not compile if renamed value change type but an there is no transformer available") {
       import products.Renames.*
 
-      compileErrorsFixed(
+      compileErrors(
         """
         User(1, "Kuba", Some(28))
           .intoPartial[UserPL]
@@ -1040,7 +1040,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should be disabled by default") {
       import products.Defaults.*
 
-      compileErrorsFixed("""Source(1, "yy", 1.0).transformIntoPartial[Target]""").check(
+      compileErrors("""Source(1, "yy", 1.0).transformIntoPartial[Target]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -1048,7 +1048,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""Source(1, "yy", 1.0).intoPartial[Target].transform""").check(
+      compileErrors("""Source(1, "yy", 1.0).intoPartial[Target].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -1157,7 +1157,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
     ) {
       import products.Defaults.*
 
-      compileErrorsFixed("""Source(1, "yy", 1.0).intoPartial[Target2].enableDefaultValues.transform""").check(
+      compileErrors("""Source(1, "yy", 1.0).intoPartial[Target2].enableDefaultValues.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
         "io.scalaland.chimney.fixtures.products.Defaults.Target2",
         "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -1167,13 +1167,13 @@ class PartialTransformerProductSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.enableDefaultValues
 
-        compileErrorsFixed("""Source(1, "yy", 1.0).transformIntoPartial[Target2]""").check(
+        compileErrors("""Source(1, "yy", 1.0).transformIntoPartial[Target2]""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
           "Consult https://chimney.readthedocs.io for usage examples."
         )
-        compileErrorsFixed("""Source(1, "yy", 1.0).intoPartial[Target2].transform""").check(
+        compileErrors("""Source(1, "yy", 1.0).intoPartial[Target2].transform""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "io.scalaland.chimney.fixtures.products.Defaults.Target2",
           "xx: scala.Long - can't derive transformation from xx: scala.Int in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -1242,7 +1242,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       @unused implicit val config = TransformerConfiguration.default.enableDefaultValues
 
-      compileErrorsFixed("""Source(1, "yy", 1.0).intoPartial[Target].disableDefaultValues.transform""").check(
+      compileErrors("""Source(1, "yy", 1.0).intoPartial[Target].disableDefaultValues.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
@@ -1257,7 +1257,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should be disabled by default") {
       import products.Inherited.*
 
-      compileErrorsFixed("(new Source).transformIntoPartial[Target]").check(
+      compileErrors("(new Source).transformIntoPartial[Target]").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
         "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
@@ -1265,7 +1265,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("(new Source).intoPartial[Target].transform").check(
+      compileErrors("(new Source).intoPartial[Target].transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
         "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
@@ -1302,7 +1302,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       @unused implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
 
-      compileErrorsFixed("(new Source).intoPartial[Target].disableInheritedAccessors.transform").check(
+      compileErrors("(new Source).intoPartial[Target].disableInheritedAccessors.transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Inherited.Source to io.scalaland.chimney.fixtures.products.Inherited.Target",
         "io.scalaland.chimney.fixtures.products.Inherited.Target",
         "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.products.Inherited.Source",
@@ -1317,7 +1317,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("should be disabled by default") {
       import products.Accessors.*
 
-      compileErrorsFixed("Source(10).transformIntoPartial[Target2]").check(
+      compileErrors("Source(10).transformIntoPartial[Target2]").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
@@ -1325,7 +1325,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("Source(10).intoPartial[Target2].transform").check(
+      compileErrors("Source(10).intoPartial[Target2].transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
@@ -1455,7 +1455,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       @unused implicit val config = TransformerConfiguration.default.enableMethodAccessors
 
-      compileErrorsFixed("""Source(10).into[Target2].disableMethodAccessors.transform""").check(
+      compileErrors("""Source(10).into[Target2].disableMethodAccessors.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Accessors.Source to io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "io.scalaland.chimney.fixtures.products.Accessors.Target2",
         "z: scala.Double - no accessor named z in source type io.scalaland.chimney.fixtures.products.Accessors.Source",
@@ -1478,7 +1478,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
     test("should be disabled by default") {
 
-      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).transformIntoPartial[Bar]""").check(
+      compileErrors("""Foo(Foo.Baz("test"), 1024).transformIntoPartial[Bar]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Foo to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
         "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
         "baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
@@ -1486,7 +1486,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).intoPartial[Bar].transform""").check(
+      compileErrors("""Foo(Foo.Baz("test"), 1024).intoPartial[Bar].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Foo to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
         "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
         "baz: io.scalaland.chimney.PartialTransformerProductSpec.Bar.Baz - no accessor named baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
@@ -1494,7 +1494,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).transformIntoPartial[Foo]""").check(
+      compileErrors("""Bar(Bar.Baz("test"), 1024).transformIntoPartial[Foo]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Bar to io.scalaland.chimney.PartialTransformerProductSpec.Foo",
         "io.scalaland.chimney.PartialTransformerProductSpec.Foo",
         "Baz: io.scalaland.chimney.PartialTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
@@ -1502,7 +1502,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).intoPartial[Foo].transform""").check(
+      compileErrors("""Bar(Bar.Baz("test"), 1024).intoPartial[Foo].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Bar to io.scalaland.chimney.PartialTransformerProductSpec.Foo",
         "io.scalaland.chimney.PartialTransformerProductSpec.Foo",
         "Baz: io.scalaland.chimney.PartialTransformerProductSpec.Foo.Baz - no accessor named Baz in source type io.scalaland.chimney.PartialTransformerProductSpec.Bar",
@@ -1517,7 +1517,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
       }
 
-      compileErrorsFixed(
+      compileErrors(
         """Foo(Foo.Baz("test"), 1024).intoPartial[Bar].enableCustomFieldNameComparison(BadNameComparison).transform"""
       )
         .check(
@@ -1538,7 +1538,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         Bar(Bar.Baz("test"), 100)
       )
 
-      compileErrorsFixed(
+      compileErrors(
         """
         FooAmbiguous(FooAmbiguous.Baz("test", 10), 100, "test2").intoPartial[Bar]
           .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
@@ -1616,7 +1616,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         TransformedNamesComparison.CaseInsensitiveEquality
       )
 
-      compileErrorsFixed("""Foo(Foo.Baz("test"), 1024).intoPartial[Bar].disableCustomFieldNameComparison.transform""")
+      compileErrors("""Foo(Foo.Baz("test"), 1024).intoPartial[Bar].disableCustomFieldNameComparison.transform""")
         .check(
           "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Foo to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
           "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
@@ -1625,7 +1625,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
           "Consult https://chimney.readthedocs.io for usage examples."
         )
 
-      compileErrorsFixed("""Bar(Bar.Baz("test"), 1024).intoPartial[Foo].disableCustomFieldNameComparison.transform""")
+      compileErrors("""Bar(Bar.Baz("test"), 1024).intoPartial[Foo].disableCustomFieldNameComparison.transform""")
         .check(
           "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Bar to io.scalaland.chimney.PartialTransformerProductSpec.Foo",
           "io.scalaland.chimney.PartialTransformerProductSpec.Foo",
@@ -1883,7 +1883,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
     test("compile error when optionDefaultsToNone were disabled locally") {
 
-      compileErrorsFixed("""(new Source).intoPartial[Target].disableOptionDefaultsToNone.transform""").check(
+      compileErrors("""(new Source).intoPartial[Target].disableOptionDefaultsToNone.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Source to io.scalaland.chimney.PartialTransformerProductSpec.Target"
       )
     }
@@ -1901,7 +1901,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
     test("ambiguous error when not resolved") {
 
-      compileErrorsFixed("""Foo("100").transformIntoPartial[Bar]""").check(
+      compileErrors("""Foo("100").transformIntoPartial[Bar]""").check(
         "Ambiguous implicits while resolving Chimney recursive transformation",
         "Please eliminate ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used"
       )
@@ -1924,7 +1924,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         Foo("100").transformIntoPartial[Bar].asOption ==> Some(Bar(100))
 
         test("disabled again should not compile") {
-          compileErrorsFixed(
+          compileErrors(
             """
             Foo("100").intoPartial[Bar]
               .disableImplicitConflictResolution
@@ -1955,7 +1955,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
         test("disabled again should not compile") {
 
-          compileErrorsFixed(
+          compileErrors(
             """
             Foo("100").intoPartial[Bar]
               .disableImplicitConflictResolution

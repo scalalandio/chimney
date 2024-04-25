@@ -160,7 +160,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
     test(
       """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""
     ) {
-      compileErrorsFixed("""(colors2.Black: colors2.Color).transformIntoPartial[colors1.Color]""").check(
+      compileErrors("""(colors2.Black: colors2.Color).transformIntoPartial[colors1.Color]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors2.Color to io.scalaland.chimney.fixtures.colors1.Color",
         "io.scalaland.chimney.fixtures.colors1.Color",
         "can't transform coproduct instance io.scalaland.chimney.fixtures.colors2.Black to io.scalaland.chimney.fixtures.colors1.Color",
@@ -541,7 +541,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
 
     test("should be disabled by default") {
 
-      compileErrorsFixed("""(Foo.BAZ: Foo).transformIntoPartial[Bar]""").check(
+      compileErrors("""(Foo.BAZ: Foo).transformIntoPartial[Bar]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
@@ -550,7 +550,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""(Foo.BAZ: Foo).intoPartial[Bar].transform""").check(
+      compileErrors("""(Foo.BAZ: Foo).intoPartial[Bar].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
@@ -559,7 +559,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""(Bar.Baz: Bar).transformIntoPartial[Foo]""").check(
+      compileErrors("""(Bar.Baz: Bar).transformIntoPartial[Foo]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
         "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
@@ -568,7 +568,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""(Bar.Baz: Bar).intoPartial[Foo].transform""").check(
+      compileErrors("""(Bar.Baz: Bar).intoPartial[Foo].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
         "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
@@ -584,7 +584,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
       }
 
-      compileErrorsFixed("""(Foo.BAZ: Foo).into[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform""")
+      compileErrors("""(Foo.BAZ: Foo).into[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform""")
         .check(
           "Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: io.scalaland.chimney.PartialTransformerSealedHierarchySpec.BadNameComparison!!!"
         )
@@ -595,7 +595,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
       (Foo2.baz: Foo2).transformIntoPartial[BarAmbiguous].asOption ==> Some(BarAmbiguous.baz)
       (Foo2.baz: Foo2).intoPartial[BarAmbiguous].transform.asOption ==> Some(BarAmbiguous.baz)
 
-      compileErrorsFixed(
+      compileErrors(
         """
         (Foo2.baz: Foo2)
           .intoPartial[BarAmbiguous]
@@ -666,7 +666,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         TransformedNamesComparison.CaseInsensitiveEquality
       )
 
-      compileErrorsFixed("""(Foo.BAZ: Foo).intoPartial[Bar].disableCustomSubtypeNameComparison.transform""").check(
+      compileErrors("""(Foo.BAZ: Foo).intoPartial[Bar].disableCustomSubtypeNameComparison.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
@@ -675,7 +675,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("""(Bar.Baz: Bar).intoPartial[Foo].disableCustomSubtypeNameComparison.transform""").check(
+      compileErrors("""(Bar.Baz: Bar).intoPartial[Foo].disableCustomSubtypeNameComparison.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
         "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",

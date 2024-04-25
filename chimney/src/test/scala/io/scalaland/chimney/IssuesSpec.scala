@@ -66,7 +66,7 @@ class IssuesSpec extends ChimneySpec {
 
     test("fix for `withFieldConst`") {
 
-      compileErrorsFixed(
+      compileErrors(
         """
         Foo1("test")
           .into[Foo2]
@@ -77,7 +77,7 @@ class IssuesSpec extends ChimneySpec {
 
     test("fix for `withFieldComputed`") {
 
-      compileErrorsFixed(
+      compileErrors(
         """
         Foo1("test")
           .into[Foo2]
@@ -216,7 +216,7 @@ class IssuesSpec extends ChimneySpec {
     case class BarNested(num: String)
     @unused case class Bar(maybeString: scala.collection.immutable.Seq[String], nested: BarNested)
 
-    compileErrorsFixed("Foo(None, FooNested(None)).into[Bar].transform")
+    compileErrors("Foo(None, FooNested(None)).into[Bar].transform")
       .check(
         "derivation from foo.maybeString: scala.Option[scala.collection.immutable.Set[java.lang.String]] to scala.collection.immutable.Seq[java.lang.String] is not supported in Chimney!",
         "derivation from foo.nested.num: scala.Option[scala.Int] to java.lang.String is not supported in Chimney!"
@@ -278,8 +278,8 @@ class IssuesSpec extends ChimneySpec {
 
     // These two will fail to compile as target is case class, but source type is internal.Venue,
     // thus it will try to access `def name` accessor without .enableMethodAccessors flag
-    compileErrorsFixed("event.venue.transformInto[dto.Venue]").arePresent()
-    compileErrorsFixed("(venue: internal.Venue).transformInto[dto.Venue]").arePresent()
+    compileErrors("event.venue.transformInto[dto.Venue]").arePresent()
+    compileErrors("(venue: internal.Venue).transformInto[dto.Venue]").arePresent()
 
     // When .enableMethodAccessors turned on, both should work fine
     event.venue.into[dto.Venue].enableMethodAccessors.transform ==> dto.Venue("Venue Name")
@@ -711,7 +711,7 @@ class IssuesSpec extends ChimneySpec {
       case class Something(a: String, b: Int)
     }
 
-    compileErrorsFixed(
+    compileErrors(
       """
       Proto(isSomething = true, somethingDetail = Some(Proto.SomethingDetail("hello", 1)))
         .intoPartial[Domain]

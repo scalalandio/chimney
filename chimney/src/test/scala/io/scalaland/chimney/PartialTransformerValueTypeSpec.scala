@@ -10,16 +10,16 @@ class PartialTransformerValueTypeSpec extends ChimneySpec {
   test("AnyVals with private val and single accessor of different name/type are not considered value classes") {
     @unused val transformer: Transformer[String, Int] = (src: String) => src.length
 
-    compileErrorsFixed("new NotAValueType(100).transformIntoPartial[UserName]").check(
+    compileErrors("new NotAValueType(100).transformIntoPartial[UserName]").check(
       "derivation from value: io.scalaland.chimney.fixtures.valuetypes.NotAValueType to io.scalaland.chimney.fixtures.valuetypes.UserName is not supported in Chimney!"
     )
-    compileErrorsFixed("new NotAValueType(100).transformIntoPartial[UserId]").check(
+    compileErrors("new NotAValueType(100).transformIntoPartial[UserId]").check(
       "derivation from notavaluetype: io.scalaland.chimney.fixtures.valuetypes.NotAValueType to scala.Int is not supported in Chimney!"
     )
-    compileErrorsFixed("""UserName("Batman").transformIntoPartial[NotAValueType]""").check(
+    compileErrors("""UserName("Batman").transformIntoPartial[NotAValueType]""").check(
       "derivation from value: io.scalaland.chimney.fixtures.valuetypes.UserName to io.scalaland.chimney.fixtures.valuetypes.NotAValueType is not supported in Chimney!"
     )
-    compileErrorsFixed("UserId(100).transformIntoPartial[NotAValueType]").check(
+    compileErrors("UserId(100).transformIntoPartial[NotAValueType]").check(
       "derivation from value: io.scalaland.chimney.fixtures.valuetypes.UserId to io.scalaland.chimney.fixtures.valuetypes.NotAValueType is not supported in Chimney!"
     )
   }
@@ -27,16 +27,16 @@ class PartialTransformerValueTypeSpec extends ChimneySpec {
   test("AnyVals with private private constructor are not considered value classes") {
     @unused val transformer: Transformer[String, Int] = (src: String) => src.length
 
-    compileErrorsFixed("AlsoNotAValueType.create(100).transformIntoPartial[UserName]").check(
+    compileErrors("AlsoNotAValueType.create(100).transformIntoPartial[UserName]").check(
       "derivation from value: io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType to io.scalaland.chimney.fixtures.valuetypes.UserName is not supported in Chimney!"
     )
-    compileErrorsFixed("AlsoNotAValueType.create(100).transformIntoPartial[UserId]").check(
+    compileErrors("AlsoNotAValueType.create(100).transformIntoPartial[UserId]").check(
       "derivation from alsonotavaluetype: io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType to scala.Int is not supported in Chimney!"
     )
-    compileErrorsFixed("""UserName("Batman").transformIntoPartial[AlsoNotAValueType]""").check(
+    compileErrors("""UserName("Batman").transformIntoPartial[AlsoNotAValueType]""").check(
       "derivation from username: io.scalaland.chimney.fixtures.valuetypes.UserName to io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType is not supported in Chimney!"
     )
-    compileErrorsFixed("UserId(100).transformIntoPartial[AlsoNotAValueType]").check(
+    compileErrors("UserId(100).transformIntoPartial[AlsoNotAValueType]").check(
       "derivation from userid: io.scalaland.chimney.fixtures.valuetypes.UserId to io.scalaland.chimney.fixtures.valuetypes.AlsoNotAValueType is not supported in Chimney!"
     )
   }

@@ -12,7 +12,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     @unused case class Buzz(value: String)
     @unused case class ConflictingFooBuzz(value: Unit)
 
-    compileErrorsFixed("""Buzz("a").transformInto[ConflictingFooBuzz]""").check(
+    compileErrors("""Buzz("a").transformInto[ConflictingFooBuzz]""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Buzz to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.ConflictingFooBuzz",
       "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.ConflictingFooBuzz",
       "value: scala.Unit - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Buzz",
@@ -40,14 +40,14 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     (None: Option[Foo]).transformInto[Option[Bar]] ==> None
     (None: Option[String]).transformInto[Option[String]] ==> None
     Option("abc").transformInto[Option[String]] ==> Some("abc")
-    compileErrorsFixed("""Some("foobar").into[None.type].transform""").check(
+    compileErrors("""Some("foobar").into[None.type].transform""").check(
       "Chimney can't derive transformation from scala.Some[java.lang.String] to scala.None",
       "scala.None",
       "derivation from some: scala.Some[java.lang.String] to scala.None is not supported in Chimney!",
       "Consult https://chimney.readthedocs.io for usage examples."
     )
     @unused case class BarNone(value: None.type)
-    compileErrorsFixed("""Foo("a").into[BarNone].transform""").check(
+    compileErrors("""Foo("a").into[BarNone].transform""").check(
       "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.BarNone",
       "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.BarNone",
       "value: scala.None - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo",
@@ -178,7 +178,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     case class TargetWithOptionAndDefault(x: String, y: Option[Int] = Some(42))
 
     test("should be turned off by default and not allow compiling Option fields with missing source") {
-      compileErrorsFixed("""Source("foo").into[TargetWithOption].transform""").check(
+      compileErrors("""Source("foo").into[TargetWithOption].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source",
@@ -222,7 +222,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     test("should disable globally enabled .enableOptionDefaultsToNone") {
       @unused implicit val config = TransformerConfiguration.default.enableOptionDefaultsToNone
 
-      compileErrorsFixed("""Source("foo").into[TargetWithOption].disableOptionDefaultsToNone.transform""").check(
+      compileErrors("""Source("foo").into[TargetWithOption].disableOptionDefaultsToNone.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source",

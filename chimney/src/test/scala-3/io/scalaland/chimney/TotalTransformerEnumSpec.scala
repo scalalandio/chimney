@@ -122,7 +122,7 @@ class TotalTransformerEnumSpec extends ChimneySpec {
   }
 
   test("not allow transformation of of sealed hierarchies when the transformation would be ambiguous") {
-    val error = compileErrorsFixed(
+    val error = compileErrors(
       """
       (shapes1enums.Shape.Triangle(shapes1enums.Point(0, 0), shapes1enums.Point(2, 2), shapes1enums.Point(2, 0)): shapes1enums.Shape)
         .transformInto[shapes5enums.Shape]
@@ -151,7 +151,7 @@ class TotalTransformerEnumSpec extends ChimneySpec {
     test(
       """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""
     ) {
-      compileErrorsFixed("""(colors2enums.Color.Black: colors2enums.Color).transformInto[colors1enums.Color]""").check(
+      compileErrors("""(colors2enums.Color.Black: colors2enums.Color).transformInto[colors1enums.Color]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors2enums.Color to io.scalaland.chimney.fixtures.colors1enums.Color",
         "io.scalaland.chimney.fixtures.colors1enums.Color",
         "can't transform coproduct instance io.scalaland.chimney.fixtures.colors2enums.Color.Black to io.scalaland.chimney.fixtures.colors1enums.Color",
@@ -317,7 +317,7 @@ class TotalTransformerEnumSpec extends ChimneySpec {
 
     test("should be disabled by default") {
 
-      compileErrorsFixed("(Foo.bar: Foo).transformInto[Bar]").check(
+      compileErrors("(Foo.bar: Foo).transformInto[Bar]").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
         "io.scalaland.chimney.fixtures.renames.Bar",
         "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
@@ -326,7 +326,7 @@ class TotalTransformerEnumSpec extends ChimneySpec {
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrorsFixed("(Foo.bar: Foo).into[Bar].transform").check(
+      compileErrors("(Foo.bar: Foo).into[Bar].transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
         "io.scalaland.chimney.fixtures.renames.Bar",
         "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",
@@ -342,7 +342,7 @@ class TotalTransformerEnumSpec extends ChimneySpec {
         def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
       }
 
-      compileErrorsFixed("""(Foo.bar: Foo).into[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform""")
+      compileErrors("""(Foo.bar: Foo).into[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform""")
         .check(
           "Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: io.scalaland.chimney.TotalTransformerEnumSpec.BadNameComparison!!!"
         )
@@ -350,7 +350,7 @@ class TotalTransformerEnumSpec extends ChimneySpec {
 
     test("should inform user when the matcher they provided results in ambiguities") {
 
-      compileErrorsFixed(
+      compileErrors(
         """
         (Foo.bar: Foo)
           .into[BarAmbiguous]
@@ -392,7 +392,7 @@ class TotalTransformerEnumSpec extends ChimneySpec {
       @unused implicit val config = TransformerConfiguration.default
         .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
 
-      compileErrorsFixed("(Foo.bar: Foo).into[Bar].disableCustomSubtypeNameComparison.transform").check(
+      compileErrors("(Foo.bar: Foo).into[Bar].disableCustomSubtypeNameComparison.transform").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Foo to io.scalaland.chimney.fixtures.renames.Bar",
         "io.scalaland.chimney.fixtures.renames.Bar",
         "derivation from bar: io.scalaland.chimney.fixtures.renames.Foo.bar to io.scalaland.chimney.fixtures.renames.Bar is not supported in Chimney!",

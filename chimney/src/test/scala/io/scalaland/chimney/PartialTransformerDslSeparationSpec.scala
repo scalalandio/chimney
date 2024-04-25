@@ -43,7 +43,7 @@ class PartialTransformerDslSeparationSpec extends ChimneySpec {
 
     test("should not enable inlined derivation") {
       // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").intoPartial[Bar].transform""").arePresent()
+      compileErrors("""Foo("test").intoPartial[Bar].transform""").arePresent()
     }
 
     test("should not enable summoning declared instances") {
@@ -51,7 +51,7 @@ class PartialTransformerDslSeparationSpec extends ChimneySpec {
         PartialTransformer.define[Foo, Bar].withFieldConst(_.baz, "test2").buildTransformer
 
       // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").transformIntoPartial[Bar]""").arePresent()
+      compileErrors("""Foo("test").transformIntoPartial[Bar]""").arePresent()
     }
   }
 
@@ -63,7 +63,7 @@ class PartialTransformerDslSeparationSpec extends ChimneySpec {
 
     test("should not enable automatic derivation") {
       // format of missing implicit differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").transformIntoPartial[Bar]""").arePresent()
+      compileErrors("""Foo("test").transformIntoPartial[Bar]""").arePresent()
     }
 
     test("should enable inlined derivation") {
@@ -75,7 +75,7 @@ class PartialTransformerDslSeparationSpec extends ChimneySpec {
         Transformer.define[Foo, Bar].withFieldConst(_.baz, "test2").buildTransformer
 
       // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").transformIntoPartial[Bar]""").arePresent()
+      compileErrors("""Foo("test").transformIntoPartial[Bar]""").arePresent()
     }
   }
 
@@ -87,12 +87,12 @@ class PartialTransformerDslSeparationSpec extends ChimneySpec {
 
     test("should not enable automatic derivation") {
       // format of missing implicit differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").transformIntoPartial[Bar]""").arePresent()
+      compileErrors("""Foo("test").transformIntoPartial[Bar]""").arePresent()
     }
 
     test("should not enable inlined derivation") {
       // format of missing method differ between 2 and 3 and we cannot rely on it
-      compileErrorsFixed("""Foo("test").intoPartial[Bar].transform""").arePresent()
+      compileErrors("""Foo("test").intoPartial[Bar].transform""").arePresent()
     }
 
     test("should enable summoning declared instances") {

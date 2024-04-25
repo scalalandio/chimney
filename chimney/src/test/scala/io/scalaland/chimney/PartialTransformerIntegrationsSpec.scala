@@ -695,13 +695,13 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     case class TargetWithOptionAndDefault(x: String, y: Possible[Int] = Possible.Present(42))
 
     test("should be turned off by default and not allow compiling OptionalValue fields with missing source") {
-      compileErrorsFixed("""Source("foo").transformIntoPartial[TargetWithOption]""").check(
+      compileErrors("""Source("foo").transformIntoPartial[TargetWithOption]""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
-      compileErrorsFixed("""Source("foo").intoPartial[TargetWithOption].transform""").check(
+      compileErrors("""Source("foo").intoPartial[TargetWithOption].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
@@ -765,7 +765,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     test("should disable globally enabled .enableOptionDefaultsToNone") {
       @unused implicit val config = TransformerConfiguration.default.enableOptionDefaultsToNone
 
-      compileErrorsFixed("""Source("foo").intoPartial[TargetWithOption].disableOptionDefaultsToNone.transform""").check(
+      compileErrors("""Source("foo").intoPartial[TargetWithOption].disableOptionDefaultsToNone.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
@@ -799,7 +799,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     @unused case class Target(a: String)
 
     test("should fail compilation if OptionalValue unwrapping is not provided when disabled") {
-      compileErrorsFixed(
+      compileErrors(
         """Source(Possible.Present("value")).intoPartial[Target].disablePartialUnwrapsOption.transform"""
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.Target",
@@ -812,7 +812,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
       locally {
         @unused implicit val config = TransformerConfiguration.default.disablePartialUnwrapsOption
 
-        compileErrorsFixed("""Source(Possible.Present("value")).transformIntoPartial[Target]""").check(
+        compileErrors("""Source(Possible.Present("value")).transformIntoPartial[Target]""").check(
           "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.Target",
           "java.lang.String",
           "derivation from source.a: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[java.lang.String] to java.lang.String is not supported in Chimney!",

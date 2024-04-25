@@ -75,9 +75,9 @@ class PatcherProductSpec extends ChimneySpec {
 
     test("should fail compilation if transformation is not possible") {
       // without implicit Transformer[Int, String], it doesn't compile
-      compileErrorsFixed("""Obj("").patchUsing(Patch(100))""")
+      compileErrors("""Obj("").patchUsing(Patch(100))""")
         .check("not supported")
-      compileErrorsFixed("""Obj("").using(Patch(100)).patch""")
+      compileErrors("""Obj("").using(Patch(100)).patch""")
         .check("not supported")
     }
 
@@ -101,17 +101,17 @@ class PatcherProductSpec extends ChimneySpec {
 
     test("should be disabled by default") {
 
-      compileErrorsFixed("exampleUser.patchUsing(patch1)").check(
+      compileErrors("exampleUser.patchUsing(patch1)").check(
         "Field named 'address' not found in target patching type io.scalaland.chimney.fixtures.PatchDomain.User!"
       )
-      compileErrorsFixed("exampleUser.using(patch1).patch").check(
+      compileErrors("exampleUser.using(patch1).patch").check(
         "Field named 'address' not found in target patching type io.scalaland.chimney.fixtures.PatchDomain.User!"
       )
 
-      compileErrorsFixed("exampleUser.patchUsing(patch2)").check(
+      compileErrors("exampleUser.patchUsing(patch2)").check(
         "Field named 'address' not found in target patching type io.scalaland.chimney.fixtures.PatchDomain.User!"
       )
-      compileErrorsFixed("exampleUser.using(patch2).patch").check(
+      compileErrors("exampleUser.using(patch2).patch").check(
         "Field named 'address' not found in target patching type io.scalaland.chimney.fixtures.PatchDomain.User!"
       )
     }
@@ -156,11 +156,11 @@ class PatcherProductSpec extends ChimneySpec {
       // note address doesn't exist in User and it's at the beginning of the case class
       @unused val patch2 = PatchWithAnotherRedundantField("Unknown", Phone(4321L))
 
-      compileErrorsFixed("exampleUser.using(patch1).failRedundantPatcherFields.patch").check(
+      compileErrors("exampleUser.using(patch1).failRedundantPatcherFields.patch").check(
         "Field named 'address' not found in target patching type io.scalaland.chimney.fixtures.PatchDomain.User!"
       )
 
-      compileErrorsFixed("exampleUser.using(patch2).failRedundantPatcherFields.patch").check(
+      compileErrors("exampleUser.using(patch2).failRedundantPatcherFields.patch").check(
         "Field named 'address' not found in target patching type io.scalaland.chimney.fixtures.PatchDomain.User!"
       )
     }
