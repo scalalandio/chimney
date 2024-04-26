@@ -108,7 +108,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         //   case $bindName: $SomeFrom => val $fromName = $bindName; $using
         val bindName = Symbol.newBind(
           Symbol.spliceOwner,
-          FreshTerm.generate(TypeRepr.of(using SomeFrom).show(using Printer.TypeReprShortCode).toLowerCase),
+          FreshTerm.generate(TypeRepr.of[SomeFrom].show(using Printer.TypeReprShortCode).toLowerCase),
           Flags.EmptyFlags,
           TypeRepr.of(using SomeFrom)
         )

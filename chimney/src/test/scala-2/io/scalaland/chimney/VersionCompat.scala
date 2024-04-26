@@ -5,7 +5,7 @@ import munit.internal.MacroCompatScala2
 
 trait VersionCompat {
 
-  // TODO: I wish to remove these one day
+  // Workaround for https://github.com/scala/scala3/issues/18484, running the test only on Scala 2:
 
   def compileErrorsScala2(code: String): String =
     macro MacroCompatScala2.compileErrorsImpl
