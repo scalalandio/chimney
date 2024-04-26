@@ -27,7 +27,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       val context = TransformationContext.ForTotal
         .create[From, To](
           src,
-          TransformerConfigurations.readTransformerConfig[Tail, InstanceFlags, ImplicitScopeFlags],
+          TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags],
           runtimeDataStore
         )
         .updateConfig(_.allowFromToImplicitSummoning)
@@ -55,7 +55,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
         val context = TransformationContext.ForTotal
           .create[From, To](
             src,
-            TransformerConfigurations.readTransformerConfig[Tail, InstanceFlags, ImplicitScopeFlags],
+            TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags],
             runtimeDataStore
           )
 
@@ -85,7 +85,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
         .create[From, To](
           src,
           failFast,
-          TransformerConfigurations.readTransformerConfig[Tail, InstanceFlags, ImplicitScopeFlags],
+          TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags],
           runtimeDataStore
         )
         .updateConfig(_.allowFromToImplicitSummoning)
@@ -114,7 +114,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
           .create[From, To](
             src,
             failFast,
-            TransformerConfigurations.readTransformerConfig[Tail, InstanceFlags, ImplicitScopeFlags],
+            TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags],
             runtimeDataStore
           )
 

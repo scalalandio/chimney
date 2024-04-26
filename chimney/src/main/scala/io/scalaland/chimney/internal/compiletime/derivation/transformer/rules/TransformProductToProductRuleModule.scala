@@ -176,8 +176,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     foundOverrides,
                     flags.getFieldNameComparison.toString
                   )
-                case (fromName, value) => // this is not from name! it is a name
-                  useOverride[From, To, CtorParam](fromName, toName, value)
+                case (_, value) => useOverride[From, To, CtorParam](toName, value)
               }
               .orElse {
                 val ambiguityOrPossibleSourceField =
@@ -263,10 +262,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           .flatMap(DerivationResult.expanded)
     }
 
-    // TODO: this is NOT a fromName, it is names used in overrides (so it might be e.g. fromName = getValue, vs
-    // toName = setValue, while the field was completely empty in From type!!!
+    // TODO: perhaps we should NOT pass To's field name as From's field name when providing errors to overrides?
     private def useOverride[From, To, CtorParam: Type](
-        fromName: String,
         toName: String,
         runtimeFieldOverride: TransformerOverride.ForField
     )(implicit
@@ -285,7 +282,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         // '{
         //   ${ runtimeDataStore }(idx)
         //     .asInstanceOf[partial.Result[$ctorParam]]
-        //     .prependErrorPath(PathElement.Accessor("fromName"))
+        //     .prependErrorPath(PathElement.Accessor("toName"))
         //  }
         DerivationResult.existential[TransformationExpr, CtorParam](
           TransformationExpr.fromPartial(
@@ -293,7 +290,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .runtimeDataStore(runtimeDataIdx)
               .asInstanceOfExpr[partial.Result[CtorParam]]
               .prependErrorPath(
-                ChimneyExpr.PathElement.Accessor(Expr.String(fromName)).upcastToExprOf[partial.PathElement]
+                ChimneyExpr.PathElement.Accessor(Expr.String(toName)).upcastToExprOf[partial.PathElement]
               )
           )
         )
@@ -315,7 +312,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             //     ${ runtimeDataStore }(idx).asInstanceOf[$OriginalFrom => $CtorParam]
             //   )
             //   .apply(${ originalSrc })
-            //   .prependErrorPath(PathElement.Accessor("fromName"))
+            //   .prependErrorPath(PathElement.Accessor("toName"))
             // }
             DerivationResult.existential[TransformationExpr, CtorParam](
               TransformationExpr.fromPartial(
@@ -326,7 +323,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   .apply(originalSrc)
                   .prependErrorPath(
                     ChimneyExpr.PathElement
-                      .Accessor(Expr.String(fromName))
+                      .Accessor(Expr.String(toName))
                       .upcastToExprOf[partial.PathElement]
                   )
               )
@@ -337,7 +334,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         // '{
         //   ${ runtimeDataStore }(idx)
         //     .asInstanceOf[$OriginalFrom => partial.Result[$CtorParam]](${ originalSrc })
-        //     .prependErrorPath(PathElement.Accessor("fromName"))
+        //     .prependErrorPath(PathElement.Accessor("toName"))
         // }
         import ctx.originalSrc.{Underlying as OriginalFrom, value as originalSrc}
         DerivationResult.existential[TransformationExpr, CtorParam](
@@ -347,7 +344,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .asInstanceOfExpr[OriginalFrom => partial.Result[CtorParam]]
               .apply(originalSrc)
               .prependErrorPath(
-                ChimneyExpr.PathElement.Accessor(Expr.String(fromName)).upcastToExprOf[partial.PathElement]
+                ChimneyExpr.PathElement.Accessor(Expr.String(toName)).upcastToExprOf[partial.PathElement]
               )
           )
         )
@@ -402,10 +399,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           ) {
             // We're constructing:
             // '{ ${ derivedToElement } } // using ${ src.$name }
-            deriveRecursiveTransformationExpr[ExtractedSrc, CtorParam](extractedSrcExpr, Path.Root.select(fromName))
+            deriveRecursiveTransformationExpr[ExtractedSrc, CtorParam](extractedSrcExpr, Path.Root.select(toName))
               .transformWith { expr =>
                 // If we derived partial.Result[$ctorParam] we are appending:
-                //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
+                //  ${ derivedToElement }.prependErrorPath(...).prependErrorPath(...) // sourcePath
                 DerivationResult.existential[TransformationExpr, CtorParam](appendPath(expr, sourcePath))
               } { errors =>
                 appendMissingTransformer[From, To, ExtractedSrc, CtorParam](errors, toName)

@@ -59,9 +59,7 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   protected object PatcherConfigurations {
 
-    // TODO: rename Config => Configuration
-
-    final def readPatcherConfig[
+    final def readPatcherConfiguration[
         Tail <: runtime.PatcherOverrides: Type,
         Flags <: runtime.PatcherFlags: Type,
         ImplicitScopeFlags <: runtime.PatcherFlags: Type
