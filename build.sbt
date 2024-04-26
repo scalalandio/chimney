@@ -3,8 +3,7 @@ import com.typesafe.tools.mima.core.{Problem, ProblemFilters}
 import commandmatrix.extra.*
 import sbtprotoc.ProtocPlugin.ProtobufConfig
 
-// Used to configure the build so that it would format on compile during development
-// but not on CI.
+// Used to configure the build so that it would format on compile during development but not on CI.
 lazy val isCI = sys.env.get("CI").contains("true")
 ThisBuild / scalafmtOnCompile := !isCI
 
@@ -20,7 +19,7 @@ ciRelease := {
   }
 }
 
-// versions
+// Versions:
 
 val versions = new {
   val scala212 = "2.12.19"
@@ -36,7 +35,7 @@ val versions = new {
   val idePlatform = VirtualAxis.jvm
 }
 
-// common settings
+// Common settings:
 
 Global / excludeLintKeys += git.useGitDescribe
 Global / excludeLintKeys += ideSkipProject
@@ -56,7 +55,7 @@ val only1VersionInIDE =
         .Configure(_.settings(ideSkipProject := true, bspEnabled := false, scalafmtOnCompile := false))
     }
 
-val preAndPost212 =
+val addScala213plusDir =
   MatrixAction
     .ForScala(v => (v.value == versions.scala213) || v.isScala3)
     .Configure(
@@ -367,7 +366,7 @@ lazy val root = project
 
 lazy val chimneyMacroCommons = projectMatrix
   .in(file("chimney-macro-commons"))
-  .someVariations(versions.scalas, versions.platforms)((preAndPost212 +: only1VersionInIDE) *)
+  .someVariations(versions.scalas, versions.platforms)((addScala213plusDir +: only1VersionInIDE) *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
@@ -382,7 +381,7 @@ lazy val chimneyMacroCommons = projectMatrix
 
 lazy val chimney = projectMatrix
   .in(file("chimney"))
-  .someVariations(versions.scalas, versions.platforms)((preAndPost212 +: only1VersionInIDE) *)
+  .someVariations(versions.scalas, versions.platforms)((addScala213plusDir +: only1VersionInIDE) *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
@@ -404,14 +403,14 @@ lazy val chimney = projectMatrix
         case _            => Seq.empty
       }
     },
-    // changes to macros should not cause any runtime problems
+    // Changes to macros should not cause any runtime problems
     mimaBinaryIssueFilters := Seq(ProblemFilters.exclude[Problem]("io.scalaland.chimney.internal.compiletime.*"))
   )
   .dependsOn(chimneyMacroCommons)
 
 lazy val chimneyCats = projectMatrix
   .in(file("chimney-cats"))
-  .someVariations(versions.scalas, versions.platforms)((preAndPost212 +: only1VersionInIDE) *)
+  .someVariations(versions.scalas, versions.platforms)((addScala213plusDir +: only1VersionInIDE) *)
   .enablePlugins(GitVersioning, GitBranchPrompt)
   .disablePlugins(WelcomePlugin, ProtocPlugin)
   .settings(
@@ -425,7 +424,8 @@ lazy val chimneyCats = projectMatrix
   .settings(mimaSettings *)
   .settings(dependencies *)
   .settings(
-    libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0" % Provided,
+    Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.cats.*",
+    libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0",
     libraryDependencies += "org.typelevel" %%% "cats-laws" % "2.10.0" % Test
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
@@ -444,15 +444,9 @@ lazy val chimneyJavaCollections = projectMatrix
   .settings(publishSettings *)
   .settings(mimaSettings *)
   .settings(
+    Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.javacollections.*",
     // Scala 2.12 doesn't have scala.jdk.StreamConverters and we use it in test of java.util.stream type class instances
-    libraryDependencies += "org.scala-lang.modules" %%% "scala-java8-compat" % "1.0.2" % Test,
-    Compile / doc / scalacOptions ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((3, _)) => Seq("-skip-by-regex:io\\.scalaland\\.chimney\\.javacollections\\.internal")
-        case Some((2, _)) => Seq("-skip-packages", "io.scalaland.chimney.javacollections.internal")
-        case _            => Seq.empty
-      }
-    }
+    libraryDependencies += "org.scala-lang.modules" %%% "scala-java8-compat" % "1.0.2" % Test
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
@@ -462,8 +456,8 @@ lazy val chimneyProtobufs = projectMatrix
     (only1VersionInIDE :+ MatrixAction
       .ForPlatforms(VirtualAxis.js, VirtualAxis.native)
       .Settings(
-        // Scala.js and Scala Native decided to not implement java.time as let external library do it
-        // while we want to provide some type class instances for types in java.time
+        // Scala.js and Scala Native decided to not implement java.time and let an external library do it,
+        // meanwhile we want to provide some type class instances for types in java.time.
         libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
       )) *
   )
@@ -478,6 +472,7 @@ lazy val chimneyProtobufs = projectMatrix
   .settings(publishSettings *)
   .settings(mimaSettings *)
   .settings(
+    Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.protobufs.*",
     scalacOptions := {
       // protobufs Compile contains only generated classes, and scalacOptions from settings:* breaks Scala 3 compilation
       val resetOptions = if (scalacOptions.value.contains("-scalajs")) Seq("-scalajs") else Seq.empty
