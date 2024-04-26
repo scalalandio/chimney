@@ -84,7 +84,7 @@ val settings = Seq(
           "-feature",
           "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
           "-Wnonunit-statement",
-          // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is!
+          // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
           "-Wunused:privates",
           "-Wunused:locals",
           "-Wunused:explicits",
@@ -106,7 +106,7 @@ val settings = Seq(
           "-explaintypes",
           "-feature",
           "-language:higherKinds",
-          "-Wconf:origin=scala.collection.compat.*:s", // type aliases without which 2.12 fail compilation but 2.13 doesn't need them
+          "-Wconf:origin=scala.collection.compat.*:s", // type aliases without which 2.12 fail compilation but 2.13/3 doesn't need them
           "-Wconf:cat=scala3-migration:s", // silence mainly issues with -Xsource:3 and private case class constructors
           "-Wconf:cat=deprecation&origin=io.scalaland.chimney.*:s", // we want to be able to deprecate APIs and test them while they're deprecated
           "-Wconf:msg=The outer reference in this type test cannot be checked at run time:s", // suppress fake(?) errors in internal.compiletime (adding origin breaks this suppression)
