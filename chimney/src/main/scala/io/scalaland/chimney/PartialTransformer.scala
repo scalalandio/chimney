@@ -18,6 +18,7 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   *
   * @since 0.7.0
   */
+@FunctionalInterface
 trait PartialTransformer[From, To] extends PartialTransformer.AutoDerived[From, To] {
 
   /** Run transformation using provided value as a source.
@@ -161,6 +162,7 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
     *
     * @since 0.8.0
     */
+  @FunctionalInterface
   trait AutoDerived[From, To] {
     def transform(src: From, failFast: Boolean): partial.Result[To]
   }

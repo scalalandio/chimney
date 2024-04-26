@@ -17,6 +17,7 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   *
   * @since 0.1.0
   */
+@FunctionalInterface
 trait Transformer[From, To] extends Transformer.AutoDerived[From, To] {
 
   /** Run transformation using provided value as a source.
@@ -94,6 +95,7 @@ object Transformer extends TransformerCompanionPlatform {
     *
     * @since 0.8.0
     */
+  @FunctionalInterface
   trait AutoDerived[From, To] {
     def transform(src: From): To
   }

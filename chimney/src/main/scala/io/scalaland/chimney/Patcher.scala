@@ -15,6 +15,7 @@ import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
   *
   * @since 0.1.3
   */
+@FunctionalInterface
 trait Patcher[A, Patch] extends Patcher.AutoDerived[A, Patch] {
 
   /** Modifies a copy of one object using values from another object.
@@ -73,6 +74,7 @@ object Patcher extends PatcherCompanionPlatform {
     *
     * @since 0.8.0
     */
+  @FunctionalInterface
   trait AutoDerived[A, Patch] {
     def patch(obj: A, patch: Patch): A
   }

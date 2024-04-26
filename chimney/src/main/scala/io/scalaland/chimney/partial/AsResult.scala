@@ -16,6 +16,7 @@ import scala.util.Try
   *
   * @since 0.8.5
   */
+@FunctionalInterface
 trait AsResult[F[_]] {
 
   /** Converts `F[A]` into `Result[A]`.
