@@ -70,6 +70,13 @@ final case class TupleArityMismatch(
     toType: String
 ) extends TransformerDerivationError
 
+final case class AmbiguousImplicitPriority(
+    totalExprPrettyPrint: String,
+    partialExprPrettyPrint: String,
+    fromType: String,
+    toType: String
+) extends TransformerDerivationError
+
 final case class NotSupportedTransformerDerivation(
     exprPrettyPrint: String,
     fromType: String,
@@ -101,6 +108,11 @@ object TransformerDerivationError {
             s"  coproduct instance $fromField of $fromType has ambiguous matches in $toType: ${foundToFields.mkString(", ")}"
           case TupleArityMismatch(fromArity, toArity, fromType, _) =>
             s"  source tuple $fromType is of arity $fromArity, while target type $toType is of arity $toArity; they need to be equal!"
+          case AmbiguousImplicitPriority(totalExprPrettyPrint, partialExprPrettyPrint, _, _) =>
+            s"""  ambiguous implicits while resolving Chimney recursive transformation!
+               |    PartialTransformer[$fromType, $toType]: $partialExprPrettyPrint
+               |    Transformer[$fromType, $toType]: $totalExprPrettyPrint
+               |  Please eliminate total/partial ambiguity from implicit scope or use ${MAGENTA}enableImplicitConflictResolution$RESET/${MAGENTA}withFieldComputed$RESET/${MAGENTA}withFieldComputedPartial$RESET to decide which one should be used.""".stripMargin
           case NotSupportedTransformerDerivation(exprPrettyPrint, fromType, _) =>
             s"  derivation from $exprPrettyPrint: $fromType to $toType is not supported in Chimney!"
         }

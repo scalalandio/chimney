@@ -36,7 +36,7 @@ class PartialTransformerDslSeparationSpec extends ChimneySpec {
     case class Bar(baz: String)
 
     test("should enable automatic derivation") {
-      // TODO: requires implicit conflict resolution settings since it generates identity transformer using macros
+      // requires implicit conflict resolution settings since it generates identity transformer using macros
       implicit val cfg = TransformerConfiguration.default.enableImplicitConflictResolution(dsl.PreferTotalTransformer)
       implicitly[PartialTransformer[Foo, Bar]].transform(Foo("test")).asOption.get ==> Bar("test")
     }

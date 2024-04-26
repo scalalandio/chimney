@@ -3,6 +3,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 import io.scalaland.chimney.internal.compiletime.{
   AmbiguousFieldOverrides,
   AmbiguousFieldSources,
+  AmbiguousImplicitPriority,
   AmbiguousSubtypeTargets,
   DerivationResult,
   MissingConstructorArgument,
@@ -12,9 +13,11 @@ import io.scalaland.chimney.internal.compiletime.{
   NotSupportedTransformerDerivation,
   TupleArityMismatch
 }
-import io.scalaland.chimney.partial
+import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
 
 private[compiletime] trait ResultOps { this: Derivation =>
+
+  import ChimneyType.Implicits.*
 
   /** DerivationResult is defined outside the "cake", so methods using utilities from the cake have to be extensions */
   implicit final protected class DerivationResultModule(derivationResult: DerivationResult.type) {
@@ -142,6 +145,20 @@ private[compiletime] trait ResultOps { this: Derivation =>
       TupleArityMismatch(
         fromArity = fromArity,
         toArity = toArity,
+        fromType = Type.prettyPrint[From],
+        toType = Type.prettyPrint[To]
+      )
+    )
+
+    def ambiguousImplicitPriority[From, To, A](
+        total: Expr[Transformer[From, To]],
+        partial: Expr[PartialTransformer[From, To]]
+    )(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      AmbiguousImplicitPriority(
+        totalExprPrettyPrint = total.prettyPrint,
+        partialExprPrettyPrint = partial.prettyPrint,
         fromType = Type.prettyPrint[From],
         toType = Type.prettyPrint[To]
       )

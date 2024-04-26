@@ -1902,8 +1902,15 @@ class PartialTransformerProductSpec extends ChimneySpec {
     test("ambiguous error when not resolved") {
 
       compileErrors("""Foo("100").transformIntoPartial[Bar]""").check(
-        "Ambiguous implicits while resolving Chimney recursive transformation",
-        "Please eliminate ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used"
+        "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerProductSpec.Foo to io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "scala.Int",
+        "ambiguous implicits while resolving Chimney recursive transformation!",
+        "PartialTransformer[java.lang.String, scala.Int]: partialInner",
+        "Transformer[java.lang.String, scala.Int]: totalInner",
+        "Please eliminate total/partial ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used.",
+        "io.scalaland.chimney.PartialTransformerProductSpec.Bar",
+        "value: scala.Int - can't derive transformation from value: java.lang.String in source type io.scalaland.chimney.PartialTransformerProductSpec.Foo",
+        "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
 
