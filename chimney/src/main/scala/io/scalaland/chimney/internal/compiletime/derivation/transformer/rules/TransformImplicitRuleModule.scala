@@ -25,16 +25,7 @@ private[compiletime] trait TransformImplicitRuleModule { this: Derivation =>
         import ctx.config.flags.implicitConflictResolution
         (summonTransformerSafe[From, To], summonPartialTransformerSafe[From, To]) match {
           case (Some(total), Some(partial)) if implicitConflictResolution.isEmpty =>
-            // TODO: change from immediately terminating error to DerivationResult.fail
-            reportError(
-              s"""Ambiguous implicits while resolving Chimney recursive transformation:
-                 |
-                 |PartialTransformer[${Type.prettyPrint[From]}, ${Type.prettyPrint[To]}]: ${Expr.prettyPrint(partial)}
-                 |Transformer[${Type.prettyPrint[From]}, ${Type.prettyPrint[To]}]: ${Expr.prettyPrint(total)}
-                 |
-                 |Please eliminate ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used
-                 |""".stripMargin
-            )
+            DerivationResult.ambiguousImplicitPriority(total, partial)
           case (Some(totalTransformer), partialTransformerOpt)
               if partialTransformerOpt.isEmpty || implicitConflictResolution.contains(PreferTotalTransformer) =>
             // We're constructing:
