@@ -364,8 +364,8 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     }
     
     object Example extends MyMappings {
-      val target1 = automap(source).to[TargetClass] // 
-      val target2 = automap(source).to[AnotherClass]
+      val target1 = automap(source).to[TargetClass] // TargetClass("label", 10))
+      val target2 = automap(source).to[AnotherClass] // AnotherClass("label", 10))
     }
     ```
     
