@@ -314,9 +314,7 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   protected object TransformerConfigurations {
 
-    // TODO: rename Config => Configuration
-
-    final def readTransformerConfig[
+    final def readTransformerConfiguration[
         Tail <: runtime.TransformerOverrides: Type,
         InstanceFlags <: runtime.TransformerFlags: Type,
         ImplicitScopeFlags <: runtime.TransformerFlags: Type
