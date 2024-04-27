@@ -37,6 +37,18 @@ object TransformedNamesComparison {
       fromName == toName || normalize(fromName) == normalize(toName)
   }
 
+  /** Matches names, assuming VALUE_NAME convention for Java enums should match ValueName. */
+  case object EnumAware extends TransformedNamesComparison {
+
+    private def normalize(name: String): String =
+      if (name.forall(c => !c.isLetter || c.isUpper))
+        name.split("_").map(s => s.head.toString + s.tail.toLowerCase).mkString
+      else name
+
+    def namesMatch(fromName: String, toName: String): Boolean =
+      fromName == toName || normalize(fromName) == normalize(toName)
+  }
+
   /** Matches only the same Strings. */
   case object StrictEquality extends TransformedNamesComparison {
 
@@ -52,6 +64,6 @@ object TransformedNamesComparison {
   type FieldDefault = BeanAware.type
   val FieldDefault: FieldDefault = BeanAware
 
-  type SubtypeDefault = StrictEquality.type
-  val SubtypeDefault: SubtypeDefault = StrictEquality
+  type SubtypeDefault = EnumAware.type
+  val SubtypeDefault: SubtypeDefault = EnumAware
 }

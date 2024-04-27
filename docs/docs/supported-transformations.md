@@ -3287,14 +3287,25 @@ If we need to customize it, we can use `.define.buildTransformer`:
 Arguments taken by both `.enableCustomFieldNameComparison` and `.enableCustomSubtypeNameComparison` are values of type
 `TransformedNamesComparison`. Out of the box, Chimney provides:
 
- - `TransformedNamesComparison.StrictEquality` - 2 names are considered equal only if they are identical `String`s.
-   This is the default matching strategy for subtype names conparison
  - `TransformedNamesComparison.BeanAware` - 2 names are considered equal if they are identical `String`s OR if they are
    identical after you convert them from Java Bean naming convention: 
-    - if a name starts with `is`/`get`/`set` prefix (e.g. `isField`, `getField`, `setField`) then
-    - strip this name from the prefix (obtaining e.g. `Field`) and
-    - lower case the first letter (obtaining e.g. `field`)
-    
+     - if a name starts with `is`/`get`/`set` prefix (e.g. `isField`, `getField`, `setField`) then
+     - strip this name from the prefix (obtaining e.g. `Field`) and
+     - lower case the first letter (obtaining e.g. `field`)
+
+    This is the default matching strategy for field names comparison.
+ 
+ - `TransformedNamesComparison.EnumAware` - 2 names are considered equal if they are identical `String`s OR if they are
+   identical after you attempt to convert from Java Enum naming convention that is `UNDERSCORE_CASE`:
+     - if all letters are uppercase (e.g. `SUBTYPE_NAME`)
+        - split by `"_"` (`SUBTYPE`, `NAME`)
+        - leave the first letter of each segment uppercased and lowercase the rest (`Subtype`, `Name`)
+        - concatenate the results (`SubtypeName`)
+     - otherwise leave the string unchanged 
+ 
+     This is the default matching strategy for subtype names comparison.
+
+ - `TransformedNamesComparison.StrictEquality` - 2 names are considered equal only if they are identical `String`s
  - `TransformedNamesComparison.CaseInsensitiveEquality` - 2 names are considered equal if `equalsIgnoreCase` returns
   `true`
 
@@ -3304,7 +3315,7 @@ However, these 3 does not exhaust all possible comparisons and you might need to
 
     This is an advanced feature! Due to macros' limitations this feature requires several conditions to work.
 
-The challenge is that the function you'd like to provie has to be called within macro, so it has to be defined in such
+The challenge is that the function you'd like to provide has to be called within macro, so it has to be defined in such
 a way that the macro will be able to access it. Normally, there is no way to inject a custom login into existing macro,
 but Chimney has a specific solution for this:
 
@@ -3313,7 +3324,7 @@ but Chimney has a specific solution for this:
  - your have to define this `object` as top-level definition or within another object - object defined within a `class`,
    a `trait` or locally, does need some logic for instantiation
  - you have to define your `object` in a module/subproject that is compiled _before_ the module where you need to use
-   it, so that the bytecode would already be accesible on classpath.
+   it, so that the bytecode would already be accessible on classpath.
 
 !!! example
 

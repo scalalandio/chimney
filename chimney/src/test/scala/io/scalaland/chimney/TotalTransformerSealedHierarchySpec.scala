@@ -285,39 +285,44 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
 
     test("should be disabled by default") {
 
-      compileErrors("""(Foo.BAZ: Foo).transformInto[Bar]""").check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+      (Foo.BAZ_BAZ: Foo).transformInto[Bar] ==> Bar.BazBaz
+      (Foo.BAZ_BAZ: Foo).into[Bar].transform ==> Bar.BazBaz
+      (Bar.BazBaz: Bar).transformInto[Foo] ==> Foo.BAZ_BAZ
+      (Bar.BazBaz: Bar).into[Foo].transform ==> Foo.BAZ_BAZ
+
+      compileErrors("""(Foo2.bazBaz: Foo2).transformIntoPartial[Bar]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
+        "derivation from bazbaz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.bazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.bazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrors("""(Foo.BAZ: Foo).into[Bar].transform""").check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+      compileErrors("""(Foo2.bazBaz: Foo2).intoPartial[Bar].transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
+        "derivation from bazbaz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.bazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.bazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrors("""(Bar.Baz: Bar).transformInto[Foo]""").check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+      compileErrors("""(Bar.BazBaz: Bar).transformIntoPartial[Foo2]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
+        "derivation from bazbaz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.BazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.BazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrors("""(Bar.Baz: Bar).into[Foo].transform""").check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+      compileErrors("""(Bar.BazBaz: Bar).intoPartial[Foo2].transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
+        "derivation from bazbaz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.BazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.BazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -328,7 +333,7 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
         def namesMatch(fromName: String, toName: String): Boolean = fromName.equalsIgnoreCase(toName)
       }
 
-      compileErrors("""(Foo.BAZ: Foo).into[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform""")
+      compileErrors("""(Foo2.bazBaz: Foo2).into[Bar].enableCustomSubtypeNameComparison(BadNameComparison).transform""")
         .check(
           "Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: io.scalaland.chimney.TotalTransformerSealedHierarchySpec.BadNameComparison!!!"
         )
@@ -336,12 +341,12 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
 
     test("should inform user when the matcher they provided results in ambiguities") {
 
-      (Foo2.baz: Foo2).transformInto[BarAmbiguous] ==> BarAmbiguous.baz
-      (Foo2.baz: Foo2).into[BarAmbiguous].transform ==> BarAmbiguous.baz
+      (Foo2.bazBaz: Foo2).transformInto[BarAmbiguous] ==> BarAmbiguous.bazBaz
+      (Foo2.bazBaz: Foo2).into[BarAmbiguous].transform ==> BarAmbiguous.bazBaz
 
       compileErrors(
         """
-        (Foo2.baz: Foo2)
+        (Foo2.bazBaz: Foo2)
           .into[BarAmbiguous]
           .enableCustomSubtypeNameComparison(TransformedNamesComparison.BeanAware)
           .transform
@@ -349,34 +354,34 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 to io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous",
         "io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.baz to io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous is not supported in Chimney!",
+        "derivation from bazbaz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.bazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous is not supported in Chimney!",
         "io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous",
-        "coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.baz of io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 has ambiguous matches in io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous: io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous.baz, io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous.getBaz",
+        "coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.bazBaz of io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 has ambiguous matches in io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous: io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous.bazBaz, io.scalaland.chimney.fixtures.renames.Subtypes.BarAmbiguous.getBazBaz",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
 
     test("should allow subtypes to be matched using user-provided predicate") {
-      (Foo.BAZ: Foo)
+      (Foo2.bazBaz: Foo2)
         .into[Bar]
         .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
-        .transform ==> Bar.Baz
+        .transform ==> Bar.BazBaz
 
-      (Bar.Baz: Bar)
-        .into[Foo]
+      (Bar.BazBaz: Bar)
+        .into[Foo2]
         .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
-        .transform ==> Foo.BAZ
+        .transform ==> Foo2.bazBaz
 
       locally {
         implicit val config = TransformerConfiguration.default.enableCustomSubtypeNameComparison(
           TransformedNamesComparison.CaseInsensitiveEquality
         )
 
-        (Foo.BAZ: Foo).transformInto[Bar] ==> Bar.Baz
-        (Foo.BAZ: Foo).into[Bar].transform ==> Bar.Baz
+        (Foo2.bazBaz: Foo2).transformInto[Bar] ==> Bar.BazBaz
+        (Foo2.bazBaz: Foo2).into[Bar].transform ==> Bar.BazBaz
 
-        (Bar.Baz: Bar).transformInto[Foo] ==> Foo.BAZ
-        (Bar.Baz: Bar).into[Foo].transform ==> Foo.BAZ
+        (Bar.BazBaz: Bar).transformInto[Foo2] ==> Foo2.bazBaz
+        (Bar.BazBaz: Bar).into[Foo2].transform ==> Foo2.bazBaz
       }
     }
   }
@@ -390,21 +395,21 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
         TransformedNamesComparison.CaseInsensitiveEquality
       )
 
-      compileErrors("""(Foo.BAZ: Foo).into[Bar].disableCustomSubtypeNameComparison.transform""").check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+      compileErrors("""(Foo2.bazBaz: Foo2).into[Bar].disableCustomSubtypeNameComparison.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
+        "derivation from bazbaz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.bazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
         "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo.BAZ to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo2.bazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
-      compileErrors("""(Bar.Baz: Bar).into[Foo].disableCustomSubtypeNameComparison.transform""").check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "derivation from baz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo is not supported in Chimney!",
-        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
-        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
+      compileErrors("""(Bar.BazBaz: Bar).into[Foo2].disableCustomSubtypeNameComparison.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Bar to io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
+        "derivation from bazbaz: io.scalaland.chimney.fixtures.renames.Subtypes.Bar.BazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo2 is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.BazBaz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo2",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }

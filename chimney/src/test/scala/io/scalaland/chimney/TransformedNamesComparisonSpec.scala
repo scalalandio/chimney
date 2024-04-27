@@ -29,6 +29,27 @@ class TransformedNamesComparisonSpec extends ChimneySpec {
     }
   }
 
+  group("TransformedNamesComparison.EnumAware") {
+
+    test("should match identical names") {
+      TransformedNamesComparison.EnumAware.namesMatch("SomeSubtype", "SomeSubtype") ==> true
+    }
+
+    test("should allows matching sealed subtypes/enum cases with Java Enums") {
+      TransformedNamesComparison.EnumAware.namesMatch("SomeSubtype", "SOME_SUBTYPE") ==> true
+      TransformedNamesComparison.EnumAware.namesMatch("SOME_SUBTYPE", "SomeSubtype") ==> true
+    }
+
+    test("should not match names converted with different conventions") {
+      TransformedNamesComparison.EnumAware.namesMatch("someField", "some-field") ==> false
+      TransformedNamesComparison.EnumAware.namesMatch("some-field", "someField") ==> false
+      TransformedNamesComparison.EnumAware.namesMatch("someField", "some_field") ==> false
+      TransformedNamesComparison.EnumAware.namesMatch("some_field", "someField") ==> false
+      TransformedNamesComparison.EnumAware.namesMatch("someField", "SOME_FIELD") ==> false
+      TransformedNamesComparison.EnumAware.namesMatch("SOME_FIELD", "someField") ==> false
+    }
+  }
+
   group("TransformedNamesComparison.StrictEquality") {
 
     test("should match identical names") {
