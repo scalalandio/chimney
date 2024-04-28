@@ -995,6 +995,8 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     // Target
     //   c: scala.Long - no accessor named c in source type Source
     //
+    // There are default values for c, the constructor argument/setter in Target. Consider using .enableDefaultValues.
+    //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
@@ -1089,6 +1091,10 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     //
     // Bar
     //   b: scala.Option[java.lang.String] - no accessor named b in source type Foo
+    //
+    // There are default values for b, the constructor argument/setter in Bar. Consider using .enableDefaultValues.
+    //
+    // There are default optional values available for b, the constructor argument/setter in Bar. Consider using .enableOptionDefaultsToNone.
     //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
