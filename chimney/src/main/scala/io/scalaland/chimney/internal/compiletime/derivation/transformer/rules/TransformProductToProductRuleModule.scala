@@ -224,7 +224,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         .missingConstructorArgument[From, To, CtorParam, Existential[TransformationExpr]](
                           toName,
                           availableMethodAccessors,
-                          availableInheritedAccessors
+                          availableInheritedAccessors,
+                          availableDefault = defaultValue.isDefined,
+                          availableNone = OptionalValue.unapply[CtorParam].isDefined
                         )
                     case Product.Parameter.TargetType.SetterParameter(_) if flags.beanSettersIgnoreUnmatched =>
                       DerivationResult.pure(unmatchedSetter)
@@ -236,7 +238,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
                           toName,
                           availableMethodAccessors,
-                          availableInheritedAccessors
+                          availableInheritedAccessors,
+                          availableNone = OptionalValue.unapply[CtorParam].isDefined
                         )
                   }
                 }

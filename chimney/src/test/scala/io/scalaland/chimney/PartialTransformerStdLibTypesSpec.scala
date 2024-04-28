@@ -499,12 +499,14 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
       compileErrors("""Source("foo").intoPartial[TargetWithOption].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -567,6 +569,7 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source to io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerStdLibTypesSpec.Source",
+        "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerStdLibTypesSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }

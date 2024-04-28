@@ -960,7 +960,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result.asErrorPathMessageStrings ==> Iterable.empty
     }
 
-    test("should not compile if renamed value change type but an there is no transformer available") {
+    test("should not compile if renamed value change type but an there is no Transformer available") {
       import products.Renames.*
 
       compileErrors(
@@ -1045,6 +1045,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
 
@@ -1053,6 +1054,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -1247,6 +1249,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
         "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
