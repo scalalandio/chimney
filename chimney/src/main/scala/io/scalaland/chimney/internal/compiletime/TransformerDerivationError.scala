@@ -12,76 +12,66 @@ sealed trait TransformerDerivationError extends Product with Serializable {
 final case class MissingConstructorArgument(
     toField: String,
     toFieldType: String,
-    fromType: String,
-    toType: String,
     availableMethodAccessors: List[String],
     availableInheritedAccessors: List[String]
-) extends TransformerDerivationError
+)(val fromType: String, val toType: String)
+    extends TransformerDerivationError
 
 final case class MissingJavaBeanSetterParam(
     toSetter: String,
     toSetterType: String,
-    fromType: String,
-    toType: String,
     availableMethodAccessors: List[String],
     availableInheritedAccessors: List[String]
-) extends TransformerDerivationError
+)(val fromType: String, val toType: String)
+    extends TransformerDerivationError
 
 final case class MissingFieldTransformer(
     toField: String,
     fromFieldType: String,
-    toFieldType: String,
-    fromType: String,
-    toType: String
-) extends TransformerDerivationError
+    toFieldType: String
+)(val fromType: String, val toType: String)
+    extends TransformerDerivationError
 
 final case class AmbiguousFieldSources(
     foundFromFields: List[String],
-    toField: String,
-    fromType: String,
-    toType: String
-) extends TransformerDerivationError
+    toField: String
+)(val fromType: String, val toType: String)
+    extends TransformerDerivationError
 
 final case class AmbiguousFieldOverrides(
     toName: String,
     foundOverrides: List[String],
-    fieldNamesComparator: String,
-    fromType: String,
-    toType: String
-) extends TransformerDerivationError
+    fieldNamesComparator: String
+)(val fromType: String, val toType: String)
+    extends TransformerDerivationError
 
 final case class MissingSubtypeTransformer(
-    fromSubtype: String,
-    fromType: String,
-    toType: String
-) extends TransformerDerivationError
+    fromSubtype: String
+)(val fromType: String, val toType: String)
+    extends TransformerDerivationError
 
 final case class AmbiguousSubtypeTargets(
     fromSubtype: String,
-    foundToSubtypes: List[String],
-    fromType: String,
-    toType: String
-) extends TransformerDerivationError
+    foundToSubtypes: List[String]
+)(val fromType: String, val toType: String)
+    extends TransformerDerivationError
 
 final case class TupleArityMismatch(
     fromArity: Int,
-    toArity: Int,
-    fromType: String,
-    toType: String
-) extends TransformerDerivationError
+    toArity: Int
+)(val fromType: String, val toType: String)
+    extends TransformerDerivationError
 
 final case class AmbiguousImplicitPriority(
     totalExprPrettyPrint: String,
-    partialExprPrettyPrint: String,
-    fromType: String,
-    toType: String
-) extends TransformerDerivationError
+    partialExprPrettyPrint: String
+)(val fromType: String, val toType: String)
+    extends TransformerDerivationError
 
 final case class NotSupportedTransformerDerivation(
-    exprPrettyPrint: String,
-    fromType: String,
-    toType: String
-) extends TransformerDerivationError
+    exprPrettyPrint: String
+)(val fromType: String, val toType: String)
+    extends TransformerDerivationError
 
 object TransformerDerivationError {
   def printErrors(errors: Seq[TransformerDerivationError]): String =
@@ -89,31 +79,31 @@ object TransformerDerivationError {
       .groupBy(e => (e.toType, e.fromType))
       .map { case ((toType, fromType), errs) =>
         val errStrings = errs.distinct.map {
-          case MissingConstructorArgument(toField, toFieldType, fromType, _, _, _) =>
+          case MissingConstructorArgument(toField, toFieldType, _, _) =>
             s"  $toField: $toFieldType - no accessor named $MAGENTA$toField$RESET in source type $fromType"
-          case MissingJavaBeanSetterParam(toSetter, requiredTypeName, fromType, _, _, _) =>
+          case MissingJavaBeanSetterParam(toSetter, requiredTypeName, _, _) =>
             val toNormalized = BeanAware.dropSet(toSetter)
             s"  $toSetter($toNormalized: $requiredTypeName) - no accessor named $MAGENTA$toNormalized$RESET in source type $fromType"
-          case MissingFieldTransformer(toField, fromFieldType, toFieldType, fromType, _) =>
+          case MissingFieldTransformer(toField, fromFieldType, toFieldType) =>
             s"  $toField: $toFieldType - can't derive transformation from $toField: $fromFieldType in source type $fromType"
-          case AmbiguousFieldSources(foundFromNames, toField, _, _) =>
+          case AmbiguousFieldSources(foundFromNames, toField) =>
             s"  field $toField: $toType has ambiguous matches in $fromType: ${foundFromNames.mkString(", ")}"
-          case AmbiguousFieldOverrides(toName, foundOverrides, fieldNamesComparator, _, _) =>
+          case AmbiguousFieldOverrides(toName, foundOverrides, fieldNamesComparator) =>
             val overrides =
               foundOverrides.map(fieldOverride => s"$MAGENTA$fieldOverride$RESET").mkString(", ")
             s"  field $toName: $toType could not resolve overrides since the current $MAGENTA$fieldNamesComparator: TransformedNamedComparison$RESET treats the following overrides as the same: $overrides making it ambiguous - change the field name comparator with $MAGENTA.enableCustomFieldNameComparison$RESET to resolve the ambiguity"
-          case MissingSubtypeTransformer(fromSubtype, _, _) =>
+          case MissingSubtypeTransformer(fromSubtype) =>
             s"  can't transform coproduct instance $fromSubtype to $toType"
-          case AmbiguousSubtypeTargets(fromField, foundToFields, _, _) =>
+          case AmbiguousSubtypeTargets(fromField, foundToFields) =>
             s"  coproduct instance $fromField of $fromType has ambiguous matches in $toType: ${foundToFields.mkString(", ")}"
-          case TupleArityMismatch(fromArity, toArity, fromType, _) =>
+          case TupleArityMismatch(fromArity, toArity) =>
             s"  source tuple $fromType is of arity $fromArity, while target type $toType is of arity $toArity; they need to be equal!"
-          case AmbiguousImplicitPriority(totalExprPrettyPrint, partialExprPrettyPrint, _, _) =>
+          case AmbiguousImplicitPriority(totalExprPrettyPrint, partialExprPrettyPrint) =>
             s"""  ambiguous implicits while resolving Chimney recursive transformation!
                |    PartialTransformer[$fromType, $toType]: $partialExprPrettyPrint
                |    Transformer[$fromType, $toType]: $totalExprPrettyPrint
                |  Please eliminate total/partial ambiguity from implicit scope or use ${MAGENTA}enableImplicitConflictResolution$RESET/${MAGENTA}withFieldComputed$RESET/${MAGENTA}withFieldComputedPartial$RESET to decide which one should be used.""".stripMargin
-          case NotSupportedTransformerDerivation(exprPrettyPrint, fromType, _) =>
+          case NotSupportedTransformerDerivation(exprPrettyPrint) =>
             s"  derivation from $exprPrettyPrint: $fromType to $toType is not supported in Chimney!"
         }
 
@@ -127,10 +117,10 @@ object TransformerDerivationError {
           } else ""
 
         val methodAccessorHint = prettyFieldList(errors.collect {
-          case MissingConstructorArgument(toField, _, _, _, availableMethodAccessors, _)
+          case MissingConstructorArgument(toField, _, _, availableMethodAccessors)
               if availableMethodAccessors.nonEmpty =>
             s"$MAGENTA$toField$RESET (e.g. ${availableMethodAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
-          case MissingJavaBeanSetterParam(toSetter, _, _, _, availableMethodAccessors, _)
+          case MissingJavaBeanSetterParam(toSetter, _, _, availableMethodAccessors)
               if availableMethodAccessors.nonEmpty =>
             s"$MAGENTA$toSetter$RESET (e.g. ${availableMethodAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
         }.sorted) { fields =>
@@ -138,10 +128,10 @@ object TransformerDerivationError {
         }
 
         val inheritedAccessorHint = prettyFieldList(errors.collect {
-          case MissingConstructorArgument(toField, _, _, _, _, availableInheritedAccessors)
+          case MissingConstructorArgument(toField, _, _, availableInheritedAccessors)
               if availableInheritedAccessors.nonEmpty =>
             s"$MAGENTA$toField$RESET (e.g. ${availableInheritedAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
-          case MissingJavaBeanSetterParam(toSetter, _, _, _, _, availableInheritedAccessors)
+          case MissingJavaBeanSetterParam(toSetter, _, _, availableInheritedAccessors)
               if availableInheritedAccessors.nonEmpty =>
             s"$MAGENTA$toSetter$RESET (e.g. ${availableInheritedAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
         }.sorted) { fields =>
