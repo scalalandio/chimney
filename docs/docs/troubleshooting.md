@@ -1303,6 +1303,188 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     // PaymentMethod = Card(name = "J. Doe", digits = 2764262L)
     ```
 
+The biggest difference might be approach towards transformations that can fail in runtime. Ducktape uses user-provided
+`F[_]` in derivation with one of two modes: accumulating errors (which requires computing every value, just to see if
+there is an error) or fail-fast (which stops computation on the first error, terminating faster but without data that
+would allow user to fix the data in one go). It calls such transformations `FallibleTransformer`s.
+
+Chimney uses one blessed error type: `partial.Result[_]`. It used to have a similar approach with `TransformerF`, but it
+was decided that users most of the time used: `Option`s (value absence), `Either[String, _]`s (validation with `String`
+error message),`Try` (or another `Throwable`-based error handling) or non-empty collection of any of these. 
+`partial.Result` allows storing errors representing each of these, showing which field produced particular error and
+deciding between error accumulating and fail-fast in runtime. It provides utilities to convert to and from
+`partial.Result`.
+
+!!! example
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    
+    object newtypes:
+      opaque type NonEmptyString <: String = String
+      object NonEmptyString:
+        def create(value: String): Either[String, NonEmptyString] =
+          Either.cond(!value.isBlank, value, s"not a non-empty string")
+    
+      opaque type Positive <: Long = Long
+      object Positive:
+        def create(value: Long): Either[String, Positive] =
+          Either.cond(value > 0, value, "not a positive long")
+
+    object wire:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: List[wire.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case Card(name: String, digits: Long)
+        case PayPal(email: String)
+        case Cash
+
+    object domain:
+      final case class Person(
+        firstName: NonEmptyString,
+        lastName: NonEmptyString,
+        paymentMethods: Vector[domain.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case PayPal(email: NonEmptyString)
+        case Card(digits: Positive, name: NonEmptyString)
+        case Cash
+        
+    val wirePerson = wire.Person(
+      "John",
+      "Doe",
+      List(
+        wire.PaymentMethod.Cash,
+        wire.PaymentMethod.PayPal("john@doe.com"),
+        wire.PaymentMethod.Card("J. Doe", 23232323)
+      )
+    )
+
+    import io.github.arainko.ducktape.*
+    
+    // expand the 'create' method into an instance of Transformer.Fallible
+    // this is a key component in making those transformations automatic
+    given failFastNonEmptyString: Transformer.Fallible[[a] =>> Either[String, a], String, NonEmptyString] =
+      create
+      
+    given failFastPositive: Transformer.Fallible[[a] =>> Either[String, a], Long, Positive] =
+      create
+
+    locally {
+      given Mode.FailFast.Either[String] with {}
+      
+      wirePerson
+        .into[domain.Person]
+        .fallible
+        .transform(
+          Field.fallibleConst(
+            _.paymentMethods.element.at[domain.PaymentMethod.PayPal].email,
+            newtypes.NonEmptyString.create("overridden@email.com")
+          )
+        )
+    }
+
+    // also declare the same fallible transformer but make it ready for error accumulation
+    given accumulatingNonEmptyString: Transformer.Fallible[[a] =>> Either[List[String], a], String, NonEmptyString] =
+      create(_).left.map(_ :: Nil)
+    
+    given accumulatingPositive: Transformer.Fallible[[a] =>> Either[List[String], a], Long, Positive] =
+      create(_).left.map(_ :: Nil)
+      
+    locally {
+      given Mode.Accumulating.Either[String, List] with {}
+    
+      wirePerson.fallibleTo[domain.Person]
+    }
+    ``` 
+    
+    Chimney's counterpart:
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    object newtypes:
+      opaque type NonEmptyString <: String = String
+      object NonEmptyString:
+        def create(value: String): Either[String, NonEmptyString] =
+          Either.cond(!value.isBlank, value, s"not a non-empty string")
+    
+      opaque type Positive <: Long = Long
+      object Positive:
+        def create(value: Long): Either[String, Positive] =
+          Either.cond(value > 0, value, "not a positive long")
+
+    object wire:
+      final case class Person(
+        firstName: String,
+        lastName: String,
+        paymentMethods: List[wire.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case Card(name: String, digits: Long)
+        case PayPal(email: String)
+        case Cash
+
+    object domain:
+      final case class Person(
+        firstName: NonEmptyString,
+        lastName: NonEmptyString,
+        paymentMethods: Vector[domain.PaymentMethod]
+      )
+    
+      enum PaymentMethod:
+        case PayPal(email: NonEmptyString)
+        case Card(digits: Positive, name: NonEmptyString)
+        case Cash
+        
+    val wirePerson = wire.Person(
+      "John",
+      "Doe",
+      List(
+        wire.PaymentMethod.Cash,
+        wire.PaymentMethod.PayPal("john@doe.com"),
+        wire.PaymentMethod.Card("J. Doe", 23232323)
+      )
+    )
+    
+    import io.scalaland.chimney.dsl.*
+    import io.scalaland.chimney.{partial, PartialTransformer}
+    
+    given PartialTransformer[String, newtypes.NonEmptyString]: PartialTransformer[String, newtypes.NonEmptyString](str =>
+      partial.Result.fromEitherString(newtypes.NonEmptyString.create)
+    )
+    
+    given PartialTransformer[String, newtypes.Positive]: PartialTransformer[String, newtypes.Positive](str =>
+      partial.Result.fromEitherString(newtypes.Positive.create)
+    )
+    
+    wirePerson.transformIntoPartial[domain.Person].asEitherErrorPathMessageStrings
+    wirePerson.transformIntoPartial[domain.Person](failFast = true).asEitherErrorPathMessageStrings
+    
+    wirePerson.intoPartial[domain.Person]
+      .withFieldConstPartial(
+        _.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email,
+        newtypes.NonEmptyString.create("overridden@email.com")
+      )
+      .transform
+      .asEitherErrorPathMessageStrings
+    wirePerson.intoPartial[domain.Person]
+      .withFieldConstPartial(
+        _.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email,
+        newtypes.NonEmptyString.create("overridden@email.com")
+      )
+      .transformFailFast
+      .asEitherErrorPathMessageStrings
+    ``` 
+
 Since Ducktape is inspired by Chimney, there is a huge overlap in functionality. However, there are some differences:
 
  * Ducktape is developed only on Scala 3, while Chimney supports 2.12 and 2.13 as well
