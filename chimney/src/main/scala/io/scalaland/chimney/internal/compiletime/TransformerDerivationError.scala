@@ -13,7 +13,9 @@ final case class MissingConstructorArgument(
     toField: String,
     toFieldType: String,
     availableMethodAccessors: List[String],
-    availableInheritedAccessors: List[String]
+    availableInheritedAccessors: List[String],
+    availableDefault: Boolean,
+    availableNone: Boolean
 )(val fromType: String, val toType: String)
     extends TransformerDerivationError
 
@@ -21,7 +23,8 @@ final case class MissingJavaBeanSetterParam(
     toSetter: String,
     toSetterType: String,
     availableMethodAccessors: List[String],
-    availableInheritedAccessors: List[String]
+    availableInheritedAccessors: List[String],
+    availableNone: Boolean
 )(val fromType: String, val toType: String)
     extends TransformerDerivationError
 
@@ -79,9 +82,9 @@ object TransformerDerivationError {
       .groupBy(e => (e.toType, e.fromType))
       .map { case ((toType, fromType), errs) =>
         val errStrings = errs.distinct.map {
-          case MissingConstructorArgument(toField, toFieldType, _, _) =>
+          case MissingConstructorArgument(toField, toFieldType, _, _, _, _) =>
             s"  $toField: $toFieldType - no accessor named $MAGENTA$toField$RESET in source type $fromType"
-          case MissingJavaBeanSetterParam(toSetter, requiredTypeName, _, _) =>
+          case MissingJavaBeanSetterParam(toSetter, requiredTypeName, _, _, _) =>
             val toNormalized = BeanAware.dropSet(toSetter)
             s"  $toSetter($toNormalized: $requiredTypeName) - no accessor named $MAGENTA$toNormalized$RESET in source type $fromType"
           case MissingFieldTransformer(toField, fromFieldType, toFieldType) =>
@@ -117,10 +120,10 @@ object TransformerDerivationError {
           } else ""
 
         val methodAccessorHint = prettyFieldList(errors.collect {
-          case MissingConstructorArgument(toField, _, _, availableMethodAccessors)
+          case MissingConstructorArgument(toField, _, availableMethodAccessors, _, _, _)
               if availableMethodAccessors.nonEmpty =>
             s"$MAGENTA$toField$RESET (e.g. ${availableMethodAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
-          case MissingJavaBeanSetterParam(toSetter, _, _, availableMethodAccessors)
+          case MissingJavaBeanSetterParam(toSetter, _, availableMethodAccessors, _, _)
               if availableMethodAccessors.nonEmpty =>
             s"$MAGENTA$toSetter$RESET (e.g. ${availableMethodAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
         }.sorted) { fields =>
@@ -128,18 +131,31 @@ object TransformerDerivationError {
         }
 
         val inheritedAccessorHint = prettyFieldList(errors.collect {
-          case MissingConstructorArgument(toField, _, _, availableInheritedAccessors)
+          case MissingConstructorArgument(toField, _, _, availableInheritedAccessors, _, _)
               if availableInheritedAccessors.nonEmpty =>
             s"$MAGENTA$toField$RESET (e.g. ${availableInheritedAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
-          case MissingJavaBeanSetterParam(toSetter, _, _, availableInheritedAccessors)
+          case MissingJavaBeanSetterParam(toSetter, _, _, availableInheritedAccessors, _)
               if availableInheritedAccessors.nonEmpty =>
             s"$MAGENTA$toSetter$RESET (e.g. ${availableInheritedAccessors.map(a => s"$MAGENTA$a$RESET").mkString(", ")})"
         }.sorted) { fields =>
           s"\n\nThere are inherited definitions in $fromType that might be used as accessors for $fields in $toType. Consider using $MAGENTA.enableInheritedAccessors$RESET."
         }
 
+        val defaultValueHint = prettyFieldList(errors.collect {
+          case MissingConstructorArgument(toField, _, _, _, true, _) => s"$MAGENTA$toField$RESET"
+        }.sorted) { fields =>
+          s"\n\nThere are default values for $fields in $toType. Consider using $MAGENTA.enableDefaultValues$RESET."
+        }
+
+        val noneValueHint = prettyFieldList(errors.collect {
+          case MissingConstructorArgument(toField, _, _, _, _, true) => s"$MAGENTA$toField$RESET"
+          case MissingJavaBeanSetterParam(toSetter, _, _, _, true)   => s"$MAGENTA$toSetter$RESET"
+        }.sorted) { fields =>
+          s"\n\nThere are default optional values available for $fields in $toType. Consider using $MAGENTA.enableOptionDefaultsToNone$RESET."
+        }
+
         s"""$toType
-           |${errStrings.mkString("\n")}$methodAccessorHint$inheritedAccessorHint
+           |${errStrings.mkString("\n")}$methodAccessorHint$inheritedAccessorHint$defaultValueHint$noneValueHint
            |""".stripMargin
       }
       .mkString("\n")

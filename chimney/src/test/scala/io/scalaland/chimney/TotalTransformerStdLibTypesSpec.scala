@@ -182,6 +182,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source",
+        "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -226,6 +227,7 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source to io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption",
         "y: scala.Option[scala.Int] - no accessor named y in source type io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Source",
+        "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.TotalTransformerStdLibTypesSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }

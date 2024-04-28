@@ -42,7 +42,9 @@ private[compiletime] trait ResultOps { this: Derivation =>
     def missingConstructorArgument[From, To, Field: Type, A](
         toField: String,
         availableMethodAccessors: List[String],
-        availableInheritedAccessors: List[String]
+        availableInheritedAccessors: List[String],
+        availableDefault: Boolean,
+        availableNone: Boolean
     )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
@@ -50,14 +52,17 @@ private[compiletime] trait ResultOps { this: Derivation =>
         toField = toField,
         toFieldType = Type.prettyPrint[Field],
         availableMethodAccessors = availableMethodAccessors,
-        availableInheritedAccessors = availableInheritedAccessors
+        availableInheritedAccessors = availableInheritedAccessors,
+        availableDefault = availableDefault,
+        availableNone = availableNone
       )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
     def missingJavaBeanSetterParam[From, To, Setter: Type, A](
         toSetter: String,
         availableMethodAccessors: List[String],
-        availableInheritedAccessors: List[String]
+        availableInheritedAccessors: List[String],
+        availableNone: Boolean
     )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
@@ -65,7 +70,8 @@ private[compiletime] trait ResultOps { this: Derivation =>
         toSetter = toSetter,
         toSetterType = Type.prettyPrint[Setter],
         availableMethodAccessors = availableMethodAccessors,
-        availableInheritedAccessors = availableInheritedAccessors
+        availableInheritedAccessors = availableInheritedAccessors,
+        availableNone = availableNone
       )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 

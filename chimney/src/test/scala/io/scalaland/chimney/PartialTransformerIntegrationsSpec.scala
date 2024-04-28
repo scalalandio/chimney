@@ -699,12 +699,14 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+        "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
       compileErrors("""Source("foo").intoPartial[TargetWithOption].transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+        "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
@@ -769,6 +771,7 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
         "Chimney can't derive transformation from io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source to io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption",
         "y: io.scalaland.chimney.TotalTransformerIntegrationsSpec.Possible[scala.Int] - no accessor named y in source type io.scalaland.chimney.PartialTransformerIntegrationsSpec.Source",
+        "There are default optional values available for y, the constructor argument/setter in io.scalaland.chimney.PartialTransformerIntegrationsSpec.TargetWithOption. Consider using .enableOptionDefaultsToNone.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
     }
