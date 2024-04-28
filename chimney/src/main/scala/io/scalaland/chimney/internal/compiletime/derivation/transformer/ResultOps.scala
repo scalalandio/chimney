@@ -49,11 +49,9 @@ private[compiletime] trait ResultOps { this: Derivation =>
       MissingConstructorArgument(
         toField = toField,
         toFieldType = Type.prettyPrint[Field],
-        fromType = Type.prettyPrint[From],
-        toType = Type.prettyPrint[To],
         availableMethodAccessors = availableMethodAccessors,
         availableInheritedAccessors = availableInheritedAccessors
-      )
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
     def missingJavaBeanSetterParam[From, To, Setter: Type, A](
@@ -66,11 +64,9 @@ private[compiletime] trait ResultOps { this: Derivation =>
       MissingJavaBeanSetterParam(
         toSetter = toSetter,
         toSetterType = Type.prettyPrint[Setter],
-        fromType = Type.prettyPrint[From],
-        toType = Type.prettyPrint[To],
         availableMethodAccessors = availableMethodAccessors,
         availableInheritedAccessors = availableInheritedAccessors
-      )
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
     def missingFieldTransformer[From, To, FromField: Type, ToField: Type, A](toField: String)(implicit
@@ -79,10 +75,8 @@ private[compiletime] trait ResultOps { this: Derivation =>
       MissingFieldTransformer(
         toField = toField,
         fromFieldType = Type.prettyPrint[FromField],
-        toFieldType = Type.prettyPrint[ToField],
-        fromType = Type.prettyPrint[From],
-        toType = Type.prettyPrint[To]
-      )
+        toFieldType = Type.prettyPrint[ToField]
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
     def ambiguousFieldSources[From, To, A](
@@ -91,10 +85,8 @@ private[compiletime] trait ResultOps { this: Derivation =>
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = DerivationResult.transformerError(
       AmbiguousFieldSources(
         foundFromFields = foundFromFields.sorted,
-        toField = toField,
-        fromType = Type.prettyPrint[From],
-        toType = Type.prettyPrint[To]
-      )
+        toField = toField
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
     def ambiguousFieldOverrides[From, To, A](
@@ -105,20 +97,16 @@ private[compiletime] trait ResultOps { this: Derivation =>
       AmbiguousFieldOverrides(
         toName = toName,
         foundOverrides = foundOverrides.sorted,
-        fieldNamesComparator = fieldNamesComparator,
-        fromType = Type.prettyPrint[From],
-        toType = Type.prettyPrint[To]
-      )
+        fieldNamesComparator = fieldNamesComparator
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
     def missingSubtypeTransformer[From, To, FromSubtype: Type, A](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       MissingSubtypeTransformer(
-        fromSubtype = Type.prettyPrint[FromSubtype],
-        fromType = Type.prettyPrint[From],
-        toType = Type.prettyPrint[To]
-      )
+        fromSubtype = Type.prettyPrint[FromSubtype]
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
     def ambiguousSubtypeTargets[From, To, A](
@@ -133,10 +121,8 @@ private[compiletime] trait ResultOps { this: Derivation =>
         foundToSubtypes = foundToSubtypes.map { foundToSubtype =>
           import foundToSubtype.Underlying as ToSubtype
           Type.prettyPrint[ToSubtype]
-        }.sorted,
-        fromType = Type.prettyPrint[From],
-        toType = Type.prettyPrint[To]
-      )
+        }.sorted
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
     def tupleArityMismatch[From, To, A](fromArity: Int, toArity: Int)(implicit
@@ -144,10 +130,8 @@ private[compiletime] trait ResultOps { this: Derivation =>
     ): DerivationResult[A] = DerivationResult.transformerError(
       TupleArityMismatch(
         fromArity = fromArity,
-        toArity = toArity,
-        fromType = Type.prettyPrint[From],
-        toType = Type.prettyPrint[To]
-      )
+        toArity = toArity
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
     def ambiguousImplicitPriority[From, To, A](
@@ -158,29 +142,23 @@ private[compiletime] trait ResultOps { this: Derivation =>
     ): DerivationResult[A] = DerivationResult.transformerError(
       AmbiguousImplicitPriority(
         totalExprPrettyPrint = total.prettyPrint,
-        partialExprPrettyPrint = partial.prettyPrint,
-        fromType = Type.prettyPrint[From],
-        toType = Type.prettyPrint[To]
-      )
+        partialExprPrettyPrint = partial.prettyPrint
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
     def notSupportedTransformerDerivation[From, To, A](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       NotSupportedTransformerDerivation(
-        exprPrettyPrint = ctx.src.prettyPrint,
-        fromType = Type.prettyPrint[From],
-        toType = Type.prettyPrint[To]
-      )
+        exprPrettyPrint = ctx.src.prettyPrint
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
     def notSupportedTransformerDerivationForField[From, To, A](fieldName: String)(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       NotSupportedTransformerDerivation(
-        exprPrettyPrint = fieldName,
-        fromType = Type.prettyPrint[From],
-        toType = Type.prettyPrint[To]
-      )
+        exprPrettyPrint = fieldName
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
     def summonImplicit[A: Type]: DerivationResult[Expr[A]] = DerivationResult(Expr.summonImplicitUnsafe[A])
