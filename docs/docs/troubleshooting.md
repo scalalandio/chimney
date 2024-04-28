@@ -289,6 +289,26 @@ if there is no source field nor other fallback or override. Although it is
 a bugfix, it is also a breaking change so it has to be documented. The fix would
 be a manual resolution for all fields which now (correctly) fail due to the bugfix.
 
+## Migration from 0.6.x to 0.7.0
+
+The only change in the behavior that might require manual action was making default values opt-in for safety concerns.
+Now, user has to manually enable them. 
+
+### Explicit enabling of default values
+
+Default values were already controllable with a flag, so
+[the API remains the same](supported-transformations.md#allowing-fallback-to-the-constructors-default-values).
+Only the initial value of the`DefaultValues` flag changed.
+
+If you used default values a lot, remember that you can enable them for all transformation with a scope with:
+
+!!! example
+
+    ```scala
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    implicit val cfg = TransformerConfiguration.default.enableDefaultValues
+    ```
+
 ## Coming from other type-mapping libraries
 
 Chimney is not the first type-mapping library, and it doesn't have a monopoly over various solutions. The best known are
