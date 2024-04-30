@@ -50,9 +50,11 @@ When the patch `case class` contains a field that does not exist in patched obje
     val user = User(10, "abc@@domain.com", 1234567890L)
 
     user.patchUsing(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
-    // Chimney can't derive patcher for User with patch type UserUpdateForm
+    // error:
+    // Chimney can't derive patching for User with patch type UserUpdateForm
     //
-    // Field named 'address' not found in target patching type User!
+    // Field named 'address' not found in target patching type snippet.User!
+    //
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
@@ -109,6 +111,7 @@ If the flag was enabled in the implicit config it can be disabled with `.failRed
       .using(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
       .failRedundantPatcherFields
       .patch
+    // error:
     // Chimney can't derive patcher for User with patch type UserUpdateForm
     //
     // Field named 'address' not found in target patching type User!
