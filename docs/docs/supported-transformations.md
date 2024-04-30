@@ -1563,6 +1563,7 @@ We are also able to compute values in nested structure:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
 
     case class Foo(a: String, b: Int)
     case class Bar(a: String, b: Int, c: Long)
@@ -2109,7 +2110,8 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     ```scala
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
-    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.dsl.*
+    import io.scalaland.chimney.partial
 
     enum Foo {
       case Baz(a: String)
@@ -2496,10 +2498,10 @@ automatically only with `PartialTransformer`:
     
 ### Controlling automatic `Option` unwrapping
 
-Automatic unwrapping of `Option`s by `PartialTransformer`s allows for seemless decoding of many PTO types into domain
+Automatic unwrapping of `Option`s by `PartialTransformer`s allows for seamless decoding of many PTO types into domain
 types and provides a nice symmetry with encoding values using `Transformer`s (wrapping values with `Option`).
 
-However, sometimes you might prefer to opt out of such benavior. You can disable it with a flag:
+However, sometimes you might prefer to opt out of such behavior. You can disable it with a flag:
 
 !!! example
 
@@ -2810,7 +2812,7 @@ Then Chimney will try to match the source type's getters against the method's pa
       def make(value: Int): Bar = Bar(value.toString)
     }
 
-    Foo(10).into[Bar].withConstructor(Bar.make).transform // Bar("10")
+    Foo(10).into[Bar].withConstructor(Bar.make _).transform // Bar("10")
 
     Foo(10)
       .into[Bar]
@@ -2850,7 +2852,7 @@ constructor for `PartialTransformer`:
 
     Foo("10")
       .intoPartial[Bar]
-      .withConstructorPartial(smartConstructor)
+      .withConstructorPartial(smartConstructor _)
       .transform
       .asEither // Right(Bar(10))
 
@@ -2866,7 +2868,7 @@ constructor for `PartialTransformer`:
     
     Foo("10")
       .intoPartial[Bar]
-      .withConstructorEither(Bar.parse)
+      .withConstructorEither(Bar.parse _)
       .transform
       .asEither // Right(Bar(1000))
     ```
@@ -3204,11 +3206,27 @@ The Chimney does not decide and in the presence of 2 implicits it will fail and 
     // Transformer[java.lang.String, scala.Int]: stringToIntUnsafe
     //
     // Please eliminate ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used
-    "aa"
-      .intoPartial[Int]
-      .enableImplicitConflictResolution(PreferTotalTransformer)
-      .transform // throws NumberFormatException: For input string: "aa"
-    "aa".intoPartial[Int].enableImplicitConflictResolution(PreferPartialTransformer).transform.asOption // None
+    ```
+    
+    When we provide a way of resolving implicits, the error dissapears:
+    
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
+    import io.scalaland.chimney.dsl._
+
+    implicit val stringToIntUnsafe: Transformer[String, Int] = _.toInt // throws!!!
+    implicit val stringToIntSafe: PartialTransformer[String, Int] =
+      PartialTransformer(str => partial.Result.fromCatching(str.toInt))
+
+    locally {
+      implicit val cfg = TransformerConfiguration.default.enableImplicitConflictResolution(PreferTotalTransformer)
+      "aa".transformIntoPartial[Int] // throws NumberFormatException: For input string: "aa"
+    }
+    locally {
+      implicit val cfg = TransformerConfiguration.default.enableImplicitConflictResolution(PreferPartialTransformer)
+      "aa".transformIntoPartial[Int] // None
+    }
     ```
 
 ## Recursive transformation
@@ -3241,7 +3259,7 @@ Since we are talking about recursion then there is one troublesome issue - recur
     case class Bar(a: Int, b: Option[Bar])
 
     val foo = Foo(10, Some(Foo(20, None)))
-    val bar = ???
+    // val bar = ??? // how to implement it?
     ``` 
 
 We cannot derive an expression that would handle such data without any recursion (or other form of backtracking).
@@ -3310,7 +3328,7 @@ However, these 3 does not exhaust all possible comparisons and you might need to
 
     This is an advanced feature! Due to macros' limitations this feature requires several conditions to work.
 
-The challenge is that the function you'd like to provie has to be called within macro, so it has to be defined in such
+The challenge is that the function you'd like to provide has to be called within macro, so it has to be defined in such
 a way that the macro will be able to access it. Normally, there is no way to inject a custom login into existing macro,
 but Chimney has a specific solution for this:
 
@@ -3319,7 +3337,7 @@ but Chimney has a specific solution for this:
  - your have to define this `object` as top-level definition or within another object - object defined within a `class`,
    a `trait` or locally, does need some logic for instantiation
  - you have to define your `object` in a module/subproject that is compiled _before_ the module where you need to use
-   it, so that the bytecode would already be accesible on classpath.
+   it, so that the bytecode would already be accesible on the classpath.
 
 !!! example
 
