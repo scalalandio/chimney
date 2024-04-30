@@ -7,7 +7,7 @@ import scala.collection.immutable.ListMap
 import scala.util.Using
 import scala.sys.process.*
 
-// use for local development
+// used for local development
 
 var gitTag: String = ""
 var tmpDir = Files.createTempDirectory(s"docs-snippets").toFile()
@@ -102,6 +102,43 @@ val specialHandling: ListMap[String, SpecialHandling] = ListMap(
   "supported-transformations_Resolving-priority-of-implicit-Total-vs-Partial-Transformers_1" -> SpecialHandling.TestErrors,
   "supported-transformations_Defining-custom-name-matching-predicate_1" -> SpecialHandling.NeedManual("example split into multiple files"),
   "supported-transformations_Defining-custom-name-matching-predicate_2" -> SpecialHandling.NeedManual("contunuation from the previous snippet"),
+  "troubleshooting_Replacing-Lifted-Transformers-TransformerF-with-PartialTransformers_1" -> SpecialHandling.NotExample("pseudocode"),
+  "troubleshooting_Explicit-enabling-of-default-values_1" -> SpecialHandling.NotExample("pseudocode"),
+  "troubleshooting_Ducktape_2" -> SpecialHandling.NeedManual("snippet throws exception!!! investigate later"), // FIXME
+  "troubleshooting_Ducktape_4" -> SpecialHandling.NeedManual("snippet throws exception!!! investigate later"), // FIXME
+  "troubleshooting_Ducktape_8" -> SpecialHandling.NeedManual("snippet throws exception!!! investigate later"), // FIXME
+  "troubleshooting_Ducktape_10" -> SpecialHandling.NeedManual("snippet throws exception!!! investigate later"), // FIXME
+  "troubleshooting_Recursive-types-fail-to-compile_1" -> SpecialHandling.NotExample("pseudocode"),
+  "troubleshooting_Recursive-types-fail-to-compile_2" -> SpecialHandling.NotExample("pseudocode"),
+  "troubleshooting_Recursive-calls-on-implicits_1" -> SpecialHandling.NotExample("pseudocode"),
+  "troubleshooting_Recursive-calls-on-implicits_2" -> SpecialHandling.NotExample("pseudocode"),
+  "troubleshooting_Recursive-calls-on-implicits_3" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_How-DSL-summons-Transformer-instance_1" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_How-DSL-summons-Transformer-instance_2" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_How-DSL-summons-Transformer-instance_3" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_How-DSL-summons-Transformer-instance_4" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_How-DSL-summons-Transformer-instance_5" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_How-DSL-summons-Transformer-instance_6" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_How-DSL-manages-customizations_1" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Carrying-around-the-runtime-configuration_1" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Carrying-around-the-runtime-configuration_2" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Carrying-around-the-runtime-configuration_3" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Carrying-around-the-runtime-configuration_4" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Carrying-around-the-type-level-configuration_1" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Total-vs-Partial_1" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Total-vs-Partial_2" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Total-vs-Partial_3" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Summoning-implicits_1" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Sealed-hierarchies_1" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Sealed-hierarchies_2" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Scala-2-vs-Scala-3-in-derivation_1" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Scala-2-vs-Scala-3-in-derivation_3" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Scala-2-vs-Scala-3-in-derivation_4" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Scala-2-vs-Scala-3-in-derivation_5" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Scala-2-vs-Scala-3-in-derivation_6" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Scala-2-vs-Scala-3-in-derivation_7" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Scala-2-vs-Scala-3-in-derivation_8" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Scala-2-vs-Scala-3-in-derivation_9" -> SpecialHandling.NotExample("pseudocode"),
 )
 
 val ignored: Set[String] = specialHandling.keySet

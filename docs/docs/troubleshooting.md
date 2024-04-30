@@ -150,14 +150,18 @@ This option allowed calling `.get` on `Option` to enable conversion from `Option
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep io.scalaland::chimney::0.7.5
     import io.scalaland.chimney.dsl._
 
     case class Foo(a: Option[String])
     case class Bar(a: String)
 
     Foo(Some("value")).into[Bar].enableUnsafeOption.transform // Bar("value")
-    Foo(None).into[Bar].enableUnsafeOption.transform // throws Exception
+    try {
+      Foo(None).into[Bar].enableUnsafeOption.transform // throws Exception
+    } catch {
+      case e: Throwable => println(e)
+    }
     ```
 
 Throwing exceptions made sense as a workaround in simpler times, when `Transformer`s were the only option. However,
@@ -205,7 +209,8 @@ another implicit `Transformer`.
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
-    import io.scalaland.chimney._
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.Transformer
 
     class MyType[A](private val a: A) {
       def map[B](f: A => B): MyType[B] =
@@ -226,7 +231,8 @@ there the automatic instances as well, they need to use `Transformer.AutoDerived
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
-    import io.scalaland.chimney._
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.Transformer
 
     class MyOtherType[A](private val a: A) {
       def map[B](f: A => B): MyOtherType[B] =
@@ -247,6 +253,27 @@ The difference is shown in this example:
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.Transformer
+
+    class MyType[A](private val a: A) {
+      def map[B](f: A => B): MyType[B] =
+        new MyType(f(a))
+    }
+    
+    implicit def provideMyType[A, B](implicit
+        a2b: Transformer[A, B]
+    ): Transformer[MyType[A], MyType[B]] =
+      myA => myA.map(_.transformInto[B])
+    
+    class MyOtherType[A](private val a: A) {
+      def map[B](f: A => B): MyOtherType[B] =
+        new MyOtherType(f(a))
+    }
+    
+    implicit def provideMyOtherType[A, B](implicit
+        a2b: Transformer.AutoDerived[A, B]
+    ): Transformer[MyOtherType[A], MyOtherType[B]] =
+      myA => myA.map(_.transformInto[B])
 
     // implicit provided by the user
     implicit val int2str: Transformer[Int, String] = _.toString
@@ -270,7 +297,7 @@ The difference is shown in this example:
     // myType2.transformInto[MyType[Either[String, String]]]
 
     // uses provideMyOtherType(Transformer.derive):
-    myOtherType2.transformInto[Either[String, String]]
+    myOtherType2.transformInto[MyOtherType[Either[String, String]]]
     ```
 
 ### Default values no longer are used as fallback if the source field exists
@@ -338,7 +365,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
 !!! example "The simplest in-place mapping"
 
     ```scala
-    //> using scala {{ scala.213 }}
+    //> using scala {{ scala.2_13 }}
     //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
 
     case class SourceClass(label: String, value: Int)
@@ -367,7 +394,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
 !!! example "Defining transformation in one place as implicit"
 
     ```scala
-    //> using scala {{ scala.213 }}
+    //> using scala {{ scala.2_13 }}
     //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
     
     case class SourceClass(label: String, value: Int)
@@ -417,7 +444,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
 !!! example "Automapper's dynamic mappings"
 
     ```scala
-    //> using scala {{ scala.213 }}
+    //> using scala {{ scala.2_13 }}
     //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
     
     case class SourceClass(label: String, field: String, list: List[Int])
@@ -453,7 +480,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     
     val target = source.into[TargetClass]
       .withFieldRenamed(_.field, _.renamedField) // rename
-      .withFieldConst(_.total, sum(source.values)) // value provision
+      .withFieldConst(_.total, sum(values)) // value provision
       .transform // TargetClass("label", "field", 6)
     // alternatively we don't need intermediate `values` and `sum`:
     val target2 = source.into[TargetClass]
@@ -465,7 +492,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
 !!! example "Implicit conversion and polymorphic types"
 
     ```scala
-    //> using scala {{ scala.213 }}
+    //> using scala {{ scala.2_13 }}
     //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
     
     trait SourceTrait
@@ -567,7 +594,7 @@ Here are some features it shares with Chimney (Henkan's code based on README):
 !!! example "Transform between case classes"
 
     ```scala
-    //> using scala {{ scala.213 }}
+    //> using scala {{ scala.2_13 }}
     //> using dep com.kailuowang::henkan-convert::{{ libraries.henkan }}
     
     import java.time.LocalDate
@@ -608,7 +635,7 @@ Here are some features it shares with Chimney (Henkan's code based on README):
 !!! example "Transform between case classes with optional field"
 
     ```scala
-    //> using scala {{ scala.213 }}
+    //> using scala {{ scala.2_13 }}
     //> using dep com.kailuowang::henkan-optional::{{ libraries.henkan }}
     
     case class Message(a: Option[String], b: Option[Int])
@@ -630,6 +657,7 @@ Here are some features it shares with Chimney (Henkan's code based on README):
     type you want:
     
     ```scala
+    //> using dep org.typelevel::cats-core::2.10.0
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     
@@ -846,7 +874,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     
     wirePerson
       .into[domain.Person]
-      .withConstructor(domain.Person)
+      .withConstructor(domain.Person.apply)
       .transform
     // Person(
     //   firstName = "John",
@@ -860,7 +888,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     
     wirePerson
       .into[domain.Person]
-      .withConstructor(domain.Person)
+      .withConstructor(domain.Person.apply)
       .withFieldConst(_.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email, "overridden@email.com")
       .transform
     // Person = Person(
@@ -920,13 +948,12 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     wirePerson
       .into[domain.Person]
       .transform(
-        Field.const(_.age, 24),
+        Field.const(_.firstName, "Jane"),
         Case.const(_.paymentMethods.element.at[wire.PaymentMethod.Transfer], domain.PaymentMethod.Cash)
       )
     // Person(
-    //   firstName = "John",
+    //   firstName = "Jane",
     //   lastName = "Doe",
-    //   age = 24,
     //   paymentMethods = Vector(
     //     Cash,
     //     PayPal(email = "john@doe.com"),
@@ -986,20 +1013,19 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
       //   Case.const(_.paymentMethods.element.at[wire.PaymentMethod.Transfer], domain.PaymentMethod.Cash)
       // so this has to be handled "top level" by creating implicit/given.
       given Transformer[wire.PaymentMethod, domain.PaymentMethod] = Transformer
-        .derive[wire.PaymentMethod, domain.PaymentMethod]
+        .define[wire.PaymentMethod, domain.PaymentMethod]
         .withEnumCaseHandled[wire.PaymentMethod.Transfer](_ => domain.PaymentMethod.Cash)
         .buildTransformer
 
       wirePerson
         .into[domain.Person]
-        .withFieldConst(_.age, 24)
+        .withFieldConst(_.firstName, "Jane")
         // implicit instead of nested handling for withEnumCaseHandled
         .transform
     }
     // Person(
-    //   firstName = "John",
+    //   firstName = "Jane",
     //   lastName = "Doe",
-    //   age = 24,
     //   paymentMethods = Vector(
     //     Cash,
     //     PayPal(email = "john@doe.com"),
@@ -1077,7 +1103,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     
     card
       .into[PaymentBand]
-      .transform(Field.fallBackToDefault)
+      .transform(Field.fallbackToDefault)
     // PaymentBand(
     //   name = "J. Doe",
     //   digits = 213712345L,
@@ -1234,7 +1260,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     transfer
       .into[domain.PaymentMethod]
       .transform(
-        Case.computed(_.at[wire.PaymentMethod.Transfer], transfer => domain.PaymentMethod.Card("J. Doe", transfer.accountNo.toLong))
+        Case.computed(_.at[wire.PaymentMethod.Transfer], transfer => domain.PaymentMethod.Card(name = "J. Doe", digits = transfer.accountNo.toLong))
       )
     // PaymentMethod = Card(name = "J. Doe", digits = 2764262L)
     ```
@@ -1298,7 +1324,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     
     transfer
       .into[domain.PaymentMethod]
-      .withEnumCaseHandled[wire.PaymentMethod.Transfer](transfer => domain.PaymentMethod.Card("J. Doe", transfer.accountNo.toLong))
+      .withEnumCaseHandled[wire.PaymentMethod.Transfer](transfer => domain.PaymentMethod.Card(name = "J. Doe", digits = transfer.accountNo.toLong))
       .transform
     // PaymentMethod = Card(name = "J. Doe", digits = 2764262L)
     ```
@@ -1346,14 +1372,14 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
 
     object domain:
       final case class Person(
-        firstName: NonEmptyString,
-        lastName: NonEmptyString,
+        firstName: newtypes.NonEmptyString,
+        lastName: newtypes.NonEmptyString,
         paymentMethods: Vector[domain.PaymentMethod]
       )
     
       enum PaymentMethod:
-        case PayPal(email: NonEmptyString)
-        case Card(digits: Positive, name: NonEmptyString)
+        case PayPal(email: newtypes.NonEmptyString)
+        case Card(digits: newtypes.Positive, name: newtypes.NonEmptyString)
         case Cash
         
     val wirePerson = wire.Person(
@@ -1370,11 +1396,11 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     
     // expand the 'create' method into an instance of Transformer.Fallible
     // this is a key component in making those transformations automatic
-    given failFastNonEmptyString: Transformer.Fallible[[a] =>> Either[String, a], String, NonEmptyString] =
-      create
+    given failFastNonEmptyString: Transformer.Fallible[[a] =>> Either[String, a], String, newtypes.NonEmptyString] =
+      newtypes.NonEmptyString.create
       
-    given failFastPositive: Transformer.Fallible[[a] =>> Either[String, a], Long, Positive] =
-      create
+    given failFastPositive: Transformer.Fallible[[a] =>> Either[String, a], Long, newtypes.Positive] =
+      newtypes.Positive.create
 
     locally {
       given Mode.FailFast.Either[String] with {}
@@ -1391,11 +1417,11 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     }
 
     // also declare the same fallible transformer but make it ready for error accumulation
-    given accumulatingNonEmptyString: Transformer.Fallible[[a] =>> Either[List[String], a], String, NonEmptyString] =
-      create(_).left.map(_ :: Nil)
+    given accumulatingNonEmptyString: Transformer.Fallible[[a] =>> Either[List[String], a], String, newtypes.NonEmptyString] =
+      newtypes.NonEmptyString.create(_).left.map(_ :: Nil)
     
-    given accumulatingPositive: Transformer.Fallible[[a] =>> Either[List[String], a], Long, Positive] =
-      create(_).left.map(_ :: Nil)
+    given accumulatingPositive: Transformer.Fallible[[a] =>> Either[List[String], a], Long, newtypes.Positive] =
+      newtypes.Positive.create(_).left.map(_ :: Nil)
       
     locally {
       given Mode.Accumulating.Either[String, List] with {}
@@ -1435,14 +1461,14 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
 
     object domain:
       final case class Person(
-        firstName: NonEmptyString,
-        lastName: NonEmptyString,
+        firstName: newtypes.NonEmptyString,
+        lastName: newtypes.NonEmptyString,
         paymentMethods: Vector[domain.PaymentMethod]
       )
     
       enum PaymentMethod:
-        case PayPal(email: NonEmptyString)
-        case Card(digits: Positive, name: NonEmptyString)
+        case PayPal(email: newtypes.NonEmptyString)
+        case Card(digits: newtypes.Positive, name: newtypes.NonEmptyString)
         case Cash
         
     val wirePerson = wire.Person(
@@ -1457,13 +1483,14 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     
     import io.scalaland.chimney.dsl.*
     import io.scalaland.chimney.{partial, PartialTransformer}
+    // TODO: partial.syntax._ -> asResult
     
-    given PartialTransformer[String, newtypes.NonEmptyString]: PartialTransformer[String, newtypes.NonEmptyString](str =>
-      partial.Result.fromEitherString(newtypes.NonEmptyString.create)
+    given PartialTransformer[String, newtypes.NonEmptyString] = PartialTransformer[String, newtypes.NonEmptyString](str =>
+      partial.Result.fromEitherString(newtypes.NonEmptyString.create(str))
     )
     
-    given PartialTransformer[String, newtypes.Positive]: PartialTransformer[String, newtypes.Positive](str =>
-      partial.Result.fromEitherString(newtypes.Positive.create)
+    given PartialTransformer[Long, newtypes.Positive] = PartialTransformer[Long, newtypes.Positive](str =>
+      partial.Result.fromEitherString(newtypes.Positive.create(str))
     )
     
     wirePerson.transformIntoPartial[domain.Person].asEitherErrorPathMessageStrings
@@ -1472,14 +1499,14 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     wirePerson.intoPartial[domain.Person]
       .withFieldConstPartial(
         _.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email,
-        newtypes.NonEmptyString.create("overridden@email.com")
+        partial.Result.fromEitherString(newtypes.NonEmptyString.create("overridden@email.com"))
       )
       .transform
       .asEitherErrorPathMessageStrings
     wirePerson.intoPartial[domain.Person]
       .withFieldConstPartial(
         _.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email,
-        newtypes.NonEmptyString.create("overridden@email.com")
+        partial.Result.fromEitherString(newtypes.NonEmptyString.create("overridden@email.com"))
       )
       .transformFailFast
       .asEitherErrorPathMessageStrings
