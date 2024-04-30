@@ -297,6 +297,13 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
   tasks.mkString(" ; ")
 }
 
+val publishLocalForTests = {
+  for {
+    module <- Vector("chimneyMacroCommons", "chimney", "chimneyCats", "chimneyProtobufs", "chimneyJavaCollections")
+    moduleVersion <- Vector(module, module + "3")
+  } yield moduleVersion + "/publishLocal"
+}.mkString(" ; ")
+
 val releaseCommand = (tag: Seq[String]) =>
   if (tag.nonEmpty) "publishSigned ; sonatypeBundleRelease" else "publishSigned"
 
@@ -328,7 +335,7 @@ lazy val root = project
          |
          |When working with IntelliJ or Scala Metals, edit "val ideScala = ..." and "val idePlatform = ..." within "val versions" in build.sbt to control which Scala version you're currently working with.
          |
-         |If you need to test library locally in a different project, use publishLocal:
+         |If you need to test library locally in a different project, use publish-local-for-tests or manually publishLocal:
          | - chimney-macro-commons (obligatory)
          | - chimney
          | - cats/java-collections/protobufs integration (optional)
@@ -360,7 +367,13 @@ lazy val root = project
         .alias("ci-native-2_13"),
       sbtwelcome
         .UsefulTask(ciCommand("Native", "2_12"), "CI pipeline for Scala 2.12 on Scala Native")
-        .alias("ci-native-2_12")
+        .alias("ci-native-2_12"),
+      sbtwelcome
+        .UsefulTask(
+          publishLocalForTests,
+          "Publishes all Scala 2.13 and Scala 3 JVM artifacts to test snippets in documentation"
+        )
+        .alias("publish-local-for-tests")
     )
   )
 
