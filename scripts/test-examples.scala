@@ -9,18 +9,14 @@ import scala.sys.process.*
 
 // used for local development
 
-var gitTag: String = ""
+var chimneyVersion: String = ""
 var tmpDir = Files.createTempDirectory(s"docs-snippets").toFile()
 
 // config
 
-def resolveVersion(): String = 
-  if gitTag.matches(".+-[0-9]+-g[0-9a-z]{8}") then gitTag + "-SNAPSHOT"
-  else gitTag
-
 lazy val patterns = Map(
   // keeps in sync with what sbt produces
-  "{{ chimney_version() }}" -> resolveVersion(),
+  "{{ chimney_version() }}" -> chimneyVersion,
   // keep in sync with mkdocs.yml
   "{{ libraries.ducktape }}" -> "0.2.0",
   "{{ libraries.henkan }}" -> "0.6.5",
@@ -84,25 +80,53 @@ val specialHandling: ListMap[String, SpecialHandling] = ListMap(
   "supported-transformations_Allowing-fallback-to-None-as-the-constructors-argument_3" -> SpecialHandling.TestErrors,
   "supported-transformations_Customizing-field-name-matching_2" -> SpecialHandling.TestErrors,
   "supported-transformations_Frominto-an-AnyVal_2" -> SpecialHandling.TestErrors,
-  "supported-transformations_Between-sealedenums_2" -> SpecialHandling.NeedManual("snippet fails!!! investigate later"), // FIXME
-  "supported-transformations_Between-sealedenums_3" -> SpecialHandling.NeedManual("snippet throws exception!!! investigate later"), // FIXME
-  "supported-transformations_Between-sealedenums_4" -> SpecialHandling.NeedManual("snippet throws exception!!! investigate later"), // FIXME
+  "supported-transformations_Between-sealedenums_2" -> SpecialHandling.NeedManual(
+    "snippet fails!!! investigate later"
+  ), // FIXME
+  "supported-transformations_Between-sealedenums_3" -> SpecialHandling.NeedManual(
+    "snippet throws exception!!! investigate later"
+  ), // FIXME
+  "supported-transformations_Between-sealedenums_4" -> SpecialHandling.NeedManual(
+    "snippet throws exception!!! investigate later"
+  ), // FIXME
   "supported-transformations_Javas-enums_1" -> SpecialHandling.NeedManual("requires previous snipper with Java code"),
   "supported-transformations_Javas-enums_2" -> SpecialHandling.NeedManual("requires previous snipper with Java code"),
-  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_3" -> SpecialHandling.NeedManual("snippet throws exception!!! investigate later"), // FIXME
-  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_4" -> SpecialHandling.NeedManual("requires previous snipper with Java code"),
-  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_5" -> SpecialHandling.NeedManual("requires previous snipper with Java code"),
-  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_6" -> SpecialHandling.NeedManual("requires previous snipper with Java code"),
+  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_3" -> SpecialHandling.NeedManual(
+    "snippet throws exception!!! investigate later"
+  ), // FIXME
+  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_4" -> SpecialHandling.NeedManual(
+    "requires previous snipper with Java code"
+  ),
+  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_5" -> SpecialHandling.NeedManual(
+    "requires previous snipper with Java code"
+  ),
+  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_6" -> SpecialHandling.NeedManual(
+    "requires previous snipper with Java code"
+  ),
   "supported-transformations_Customizing-subtype-name-matching_3" -> SpecialHandling.TestErrors,
   "supported-transformations_Controlling-automatic-Option-unwrapping_1" -> SpecialHandling.TestErrors,
-  "supported-transformations_Types-with-manually-provided-constructors_3" -> SpecialHandling.NeedManual("example split into multiple files"),
-  "supported-transformations_Types-with-manually-provided-constructors_4" -> SpecialHandling.NeedManual("contunuation from the previous snippet"),
-  "supported-transformations_Types-with-manually-provided-constructors_5" -> SpecialHandling.NeedManual("example split into multiple files"),
-  "supported-transformations_Types-with-manually-provided-constructors_6" -> SpecialHandling.NeedManual("contunuation from the previous snippet"),
+  "supported-transformations_Types-with-manually-provided-constructors_3" -> SpecialHandling.NeedManual(
+    "example split into multiple files"
+  ),
+  "supported-transformations_Types-with-manually-provided-constructors_4" -> SpecialHandling.NeedManual(
+    "contunuation from the previous snippet"
+  ),
+  "supported-transformations_Types-with-manually-provided-constructors_5" -> SpecialHandling.NeedManual(
+    "example split into multiple files"
+  ),
+  "supported-transformations_Types-with-manually-provided-constructors_6" -> SpecialHandling.NeedManual(
+    "contunuation from the previous snippet"
+  ),
   "supported-transformations_Resolving-priority-of-implicit-Total-vs-Partial-Transformers_1" -> SpecialHandling.TestErrors,
-  "supported-transformations_Defining-custom-name-matching-predicate_1" -> SpecialHandling.NeedManual("example split into multiple files"),
-  "supported-transformations_Defining-custom-name-matching-predicate_2" -> SpecialHandling.NeedManual("contunuation from the previous snippet"),
-  "troubleshooting_Replacing-Lifted-Transformers-TransformerF-with-PartialTransformers_1" -> SpecialHandling.NotExample("pseudocode"),
+  "supported-transformations_Defining-custom-name-matching-predicate_1" -> SpecialHandling.NeedManual(
+    "example split into multiple files"
+  ),
+  "supported-transformations_Defining-custom-name-matching-predicate_2" -> SpecialHandling.NeedManual(
+    "contunuation from the previous snippet"
+  ),
+  "troubleshooting_Replacing-Lifted-Transformers-TransformerF-with-PartialTransformers_1" -> SpecialHandling.NotExample(
+    "pseudocode"
+  ),
   "troubleshooting_Explicit-enabling-of-default-values_1" -> SpecialHandling.NotExample("pseudocode"),
   "troubleshooting_Ducktape_2" -> SpecialHandling.NeedManual("snippet throws exception!!! investigate later"), // FIXME
   "troubleshooting_Ducktape_4" -> SpecialHandling.NeedManual("snippet throws exception!!! investigate later"), // FIXME
@@ -138,7 +162,7 @@ val specialHandling: ListMap[String, SpecialHandling] = ListMap(
   "under-the-hood_Scala-2-vs-Scala-3-in-derivation_6" -> SpecialHandling.NotExample("pseudocode"),
   "under-the-hood_Scala-2-vs-Scala-3-in-derivation_7" -> SpecialHandling.NotExample("pseudocode"),
   "under-the-hood_Scala-2-vs-Scala-3-in-derivation_8" -> SpecialHandling.NotExample("pseudocode"),
-  "under-the-hood_Scala-2-vs-Scala-3-in-derivation_9" -> SpecialHandling.NotExample("pseudocode"),
+  "under-the-hood_Scala-2-vs-Scala-3-in-derivation_9" -> SpecialHandling.NotExample("pseudocode")
 )
 
 val ignored: Set[String] = specialHandling.keySet
@@ -240,23 +264,23 @@ object Markdown {
   * On CI:
   * {{{
   * # run all tests, use artifacts published locally from current tag
-  * scala-cli run test-examples.scala -- "../docs/docs" "${git describe --tags}" "" -1 -1
+  * scala-cli run test-examples.scala -- "$PWD/docs/docs" "$(sbt -batch -error 'print chimney/version')" "" -1 -1
   * }}}
   *
   * During development:
   * {{{
   * # fix: version to use, tmp directory, drop and take from snippets list (the ordering is deterministic)
-  * scala-cli run test-examples.scala --repository -- "../docs/docs" "1.0.0-RC1" /var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727 0 44
+  * scala-cli run scripts/test-examples.scala -- "$PWD/docs/docs" "1.0.0-RC1" /var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727 0 44
   * }}}
   */
 @main def testExamples(
     path: String,
-    providedGitTag: String,
+    providedVersion: String,
     providedTmpDir: String,
     providedSnippetsDrop: Int,
     providedSnippetsTake: Int
 ): Unit = {
-  gitTag = providedGitTag
+  chimneyVersion = providedVersion
   tmpDir =
     if providedTmpDir.isEmpty() then Files.createTempDirectory(s"docs-snippets").toFile() else File(providedTmpDir)
   val snippetsDrop = Option(providedSnippetsDrop).filter(_ >= 0).getOrElse(0)

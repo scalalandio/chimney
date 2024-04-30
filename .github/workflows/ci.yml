@@ -24,6 +24,23 @@ jobs:
       - name: Check code and docs formatting
         run: scalafmt --check
 
+  check-snippets:
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.action != 'labeled' # run for 'opened', 'reopened' and 'synchronize'
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: extractions/setup-just@v2
+      - uses: coursier/setup-action@v1.3.0
+        with:
+          apps: scala-cli sbt
+      - name: Run snippets from documentation
+        working-directory: docs
+        run: just test-snippets
+
   build:
 
     runs-on: ubuntu-latest
