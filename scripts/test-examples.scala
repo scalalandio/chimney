@@ -14,8 +14,8 @@ var tmpDir = Files.createTempDirectory(s"docs-snippets").toFile()
 
 // config
 
-def resolveVersion(): String =
-  if gitTag.matches(".+-[0-9]+-[0-9a-z]{8}") then gitTag + "-SNAPSHOT"
+def resolveVersion(): String = 
+  if gitTag.matches(".+-[0-9]+-g[0-9a-z]{8}") then gitTag + "-SNAPSHOT"
   else gitTag
 
 lazy val patterns = Map(
@@ -246,7 +246,7 @@ object Markdown {
   * During development:
   * {{{
   * # fix: version to use, tmp directory, drop and take from snippets list (the ordering is deterministic)
-  * scala-cli run test-examples.scala -- "../docs/docs" "1.0.0-RC1" /var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727 0 44
+  * scala-cli run test-examples.scala --repository -- "../docs/docs" "1.0.0-RC1" /var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727 0 44
   * }}}
   */
 @main def testExamples(
