@@ -31,7 +31,7 @@ If we do not want to enable the same flag(s) in several places, we can define sh
       TransformerConfiguration.default.enableMethodAccessors.enableMacrosLogging
 
     transparent inline given PatcherConfiguration[?] =
-      PatcherConfiguration.ignoreNoneInPatch.enableMacrosLogging
+      PatcherConfiguration.default.ignoreNoneInPatch.enableMacrosLogging
     ```  
 
 !!! tip
@@ -347,6 +347,7 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
 !!! example
 
     ```scala
+    //> using dep org.typelevel::cats-core::2.10.0
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
 
     case class RegistrationForm(
@@ -424,6 +425,7 @@ explanation:
 !!! example
 
     ```scala
+    //> using dep org.typelevel::cats-core::2.10.0
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     import cats.syntax.all._
     import io.scalaland.chimney.Transformer
@@ -442,6 +444,7 @@ Similarly, there exists instances for `PartialTransformer` and `partial.Result`:
 !!! example
 
     ```scala
+    //> using dep org.typelevel::cats-core::2.10.0
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     import cats.syntax.all._
     import io.scalaland.chimney.PartialTransformer
@@ -520,6 +523,7 @@ What does it means for us?
        but to NOT disable parallel semantics for some transformations when we would pass `failFast = false` later on
     
     ```scala
+    //> using dep org.typelevel::cats-core::2.10.0
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     import cats.syntax.all._
     import io.scalaland.chimney.PartialTransformer
@@ -541,6 +545,7 @@ What does it means for us?
     And `partial.Result`s have to use explicit combinators to decide whether it's sequential or parallel semantics:
 
     ```scala
+    //> using dep org.typelevel::cats-core::2.10.0
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     import cats.syntax.all._
     import io.scalaland.chimney.partial
@@ -593,6 +598,10 @@ The automatic conversion into a protobuf with such a field can be problematic:
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
+    object scalapb {
+      case class UnknownFieldSet()
+    }
+
     object domain {
       case class Address(line1: String, line2: String)
     }
@@ -600,7 +609,7 @@ The automatic conversion into a protobuf with such a field can be problematic:
       case class Address(
         line1: String = "",
         line2: String = "",
-        unknownFields: UnknownFieldSet = UnknownFieldSet()
+        unknownFields: scalapb.UnknownFieldSet = scalapb.UnknownFieldSet()
       )
     }
 
@@ -608,8 +617,7 @@ The automatic conversion into a protobuf with such a field can be problematic:
     // error: Chimney can't derive transformation from domain.Address to protobuf.Address
     //
     // protobuf.Address
-    //   unknownFields: UnknownFieldSet - no accessor named unknownFields in source type domain.Address
-    //
+    //   unknownFields: scalapb.UnknownFieldSet - no accessor named unknownFields in source type domain.Address
     //
     // Consult https://scalalandio.github.io/chimney for usage examples.
     ```
@@ -621,10 +629,11 @@ There are 2 ways in which Chimney could handle this issue:
     !!! example
   
         ```scala
-        //> using dep io.scalaland::chimney::{{ chimney_version() }}
-        import io.scalaland.chimney.dsl._
-
-        domain.Address("a", "b").into[protobuf.Address].enableDefaultValues.transform
+        domain
+          .Address("a", "b")
+          .into[protobuf.Address]
+          .enableDefaultValues
+          .transform
         ```
 
   - manually [setting this one field](supported-transformations.md#wiring-constructors-parameter-to-raw-value)_
@@ -632,9 +641,6 @@ There are 2 ways in which Chimney could handle this issue:
     !!! example
 
         ```scala
-        //> using dep io.scalaland::chimney::{{ chimney_version() }}
-        import io.scalaland.chimney.dsl._
-
         domain
           .Address("a", "b")
           .into[protobuf.Address]
@@ -1007,11 +1013,12 @@ If there is no common interface that could be summoned as implicit for performin
 !!! example
 
     Assuming Scala 3 or `-Xsource:3` for fixed `private` constructors so that `Username.apply` and `.copy` would
-    be private.
+    be private. (Newest versions of Scala 2.13 additionally require us to acknowledge this change in the behavior by
+    manually suppressing an error/warning).
 
     ```scala
     //> using scala {{ scala.2_13 }}
-    //> using options -Xsource:3
+    //> using options -Xsource:3 -Wconf:cat=scala3-migration:s
     final case class Username private (value: String)
     object Username {
       def parse(value: String): Either[String, Username] =
@@ -1035,7 +1042,17 @@ then Partial Transformer would have to be created manually:
 !!! example
 
     ```scala
+    //> using scala {{ scala.2_13 }}
+    //> using options -Xsource:3 -Wconf:cat=scala3-migration:s
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    final case class Username private (value: String)
+    object Username {
+      def parse(value: String): Either[String, Username] =
+        if (value.isEmpty) Left("Username cannot be empty")
+        else Right(Username(value))
+    }
+    
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.partial
 
@@ -1068,9 +1085,15 @@ we could use it to construct `PartialTransformer` automatically:
 !!! example
 
     ```scala
+    //> using scala {{ scala.2_13 }}
+    //> using options -Xsource:3 -Wconf:cat=scala3-migration:s
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.partial
+
+    trait SmartConstructor[From, To] {
+      def parse(from: From): Either[String, To]
+    }
 
     implicit def smartConstructedPartial[From, To](implicit
         smartConstructor: SmartConstructor[From, To]
@@ -1078,6 +1101,13 @@ we could use it to construct `PartialTransformer` automatically:
       PartialTransformer[From, To] { value =>
         partial.Result.fromEitherString(smartConstructor.parse(value))
       }
+      
+    final case class Username private (value: String)
+    object Username extends SmartConstructor[String, Username] {
+      def parse(value: String): Either[String, Username] =
+        if (value.isEmpty) Left("Username cannot be empty")
+        else Right(Username(value))
+    }
     ```
 
 The same would be true about extracting values from smart-constructed types
@@ -1164,7 +1194,7 @@ We can use them to provide unwrapping `Transformer` and wrapping
     ): Transformer[Outer, Inner] = extractor.extract(_)
 
     implicit def wrapNewType[Inner, Outer](implicit
-        builder: HasBuilder.Aux[Inner, Outer]
+        builder: HasBuilder.Aux[Outer, Inner]
     ): PartialTransformer[Inner, Outer] = PartialTransformer[Inner, Outer] { value =>
       partial.Result.fromEitherString(
         builder.build(value).left.map(_.toReadableString)
@@ -1180,11 +1210,11 @@ popular constraints as long as we express them in the value's type.
 !!! example
 
     ```scala
-    //> using dep eu.timepit::refined::0.11.0
+    //> using dep eu.timepit::refined::0.11.1
     import eu.timepit.refined._
     import eu.timepit.refined.api.Refined
     import eu.timepit.refined.auto._
-    import eu.timepit.refined.collections._
+    import eu.timepit.refined.collection._
 
     type Username = String Refined NonEmpty
     ```
@@ -1194,8 +1224,9 @@ We can validate using the dedicated type class (`Validate`), while extraction is
 !!! example
 
     ```scala
-    //> using dep eu.timepit::refined::0.11.0
+    //> using dep eu.timepit::refined::0.11.1
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import eu.timepit.refined.refineV
     import eu.timepit.refined.api.{Refined, Validate}
     import io.scalaland.chimney.{PartialTransformer, Transformer}
     import io.scalaland.chimney.partial
@@ -1207,9 +1238,7 @@ We can validate using the dedicated type class (`Validate`), while extraction is
       validate: Validate.Plain[Type, Refinement]
     ): PartialTransformer[Type, Type Refined Refinement] =
       PartialTransformer[Type, Type Refined Refinement] { value =>
-        partial.Result.fromOption(
-          validate.validate(value).fold(Some(_), _ => None)
-        )
+        partial.Result.fromEitherString(refineV[Refinement](value))
       }
     ```
 
@@ -1307,12 +1336,13 @@ Most of the time a collection doesn't perform any sort of validations, and you c
     }
     object MyCollection {
   
-      def of[A](as: A*): MyCollection[A] = new MyCollection(Vector(as*))
+      def of[A](as: A*): MyCollection[A] = new MyCollection(as.toVector)
       def from[A](vector: Vector[A]): MyCollection[A] = new MyCollection(vector)
     }
     
     // ...you can provide Chimney support for it...
     import io.scalaland.chimney.integrations.{ FactoryCompat, TotallyBuildIterable }
+    import scala.collection.compat._
     import scala.collection.mutable
 
     implicit def myCollectionIsTotallyBuildIterable[A]: TotallyBuildIterable[MyCollection[A], A] =
@@ -1340,8 +1370,8 @@ Most of the time a collection doesn't perform any sort of validations, and you c
     import io.scalaland.chimney.dsl._
     
     // for converting to and from standard library collection (or any other type supported this way)
-    MyCollection("a", "b").transformInto[List[String]] // List("a", "b")
-    List("a", "b").transformInto[MyCollection[String]] // MyCollection("a", "b")
+    MyCollection.of("a", "b").transformInto[List[String]] // List("a", "b")
+    List("a", "b").transformInto[MyCollection[String]] // MyCollection.of("a", "b")
     
     case class Foo(value: String)
     case class Bar(value: String, another: Double)
@@ -1350,7 +1380,7 @@ Most of the time a collection doesn't perform any sort of validations, and you c
     List(Foo("test"))
       .into[MyCollection[Bar]]
       .withFieldConst(_.everyItem.another, 3.14)
-      .transform // MyCollection(Bar("test", 3.14))
+      .transform // MyCollection.of(Bar("test", 3.14))
     ```
 
 If your collection performs some sort of validation, you integrate it with Chimney as well:
@@ -1373,7 +1403,7 @@ If your collection performs some sort of validation, you integrate it with Chimn
     }
     object NonEmptyCollection {
   
-      def of[A](a: A, as: A*): NonEmptyCollection[A] = new NonEmptyCollection(Vector((a +: as)*))
+      def of[A](a: A, as: A*): NonEmptyCollection[A] = new NonEmptyCollection(a +: as.toVector)
       def from[A](vector: Vector[A]): Option[NonEmptyCollection[A]] =
         if (vector.nonEmpty) Some(new NonEmptyCollection(vector)) else None
     }
@@ -1381,6 +1411,7 @@ If your collection performs some sort of validation, you integrate it with Chimn
     // ...you can provide Chimney support for it...
     import io.scalaland.chimney.integrations.{ FactoryCompat, PartiallyBuildIterable }
     import io.scalaland.chimney.partial
+    import scala.collection.compat._
     import scala.collection.mutable
 
     implicit def nonEmptyCollectionIsPartiallyBuildIterable[A]: PartiallyBuildIterable[NonEmptyCollection[A], A] =
@@ -1410,7 +1441,7 @@ If your collection performs some sort of validation, you integrate it with Chimn
     import io.scalaland.chimney.dsl._
     
     // for validating that your collection can be created once all items have been put into Builder
-    List("a").transformIntoPartial[NonEmptyCollection[String]].asOption // Some(NonEmptyCollection("a"))
+    List("a").transformIntoPartial[NonEmptyCollection[String]].asOption // Some(NonEmptyCollection.of("a"))
     List.empty[String].transformIntoPartial[NonEmptyCollection[String]].asOption // None
     ```
     
@@ -1423,6 +1454,7 @@ For map types there are specialized versions of these type classes:
     
     import io.scalaland.chimney.integrations._
     import io.scalaland.chimney.partial
+    import scala.collection.compat._
     import scala.collection.mutable
 
     class MyMap[+K, +V] private (private val impl: Vector[(K, V)]) {
@@ -1437,7 +1469,7 @@ For map types there are specialized versions of these type classes:
     }
     object MyMap {
   
-      def of[K, V](pairs: (K, V)*): MyMap[K, V] = new MyMap(Vector(pairs*))
+      def of[K, V](pairs: (K, V)*): MyMap[K, V] = new MyMap(pairs.toVector)
       def from[K, V](vector: Vector[(K, V)]): MyMap[K, V] = new MyMap(vector)
     }
   
@@ -1473,7 +1505,7 @@ For map types there are specialized versions of these type classes:
     }
     object NonEmptyMap {
   
-      def of[K, V](pair: (K, V), pairs: (K, V)*): NonEmptyMap[K, V] = new NonEmptyMap(Vector((pair +: pairs)*))
+      def of[K, V](pair: (K, V), pairs: (K, V)*): NonEmptyMap[K, V] = new NonEmptyMap(pair +: pairs.toVector)
       def from[K, V](vector: Vector[(K, V)]): Option[NonEmptyMap[K, V]] =
         if (vector.nonEmpty) Some(new NonEmptyMap(vector)) else None
     }
