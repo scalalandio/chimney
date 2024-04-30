@@ -3,3 +3,7 @@ build:
 
 serve: build
   docker run --rm -it -p 8000:8000 -v ${PWD}:/docs --env "CI_LATEST_TAG=$(git describe --tags)" mkdocs-chimney-docs
+
+test-snippets:
+  cd .. && sbt publish-local-for-tests
+  cd .. && scala-cli run scripts/test-examples.scala -- "$PWD/docs/docs" "$(sbt -batch -error 'print chimney/version')" "" -1 -1
