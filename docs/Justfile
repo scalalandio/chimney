@@ -6,4 +6,4 @@ serve: build
 
 test-snippets:
   cd .. && sbt publish-local-for-tests
-  cd .. && scala-cli run scripts/test-examples.scala -- "$PWD/docs/docs" "$(sbt -batch -error 'print chimney/version')" "" -1 -1
+  cd .. && scala-cli run scripts/test-snippets.scala -- "$PWD/docs" "$(sbt -batch -error 'print chimney/version')" "" -1 -1

@@ -1,30 +1,44 @@
 //> using scala 3.3.3
+//> using dep org.virtuslab::scala-yaml:0.0.8
 
 import java.io.File
 import java.nio.file.{Files, Paths}
 import scala.Console.{MAGENTA, RESET}
 import scala.collection.immutable.ListMap
-import scala.util.Using
+import scala.util.{Try, Using}
 import scala.sys.process.*
-
-// used for local development
-
-var chimneyVersion: String = ""
-var tmpDir = Files.createTempDirectory(s"docs-snippets").toFile()
+import scala.util.matching.Regex
 
 // config
 
-lazy val patterns = Map(
-  // keeps in sync with what sbt produces
-  "{{ chimney_version() }}" -> chimneyVersion,
-  // keep in sync with mkdocs.yml
-  "{{ libraries.ducktape }}" -> "0.2.0",
-  "{{ libraries.henkan }}" -> "0.6.5",
-  "{{ libraries.scala_automapper }}" -> "0.7.0",
-  "{{ scala.2_12 }}" -> "2.12.18",
-  "{{ scala.2_13 }}" -> "2.13.13",
-  "{{ scala.3 }}" -> "3.3.3"
-)
+case class Config(extra: Map[String, String])
+object Config {
+
+  def parse(cfgFile: File): Either[String, Config] = {
+    import org.virtuslab.yaml.*
+    def decode(any: Any): Map[String, String] = any match {
+      case map: Map[?, ?] =>
+        map.flatMap {
+          case (k, v: Map[?, ?]) => decode(v).map { case (k2, v2) => s"$k.$k2" -> v2 }
+          case (k, v: List[?])   => decode(v).map { case (k2, v2) => s"$k.$k2" -> v2 }
+          case (k, v)            => Map(k.toString -> v.toString)
+        }.toMap
+      case list: List[?] =>
+        list.zipWithIndex.flatMap {
+          case (i: Map[?, ?], idx) => decode(i).map { case (k, v) => s"[$idx].$k" -> v }
+          case (i: List[?], idx)   => decode(i).map { case (k, v) => s"[$idx].$k" -> v }
+          case (i, idx)            => Map(s"[$idx]" -> i.toString)
+        }.toMap
+      case _ => throw new IllegalArgumentException(s"$any is not an expected YAML")
+    }
+    for {
+      cfgStr <- Using(io.Source.fromFile(cfgFile))(_.getLines().toList.mkString("\n")).toEither.left
+        .map(_.getMessage())
+      cfgRaw <- cfgStr.as[Any].left.map(_.toString)
+      extra <- Try(decode(cfgRaw.asInstanceOf[Map[Any, Any]].apply("extra"))).toEither.left.map(_.getMessage)
+    } yield Config(extra)
+  }
+}
 
 enum SpecialHandling:
   case NotExample(reason: String)
@@ -169,21 +183,44 @@ val ignored: Set[String] = specialHandling.keySet
 
 // models
 
+case class Markdown(name: String, content: List[String]) {
+
+  def extractAll(replacePatterns: Map[String, String]): List[Snippet] = Snippet.extractAll(this, replacePatterns)
+}
+object Markdown {
+
+  def readAllInDir(dir: File): List[Markdown] =
+    for {
+      files <- Option(dir.listFiles()).toList
+      markdownFile <- files.sortBy(_.getName()) if markdownFile.getAbsolutePath().endsWith(".md")
+    } yield Using(io.Source.fromFile(markdownFile)) { src =>
+      val name = markdownFile.getName()
+      Markdown(name.substring(0, name.length() - ".md".length()), src.getLines().toList)
+    }.get
+}
+
 case class Snippet(name: String, hint: String, content: String) {
 
-  lazy val snippetFile: File = File(s"${tmpDir.getPath()}/$name/snippet.sc")
-  lazy val snippetDir: String = snippetFile.getParent()
+  def expectedErrors: List[String] =
+    List.empty
 
-  def isIgnored: Boolean = ignored(name)
+  def isIgnored: Boolean = ignored(name) // TODO: make it smarter
 
-  def save(): Unit = {
+  def save(tmpDir: File): File = {
+    val snippetFile: File = File(s"${tmpDir.getPath()}/$name/snippet.sc")
     snippetFile.getParentFile().mkdirs()
     Files.writeString(snippetFile.toPath(), content)
+    snippetFile
+  }
+
+  def run(tmpDir: File): Unit = {
+    val snippetDir = File(s"${tmpDir.getPath()}/$name/snippet.sc").getParent()
+    s"scala-cli run '$snippetDir'".!!
   }
 }
 object Snippet {
 
-  def extractAll(markdown: Markdown): List[Snippet] = {
+  def extractAll(markdown: Markdown, replacePatterns: Map[String, String]): List[Snippet] = {
     val name = markdown.name
 
     case class Example(section: String, ordinal: Int = 0) {
@@ -205,17 +242,17 @@ object Snippet {
 
     def adjustLine(line: String, indent: Int): String = {
       val stripIndent = if line.length() > indent then line.substring(indent) else line
-      patterns.foldLeft(stripIndent) { case (s, (k, v)) =>
-        s.replace(k, v)
+      replacePatterns.foldLeft(stripIndent) { case (s, (k, v)) =>
+        s.replaceAll(k, v)
       }
     }
 
     def mkSnippet(example: Example, lineNo: Int, contentReverse: List[String]): Snippet = {
       val content0 = contentReverse.reverse.mkString("\n")
       val content =
-        if content0.startsWith("//> using scala") then content0
+        if content0.contains("//> using scala") then content0
         else "//> using scala 2.13.13\n" + content0
-      Snippet(example.toName, s"$name:$lineNo", content)
+      Snippet(example.toName, s"$name.md:$lineNo", content)
     }
 
     def loop(content: List[(String, Int)], example: Example, mode: Mode, reverseResult: List[Snippet]): List[Snippet] =
@@ -241,36 +278,22 @@ object Snippet {
   }
 }
 
-case class Markdown(name: String, content: List[String]) {
-
-  def extractAll: List[Snippet] = Snippet.extractAll(this)
-}
-object Markdown {
-
-  def readAllInDir(dir: File): List[Markdown] =
-    for {
-      files <- Option(dir.listFiles()).toList
-      markdownFile <- files.sortBy(_.getName()) if markdownFile.getAbsolutePath().endsWith(".md")
-    } yield Using(io.Source.fromFile(markdownFile)) { src =>
-      val name = markdownFile.getName()
-      Markdown(name.substring(0, name.length() - ".md".length()), src.getLines().toList)
-    }.get
-}
-
 // program
 
 /** Usage:
   *
-  * On CI:
+  * From the project root (if called from other directory, adapt path after PWD accordingly):
+  *
+  * on CI:
   * {{{
   * # run all tests, use artifacts published locally from current tag
-  * scala-cli run test-examples.scala -- "$PWD/docs/docs" "$(sbt -batch -error 'print chimney/version')" "" -1 -1
+  * scala-cli run test-snippets.scala -- "$PWD/docs" "$(sbt -batch -error 'print chimney/version')" "" -1 -1
   * }}}
   *
-  * During development:
+  * during development:
   * {{{
   * # fix: version to use, tmp directory, drop and take from snippets list (the ordering is deterministic)
-  * scala-cli run scripts/test-examples.scala -- "$PWD/docs/docs" "1.0.0-RC1" /var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727 0 44
+  * scala-cli run scripts/test-snippets.scala -- "$PWD/docs" "1.0.0-RC1" /var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727 0 44
   * }}}
   */
 @main def testExamples(
@@ -280,46 +303,71 @@ object Markdown {
     providedSnippetsDrop: Int,
     providedSnippetsTake: Int
 ): Unit = {
-  chimneyVersion = providedVersion
-  tmpDir =
+  extension (s: StringContext) def hl(args: Any*): String = s"$MAGENTA${s.s(args*)}$RESET"
+
+  val cfgFile = File(s"$path/mkdocs.yml")
+  val cfg = Config.parse(cfgFile).right.get
+  val replacePatterns = (cfg.extra + (raw"chimney_version\(\)" -> providedVersion)).map { case (k, v) =>
+    (raw"\{\{\s*" + k + raw"\s*\}\}") -> v
+  }
+  val tmpDir =
     if providedTmpDir.isEmpty() then Files.createTempDirectory(s"docs-snippets").toFile() else File(providedTmpDir)
   val snippetsDrop = Option(providedSnippetsDrop).filter(_ >= 0).getOrElse(0)
   val snippetsTake = Option(providedSnippetsTake).filter(_ > 0).getOrElse(Int.MaxValue)
-
-  extension (s: StringContext) def hl(args: Any*): String = s"$MAGENTA${s.s(args*)}$RESET"
-
-  val docsDir = File(path)
+  println(hl"Generation for: version=$providedVersion, tmp=$tmpDir, cfg=$cfg")
+  println()
+  val docsDir = File(s"$path/docs")
   println(hl"Started reading from ${docsDir.getAbsolutePath()}")
+  println()
   val markdowns = Markdown.readAllInDir(docsDir)
   println(hl"Read files: ${markdowns.map(_.name)}")
-  val snippets = markdowns.flatMap(_.extractAll).drop(snippetsDrop).take(snippetsTake)
-  println(hl"Found snippets" + ":\n" + snippets.map(s => hl"${s.hint} (${s.name})").mkString("\n") + "\n")
+  println()
+  val snippets = markdowns.flatMap(_.extractAll(replacePatterns)).drop(snippetsDrop).take(snippetsTake)
+  println(
+    hl"Found snippets" + ":\n" + snippets.map(s => hl"\n${s.hint} (${s.name})" + ":\n" + s.content).mkString("\n")
+  )
+  println()
   val (ignoredSnippets, testedSnippets) = snippets.partition(_.isIgnored)
-  println(hl"Ignoring snippets" + ":\n" + ignoredSnippets.map(s => hl"${s.hint} (${s.name})").mkString("\n") + "\n")
+  println(hl"Ignoring snippets" + ":\n" + ignoredSnippets.map(s => hl"${s.hint} (${s.name})").mkString("\n"))
+  println()
   val ignoredNotFound = ignored.filterNot(i => snippets.exists(_.name == i)).toList.sorted
-  if ignoredNotFound.nonEmpty && snippetsDrop == 0 then {
+  if ignoredNotFound.nonEmpty && providedSnippetsDrop == -1 && providedSnippetsTake == -1 then {
     println(
       hl"Some ignored snippets have been moved, their indices changed and cannot be matched" + ":\n" + ignoredNotFound
         .mkString("\n")
     )
     sys.exit(1)
   }
-  val saved = testedSnippets.foreach(_.save())
-  val failed = testedSnippets.flatMap { snippet =>
-    import snippet.{hint, name, snippetDir}
-    println(hl"Testing: $hint ($name, saved in $snippetDir)" + ":")
-    try {
-      s"scala-cli run '$snippetDir'".!!
+  val failed = snippets.flatMap { snippet =>
+    println()
+    import snippet.{hint, name}
+    if snippet.isIgnored then {
+      println(hl"Snippet $hint (stable name: $name) was ignored")
       List.empty[String]
-    } catch {
-      case _: Throwable => List(s"$hint ($name)")
+    } else {
+      val snippetDir = snippet.save(tmpDir)
+      println(hl"Snippet: $hint (stable name: $name) saved in $snippetDir, testing" + ":")
+      try {
+        snippet.run(tmpDir)
+        println(hl"Snippet: $hint (stable name: $name) succeeded")
+        List.empty[String]
+      } catch {
+        case _: Throwable =>
+          println(hl"Snippet: $hint (stable name: $name) failed")
+          List(s"$hint (stable name: $name)")
+      }
     }
   }
+
+  println()
   if failed.nonEmpty then {
-    println(hl"Failed snippets (${failed.length}/${testedSnippets.length})" + s":\n${failed.mkString("\n")}")
+    println(
+      hl"Failed snippets (${failed.length}/${testedSnippets.length}, ignored: ${ignoredSnippets.length})" + s":\n${failed
+          .mkString("\n")}"
+    )
     println(hl"Fix them or add to ignored list (name in parenthesis is less subject to change)")
     sys.exit(1)
   } else {
-    println(hl"All snippets (${testedSnippets.length}) run succesfully!")
+    println(hl"All snippets (${testedSnippets.length}, ignored: ${ignoredSnippets.length}) run succesfully!")
   }
 }
