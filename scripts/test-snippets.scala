@@ -5,9 +5,10 @@ import java.io.File
 import java.nio.file.{Files, Paths}
 import scala.Console.{MAGENTA, RESET}
 import scala.collection.immutable.ListMap
+import scala.util.chaining.*
+import scala.util.matching.Regex
 import scala.util.{Try, Using}
 import scala.sys.process.*
-import scala.util.matching.Regex
 
 // config
 
@@ -287,7 +288,7 @@ object Snippet {
   * on CI:
   * {{{
   * # run all tests, use artifacts published locally from current tag
-  * scala-cli run test-snippets.scala -- "$PWD/docs" "$(sbt -batch -error 'print chimney/version')" "" -1 -1
+  * scala-cli run scripts/test-snippets.scala -- "$PWD/docs" "$(sbt -batch -error 'print chimney/version')" "" -1 -1
   * }}}
   *
   * during development:
@@ -305,16 +306,21 @@ object Snippet {
 ): Unit = {
   extension (s: StringContext) def hl(args: Any*): String = s"$MAGENTA${s.s(args*)}$RESET"
 
+  val chimneyVersion = providedVersion.trim
+    .pipe("\u001b\\[([0-9]+)m".r.replaceAllIn(_, "")) // remove possible console coloring from sbt
+    .pipe(raw"(?U)\s".r.replaceAllIn(_, "")) // remove possible ESC characters
+    .replaceAll("\u001B\\[0J", "") // replae this one offending thing
+
   val cfgFile = File(s"$path/mkdocs.yml")
   val cfg = Config.parse(cfgFile).right.get
-  val replacePatterns = (cfg.extra + (raw"chimney_version\(\)" -> providedVersion)).map { case (k, v) =>
+  val replacePatterns = (cfg.extra + (raw"chimney_version\(\)" -> chimneyVersion)).map { case (k, v) =>
     (raw"\{\{\s*" + k + raw"\s*\}\}") -> v
   }
   val tmpDir =
     if providedTmpDir.isEmpty() then Files.createTempDirectory(s"docs-snippets").toFile() else File(providedTmpDir)
   val snippetsDrop = Option(providedSnippetsDrop).filter(_ >= 0).getOrElse(0)
   val snippetsTake = Option(providedSnippetsTake).filter(_ > 0).getOrElse(Int.MaxValue)
-  println(hl"Generation for: version=$providedVersion, tmp=$tmpDir, cfg=$cfg")
+  println(hl"Generation for: version=$chimneyVersion, tmp=$tmpDir, cfg=$cfg")
   println()
   val docsDir = File(s"$path/docs")
   println(hl"Started reading from ${docsDir.getAbsolutePath()}")
@@ -346,7 +352,7 @@ object Snippet {
       List.empty[String]
     } else {
       val snippetDir = snippet.save(tmpDir)
-      println(hl"Snippet: $hint (stable name: $name) saved in $snippetDir, testing" + ":")
+      println(hl"Snippet: $hint (stable name: $name) saved in $snippetDir, testing" + ":\n" + snippet.content)
       try {
         snippet.run(tmpDir)
         println(hl"Snippet: $hint (stable name: $name) succeeded")
