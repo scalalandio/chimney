@@ -224,13 +224,13 @@ class ChimneySpecific(chimneyVersion: String, cfg: MkDocsConfig) extends Snippet
   * on CI:
   * {{{
   * # run all tests, use artifacts published locally from current tag
-  * scala-cli run scripts/test-snippets.scala -- "$PWD/docs" "$(sbt -batch -error 'print chimney/version')" "" -1 -1
+  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- "$PWD/docs" "$(sbt -batch -error 'print chimney/version')" "" -1 -1
   * }}}
   *
   * during development:
   * {{{
   * # fix: version to use, tmp directory, drop and take from snippets list (the ordering is deterministic)
-  * scala-cli run scripts/test-snippets.scala -- "$PWD/docs" "1.0.0-RC1" /var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727 0 44
+  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- "$PWD/docs" "1.0.0-RC1" /var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727 0 44
   * }}}
   */
 @main def testChimneySnippets(
