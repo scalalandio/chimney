@@ -145,34 +145,38 @@ def testSnippets(
   val failed = snippets.flatMap { snippet =>
     println()
     import snippet.{hint, name}
-    // TODO: move to SnippetStrategy
-    if snippet.isIgnored then {
-      println(yellow"Snippet $hint (stable name: $name) was ignored")
-      List.empty[String]
-    } else {
-      val snippetDir = snippet.save(tmpDir)
-      println(hl"Snippet: $hint (stable name: $name) saved in $snippetDir, testing" + ":\n" + snippet.content)
-      try {
-        snippet.run(tmpDir)
-        println(green"Snippet: $hint (stable name: $name) succeeded")
+    snippet.howToRun match {
+      case SnippetStrategy.ExpectSuccess =>
+        val snippetDir = snippet.save(tmpDir)
+        println(hl"Snippet: $hint (stable name: $name) saved in $snippetDir, testing" + ":\n" + snippet.content)
+        try {
+          snippet.run(tmpDir)
+          println(green"Snippet: $hint (stable name: $name) succeeded")
+          List.empty[String]
+        } catch {
+          case _: Throwable =>
+            println(red"Snippet: $hint (stable name: $name) failed")
+            List(s"$hint (stable name: $name)")
+        }
+      case SnippetStrategy.ExpectErrors(errors) =>
+        // TODO
+        println(yellow"Snippet $hint (stable name: $name) was ignored - FIXME")
         List.empty[String]
-      } catch {
-        case _: Throwable =>
-          println(red"Snippet: $hint (stable name: $name) failed")
-          List(s"$hint (stable name: $name)")
-      }
+      case SnippetStrategy.Ignore(cause) =>
+        println(yellow"Snippet $hint (stable name: $name) was ignored ($cause)")
+        List.empty[String]
     }
   }
 
   println()
   if failed.nonEmpty then {
     println(
-      hl"Failed snippets (${failed.length}/${testedSnippets.length}, ignored: ${ignoredSnippets.length})" + s":\n${failed
+      red"Failed snippets (${failed.length}/${testedSnippets.length}, ignored: ${ignoredSnippets.length})" + s":\n${failed
           .mkString("\n")}"
     )
-    println(hl"Fix them or add to ignored list (name in parenthesis is less subject to change)")
+    println(red"Fix them or add to ignored list (name in parenthesis is less subject to change)")
     sys.exit(1)
   } else {
-    println(hl"All snippets (${testedSnippets.length}, ignored: ${ignoredSnippets.length}) run succesfully!")
+    println(green"All snippets (${testedSnippets.length}, ignored: ${ignoredSnippets.length}) run succesfully!")
   }
 }
