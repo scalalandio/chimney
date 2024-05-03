@@ -7,6 +7,12 @@ import scala.util.matching.Regex
 import scala.util.Using
 import scala.sys.process.*
 
+extension (s: StringContext)
+  def hl(args: Any*): String = s"$MAGENTA${s.s(args*)}$RESET"
+  def red(args: Any*): String = s"$RED${s.s(args*)}$RESET"
+  def green(args: Any*): String = s"$GREEN${s.s(args*)}$RESET"
+  def yellow(args: Any*): String = s"$YELLOW${s.s(args*)}$RESET"
+
 // models
 
 case class Markdown(name: String, content: List[String]) {
@@ -95,88 +101,100 @@ enum SnippetStrategy:
   case ExpectErrors(errors: List[String]) // TODO
   case Ignore(cause: String)
 
-trait SnippetExtension:
+trait SnippetRunner:
+
+  def docsDir: File
+  def tmpDir: File
 
   extension (snippet: Snippet)
+    def save(): File = {
+      val snippetFile: File = File(s"${tmpDir.getPath()}/${snippet.name}/snippet.sc")
+      snippetFile.getParentFile().mkdirs()
+      Files.writeString(snippetFile.toPath(), snippet.content)
+      snippetFile
+    }
+
+    def run(): Unit = {
+      val snippetDir = File(s"${tmpDir.getPath()}/${snippet.name}/snippet.sc").getParent()
+      s"scala-cli run '$snippetDir'".!!
+    }
+
     def adjusted: Snippet
     def howToRun: SnippetStrategy
     def isIgnored: Boolean = howToRun match
       case SnippetStrategy.Ignore(_) => true
       case _                         => false
 
+case class Suite(name: String, snippets: List[Snippet]) {
+
+  def run(using SnippetRunner): Suite.Result = {
+    println(hl"$name" + ":")
+    val (failed, successfulOrIgnored) = snippets.partitionMap { snippet =>
+      println()
+      import snippet.{hint, name as stableName}
+      snippet.howToRun match {
+        case SnippetStrategy.ExpectSuccess =>
+          val snippetDir = snippet.save()
+          println(hl"Snippet: $hint (stable name: $stableName) saved in $snippetDir, testing" + ":\n" + snippet.content)
+          try {
+            snippet.run()
+            println(green"Snippet: $hint (stable name: $stableName) succeeded")
+            Right(None)
+          } catch {
+            case _: Throwable =>
+              println(red"Snippet: $hint (stable name: $stableName) failed")
+              Left(snippet)
+          }
+        case SnippetStrategy.ExpectErrors(errors) =>
+          // TODO
+          println(yellow"Snippet $hint (stable name: $stableName) was ignored - FIXME")
+          Right(Some(snippet))
+        case SnippetStrategy.Ignore(cause) =>
+          println(yellow"Snippet $hint (stable name: $stableName) was ignored ($cause)")
+          Right(Some(snippet))
+      }
+    }
+    val ignored = successfulOrIgnored.collect { case Some(snippet) => snippet }
+    val succeed = snippets.filterNot(failed.contains).filterNot(ignored.contains)
+    if failed.nonEmpty then {
+      println(
+        red"Results: ${succeed.size} succeed, ${ignored.length} ignored, ${failed.length} failed - some snippets failed:"
+      )
+      failed.foreach(s => println(red"  ${s.name}"))
+      println()
+    } else {
+      println(green"Results: ${succeed.size} succeed, ${ignored.length} ignored - all snippets passed")
+      println()
+    }
+    Suite.Result(suiteName = name, succeed = succeed, failed = failed, ignored = ignored)
+  }
+}
+object Suite {
+  case class Result(suiteName: String, succeed: List[Snippet], failed: List[Snippet], ignored: List[Snippet])
+}
+
 // program
 
-extension (s: StringContext)
-  def hl(args: Any*): String = s"$MAGENTA${s.s(args*)}$RESET"
-  def red(args: Any*): String = s"$RED${s.s(args*)}$RESET"
-  def green(args: Any*): String = s"$GREEN${s.s(args*)}$RESET"
-  def yellow(args: Any*): String = s"$YELLOW${s.s(args*)}$RESET"
-
-def testSnippets(
-    docsDir: File,
-    tmpDir: File,
-    snippetsDrop: Int,
-    snippetsTake: Int
-)(using SnippetExtension): Unit = {
-  println(hl"Testing with docs in $docsDir, snippets extracted to: tmp=$tmpDir")
-  println(hl"Started reading from ${docsDir.getAbsolutePath()}")
+def testSnippets()(using SnippetRunner): Unit = {
+  println(
+    hl"Testing with docs in ${summon[SnippetRunner].docsDir}, snippets extracted to: tmp=${summon[SnippetRunner].tmpDir}"
+  )
+  println(hl"Started reading from ${summon[SnippetRunner].docsDir.getAbsolutePath()}")
   println()
-  val markdowns = Markdown.readAllInDir(docsDir)
+  val markdowns = Markdown.readAllInDir(summon[SnippetRunner].docsDir)
   println(hl"Read files: ${markdowns.map(_.name)}")
   println()
-  val snippets = markdowns.flatMap(_.extractAll).drop(snippetsDrop).take(snippetsTake).map(_.adjusted)
-  println(
-    hl"Found snippets" + ":\n" + snippets.map(s => hl"\n${s.hint} (${s.name})" + ":\n" + s.content).mkString("\n")
-  )
-  println()
-  val (ignoredSnippets, testedSnippets) = snippets.partition(_.isIgnored)
-  println(hl"Ignoring snippets" + ":\n" + ignoredSnippets.map(s => hl"${s.hint} (${s.name})").mkString("\n"))
-  println()
-  /*
-  val ignoredNotFound = ignored.filterNot(i => snippets.exists(_.name == i)).toList.sorted
-  if ignoredNotFound.nonEmpty && providedSnippetsDrop == -1 && providedSnippetsTake == -1 then {
-    println(
-      hl"Some ignored snippets have been moved, their indices changed and cannot be matched" + ":\n" + ignoredNotFound
-        .mkString("\n")
-    )
-    sys.exit(1)
+  val suites = markdowns.map { markdown =>
+    Suite(markdown.name, markdown.extractAll.map(_.adjusted))
   }
-   */
-  val failed = snippets.flatMap { snippet =>
-    println()
-    import snippet.{hint, name}
-    snippet.howToRun match {
-      case SnippetStrategy.ExpectSuccess =>
-        val snippetDir = snippet.save(tmpDir)
-        println(hl"Snippet: $hint (stable name: $name) saved in $snippetDir, testing" + ":\n" + snippet.content)
-        try {
-          snippet.run(tmpDir)
-          println(green"Snippet: $hint (stable name: $name) succeeded")
-          List.empty[String]
-        } catch {
-          case _: Throwable =>
-            println(red"Snippet: $hint (stable name: $name) failed")
-            List(s"$hint (stable name: $name)")
-        }
-      case SnippetStrategy.ExpectErrors(errors) =>
-        // TODO
-        println(yellow"Snippet $hint (stable name: $name) was ignored - FIXME")
-        List.empty[String]
-      case SnippetStrategy.Ignore(cause) =>
-        println(yellow"Snippet $hint (stable name: $name) was ignored ($cause)")
-        List.empty[String]
-    }
-  }
-
+  val (failed, succeed) = suites.map(_.run).partition(_.failed.nonEmpty)
   println()
   if failed.nonEmpty then {
-    println(
-      red"Failed snippets (${failed.length}/${testedSnippets.length}, ignored: ${ignoredSnippets.length})" + s":\n${failed
-          .mkString("\n")}"
-    )
+    println(red"Failed suites:")
+    failed.foreach(r => println(red"  ${r.suiteName}"))
     println(red"Fix them or add to ignored list (name in parenthesis is less subject to change)")
     sys.exit(1)
   } else {
-    println(green"All snippets (${testedSnippets.length}, ignored: ${ignoredSnippets.length}) run succesfully!")
+    println(green"All suites run succesfully!")
   }
 }

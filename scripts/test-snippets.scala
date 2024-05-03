@@ -193,7 +193,12 @@ val specialHandling: ListMap[String, SpecialHandling] = ListMap(
   "under-the-hood_Scala-2-vs-Scala-3-in-derivation_9" -> SpecialHandling.NotExample("pseudocode")
 )
 
-class ChimneySpecific(chimneyVersion: String, cfg: MkDocsConfig) extends SnippetExtension {
+class ChimneySpecific(
+    chimneyVersion: String,
+    cfg: MkDocsConfig,
+    val docsDir: File,
+    val tmpDir: File
+) extends SnippetRunner {
 
   private val defaultScalaVersion = "2.13.13"
 
@@ -224,21 +229,19 @@ class ChimneySpecific(chimneyVersion: String, cfg: MkDocsConfig) extends Snippet
   * on CI:
   * {{{
   * # run all tests, use artifacts published locally from current tag
-  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- "$PWD/docs" "$(sbt -batch -error 'print chimney/version')" "" -1 -1
+  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- "$PWD/docs" "$(sbt -batch -error 'print chimney/version')" ""
   * }}}
   *
   * during development:
   * {{{
   * # fix: version to use, tmp directory, drop and take from snippets list (the ordering is deterministic)
-  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- "$PWD/docs" "1.0.0-RC1" /var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727 0 44
+  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- "$PWD/docs" "1.0.0-RC1" /var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727
   * }}}
   */
 @main def testChimneySnippets(
     path: String,
     providedVersion: String,
-    providedTmpDir: String,
-    providedSnippetsDrop: Int,
-    providedSnippetsTake: Int
+    providedTmpDir: String
 ): Unit = {
   val chimneyVersion = providedVersion.trim
     .pipe("\u001b\\[([0-9]+)m".r.replaceAllIn(_, "")) // remove possible console coloring from sbt
@@ -248,13 +251,13 @@ class ChimneySpecific(chimneyVersion: String, cfg: MkDocsConfig) extends Snippet
   val cfgFile = File(s"$path/mkdocs.yml")
   val cfg = MkDocsConfig.parse(cfgFile).right.get
 
-  given SnippetExtension = new ChimneySpecific(chimneyVersion, cfg)
-
-  testSnippets(
+  given SnippetRunner = new ChimneySpecific(
+    chimneyVersion = chimneyVersion,
+    cfg = cfg,
     docsDir = File(s"$path/docs"),
     tmpDir =
       if providedTmpDir.isEmpty() then Files.createTempDirectory(s"docs-snippets").toFile() else File(providedTmpDir),
-    snippetsDrop = Option(providedSnippetsDrop).filter(_ >= 0).getOrElse(0),
-    snippetsTake = Option(providedSnippetsTake).filter(_ > 0).getOrElse(Int.MaxValue)
   )
+
+  testSnippets()
 }
