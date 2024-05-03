@@ -459,6 +459,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     implicit val cfg = TransformerConfiguration.default.enableMethodAccessors
 
     (new Source("value", 512)).into[Target].disableMethodAccessors.transform
+    // expected error:
     // Chimney can't derive transformation from Source to Target
     //
     // Target
@@ -522,6 +523,7 @@ If the flag was enabled in the implicit config it can be disabled with `.enableI
     implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
 
     Source(10).into[Target].disableInheritedAccessors.transform
+    // expected error:
     // Chimney can't derive transformation from Source to Target
     //
     // Target
@@ -603,6 +605,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     implicit val cfg = TransformerConfiguration.default.enableBeanGetters
 
     (new Source("value", 512)).into[Target].disableBeanGetters.transform
+    // expected error:
     // Chimney can't derive transformation from Source to Target
     //
     // Target
@@ -712,6 +715,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     implicit val cfg = TransformerConfiguration.default.enableBeanSetters
 
     (new Source("value", 512)).into[Target].disableBeanSetters.transform
+    // expected error:
     // Chimney can't derive transformation from Source to Target
     //
     // Target
@@ -779,6 +783,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     implicit val cfg = TransformerConfiguration.default.enableIgnoreUnmatchedBeanSetters
 
     ().into[Target].disableIgnoreUnmatchedBeanSetters.transform
+    // expected error:
     // Chimney can't derive transformation from Source to Target
     //
     // Target
@@ -990,6 +995,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     implicit val cfg = TransformerConfiguration.default.enableDefaultValues
 
     (new Source("value", 512)).into[Target].disableDefaultValues.transform
+    // expected error:
     // Chimney can't derive transformation from Source to Target
     //
     // Target
@@ -1087,6 +1093,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     implicit val cfg = TransformerConfiguration.default.enableOptionDefaultsToNone
 
     Foo("value").into[Bar].disableOptionDefaultsToNone.transform
+    // expected error:
     // Chimney can't derive transformation from Foo to Bar
     //
     // Bar
@@ -1685,6 +1692,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
       .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
 
     Foo(Foo.Baz("test"), 1024).into[Bar].disableCustomFieldNameComparison.transform
+    // expected error:
     // Chimney can't derive transformation from Foo to Bar
     //
     // Bar
@@ -1762,6 +1770,7 @@ as transparent, similarly to virtually every other Scala library.
     case class Bar private (b: String) extends AnyVal // cannot be automatically wrapped
 
     Foo(10).transformInto[Bar]
+    // expected error:
     // Chimney can't derive transformation from Foo to Bar
     //
     // Bar
@@ -2383,6 +2392,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
       .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
 
     (Foo.BAZ: Foo).into[Bar].disableCustomSubtypeNameComparison.transform
+    // expected error:
     // Chimney can't derive transformation from Foo to Bar
     //
     // Bar
@@ -2513,7 +2523,8 @@ However, sometimes you might prefer to opt out of such behavior. You can disable
     case class Bar(a: Int)
 
     Foo(Some(10)).intoPartial[Bar].disablePartialUnwrapsOption.transform.asOption
-    // error: Chimney can't derive transformation from Foo to Bar
+    // expected error:
+    // Chimney can't derive transformation from Foo to Bar
     //
     // Bar
     //   a: scala.Int - can't derive transformation from a: scala.Option[scala.Int] in source type Foo
@@ -2528,7 +2539,8 @@ However, sometimes you might prefer to opt out of such behavior. You can disable
       implicit val cfg = TransformerConfiguration.default.disablePartialUnwrapsOption
 
       Foo(Some(10)).transformIntoPartial[Bar]
-      // error: Chimney can't derive transformation from Foo to Bar
+      // expected error:
+      // Chimney can't derive transformation from Foo to Bar
       //
       // Bar
       //   a: scala.Int - can't derive transformation from a: scala.Option[scala.Int] in source type Foo
@@ -2538,7 +2550,8 @@ However, sometimes you might prefer to opt out of such behavior. You can disable
       //
       // Consult https://chimney.readthedocs.io for usage examples.
       Foo(Some(10)).intoPartial[Bar].transform
-      // error: Chimney can't derive transformation from Foo to Bar
+      // expected error:
+      // Chimney can't derive transformation from Foo to Bar
       //
       // Bar
       //   a: scala.Int - can't derive transformation from a: scala.Option[scala.Int] in source type Foo
@@ -3200,6 +3213,7 @@ The Chimney does not decide and in the presence of 2 implicits it will fail and 
       PartialTransformer(str => partial.Result.fromCatching(str.toInt))
 
     "aa".intoPartial[Int].transform
+    // expected error:
     // Ambiguous implicits while resolving Chimney recursive transformation:
     //
     // PartialTransformer[java.lang.String, scala.Int]: stringToIntSafe
