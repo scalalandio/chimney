@@ -152,7 +152,7 @@ class ChimneySpecific(
         ) { case (s, (k, v)) => s.replaceAll(k, v) }
       )
 
-    def howToRun: SnippetStrategy = specialHandling.get(snippet.name) match
+    def howToRun: SnippetStrategy = specialHandling.get(snippet.fileName) match
       case None =>
         // for simplicity: we're assuming that each actual example should have //> using dep with some library
         if !snippet.content.contains("//> using dep") then SnippetStrategy.Ignore("pseudocode")
