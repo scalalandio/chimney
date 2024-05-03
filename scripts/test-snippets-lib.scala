@@ -101,15 +101,11 @@ object Snippet {
   }
 }
 
-enum SnippetStrategy:
-  case ExpectSuccess
-  case ExpectErrors(errors: List[String])
-  case Ignore(cause: String)
-
-trait SnippetRunner:
+trait Runner:
 
   def docsDir: File
   def tmpDir: File
+  def filter: Option[String]
 
   extension (snippet: Snippet)
     def save(): File = {
@@ -125,20 +121,71 @@ trait SnippetRunner:
     }
 
     def adjusted: Snippet
-    def howToRun: SnippetStrategy
+
+    def howToRun: Runner.Strategy
+
     def isIgnored: Boolean = howToRun match
-      case SnippetStrategy.Ignore(_) => true
+      case Runner.Strategy.Ignore(_) => true
       case _                         => false
+
+object Runner:
+  enum Strategy:
+    case ExpectSuccess
+    case ExpectErrors(errors: List[String])
+    case Ignore(cause: String)
+
+  class Default(val docsDir: File, val tmpDir: File, val filter: Option[String]) extends Runner:
+
+    private val filterPattern = filter.map(f => Regex.quote(f).replaceAll("[*]", raw"\\E.*\\Q").r)
+
+    private def extractErrors(content: String): List[String] = {
+      enum State:
+        case ReadingErrMsg(current: Vector[String])
+        case Skipping
+      val errorStart = raw"\s*// expected error:\s*".r
+      val comment = raw"\s*// (.+)".r
+      content
+        .split("\n")
+        .foldLeft((State.Skipping: State) -> Vector.empty[String]) {
+          case ((State.ReadingErrMsg(currentErrorMsg), allErrorMsgs), comment(content)) =>
+            State.ReadingErrMsg(currentErrorMsg :+ content) -> allErrorMsgs
+          case ((State.ReadingErrMsg(currentErrorMsg), allErrorMsgs), _) =>
+            State.Skipping -> (allErrorMsgs :+ currentErrorMsg.mkString("\n"))
+          case ((State.Skipping, allErrMsgs), errorStart()) =>
+            State.ReadingErrMsg(Vector.empty) -> allErrMsgs
+          case ((State.Skipping, allErrMsgs), _) =>
+            State.Skipping -> allErrMsgs
+        }
+        .match {
+          case (State.ReadingErrMsg(currentErrorMsg), allErrMsgs) => allErrMsgs :+ (currentErrorMsg.mkString("\n"))
+          case (State.Skipping, allErrorMsgs)                     => allErrorMsgs
+        }
+        .toList
+    }
+
+    extension (snippet: Snippet)
+      def adjusted: Snippet = snippet
+      def howToRun: Strategy =
+        // simple filtering
+        if filterPattern.exists(p => !p.matches(snippet.stableName)) then Strategy.Ignore("filtered out")
+        // for simplicity: we're assuming that each actual example should have //> using dep with some library
+        else if !snippet.content.contains("//> using dep") then Strategy.Ignore("pseudocode")
+        // for simplicity: we're assuming that only sbt examples have libraryDependencies
+        else if snippet.content.contains("libraryDependencies") then Strategy.Ignore("sbt example")
+        // for simplicity: we're assuming that errors are defined in inline comments starting with '// expected error:'
+        else if snippet.content.contains("// expected error:") then
+          Strategy.ExpectErrors(extractErrors(snippet.content))
+        else Strategy.ExpectSuccess
 
 case class Suite(name: String, snippets: List[Snippet]) {
 
-  def run(using SnippetRunner): Suite.Result = {
+  def run(using Runner): Suite.Result = {
     val (failed, successfulOrIgnored) = snippets.partitionMap { snippet =>
       println(hl"$name" + ":")
       println()
       import snippet.{hint, stableName}
       snippet.howToRun match {
-        case SnippetStrategy.ExpectSuccess =>
+        case Runner.Strategy.ExpectSuccess =>
           val snippetDir = snippet.save()
           println(hl"Snippet $stableName ($hint) saved in $snippetDir, testing" + ":\n" + snippet.content)
           try {
@@ -150,11 +197,11 @@ case class Suite(name: String, snippets: List[Snippet]) {
               println(red"Snippet $stableName ($hint) failed")
               Left(snippet)
           }
-        case SnippetStrategy.ExpectErrors(errors) =>
+        case Runner.Strategy.ExpectErrors(errors) =>
           // TODO
           println(yellow"Snippet $stableName ($hint) was ignored - FIXME")
           Right(Some(snippet))
-        case SnippetStrategy.Ignore(cause) =>
+        case Runner.Strategy.Ignore(cause) =>
           println(yellow"Snippet $stableName ($hint) was ignored ($cause)")
           Right(Some(snippet))
       }
@@ -180,7 +227,7 @@ object Suite {
 case class TestConfig(
     docsDir: File,
     tmpDir: File,
-    filter: Option[String], // TODO: use it
+    filter: Option[String],
     extra: Map[String, String]
 )
 object TestConfig {
@@ -216,13 +263,13 @@ object TestConfig {
   def parse(args: Array[String]): Either[Help, TestConfig] = defn.parse(args = args, env = sys.env)
 }
 
-val runTestSnippets: SnippetRunner ?=> Unit = {
+val runTestSnippets: Runner ?=> Unit = {
   println(
-    hl"Testing with docs in ${summon[SnippetRunner].docsDir}, snippets extracted to: tmp=${summon[SnippetRunner].tmpDir}"
+    hl"Testing with docs in ${summon[Runner].docsDir}, snippets extracted to: tmp=${summon[Runner].tmpDir}"
   )
-  println(hl"Started reading from ${summon[SnippetRunner].docsDir.getAbsolutePath()}")
+  println(hl"Started reading from ${summon[Runner].docsDir.getAbsolutePath()}")
   println()
-  val markdowns = Markdown.readAllInDir(summon[SnippetRunner].docsDir)
+  val markdowns = Markdown.readAllInDir(summon[Runner].docsDir)
   println(hl"Read files: ${markdowns.map(_.name)}")
   println()
   val suites = markdowns.map { markdown =>
@@ -240,7 +287,7 @@ val runTestSnippets: SnippetRunner ?=> Unit = {
   }
 }
 
-def testSnippets(args: Array[String])(f: TestConfig => SnippetRunner): Unit =
+def testSnippets(args: Array[String])(f: TestConfig => Runner): Unit =
   TestConfig.parse(args) match {
     case Right(cfg) => runTestSnippets(using f(cfg))
     case Left(help) => println(help); sys.exit(1)
