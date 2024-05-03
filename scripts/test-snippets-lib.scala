@@ -31,34 +31,32 @@ object Markdown {
     }.get
 }
 
-case class Snippet(name: String, hint: String, content: String) {
-
-  def save(tmpDir: File): File = {
-    val snippetFile: File = File(s"${tmpDir.getPath()}/$name/snippet.sc")
-    snippetFile.getParentFile().mkdirs()
-    Files.writeString(snippetFile.toPath(), content)
-    snippetFile
-  }
-
-  def run(tmpDir: File): Unit = {
-    val snippetDir = File(s"${tmpDir.getPath()}/$name/snippet.sc").getParent()
-    s"scala-cli run '$snippetDir'".!!
-  }
+case class Snippet(markdownName: String, lineNo: Int, section: String, ordinal: Int, content: String) {
+  lazy val fileName: String =
+    s"${markdownName}_${section}_$ordinal".replaceAll(" +", "-").replaceAll("[^A-Za-z0-9_-]+", "")
+  lazy val stableName: String = s"$markdownName.md#$section[$ordinal]"
+  lazy val hint: String = s"$markdownName.md:$lineNo"
 }
 object Snippet {
 
   def extractAll(markdown: Markdown): List[Snippet] = {
     val name = markdown.name
 
-    case class Example(section: String, ordinal: Int = 0) {
+    case class Example(section: String, lineNo: Int = 1, ordinal: Int = 0) {
 
-      def next: Example = copy(ordinal = ordinal + 1)
+      def next(lineNo: Int): Example = copy(lineNo = lineNo, ordinal = ordinal + 1)
 
-      def toName: String = s"${name}_${section}_$ordinal".replaceAll(" +", "-").replaceAll("[^A-Za-z0-9_-]+", "")
+      def toSnippet(content: String): Snippet = Snippet(
+        markdownName = markdown.name,
+        lineNo = lineNo,
+        section = section,
+        ordinal = ordinal,
+        content = content
+      )
     }
 
     enum Mode:
-      case Reading(lineNo: Int, indent: Int, contentReverse: List[String])
+      case Reading(indent: Int, content: Vector[String])
       case Awaiting
 
     import Mode.*
@@ -67,38 +65,44 @@ object Snippet {
     val end = "```"
     val sectionName = "#+(.+)".r
 
-    def adjustLine(line: String, indent: Int): String =
-      if line.length() > indent then line.substring(indent) else line
-
-    def mkSnippet(example: Example, lineNo: Int, contentReverse: List[String]): Snippet =
-      Snippet(example.toName, s"$name.md:$lineNo", contentReverse.reverse.mkString("\n"))
-
-    def loop(content: List[(String, Int)], example: Example, mode: Mode, reverseResult: List[Snippet]): List[Snippet] =
-      content match {
-        case (line, lineNo) :: lines =>
-          mode match {
-            case Reading(lineNo, indent, contentReverse) =>
-              if line.trim() == end then
-                loop(lines, example, Awaiting, mkSnippet(example, lineNo, contentReverse) :: reverseResult)
-              else
-                loop(lines, example, Reading(lineNo, indent, adjustLine(line, indent) :: contentReverse), reverseResult)
-            case Awaiting =>
-              line.trim() match {
-                case `start` => loop(lines, example.next, Reading(lineNo + 1, line.indexOf(start), Nil), reverseResult)
-                case sectionName(section) => loop(lines, Example(section.trim()), Awaiting, reverseResult)
-                case _                    => loop(lines, example, Awaiting, reverseResult)
-              }
-          }
-        case Nil => reverseResult.reverse
+    def loop(content: List[(String, Int)], example: Example, mode: Mode, result: Vector[Snippet]): List[Snippet] =
+      (content, mode) match {
+        // ``` terminates snippet reading
+        case ((line, _) :: lines, Reading(indent, content)) if line.trim() == end =>
+          loop(
+            lines,
+            example,
+            Awaiting,
+            result :+ example.toSnippet(content.mkString("\n"))
+          )
+        // ``` not reached, we're stil lreading snippet
+        case ((line, _) :: lines, Reading(indent, content)) =>
+          loop(
+            lines,
+            example,
+            Reading(indent, content :+ (if line.length() > indent then line.substring(indent) else line)),
+            result
+          )
+        // ```scala found, we're reading snippet starting from the next line
+        case ((line, lineNo) :: lines, Awaiting) if line.trim() == start =>
+          loop(lines, example.next(lineNo + 1), Reading(line.indexOf(start), Vector.empty), result)
+        // # section name
+        case ((sectionName(section), lineNo) :: lines, Awaiting) =>
+          loop(lines, Example(section.trim(), lineNo), Awaiting, result)
+        // not reading snippet. skipping over this line
+        case ((line, lineNo) :: lines, Awaiting) =>
+          loop(lines, example, Awaiting, result)
+        // end of document reached, all snippets found
+        case (Nil, _) => result.toList
       }
 
-    loop(markdown.content.zipWithIndex, Example(""), Awaiting, Nil)
+    loop(markdown.content.zipWithIndex, Example(""), Awaiting, Vector.empty)
   }
 }
 
 enum SnippetStrategy:
   case ExpectSuccess
-  case ExpectErrors(errors: List[String]) // TODO
+  case ExpectErrors(errors: List[String])
   case Ignore(cause: String)
 
 trait SnippetRunner:
@@ -108,14 +112,14 @@ trait SnippetRunner:
 
   extension (snippet: Snippet)
     def save(): File = {
-      val snippetFile: File = File(s"${tmpDir.getPath()}/${snippet.name}/snippet.sc")
+      val snippetFile: File = File(s"${tmpDir.getPath()}/${snippet.fileName}/snippet.sc")
       snippetFile.getParentFile().mkdirs()
       Files.writeString(snippetFile.toPath(), snippet.content)
       snippetFile
     }
 
     def run(): Unit = {
-      val snippetDir = File(s"${tmpDir.getPath()}/${snippet.name}/snippet.sc").getParent()
+      val snippetDir = File(s"${tmpDir.getPath()}/${snippet.fileName}/snippet.sc").getParent()
       s"scala-cli run '$snippetDir'".!!
     }
 
@@ -128,29 +132,29 @@ trait SnippetRunner:
 case class Suite(name: String, snippets: List[Snippet]) {
 
   def run(using SnippetRunner): Suite.Result = {
-    println(hl"$name" + ":")
     val (failed, successfulOrIgnored) = snippets.partitionMap { snippet =>
+      println(hl"$name" + ":")
       println()
-      import snippet.{hint, name as stableName}
+      import snippet.{hint, stableName}
       snippet.howToRun match {
         case SnippetStrategy.ExpectSuccess =>
           val snippetDir = snippet.save()
-          println(hl"Snippet: $hint (stable name: $stableName) saved in $snippetDir, testing" + ":\n" + snippet.content)
+          println(hl"Snippet $stableName ($hint) saved in $snippetDir, testing" + ":\n" + snippet.content)
           try {
             snippet.run()
-            println(green"Snippet: $hint (stable name: $stableName) succeeded")
+            println(green"Snippet $stableName ($hint) succeeded")
             Right(None)
           } catch {
             case _: Throwable =>
-              println(red"Snippet: $hint (stable name: $stableName) failed")
+              println(red"Snippet $stableName ($hint) failed")
               Left(snippet)
           }
         case SnippetStrategy.ExpectErrors(errors) =>
           // TODO
-          println(yellow"Snippet $hint (stable name: $stableName) was ignored - FIXME")
+          println(yellow"Snippet $stableName ($hint) was ignored - FIXME")
           Right(Some(snippet))
         case SnippetStrategy.Ignore(cause) =>
-          println(yellow"Snippet $hint (stable name: $stableName) was ignored ($cause)")
+          println(yellow"Snippet $stableName ($hint) was ignored ($cause)")
           Right(Some(snippet))
       }
     }
@@ -160,12 +164,9 @@ case class Suite(name: String, snippets: List[Snippet]) {
       println(
         red"Results: ${succeed.size} succeed, ${ignored.length} ignored, ${failed.length} failed - some snippets failed:"
       )
-      failed.foreach(s => println(red"  ${s.name}"))
+      failed.foreach(s => println(red"  ${s.stableName} (${s.hint})}"))
       println()
-    } else {
-      println(green"Results: ${succeed.size} succeed, ${ignored.length} ignored - all snippets passed")
-      println()
-    }
+    } else {}
     Suite.Result(suiteName = name, succeed = succeed, failed = failed, ignored = ignored)
   }
 }
@@ -195,6 +196,6 @@ def testSnippets()(using SnippetRunner): Unit = {
     println(red"Fix them or add to ignored list (name in parenthesis is less subject to change)")
     sys.exit(1)
   } else {
-    println(green"All suites run succesfully!")
+    println(green"All snippets run succesfully!")
   }
 }
