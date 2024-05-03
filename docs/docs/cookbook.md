@@ -614,7 +614,8 @@ The automatic conversion into a protobuf with such a field can be problematic:
     }
 
     domain.Address("a", "b").transformInto[protobuf.Address]
-    // error: Chimney can't derive transformation from domain.Address to protobuf.Address
+    // expected error:
+    // Chimney can't derive transformation from domain.Address to protobuf.Address
     //
     // protobuf.Address
     //   unknownFields: scalapb.UnknownFieldSet - no accessor named unknownFields in source type domain.Address
@@ -769,7 +770,6 @@ Encoding (with `Transformer`s) is pretty straightforward:
 !!! example
 
     ```scala
-    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     val domainType: addressbook.AddressBookType = addressbook.AddressBookType.Private("test")
@@ -790,7 +790,6 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
     !!! example
     
         ```scala
-        //> using dep io.scalaland::chimney::{{ chimney_version() }}
         import io.scalaland.chimney.dsl._
 
         pbType.value
@@ -807,7 +806,6 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
     !!! example
   
         ```scala
-        //> using dep io.scalaland::chimney-protobufs::{{ chimney_version() }}
         import io.scalaland.chimney.dsl._
         import io.scalaland.chimney.protobufs._ // includes support for empty scalapb.GeneratedMessage
 
@@ -893,7 +891,6 @@ could be done with:
 !!! example
   
     ```scala
-    //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
     val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered

@@ -326,6 +326,7 @@ as soon as we get it - by delaying the wrapping as long as possible we are avoid
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.Transformer
 
     case class Foo(a: Int, b: Int, c: Int)
     case class Bar(a: String, b: String, c: String)
