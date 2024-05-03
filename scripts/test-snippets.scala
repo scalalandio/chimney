@@ -108,43 +108,19 @@ val specialHandling: ListMap[String, SpecialHandling] = ListMap(
 class ChimneySpecific(
     chimneyVersion: String,
     mkDocsCfg: MkDocsConfig,
-    val docsDir: File,
-    val tmpDir: File
-) extends SnippetRunner {
+    docsDir: File,
+    tmpDir: File,
+    filter: Option[String]
+) extends Runner.Default(docsDir, tmpDir, filter) {
 
   private val defaultScalaVersion = "2.13.13"
-
-  private def extractErrors(content: String): List[String] = {
-    enum State:
-      case ReadingErrMsg(current: Vector[String])
-      case Skipping
-    val errorStart = raw"\s*// expected error:\s*".r
-    val comment = raw"\s*// (.+)".r
-    content
-      .split("\n")
-      .foldLeft((State.Skipping: State) -> Vector.empty[String]) {
-        case ((State.ReadingErrMsg(currentErrorMsg), allErrorMsgs), comment(content)) =>
-          State.ReadingErrMsg(currentErrorMsg :+ content) -> allErrorMsgs
-        case ((State.ReadingErrMsg(currentErrorMsg), allErrorMsgs), _) =>
-          State.Skipping -> (allErrorMsgs :+ currentErrorMsg.mkString("\n"))
-        case ((State.Skipping, allErrMsgs), errorStart()) =>
-          State.ReadingErrMsg(Vector.empty) -> allErrMsgs
-        case ((State.Skipping, allErrMsgs), _) =>
-          State.Skipping -> allErrMsgs
-      }
-      .match {
-        case (State.ReadingErrMsg(currentErrorMsg), allErrMsgs) => allErrMsgs :+ (currentErrorMsg.mkString("\n"))
-        case (State.Skipping, allErrorMsgs)                     => allErrorMsgs
-      }
-      .toList
-  }
 
   private val replacePatterns = (mkDocsCfg.extra + (raw"chimney_version\(\)" -> chimneyVersion)).map { case (k, v) =>
     (raw"\{\{\s*" + k + raw"\s*\}\}") -> v
   }
 
   extension (snippet: Snippet)
-    def adjusted: Snippet =
+    override def adjusted: Snippet =
       snippet.copy(content =
         replacePatterns.foldLeft(
           if snippet.content.contains("//> using scala") then snippet.content
@@ -152,17 +128,9 @@ class ChimneySpecific(
         ) { case (s, (k, v)) => s.replaceAll(k, v) }
       )
 
-    def howToRun: SnippetStrategy = specialHandling.get(snippet.fileName) match
-      case None =>
-        // for simplicity: we're assuming that each actual example should have //> using dep with some library
-        if !snippet.content.contains("//> using dep") then SnippetStrategy.Ignore("pseudocode")
-        // for simplicity: we're assuming that only sbt examples have libraryDependencies
-        else if snippet.content.contains("libraryDependencies") then SnippetStrategy.Ignore("sbt example")
-        // for simplicity: we're assuming that errors are defined in inline comments starting with '// expected error:'
-        else if snippet.content.contains("// expected error:") then
-          SnippetStrategy.ExpectErrors(extractErrors(snippet.content))
-        else SnippetStrategy.ExpectSuccess
-      case Some(SpecialHandling.NeedManual(reason)) => SnippetStrategy.Ignore(reason)
+    override def howToRun: Runner.Strategy = specialHandling.get(snippet.fileName) match
+      case None                                     => super.howToRun(snippet)
+      case Some(SpecialHandling.NeedManual(reason)) => Runner.Strategy.Ignore(reason)
 }
 
 /** Usage:
@@ -178,7 +146,7 @@ class ChimneySpecific(
   * during development:
   * {{{
   * # fix: version to use, tmp directory
-  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- --extra "chimney-version=1.0.0-RC1" --filter "Supported Transformations" "$PWD/docs/docs" "/var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727"
+  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- --extra "chimney-version=1.0.0-RC1" --filter "supported-transformations.md" "$PWD/docs/docs" "/var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727"
   * }}}
   */
 @main def testChimneySnippets(args: String*): Unit = testSnippets(args.toArray) { cfg =>
@@ -197,6 +165,7 @@ class ChimneySpecific(
     chimneyVersion = chimneyVersion,
     mkDocsCfg = mkDocsCfg,
     docsDir = cfg.docsDir,
-    tmpDir = cfg.tmpDir
+    tmpDir = cfg.tmpDir,
+    filter = cfg.filter
   )
 }
