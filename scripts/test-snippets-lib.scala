@@ -1,7 +1,8 @@
 //> using scala 3.3.3
+//> using dep "com.monovore::decline:2.4.1"
 
 import java.io.File
-import java.nio.file.Files
+import java.nio.file.{Files, Path}
 import scala.Console.{GREEN, MAGENTA, RED, RESET, YELLOW}
 import scala.util.matching.Regex
 import scala.util.Using
@@ -176,7 +177,46 @@ object Suite {
 
 // program
 
-def testSnippets()(using SnippetRunner): Unit = {
+case class TestConfig(
+    docsDir: File,
+    tmpDir: File,
+    filter: Option[String], // TODO: use it
+    extra: Map[String, String]
+)
+object TestConfig {
+  import com.monovore.decline.*
+
+  val defn = Command("test-snippets", "Turn Scala snippets in Mkardown files into test suites", helpFlag = true) {
+    import cats.data.{Validated, ValidatedNel}
+    import cats.implicits.*
+
+    given Argument[(String, String)] with
+      def read(string: String): ValidatedNel[String, (String, String)] =
+        string.split("=").toList match {
+          case key :: value :: Nil => Validated.valid(key -> value)
+          case _                   => Validated.invalidNel(s"Expected pair, got: $string")
+        }
+      def defaultMetavar: String = "<key>=<value>"
+
+    (
+      Opts.argument[Path](metavar = "docs"),
+      Opts.argument[Path](metavar = "tmp").orNone,
+      Opts.option[String](long = "filter", short = "f", help = "Run only tests matching filter").orNone,
+      Opts.options[(String, String)](long = "extra", help = "").orNone
+    ).mapN { (docs, tmpOpt, filter, extras) =>
+      TestConfig(
+        docsDir = docs.toFile,
+        tmpDir = tmpOpt.map(_.toFile).getOrElse(Files.createTempDirectory(s"docs-snippets").toFile()),
+        filter = filter,
+        extra = extras.map(_.toList.toMap).getOrElse(Map.empty)
+      )
+    }
+  }
+
+  def parse(args: Array[String]): Either[Help, TestConfig] = defn.parse(args = args, env = sys.env)
+}
+
+val runTestSnippets: SnippetRunner ?=> Unit = {
   println(
     hl"Testing with docs in ${summon[SnippetRunner].docsDir}, snippets extracted to: tmp=${summon[SnippetRunner].tmpDir}"
   )
@@ -199,3 +239,9 @@ def testSnippets()(using SnippetRunner): Unit = {
     println(green"All snippets run succesfully!")
   }
 }
+
+def testSnippets(args: Array[String])(f: TestConfig => SnippetRunner): Unit =
+  TestConfig.parse(args) match {
+    case Right(cfg) => runTestSnippets(using f(cfg))
+    case Left(help) => println(help); sys.exit(1)
+  }
