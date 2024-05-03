@@ -107,7 +107,7 @@ val specialHandling: ListMap[String, SpecialHandling] = ListMap(
 
 class ChimneySpecific(
     chimneyVersion: String,
-    cfg: MkDocsConfig,
+    mkDocsCfg: MkDocsConfig,
     val docsDir: File,
     val tmpDir: File
 ) extends SnippetRunner {
@@ -139,7 +139,7 @@ class ChimneySpecific(
       .toList
   }
 
-  private val replacePatterns = (cfg.extra + (raw"chimney_version\(\)" -> chimneyVersion)).map { case (k, v) =>
+  private val replacePatterns = (mkDocsCfg.extra + (raw"chimney_version\(\)" -> chimneyVersion)).map { case (k, v) =>
     (raw"\{\{\s*" + k + raw"\s*\}\}") -> v
   }
 
@@ -172,35 +172,31 @@ class ChimneySpecific(
   * on CI:
   * {{{
   * # run all tests, use artifacts published locally from current tag
-  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- "$PWD/docs" "$(sbt -batch -error 'print chimney/version')" ""
+  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- --extra "chimney-version=$(sbt -batch -error 'print chimney/version')" "$PWD/docs/docs"
   * }}}
   *
   * during development:
   * {{{
-  * # fix: version to use, tmp directory, drop and take from snippets list (the ordering is deterministic)
-  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- "$PWD/docs" "1.0.0-RC1" /var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727
+  * # fix: version to use, tmp directory
+  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- --extra "chimney-version=1.0.0-RC1" --filter "Supported Transformations" "$PWD/docs/docs" "/var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727"
   * }}}
   */
-@main def testChimneySnippets(
-    path: String,
-    providedVersion: String,
-    providedTmpDir: String
-): Unit = {
-  val chimneyVersion = providedVersion.trim
+@main def testChimneySnippets(args: String*): Unit = testSnippets(args.toArray) { cfg =>
+  val chimneyVersion = cfg
+    .extra("chimney-version")
+    .trim
     .pipe("\u001b\\[([0-9]+)m".r.replaceAllIn(_, "")) // remove possible console coloring from sbt
     .pipe(raw"(?U)\s".r.replaceAllIn(_, "")) // remove possible ESC characters
     .replaceAll("\u001B\\[0J", "") // replace this one offending thing
 
-  val cfgFile = File(s"$path/mkdocs.yml")
-  val cfg = MkDocsConfig.parse(cfgFile).right.get
+  val cfgFile = File(s"${cfg.docsDir}/../mkdocs.yml").getAbsoluteFile()
+  println(hl"Reading MkDocs specific config: $cfgFile")
+  val mkDocsCfg = MkDocsConfig.parse(cfgFile).right.get
 
-  given SnippetRunner = new ChimneySpecific(
+  new ChimneySpecific(
     chimneyVersion = chimneyVersion,
-    cfg = cfg,
-    docsDir = File(s"$path/docs"),
-    tmpDir =
-      if providedTmpDir.isEmpty() then Files.createTempDirectory(s"docs-snippets").toFile() else File(providedTmpDir),
+    mkDocsCfg = mkDocsCfg,
+    docsDir = cfg.docsDir,
+    tmpDir = cfg.tmpDir
   )
-
-  testSnippets()
 }
