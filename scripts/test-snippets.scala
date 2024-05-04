@@ -37,81 +37,10 @@ object MkDocsConfig {
   }
 }
 
-enum SpecialHandling:
-  case NeedManual(reason: String)
-
-val specialHandling: ListMap[String, SpecialHandling] = ListMap(
-  "index__2" -> SpecialHandling.NeedManual("landing page"),
-  "index__3" -> SpecialHandling.NeedManual("landing page"),
-  "index__4" -> SpecialHandling.NeedManual("landing page"),
-  "index__5" -> SpecialHandling.NeedManual("landing page"),
-  "index__6" -> SpecialHandling.NeedManual("landing page"),
-  "supported-transformations_Between-sealedenums_2" -> SpecialHandling.NeedManual(
-    "snippet fails!!! investigate later"
-  ), // FIXME
-  "supported-transformations_Between-sealedenums_3" -> SpecialHandling.NeedManual(
-    "snippet throws exception!!! investigate later"
-  ), // FIXME
-  "supported-transformations_Between-sealedenums_4" -> SpecialHandling.NeedManual(
-    "snippet throws exception!!! investigate later"
-  ), // FIXME
-  "supported-transformations_Javas-enums_1" -> SpecialHandling.NeedManual("requires previous snipper with Java code"),
-  "supported-transformations_Javas-enums_2" -> SpecialHandling.NeedManual("requires previous snipper with Java code"),
-  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_3" -> SpecialHandling
-    .NeedManual(
-      "snippet throws exception!!! investigate later"
-    ), // FIXME
-  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_4" -> SpecialHandling
-    .NeedManual(
-      "requires previous snipper with Java code"
-    ),
-  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_5" -> SpecialHandling
-    .NeedManual(
-      "requires previous snipper with Java code"
-    ),
-  "supported-transformations_Handling-a-specific-sealed-subtype-with-a-computed-value_6" -> SpecialHandling
-    .NeedManual(
-      "requires previous snipper with Java code"
-    ),
-  "supported-transformations_Types-with-manually-provided-constructors_3" -> SpecialHandling.NeedManual(
-    "example split into multiple files"
-  ),
-  "supported-transformations_Types-with-manually-provided-constructors_4" -> SpecialHandling.NeedManual(
-    "contunuation from the previous snippet"
-  ),
-  "supported-transformations_Types-with-manually-provided-constructors_5" -> SpecialHandling.NeedManual(
-    "example split into multiple files"
-  ),
-  "supported-transformations_Types-with-manually-provided-constructors_6" -> SpecialHandling.NeedManual(
-    "contunuation from the previous snippet"
-  ),
-  "supported-transformations_Defining-custom-name-matching-predicate_1" -> SpecialHandling.NeedManual(
-    "example split into multiple files"
-  ),
-  "supported-transformations_Defining-custom-name-matching-predicate_2" -> SpecialHandling.NeedManual(
-    "contunuation from the previous snippet"
-  ),
-  "troubleshooting_Ducktape_2" -> SpecialHandling.NeedManual(
-    "snippet throws exception!!! investigate later"
-  ), // FIXME
-  "troubleshooting_Ducktape_4" -> SpecialHandling.NeedManual(
-    "snippet throws exception!!! investigate later"
-  ), // FIXME
-  "troubleshooting_Ducktape_8" -> SpecialHandling.NeedManual(
-    "snippet throws exception!!! investigate later"
-  ), // FIXME
-  "troubleshooting_Ducktape_10" -> SpecialHandling.NeedManual(
-    "snippet throws exception!!! investigate later"
-  ) // FIXME
-)
-
-class ChimneySpecific(
+class ChimneyExtendedRunner(runner: Runner)(
     chimneyVersion: String,
-    mkDocsCfg: MkDocsConfig,
-    docsDir: File,
-    tmpDir: File,
-    filter: Option[String]
-) extends Runner.Default(docsDir, tmpDir, filter) {
+    mkDocsCfg: MkDocsConfig
+) extends Runner {
 
   private val defaultScalaVersion = "2.13.13"
 
@@ -119,18 +48,48 @@ class ChimneySpecific(
     (raw"\{\{\s*" + k + raw"\s*\}\}") -> v
   }
 
+  private val manuallyIgnored = ListMap(
+    "index.md[2]" -> "landing page",
+    "index.md[3]" -> "landing page",
+    "index.md[4]" -> "landing page",
+    "index.md[5]" -> "landing page",
+    "index.md[6]" -> "landing page",
+    "supported-transformations.md#Between `sealed`/`enum`s[2]" -> "snippet fails!!! investigate later", // FIXME
+    "supported-transformations.md#Between `sealed`/`enum`s[3]" -> "snippet throws exception!!! investigate later", // FIXME
+    "supported-transformations.md#Between `sealed`/`enum`s[4]" -> "snippet throws exception!!! investigate later", // FIXME
+    "supported-transformations.md#Java's `enum`s[1]" -> "requires previous snipper with Java code",
+    "supported-transformations.md#Java's `enum`s[2]" -> "requires previous snipper with Java code",
+    "supported-transformations.md#Handling a specific `sealed` subtype with a computed value[3]" -> "snippet throws exception!!! investigate later", // FIXME
+    "supported-transformations.md#Handling a specific `sealed` subtype with a computed value[4]" -> "requires previous snipper with Java code",
+    "supported-transformations.md#Handling a specific `sealed` subtype with a computed value[5]" -> "requires previous snipper with Java code",
+    "supported-transformations.md#Handling a specific `sealed` subtype with a computed value[6]" -> "requires previous snipper with Java code",
+    "supported-transformations.md#Types with manually provided constructors[3]" -> "example split into multiple files",
+    "supported-transformations.md#Types with manually provided constructors[4]" -> "contunuation from the previous snippet",
+    "supported-transformations.md#Types with manually provided constructors[5]" -> "example split into multiple files",
+    "supported-transformations.md#Types with manually provided constructors[6]" -> "contunuation from the previous snippet",
+    "supported-transformations.md#Defining custom name matching predicate[1]" -> "example split into multiple files",
+    "supported-transformations.md#Defining custom name matching predicate[2]" -> "contunuation from the previous snippet",
+    "troubleshooting.md#Ducktape[2]" -> "snippet throws exception!!! investigate later", // FIXME
+    "troubleshooting.md#Ducktape[4]" -> "snippet throws exception!!! investigate later", // FIXME
+    "troubleshooting.md#Ducktape[8]" -> "snippet throws exception!!! investigate later", // FIXME
+    "troubleshooting.md#Ducktape[10]" -> "snippet throws exception!!! investigate later" // FIXME
+  )
+
+  export runner.{docsDir, filter, tmpDir}
+
   extension (snippet: Snippet)
-    override def adjusted: Snippet =
+    def adjusted: Snippet = runner.adjusted(
       snippet.copy(content =
         replacePatterns.foldLeft(
           if snippet.content.contains("//> using scala") then snippet.content
           else s"//> using scala $defaultScalaVersion\n${snippet.content}"
         ) { case (s, (k, v)) => s.replaceAll(k, v) }
       )
+    )
 
-    override def howToRun: Runner.Strategy = specialHandling.get(snippet.fileName) match
-      case None                                     => super.howToRun(snippet)
-      case Some(SpecialHandling.NeedManual(reason)) => Runner.Strategy.Ignore(reason)
+    def howToRun: Runner.Strategy = manuallyIgnored.get(snippet.stableName) match
+      case None         => runner.howToRun(snippet)
+      case Some(reason) => Runner.Strategy.Ignore(reason)
 }
 
 /** Usage:
@@ -146,26 +105,19 @@ class ChimneySpecific(
   * during development:
   * {{{
   * # fix: version to use, tmp directory
-  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- --extra "chimney-version=1.0.0-RC1" --filter "supported-transformations.md" "$PWD/docs/docs" "/var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727"
+  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- --extra "chimney-version=1.0.0-RC1" --filter "supported-transformations.md*" "$PWD/docs/docs" "/var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727"
   * }}}
   */
 @main def testChimneySnippets(args: String*): Unit = testSnippets(args.toArray) { cfg =>
-  val chimneyVersion = cfg
-    .extra("chimney-version")
-    .trim
-    .pipe("\u001b\\[([0-9]+)m".r.replaceAllIn(_, "")) // remove possible console coloring from sbt
-    .pipe(raw"(?U)\s".r.replaceAllIn(_, "")) // remove possible ESC characters
-    .replaceAll("\u001B\\[0J", "") // replace this one offending thing
-
-  val cfgFile = File(s"${cfg.docsDir}/../mkdocs.yml").getAbsoluteFile()
-  println(hl"Reading MkDocs specific config: $cfgFile")
-  val mkDocsCfg = MkDocsConfig.parse(cfgFile).right.get
-
-  new ChimneySpecific(
-    chimneyVersion = chimneyVersion,
-    mkDocsCfg = mkDocsCfg,
-    docsDir = cfg.docsDir,
-    tmpDir = cfg.tmpDir,
-    filter = cfg.filter
+  new ChimneyExtendedRunner(new Runner.Default(cfg))(
+    chimneyVersion = cfg
+      .extra("chimney-version")
+      .trim
+      .pipe("\u001b\\[([0-9]+)m".r.replaceAllIn(_, "")) // remove possible console coloring from sbt
+      .pipe(raw"(?U)\s".r.replaceAllIn(_, "")) // remove possible ESC characters
+      .replaceAll("\u001B\\[0J", ""), // replace this one offending thing
+    mkDocsCfg = MkDocsConfig
+      .parse(File(s"${cfg.docsDir}/../mkdocs.yml").getAbsoluteFile())
+      .fold(s => throw Exception(s), identity)
   )
 }
