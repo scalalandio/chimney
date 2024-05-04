@@ -34,8 +34,11 @@ object Markdown {
 
 case class Snippet(markdownName: String, lineNo: Int, section: String, ordinal: Int, content: String) {
   lazy val fileName: String =
-    s"${markdownName}_${section}_$ordinal".replaceAll(" +", "-").replaceAll("[^A-Za-z0-9_-]+", "")
-  lazy val stableName: String = s"$markdownName.md#$section[$ordinal]"
+    (if section.isEmpty then s"${markdownName}_$ordinal" else s"${markdownName}_${section}_$ordinal")
+      .replaceAll(" +", "-")
+      .replaceAll("[^A-Za-z0-9_-]+", "")
+  lazy val stableName: String =
+    if section.isEmpty then s"$markdownName.md[$ordinal]" else s"$markdownName.md#$section[$ordinal]"
   lazy val hint: String = s"$markdownName.md:$lineNo"
 }
 object Snippet {
@@ -136,6 +139,8 @@ object Runner:
 
   class Default(val docsDir: File, val tmpDir: File, val filter: Option[String]) extends Runner:
 
+    def this(cfg: TestConfig) = this(cfg.docsDir, cfg.tmpDir, cfg.filter)
+
     private val filterPattern = filter.map(f => Regex.quote(f).replaceAll("[*]", raw"\\E.*\\Q").r)
 
     private def extractErrors(content: String): List[String] = {
@@ -180,8 +185,8 @@ object Runner:
 case class Suite(name: String, snippets: List[Snippet]) {
 
   def run(using Runner): Suite.Result = {
+    println(hl"$name" + ":")
     val (failed, successfulOrIgnored) = snippets.partitionMap { snippet =>
-      println(hl"$name" + ":")
       println()
       import snippet.{hint, stableName}
       snippet.howToRun match {
@@ -214,7 +219,12 @@ case class Suite(name: String, snippets: List[Snippet]) {
       )
       failed.foreach(s => println(red"  ${s.stableName} (${s.hint})}"))
       println()
-    } else {}
+    } else {
+      println(
+        green"Results: ${succeed.size} succeed, ${ignored.length} ignored, all snippets succeeded"
+      )
+      println()
+    }
     Suite.Result(suiteName = name, succeed = succeed, failed = failed, ignored = ignored)
   }
 }
@@ -233,7 +243,7 @@ case class TestConfig(
 object TestConfig {
   import com.monovore.decline.*
 
-  val defn = Command("test-snippets", "Turn Scala snippets in Mkardown files into test suites", helpFlag = true) {
+  val defn = Command("test-snippets", "Turn Scala snippets in Markdown files into test suites", helpFlag = true) {
     import cats.data.{Validated, ValidatedNel}
     import cats.implicits.*
 
@@ -280,7 +290,7 @@ val runTestSnippets: Runner ?=> Unit = {
   if failed.nonEmpty then {
     println(red"Failed suites:")
     failed.foreach(r => println(red"  ${r.suiteName}"))
-    println(red"Fix them or add to ignored list (name in parenthesis is less subject to change)")
+    println(red"Fix them or add to ignored list")
     sys.exit(1)
   } else {
     println(green"All snippets run succesfully!")
