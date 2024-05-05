@@ -1,5 +1,8 @@
+//> using scala 3.3.3
+//> using dep com.kubuszok::scala-cli-md-spec:0.0.2
 //> using dep org.virtuslab::scala-yaml:0.0.8
 
+import com.kubuszok.scalaclimdspec.*
 import java.io.File
 import java.nio.file.Files
 import scala.collection.immutable.ListMap
@@ -99,13 +102,13 @@ class ChimneyExtendedRunner(runner: Runner)(
   * on CI:
   * {{{
   * # run all tests, use artifacts published locally from current tag
-  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- --extra "chimney-version=$(sbt -batch -error 'print chimney/version')" "$PWD/docs/docs"
+  * scala-cli run scripts/test-snippets.scala -- --extra "chimney-version=$(sbt -batch -error 'print chimney/version')" "$PWD/docs/docs"
   * }}}
   *
   * during development:
   * {{{
   * # fix: version to use, tmp directory
-  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- --extra "chimney-version=1.0.0-RC1" --test-only "supported-transformations.md*" "$PWD/docs/docs" "/var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727"
+  * scala-cli run scripts/test-snippets.scala -- --extra "chimney-version=1.0.0-RC1" --test-only "supported-transformations.md*" "$PWD/docs/docs" "/var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727"
   * }}}
   */
 @main def testChimneySnippets(args: String*): Unit = testSnippets(args.toArray) { cfg =>
