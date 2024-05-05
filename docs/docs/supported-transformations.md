@@ -3214,12 +3214,15 @@ The Chimney does not decide and in the presence of 2 implicits it will fail and 
 
     "aa".intoPartial[Int].transform
     // expected error:
-    // Ambiguous implicits while resolving Chimney recursive transformation:
+    // Chimney can't derive transformation from java.lang.String to scala.Int
     //
-    // PartialTransformer[java.lang.String, scala.Int]: stringToIntSafe
-    // Transformer[java.lang.String, scala.Int]: stringToIntUnsafe
+    //  scala.Int
+    //   ambiguous implicits while resolving Chimney recursive transformation!
+    //     PartialTransformer[java.lang.String, scala.Int]: stringToIntSafe
+    //     Transformer[java.lang.String, scala.Int]: stringToIntUnsafe
+    //   Please eliminate total/partial ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used.
     //
-    // Please eliminate ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
     
     When we provide a way of resolving implicits, the error dissapears:
