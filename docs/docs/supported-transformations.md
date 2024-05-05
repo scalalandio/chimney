@@ -784,7 +784,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
 
     ().into[Target].disableIgnoreUnmatchedBeanSetters.transform
     // expected error:
-    // Chimney can't derive transformation from Source to Target
+    // Chimney can't derive transformation from scala.Unit to Target
     //
     // Target
     //   setA(a: java.lang.String) - no accessor named a in source type scala.Unit

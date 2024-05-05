@@ -112,7 +112,7 @@ If the flag was enabled in the implicit config it can be disabled with `.failRed
       .failRedundantPatcherFields
       .patch
     // expected error:
-    // Chimney can't derive patcher for User with patch type UserUpdateForm
+    // Chimney can't derive patching for User with patch type UserUpdateForm
     //
     // Field named 'address' not found in target patching type User!
     //
