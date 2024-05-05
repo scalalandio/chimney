@@ -329,7 +329,7 @@ object TestConfig {
     (
       Opts.argument[Path](metavar = "docs"),
       Opts.argument[Path](metavar = "tmp").orNone,
-      Opts.option[String](long = "filter", short = "f", help = "Run only tests matching filter").orNone,
+      Opts.option[String](long = "test-only", short = "f", help = "Run only tests matching filter").orNone,
       Opts.options[(String, String)](long = "extra", help = "").orNone
     ).mapN { (docs, tmpOpt, filter, extras) =>
       TestConfig(

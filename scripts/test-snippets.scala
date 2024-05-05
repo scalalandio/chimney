@@ -105,7 +105,7 @@ class ChimneyExtendedRunner(runner: Runner)(
   * during development:
   * {{{
   * # fix: version to use, tmp directory
-  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- --extra "chimney-version=1.0.0-RC1" --filter "supported-transformations.md*" "$PWD/docs/docs" "/var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727"
+  * scala-cli run scripts/test-snippets.scala scripts/test-snippets-lib.scala -- --extra "chimney-version=1.0.0-RC1" --test-only "supported-transformations.md*" "$PWD/docs/docs" "/var/folders/m_/sm90t09d5591cgz5h242bkm80000gn/T/docs-snippets13141962741435068727"
   * }}}
   */
 @main def testChimneySnippets(args: String*): Unit = testSnippets(args.toArray) { cfg =>
