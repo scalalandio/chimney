@@ -45,7 +45,7 @@ class ChimneyExtendedRunner(runner: Runner)(
     mkDocsCfg: MkDocsConfig
 ) extends Runner {
 
-  private val defaultScalaVersion = "2.13.13"
+  private val defaultScalaVersion = "2.13.14"
 
   private val replacePatterns = (mkDocsCfg.extra + (raw"chimney_version\(\)" -> chimneyVersion)).map { case (k, v) =>
     (raw"\{\{\s*" + k + raw"\s*\}\}") -> v
