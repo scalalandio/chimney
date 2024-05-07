@@ -122,18 +122,15 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
           usage.asTerm
         )
 
-        if TypeRepr.of[SomeFrom].typeSymbol.flags.is(Flags.Enum | Flags.JavaStatic) then
+        val sym = TypeRepr.of[SomeFrom].typeSymbol
+        if sym.flags.is(Flags.Enum) && (sym.flags.is(Flags.JavaStatic) || sym.flags.is(Flags.StableRealizable)) then
           // Scala 3's enums' parameterless cases are vals with type erased, so w have to match them by value
           // case arg @ Enum.Value => ...
-          CaseDef(Bind(bindName, Ident(TypeRepr.of[SomeFrom].typeSymbol.termRef)), None, body)
-        else if TypeRepr.of[SomeFrom].typeSymbol.flags.is(Flags.Module) then
+          CaseDef(Bind(bindName, Ident(sym.termRef)), None, body)
+        else if sym.flags.is(Flags.Module) then
           // case objects are also matched by value but the tree for them is generated in a slightly different way
           // case arg @ Enum.Value => ...
-          CaseDef(
-            Bind(bindName, Ident(TypeRepr.of[SomeFrom].typeSymbol.companionModule.termRef)),
-            None,
-            body
-          )
+          CaseDef(Bind(bindName, Ident(sym.companionModule.termRef)), None, body)
         else
           // case arg : Enum.Value => ...
           CaseDef(Bind(bindName, Typed(Wildcard(), TypeTree.of[SomeFrom])), None, body)
