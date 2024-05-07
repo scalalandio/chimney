@@ -1677,8 +1677,8 @@ On Scala 2 `java.lang.UnsupportedOperationException: Position.point on NoPositio
 recursive derivation (not only in Chimney) can overflow this stack trace, but on Scala 2 it can become notorious in
 the form of an empty value used by the macro to report where error happened.
 
-These issues can be addressed by increasing the compiler's JVM stack size, passing it e.g. -Xss64m (to increase the size
-to 64MB).
+These issues can be addressed by increasing the compiler's JVM stack size, passing it e.g. `-Xss64m` (to increase
+the size to 64MB).
 
 However, if you are using the compiler's flags to report unused definitions when macros are involved, there can also be
 an error caused by [scala/bug#12895](https://github.com/scala/bug/issues/12895). This bug was fixed in Scala 2.13.14,

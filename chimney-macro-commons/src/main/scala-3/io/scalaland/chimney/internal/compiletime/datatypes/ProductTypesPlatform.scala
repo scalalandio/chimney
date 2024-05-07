@@ -63,7 +63,8 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
     }
     def isCaseVal[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
-      sym.isPublic && sym.flags.is(Flags.Case | Flags.Enum | Flags.JavaStatic)
+      sym.isPublic && sym.flags
+        .is(Flags.Case | Flags.Enum) && (sym.flags.is(Flags.JavaStatic) || sym.flags.is(Flags.StableRealizable))
     }
     def isJavaEnumValue[A: Type]: Boolean =
       Type[A] <:< scala.quoted.Type.of[java.lang.Enum[?]] && !TypeRepr.of[A].typeSymbol.isAbstract
