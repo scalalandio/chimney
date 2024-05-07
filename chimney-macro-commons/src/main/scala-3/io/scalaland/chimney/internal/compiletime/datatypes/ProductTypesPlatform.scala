@@ -42,7 +42,6 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
       def isJavaSetterOrVar(setter: Symbol): Boolean =
         isJavaSetter(setter) || isVar(setter)
-
     }
 
     import platformSpecific.*

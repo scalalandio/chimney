@@ -50,13 +50,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             mapElementsMatchedByName[From, To](fromSubtype, toElements).orElse(mapWholeTo[From, To](fromSubtype))
           }
           .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
-            combineElementsMappings[From, To](overrideMappings ++ nameMatchedMappings).logSuccess { exp =>
-              exp match {
-                case Rule.ExpansionResult.Expanded(TransformationExpr.TotalExpr(value)) =>
-                  "we've got " + value.toString + value.asInstanceOf[Expr[Any]].tpe
-                case _ => "nope"
-              }
-            }
+            combineElementsMappings[From, To](overrideMappings ++ nameMatchedMappings)
           }
     }
 
