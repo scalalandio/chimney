@@ -14,8 +14,16 @@ object DerivationError {
       .collectFirst {
         case MacroException(exception) =>
           val stackTrace =
-            exception.getStackTrace.view.take(10).map(ste => s"  \t${Console.RED}$ste${Console.RESET}").mkString("\n")
-          s"  macro expansion thrown exception!: $exception:\n$stackTrace\n  \t${Console.RED}...${Console.RESET}"
+            exception.getStackTrace.view
+              .take(10)
+              .map(ste => s"  \t${Console.RED}$ste${Console.RESET}")
+              .mkString("\n") + s"\n  \t${Console.RED}...${Console.RESET}"
+          exception match {
+            case _: StackOverflowError =>
+              s"  macro expansion thrown StackOverflow - usually it's a sign that JVM need larger Stack. Increase it with e.g. -Xss64m passed to JVM!: $exception:\n$stackTrace"
+            case _ =>
+              s"  macro expansion thrown exception!: $exception:\n$stackTrace"
+          }
         case NotYetImplemented(what) =>
           s"  derivation failed because functionality $what is not yet implemented!"
       }

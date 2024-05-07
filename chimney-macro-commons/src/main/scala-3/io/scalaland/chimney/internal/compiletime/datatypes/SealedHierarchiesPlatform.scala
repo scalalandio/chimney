@@ -14,7 +14,7 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
 
     def isSealed[A: Type]: Boolean = {
       val flags = TypeRepr.of[A].typeSymbol.flags
-      flags.is(Flags.Enum) || flags.is(Flags.Sealed)
+      flags.is(Flags.Sealed) // do NOT use flags.is(Flags.Enum) since it will also match enums cases!
     }
 
     def parse[A: Type]: Option[Enum[A]] =
