@@ -18,6 +18,8 @@ What does it mean? Imagine you'd have to convert between this Protobuf-like defi
 !!! example
 
     ```scala
+    // file: dto.scala - part of the demo
+    //> using scala {{ scala.3 }}
     case class UserDTO(
         name: String, // 1. primitive
         addresses: Seq[AddressDTO], // 2. Seq collection
@@ -42,6 +44,7 @@ and this domain model:
 !!! example
 
     ```scala
+    // file: domain.scala - part of the demo
     case class User(
         name: Username, // 1. value class
         addresses: List[Address], // 2. List collection
@@ -71,19 +74,19 @@ From now on, forget about it! Encoding domain object with an infallible transfor
 !!! example
 
     ```scala
+    // file: conversion.sc - part of the demo
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
-    User(
-      Username("John"),
-      List(Address("Paper St", "Somewhere")),
-      RecoveryMethod.Email("john@example.com")
-    ).transformInto[UserDTO]
-    // UserDTO(
-    //   "John",
-    //   Seq(AddressDTO("Paper St", "Somewhere")),
-    //   Some(RecoveryMethodDTO.Email(EmailDTO("john@example.com")))
-    // )
+    println(
+      User(
+        Username("John"),
+        List(Address("Paper St", "Somewhere")),
+        RecoveryMethod.Email("john@example.com")
+      ).transformInto[UserDTO]
+    )
+    // expected output:
+    // UserDTO(John,List(AddressDTO(Paper St,Somewhere)),Some(Email(EmailDTO(john@example.com))))
     ```
 
 ??? example "Curious about the generated code?"
@@ -122,34 +125,37 @@ Done! Decoding Protobuf into domain object with a fallible transformation, like 
 !!! example
 
     ```scala
+    // file: conversion.sc - part of the demo
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
-    UserDTO(
-      "John",
-      Seq(AddressDTO("Paper St", "Somewhere")),
-      Option(RecoveryMethodDTO.Email(EmailDTO("john@example.com")))
+    println(
+      UserDTO(
+        "John",
+        Seq(AddressDTO("Paper St", "Somewhere")),
+        Option(RecoveryMethodDTO.Email(EmailDTO("john@example.com")))
+      )
+        .transformIntoPartial[User]
+        .asEither
+        .left
+        .map(_.asErrorPathMessages)
     )
-      .transformIntoPartial[User]
-      .asEither
-      .left
-      .map(_.asErrorPathMessages)
-    // Right(User(
-    //   Username("John"),
-    //   List(Address("Paper St", "Somewhere")),
-    //   RecoveryMethod.Email("john@example.com")
-    // ))
+    // expected output:
+    // Right(User(Username(John),List(Address(Paper St,Somewhere)),Email(john@example.com)))
 
-    UserDTO(
-      "John",
-      Seq(AddressDTO("Paper St", "Somewhere")),
-      None
+    println(
+      UserDTO(
+        "John",
+        Seq(AddressDTO("Paper St", "Somewhere")),
+        None
+      )
+        .transformIntoPartial[User]
+        .asEither
+        .left
+        .map(_.asErrorPathMessages)
     )
-      .transformIntoPartial[User]
-      .asEither
-      .left
-      .map(_.asErrorPathMessages)
-    // Left(List("recovery" -> EmptyValue))
+    // expected output:
+    // Left(List((recovery,EmptyValue)))
     ```
 
 ??? example "Curious about the generated code?"
