@@ -2896,6 +2896,7 @@ to be automatically recognized as such:
     than where they are being used:
 
     ```scala
+    // file: models.scala - part of opaque example
     package models
 
     case class StringIP(s1: String, s2: String, s3: String, s4: String)
@@ -2925,6 +2926,7 @@ to be automatically recognized as such:
     ```
 
     ```scala
+    // file: main.scala - part of opaque example
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     package example
@@ -2954,6 +2956,7 @@ to be automatically recognized as such:
 !!! example
 
     ```scala
+    // file: models.scala - part of opaque example 2
     package models
 
     case class Foo(value: String)
@@ -2967,6 +2970,7 @@ to be automatically recognized as such:
     ```
 
     ```scala
+    // file: main.scala - part of opaque example 2
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     package example
@@ -3359,6 +3363,7 @@ but Chimney has a specific solution for this:
 !!! example
 
     ```scala
+    // file: PermissiveNamesComparison.scala - part of custom naming comparison example
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     package your.organization
 
@@ -3388,6 +3393,7 @@ but Chimney has a specific solution for this:
     be able to use that value.
 
     ```scala
+    // file: snippet.test.sc - part of custom naming comparison example
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
 
     case class Foo(a_name: String, BName: String)

@@ -61,10 +61,6 @@ class ChimneyExtendedRunner(runner: Runner)(
     "supported-transformations.md#Handling a specific `sealed` subtype with a computed value[4]" -> "requires previous snippet with Java code",
     "supported-transformations.md#Handling a specific `sealed` subtype with a computed value[5]" -> "requires previous snippet with Java code",
     "supported-transformations.md#Handling a specific `sealed` subtype with a computed value[6]" -> "requires previous snippet with Java code",
-    "supported-transformations.md#Types with manually provided constructors[3]" -> "example split into multiple files",
-    "supported-transformations.md#Types with manually provided constructors[4]" -> "contunuation from the previous snippet",
-    "supported-transformations.md#Types with manually provided constructors[5]" -> "example split into multiple files",
-    "supported-transformations.md#Types with manually provided constructors[6]" -> "contunuation from the previous snippet",
     "supported-transformations.md#Defining custom name matching predicate[1]" -> "example split into multiple files",
     "supported-transformations.md#Defining custom name matching predicate[2]" -> "contunuation from the previous snippet",
     "troubleshooting.md#Ducktape[2]" -> "snippet throws exception!!! investigate later", // FIXME: https://github.com/scala/scala3/issues/20349
