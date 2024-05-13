@@ -1,5 +1,5 @@
 //> using scala 3.3.3
-//> using dep com.kubuszok::scala-cli-md-spec:0.1.0
+//> using dep com.kubuszok::scala-cli-md-spec:0.1.1
 //> using dep org.virtuslab::scala-yaml:0.0.8
 
 import com.kubuszok.scalaclimdspec.*
@@ -51,24 +51,6 @@ class ChimneyExtendedRunner(runner: Runner)(
     (raw"\{\{\s*" + k + raw"\s*\}\}") -> v
   }
 
-  private val manuallyIgnored = ListMap(
-    "supported-transformations.md#Between `sealed`/`enum`s[2]" -> "snippet fails!!! investigate later", // FIXME: https://github.com/scala/scala3/issues/20349
-    "supported-transformations.md#Between `sealed`/`enum`s[3]" -> "snippet throws exception!!! investigate later", // FIXME: https://github.com/scala/scala3/issues/20349
-    "supported-transformations.md#Between `sealed`/`enum`s[4]" -> "snippet throws exception!!! investigate later", // FIXME: https://github.com/scala/scala3/issues/20349
-    "supported-transformations.md#Java's `enum`s[1]" -> "requires previous snippet with Java code",
-    "supported-transformations.md#Java's `enum`s[2]" -> "requires previous snippet with Java code",
-    "supported-transformations.md#Handling a specific `sealed` subtype with a computed value[3]" -> "snippet throws exception!!! investigate later", // FIXME: https://github.com/scala/scala3/issues/20349
-    "supported-transformations.md#Handling a specific `sealed` subtype with a computed value[4]" -> "requires previous snippet with Java code",
-    "supported-transformations.md#Handling a specific `sealed` subtype with a computed value[5]" -> "requires previous snippet with Java code",
-    "supported-transformations.md#Handling a specific `sealed` subtype with a computed value[6]" -> "requires previous snippet with Java code",
-    "supported-transformations.md#Defining custom name matching predicate[1]" -> "example split into multiple files",
-    "supported-transformations.md#Defining custom name matching predicate[2]" -> "contunuation from the previous snippet",
-    "troubleshooting.md#Ducktape[2]" -> "snippet throws exception!!! investigate later", // FIXME: https://github.com/scala/scala3/issues/20349
-    "troubleshooting.md#Ducktape[4]" -> "snippet throws exception!!! investigate later", // FIXME: https://github.com/scala/scala3/issues/20349
-    "troubleshooting.md#Ducktape[8]" -> "snippet throws exception!!! investigate later", // FIXME: https://github.com/scala/scala3/issues/20349
-    "troubleshooting.md#Ducktape[10]" -> "snippet throws exception!!! investigate later" // FIXME: https://github.com/scala/scala3/issues/20349
-  )
-
   val addDefaultScala: Snippet.Content => Snippet.Content = {
     case Snippet.Content.Single(content) =>
       Snippet.Content.Single(
@@ -96,19 +78,16 @@ class ChimneyExtendedRunner(runner: Runner)(
       )
   }
 
-  export runner.{docsDir, filter, tmpDir}
+  export runner.{docsDir, filter, howToRun, tmpDir}
 
   extension (snippet: Snippet)
     def adjusted: Snippet =
       // interpolate templates before Default adjustments
       runner.adjusted(snippet.copy(content = interpolateTemplates(snippet.content)))
 
-    def howToRun: Runner.Strategy = manuallyIgnored.get(snippet.stableName) match
-      case None         => runner.howToRun(snippet)
-      case Some(reason) => Runner.Strategy.Ignore(reason)
-
   extension (snippets: List[Snippet])
     def adjusted: List[Snippet] = runner.adjusted(snippets).map { snippet =>
+      // add default Scala but only to those snippets that are already run (adding it before would make all of them run)
       howToRun(snippet) match
         case Runner.Strategy.Ignore(_) => snippet
         case _                         => snippet.copy(content = addDefaultScala(snippet.content))

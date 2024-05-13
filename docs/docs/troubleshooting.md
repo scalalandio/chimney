@@ -808,6 +808,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     Chimney's counterpart:
     
     ```scala
+    // file: snippet.scala - part of Ductape counterpart 1
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     
@@ -835,6 +836,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
         case Card(digits: Long, name: String)
         case Cash
     
+    @main def example: Unit = {
     val wirePerson = wire.Person(
       "John",
       "Doe",
@@ -900,6 +902,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     //     Card(digits = 23232323L, name = "J. Doe")
     //   )
     // )
+    }
     ```
 
 !!! example "Nested enum with missing counterpart"
@@ -967,6 +970,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     which would handle them as top level:
 
     ```scala
+    // file: snippet.scala - part of Ductape counterpart 2
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     
@@ -995,6 +999,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
         case Card(digits: Long, name: String)
         case Cash
     
+    @main def example: Unit = {
     val wirePerson = wire.Person(
       "John",
       "Doe",
@@ -1033,6 +1038,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     //     Cash
     //   )
     // )
+    }
     ```
 
 !!! example "Nested enum with missing counterpart"
@@ -1126,6 +1132,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     Chimney's counterpart:
     
     ```scala
+    // file: snippet.scala - part of Ductape counterpart 3
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     
@@ -1156,6 +1163,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
         
     case class PaymentBand(name: String, digits: Long, color: String = "red")
     
+    @main def example: Unit = {
     val card: wire.PaymentMethod.Card =
       wire.PaymentMethod.Card(name = "J. Doe", digits = 213712345)
       
@@ -1205,6 +1213,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
       .into[DestToplevel]
       .enableOptionDefaultsToNone
       .transform
+    }
     ```
 
 !!! example "Coproduct configurations"
@@ -1268,6 +1277,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     Chimney's counterpart:
 
     ```scala
+    // file: snippet.scala - part of Ductape counterpart 4
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     
@@ -1296,6 +1306,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
         case Card(digits: Long, name: String)
         case Cash
     
+    @main def example: Unit = {
     val transfer = wire.PaymentMethod.Transfer("2764262")
     
     val wirePerson = wire.Person(
@@ -1327,6 +1338,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
       .withEnumCaseHandled[wire.PaymentMethod.Transfer](transfer => domain.PaymentMethod.Card(name = "J. Doe", digits = transfer.accountNo.toLong))
       .transform
     // PaymentMethod = Card(name = "J. Doe", digits = 2764262L)
+    }
     ```
 
 The biggest difference might be approach towards transformations that can fail in runtime. Ducktape uses user-provided
@@ -1433,6 +1445,7 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     Chimney's counterpart:
 
     ```scala
+    // file: snippet.scala - part of Ductape counterpart 5
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     
@@ -1471,6 +1484,7 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
         case Card(digits: newtypes.Positive, name: newtypes.NonEmptyString)
         case Cash
         
+    @main def example: Unit = {
     val wirePerson = wire.Person(
       "John",
       "Doe",
@@ -1510,6 +1524,7 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
       )
       .transformFailFast
       .asEitherErrorPathMessageStrings
+    }
     ``` 
 
 Since Ducktape is inspired by Chimney, there is a huge overlap in functionality. However, there are some differences:

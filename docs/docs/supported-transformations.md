@@ -1852,6 +1852,7 @@ It works also with Scala 3's `enum`:
     `sealed trait` into `enum`
 
     ```scala
+    // file: snippet.scala - part of sealed trait into Scala 3 enum example
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
@@ -1865,10 +1866,12 @@ It works also with Scala 3's `enum`:
       case Fizz
       case Buzz
 
+    @main def example: Unit = {
     (Foo.Baz("value", 10): Foo)
       .transformInto[Bar] // Bar.Baz(10)
     (Foo.Buzz: Foo)
       .transformInto[Bar] // Bar.Buzz
+    }
     ```
     
 !!! example
@@ -1876,6 +1879,7 @@ It works also with Scala 3's `enum`:
     `enum` into `sealed trait` 
 
     ```scala
+    // file: snippet.scala - part of Scala 3 enum into sealed trait example
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
@@ -1889,10 +1893,12 @@ It works also with Scala 3's `enum`:
       case object Fizz extends Bar
       case object Buzz extends Bar
 
+    @main def example: Unit = {
     (Foo.Baz("value", 10): Foo)
       .transformInto[Bar] // Bar.Baz(10)
     (Foo.Buzz: Foo)
       .transformInto[Bar] // Bar.Buzz
+    }
     ```
     
 !!! example
@@ -1900,6 +1906,7 @@ It works also with Scala 3's `enum`:
     `enum` into `enum` 
 
     ```scala
+    // file: snippet.scala - part of Scala 3 enum into Scala 3 enum example
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
@@ -1912,10 +1919,12 @@ It works also with Scala 3's `enum`:
       case Fizz
       case Buzz
 
+    @main def example: Unit = {
     (Foo.Baz("value", 10): Foo)
       .transformInto[Bar] // Bar.Baz(10)
     (Foo.Buzz: Foo)
       .transformInto[Bar] // Bar.Buzz
+    }
     ```
 
 ### Non-flat ADTs
@@ -1970,13 +1979,14 @@ Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/a
     Java's `enum` to/from `sealed`
 
     ```java
-    // in Java
+    // file: ColorJ.java - part of Java enum and Scala 2 example
     enum ColorJ {
       Red, Green, Blue;
     }
     ```
 
     ```scala
+    // file: example.sc - part of Java enum and Scala 2 example
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
 
@@ -2000,13 +2010,14 @@ Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/a
     Java's `enum` to/from Scala's `enum`
 
     ```java
-    // in Java
+    // file: ColorJ.java - part of Java enum and Scala 3 example
     enum ColorJ {
       Red, Green, Blue;
     }
     ```
 
     ```scala
+    // file: example.scala - part of Java enum and Scala 3 example
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
@@ -2014,12 +2025,14 @@ Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/a
     enum ColorE:
       case Red, Green, Blue
 
+    @main def example: Unit = {
     ColorJ.Red.transformInto[ColorE] // ColorE.Red
     ColorJ.Green.transformInto[ColorE] // ColorE.Green
     ColorJ.Blue.transformInto[ColorE] // ColorE.Blue
-    (ColorE.Red: ColorS).transformInto[ColorS] // ColorJ.Red
-    (ColorE.Green: ColorS).transformInto[ColorS] // ColorJ.Green
-    (ColorE.Blue: ColorS).transformInto[ColorS] // ColorJ.Blue
+    (ColorE.Red: ColorE).transformInto[ColorJ] // ColorJ.Red
+    (ColorE.Green: ColorE).transformInto[ColorJ] // ColorJ.Green
+    (ColorE.Blue: ColorE).transformInto[ColorJ] // ColorJ.Blue
+    }
     ```
 
 ### Handling a specific `sealed` subtype with a computed value
@@ -2117,6 +2130,7 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     and `withEnumCaseHandledPartial`:
     
     ```scala
+    // file: snippet.scala - part of withEnumCaseHandled example 
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
@@ -2132,6 +2146,7 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
       case Buzz
     }
 
+    @main def example: Unit = {
     (Bar.Baz("value"): Bar)
       .into[Foo]
       .withEnumCaseHandled[Bar.Fizz.type] { fizz =>
@@ -2172,6 +2187,7 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
       }
       .transform
       .asEither // Right(Foo.Buzz)
+    }
     ```
     
     These methods are only aliases and there is no difference in behavior between `withSealedCaseHandled` and
@@ -2197,13 +2213,14 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     Java's `enum`s, the enum instance's exact type will always be upcasted/lost, turning the handler into "catch-all":
 
     ```java
-    // in Java
+    // file: ColorJ.java - part of Java enums in Scala 2 failure example
     enum ColorJ {
-      Red, Blue, Greed, Black;
+      Red, Blue, Green, Black;
     }
     ```
 
     ```scala
+    // file: example.sc - part of Java enums in Scala 2 failure example
     //> using scala {{ scala.2_13 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
@@ -2226,7 +2243,15 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     There is nothing we can do about the type, however, we can analyze the code and, if it preserves the exact Java enum
     we can use a sort of a type refinement to remember the selected instance:
     
+    ```java
+    // file: ColorJ.java - part of Java enums in Scala 2 workaround example
+    enum ColorJ {
+      Red, Blue, Green, Black;
+    }
+    ```
+
     ```scala
+    // file: example.sc - part of Java enums in Scala 2 workaround example
     //> using scala {{ scala.2_13 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl._
@@ -2268,7 +2293,15 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     
     This issue doesn't occur on Scala 3, which infers types correctly:
     
+    ```java
+    // file: ColorJ.java - part of Java enums in Scala 3 example
+    enum ColorJ {
+      Red, Blue, Green, Black;
+    }
+    ```
+
     ```scala
+    // file: example.scala - part of Java enums in Scala 3 example
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
@@ -2278,10 +2311,12 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
 
     def blackIsRed(black: ColorJ.Black.type): ColorS = ColorS.Red
 
-    ColorJ.Red.into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Red
-    ColorJ.Green.into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Green
-    ColorJ.Blue.into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Blue
-    ColorJ.Black.into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Black
+    @main def example: Unit = {
+    (ColorJ.Red: ColorJ).into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Red
+    (ColorJ.Green: ColorJ).into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Green
+    (ColorJ.Blue: ColorJ).into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Blue
+    (ColorJ.Black: ColorJ).into[ColorS].withSealedSubtypeHandled(blackIsRed).transform // ColorS.Black
+    }
     ```
 
 ### Customizing subtype name matching
@@ -3363,7 +3398,7 @@ but Chimney has a specific solution for this:
 !!! example
 
     ```scala
-    // file: PermissiveNamesComparison.scala - part of custom naming comparison example
+    // file: your/organization/PermissiveNamesComparison.scala - part of custom naming comparison example
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     package your.organization
 
@@ -3393,18 +3428,23 @@ but Chimney has a specific solution for this:
     be able to use that value.
 
     ```scala
-    // file: snippet.test.sc - part of custom naming comparison example
-    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    // file: your/organization/PermissiveNamesComparison.test.scala - part of custom naming comparison example
+    //> using dep org.scalameta::munit::1.0.0-RC1
+    import io.scalaland.chimney.dsl._
 
     case class Foo(a_name: String, BName: String)
     case class Bar(`a-name`: String, getBName: String)
 
-    Foo("value1", "value2")
-      .into[Bar]
-      .enableCustomFieldNameComparison(your.organization.PermissiveNamesComparison)
-      // this would be parsed as well
-      // .enableCustomSubtypeNameComparison(your.organization.PermissiveNamesComparison)
-      .transform
+    class Test extends munit.FunSuite {
+      test("should compile") {
+        Foo("value1", "value2")
+          .into[Bar]
+          .enableCustomFieldNameComparison(your.organization.PermissiveNamesComparison)
+          // this would be parsed as well
+          // .enableCustomSubtypeNameComparison(your.organization.PermissiveNamesComparison)
+          .transform
+      }
+    }
     ```
 
 Since this feature relied on ClassLoaders and class path lookup it, testing it with REPL may not work.
