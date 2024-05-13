@@ -69,24 +69,30 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
       /** Applies type arguments from supertype to subtype if there are any */
       def subtypeTypeOf[A: Type](subtype: Symbol): ?<[A] =
-        subtype.primaryConstructor.paramSymss match {
-          // subtype takes type parameters
-          case typeParamSymbols :: _ if typeParamSymbols.exists(_.isType) =>
-            // we have to figure how subtypes type params map to parent type params
-            val appliedTypeByParam: Map[String, TypeRepr] =
-              subtype.typeRef
-                .baseType(TypeRepr.of[A].typeSymbol)
-                .typeArgs
-                .map(_.typeSymbol.name)
-                .zip(TypeRepr.of[A].typeArgs)
-                .toMap
-            // TODO: some better error message if child has an extra type param that doesn't come from the parent
-            val typeParamReprs: List[TypeRepr] = typeParamSymbols.map(_.name).map(appliedTypeByParam)
-            fromUntyped[A](subtype.typeRef.appliedTo(typeParamReprs)).as_?<[A]
-          // subtype is monomorphic
-          case _ =>
-            fromUntyped[A](subtype.typeRef).as_?<[A]
-        }
+        fromUntyped[A] {
+          val isScala3EnumButNotJavaEnum =
+            subtype.flags.is(Flags.Enum | Flags.StableRealizable) && !subtype.flags.is(Flags.JavaStatic)
+          if isScala3EnumButNotJavaEnum then TypeRepr.of[A].memberType(subtype)
+          else {
+            subtype.primaryConstructor.paramSymss match {
+              // subtype takes type parameters
+              case typeParamSymbols :: _ if typeParamSymbols.exists(_.isType) =>
+                // we have to figure how subtypes type params map to parent type params
+                val appliedTypeByParam: Map[String, TypeRepr] =
+                  subtype.typeRef
+                    .baseType(TypeRepr.of[A].typeSymbol)
+                    .typeArgs
+                    .map(_.typeSymbol.name)
+                    .zip(TypeRepr.of[A].typeArgs)
+                    .toMap
+                // TODO: some better error message if child has an extra type param that doesn't come from the parent
+                val typeParamReprs: List[TypeRepr] = typeParamSymbols.map(_.name).map(appliedTypeByParam)
+                subtype.typeRef.appliedTo(typeParamReprs)
+              // subtype is monomorphic
+              case _ => subtype.typeRef
+            }
+          }
+        }.as_?<[A]
     }
 
     val Nothing: Type[Nothing] = quoted.Type.of[Nothing]

@@ -15,6 +15,25 @@ class TotalTransformerEnumSpec extends ChimneySpec {
     (colors1enums.Color.Blue: colors1enums.Color).transformInto[colors2enums.Color] ==> colors2enums.Color.Blue
   }
 
+  test("""sdsdfs""") {
+    class Snippet {
+      enum Color1:
+        case Red, Blue, Green
+
+      enum Color2:
+        case Blue, Green, Red, Black
+
+      val result = {
+        // implicit val cfg = TransformerConfiguration.default.enableMacrosLogging
+        (Color1.Red: Color1).transformInto[Color2] ==> Color2.Red
+        (Color1.Green: Color1).transformInto[Color2] ==> Color2.Green
+        (Color1.Blue: Color1).transformInto[Color2] ==> Color2.Blue
+      }
+    }
+
+    new Snippet().result
+  }
+
   test(
     """transform nested sealed hierarchies between flat and nested hierarchies of case objects without modifiers"""
   ) {
