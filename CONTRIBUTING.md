@@ -8,6 +8,48 @@ Please, use provided templates to describe the issue. It makes it easier for us 
 we would have to do improve things. While it may look a bit verbose, knowing: the versions, what you did, what error you
 got, really helps us understand the core of the problem faster.
 
+## Contributing to the documentation
+
+Documentation is hosted on [Read the Docs](https://docs.readthedocs.io/) using their versioning system. It uses
+[MkDocs](https://www.mkdocs.org/) with [Material](https://squidfunk.github.io/mkdocs-material/) and 
+[Macros](https://mkdocs-macros-plugin.readthedocs.io/) plugins.
+
+To develop locally it is recommended to install [Just](https://github.com/casey/just) and Docker:
+
+ * `cd docs`
+ * `just serve`
+ * open http://0.0.0.0:8000/
+
+Site will reload and update as you edit the markdown files in `docs/docs` directory.
+
+### Testing snippets
+
+Testing snippets requires [Scala CLI](https://scala-cli.virtuslab.org/) installed. They are implemented with
+[ScalaCLI.md Spec](https://github.com/MateuszKubuszok/scala-cli-md-spec).
+
+To run all tests you should publish the newest Chimney artifacts locally:
+
+```bash
+sbt publish-local-for-tests
+```
+
+and look what version name was generated for them. Then you can run (from the root of the project):
+
+```bash
+scala-cli run scripts/test-snippets.scala -- --extra "chimney-version=[version from the artifacts]" "$PWD/docs/docs"
+# or
+scala-cli run scripts/test-snippets.scala -- --extra "chimney-version=[version from the artifacts]" --test-only '*' "$PWD/docs/docs"
+```
+
+to test all snippets. To test only selected ones you can run:
+
+```bash
+# test all snippets from supported-transformations.md
+scala-cli run scripts/test-snippets.scala -- --extra "chimney-version=[version from the artifacts]" --test-only 'supported-transformations.md#*' "$PWD/docs/docs"
+# test all snippets from supported-transformations.md in "Total `Transformer`s vs `PartialTransformer`s" section
+scala-cli run scripts/test-snippets.scala -- --extra "chimney-version=[version from the artifacts]" --test-only 'supported-transformations.md#Total `Transformer`s vs `PartialTransformer`s*' "$PWD/docs/docs"
+```
+
 ## Contributing code
 
 We are open to all contributors. And Chimney is a complicated library. There are many things that you could
@@ -93,20 +135,6 @@ Very basic introduction can be found in [design doc](DESIGN.md) and in the
 [Under the hood](https://chimney.readthedocs.io/under-the-hood/) section of the documentation.
 From then on we suggest looking at tests, and using`.enableMacrosLogging` to see how some branches are triggered.
 If still at doubt, you can ask us on GH discussions.
-
-## Contributing to the documentation
-
-Documentation is hosted on [Read the Docs](https://docs.readthedocs.io/) using their versioning system. It uses
-[MkDocs](https://www.mkdocs.org/) with [Material](https://squidfunk.github.io/mkdocs-material/) and 
-[Macros](https://mkdocs-macros-plugin.readthedocs.io/) plugins.
-
-To develop locally it is recommended to install [Just](https://github.com/casey/just) and Docker:
-
- * `cd docs`
- * `just serve`
- * open http://0.0.0.0:8000/
-
-Site will reload and update as you edit the markdown files in docs/docs directory.
 
 ## Testing snapshots
 
