@@ -205,7 +205,7 @@ val settings = Seq(
 val dependencies = Seq(
   libraryDependencies ++= Seq(
     "org.scala-lang.modules" %%% "scala-collection-compat" % "2.11.0",
-    "org.scalameta" %%% "munit" % "1.0.0-RC1" % Test
+    "org.scalameta" %%% "munit" % "1.0.0" % Test
   ),
   libraryDependencies ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
@@ -219,7 +219,7 @@ val dependencies = Seq(
   }
 )
 
-val versionSchemeSettings = Seq(versionScheme := Some("early-semver")) // TODO: change to semver before 1.0.0
+val versionSchemeSettings = Seq(versionScheme := Some("early-semver"))
 
 val publishSettings = Seq(
   organization := "io.scalaland",
