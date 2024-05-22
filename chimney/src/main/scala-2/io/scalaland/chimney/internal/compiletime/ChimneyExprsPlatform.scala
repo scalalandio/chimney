@@ -89,7 +89,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
             result: Expr[partial.Result[A]]
         ): Expr[partial.Result.Errors] =
           c.Expr[partial.Result.Errors](
-            q"_root_.io.scalaland.chimney.partial.Result.Errors.__mergeResultNullable[${Type[A]}]($errorsNullable, $result)"
+            q"_root_.io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable[${Type[A]}]($errorsNullable, $result)"
           )
       }
 
