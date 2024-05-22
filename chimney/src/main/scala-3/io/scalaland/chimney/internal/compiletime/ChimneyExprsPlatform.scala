@@ -74,7 +74,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
             errorsNullable: Expr[partial.Result.Errors],
             result: Expr[partial.Result[A]]
         ): Expr[partial.Result.Errors] =
-          '{ partial.Result.Errors.__mergeResultNullable[A](${ errorsNullable }, ${ result }) }
+          '{ io.scalaland.chimney.internal.runtime.ResultUtils.mergeNullable[A](${ errorsNullable }, ${ result }) }
       }
 
       def fromEmpty[A: Type]: Expr[partial.Result[A]] = '{ partial.Result.fromEmpty[A] }
