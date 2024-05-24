@@ -29,14 +29,18 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
         .toList
 
     private def extractSealedSubtypes[A: Type]: List[(String, ?<[A])] = {
+
       def extractRecursively(t: TypeSymbol): List[TypeSymbol] =
         if (t.asClass.isSealed) t.asClass.knownDirectSubclasses.toList.map(_.asType).flatMap(extractRecursively)
         else List(t)
 
+      val order =
+        Ordering.fromLessThan[Position]((a, b) => a.line < b.line || (a.line == b.line && a.column < b.column))
+
       // calling .distinct here as `knownDirectSubclasses` returns duplicates for multiply-inherited types
-      extractRecursively(Type[A].tpe.typeSymbol.asType).distinct.map(typeSymbol =>
-        subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol)
-      ).sortBy(_._1)
+      extractRecursively(Type[A].tpe.typeSymbol.asType).distinct
+        .sortBy(_.pos)(order)
+        .map(typeSymbol => subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol))
     }
 
     private def symbolsToEnum[A: Type](subtypes: List[(String, ?<[A])]): Enum[A] =
