@@ -36,7 +36,7 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
       // calling .distinct here as `knownDirectSubclasses` returns duplicates for multiply-inherited types
       extractRecursively(Type[A].tpe.typeSymbol.asType).distinct.map(typeSymbol =>
         subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol)
-      )
+      ).sortBy(_._1)
     }
 
     private def symbolsToEnum[A: Type](subtypes: List[(String, ?<[A])]): Enum[A] =
