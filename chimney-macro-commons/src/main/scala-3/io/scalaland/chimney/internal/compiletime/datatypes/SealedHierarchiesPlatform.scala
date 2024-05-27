@@ -29,10 +29,14 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
         else if sym.flags.is(Flags.Module) then List(sym.typeRef.typeSymbol.moduleClass)
         else List(sym)
 
+      val order = Ordering.Option(Ordering.fromLessThan[Position] { (a, b) =>
+        a.startLine < b.startLine || (a.startLine == b.startLine && a.startColumn < b.startColumn)
+      })
+
       // calling .distinct here as `children` returns duplicates for multiply-inherited types
-      extractRecursively(TypeRepr.of[A].typeSymbol).distinct.map(typeSymbol =>
-        subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol)
-      )
+      extractRecursively(TypeRepr.of[A].typeSymbol).distinct
+        .sortBy(_.pos)(order)
+        .map(typeSymbol => subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol))
     }
 
     private def symbolsToEnum[A: Type](subtypes: List[(String, ?<[A])]): Enum[A] =
