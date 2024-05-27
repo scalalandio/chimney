@@ -35,7 +35,7 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
 
       // calling .distinct here as `children` returns duplicates for multiply-inherited types
       extractRecursively(TypeRepr.of[A].typeSymbol).distinct
-        .sortBy(_.pos)(order)
+        .sortBy(_.pos.filter(pos => scala.util.Try(pos.start).isSuccess))(order)
         .map(typeSymbol => subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol))
     }
 
