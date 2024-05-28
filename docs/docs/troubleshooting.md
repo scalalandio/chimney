@@ -43,7 +43,10 @@ you can assume that most changes are source compatible. The only explicit change
  - deprecation of `withCoproductInstance` - method is still available but deprecated in favor of `withEnumCaseHandled`
    and `withSealedSubtypeHandled` 
  - setters behavior was restored to how it used to work on 0.7.x - unary method not only has to start its name with
-   `set` but also return `Unit`. If needed non-`Unit` setters can be enabled by an opt-in flag.
+   `set` but also return `Unit`. If needed non-`Unit` setters can be enabled by an opt-in flag
+ - the way of turning `Option`/`Either[String, *]`/`Try`/`cats.data.Validated` was unified - `AsResult[F]` type class
+   was introduced, and  `import io.scalaland.chimney.partial.syntax.*` provides `fa.asResult` syntax. So
+   `validated.toPartialResult` has to be rewritten into `validated.asResult`.
 
 While most changes are source backward compatible, a lot of internals had to be revamped to fix bugs and unblock
 further development. For that reason these changes are not binary backward compatible, and have to be considered 
@@ -70,6 +73,32 @@ mathematical sets.
 
 Since 1.0.0 Chimney makes non-`Unit` setters opt-in - it still allows to use them but requires enabling them
 [with a flag](supported-transformations.md#writing-to-non-unit-bean-setters).
+
+### Migrating to `asResult`
+
+Chimney 0.8.5 introduced `AsResult` type class:
+
+!!! example
+
+    ```scala
+    trait AsResult[F[_]] {
+      def asResult[A](fa: F[A]): Result[A]
+    }
+    ```
+
+which can be used together with `io.scalaland.chimney.partial.syntax._` to provide `asResult` extension:
+
+!!! example
+
+    ```scala
+    import io.scalaland.chimney.partial.syntax._
+    
+    (Left("error"): Either[String, Int]).asResult // partial.Result[Int]
+    ```
+
+Meanwhile, Chimney Cats' module used to define `toPartialResult` extension methods to handle conversion from
+`cats.Validated` into `partial.Result`. Now, it uses `asResult` as well - to migrate you simple have to replace all
+occurrences of `toPartialResult` with `asResult`. 
 
 ## Migration from 0.7.x to 0.8.0
 
