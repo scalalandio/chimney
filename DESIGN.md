@@ -97,7 +97,7 @@ stores transformed value next to overrides container, so it can generate similar
 // just calls b.transform(a)
 Bar(1, "test").transformInto(
   // created by implicit macro:
-  new Transformer.Autoderived[Bar, Foo] {
+  new Transformer.AutoDerived[Bar, Foo] {
     def transform(src: Bar): Foo = new Foo(
       src.a,
       src.b

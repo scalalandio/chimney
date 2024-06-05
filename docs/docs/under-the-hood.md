@@ -88,32 +88,32 @@ them slightly different types:
 !!! example
 
     ```scala
-    // Transformer is a subtype of Autoderived (is more specific/constrained)
-    trait Transformer[From, To] extends Transformer.Autoderived {
+    // Transformer is a subtype of AutoDerived (is more specific/constrained)
+    trait Transformer[From, To] extends Transformer.AutoDerived {
       def transform(src: From): To
     }
     object Transformer {
-      trait Autoderived[From, To] {
-    def transform(src: From): To
+      trait AutoDerived[From, To] {
+        def transform(src: From): To
       }
-      // Somewhere in the companion object we would define an implicit derivation of Autoderived,
+      // Somewhere in the companion object we would define an implicit derivation of AutoDerived,
       // making it a low-priority(!!!) implicit and a macro.
     }
     ```
     
     ```scala
     // extension method on [From](from: From)
-    def transformInto[To](implicit transformer: Transformer.Autoderived[From, To]): To = transformer.transform(from)
+    def transformInto[To](implicit transformer: Transformer.AutoDerived[From, To]): To = transformer.transform(from)
     ``` 
 
 With such setup:
 
   - the user's `Transformer` would always be attempted first
-  - then summoning would fall back on `Transformer.Autoderived` if there was none (being low-priority) 
+  - then summoning would fall back on `Transformer.AutoDerived` if there was none (being low-priority) 
   - since the automatic derivation would be a macro, it could produce a nice compiler error instead of
     _implicit not found_ (in macros there are ways to fail compilation with an error)
   - when needed, we could rule out automatic derivation just by summoning `Transformer` instead of
-    `Transformer.Autoderived` (which is done both in macros and in
+    `Transformer.AutoDerived` (which is done both in macros and in
     [`import io.scalaland.chimney.syntax._`](cookbook.md#automatic-semiautomatic-and-inlined-derivation))
 
 ### How DSL summons `PartialTransformer` instance
@@ -275,7 +275,7 @@ configs, meaning that they need a separate builder, but they use the same `Trans
 `Transformer.derive[From, To]` works the same way as the automatic derivation - a macro is called, and internally it
 generates the expression of type `To`. Before returning the expression the macro wraps it with a type class. The only
 differences between automatic and semiautomatic is `implicit` keyword and upcasting `Transformer` to
-`Transformer.Autoderived`. 
+`Transformer.AutoDerived`. 
 
 `Transformer.define[From, To].buildTransformer` works like a mix of `Transformer.derive[From, To]` and
 `from.into[To].transform`: it carries around `RuntimeDataStore` like `into.transform`, but don't need to store
