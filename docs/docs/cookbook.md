@@ -347,7 +347,7 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
 !!! example
 
     ```scala
-    //> using dep org.typelevel::cats-core::2.10.0
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
 
     case class RegistrationForm(
