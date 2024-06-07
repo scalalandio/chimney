@@ -7,7 +7,7 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.0.12")
 addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.10.0")
 addSbtPlugin("com.indoorvivants" % "sbt-commandmatrix" % "0.0.5")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.16.0")
-addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.17")
+addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.3")
 // publishing
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.10.0")
 addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.2.1")
@@ -19,8 +19,8 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.7")
 addSbtPlugin("org.jetbrains" % "sbt-ide-settings" % "1.1.0")
 // testing protobufs
 addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.7")
-libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.15"
-//
+libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.17"
+// documentation
 addSbtPlugin("com.github.reibitto" % "sbt-welcome" % "0.4.0")
 
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always

@@ -33,6 +33,15 @@ val versions = new {
   // Which version should be used in IntelliJ
   val ideScala = scala3
   val idePlatform = VirtualAxis.jvm
+
+  // Dependencies
+  val cats = "2.12.0"
+  val kindProjector = "0.13.3"
+  val munit = "1.0.0"
+  val scalaCollectionCompat = "2.12.0"
+  val scalaJavaCompat = "1.0.2"
+  val scalaJavaTime = "2.6.0"
+  val scalapbRuntime = scalapb.compiler.Version.scalapbVersion
 }
 
 // Common settings:
@@ -204,15 +213,15 @@ val settings = Seq(
 
 val dependencies = Seq(
   libraryDependencies ++= Seq(
-    "org.scala-lang.modules" %%% "scala-collection-compat" % "2.11.0",
-    "org.scalameta" %%% "munit" % "1.0.0" % Test
+    "org.scala-lang.modules" %%% "scala-collection-compat" % versions.scalaCollectionCompat,
+    "org.scalameta" %%% "munit" % versions.munit % Test
   ),
   libraryDependencies ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, _)) =>
         Seq(
           "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
-          compilerPlugin("org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full)
+          compilerPlugin("org.typelevel" % "kind-projector" % versions.kindProjector cross CrossVersion.full)
         )
       case _ => Seq.empty
     }
@@ -438,8 +447,8 @@ lazy val chimneyCats = projectMatrix
   .settings(dependencies *)
   .settings(
     Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.cats.*",
-    libraryDependencies += "org.typelevel" %%% "cats-core" % "2.10.0",
-    libraryDependencies += "org.typelevel" %%% "cats-laws" % "2.10.0" % Test
+    libraryDependencies += "org.typelevel" %%% "cats-core" % versions.cats,
+    libraryDependencies += "org.typelevel" %%% "cats-laws" % versions.cats % Test
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
@@ -459,7 +468,7 @@ lazy val chimneyJavaCollections = projectMatrix
   .settings(
     Compile / console / initialCommands := "import io.scalaland.chimney.*, io.scalaland.chimney.dsl.*, io.scalaland.chimney.javacollections.*",
     // Scala 2.12 doesn't have scala.jdk.StreamConverters and we use it in test of java.util.stream type class instances
-    libraryDependencies += "org.scala-lang.modules" %%% "scala-java8-compat" % "1.0.2" % Test
+    libraryDependencies += "org.scala-lang.modules" %%% "scala-java8-compat" % versions.scalaJavaCompat % Test
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
@@ -471,7 +480,7 @@ lazy val chimneyProtobufs = projectMatrix
       .Settings(
         // Scala.js and Scala Native decided to not implement java.time and let an external library do it,
         // meanwhile we want to provide some type class instances for types in java.time.
-        libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.5.0"
+        libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % versions.scalaJavaTime
       )) *
   )
   .enablePlugins(GitVersioning, GitBranchPrompt)
@@ -501,7 +510,7 @@ lazy val chimneyProtobufs = projectMatrix
     Compile / PB.targets := Seq(scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"),
     Test / PB.protoSources += PB.externalSourcePath.value,
     Test / PB.targets := Seq(scalapb.gen() -> (Test / sourceManaged).value / "scalapb"),
-    libraryDependencies += "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % ProtobufConfig
+    libraryDependencies += "com.thesamet.scalapb" %% "scalapb-runtime" % versions.scalapbRuntime % ProtobufConfig
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
