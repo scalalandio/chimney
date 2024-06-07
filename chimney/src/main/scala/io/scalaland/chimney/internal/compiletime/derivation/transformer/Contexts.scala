@@ -1,6 +1,5 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.partial
 
 private[compiletime] trait Contexts { this: Derivation =>
@@ -14,7 +13,6 @@ private[compiletime] trait Contexts { this: Derivation =>
 
     /** When using nested paths (_.foo.bar.baz) and recursive derivation this is the original, "top-level" value */
     val originalSrc: ExistentialExpr
-    val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
     val config: TransformerConfiguration
     val derivationStartedAt: java.time.Instant
 
@@ -27,7 +25,6 @@ private[compiletime] trait Contexts { this: Derivation =>
           From = Type[NewFrom],
           To = Type[NewTo],
           originalSrc = ctx.originalSrc,
-          runtimeDataStore = ctx.runtimeDataStore,
           config = ctx.config,
           ctx.derivationStartedAt
         )
@@ -36,7 +33,6 @@ private[compiletime] trait Contexts { this: Derivation =>
           From = Type[NewFrom],
           To = Type[NewTo],
           originalSrc = ctx.originalSrc,
-          runtimeDataStore = ctx.runtimeDataStore,
           config = ctx.config,
           ctx.derivationStartedAt
         )
@@ -48,7 +44,6 @@ private[compiletime] trait Contexts { this: Derivation =>
           From = ctx.From,
           To = ctx.To,
           originalSrc = ctx.originalSrc,
-          runtimeDataStore = ctx.runtimeDataStore,
           config = update(ctx.config),
           derivationStartedAt = ctx.derivationStartedAt
         )
@@ -57,7 +52,6 @@ private[compiletime] trait Contexts { this: Derivation =>
           From = ctx.From,
           To = ctx.To,
           originalSrc = ctx.originalSrc,
-          runtimeDataStore = ctx.runtimeDataStore,
           config = update(ctx.config),
           derivationStartedAt = ctx.derivationStartedAt
         )
@@ -85,7 +79,6 @@ private[compiletime] trait Contexts { this: Derivation =>
         val From: Type[From],
         val To: Type[To],
         val originalSrc: ExistentialExpr,
-        val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
         val config: TransformerConfiguration,
         val derivationStartedAt: java.time.Instant
     ) extends TransformationContext[From, To] {
@@ -107,14 +100,12 @@ private[compiletime] trait Contexts { this: Derivation =>
 
       def create[From: Type, To: Type](
           src: Expr[From],
-          config: TransformerConfiguration,
-          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
+          config: TransformerConfiguration
       ): ForTotal[From, To] =
         ForTotal(src = src)(
           From = Type[From],
           To = Type[To],
           originalSrc = src.as_??,
-          runtimeDataStore = runtimeDataStore,
           config = config.preventImplicitSummoningFor[From, To],
           derivationStartedAt = java.time.Instant.now()
         )
@@ -124,7 +115,6 @@ private[compiletime] trait Contexts { this: Derivation =>
         val From: Type[From],
         val To: Type[To],
         val originalSrc: ExistentialExpr,
-        val runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore],
         val config: TransformerConfiguration,
         val derivationStartedAt: java.time.Instant
     ) extends TransformationContext[From, To] {
@@ -148,13 +138,11 @@ private[compiletime] trait Contexts { this: Derivation =>
       def create[From: Type, To: Type](
           src: Expr[From],
           failFast: Expr[Boolean],
-          config: TransformerConfiguration,
-          runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
+          config: TransformerConfiguration
       ): ForPartial[From, To] = ForPartial(src = src, failFast = failFast)(
         From = Type[From],
         To = Type[To],
         originalSrc = src.as_??,
-        runtimeDataStore = runtimeDataStore,
         config = config.preventImplicitSummoningFor[From, To],
         derivationStartedAt = java.time.Instant.now()
       )

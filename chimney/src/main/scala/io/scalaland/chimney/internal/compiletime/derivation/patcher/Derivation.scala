@@ -156,8 +156,7 @@ private[compiletime] trait Derivation
     val context = TransformationContext.ForTotal
       .create[From, To](
         src,
-        TransformerConfiguration(),
-        ChimneyExpr.RuntimeDataStore.empty
+        TransformerConfiguration()
       )
       .updateConfig(_.allowFromToImplicitSummoning)
 

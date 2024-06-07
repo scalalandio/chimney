@@ -80,23 +80,17 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               val fromExpr = someFromExpr.upcastToExprOf[From]
 
               runtimeCoproductOverride match {
-                case TransformerOverride.CaseComputed(idx) =>
+                case TransformerOverride.CaseComputed(runtimeData) =>
                   // We're constructing:
                   // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => $To](someFromExpr)
                   TransformationExpr.fromTotal(
-                    ctx
-                      .runtimeDataStore(idx)
-                      .asInstanceOfExpr[From => To]
-                      .apply(fromExpr)
+                    runtimeData.asInstanceOfExpr[From => To].apply(fromExpr)
                   )
-                case TransformerOverride.CaseComputedPartial(idx) =>
+                case TransformerOverride.CaseComputedPartial(runtimeData) =>
                   // We're constructing:
                   // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => partial.Result[$To]](someFromExpr)
                   TransformationExpr.fromPartial(
-                    ctx
-                      .runtimeDataStore(idx)
-                      .asInstanceOfExpr[From => partial.Result[To]]
-                      .apply(fromExpr)
+                    runtimeData.asInstanceOfExpr[From => partial.Result[To]].apply(fromExpr)
                   )
               }
             }

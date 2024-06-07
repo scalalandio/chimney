@@ -40,11 +40,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
       import Product.Constructor.exprAsInstanceOfMethod as mkCtor
       constructorOverride match {
-        case TransformerOverride.Constructor(idx, args) =>
-          val Product.Constructor(parameters, constructor) = mkCtor[To](args)(ctx.runtimeDataStore(idx))
+        case TransformerOverride.Constructor(runtimeData, args) =>
+          val Product.Constructor(parameters, constructor) = mkCtor[To](args)(runtimeData)
           mapOverridesAndExtractorsToConstructorArguments[From, To, To](fromExtractors, parameters, constructor)
-        case TransformerOverride.ConstructorPartial(idx, args) =>
-          val Product.Constructor(params, ctor) = mkCtor[partial.Result[To]](args)(ctx.runtimeDataStore(idx))
+        case TransformerOverride.ConstructorPartial(runtimeData, args) =>
+          val Product.Constructor(params, ctor) = mkCtor[partial.Result[To]](args)(runtimeData)
           mapOverridesAndExtractorsToConstructorArguments[From, To, partial.Result[To]](fromExtractors, params, ctor)
             .map {
               case Rule.ExpansionResult.Expanded(transformationExpr) =>
@@ -272,15 +272,15 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Existential[TransformationExpr]] = runtimeFieldOverride match {
-      case TransformerOverride.Const(runtimeDataIdx) =>
+      case TransformerOverride.Const(runtimeData) =>
         // We're constructing:
         // '{ ${ runtimeDataStore }(idx).asInstanceOf[$ctorParam] }
         DerivationResult.existential[TransformationExpr, CtorParam](
           TransformationExpr.fromTotal(
-            ctx.runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[CtorParam]
+            runtimeData.asInstanceOfExpr[CtorParam]
           )
         )
-      case TransformerOverride.ConstPartial(runtimeDataIdx) =>
+      case TransformerOverride.ConstPartial(runtimeData) =>
         // We're constructing:
         // '{
         //   ${ runtimeDataStore }(idx)
@@ -289,15 +289,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         //  }
         DerivationResult.existential[TransformationExpr, CtorParam](
           TransformationExpr.fromPartial(
-            ctx
-              .runtimeDataStore(runtimeDataIdx)
+            runtimeData
               .asInstanceOfExpr[partial.Result[CtorParam]]
               .prependErrorPath(
                 ChimneyExpr.PathElement.Accessor(Expr.String(toName)).upcastToExprOf[partial.PathElement]
               )
           )
         )
-      case TransformerOverride.Computed(runtimeDataIdx) =>
+      case TransformerOverride.Computed(runtimeData) =>
         import ctx.originalSrc.{Underlying as OriginalFrom, value as originalSrc}
         ctx match {
           case TransformationContext.ForTotal(_) =>
@@ -305,7 +304,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             // '{ ${ runtimeDataStore }(idx).asInstanceOf[$OriginalFrom => $CtorParam](${ originalSrc }) }
             DerivationResult.existential[TransformationExpr, CtorParam](
               TransformationExpr.fromTotal(
-                ctx.runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[OriginalFrom => CtorParam].apply(originalSrc)
+                runtimeData.asInstanceOfExpr[OriginalFrom => CtorParam].apply(originalSrc)
               )
             )
           case TransformationContext.ForPartial(_, _) =>
@@ -320,9 +319,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             DerivationResult.existential[TransformationExpr, CtorParam](
               TransformationExpr.fromPartial(
                 ChimneyExpr.PartialResult
-                  .fromFunction(
-                    ctx.runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[OriginalFrom => CtorParam]
-                  )
+                  .fromFunction(runtimeData.asInstanceOfExpr[OriginalFrom => CtorParam])
                   .apply(originalSrc)
                   .prependErrorPath(
                     ChimneyExpr.PathElement
@@ -332,7 +329,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               )
             )
         }
-      case TransformerOverride.ComputedPartial(runtimeDataIdx) =>
+      case TransformerOverride.ComputedPartial(runtimeData) =>
         // We're constructing:
         // '{
         //   ${ runtimeDataStore }(idx)
@@ -342,8 +339,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         import ctx.originalSrc.{Underlying as OriginalFrom, value as originalSrc}
         DerivationResult.existential[TransformationExpr, CtorParam](
           TransformationExpr.fromPartial(
-            ctx
-              .runtimeDataStore(runtimeDataIdx)
+            runtimeData
               .asInstanceOfExpr[OriginalFrom => partial.Result[CtorParam]]
               .apply(originalSrc)
               .prependErrorPath(
