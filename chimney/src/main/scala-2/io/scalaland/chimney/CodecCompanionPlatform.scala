@@ -22,23 +22,3 @@ private[chimney] trait CodecCompanionPlatform { this: Codec.type =>
   def derive[Domain, Dto]: Codec[Domain, Dto] =
     macro CodecMacros.deriveCodecWithDefaults[Domain, Dto]
 }
-
-private[chimney] trait CodecAutoDerivedCompanionPlatform { this: Codec.AutoDerived.type =>
-
-  /** Provides [[io.scalaland.chimney.Codec.AutoDerived]] derived with the default settings.
-    *
-    * This instance WILL NOT be visible for recursive derivation (automatic, semiautomatic, inlined), which is how it
-    * differs from [[io.scalaland.chimney.auto#deriveAutomaticCodec]].
-    *
-    * @tparam Domain
-    *   type of domain value
-    * @tparam Dto
-    *   type of DTO value
-    * @return
-    *   [[io.scalaland.chimney.Codec.AutoDerived]] type class instance
-    *
-    * @since 1.2.0
-    */
-  implicit def deriveAutomatic[Domain, Dto]: Codec.AutoDerived[Domain, Dto] =
-    macro CodecMacros.deriveCodecWithDefaults[Domain, Dto]
-}
