@@ -10,30 +10,30 @@ import scala.quoted.*
 object IsoDefinitionMacros {
 
   def withFieldRenamedImpl[
-      From: Type,
-      To: Type,
-      FromOverrides <: TransformerOverrides: Type,
-      ToOverrides <: TransformerOverrides: Type,
+      First: Type,
+      Second: Type,
+      FirstOverrides <: TransformerOverrides: Type,
+      SecondOverrides <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
       T: Type,
       U: Type
   ](
-      id: Expr[IsoDefinition[From, To, FromOverrides, ToOverrides, Flags]],
-      selectorFrom: Expr[From => T],
-      selectorTo: Expr[To => U]
-  )(using Quotes): Expr[IsoDefinition[From, To, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
+      id: Expr[IsoDefinition[First, Second, FirstOverrides, SecondOverrides, Flags]],
+      selectorFirst: Expr[First => T],
+      selectorSecond: Expr[Second => U]
+  )(using Quotes): Expr[IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameTypes {
-      [fromPath <: Path, toPath <: Path] =>
-        (_: Type[fromPath]) ?=>
-          (_: Type[toPath]) ?=>
+      [firstPath <: Path, secondPath <: Path] =>
+        (_: Type[firstPath]) ?=>
+          (_: Type[secondPath]) ?=>
             '{
               $id.asInstanceOf[IsoDefinition[
-                From,
-                To,
-                RenamedFrom[fromPath, toPath, FromOverrides],
-                RenamedFrom[toPath, fromPath, ToOverrides],
+                First,
+                Second,
+                RenamedFrom[firstPath, secondPath, FirstOverrides],
+                RenamedFrom[secondPath, firstPath, SecondOverrides],
                 Flags
               ]]
           }
-    }(selectorFrom, selectorTo)
+    }(selectorFirst, selectorSecond)
 }

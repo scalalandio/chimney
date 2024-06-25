@@ -5,23 +5,38 @@ import io.scalaland.chimney.internal.compiletime.derivation.iso.IsoMacros
 import io.scalaland.chimney.internal.compiletime.dsl.IsoDefinitionMacros
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
 
+/** Allows customization of [[io.scalaland.chimney.Iso]] derivation.
+  *
+  * @tparam First
+  *   input type of the first conversion, output type of the second conversion
+  * @tparam Second
+  *   output type of the first conversion, input type of the second conversion
+  * @tparam FirstOverrides
+  *   type-level encoded config
+  * @tparam SecondOverrides
+  *   type-level encoded config
+  * @tparam Flags
+  *   type-level encoded flags
+  *
+  * @since 1.2.0
+  */
 final class IsoDefinition[
-    From,
-    To,
-    FromOverrides <: TransformerOverrides,
-    ToOverrides <: TransformerOverrides,
+    First,
+    Second,
+    FirstOverrides <: TransformerOverrides,
+    SecondOverrides <: TransformerOverrides,
     Flags <: TransformerFlags
 ](
-    val from: TransformerDefinition[From, To, FromOverrides, Flags],
-    val to: TransformerDefinition[To, From, ToOverrides, Flags]
+    val first: TransformerDefinition[First, Second, FirstOverrides, Flags],
+    val second: TransformerDefinition[Second, First, SecondOverrides, Flags]
 ) extends TransformerFlagsDsl[
-      [Flags1 <: TransformerFlags] =>> CodecDefinition[From, To, FromOverrides, ToOverrides, Flags1],
+      [Flags1 <: TransformerFlags] =>> CodecDefinition[First, Second, FirstOverrides, SecondOverrides, Flags1],
       Flags
     ] {
 
-  /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
+  /** Use `selectorFirst` field in `First` to obtain the value of `selectorSecond` field in `Second`
     *
-    * By default if `From` is missing field picked by `selectorTo` (or reverse) the compilation fails.
+    * By default if `First` is missing field picked by `selectorSecond` (or reverse) the compilation fails.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-its-source-field]]
@@ -31,25 +46,25 @@ final class IsoDefinition[
     *   type of source field
     * @tparam U
     *   type of target field
-    * @param selectorFrom
-    *   source field in `From`, defined like `_.originalName`
-    * @param selectorTo
-    *   target field in `To`, defined like `_.newName`
+    * @param selectorFirst
+    *   source field in `First`, defined like `_.originalName`
+    * @param selectorSecond
+    *   target field in `Second`, defined like `_.newName`
     * @return
     *   [[io.scalaland.chimney.dsl.IsoDefinition]]
     *
     * @since 1.2.0
     */
   transparent inline def withFieldRenamed[T, U](
-      inline selectorFrom: From => T,
-      inline selectorTo: To => U
-  ): IsoDefinition[From, To, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags] =
-    ${ IsoDefinitionMacros.withFieldRenamedImpl('this, 'selectorFrom, 'selectorTo) }
+      inline selectorFirst: First => T,
+      inline selectorSecond: Second => U
+  ): IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags] =
+    ${ IsoDefinitionMacros.withFieldRenamedImpl('this, 'selectorFirst, 'selectorSecond) }
 
   /** Build Iso using current configuration.
     *
-    * It runs macro that tries to derive instance of `Iso[From, To]`. When transformation can't be derived, it results
-    * with compilation error.
+    * It runs macro that tries to derive instance of `Iso[First, Second]`. When transformation can't be derived, it
+    * results with compilation error.
     *
     * @return
     *   [[io.scalaland.chimney.Iso]] type class instance
@@ -58,6 +73,6 @@ final class IsoDefinition[
     */
   inline def buildIso[ImplicitScopeFlags <: TransformerFlags](using
       tc: TransformerConfiguration[ImplicitScopeFlags]
-  ): Iso[From, To] =
-    ${ IsoMacros.deriveIsoWithConfig[From, To, FromOverrides, ToOverrides, Flags, ImplicitScopeFlags]('this) }
+  ): Iso[First, Second] =
+    ${ IsoMacros.deriveIsoWithConfig[First, Second, FirstOverrides, SecondOverrides, Flags, ImplicitScopeFlags]('this) }
 }

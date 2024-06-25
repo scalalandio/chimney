@@ -11,22 +11,22 @@ class IsoDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
   import c.universe.{Select as _, *}
 
   def withFieldRenamedImpl[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
-      FromOverrides <: TransformerOverrides: WeakTypeTag,
-      ToOverrides <: TransformerOverrides: WeakTypeTag,
+      First: WeakTypeTag,
+      Second: WeakTypeTag,
+      FirstOverrides <: TransformerOverrides: WeakTypeTag,
+      SecondOverrides <: TransformerOverrides: WeakTypeTag,
       Flags <: TransformerFlags: WeakTypeTag
-  ](selectorFrom: Tree, selectorTo: Tree): Tree = c.prefix.tree
+  ](selectorFirst: Tree, selectorSecond: Tree): Tree = c.prefix.tree
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
-        def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+        def apply[FirstPath <: Path: WeakTypeTag, SecondPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
           weakTypeTag[IsoDefinition[
-            From,
-            To,
-            RenamedFrom[FromPath, ToPath, FromOverrides],
-            RenamedFrom[ToPath, FromPath, ToOverrides],
+            First,
+            Second,
+            RenamedFrom[FirstPath, SecondPath, FirstOverrides],
+            RenamedFrom[SecondPath, FirstPath, SecondOverrides],
             Flags
           ]]
-      }.applyFromSelectors(selectorFrom, selectorTo)
+      }.applyFromSelectors(selectorFirst, selectorSecond)
     )
 }

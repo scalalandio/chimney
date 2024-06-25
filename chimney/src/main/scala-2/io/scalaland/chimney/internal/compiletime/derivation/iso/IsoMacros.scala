@@ -12,26 +12,26 @@ final class IsoMacros(val c: blackbox.Context) extends DerivationPlatform with G
   import c.universe.{internal as _, Transformer as _, *}
 
   def deriveIsoWithDefaults[
-      From: WeakTypeTag,
-      To: WeakTypeTag
-  ]: c.universe.Expr[Iso[From, To]] =
+      First: WeakTypeTag,
+      Second: WeakTypeTag
+  ]: c.universe.Expr[Iso[First, Second]] =
     retypecheck(
       suppressWarnings(
         resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
           import implicitScopeFlagsType.Underlying
           c.Expr(
             q"""
-            io.scalaland.chimney.Iso[${Type[From]}, ${Type[To]}](
-              from = ${deriveTotalTransformer[
-                From,
-                To,
+            io.scalaland.chimney.Iso[${Type[First]}, ${Type[Second]}](
+              first = ${deriveTotalTransformer[
+                First,
+                Second,
                 runtime.TransformerOverrides.Empty,
                 runtime.TransformerFlags.Default,
                 implicitScopeFlagsType.Underlying
               ](ChimneyExpr.RuntimeDataStore.empty)},
-              to = ${derivePartialTransformer[
-                To,
-                From,
+              second = ${derivePartialTransformer[
+                Second,
+                First,
                 runtime.TransformerOverrides.Empty,
                 runtime.TransformerFlags.Default,
                 implicitScopeFlagsType.Underlying
@@ -44,35 +44,35 @@ final class IsoMacros(val c: blackbox.Context) extends DerivationPlatform with G
     )
 
   def deriveIsoWithConfig[
-      From: WeakTypeTag,
-      To: WeakTypeTag,
-      FromOverrides <: runtime.TransformerOverrides: WeakTypeTag,
-      ToOverrides <: runtime.TransformerOverrides: WeakTypeTag,
+      First: WeakTypeTag,
+      Second: WeakTypeTag,
+      FirstOverrides <: runtime.TransformerOverrides: WeakTypeTag,
+      SecondOverrides <: runtime.TransformerOverrides: WeakTypeTag,
       InstanceFlags <: runtime.TransformerFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.TransformerFlags: WeakTypeTag
   ](
       tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]
-  ): Expr[Iso[From, To]] = retypecheck(
+  ): Expr[Iso[First, Second]] = retypecheck(
     suppressWarnings(
       Expr.block(
         List(Expr.suppressUnused(tc)),
         c.Expr(
           q"""
-          io.scalaland.chimney.Iso[${Type[From]}, ${Type[To]}](
-            from = ${deriveTotalTransformer[
-              From,
-              To,
-              FromOverrides,
+          io.scalaland.chimney.Iso[${Type[First]}, ${Type[Second]}](
+            first = ${deriveTotalTransformer[
+              First,
+              Second,
+              FirstOverrides,
               InstanceFlags,
               ImplicitScopeFlags
             ](
               // Called by CodecDefinition => prefix is CodecDefinition
-              c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.from.runtimeData")
+              c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.first.runtimeData")
             )},
-            to = ${deriveTotalTransformer[
-              To,
-              From,
-              ToOverrides,
+            second = ${deriveTotalTransformer[
+              Second,
+              First,
+              SecondOverrides,
               InstanceFlags,
               ImplicitScopeFlags
             ](

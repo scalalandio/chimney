@@ -5,6 +5,21 @@ import io.scalaland.chimney.internal.compiletime.derivation.codec.CodecMacros
 import io.scalaland.chimney.internal.compiletime.dsl.CodecDefinitionMacros
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
 
+/** Allows customization of [[io.scalaland.chimney.Codec]] derivation.
+  *
+  * @tparam Domain
+  *   type of the domain value
+  * @tparam Dto
+  *   typeof the DTO value
+  * @tparam EncodeOverrides
+  *   type-level encoded config
+  * @tparam DecodeOverrides
+  *   type-level encoded config
+  * @tparam Flags
+  *   type-level encoded flags
+  *
+  * @since 1.2.0
+  */
 final class CodecDefinition[
     Domain,
     Dto,
@@ -19,6 +34,27 @@ final class CodecDefinition[
       Flags
     ] {
 
+  /** Use `selectorDomain` field in `Domain` to obtain the value of `selectorDto` field in `Dto`
+    *
+    * By default if `Domain` is missing field picked by `selectorDto` (or reverse) the compilation fails.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-its-source-field]]
+    *   for more details
+    *
+    * @tparam T
+    *   type of domain field
+    * @tparam U
+    *   type of DTO field
+    * @param selectorDomain
+    *   source field in `Domain`, defined like `_.originalName`
+    * @param selectorDto
+    *   target field in `Dto`, defined like `_.newName`
+    * @return
+    *   [[io.scalaland.chimney.dsl.CodecDefinition]]
+    *
+    * @since 1.2.0
+    */
   transparent inline def withFieldRenamed[T, U](
       inline selectorDomain: Domain => T,
       inline selectorDto: Dto => U
