@@ -32,7 +32,7 @@ final class IsoDefinition[
     val first: TransformerDefinition[First, Second, FirstOverrides, Flags],
     val second: TransformerDefinition[Second, First, SecondOverrides, Flags]
 ) extends TransformerFlagsDsl[Lambda[
-      `Flags1 <: TransformerFlags` => CodecDefinition[First, Second, FirstOverrides, SecondOverrides, Flags1]
+      `Flags1 <: TransformerFlags` => IsoDefinition[First, Second, FirstOverrides, SecondOverrides, Flags1]
     ], Flags] {
 
   /** Use `selectorFirst` field in `First` to obtain the value of `selectorSecond` field in `Second`

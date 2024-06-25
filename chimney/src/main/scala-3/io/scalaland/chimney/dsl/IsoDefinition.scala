@@ -30,7 +30,7 @@ final class IsoDefinition[
     val first: TransformerDefinition[First, Second, FirstOverrides, Flags],
     val second: TransformerDefinition[Second, First, SecondOverrides, Flags]
 ) extends TransformerFlagsDsl[
-      [Flags1 <: TransformerFlags] =>> CodecDefinition[First, Second, FirstOverrides, SecondOverrides, Flags1],
+      [Flags1 <: TransformerFlags] =>> IsoDefinition[First, Second, FirstOverrides, SecondOverrides, Flags1],
       Flags
     ] {
 
