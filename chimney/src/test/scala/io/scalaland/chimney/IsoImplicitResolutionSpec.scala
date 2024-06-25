@@ -11,7 +11,7 @@ class IsoImplicitResolutionSpec extends ChimneySpec {
       implicit def usernameToString: Transformer[UserName, String] =
         userNameToStringTransformer
       implicit def stringToUsername: Transformer[String, UserName] = value => UserName(value + "T")
-      Iso.derive
+      Iso.derive[User, UserDTO]
     }
 
     User("1", UserName("name")).transformInto[UserDTO] ==> UserDTO("1", "nameT")
@@ -23,7 +23,7 @@ class IsoImplicitResolutionSpec extends ChimneySpec {
       implicit def usernameToString: Transformer[UserName, String] =
         userNameToStringTransformer
       implicit def stringToUsername: Transformer[String, UserName] = value => UserName(value + "T")
-      Iso.derive
+      Iso.derive[User, UserDTO]
     }
 
     UserDTO("1", "name").transformIntoPartial[User].asOption ==> Some(User("1", UserName("nameT")))
