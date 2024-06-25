@@ -2,6 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Codec
 import io.scalaland.chimney.internal.compiletime.derivation.codec.CodecMacros
+import io.scalaland.chimney.internal.compiletime.dsl.CodecDefinitionMacros
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
 
 import scala.language.experimental.macros
@@ -19,8 +20,43 @@ final class CodecDefinition[
       `Flags1 <: TransformerFlags` => CodecDefinition[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags1]
     ], Flags] {
 
-  // TODO: def withFieldRenamed
+  /** Use `selectorDomain` field in `Domain` to obtain the value of `selectorDto` field in `Dto`
+    *
+    * By default if `Domain` is missing field picked by `selectorDto` (or reverse) the compilation fails.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-its-source-field]]
+    *   for more details
+    *
+    * @tparam T
+    *   type of domain field
+    * @tparam U
+    *   type of DTO field
+    * @param selectorDomain
+    *   source field in `Domain`, defined like `_.originalName`
+    * @param selectorDto
+    *   target field in `Dto`, defined like `_.newName`
+    * @return
+    *   [[io.scalaland.chimney.dsl.CodecDefinition]]
+    *
+    * @since 1.2.0
+    */
+  def withFieldRenamed[T, U](
+      selectorDomain: Domain => T,
+      selectorDto: Dto => U
+  ): CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags] =
+    macro CodecDefinitionMacros.withFieldRenamedImpl[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags]
 
+  /** Build Codec using current configuration.
+    *
+    * It runs macro that tries to derive instance of `Codec[Domain, Dto]`. When transformation can't be derived, it
+    * results with compilation error.
+    *
+    * @return
+    *   [[io.scalaland.chimney.Codec]] type class instance
+    *
+    * @since 1.2.0
+    */
   def buildCodec[ImplicitScopeFlags <: TransformerFlags](implicit
       tc: TransformerConfiguration[ImplicitScopeFlags]
   ): Codec[Domain, Dto] =

@@ -1,0 +1,39 @@
+package io.scalaland.chimney.internal.compiletime.dsl
+
+import io.scalaland.chimney.dsl.*
+import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
+import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}
+import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
+
+import scala.quoted.*
+
+object CodecDefinitionMacros {
+
+  def withFieldRenamedImpl[
+      Domain: Type,
+      Dto: Type,
+      EncodeOverrides <: TransformerOverrides: Type,
+      DecodeOverrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      T: Type,
+      U: Type
+  ](
+      cd: Expr[CodecDefinition[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags]],
+      selectorDomain: Expr[Domain => T],
+      selectorDto: Expr[Dto => U]
+  )(using Quotes): Expr[CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyFieldNameTypes {
+      [fromPath <: Path, toPath <: Path] =>
+        (_: Type[fromPath]) ?=>
+          (_: Type[toPath]) ?=>
+            '{
+              $cd.asInstanceOf[CodecDefinition[
+                Domain,
+                Dto,
+                RenamedFrom[fromPath, toPath, EncodeOverrides],
+                RenamedFrom[toPath, fromPath, DecodeOverrides],
+                Flags
+              ]]
+          }
+    }(selectorDomain, selectorDto)
+}
