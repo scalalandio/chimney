@@ -1,7 +1,10 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Codec
+import io.scalaland.chimney.internal.compiletime.derivation.codec.CodecMacros
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
+
+import scala.language.experimental.macros
 
 final class CodecDefinition[
     Domain,
@@ -20,6 +23,6 @@ final class CodecDefinition[
 
   def buildCodec[ImplicitScopeFlags <: TransformerFlags](implicit
       tc: TransformerConfiguration[ImplicitScopeFlags]
-  ): Codec[Domain, Dto] = ???
-  // macro TransformerMacros.deriveTotalTransformerWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags]
+  ): Codec[Domain, Dto] =
+    macro CodecMacros.deriveCodecWithConfig[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags, ImplicitScopeFlags]
 }

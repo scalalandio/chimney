@@ -12,7 +12,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def derivePatcherResult[
       A: Type,
       Patch: Type,
-      Tail <: runtime.PatcherOverrides: Type,
+      Overrides <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ](
@@ -24,7 +24,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
         .create[A, Patch](
           obj,
           patch,
-          config = PatcherConfigurations.readPatcherConfiguration[Tail, Flags, ImplicitScopeFlags]
+          config = PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags]
         )
         .updateConfig(_.allowAPatchImplicitSearch)
 
@@ -40,7 +40,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   final def derivePatcher[
       A: Type,
       Patch: Type,
-      Tail <: runtime.PatcherOverrides: Type,
+      Overrides <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ]: Expr[Patcher[A, Patch]] = {
@@ -49,7 +49,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
         val context = PatcherContext.create[A, Patch](
           obj,
           patch,
-          config = PatcherConfigurations.readPatcherConfiguration[Tail, Flags, ImplicitScopeFlags]
+          config = PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags]
         )
 
         await(enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context))

@@ -1,6 +1,7 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Iso
+import io.scalaland.chimney.internal.compiletime.derivation.iso.IsoMacros
 import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
 
 final class IsoDefinition[
@@ -21,6 +22,6 @@ final class IsoDefinition[
 
   inline def buildCodec[ImplicitScopeFlags <: TransformerFlags](using
       tc: TransformerConfiguration[ImplicitScopeFlags]
-  ): Iso[From, To] = ???
-  // ${ TransformerMacros.deriveTotalTransformerWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags]('this) }
+  ): Iso[From, To] =
+    ${ IsoMacros.deriveIsoWithConfig[From, To, FromOverrides, ToOverrides, Flags, ImplicitScopeFlags]('this) }
 }
