@@ -2,7 +2,10 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 
-private[chimney] trait PartialTransformerCompanionPlatform { this: PartialTransformer.type =>
+import scala.annotation.targetName
+
+private[chimney] trait PartialTransformerCompanionPlatform extends PartialTransformerLowPriorityImplicits1 {
+  this: PartialTransformer.type =>
 
   /** Provides [[io.scalaland.chimney.PartialTransformer]] derived with the default settings.
     *
@@ -37,6 +40,7 @@ private[chimney] trait PartialTransformerAutoDerivedCompanionPlatform { this: Pa
     *
     * @since 0.8.0
     */
-  implicit inline def derive[From, To]: PartialTransformer.AutoDerived[From, To] =
+  @targetName("derive") // all methods were suppose to be named deriveAutomatic, but this one slipped through
+  implicit inline def deriveAutomatic[From, To]: PartialTransformer.AutoDerived[From, To] =
     ${ TransformerMacros.derivePartialTransformerWithDefaults[From, To] }
 }

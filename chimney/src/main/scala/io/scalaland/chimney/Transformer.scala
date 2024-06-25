@@ -103,3 +103,46 @@ object Transformer extends TransformerCompanionPlatform {
   /** @since 0.8.0 */
   object AutoDerived extends TransformerAutoDerivedCompanionPlatform
 }
+// extended by TransformerCompanionPlatform
+private[chimney] trait TransformerLowPriorityImplicits1 extends TransformerLowPriorityImplicits2 {
+  this: Transformer.type =>
+
+  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Iso#from]].
+    *
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    *
+    * @since 1.2.0
+    */
+  implicit def transformerFromIsoFrom[From, To](implicit iso: Iso[From, To]): Transformer[From, To] = iso.from
+}
+private[chimney] trait TransformerLowPriorityImplicits2 extends TransformerLowPriorityImplicits3 {
+  this: Transformer.type =>
+
+  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Iso#to]].
+    *
+    * @tparam From
+    *   type of input value
+    * @tparam To
+    *   type of output value
+    *
+    * @since 1.2.0
+    */
+  implicit def transformerFromIsoTo[From, To](implicit iso: Iso[To, From]): Transformer[From, To] = iso.to
+}
+private[chimney] trait TransformerLowPriorityImplicits3 { this: Transformer.type =>
+
+  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Codec#encode]].
+    *
+    * @tparam Domain
+    *   type of domain value
+    * @tparam Dto
+    *   type of DTO value
+    *
+    * @since 1.2.0
+    */
+  implicit def transformerFromCodecEncoder[Domain, Dto](implicit codec: Codec[Domain, Dto]): Transformer[Domain, Dto] =
+    codec.encode
+}

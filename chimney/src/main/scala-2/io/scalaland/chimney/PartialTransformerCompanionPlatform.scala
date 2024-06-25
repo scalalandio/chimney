@@ -4,7 +4,8 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Transfor
 
 import scala.language.experimental.macros
 
-private[chimney] trait PartialTransformerCompanionPlatform { this: PartialTransformer.type =>
+private[chimney] trait PartialTransformerCompanionPlatform extends PartialTransformerLowPriorityImplicits1 {
+  this: PartialTransformer.type =>
 
   /** Provides [[io.scalaland.chimney.PartialTransformer]] derived with the default settings.
     *
