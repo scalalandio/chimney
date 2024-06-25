@@ -2,11 +2,10 @@ package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
 import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerDefinition}
 import io.scalaland.chimney.{PartialTransformer, Transformer}
-import io.scalaland.chimney.internal.compiletime.DefinitionsPlatform
 import io.scalaland.chimney.internal.runtime
 import io.scalaland.chimney.partial
 
-import scala.quoted.{Expr, Quotes, Type, Varargs}
+import scala.quoted.{Expr, Quotes, Type}
 
 final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
 

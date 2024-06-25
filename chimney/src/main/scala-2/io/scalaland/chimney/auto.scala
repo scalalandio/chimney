@@ -1,5 +1,7 @@
 package io.scalaland.chimney
 
+import io.scalaland.chimney.internal.compiletime.derivation.codec.CodecMacros
+import io.scalaland.chimney.internal.compiletime.derivation.iso.IsoMacros
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 
@@ -61,11 +63,8 @@ private[chimney] trait LowPriorityAutoInstances { this: auto.type =>
     *
     * @since 1.2.0
     */
-  implicit def deriveAutomaticCodec[Domain, Dto](implicit
-      encode: Transformer[Domain, Dto],
-      decode: PartialTransformer[Dto, Domain]
-  ): Codec[Domain, Dto] =
-    Codec.derive[Domain, Dto]
+  implicit def deriveAutomaticCodec[Domain, Dto]: Codec[Domain, Dto] =
+    macro CodecMacros.deriveCodecWithDefaults[Domain, Dto]
 
   /** Provides [[io.scalaland.chimney.Iso]] derived with the default settings.
     *
@@ -81,11 +80,8 @@ private[chimney] trait LowPriorityAutoInstances { this: auto.type =>
     *
     * @since 1.2.0
     */
-  implicit def deriveAutomaticIso[From, To](implicit
-      from: Transformer[From, To],
-      to: Transformer[To, From]
-  ): Iso[From, To] =
-    Iso.derive[From, To]
+  implicit def deriveAutomaticIso[From, To]: Iso[From, To] =
+    macro IsoMacros.deriveIsoWithDefaults[From, To]
 
   /** Provides [[io.scalaland.chimney.Patcher]] derived with the default settings.
     *
