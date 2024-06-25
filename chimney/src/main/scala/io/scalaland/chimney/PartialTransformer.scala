@@ -174,3 +174,20 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
       (src: From, failFast: Boolean) => partial.Result.fromCatching(total.transform(src))
   }
 }
+// extended by PartialTransformerCompanionPlatform
+private[chimney] trait PartialTransformerLowPriorityImplicits1 { this: PartialTransformer.type =>
+
+  /** Extracts [[io.scalaland.chimney.PartialTransformer]] from existing [[io.scalaland.chimney.Codec#decode]].
+    *
+    * @tparam Domain
+    *   type of domain value
+    * @tparam Dto
+    *   type of DTO value
+    *
+    * @since 1.2.0
+    */
+  implicit def transformerFromCodecDecoder[Dto, Domain](implicit
+      codec: Codec[Domain, Dto]
+  ): PartialTransformer[Dto, Domain] =
+    codec.decode
+}

@@ -21,8 +21,8 @@ object Iso {
     val to: Transformer[To, From]
   }
   object AutoDerived {
-    
-    implicit def derive[From, To](implicit
+
+    implicit def deriveAutomatic[From, To](implicit
         from: Transformer.AutoDerived[From, To],
         to: Transformer.AutoDerived[To, From]
     ): Iso.AutoDerived[From, To] = Iso.derive(from, to)

@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Transfor
 
 import scala.language.experimental.macros
 
-private[chimney] trait TransformerCompanionPlatform { this: Transformer.type =>
+private[chimney] trait TransformerCompanionPlatform extends TransformerLowPriorityImplicits1 { this: Transformer.type =>
 
   /** Provides [[io.scalaland.chimney.Transformer]] derived with the default settings.
     *

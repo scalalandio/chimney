@@ -31,7 +31,7 @@ object Codec {
   }
   object AutoDerived {
 
-    implicit def derive[Domain, Dto](implicit
+    implicit def deriveAutomatic[Domain, Dto](implicit
         encode: Transformer.AutoDerived[Domain, Dto],
         decode: PartialTransformer.AutoDerived[Dto, Domain]
     ): Codec.AutoDerived[Domain, Dto] = Codec.derive(encode, decode)
