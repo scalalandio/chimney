@@ -7,7 +7,7 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   * succeed (total transformation).
   *
   * @see
-  *   [[https://chimney.readthedocs.io/supported-transformations/TODO]]
+  *   [[https://chimney.readthedocs.io/cookbook/#bidirectional-transformations]]
   *
   * @tparam First
   *   input type of the first conversion, output type of the second conversion
@@ -25,7 +25,7 @@ final case class Iso[First, Second](first: Transformer[First, Second], second: T
 /** Companion of [[io.scalaland.chimney.Iso]].
   *
   * @see
-  *   [[https://chimney.readthedocs.io/supported-transformations/TODO]]
+  *   [[https://chimney.readthedocs.io/cookbook/#bidirectional-transformations]]
   *
   * @since 1.2.0
   */

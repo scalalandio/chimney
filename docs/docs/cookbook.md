@@ -256,6 +256,84 @@ For the reasons above the recommendations are as follows:
   - if you use unit tests to ensure that your code does what it should and benchmarks to
     ensure it is reasonably fast keep on using `import dsl._`
 
+## Bidirectional transformations
+
+In some cases you might want to derive 2 transformations: from some type into another type and back. Most of the time,
+such case appears not when you are using transformation on the spot, but when you need to derived in a semiautomatic
+way.
+
+!!! example "Isomorphic transformation"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.Transformer
+    
+    case class Foo(a: Int, b: String)
+    case class Bar(b: String, a: Int)
+    
+    object Bar {
+      implicit val fromFoo: Transformer[Foo, Bar] = Transformer.derive
+      implicit val intoFoo: Transformer[Bar, Foo] = Transformer.derive
+    }
+    ```
+
+!!! example "Domain model encoding/decoding"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.{PartialTransformer, Transformer}
+    
+    case class Domain(a: Int, b: String)
+    case class Dto(b: Option[String], a: Option[Int])
+    
+    object Dto {
+      implicit val fromDomain: Transformer[Domain, Dto] = Transformer.derive
+      implicit val intoDomain: PartialTransformer[Dto, Domain] = PartialTransformer.derive
+    }
+    ```
+
+To make things less annoying, in such cases you can use `Iso` (for bidirectional conversion that always succeeds)
+or `Codec` (for bidirectional conversion which always succeeds in one way, but might need validation in another):
+
+!!! example "Isomorphic transformation"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.Iso
+    
+    case class Foo(a: Int, b: String)
+    case class Bar(b: String, a: Int)
+    
+    object Bar {
+      implicit val iso: Iso[Foo, Bar] = Iso.derive
+      // Provides:
+      // - iso.first: Transformer[Foo, Bar]
+      // - iso.second: Transformer[Bar, Foo]
+      // both automatically unpacked when using the DSL.
+    }
+    ```
+
+!!! example "Domain model encoding/decoding"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.Codec
+    
+    case class Domain(a: Int, b: String)
+    case class Dto(b: Option[String], a: Option[Int])
+    
+    object Dto {
+      implicit val codec: Codec[Domain, Dto] = Codec.derive
+      // Provides:
+      // - codec.encode: Transformer[Foo, Bar]
+      // - codec.decode: PartialTransformer[Bar, Foo]
+      // both automatically unpacked when using the DSL.
+    }
+    ```
+
+Both `Iso` and `Codec` are only available through semiautomatic derivation. Currently, they only provide
+`withFieldRenamed` value override and flags overrides. 
+
 ## Java collections' integration
 
 If you need support for:
