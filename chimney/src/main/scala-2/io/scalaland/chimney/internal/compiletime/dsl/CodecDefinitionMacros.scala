@@ -1,0 +1,32 @@
+package io.scalaland.chimney.internal.compiletime.dsl
+
+import io.scalaland.chimney.dsl.CodecDefinition
+import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}
+import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
+
+import scala.reflect.macros.whitebox
+
+class CodecDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
+
+  import c.universe.{Select as _, *}
+
+  def withFieldRenamedImpl[
+      Domain: WeakTypeTag,
+      Dto: WeakTypeTag,
+      EncodeOverrides <: TransformerOverrides: WeakTypeTag,
+      DecodeOverrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selectorDomain: Tree, selectorDto: Tree): Tree = c.prefix.tree
+    .asInstanceOfExpr(
+      new ApplyFieldNameTypes {
+        def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[CodecDefinition[
+            Domain,
+            Dto,
+            RenamedFrom[FromPath, ToPath, EncodeOverrides],
+            RenamedFrom[ToPath, FromPath, DecodeOverrides],
+            Flags
+          ]]
+      }.applyFromSelectors(selectorDomain, selectorDto)
+    )
+}
