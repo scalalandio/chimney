@@ -265,8 +265,10 @@ If you need support for:
     `scala.collection.IterableOnce` with a dedicated `Factory` (or `CanBuildFrom`)
   - `java.util.Map`/`java.util.Dictionary`/`java.util.Properties` and convert to/from `scala.collection.Map`
   - `java.util.stream`s and convert them to/from all sorts of Scala collections
+  - `java.lang.Boolean`/`java.lang.Byte`/`java.lang.Char`/`java.lang.Int`/`java.lang.Long`/`java.lang.Long`/
+    `java.lang.Short`/`java.lang.Float`/`java.lang.Double` and convert to/from its `scala` counterpart
 
-Then you can use one simple import to enable it:
+then you can use one simple import to enable it:
 
 !!! example
 
