@@ -47,40 +47,6 @@ private[chimney] trait LowPriorityAutoInstances { this: auto.type =>
   implicit inline def deriveAutomaticPartialTransformer[From, To]: PartialTransformer[From, To] =
     ${ TransformerMacros.derivePartialTransformerWithDefaults[From, To] }
 
-  /** Provides [[io.scalaland.chimney.Codec]] derived with the default settings.
-    *
-    * This instance WILL be visible for recursive derivation (automatic, semiautomatic, inlined), which is how it
-    * differs from [[io.scalaland.chimney.Codec.AutoDerived#deriveAutomatic]].
-    *
-    * @tparam Domain
-    *   type of domain value
-    * @tparam Dto
-    *   type of DTO value
-    * @return
-    *   [[io.scalaland.chimney.Codec]] type class instance
-    *
-    * @since 1.2.0
-    */
-  implicit inline def deriveAutomaticCodec[Domain, Dto]: Codec[Domain, Dto] =
-    ${ CodecMacros.deriveCodecWithDefaults[Domain, Dto] }
-
-  /** Provides [[io.scalaland.chimney.Iso]] derived with the default settings.
-    *
-    * This instance WILL be visible for recursive derivation (automatic, semiautomatic, inlined), which is how it
-    * differs from [[io.scalaland.chimney.Iso.AutoDerived#deriveAutomatic]].
-    *
-    * @tparam From
-    *   type of input value
-    * @tparam To
-    *   type of output value
-    * @return
-    *   [[io.scalaland.chimney.Iso]] type class instance
-    *
-    * @since 1.2.0
-    */
-  implicit inline def deriveAutomaticIso[From, To]: Iso[From, To] =
-    ${ IsoMacros.deriveIsoWithDefaults[From, To] }
-
   /** Provides [[io.scalaland.chimney.Patcher]] derived with the default settings.
     *
     * This instance WILL be visible for recursive derivation (automatic, semiautomatic, inlined), which is how it
