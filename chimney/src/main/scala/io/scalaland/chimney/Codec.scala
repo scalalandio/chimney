@@ -1,5 +1,8 @@
 package io.scalaland.chimney
 
+import io.scalaland.chimney.dsl.{CodecDefinition, TransformerDefinition}
+import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
+
 final case class Codec[Domain, Dto](encode: Transformer[Domain, Dto], decode: PartialTransformer[Dto, Domain])
     extends Codec.AutoDerived[Domain, Dto]
 object Codec {
@@ -9,7 +12,9 @@ object Codec {
       decode: PartialTransformer.AutoDerived[Dto, Domain]
   ): Codec[Domain, Dto] = Codec[Domain, Dto](encode = safeUpcast[Domain, Dto], decode = safeUpcastPartial[Dto, Domain])
 
-  // TODO: define
+  def define[Domain, Dto]
+      : CodecDefinition[Domain, Dto, TransformerOverrides.Empty, TransformerOverrides.Empty, TransformerFlags.Default] =
+    new CodecDefinition(Transformer.define, PartialTransformer.define)
 
   private def safeUpcast[From, To](implicit t: Transformer.AutoDerived[From, To]): Transformer[From, To] =
     t match {
