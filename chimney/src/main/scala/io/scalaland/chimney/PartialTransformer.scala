@@ -186,7 +186,7 @@ private[chimney] trait PartialTransformerLowPriorityImplicits1 { this: PartialTr
     *
     * @since 1.2.0
     */
-  implicit def transformerFromCodecDecoder[Dto, Domain](implicit
+  implicit def partialTransformerFromCodecDecoder[Dto, Domain](implicit
       codec: Codec[Domain, Dto]
   ): PartialTransformer[Dto, Domain] =
     codec.decode

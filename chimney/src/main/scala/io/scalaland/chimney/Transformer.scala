@@ -107,30 +107,32 @@ object Transformer extends TransformerCompanionPlatform {
 private[chimney] trait TransformerLowPriorityImplicits1 extends TransformerLowPriorityImplicits2 {
   this: Transformer.type =>
 
-  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Iso#from]].
+  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Iso#left]].
     *
-    * @tparam From
-    *   type of input value
-    * @tparam To
-    *   type of output value
+    * @tparam First
+    *   input type of the first conversion, output type of the second conversion
+    * @tparam Second
+    *   output type of the first conversion, input type of the second conversion
     *
     * @since 1.2.0
     */
-  implicit def transformerFromIsoFrom[From, To](implicit iso: Iso[From, To]): Transformer[From, To] = iso.from
+  implicit def transformerFromIsoFirst[First, Second](implicit iso: Iso[First, Second]): Transformer[First, Second] =
+    iso.first
 }
 private[chimney] trait TransformerLowPriorityImplicits2 extends TransformerLowPriorityImplicits3 {
   this: Transformer.type =>
 
-  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Iso#to]].
+  /** Extracts [[io.scalaland.chimney.Transformer]] from existing [[io.scalaland.chimney.Iso#right]].
     *
-    * @tparam From
-    *   type of input value
-    * @tparam To
-    *   type of output value
+    * @tparam First
+    *   input type of the first conversion, output type of the second conversion
+    * @tparam Second
+    *   output type of the first conversion, input type of the second conversion
     *
     * @since 1.2.0
     */
-  implicit def transformerFromIsoTo[From, To](implicit iso: Iso[To, From]): Transformer[From, To] = iso.to
+  implicit def transformerFromIsoSecond[First, Second](implicit iso: Iso[First, Second]): Transformer[Second, First] =
+    iso.second
 }
 private[chimney] trait TransformerLowPriorityImplicits3 { this: Transformer.type =>
 

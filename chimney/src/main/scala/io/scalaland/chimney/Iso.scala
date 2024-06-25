@@ -9,18 +9,19 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   * @see
   *   [[https://chimney.readthedocs.io/supported-transformations/TODO]]
   *
-  * @tparam From
+  * @tparam First
   *   input type of the first conversion, output type of the second conversion
-  * @tparam To
+  * @tparam Second
   *   output type of the first conversion, input type of the second conversion
-  * @param from
-  *   conversion from the first type into the second type
-  * @param to
-  *   conversion from the second type into the first type
+  * @param first
+  *   conversion the first type into the second type
+  * @param second
+  *   conversion the second type into the first type
   *
   * @since 1.2.0
   */
-final case class Iso[From, To](from: Transformer[From, To], to: Transformer[To, From]) extends Iso.AutoDerived[From, To]
+final case class Iso[First, Second](first: Transformer[First, Second], second: Transformer[Second, First])
+    extends Iso.AutoDerived[First, Second]
 
 /** Companion of [[io.scalaland.chimney.Iso]].
   *
@@ -37,16 +38,16 @@ object Iso extends IsoCompanionPlatform {
     * @see
     *   [[io.scalaland.chimney.dsl.IsoDefinition]] for available settings
     *
-    * @tparam From
+    * @tparam First
     *   input type of the first conversion, output type of the second conversion
-    * @tparam To
+    * @tparam Second
     *   output type of the first conversion, input type of the second conversion
     *
     * @return
     *   [[io.scalaland.chimney.dsl.IsoDefinition]] with defaults
     */
-  def define[From, To]
-      : IsoDefinition[From, To, TransformerOverrides.Empty, TransformerOverrides.Empty, TransformerFlags.Default] =
+  def define[First, Second]
+      : IsoDefinition[First, Second, TransformerOverrides.Empty, TransformerOverrides.Empty, TransformerFlags.Default] =
     new IsoDefinition(Transformer.define, Transformer.define)
 
   /** Type class used when you want o allow using automatically derived transformations.
@@ -57,16 +58,16 @@ object Iso extends IsoCompanionPlatform {
     * @see
     *   [[https://chimney.readthedocs.io/cookbook/#automatic-semiautomatic-and-inlined-derivation]] for more details
     *
-    * @tparam From
+    * @tparam First
     *   input type of the first conversion, output type of the second conversion
-    * @tparam To
+    * @tparam Second
     *   output type of the first conversion, input type of the second conversion
     *
     * @since 1.2.0
     */
-  trait AutoDerived[From, To] {
-    val from: Transformer[From, To]
-    val to: Transformer[To, From]
+  trait AutoDerived[First, Second] {
+    val first: Transformer[First, Second]
+    val second: Transformer[Second, First]
   }
 
   /** @since 1.2.0 */

@@ -12,26 +12,26 @@ final class IsoMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
   import quotes.*, quotes.reflect.*
 
   def deriveIsoWithDefaults[
-      From: Type,
-      To: Type
-  ]: Expr[Iso[From, To]] = suppressWarnings {
+      First: Type,
+      Second: Type
+  ]: Expr[Iso[First, Second]] = suppressWarnings {
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
       import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
       '{
-        Iso[From, To](
-          from = ${
+        Iso[First, Second](
+          first = ${
             deriveTotalTransformer[
-              From,
-              To,
+              First,
+              Second,
               runtime.TransformerOverrides.Empty,
               runtime.TransformerFlags.Default,
               ImplicitScopeFlags
             ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
           },
-          to = ${
+          second = ${
             deriveTotalTransformer[
-              To,
-              From,
+              Second,
+              First,
               runtime.TransformerOverrides.Empty,
               runtime.TransformerFlags.Default,
               ImplicitScopeFlags
@@ -43,25 +43,25 @@ final class IsoMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
   }
 
   def deriveIsoWithConfig[
-      From: Type,
-      To: Type,
-      FromOverrides <: runtime.TransformerOverrides: Type,
-      ToOverrides <: runtime.TransformerOverrides: Type,
+      First: Type,
+      Second: Type,
+      FirstOverrides <: runtime.TransformerOverrides: Type,
+      SecondOverrides <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
-      id: Expr[IsoDefinition[From, To, FromOverrides, ToOverrides, Flags]]
-  ): Expr[Iso[From, To]] = suppressWarnings {
+      id: Expr[IsoDefinition[First, Second, FirstOverrides, SecondOverrides, Flags]]
+  ): Expr[Iso[First, Second]] = suppressWarnings {
     '{
-      Iso[From, To](
-        from = ${
-          deriveTotalTransformer[From, To, FromOverrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
-            ${ id }.from.runtimeData
+      Iso[First, Second](
+        first = ${
+          deriveTotalTransformer[First, Second, FirstOverrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
+            ${ id }.first.runtimeData
           })
         },
-        to = ${
-          deriveTotalTransformer[To, From, ToOverrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
-            ${ id }.to.runtimeData
+        second = ${
+          deriveTotalTransformer[Second, First, SecondOverrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{
+            ${ id }.second.runtimeData
           })
         }
       )
@@ -98,20 +98,21 @@ final class IsoMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
 object IsoMacros {
 
   final def deriveIsoWithDefaults[
-      From: Type,
-      To: Type
-  ](using quotes: Quotes): Expr[Iso[From, To]] =
-    new IsoMacros(quotes).deriveIsoWithDefaults[From, To]
+      First: Type,
+      Second: Type
+  ](using quotes: Quotes): Expr[Iso[First, Second]] =
+    new IsoMacros(quotes).deriveIsoWithDefaults[First, Second]
 
   final def deriveIsoWithConfig[
-      From: Type,
-      To: Type,
-      FromOverrides <: runtime.TransformerOverrides: Type,
-      ToOverrides <: runtime.TransformerOverrides: Type,
+      First: Type,
+      Second: Type,
+      FirstOverrides <: runtime.TransformerOverrides: Type,
+      SecondOverrides <: runtime.TransformerOverrides: Type,
       Flags <: runtime.TransformerFlags: Type,
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
-      id: Expr[IsoDefinition[From, To, FromOverrides, ToOverrides, Flags]]
-  )(using quotes: Quotes): Expr[Iso[From, To]] =
-    new IsoMacros(quotes).deriveIsoWithConfig[From, To, FromOverrides, ToOverrides, Flags, ImplicitScopeFlags](id)
+      id: Expr[IsoDefinition[First, Second, FirstOverrides, SecondOverrides, Flags]]
+  )(using quotes: Quotes): Expr[Iso[First, Second]] =
+    new IsoMacros(quotes)
+      .deriveIsoWithConfig[First, Second, FirstOverrides, SecondOverrides, Flags, ImplicitScopeFlags](id)
 }

@@ -7,6 +7,21 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
 
 import scala.language.experimental.macros
 
+/** Allows customization of [[io.scalaland.chimney.Codec]] derivation.
+  *
+  * @tparam Domain
+  *   type of the domain value
+  * @tparam Dto
+  *   typeof the DTO value
+  * @tparam EncodeOverrides
+  *   type-level encoded config
+  * @tparam DecodeOverrides
+  *   type-level encoded config
+  * @tparam Flags
+  *   type-level encoded flags
+  *
+  * @since 1.2.0
+  */
 final class CodecDefinition[
     Domain,
     Dto,
