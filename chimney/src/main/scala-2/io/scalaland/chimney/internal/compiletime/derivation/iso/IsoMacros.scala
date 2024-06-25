@@ -29,7 +29,7 @@ final class IsoMacros(val c: blackbox.Context) extends DerivationPlatform with G
                 runtime.TransformerFlags.Default,
                 implicitScopeFlagsType.Underlying
               ](ChimneyExpr.RuntimeDataStore.empty)},
-              second = ${derivePartialTransformer[
+              second = ${deriveTotalTransformer[
                 Second,
                 First,
                 runtime.TransformerOverrides.Empty,
@@ -77,7 +77,7 @@ final class IsoMacros(val c: blackbox.Context) extends DerivationPlatform with G
               ImplicitScopeFlags
             ](
               // Called by CodecDefinition => prefix is CodecDefinition
-              c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.to.runtimeData")
+              c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.second.runtimeData")
             )}
           )
           """

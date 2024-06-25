@@ -12,7 +12,7 @@ class CodecImplicitResolutionSpec extends ChimneySpec {
         userNameToStringTransformer
       implicit def stringToUsername: PartialTransformer[String, UserName] =
         PartialTransformer.liftTotal(value => UserName(value))
-      Codec.derive
+      Codec.derive[User, UserDTO]
     }
 
     User("1", UserName("name")).transformInto[UserDTO] ==> UserDTO("1", "nameT")
@@ -25,7 +25,7 @@ class CodecImplicitResolutionSpec extends ChimneySpec {
         userNameToStringTransformer
       implicit def stringToUsername: PartialTransformer[String, UserName] =
         PartialTransformer.liftTotal(value => UserName(value + "T"))
-      Codec.derive
+      Codec.derive[User, UserDTO]
     }
 
     UserDTO("1", "name").transformIntoPartial[User].asOption ==> Some(User("1", UserName("nameT")))
