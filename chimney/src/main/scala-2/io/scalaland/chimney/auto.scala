@@ -1,7 +1,5 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.internal.compiletime.derivation.codec.CodecMacros
-import io.scalaland.chimney.internal.compiletime.derivation.iso.IsoMacros
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 
