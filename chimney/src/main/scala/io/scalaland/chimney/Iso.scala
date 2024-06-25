@@ -1,5 +1,8 @@
 package io.scalaland.chimney
 
+import io.scalaland.chimney.dsl.IsoDefinition
+import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverrides}
+
 final case class Iso[From, To](from: Transformer[From, To], to: Transformer[To, From]) extends Iso.AutoDerived[From, To]
 object Iso {
 
@@ -8,7 +11,9 @@ object Iso {
       to: Transformer.AutoDerived[To, From]
   ): Iso[From, To] = Iso[From, To](from = safeUpcast[From, To], to = safeUpcast[To, From])
 
-  // TODO: define
+  def define[From, To]
+      : IsoDefinition[From, To, TransformerOverrides.Empty, TransformerOverrides.Empty, TransformerFlags.Default] =
+    new IsoDefinition(Transformer.define, Transformer.define)
 
   private def safeUpcast[From, To](implicit t: Transformer.AutoDerived[From, To]): Transformer[From, To] =
     t match {
