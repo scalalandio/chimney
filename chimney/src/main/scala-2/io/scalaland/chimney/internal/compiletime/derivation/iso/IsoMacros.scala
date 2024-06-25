@@ -66,7 +66,7 @@ final class IsoMacros(val c: blackbox.Context) extends DerivationPlatform with G
               InstanceFlags,
               ImplicitScopeFlags
             ](
-              // Called by CodecDefinition => prefix is CodecDefinition
+              // Called by IsoDefinition => prefix is IsoDefinition
               c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.first.runtimeData")
             )},
             second = ${deriveTotalTransformer[
@@ -76,7 +76,7 @@ final class IsoMacros(val c: blackbox.Context) extends DerivationPlatform with G
               InstanceFlags,
               ImplicitScopeFlags
             ](
-              // Called by CodecDefinition => prefix is CodecDefinition
+              // Called by IsoDefinition => prefix is IsoDefinition
               c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.second.runtimeData")
             )}
           )

@@ -8,7 +8,7 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   * the DTO model.
   *
   * @see
-  *   [[https://chimney.readthedocs.io/supported-transformations/TODO]]
+  *   [[https://chimney.readthedocs.io/cookbook/#bidirectional-transformations]]
   *
   * @tparam Domain
   *   type of the domain value
@@ -26,7 +26,7 @@ final case class Codec[Domain, Dto](encode: Transformer[Domain, Dto], decode: Pa
 /** Companion of [[io.scalaland.chimney.Codec]].
   *
   * @see
-  *   [[https://chimney.readthedocs.io/supported-transformations/TODO]]
+  *   [[https://chimney.readthedocs.io/cookbook/#bidirectional-transformations]]
   *
   * @since 1.2.0
   */
