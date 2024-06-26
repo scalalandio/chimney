@@ -96,7 +96,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   )(using U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withFieldComputedImpl('this, 'selector, 'f) }
 
-  /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
+  /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`.
     *
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
@@ -170,6 +170,40 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
       inline f: Subtype => To
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withSealedSubtypeHandledImpl('this, 'f) }
+
+  /** Use `FromSubtype` in `From` as a source for `ToSubtype` in `To`.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @tparam FromSubtype
+    *   type of sealed/enum instance
+    * @tparam ToSubtype
+    *   type of sealed/enum instance
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    *
+    * @since 1.2.0
+    */
+  transparent inline def withSealedSubtypeRenamed[FromSubtype, ToSubtype]
+      : TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${
+      TransformerDefinitionMacros.withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype](
+        'this
+      )
+    }
+
+  /** Alias to [[withSealedSubtypeRenamed]].
+    *
+    * @since 1.2.0
+    */
+  transparent inline def withEnumCaseRenamed[FromSubtype, ToSubtype]
+      : TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${
+      TransformerDefinitionMacros.withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype](
+        'this
+      )
+    }
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *

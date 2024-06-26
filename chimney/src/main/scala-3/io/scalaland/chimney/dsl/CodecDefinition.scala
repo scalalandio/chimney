@@ -34,7 +34,7 @@ final class CodecDefinition[
       Flags
     ] {
 
-  /** Use `selectorDomain` field in `Domain` to obtain the value of `selectorDto` field in `Dto`
+  /** Use `selectorDomain` field in `Domain` to obtain the value of `selectorDto` field in `Dto`.
     *
     * By default if `Domain` is missing field picked by `selectorDto` (or reverse) the compilation fails.
     *
@@ -60,6 +60,42 @@ final class CodecDefinition[
       inline selectorDto: Dto => U
   ): CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags] =
     ${ CodecDefinitionMacros.withFieldRenamedImpl('this, 'selectorDomain, 'selectorDto) }
+
+  /** Use `DomainSubtype` in `Domain` as a source for `DtoSubtype` in `Dto`.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @tparam DomainSubtype
+    *   type of sealed/enum instance
+    * @tparam DtoSubtype
+    *   type of sealed/enum instance
+    * @return
+    *   [[io.scalaland.chimney.dsl.CodecDefinition]]
+    *
+    * @since 1.2.0
+    */
+  transparent inline def withSealedSubtypeRenamed[DomainSubtype, DtoSubtype]
+      : CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags] =
+    ${
+      CodecDefinitionMacros
+        .withSealedSubtypeRenamedImpl[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags, DomainSubtype, DtoSubtype](
+          'this
+        )
+    }
+
+  /** Alias to [[withSealedSubtypeRenamed]].
+    *
+    * @since 1.2.0
+    */
+  transparent inline def withEnumCaseRenamed[DomainSubtype, DtoSubtype]
+      : CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags] =
+    ${
+      CodecDefinitionMacros
+        .withSealedSubtypeRenamedImpl[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags, DomainSubtype, DtoSubtype](
+          'this
+        )
+    }
 
   /** Build Codec using current configuration.
     *

@@ -135,7 +135,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   )(implicit ev: U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerDefinitionMacros.withFieldComputedPartialImpl[From, To, Overrides, Flags]
 
-  /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
+  /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`.
     *
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
@@ -258,6 +258,34 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
       f: Subtype => partial.Result[To]
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerDefinitionMacros.withSealedSubtypeHandledPartialImpl[From, To, Overrides, Flags, Subtype]
+
+  /** Use `FromSubtype` in `From` as a source for `ToSubtype` in `To`.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @tparam DomainSubtype
+    *   type of sealed/enum instance
+    * @tparam DtoSubtype
+    *   type of sealed/enum instance
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *
+    * @since 1.2.0
+    */
+  def withSealedSubtypeRenamed[FromSubtype, ToSubtype]
+      : PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerDefinitionMacros
+      .withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]
+
+  /** Alias to [[withSealedSubtypeRenamed]].
+    *
+    * @since 1.2.0
+    */
+  def withEnumCaseRenamed[FromSubtype, ToSubtype]
+      : PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerDefinitionMacros
+      .withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *

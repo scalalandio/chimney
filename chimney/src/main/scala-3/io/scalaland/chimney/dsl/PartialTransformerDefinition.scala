@@ -137,7 +137,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedPartialImpl('this, 'selector, 'f) }
 
-  /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
+  /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`.
     *
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
@@ -260,6 +260,38 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
       inline f: Subtype => partial.Result[To]
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withSealedSubtypeHandledPartialImpl('this, 'f) }
+
+  /** Use `FromSubtype` in `From` as a source for `ToSubtype` in `To`.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @tparam FromSubtype
+    *   type of sealed/enum instance
+    * @tparam ToSubtype
+    *   type of sealed/enum instance
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *
+    * @since 1.2.0
+    */
+  transparent inline def withSealedSubtypeRenamed[FromSubtype, ToSubtype]
+      : PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${
+      PartialTransformerDefinitionMacros
+        .withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]('this)
+    }
+
+  /** Alias to [[withSealedSubtypeRenamed]].
+    *
+    * @since 1.2.0
+    */
+  transparent inline def withEnumCaseRenamed[FromSubtype, ToSubtype]
+      : PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${
+      PartialTransformerDefinitionMacros
+        .withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]('this)
+    }
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *
