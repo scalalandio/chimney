@@ -264,6 +264,31 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withSealedSubtypeHandledPartialImpl[From, To, Overrides, Flags, Subtype]
 
+  /** Use `FromSubtype` in `From` as a source for `ToSubtype` in `To`.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @tparam FromSubtype
+    *   type of sealed/enum instance
+    * @tparam ToSubtype
+    *   type of sealed/enum instance
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *
+    * @since 1.2.0
+    */
+  def withSealedSubtypeRenamed[FromSubtype, ToSubtype]
+      : PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerIntoMacros.withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]
+
+  /** Alias to [[withSealedSubtypeRenamed]].
+    *
+    * @since 1.2.0
+    */
+  def withEnumCaseRenamed[FromSubtype, ToSubtype]: PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerIntoMacros.withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]
+
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *
     * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.

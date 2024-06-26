@@ -173,9 +173,9 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
     *
-    * @tparam DomainSubtype
+    * @tparam FromSubtype
     *   type of sealed/enum instance
-    * @tparam DtoSubtype
+    * @tparam ToSubtype
     *   type of sealed/enum instance
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerDefinition]]

@@ -104,6 +104,30 @@ object TransformerIntoMacros {
         ]]
     }
 
+  def withSealedSubtypeRenamedImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      FromSubtype: Type,
+      ToSubtype: Type
+  ](
+      td: Expr[TransformerInto[From, To, Overrides, Flags]]
+  )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    '{
+      $td
+        .asInstanceOf[TransformerInto[
+          From,
+          To,
+          RenamedFrom[
+            Path.SourceMatching[Path.Root, FromSubtype],
+            Path.SourceMatching[Path.Root, ToSubtype],
+            Overrides
+          ],
+          Flags
+        ]]
+    }
+
   def withConstructorImpl[
       From: Type,
       To: Type,

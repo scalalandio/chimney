@@ -172,6 +172,30 @@ object PartialTransformerIntoMacros {
         ]]
     }
 
+  def withSealedSubtypeRenamedImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      FromSubtype: Type,
+      ToSubtype: Type
+  ](
+      td: Expr[PartialTransformerInto[From, To, Overrides, Flags]]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    '{
+      $td
+        .asInstanceOf[PartialTransformerInto[
+          From,
+          To,
+          RenamedFrom[
+            Path.SourceMatching[Path.Root, FromSubtype],
+            Path.SourceMatching[Path.Root, ToSubtype],
+            Overrides
+          ],
+          Flags
+        ]]
+    }
+
   def withConstructorImpl[
       From: Type,
       To: Type,
