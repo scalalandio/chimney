@@ -64,7 +64,8 @@ final class CodecDefinition[
   /** Use `DomainSubtype` in `Domain` as a source for `DtoSubtype` in `Dto`.
     *
     * @see
-    *   [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *   [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-by-a-specific-target-subtype]]
+    *   for more details
     *
     * @tparam DomainSubtype
     *   type of sealed/enum instance

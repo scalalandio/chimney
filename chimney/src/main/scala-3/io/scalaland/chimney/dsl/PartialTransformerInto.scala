@@ -268,7 +268,8 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   /** Use `FromSubtype` in `From` as a source for `ToSubtype` in `To`.
     *
     * @see
-    *   [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *   [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-by-a-specific-target-subtype]]
+    *   for more details
     *
     * @tparam FromSubtype
     *   type of sealed/enum instance

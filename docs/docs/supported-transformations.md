@@ -2035,6 +2035,73 @@ Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/a
     }
     ```
 
+### Handling a specific `sealed` subtype by a specific target subtype
+
+Sometimes a corresponding subtype of the target type has a unrelated name, that cannot be matched by simple comparison.
+Or we might want to redirect two subtypes into the same target subtype. For that we have `.withSealedSubtypeRenamed`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+    
+    sealed trait Source
+    object Source {
+      case object Foo extends Source
+      case class Baz(a: Int) extends Source
+    }
+    
+    sealed trait Target
+    object Target {
+      case object Foo extends Target
+      case class Bar(a: Int) extends Target
+    }
+    
+    (Source.Baz(10): Source)
+      .into[Target]
+      .withSealedSubtypeRenamed[Source.Baz, Target.Bar]
+      .transform // Target.Bar(10)
+    ```
+
+!!! notice
+
+    While `sealed` hierarchies, Scala 3 `enum`s and Java `enum`s fall into the same category of Algebraic Data Types,
+    manu users might consider them different things and e.g. not look for methods starting with `withSealedSubtype`
+    when dealing with `enum`s. For that reason we provide an aliases to this methods - `withEnumCaseRenamed`:
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using scala {{ scala.3 }}
+    import io.scalaland.chimney.dsl._
+    
+    enum Source {
+      case Foo
+      case Baz(a: Int)
+    }
+    
+    enum Target {
+      case Foo
+      case Bar(a: Int)
+    }
+    
+    (Source.Baz(10): Source)
+      .into[Target]
+      .withEnumCaseRenamed[Source.Baz, Target.Bar]
+      .transform // Target.Bar(10)
+    ```
+    
+    These methods are only aliases and there is no difference in behavior between `withSealedSubtypeRenamed` and
+    `withEnumCaseRenamed` - the difference in names exist only for the sake of readability and discoverability.
+
+!!! warning
+
+    Due to limitations of Scala 2, when you want to use `.withSealedSubtypeRenamed` with Java's `enum`s, the enum
+    instance's exact type will always be upcasted/lost, turning the handler into "catch-all".
+    
+    The explanation and the solution to that is described in
+    [`.withSealedSubtypeHandled`](#handling-a-specific-sealed-subtype-with-a-computed-value) documentation.
+
 ### Handling a specific `sealed` subtype with a computed value
 
 Sometimes we are missing a corresponding subtype of the target type. Or we might want to override it with our
@@ -2130,7 +2197,7 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     and `withEnumCaseHandledPartial`:
     
     ```scala
-    // file: snippet.scala - part of withEnumCaseHandled example 
+    // file: snippet.scala - part of withEnumCaseHandled example
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import io.scalaland.chimney.dsl.*
