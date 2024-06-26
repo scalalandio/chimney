@@ -6,6 +6,8 @@ import io.scalaland.chimney.Transformer
 import scala.collection.compat._
 // format: on
 
+// FIXME: when we would do some 2.0.0 release, we should align the naming (Protobuf -> Protobufs)
+
 /** @since 0.8.0 */
 trait ProtobufTransformerImplicits extends ProtobufTransformerImplicitsLowPriorityImplicits1 {}
 
