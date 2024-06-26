@@ -63,7 +63,7 @@ and this domain model:
   - you'd have to wrap and unwrap `AnyVal`
   - you'd have to convert a collection
   - in transformation in one way you'd have to wrap with `Option`, and on the way back handle `None`
-  - in one transformation you'd have to manually flatten ADT, and on the way back you have'd to unflatten it
+  - in one transformation you'd have to manually flatten ADT, and on the way back you have had to unflatten it
 
 Can you imagine all the code you'd have to write? For now! And the necessity to carefully update when the model changes?
 The silly mistakes with using the wrong field you'll inevitably make while copy-pasting a lot of repetitive, boring

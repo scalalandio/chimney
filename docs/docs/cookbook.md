@@ -587,7 +587,7 @@ Now, let's take a look what Chimney does, and why the behavior is different.
     from some config or context and for better debugging experience (e.g. using fail fast for normal operations, but letting
     us change a switch in the deployed app without recompiling and redeploying everything to test just one call).
 
-What does it means for us?
+What does it mean to us?
 
 !!! warning
 
@@ -648,7 +648,7 @@ What does it means for us?
     ```
 
 Notice that this is not an issue if we are transforming one value into another value in a non-fallible way, e.g. through
-`map`, `contramap`, `dimap`. There is also no issie if we chain sevaral `flatMap`s for something more like Kleisli
+`map`, `contramap`, `dimap`. There is also no issie if we chain several `flatMap`s for something more like Kleisli
 composition (`result.flatMap(f).flatMap(g)`) but becomes an issue when we use `flatMap` and `flatMap`-based operations
 for building products (`result.flatMap(a => result2.map(b => (a, b))`).
 
@@ -668,7 +668,7 @@ By default, ScalaPB would generate in a case class an additional field
 `unknownFields: UnknownFieldSet = UnknownFieldSet()`. This field
 could be used if you want to somehow log/trace some extra values -
 perhaps from another version of the schema - were passed but your current
-version's parser didn't need it.
+version's parser did not need it.
 
 The automatic conversion into a protobuf with such a field can be problematic:
 
@@ -705,7 +705,7 @@ The automatic conversion into a protobuf with such a field can be problematic:
 
 There are 2 ways in which Chimney could handle this issue:
 
-  - using [default values](supported-transformations.md#allowing-constructors-defaults)
+  - using [default values](supported-transformations.md#allowing-fallback-to-the-constructors-default-values)
   
     !!! example
   
@@ -717,7 +717,7 @@ There are 2 ways in which Chimney could handle this issue:
           .transform
         ```
 
-  - manually [setting this one field](supported-transformations.md#wiring-constructors-parameter-to-raw-value)_
+  - manually [setting this one field](supported-transformations.md#wiring-the-constructors-parameter-to-a-provided-value)_
 
     !!! example
 

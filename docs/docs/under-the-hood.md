@@ -514,7 +514,7 @@ The derivation has a few stages:
  
   - lists of subtypes of both the source type and the target type are made
   - manual overrides are applied
-  - the source type's subtypes that didn't have a manual override are being resolved by macro, matching is done by name
+  - the source type's subtypes that did not have a manual override are being resolved by macro, matching is done by name
   - if no derivation failed, we can combine expressions for each argument into an exhaustive pattern-matching
     - if the transformation is Total (or all expressions are Total), we only need to upcast each result to
       the target type
