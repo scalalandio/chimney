@@ -279,6 +279,42 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
     }
   }
 
+  group("settings .withSealedSubtypeRenamed[FromSubtype, ToSubtype]") {
+
+    import fixtures.renames.Subtypes.*
+
+    test(
+      """should be absent by default and not allow transforming "superset" of case class to "subset" of case objects"""
+    ) {
+
+      compileErrors("""(Foo3.Baz: Foo3).into[Bar].transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.renames.Subtypes.Foo3 to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "derivation from bazz: io.scalaland.chimney.fixtures.renames.Subtypes.Foo3.Bazz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar is not supported in Chimney!",
+        "io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Foo3.Bazz to io.scalaland.chimney.fixtures.renames.Subtypes.Bar",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("transform sealed hierarchy's subtype into user-provided subtype") {
+
+      (Foo3.Baz: Foo3).into[Bar].withSealedSubtypeRenamed[Foo3.Bazz.type, Bar.Baz.type].transform ==> Bar.Baz
+      (Foo3.Bazz: Foo3).into[Bar].withSealedSubtypeRenamed[Foo3.Bazz.type, Bar.Baz.type].transform ==> Bar.Baz
+    }
+  }
+
+  group("settings .withEnumCaseRenamed[FromSubtype, ToSubtype]") {
+
+    import fixtures.renames.Subtypes.*
+
+    test("transform sealed hierarchy's subtype into user-provided subtype") {
+
+      (Foo3.Baz: Foo3).into[Bar].withEnumCaseRenamed[Foo3.Bazz.type, Bar.Baz.type].transform ==> Bar.Baz
+      (Foo3.Bazz: Foo3).into[Bar].withEnumCaseRenamed[Foo3.Bazz.type, Bar.Baz.type].transform ==> Bar.Baz
+    }
+  }
+
   group("flag .enableCustomSubtypeNameComparison") {
 
     import fixtures.renames.Subtypes.*

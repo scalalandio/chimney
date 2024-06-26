@@ -22,4 +22,10 @@ object Subtypes {
     case object getBaz extends BarAmbiguous
     case object baz extends BarAmbiguous
   }
+
+  sealed trait Foo3
+  object Foo3 {
+    case object Baz extends Foo3
+    case object Bazz extends Foo3
+  }
 }
