@@ -63,6 +63,9 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     *
     * By default in such case derivation will fail. By enabling this flag, derivation will fallback to default value.
     *
+    * This flag can be set in parallel to enabling default values for specific field type with
+    * [[enableDefaultValueOfType]].
+    *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#allowing-fallback-to-the-constructors-default-values]]
     *   for more details
@@ -74,6 +77,9 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Fail derivation if `From` type is missing field even if `To` has default value for it.
     *
+    * This flag can be set in parallel to enabling default values for specific field type with *
+    * [[disableDefaultValueOfType]].
+    *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#allowing-fallback-to-the-constructors-default-values]]
     *   for more details
@@ -82,6 +88,34 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     */
   def disableDefaultValues: UpdateFlag[Disable[DefaultValues, Flags]] =
     disableFlag[DefaultValues]
+
+  /** Enable fallback to default case class values in `To` type for fields of `T` type.
+    *
+    * By default in such case derivation will fail. By enabling this flag, derivation will fallback to default value.
+    *
+    * This flag can be set in parallel to globally enabling default values with [[enableDefaultValues]].
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#allowing-fallback-to-the-constructors-default-values]]
+    *   for more details
+    *
+    * @since 1.2.0
+    */
+  def enableDefaultValueOfType[T]: UpdateFlag[Enable[DefaultValueOfType[T], Flags]] =
+    enableFlag[DefaultValueOfType[T]]
+
+  /** Fail derivation if `From` type is missing field even if `To` has default value type for fields of `T` type.
+    *
+    * This flag can be set in parallel to globally enabling default values with [[disableDefaultValues]].
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#allowing-fallback-to-the-constructors-default-values]]
+    *   for more details
+    *
+    * @since 1.2.0
+    */
+  def disableDefaultValueOfType[T]: UpdateFlag[Disable[DefaultValueOfType[T], Flags]] =
+    disableFlag[DefaultValueOfType[T]]
 
   /** Enable Java Beans naming convention (`.getName`, `.isName`) on `From`.
     *
