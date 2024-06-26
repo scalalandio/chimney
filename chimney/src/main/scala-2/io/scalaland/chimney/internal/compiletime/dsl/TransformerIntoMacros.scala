@@ -69,6 +69,23 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       ]]
   }.applyJavaEnumFixFromClosureSignature[Subtype](f)
 
+  def withSealedSubtypeRenamedImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      FromSubtype: WeakTypeTag,
+      ToSubtype: WeakTypeTag
+  ]: Tree = c.prefix.tree
+    .asInstanceOfExpr(
+      weakTypeTag[TransformerInto[
+        From,
+        To,
+        RenamedFrom[Path.SourceMatching[Path.Root, FromSubtype], Path.SourceMatching[Path.Root, ToSubtype], Overrides],
+        Flags
+      ]]
+    )
+
   def withConstructorImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,
