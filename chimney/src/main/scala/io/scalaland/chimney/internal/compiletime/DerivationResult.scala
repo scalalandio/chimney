@@ -247,7 +247,7 @@ private[compiletime] object DerivationResult {
     }
     try {
       val result = thunk(await)
-      Success(result, stateCache)
+      Success(result, if (stateCache != null) stateCache else State()) // if await wasn't called stateCache is null
     } catch {
       case PassErrors(derivationErrors, `await`) => Failure(derivationErrors, stateCache)
       case NonFatal(error)                       => DerivationResult.fromException(error)
