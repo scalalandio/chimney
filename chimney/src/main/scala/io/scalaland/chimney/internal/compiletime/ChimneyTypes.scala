@@ -142,6 +142,15 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerOverrides,
             runtime.TransformerOverrides.RenamedFrom
           ] { this: RenamedFrom.type => }
+
+      val RenamedTo: RenamedToModule
+      trait RenamedToModule
+          extends Type.Ctor3UpperBounded[
+            runtime.Path,
+            runtime.Path,
+            runtime.TransformerOverrides,
+            runtime.TransformerOverrides.RenamedTo
+          ] { this: RenamedTo.type => }
     }
 
     val TransformerFlags: TransformerFlagsModule

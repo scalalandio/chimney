@@ -53,14 +53,14 @@ object IsoDefinitionMacros {
         .asInstanceOf[IsoDefinition[
           First,
           Second,
-          RenamedFrom[
+          RenamedTo[
             Path.SourceMatching[Path.Root, FirstSubtype],
-            Path.SourceMatching[Path.Root, SecondSubtype],
+            Path.Matching[Path.Root, SecondSubtype],
             FirstOverrides
           ],
-          RenamedFrom[
+          RenamedTo[
             Path.SourceMatching[Path.Root, SecondSubtype],
-            Path.SourceMatching[Path.Root, FirstSubtype],
+            Path.Matching[Path.Root, FirstSubtype],
             SecondOverrides
           ],
           Flags

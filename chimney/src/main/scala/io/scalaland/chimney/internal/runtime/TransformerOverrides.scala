@@ -19,4 +19,6 @@ object TransformerOverrides {
   final class ConstructorPartial[Args <: ArgumentLists, ToPath <: Path, Tail <: Overrides] extends Overrides
   // Computes a value using manually pointed value from (src: From)
   final class RenamedFrom[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
+  // Computes a value from matched subtype, targeting another subtype
+  final class RenamedTo[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
 }

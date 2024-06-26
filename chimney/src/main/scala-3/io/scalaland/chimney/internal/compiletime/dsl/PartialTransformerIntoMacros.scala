@@ -187,11 +187,7 @@ object PartialTransformerIntoMacros {
         .asInstanceOf[PartialTransformerInto[
           From,
           To,
-          RenamedFrom[
-            Path.SourceMatching[Path.Root, FromSubtype],
-            Path.SourceMatching[Path.Root, ToSubtype],
-            Overrides
-          ],
+          RenamedTo[Path.SourceMatching[Path.Root, FromSubtype], Path.Matching[Path.Root, ToSubtype], Overrides],
           Flags
         ]]
     }

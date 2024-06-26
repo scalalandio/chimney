@@ -215,6 +215,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
 
     final case class RenamedFrom(sourcePath: Path) extends ForField
+    final case class RenamedTo(targetPath: Path) extends ForSubtype
 
     private def printArgs(args: Args): String = {
       import ExistentialType.prettyPrint as printTpe
@@ -467,6 +468,13 @@ private[compiletime] trait Configurations { this: Derivation =>
           .addTransformerOverride(
             extractPath[ToPath],
             TransformerOverride.RenamedFrom(extractPath[FromPath])
+          )
+      case ChimneyType.TransformerOverrides.RenamedTo(fromPath, toPath, cfg) =>
+        import fromPath.Underlying as FromPath, toPath.Underlying as ToPath, cfg.Underlying as Tail2
+        extractTransformerConfig[Tail2](runtimeDataIdx, runtimeDataStore)
+          .addTransformerOverride(
+            extractPath[ToPath],
+            TransformerOverride.RenamedTo(extractPath[FromPath])
           )
       case _ =>
         // $COVERAGE-OFF$

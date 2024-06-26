@@ -43,14 +43,14 @@ class CodecDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       weakTypeTag[CodecDefinition[
         Domain,
         Dto,
-        RenamedFrom[
+        RenamedTo[
           Path.SourceMatching[Path.Root, DomainSubtype],
-          Path.SourceMatching[Path.Root, DtoSubtype],
+          Path.Matching[Path.Root, DtoSubtype],
           EncodeOverrides
         ],
-        RenamedFrom[
+        RenamedTo[
           Path.SourceMatching[Path.Root, DtoSubtype],
-          Path.SourceMatching[Path.Root, DomainSubtype],
+          Path.Matching[Path.Root, DomainSubtype],
           DecodeOverrides
         ],
         Flags

@@ -233,6 +233,22 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             )
           }
       }
+      object RenamedTo extends RenamedToModule {
+        def apply[
+            FromPath <: runtime.Path: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.RenamedTo[FromPath, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.RenamedTo[FromPath, ToPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.RenamedTo[?, ?, ?]].map { A0 =>
+            (
+              A0.param_<[runtime.Path](0),
+              fixJavaEnums(A0.param_<[runtime.Path](1)),
+              A0.param_<[runtime.TransformerOverrides](2)
+            )
+          }
+      }
     }
 
     object TransformerFlags extends TransformerFlagsModule {

@@ -43,14 +43,14 @@ class IsoDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
       weakTypeTag[IsoDefinition[
         First,
         Second,
-        RenamedFrom[
+        RenamedTo[
           Path.SourceMatching[Path.Root, FirstSubtype],
-          Path.SourceMatching[Path.Root, SecondSubtype],
+          Path.Matching[Path.Root, SecondSubtype],
           FirstOverrides
         ],
-        RenamedFrom[
+        RenamedTo[
           Path.SourceMatching[Path.Root, SecondSubtype],
-          Path.SourceMatching[Path.Root, FirstSubtype],
+          Path.Matching[Path.Root, FirstSubtype],
           SecondOverrides
         ],
         Flags

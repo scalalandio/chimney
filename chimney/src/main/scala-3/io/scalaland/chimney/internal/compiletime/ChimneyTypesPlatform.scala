@@ -187,6 +187,25 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
               )
             case _ => scala.None
       }
+      object RenamedTo extends RenamedToModule {
+        def apply[
+            FromPath <: runtime.Path: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.RenamedTo[FromPath, ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.RenamedTo[FromPath, ToPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          tpe match
+            case '[runtime.TransformerOverrides.RenamedTo[fromPath, toPath, cfg]] =>
+              Some(
+                (
+                  Type[fromPath].as_?<[runtime.Path],
+                  Type[toPath].as_?<[runtime.Path],
+                  Type[cfg].as_?<[runtime.TransformerOverrides]
+                )
+              )
+            case _ => scala.None
+      }
     }
 
     object TransformerFlags extends TransformerFlagsModule {
