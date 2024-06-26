@@ -203,7 +203,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     )
                 }
               }
-              .orElse(useFallbackValues[From, To, CtorParam](defaultValue))
+              .orElse {
+                useFallbackValues[From, To, CtorParam](
+                  defaultValue.orElse(summonDefaultValue[CtorParam].map(_.provide()))
+                )
+              }
               .getOrElse[DerivationResult[Existential[TransformationExpr]]] {
                 if (usePositionBasedMatching)
                   DerivationResult.tupleArityMismatch(fromArity = fromEnabledExtractors.size, toArity = parameters.size)
@@ -442,17 +446,19 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     }
 
     private def useFallbackValues[From, To, CtorParam: Type](
-        defaultValue: Option[Expr[CtorParam]]
+        defaultValue: => Option[Expr[CtorParam]]
     )(implicit ctx: TransformationContext[From, To]): Option[DerivationResult[Existential[TransformationExpr]]] = {
       def useDefaultValue: Option[DerivationResult[Existential[TransformationExpr]]] =
         // Default values are provided from ProductType parsing.
-        defaultValue.filter(_ => ctx.config.flags.processDefaultValues).map { (value: Expr[CtorParam]) =>
-          // We're constructing:
-          // '{ ${ defaultValue } }
-          DerivationResult.existential[TransformationExpr, CtorParam](
-            TransformationExpr.fromTotal(value)
-          )
-        }
+        if (ctx.config.flags.isDefaultValueEnabledGloballyOrFor[CtorParam]) {
+          defaultValue.map { (value: Expr[CtorParam]) =>
+            // We're constructing:
+            // '{ ${ defaultValue } }
+            DerivationResult.existential[TransformationExpr, CtorParam](
+              TransformationExpr.fromTotal(value)
+            )
+          }
+        } else None
 
       def useNone: Option[DerivationResult[Existential[TransformationExpr]]] =
         // OptionalValue handles both scala.Options as well as a support provided through integrations.OptionalValue.

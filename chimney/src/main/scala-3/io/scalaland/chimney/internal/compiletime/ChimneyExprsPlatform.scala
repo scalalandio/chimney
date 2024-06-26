@@ -197,6 +197,13 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         }
     }
 
+    object DefaultValue extends DefaultValueModule {
+
+      def provide[Value: Type](
+          defaultValue: Expr[integrations.DefaultValue[Value]]
+      ): Expr[Value] = '{ ${ defaultValue }.provide() }
+    }
+
     object OptionalValue extends OptionalValueModule {
 
       def empty[Optional: Type, Value: Type](

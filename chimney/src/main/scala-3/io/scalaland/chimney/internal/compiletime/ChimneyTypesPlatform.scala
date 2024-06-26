@@ -376,6 +376,13 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       }
     }
 
+    object DefaultValue extends DefaultValueModule {
+      def apply[Value: Type]: Type[integrations.DefaultValue[Value]] =
+        quoted.Type.of[integrations.DefaultValue[Value]]
+      def unapply[A](tpe: Type[A]): Option[??] = tpe match
+        case '[integrations.DefaultValue[value]] => Some(Type[value].as_??)
+        case _                                   => scala.None
+    }
     object OptionalValue extends OptionalValueModule {
       def apply[Optional: Type, Value: Type]: Type[integrations.OptionalValue[Optional, Value]] =
         quoted.Type.of[integrations.OptionalValue[Optional, Value]]

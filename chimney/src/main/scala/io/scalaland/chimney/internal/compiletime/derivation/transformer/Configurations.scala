@@ -62,6 +62,9 @@ private[compiletime] trait Configurations { this: Derivation =>
     def getDefaultValueOfType[A: Type]: Boolean =
       processDefaultValuesOfType.exists(_.Underlying =:= Type[A])
 
+    def isDefaultValueEnabledGloballyOrFor[A: Type]: Boolean =
+      processDefaultValues || getDefaultValueOfType[A]
+
     def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags =
       copy(implicitConflictResolution = preference)
 
