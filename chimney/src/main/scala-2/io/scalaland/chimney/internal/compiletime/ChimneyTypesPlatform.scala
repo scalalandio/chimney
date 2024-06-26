@@ -280,6 +280,12 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           weakTypeTag[runtime.TransformerFlags.MethodAccessors]
         val DefaultValues: Type[runtime.TransformerFlags.DefaultValues] =
           weakTypeTag[runtime.TransformerFlags.DefaultValues]
+        object DefaultValueOfType extends DefaultValueOfTypeModule {
+          def apply[T: Type]: Type[runtime.TransformerFlags.DefaultValueOfType[T]] =
+            weakTypeTag[runtime.TransformerFlags.DefaultValueOfType[T]]
+          def unapply[A](A: Type[A]): Option[??] =
+            A.asCtor[runtime.TransformerFlags.DefaultValueOfType[?]].map(A0 => A0.param(0))
+        }
         val BeanGetters: Type[runtime.TransformerFlags.BeanGetters] =
           weakTypeTag[runtime.TransformerFlags.BeanGetters]
         val BeanSetters: Type[runtime.TransformerFlags.BeanSetters] =

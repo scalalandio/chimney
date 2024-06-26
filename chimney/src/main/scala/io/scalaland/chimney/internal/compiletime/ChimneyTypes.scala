@@ -178,6 +178,11 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
         val InheritedAccessors: Type[runtime.TransformerFlags.InheritedAccessors]
         val MethodAccessors: Type[runtime.TransformerFlags.MethodAccessors]
         val DefaultValues: Type[runtime.TransformerFlags.DefaultValues]
+        val DefaultValueOfType: DefaultValueOfTypeModule
+        trait DefaultValueOfTypeModule
+            extends Type.Ctor1[
+              runtime.TransformerFlags.DefaultValueOfType
+            ] { this: DefaultValueOfType.type => }
         val BeanGetters: Type[runtime.TransformerFlags.BeanGetters]
         val BeanSetters: Type[runtime.TransformerFlags.BeanSetters]
         val BeanSettersIgnoreUnmatched: Type[runtime.TransformerFlags.BeanSettersIgnoreUnmatched]

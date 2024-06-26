@@ -5,7 +5,7 @@ import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.runtime
 
 import scala.collection.compat.*
-import scala.collection.immutable.ListMap
+import scala.collection.immutable.{ListMap, ListSet}
 
 private[compiletime] trait Configurations { this: Derivation =>
 
@@ -13,6 +13,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       inheritedAccessors: Boolean = false,
       methodAccessors: Boolean = false,
       processDefaultValues: Boolean = false,
+      processDefaultValuesOfType: ListSet[??] = ListSet.empty,
       beanSetters: Boolean = false,
       beanSettersIgnoreUnmatched: Boolean = false,
       nonUnitBeanSetters: Boolean = false,
@@ -52,6 +53,15 @@ private[compiletime] trait Configurations { this: Derivation =>
         // $COVERAGE-ON$
       }
 
+    def setDefaultValueOfType[A: Type](value: Boolean): TransformerFlags =
+      copy(processDefaultValuesOfType =
+        if (value) processDefaultValuesOfType + Type[A].as_??
+        else processDefaultValuesOfType.filterNot(_.Underlying =:= Type[A])
+      )
+
+    def getDefaultValueOfType[A: Type]: Boolean =
+      processDefaultValuesOfType.exists(_.Underlying =:= Type[A])
+
     def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags =
       copy(implicitConflictResolution = preference)
 
@@ -71,6 +81,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (inheritedAccessors) Vector("inheritedAccessors") else Vector.empty,
         if (methodAccessors) Vector("methodAccessors") else Vector.empty,
         if (processDefaultValues) Vector("processDefaultValues") else Vector.empty,
+        if (processDefaultValuesOfType.nonEmpty) Vector(processDefaultValuesOfType.toVector.map(ExistentialType.prettyPrint).mkString("processDefaultValuesOfType=(", ", ", ")"))
+        else Vector.empty,
         if (beanSetters) Vector("beanSetters") else Vector.empty,
         if (beanSettersIgnoreUnmatched) Vector("beanSettersIgnoreUnmatched") else Vector.empty,
         if (nonUnitBeanSetters) Vector("nonUnitBeanSetters") else Vector.empty,
@@ -356,6 +368,9 @@ private[compiletime] trait Configurations { this: Derivation =>
       case ChimneyType.TransformerFlags.Enable(flag, flags) =>
         import flag.Underlying as Flag, flags.Underlying as Flags2
         Flag match {
+          case ChimneyType.TransformerFlags.Flags.DefaultValueOfType(t) =>
+            import t.Underlying as T
+            extractTransformerFlags[Flags2](defaultFlags).setDefaultValueOfType[T](value = true)
           case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(r) =>
             if (r.Underlying =:= ChimneyType.PreferTotalTransformer)
               extractTransformerFlags[Flags2](defaultFlags).setImplicitConflictResolution(
@@ -386,6 +401,9 @@ private[compiletime] trait Configurations { this: Derivation =>
       case ChimneyType.TransformerFlags.Disable(flag, flags) =>
         import flag.Underlying as Flag, flags.Underlying as Flags2
         Flag match {
+          case ChimneyType.TransformerFlags.Flags.DefaultValueOfType(t) =>
+            import t.Underlying as T
+            extractTransformerFlags[Flags2](defaultFlags).setDefaultValueOfType[T](value = false)
           case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(_) =>
             extractTransformerFlags[Flags2](defaultFlags).setImplicitConflictResolution(None)
           case ChimneyType.TransformerFlags.Flags.FieldNameComparison(_) =>

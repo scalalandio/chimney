@@ -12,6 +12,7 @@ object TransformerFlags {
   final class InheritedAccessors extends Flag
   final class MethodAccessors extends Flag
   final class DefaultValues extends Flag
+  final class DefaultValueOfType[T] extends Flag
   final class BeanSetters extends Flag
   final class BeanSettersIgnoreUnmatched extends Flag
   final class NonUnitBeanSetters extends Flag
