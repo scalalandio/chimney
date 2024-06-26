@@ -30,13 +30,12 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
     private def mapEachSealedElementToAnotherSealedElement[From, To](
         fromElements: Enum.Elements[From],
         toElements: Enum.Elements[To]
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
-      lazy val overrideMappings = mapOverriddenElements[From, To]
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       DerivationResult.log {
         val fromSubs = fromElements.map(tpe => Type.prettyPrint(tpe.Underlying)).mkString(", ")
         val toSubs = toElements.map(tpe => Type.prettyPrint(tpe.Underlying)).mkString(", ")
         s"Resolved ${Type.prettyPrint[From]} subtypes: ($fromSubs) and ${Type.prettyPrint[To]} subtypes ($toSubs)"
-      } >>
+      } >> mapOverriddenElements[From, To].flatMap { overrideMappings =>
         Traverse[List]
           .parTraverse[
             DerivationResult,
@@ -52,23 +51,32 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
           .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
             combineElementsMappings[From, To](overrideMappings ++ nameMatchedMappings)
           }
-    }
+      }
 
     private def mapOverriddenElements[From, To](implicit
         ctx: TransformationContext[From, To]
-    ): List[Existential[ExprPromise[*, TransformationExpr[To]]]] = ctx.config
-      .filterCurrentOverridesForSubtype(
-        someFrom => {
-          import someFrom.Underlying as SomeFrom
-          Type[SomeFrom] <:< Type[From]
-        },
-        _ => false
-      )
-      .toList
-      .collect { case (Some(someFrom), runtimeCoproductOverride) =>
+    ): DerivationResult[List[Existential[ExprPromise[*, TransformationExpr[To]]]]] = {
+      val overrides = ctx.config
+        .filterCurrentOverridesForSubtype(
+          someFrom => {
+            import someFrom.Underlying as SomeFrom
+            Type[SomeFrom] <:< Type[From]
+          },
+          _ => false
+        )
+        .toList
+        .collect { case (Some(someFrom), runtimeCoproductOverride) =>
+          someFrom -> runtimeCoproductOverride
+        }
+
+      Traverse[List].parTraverse[
+        DerivationResult,
+        (ExistentialType, TransformerOverride.ForSubtype),
+        (Existential[ExprPromise[*, TransformationExpr[To]]])
+      ](overrides) { case (someFrom, runtimeSubtype) =>
         import someFrom.Underlying as SomeFrom
-        someFrom.mapK[ExprPromise[*, TransformationExpr[To]]] { _ => _ =>
-          ExprPromise
+        DerivationResult.direct[TransformationExpr[To], Existential[ExprPromise[*, TransformationExpr[To]]]] { await =>
+          val promise = ExprPromise
             .promise[SomeFrom](ExprPromise.NameGenerationStrategy.FromType)
             .map { (someFromExpr: Expr[SomeFrom]) =>
               // Ideally we would use here (someFrom => ...) types and pass down someFromExpr,
@@ -77,9 +85,9 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               //      val _ = javaEnum
               //     runtimeDataStore(x).asInstanceOf[JavaEnum.Value => To](javaEnum)
               // complaining that javaEnum.type is not equal to expected JavaEnum.Value.type.
-              val fromExpr = someFromExpr.upcastToExprOf[From]
+              lazy val fromExpr = someFromExpr.upcastToExprOf[From]
 
-              runtimeCoproductOverride match {
+              runtimeSubtype match {
                 case TransformerOverride.CaseComputed(runtimeData) =>
                   // We're constructing:
                   // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => $To](someFromExpr)
@@ -92,10 +100,30 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                   TransformationExpr.fromPartial(
                     runtimeData.asInstanceOfExpr[From => partial.Result[To]].apply(fromExpr)
                   )
+                case TransformerOverride.RenamedTo(targetPath) =>
+                  // We're constructing:
+                  // case someFromExpr: $someFrom => $derivedToSubtype.asInstance
+                  await(targetPath match {
+                    case Path.AtSubtype(someTo, root) if someTo.Underlying <:< Type[To] && root == Path.Root =>
+                      import someTo.Underlying as SomeTo
+                      deriveRecursiveTransformationExpr[SomeFrom, SomeTo](
+                        someFromExpr,
+                        Path.Root.sourceMatching[SomeFrom]
+                      ).map(
+                        _.fold(totalExpr => TransformationExpr.fromTotal(totalExpr.asInstanceOfExpr[To])) {
+                          partialExpr =>
+                            TransformationExpr.fromPartial(partialExpr.asInstanceOfExpr[partial.Result[To]])
+                        }
+                      )
+                    case _ =>
+                      DerivationResult.assertionError("TODO")
+                  })
               }
             }
+          Existential[ExprPromise[*, TransformationExpr[To]], SomeFrom](promise)
         }
       }
+    }
 
     private def mapElementsMatchedByName[From, To](
         fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]],

@@ -53,14 +53,14 @@ object CodecDefinitionMacros {
         .asInstanceOf[CodecDefinition[
           Domain,
           Dto,
-          RenamedFrom[
+          RenamedTo[
             Path.SourceMatching[Path.Root, DomainSubtype],
-            Path.SourceMatching[Path.Root, DtoSubtype],
+            Path.Matching[Path.Root, DtoSubtype],
             EncodeOverrides
           ],
-          RenamedFrom[
+          RenamedTo[
             Path.SourceMatching[Path.Root, DtoSubtype],
-            Path.SourceMatching[Path.Root, DomainSubtype],
+            Path.Matching[Path.Root, DomainSubtype],
             DecodeOverrides
           ],
           Flags

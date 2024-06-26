@@ -17,7 +17,7 @@ object Path {
     */
   final class Matching[Init <: Path, Subtype] extends Path
 
-  /** Used only for withSealedSubtypeMatching to denote that type is matched on the source side!!! */
+  /** Used only for withSealedSubtypeMatching/Renamed to denote that type is matched on the source side!!! */
   final class SourceMatching[Init <: Path, SourceSubtype] extends Path
 
   /** Represents $init.everyItem path. */
