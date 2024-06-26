@@ -65,7 +65,8 @@ final class IsoDefinition[
   /** Use `FirstSubtype` in `First` as a source for `SecondSubtype` in `Second`.
     *
     * @see
-    *   [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *   [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-by-a-specific-target-subtype]]
+    *   for more details
     *
     * @tparam FirstSubtype
     *   type of sealed/enum instance
