@@ -239,6 +239,13 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           quoted.Type.of[runtime.TransformerFlags.MethodAccessors]
         val DefaultValues: Type[runtime.TransformerFlags.DefaultValues] =
           quoted.Type.of[runtime.TransformerFlags.DefaultValues]
+        object DefaultValueOfType extends DefaultValueOfTypeModule {
+          def apply[T: Type]: Type[runtime.TransformerFlags.DefaultValueOfType[T]] =
+            quoted.Type.of[runtime.TransformerFlags.DefaultValueOfType[T]]
+          def unapply[A](tpe: Type[A]): Option[??] = tpe match
+            case '[runtime.TransformerFlags.DefaultValueOfType[t]] => Some(Type[t].as_??)
+            case _                                                 => scala.None
+        }
         val BeanGetters: Type[runtime.TransformerFlags.BeanGetters] =
           quoted.Type.of[runtime.TransformerFlags.BeanGetters]
         val BeanSetters: Type[runtime.TransformerFlags.BeanSetters] =
