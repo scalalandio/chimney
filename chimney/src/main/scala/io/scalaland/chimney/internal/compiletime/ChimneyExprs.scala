@@ -137,6 +137,12 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
       ): Expr[io.scalaland.chimney.Patcher[A, Patch]]
     }
 
+    val DefaultValue: DefaultValueModule
+    trait DefaultValueModule { this: DefaultValue.type =>
+
+      def provide[Value: Type](defaultValue: Expr[integrations.DefaultValue[Value]]): Expr[Value]
+    }
+
     val OptionalValue: OptionalValueModule
     trait OptionalValueModule { this: OptionalValue.type =>
 
@@ -260,6 +266,13 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
 
     def patch(obj: Expr[A], patch: Expr[Patch]): Expr[A] =
       ChimneyExpr.Patcher.patch(patcherExpr, obj, patch)
+  }
+
+  implicit final protected class DefaultValueOps[Value: Type](
+      private val defaultValueExpr: Expr[integrations.DefaultValue[Value]]
+  ) {
+
+    def provide(): Expr[Value] = ChimneyExpr.DefaultValue.provide(defaultValueExpr)
   }
 
   implicit final protected class OptionalValueOps[Optional: Type, Value: Type](

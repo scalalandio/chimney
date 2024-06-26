@@ -288,6 +288,9 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
           ] { this: EveryMapValue.type => }
     }
 
+    val DefaultValue: DefaultValueModule
+    trait DefaultValueModule extends Type.Ctor1[integrations.DefaultValue] { this: DefaultValue.type => }
+
     val OptionalValue: OptionalValueModule
     trait OptionalValueModule extends Type.Ctor2[integrations.OptionalValue] { this: OptionalValue.type =>
       def inferred[Optional: Type]: ExistentialType
@@ -336,6 +339,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
 
       implicit val RuntimeDataStoreType: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] = RuntimeDataStore
 
+      implicit def DefaultValueType[Value: Type]: Type[integrations.DefaultValue[Value]] = DefaultValue[Value]
       implicit def OptionalValueType[Optional: Type, Value: Type]: Type[integrations.OptionalValue[Optional, Value]] =
         OptionalValue[Optional, Value]
       implicit def PartiallyBuildIterableType[Optional: Type, Value: Type]

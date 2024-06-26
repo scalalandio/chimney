@@ -26,6 +26,10 @@ private[compiletime] trait ImplicitSummoning { this: Derivation =>
       : Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
     Expr.summonImplicit[io.scalaland.chimney.PartialTransformer[From, To]]
 
+  final protected def summonDefaultValue[Value: Type]
+      : Option[Expr[io.scalaland.chimney.integrations.DefaultValue[Value]]] =
+    Expr.summonImplicit[io.scalaland.chimney.integrations.DefaultValue[Value]]
+
   final protected type OptionalValueExpr[Optional, Value] =
     Expr[io.scalaland.chimney.integrations.OptionalValue[Optional, Value]]
   final protected def summonOptionalValue[Optional: Type]: Option[Existential[OptionalValueExpr[Optional, *]]] = {
