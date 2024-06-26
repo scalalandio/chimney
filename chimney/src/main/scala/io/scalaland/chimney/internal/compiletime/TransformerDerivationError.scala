@@ -144,7 +144,7 @@ object TransformerDerivationError {
         val defaultValueHint = prettyFieldList(errors.collect {
           case MissingConstructorArgument(toField, _, _, _, true, _) => s"$MAGENTA$toField$RESET"
         }.sorted) { fields =>
-          s"\n\nThere are default values for $fields in $toType. Consider using $MAGENTA.enableDefaultValues$RESET."
+          s"\n\nThere are default values for $fields in $toType. Consider using $MAGENTA.enableDefaultValues$RESET or $MAGENTA.enableDefaultValueForType$RESET."
         }
 
         val noneValueHint = prettyFieldList(errors.collect {
