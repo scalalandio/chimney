@@ -21,7 +21,7 @@ While looking at code examples you're going to see these 2 terms: **Total Transf
 
 Chimney's job is to generate the code that will convert the value of one type (often called a **source** type, or `From`)
 into another type (often called a **target** type, or `To`). When Chimney has enough information to generate
-the transformation, most of the time it could do it for **every** value of the source type. In Chimney we called such
+the transformation, most of the time it could do it for **every** value of the source type. In Chimney, we called such
 transformations Total (because they are virtually **total functions**). One way in which Chimney allows you to use such
 transformation is through `Transformer[From, To]`:
 
@@ -855,8 +855,8 @@ It is disabled by default for the same reasons as default values - being potenti
 
 ### Writing to non-`Unit` Bean setters
 
-By default only unary methods returning `Unit` and starting with `set*` are considered setters. But this would exclude
-e.g. some builder methods which return `this.type` despite mutating. Such methods are siently ignored.
+By default, only unary methods returning `Unit` and starting with `set*` are considered setters. But this would exclude
+e.g. some builder methods which return `this.type` despite mutating. Such methods are silently ignored.
 
 To consider such methods (and fail compilation if they are not matched) you can enable them with a flag:
 
@@ -1045,7 +1045,7 @@ The `None` value is used as a fallback, meaning:
     could be found - if a source value type can be converted into a target argument/setter type then the value provision
     succeeds, but if Chimney fails to convert the value then the whole derivation fails rather than falls back to
     the `None` value
-  - it will not be used if a default value is present and [the support for default values has been enabled](#allowing-the-constructors-default-values)
+  - it will not be used if a default value is present and [the support for default values has been enabled](#allowing-fallback-to-the-constructors-default-values)
     (the fallback to `None` has a lower priority than the fallback to a default value) 
 
 !!! example
@@ -1595,11 +1595,11 @@ We are also able to compute values in nested structure:
 
 Be default names are matched in a Java-Bean-aware way - `fieldName` would be considered a match for another `fieldName`
 but also for `isFieldName`, `getFieldName` and `setFieldName`. This allows the macro to read both normal `val`s and
-Bean getters and write into constructor arguments and Bean setters. (Whether such getters/setters would we admited
+Bean getters and write into constructor arguments and Bean setters. (Whether such getters/setters would we admitted
 for matching is controlled by dedicated flags: [`.enableBeanGetters`](#reading-from-bean-getters) and 
 [`.enableBeanSetters`](#writing-to-bean-setters)).
 
-The field name matching predicate can be overrided with a flag:
+The field name matching predicate can be overridden with a flag:
 
 !!! example
 
@@ -2037,7 +2037,7 @@ Java's `enum` can also be converted this way to/from `sealed`/Scala 3's `enum`/a
 
 ### Handling a specific `sealed` subtype by a specific target subtype
 
-Sometimes a corresponding subtype of the target type has a unrelated name, that cannot be matched by simple comparison.
+Sometimes a corresponding subtype of the target type has an unrelated name, that cannot be matched by simple comparison.
 Or we might want to redirect two subtypes into the same target subtype. For that we have `.withSealedSubtypeRenamed`:
 
 !!! example
@@ -2071,6 +2071,7 @@ Or we might want to redirect two subtypes into the same target subtype. For that
     when dealing with `enum`s. For that reason we provide an aliases to this methods - `withEnumCaseRenamed`:
 
     ```scala
+    // file: snippet.scala - part of withEnumCaseRenamed example
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     //> using scala {{ scala.3 }}
     import io.scalaland.chimney.dsl._
@@ -2085,10 +2086,12 @@ Or we might want to redirect two subtypes into the same target subtype. For that
       case Bar(a: Int)
     }
     
+    @main def example: Unit = {
     (Source.Baz(10): Source)
       .into[Target]
       .withEnumCaseRenamed[Source.Baz, Target.Bar]
       .transform // Target.Bar(10)
+    }
     ```
     
     These methods are only aliases and there is no difference in behavior between `withSealedSubtypeRenamed` and
@@ -2391,7 +2394,7 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
 Be default names are matched with a `String` equality - `Subtype` would be considered a match for another `Subtype`
 but not for `SUBTYPE` or any other capitalization.
 
-The subtype name matching predicate can be overrided with a flag:
+The subtype name matching predicate can be overridden with a flag:
 
 !!! example
 
@@ -3435,7 +3438,7 @@ Arguments taken by both `.enableCustomFieldNameComparison` and `.enableCustomSub
 `TransformedNamesComparison`. Out of the box, Chimney provides:
 
  - `TransformedNamesComparison.StrictEquality` - 2 names are considered equal only if they are identical `String`s.
-   This is the default matching strategy for subtype names conparison
+   This is the default matching strategy for subtype names comparison
  - `TransformedNamesComparison.BeanAware` - 2 names are considered equal if they are identical `String`s OR if they are
    identical after you convert them from Java Bean naming convention: 
     - if a name starts with `is`/`get`/`set` prefix (e.g. `isField`, `getField`, `setField`) then
@@ -3445,7 +3448,7 @@ Arguments taken by both `.enableCustomFieldNameComparison` and `.enableCustomSub
  - `TransformedNamesComparison.CaseInsensitiveEquality` - 2 names are considered equal if `equalsIgnoreCase` returns
   `true`
 
-However, these 3 does not exhaust all possible comparisons and you might need to provide one yourself. 
+However, these 3 do not exhaust all possible comparisons and you might need to provide one yourself. 
 
 !!! warning
 
@@ -3460,7 +3463,7 @@ but Chimney has a specific solution for this:
  - your have to define this `object` as top-level definition or within another object - object defined within a `class`,
    a `trait` or locally, does need some logic for instantiation
  - you have to define your `object` in a module/subproject that is compiled _before_ the module where you need to use
-   it, so that the bytecode would already be accesible on the classpath.
+   it, so that the bytecode would already be accessible on the classpath.
 
 !!! example
 

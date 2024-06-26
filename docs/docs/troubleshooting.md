@@ -162,7 +162,7 @@ To migrate your code from Lifted Transformers to Partial Transformers, you may t
     - `partial.Result.fromEither`
     - `partial.Result.fromTry`
     - and so on...
-  - the resulting type of a call to `.transform` is also a `partial.Result[A]`. If you don't want to work with
+  - the resulting type of the call to `.transform` is also a `partial.Result[A]`. If you don't want to work with
     `partial.Result` directly, figure out ways to convert it to other, more familiar data structures.
     Some of the ways may include:
     - `result.asOption`
@@ -1377,7 +1377,7 @@ would allow user to fix the data in one go). It calls such transformations `Fall
 
 Chimney uses one blessed error type: `partial.Result[_]`. It used to have a similar approach with `TransformerF`, but it
 was decided that users most of the time used: `Option`s (value absence), `Either[String, _]`s (validation with `String`
-error message),`Try` (or another `Throwable`-based error handling) or non-empty collection of any of these. 
+error message),`Try` (or another `Throwable`-based error handling) or non-empty collection of these. 
 `partial.Result` allows storing errors representing each of these, showing which field produced particular error and
 deciding between error accumulating and fail-fast in runtime. It provides utilities to convert to and from
 `partial.Result`.
