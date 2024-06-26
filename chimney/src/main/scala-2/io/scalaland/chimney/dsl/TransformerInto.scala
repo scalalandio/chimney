@@ -177,7 +177,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     *
     * @since 1.2.0
     */
-  def withEnumCaseRenamed[FromSubtype, ToSubtype]: TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+  def withEnumCaseRenamed[FromSubtype, ToSubtype]: TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]
 
   /** Use `f` instead of the primary constructor to construct the `To` value.

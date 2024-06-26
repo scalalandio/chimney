@@ -473,8 +473,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         import fromPath.Underlying as FromPath, toPath.Underlying as ToPath, cfg.Underlying as Tail2
         extractTransformerConfig[Tail2](runtimeDataIdx, runtimeDataStore)
           .addTransformerOverride(
-            extractPath[ToPath],
-            TransformerOverride.RenamedTo(extractPath[FromPath])
+            extractPath[FromPath],
+            TransformerOverride.RenamedTo(extractPath[ToPath])
           )
       case _ =>
         // $COVERAGE-OFF$
