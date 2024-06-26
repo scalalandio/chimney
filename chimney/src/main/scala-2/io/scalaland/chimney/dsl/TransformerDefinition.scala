@@ -93,7 +93,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   )(implicit ev: U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withFieldComputedImpl[From, To, Overrides, Flags]
 
-  /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
+  /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`.
     *
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
     *
@@ -167,6 +167,31 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
       f: Subtype => To
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
+
+  /** Use `FromSubtype` in `From` as a source for `ToSubtype` in `To`.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @tparam DomainSubtype
+    *   type of sealed/enum instance
+    * @tparam DtoSubtype
+    *   type of sealed/enum instance
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    *
+    * @since 1.2.0
+    */
+  def withSealedSubtypeRenamed[FromSubtype, ToSubtype]
+      : TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerDefinitionMacros.withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]
+
+  /** Alias to [[withSealedSubtypeRenamed]].
+    *
+    * @since 1.2.0
+    */
+  def withEnumCaseRenamed[FromSubtype, ToSubtype]: TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerDefinitionMacros.withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]
 
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *

@@ -29,4 +29,31 @@ class IsoDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
           ]]
       }.applyFromSelectors(selectorFirst, selectorSecond)
     )
+
+  def withSealedSubtypeRenamedImpl[
+      First: WeakTypeTag,
+      Second: WeakTypeTag,
+      FirstOverrides <: TransformerOverrides: WeakTypeTag,
+      SecondOverrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      FirstSubtype: WeakTypeTag,
+      SecondSubtype: WeakTypeTag
+  ]: Tree = c.prefix.tree
+    .asInstanceOfExpr(
+      weakTypeTag[IsoDefinition[
+        First,
+        Second,
+        RenamedFrom[
+          Path.SourceMatching[Path.Root, FirstSubtype],
+          Path.SourceMatching[Path.Root, SecondSubtype],
+          FirstOverrides
+        ],
+        RenamedFrom[
+          Path.SourceMatching[Path.Root, SecondSubtype],
+          Path.SourceMatching[Path.Root, FirstSubtype],
+          SecondOverrides
+        ],
+        Flags
+      ]]
+    )
 }

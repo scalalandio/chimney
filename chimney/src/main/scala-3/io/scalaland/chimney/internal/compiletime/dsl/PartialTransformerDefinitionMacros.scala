@@ -182,6 +182,30 @@ object PartialTransformerDefinitionMacros {
         ]]
     }
 
+  def withSealedSubtypeRenamedImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      FromSubtype: Type,
+      ToSubtype: Type
+  ](
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]]
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
+    '{
+      $td
+        .asInstanceOf[PartialTransformerDefinition[
+          From,
+          To,
+          RenamedFrom[
+            Path.SourceMatching[Path.Root, FromSubtype],
+            Path.SourceMatching[Path.Root, ToSubtype],
+            Overrides
+          ],
+          Flags
+        ]]
+    }
+
   def withConstructorImpl[
       From: Type,
       To: Type,

@@ -36,4 +36,34 @@ object IsoDefinitionMacros {
               ]]
           }
     }(selectorFirst, selectorSecond)
+
+  def withSealedSubtypeRenamedImpl[
+      First: Type,
+      Second: Type,
+      FirstOverrides <: TransformerOverrides: Type,
+      SecondOverrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      FirstSubtype: Type,
+      SecondSubtype: Type
+  ](
+      id: Expr[IsoDefinition[First, Second, FirstOverrides, SecondOverrides, Flags]]
+  )(using Quotes): Expr[IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
+    '{
+      $id
+        .asInstanceOf[IsoDefinition[
+          First,
+          Second,
+          RenamedFrom[
+            Path.SourceMatching[Path.Root, FirstSubtype],
+            Path.SourceMatching[Path.Root, SecondSubtype],
+            FirstOverrides
+          ],
+          RenamedFrom[
+            Path.SourceMatching[Path.Root, SecondSubtype],
+            Path.SourceMatching[Path.Root, FirstSubtype],
+            SecondOverrides
+          ],
+          Flags
+        ]]
+    }
 }

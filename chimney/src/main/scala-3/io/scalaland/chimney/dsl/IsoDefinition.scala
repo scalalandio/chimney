@@ -34,7 +34,7 @@ final class IsoDefinition[
       Flags
     ] {
 
-  /** Use `selectorFirst` field in `First` to obtain the value of `selectorSecond` field in `Second`
+  /** Use `selectorFirst` field in `First` to obtain the value of `selectorSecond` field in `Second`.
     *
     * By default if `First` is missing field picked by `selectorSecond` (or reverse) the compilation fails.
     *
@@ -60,6 +60,42 @@ final class IsoDefinition[
       inline selectorSecond: Second => U
   ): IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags] =
     ${ IsoDefinitionMacros.withFieldRenamedImpl('this, 'selectorFirst, 'selectorSecond) }
+
+  /** Use `FirstSubtype` in `First` as a source for `SecondSubtype` in `Second`.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#TODO]] for more details
+    *
+    * @tparam DomainSubtype
+    *   type of sealed/enum instance
+    * @tparam DtoSubtype
+    *   type of sealed/enum instance
+    * @return
+    *   [[io.scalaland.chimney.dsl.IsoDefinition]]
+    *
+    * @since 1.2.0
+    */
+  transparent inline def withSealedSubtypeRenamed[DomainSubtype, DtoSubtype]
+      : IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags] =
+    ${
+      IsoDefinitionMacros
+        .withSealedSubtypeRenamedImpl[First, Second, FirstOverrides, SecondOverrides, Flags, DomainSubtype, DtoSubtype](
+          'this
+        )
+    }
+
+  /** Alias to [[withSealedSubtypeRenamed]].
+    *
+    * @since 1.2.0
+    */
+  transparent inline def withEnumCaseRenamed[DomainSubtype, DtoSubtype]
+      : IsoDefinition[First, Second, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags] =
+    ${
+      IsoDefinitionMacros
+        .withSealedSubtypeRenamedImpl[First, Second, FirstOverrides, SecondOverrides, Flags, DomainSubtype, DtoSubtype](
+          'this
+        )
+    }
 
   /** Build Iso using current configuration.
     *

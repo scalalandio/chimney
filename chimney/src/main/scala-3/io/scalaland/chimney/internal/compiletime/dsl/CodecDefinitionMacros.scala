@@ -36,4 +36,34 @@ object CodecDefinitionMacros {
               ]]
           }
     }(selectorDomain, selectorDto)
+
+  def withSealedSubtypeRenamedImpl[
+      Domain: Type,
+      Dto: Type,
+      EncodeOverrides <: TransformerOverrides: Type,
+      DecodeOverrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      DomainSubtype: Type,
+      DtoSubtype: Type
+  ](
+      id: Expr[CodecDefinition[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags]]
+  )(using Quotes): Expr[CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
+    '{
+      $id
+        .asInstanceOf[CodecDefinition[
+          Domain,
+          Dto,
+          RenamedFrom[
+            Path.SourceMatching[Path.Root, DomainSubtype],
+            Path.SourceMatching[Path.Root, DtoSubtype],
+            EncodeOverrides
+          ],
+          RenamedFrom[
+            Path.SourceMatching[Path.Root, DtoSubtype],
+            Path.SourceMatching[Path.Root, DomainSubtype],
+            DecodeOverrides
+          ],
+          Flags
+        ]]
+    }
 }

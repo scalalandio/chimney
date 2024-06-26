@@ -29,4 +29,31 @@ class CodecDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUtils
           ]]
       }.applyFromSelectors(selectorDomain, selectorDto)
     )
+
+  def withSealedSubtypeRenamedImpl[
+      Domain: WeakTypeTag,
+      Dto: WeakTypeTag,
+      EncodeOverrides <: TransformerOverrides: WeakTypeTag,
+      DecodeOverrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      DomainSubtype: WeakTypeTag,
+      DtoSubtype: WeakTypeTag
+  ]: Tree = c.prefix.tree
+    .asInstanceOfExpr(
+      weakTypeTag[CodecDefinition[
+        Domain,
+        Dto,
+        RenamedFrom[
+          Path.SourceMatching[Path.Root, DomainSubtype],
+          Path.SourceMatching[Path.Root, DtoSubtype],
+          EncodeOverrides
+        ],
+        RenamedFrom[
+          Path.SourceMatching[Path.Root, DtoSubtype],
+          Path.SourceMatching[Path.Root, DomainSubtype],
+          DecodeOverrides
+        ],
+        Flags
+      ]]
+    )
 }
