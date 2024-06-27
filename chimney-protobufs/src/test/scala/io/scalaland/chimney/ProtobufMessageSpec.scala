@@ -4,7 +4,7 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl._
 // format: on
 import io.scalaland.chimney.examples.pb
-import io.scalaland.chimney.fixtures.{addressbook, order}
+import io.scalaland.chimney.fixtures.{addressbook, order, user}
 
 class ProtobufMessageSpec extends ChimneySpec {
 
@@ -137,6 +137,25 @@ class ProtobufMessageSpec extends ChimneySpec {
           )
         }
       }
+    }
+
+    test("User") {
+
+      val domainUser = user.User(
+        addressbook.PersonName("Susan"),
+        addressbook.PersonId(321),
+        addressbook.Email("susan@example.com"),
+        List(addressbook.PhoneNumber("200300400", addressbook.MOBILE))
+      )
+
+      val pbUser = pb.user.User(
+        "Susan",
+        321,
+        "susan@example.com",
+        Seq(pb.addressbook.PhoneNumber("200300400", pb.addressbook.PhoneType.MOBILE))
+      )
+
+      domainUser.into[pb.user.User].enableDefaultValueOfType[scalapb.UnknownFieldSet].transform ==> pbUser
     }
   }
 }
