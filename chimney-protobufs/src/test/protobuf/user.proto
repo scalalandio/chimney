@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package io.scalaland.chimney.examples.pb;
+
+import "scalapb/scalapb.proto";
+import "addressbook.proto";
+
+option (scalapb.options) = {
+  no_default_values_in_constructor: true
+  preserve_unknown_fields: true
+};
+
+message User {
+  string name = 1;
+  int32 id = 2;
+  string email = 3;
+  repeated PhoneNumber phones = 4;
+}
