@@ -19,7 +19,22 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         case NameGenerationStrategy.FromExpr(expr)  => freshTermName[From](expr, usageHint)
       }
 
-    protected def createRefToName[From: Type](name: ExprPromiseName): Expr[From] = Ref(name).asExprOf[From]
+    protected def createRefToName[From: Type](name: ExprPromiseName): Expr[From] = {
+      val From = TypeRepr.of[From]
+
+      val fixedRef = for {
+        sym <- Option(From.typeSymbol)
+        if sym.flags.is(Flags.Enum | Flags.StableRealizable) && !sym.flags.is(Flags.JavaStatic)
+        parentSymbol <- From.baseClasses.find(_.flags.is(Flags.Enum | Flags.Sealed))
+        parentType = From.baseType(parentSymbol)
+        fixedFrom = Type.platformSpecific.fromUntyped(parentType.memberType(sym)).as_??
+      } yield {
+        import fixedFrom.Underlying as FixedFrom
+        Ref(name).asExprOf[FixedFrom].asInstanceOf[Expr[From]]
+      }
+
+      fixedRef.getOrElse(Ref(name).asExprOf[From])
+    }
 
     def createLambda[From: Type, To: Type, B](
         fromName: ExprPromiseName,
@@ -126,7 +141,10 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         if sym.flags.is(Flags.Enum) && (sym.flags.is(Flags.JavaStatic) || sym.flags.is(Flags.StableRealizable)) then
           // Scala 3's enums' parameterless cases are vals with type erased, so w have to match them by value
           // case arg @ Enum.Value => ...
-          CaseDef(Bind(bindName, Ident(sym.termRef)), None, body)
+          val fixedSym =
+            if !sym.flags.is(Flags.JavaStatic) then TypeRepr.of[From].typeSymbol.children.find(_.name == sym.name).get
+            else sym
+          CaseDef(Bind(bindName, Ident(fixedSym.termRef)), None, body)
         else if sym.flags.is(Flags.Module) then
           // case objects are also matched by value but the tree for them is generated in a slightly different way
           // case arg @ Enum.Value => ...
