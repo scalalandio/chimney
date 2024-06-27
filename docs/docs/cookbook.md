@@ -707,7 +707,7 @@ There are 2 ways in which Chimney could handle this issue:
 
   - using [default values](supported-transformations.md#allowing-fallback-to-the-constructors-default-values)
   
-    !!! example
+    !!! example "Globally enabled default values"
   
         ```scala
         domain
@@ -715,6 +715,21 @@ There are 2 ways in which Chimney could handle this issue:
           .into[protobuf.Address]
           .enableDefaultValues
           .transform
+
+        // can be set up for the whole scope with: 
+        // implicit val cfg = TransformerConfiguration.default.enableDefaultValues
+        ```
+  
+    !!! example "Default values scoped only to UnknownFieldSet"
+  
+        ```scala
+        domain
+          .Address("a", "b")
+          .into[protobuf.Address]
+          .enableDefaultValueOfType[scalapb.UnknownFieldSet]
+          .transform
+        // can be set up for the whole scope with: 
+        // implicit val cfg = TransformerConfiguration.default.enableDefaultValueOfType[scalapb.UnknownFieldSet]
         ```
 
   - manually [setting this one field](supported-transformations.md#wiring-the-constructors-parameter-to-a-provided-value)_
@@ -1318,6 +1333,36 @@ We can validate using the dedicated type class (`Validate`), while extraction is
         partial.Result.fromEitherString(refineV[Refinement](value))
       }
     ```
+
+## Custom default values
+
+If you are providing integration for a type which you do not control, and you'd like to let your users fall back
+to default values when using Chimney, but the type does not define them - it might be still possible to provide them
+with `io.scalaland.chimney.integrations.DefaultValue`. It could look like this:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    
+    // Types which we cannot simply edit: come from external library, codegen, etc.
+    
+    case class MyType(int: Int)
+    case class Foo(a: Int)
+    case class Bar(a: Int, b: MyType)
+    
+    // Our integration:
+    implicit val defaultMyType: io.scalaland.chimney.integrations.DefaultValue[MyType] = () => MyType(0)
+    
+    // Remember that default values has to be enabled!
+    import io.scalaland.chimney.dsl._
+    Foo(10).into[Bar].enableDefaultValues.transform // Bar(10, MyType(0))
+    Foo(10).into[Bar].enableDefaultValueOfType[MyType].transform // Bar(10, MyType(0))
+    ``` 
+
+Keep in mind, that such provision works for every constructor which has an argument of such type not matched with source
+value, so it's only safe to use when in the scope which sees such implicit all derivations would only need default value
+of this type, rather than convert it from something else.
 
 ## Custom optional types
 

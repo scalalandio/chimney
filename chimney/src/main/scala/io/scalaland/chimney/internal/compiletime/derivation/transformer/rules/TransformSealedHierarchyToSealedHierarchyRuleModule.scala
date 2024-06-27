@@ -116,7 +116,9 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                         }
                       )
                     case _ =>
-                      DerivationResult.assertionError("TODO")
+                      // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+                      DerivationResult.assertionError(s"Unexpected path: $targetPath")
+                    // $COVERAGE-ON$
                   })
               }
             }
