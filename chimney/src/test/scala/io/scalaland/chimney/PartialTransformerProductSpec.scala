@@ -1057,6 +1057,23 @@ class PartialTransformerProductSpec extends ChimneySpec {
         "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues or .enableDefaultValueForType.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
+
+      import products.Renames.*
+      @unused implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
+
+      compileErrors("""User(1, "Adam", None).transformIntoPartial[User2ID]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.User2ID",
+        "io.scalaland.chimney.fixtures.products.Renames.User2ID",
+        "extraID: scala.Int - no accessor named extraID in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrors("""User(1, "Adam", None).intoPartial[User2ID].transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.User2ID",
+        "io.scalaland.chimney.fixtures.products.Renames.User2ID",
+        "extraID: scala.Int - no accessor named extraID in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
     }
 
     test("should not be needed if all target fields with default values have their values provided in other way") {
@@ -1234,6 +1251,51 @@ class PartialTransformerProductSpec extends ChimneySpec {
         result3.asEither ==> Right(expected)
         result3.asErrorPathMessageStrings ==> Iterable.empty
       }
+    }
+
+    test("should use default value provided with DefaultValue[A] when the constructor is missing one") {
+      import products.Renames.*
+
+      implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
+
+      val expected = User2ID(1, "Adam", None, 0)
+
+      val result = User(1, "Adam", None).intoPartial[User2ID].enableDefaultValues.transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableDefaultValues
+
+        val result2 = User(1, "Adam", None).transformIntoPartial[User2ID]
+        result2.asOption ==> Some(expected)
+        result2.asEither ==> Right(expected)
+        result2.asErrorPathMessageStrings ==> Iterable.empty
+
+        val result3 = User(1, "Adam", None).intoPartial[User2ID].transform
+        result3.asOption ==> Some(expected)
+        result3.asEither ==> Right(expected)
+        result3.asErrorPathMessageStrings ==> Iterable.empty
+      }
+    }
+  }
+
+  group("flag .disableDefaultValues") {
+
+    test("should disable globally enabled .enableDefaultValues") {
+      import products.Defaults.*
+
+      @unused implicit val config = TransformerConfiguration.default.enableDefaultValues
+
+      compileErrors("""Source(1, "yy", 1.0).intoPartial[Target].disableDefaultValues.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
+        "io.scalaland.chimney.fixtures.products.Defaults.Target",
+        "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
+        "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues or .enableDefaultValueForType.",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
     }
   }
 
@@ -1421,6 +1483,33 @@ class PartialTransformerProductSpec extends ChimneySpec {
         result3.asErrorPathMessageStrings ==> Iterable.empty
       }
     }
+
+    test("should use default value provided with DefaultValue[A] when the constructor is missing one") {
+      import products.Renames.*
+
+      implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
+
+      val expected = User2ID(1, "Adam", None, 0)
+
+      val result = User(1, "Adam", None).intoPartial[User2ID].enableDefaultValueOfType[Int].transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableDefaultValueOfType[Int]
+
+        val result2 = User(1, "Adam", None).transformIntoPartial[User2ID]
+        result2.asOption ==> Some(expected)
+        result2.asEither ==> Right(expected)
+        result2.asErrorPathMessageStrings ==> Iterable.empty
+
+        val result3 = User(1, "Adam", None).intoPartial[User2ID].transform
+        result3.asOption ==> Some(expected)
+        result3.asEither ==> Right(expected)
+        result3.asErrorPathMessageStrings ==> Iterable.empty
+      }
+    }
   }
 
   group("flag .disableDefaultValueForType[A]") {
@@ -1440,24 +1529,6 @@ class PartialTransformerProductSpec extends ChimneySpec {
           .transform
         """
       ).check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
-        "io.scalaland.chimney.fixtures.products.Defaults.Target",
-        "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-        "y: java.lang.String - no accessor named y in source type io.scalaland.chimney.fixtures.products.Defaults.Source",
-        "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues or .enableDefaultValueForType.",
-        "Consult https://chimney.readthedocs.io for usage examples."
-      )
-    }
-  }
-
-  group("flag .disableDefaultValues") {
-
-    test("should disable globally enabled .enableDefaultValues") {
-      import products.Defaults.*
-
-      @unused implicit val config = TransformerConfiguration.default.enableDefaultValues
-
-      compileErrors("""Source(1, "yy", 1.0).intoPartial[Target].disableDefaultValues.transform""").check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Defaults.Source to io.scalaland.chimney.fixtures.products.Defaults.Target",
         "io.scalaland.chimney.fixtures.products.Defaults.Target",
         "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Defaults.Source",

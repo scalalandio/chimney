@@ -541,6 +541,23 @@ class TotalTransformerProductSpec extends ChimneySpec {
         "There are default values for x, y, constructor arguments/setters in io.scalaland.chimney.fixtures.products.Defaults.Target. Consider using .enableDefaultValues or .enableDefaultValueForType.",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
+
+      import products.Renames.*
+      @unused implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
+
+      compileErrors("""User(1, "Adam", None).transformInto[User2ID]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.User2ID",
+        "io.scalaland.chimney.fixtures.products.Renames.User2ID",
+        "extraID: scala.Int - no accessor named extraID in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrors("""User(1, "Adam", None).into[User2ID].transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Renames.User to io.scalaland.chimney.fixtures.products.Renames.User2ID",
+        "io.scalaland.chimney.fixtures.products.Renames.User2ID",
+        "extraID: scala.Int - no accessor named extraID in source type io.scalaland.chimney.fixtures.products.Renames.User",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
     }
 
     test("should not be needed if all target fields with default values have their values provided in other way") {
@@ -644,6 +661,21 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
         Source(1, "yy", 1.0).transformInto[Target2] ==> Target2(1L, "yy", 1.0)
         Source(1, "yy", 1.0).into[Target2].transform ==> Target2(1L, "yy", 1.0)
+      }
+    }
+
+    test("should use default value provided with DefaultValue[A] when the constructor is missing one") {
+      import products.Renames.*
+
+      implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
+
+      User(1, "Adam", None).into[User2ID].enableDefaultValues.transform ==> User2ID(1, "Adam", None, 0)
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableDefaultValues
+
+        User(1, "Adam", None).transformInto[User2ID] ==> User2ID(1, "Adam", None, 0)
+        User(1, "Adam", None).into[User2ID].transform ==> User2ID(1, "Adam", None, 0)
       }
     }
   }
@@ -803,6 +835,21 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
         Source(1, "yy", 1.0).transformInto[Target2] ==> Target2(1L, "yy", 1.0)
         Source(1, "yy", 1.0).into[Target2].transform ==> Target2(1L, "yy", 1.0)
+      }
+    }
+
+    test("should use default value provided with DefaultValue[A] when the constructor is missing one") {
+      import products.Renames.*
+
+      implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
+
+      User(1, "Adam", None).into[User2ID].enableDefaultValueOfType[Int].transform ==> User2ID(1, "Adam", None, 0)
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableDefaultValueOfType[Int]
+
+        User(1, "Adam", None).transformInto[User2ID] ==> User2ID(1, "Adam", None, 0)
+        User(1, "Adam", None).into[User2ID].transform ==> User2ID(1, "Adam", None, 0)
       }
     }
   }
