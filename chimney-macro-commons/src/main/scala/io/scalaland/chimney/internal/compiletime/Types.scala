@@ -105,6 +105,32 @@ private[compiletime] trait Types { this: Existentials =>
 
     def Factory[A: Type, C: Type]: Type[Factory[A, C]]
 
+    trait Literal[U] {
+      def apply[A <: U](value: A): Type[A]
+      def unapply[A](A: Type[A]): Option[Existential.UpperBounded[U, Id]]
+    }
+
+    val BooleanLiteral: BooleanLiteralModule
+    trait BooleanLiteralModule extends Literal[Boolean] { this: BooleanLiteral.type => }
+
+    val IntLiteral: IntLiteralModule
+    trait IntLiteralModule extends Literal[Int] { this: IntLiteral.type => }
+
+    val LongLiteral: LongLiteralModule
+    trait LongLiteralModule extends Literal[Long] { this: LongLiteral.type => }
+
+    val FloatLiteral: FloatLiteralModule
+    trait FloatLiteralModule extends Literal[Float] { this: FloatLiteral.type => }
+
+    val DoubleLiteral: DoubleLiteralModule
+    trait DoubleLiteralModule extends Literal[Double] { this: DoubleLiteral.type => }
+
+    val CharLiteral: CharLiteralModule
+    trait CharLiteralModule extends Literal[Char] { this: CharLiteral.type => }
+
+    val StringLiteral: StringLiteralModule
+    trait StringLiteralModule extends Literal[String] { this: StringLiteral.type => }
+
     // You can `import Type.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts
     // with implicit types seen in platform-specific scopes (which would happen if those implicits were always used).
     object Implicits {

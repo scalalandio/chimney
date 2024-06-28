@@ -62,6 +62,25 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       // and <https://github.com/scalalandio/chimney/issues/562> and similar
       def forceTypeSymbolInitialization[A: Type]: Unit = forceTypeSymbolInitialization(Type[A].tpe.typeSymbol)
       def forceTypeSymbolInitialization(s: Symbol): Unit = s.typeSignature
+
+      abstract class LiteralImpl[U: Type] extends Literal[U] {
+        def apply[A <: U](value: A): Type[A] =
+          // fromUntyped(c.universe.internal.UniqueConstantType(Constant(value.asInstanceOf[AnyVal])))
+          fromUntyped(c.universe.internal.constantType(Constant(value.asInstanceOf[AnyVal])))
+        def unapply[A](A: Type[A]): Option[Existential.UpperBounded[U, Id]] =
+          if (A <:< Type[U]) {
+            scala.util
+              .Try(
+                A.tpe
+                  .asInstanceOf[scala.reflect.internal.Types#UniqueConstantType]
+                  .value // Constant
+                  .value // scala.Any
+                  .asInstanceOf[U]
+              )
+              .toOption
+              .map(Existential.UpperBounded[U, Id, U](_))
+          } else None
+      }
     }
 
     import platformSpecific.*
@@ -135,6 +154,16 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     }
 
     def Factory[A: Type, C: Type]: Type[Factory[A, C]] = weakTypeTag[Factory[A, C]]
+
+    import platformSpecific.LiteralImpl
+
+    object BooleanLiteral extends LiteralImpl[Boolean] with BooleanLiteralModule
+    object IntLiteral extends LiteralImpl[Int] with IntLiteralModule
+    object LongLiteral extends LiteralImpl[Long] with LongLiteralModule
+    object FloatLiteral extends LiteralImpl[Float] with FloatLiteralModule
+    object DoubleLiteral extends LiteralImpl[Double] with DoubleLiteralModule
+    object CharLiteral extends LiteralImpl[Char] with CharLiteralModule
+    object StringLiteral extends LiteralImpl[String] with StringLiteralModule
 
     def extractStringSingleton[S <: String](S: Type[S]): String = scala.util
       .Try(

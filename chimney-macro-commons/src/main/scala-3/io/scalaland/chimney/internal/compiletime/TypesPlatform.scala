@@ -89,6 +89,17 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
           case _ =>
             fromUntyped[A](subtype.typeRef).as_?<[A]
         }
+
+      abstract class LiteralImpl[U: Type](lift: U => Constant) extends Literal[U] {
+        final def apply[A <: U](value: A): Type[A] =
+          ConstantType(lift(value)).asType.asInstanceOf[Type[A]]
+        final def unapply[A](A: Type[A]): Option[Existential.UpperBounded[U, Id]] =
+          if A <:< Type[U] then
+            quoted.Type
+              .valueOfConstant[U](using A.asInstanceOf[Type[U]])
+              .map(Existential.UpperBounded[U, Id, U](_))
+          else None
+      }
     }
 
     val Nothing: Type[Nothing] = quoted.Type.of[Nothing]
@@ -214,6 +225,16 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     }
 
     def Factory[A: Type, C: Type]: Type[Factory[A, C]] = quoted.Type.of[Factory[A, C]]
+
+    import platformSpecific.LiteralImpl
+
+    object BooleanLiteral extends LiteralImpl[Boolean](BooleanConstant(_)) with BooleanLiteralModule
+    object IntLiteral extends LiteralImpl[Int](IntConstant(_)) with IntLiteralModule
+    object LongLiteral extends LiteralImpl[Long](LongConstant(_)) with LongLiteralModule
+    object FloatLiteral extends LiteralImpl[Float](FloatConstant(_)) with FloatLiteralModule
+    object DoubleLiteral extends LiteralImpl[Double](DoubleConstant(_)) with DoubleLiteralModule
+    object CharLiteral extends LiteralImpl[Char](CharConstant(_)) with CharLiteralModule
+    object StringLiteral extends LiteralImpl[String](StringConstant(_)) with StringLiteralModule
 
     def extractStringSingleton[S <: String](S: Type[S]): String = quoted.Type.valueOfConstant[S](using S) match {
       case Some(str) => str
