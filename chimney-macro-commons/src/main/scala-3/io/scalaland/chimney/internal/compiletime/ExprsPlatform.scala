@@ -22,7 +22,12 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     val Null: Expr[Null] = '{ null }
     val Unit: Expr[Unit] = '{ () }
 
+    def Boolean(value: Boolean): Expr[Boolean] = scala.quoted.Expr(value)
     def Int(value: Int): Expr[Int] = scala.quoted.Expr(value)
+    def Long(value: Long): Expr[Long] = scala.quoted.Expr(value)
+    def Float(value: Float): Expr[Float] = scala.quoted.Expr(value)
+    def Double(value: Double): Expr[Double] = scala.quoted.Expr(value)
+    def Char(value: Char): Expr[Char] = scala.quoted.Expr(value)
     def String(value: String): Expr[String] = scala.quoted.Expr(value)
 
     def Tuple2[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[(A, B)] = '{ (${ a }, ${ b }) }

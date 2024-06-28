@@ -86,6 +86,9 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
     type Underlying = A
   }
 
+  /** Convenient for literal singletons */
+  type Id[A] = A
+
   // aliases to make the (very common) existential types shorter
 
   type ?? = ExistentialType
