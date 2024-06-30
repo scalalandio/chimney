@@ -29,7 +29,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
       /** Applies type arguments from supertype to subtype if there are any */
       def subtypeTypeOf[A: Type](subtype: TypeSymbol): ?<[A] = {
-        subtype.typeSignature // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
+        forceTypeSymbolInitialization(subtype)
 
         val sEta = subtype.toType.etaExpand
         fromUntyped[A](
@@ -57,6 +57,11 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       // everyone has the same baseClasses, everyone reports to have public primaryConstructor (which is <none>).
       // The only different in behavior is that one prints com.my.Enum and another com.my.Enum(MyValue).
       val javaEnumRegexpFormat = raw"^(.+)\((.+)\)$$".r
+
+      // Workaround for <https://issues.scala-lang.org/browse/SI-7755>
+      // and <https://github.com/scalalandio/chimney/issues/562> and similar
+      def forceTypeSymbolInitialization[A: Type]: Unit = forceTypeSymbolInitialization(Type[A].tpe.typeSymbol)
+      def forceTypeSymbolInitialization(s: Symbol): Unit = s.typeSignature
     }
 
     import platformSpecific.*

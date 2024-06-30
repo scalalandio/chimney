@@ -114,6 +114,7 @@ trait ProductTypes { this: Definitions =>
     def exprAsInstanceOfMethod[A: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Product.Constructor[A]
 
     // defaults methods are 1-indexed
+    protected def classNewDefaultScala2(idx: Int): String = "<init>>$default$" + idx
     protected def caseClassApplyDefaultScala2(idx: Int): String = "apply$default$" + idx
     protected def caseClassApplyDefaultScala3(idx: Int): String = "$lessinit$greater$default$" + idx
 

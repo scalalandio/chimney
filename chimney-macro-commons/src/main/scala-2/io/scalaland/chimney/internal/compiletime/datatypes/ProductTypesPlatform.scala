@@ -72,6 +72,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
     def parseExtraction[A: Type]: Option[Product.Extraction[A]] = Some(
       Product.Extraction(
         ListMap.from[String, Existential[Product.Getter[A, *]]] {
+          forceTypeSymbolInitialization[A]
           val localDefinitions = Type[A].tpe.decls.to(Set)
           Type[A].tpe.members.sorted
             .to(List)
@@ -108,6 +109,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
     def parseConstructor[A: Type]: Option[Product.Constructor[A]] = {
       val A = Type[A].tpe
       val sym = A.typeSymbol
+      forceTypeSymbolInitialization(sym)
 
       if (isJavaEnumValue[A]) {
         Some(Product.Constructor(ListMap.empty, _ => c.Expr[A](q"$A")))
@@ -124,17 +126,20 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         lazy val companion = companionSymbol[A]
         val defaultValues = paramss.flatten.zipWithIndex.collect {
           case (param, idx) if param.asTerm.isParamWithDefault =>
-            val scala2default = caseClassApplyDefaultScala2(idx + 1)
-            val scala3default = caseClassApplyDefaultScala3(idx + 1)
+            val defaultIdx = idx + 1 // defaults are 1-indexed
+            val scala2default = caseClassApplyDefaultScala2(defaultIdx)
+            val scala3default = caseClassApplyDefaultScala3(defaultIdx)
+            val scala2new = classNewDefaultScala2(defaultIdx)
             val foundDefault = companion.typeSignature.decls
               .to(List)
               .collectFirst {
                 case method if getDecodedName(method) == scala2default => TermName(scala2default)
                 case method if getDecodedName(method) == scala3default => TermName(scala3default)
+                case method if getDecodedName(method) == scala2new     => TermName(scala2new)
               }
               .getOrElse(
                 assertionFailed(
-                  s"Expected that ${Type.prettyPrint[A]}'s constructor parameter `$param` would have default value: attempted `$scala2default` and `$scala3default`, found: ${companion.typeSignature.decls}"
+                  s"Expected that ${Type.prettyPrint[A]}'s constructor parameter `$param` would have default value: attempted `$scala2default`, `$scala3default` and `$scala2new`, found: ${companion.typeSignature.decls}"
                 )
               )
             paramNames(param) -> q"$companion.$foundDefault"

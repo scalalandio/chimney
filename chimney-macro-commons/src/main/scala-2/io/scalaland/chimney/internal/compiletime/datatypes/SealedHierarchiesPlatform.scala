@@ -29,6 +29,7 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
         .toList
 
     private def extractSealedSubtypes[A: Type]: List[(String, ?<[A])] = {
+      forceTypeSymbolInitialization[A]
 
       def extractRecursively(t: TypeSymbol): List[TypeSymbol] =
         if (t.asClass.isSealed) t.asClass.knownDirectSubclasses.toList.map(_.asType).flatMap(extractRecursively)
