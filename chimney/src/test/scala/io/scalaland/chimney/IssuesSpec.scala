@@ -760,4 +760,14 @@ class IssuesSpec extends ChimneySpec {
     import Issue498.*
     (Foo.Sub1("test"): Foo).into[Bar].withFieldConst(_.b, 1).transform ==> Bar.Sub1("test", 1)
   }
+
+  test("support non-sealed trait destination") {
+    (colors1.Green: colors1.Color)
+      .into[String]
+      .withSealedSubtypeHandled[colors1.Red.type](_ => "red")
+      .withSealedSubtypeHandled[colors1.Green.type](_ => "green")
+      .withSealedSubtypeHandled[colors1.Blue.type](_ => "blue")
+      .transform ==> "green"
+
+  }
 }

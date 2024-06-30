@@ -16,11 +16,9 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
       (Type[From], Type[To]) match {
         case (SealedHierarchy(Enum(fromElements)), SealedHierarchy(Enum(toElements))) =>
           mapEachSealedElementToAnotherSealedElement(fromElements, toElements)
-        case (SealedHierarchy(_), _) =>
-          DerivationResult.attemptNextRuleBecause(
-            s"Type ${Type.prettyPrint[From]} is a sealed/enum type but ${Type.prettyPrint[To]} is not"
-          )
-        case (_, SealedHierarchy(_)) =>
+        case (SealedHierarchy(Enum(fromElements)), _) if !ctx.config.areOverridesEmpty =>
+          mapEachSealedElementToAnotherSealedElement(fromElements, List.empty)
+        case (SealedHierarchy(Enum(fromElements)), _) =>
           DerivationResult.attemptNextRuleBecause(
             s"Type ${Type.prettyPrint[To]} is a sealed/enum type but ${Type.prettyPrint[From]} is not"
           )
