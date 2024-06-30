@@ -13,6 +13,7 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
 
     def parse[A: Type]: Option[Existential[WrapperClass[A, *]]] = {
       val A = Type[A].tpe
+      forceTypeSymbolInitialization[A]
 
       val getterOpt: Option[Symbol] = A.decls.to(List).find(m => m.isPublic && m.isMethod && m.asMethod.isGetter)
       val primaryConstructorOpt: Option[Symbol] = Option(A.typeSymbol)
