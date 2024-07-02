@@ -105,9 +105,11 @@ private[compiletime] trait Derivation
                   )
                 }
             case _ =>
+              // $COVERAGE-OFF$should never happen unless we messed up
               assertionFailed(
                 s"Expected both types to be options, got ${Type.prettyPrint[PatchGetter]} and ${Type.prettyPrint[TargetParam]}"
               )
+            // $COVERAGE-ON$
           }
         } else if (PatchGetter <:< TargetParam) {
           DerivationResult.pure(Some(patchGetterExpr))

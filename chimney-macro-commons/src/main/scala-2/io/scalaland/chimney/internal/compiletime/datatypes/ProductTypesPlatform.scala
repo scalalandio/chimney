@@ -118,7 +118,9 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       } else if (isPOJO[A]) {
         val primaryConstructor =
           Option(sym).filter(_.isClass).map(_.asClass.primaryConstructor).filter(_.isPublic).getOrElse {
+            // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
             assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
+            // $COVERAGE-ON$
           }
         val paramss = paramListsOf(A, primaryConstructor)
         val paramNames = paramss.flatMap(_.map(param => param -> getDecodedName(param))).toMap
@@ -129,19 +131,20 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
             val defaultIdx = idx + 1 // defaults are 1-indexed
             val scala2default = caseClassApplyDefaultScala2(defaultIdx)
             val scala3default = caseClassApplyDefaultScala3(defaultIdx)
-            val scala2new = classNewDefaultScala2(defaultIdx)
+            val newDefault = classNewDefaultScala2(defaultIdx)
+            val defaults = List(scala2default, scala3default, newDefault)
             val foundDefault = companion.typeSignature.decls
               .to(List)
               .collectFirst {
-                case method if getDecodedName(method) == scala2default => TermName(scala2default)
-                case method if getDecodedName(method) == scala3default => TermName(scala3default)
-                case method if getDecodedName(method) == scala2new     => TermName(scala2new)
+                case method if defaults.contains(getDecodedName(method)) => method
               }
-              .getOrElse(
+              .getOrElse {
+                // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
                 assertionFailed(
-                  s"Expected that ${Type.prettyPrint[A]}'s constructor parameter `$param` would have default value: attempted `$scala2default`, `$scala3default` and `$scala2new`, found: ${companion.typeSignature.decls}"
+                  s"Expected that ${Type.prettyPrint[A]}'s constructor parameter `$param` would have default value: attempted `$scala2default`, `$scala3default` and `$newDefault`, found: ${companion.typeSignature.decls}"
                 )
-              )
+                // $COVERAGE-ON$
+              }
             paramNames(param) -> q"$companion.$foundDefault"
         }.toMap
         val constructorParameters = ListMap.from(paramss.flatMap(_.map { param =>
@@ -276,7 +279,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           .dropWhile { case (x, y) => x == y }
           .takeWhile(_._1 != NoSymbol)
           .map(_._1.name.toTermName)
-        // $COVERAGE-OFF$
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         if (path.isEmpty) assertionFailed(s"Cannot find a companion for ${Type.prettyPrint[A]}")
         else c.typecheck(path.foldLeft[Tree](Ident(path.next()))(Select(_, _)), silent = true).symbol
         // $COVERAGE-ON$

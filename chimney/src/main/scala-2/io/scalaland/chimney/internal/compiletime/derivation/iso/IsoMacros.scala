@@ -102,7 +102,7 @@ final class IsoMacros(val c: blackbox.Context) extends DerivationPlatform with G
         )
 
       Expr.summonImplicit(transformerConfigurationType).getOrElse {
-        // $COVERAGE-OFF$
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError("Can't locate implicit TransformerConfiguration!")
         // $COVERAGE-ON$
       }

@@ -18,7 +18,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       } else if (Type[Flag] =:= ChimneyType.PatcherFlags.Flags.MacrosLogging) {
         copy(displayMacrosLogging = value)
       } else {
-        // $COVERAGE-OFF$
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError(s"Invalid internal PatcherFlags type shape: ${Type[Flag]}!")
         // $COVERAGE-ON$
       }
@@ -79,7 +79,7 @@ private[compiletime] trait Configurations { this: Derivation =>
           import flag.Underlying as Flag, flags.Underlying as Flags2
           extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = false)
         case _ =>
-          // $COVERAGE-OFF$
+          // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
           reportError(s"Invalid internal PatcherFlags type shape: ${Type.prettyPrint[Flags]}!")
         // $COVERAGE-ON$
       }
@@ -87,8 +87,10 @@ private[compiletime] trait Configurations { this: Derivation =>
     private def extractPatcherConfig[Tail <: runtime.PatcherOverrides: Type](): PatcherConfiguration =
       Type[Tail] match {
         case empty if empty =:= ChimneyType.PatcherOverrides.Empty => PatcherConfiguration()
-        case _ =>
+        case _                                                     =>
+          // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
           reportError(s"Invalid internal PatcherOverrides type shape: ${Type.prettyPrint[Tail]}!!")
+        // $COVERAGE-ON$
       }
   }
 }

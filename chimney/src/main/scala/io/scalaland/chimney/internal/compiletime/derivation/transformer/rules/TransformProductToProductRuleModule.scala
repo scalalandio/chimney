@@ -516,7 +516,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           import res1.{Underlying as Res1, value as result1Expr}, res2.{Underlying as Res2, value as result2Expr}
           ctx match {
             case TransformationContext.ForTotal(_) =>
+              // $COVERAGE-OFF$should never happen unless we messed up
               assertionFailed("Expected partial while got total")
+            // $COVERAGE-ON$
             case TransformationContext.ForPartial(_, failFast) =>
               TransformationExpr.fromPartial(
                 ChimneyExpr.PartialResult.map2(
@@ -667,7 +669,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
                 ctx match {
                   case TransformationContext.ForTotal(_) =>
+                    // $COVERAGE-OFF$should never happen unless we messed up
                     assertionFailed("Expected partial, got total")
+                  // $COVERAGE-ON$
                   case TransformationContext.ForPartial(_, failFast) =>
                     // Finally, we are combining:
                     // if (${ failFast }) {

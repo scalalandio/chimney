@@ -384,7 +384,7 @@ private[compiletime] trait Configurations { this: Derivation =>
                 Some(dsls.PreferPartialTransformer)
               )
             else {
-              // $COVERAGE-OFF$
+              // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
               reportError("Invalid ImplicitTransformerPreference type!!")
               // $COVERAGE-ON$
             }
@@ -417,7 +417,7 @@ private[compiletime] trait Configurations { this: Derivation =>
             extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = false)
         }
       case _ =>
-        // $COVERAGE-OFF$
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError(s"Invalid internal TransformerFlags type shape: ${Type.prettyPrint[Flags]}!")
       // $COVERAGE-ON$
     }
@@ -498,7 +498,7 @@ private[compiletime] trait Configurations { this: Derivation =>
             TransformerOverride.RenamedTo(extractPath[ToPath])
           )
       case _ =>
-        // $COVERAGE-OFF$
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError(s"Invalid internal TransformerOverrides type shape: ${Type.prettyPrint[Tail]}!!")
       // $COVERAGE-ON$
     }
@@ -525,7 +525,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         import init.Underlying as PathType2
         extractPath[PathType2].everyMapValue
       case _ =>
-        // $COVERAGE-OFF$
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError(s"Invalid internal Path shape: ${Type.prettyPrint[PathType]}!!")
       // $COVERAGE-ON$
     }
@@ -553,7 +553,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         .reverse // ...and this is: "foo.bar.baz$", "foo.bar$baz$", "foo$bar$baz$"
         .collectFirst { case Comparison(value) => value } // attempts: top-level object, object in object, etc
         .getOrElse {
-          // $COVERAGE-OFF$
+          // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
           reportError(
             s"Invalid TransformerNamesComparison type - only (case) objects are allowed, and only the ones defined as top-level or in top-level objects, got: ${Type
                 .prettyPrint[Comparison]}!!!"

@@ -115,7 +115,9 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     def summonImplicit[A: Type]: Option[Expr[A]]
     def summonImplicitUnsafe[A: Type]: Expr[A] = summonImplicit[A].getOrElse {
+      // $COVERAGE-OFF$should never happen unless we messed up
       assertionFailed(s"Implicit not found: ${Type.prettyPrint[A]}")
+      // $COVERAGE-ON$
     }
 
     // Implementations of Expr extension methods

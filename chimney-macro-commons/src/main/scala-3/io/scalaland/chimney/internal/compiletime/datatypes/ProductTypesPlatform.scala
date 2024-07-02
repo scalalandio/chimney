@@ -143,7 +143,9 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
         val primaryConstructor =
           Option(sym.primaryConstructor).filter(_.isPublic).getOrElse {
+            // $COVERAGE-OFF$should never happen unless we messed up
             assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
+            // $COVERAGE-ON$
           }
         val paramss = paramListsOf(A, primaryConstructor)
         val paramNames = paramss.flatMap(_.map(param => param -> param.name)).toMap
@@ -155,9 +157,11 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
             val scala3default = caseClassApplyDefaultScala3(idx + 1)
             val default =
               (mod.declaredMethod(scala2default) ++ mod.declaredMethod(scala3default)).headOption.getOrElse {
+                // $COVERAGE-OFF$should never happen unless we messed up
                 assertionFailed(
                   s"Expected that ${Type.prettyPrint[A]}'s constructor parameter `$param` would have default value: attempted `$scala2default` and `$scala3default`, found: ${mod.declaredMethods}"
                 )
+                // $COVERAGE-ON$
               }
             paramNames(param) -> Ref(mod).select(default)
         }.toMap
@@ -262,7 +266,9 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           val fnType = fnTypeByArity.getOrElse(
             paramList.size,
             // TODO: handle FunctionXXL
+            // $COVERAGE-OFF$should never happen unless we messed up
             assertionFailed(s"Expected arity between 0 and 22 into ${Type.prettyPrint[A]}, got: ${paramList.size}")
+            // $COVERAGE-ON$
           )
           val paramTypes = paramList.view.values.map(p => TypeRepr.of(using p.Underlying)).toVector
 

@@ -103,9 +103,11 @@ private[compiletime] trait TransformationRules { this: Derivation =>
     final def isPartial: Boolean = fold(_ => false)(_ => true)
 
     final def ensureTotal: Expr[A] = fold(identity) { expr =>
+      // $COVERAGE-OFF$should never happen unless we messed up
       assertionFailed(
         s"Derived partial.Result expression where total Transformer expects direct value: ${Expr.prettyPrint(expr)}"
       )
+      // $COVERAGE-ON$
     }
     final def ensurePartial: Expr[partial.Result[A]] = fold { expr =>
       implicit val A: Type[A] = Expr.typeOf(expr)

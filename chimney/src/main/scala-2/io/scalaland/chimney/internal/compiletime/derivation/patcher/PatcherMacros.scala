@@ -79,7 +79,7 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
         )
 
       Expr.summonImplicit(patcherConfigurationType).getOrElse {
-        // $COVERAGE-OFF$
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError("Can't locate implicit PatcherConfiguration!")
         // $COVERAGE-ON$
       }
