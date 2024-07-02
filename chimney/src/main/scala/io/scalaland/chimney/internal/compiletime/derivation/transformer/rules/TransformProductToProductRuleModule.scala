@@ -470,17 +470,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           )
         }
 
-      def useUnit: Option[DerivationResult[Existential[TransformationExpr]]] =
-        // Unit is always supported as a fallback (we might extend it in the future to all singleton types?).
-        Option(Expr.Unit).filter(_ => Type[CtorParam] =:= Type[Unit]).map { value =>
+      def useSingletonType: Option[DerivationResult[Existential[TransformationExpr]]] =
+        // Singletons are always supported as a fallback (except None as this is explicitly handled with a flag).
+        SingletonType.parse[CtorParam].filterNot(_ => Type[CtorParam] =:= Type[None.type]).map { singleton =>
           // We're constructing:
-          // '{ () }
+          // '{ singleton } // e.g. (), null, case object, val, Java enum
           DerivationResult.existential[TransformationExpr, CtorParam](
-            TransformationExpr.fromTotal(value.upcastToExprOf[CtorParam])
+            TransformationExpr.fromTotal(singleton.value.upcastToExprOf[CtorParam])
           )
         }
 
-      useDefaultValue.orElse(useNone).orElse(useUnit)
+      useDefaultValue.orElse(useNone).orElse(useSingletonType)
     }
 
     private def wireArgumentsToConstructor[From, To, ToOrPartialTo: Type](
