@@ -9,6 +9,13 @@ trait SingletonTypes { this: (Definitions & ProductTypes) =>
     * Should have the same behavior as `ValueOf` without relying on it (it's unavailable in Scala 2.12).
     */
   final protected case class Singleton[A](value: Expr[A])
+  protected object Singleton {
+
+    def unapply[A](A: Type[A]): Option[Expr[A]] = A match {
+      case SingletonType(singleton) => Some(singleton.value)
+      case _                        => None
+    }
+  }
 
   protected object SingletonType {
 
