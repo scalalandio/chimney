@@ -13,7 +13,13 @@ private[compiletime] trait Exprs { this: Definitions =>
     val Null: Expr[Null]
     val Unit: Expr[Unit]
 
+    // FIXME: if we were ever doing 2.0 this would be following the pattern with apply, unapply and [A <: Type]: Expr[A]
+    def Boolean(value: Boolean): Expr[Boolean]
     def Int(value: Int): Expr[Int]
+    def Long(value: Long): Expr[Long]
+    def Float(value: Float): Expr[Float]
+    def Double(value: Double): Expr[Double]
+    def Char(value: Char): Expr[Char]
     def String(value: String): Expr[String]
 
     def Tuple2[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[(A, B)]

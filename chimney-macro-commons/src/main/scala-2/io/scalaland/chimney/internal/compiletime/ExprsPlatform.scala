@@ -11,7 +11,12 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     val Null: Expr[Null] = c.Expr[Null](q"null")
     val Unit: Expr[Unit] = c.Expr[Unit](q"()")
 
+    def Boolean(value: Boolean): Expr[Boolean] = c.Expr[Boolean](q"$value")
     def Int(value: Int): Expr[Int] = c.Expr[Int](q"$value")
+    def Long(value: Long): Expr[Long] = c.Expr[Long](q"$value")
+    def Float(value: Float): Expr[Float] = c.Expr[Float](q"$value")
+    def Double(value: Double): Expr[Double] = c.Expr[Double](q"$value")
+    def Char(value: Char): Expr[Char] = c.Expr[Char](q"$value")
     def String(value: String): Expr[String] = c.Expr[String](q"$value")
 
     def Tuple2[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[(A, B)] = c.Expr[(A, B)](q"($a, $b)")
