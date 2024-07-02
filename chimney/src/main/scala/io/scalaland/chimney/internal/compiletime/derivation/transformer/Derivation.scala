@@ -11,6 +11,7 @@ private[compiletime] trait Derivation
     with datatypes.IterableOrArrays
     with datatypes.ProductTypes
     with datatypes.SealedHierarchies
+    with datatypes.SingletonTypes
     with datatypes.ValueClasses
     with integrations.OptionalValues
     with integrations.PartiallyBuildIterables
