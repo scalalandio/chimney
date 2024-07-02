@@ -568,6 +568,13 @@ class TotalTransformerProductSpec extends ChimneySpec {
         .withFieldConst(_.x, 30)
         .withFieldComputed(_.y, _.yy + "2")
         .transform ==> Target(30, "yy2", 1.0)
+
+      Source(1, "yy", 1.0)
+        .into[Target3]
+        .withFieldConst(_.xx, 30L)
+        .withFieldComputed(_.yy, _.yy + "2")
+        .withFieldConst(_.z, 1.0)
+        .transform ==> new Target3(30L, "yy2", 1.0)
     }
 
     test("should enable using default values when no source value can be resolved in flat transformation") {
