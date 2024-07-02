@@ -62,9 +62,11 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
             typeArgumentByName
           // unknown
           case out =>
+            // $COVERAGE-OFF$should never happen unless we messed up
             assertionFailed(
               s"Constructor of ${Type.prettyPrint(fromUntyped[Any](tpe))} has unrecognized/unsupported format of type: $out"
             )
+          // $COVERAGE-ON$
         }
 
       /** Applies type arguments from supertype to subtype if there are any */
@@ -215,7 +217,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     def extractStringSingleton[S <: String](S: Type[S]): String = quoted.Type.valueOfConstant[S](using S) match {
       case Some(str) => str
-      case None      => assertionFailed(s"Invalid string literal type: ${prettyPrint(S)}")
+      case None      =>
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+        assertionFailed(s"Invalid string literal type: ${prettyPrint(S)}")
+      // $COVERAGE-ON$
     }
 
     def isTuple[A](A: Type[A]): Boolean = TypeRepr.of(using A).typeSymbol.fullName.startsWith("scala.Tuple")

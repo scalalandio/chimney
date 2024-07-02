@@ -144,7 +144,11 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
           .value
           .asInstanceOf[String]
       )
-      .getOrElse(assertionFailed(s"Invalid string literal type: ${prettyPrint(S)}"))
+      .getOrElse {
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+        assertionFailed(s"Invalid string literal type: ${prettyPrint(S)}")
+        // $COVERAGE-ON$
+      }
 
     def isTuple[A](A: Type[A]): Boolean = A.tpe.typeSymbol.fullName.startsWith("scala.Tuple")
 

@@ -35,7 +35,7 @@ final class PatcherMacros(q: Quotes) extends DerivationPlatform(q) with Gateway 
     val implicitScopeConfig = scala.quoted.Expr
       .summon[io.scalaland.chimney.dsl.PatcherConfiguration[? <: runtime.PatcherFlags]]
       .getOrElse {
-        // $COVERAGE-OFF$
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError("Can't locate implicit PatcherConfiguration!")
         // $COVERAGE-ON$
       }

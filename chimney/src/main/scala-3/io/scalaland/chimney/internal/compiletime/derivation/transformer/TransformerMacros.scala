@@ -75,7 +75,7 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
     val implicitScopeConfig = scala.quoted.Expr
       .summon[io.scalaland.chimney.dsl.TransformerConfiguration[? <: runtime.TransformerFlags]]
       .getOrElse {
-        // $COVERAGE-OFF$
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError("Can't locate implicit TransformerConfiguration!")
         // $COVERAGE-ON$
       }

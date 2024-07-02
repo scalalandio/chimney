@@ -128,11 +128,13 @@ trait ProductTypes { this: Definitions =>
     ): (Product.Arguments, Product.Arguments) = {
       val missingArguments = parameters.filter(settersCanBeIgnored).keySet diff arguments.keySet
       if (missingArguments.nonEmpty) {
+        // $COVERAGE-OFF$should never happen unless we messed up
         val missing = missingArguments.mkString(", ")
         val provided = arguments.keys.mkString(", ")
         assertionFailed(
           s"Constructor of ${Type.prettyPrint[A]} expected arguments: $missing but they were not provided, what was provided: $provided"
         )
+        // $COVERAGE-ON$
       }
 
       parameters.foreach { case (name, param) =>
@@ -140,10 +142,12 @@ trait ProductTypes { this: Definitions =>
         // setter might be absent, so we cannot assume that argument for it is in a map
         arguments.get(name).foreach { argument =>
           if (!(argument.Underlying <:< Param)) {
+            // $COVERAGE-OFF$should never happen unless we messed up
             assertionFailed(
               s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
                   .prettyPrint[param.Underlying]}, instead got ${Expr.prettyPrint(argument.value)} ${Type.prettyPrint(argument.Underlying)}"
             )
+            // $COVERAGE-ON$
           }
         }
       }
