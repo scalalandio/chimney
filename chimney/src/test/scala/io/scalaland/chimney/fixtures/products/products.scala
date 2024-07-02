@@ -65,7 +65,14 @@ object Defaults {
 
   case class Source(xx: Int, yy: String, z: Double)
   case class Target(x: Int = 10, y: String = "y", z: Double)
-  case class Target2(xx: Long = 10, yy: String = "y", z: Double)
+  case class Target2(xx: Long = 10L, yy: String = "y", z: Double)
+  class Target3(val xx: Long = 10L, val yy: String = "y", val z: Double) {
+    override def toString: String = s"Target3($xx, $yy, $z)"
+    override def equals(obj: Any): Boolean = obj match {
+      case another: Target3 => xx == another.xx && yy == another.yy && z == another.z
+      case _                => false
+    }
+  }
 
   case class Nested[A](value: A)
 }

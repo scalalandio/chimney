@@ -1090,6 +1090,18 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result.asOption ==> Some(expected)
       result.asEither ==> Right(expected)
       result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected2 = new Target3(30L, "yy2", 1.0)
+
+      val result2 = Source(1, "yy", 1.0)
+        .intoPartial[Target3]
+        .withFieldConst(_.xx, 30L)
+        .withFieldComputed(_.yy, _.yy + "2")
+        .transform
+
+      result2.asOption ==> Some(expected2)
+      result2.asEither ==> Right(expected2)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
     }
 
     test("should enable using default values when no source value can be resolved in flat transformation") {
