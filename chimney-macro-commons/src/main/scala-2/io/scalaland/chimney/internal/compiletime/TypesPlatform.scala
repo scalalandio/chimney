@@ -65,14 +65,13 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
       abstract class LiteralImpl[U: Type] extends Literal[U] {
         def apply[A <: U](value: A): Type[A] =
-          // fromUntyped(c.universe.internal.UniqueConstantType(Constant(value.asInstanceOf[AnyVal])))
           fromUntyped(c.universe.internal.constantType(Constant(value.asInstanceOf[AnyVal])))
         def unapply[A](A: Type[A]): Option[Existential.UpperBounded[U, Id]] =
           if (A <:< Type[U]) {
             scala.util
               .Try(
                 A.tpe
-                  .asInstanceOf[scala.reflect.internal.Types#UniqueConstantType]
+                  .asInstanceOf[scala.reflect.internal.Types#ConstantType]
                   .value // Constant
                   .value // scala.Any
                   .asInstanceOf[U]
