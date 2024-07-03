@@ -164,20 +164,6 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     object CharLiteral extends LiteralImpl[Char] with CharLiteralModule
     object StringLiteral extends LiteralImpl[String] with StringLiteralModule
 
-    def extractStringSingleton[S <: String](S: Type[S]): String = scala.util
-      .Try(
-        S.tpe
-          .asInstanceOf[scala.reflect.internal.Types#UniqueConstantType]
-          .value
-          .value
-          .asInstanceOf[String]
-      )
-      .getOrElse {
-        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
-        assertionFailed(s"Invalid string literal type: ${prettyPrint(S)}")
-        // $COVERAGE-ON$
-      }
-
     def isTuple[A](A: Type[A]): Boolean = A.tpe.typeSymbol.fullName.startsWith("scala.Tuple")
 
     def isSubtypeOf[A, B](A: Type[A], B: Type[B]): Boolean = A.tpe <:< B.tpe

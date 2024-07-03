@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal.compiletime
 import scala.collection.compat.Factory
 import scala.collection.immutable.ListSet
 
-private[compiletime] trait Types { this: Existentials =>
+private[compiletime] trait Types { this: (Existentials & Results) =>
 
   /** Platform-specific type representation (`c.WeakTypeTag[A]` in 2, `scala.quoted.Type[A]` in 3) */
   protected type Type[A]
@@ -173,7 +173,15 @@ private[compiletime] trait Types { this: Existentials =>
 
     // Implementations of extension methods
 
-    def extractStringSingleton[S <: String](S: Type[S]): String
+    // FIXME (2.0.0 cleanup): this could be removed and the body copy-pasted into extension method
+    def extractStringSingleton[S <: String](S: Type[S]): String = StringLiteral
+      .unapply(S)
+      .getOrElse {
+        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+        assertionFailed(s"Invalid string literal type: ${prettyPrint(S)}")
+        // $COVERAGE-ON$
+      }
+      .value
 
     def isTuple[A](A: Type[A]): Boolean
 

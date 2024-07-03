@@ -26,6 +26,7 @@ trait TotallyBuildIterable[Collection, Item] {
   def to[Collection2](collection: Collection, factory: Factory[Item, Collection2]): Collection2 =
     FactoryCompat.iteratorTo(iterator(collection), factory)
 
+  /** Useful since this class is invariant. */
   def widen[Collection2 >: Collection]: TotallyBuildIterable[Collection2, Item] =
     this.asInstanceOf[TotallyBuildIterable[Collection2, Item]]
 }
