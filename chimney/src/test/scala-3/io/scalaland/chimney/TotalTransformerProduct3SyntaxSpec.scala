@@ -5,7 +5,7 @@ import io.scalaland.chimney.fixtures.*
 
 class TotalTransformerProduct3SyntaxSpec extends ChimneySpec {
 
-  // inference on value.this (without upcasting) works only with Scala 3
+  // Inference on value.this (without upcasting) works only with Scala 3
   test("transformation should automatically fill Enum.Value.type type parameters") {
     case class Foo(value: String)
     import TotalTransformerProduct3SyntaxSpec.*
@@ -16,6 +16,8 @@ class TotalTransformerProduct3SyntaxSpec extends ChimneySpec {
 }
 object TotalTransformerProduct3SyntaxSpec {
 
+  // Same issue as with https://github.com/scalalandio/chimney/pull/533 / https://github.com/scala/scala3/issues/20349
+  // / https://github.com/scala/scala3/issues/19825.
   enum Type:
     case Value
 }

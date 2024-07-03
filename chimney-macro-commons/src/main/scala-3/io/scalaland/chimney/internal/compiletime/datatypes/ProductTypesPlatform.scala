@@ -62,7 +62,6 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
     }
     def isCaseVal[A](implicit A: Type[A]): Boolean = {
       def attempt(sym: Symbol): Boolean =
-        println(s"${Type.prettyPrint[A]} -> $sym -> ${sym.flags.show}")
         sym.isPublic && sym.flags
           .is(Flags.Case | Flags.Enum) && (sym.flags.is(Flags.JavaStatic) || sym.flags.is(Flags.StableRealizable))
       attempt(TypeRepr.of(using A).typeSymbol) || attempt(TypeRepr.of(using A).termSymbol)
