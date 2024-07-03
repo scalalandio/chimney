@@ -1238,6 +1238,13 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       Foo("test").transformInto[PolyBar[Null]] ==> PolyBar("test", null)
     }
+
+    test("automatically fill case object parameters") {
+      case class Foo(value: String)
+      case object SomeObject
+
+      Foo("test").transformInto[PolyBar[SomeObject.type]] ==> PolyBar("test", SomeObject)
+    }
   }
 
   test("support abstracting over a value in dsl operations") {
