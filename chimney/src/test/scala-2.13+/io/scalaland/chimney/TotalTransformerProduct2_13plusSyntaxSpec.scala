@@ -3,7 +3,7 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
-class TotalTransformerProduct_2_13plusSyntaxSpec extends ChimneySpec {
+class TotalTransformerProduct2_13plusSyntaxSpec extends ChimneySpec {
 
   // literal singleton types are available only in 2.13 and 3
   test("transformation should automatically fill literal singleton type parameters") {
