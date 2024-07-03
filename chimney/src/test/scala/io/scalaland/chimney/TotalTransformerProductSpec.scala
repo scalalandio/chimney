@@ -1232,6 +1232,12 @@ class TotalTransformerProductSpec extends ChimneySpec {
       Foo("test").transformInto[PolyBar.UnitBar] ==> PolyBar("test", ())
       Foo("test").transformInto[PolyBar[Unit]] ==> PolyBar("test", ())
     }
+
+    test("automatically fill Null parameters") {
+      case class Foo(value: String)
+
+      Foo("test").transformInto[PolyBar[Null]] ==> PolyBar("test", null)
+    }
   }
 
   test("support abstracting over a value in dsl operations") {
