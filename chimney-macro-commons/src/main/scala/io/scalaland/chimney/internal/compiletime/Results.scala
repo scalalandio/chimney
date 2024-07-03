@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
-private[compiletime] trait Results { this: Definitions =>
+private[compiletime] trait Results {
 
   /** Prints info at current macro expansion - assume it can only be called once */
   protected def reportInfo(info: String): Unit
