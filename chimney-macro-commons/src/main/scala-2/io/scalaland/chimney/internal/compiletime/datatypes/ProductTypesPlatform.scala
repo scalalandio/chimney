@@ -149,7 +149,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         }.toMap
         val constructorParameters = ListMap.from(paramss.flatMap(_.map { param =>
           val name = paramNames(param)
-          val tpe = ExistentialType(fromUntyped(param.typeSignatureIn(A)))
+          val tpe = ExistentialType(fromUntyped(paramTypes(name)))
           name ->
             tpe.mapK { implicit Tpe: Type[tpe.Underlying] => _ =>
               Product.Parameter(
