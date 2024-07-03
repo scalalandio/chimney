@@ -61,9 +61,11 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       sym.isPublic && sym.flags.is(Flags.Case | Flags.Module)
     }
     def isCaseVal[A](implicit A: Type[A]): Boolean = {
-      val sym = TypeRepr.of(using A).typeSymbol
-      sym.isPublic && sym.flags
-        .is(Flags.Case | Flags.Enum) && (sym.flags.is(Flags.JavaStatic) || sym.flags.is(Flags.StableRealizable))
+      def attempt(sym: Symbol): Boolean =
+        println(s"${Type.prettyPrint[A]} -> $sym -> ${sym.flags.show}")
+        sym.isPublic && sym.flags
+          .is(Flags.Case | Flags.Enum) && (sym.flags.is(Flags.JavaStatic) || sym.flags.is(Flags.StableRealizable))
+      attempt(TypeRepr.of(using A).typeSymbol) || attempt(TypeRepr.of(using A).termSymbol)
     }
     def isJavaEnumValue[A: Type]: Boolean =
       Type[A] <:< scala.quoted.Type.of[java.lang.Enum[?]] && !TypeRepr.of[A].typeSymbol.isAbstract
@@ -133,7 +135,9 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
     def parseConstructor[A: Type]: Option[Product.Constructor[A]] =
       if isCaseObject[A] || isCaseVal[A] || isJavaEnumValue[A] then {
         val A = TypeRepr.of[A]
-        val sym = A.typeSymbol
+        // Workaround for different Symbol used when we obtain things from SealedHierarchies and passed by user as
+        // Enum.Value.type
+        val sym = if A.termSymbol != Symbol.noSymbol then A.termSymbol else A.typeSymbol
 
         if isCaseVal[A] || isJavaEnumValue[A] then Some(Product.Constructor(ListMap.empty, _ => Ref(sym).asExprOf[A]))
         else Some(Product.Constructor(ListMap.empty, _ => Ref(sym.companionModule).asExprOf[A]))
