@@ -190,9 +190,11 @@ final class TransformerMacros(val c: blackbox.Context) extends DerivationPlatfor
     )
   }
 
-  private def retypecheck[A: Type](expr: c.Expr[A]): c.Expr[A] = try
-    c.Expr[A](c.typecheck(tree = c.untypecheck(expr.tree)))
-  catch {
+  private def retypecheck[A: Type](expr: c.Expr[A]): c.Expr[A] = try {
+    val res = c.typecheck(tree = c.untypecheck(expr.tree))
+    // expr->untypecheck->typecheck can loose precision, e.g. upcast literal-based singleton type to its parent
+    c.Expr[A](if (res.tpe <:< Type[A].tpe) res else q"$res.asInstanceOf[${Type[A]}]")
+  } catch {
     case scala.reflect.macros.TypecheckException(_, msg) => c.abort(c.enclosingPosition, msg)
   }
 

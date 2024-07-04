@@ -11,7 +11,7 @@ private[compiletime] trait TransformToSingletonRuleModule { this: Derivation =>
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       Type[To] match {
-        case _ if Type[To] <:< Type[Unit] || Type[To] <:< Type[None.type] =>
+        case _ if !(Type[To] =:= Type[Null]) && (Type[To] <:< Type[Unit] || Type[To] <:< Type[None.type]) =>
           DerivationResult.attemptNextRuleBecause(
             s"Explicitly ignoring singletons of ${Type.prettyPrint[To]} due to safety concerns"
           )

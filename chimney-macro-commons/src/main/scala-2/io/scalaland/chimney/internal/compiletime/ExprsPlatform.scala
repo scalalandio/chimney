@@ -7,17 +7,29 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
   final override protected type Expr[A] = c.Expr[A]
   protected object Expr extends ExprModule {
 
+    object platformSpecific {
+
+      def refineToLiteral[U: Type](literal: Type.Literal[U], tree: Tree, value: U): Expr[U] =
+        if (isScala212) c.Expr[U](tree)
+        else {
+          val aType = literal(value).as_??
+          import aType.Underlying as A
+          c.Expr[A](tree).asInstanceOf[Expr[U]]
+        }
+    }
+    import platformSpecific.*
+
     val Nothing: Expr[Nothing] = c.Expr[Nothing](q"???")
     val Null: Expr[Null] = c.Expr[Null](q"null")
     val Unit: Expr[Unit] = c.Expr[Unit](q"()")
 
-    def Boolean(value: Boolean): Expr[Boolean] = c.Expr[Boolean](q"$value")
-    def Int(value: Int): Expr[Int] = c.Expr[Int](q"$value")
-    def Long(value: Long): Expr[Long] = c.Expr[Long](q"$value")
-    def Float(value: Float): Expr[Float] = c.Expr[Float](q"$value")
-    def Double(value: Double): Expr[Double] = c.Expr[Double](q"$value")
-    def Char(value: Char): Expr[Char] = c.Expr[Char](q"$value")
-    def String(value: String): Expr[String] = c.Expr[String](q"$value")
+    def Boolean(value: Boolean): Expr[Boolean] = refineToLiteral(Type.BooleanLiteral, q"$value", value)
+    def Int(value: Int): Expr[Int] = refineToLiteral(Type.IntLiteral, q"$value", value)
+    def Long(value: Long): Expr[Long] = refineToLiteral(Type.LongLiteral, q"$value", value)
+    def Float(value: Float): Expr[Float] = refineToLiteral(Type.FloatLiteral, q"$value", value)
+    def Double(value: Double): Expr[Double] = refineToLiteral(Type.DoubleLiteral, q"$value", value)
+    def Char(value: Char): Expr[Char] = refineToLiteral(Type.CharLiteral, q"$value", value)
+    def String(value: String): Expr[String] = refineToLiteral(Type.StringLiteral, q"$value", value)
 
     def Tuple2[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[(A, B)] = c.Expr[(A, B)](q"($a, $b)")
 
