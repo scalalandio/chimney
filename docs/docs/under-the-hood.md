@@ -391,7 +391,7 @@ there are some intuitions about the order in which `Rule`s are tried, which shou
     ignore it
   - the second `rule` to attempt is whether the value has to be converted at all, perhaps it is already at the right type
     or could be with just upcasting
-  - then we have a whole much of special cases for: value classes, `Option`s, `Either`s, `Array`s, collections, which
+  - then we have a whole much of special cases for: value classes, `Option`s, `Either`s, `Array`s, collections... which
     could handle more edge cases than a generic rule for product types or sealed hierarchies. Their order is defined
     empirically - you throw a lot of tests and see if there is some Feature Interaction Bug coming from the current
     order of `Rule`s, which could be fixed with adding some guard to one of them or by changing their order (because one
@@ -451,6 +451,8 @@ If `From` is a subtype of `To` and there are no reasons to pass, the rule upcast
 
 Chimney would have specialized expression generation for things like:
 
+  - singletons types - we might check if the target is a singleton type (`case object`, Scala 3 enum's paremeterless
+    `case`, literal-based singleton type) and return the only possible value
   - `AnyVal`s - we might check if wrapping/unwrapping/rewrapping is needed, and trigger a recursive derivation for
     the wrapped types
   - `Option`s - we might check if wrapping/unwrapping (only in Partials)/mapping is needed and trigger a recursive

@@ -929,7 +929,7 @@ It is disabled by default for the same reasons as default values - being potenti
 
 ### Fallback to `Unit` as the constructor's argument
 
-If a class' constructor takes `Unit` as a parameter it is always provided without any configuration.
+If a class' constructor takes `Unit` as a parameter, it is always provided without any configuration.
 
 !!! example
 
@@ -945,6 +945,84 @@ If a class' constructor takes `Unit` as a parameter it is always provided withou
     Source().transformIntoPartial[Target].asEither // Right(Target(()))
     Source().intoPartial[Target].transform.asEither // Right(Target(()))
     ```
+
+### Fallback to literal-based singleton types as the constructor's argument
+
+If a class' constructor takes literal-based singleton types as a parameter (e.g. due to type parameter application),
+it is always provided without any configuration (on [Scala 2.13/3](https://docs.scala-lang.org/sips/42.type.html),
+since 2.12 did not yet have this concept).
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+
+    case class Source()
+    case class Target(value: "my value")
+
+    Source().transformInto[Target] // Target("my value")
+    Source().into[Target].transform // Target("my value")
+    Source().transformIntoPartial[Target].asEither // Right(Target("my value"))
+    Source().intoPartial[Target].transform.asEither // Right(Target("my value"))
+    ```
+
+### Fallback to case objects as the constructor's argument
+
+If a class' constructor takes `case object` as a parameter (e.g. due to type parameter application), it is always
+provided without any configuration (on [Scala 2.13/3](https://docs.scala-lang.org/sips/42.type.html), since 2.12 did not
+yet have this concept).
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+
+    case object SomeObject
+
+    case class Source()
+    case class Target(value: SomeObject.type)
+
+    Source().transformInto[Target] // Target(SomeObject)
+    Source().into[Target].transform // Target(SomeObject)
+    Source().transformIntoPartial[Target].asEither // Right(Target(SomeObject))
+    Source().intoPartial[Target].transform.asEither // Right(Target(SomeObject))
+    ```
+
+On Scala 3, parameterless `case` can be used as well:    
+
+!!! example
+
+    ```scala
+    // file: snippet.scala - part of example of parameterless case as fallback value
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+
+    enum SomeEnum:
+      case SomeValue
+
+    case class Source()
+    case class Target(value: SomeEnum.SomeValue.type)
+
+    @main def example: Unit = {
+    Source().transformInto[Target] // Target(SomeEnum.SomeValue)
+    Source().into[Target].transform // Target(SomeEnum.SomeValue)
+    Source().transformIntoPartial[Target].asEither // Right(Target(SomeEnum.SomeValue))
+    Source().intoPartial[Target].transform.asEither // Right(Target(SomeEnum.SomeValue))
+    }
+    ```
+
+!!! notice
+
+    Only `case object`s and parameterless `case`s are supported this way - other `object`s, or singletons defined
+    for `value.type` are not supported at the moment.
+    
+!!! notice
+
+    `None.type` is explicitly excluded from this support as it might accidentally fill the value that should not be
+    filled - provide it explicitly or enable with `.enableOptionDefaultsToNone`.
 
 ### Allowing fallback to the constructor's default values
 
@@ -2923,6 +3001,84 @@ Finally, you can always provide a custom `Transformer` from/to a type containing
     If you need to fetch and pass around implicit transformers (both total and partial), read
     the [Automatic, semiautomatic and inlined derication](cookbook.md#automatic-semiautomatic-and-inlined-derivation)
     cookbook.
+
+## Into singleton types
+
+If the target is one of supported singleton types, we can provide the transformation based only on the type.
+
+### Into a literal-based singleton type
+
+Scala 2.13 and 3 allow using [literal-based singleton types](https://docs.scala-lang.org/sips/42.type.html):
+
+!!! example
+ 
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+    
+    case class Example(a: Int, b: String)
+
+    Example(10, "test").transformInto[true] // true
+    Example(10, "test").into[true].transform // true
+    Example(10, "test").transformInto[1024] // 1024
+    Example(10, "test").into[1024].transform // 1024
+    Example(10, "test").transformInto[1024L] // 1024L
+    Example(10, "test").into[1024L].transform // 1024L
+    Example(10, "test").transformInto[3.14f] // 3.14f
+    Example(10, "test").into[3.14f].transform // 3.14f
+    Example(10, "test").transformInto[3.14] // 3.14
+    Example(10, "test").into[3.14].transform // 3.14
+    Example(10, "test").transformInto['@'] // '@'
+    Example(10, "test").into['@'].transform // '@'
+    Example(10, "test").transformInto["str"] // "str"
+    Example(10, "test").into["str"].transform // "str"
+    ```
+
+### Into a case class
+
+When the target is a `case class`, the transformation can always be provided:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+
+    case class Example(a: Int, b: String)
+    case object SomeObject
+
+    Example(10, "test").transformInto[SomeObject.type] // SomeObject
+    Example(10, "test").into[SomeObject.type].transform // SomeObject
+    Example(10, "test").transformIntoPartial[SomeObject.type].asEither // Right(SomeObject)
+    Example(10, "test").intoPartial[SomeObject.type].transform.asEither // Right(SomeObject)
+    ```
+
+On Scala 3, parameterless `case` can be used as well:    
+
+!!! example
+
+    ```scala
+    // file: snippet.scala - part of example of parameterless case as target type
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+
+    case class Example(a: Int, b: String)
+    enum SomeEnum:
+      case SomeValue
+
+    @main def example: Unit = {
+    Example(10, "test").transformInto[SomeEnum.SomeValue.type] // Target(SomeEnum.SomeValue)
+    Example(10, "test").into[SomeEnum.SomeValue.type].transform // Target(SomeEnum.SomeValue)
+    Example(10, "test").transformIntoPartial[SomeEnum.SomeValue.type].asEither // Right(Target(SomeEnum.SomeValue))
+    Example(10, "test").intoPartial[SomeEnum.SomeValue.type].transform.asEither // Right(Target(SomeEnum.SomeValue))
+    }
+    ```
+
+!!! notice
+
+    `Unit` and `None.type` are explicitly excluded for safety reasons. If you want to enable conversion into them,
+     provide an implicit manually.
 
 ## Types with manually provided constructors
 
