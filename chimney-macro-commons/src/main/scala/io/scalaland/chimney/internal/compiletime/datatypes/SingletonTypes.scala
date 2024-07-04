@@ -24,8 +24,8 @@ trait SingletonTypes { this: (Definitions & ProductTypes) =>
     final def parse[A: Type]: Option[Singleton[A]] = {
       def found[B](b: Expr[B]): Option[Singleton[A]] = Some(Singleton(b.asInstanceOf[Expr[A]]))
       Type[A] match {
-        case _ if Type[A] <:< Type[Unit] => found(Expr.Unit)
-        case _ if Type[A] <:< Type[Null] => found(Expr.Null)
+        case _ if Type[A] <:< Type[Unit] => found(Expr.Unit.asInstanceOfExpr[A])
+        case _ if Type[A] <:< Type[Null] => found(Expr.Null.asInstanceOfExpr[A])
         case Type.BooleanLiteral(b)      => found(Expr.Boolean(b.value))
         case Type.IntLiteral(i)          => found(Expr.Int(i.value))
         case Type.LongLiteral(l)         => found(Expr.Long(l.value))
@@ -33,6 +33,7 @@ trait SingletonTypes { this: (Definitions & ProductTypes) =>
         case Type.DoubleLiteral(d)       => found(Expr.Double(d.value))
         case Type.CharLiteral(c)         => found(Expr.Char(c.value))
         case Type.StringLiteral(s)       => found(Expr.String(s.value))
+        // This supports ONLY case object or parameterless enum's cases (on Scala 3). We might consider expanding it.
         case _ if ProductType.isCaseObject[A] || ProductType.isCaseVal[A] || ProductType.isJavaEnumValue[A] =>
           Type[A] match {
             case Product.Constructor(params, ctor) if params.isEmpty => found(ctor(Map.empty))
