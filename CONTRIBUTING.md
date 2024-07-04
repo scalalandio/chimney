@@ -145,13 +145,14 @@ You can check its name in:
  * **Sonatype Release / release-tag** GitHub Action [log](https://github.com/scalalandio/chimney/actions/workflows/release.yml)
  * newest commit will be available on https://chimney.readthedocs.io/ as the [latest version](https://chimney.readthedocs.io/en/latest/)
  * sbt after starting it for selected commit and checking which version will be printed by welcome prompt
+ * you may need to add https://oss.sonatype.org/content/repositories/snapshots to the list of repositories
 
 If you want to test changes that were not merged to `master` you can publish them you for yourself locally. For that
 open sbt and run `publishLocal` task for every artifact that you want to publish as a snapshot. Keep in mind that:
 
  * `chimney-macro-commons` is required for `chimney` to work
  * `chimney-cats`, `chimney-java-collections` and `chimney-protobufs` rely on `chimney`
- * `chimneyMacroCommons`, `chimney`, `chimneyCats`, etc are versions with Scala 2.13 on JVM
+ * `chimneyMacroCommons`, `chimney`, `chimneyCats`, etc. are versions with Scala 2.13 on JVM
  * versions for Scala 2.12, Scala 3, Scala.js and Scala Native are NOT published by prepending `++` but by
    using a different suffix (`2_12`, `3`, `JS`, `Native`, see `projects` task to get a full list of projects) 
 
