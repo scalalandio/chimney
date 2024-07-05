@@ -392,6 +392,12 @@ Cats integration module contains the following utilities:
           `UnorderedFoldable`, `Invariant`, `Semigriupal`, `NonEmptyAlternative`, `SemigroupK`, `MonoidK`)
         - `Parallel[partial.Result]` (implementing also`NonEmptyParallel`)
         - `Semigroup[partial.Result.Errors]`
+     - for `Codec` type class:
+        - `Category[Codec]`
+        - `InvariantSemigroupal[Codec[Domain, *]]` (implementing also `Invariant`, `Semigroupal`)
+     - for `Iso` type class:
+        - `Category[Iso]`
+        - `InvariantSemigroupal[Iso[First, *]]` (implementing also `Invariant`, `Semigroupal`)
   - instances for `cats.data` types allowing Chimney to recognize them as collections:
     - `cats.data.Chain` (transformation _from_ and _to_ always available)
     - `cats.data.NonEmptyChain` (transformations: _from_ always available, _to_ only with `PartialTransformer`)
