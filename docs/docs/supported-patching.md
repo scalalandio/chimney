@@ -11,6 +11,7 @@ Currently, the only supported case is updating one `case class` with another:
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import io.scalaland.chimney.dsl._
 
     case class Email(address: String) extends AnyVal
@@ -22,8 +23,11 @@ Currently, the only supported case is updating one `case class` with another:
     val user = User(10, Email("abc@@domain.com"), Phone(1234567890L))
     val updateForm = UserUpdateForm("xyz@@domain.com", 123123123L)
 
-    user.patchUsing(updateForm)
-    // User(10, Email("xyz@@domain.com"), Phone(123123123L))
+    pprint.pprintln(
+      user.patchUsing(updateForm)
+    )
+    // expected output:
+    // User(id = 10, email = Email(address = "xyz@@domain.com"), phone = Phone(number = 123123123L))
     ```
 
 As we see the values from the "patch" aren't always of the same type as the values they are supposed to update.
@@ -66,6 +70,7 @@ But there is a way to ignore redundant patcher fields explicitly with `.ignoreRe
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import io.scalaland.chimney.dsl._
 
     case class User(id: Int, email: String, phone: Long)
@@ -73,18 +78,24 @@ But there is a way to ignore redundant patcher fields explicitly with `.ignoreRe
 
     val user = User(10, "abc@@domain.com", 1234567890L)
 
-    user
-      .using(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
-      .ignoreRedundantPatcherFields
-      .patch
-    // User(10, "xyz@@domain.com", 123123123L)
+    pprint.pprintln(
+      user
+        .using(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
+        .ignoreRedundantPatcherFields
+        .patch
+    )
+    // expected output:
+    // User(id = 10, email = "xyz@@domain.com", phone = 123123123L)
 
     locally {
       // All patching derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = PatcherConfiguration.default.ignoreRedundantPatcherFields
 
-      user.patchUsing(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
-      // User(10, "xyz@@domain.com", 123123123L)
+      pprint.pprintln(
+        user.patchUsing(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
+      )
+      // expected output:
+      // User(id = 10, email = "xyz@@domain.com", phone = 123123123L)
     }
     ```
 
@@ -131,6 +142,7 @@ Let’s consider the following patch:
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import io.scalaland.chimney.dsl._
 
     case class User(id: Int, email: String, phone: Long)
@@ -139,8 +151,11 @@ Let’s consider the following patch:
     val user = User(10, "abc@@domain.com", 1234567890L)
     val update = UserPatch(email = Some("updated@@example.com"), phone = None)
 
-    user.patchUsing(update)
-    // User(10, "updated@@example.com", 1234567890L)
+    pprint.pprintln(
+      user.patchUsing(update)
+    )
+    // expected output:
+    // User(id = 10, email = "updated@@example.com", phone = 1234567890L)
     ```
 
 The field `phone` remained the same as in the original `user`, while the optional e-mail string got updated from
@@ -173,6 +188,7 @@ but it also gives a simple way to always ignore `None` from the patch with `.ign
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import io.scalaland.chimney.dsl._
 
     case class User(name: Option[String], age: Option[Int])
@@ -180,22 +196,34 @@ but it also gives a simple way to always ignore `None` from the patch with `.ign
 
     val user = User(Some("John"), Some(30))
     val userPatch = UserPatch(None, None)
+     
+    pprint.pprintln(
+      user.patchUsing(userPatch)
+    )
+    // clears both fields:
+    // expected output:
+    // User(name = None, age = None)
 
-    user.patchUsing(userPatch)
-    // clears both fields: User(None, None)
-
-    user
-      .using(userPatch)
-      .ignoreNoneInPatch
-      .patch
-    // ignores updating both fields: User(Some("John"), Some(30))
+    pprint.pprintln(
+      user
+        .using(userPatch)
+        .ignoreNoneInPatch
+        .patch
+    )
+    // ignores updating both fields:
+    // expected output:
+    // User(name = Some(value = "John"), age = Some(value = 30))
 
     locally {
       // All patching derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
       implicit val cfg = PatcherConfiguration.default.ignoreNoneInPatch
 
-      user.patchUsing(userPatch)
-      // ignores updating both fields: User(Some("John"), Some(30))
+      pprint.pprintln(
+        user.patchUsing(userPatch)
+      )
+      // ignores updating both fields:
+      // expected output:
+      // User(name = Some(value = "John"), age = Some(value = 30))
     }
     ```
 
@@ -205,6 +233,7 @@ If the flag was enabled in the implicit config it can be disabled with `.clearOn
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import io.scalaland.chimney.dsl._
 
     case class User(name: Option[String], age: Option[Int])
@@ -216,10 +245,14 @@ If the flag was enabled in the implicit config it can be disabled with `.clearOn
     // all patching derived in this scope will see these new flags
     implicit val cfg = PatcherConfiguration.default.ignoreNoneInPatch
 
-    user
-      .using(userPatch)
-      .clearOnNoneInPatch
-      .patch
-    // clears both fields: User(None, None)
+    pprint.pprintln(
+      user
+        .using(userPatch)
+        .clearOnNoneInPatch
+        .patch
+    )
+    // clears both fields:
+    // expected output:
+    // User(name = None, age = None)
     ```
  
