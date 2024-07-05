@@ -76,9 +76,10 @@ From now on, forget about it! Encoding domain object with an infallible transfor
     ```scala
     // file: conversion.sc - part of the demo
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import io.scalaland.chimney.dsl._
 
-    println(
+    pprint.pprintln(
       User(
         Username("John"),
         List(Address("Paper St", "Somewhere")),
@@ -86,7 +87,11 @@ From now on, forget about it! Encoding domain object with an infallible transfor
       ).transformInto[UserDTO]
     )
     // expected output:
-    // UserDTO(John,List(AddressDTO(Paper St,Somewhere)),Some(Email(EmailDTO(john@example.com))))
+    // UserDTO(
+    //   name = "John",
+    //   addresses = List(AddressDTO(street = "Paper St", city = "Somewhere")),
+    //   recovery = Some(value = Email(value = EmailDTO(email = "john@example.com")))
+    // )
     ```
 
 ??? example "Curious about the generated code?"
@@ -127,9 +132,10 @@ Done! Decoding Protobuf into domain object with a fallible transformation, like 
     ```scala
     // file: conversion.sc - part of the demo
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import io.scalaland.chimney.dsl._
 
-    println(
+    pprint.pprintln(
       UserDTO(
         "John",
         Seq(AddressDTO("Paper St", "Somewhere")),
@@ -141,9 +147,15 @@ Done! Decoding Protobuf into domain object with a fallible transformation, like 
         .map(_.asErrorPathMessages)
     )
     // expected output:
-    // Right(User(Username(John),List(Address(Paper St,Somewhere)),Email(john@example.com)))
+    // Right(
+    //   value = User(
+    //     name = Username(name = "John"),
+    //     addresses = List(Address(street = "Paper St", city = "Somewhere")),
+    //     recovery = Email(email = "john@example.com")
+    //   )
+    // )
 
-    println(
+    pprint.pprintln(
       UserDTO(
         "John",
         Seq(AddressDTO("Paper St", "Somewhere")),
@@ -155,7 +167,7 @@ Done! Decoding Protobuf into domain object with a fallible transformation, like 
         .map(_.asErrorPathMessages)
     )
     // expected output:
-    // Left(List((recovery,EmptyValue)))
+    // Left(value = List(("recovery", EmptyValue)))
     ```
 
 ??? example "Curious about the generated code?"
