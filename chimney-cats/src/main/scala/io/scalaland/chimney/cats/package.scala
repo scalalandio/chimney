@@ -6,3 +6,5 @@ package object cats
     with CatsTotalTransformerImplicits
     with CatsPartialTransformerImplicits
     with CatsPartialResultImplicits
+    with CatsCodecImplicits
+    with CatsIsoImplicits
