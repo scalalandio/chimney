@@ -435,6 +435,7 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
     ```scala
     //> using dep org.typelevel::cats-core::{{ libraries.cats }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
 
     case class RegistrationForm(
         email: String,
@@ -457,7 +458,7 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
     import io.scalaland.chimney.partial.syntax._
     import io.scalaland.chimney.cats._
 
-    def hashpw(pw: String): String = "trust me bro, $pw is hashed"
+    def hashpw(pw: String): String = s"trust me bro, $pw is hashed"
 
     def validateEmail(form: RegistrationForm): ValidatedNec[String, String] =
       if (form.email.contains('@')) {
@@ -481,19 +482,45 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
         .buildTransformer
 
     val okForm = RegistrationForm("john@example.com", "John", "s3cr3t", "40")
-    okForm.transformIntoPartial[RegisteredUser].asValidatedNec
-    // Valid(RegisteredUser(email = "john@example.com", username = "John", passwordHash = "...", age = 40))
+    pprint.pprintln(
+      okForm.transformIntoPartial[RegisteredUser].asValidatedNec
+    )
+    // expected output:
+    // Valid(
+    //   a = RegisteredUser(
+    //     email = "john@example.com",
+    //     username = "John",
+    //     passwordHash = "trust me bro, s3cr3t is hashed",
+    //     age = 40
+    //   )
+    // )
 
-    Array(
-      RegistrationForm("john_example.com", "John", "s3cr3t", "10"),
-      RegistrationForm("alice@example.com", "Alice", "s3cr3t", "19"),
-      RegistrationForm("bob@example.com", "Bob", "s3cr3t", "21.5")
-    ).transformIntoPartial[Array[RegisteredUser]].asValidatedNel
-    // Invalid(NonEmptyList(
-    //   Error(StringMessage("John's email: does not contain '@' character"), ErrorPath(List(Index(0), Accessor("email")))),
-    //   Error(StringMessage("John's age: must have at least 18 years"), ErrorPath(List(Index(0), Accessor("age")))),
-    //   Error(StringMessage("Bob's age: invalid number"), ErrorPath(List(Index(2), Accessor("age"))))
-    // ))
+    pprint.pprintln(
+      Array(
+        RegistrationForm("john_example.com", "John", "s3cr3t", "10"),
+        RegistrationForm("alice@example.com", "Alice", "s3cr3t", "19"),
+        RegistrationForm("bob@example.com", "Bob", "s3cr3t", "21.5")
+      ).transformIntoPartial[Array[RegisteredUser]].asValidatedNel
+    )
+    // expected output:
+    // Invalid(
+    //   e = NonEmptyList(
+    //     head = Error(
+    //       message = StringMessage(message = "John's email: does not contain '@' character"),
+    //       path = Path(elements = List(Index(index = 0), Accessor(name = "email")))
+    //     ),
+    //     tail = List(
+    //       Error(
+    //         message = StringMessage(message = "John's age: must have at least 18 years"),
+    //         path = Path(elements = List(Index(index = 0), Accessor(name = "age")))
+    //       ),
+    //       Error(
+    //         message = StringMessage(message = "Bob's age: invalid number"),
+    //         path = Path(elements = List(Index(index = 2), Accessor(name = "age")))
+    //       )
+    //     )
+    //   )
+    // )
     ```
 
     Form validation logic is implemented in terms of `Validated` data type. You can easily convert
@@ -513,16 +540,27 @@ explanation:
     ```scala
     //> using dep org.typelevel::cats-core::2.10.0
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import cats.syntax.all._
     import io.scalaland.chimney.Transformer
     import io.scalaland.chimney.cats._
 
     val example: Transformer[Int, String] = _.toString
 
-    example.map(str => s"valis is $str").transform(10) // "value is 10"
-    example.dimap[Double, String](_.toInt)(str => "value " + str).transform(10.50)
+    pprint.pprintln(
+      example.map(str => s"valis is $str").transform(10)
+    )
+    pprint.pprintln(
+      example.dimap[Double, String](_.toInt)(str => "value " + str).transform(10.50)
+    )
     // example.contramap[Double](_.toInt).transform(10.50) // Scala has a problem inferring what is F and what is A here
-    cats.arrow.Arrow[Transformer].id[String].transform("value") // "value"
+    pprint.pprintln(
+      cats.arrow.Arrow[Transformer].id[String].transform("value")
+    )
+    // expected output:
+    // "valis is 10"
+    // "value 10"
+    // "value"
     ```
 
 Similarly, there exists instances for `PartialTransformer` and `partial.Result`: 
@@ -532,15 +570,26 @@ Similarly, there exists instances for `PartialTransformer` and `partial.Result`:
     ```scala
     //> using dep org.typelevel::cats-core::2.10.0
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import cats.syntax.all._
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.cats._
 
     val example: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
 
-    example.map(int => int.toDouble).transform("10") // 10.0
-    example.dimap[String, Float](str => str + "00")(int => int.toFloat).transform("10") // 100.0f
-    cats.arrow.Arrow[PartialTransformer].id[String].transform("value") // partial.Result.Value("value")
+    pprint.pprintln(
+      example.map(int => int.toDouble).transform("10")
+    )
+    pprint.pprintln(
+      example.dimap[String, Float](str => str + "00")(int => int.toFloat).transform("10")
+    )
+    pprint.pprintln(
+      cats.arrow.Arrow[PartialTransformer].id[String].transform("value")
+    )
+    // expected output:
+    // Value(value = 10.0)
+    // Value(value = 1000.0F)
+    // Value(value = "value")
     ```
 
 However, between Cats and Chimney, there is a difference in approach when it comes to "sequential" and "parallel"
@@ -611,6 +660,7 @@ What does it mean to us?
     ```scala
     //> using dep org.typelevel::cats-core::2.10.0
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import cats.syntax.all._
     import io.scalaland.chimney.PartialTransformer
     import io.scalaland.chimney.cats._
@@ -620,12 +670,18 @@ What does it mean to us?
     val t2 = t0.map(_.toLong)
 
     // uses 1 input value to create a tuple of 2 values, fails fast on the error for the first
-    t1.product(t2).transform("aa").asEitherErrorPathMessageStrings
-    // Left(List((,For input string: "aa")))
+    pprint.pprintln(
+      t1.product(t2).transform("aa").asEitherErrorPathMessageStrings
+    )
+    // expected output:
+    // Left(value = List(("", "For input string: \"aa\"")))
 
     // uses 1 input value to create a tuple of 2 values, agregates the errors for both
-    t1.parProduct(t2).transform("aa").asEitherErrorPathMessageStrings
-    // Left(List((,For input string: "aa"), (,For input string: "aa")))
+    pprint.pprintln(
+      t1.parProduct(t2).transform("aa").asEitherErrorPathMessageStrings
+    )
+    // expected output:
+    // Left(value = List(("", "For input string: \"aa\""), ("", "For input string: \"aa\"")))
     ```
 
     And `partial.Result`s have to use explicit combinators to decide whether it's sequential or parallel semantics:
@@ -633,6 +689,7 @@ What does it mean to us?
     ```scala
     //> using dep org.typelevel::cats-core::2.10.0
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import cats.syntax.all._
     import io.scalaland.chimney.partial
     import io.scalaland.chimney.cats._
@@ -641,16 +698,78 @@ What does it mean to us?
     val result2 = partial.Result.fromErrorString[Double]("error 2")
 
     // all of these will preserve only the first error ("error 1"):
-    (result1, result2).mapN((a: Int, b: Double) => a + b) // partial.Result[Double]
-    result1.product(result2) // partial.Result[(Int, Double)]
-    result1 <* result2 // partial.Result[Int]
-    result1 *> result2 // partial.Result[Double]
+    pprint.pprintln(
+      (result1, result2).mapN((a: Int, b: Double) => a + b) // partial.Result[Double]
+    )
+    pprint.pprintln(
+      result1.product(result2) // partial.Result[(Int, Double)]
+    )
+    pprint.pprintln(
+      result1 <* result2 // partial.Result[Int]
+    )
+    pprint.pprintln(
+      result1 *> result2 // partial.Result[Double]
+    )
+    // expected output:
+    // Errors(
+    //   errors = NonEmptyErrorsChain(
+    //     Error(message = StringMessage(message = "error 1"), path = Path(elements = List()))
+    //   )
+    // )
+    // Errors(
+    //   errors = NonEmptyErrorsChain(
+    //     Error(message = StringMessage(message = "error 1"), path = Path(elements = List()))
+    //   )
+    // )
+    // Errors(
+    //   errors = NonEmptyErrorsChain(
+    //     Error(message = StringMessage(message = "error 1"), path = Path(elements = List()))
+    //   )
+    // )
+    // Errors(
+    //   errors = NonEmptyErrorsChain(
+    //     Error(message = StringMessage(message = "error 1"), path = Path(elements = List()))
+    //   )
+    // )
 
     // all of these will preserve both errors:
-    (result1, result2).parMapN((a: Int, b: Double) => a + b) // partial.Result[Double]
-    result1.parProduct(result2) // partial.Result[(Int, Double)]
-    result1 <& result2 // partial.Result[Int]
-    result1 &> result2 // partial.Result[Double]
+    pprint.pprintln(
+      (result1, result2).parMapN((a: Int, b: Double) => a + b) // partial.Result[Double]
+    )
+    pprint.pprintln(
+      result1.parProduct(result2) // partial.Result[(Int, Double)]
+    )
+    pprint.pprintln(
+      result1 <& result2 // partial.Result[Int]
+    )
+    pprint.pprintln(
+      result1 &> result2 // partial.Result[Double]
+    )
+    // expected output:
+    // Errors(
+    //   errors = NonEmptyErrorsChain(
+    //     Error(message = StringMessage(message = "error 1"), path = Path(elements = List())),
+    //     Error(message = StringMessage(message = "error 2"), path = Path(elements = List()))
+    //   )
+    // )
+    // Errors(
+    //   errors = NonEmptyErrorsChain(
+    //     Error(message = StringMessage(message = "error 1"), path = Path(elements = List())),
+    //     Error(message = StringMessage(message = "error 2"), path = Path(elements = List()))
+    //   )
+    // )
+    // Errors(
+    //   errors = NonEmptyErrorsChain(
+    //     Error(message = StringMessage(message = "error 1"), path = Path(elements = List())),
+    //     Error(message = StringMessage(message = "error 2"), path = Path(elements = List()))
+    //   )
+    // )
+    // Errors(
+    //   errors = NonEmptyErrorsChain(
+    //     Error(message = StringMessage(message = "error 1"), path = Path(elements = List())),
+    //     Error(message = StringMessage(message = "error 2"), path = Path(elements = List()))
+    //   )
+    // )
     ```
 
 Notice that this is not an issue if we are transforming one value into another value in a non-fallible way, e.g. through
@@ -1350,6 +1469,7 @@ with `io.scalaland.chimney.integrations.DefaultValue`. It could look like this:
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     // Types which we cannot simply edit: come from external library, codegen, etc.
     
@@ -1362,8 +1482,15 @@ with `io.scalaland.chimney.integrations.DefaultValue`. It could look like this:
     
     // Remember that default values has to be enabled!
     import io.scalaland.chimney.dsl._
-    Foo(10).into[Bar].enableDefaultValues.transform // Bar(10, MyType(0))
-    Foo(10).into[Bar].enableDefaultValueOfType[MyType].transform // Bar(10, MyType(0))
+    pprint.pprintln(
+      Foo(10).into[Bar].enableDefaultValues.transform
+    )
+    pprint.pprintln(
+      Foo(10).into[Bar].enableDefaultValueOfType[MyType].transform
+    )
+    // expected outputs:
+    // Bar(a = 10, b = MyType(int = 0))
+    // Bar(a = 10, b = MyType(int = 0))
     ``` 
 
 Keep in mind, that such provision works for every constructor which has an argument of such type not matched with source
@@ -1379,6 +1506,7 @@ In case your library/domain defines custom Optional types, you can provide your 
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
 
     // When you define your own optional...
     sealed trait MyOptional[+A]
@@ -1406,24 +1534,46 @@ In case your library/domain defines custom Optional types, you can provide your 
     import io.scalaland.chimney.dsl._
     
     // for converting between Option and custom optional type
-    Option("test").transformInto[MyOptional[String]] // MyOptional.Present("test")
-    MyOptional("test").transformInto[Option[String]] // Some("test")
+    pprint.pprintln(
+      Option("test").transformInto[MyOptional[String]]
+    )
+    pprint.pprintln(
+      MyOptional("test").transformInto[Option[String]]
+    )
+    // expected output:
+    // Present(value = "test")
+    // Some(value = "test")
     
     // for automatinc wrapping with custom optional type
-    "test".transformInto[MyOptional[String]] // MyOptional.Present("test")
+    pprint.pprintln(
+      "test".transformInto[MyOptional[String]]
+    )
+    // expected output:
+    // Present(value = "test")
     
     // for safe unwrapping with PartialTransformers
-    MyOptional("test").transformIntoPartial[String].asOption // Option("test")
-    MyOptional("test").transformIntoPartial[String].asOption // Option("test")
+    pprint.pprintln(
+      MyOptional("test").transformIntoPartial[String].asOption
+    )
+    pprint.pprintln(
+      MyOptional("test").transformIntoPartial[String].asOption
+    )
+    // expected output:
+    // Some(value = "test")
+    // Some(value = "test")
     
     case class Foo(value: String)
     case class Bar(value: String, another: Double)
     
     // for overriding values with path to optional value like with Option
-    MyOptional(Foo("test"))
-      .into[MyOptional[Bar]]
-      .withFieldConst(_.matchingSome.another, 3.14)
-      .transform // MyOptional(Bar("test", 3.14))
+    pprint.pprintln(
+      MyOptional(Foo("test"))
+        .into[MyOptional[Bar]]
+        .withFieldConst(_.matchingSome.another, 3.14)
+        .transform
+    )
+    // expected output:
+    // Present(value = Bar(value = "test", another = 3.14))
     ```
 
 As you can see, once you provide 1 implicit your custom optional type:
@@ -1450,6 +1600,7 @@ Most of the time a collection doesn't perform any sort of validations, and you c
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     // When you define your own collection...
     class MyCollection[+A] private (private val impl: Vector[A]) {
@@ -1461,6 +1612,7 @@ Most of the time a collection doesn't perform any sort of validations, and you c
         case _                             => false
       }
       override def hashCode(): Int = impl.hashCode()
+      override def toString: String = impl.mkString("MyCollection(", ", ", ")")
     }
     object MyCollection {
   
@@ -1498,17 +1650,28 @@ Most of the time a collection doesn't perform any sort of validations, and you c
     import io.scalaland.chimney.dsl._
     
     // for converting to and from standard library collection (or any other type supported this way)
-    MyCollection.of("a", "b").transformInto[List[String]] // List("a", "b")
-    List("a", "b").transformInto[MyCollection[String]] // MyCollection.of("a", "b")
+    pprint.pprintln(
+      MyCollection.of("a", "b").transformInto[List[String]]
+    )
+    pprint.pprintln(
+      List("a", "b").transformInto[MyCollection[String]]
+    )
+    // expected output:
+    // List("a", "b")
+    // MyCollection(a, b)
     
     case class Foo(value: String)
     case class Bar(value: String, another: Double)
     
     // for overriding values with path to items like with standard library's collections
-    List(Foo("test"))
-      .into[MyCollection[Bar]]
-      .withFieldConst(_.everyItem.another, 3.14)
-      .transform // MyCollection.of(Bar("test", 3.14))
+    pprint.pprintln(
+      List(Foo("test"))
+        .into[MyCollection[Bar]]
+        .withFieldConst(_.everyItem.another, 3.14)
+        .transform
+    )
+    // expected output:
+    // MyCollection(Bar(test,3.14))
     ```
 
 If your collection performs some sort of validation, you integrate it with Chimney as well:
@@ -1517,6 +1680,7 @@ If your collection performs some sort of validation, you integrate it with Chimn
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     // When you define your own collection...
     class NonEmptyCollection[+A] private (private val impl: Vector[A]) {
@@ -1528,6 +1692,7 @@ If your collection performs some sort of validation, you integrate it with Chimn
         case _                                         => false
       }
       override def hashCode(): Int = impl.hashCode()
+      override def toString: String = impl.mkString("NonEmptyCollection(", ", ", ")")
     }
     object NonEmptyCollection {
   
@@ -1569,8 +1734,15 @@ If your collection performs some sort of validation, you integrate it with Chimn
     import io.scalaland.chimney.dsl._
     
     // for validating that your collection can be created once all items have been put into Builder
-    List("a").transformIntoPartial[NonEmptyCollection[String]].asOption // Some(NonEmptyCollection.of("a"))
-    List.empty[String].transformIntoPartial[NonEmptyCollection[String]].asOption // None
+    pprint.pprintln(
+      List("a").transformIntoPartial[NonEmptyCollection[String]].asOption
+    )
+    pprint.pprintln(
+      List.empty[String].transformIntoPartial[NonEmptyCollection[String]].asOption
+    )
+    // expected output:
+    // Some(value = NonEmptyCollection(a))
+    // None
     ```
     
 For map types there are specialized versions of these type classes:
