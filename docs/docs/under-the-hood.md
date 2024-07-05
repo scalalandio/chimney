@@ -333,7 +333,7 @@ as soon as we get it - by delaying the wrapping as long as possible we are avoid
 
     implicit val int2string: Transformer[Int, String] = _.toString
 
-    Foo(1, 2, 3).into[Bar].transform
+    Foo(1, 2, 3).intoPartial[Bar].transform
     ```
     
     would NOT generate anything similar to
