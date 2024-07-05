@@ -3,7 +3,7 @@ package io.scalaland.chimney.cats.utils
 import cats.Eq
 import cats.data.Const
 import cats.syntax.eq.*
-import io.scalaland.chimney.{partial, ChimneySpec, PartialTransformer, Transformer}
+import io.scalaland.chimney.{partial, ChimneySpec, Codec, Iso, PartialTransformer, Transformer}
 import io.scalaland.chimney.cats.catsEqForPartialResult
 import org.scalacheck.{Arbitrary, Cogen}
 import org.scalacheck.Test.check
@@ -18,6 +18,20 @@ trait ArbitraryUtils { this: ChimneySpec =>
 
   implicit def arbitraryPartialTransformer[From, To: Arbitrary]: Arbitrary[PartialTransformer[From, To]] = Arbitrary {
     Arbitrary.arbitrary[To].map[PartialTransformer[From, To]](to => PartialTransformer.fromFunction[From, To](_ => to))
+  }
+
+  implicit def arbitraryCodec[From: Arbitrary, To: Arbitrary]: Arbitrary[Codec[From, To]] = Arbitrary {
+    for {
+      encode <- Arbitrary.arbitrary[Transformer[From, To]]
+      decode <- Arbitrary.arbitrary[PartialTransformer[To, From]]
+    } yield Codec(encode, decode)
+  }
+
+  implicit def arbitraryIso[From: Arbitrary, To: Arbitrary]: Arbitrary[Iso[From, To]] = Arbitrary {
+    for {
+      first <- Arbitrary.arbitrary[Transformer[From, To]]
+      second <- Arbitrary.arbitrary[Transformer[To, From]]
+    } yield Iso(first, second)
   }
 
   implicit def arbitraryResult[A: Arbitrary]: Arbitrary[partial.Result[A]] = Arbitrary {
@@ -40,11 +54,21 @@ trait ArbitraryUtils { this: ChimneySpec =>
 
   implicit def cogenPartialResultErrors: Cogen[partial.Result.Errors] = Cogen[Unit].contramap(_ => ())
 
+  implicit def cogenCodec[From, To]: Cogen[Codec[From, To]] = Cogen[Unit].contramap(_ => ())
+
+  implicit def cogenIso[From, To]: Cogen[Iso[From, To]] = Cogen[Unit].contramap(_ => ())
+
   implicit def eqTransformers[From: Arbitrary, To: Eq]: Eq[Transformer[From, To]] = (t1, t2) =>
     check(forAll((from: From) => t1.transform(from) === t2.transform(from)))(_.withMinSuccessfulTests(20)).passed
 
   implicit def eqPartialTransformers[From: Arbitrary, To: Eq]: Eq[PartialTransformer[From, To]] = (t1, t2) =>
     check(forAll((from: From) => t1.transform(from) === t2.transform(from)))(_.withMinSuccessfulTests(20)).passed
+
+  implicit def eqCodec[From: Arbitrary: Eq, To: Arbitrary: Eq]: Eq[Codec[From, To]] = (t1, t2) =>
+    t1.encode === t2.encode && t1.decode === t2.decode
+
+  implicit def eqIso[From: Arbitrary: Eq, To: Arbitrary: Eq]: Eq[Iso[From, To]] = (t1, t2) =>
+    t1.first === t2.first && t1.second === t2.second
 
   def checkLawsAsTests(rules: Laws#RuleSet): Unit = rules.props.foreach { case (name, prop) =>
     test(name) {

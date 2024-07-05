@@ -4,6 +4,7 @@ import _root_.cats.{CoflatMap, Contravariant, Monad}
 import _root_.cats.arrow.{ArrowChoice, CommutativeArrow}
 import io.scalaland.chimney.Transformer
 
+/** @since 1.0.0 */
 trait CatsTotalTransformerImplicits {
 
   /** @since 1.0.0 */
