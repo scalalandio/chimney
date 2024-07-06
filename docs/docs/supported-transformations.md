@@ -4609,7 +4609,7 @@ but Chimney has a specific solution for this:
 
     ```scala
     // file: your/organization/PermissiveNamesComparison.test.scala - part of custom naming comparison example
-    //> using dep org.scalameta::munit::1.0.0-RC1
+    //> using dep org.scalameta::munit::1.0.0
     import io.scalaland.chimney.dsl._
 
     case class Foo(a_name: String, BName: String)
