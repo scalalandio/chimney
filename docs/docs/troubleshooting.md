@@ -686,7 +686,7 @@ Here are some features it shares with Chimney (Henkan's code based on README):
     type you want:
     
     ```scala
-    //> using dep org.typelevel::cats-core::2.10.0
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     
