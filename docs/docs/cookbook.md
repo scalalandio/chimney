@@ -538,7 +538,7 @@ explanation:
 !!! example
 
     ```scala
-    //> using dep org.typelevel::cats-core::2.10.0
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import cats.syntax.all._
@@ -568,7 +568,7 @@ Similarly, there exists instances for `PartialTransformer` and `partial.Result`:
 !!! example
 
     ```scala
-    //> using dep org.typelevel::cats-core::2.10.0
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import cats.syntax.all._
@@ -658,7 +658,7 @@ What does it mean to us?
        but to NOT disable parallel semantics for some transformations when we would pass `failFast = false` later on
     
     ```scala
-    //> using dep org.typelevel::cats-core::2.10.0
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import cats.syntax.all._
@@ -687,7 +687,7 @@ What does it mean to us?
     And `partial.Result`s have to use explicit combinators to decide whether it's sequential or parallel semantics:
 
     ```scala
-    //> using dep org.typelevel::cats-core::2.10.0
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import cats.syntax.all._
