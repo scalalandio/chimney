@@ -200,13 +200,21 @@ now we have `PartialTransformer`s. They have a build-in ability to unwrap `Optio
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import io.scalaland.chimney.dsl._
 
     case class Foo(a: Option[String])
     case class Bar(a: String)
 
-    Foo(Some("value")).transformIntoPartial[Bar](failFast = true).asOption // Some(Bar("value"))
-    Foo(None).transformIntoPartial[Bar](failFast = true).asOption // None
+    pprint.pprintln(
+      Foo(Some("value")).transformIntoPartial[Bar](failFast = true).asOption
+    )
+    pprint.pprintln(
+      Foo(None).transformIntoPartial[Bar](failFast = true).asOption
+    )
+    // expected output:
+    // Some(value = Bar(a = "value"))
+    // None
     ```
 
 With `failFast = true` and `.asOption` Partial Transformers have similar semantics to `Transformer` with unsafe `Option`
@@ -281,12 +289,14 @@ The difference is shown in this example:
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     import io.scalaland.chimney.dsl._
     import io.scalaland.chimney.Transformer
 
     class MyType[A](private val a: A) {
       def map[B](f: A => B): MyType[B] =
         new MyType(f(a))
+      override def toString: String = s"MyType($a)"
     }
     
     implicit def provideMyType[A, B](implicit
@@ -297,6 +307,7 @@ The difference is shown in this example:
     class MyOtherType[A](private val a: A) {
       def map[B](f: A => B): MyOtherType[B] =
         new MyOtherType(f(a))
+      override def toString: String = s"MyOtherType($a)"
     }
     
     implicit def provideMyOtherType[A, B](implicit
@@ -311,10 +322,18 @@ The difference is shown in this example:
     val myOtherType: MyOtherType[Int] = new MyOtherType(10)
 
     // uses provideMyType(int2str):
-    myType.transformInto[MyType[String]]
+    pprint.pprintln(
+      myType.transformInto[MyType[String]]
+    )
+    // expected output:
+    // MyType(10)
 
     // uses provideMyOtherType(int2str):
-    myOtherType.transformInto[MyOtherType[String]]
+    pprint.pprintln(
+      myOtherType.transformInto[MyOtherType[String]]
+    )
+    // expected output:
+    // MyOtherType(10)
 
     val myType2: MyType[Either[Int, Int]] = new MyType(Right(10))
     val myOtherType2: MyOtherType[Either[Int, Int]] = new MyOtherType(Right(10))
@@ -326,7 +345,11 @@ The difference is shown in this example:
     // myType2.transformInto[MyType[Either[String, String]]]
 
     // uses provideMyOtherType(Transformer.derive):
-    myOtherType2.transformInto[MyOtherType[Either[String, String]]]
+    pprint.pprintln(
+      myOtherType2.transformInto[MyOtherType[Either[String, String]]]
+    )
+    // expected output:
+    // MyOtherType(Right(10))
     ```
 
 ### Default values no longer are used as fallback if the source field exists
@@ -396,6 +419,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     ```scala
     //> using scala {{ scala.2_13 }}
     //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
 
     case class SourceClass(label: String, value: Int)
     case class TargetClass(label: String, value: Int)
@@ -403,13 +427,18 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     import io.bfil.automapper._
     
     val source = SourceClass("label", 10)
-    val target = automap(source).to[TargetClass] // TargetClass("label", 10)
+    val target = automap(source).to[TargetClass]
+    
+    pprint.pprintln(target)
+    // expected output:
+    // TargetClass(label = "label", value = 10)
     ```
     
     Chimney's counterpart:
     
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     case class SourceClass(label: String, value: Int)
     case class TargetClass(label: String, value: Int)
@@ -417,7 +446,11 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     import io.scalaland.chimney.dsl._
     
     val source = SourceClass("label", 10)
-    val target = source.transformInto[TargetClass] // TargetClass("label", 10)
+    val target = source.transformInto[TargetClass]
+    
+    pprint.pprintln(target)
+    // expected output:
+    // TargetClass(label = "label", value = 10)
     ```
 
 !!! example "Defining transformation in one place as implicit"
@@ -425,6 +458,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     ```scala
     //> using scala {{ scala.2_13 }}
     //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     case class SourceClass(label: String, value: Int)
     case class TargetClass(label: String, value: Int)
@@ -440,15 +474,22 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     }
     
     object Example extends MyMappings {
-      val target1 = automap(source).to[TargetClass] // TargetClass("label", 10))
-      val target2 = automap(source).to[AnotherClass] // AnotherClass("label", 10))
+      val target1 = automap(source).to[TargetClass]
+      val target2 = automap(source).to[AnotherClass] 
     }
+    
+    pprint.pprintln(Example.target1)
+    pprint.pprintln(Example.target2)
+    // expected output:
+    // TargetClass(label = "label", value = 10)
+    // AnotherClass(label = "label", value = 10)
     ```
     
     Chimney's counterpart:
     
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     case class SourceClass(label: String, value: Int)
     case class TargetClass(label: String, value: Int)
@@ -465,9 +506,15 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     }
     
     object Example extends MyMappings {
-      val target1 = source.transformInto[TargetClass] // TargetClass("label", 10))
-      val target2 = source.transformInto[AnotherClass] // AnotherClass("label", 10))
+      val target1 = source.transformInto[TargetClass]
+      val target2 = source.transformInto[AnotherClass]
     }
+    
+    pprint.pprintln(Example.target1)
+    pprint.pprintln(Example.target2)
+    // expected output:
+    // TargetClass(label = "label", value = 10)
+    // AnotherClass(label = "label", value = 10)
     ```
     
 !!! example "Automapper's dynamic mappings"
@@ -475,6 +522,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     ```scala
     //> using scala {{ scala.2_13 }}
     //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     case class SourceClass(label: String, field: String, list: List[Int])
     case class TargetClass(label: String, renamedField: String, total: Int)
@@ -488,13 +536,17 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     
     val target = automap(source).dynamicallyTo[TargetClass](
       renamedField = source.field, total = sum(values)
-    ) // TargetClass("label", "field", 6)
+    )
+    pprint.pprintln(target)
+    // expected output:
+    // TargetClass(label = "label", renamedField = "field", total = 6)
     ```
     
     Depending on case, in Chimney we would call it rename, value provision, value computation.
     
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     case class SourceClass(label: String, field: String, list: List[Int])
     case class TargetClass(label: String, renamedField: String, total: Int)
@@ -510,12 +562,18 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     val target = source.into[TargetClass]
       .withFieldRenamed(_.field, _.renamedField) // rename
       .withFieldConst(_.total, sum(values)) // value provision
-      .transform // TargetClass("label", "field", 6)
+      .transform
     // alternatively we don't need intermediate `values` and `sum`:
     val target2 = source.into[TargetClass]
       .withFieldRenamed(_.field, _.renamedField) // rename
       .withFieldComputed(_.total, src => src.list.sum) // value computation
-      .transform // TargetClass("label", "field", 6)
+      .transform
+      
+    pprint.pprintln(target)
+    pprint.pprintln(target2)
+    // expected output:
+    // TargetClass(label = "label", renamedField = "field", total = 6)
+    // TargetClass(label = "label", renamedField = "field", total = 6)
     ```
 
 !!! example "Implicit conversion and polymorphic types"
@@ -523,6 +581,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     ```scala
     //> using scala {{ scala.2_13 }}
     //> using dep io.bfil::automapper::{{ libraries.scala_automapper }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     trait SourceTrait
     case class SourceClassA(label: String, value: Int) extends SourceTrait
@@ -543,7 +602,10 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     }
     
     val source = SourceClass(SourceClassA("label", 10))
-    val target = automap(source).to[TargetClass] // TargetClass(TargetClassA("label", 10)))
+    val target = automap(source).to[TargetClass]
+    pprint.pprintln(target)
+    // expected output:
+    // TargetClass(field = TargetClassA(label = "label", value = 10))
     ```
     
     In Chimney we are not relying on implicit conversions - instead we use implicit `Transformer`s when provided
@@ -551,6 +613,7 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     trait SourceTrait
     case class SourceClassA(label: String, value: Int) extends SourceTrait
@@ -572,7 +635,10 @@ Here are some features it shares with Chimney (Automapper's code based on exampl
     }
 
     val source = SourceClass(SourceClassA("label", 10))
-    val target = source.transformInto[TargetClass] // TargetClass(TargetClassA("label", 10)))
+    val target = source.transformInto[TargetClass]
+    pprint.pprintln(target)
+    // expected output:
+    // TargetClass(field = TargetClassA(label = "label", value = 10))
     ```
 
 Additionally, Scala Automapper supports:
@@ -625,6 +691,7 @@ Here are some features it shares with Chimney (Henkan's code based on README):
     ```scala
     //> using scala {{ scala.2_13 }}
     //> using dep com.kailuowang::henkan-convert::{{ libraries.henkan }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     import java.time.LocalDate
     
@@ -636,15 +703,26 @@ Here are some features it shares with Chimney (Henkan's code based on README):
     
     import henkan.convert.Syntax._
     
-    employee.to[UnionMember]() // UnionMember("George", "123 E 86 St", LocalDate.of(1963, 3, 12))
-    unionMember.to[Employee]() // Employee("Micheal", "41 Dunwoody St", LocalDate.of(1994, 7, 29), 50000d)
-    unionMember.to[Employee].set(salary = 60000.0) // Employee("Micheal", "41 Dunwoody St", LocalDate.of(1994, 7, 29), 60000.0)
+    pprint.pprintln(
+      employee.to[UnionMember]()
+    )
+    pprint.pprintln(
+      unionMember.to[Employee]()
+    )
+    pprint.pprintln(
+      unionMember.to[Employee].set(salary = 60000.0)
+    )
+    // expected output:
+    // UnionMember(name = "George", address = "123 E 86 St", dateOfBirth = 1963-03-12)
+    // Employee(name = "Micheal", address = "41 Dunwoody St", dateOfBirth = 1994-07-29, salary = 50000.0)
+    // Employee(name = "Micheal", address = "41 Dunwoody St", dateOfBirth = 1994-07-29, salary = 60000.0)
     ```
     
     Chimney counterpart:
     
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     import java.time.LocalDate
     
@@ -656,9 +734,19 @@ Here are some features it shares with Chimney (Henkan's code based on README):
     
     import io.scalaland.chimney.dsl._
     
-    employee.transformInto[UnionMember] // UnionMember("George", "123 E 86 St", LocalDate.of(1963, 3, 12))
-    unionMember.into[Employee].enableDefaultValues.transform // Employee("Micheal", "41 Dunwoody St", LocalDate.of(1994, 7, 29), 50000d)
-    unionMember.into[Employee].withFieldConst(_.salary, 60000.0).transform // Employee("Micheal", "41 Dunwoody St", LocalDate.of(1994, 7, 29), 60000.0)
+    pprint.pprintln(
+      employee.transformInto[UnionMember]
+    )
+    pprint.pprintln(
+      unionMember.into[Employee].enableDefaultValues.transform
+    )
+    pprint.pprintln(
+      unionMember.into[Employee].withFieldConst(_.salary, 60000.0).transform
+    )
+    // expected output:
+    // UnionMember(name = "George", address = "123 E 86 St", dateOfBirth = 1963-03-12)
+    // Employee(name = "Micheal", address = "41 Dunwoody St", dateOfBirth = 1994-07-29, salary = 50000.0)
+    // Employee(name = "Micheal", address = "41 Dunwoody St", dateOfBirth = 1994-07-29, salary = 60000.0)
     ```
 
 !!! example "Transform between case classes with optional field"
@@ -666,6 +754,7 @@ Here are some features it shares with Chimney (Henkan's code based on README):
     ```scala
     //> using scala {{ scala.2_13 }}
     //> using dep com.kailuowang::henkan-optional::{{ libraries.henkan }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     case class Message(a: Option[String], b: Option[Int])
     case class Domain(a: String, b: Int)
@@ -674,10 +763,21 @@ Here are some features it shares with Chimney (Henkan's code based on README):
     import cats.implicits._
     import henkan.optional.all._
     
-    validate(Message(Some("a"), Some(2))).to[Domain] // Valid(Domain(a,2))
-    validate(Message(Some("a"), None)).to[Domain] // Invalid(NonEmptyList(RequiredFieldMissing(b)))
+    pprint.pprintln(
+      validate(Message(Some("a"), Some(2))).to[Domain]
+    )
+    pprint.pprintln(
+      validate(Message(Some("a"), None)).to[Domain]
+    )
+    // expected output:
+    // Valid(a = Domain(a = "a", b = 2))
+    // Invalid(e = NonEmptyList(head = RequiredFieldMissing(fieldName = "b"), tail = List()))
     
-    from(Domain("a", 2)).toOptional[Message] // Message(Some(a),Some(2))
+    pprint.pprintln(
+      from(Domain("a", 2)).toOptional[Message]
+    )
+    // expected output:
+    // Message(a = Some(value = "a"), b = Some(value = 2))
     ```
     
     For conversions that can fail (e.g. unwrapping `Option` value into non-`Option` field) Chimney provides deficated
@@ -689,20 +789,40 @@ Here are some features it shares with Chimney (Henkan's code based on README):
     //> using dep org.typelevel::cats-core::{{ libraries.cats }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     case class Message(a: Option[String], b: Option[Int])
     case class Domain(a: String, b: Int)
     
     import io.scalaland.chimney.dsl._
     
-    Message(Some("a"), Some(2)).transformIntoPartial[Domain].asOption // Some(Domain("a", 2))
-    Message(Some("a"), None).transformIntoPartial[Domain].asOption // None
+    pprint.pprintln(
+      Message(Some("a"), Some(2)).transformIntoPartial[Domain].asOption
+    )
+    pprint.pprintln(
+      Message(Some("a"), None).transformIntoPartial[Domain].asOption
+    )
+    // expected output:
+    // Some(value = Domain(a = "a", b = 2))
+    // None
     
     import io.scalaland.chimney.cats._ // provides .asValidated
     
-    Message(Some("a"), Some(2)).transformIntoPartial[Domain].asValidated // Valid(Domain("a", 2))
-    Message(Some("a"), None).transformIntoPartial[Domain].asValidated
-    // Invalid(Errors(NonEmptyErrorsChain.from(Error.fromEmptyValue.prependErrorPath(PathElement.Accessor("b"))))))
+    pprint.pprintln(
+      Message(Some("a"), Some(2)).transformIntoPartial[Domain].asValidated
+    )
+    pprint.pprintln(
+      Message(Some("a"), None).transformIntoPartial[Domain].asValidated
+    )
+    // expected output:
+    // Valid(a = Domain(a = "a", b = 2))
+    // Invalid(
+    //   e = Errors(
+    //     errors = NonEmptyErrorsChain(
+    //       Error(message = EmptyValue, path = Path(elements = List(Accessor(name = "b"))))
+    //     )
+    //   )
+    // )
     ```
 
 Chimney additionally provides:
@@ -746,6 +866,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     ```scala
     //> using scala {{ scala.3 }}
     //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     object wire:
       final case class Person(
@@ -783,7 +904,10 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     
     import io.github.arainko.ducktape.*
     
-    wirePerson.to[domain.Person]
+    pprint.pprintln(
+      wirePerson.to[domain.Person]
+    )
+    // expected output:
     // Person(
     //   firstName = "John",
     //   lastName = "Doe",
@@ -794,11 +918,14 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     //   )
     // )
     
-    wirePerson
-      .into[domain.Person]
-      .transform(
-        Field.const(_.paymentMethods.element.at[domain.PaymentMethod.PayPal].email, "overridden@email.com")
-      )
+    pprint.pprintln(
+      wirePerson
+        .into[domain.Person]
+        .transform(
+          Field.const(_.paymentMethods.element.at[domain.PaymentMethod.PayPal].email, "overridden@email.com")
+        )
+    )
+    // expected output:
     // Person(
     //   firstName = "John",
     //   lastName = "Doe",
@@ -809,7 +936,10 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     //   )
     // )
     
-    wirePerson.via(domain.Person.apply)
+    pprint.pprintln(
+      wirePerson.via(domain.Person.apply)
+    )
+    // expected output:
     // Person(
     //   firstName = "John",
     //   lastName = "Doe",
@@ -820,10 +950,13 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     //   )
     // )
     
-    wirePerson
-      .intoVia(domain.Person.apply)
-      .transform(Field.const(_.paymentMethods.element.at[domain.PaymentMethod.PayPal].email, "overridden@email.com"))
-    // Person = Person(
+    pprint.pprintln(
+      wirePerson
+        .intoVia(domain.Person.apply)
+        .transform(Field.const(_.paymentMethods.element.at[domain.PaymentMethod.PayPal].email, "overridden@email.com"))
+    )
+    // expected output:
+    // Person(
     //   firstName = "John",
     //   lastName = "Doe",
     //   paymentMethods = Vector(
@@ -840,6 +973,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     // file: snippet.scala - part of Ductape counterpart 1
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     object wire:
       final case class Person(
@@ -878,7 +1012,10 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     
     import io.scalaland.chimney.dsl.*
     
-    wirePerson.transformInto[domain.Person]
+    pprint.pprintln(
+      wirePerson.transformInto[domain.Person]
+    )
+    // expected output:
     // Person(
     //   firstName = "John",
     //   lastName = "Doe",
@@ -889,10 +1026,13 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     //   )
     // )
     
-    wirePerson
-      .into[domain.Person]
-      .withFieldConst(_.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email, "overridden@email.com")
-      .transform
+    pprint.pprintln(
+      wirePerson
+        .into[domain.Person]
+        .withFieldConst(_.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email, "overridden@email.com")
+        .transform
+    )
+    // expected output:
     // Person(
     //   firstName = "John",
     //   lastName = "Doe",
@@ -903,10 +1043,13 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     //   )
     // )
     
-    wirePerson
-      .into[domain.Person]
-      .withConstructor(domain.Person.apply)
-      .transform
+    pprint.pprintln(
+      wirePerson
+        .into[domain.Person]
+        .withConstructor(domain.Person.apply)
+        .transform
+    )
+    // expected output:
     // Person(
     //   firstName = "John",
     //   lastName = "Doe",
@@ -917,12 +1060,15 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     //   )
     // )
     
-    wirePerson
-      .into[domain.Person]
-      .withConstructor(domain.Person.apply)
-      .withFieldConst(_.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email, "overridden@email.com")
-      .transform
-    // Person = Person(
+    pprint.pprintln(
+      wirePerson
+        .into[domain.Person]
+        .withConstructor(domain.Person.apply)
+        .withFieldConst(_.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email, "overridden@email.com")
+        .transform
+    )
+    // expected output:
+    // Person(
     //   firstName = "John",
     //   lastName = "Doe",
     //   paymentMethods = Vector(
@@ -939,6 +1085,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     ```scala
     //> using scala {{ scala.3 }}
     //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     object wire:
       final case class Person(
@@ -977,20 +1124,22 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     
     import io.github.arainko.ducktape.*
     
-    wirePerson
-      .into[domain.Person]
-      .transform(
-        Field.const(_.firstName, "Jane"),
-        Case.const(_.paymentMethods.element.at[wire.PaymentMethod.Transfer], domain.PaymentMethod.Cash)
-      )
+    pprint.pprintln(
+      wirePerson
+        .into[domain.Person]
+        .transform(
+          Field.const(_.firstName, "Jane"),
+          Case.const(_.paymentMethods.element.at[wire.PaymentMethod.Transfer], domain.PaymentMethod.Cash)
+        )
+    )
+    // expected output:
     // Person(
     //   firstName = "Jane",
     //   lastName = "Doe",
     //   paymentMethods = Vector(
     //     Cash,
     //     PayPal(email = "john@doe.com"),
-    //     Card(name = "J. Doe", digits = 23232323L),
-    //     Cash
+    //     Card(digits = 23232323L, name = "J. Doe")
     //   )
     // )
     ```
@@ -1002,6 +1151,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     // file: snippet.scala - part of Ductape counterpart 2
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     object wire:
       final case class Person(
@@ -1042,7 +1192,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     import io.scalaland.chimney.dsl.*
     import io.scalaland.chimney.Transformer
     
-    locally {
+    pprint.pprintln {
       // There is no direct analogue to nested:
       //   Case.const(_.paymentMethods.element.at[wire.PaymentMethod.Transfer], domain.PaymentMethod.Cash)
       // so this has to be handled "top level" by creating implicit/given.
@@ -1057,14 +1207,14 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
         // implicit instead of nested handling for withEnumCaseHandled
         .transform
     }
+    // expected output:
     // Person(
     //   firstName = "Jane",
     //   lastName = "Doe",
     //   paymentMethods = Vector(
     //     Cash,
     //     PayPal(email = "john@doe.com"),
-    //     Card(name = "J. Doe", digits = 23232323L),
-    //     Cash
+    //     Card(digits = 23232323L, name = "J. Doe")
     //   )
     // )
     }
@@ -1075,6 +1225,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     ```scala
     //> using scala {{ scala.3 }}
     //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     object wire:
       final case class Person(
@@ -1107,43 +1258,39 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
       
     import io.github.arainko.ducktape.*
     
-    card
-      .into[PaymentBand]
-      .transform(Field.const(_.color, "blue"))
-    // PaymentBand(
-    //   name = "J. Doe",
-    //   digits = 213712345L,
-    //   color = "blue"
-    // )
+    pprint.pprintln(
+      card
+        .into[PaymentBand]
+        .transform(Field.const(_.color, "blue"))
+    )
+    // expected output:
+    // PaymentBand(name = "J. Doe", digits = 213712345L, color = "blue")
     
-    card
-      .into[PaymentBand]
-      .transform(
-        Field.computed(_.color, card => if (card.digits % 2 == 0) "green" else "yellow")
-      )
-    // PaymentBand(
-    //   name = "J. Doe",
-    //   digits = 213712345L,
-    //   color = "yellow"
-    // )
+    pprint.pprintln(
+      card
+        .into[PaymentBand]
+        .transform(
+          Field.computed(_.color, card => if (card.digits % 2 == 0) "green" else "yellow")
+        )
+    )
+    // expected output:
+    // PaymentBand(name = "J. Doe", digits = 213712345L, color = "yellow")
     
-    card
-      .into[PaymentBand]
-      .transform(Field.default(_.color))
-    // PaymentBand(
-    //   name = "J. Doe",
-    //   digits = 213712345L,
-    //   color = "red"
-    // )
+    pprint.pprintln(
+      card
+        .into[PaymentBand]
+        .transform(Field.default(_.color))
+    )
+    // expected output:
+    // PaymentBand(name = "J. Doe", digits = 213712345L, color = "red")
     
-    card
-      .into[PaymentBand]
-      .transform(Field.fallbackToDefault)
-    // PaymentBand(
-    //   name = "J. Doe",
-    //   digits = 213712345L,
-    //   color = "red"
-    // )
+    pprint.pprintln(
+      card
+        .into[PaymentBand]
+        .transform(Field.fallbackToDefault)
+    )
+    // expected output:
+    // PaymentBand(name = "J. Doe", digits = 213712345L, color = "red")
     
     case class SourceToplevel(level1: SourceLevel1, transformable: Option[Int])
     case class SourceLevel1(str: String)
@@ -1153,9 +1300,17 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     
     val source = SourceToplevel(SourceLevel1("str"), Some(400))
     
-    source
-      .into[DestToplevel]
-      .transform(Field.fallbackToNone)
+    pprint.pprintln(
+      source
+        .into[DestToplevel]
+        .transform(Field.fallbackToNone)
+    )
+    // expected output:
+    // DestToplevel(
+    //   level1 = DestLevel1(extra = None, str = "str"),
+    //   extra = None,
+    //   transformable = Some(value = 400)
+    // )
     ```
     
     Chimney's counterpart:
@@ -1164,6 +1319,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     // file: snippet.scala - part of Ductape counterpart 3
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     object wire:
       final case class Person(
@@ -1198,37 +1354,34 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
       
     import io.scalaland.chimney.dsl.*
     
-    card
-      .into[PaymentBand]
-      .withFieldConst(_.color, "blue")
-      .transform
-    // PaymentBand(
-    //   name = "J. Doe",
-    //   digits = 213712345L,
-    //   color = "blue"
-    // )
+    pprint.pprintln(
+      card
+        .into[PaymentBand]
+        .withFieldConst(_.color, "blue")
+        .transform
+    )
+    // expected output:
+    // PaymentBand(name = "J. Doe", digits = 213712345L, color = "blue")
     
-    card
-      .into[PaymentBand]
-      .withFieldComputed(_.color, card => if (card.digits % 2 == 0) "green" else "yellow")
-      .transform
-    // PaymentBand(
-    //   name = "J. Doe",
-    //   digits = 213712345L,
-    //   color = "yellow"
-    // )
+    pprint.pprintln(
+      card
+        .into[PaymentBand]
+        .withFieldComputed(_.color, card => if (card.digits % 2 == 0) "green" else "yellow")
+        .transform
+    )
+    // expected output:
+    // PaymentBand(name = "J. Doe", digits = 213712345L, color = "yellow")
     
     // Default values can only be enabled for a whole derivation, not for a particular field!
     
-    card
-      .into[PaymentBand]
-      .enableDefaultValues
-      .transform
-    // PaymentBand(
-    //   name = "J. Doe",
-    //   digits = 213712345L,
-    //   color = "red"
-    // )
+    pprint.pprintln(
+      card
+        .into[PaymentBand]
+        .enableDefaultValues
+        .transform
+    )
+    // expected output:
+    // PaymentBand(name = "J. Doe", digits = 213712345L, color = "red")
     
     case class SourceToplevel(level1: SourceLevel1, transformable: Option[Int])
     case class SourceLevel1(str: String)
@@ -1238,10 +1391,18 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     
     val source = SourceToplevel(SourceLevel1("str"), Some(400))
     
-    source
-      .into[DestToplevel]
-      .enableOptionDefaultsToNone
-      .transform
+    pprint.pprintln(
+      source
+        .into[DestToplevel]
+        .enableOptionDefaultsToNone
+        .transform
+    )
+    // expected output:
+    // DestToplevel(
+    //   level1 = DestLevel1(extra = None, str = "str"),
+    //   extra = None,
+    //   transformable = Some(value = 400)
+    // )
     }
     ```
 
@@ -1250,6 +1411,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     ```scala
     //> using scala {{ scala.3 }}
     //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     object wire:
       final case class Person(
@@ -1290,17 +1452,23 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     
     import io.github.arainko.ducktape.*
     
-    transfer
-      .into[domain.PaymentMethod]
-      .transform(Case.const(_.at[wire.PaymentMethod.Transfer], domain.PaymentMethod.Cash))
-    // PaymentMethod = Cash
+    pprint.pprintln(
+      transfer
+        .into[domain.PaymentMethod]
+        .transform(Case.const(_.at[wire.PaymentMethod.Transfer], domain.PaymentMethod.Cash))
+    )
+    // expected output:
+    // Cash
     
-    transfer
-      .into[domain.PaymentMethod]
-      .transform(
-        Case.computed(_.at[wire.PaymentMethod.Transfer], transfer => domain.PaymentMethod.Card(name = "J. Doe", digits = transfer.accountNo.toLong))
-      )
-    // PaymentMethod = Card(name = "J. Doe", digits = 2764262L)
+    pprint.pprintln(
+      transfer
+        .into[domain.PaymentMethod]
+        .transform(
+          Case.computed(_.at[wire.PaymentMethod.Transfer], transfer => domain.PaymentMethod.Card(name = "J. Doe", digits = transfer.accountNo.toLong))
+        )
+    )
+    // expected output:
+    // Card(digits = 2764262L, name = "J. Doe")
     ```
 
     Chimney's counterpart:
@@ -1309,6 +1477,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     // file: snippet.scala - part of Ductape counterpart 4
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     object wire:
       final case class Person(
@@ -1356,17 +1525,23 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     // we are passing "just" a subtype of a whole value. In nested case handling it would be a subtype of some nested
     // field as opposed to the whole transformed value, so the name "Computed" would be confusing and inconsistent. 
 
-    transfer
-      .into[domain.PaymentMethod]
-      .withEnumCaseHandled[wire.PaymentMethod.Transfer](_ => domain.PaymentMethod.Cash)
-      .transform
-    // PaymentMethod = Cash
+    pprint.pprintln(
+      transfer
+        .into[domain.PaymentMethod]
+        .withEnumCaseHandled[wire.PaymentMethod.Transfer](_ => domain.PaymentMethod.Cash)
+        .transform
+    )
+    // expected output:
+    // Cash
     
-    transfer
-      .into[domain.PaymentMethod]
-      .withEnumCaseHandled[wire.PaymentMethod.Transfer](transfer => domain.PaymentMethod.Card(name = "J. Doe", digits = transfer.accountNo.toLong))
-      .transform
-    // PaymentMethod = Card(name = "J. Doe", digits = 2764262L)
+    pprint.pprintln(
+      transfer
+        .into[domain.PaymentMethod]
+        .withEnumCaseHandled[wire.PaymentMethod.Transfer](transfer => domain.PaymentMethod.Card(name = "J. Doe", digits = transfer.accountNo.toLong))
+        .transform
+    )
+    // expected output:
+    // Card(digits = 2764262L, name = "J. Doe")
     }
     ```
 
@@ -1387,6 +1562,7 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     ```scala
     //> using scala {{ scala.3 }}
     //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     object newtypes:
       opaque type NonEmptyString <: String = String
@@ -1443,7 +1619,7 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     given failFastPositive: Transformer.Fallible[[a] =>> Either[String, a], Long, newtypes.Positive] =
       newtypes.Positive.create
 
-    locally {
+    pprint.pprintln {
       given Mode.FailFast.Either[String] with {}
       
       wirePerson
@@ -1456,6 +1632,18 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
           )
         )
     }
+    // expected output:
+    // Right(
+    //   value = Person(
+    //     firstName = "John",
+    //     lastName = "Doe",
+    //     paymentMethods = Vector(
+    //       Cash,
+    //       PayPal(email = "overridden@email.com"),
+    //       Card(digits = 23232323L, name = "J. Doe")
+    //     )
+    //   )
+    // )
 
     // also declare the same fallible transformer but make it ready for error accumulation
     given accumulatingNonEmptyString: Transformer.Fallible[[a] =>> Either[List[String], a], String, newtypes.NonEmptyString] =
@@ -1464,11 +1652,23 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     given accumulatingPositive: Transformer.Fallible[[a] =>> Either[List[String], a], Long, newtypes.Positive] =
       newtypes.Positive.create(_).left.map(_ :: Nil)
       
-    locally {
+    pprint.pprintln {
       given Mode.Accumulating.Either[String, List] with {}
     
       wirePerson.fallibleTo[domain.Person]
     }
+    // expected output:
+    // Right(
+    //   value = Person(
+    //     firstName = "John",
+    //     lastName = "Doe",
+    //     paymentMethods = Vector(
+    //       Cash,
+    //       PayPal(email = "john@doe.com"),
+    //       Card(digits = 23232323L, name = "J. Doe")
+    //     )
+    //   )
+    // )
     ``` 
     
     Chimney's counterpart:
@@ -1477,6 +1677,7 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     // file: snippet.scala - part of Ductape counterpart 5
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     object newtypes:
       opaque type NonEmptyString <: String = String
@@ -1526,33 +1727,87 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     
     import io.scalaland.chimney.dsl.*
     import io.scalaland.chimney.{partial, PartialTransformer}
-    // TODO: partial.syntax._ -> asResult
+    import partial.syntax.*
     
     given PartialTransformer[String, newtypes.NonEmptyString] = PartialTransformer[String, newtypes.NonEmptyString](str =>
-      partial.Result.fromEitherString(newtypes.NonEmptyString.create(str))
+      newtypes.NonEmptyString.create(str).asResult
     )
     
     given PartialTransformer[Long, newtypes.Positive] = PartialTransformer[Long, newtypes.Positive](str =>
-      partial.Result.fromEitherString(newtypes.Positive.create(str))
+      newtypes.Positive.create(str).asResult
     )
     
-    wirePerson.transformIntoPartial[domain.Person].asEitherErrorPathMessageStrings
-    wirePerson.transformIntoPartial[domain.Person](failFast = true).asEitherErrorPathMessageStrings
+    pprint.pprintln(
+      wirePerson.transformIntoPartial[domain.Person].asEitherErrorPathMessageStrings
+    )
+    pprint.pprintln(
+      wirePerson.transformIntoPartial[domain.Person](failFast = true).asEitherErrorPathMessageStrings
+    )
+    // expected output:
+    // Right(
+    //   value = Person(
+    //     firstName = "John",
+    //     lastName = "Doe",
+    //     paymentMethods = Vector(
+    //       Cash,
+    //       PayPal(email = "john@doe.com"),
+    //       Card(digits = 23232323L, name = "J. Doe")
+    //     )
+    //   )
+    // )
+    // Right(
+    //   value = Person(
+    //     firstName = "John",
+    //     lastName = "Doe",
+    //     paymentMethods = Vector(
+    //       Cash,
+    //       PayPal(email = "john@doe.com"),
+    //       Card(digits = 23232323L, name = "J. Doe")
+    //     )
+    //   )
+    // )
     
-    wirePerson.intoPartial[domain.Person]
-      .withFieldConstPartial(
-        _.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email,
-        partial.Result.fromEitherString(newtypes.NonEmptyString.create("overridden@email.com"))
-      )
-      .transform
-      .asEitherErrorPathMessageStrings
-    wirePerson.intoPartial[domain.Person]
-      .withFieldConstPartial(
-        _.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email,
-        partial.Result.fromEitherString(newtypes.NonEmptyString.create("overridden@email.com"))
-      )
-      .transformFailFast
-      .asEitherErrorPathMessageStrings
+    pprint.pprintln(
+      wirePerson.intoPartial[domain.Person]
+        .withFieldConstPartial(
+          _.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email,
+          newtypes.NonEmptyString.create("overridden@email.com").asResult
+        )
+        .transform
+        .asEitherErrorPathMessageStrings
+    )
+    pprint.pprintln(
+      wirePerson.intoPartial[domain.Person]
+        .withFieldConstPartial(
+          _.paymentMethods.everyItem.matching[domain.PaymentMethod.PayPal].email,
+          newtypes.NonEmptyString.create("overridden@email.com").asResult
+        )
+        .transformFailFast
+        .asEitherErrorPathMessageStrings
+    )
+    // expected output:
+    // Right(
+    //   value = Person(
+    //     firstName = "John",
+    //     lastName = "Doe",
+    //     paymentMethods = Vector(
+    //       Cash,
+    //       PayPal(email = "overridden@email.com"),
+    //       Card(digits = 23232323L, name = "J. Doe")
+    //     )
+    //   )
+    // )
+    // Right(
+    //   value = Person(
+    //     firstName = "John",
+    //     lastName = "Doe",
+    //     paymentMethods = Vector(
+    //       Cash,
+    //       PayPal(email = "overridden@email.com"),
+    //       Card(digits = 23232323L, name = "J. Doe")
+    //     )
+    //   )
+    // )
     }
     ``` 
 
