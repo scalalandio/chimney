@@ -20,6 +20,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       beanGetters: Boolean = false,
       optionDefaultsToNone: Boolean = false,
       partialUnwrapsOption: Boolean = true,
+      nonAnyValWrappers: Boolean = false,
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
       fieldNameComparison: Option[dsls.TransformedNamesComparison] = None,
       subtypeNameComparison: Option[dsls.TransformedNamesComparison] = None,
@@ -45,6 +46,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         copy(optionDefaultsToNone = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.PartialUnwrapsOption) {
         copy(partialUnwrapsOption = value)
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.NonAnyValWrappers) {
+        copy(nonAnyValWrappers = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.MacrosLogging) {
         copy(displayMacrosLogging = value)
       } else {
@@ -91,6 +94,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (nonUnitBeanSetters) Vector("nonUnitBeanSetters") else Vector.empty,
         if (beanGetters) Vector("beanGetters") else Vector.empty,
         if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
+        if (nonAnyValWrappers) Vector("nonAnyValWrappers") else Vector.empty,
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
         fieldNameComparison.map(r => s"fieldNameComparison=$r").toList.toVector,
         subtypeNameComparison.map(r => s"subtypeNameComparison=$r").toList.toVector,

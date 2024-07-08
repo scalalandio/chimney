@@ -256,6 +256,30 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
   def disablePartialUnwrapsOption: UpdateFlag[Disable[PartialUnwrapsOption, Flags]] =
     disableFlag[PartialUnwrapsOption]
 
+  /** Enable unpacking/wrapping with wrapper types (classes with have only 1 val, set in a constructor) even when they
+    * are not AnyVals.
+    *
+    * By default in such case compilation fails.
+    *
+    * @see
+    *   [[TODO]] for more details
+    *
+    * @since 1.3.0
+    */
+  def enableNonAnyValWrappers: UpdateFlag[Enable[NonAnyValWrappers, Flags]] =
+    enableFlag[NonAnyValWrappers]
+
+  /** Disable unpacking/wrapping with wrapper types (classes with have only 1 val, set in a constructor) even when they
+    * are not AnyVals.
+    *
+    * @see
+    *   [[TODO]] for more details
+    *
+    * @since 1.3.0
+    */
+  def disableNonAnyValWrappers: UpdateFlag[Disable[NonAnyValWrappers, Flags]] =
+    disableFlag[NonAnyValWrappers]
+
   /** Enable conflict resolution when both `Transformer` and `PartialTransformer` are available in the implicit scope.
     *
     * @param preference
