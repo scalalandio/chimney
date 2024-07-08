@@ -69,6 +69,8 @@ private[protobufs] trait ProtobufTransformerImplicitsLowPriorityImplicits1 { thi
 
   // com.google.protobuf.ByteString
 
+  // FIXME (2.0.0 cleanup): ByteString should be TotallyBuildIterable
+
   /** @since 0.8.0 */
   implicit def totalTransformerFromByteStringToByteCollection[Coll[A] <: IterableOnce[A]](implicit
       factory: Factory[Byte, Coll[Byte]]
@@ -91,6 +93,8 @@ private[protobufs] trait ProtobufTransformerImplicitsLowPriorityImplicits1 { thi
     bool => com.google.protobuf.wrappers.BoolValue.of(bool)
 
   // com.google.protobuf.wrappers.BytesValue
+
+  // FIXME (2.0.0 cleanup): BytesValue should be TotallyBuildIterable
 
   /** @since 0.8.0 */
   implicit def totalTransformerFromBytesValueToByteCollection[Coll[A] <: IterableOnce[A]](implicit

@@ -31,6 +31,7 @@ class ProtobufOneOfSpec extends ChimneySpec {
       // format: off
       import protobufs._
       // format: on
+
       pbType.value.intoPartial[addressbook.AddressBookType].transform.asOption ==> Some(domainType)
     }
   }
@@ -50,6 +51,18 @@ class ProtobufOneOfSpec extends ChimneySpec {
         .withSealedSubtypeHandled[pb.order.CustomerStatus.NonEmpty](_.transformInto[order.CustomerStatus])
         .transform
         .asOption ==> Some(domainStatus)
+    }
+
+    test("partially transform into sealed hierarchy (handling Value.Empty.type with implicit)") {
+      // format: off
+      //import protobufs._
+      // format: on
+
+      // TODO: figure that out: on Scala 3 macro cannot figure out this implicit while on Scala 2 it can :/
+      implicit val f: PartialTransformer[pb.order.CustomerStatus.Empty.type, order.CustomerStatus] =
+        protobufs.partialTransformerFromEmptySealedOneOfInstance
+
+      pbStatus.transformIntoPartial[order.CustomerStatus].asOption ==> Some(domainStatus)
     }
   }
 

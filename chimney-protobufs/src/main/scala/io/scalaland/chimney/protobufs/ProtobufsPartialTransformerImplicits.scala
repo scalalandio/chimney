@@ -9,6 +9,16 @@ trait ProtobufsPartialTransformerImplicits extends ProtobufsPartialTransformerIm
   implicit def partialTransformerFromEmptyOneOfInstance[From <: scalapb.GeneratedOneof { type ValueType = Nothing }, To]
       : PartialTransformer[From, To] =
     PartialTransformer(_ => partial.Result.fromEmpty)
+
+  /** @since 1.3.0 */
+  implicit def partialTransformerFromEmptySealedOneOfInstance[From <: scalapb.GeneratedSealedOneof with Singleton, To]
+      : PartialTransformer[From, To] =
+    PartialTransformer(_ => partial.Result.fromEmpty)
+
+  /** @since 1.3.0 */
+  implicit def partialTransformerFromUnrecognizedEnumInstance[From <: scalapb.UnrecognizedEnum, To]
+      : PartialTransformer[From, To] =
+    PartialTransformer(_ => partial.Result.fromEmpty)
 }
 
 private[protobufs] trait ProtobufsPartialTransformerImplicitsLowPriorityImplicits1 {
