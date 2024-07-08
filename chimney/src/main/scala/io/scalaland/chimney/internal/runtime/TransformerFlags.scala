@@ -19,6 +19,7 @@ object TransformerFlags {
   final class BeanGetters extends Flag
   final class OptionDefaultsToNone extends Flag
   final class PartialUnwrapsOption extends Flag
+  final class NonAnyValWrappers extends Flag
   final class ImplicitConflictResolution[R <: ImplicitTransformerPreference] extends Flag
   final class FieldNameComparison[C <: TransformedNamesComparison] extends Flag
   final class SubtypeNameComparison[C <: TransformedNamesComparison] extends Flag
