@@ -12,23 +12,29 @@ import scala.collection.compat.immutable.ArraySeq
 
 class ProtobufBuildInSpec extends ChimneySpec {
 
-  test("transform com.google.protobuf.empty to Unit") {
+  group("com.google.protobuf.empty") {
     val protobuf = pb.wrappers
       .WithEmpty(Some(com.google.protobuf.empty.Empty.of()))
     val domain = wrappers.WithEmpty(())
 
-    locally {
-      implicit val cfg = TransformerConfiguration.default.enableImplicitConflictResolution(PreferTotalTransformer)
-      protobuf.transformIntoPartial[wrappers.WithEmpty].asOption ==> Some(domain)
+    test("totally transform from Unit") {
+      domain.transformInto[pb.wrappers.WithEmpty] ==> protobuf
+      domain.transformIntoPartial[pb.wrappers.WithEmpty].asOption ==> Some(protobuf)
     }
-    locally {
-      implicit val cfg = TransformerConfiguration.default.enableImplicitConflictResolution(PreferPartialTransformer)
-      protobuf.transformIntoPartial[wrappers.WithEmpty].asOption ==> None
+
+    test("partially transform into Unit (with conflict resolution provided)") {
+      locally {
+        implicit val cfg = TransformerConfiguration.default.enableImplicitConflictResolution(PreferTotalTransformer)
+        protobuf.transformIntoPartial[wrappers.WithEmpty].asOption ==> Some(domain)
+      }
+      locally {
+        implicit val cfg = TransformerConfiguration.default.enableImplicitConflictResolution(PreferPartialTransformer)
+        protobuf.transformIntoPartial[wrappers.WithEmpty].asOption ==> None
+      }
     }
-    domain.transformInto[pb.wrappers.WithEmpty] ==> protobuf
   }
 
-  test("transform com.google.protobuf.wrappers to unwrapped values") {
+  group("com.google.protobuf.wrappers") {
     val bytes = ArraySeq(0.toByte, 1.toByte)
     val protobuf = pb.wrappers.Wrappers.of(
       Some(com.google.protobuf.wrappers.BoolValue.of(true)),
@@ -55,11 +61,18 @@ class ProtobufBuildInSpec extends ChimneySpec {
       200L,
       "value"
     )
-    protobuf.transformIntoPartial[wrappers.Wrappers].asOption ==> Some(domain)
-    domain.transformInto[pb.wrappers.Wrappers] ==> protobuf
+
+    test("totally transform from unwrapped values") {
+      domain.transformInto[pb.wrappers.Wrappers] ==> protobuf
+      domain.transformIntoPartial[pb.wrappers.Wrappers].asOption ==> Some(protobuf)
+    }
+
+    test("partially transform into unwrapped value") {
+      protobuf.transformIntoPartial[wrappers.Wrappers].asOption ==> Some(domain)
+    }
   }
 
-  test("transform com.google.protobuf.duration to Duration and com.google.protobuf.timestamp to Instant") {
+  group("com.google.protobuf.duration/com.google.protobuf.timestamp") {
     val protobuf = pb.wrappers.TimeInstances.of(
       Some(com.google.protobuf.duration.Duration.of(10L, 0)),
       Some(com.google.protobuf.duration.Duration.of(0L, 100)),
@@ -71,7 +84,13 @@ class ProtobufBuildInSpec extends ChimneySpec {
       java.time.Instant.ofEpochSecond(12L, 34L)
     )
 
-    protobuf.transformIntoPartial[wrappers.TimeInstances].asOption ==> Some(domain)
-    domain.transformIntoPartial[pb.wrappers.TimeInstances].asOption ==> Some(protobuf)
+    test("partially transform from Duration/Instant") {
+      // Duration.Infinite cannot be encoded as PB duration!
+      domain.transformIntoPartial[pb.wrappers.TimeInstances].asOption ==> Some(protobuf)
+    }
+
+    test("totally transform into Duration/Instant") {
+      protobuf.transformIntoPartial[wrappers.TimeInstances].asOption ==> Some(domain)
+    }
   }
 }

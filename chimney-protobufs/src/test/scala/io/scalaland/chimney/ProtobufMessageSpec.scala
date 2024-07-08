@@ -8,154 +8,126 @@ import io.scalaland.chimney.fixtures.{addressbook, order, user}
 
 class ProtobufMessageSpec extends ChimneySpec {
 
-  group("transform bigger case classes") {
+  // enums decoding is handled in another suite
+  implicit val decodePhoneType: PartialTransformer[pb.addressbook.PhoneType, addressbook.PhoneType] =
+    PartialTransformer
+      .define[pb.addressbook.PhoneType, addressbook.PhoneType]
+      .withEnumCaseHandledPartial[pb.addressbook.PhoneType.Unrecognized](_ => partial.Result.fromEmpty)
+      .buildTransformer
 
-    test("PhoneNumber") {
+  group("messages compiled with preserve_unknown_fields: false") {
 
-      addressbook
-        .PhoneNumber("1234567", addressbook.HOME)
-        .transformInto[pb.addressbook.PhoneNumber] ==>
-        pb.addressbook.PhoneNumber("1234567", pb.addressbook.PhoneType.HOME)
-    }
-
-    test("Person") {
-
-      addressbook
-        .Person(
-          addressbook.PersonName("John"),
-          addressbook.PersonId(123),
-          addressbook.Email("john@example.com"),
-          List(
-            addressbook.PhoneNumber("1234567", addressbook.HOME),
-            addressbook.PhoneNumber("77332233", addressbook.WORK),
-            addressbook.PhoneNumber("88776655", addressbook.MOBILE)
-          )
-        )
-        .transformInto[pb.addressbook.Person] ==>
+    val pbPhone: pb.addressbook.PhoneNumber = pb.addressbook.PhoneNumber("1234567", pb.addressbook.PhoneType.HOME)
+    val pbPerson: pb.addressbook.Person = pb.addressbook.Person(
+      "John",
+      123,
+      "john@example.com",
+      Seq(
+        pbPhone,
+        pb.addressbook.PhoneNumber("77332233", pb.addressbook.PhoneType.WORK),
+        pb.addressbook.PhoneNumber("88776655", pb.addressbook.PhoneType.MOBILE)
+      )
+    )
+    val pbAddressBook: pb.addressbook.AddressBook = pb.addressbook.AddressBook(
+      Seq(
+        pbPerson,
         pb.addressbook.Person(
-          "John",
-          123,
-          "john@example.com",
-          Seq(
-            pb.addressbook.PhoneNumber("1234567", pb.addressbook.PhoneType.HOME),
-            pb.addressbook.PhoneNumber("77332233", pb.addressbook.PhoneType.WORK),
-            pb.addressbook.PhoneNumber("88776655", pb.addressbook.PhoneType.MOBILE)
-          )
+          "Susan",
+          321,
+          "susan@example.com",
+          Seq(pb.addressbook.PhoneNumber("200300400", pb.addressbook.PhoneType.MOBILE))
         )
-    }
-
-    test("AddressBook") {
-
-      addressbook
-        .AddressBook(
-          List(
-            addressbook.Person(
-              addressbook.PersonName("John"),
-              addressbook.PersonId(123),
-              addressbook.Email("john@example.com"),
-              List(
-                addressbook.PhoneNumber("1234567", addressbook.HOME),
-                addressbook.PhoneNumber("77332233", addressbook.WORK),
-                addressbook.PhoneNumber("88776655", addressbook.MOBILE)
-              )
-            ),
-            addressbook.Person(
-              addressbook.PersonName("Susan"),
-              addressbook.PersonId(321),
-              addressbook.Email("susan@example.com"),
-              List(addressbook.PhoneNumber("200300400", addressbook.MOBILE))
-            )
-          )
-        )
-        .transformInto[pb.addressbook.AddressBook] ==>
-        pb.addressbook.AddressBook(
-          Seq(
-            pb.addressbook.Person(
-              "John",
-              123,
-              "john@example.com",
-              Seq(
-                pb.addressbook.PhoneNumber("1234567", pb.addressbook.PhoneType.HOME),
-                pb.addressbook.PhoneNumber("77332233", pb.addressbook.PhoneType.WORK),
-                pb.addressbook.PhoneNumber("88776655", pb.addressbook.PhoneType.MOBILE)
-              )
-            ),
-            pb.addressbook.Person(
-              "Susan",
-              321,
-              "susan@example.com",
-              Seq(pb.addressbook.PhoneNumber("200300400", pb.addressbook.PhoneType.MOBILE))
-            )
-          )
-        )
-    }
-
-    group("Order") {
-
-      group("success case") {
-
-        val domainOrder =
-          order.Order(
-            List(order.OrderLine(order.Item(123, "foo"), 3), order.OrderLine(order.Item(321, "bar"), 1)),
-            order.Customer(123, "John", "Beer", order.Address("street", 1137, "city"))
-          )
-        val pbOrder = pb.order.Order(
-          Seq(
-            pb.order.OrderLine(Option(pb.order.Item(123, "foo")), 3),
-            pb.order.OrderLine(Option(pb.order.Item(321, "bar")), 1)
-          ),
-          Option(pb.order.Customer(123, "John", "Beer", Option(pb.order.Address("street", 1137, "city"))))
-        )
-
-        test("using total transformers") {
-
-          domainOrder.into[pb.order.Order].transform ==> pbOrder
-        }
-
-        test("using partial transformers") {
-          pbOrder.into[order.Order].partial.transform ==> partial.Result.fromValue(domainOrder)
-        }
-      }
-
-      group("failure case") {
-
-        val pbFailureOrder = pb.order.Order(
-          Seq(
-            pb.order.OrderLine(Option(pb.order.Item(123, "foo")), 3),
-            pb.order.OrderLine(None, 1)
-          ),
-          Option(pb.order.Customer(123, "John", "Beer", None))
-        )
-
-        test("using partial transformers") {
-          val result = pbFailureOrder.into[order.Order].partial.transform
-
-          result.asOption ==> None
-          result.asErrorPathMessageStrings ==> Iterable(
-            "lines(1).item" -> "empty value",
-            "customer.address" -> "empty value"
-          )
-        }
-      }
-    }
-
-    test("User") {
-
-      val domainUser = user.User(
-        addressbook.PersonName("Susan"),
-        addressbook.PersonId(321),
-        addressbook.Email("susan@example.com"),
-        List(addressbook.PhoneNumber("200300400", addressbook.MOBILE))
       )
+    )
+    val pbOrder: pb.order.Order = pb.order.Order(
+      Seq(
+        pb.order.OrderLine(Option(pb.order.Item(123, "foo")), 3),
+        pb.order.OrderLine(Option(pb.order.Item(321, "bar")), 1)
+      ),
+      Option(pb.order.Customer(123, "John", "Beer", Option(pb.order.Address("street", 1137, "city"))))
+    )
+    val pbOrderInvalid = pb.order.Order(
+      Seq(
+        pb.order.OrderLine(Option(pb.order.Item(123, "foo")), 3),
+        pb.order.OrderLine(None, 1)
+      ),
+      Option(pb.order.Customer(123, "John", "Beer", None))
+    )
 
-      val pbUser = pb.user.User(
-        "Susan",
-        321,
-        "susan@example.com",
-        Seq(pb.addressbook.PhoneNumber("200300400", pb.addressbook.PhoneType.MOBILE))
+    val domainPhone: addressbook.PhoneNumber = addressbook.PhoneNumber("1234567", addressbook.HOME)
+    val domainPerson: addressbook.Person = addressbook.Person(
+      addressbook.PersonName("John"),
+      addressbook.PersonId(123),
+      addressbook.Email("john@example.com"),
+      List(
+        domainPhone,
+        addressbook.PhoneNumber("77332233", addressbook.WORK),
+        addressbook.PhoneNumber("88776655", addressbook.MOBILE)
       )
+    )
+    val domainAddressBook: addressbook.AddressBook = addressbook
+      .AddressBook(
+        List(
+          domainPerson,
+          addressbook.Person(
+            addressbook.PersonName("Susan"),
+            addressbook.PersonId(321),
+            addressbook.Email("susan@example.com"),
+            List(addressbook.PhoneNumber("200300400", addressbook.MOBILE))
+          )
+        )
+      )
+    val domainOrder: order.Order = order.Order(
+      List(order.OrderLine(order.Item(123, "foo"), 3), order.OrderLine(order.Item(321, "bar"), 1)),
+      order.Customer(123, "John", "Beer", order.Address("street", 1137, "city"))
+    )
 
+    test("totally transform from cases classes") {
+      domainPhone.transformInto[pb.addressbook.PhoneNumber] ==> pbPhone
+      domainPerson.transformInto[pb.addressbook.Person] ==> pbPerson
+      domainAddressBook.transformInto[pb.addressbook.AddressBook] ==> pbAddressBook
+      domainOrder.into[pb.order.Order].transform ==> pbOrder
+    }
+
+    test("partially transform into case classes unwrapping present optional values") {
+      pbPhone.intoPartial[addressbook.PhoneNumber].transform.asOption ==> Some(domainPhone)
+      pbPerson.intoPartial[addressbook.Person].transform.asOption ==> Some(domainPerson)
+      pbAddressBook.intoPartial[addressbook.AddressBook].transform.asOption ==> Some(domainAddressBook)
+      pbOrder.intoPartial[order.Order].transform.asOption ==> Some(domainOrder)
+    }
+
+    test("partially transform into case classes failing absent optional values with Empty") {
+      val result = pbOrderInvalid.intoPartial[order.Order].transform
+      result.asOption ==> None
+      result.asErrorPathMessageStrings ==> Iterable(
+        "lines(1).item" -> "empty value",
+        "customer.address" -> "empty value"
+      )
+    }
+  }
+
+  group("messages compiled with preserve_unknown_fields: true") {
+
+    val pbUser = pb.user.User(
+      "Susan",
+      321,
+      "susan@example.com",
+      Seq(pb.addressbook.PhoneNumber("200300400", pb.addressbook.PhoneType.MOBILE))
+    )
+    val domainUser = user.User(
+      addressbook.PersonName("Susan"),
+      addressbook.PersonId(321),
+      addressbook.Email("susan@example.com"),
+      List(addressbook.PhoneNumber("200300400", addressbook.MOBILE))
+    )
+
+    test("totally transform from cases classes (enabling default values for UnknownFieldSet)") {
+      domainUser.into[pb.user.User].enableDefaultValues.transform ==> pbUser
       domainUser.into[pb.user.User].enableDefaultValueOfType[scalapb.UnknownFieldSet].transform ==> pbUser
+    }
+
+    test("partially transform into cases classes") {
+      pbUser.intoPartial[user.User].transform.asOption ==> Some(domainUser)
     }
   }
 }
