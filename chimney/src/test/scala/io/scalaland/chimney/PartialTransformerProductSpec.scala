@@ -1764,6 +1764,139 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
   }
 
+  group("flag .enableNonAnyValWrappers") {
+
+    test("should be disabled by default") {
+      import fixtures.nestedpath.NestedProduct
+      import fixtures.valuetypes.*
+
+      compileErrors("""UserWithName("value").transformIntoPartial[String]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.valuetypes.UserWithName to java.lang.String",
+        "java.lang.String",
+        "derivation from userwithname: io.scalaland.chimney.fixtures.valuetypes.UserWithName to java.lang.String is not supported in Chimney!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+      compileErrors(""""value".transformIntoPartial[UserWithName]""").check(
+        "Chimney can't derive transformation from java.lang.String to io.scalaland.chimney.fixtures.valuetypes.UserWithName",
+        "io.scalaland.chimney.fixtures.valuetypes.UserWithName",
+        "id: java.lang.String - no accessor named id in source type java.lang.String",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+      compileErrors("""UserWithName("value").transformIntoPartial[NestedProduct[String]]""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.valuetypes.UserWithName to io.scalaland.chimney.fixtures.nestedpath.NestedProduct[java.lang.String]",
+        "io.scalaland.chimney.fixtures.nestedpath.NestedProduct[java.lang.String]",
+        "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.valuetypes.UserWithName",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should allow unwrapping non-AnyVal wrappers") {
+      import fixtures.valuetypes.*
+
+      val expected = "value"
+
+      val result = UserWithName("value").intoPartial[String].enableNonAnyValWrappers.transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      locally {
+        implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+
+        val result2 = UserWithName("value").transformIntoPartial[String]
+        result2.asOption ==> Some(expected)
+        result2.asEither ==> Right(expected)
+        result2.asErrorPathMessageStrings ==> Iterable.empty
+
+        val result3 = UserWithName("value").intoPartial[String].transform
+        result3.asOption ==> Some(expected)
+        result3.asEither ==> Right(expected)
+        result3.asErrorPathMessageStrings ==> Iterable.empty
+      }
+    }
+
+    test("should allow wrapping non-AnyVal wrappers") {
+      import fixtures.valuetypes.*
+
+      val expected = UserWithName("value")
+
+      val result = "value".intoPartial[UserWithName].enableNonAnyValWrappers.transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      locally {
+        implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+
+        val result2 = "value".transformIntoPartial[UserWithName]
+        result2.asOption ==> Some(expected)
+        result2.asEither ==> Right(expected)
+        result2.asErrorPathMessageStrings ==> Iterable.empty
+
+        val result3 = "value".intoPartial[UserWithName].transform
+        result3.asOption ==> Some(expected)
+        result3.asEither ==> Right(expected)
+        result3.asErrorPathMessageStrings ==> Iterable.empty
+      }
+    }
+
+    test("should allow rewrapping non-AnyVal wrappers") {
+      import fixtures.nestedpath.NestedProduct
+      import fixtures.valuetypes.*
+
+      val expected = NestedProduct[String]("value")
+
+      val result = UserWithName("value").intoPartial[NestedProduct[String]].enableNonAnyValWrappers.transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      locally {
+        implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+
+        val result2 = UserWithName("value").transformIntoPartial[NestedProduct[String]]
+        result2.asOption ==> Some(expected)
+        result2.asEither ==> Right(expected)
+        result2.asErrorPathMessageStrings ==> Iterable.empty
+
+        val result3 = UserWithName("value").intoPartial[NestedProduct[String]].transform
+        result3.asOption ==> Some(expected)
+        result3.asEither ==> Right(expected)
+        result3.asErrorPathMessageStrings ==> Iterable.empty
+      }
+    }
+  }
+
+  group("flag .disableNonAnyValWrappers") {
+
+    test("should disable globally enabled .enableNonAnyValWrappers") {
+      import fixtures.nestedpath.NestedProduct
+      import fixtures.valuetypes.*
+
+      @unused implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+
+      compileErrors("""UserWithName("value").intoPartial[String].disableNonAnyValWrappers.transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.valuetypes.UserWithName to java.lang.String",
+        "java.lang.String",
+        "derivation from userwithname: io.scalaland.chimney.fixtures.valuetypes.UserWithName to java.lang.String is not supported in Chimney!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+      compileErrors(""""value".intoPartial[UserWithName].disableNonAnyValWrappers.transform""").check(
+        "Chimney can't derive transformation from java.lang.String to io.scalaland.chimney.fixtures.valuetypes.UserWithName",
+        "io.scalaland.chimney.fixtures.valuetypes.UserWithName",
+        "id: java.lang.String - no accessor named id in source type java.lang.String",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+      compileErrors("""UserWithName("value").intoPartial[NestedProduct[String]].disableNonAnyValWrappers.transform""")
+        .check(
+          "Chimney can't derive transformation from io.scalaland.chimney.fixtures.valuetypes.UserWithName to io.scalaland.chimney.fixtures.nestedpath.NestedProduct[java.lang.String]",
+          "io.scalaland.chimney.fixtures.nestedpath.NestedProduct[java.lang.String]",
+          "value: java.lang.String - no accessor named value in source type io.scalaland.chimney.fixtures.valuetypes.UserWithName",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+    }
+  }
+
   group("flag .enableCustomFieldNameComparison") {
     case class Foo(Baz: Foo.Baz, A: Int)
     object Foo {
