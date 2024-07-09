@@ -15,11 +15,21 @@ class ProtobufOneOfSpec extends ChimneySpec {
         pb.addressbook.AddressBookType.Value.Private(pb.addressbook.AddressBookType.Private.of("test"))
       )
 
-    test("totally transform from sealed hierarchy") {
-      domainType.into[pb.addressbook.AddressBookType.Value].transform ==> pbType.value
+    test("totally transform wrapped value from sealed hierarchy") {
+      domainType.transformInto[pb.addressbook.AddressBookType.Value] ==> pbType.value
     }
 
-    test("partially transform into sealed hierarchy (manually handling Value.Empty)") {
+    test("totally transform wrapper value from sealed hierarchy (manually enabling non-AnyVal wrappers)") {
+      domainType.into[pb.addressbook.AddressBookType].enableNonAnyValWrappers.transform ==> pbType
+
+      locally {
+        implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+
+        domainType.transformInto[pb.addressbook.AddressBookType] ==> pbType
+      }
+    }
+
+    test("partially transform wrapped value into sealed hierarchy (manually handling Value.Empty)") {
       pbType.value
         .intoPartial[addressbook.AddressBookType]
         .withSealedSubtypeHandledPartial[pb.addressbook.AddressBookType.Value.Empty.type](_ => partial.Result.fromEmpty)
@@ -27,12 +37,27 @@ class ProtobufOneOfSpec extends ChimneySpec {
         .asOption ==> Some(domainType)
     }
 
-    test("partially transform into sealed hierarchy (handling Value.Empty.type with implicit)") {
+    test("partially transform wrapped into sealed hierarchy (handling Value.Empty.type with implicit)") {
       // format: off
       import protobufs._
       // format: on
 
-      pbType.value.intoPartial[addressbook.AddressBookType].transform.asOption ==> Some(domainType)
+      pbType.value.transformIntoPartial[addressbook.AddressBookType].asOption ==> Some(domainType)
+    }
+
+    test(
+      "partially transform wrapper into sealed hierarchy (handling Value.Empty.type with implicit, and enabling non-AnyVal wrappers)"
+    ) {
+      // format: off
+      import protobufs._
+      // format: on
+
+      pbType.intoPartial[addressbook.AddressBookType].enableNonAnyValWrappers.transform.asOption ==> Some(domainType)
+
+      locally {
+        implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+        pbType.transformIntoPartial[addressbook.AddressBookType].asOption ==> Some(domainType)
+      }
     }
   }
 
@@ -41,7 +66,7 @@ class ProtobufOneOfSpec extends ChimneySpec {
     val pbStatus: pb.order.CustomerStatus = pb.order.CustomerRegistered()
 
     test("totally transform from sealed hierarchy") {
-      domainStatus.into[pb.order.CustomerStatus].transform ==> pbStatus
+      domainStatus.transformInto[pb.order.CustomerStatus] ==> pbStatus
     }
 
     test("partially transform into sealed hierarchy (manually handling Empty and NonEmpty subtypes)") {
@@ -71,11 +96,11 @@ class ProtobufOneOfSpec extends ChimneySpec {
     val pbStatus: Option[pb.order.PaymentStatus] = Option(pb.order.PaymentRequested())
 
     test("totally transform from sealed hierarchy") {
-      domainStatus.into[Option[pb.order.PaymentStatus]].transform ==> pbStatus
+      domainStatus.transformInto[Option[pb.order.PaymentStatus]] ==> pbStatus
     }
 
     test("totally transform into sealed hierarchy") {
-      pbStatus.into[Option[order.PaymentStatus]].transform ==> domainStatus
+      pbStatus.transformInto[Option[order.PaymentStatus]] ==> domainStatus
     }
   }
 }
