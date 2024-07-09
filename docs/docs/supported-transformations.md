@@ -2356,7 +2356,7 @@ If the flag was enabled in the implicit config it can be disabled with `.disbleN
     
     case class UserName(value: String)
     
-    "user name".transformInto[UserName]
+    "user name".into[UserName].disableNonAnyValWrappers.transform
     // expected error:
     // Chimney can't derive transformation from java.lang.String to UserName
     // 
