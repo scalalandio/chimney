@@ -90,14 +90,14 @@ class ProtobufMessageSpec extends ChimneySpec {
     }
 
     test("partially transform into case classes unwrapping present optional values") {
-      pbPhone.intoPartial[addressbook.PhoneNumber].transform.asOption ==> Some(domainPhone)
-      pbPerson.intoPartial[addressbook.Person].transform.asOption ==> Some(domainPerson)
-      pbAddressBook.intoPartial[addressbook.AddressBook].transform.asOption ==> Some(domainAddressBook)
-      pbOrder.intoPartial[order.Order].transform.asOption ==> Some(domainOrder)
+      pbPhone.transformIntoPartial[addressbook.PhoneNumber].asOption ==> Some(domainPhone)
+      pbPerson.transformIntoPartial[addressbook.Person].asOption ==> Some(domainPerson)
+      pbAddressBook.transformIntoPartial[addressbook.AddressBook].asOption ==> Some(domainAddressBook)
+      pbOrder.transformIntoPartial[order.Order].asOption ==> Some(domainOrder)
     }
 
     test("partially transform into case classes failing absent optional values with Empty") {
-      val result = pbOrderInvalid.intoPartial[order.Order].transform
+      val result = pbOrderInvalid.transformIntoPartial[order.Order]
       result.asOption ==> None
       result.asErrorPathMessageStrings ==> Iterable(
         "lines(1).item" -> "empty value",
@@ -127,7 +127,7 @@ class ProtobufMessageSpec extends ChimneySpec {
     }
 
     test("partially transform into cases classes") {
-      pbUser.intoPartial[user.User].transform.asOption ==> Some(domainUser)
+      pbUser.transformIntoPartial[user.User].asOption ==> Some(domainUser)
     }
   }
 }
