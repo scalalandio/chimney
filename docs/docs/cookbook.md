@@ -1589,6 +1589,7 @@ An example of such optional type is `java.util.Optional` for which support is pr
 ## Custom collection types
 
 In case your library/domain defines custom collections - which are:
+
  * NOT providing `scala.collection.Factory` (2.13/3) or `scala.collection.genric.CanBuildFrom` (2.12)
  * or NOT extending `Iterable`
 
@@ -1834,6 +1835,7 @@ For map types there are specialized versions of these type classes:
     ```
     
 The only 2 difference they make is that:
+
  - when we are converting with `PartialTransformer` failures will be reported on map keys instead of `_1` and `_2` field
    of a tuple in a sequence (e.g. `keys(myKey)` - if key conversion failed for `myKey` value or `(myKey)` if value
    conversion failed for `myKey` key, instead of `(0)._1` or `(0)._2`)
