@@ -1037,6 +1037,13 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
     Importing `import io.scalaland.chimney.protobufs._` works only for the default output. If you used `sealed_value` or
     `sealed_value_optional` read further sections. 
 
+!!! notice
+
+    As you may have notices transformation is between `addressbook.AddressBookType` and
+    `pb.addressbook.AddressBookType.Value`. If we wanted to automatically wrap/unwrap
+    `pb.addressbook.AddressBookType.Value` with `pb.addressbook.AddressBookType` we should
+    [enable non-AnyVal wrapper types](supported-transformations.md#frominto-a-wrapper-type).
+
 ### `sealed_value oneof` fields
 
 In case we can edit our protobuf definition, we can arrange the generated code
