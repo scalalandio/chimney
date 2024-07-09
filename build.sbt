@@ -463,6 +463,7 @@ lazy val chimneyJavaCollections = projectMatrix
     description := "Integrations with selected Java collections"
   )
   .settings(settings *)
+  .settings(versionSchemeSettings *)
   .settings(publishSettings *)
   .settings(mimaSettings *)
   .settings(
@@ -491,6 +492,7 @@ lazy val chimneyProtobufs = projectMatrix
     description := "Integrations with selected Protobufs build-in types"
   )
   .settings(settings *)
+  .settings(versionSchemeSettings *)
   .settings(publishSettings *)
   .settings(mimaSettings *)
   .settings(
