@@ -262,7 +262,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     * By default in such case compilation fails.
     *
     * @see
-    *   [[TODO]] for more details
+    *   [[https://chimney.readthedocs.io/supported-transformations/#frominto-a-wrapper-type]] for more details
     *
     * @since 1.3.0
     */
@@ -273,7 +273,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
     * are not AnyVals.
     *
     * @see
-    *   [[TODO]] for more details
+    *   [[https://chimney.readthedocs.io/supported-transformations/#frominto-a-wrapper-type]] for more details
     *
     * @since 1.3.0
     */
