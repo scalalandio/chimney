@@ -89,6 +89,7 @@ function was not defined, "empty value" when something was expected) and even th
     pprint.pprintln(
       transformer.transform(new MyType("10")).asEither.left.map(_.asErrorPathMessages)
     )
+    // expected output:
     // Right(value = MyOtherType(10))
     pprint.pprintln(
       transformer
