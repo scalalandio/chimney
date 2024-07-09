@@ -2280,6 +2280,92 @@ as transparent, similarly to virtually every other Scala library.
     If you use any value override (`withFieldConst`, `withFieldComputed`, etc.) getting value from/to `AnyVal`, it
     _will_ be treated as just a normal product type.
 
+### From/into a wrapper type
+
+Automatic unwrapping/wrapping is limited only to classes with a single, public `val` constructor parameter, and only
+when the whole type `extends AnyVal`. What if we have a type which wraps a single value but does not `extends AnyVal`?
+
+Such cases are often when we use ScalaPB, so it would be useful to automatically handle such cases. It's possible with
+a flag:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+    
+    case class UserName(value: String)
+    
+    pprint.pprintln(
+      "user name".into[UserName].enableNonAnyValWrappers.transform
+    )
+    pprint.pprintln(
+      "user name".intoPartial[UserName].enableNonAnyValWrappers.transform.asEither
+    )
+    // expected output:
+    // UserName(value = "user name")
+    // Right(value = UserName(value = "user name"))
+    
+    pprint.pprintln(
+      UserName("user name").into[String].enableNonAnyValWrappers.transform
+    )
+    pprint.pprintln(
+      UserName("user name").intoPartial[String].enableNonAnyValWrappers.transform.asEither
+    )
+    // expected output:
+    // "user name"
+    // Right(value = "user name")
+    
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+      
+      pprint.pprintln(
+        "user name".transformInto[UserName]
+      )
+      pprint.pprintln(
+        "user name".into[UserName].transform
+      )
+      // expected output:
+      // UserName(value = "user name")
+      // UserName(value = "user name")
+      // Right(value = UserName(value = "user name"))
+      
+      pprint.pprintln(
+        "user name".transformIntoPartial[UserName].asEither
+      )
+      pprint.pprintln(
+        "user name".intoPartial[UserName].transform.asEither
+      )
+      // expected output:
+      // Right(value = UserName(value = "user name"))
+      // Right(value = UserName(value = "user name"))
+    }
+    ```
+    
+If the flag was enabled in the implicit config it can be disabled with `.disbleNonAnyValWrappers`.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+    
+    implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+    
+    case class UserName(value: String)
+    
+    "user name".transformInto[UserName]
+    // expected error:
+    // Chimney can't derive transformation from java.lang.String to UserName
+    // 
+    // UserName
+    //   value: java.lang.String - no accessor named value in source type java.lang.String
+    // 
+    // Consult https://chimney.readthedocs.io for usage examples.
+    ```
+
 ## Between `sealed`/`enum`s
 
 When both the source type and the target type of the transformation are `sealed` (`trait`, `abstract class`), Chimney
