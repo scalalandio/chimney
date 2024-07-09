@@ -1027,7 +1027,7 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
   
         ```scala
         import io.scalaland.chimney.dsl._
-        import io.scalaland.chimney.protobufs._ // includes support for empty scalapb.GeneratedMessage
+        import io.scalaland.chimney.protobufs._ // includes support for empty scalapb.GeneratedOneof
 
         pbType.value.intoPartial[addressbook.AddressBookType].transform.asOption == Some(domainType)
         ```
@@ -1106,31 +1106,45 @@ Transforming to and from:
     }
     ```
 
-could be done with:
+could be done
 
-!!! example
+  - manually
+
+    !!! example
+      
+        ```scala
+        import io.scalaland.chimney.dsl._
+    
+        val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered
+        val pbStatus: pb.order.CustomerStatus = pb.order.CustomerRegistered()
+    
+        domainStatus.into[pb.order.CustomerStatus].transform == pbStatus
+    
+        pbStatus
+          .intoPartial[order.CustomerStatus]
+          .withSealedSubtypeHandledPartial[pb.order.CustomerStatus.Empty.type](
+            _ => partial.Result.fromEmpty
+          )
+          .withSealedSubtypeHandled[pb.order.CustomerStatus.NonEmpty](
+            _.transformInto[order.CustomerStatus]
+          )
+          .transform
+          .asOption == Some(domainStatus)
+        ```
+
+  - or with an import
+
+    !!! example
   
-    ```scala
-    import io.scalaland.chimney.dsl._
-
-    val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered
-    val pbStatus: pb.order.CustomerStatus = pb.order.CustomerRegistered()
-
-    domainStatus.into[pb.order.CustomerStatus].transform == pbStatus
-
-    pbStatus
-      .intoPartial[order.CustomerStatus]
-      .withSealedSubtypeHandledPartial[pb.order.CustomerStatus.Empty.type](
-        _ => partial.Result.fromEmpty
-      )
-      .withSealedSubtypeHandled[pb.order.CustomerStatus.NonEmpty](
-        _.transformInto[order.CustomerStatus]
-      )
-      .transform
-      .asOption == Some(domainStatus)
-    ```
-
-As you can see, we have to manually handle decoding the `Empty` value.
+        ```scala
+        import io.scalaland.chimney.dsl._
+        import io.scalaland.chimney.protobufs._ // includes support for empty scalapb.GeneratedSealedOneof
+      
+        val domainStatus: order.CustomerStatus = order.CustomerStatus.CustomerRegistered
+        val pbStatus: pb.order.CustomerStatus = pb.order.CustomerRegistered()
+      
+        pbStatus.transformIntoPartial[order.CustomerStatus].asOption == Some(domainStatus)
+        ```
 
 ### `sealed_value_optional oneof` fields
 
@@ -1183,13 +1197,98 @@ the transformation is pretty straightforward in both directions:
     val domainStatus: Option[order.PaymentStatus] = Option(order.PaymentStatus.PaymentRequested)
     val pbStatus: Option[pb.order.PaymentStatus] = Option(pb.order.PaymentRequested())
 
-    domainStatus.into[Option[pb.order.PaymentStatus]].transform ==> pbStatus
-    pbStatus.into[Option[order.PaymentStatus]].transform ==> domainStatus
+    domainStatus.into[Option[pb.order.PaymentStatus]].transform == pbStatus
+    pbStatus.into[Option[order.PaymentStatus]].transform == domainStatus
     ```
 
 since there is no `Empty` case to handle. Wrapping into `Option` would
 be handled automatically, similarly unwrapping (as long as you decode using
 partial transformers).
+
+### enum fields
+
+ScalaPB turn enum fields into wrapped sealed traits, with additional `Unrecognized` value (all the other values are
+subtypes of `Recognized` sealed subtrait). E.g:
+
+!!! example
+
+    ```protobuf
+    enum PhoneType {
+      MOBILE = 0;
+      HOME = 1;
+      WORK = 2;
+    }
+    ```
+
+will generate something similar to:
+
+!!! example
+
+    ```scala
+    sealed abstract class PhoneType(val value: Int) extends scalapb.GeneratedEnum
+    
+    object PhoneType extends scalapb.GeneratedEnumCompanion[PhoneType] {
+    
+      sealed trait Recognized extends PhoneType
+      
+      case object MOBILE extends PhoneType(0) with PhoneType.Recognized { /* ... */ }
+      case object HOME extends PhoneType(0) with PhoneType.Recognized { /* ... */ }
+      case object WORK extends PhoneType(0) with PhoneType.Recognized { /* ... */ }
+      
+      final case class Unrecognized(unrecognizedValue: Int) extends PhoneType(unrecognizedValue)
+        with scalapb.UnrecogneizedEnum
+        
+      // ...
+    }
+    ```
+
+conversion to and from:
+
+!!! example
+
+    ```scala
+    sealed trait PhoneType
+    object PhoneType {
+      case object MOBILE extends PhoneType
+      case object HOME extends PhoneType
+      case object WORK extends PhoneType
+    }
+    ```
+
+could be done
+
+  - manually
+
+    !!! example
+
+        ```scala
+        import io.scalaland.chimney.dsl._
+  
+        val domainType: PhoneType = PhoneType.MOBILE
+        val pbType: pb.addressbook.PhoneType = pb.addressbook.PhoneType.MOBILE
+  
+        domainType.transformInto[pb.addressbook.PhoneType] == pbType
+
+        pbType
+          .intoPartial[addressbook.PhoneType]
+          .withEnumCaseHandledPartial[pb.addressbook.PhoneType.Unrecognized](_ => partial.Result.fromEmpty)
+          .transform == domainType
+        ```
+
+  - or with an import
+
+    !!! example
+
+        ```scala
+        import io.scalaland.chimney.dsl._
+        import io.scalaland.chimney.protobufs._ // includes support for empty scalapb.GeneratedEnum
+  
+        val domainType: PhoneType = PhoneType.MOBILE
+        val pbType: pb.addressbook.PhoneType = pb.addressbook.PhoneType.MOBILE
+  
+        domainType.transformInto[pb.addressbook.PhoneType] == pbType
+        pbType.transformIntoPartial[addressbook.PhoneType].transform == domainType
+        ```
 
 ### Build-in ScalaPB types
 
