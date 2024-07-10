@@ -267,11 +267,11 @@ val publishSettings = Seq(
 val mimaSettings = Seq(
   mimaPreviousArtifacts := {
     val previousVersions = moduleName.value match {
-      case "chimney-macro-commons"    => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0")
-      case "chimney"                  => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0")
-      case "chimney-cats"             => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0")
-      case "chimney-java-collections" => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0")
-      case "chimney-protobufs"        => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0")
+      case "chimney-macro-commons"    => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0")
+      case "chimney"                  => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0")
+      case "chimney-cats"             => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0")
+      case "chimney-java-collections" => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0")
+      case "chimney-protobufs"        => Set("1.0.0-RC1", "1.0.0", "1.1.0", "1.2.0", "1.3.0")
       case _                          => Set()
     }
     previousVersions.map(organization.value %% moduleName.value % _)
