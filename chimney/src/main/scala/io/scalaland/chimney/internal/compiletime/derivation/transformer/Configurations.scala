@@ -101,6 +101,15 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
       ).flatten.mkString(", ")})"
   }
+  object TransformerFlags {
+
+    def global: TransformerFlags =
+      XMacroSettings.foldLeft(TransformerFlags()) {
+        case (cfg, transformerFlag"InheritedAccessors=$value") => cfg.copy(inheritedAccessors = value.toBoolean)
+        // TODO: the rest
+        case (cfg, _) => cfg
+      }
+  }
 
   final protected class Path private (private val segments: Vector[Path.Segment]) {
 
@@ -346,7 +355,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         InstanceFlags <: runtime.TransformerFlags: Type,
         ImplicitScopeFlags <: runtime.TransformerFlags: Type
     ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): TransformerConfiguration = {
-      val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags())
+      val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags.global)
       val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
       val cfg = extractTransformerConfig[Tail](runtimeDataIdx = 0, runtimeDataStore).copy(flags = allFlags)
       if (Type[InstanceFlags] =:= ChimneyType.TransformerFlags.Default) cfg else cfg.setLocalFlagsOverriden
