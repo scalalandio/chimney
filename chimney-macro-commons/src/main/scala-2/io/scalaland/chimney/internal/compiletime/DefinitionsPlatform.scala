@@ -11,5 +11,8 @@ trait DefinitionsPlatform
 
   val c: blackbox.Context
 
-  protected val isScala212 = scala.util.Properties.versionNumberString < "2.13"
+  protected val XMacroSettings: List[String] = c.settings
+
+  /** Useful for distinction between 2.12 and 2.13, when necessary. */
+  protected val isScala212: Boolean = scala.util.Properties.versionNumberString < "2.13"
 }

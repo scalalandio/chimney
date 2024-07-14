@@ -7,4 +7,11 @@ abstract class DefinitionsPlatform(using val quotes: quoted.Quotes)
     with TypesPlatform
     with ExprsPlatform
     with ExprPromisesPlatform
-    with ResultsPlatform
+    with ResultsPlatform {
+
+  protected val XMacroSettings: List[String] = {
+    // workaround to contain @experimental from polluting the whole codebase
+    val info = quotes.reflect.CompilationInfo
+    info.getClass.getMethod("XmacroSettings").invoke(info).asInstanceOf[List[String]]
+  }
+}
