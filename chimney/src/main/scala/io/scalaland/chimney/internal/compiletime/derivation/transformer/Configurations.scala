@@ -103,12 +103,27 @@ private[compiletime] trait Configurations { this: Derivation =>
   }
   object TransformerFlags {
 
-    def global: TransformerFlags =
-      XMacroSettings.foldLeft(TransformerFlags()) {
-        case (cfg, transformerFlag"InheritedAccessors=$value") => cfg.copy(inheritedAccessors = value.toBoolean)
-        // TODO: the rest
-        case (cfg, _) => cfg
-      }
+    def global: TransformerFlags = XMacroSettings.foldLeft(TransformerFlags()) {
+      case (cfg, transformerFlag"InheritedAccessors=$value") => cfg.copy(inheritedAccessors = value.toBoolean)
+      case (cfg, transformerFlag"MethodAccessors=$value")    => cfg.copy(methodAccessors = value.toBoolean)
+      case (cfg, transformerFlag"DefaultValues=$value")      => cfg.copy(processDefaultValues = value.toBoolean)
+      case (cfg, transformerFlag"BeanSetters=$value")        => cfg.copy(beanSetters = value.toBoolean)
+      case (cfg, transformerFlag"BeanSettersIgnoreUnmatched=$value") =>
+        cfg.copy(beanSettersIgnoreUnmatched = value.toBoolean)
+      case (cfg, transformerFlag"NonUnitBeanSetters=$value")   => cfg.copy(nonUnitBeanSetters = value.toBoolean)
+      case (cfg, transformerFlag"BeanGetters=$value")          => cfg.copy(beanGetters = value.toBoolean)
+      case (cfg, transformerFlag"OptionDefaultsToNone=$value") => cfg.copy(optionDefaultsToNone = value.toBoolean)
+      case (cfg, transformerFlag"PartialUnwrapsOption=$value") => cfg.copy(partialUnwrapsOption = value.toBoolean)
+      case (cfg, transformerFlag"NonAnyValWrappers=$value")    => cfg.copy(nonAnyValWrappers = value.toBoolean)
+      case (cfg, transformerFlag"ImplicitConflictResolution=$value") =>
+        cfg.copy(implicitConflictResolution = value match {
+          case "Total"   => Some(dsls.PreferTotalTransformer)
+          case "Partial" => Some(dsls.PreferPartialTransformer)
+          case "none"    => None
+        })
+      case (cfg, transformerFlag"MacrosLogging=$value") => cfg.copy(displayMacrosLogging = value.toBoolean)
+      case (cfg, _)                                     => cfg
+    }
   }
 
   final protected class Path private (private val segments: Vector[Path.Segment]) {

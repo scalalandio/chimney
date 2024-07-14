@@ -29,6 +29,16 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
       ).flatten.mkString(", ")})"
   }
+  object PatcherFlags {
+
+    def global: PatcherFlags = XMacroSettings.foldLeft(PatcherFlags()) {
+      case (cfg, patcherFlag"IgnoreNoneInPatch=$value") => cfg.copy(ignoreNoneInPatch = value.toBoolean)
+      case (cfg, patcherFlag"IgnoreRedundantPatcherFields=$value") =>
+        cfg.copy(ignoreRedundantPatcherFields = value.toBoolean)
+      case (cfg, patcherFlag"MacrosLogging=$value") => cfg.copy(displayMacrosLogging = value.toBoolean)
+      case (cfg, _)                                 => cfg
+    }
+  }
 
   final protected case class PatcherConfiguration(
       flags: PatcherFlags = PatcherFlags(),
@@ -64,7 +74,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         Flags <: runtime.PatcherFlags: Type,
         ImplicitScopeFlags <: runtime.PatcherFlags: Type
     ]: PatcherConfiguration = {
-      val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](PatcherFlags())
+      val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](PatcherFlags.global)
       val allFlags = extractTransformerFlags[Flags](implicitScopeFlags)
       extractPatcherConfig[Tail]().copy(flags = allFlags)
     }
