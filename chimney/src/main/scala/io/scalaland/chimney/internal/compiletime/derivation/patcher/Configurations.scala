@@ -31,6 +31,7 @@ private[compiletime] trait Configurations { this: Derivation =>
   }
   object PatcherFlags {
 
+    // $COVERAGE-OFF$It's testable in snippets not not really in normal tests with coverage
     def global: PatcherFlags = XMacroSettings.foldLeft(PatcherFlags()) {
       case (cfg, patcherFlag"IgnoreNoneInPatch=$value") => cfg.copy(ignoreNoneInPatch = value.toBoolean)
       case (cfg, patcherFlag"IgnoreRedundantPatcherFields=$value") =>
@@ -38,6 +39,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       case (cfg, patcherFlag"MacrosLogging=$value") => cfg.copy(displayMacrosLogging = value.toBoolean)
       case (cfg, _)                                 => cfg
     }
+    // $COVERAGE-ON$
   }
 
   final protected case class PatcherConfiguration(
