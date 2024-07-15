@@ -150,6 +150,47 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     def summonImplicit[A: Type]: Option[Expr[A]] = scala.quoted.Expr.summon[A]
 
+    def nowarn[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
+      val annotationSymbol: Symbol = TypeRepr.of[scala.annotation.nowarn].typeSymbol
+      val annotation = Apply(
+        Select(New(TypeIdent(annotationSymbol)), annotationSymbol.primaryConstructor),
+        List(scala.quoted.Expr(warnings.toArray).asTerm)
+      )
+      val name = Symbol.newVal(
+        Symbol.spliceOwner,
+        ExprPromise.platformSpecific.freshTerm("nowarnResult"),
+        AnnotatedType(TypeRepr.of[A], annotation),
+        Flags.EmptyFlags,
+        Symbol.noSymbol
+      )
+
+      Block(
+        List(ValDef(name, Some(expr.asTerm.changeOwner(name)))),
+        Ref(name)
+      ).asExprOf[A]
+    }
+    def suppressWarnings[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
+      val annotationSymbol: Symbol = TypeRepr.of[java.lang.SuppressWarnings].typeSymbol
+      val annotation = Apply(
+        Select(New(TypeIdent(annotationSymbol)), annotationSymbol.primaryConstructor),
+        List(scala.quoted.Expr(warnings.toArray).asTerm)
+      )
+      val name = Symbol.newVal(
+        Symbol.spliceOwner,
+        ExprPromise.platformSpecific.freshTerm("suppressWarningsResult"),
+        AnnotatedType(TypeRepr.of[A], annotation),
+        Flags.EmptyFlags,
+        Symbol.noSymbol
+      )
+
+      Block(
+        List(ValDef(name, Some(expr.asTerm.changeOwner(name)))),
+        Ref(name)
+      ).asExprOf[A]
+    }
+
+    def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] = '{ val _ = ${ expr } }
+
     def eq[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[Boolean] = '{ ${ a } == ${ b } }
 
     def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B] = '{ ${ resetOwner(expr) }.asInstanceOf[B] }
@@ -161,8 +202,6 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       )
       expr.asInstanceOf[Expr[B]] // check that A <:< B without upcasting in code (Scala 3 should get away without it)
     }
-
-    def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] = '{ val _ = ${ expr } }
 
     def prettyPrint[A](expr: Expr[A]): String =
       expr.asTerm

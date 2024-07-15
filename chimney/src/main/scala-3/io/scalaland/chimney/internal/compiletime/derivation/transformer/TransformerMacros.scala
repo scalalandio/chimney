@@ -88,12 +88,6 @@ final class TransformerMacros(q: Quotes) extends DerivationPlatform(q) with Gate
       useImplicitScopeFlags(implicitScopeFlagsType)
     )
   }
-
-  private def suppressWarnings[A: Type](expr: Expr[A]): Expr[A] = '{
-    @SuppressWarnings(Array("org.wartremover.warts.All", "all"))
-    val result = ${ expr }
-    result
-  }
 }
 
 object TransformerMacros {

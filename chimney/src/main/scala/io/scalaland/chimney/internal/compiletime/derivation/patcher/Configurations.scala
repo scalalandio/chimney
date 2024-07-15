@@ -31,7 +31,7 @@ private[compiletime] trait Configurations { this: Derivation =>
   }
   object PatcherFlags {
 
-    // $COVERAGE-OFF$It's testable in snippets not not really in normal tests with coverage
+    // $COVERAGE-OFF$It's testable in (Scala-CLI) snippets and not really in normal tests with coverage
     def global: PatcherFlags = XMacroSettings.foldLeft(PatcherFlags()) {
       case (cfg, patcherFlag"IgnoreNoneInPatch=$value") => cfg.copy(ignoreNoneInPatch = value.toBoolean)
       case (cfg, patcherFlag"IgnoreRedundantPatcherFields=$value") =>

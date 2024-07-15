@@ -99,16 +99,4 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   catch {
     case scala.reflect.macros.TypecheckException(_, msg) => c.abort(c.enclosingPosition, msg)
   }
-
-  private def suppressWarnings[A: Type](expr: c.Expr[A]): c.Expr[A] = {
-    // Scala 3 generate prefix$macro$[n] while Scala 2 prefix[n] and we want to align the behavior
-    val result = c.internal.reificationSupport.freshTermName("result$macro$")
-    c.Expr[A](
-      q"""{
-        @_root_.java.lang.SuppressWarnings(_root_.scala.Array("org.wartremover.warts.All", "all"))
-        val $result = $expr
-        $result
-      }"""
-    )
-  }
 }

@@ -2,7 +2,7 @@ package io.scalaland.chimney.internal.compiletime
 
 private[compiletime] trait ChimneyDefinitions extends Definitions with ChimneyTypes with ChimneyExprs {
 
-  // $COVERAGE-OFF$It's testable in snippets not not really in normal tests with coverage
+  // $COVERAGE-OFF$It's testable in (Scala-CLI) snippets and not really in normal tests with coverage
   implicit protected class FlagOps(sc: StringContext) {
 
     /** Usage
