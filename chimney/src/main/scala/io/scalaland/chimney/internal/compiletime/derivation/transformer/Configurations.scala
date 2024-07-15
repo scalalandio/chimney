@@ -103,6 +103,7 @@ private[compiletime] trait Configurations { this: Derivation =>
   }
   object TransformerFlags {
 
+    // $COVERAGE-OFF$It's testable in snippets not not really in normal tests with coverage
     def global: TransformerFlags = XMacroSettings.foldLeft(TransformerFlags()) {
       case (cfg, transformerFlag"InheritedAccessors=$value") => cfg.copy(inheritedAccessors = value.toBoolean)
       case (cfg, transformerFlag"MethodAccessors=$value")    => cfg.copy(methodAccessors = value.toBoolean)
@@ -124,6 +125,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       case (cfg, transformerFlag"MacrosLogging=$value") => cfg.copy(displayMacrosLogging = value.toBoolean)
       case (cfg, _)                                     => cfg
     }
+    // $COVERAGE-ON$
   }
 
   final protected class Path private (private val segments: Vector[Path.Segment]) {
