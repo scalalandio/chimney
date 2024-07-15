@@ -8,6 +8,16 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
   protected object ExprPromise extends ExprPromiseModule {
 
+    object platformSpecific {
+
+      object freshTerm {
+        // workaround to contain @experimental from polluting the whole codebase
+        private val impl = quotes.reflect.Symbol.getClass.getMethod("freshName", classOf[String])
+
+        def apply(prefix: String): String = impl.invoke(quotes.reflect.Symbol, prefix).asInstanceOf[String]
+      }
+    }
+
     // made public for ProductType.parse
     def provideFreshName[From: Type](
         nameGenerationStrategy: NameGenerationStrategy,
@@ -55,7 +65,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
     ): ExprPromiseName = Symbol
       .newVal(
         Symbol.spliceOwner,
-        FreshTerm.generate(prefix),
+        platformSpecific.freshTerm(prefix),
         TypeRepr.of[A],
         usageHint match
           case UsageHint.None => Flags.EmptyFlags
@@ -108,7 +118,9 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         //   case $bindName: $SomeFrom => val $fromName = $bindName; $using
         val bindName = Symbol.newBind(
           Symbol.spliceOwner,
-          FreshTerm.generate(TypeRepr.of[SomeFrom].show(using Printer.TypeReprShortCode).toLowerCase),
+          ExprPromise.platformSpecific.freshTerm(
+            TypeRepr.of[SomeFrom].show(using Printer.TypeReprShortCode).toLowerCase
+          ),
           Flags.EmptyFlags,
           TypeRepr.of(using SomeFrom)
         )
@@ -136,12 +148,5 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
           CaseDef(Bind(bindName, Typed(Wildcard(), TypeTree.of[SomeFrom])), None, body)
       }
     ).asExprOf[To]
-  }
-
-  // workaround to contain @experimental from polluting the whole codebase
-  private object FreshTerm {
-    private val impl = quotes.reflect.Symbol.getClass.getMethod("freshName", classOf[String])
-
-    def generate(prefix: String): String = impl.invoke(quotes.reflect.Symbol, prefix).asInstanceOf[String]
   }
 }

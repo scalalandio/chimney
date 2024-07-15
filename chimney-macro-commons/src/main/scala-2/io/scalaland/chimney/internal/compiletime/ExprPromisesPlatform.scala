@@ -8,6 +8,13 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
   protected object ExprPromise extends ExprPromiseModule {
 
+    object platformSpecific {
+
+      def freshTermName(prefix: String): TermName =
+        // Scala 3 generate prefix$macro$[n] while Scala 2 prefix[n] and we want to align the behavior
+        c.internal.reificationSupport.freshTermName(prefix.toLowerCase + "$macro$")
+    }
+
     // made public for ChimneyExprsPlatform: Transformer.lift and PartialTransformer.lift
     def provideFreshName[From: Type](
         nameGenerationStrategy: NameGenerationStrategy,
@@ -36,8 +43,7 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
       c.Expr[(From, From2) => To](q"($fromName: ${Type[From]}, $from2Name: ${Type[From2]}) => $to")
 
     private def freshTermName(prefix: String): ExprPromiseName =
-      // Scala 3 generate prefix$macro$[n] while Scala 2 prefix[n] and we want to align the behavior
-      c.internal.reificationSupport.freshTermName(prefix.toLowerCase + "$macro$")
+      platformSpecific.freshTermName(prefix)
     private def freshTermName(tpe: c.Type): ExprPromiseName =
       freshTermName(tpe.typeSymbol.name.decodedName.toString.toLowerCase)
     private def freshTermName(srcPrefixTree: Expr[?]): ExprPromiseName =

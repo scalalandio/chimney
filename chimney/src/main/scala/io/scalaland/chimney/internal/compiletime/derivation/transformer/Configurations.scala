@@ -103,7 +103,7 @@ private[compiletime] trait Configurations { this: Derivation =>
   }
   object TransformerFlags {
 
-    // $COVERAGE-OFF$It's testable in snippets not not really in normal tests with coverage
+    // $COVERAGE-OFF$It's testable in (Scala-CLI) snippets and not really in normal tests with coverage
     def global: TransformerFlags = XMacroSettings.foldLeft(TransformerFlags()) {
       case (cfg, transformerFlag"InheritedAccessors=$value") => cfg.copy(inheritedAccessors = value.toBoolean)
       case (cfg, transformerFlag"MethodAccessors=$value")    => cfg.copy(methodAccessors = value.toBoolean)

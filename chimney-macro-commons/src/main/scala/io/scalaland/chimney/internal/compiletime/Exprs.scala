@@ -126,6 +126,11 @@ private[compiletime] trait Exprs { this: Definitions =>
       // $COVERAGE-ON$
     }
 
+    def nowarn[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A]
+    def suppressWarnings[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A]
+
+    def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit]
+
     // Implementations of Expr extension methods
 
     def eq[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[Boolean]
@@ -133,8 +138,6 @@ private[compiletime] trait Exprs { this: Definitions =>
     def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B]
 
     def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B]
-
-    def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit]
 
     def prettyPrint[A](expr: Expr[A]): String
 

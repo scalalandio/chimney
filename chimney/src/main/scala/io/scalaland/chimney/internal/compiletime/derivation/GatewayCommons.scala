@@ -1,8 +1,8 @@
 package io.scalaland.chimney.internal.compiletime.derivation
 
-import io.scalaland.chimney.internal.compiletime.{Definitions, DerivationResult}
+import io.scalaland.chimney.internal.compiletime.{ChimneyDefinitions, DerivationResult}
 
-private[compiletime] trait GatewayCommons { this: Definitions =>
+private[compiletime] trait GatewayCommons { this: ChimneyDefinitions =>
 
   /** Assigns `expr` value to newly created val, and then uses reference to the reference to this val.
     *
@@ -49,6 +49,35 @@ private[compiletime] trait GatewayCommons { this: Definitions =>
       },
       identity
     )
+  }
+
+  /** Adds @SuppressWarnings/@nowarn annotation the the generated code - allows customizing it with a compiler flag. */
+  protected def suppressWarnings[A: Type](expr: Expr[A]): Expr[A] = {
+    // Add @SuppressWarnings(...) to the expr:
+    // - by default use: "org.wartremover.warts.All" (WartRemover) and "all" (Scapegoat)
+    // - overridden with "-Xmacro-settings:chimney.SuppressWarnings=value"
+    //   - "-Xmacro-settings:chimney.SuppressWarnings=none" skips the annotation
+    //   - "-Xmacro-settings:chimney.SuppressWarnings=a,b,c" would create @SuppressWarnings(Array("a", "b", "c"))
+    val suppressWarningsCfg = XMacroSettings.foldLeft(Option(List("org.wartremover.warts.All", "all"))) {
+      case (_, chimneyFlag"SuppressWarnings=$value") => if (value == "none") None else Option(value.split(",").toList)
+      case (cfg, _)                                  => cfg
+    }
+    val suppressWarningsExpr = suppressWarningsCfg.fold(expr)(Expr.suppressWarnings(_)(expr))
+
+    // Add @nowarn(...) to the expr:
+    // - by default annotation is not added
+    // - overridden with "-Xmacro-settings:chimney.nowarn=value"
+    //   - "-Xmacro-settings:chimney.nowarn=none" skips the annotation
+    //   - "-Xmacro-settings:chimney.nowarn=true" would create @nowarn
+    //   - "-Xmacro-settings:chimney.nowarn=msg" would create @nowarn("msg")
+    val nowarnCfg = XMacroSettings.foldLeft(Option.empty[Option[String]]) {
+      case (_, chimneyFlag"nowarn=$value") =>
+        if (value == "none") None else if (value == "true") Option(None) else Option(Some(value))
+      case (cfg, _) => cfg
+    }
+    val nowarnExpr = nowarnCfg.fold(suppressWarningsExpr)(Expr.nowarn(_)(expr))
+
+    nowarnExpr
   }
 
   private val chimneyDocUrl = "https://chimney.readthedocs.io"

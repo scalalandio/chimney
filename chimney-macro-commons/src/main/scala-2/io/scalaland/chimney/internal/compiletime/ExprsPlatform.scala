@@ -148,6 +148,40 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       .filterNot(_ == EmptyTree)
       .map(c.Expr[A](_))
 
+    def nowarn[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
+      val name = ExprPromise.platformSpecific.freshTermName("nowarnResult")
+      c.Expr[A](
+        warnings.fold(
+          q"""
+          @ _root_.scala.annotation.nowarn
+          val $name = $expr
+          $name
+          """
+        ) { msg =>
+          q"""
+          @ _root_.scala.annotation.nowarn($msg)
+          val $name = $expr
+          $name
+          """
+        }
+      )
+    }
+    def suppressWarnings[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
+      val name = ExprPromise.platformSpecific.freshTermName("suppressWarningsResult")
+      c.Expr[A](
+        q"""
+        @ _root_.java.lang.SuppressWarnings(_root_.scala.Array(..$warnings))
+        val $name = $expr
+        $name
+        """
+      )
+    }
+
+    def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] =
+      // In Scala 2.12 suppressing two variables at once resulted in "_ is already defined as value _" error
+      if (isScala212) c.Expr[Unit](q"_root_.scala.Predef.locally { val _ = $expr }")
+      else c.Expr[Unit](q"val _ = $expr")
+
     def eq[A: Type, B: Type](a: Expr[A], b: Expr[B]): Expr[Boolean] = c.Expr[Boolean](q"$a == $b")
 
     def asInstanceOf[A: Type, B: Type](expr: Expr[A]): Expr[B] = c.Expr[B](q"$expr.asInstanceOf[${Type[B]}]")
@@ -160,11 +194,6 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       if (Type[A] =:= Type[B]) expr.asInstanceOf[Expr[B]] // types are identical in practice, we can just cast
       else c.Expr[B](q"($expr : ${Type[B]})") // check A <:< B AND add a syntax to force upcasting
     }
-
-    def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit] =
-      // In Scala 2.12 suppressing two variables at once resulted in "_ is already defined as value _" error
-      if (isScala212) c.Expr[Unit](q"_root_.scala.Predef.locally { val _ = $expr }")
-      else c.Expr[Unit](q"val _ = $expr")
 
     def prettyPrint[A](expr: Expr[A]): String =
       expr.tree
