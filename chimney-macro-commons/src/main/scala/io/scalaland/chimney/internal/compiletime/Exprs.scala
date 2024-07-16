@@ -127,7 +127,7 @@ private[compiletime] trait Exprs { this: Definitions =>
     }
 
     def nowarn[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A]
-    def suppressWarnings[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A]
+    def SuppressWarnings[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A]
 
     def suppressUnused[A: Type](expr: Expr[A]): Expr[Unit]
 

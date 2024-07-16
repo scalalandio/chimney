@@ -57,12 +57,12 @@ private[compiletime] trait GatewayCommons { this: ChimneyDefinitions =>
     // - by default use: "org.wartremover.warts.All" (WartRemover) and "all" (Scapegoat)
     // - overridden with "-Xmacro-settings:chimney.SuppressWarnings=value"
     //   - "-Xmacro-settings:chimney.SuppressWarnings=none" skips the annotation
-    //   - "-Xmacro-settings:chimney.SuppressWarnings=a,b,c" would create @SuppressWarnings(Array("a", "b", "c"))
+    //   - "-Xmacro-settings:chimney.SuppressWarnings=a;b;c" would create @SuppressWarnings(Array("a", "b", "c"))
     val suppressWarningsCfg = XMacroSettings.foldLeft(Option(List("org.wartremover.warts.All", "all"))) {
-      case (_, chimneyFlag"SuppressWarnings=$value") => if (value == "none") None else Option(value.split(",").toList)
+      case (_, chimneyFlag"SuppressWarnings=$value") => if (value == "none") None else Option(value.split(";").toList)
       case (cfg, _)                                  => cfg
     }
-    val suppressWarningsExpr = suppressWarningsCfg.fold(expr)(Expr.suppressWarnings(_)(expr))
+    val suppressWarningsExpr = suppressWarningsCfg.fold(expr)(Expr.SuppressWarnings(_)(expr))
 
     // Add @nowarn(...) to the expr:
     // - by default annotation is not added

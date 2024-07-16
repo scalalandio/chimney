@@ -14,31 +14,29 @@ final class CodecMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
   def deriveCodecWithDefaults[
       Domain: Type,
       Dto: Type
-  ]: Expr[Codec[Domain, Dto]] = suppressWarnings {
-    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
-      import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
-      '{
-        Codec[Domain, Dto](
-          encode = ${
-            deriveTotalTransformer[
-              Domain,
-              Dto,
-              runtime.TransformerOverrides.Empty,
-              runtime.TransformerFlags.Default,
-              ImplicitScopeFlags
-            ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
-          },
-          decode = ${
-            derivePartialTransformer[
-              Dto,
-              Domain,
-              runtime.TransformerOverrides.Empty,
-              runtime.TransformerFlags.Default,
-              ImplicitScopeFlags
-            ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
-          }
-        )
-      }
+  ]: Expr[Codec[Domain, Dto]] = resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
+    import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
+    '{
+      Codec[Domain, Dto](
+        encode = ${
+          deriveTotalTransformer[
+            Domain,
+            Dto,
+            runtime.TransformerOverrides.Empty,
+            runtime.TransformerFlags.Default,
+            ImplicitScopeFlags
+          ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
+        },
+        decode = ${
+          derivePartialTransformer[
+            Dto,
+            Domain,
+            runtime.TransformerOverrides.Empty,
+            runtime.TransformerFlags.Default,
+            ImplicitScopeFlags
+          ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
+        }
+      )
     }
   }
 
@@ -51,7 +49,7 @@ final class CodecMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       cd: Expr[CodecDefinition[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags]]
-  ): Expr[Codec[Domain, Dto]] = suppressWarnings {
+  ): Expr[Codec[Domain, Dto]] =
     '{
       Codec[Domain, Dto](
         encode = ${
@@ -66,7 +64,6 @@ final class CodecMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
         }
       )
     }
-  }
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
       useImplicitScopeFlags: ?<[runtime.TransformerFlags] => Expr[A]

@@ -14,34 +14,31 @@ final class CodecMacros(val c: blackbox.Context) extends DerivationPlatform with
   def deriveCodecWithDefaults[
       Domain: WeakTypeTag,
       Dto: WeakTypeTag
-  ]: c.universe.Expr[Codec[Domain, Dto]] =
-    retypecheck(
-      suppressWarnings(
-        resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
-          import implicitScopeFlagsType.Underlying
-          c.Expr(
-            q"""
-            io.scalaland.chimney.Codec[${Type[Domain]}, ${Type[Dto]}](
-              encode = ${deriveTotalTransformer[
-                Domain,
-                Dto,
-                runtime.TransformerOverrides.Empty,
-                runtime.TransformerFlags.Default,
-                implicitScopeFlagsType.Underlying
-              ](ChimneyExpr.RuntimeDataStore.empty)},
-              decode = ${derivePartialTransformer[
-                Dto,
-                Domain,
-                runtime.TransformerOverrides.Empty,
-                runtime.TransformerFlags.Default,
-                implicitScopeFlagsType.Underlying
-              ](ChimneyExpr.RuntimeDataStore.empty)}
-            )
-            """
-          )
-        }
+  ]: c.universe.Expr[Codec[Domain, Dto]] = retypecheck(
+    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
+      import implicitScopeFlagsType.Underlying
+      c.Expr(
+        q"""
+        io.scalaland.chimney.Codec[${Type[Domain]}, ${Type[Dto]}](
+          encode = ${deriveTotalTransformer[
+            Domain,
+            Dto,
+            runtime.TransformerOverrides.Empty,
+            runtime.TransformerFlags.Default,
+            implicitScopeFlagsType.Underlying
+          ](ChimneyExpr.RuntimeDataStore.empty)},
+          decode = ${derivePartialTransformer[
+            Dto,
+            Domain,
+            runtime.TransformerOverrides.Empty,
+            runtime.TransformerFlags.Default,
+            implicitScopeFlagsType.Underlying
+          ](ChimneyExpr.RuntimeDataStore.empty)}
+        )
+        """
       )
-    )
+    }
+  )
 
   def deriveCodecWithConfig[
       Domain: WeakTypeTag,
@@ -53,35 +50,33 @@ final class CodecMacros(val c: blackbox.Context) extends DerivationPlatform with
   ](
       tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]
   ): Expr[Codec[Domain, Dto]] = retypecheck(
-    suppressWarnings(
-      Expr.block(
-        List(Expr.suppressUnused(tc)),
-        c.Expr(
-          q"""
-          io.scalaland.chimney.Codec[${Type[Domain]}, ${Type[Dto]}](
-            encode = ${deriveTotalTransformer[
-              Domain,
-              Dto,
-              EncodeOverrides,
-              InstanceFlags,
-              ImplicitScopeFlags
-            ](
-              // Called by CodecDefinition => prefix is CodecDefinition
-              c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.encode.runtimeData")
-            )},
-            decode = ${derivePartialTransformer[
-              Dto,
-              Domain,
-              DecodeOverrides,
-              InstanceFlags,
-              ImplicitScopeFlags
-            ](
-              // Called by CodecDefinition => prefix is CodecDefinition
-              c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.decode.runtimeData")
-            )}
-          )
-          """
+    Expr.block(
+      List(Expr.suppressUnused(tc)),
+      c.Expr(
+        q"""
+        io.scalaland.chimney.Codec[${Type[Domain]}, ${Type[Dto]}](
+          encode = ${deriveTotalTransformer[
+            Domain,
+            Dto,
+            EncodeOverrides,
+            InstanceFlags,
+            ImplicitScopeFlags
+          ](
+            // Called by CodecDefinition => prefix is CodecDefinition
+            c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.encode.runtimeData")
+          )},
+          decode = ${derivePartialTransformer[
+            Dto,
+            Domain,
+            DecodeOverrides,
+            InstanceFlags,
+            ImplicitScopeFlags
+          ](
+            // Called by CodecDefinition => prefix is CodecDefinition
+            c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.decode.runtimeData")
+          )}
         )
+        """
       )
     )
   )

@@ -14,31 +14,29 @@ final class IsoMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
   def deriveIsoWithDefaults[
       First: Type,
       Second: Type
-  ]: Expr[Iso[First, Second]] = suppressWarnings {
-    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
-      import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
-      '{
-        Iso[First, Second](
-          first = ${
-            deriveTotalTransformer[
-              First,
-              Second,
-              runtime.TransformerOverrides.Empty,
-              runtime.TransformerFlags.Default,
-              ImplicitScopeFlags
-            ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
-          },
-          second = ${
-            deriveTotalTransformer[
-              Second,
-              First,
-              runtime.TransformerOverrides.Empty,
-              runtime.TransformerFlags.Default,
-              ImplicitScopeFlags
-            ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
-          }
-        )
-      }
+  ]: Expr[Iso[First, Second]] = resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
+    import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
+    '{
+      Iso[First, Second](
+        first = ${
+          deriveTotalTransformer[
+            First,
+            Second,
+            runtime.TransformerOverrides.Empty,
+            runtime.TransformerFlags.Default,
+            ImplicitScopeFlags
+          ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
+        },
+        second = ${
+          deriveTotalTransformer[
+            Second,
+            First,
+            runtime.TransformerOverrides.Empty,
+            runtime.TransformerFlags.Default,
+            ImplicitScopeFlags
+          ](runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty)
+        }
+      )
     }
   }
 
@@ -51,7 +49,7 @@ final class IsoMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       id: Expr[IsoDefinition[First, Second, FirstOverrides, SecondOverrides, Flags]]
-  ): Expr[Iso[First, Second]] = suppressWarnings {
+  ): Expr[Iso[First, Second]] =
     '{
       Iso[First, Second](
         first = ${
@@ -66,7 +64,6 @@ final class IsoMacros(q: Quotes) extends DerivationPlatform(q) with Gateway {
         }
       )
     }
-  }
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
       useImplicitScopeFlags: ?<[runtime.TransformerFlags] => Expr[A]

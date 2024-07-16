@@ -18,22 +18,24 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   ](
       obj: Expr[A],
       patch: Expr[Patch]
-  ): Expr[A] = cacheDefinition(obj) { obj =>
-    cacheDefinition(patch) { patch =>
-      val context = PatcherContext
-        .create[A, Patch](
-          obj,
-          patch,
-          config = PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags]
+  ): Expr[A] = suppressWarnings {
+    cacheDefinition(obj) { obj =>
+      cacheDefinition(patch) { patch =>
+        val context = PatcherContext
+          .create[A, Patch](
+            obj,
+            patch,
+            config = PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags]
+          )
+          .updateConfig(_.allowAPatchImplicitSearch)
+
+        val result = enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
+
+        Expr.block(
+          List(Expr.suppressUnused(obj), Expr.suppressUnused(patch)),
+          extractExprAndLog[A, Patch, A](result)
         )
-        .updateConfig(_.allowAPatchImplicitSearch)
-
-      val result = enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
-
-      Expr.block(
-        List(Expr.suppressUnused(obj), Expr.suppressUnused(patch)),
-        extractExprAndLog[A, Patch, A](result)
-      )
+      }
     }
   }
 
@@ -43,7 +45,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       Overrides <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
-  ]: Expr[Patcher[A, Patch]] = {
+  ]: Expr[Patcher[A, Patch]] = suppressWarnings {
     val result = DerivationResult.direct[Expr[A], Expr[Patcher[A, Patch]]] { await =>
       ChimneyExpr.Patcher.instance[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
         val context = PatcherContext.create[A, Patch](

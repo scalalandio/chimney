@@ -18,18 +18,16 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   ](
       tc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): c.Expr[A] = retypecheck(
-    suppressWarnings(
-      // Called by PatcherUsing => prefix is PatcherUsing
-      cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Overrides, Flags]](c.prefix.tree)) { pu =>
-        Expr.block(
-          List(Expr.suppressUnused(pu)),
-          derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
-            obj = c.Expr[A](q"$pu.obj"),
-            patch = c.Expr[Patch](q"$pu.objPatch")
-          )
+    // Called by PatcherUsing => prefix is PatcherUsing
+    cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Overrides, Flags]](c.prefix.tree)) { pu =>
+      Expr.block(
+        List(Expr.suppressUnused(pu)),
+        derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
+          obj = c.Expr[A](q"$pu.obj"),
+          patch = c.Expr[Patch](q"$pu.objPatch")
         )
-      }
-    )
+      )
+    }
   )
 
   def derivePatcherWithConfig[
@@ -41,26 +39,22 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   ](
       tc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): Expr[Patcher[A, Patch]] = retypecheck(
-    suppressWarnings(
-      cacheDefinition(c.Expr[dsl.PatcherDefinition[A, Patch, Overrides, InstanceFlags]](c.prefix.tree)) { pu =>
-        Expr.block(
-          List(Expr.suppressUnused(pu)),
-          derivePatcher[A, Patch, Overrides, InstanceFlags, ImplicitScopeFlags]
-        )
-      }
-    )
+    cacheDefinition(c.Expr[dsl.PatcherDefinition[A, Patch, Overrides, InstanceFlags]](c.prefix.tree)) { pu =>
+      Expr.block(
+        List(Expr.suppressUnused(pu)),
+        derivePatcher[A, Patch, Overrides, InstanceFlags, ImplicitScopeFlags]
+      )
+    }
   )
 
   def derivePatcherWithDefaults[
       A: WeakTypeTag,
       Patch: WeakTypeTag
   ]: Expr[Patcher[A, Patch]] = retypecheck(
-    suppressWarnings(
-      resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
-        import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
-        derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
-      }
-    )
+    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
+      import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
+      derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
+    }
   )
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
