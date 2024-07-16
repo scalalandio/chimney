@@ -166,7 +166,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         }
       )
     }
-    def suppressWarnings[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
+    def SuppressWarnings[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
       val name = ExprPromise.platformSpecific.freshTermName("suppressWarningsResult")
       c.Expr[A](
         q"""

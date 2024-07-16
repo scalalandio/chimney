@@ -22,23 +22,25 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
   ](
       src: Expr[From],
       runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
-  ): Expr[To] = cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-    cacheDefinition(src) { src =>
-      val context = TransformationContext.ForTotal
-        .create[From, To](
-          src,
-          TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
-            runtimeDataStore
+  ): Expr[To] = suppressWarnings {
+    cacheDefinition(runtimeDataStore) { runtimeDataStore =>
+      cacheDefinition(src) { src =>
+        val context = TransformationContext.ForTotal
+          .create[From, To](
+            src,
+            TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
+              runtimeDataStore
+            )
           )
+          .updateConfig(_.allowFromToImplicitSummoning)
+
+        val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
+
+        Expr.block(
+          List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(src)),
+          extractExprAndLog[From, To, To](result)
         )
-        .updateConfig(_.allowFromToImplicitSummoning)
-
-      val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
-
-      Expr.block(
-        List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(src)),
-        extractExprAndLog[From, To, To](result)
-      )
+      }
     }
   }
 
@@ -50,25 +52,27 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
-  ): Expr[Transformer[From, To]] = cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-    val result = DerivationResult.direct[Expr[To], Expr[Transformer[From, To]]] { await =>
-      ChimneyExpr.Transformer.instance[From, To] { (src: Expr[From]) =>
-        val context = TransformationContext.ForTotal
-          .create[From, To](
-            src,
-            TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
-              runtimeDataStore
+  ): Expr[Transformer[From, To]] = suppressWarnings {
+    cacheDefinition(runtimeDataStore) { runtimeDataStore =>
+      val result = DerivationResult.direct[Expr[To], Expr[Transformer[From, To]]] { await =>
+        ChimneyExpr.Transformer.instance[From, To] { (src: Expr[From]) =>
+          val context = TransformationContext.ForTotal
+            .create[From, To](
+              src,
+              TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
+                runtimeDataStore
+              )
             )
-          )
 
-        await(enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context))
+          await(enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context))
+        }
       }
-    }
 
-    Expr.block(
-      List(Expr.suppressUnused(runtimeDataStore)),
-      extractExprAndLog[From, To, Transformer[From, To]](result)
-    )
+      Expr.block(
+        List(Expr.suppressUnused(runtimeDataStore)),
+        extractExprAndLog[From, To, Transformer[From, To]](result)
+      )
+    }
   }
 
   final def derivePartialTransformationResult[
@@ -81,24 +85,26 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       src: Expr[From],
       failFast: Expr[Boolean],
       runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
-  ): Expr[partial.Result[To]] = cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-    cacheDefinition(src) { src =>
-      val context = TransformationContext.ForPartial
-        .create[From, To](
-          src,
-          failFast,
-          TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
-            runtimeDataStore
+  ): Expr[partial.Result[To]] = suppressWarnings {
+    cacheDefinition(runtimeDataStore) { runtimeDataStore =>
+      cacheDefinition(src) { src =>
+        val context = TransformationContext.ForPartial
+          .create[From, To](
+            src,
+            failFast,
+            TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
+              runtimeDataStore
+            )
           )
+          .updateConfig(_.allowFromToImplicitSummoning)
+
+        val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
+
+        Expr.block(
+          List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(src)),
+          extractExprAndLog[From, To, partial.Result[To]](result)
         )
-        .updateConfig(_.allowFromToImplicitSummoning)
-
-      val result = enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context)
-
-      Expr.block(
-        List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(src)),
-        extractExprAndLog[From, To, partial.Result[To]](result)
-      )
+      }
     }
   }
 
@@ -110,26 +116,28 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       ImplicitScopeFlags <: runtime.TransformerFlags: Type
   ](
       runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
-  ): Expr[PartialTransformer[From, To]] = cacheDefinition(runtimeDataStore) { runtimeDataStore =>
-    val result = DerivationResult.direct[Expr[partial.Result[To]], Expr[PartialTransformer[From, To]]] { await =>
-      ChimneyExpr.PartialTransformer.instance[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
-        val context = TransformationContext.ForPartial
-          .create[From, To](
-            src,
-            failFast,
-            TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
-              runtimeDataStore
+  ): Expr[PartialTransformer[From, To]] = suppressWarnings {
+    cacheDefinition(runtimeDataStore) { runtimeDataStore =>
+      val result = DerivationResult.direct[Expr[partial.Result[To]], Expr[PartialTransformer[From, To]]] { await =>
+        ChimneyExpr.PartialTransformer.instance[From, To] { (src: Expr[From], failFast: Expr[Boolean]) =>
+          val context = TransformationContext.ForPartial
+            .create[From, To](
+              src,
+              failFast,
+              TransformerConfigurations.readTransformerConfiguration[Tail, InstanceFlags, ImplicitScopeFlags](
+                runtimeDataStore
+              )
             )
-          )
 
-        await(enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context))
+          await(enableLoggingIfFlagEnabled(deriveFinalTransformationResultExpr(context), context))
+        }
       }
-    }
 
-    Expr.block(
-      List(Expr.suppressUnused(runtimeDataStore)),
-      extractExprAndLog[From, To, PartialTransformer[From, To]](result)
-    )
+      Expr.block(
+        List(Expr.suppressUnused(runtimeDataStore)),
+        extractExprAndLog[From, To, PartialTransformer[From, To]](result)
+      )
+    }
   }
 
   /** Adapts TransformationExpr[To] to expected type of transformation */

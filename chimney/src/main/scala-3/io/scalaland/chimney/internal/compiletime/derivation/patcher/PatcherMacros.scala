@@ -15,18 +15,14 @@ final class PatcherMacros(q: Quotes) extends DerivationPlatform(q) with Gateway 
       Overrides <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
-  ]: Expr[Patcher[A, Patch]] = suppressWarnings {
-    derivePatcher[A, Patch, Overrides, Flags, ImplicitScopeFlags]
-  }
+  ]: Expr[Patcher[A, Patch]] = derivePatcher[A, Patch, Overrides, Flags, ImplicitScopeFlags]
 
   def derivePatcherWithDefaults[
       A: Type,
       Patch: Type
-  ]: Expr[Patcher[A, Patch]] = suppressWarnings {
-    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
-      import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
-      derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
-    }
+  ]: Expr[Patcher[A, Patch]] = resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
+    import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
+    derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
   }
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](

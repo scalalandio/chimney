@@ -14,34 +14,31 @@ final class IsoMacros(val c: blackbox.Context) extends DerivationPlatform with G
   def deriveIsoWithDefaults[
       First: WeakTypeTag,
       Second: WeakTypeTag
-  ]: c.universe.Expr[Iso[First, Second]] =
-    retypecheck(
-      suppressWarnings(
-        resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
-          import implicitScopeFlagsType.Underlying
-          c.Expr(
-            q"""
-            io.scalaland.chimney.Iso[${Type[First]}, ${Type[Second]}](
-              first = ${deriveTotalTransformer[
-                First,
-                Second,
-                runtime.TransformerOverrides.Empty,
-                runtime.TransformerFlags.Default,
-                implicitScopeFlagsType.Underlying
-              ](ChimneyExpr.RuntimeDataStore.empty)},
-              second = ${deriveTotalTransformer[
-                Second,
-                First,
-                runtime.TransformerOverrides.Empty,
-                runtime.TransformerFlags.Default,
-                implicitScopeFlagsType.Underlying
-              ](ChimneyExpr.RuntimeDataStore.empty)}
-            )
-            """
-          )
-        }
+  ]: c.universe.Expr[Iso[First, Second]] = retypecheck(
+    resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
+      import implicitScopeFlagsType.Underlying
+      c.Expr(
+        q"""
+        io.scalaland.chimney.Iso[${Type[First]}, ${Type[Second]}](
+          first = ${deriveTotalTransformer[
+            First,
+            Second,
+            runtime.TransformerOverrides.Empty,
+            runtime.TransformerFlags.Default,
+            implicitScopeFlagsType.Underlying
+          ](ChimneyExpr.RuntimeDataStore.empty)},
+          second = ${deriveTotalTransformer[
+            Second,
+            First,
+            runtime.TransformerOverrides.Empty,
+            runtime.TransformerFlags.Default,
+            implicitScopeFlagsType.Underlying
+          ](ChimneyExpr.RuntimeDataStore.empty)}
+        )
+        """
       )
-    )
+    }
+  )
 
   def deriveIsoWithConfig[
       First: WeakTypeTag,
@@ -53,35 +50,33 @@ final class IsoMacros(val c: blackbox.Context) extends DerivationPlatform with G
   ](
       tc: Expr[io.scalaland.chimney.dsl.TransformerConfiguration[ImplicitScopeFlags]]
   ): Expr[Iso[First, Second]] = retypecheck(
-    suppressWarnings(
-      Expr.block(
-        List(Expr.suppressUnused(tc)),
-        c.Expr(
-          q"""
-          io.scalaland.chimney.Iso[${Type[First]}, ${Type[Second]}](
-            first = ${deriveTotalTransformer[
-              First,
-              Second,
-              FirstOverrides,
-              InstanceFlags,
-              ImplicitScopeFlags
-            ](
-              // Called by IsoDefinition => prefix is IsoDefinition
-              c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.first.runtimeData")
-            )},
-            second = ${deriveTotalTransformer[
-              Second,
-              First,
-              SecondOverrides,
-              InstanceFlags,
-              ImplicitScopeFlags
-            ](
-              // Called by IsoDefinition => prefix is IsoDefinition
-              c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.second.runtimeData")
-            )}
+    Expr.block(
+      List(Expr.suppressUnused(tc)),
+      c.Expr(
+        q"""
+        io.scalaland.chimney.Iso[${Type[First]}, ${Type[Second]}](
+          first = ${deriveTotalTransformer[
+            First,
+            Second,
+            FirstOverrides,
+            InstanceFlags,
+            ImplicitScopeFlags
+          ](
+            // Called by IsoDefinition => prefix is IsoDefinition
+            c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.first.runtimeData")
+          )},
+          second = ${deriveTotalTransformer[
+            Second,
+            First,
+            SecondOverrides,
+            InstanceFlags,
+            ImplicitScopeFlags
+          ](
+            // Called by IsoDefinition => prefix is IsoDefinition
+            c.Expr[dsl.TransformerDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.second.runtimeData")
+          )}
           )
-          """
-        )
+        """
       )
     )
   )

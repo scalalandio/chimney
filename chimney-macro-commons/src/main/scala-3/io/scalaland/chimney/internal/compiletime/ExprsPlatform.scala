@@ -169,7 +169,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         Ref(name)
       ).asExprOf[A]
     }
-    def suppressWarnings[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
+    def SuppressWarnings[A: Type](warnings: List[String])(expr: Expr[A]): Expr[A] = {
       val annotationSymbol: Symbol = TypeRepr.of[java.lang.SuppressWarnings].typeSymbol
       val annotation = Apply(
         Select(New(TypeIdent(annotationSymbol)), annotationSymbol.primaryConstructor),
