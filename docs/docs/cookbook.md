@@ -61,6 +61,85 @@ If we do not want to enable the same flag(s) in several places, we can define sh
     an implicit `TransformerConfiguration` would be considerd new default settings in new derivations, but would not
     cause `.into.transform` to ignore an implicit if one is present. 
 
+## Changing the flags for every derivation in the project
+
+While `TransformerConfiguration` let us share configs (flags) between several derivations, we might also want to set up
+some of them globally, for the whole project. Luckily, Scala 2.12, 2.13 and 3.3 give us `-Xmacro-settings` flag, which
+is intended to pass configuration into the macros.
+
+!!! example
+
+    ```scala
+    // in build.sbt:
+    
+    // log the derivation of every Transformer in project
+    scalacOptions += "-Xmacro-settings:chimney.transformer.MacrosLogging=true"
+    ```
+
+!!! notice
+
+    `-Xmacro-settings:...` is comma-separated, so if you want to pass multiple options, then either
+    
+      * provide this option more than once (`-Xmacro-settings:option-a -Xmacro-settings:option-b`)
+      * provide this option one separating then with a coma (`-Xmacro-settings:option-a,option-b`)
+
+As you can see `Transformer`'s flags have the prefix `chimney.transformer.`:
+
+| Flag in DSL                                                   | Option for `-Xmacro-settings:...`                                         | Description                                                                                                                                                                               |
+|---------------------------------------------------------------|---------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `.enableMethodAccessors`                                      | `chimney.transformer.MethodAccessors=true`                                | turn on [Reading from methods](supported-transformations.md#reading-from-methods)                                                                                                         |
+| `.disableMethodAccessors`                                     | `chimney.transformer.MethodAccessors=false`                               | turn off [Reading from methods](supported-transformations.md#reading-from-methods) (default)                                                                                              |
+| `.enableInheritedAccessors`                                   | `chimney.transformer.InheritedAccessors=true`                             | turn on [Reading from inherited values/methods](supported-transformations.md#reading-from-inherited-valuesmethods)                                                                        |
+| `.disableInheritedAccessors`                                  | `chimney.transformer.InheritedAccessors=false`                            | turn off [Reading from inherited values/methods](supported-transformations.md#reading-from-inherited-valuesmethods) (default)                                                             |
+| `.enableBeanGetters`                                          | `chimney.transformer.BeanGetters=true`                                    | turn on [Reading from Bean getters](supported-transformations.md#reading-from-bean-getters)                                                                                               |
+| `.disableBeanGetters`                                         | `chimney.transformer.BeanGetters=false`                                   | turn off [Reading from Bean getters](supported-transformations.md#reading-from-bean-getters) (default)                                                                                    |
+| `.enableBeanSetters`                                          | `chimney.transformer.BeanSetters=true`                                    | turn on [Writing to Bean setters](supported-transformations.md#writing-to-bean-setters)                                                                                                   |
+| `.disableBeanSetters`                                         | `chimney.transformer.BeanSetters=false`                                   | turn off [Writing to Bean setters](supported-transformations.md#writing-to-bean-setters) (default)                                                                                        |
+| `.enableBeanSettersIgnoreUnmatched`                           | `chimney.transformer.BeanSettersIgnoreUnmatched=true`                     | turn on [Ignoring unmatched Bean setters](supported-transformations.md#ignoring-unmatched-bean-setters)                                                                                   |
+| `.disableBeanSettersIgnoreUnmatched`                          | `chimney.transformer.BeanSettersIgnoreUnmatched=false`                    | turn off [Ignoring unmatched Bean setters](supported-transformations.md#ignoring-unmatched-bean-setters) (default)                                                                        |
+| `.enableNonUnitBeanSetters`                                   | `chimney.transformer.NonUnitBeanSetters=true`                             | turn on [Writing to non-`Unit` Bean setters](supported-transformations.md#writing-to-non-unit-bean-setters)                                                                               |
+| `.disableNonUnitBeanSetters`                                  | `chimney.transformer.NonUnitBeanSetters=false`                            | turn off [Writing to non-`Unit` Bean setters](supported-transformations.md#writing-to-non-unit-bean-setters) (default)                                                                    |
+| `.enableDefaultValues`                                        | `chimney.transformer.DefaultValues=true`                                  | turn on [Allowing fallback to the constructor's default values](supported-transformations.md#allowing-fallback-to-the-constructors-default-values)                                        |
+| `.disableDefaultValues`                                       | `chimney.transformer.DefaultValues=false`                                 | turn off [Allowing fallback to the constructor's default values](supported-transformations.md#allowing-fallback-to-the-constructors-default-values) (default)                             |
+| `.enableOptionDefaultsToNone`                                 | `chimney.transformer.OptionDefaultsToNone=true`                           | turn on [Allowing fallback to `None` as the constructor's argument](supported-transformations.md#allowing-fallback-to-none-as-the-constructors-argument)                                  |
+| `.disableOptionDefaultsToNone`                                | `chimney.transformer.OptionDefaultsToNone=false`                          | turn off [Allowing fallback to `None` as the constructor's argument](supported-transformations.md#allowing-fallback-to-none-as-the-constructors-argument) (default)                       |
+| `.enableNonAnyValWrappers`                                    | `chimney.transformer.NonAnyValWrappers=true`                              | turn on [Transformation from/into a wrapper type](supported-transformations.md#frominto-a-wrapper-type)                                                                                   |
+| `.disableNonAnyValWrappers`                                   | `chimney.transformer.NonAnyValWrappers=false`                             | turn off [Transformation from/into a wrapper type](supported-transformations.md#frominto-a-wrapper-type) (default)                                                                        |
+| `.enablePartialUnwrapsOption`                                 | `chimney.transformer.PartialUnwrapsOption=true`                           | turn on [Controlling automatic `Option` unwrapping](supported-transformations.md#controlling-automatic-option-unwrapping)  (default)                                                      |
+| `.disablePartialUnwrapsOption`                                | `chimney.transformer.PartialUnwrapsOption=false`                          | turn off [Controlling automatic `Option` unwrapping](supported-transformations.md#controlling-automatic-option-unwrapping)                                                                |
+| `.enableImplicitConflictResolution(PreferTotalTransformer)`   | `chimney.transformer.ImplicitConflictResolution=PreferTotalTransformer`   | turn on [Resolving priority of implicit Total vs Partial Transformers](supported-transformations.md#resolving-priority-of-implicit-total-vs-partial-transformers) to Total Transformers   |
+| `.enableImplicitConflictResolution(PreferPartialTransformer)` | `chimney.transformer.ImplicitConflictResolution=PreferPartialTransformer` | turn on [Resolving priority of implicit Total vs Partial Transformers](supported-transformations.md#resolving-priority-of-implicit-total-vs-partial-transformers) to Partial Transformers |
+| `.disableImplicitConflictResolution`                          | `chimney.transformer.ImplicitConflictResolution=none`                     | turn off [Resolving priority of implicit Total vs Partial Transformers](supported-transformations.md#resolving-priority-of-implicit-total-vs-partial-transformers) (default)              |
+| `.enableMacrosLogging`                                        | `chimney.transformer.MacrosLogging=true`                                  | turn on [Debugging macros](troubleshooting.md#debugging-macros)                                                                                                                           |
+| `.disableMacrosLogging`                                       | `chimney.transformer.MacrosLogging=false`                                 | turn off [Debugging macros](troubleshooting.md#debugging-macros) (default)                                                                                                                |
+
+`Patcher`'s flags have the prefix`chimney.patcher.`:
+
+| Flag in DSL                     | Option for `-Xmacro-settings:...`                    | Description                                                                                                                                           |
+|---------------------------------|------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `.ignoreRedundantPatcherFields` | `chimney.patcher.IgnoreRedundantPatcherFields=true`  | turn on [Ignoring fields in patches](supported-patching.md#ignoring-fields-in-patches)                                                                |
+| `.failRedundantPatcherFields`   | `chimney.patcher.IgnoreRedundantPatcherFields=false` | turn off [Ignoring fields in patches](supported-patching.md#ignoring-fields-in-patches) (default)                                                     |
+| `.ignoreNoneInPatch`            | `chimney.patcher.IgnoreNoneInPatch=true`             | turn on [Treating `None` as no-update instead of "set to `None`"](supported-patching.md#treating-none-as-no-update-instead-of-set-to-none)            |
+| `.clearOnNoneInPatch`           | `chimney.patcher.IgnoreNoneInPatch=false`            | turn off [Treating `None` as no-update instead of "set to `None`"](supported-patching.md#treating-none-as-no-update-instead-of-set-to-none) (default) |
+| `.enableMacrosLogging`          | `chimney.patcher.MacrosLogging=true`                 | turn on [Debugging macros](troubleshooting.md#debugging-macros)                                                                                       |
+| `.disableMacrosLogging`         | `chimney.patcher.MacrosLogging=false`                | turn off [Debugging macros](troubleshooting.md#debugging-macros) (default)                                                                            |
+
+### Suppressing warnings in macros
+
+There are additional global options only available through `-Xmacro-settings`. They can be used to add annotations
+`@java.lang.SuppressWarnings` and `@scala.annotation.nowarn`, which is useful in suppressing warnings from plug-ins
+like [WartRemover](https://www.wartremover.org/) or [Scapegoat](https://github.com/scapegoat-scala/scapegoat).
+
+| Option for `-Xmacro-settings:...`            | Description                                                                   |
+|----------------------------------------------|-------------------------------------------------------------------------------|
+| `chimney.SuppressWarnings=warning1;warning2` | annotates the generated code with `@SuppressWarnings("warning1", "warning2")` |
+| `chimney.SuppressWarnings=none`              | does not annotate the generated code with `@SuppressWarnings`                 |
+| `chimney.nowarn=msg`                         | annotates the generated code with `@nowarn("msg")`                            |
+| `chimney.nowarn=true`                        | annotates the generated code with `@nowarn`                                   |
+| `chimney.nowarn=none`                        | does not annotate the generated code with `@nowarn`                           |
+
+By default, code is annotated with`@SuppressWarnings("org.wartremover.warts.All", "all")` and without `@nowarn`. 
+
 ## Automatic, Semiautomatic and Inlined derivation
 
 When you use the standard way of working with Chimney, but `import io.scalaland.chimney.dsl._`

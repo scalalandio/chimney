@@ -118,9 +118,9 @@ private[compiletime] trait Configurations { this: Derivation =>
       case (cfg, transformerFlag"NonAnyValWrappers=$value")    => cfg.copy(nonAnyValWrappers = value.toBoolean)
       case (cfg, transformerFlag"ImplicitConflictResolution=$value") =>
         cfg.copy(implicitConflictResolution = value match {
-          case "Total"   => Some(dsls.PreferTotalTransformer)
-          case "Partial" => Some(dsls.PreferPartialTransformer)
-          case "none"    => None
+          case "PreferTotalTransformer"   => Some(dsls.PreferTotalTransformer)
+          case "PreferPartialTransformer" => Some(dsls.PreferPartialTransformer)
+          case "none"                     => None
         })
       case (cfg, transformerFlag"MacrosLogging=$value") => cfg.copy(displayMacrosLogging = value.toBoolean)
       case (cfg, _)                                     => cfg
