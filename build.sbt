@@ -517,6 +517,26 @@ lazy val chimneyProtobufs = projectMatrix
   )
   .dependsOn(chimney % s"$Test->$Test;$Compile->$Compile")
 
+lazy val chimneyEngine = projectMatrix
+  .in(file("chimney-engine"))
+  .someVariations(versions.scalas, versions.platforms)((addScala213plusDir +: only1VersionInIDE) *)
+  .enablePlugins(GitVersioning, GitBranchPrompt)
+  .disablePlugins(WelcomePlugin, ProtocPlugin)
+  .settings(
+    moduleName := "chimney-engine",
+    name := "chimney-engine",
+    description := "Chimney derivation engine exposed for reuse in other libraries"
+  )
+  .settings(settings *)
+  .settings(versionSchemeSettings *)
+  .settings(publishSettings *)
+  .settings(mimaSettings *)
+  .settings(
+    mimaFailOnNoPrevious := false // this hasn't been published yet
+  )
+  .settings(dependencies *)
+  .dependsOn(chimney)
+
 lazy val benchmarks = projectMatrix
   .in(file("benchmarks"))
   .someVariations(List(versions.scala213), List(VirtualAxis.jvm))(only1VersionInIDE *) // only makes sense for JVM
