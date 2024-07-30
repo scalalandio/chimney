@@ -9,7 +9,7 @@ addSbtPlugin("com.indoorvivants" % "sbt-commandmatrix" % "0.0.5")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.16.0")
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.4")
 // publishing
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.11.0")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.11.1")
 addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.2.1")
 // MiMa
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.3")
