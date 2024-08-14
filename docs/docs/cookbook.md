@@ -1436,7 +1436,7 @@ classes.
     this:
     
     ```scala
-    //> using dep com.softwaremill::quicklens::{{ libraries.quicklens }}
+    //> using dep com.softwaremill.quicklens::quicklens::{{ libraries.quicklens }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
     
     case class Foo(bar: Option[Bar])
