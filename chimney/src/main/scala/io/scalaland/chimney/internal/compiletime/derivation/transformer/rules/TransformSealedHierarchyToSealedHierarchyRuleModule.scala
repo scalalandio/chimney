@@ -115,8 +115,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                             TransformationExpr.fromPartial(partialExpr.asInstanceOfExpr[partial.Result[To]])
                         }
                       )
+                    // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
                     case _ =>
-                      // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
                       DerivationResult.assertionError(s"Unexpected path: $targetPath")
                     // $COVERAGE-ON$
                   })

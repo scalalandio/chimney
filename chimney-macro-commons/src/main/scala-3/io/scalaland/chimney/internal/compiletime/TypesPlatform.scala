@@ -61,8 +61,8 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
                 .toMap
             typeArgumentByName
           // unknown
+          // $COVERAGE-OFF$should never happen unless we messed up
           case out =>
-            // $COVERAGE-OFF$should never happen unless we messed up
             assertionFailed(
               s"Constructor of ${Type.prettyPrint(fromUntyped[Any](tpe))} has unrecognized/unsupported format of type: $out"
             )
