@@ -428,12 +428,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         whenAbsent
       case runtimeFieldOverride :: Nil =>
         TransformProductToProductRule.useOverride[From, To, CtorParam](toName, runtimeFieldOverride)
+      // $COVERAGE-OFF$Config parsing dedupliate values
       case runtimeFieldOverrides =>
-        DerivationResult.ambiguousFieldOverrides[From, To, TransformationExpr[CtorParam]](
-          toName,
-          runtimeFieldOverrides.map(_.toString),
-          ctx.config.flags.getFieldNameComparison.toString
-        )
+        DerivationResult.assertionError(s"Unexpected multiple overrides: ${runtimeFieldOverrides.mkString(", ")}")
+      // $COVERAGE-ON$
     }
 
     private def useExtractor[From, To, CtorParam: Type](
@@ -537,8 +535,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           // }, ${ failFast }) }
           import res1.{Underlying as Res1, value as result1Expr}, res2.{Underlying as Res2, value as result2Expr}
           ctx match {
+            // $COVERAGE-OFF$should never happen unless we messed up
             case TransformationContext.ForTotal(_) =>
-              // $COVERAGE-OFF$should never happen unless we messed up
               assertionFailed("Expected partial while got total")
             // $COVERAGE-ON$
             case TransformationContext.ForPartial(_, failFast) =>
@@ -690,8 +688,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     }
 
                 ctx match {
+                  // $COVERAGE-OFF$should never happen unless we messed up
                   case TransformationContext.ForTotal(_) =>
-                    // $COVERAGE-OFF$should never happen unless we messed up
                     assertionFailed("Expected partial, got total")
                   // $COVERAGE-ON$
                   case TransformationContext.ForPartial(_, failFast) =>

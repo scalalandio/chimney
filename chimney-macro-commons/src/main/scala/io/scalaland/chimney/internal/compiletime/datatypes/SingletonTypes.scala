@@ -37,8 +37,8 @@ trait SingletonTypes { this: (Definitions & ProductTypes) =>
         case _ if ProductType.isCaseObject[A] || ProductType.isCaseVal[A] || ProductType.isJavaEnumValue[A] =>
           Type[A] match {
             case Product.Constructor(params, ctor) if params.isEmpty => found(ctor(Map.empty))
-            case _                                                   =>
-              // $COVERAGE-OFF$should never happen unless we messed up
+            // $COVERAGE-OFF$should never happen unless we messed up
+            case _ =>
               assertionFailed(
                 s"Expected case object/case with no params/Java enum of ${Type.prettyPrint[A]} to have a nullary constructor"
               )

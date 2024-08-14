@@ -487,8 +487,8 @@ private[compiletime] trait Configurations { this: Derivation =>
           case _ =>
             extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = false)
         }
+      // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
       case _ =>
-        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError(s"Invalid internal TransformerFlags type shape: ${Type.prettyPrint[Flags]}!")
       // $COVERAGE-ON$
     }
@@ -568,8 +568,8 @@ private[compiletime] trait Configurations { this: Derivation =>
             extractPath[FromPath],
             TransformerOverride.RenamedTo(extractPath[ToPath])
           )
+      // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
       case _ =>
-        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError(s"Invalid internal TransformerOverrides type shape: ${Type.prettyPrint[Tail]}!!")
       // $COVERAGE-ON$
     }
@@ -595,8 +595,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       case ChimneyType.Path.EveryMapValue(init) =>
         import init.Underlying as PathType2
         extractPath[PathType2].everyMapValue
+      // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
       case _ =>
-        // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         reportError(s"Invalid internal Path shape: ${Type.prettyPrint[PathType]}!!")
       // $COVERAGE-ON$
     }

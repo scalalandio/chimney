@@ -104,8 +104,8 @@ private[compiletime] trait Derivation
                     transformedExpr.orElse(targetGetter.value.get(ctx.obj).upcastToExprOf[Option[TargetInner]]).as_??
                   )
                 }
+            // $COVERAGE-OFF$should never happen unless we messed up
             case _ =>
-              // $COVERAGE-OFF$should never happen unless we messed up
               assertionFailed(
                 s"Expected both types to be options, got ${Type.prettyPrint[PatchGetter]} and ${Type.prettyPrint[TargetParam]}"
               )
