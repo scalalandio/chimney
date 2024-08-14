@@ -19,8 +19,9 @@ If you:
     Swagger or AsyncAPI.
     - However, if you parse raw data into some structured data, that structured data can be used by Chimney to convert
       into e.g. domain model
-  - want to update immutable data by passing some path to the updated field and then provide a value - you need a lens
-    library like Quicklens or Monocle
+  - want to update immutable data by passing some path to the updated field and then provide a value - you MAY need
+    a lens library like Quicklens or Monocle, although Chimney has
+    [a limited support some lens use case](cookbook.md#lens-like-use-cases)
   - want to limit the amount of tests written and are wondering if automatic generation of such an important code is
     safe - you need to ask yourself: would you have the same dilemma if you were asked about generating JSON codecs?
     Would you wonder if you need to test them? (In our experience, yes). Could you remove the need to test them if you

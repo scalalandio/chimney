@@ -1405,6 +1405,138 @@ Each of these transformations is provided by the same import:
     import io.scalaland.chimney.protobufs._
     ```
 
+## Lens-like use cases
+
+Chimney can be used in some cases where optics/prisms are normally used. Let us demonstrate them by reimplementing
+some [Quicklens](https://github.com/softwaremill/quicklens) example, where we would update a value of nested case
+classes.
+
+!!! example
+
+    Let' set we have a nested structure:
+    
+    ```scala
+    case class Foo(bar: Option[Bar])
+    case class Bar(baz: List[Baz])
+    case class Baz(a: Int, b: String, c: Double)
+    
+    val foo = Foo(
+      bar = Some(
+        Baz(
+          baz = List(
+            Baz(a = 1, b = "a", c = 10.0),
+            Baz(a = 2, b = "b", c = 20.0)
+          )
+        )
+      )
+    )
+    ```
+    
+    Let's say we need to update all `a` in Baz to `10` and all `b` to `"new"`. With Quicklens we could implement it like
+    this:
+    
+    ```scala
+    //> using dep com.softwaremill::quicklens::{{ libraries.quicklens }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    
+    case class Foo(bar: Option[Bar])
+    case class Bar(baz: List[Baz])
+    case class Baz(a: Int, b: String, c: Double)
+    
+    val foo = Foo(
+      bar = Some(
+        Bar(
+          baz = List(
+            Baz(a = 1, b = "a", c = 10.0),
+            Baz(a = 2, b = "b", c = 20.0)
+          )
+        )
+      )
+    )
+    
+    import com.softwaremill.quicklens._
+  
+    pprint.pprintln(
+      foo
+        .modify(_.bar.each.baz.each.a).setTo(10)
+        .modify(_.bar.each.baz.each.b).setTo("new")
+    )
+    // expected output:
+    // Foo(
+    //   bar = Some(
+    //     value = Bar(baz = List(Baz(a = 10, b = "new", c = 10.0), Baz(a = 10, b = "new", c = 20.0)))
+    //   )
+    // )
+    ```
+    
+    It could be translated to Chimney like this:
+    
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    
+    case class Foo(bar: Option[Bar])
+    case class Bar(baz: List[Baz])
+    case class Baz(a: Int, b: String, c: Double)
+    
+    val foo = Foo(
+      bar = Some(
+        Bar(
+          baz = List(
+            Baz(a = 1, b = "a", c = 10.0),
+            Baz(a = 2, b = "b", c = 20.0)
+          )
+        )
+      )
+    )
+    
+    import io.scalaland.chimney.dsl._
+    
+    pprint.pprintln(
+      foo
+        .into[Foo]
+        .withFieldConst(_.bar.matchingSome.baz.everyItem.a, 10)
+        .withFieldConst(_.bar.matchingSome.baz.everyItem.b, "new")
+        .enableMacrosLogging
+        .transform
+    )
+    // expected output:
+    // Foo(
+    //   bar = Some(
+    //     value = Bar(baz = List(Baz(a = 10, b = "new", c = 10.0), Baz(a = 10, b = "new", c = 20.0)))
+    //   )
+    // )
+    ```
+
+Some comparison between the two could be found in the table below:
+
+| Quicklens                              | Chimney                                                            |
+|----------------------------------------|--------------------------------------------------------------------|
+| `value.modify(path).setTo(fieldValue)` | `value.into[ValueType].withFieldConst(path, fieldValue).transform` |
+| `.fieldName`                           | `.fieldName`                                                       |
+| `.each` (collection, non-`Map`)        | `.everyItem`                                                       |
+| `.each` (collection, `Map`)            | `.everyMapValue`                                                   |
+| `.each` (`Option`)                     | `.matchingSome`                                                    |
+| `.eachLeft`                            | `.matchingLeft`                                                    |
+| `.eachRight`                           | `.matchingRight`                                                   |
+| `.when[Subtype]`                       | `.matching[Subtype]`                                               |
+
+Additionally, Chimney defines `.everyMapKey`.
+
+There are no Chimney counterparts for Quicklens':
+
+ * `.at(idx)`/`.at(key)` (update specific index/map key, throwing if absent)
+ * `.index(idx)` (update specific index/map key, ignoring if absent)
+ * `.atOrElse(idx, value)` (update specific index/map key, using `value` if absent)
+ * `.eachWhere(predicate)` (update all items fulfilling the predicate)
+ * `.setToIf(predicate)(value)` (updates if predicate is fulfilled)
+ * `.setToIfDefined(option)` (updates using `Option`)
+ * `.using(f)` (update the field with specific fun)
+
+For these cases, a proper optics library (like Quicklens) is recommended. As you can see method names in Chimney DSL
+were selected in such way that there should be no conflicts with other libraries, so you don't have to choose one - you
+can pick up both.
+
 ## Libraries with smart constructors
 
 Any type that uses a smart constructor (returning parsed result rather than throwing an exception) would require

@@ -99,5 +99,6 @@ extra:
     henkan:           "0.6.5"
     ducktape:         "0.2.0"
     pprint:           "0.9.0"
+    quicklens:        "1.9.7"
   local:
     tag: !ENV [CI_LATEST_TAG, 'latest'] # used as git.tag fallback in Docker container
