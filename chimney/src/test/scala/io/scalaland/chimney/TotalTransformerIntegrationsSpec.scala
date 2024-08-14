@@ -32,7 +32,12 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
     (null: String).transformInto[Possible[String]] ==> Possible.Nope
   }
 
-  // TODO: matchingSome
+  test("transform into OptionalValue with an override") {
+    Foo("abc").into[Possible[Foo]].withFieldConst(_.matchingSome.value, "def").transform ==> Possible(Foo("def"))
+    Option(Foo("abc")).into[Possible[Foo]].withFieldConst(_.matchingSome.value, "def").transform ==> Possible(
+      Foo("def")
+    )
+  }
 
   test("transform from TotallyBuildIterable to TotallyBuildIterable") {
     CustomCollection.of(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))

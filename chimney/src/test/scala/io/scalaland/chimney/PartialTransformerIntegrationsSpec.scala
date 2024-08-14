@@ -175,7 +175,14 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
     }
   }
 
-  // TODO: matchingSome
+  test("transform into OptionalValue with an override") {
+    "abc".intoPartial[Possible[String]].withFieldConst(_.matchingSome, "def").transform.asOption ==> Some(
+      Possible("def")
+    )
+    Option("abc").intoPartial[Possible[String]].withFieldConst(_.matchingSome, "def").transform.asOption ==> Some(
+      Possible("def")
+    )
+  }
 
   test(
     "transform TotallyBuildIterable/PartiallyBuildIterable to TotallyBuildIterable/PartiallyBuildIterable, using Total Transformer for inner type transformation"
