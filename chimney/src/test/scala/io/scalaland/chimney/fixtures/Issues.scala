@@ -208,3 +208,9 @@ object Issue498 {
     case class Sub2(a: String, b: Int) extends Bar
   }
 }
+
+object Issue579 {
+  case class Foo(bar: Option[Bar])
+  case class Bar(baz: List[Baz])
+  case class Baz(a: Int, b: String, c: Double)
+}

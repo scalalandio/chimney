@@ -760,4 +760,13 @@ class IssuesSpec extends ChimneySpec {
     import Issue498.*
     (Foo.Sub1("test"): Foo).into[Bar].withFieldConst(_.b, 1).transform ==> Bar.Sub1("test", 1)
   }
+
+  test("fix issue #579") {
+    import Issue579.*
+    Foo(Some(Bar(List(Baz(a = 1, b = "a", c = 10.0), Baz(a = 2, b = "b", c = 20.0)))))
+      .into[Foo]
+      .withFieldConst(_.bar.matchingSome.baz.everyItem.a, 10)
+      .withFieldConst(_.bar.matchingSome.baz.everyItem.b, "new")
+      .transform ==> Foo(Some(Bar(List(Baz(a = 10, b = "new", c = 10.0), Baz(a = 10, b = "new", c = 20.0)))))
+  }
 }
