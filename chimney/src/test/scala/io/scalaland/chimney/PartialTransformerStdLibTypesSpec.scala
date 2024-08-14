@@ -197,7 +197,12 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     }
   }
 
-  // TODO: matchingSome
+  test("transform into Option-type with an override") {
+    "abc".intoPartial[Option[String]].withFieldConst(_.matchingSome, "def").transform.asOption ==> Some(Some("def"))
+    Option("abc").intoPartial[Option[String]].withFieldConst(_.matchingSome, "def").transform.asOption ==> Some(
+      Some("def")
+    )
+  }
 
   test("transform from Either-type into Either-type, using Total Transformer for inner types transformation") {
     implicit val intPrinter: Transformer[Int, String] = _.toString
@@ -229,7 +234,30 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     Right("x").transformIntoPartial[Right[Int, Int]].asOption ==> None
   }
 
-  // TODO: matchingLeft, matchingRight
+  test("transform Either-type with an override") {
+    (Left("a"): Either[String, String])
+      .intoPartial[Either[String, String]]
+      .withFieldConst(_.matchingLeft, "b")
+      .withFieldConst(_.matchingRight, "c")
+      .transform
+      .asOption ==> Some(Left("b"))
+    (Right("a"): Either[String, String])
+      .intoPartial[Either[String, String]]
+      .withFieldConst(_.matchingLeft, "b")
+      .withFieldConst(_.matchingRight, "c")
+      .transform
+      .asOption ==> Some(Right("c"))
+    Left("a")
+      .intoPartial[Either[String, String]]
+      .withFieldConst(_.matchingLeft, "b")
+      .transform
+      .asOption ==> Some(Left("b"))
+    Right("a")
+      .intoPartial[Either[String, String]]
+      .withFieldConst(_.matchingRight, "c")
+      .transform
+      .asOption ==> Some(Right("c"))
+  }
 
   test("transform Iterable-type to Iterable-type, using Total Transformer for inner type transformation") {
     implicit val intPrinter: Transformer[Int, String] = _.toString
