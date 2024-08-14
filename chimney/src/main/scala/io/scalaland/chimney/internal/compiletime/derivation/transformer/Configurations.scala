@@ -9,6 +9,8 @@ import scala.collection.immutable.{ListMap, ListSet}
 
 private[compiletime] trait Configurations { this: Derivation =>
 
+  import Type.Implicits.*
+
   final protected case class TransformerFlags(
       inheritedAccessors: Boolean = false,
       methodAccessors: Boolean = false,
@@ -308,6 +310,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       runtimeOverrides.isEmpty
     def areLocalFlagsAndOverridesEmpty: Boolean =
       areLocalFlagsEmpty && areOverridesEmpty
+
     def filterCurrentOverridesForField(nameFilter: String => Boolean): Map[String, TransformerOverride.ForField] =
       ListMap.from(
         runtimeOverridesForCurrent.collect {
@@ -318,14 +321,52 @@ private[compiletime] trait Configurations { this: Derivation =>
     def filterCurrentOverridesForSubtype(
         sourceTypeFilter: ?? => Boolean,
         @scala.annotation.unused targetTypeFilter: ?? => Boolean
-    ): Map[Option[??], TransformerOverride.ForSubtype] =
-      ListMap.from(
-        runtimeOverridesForCurrent.collect {
-          case (Path.AtSourceSubtype(tpe, _), runtimeCoproductOverride: TransformerOverride.ForSubtype)
-              if sourceTypeFilter(tpe) =>
-            Some(tpe) -> runtimeCoproductOverride
-        }
-      )
+    ): Map[Option[??], TransformerOverride.ForSubtype] = ListMap.from(
+      runtimeOverridesForCurrent.collect {
+        case (Path.AtSourceSubtype(tpe, _), runtimeCoproductOverride: TransformerOverride.ForSubtype)
+            if sourceTypeFilter(tpe) =>
+          Some(tpe) -> runtimeCoproductOverride
+      }
+    )
+    def filterCurrentOverridesForSome: Set[TransformerOverride.ForField] = ListSet.from(
+      runtimeOverrides.collect {
+        case (Path.AtSubtype(tpe, path), runtimeFieldOverride: TransformerOverride.ForField)
+            if path == Path.Root && tpe.Underlying <:< Type[Some[Any]] =>
+          runtimeFieldOverride
+      }
+    )
+    def filterCurrentOverridesForLeft: Set[TransformerOverride.ForField] = ListSet.from(
+      runtimeOverrides.collect {
+        case (Path.AtSubtype(tpe, path), runtimeFieldOverride: TransformerOverride.ForField)
+            if path == Path.Root && tpe.Underlying <:< Type[Left[Any, Any]] =>
+          runtimeFieldOverride
+      }
+    )
+    def filterCurrentOverridesForRight: Set[TransformerOverride.ForField] = ListSet.from(
+      runtimeOverrides.collect {
+        case (Path.AtSubtype(tpe, path), runtimeFieldOverride: TransformerOverride.ForField)
+            if path == Path.Root && tpe.Underlying <:< Type[Right[Any, Any]] =>
+          runtimeFieldOverride
+      }
+    )
+    def filterCurrentOverridesForEveryItem: Set[TransformerOverride.ForField] = ListSet.from(
+      runtimeOverrides.collect {
+        case (Path.AtItem(path), runtimeFieldOverride: TransformerOverride.ForField) if path == Path.Root =>
+          runtimeFieldOverride
+      }
+    )
+    def filterCurrentOverridesForEveryMapKey: Set[TransformerOverride.ForField] = ListSet.from(
+      runtimeOverrides.collect {
+        case (Path.AtMapKey(path), runtimeFieldOverride: TransformerOverride.ForField) if path == Path.Root =>
+          runtimeFieldOverride
+      }
+    )
+    def filterCurrentOverridesForEveryMapValue: Set[TransformerOverride.ForField] = ListSet.from(
+      runtimeOverrides.collect {
+        case (Path.AtMapValue(path), runtimeFieldOverride: TransformerOverride.ForField) if path == Path.Root =>
+          runtimeFieldOverride
+      }
+    )
     def currentOverrideForConstructor: Option[TransformerOverride.ForConstructor] =
       runtimeOverridesForCurrent.collectFirst {
         case (_, runtimeConstructorOverride: TransformerOverride.ForConstructor) => runtimeConstructorOverride

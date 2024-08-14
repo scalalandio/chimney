@@ -4,9 +4,10 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation =>
+private[compiletime] trait TransformOptionToOptionRuleModule {
+  this: Derivation & TransformProductToProductRuleModule =>
 
-  import Type.Implicits.*, ChimneyType.Implicits.*
+  import Type.Implicits.*, ChimneyType.Implicits.*, TransformProductToProductRule.useOverrideIfPresentOr
 
   protected object TransformOptionToOptionRule extends Rule("OptionToOption") {
 
@@ -36,7 +37,9 @@ private[compiletime] trait TransformOptionToOptionRuleModule { this: Derivation 
       ExprPromise
         .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromType)
         .traverse { (newFromExpr: Expr[InnerFrom]) =>
-          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromExpr, Path.Root.matching[Some[InnerTo]])
+          useOverrideIfPresentOr("matchingSome", ctx.config.filterCurrentOverridesForSome) {
+            deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromExpr, Path.Root.matching[Some[InnerTo]])
+          }
         }
         .flatMap { (derivedToExprPromise: ExprPromise[InnerFrom, TransformationExpr[InnerTo]]) =>
           derivedToExprPromise.foldTransformationExpr { (totalP: ExprPromise[InnerFrom, Expr[InnerTo]]) =>

@@ -6,9 +6,10 @@ import io.scalaland.chimney.partial
 
 import scala.collection.compat.Factory
 
-private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivation =>
+private[compiletime] trait TransformIterableToIterableRuleModule {
+  this: Derivation & TransformProductToProductRuleModule =>
 
-  import Type.Implicits.*, ChimneyType.Implicits.*
+  import Type.Implicits.*, ChimneyType.Implicits.*, TransformProductToProductRule.useOverrideIfPresentOr
 
   protected object TransformIterableToIterableRule extends Rule("IterableToIterable") {
 
@@ -55,12 +56,16 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
       val toKeyResult = ExprPromise
         .promise[FromK](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
         .traverse { key =>
-          deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.everyMapKey).map(_.ensurePartial -> key)
+          useOverrideIfPresentOr("everyMapKey", ctx.config.filterCurrentOverridesForEveryMapKey) {
+            deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.everyMapKey)
+          }.map(_.ensurePartial -> key)
         }
       val toValueResult = ExprPromise
         .promise[FromV](ExprPromise.NameGenerationStrategy.FromPrefix("value"))
         .traverse { value =>
-          deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue).map(_.ensurePartial)
+          useOverrideIfPresentOr("everyMapValue", ctx.config.filterCurrentOverridesForEveryMapValue) {
+            deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue)
+          }.map(_.ensurePartial)
         }
 
       toKeyResult.parTuple(toValueResult).flatMap { case (toKeyP, toValueP) =>
@@ -113,7 +118,9 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
       ExprPromise
         .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromExpr(ctx.src))
         .traverse { (newFromSrc: Expr[InnerFrom]) =>
-          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromSrc, Path.Root.everyItem)
+          useOverrideIfPresentOr("everyItem", ctx.config.filterCurrentOverridesForEveryItem) {
+            deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromSrc, Path.Root.everyItem)
+          }
         }
         .flatMap { (to2P: ExprPromise[InnerFrom, TransformationExpr[InnerTo]]) =>
           to2P.foldTransformationExpr { (totalP: ExprPromise[InnerFrom, Expr[InnerTo]]) =>

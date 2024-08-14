@@ -176,7 +176,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     foundOverrides,
                     flags.getFieldNameComparison.toString
                   )
-                case (_, value) => useOverride[From, To, CtorParam](toName, value)
+                case (_, value) =>
+                  useOverride[From, To, CtorParam](toName, value).flatMap(
+                    DerivationResult.existential[TransformationExpr, CtorParam](_)
+                  )
               }
               .orElse {
                 val ambiguityOrPossibleSourceField =
@@ -270,16 +273,16 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     }
 
     // TODO: perhaps we should NOT pass To's field name as From's field name when providing errors to overrides?
-    private def useOverride[From, To, CtorParam: Type](
+    def useOverride[From, To, CtorParam: Type](
         toName: String,
         runtimeFieldOverride: TransformerOverride.ForField
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Existential[TransformationExpr]] = runtimeFieldOverride match {
+    ): DerivationResult[TransformationExpr[CtorParam]] = runtimeFieldOverride match {
       case TransformerOverride.Const(runtimeData) =>
         // We're constructing:
         // '{ ${ runtimeDataStore }(idx).asInstanceOf[$ctorParam] }
-        DerivationResult.existential[TransformationExpr, CtorParam](
+        DerivationResult.pure(
           TransformationExpr.fromTotal(
             runtimeData.asInstanceOfExpr[CtorParam]
           )
@@ -291,7 +294,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         //     .asInstanceOf[partial.Result[$ctorParam]]
         //     .prependErrorPath(PathElement.Accessor("toName"))
         //  }
-        DerivationResult.existential[TransformationExpr, CtorParam](
+        DerivationResult.pure(
           TransformationExpr.fromPartial(
             runtimeData
               .asInstanceOfExpr[partial.Result[CtorParam]]
@@ -306,7 +309,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           case TransformationContext.ForTotal(_) =>
             // We're constructing:
             // '{ ${ runtimeDataStore }(idx).asInstanceOf[$OriginalFrom => $CtorParam](${ originalSrc }) }
-            DerivationResult.existential[TransformationExpr, CtorParam](
+            DerivationResult.pure(
               TransformationExpr.fromTotal(
                 runtimeData.asInstanceOfExpr[OriginalFrom => CtorParam].apply(originalSrc)
               )
@@ -320,7 +323,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             //   .apply(${ originalSrc })
             //   .prependErrorPath(PathElement.Accessor("toName"))
             // }
-            DerivationResult.existential[TransformationExpr, CtorParam](
+            DerivationResult.pure(
               TransformationExpr.fromPartial(
                 ChimneyExpr.PartialResult
                   .fromFunction(runtimeData.asInstanceOfExpr[OriginalFrom => CtorParam])
@@ -341,7 +344,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         //     .prependErrorPath(PathElement.Accessor("toName"))
         // }
         import ctx.originalSrc.{Underlying as OriginalFrom, value as originalSrc}
-        DerivationResult.existential[TransformationExpr, CtorParam](
+        DerivationResult.pure(
           TransformationExpr.fromPartial(
             runtimeData
               .asInstanceOfExpr[OriginalFrom => partial.Result[CtorParam]]
@@ -406,12 +409,31 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .transformWith { expr =>
                 // If we derived partial.Result[$ctorParam] we are appending:
                 //  ${ derivedToElement }.prependErrorPath(...).prependErrorPath(...) // sourcePath
-                DerivationResult.existential[TransformationExpr, CtorParam](appendPath(expr, sourcePath))
+                DerivationResult.pure(appendPath(expr, sourcePath))
               } { errors =>
                 appendMissingTransformer[From, To, ExtractedSrc, CtorParam](errors, toName)
               }
           }
         }
+    }
+
+    // Exposes logic for: OptionToOption, EitherToEither, ...
+    def useOverrideIfPresentOr[From, To, CtorParam: Type](
+        toName: String,
+        runtimeFieldOverrides: Set[TransformerOverride.ForField]
+    )(whenAbsent: => DerivationResult[TransformationExpr[CtorParam]])(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[TransformationExpr[CtorParam]] = runtimeFieldOverrides.toList match {
+      case Nil =>
+        whenAbsent
+      case runtimeFieldOverride :: Nil =>
+        TransformProductToProductRule.useOverride[From, To, CtorParam](toName, runtimeFieldOverride)
+      case runtimeFieldOverrides =>
+        DerivationResult.ambiguousFieldOverrides[From, To, TransformationExpr[CtorParam]](
+          toName,
+          runtimeFieldOverrides.map(_.toString),
+          ctx.config.flags.getFieldNameComparison.toString
+        )
     }
 
     private def useExtractor[From, To, CtorParam: Type](
@@ -711,16 +733,16 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     private def appendMissingTransformer[From, To, SourceField: Type, TargetField: Type](
         errors: DerivationErrors,
         toName: String
-    )(implicit ctx: TransformationContext[From, To]) = {
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Nothing] = {
       val newError = DerivationResult.missingFieldTransformer[
         From,
         To,
         SourceField,
         TargetField,
-        Existential[TransformationExpr]
+        TransformationExpr[TargetField]
       ](toName)
       val oldErrors = DerivationResult.fail(errors)
-      newError.parTuple(oldErrors).map[Existential[TransformationExpr]](_ => ???)
+      newError.parTuple(oldErrors).map[Nothing](_ => ???)
     }
 
     // Stub to use when the setter's return type is not Unit and nonUnitBeanSetters flag is off.
