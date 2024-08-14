@@ -118,7 +118,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule { this: Derivat
         .flatMap { (to2P: ExprPromise[InnerFrom, TransformationExpr[InnerTo]]) =>
           to2P.foldTransformationExpr { (totalP: ExprPromise[InnerFrom, Expr[InnerTo]]) =>
             // TODO: restore .map implementation
-            if (Type[InnerFrom] =:= Type[InnerTo]) {
+            if (Type[InnerFrom] =:= Type[InnerTo] && ctx.config.areOverridesEmpty) {
               def srcToFactory[ToOrPartialTo: Type](
                   factory: Expr[Factory[InnerTo, ToOrPartialTo]]
               ): Expr[ToOrPartialTo] =
