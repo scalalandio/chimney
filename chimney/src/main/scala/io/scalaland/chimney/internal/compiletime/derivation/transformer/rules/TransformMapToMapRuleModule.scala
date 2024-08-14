@@ -6,9 +6,10 @@ import io.scalaland.chimney.partial
 
 import scala.collection.compat.Factory
 
-private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with TransformIterableToIterableRuleModule =>
+private[compiletime] trait TransformMapToMapRuleModule {
+  this: Derivation & TransformIterableToIterableRuleModule & TransformProductToProductRuleModule =>
 
-  import Type.Implicits.*, ChimneyType.Implicits.*
+  import Type.Implicits.*, ChimneyType.Implicits.*, TransformProductToProductRule.useOverrideIfPresentOr
 
   protected object TransformMapToMapRule extends Rule("MapToMap") {
 
@@ -74,12 +75,16 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
       val toKeyResult = ExprPromise
         .promise[FromK](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
         .traverse { key =>
-          deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.everyMapKey).map(_.ensureTotal)
+          useOverrideIfPresentOr("everyMapKey", ctx.config.filterCurrentOverridesForEveryMapKey) {
+            deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.everyMapKey)
+          }.map(_.ensureTotal)
         }
       val toValueResult = ExprPromise
         .promise[FromV](ExprPromise.NameGenerationStrategy.FromPrefix("value"))
         .traverse { value =>
-          deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue).map(_.ensureTotal)
+          useOverrideIfPresentOr("everyMapValue", ctx.config.filterCurrentOverridesForEveryMapValue) {
+            deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue)
+          }.map(_.ensureTotal)
         }
 
       toKeyResult.parTuple(toValueResult).flatMap { case (toKeyP, toValueP) =>
@@ -117,12 +122,16 @@ private[compiletime] trait TransformMapToMapRuleModule { this: Derivation with T
       val toKeyResult = ExprPromise
         .promise[FromK](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
         .traverse { key =>
-          deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.everyMapKey).map(_.ensurePartial -> key)
+          useOverrideIfPresentOr("everyMapKey", ctx.config.filterCurrentOverridesForEveryMapKey) {
+            deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.everyMapKey)
+          }.map(_.ensurePartial -> key)
         }
       val toValueResult = ExprPromise
         .promise[FromV](ExprPromise.NameGenerationStrategy.FromPrefix("value"))
         .traverse { value =>
-          deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue).map(_.ensurePartial -> value)
+          useOverrideIfPresentOr("everyMapValue", ctx.config.filterCurrentOverridesForEveryMapValue) {
+            deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue)
+          }.map(_.ensurePartial -> value)
         }
 
       toKeyResult.parTuple(toValueResult).flatMap { case (toKeyP, toValueP) =>

@@ -4,9 +4,10 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
 
-private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation =>
+private[compiletime] trait TransformEitherToEitherRuleModule {
+  this: Derivation & TransformProductToProductRuleModule =>
 
-  import Type.Implicits.*, ChimneyType.Implicits.*
+  import Type.Implicits.*, ChimneyType.Implicits.*, TransformProductToProductRule.useOverrideIfPresentOr
 
   protected object TransformEitherToEitherRule extends Rule("EitherToEither") {
 
@@ -27,26 +28,32 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
     private def mapLeft[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] =
-      deriveRecursiveTransformationExpr[FromL, ToL](
-        ctx.src.upcastToExprOf[Left[FromL, FromR]].value,
-        Path.Root.matching[Left[ToL, ToR]]
-      ).flatMap { (derivedToL: TransformationExpr[ToL]) =>
-        // We're constructing:
-        // '{ Left( ${ derivedToL } ) /* from ${ src }.value */ }
-        DerivationResult.expanded(derivedToL.map(Expr.Either.Left[ToL, ToR](_).upcastToExprOf[To]))
+      useOverrideIfPresentOr("matchingLeft", ctx.config.filterCurrentOverridesForLeft) {
+        deriveRecursiveTransformationExpr[FromL, ToL](
+          ctx.src.upcastToExprOf[Left[FromL, FromR]].value,
+          Path.Root.matching[Left[ToL, ToR]]
+        )
       }
+        .flatMap { (derivedToL: TransformationExpr[ToL]) =>
+          // We're constructing:
+          // '{ Left( ${ derivedToL } ) /* from ${ src }.value */ }
+          DerivationResult.expanded(derivedToL.map(Expr.Either.Left[ToL, ToR](_).upcastToExprOf[To]))
+        }
 
     private def mapRight[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] =
-      deriveRecursiveTransformationExpr[FromR, ToR](
-        ctx.src.upcastToExprOf[Right[FromL, FromR]].value,
-        Path.Root.matching[Right[ToL, ToR]]
-      ).flatMap { (derivedToR: TransformationExpr[ToR]) =>
-        // We're constructing:
-        // '{ Right( ${ derivedToR } ) /* from ${ src }.value */ }
-        DerivationResult.expanded(derivedToR.map(Expr.Either.Right[ToL, ToR](_).upcastToExprOf[To]))
+      useOverrideIfPresentOr("matchingRight", ctx.config.filterCurrentOverridesForRight) {
+        deriveRecursiveTransformationExpr[FromR, ToR](
+          ctx.src.upcastToExprOf[Right[FromL, FromR]].value,
+          Path.Root.matching[Right[ToL, ToR]]
+        )
       }
+        .flatMap { (derivedToR: TransformationExpr[ToR]) =>
+          // We're constructing:
+          // '{ Right( ${ derivedToR } ) /* from ${ src }.value */ }
+          DerivationResult.expanded(derivedToR.map(Expr.Either.Right[ToL, ToR](_).upcastToExprOf[To]))
+        }
 
     private def mapEither[From, To, FromL: Type, FromR: Type, ToL: Type, ToR: Type](implicit
         ctx: TransformationContext[From, To]
@@ -54,13 +61,17 @@ private[compiletime] trait TransformEitherToEitherRuleModule { this: Derivation 
       val toLeftResult = ExprPromise
         .promise[FromL](ExprPromise.NameGenerationStrategy.FromPrefix("left"))
         .traverse { (leftExpr: Expr[FromL]) =>
-          deriveRecursiveTransformationExpr[FromL, ToL](leftExpr, Path.Root.matching[Left[ToL, ToR]])
+          useOverrideIfPresentOr("matchingLeft", ctx.config.filterCurrentOverridesForLeft) {
+            deriveRecursiveTransformationExpr[FromL, ToL](leftExpr, Path.Root.matching[Left[ToL, ToR]])
+          }
         }
 
       val toRightResult = ExprPromise
         .promise[FromR](ExprPromise.NameGenerationStrategy.FromPrefix("right"))
         .traverse { (rightExpr: Expr[FromR]) =>
-          deriveRecursiveTransformationExpr[FromR, ToR](rightExpr, Path.Root.matching[Right[ToL, ToR]])
+          useOverrideIfPresentOr("matchingRight", ctx.config.filterCurrentOverridesForRight) {
+            deriveRecursiveTransformationExpr[FromR, ToR](rightExpr, Path.Root.matching[Right[ToL, ToR]])
+          }
         }
 
       val inLeft =
