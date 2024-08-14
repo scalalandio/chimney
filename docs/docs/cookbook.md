@@ -1537,7 +1537,47 @@ For these cases, a proper optics library (like Quicklens) is recommended. As you
 were selected in such way that there should be no conflicts with other libraries, so you don't have to choose one - you
 can pick up both.
 
-## Libraries with smart constructors
+## Integrations
+
+While Chimney supports a lot of transformations out of the box, sometimes it needs our help. We can do it ad hoc
+like described in [Supported transformations](supported-transformations.md), but if we are maintaining some library
+we would like our users to be able to integrate with Chimney using a single import. How do do it?
+
+Transformations between 2 fully-known types can be handled with normal `implicit` values:
+
+```scala
+// Foo is a proper type
+// Bar is a proper type
+implicit val fooBarTransformer: Transformer[Foo, Bar] = ...
+```
+
+The problem arises when we need some genericness. E.g. if we wanted to provide a transformation between collections:
+
+```scala
+// CollectionFoo[A] is our own collection type parametrized with A
+// CollectionBar[B] is our own collection type parametrized with B
+implicit def fooCollectionBarCollectionTransformer[A, B](
+  implicit abBar: Transformer[A, B]
+): Transformer[FooCollection[A], BarCollection[B]] = ...
+```
+
+such generic `implicit` would:
+
+ * NOT autoderive `Transformer` even if Chimney could do it - for that we would have to use `Transformer.AutoDerived`
+   (why is explained in [one of sections above](#automatic-semiautomatic-and-inlined-derivation))
+ * NOT cooperate with DSL for overriding values by paths e.g.
+   `FooCollection[Foo].into[BarCollection[Bar]].withFieldConst(_.everyItem.value, someValue).transform`
+ * require defining a separare `implicit` between each 2 collections types
+
+Similarly, newtypes/refined types would require dedicated pair of implicits for wrapping/unwrapping if we went with
+a naive approach, custom optional types would not behave like `Option`s, etc.
+
+To make integration with libraries easier we prepared this section as well as a dedicated package in Chimney
+namespace: `io.scalaland.chimney.integrations`. Examples of integrations provided this way are
+[Cats](#cats-integration), [Java collections](#java-collections-integration) and [Protobufs](#protocol-buffers-integration)
+modules.
+
+### Libraries with smart constructors
 
 Any type that uses a smart constructor (returning parsed result rather than throwing an exception) would require
 Partial Transformer rather than Total Transformer to convert.
@@ -1650,7 +1690,7 @@ The same would be true about extracting values from smart-constructed types
 Let's see how we could implement support for automatic transformations of
 types provided in some popular libraries.
 
-### Scala NewType
+#### Scala NewType
 
 [NewType](https://github.com/estatico/scala-newtype) is a macro-annotation-based
 library which attempts to remove runtime overhead from user's types.
@@ -1689,7 +1729,7 @@ as a wrapper around another type that performs this validation e.g. Refined Type
     ): Transformer[From, To] = coercible(_)
     ```
 
-### Monix Newtypes
+#### Monix Newtypes
 
 [Monix's Newtypes](https://newtypes.monix.io/) is similar to NewType in that
 it tries to remove wrapping in runtime. However, it uses different tricks
@@ -1736,7 +1776,7 @@ We can use them to provide unwrapping `Transformer` and wrapping
     }
     ```
 
-### Refined Types
+#### Refined Types
 
 [Refined Types](https://github.com/fthomas/refined) is a library aiming to provide automatic validation of some
 popular constraints as long as we express them in the value's type.
@@ -1776,7 +1816,7 @@ We can validate using the dedicated type class (`Validate`), while extraction is
       }
     ```
 
-## Custom default values
+### Custom default values
 
 If you are providing integration for a type which you do not control, and you'd like to let your users fall back
 to default values when using Chimney, but the type does not define them - it might be still possible to provide them
@@ -1814,7 +1854,7 @@ Keep in mind, that such provision works for every constructor which has an argum
 value, so it's only safe to use when in the scope which sees such implicit all derivations would only need default value
 of this type, rather than convert it from something else.
 
-## Custom optional types
+### Custom optional types
 
 In case your library/domain defines custom Optional types, you can provide your own handling of such types through
 `io.scalaland.chimney.integrations.OptionalValue`. It could look like this:
@@ -1903,7 +1943,7 @@ As you can see, once you provide 1 implicit your custom optional type:
 An example of such optional type is `java.util.Optional` for which support is provided via `OptionalValue` in
 [Java collections' integration](#java-collections-integration).
 
-## Custom collection types
+### Custom collection types
 
 In case your library/domain defines custom collections - which are:
 
@@ -2161,3 +2201,25 @@ The only 2 difference they make is that:
 An example of such collections are `java.util` collections for which support is provided via `TotallyBuildIterable` 
 and `TotallyBuildMap` in [Java collections' integration](#java-collections-integration), or `cats.data` types
 provided in [Cats integration](#cats-integration).
+
+### Third-party integrations
+
+Some libraries already provided support for Chimney, and you don't have to provide it yourself:
+
+#### Neotype
+
+[Neotype](https://github.com/kitlangton/neotype) is Scala 3 only library which makes working with `opaque type`s
+easier. It's similar to other libraries described in
+[Libraries with smart constructors](#libraries-with-smart-constructors).
+
+You can find it on [GitHub](https://github.com/kitlangton/neotype) or
+[Scaladex](https://index.scala-lang.org/kitlangton/neotype/artifacts/neotype).
+
+#### Refined4s
+
+[Refined4s](https://refined4s.kevinly.dev/) is Scala 3 only library which makes working with `opaque type`s
+easier just like Neotype or other libraries described in
+[Libraries with smart constructors](#libraries-with-smart-constructors).
+
+You can find it on [GitHub](https://github.com/kevin-lee/refined4s) or
+[Scaladex](https://index.scala-lang.org/kevin-lee/refined4s/artifacts/refined4s-cats).
