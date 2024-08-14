@@ -62,7 +62,10 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     (null: String).transformInto[Option[String]] ==> None
   }
 
-  // TODO: matchingSome
+  test("transform into Option-type with an override") {
+    Foo("abc").into[Option[Foo]].withFieldConst(_.matchingSome.value, "def").transform ==> Some(Foo("def"))
+    Option(Foo("abc")).into[Option[Foo]].withFieldConst(_.matchingSome.value, "def").transform ==> Some(Foo("def"))
+  }
 
   test("transform from Either-type into Either-type") {
     (Left(Foo("a")): Either[Foo, Foo]).transformInto[Either[Bar, Bar]] ==> Left(Bar("a"))
@@ -75,7 +78,20 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     (Right("a"): Either[String, String]).transformInto[Either[String, String]] ==> Right("a")
   }
 
-  // TODO: matchingLeft, matchingRight
+  test("transform Either-type with an override") {
+    (Left(Foo("a")): Either[Foo, Foo])
+      .into[Either[Bar, Bar]]
+      .withFieldConst(_.matchingLeft.value, "b")
+      .withFieldConst(_.matchingRight.value, "c")
+      .transform ==> Left(Bar("b"))
+    (Right(Foo("a")): Either[Foo, Foo])
+      .into[Either[Bar, Bar]]
+      .withFieldConst(_.matchingLeft.value, "b")
+      .withFieldConst(_.matchingRight.value, "c")
+      .transform ==> Right(Bar("c"))
+    Left(Foo("a")).into[Either[Bar, Bar]].withFieldConst(_.matchingLeft.value, "b").transform ==> Left(Bar("b"))
+    Right(Foo("a")).into[Either[Bar, Bar]].withFieldConst(_.matchingRight.value, "c").transform ==> Right(Bar("c"))
+  }
 
   test("transform from Iterable-type to Iterable-type") {
     Seq(Foo("a")).transformInto[Seq[Bar]] ==> Seq(Bar("a"))
