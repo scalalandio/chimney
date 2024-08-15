@@ -14,7 +14,7 @@ import io.scalaland.chimney.partial.{AsResult, Error, Result}
   *
   * @since 0.8.5
   */
-extension [A](option: Option[A])
+extension [A](option: Option[A]) {
 
   /** Converts [[scala.Some]] to [[io.scalaland.chimney.partial.Result.Value]] and uses user-provided
     * [[io.scalaland.chimney.partial.Error]] on [[scala.None]].
@@ -51,6 +51,7 @@ extension [A](option: Option[A])
     * @since 0.8.5
     */
   def orThrowableAsResult(onEmpty: => Throwable): Result[A] = Result.fromOptionOrThrowable(option, onEmpty)
+}
 
 /** Provides operations lifting `F[A]` to [[io.scalaland.chimney.partial.Result]].
   *
@@ -66,7 +67,8 @@ extension [A](option: Option[A])
   *
   * @since 0.8.5
   */
-extension [F[_], A](fa: F[A])
+extension [F[_], A](fa: F[A]) {
+
   /** Converts `F[A]` to [[io.scalaland.chimney.partial.Result]].
     *
     * @return
@@ -75,3 +77,4 @@ extension [F[_], A](fa: F[A])
     * @since 0.8.5
     */
   def asResult(using F: AsResult[F]): Result[A] = F.asResult(fa)
+}

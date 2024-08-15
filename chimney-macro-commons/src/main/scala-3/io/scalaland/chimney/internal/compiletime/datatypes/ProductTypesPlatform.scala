@@ -13,12 +13,13 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
     object platformSpecific {
 
       // to align API between Scala versions
-      extension (sym: Symbol)
+      extension (sym: Symbol) {
         def isAbstract: Boolean = !sym.isNoSymbol && sym.flags.is(Flags.Abstract) || sym.flags.is(Flags.Trait)
 
         def isPublic: Boolean = !sym.isNoSymbol &&
           !(sym.flags.is(Flags.Private) || sym.flags.is(Flags.PrivateLocal) || sym.flags.is(Flags.Protected) ||
             sym.privateWithin.isDefined || sym.protectedWithin.isDefined)
+      }
 
       def isParameterless(method: Symbol): Boolean =
         method.paramSymss.filterNot(_.exists(_.isType)).flatten.isEmpty
@@ -122,8 +123,8 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
               isInherited = !localDefinitions(getter),
               get =
                 // TODO: pathological cases like def foo[Unused]()()()
-                if getter.paramSymss.isEmpty then
-                  (in: Expr[A]) => in.asTerm.select(getter).appliedToArgss(Nil).asExprOf[tpe.Underlying]
+                if getter.paramSymss.isEmpty then (in: Expr[A]) =>
+                  in.asTerm.select(getter).appliedToArgss(Nil).asExprOf[tpe.Underlying]
                 else (in: Expr[A]) => in.asTerm.select(getter).appliedToNone.asExprOf[tpe.Underlying]
             )
           }

@@ -26,7 +26,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       }
 
       /** What is the type of each method parameter */
-      def paramsWithTypes(tpe: TypeRepr, method: Symbol, isConstructor: Boolean): Map[String, TypeRepr] =
+      def paramsWithTypes(tpe: TypeRepr, method: Symbol, isConstructor: Boolean): Map[String, TypeRepr] = {
         // constructor methods still have to have their type parameters manually applied,
         // even if we know the exact type of their class
         val appliedIfNecessary =
@@ -68,6 +68,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
             )
           // $COVERAGE-ON$
         }
+      }
 
       /** Applies type arguments from supertype to subtype if there are any */
       def subtypeTypeOf[A: Type](subtype: Symbol): ?<[A] =
@@ -94,10 +95,9 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         final def apply[A <: U](value: A): Type[A] =
           ConstantType(lift(value)).asType.asInstanceOf[Type[A]]
         final def unapply[A](A: Type[A]): Option[Existential.UpperBounded[U, Id]] =
-          if A <:< Type[U] then
-            quoted.Type
-              .valueOfConstant[U](using A.asInstanceOf[Type[U]])
-              .map(Existential.UpperBounded[U, Id, U](_))
+          if A <:< Type[U] then quoted.Type
+            .valueOfConstant[U](using A.asInstanceOf[Type[U]])
+            .map(Existential.UpperBounded[U, Id, U](_))
           else None
       }
     }
@@ -246,9 +246,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
       // while in Scala 2 macros it dealiases everything - to keep the same behavior between them we need to
       // apply recursive dealiasing ourselves.
       def dealiasAll(tpe: TypeRepr): TypeRepr =
-        tpe match
+        tpe match {
           case AppliedType(tycon, args) => AppliedType(dealiasAll(tycon), args.map(dealiasAll(_)))
           case _                        => tpe.dealias
+        }
 
       val repr = dealiasAll(TypeRepr.of[A])
 
@@ -260,10 +261,10 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
           // Classes defined inside a "class" or "def" have package.name.ClassName removed from the type,
           // so we have to prepend it ourselves to keep behavior consistent with Scala 2.
-          if symbolFullName != colorlessReprName && symbolFullName.endsWith("__" + colorlessReprName) then
-            symbolFullName.substring(0, symbolFullName.length - 2 - colorlessReprName.length) + colorfulReprName
-          else if symbolFullName != colorlessReprName && symbolFullName.endsWith("_" + colorlessReprName) then
-            symbolFullName.substring(0, symbolFullName.length - 1 - colorlessReprName.length) + colorfulReprName
+          if symbolFullName != colorlessReprName && symbolFullName.endsWith("__" + colorlessReprName)
+          then symbolFullName.substring(0, symbolFullName.length - 2 - colorlessReprName.length) + colorfulReprName
+          else if symbolFullName != colorlessReprName && symbolFullName.endsWith("_" + colorlessReprName)
+          then symbolFullName.substring(0, symbolFullName.length - 1 - colorlessReprName.length) + colorfulReprName
           else colorfulReprName
         }
         .getOrElse(repr.toString)

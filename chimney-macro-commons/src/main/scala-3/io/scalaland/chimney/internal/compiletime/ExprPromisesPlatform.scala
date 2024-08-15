@@ -67,19 +67,20 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
         Symbol.spliceOwner,
         platformSpecific.freshTerm(prefix),
         TypeRepr.of[A],
-        usageHint match
+        usageHint match {
           case UsageHint.None => Flags.EmptyFlags
           case UsageHint.Lazy => Flags.Lazy
           case UsageHint.Var  => Flags.Mutable
-        ,
+        },
         Symbol.noSymbol
       )
     private def freshTermName[A: Type](usageHint: UsageHint): ExprPromiseName = {
       // To keep things consistent with Scala 2 for e.g. "Some[String]" we should generate "some" rather than
       // "some[string], so we need to remove types applied to type constructor.
-      val repr = TypeRepr.of[A] match
+      val repr = TypeRepr.of[A] match {
         case AppliedType(repr, _) => repr
         case otherwise            => otherwise
+      }
       freshTermName(repr.show(using Printer.TypeReprShortCode).toLowerCase, usageHint)
     }
     private def freshTermName[A: Type](expr: Expr[?], usageHint: UsageHint): ExprPromiseName =
@@ -136,13 +137,13 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
         val sym = TypeRepr.of[SomeFrom].typeSymbol
         if sym.flags.is(Flags.Enum) && (sym.flags.is(Flags.JavaStatic) || sym.flags.is(Flags.StableRealizable)) then
-          // Scala 3's enums' parameterless cases are vals with type erased, so w have to match them by value
-          // case arg @ Enum.Value => ...
-          CaseDef(Bind(bindName, Ident(sym.termRef)), None, body)
+        // Scala 3's enums' parameterless cases are vals with type erased, so w have to match them by value
+        // case arg @ Enum.Value => ...
+        CaseDef(Bind(bindName, Ident(sym.termRef)), None, body)
         else if sym.flags.is(Flags.Module) then
-          // case objects are also matched by value but the tree for them is generated in a slightly different way
-          // case arg @ Enum.Value => ...
-          CaseDef(Bind(bindName, Ident(sym.companionModule.termRef)), None, body)
+        // case objects are also matched by value but the tree for them is generated in a slightly different way
+        // case arg @ Enum.Value => ...
+        CaseDef(Bind(bindName, Ident(sym.companionModule.termRef)), None, body)
         else
           // case arg : Enum.Value => ...
           CaseDef(Bind(bindName, Typed(Wildcard(), TypeTree.of[SomeFrom])), None, body)
