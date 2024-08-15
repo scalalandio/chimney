@@ -48,6 +48,11 @@ scala-cli repl --scala "{{ scala.3 }}" --dependency "io.scalaland::chimney::{{ c
 
 !!! tip
 
+    If you are looking for videos or a tutorials take a look at
+    [More sources, videos and tutorials](troubleshooting.md#more-sources-videos-and-tutorials) section!
+
+!!! tip
+
     If you are a advanced user, who wants to learn the difference between automatic derivation and semiautomatic derivation
     in Chimney, see [Automatic, semiautomatic and inlined derivation](cookbook.md#automatic-semiautomatic-and-inlined-derivation).
 

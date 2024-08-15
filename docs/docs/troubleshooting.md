@@ -2222,6 +2222,21 @@ would generate:
     + Derivation took 0.113354000 s
     ```
 
+## More sources, videos and tutorials
+
+Videos/presentations including or describing Chimney:
+
+ * [*Domain, API, DTO - translating between layers with Chimney*, Mateusz Kubuszok](https://www.youtube.com/watch?v=SNc7xeHrKnQ&t=194s) ([slides](https://mateuszkubuszok.github.io/DomainApiDtoChimney/#/)) - showing examples in newer versions of Chimney (1.0.0+)
+ * [*Breaking framework chains with vanilla Scala*, Marcin Szałomski](https://www.youtube.com/watch?v=U67BAeH3cxo)
+ * [*Unveiling the Magic: Chimney’s Internals, Macros & Scala 3*, Mateusz Kubuszok](https://mateuszkubuszok.github.io/ChimneyInternalsPresentation/#/) - unfortunatelly not recorded, the presentation explained what Chimney does under the hood and why
+   migration from 0.7.x (Scala 2-only) to 0.8.x (Scala 2 + Scala 3) was such a challenge (it wasn't only about macros)
+ * [*The Best Scala Libraries I Use in Every Project*, DevInsideYou](https://www.youtube.com/watch?v=ZymD5NuOwdA&t=194s) - mentions Chimney
+ * [*Data Juggling - Part 1 - Getting Started with #Chimney*, DevInsideYou](https://www.youtube.com/watch?v=ezz0BpEHEQY) - examples with older versions of Chimney (before `PartialTransformer`s introduction, `TransformerF` deprecation and 1.0.0 stabilization, but the main idea remained unchanged)
+
+Articles/written tutorials including or describing Chimney:
+
+ * [*5 Scala Libraries That Will Make Your Life Easier*, Jacek Kunicki](https://softwaremill.com/5-scala-libraries-that-will-make-your-life-easier/) - mentions Chimney as #2
+
 ## Ideas, questions or bug reports
 
 If you haven't found a solution to your question try asking
