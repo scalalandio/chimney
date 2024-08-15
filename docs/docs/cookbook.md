@@ -1123,6 +1123,18 @@ Decoding (with `PartialTransformer`s) requires handling of `Empty.Value` type
     `pb.addressbook.AddressBookType.Value` with `pb.addressbook.AddressBookType` we should
     [enable non-AnyVal wrapper types](supported-transformations.md#frominto-a-wrapper-type).
 
+    ```scala
+    // enable unwrapping/wrapping inline
+    domainType.into[pb.addressbook.AddressBookType].enableNonAnyValWrappers.transform == pbType
+
+    locally {
+      // enable unwrapping/wrapping for all derivations in the scope
+      implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+
+      domainType.transformInto[pb.addressbook.AddressBookType] == pbType
+    }
+    ```
+
 ### `sealed_value oneof` fields
 
 In case we can edit our protobuf definition, we can arrange the generated code
