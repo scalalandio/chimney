@@ -21,9 +21,10 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
 
     object PartialResult extends PartialResultModule {
       def apply[A: Type]: Type[partial.Result[A]] = quoted.Type.of[partial.Result[A]]
-      def unapply[A](tpe: Type[A]): Option[??] = tpe match
+      def unapply[A](tpe: Type[A]): Option[??] = tpe match {
         case '[partial.Result[inner]] => Some(Type[inner].as_??)
         case _                        => scala.None
+      }
 
       def Value[A: Type]: Type[partial.Result.Value[A]] = quoted.Type.of[partial.Result.Value[A]]
       val Errors: Type[partial.Result.Errors] = quoted.Type.of[partial.Result.Errors]
@@ -51,10 +52,11 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[Name <: String: Type, Tpe: Type, Args <: runtime.ArgumentList: Type]
             : Type[runtime.ArgumentList.Argument[Name, Tpe, Args]] =
           quoted.Type.of[runtime.ArgumentList.Argument[Name, Tpe, Args]]
-        def unapply[A](tpe: Type[A]): Option[(?<[String], ??, ?<[runtime.ArgumentList])] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[String], ??, ?<[runtime.ArgumentList])] = tpe match {
           case '[runtime.ArgumentList.Argument[name, tpe, args]] =>
             Some((Type[name].as_?<[String], Type[tpe].as_??, Type[args].as_?<[runtime.ArgumentList]))
           case _ => scala.None
+        }
       }
     }
 
@@ -64,10 +66,11 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[Head <: runtime.ArgumentList: Type, Tail <: runtime.ArgumentLists: Type]
             : Type[runtime.ArgumentLists.List[Head, Tail]] =
           quoted.Type.of[runtime.ArgumentLists.List[Head, Tail]]
-        def unapply[A](tpe: Type[A]): Option[(?<[runtime.ArgumentList], ?<[runtime.ArgumentLists])] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.ArgumentList], ?<[runtime.ArgumentLists])] = tpe match {
           case '[runtime.ArgumentLists.List[head, tail]] =>
             Some((Type[head].as_?<[runtime.ArgumentList], Type[tail].as_?<[runtime.ArgumentLists]))
           case _ => scala.None
+        }
       }
     }
 
@@ -77,56 +80,62 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.Const[ToPath, Tail]] =
           quoted.Type.of[runtime.TransformerOverrides.Const[ToPath, Tail]]
-        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
           case '[runtime.TransformerOverrides.Const[toPath, cfg]] =>
             Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
           case _ => scala.None
+        }
       }
       object ConstPartial extends ConstPartialModule {
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.ConstPartial[ToPath, Tail]] =
           quoted.Type.of[runtime.TransformerOverrides.ConstPartial[ToPath, Tail]]
-        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
           case '[runtime.TransformerOverrides.ConstPartial[toPath, cfg]] =>
             Some((Type[toPath].as_>?<[Nothing, runtime.Path], Type[cfg].as_>?<[Nothing, runtime.TransformerOverrides]))
           case _ => scala.None
+        }
       }
       object Computed extends ComputedModule {
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.Computed[ToPath, Tail]] =
           quoted.Type.of[runtime.TransformerOverrides.Computed[ToPath, Tail]]
-        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
           case '[runtime.TransformerOverrides.Computed[toPath, cfg]] =>
             Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
           case _ => scala.None
+        }
       }
       object ComputedPartial extends ComputedPartialModule {
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.ComputedPartial[ToPath, Tail]] =
           quoted.Type.of[runtime.TransformerOverrides.ComputedPartial[ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(Nothing >?< runtime.Path, Nothing >?< runtime.TransformerOverrides)] =
-          tpe match
+          tpe match {
             case '[runtime.TransformerOverrides.ComputedPartial[toPath, cfg]] =>
               Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
             case _ => scala.None
+          }
       }
       object CaseComputed extends CaseComputedModule {
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.CaseComputed[ToPath, Tail]] =
           quoted.Type.of[runtime.TransformerOverrides.CaseComputed[ToPath, Tail]]
-        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
           case '[runtime.TransformerOverrides.CaseComputed[toPath, cfg]] =>
             Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
           case _ => scala.None
+        }
       }
       object CaseComputedPartial extends CaseComputedPartialModule {
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Tail]] =
           quoted.Type.of[runtime.TransformerOverrides.CaseComputedPartial[ToPath, Tail]]
-        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
           case '[runtime.TransformerOverrides.CaseComputedPartial[toPath, cfg]] =>
             Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
           case _ => scala.None
+        }
       }
       object Constructor extends ConstructorModule {
         def apply[
@@ -137,7 +146,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           quoted.Type.of[runtime.TransformerOverrides.Constructor[Args, ToPath, Tail]]
         def unapply[A](
             tpe: Type[A]
-        ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
+        ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
           case '[runtime.TransformerOverrides.Constructor[args, toPath, cfg]] =>
             Some(
               (
@@ -147,6 +156,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
               )
             )
           case _ => scala.None
+        }
       }
       object ConstructorPartial extends ConstructorPartialModule {
         def apply[
@@ -157,7 +167,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           quoted.Type.of[runtime.TransformerOverrides.ConstructorPartial[Args, ToPath, Tail]]
         def unapply[A](
             tpe: Type[A]
-        ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match
+        ): Option[(?<[runtime.ArgumentLists], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
           case '[runtime.TransformerOverrides.ConstructorPartial[args, toPath, cfg]] =>
             Some(
               (
@@ -167,6 +177,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
               )
             )
           case _ => scala.None
+        }
       }
       object RenamedFrom extends RenamedFromModule {
         def apply[
@@ -176,7 +187,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         ]: Type[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Tail]] =
           quoted.Type.of[runtime.TransformerOverrides.RenamedFrom[FromPath, ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
-          tpe match
+          tpe match {
             case '[runtime.TransformerOverrides.RenamedFrom[fromPath, toPath, cfg]] =>
               Some(
                 (
@@ -186,6 +197,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
                 )
               )
             case _ => scala.None
+          }
       }
       object RenamedTo extends RenamedToModule {
         def apply[
@@ -195,7 +207,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         ]: Type[runtime.TransformerOverrides.RenamedTo[FromPath, ToPath, Tail]] =
           quoted.Type.of[runtime.TransformerOverrides.RenamedTo[FromPath, ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
-          tpe match
+          tpe match {
             case '[runtime.TransformerOverrides.RenamedTo[fromPath, toPath, cfg]] =>
               Some(
                 (
@@ -205,6 +217,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
                 )
               )
             case _ => scala.None
+          }
       }
     }
 
@@ -216,20 +229,22 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             : Type[runtime.TransformerFlags.Enable[F, Flags]] =
           quoted.Type.of[runtime.TransformerFlags.Enable[F, Flags]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.TransformerFlags.Flag], ?<[runtime.TransformerFlags])] =
-          tpe match
+          tpe match {
             case '[runtime.TransformerFlags.Enable[f, flags]] =>
               Some((Type[f].as_?<[runtime.TransformerFlags.Flag], Type[flags].as_?<[runtime.TransformerFlags]))
             case _ => scala.None
+          }
       }
       object Disable extends DisableModule {
         def apply[F <: runtime.TransformerFlags.Flag: Type, Flags <: runtime.TransformerFlags: Type]
             : Type[runtime.TransformerFlags.Disable[F, Flags]] =
           quoted.Type.of[runtime.TransformerFlags.Disable[F, Flags]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.TransformerFlags.Flag], ?<[runtime.TransformerFlags])] =
-          tpe match
+          tpe match {
             case '[runtime.TransformerFlags.Disable[f, flags]] =>
               Some((Type[f].as_?<[runtime.TransformerFlags.Flag], Type[flags].as_?<[runtime.TransformerFlags]))
             case _ => scala.None
+          }
       }
 
       object Flags extends FlagsModule {
@@ -242,9 +257,10 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         object DefaultValueOfType extends DefaultValueOfTypeModule {
           def apply[T: Type]: Type[runtime.TransformerFlags.DefaultValueOfType[T]] =
             quoted.Type.of[runtime.TransformerFlags.DefaultValueOfType[T]]
-          def unapply[A](tpe: Type[A]): Option[??] = tpe match
+          def unapply[A](tpe: Type[A]): Option[??] = tpe match {
             case '[runtime.TransformerFlags.DefaultValueOfType[t]] => Some(Type[t].as_??)
             case _                                                 => scala.None
+          }
         }
         val BeanGetters: Type[runtime.TransformerFlags.BeanGetters] =
           quoted.Type.of[runtime.TransformerFlags.BeanGetters]
@@ -264,27 +280,30 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           def apply[R <: dsls.ImplicitTransformerPreference: Type]
               : Type[runtime.TransformerFlags.ImplicitConflictResolution[R]] =
             quoted.Type.of[runtime.TransformerFlags.ImplicitConflictResolution[R]]
-          def unapply[A](tpe: Type[A]): Option[?<[dsls.ImplicitTransformerPreference]] = tpe match
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.ImplicitTransformerPreference]] = tpe match {
             case '[runtime.TransformerFlags.ImplicitConflictResolution[r]] =>
               Some(Type[r].as_?<[dsls.ImplicitTransformerPreference])
             case _ => scala.None
+          }
         }
         object FieldNameComparison extends FieldNameComparisonModule {
           def apply[C <: dsls.TransformedNamesComparison: Type]: Type[runtime.TransformerFlags.FieldNameComparison[C]] =
             quoted.Type.of[runtime.TransformerFlags.FieldNameComparison[C]]
-          def unapply[A](tpe: Type[A]): Option[?<[dsls.TransformedNamesComparison]] = tpe match
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.TransformedNamesComparison]] = tpe match {
             case '[runtime.TransformerFlags.FieldNameComparison[c]] =>
               Some(Type[c].as_?<[dsls.TransformedNamesComparison])
             case _ => scala.None
+          }
         }
         object SubtypeNameComparison extends SubtypeNameComparisonModule {
           def apply[C <: dsls.TransformedNamesComparison: Type]
               : Type[runtime.TransformerFlags.SubtypeNameComparison[C]] =
             quoted.Type.of[runtime.TransformerFlags.SubtypeNameComparison[C]]
-          def unapply[A](tpe: Type[A]): Option[?<[dsls.TransformedNamesComparison]] = tpe match
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.TransformedNamesComparison]] = tpe match {
             case '[runtime.TransformerFlags.SubtypeNameComparison[c]] =>
               Some(Type[c].as_?<[dsls.TransformedNamesComparison])
             case _ => scala.None
+          }
         }
         val MacrosLogging: Type[runtime.TransformerFlags.MacrosLogging] =
           quoted.Type.of[runtime.TransformerFlags.MacrosLogging]
@@ -304,10 +323,11 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           quoted.Type.of[runtime.PatcherFlags.Enable[F, Flags]]
 
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.PatcherFlags.Flag], ?<[runtime.PatcherFlags])] =
-          tpe match
+          tpe match {
             case '[runtime.PatcherFlags.Enable[f, flags]] =>
               Some((Type[f].as_?<[runtime.PatcherFlags.Flag], Type[flags].as_?<[runtime.PatcherFlags]))
             case _ => scala.None
+          }
       }
       object Disable extends DisableModule {
         def apply[F <: runtime.PatcherFlags.Flag: Type, Flags <: runtime.PatcherFlags: Type]
@@ -315,10 +335,11 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           quoted.Type.of[runtime.PatcherFlags.Disable[F, Flags]]
 
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.PatcherFlags.Flag], ?<[runtime.PatcherFlags])] =
-          tpe match
+          tpe match {
             case '[runtime.PatcherFlags.Disable[f, flags]] =>
               Some((Type[f].as_?<[runtime.PatcherFlags.Flag], Type[flags].as_?<[runtime.PatcherFlags]))
             case _ => scala.None
+          }
       }
 
       object Flags extends FlagsModule {
@@ -335,100 +356,112 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       object Select extends SelectModule {
         def apply[Init <: runtime.Path: Type, FieldName <: String: Type]: Type[runtime.Path.Select[Init, FieldName]] =
           quoted.Type.of[runtime.Path.Select[Init, FieldName]]
-        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[String])] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[String])] = tpe match {
           case '[runtime.Path.Select[init, fieldName]] =>
             Some((Type[init].as_?<[runtime.Path], Type[fieldName].as_?<[String]))
           case _ => scala.None
+        }
       }
       object Matching extends MatchingModule {
         def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.Matching[Init, Subtype]] =
           quoted.Type.of[runtime.Path.Matching[Init, Subtype]]
-        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ??)] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ??)] = tpe match {
           case '[runtime.Path.Matching[init, subtype]] => Some((Type[init].as_?<[runtime.Path], Type[subtype].as_??))
           case _                                       => scala.None
+        }
       }
       object SourceMatching extends SourceMatchingModule {
         def apply[Init <: runtime.Path: Type, Subtype: Type]: Type[runtime.Path.SourceMatching[Init, Subtype]] =
           quoted.Type.of[runtime.Path.SourceMatching[Init, Subtype]]
-        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ??)] = tpe match
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ??)] = tpe match {
           case '[runtime.Path.SourceMatching[init, subtype]] =>
             Some((Type[init].as_?<[runtime.Path], Type[subtype].as_??))
           case _ => scala.None
+        }
       }
       object EveryItem extends EveryItemModule {
         def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryItem[Init]] =
           quoted.Type.of[runtime.Path.EveryItem[Init]]
-        def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
+        def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match {
           case '[runtime.Path.EveryItem[init]] => Some(Type[init].as_?<[runtime.Path])
           case _                               => scala.None
+        }
       }
       object EveryMapKey extends EveryMapKeyModule {
         def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryMapKey[Init]] =
           quoted.Type.of[runtime.Path.EveryMapKey[Init]]
-        def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
+        def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match {
           case '[runtime.Path.EveryMapKey[init]] => Some(Type[init].as_?<[runtime.Path])
           case _                                 => scala.None
+        }
       }
       object EveryMapValue extends EveryMapValueModule {
         def apply[Init <: runtime.Path: Type]: Type[runtime.Path.EveryMapValue[Init]] =
           quoted.Type.of[runtime.Path.EveryMapValue[Init]]
-        def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match
+        def unapply[A](tpe: Type[A]): Option[?<[runtime.Path]] = tpe match {
           case '[runtime.Path.EveryMapValue[init]] => Some(Type[init].as_?<[runtime.Path])
           case _                                   => scala.None
+        }
       }
     }
 
     object DefaultValue extends DefaultValueModule {
       def apply[Value: Type]: Type[integrations.DefaultValue[Value]] =
         quoted.Type.of[integrations.DefaultValue[Value]]
-      def unapply[A](tpe: Type[A]): Option[??] = tpe match
+      def unapply[A](tpe: Type[A]): Option[??] = tpe match {
         case '[integrations.DefaultValue[value]] => Some(Type[value].as_??)
         case _                                   => scala.None
+      }
     }
     object OptionalValue extends OptionalValueModule {
       def apply[Optional: Type, Value: Type]: Type[integrations.OptionalValue[Optional, Value]] =
         quoted.Type.of[integrations.OptionalValue[Optional, Value]]
-      def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match
+      def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match {
         case '[integrations.OptionalValue[optional, value]] => Some((Type[optional].as_??, Type[value].as_??))
         case _                                              => scala.None
+      }
       def inferred[Optional: Type]: ExistentialType =
         quoted.Type.of[integrations.OptionalValue[Optional, ?]].as_??
     }
     object PartiallyBuildIterable extends PartiallyBuildIterableModule {
       def apply[Collection: Type, Item: Type]: Type[integrations.PartiallyBuildIterable[Collection, Item]] =
         quoted.Type.of[integrations.PartiallyBuildIterable[Collection, Item]]
-      def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match
+      def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match {
         case '[integrations.PartiallyBuildIterable[collection, item]] =>
           Some((Type[collection].as_??, Type[item].as_??))
         case _ => scala.None
+      }
       def inferred[Collection: Type]: ExistentialType =
         quoted.Type.of[integrations.PartiallyBuildIterable[Collection, ?]].as_??
     }
     object PartiallyBuildMap extends PartiallyBuildMapModule {
       def apply[Map: Type, Key: Type, Value: Type]: Type[integrations.PartiallyBuildMap[Map, Key, Value]] =
         quoted.Type.of[integrations.PartiallyBuildMap[Map, Key, Value]]
-      def unapply[A](tpe: Type[A]): Option[(??, ??, ??)] = tpe match
+      def unapply[A](tpe: Type[A]): Option[(??, ??, ??)] = tpe match {
         case '[integrations.PartiallyBuildMap[map, key, value]] =>
           Some((Type[map].as_??, Type[key].as_??, Type[value].as_??))
         case _ => scala.None
+      }
     }
     object TotallyBuildIterable extends TotallyBuildIterableModule {
       def apply[Collection: Type, Item: Type]: Type[integrations.TotallyBuildIterable[Collection, Item]] =
         quoted.Type.of[integrations.TotallyBuildIterable[Collection, Item]]
-      def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match
+      def unapply[A](tpe: Type[A]): Option[(??, ??)] = tpe match {
         case '[integrations.TotallyBuildIterable[collection, item]] =>
           Some((Type[collection].as_??, Type[item].as_??))
         case _ => scala.None
+      }
       def inferred[Collection: Type]: ExistentialType =
         quoted.Type.of[integrations.TotallyBuildIterable[Collection, ?]].as_??
     }
     object TotallyBuildMap extends TotallyBuildMapModule {
       def apply[Map: Type, Key: Type, Value: Type]: Type[integrations.TotallyBuildMap[Map, Key, Value]] =
         quoted.Type.of[integrations.TotallyBuildMap[Map, Key, Value]]
-      def unapply[A](tpe: Type[A]): Option[(??, ??, ??)] = tpe match
+      def unapply[A](tpe: Type[A]): Option[(??, ??, ??)] = tpe match {
         case '[integrations.TotallyBuildMap[map, key, value]] =>
           Some((Type[map].as_??, Type[key].as_??, Type[value].as_??))
         case _ => scala.None
+      }
     }
   }
 }

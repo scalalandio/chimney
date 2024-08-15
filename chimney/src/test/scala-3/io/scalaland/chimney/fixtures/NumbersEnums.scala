@@ -4,21 +4,23 @@ package numbers
 // following https://en.wikipedia.org/wiki/Names_of_large_numbers
 
 package shortEnums {
-  enum NumScale[+A, Dummy]:
+  enum NumScale[+A, Dummy] {
     case Zero extends NumScale[Nothing, Nothing]
     case Million[A](count: A) extends NumScale[A, Nothing] // 10^6
     case Billion[A](count: A) extends NumScale[A, Nothing] // 10^9
     case Trillion[A](count: A) extends NumScale[A, Nothing] // 10^12
+  }
 }
 
 package longEnums {
-  enum NumScale[+A]:
+  enum NumScale[+A] {
     case Zero extends NumScale[Nothing]
     case Million[A](count: A) extends NumScale[A] // 10^6
     case Milliard[A](count: A) extends NumScale[A] // 10^9
     case Billion[A](count: A) extends NumScale[A] // 10^12
     case Billiard[A](count: A) extends NumScale[A] // 10^15
     case Trillion[A](count: A) extends NumScale[A] // 10^18
+  }
 }
 
 import io.scalaland.chimney.{PartialTransformer, Transformer}

@@ -15,8 +15,10 @@ object TotalTransformerSingleton3SyntaxSpec {
 
   // Same issue as with https://github.com/scalalandio/chimney/pull/533 / https://github.com/scala/scala3/issues/20349
   // / https://github.com/scala/scala3/issues/19825.
-  enum Input:
+  enum Input {
     case Foo
-  enum Output:
+  }
+  enum Output {
     case Bar
+  }
 }
