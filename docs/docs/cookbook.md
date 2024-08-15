@@ -2202,6 +2202,119 @@ An example of such collections are `java.util` collections for which support is 
 and `TotallyBuildMap` in [Java collections' integration](#java-collections-integration), or `cats.data` types
 provided in [Cats integration](#cats-integration).
 
+### Custom error types
+
+Chimney's derivation supports only 1 error type: `partial.Result[A]`. It allows to effectively combine errors,
+provide paths to failed values and chose between fail-fast and error accumulating mode in runtime.
+
+However, projects might use different ones: `Either[String, A]`, `Try[A]`, `ValidatedNel[String, A]`, ... so we might
+want to be able to convert back and forth between `partial.Result` and the project's error type.
+
+Conversion into `partial.Result` is handled with `io.scalaland.chimney.partial.syntax._`, which provides `.asResult`
+extension methods, while conversion from is a method `.to[ErrorTypeName]`:
+
+!!! example
+
+    ```scala    
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial.syntax._
+    import scala.util.Try
+
+    case class Foo(str: String, meta: String)
+    case class Bar(int: Int, meta: String)
+
+    pprint.pprintln(
+      Foo("10", "value")
+        .intoPartial[Bar]
+        .withFieldComputedPartial(_.int, foo => Try(foo.str.toInt).asResult) // Try -> partial.Result
+        .transform
+        .asOption // partial.Result -> Option
+    )
+    // expected output:
+    // Bar(int = 10, meta = "value")
+    ```
+
+Out of the box, Chimney provides `partial.Result[A]` conversions:
+
+  * from/to `Option[A]`:
+    * `(option: Option[A]).asResult: partial.Result[A]`
+    * `(option: Option[A]).toPartialResult: partial.Result[A]` (old syntax)
+    * `(option: Option[A]).toPartialResultOrString(ifEmpty: String): partial.Result[A]` (old syntax)
+    * `(result: partial.Result[A]).asOption: Option[A]`
+* from `Either[String, A]`:
+    * `(either: Either[String, A]).asResult: partial.Result[A]`
+    * `(either: Either[String, A]).toPartialResult: partial.Result[A]` (old syntax)
+ * from `Either[partial.Result.Errors, A]`:
+    * `(either: Either[partial.Result.Errors, A]).asResult: partial.Result[A]`
+    * `(result: partial.Result[A]).asEither: Either[partial.Result.Errors, A]`
+ * from `Try[A]`:
+    * `(ttry: Try[A]).asResult`
+    * `(ttry: Try[A]).toPartialResult` (old syntax)
+
+To enable `.asResult` syntax, all you need to do is providind an `implicit` instance of
+`io.scalaland.chimney.partial.AsResult` type class:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class MyErrorType[A](value: Either[List[String], A])
+
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+    import io.scalaland.chimney.partial.syntax._
+
+    implicit val myErrorTypeAsResult: partial.AsResult[MyErrorType] =
+      new partial.AsResult[MyErrorType] {
+
+        def asResult[A](myResult: MyErrorType[A]): partial.Result[A] = myResult.value match {
+          case Right(value)        => partial.Result.fromValue(value)
+          case Left(head :: tails) => partial.Result.fromErrorStrings(head, tails: _*)
+          case Left(Nil)           => partial.Result.fromEmpty
+        }
+      }
+
+    pprint.pprintln(
+      MyErrorType(Right("value")).asResult
+    )
+    // expected output:
+    // Value(value = "value")
+    ```
+
+However, since conversion from `partial.Result` needs a dedicated name (`.asErrorTypeName` by convention) it
+requires a normal extension methods provided by the user.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class MyErrorType[A](value: Either[List[String], A])
+
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+
+    implicit class MyErrorTypeResultOps[A](private val result: partial.Result[A]) extends AnyVal {
+
+      def asMyErrorType: MyErrorType[A] = result.asEitherErrorPathMessageStrings match {
+        case Right(value) => MyErrorType(Right(value))
+        case Left(errors) => MyErrorType(Left(errors.map { case (path, msg) => msg }.toList))
+      }
+    }
+
+    pprint.pprintln(
+      partial.Result.fromValue("value").asMyErrorType
+    )
+    // expected output:
+    // MyErrorType(value = Right(value = "value"))
+    ```
+
 ### Third-party integrations
 
 Some libraries already provided support for Chimney, and you don't have to provide it yourself:
