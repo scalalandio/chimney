@@ -591,6 +591,25 @@ object Result {
       case t: Throwable => fromErrorThrowable(t)
     }
 
+  /** Converts possibly throwing computation into [[io.scalaland.chimney.partial.Result]] by catching only
+    * [[scala.util.control.NonFatal NonFatal Exceptions]].
+    *
+    * @tparam A
+    *   type of successful result
+    * @param value
+    *   computation to run while catching its [[scala.util.control.NonFatal NonFatal Exceptions]]
+    * @return
+    *   successful [[io.scalaland.chimney.partial.Result.Value]] if computation didn't throw, failed
+    *   [[io.scalaland.chimney.partial.Result.Errors]] with caught Exception if it threw
+    * @since 1.5.0
+    */
+  final def fromCatchingNonFatal[A](value: => A): Result[A] =
+    try
+      fromValue(value)
+    catch {
+      case scala.util.control.NonFatal(t) => fromErrorThrowable(t)
+    }
+
   /** Converts an [[scala.collection.Iterator]] of input type into selected collection of output type, aggregating
     * errors from conversions of individual elements.
     *
