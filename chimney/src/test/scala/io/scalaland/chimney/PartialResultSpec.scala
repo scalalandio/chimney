@@ -266,6 +266,23 @@ class PartialResultSpec extends ChimneySpec {
     partial.Result.fromCatching(throw exception) ==> partial.Result.fromErrorThrowable(exception)
   }
 
+  test("fromCatchingNonFatal converts thunk to Result caching NonFatal Throwable as Error") {
+    val nseEx = new NoSuchElementException("oops")
+    partial.Result.fromCatchingNonFatal(1) ==> partial.Result.fromValue(1)
+    partial.Result.fromCatchingNonFatal(throw nseEx) ==> partial.Result.fromErrorThrowable(nseEx)
+  }
+
+  test("fromCatchingNonFatal propagates Fatal Throwable") {
+    try
+      partial.Result.fromCatchingNonFatal(throw new OutOfMemoryError("oops"))
+    catch {
+      case _: VirtualMachineError =>
+        ()
+      case th: Throwable =>
+        throw th
+    }
+  }
+
   test(
     "traverse with failFast = false preserves parallel semantics (both branches are executed even if one of them fails)"
   ) {
