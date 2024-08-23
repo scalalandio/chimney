@@ -19,7 +19,7 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   * @since 0.7.0
   */
 @FunctionalInterface
-trait PartialTransformer[From, To] extends PartialTransformer.AutoDerived[From, To] {
+trait PartialTransformer[From, To] extends PartialTransformer.AutoDerived[From, To] { self =>
 
   /** Run transformation using provided value as a source.
     *
@@ -58,6 +58,33 @@ trait PartialTransformer[From, To] extends PartialTransformer.AutoDerived[From, 
     */
   final def transformFailFast(src: From): partial.Result[To] =
     transform(src, failFast = true)
+
+  /** Creates a new [[io.scalaland.chimney.PartialTransformer PartialTransformer]] by applying a pure function to a
+    * [[io.scalaland.chimney.partial.Result Result]] of transforming `From` to `To`. See an example:
+    * {{{
+    *   val stringTransformer: PartialTransformer[String, Int] =
+    *     PartialTransformer.fromFunction(_.length)
+    *
+    *   case class Length(length: Int)
+    *
+    *   implicit val toLengthTransformer: PartialTransformer[String, Length] =
+    *     stringTransformer.map(id => Length(id))
+    * }}}
+    *
+    * @param f
+    *   a pure function that maps a value of `To` to `A`
+    * @return
+    *   new [[io.scalaland.chimney.PartialTransformer PartialTransformer]]
+    *
+    * @since 1.5.0
+    */
+  final def map[A](f: To => A): PartialTransformer[From, A] = new PartialTransformer[From, A] {
+    override def transform(src: From, failFast: Boolean): partial.Result[A] =
+      self.transform(src, failFast) match {
+        case partial.Result.Value(to)    => partial.Result.Value(f(to))
+        case errs: partial.Result.Errors => errs.asInstanceOf[partial.Result[A]]
+      }
+  }
 }
 
 /** Companion of [[io.scalaland.chimney.PartialTransformer]].

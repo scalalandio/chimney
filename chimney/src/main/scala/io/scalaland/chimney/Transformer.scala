@@ -43,7 +43,7 @@ trait Transformer[From, To] extends Transformer.AutoDerived[From, To] { self =>
     * }}}
     *
     * @param f
-    *   a pure function to map a value of `A` to `From`
+    *   a pure function that maps a value of `A` to `From`
     * @return
     *   new [[io.scalaland.chimney.Transformer Transformer]]
     *
