@@ -49,7 +49,7 @@ trait Transformer[From, To] extends Transformer.AutoDerived[From, To] { self =>
     *
     * @since 1.5.0
     */
-  def contramap[A](f: A => From): Transformer[A, To] = new Transformer[A, To] {
+  final def contramap[A](f: A => From): Transformer[A, To] = new Transformer[A, To] {
     override def transform(src: A): To = self.transform(f(src))
   }
 }
