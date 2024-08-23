@@ -1,5 +1,7 @@
 package io.scalaland.chimney
 
+import io.scalaland.chimney.dsl.*
+
 class PartialTransformerSpec extends ChimneySpec {
 
   private val pt1 = PartialTransformer[String, Int](str => partial.Result.fromValue(str.toInt))
@@ -72,5 +74,44 @@ class PartialTransformerSpec extends ChimneySpec {
       ("s1", """For input string: "abc"""")
       // no second error due to fail fast mode
     )
+  }
+
+  test("map") {
+    case class Length(length: Int)
+
+    trait Prefix {
+      def code: Int
+    }
+
+    object Prefix {
+
+      def from(i: Int): Prefix = i match {
+        case 1 => FooPrefix
+        case 2 => BarPrefix
+        case _ => NanPrefix
+      }
+
+      case object NanPrefix extends Prefix {
+        override def code: Int = 0
+      }
+
+      case object FooPrefix extends Prefix {
+        override def code: Int = 1
+      }
+
+      case object BarPrefix extends Prefix {
+        override def code: Int = 2
+      }
+    }
+
+    implicit val toLengthTransformer: PartialTransformer[String, Length] =
+      pt1.map(Length.apply)
+
+    implicit val toPrefixTransformer: PartialTransformer[String, Prefix] =
+      pt1.map(Prefix.from)
+
+    val id = "2"
+    id.intoPartial[Length].transform ==> partial.Result.fromValue(Length(id.toInt))
+    id.intoPartial[Prefix].transform ==> partial.Result.fromValue(Prefix.BarPrefix)
   }
 }
