@@ -18,7 +18,7 @@ import io.scalaland.chimney.internal.runtime.{TransformerFlags, TransformerOverr
   * @since 0.1.0
   */
 @FunctionalInterface
-trait Transformer[From, To] extends Transformer.AutoDerived[From, To] {
+trait Transformer[From, To] extends Transformer.AutoDerived[From, To] { self =>
 
   /** Run transformation using provided value as a source.
     *
@@ -30,6 +30,28 @@ trait Transformer[From, To] extends Transformer.AutoDerived[From, To] {
     * @since 0.1.0
     */
   def transform(src: From): To
+
+  /** Creates a new [[io.scalaland.chimney.Transformer Transformer]] by applying a pure function to a source of type `A`
+    * before transforming it to `To`. See an example:
+    * {{{
+    *   val stringTransformer: Transformer[String, Int] = _.length
+    *
+    *   case class Id(id: String)
+    *
+    *   implicit val idTransformer: Transformer[Id, Int] =
+    *     stringTransformer.contramap(_.id)
+    * }}}
+    *
+    * @param f
+    *   a pure function to map a value of `A` to `From`
+    * @return
+    *   new [[io.scalaland.chimney.Transformer Transformer]]
+    *
+    * @since 1.5.0
+    */
+  def contramap[A](f: A => From): Transformer[A, To] = new Transformer[A, To] {
+    override def transform(src: A): To = self.transform(f(src))
+  }
 }
 
 /** Companion of [[io.scalaland.chimney.Transformer]].
