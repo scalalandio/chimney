@@ -18,7 +18,7 @@ export io.scalaland.chimney.syntax.{
 }
 
 // Extension methods in dsl.* summon TypeClass.AutoDerived while extension methods in syntax.* summon TypeClass.
-// This help us preserve legacy behavior in dsl code while keeping stricter separation in auto/syntax imports.
+// This helps us preserve legacy behavior in dsl code while keeping stricter separation in auto/syntax imports.
 
 /** Provides transformer operations on values of any type.
   *

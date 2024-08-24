@@ -51,7 +51,7 @@ private[compiletime] trait GatewayCommons { this: ChimneyDefinitions =>
     )
   }
 
-  /** Adds @SuppressWarnings/@nowarn annotation the the generated code - allows customizing it with a compiler flag. */
+  /** Adds @SuppressWarnings/@nowarn annotation the generated code - allows customizing it with a compiler flag. */
   protected def suppressWarnings[A: Type](expr: Expr[A]): Expr[A] = {
     // Add @SuppressWarnings(...) to the expr:
     // - by default use: "org.wartremover.warts.All" (WartRemover) and "all" (Scapegoat)
