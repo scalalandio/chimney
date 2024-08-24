@@ -53,7 +53,7 @@ scala-cli repl --scala "{{ scala.3 }}" --dependency "io.scalaland::chimney::{{ c
 
 !!! tip
 
-    If you are a advanced user, who wants to learn the difference between automatic derivation and semiautomatic derivation
+    If you are an advanced user, who wants to learn the difference between automatic derivation and semiautomatic derivation
     in Chimney, see [Automatic, semiautomatic and inlined derivation](cookbook.md#automatic-semiautomatic-and-inlined-derivation).
 
 ## Java collections integration

@@ -1553,7 +1553,7 @@ can pick up both.
 
 While Chimney supports a lot of transformations out of the box, sometimes it needs our help. We can do it ad hoc
 like described in [Supported transformations](supported-transformations.md), but if we are maintaining some library
-we would like our users to be able to integrate with Chimney using a single import. How do do it?
+we would like our users to be able to integrate with Chimney using a single import. How to do it?
 
 Transformations between 2 fully-known types can be handled with normal `implicit` values:
 
