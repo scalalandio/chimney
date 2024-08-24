@@ -59,7 +59,7 @@ object Patcher extends PatcherCompanionPlatform {
   def define[A, Patch]: PatcherDefinition[A, Patch, PatcherOverrides.Empty, PatcherFlags.Default] =
     new PatcherDefinition
 
-  /** Type class used when you want o allow using automatically derived patchings.
+  /** Type class used when you want to allow using automatically derived patchings.
     *
     * When we want to only allow semiautomatically derived/manually defined instances you should use
     * [[io.scalaland.chimney.Patcher]].

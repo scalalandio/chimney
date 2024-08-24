@@ -80,7 +80,7 @@ object Transformer extends TransformerCompanionPlatform {
       : PartialTransformerDefinition[From, To, TransformerOverrides.Empty, TransformerFlags.Default] =
     new PartialTransformerDefinition(TransformerDefinitionCommons.emptyRuntimeDataStore)
 
-  /** Type class used when you want o allow using automatically derived transformations.
+  /** Type class used when you want to allow using automatically derived transformations.
     *
     * When we want to only allow semiautomatically derived/manually defined instances you should use
     * [[io.scalaland.chimney.Transformer]].
