@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal.compiletime
 import scala.collection.compat.*
 import scala.util.control.NonFatal
 
-/** Representations of a ongoing computation.
+/** Representations of an ongoing computation.
   *
   * Features:
   *   - handles errors

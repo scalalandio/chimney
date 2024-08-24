@@ -40,7 +40,7 @@ private[chimney] trait PartialTransformerAutoDerivedCompanionPlatform { this: Pa
     *
     * @since 0.8.0
     */
-  @targetName("derive") // all methods were suppose to be named deriveAutomatic, but this one slipped through
+  @targetName("derive") // all methods were supposed to be named deriveAutomatic, but this one slipped through
   implicit inline def deriveAutomatic[From, To]: PartialTransformer.AutoDerived[From, To] =
     ${ TransformerMacros.derivePartialTransformerWithDefaults[From, To] }
 }
