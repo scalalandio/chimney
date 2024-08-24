@@ -9,7 +9,7 @@ assignees: ''
 
 **Checklist**
 
-- [ ] I read the documentation at https://chimney.readthedocs.io/ and checked that the functionality doesn't exists
+- [ ] I read the documentation at https://chimney.readthedocs.io/ and checked that the functionality doesn't exist
 - [ ] I checked the https://github.com/scalalandio/chimney/issues and haven't found the feature already requested reported
 - [ ] I confirmed that the request is not related to functionality that was deprecated: lifted transformers (`TransformerF`s) or `unsafeOption` flags
 - [ ] I believe that this is actual feature request, rather than [a question how to use existing features](https://github.com/scalalandio/chimney/discussions)
