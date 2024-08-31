@@ -59,55 +59,6 @@ trait PartialTransformer[From, To] extends PartialTransformer.AutoDerived[From, 
   final def transformFailFast(src: From): partial.Result[To] =
     transform(src, failFast = true)
 
-  /** Creates a new [[io.scalaland.chimney.PartialTransformer PartialTransformer]] by applying a pure function to a
-    * [[io.scalaland.chimney.partial.Result Result]] of transforming `From` to `To`. See an example:
-    * {{{
-    *   val stringTransformer: PartialTransformer[String, Int] =
-    *     PartialTransformer.fromFunction(_.length)
-    *
-    *   case class Length(length: Int)
-    *
-    *   implicit val toLengthTransformer: PartialTransformer[String, Length] =
-    *     stringTransformer.map(id => Length(id))
-    * }}}
-    *
-    * @param f
-    *   a pure function that maps a value of `To` to `A`
-    * @return
-    *   new [[io.scalaland.chimney.PartialTransformer PartialTransformer]]
-    *
-    * @since 1.5.0
-    */
-  final def map[A](f: To => A): PartialTransformer[From, A] = new PartialTransformer[From, A] {
-    override def transform(src: From, failFast: Boolean): partial.Result[A] =
-      self.transform(src, failFast) match {
-        case partial.Result.Value(to)    => partial.Result.Value(f(to))
-        case errs: partial.Result.Errors => errs.asInstanceOf[partial.Result[A]]
-      }
-  }
-
-  /** Creates a new [[io.scalaland.chimney.PartialTransformer PartialTransformer]] by applying a pure function to a
-    * source of type `A` before transforming it to `To`. See an example:
-    * {{{
-    *   val stringTransformer: PartialTransformer[String, Int] =
-    *     PartialTransformer.fromFunction(_.length)
-    *
-    *   case class Id(id: String)
-    *
-    *   implicit val idTransformer: PartialTransformer[Id, Int] =
-    *     stringTransformer.contramap(_.id)
-    * }}}
-    *
-    * @param f
-    *   a pure function that maps a value of `A` to `From`
-    * @return
-    *   new [[io.scalaland.chimney.PartialTransformer PartialTransformer]]
-    * @since 1.5.0
-    */
-  final def contramap[A](f: A => From): PartialTransformer[A, To] = new PartialTransformer[A, To] {
-    override def transform(src: A, failFast: Boolean): partial.Result[To] =
-      self.transform(f(src), failFast)
-  }
 }
 
 /** Companion of [[io.scalaland.chimney.PartialTransformer]].
@@ -213,7 +164,7 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
     * @since 0.8.0
     */
   @FunctionalInterface
-  trait AutoDerived[From, To] {
+  trait AutoDerived[From, To] extends PartialTransformerOps[From, To] {
     def transform(src: From, failFast: Boolean): partial.Result[To]
   }
 
@@ -222,6 +173,62 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
 
     implicit def liftTotal[From, To](implicit total: Transformer[From, To]): AutoDerived[From, To] =
       (src: From, failFast: Boolean) => partial.Result.fromCatching(total.transform(src))
+  }
+
+  trait PartialTransformerOps[From, To] { self =>
+
+    def transform(src: From, failFast: Boolean): partial.Result[To]
+
+    /** Creates a new [[io.scalaland.chimney.PartialTransformer PartialTransformer]] by applying a pure function to a
+      * [[io.scalaland.chimney.partial.Result Result]] of transforming `From` to `To`. See an example:
+      * {{{
+      *   val stringTransformer: PartialTransformer[String, Int] =
+      *     PartialTransformer.fromFunction(_.length)
+      *
+      *   case class Length(length: Int)
+      *
+      *   implicit val toLengthTransformer: PartialTransformer[String, Length] =
+      *     stringTransformer.map(id => Length(id))
+      * }}}
+      *
+      * @param f
+      *   a pure function that maps a value of `To` to `A`
+      * @return
+      *   new [[io.scalaland.chimney.PartialTransformer PartialTransformer]]
+      *
+      * @since 1.5.0
+      */
+    final def map[A](f: To => A): PartialTransformer[From, A] = new PartialTransformer[From, A] {
+      override def transform(src: From, failFast: Boolean): partial.Result[A] =
+        self.transform(src, failFast) match {
+          case partial.Result.Value(to)    => partial.Result.Value(f(to))
+          case errs: partial.Result.Errors => errs.asInstanceOf[partial.Result[A]]
+        }
+    }
+
+    /** Creates a new [[io.scalaland.chimney.PartialTransformer PartialTransformer]] by applying a pure function to a
+      * source of type `A` before transforming it to `To`. See an example:
+      * {{{
+      *   val stringTransformer: PartialTransformer[String, Int] =
+      *     PartialTransformer.fromFunction(_.length)
+      *
+      *   case class Id(id: String)
+      *
+      *   implicit val idTransformer: PartialTransformer[Id, Int] =
+      *     stringTransformer.contramap(_.id)
+      * }}}
+      *
+      * @param f
+      *   a pure function that maps a value of `A` to `From`
+      * @return
+      *   new [[io.scalaland.chimney.PartialTransformer PartialTransformer]]
+      *
+      * @since 1.5.0
+      */
+    final def contramap[A](f: A => From): PartialTransformer[A, To] = new PartialTransformer[A, To] {
+      override def transform(src: A, failFast: Boolean): partial.Result[To] =
+        self.transform(f(src), failFast)
+    }
   }
 }
 // extended by PartialTransformerCompanionPlatform
