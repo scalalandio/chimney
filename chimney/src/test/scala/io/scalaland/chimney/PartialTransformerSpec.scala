@@ -114,4 +114,34 @@ class PartialTransformerSpec extends ChimneySpec {
     id.intoPartial[Length].transform ==> partial.Result.fromValue(Length(id.toInt))
     id.intoPartial[Prefix].transform ==> partial.Result.fromValue(Prefix.BarPrefix)
   }
+
+  test("contramap") {
+    case class Id(id: String)
+
+    trait Prefix {
+      def value: String
+    }
+
+    object Prefix {
+      case object FooPrefix extends Prefix {
+        override def value: String = "1"
+      }
+
+      case object BarPrefix extends Prefix {
+        override def value: String = "2"
+      }
+    }
+
+    implicit val idTransformer: PartialTransformer[Id, Int] =
+      pt1.contramap(_.id)
+
+    implicit val prefixTransformer: PartialTransformer[Prefix, Int] =
+      pt1.contramap(_.value)
+
+    val id = "1"
+    Id(id).intoPartial[Int].transform ==> partial.Result.fromValue(id.toInt)
+
+    val prefix: Prefix = Prefix.FooPrefix
+    prefix.intoPartial[Int].transform ==> partial.Result.fromValue(id.toInt)
+  }
 }
