@@ -31,49 +31,6 @@ trait Transformer[From, To] extends Transformer.AutoDerived[From, To] { self =>
     */
   def transform(src: From): To
 
-  /** Creates a new [[io.scalaland.chimney.Transformer Transformer]] by applying a pure function to a source of type `A`
-    * before transforming it to `To`. See an example:
-    * {{{
-    *   val stringTransformer: Transformer[String, Int] = _.length
-    *
-    *   case class Id(id: String)
-    *
-    *   implicit val idTransformer: Transformer[Id, Int] =
-    *     stringTransformer.contramap(_.id)
-    * }}}
-    *
-    * @param f
-    *   a pure function that maps a value of `A` to `From`
-    * @return
-    *   new [[io.scalaland.chimney.Transformer Transformer]]
-    *
-    * @since 1.5.0
-    */
-  final def contramap[A](f: A => From): Transformer[A, To] = new Transformer[A, To] {
-    override def transform(src: A): To = self.transform(f(src))
-  }
-
-  /** Creates a new [[io.scalaland.chimney.Transformer Transformer]] by applying a pure function to a result of
-    * transforming `From` to `To`. See an example:
-    * {{{
-    *   val stringTransformer: Transformer[String, Int] = _.length
-    *
-    *   case class Length(length: Int)
-    *
-    *   implicit val toLengthTransformer: Transformer[String, Length] =
-    *     stringTransformer.map(id => Length(id))
-    * }}}
-    *
-    * @param f
-    *   a pure function that maps a value of `To` to `A`
-    * @return
-    *   new [[io.scalaland.chimney.Transformer Transformer]]
-    *
-    * @since 1.5.0
-    */
-  final def map[A](f: To => A): Transformer[From, A] = new Transformer[From, A] {
-    override def transform(src: From): A = f(self.transform(src))
-  }
 }
 
 /** Companion of [[io.scalaland.chimney.Transformer]].
@@ -140,12 +97,61 @@ object Transformer extends TransformerCompanionPlatform {
     * @since 0.8.0
     */
   @FunctionalInterface
-  trait AutoDerived[From, To] {
+  trait AutoDerived[From, To] extends TransformerOps[From, To] {
     def transform(src: From): To
   }
 
   /** @since 0.8.0 */
   object AutoDerived extends TransformerAutoDerivedCompanionPlatform
+
+  trait TransformerOps[From, To] { self =>
+
+    def transform(src: From): To
+
+    /** Creates a new [[io.scalaland.chimney.Transformer Transformer]] by applying a pure function to a source of type
+      * `A` before transforming it to `To`. See an example:
+      * {{{
+      *   val stringTransformer: Transformer[String, Int] = _.length
+      *
+      *   case class Id(id: String)
+      *
+      *   implicit val idTransformer: Transformer[Id, Int] =
+      *     stringTransformer.contramap(_.id)
+      * }}}
+      *
+      * @param f
+      *   a pure function that maps a value of `A` to `From`
+      * @return
+      *   new [[io.scalaland.chimney.Transformer Transformer]]
+      *
+      * @since 1.5.0
+      */
+    final def contramap[A](f: A => From): Transformer[A, To] = new Transformer[A, To] {
+      override def transform(src: A): To = self.transform(f(src))
+    }
+
+    /** Creates a new [[io.scalaland.chimney.Transformer Transformer]] by applying a pure function to a result of
+      * transforming `From` to `To`. See an example:
+      * {{{
+      *   val stringTransformer: Transformer[String, Int] = _.length
+      *
+      *   case class Length(length: Int)
+      *
+      *   implicit val toLengthTransformer: Transformer[String, Length] =
+      *     stringTransformer.map(id => Length(id))
+      * }}}
+      *
+      * @param f
+      *   a pure function that maps a value of `To` to `A`
+      * @return
+      *   new [[io.scalaland.chimney.Transformer Transformer]]
+      *
+      * @since 1.5.0
+      */
+    final def map[A](f: To => A): Transformer[From, A] = new Transformer[From, A] {
+      override def transform(src: From): A = f(self.transform(src))
+    }
+  }
 }
 // extended by TransformerCompanionPlatform
 private[chimney] trait TransformerLowPriorityImplicits1 extends TransformerLowPriorityImplicits2 {
