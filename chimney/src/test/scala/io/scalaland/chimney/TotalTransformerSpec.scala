@@ -4,6 +4,49 @@ import io.scalaland.chimney.dsl.*
 
 class TotalTransformerSpec extends ChimneySpec {
 
+  test("map") {
+    case class Length(length: Int)
+
+    trait Prefix {
+      def code: Int
+    }
+
+    object Prefix {
+
+      def from(i: Int): Prefix = i match {
+        case 1 => FooPrefix
+        case 2 => BarPrefix
+        case _ => NanPrefix
+      }
+
+      case object NanPrefix extends Prefix {
+        override def code: Int = 0
+      }
+
+      case object FooPrefix extends Prefix {
+        override def code: Int = 1
+      }
+
+      case object BarPrefix extends Prefix {
+        override def code: Int = 2
+      }
+    }
+
+    val stringTransformer = new Transformer[String, Int] {
+      override def transform(src: String): Int = src.length
+    }
+
+    implicit val toLengthTransformer: Transformer[String, Length] =
+      stringTransformer.map(Length.apply)
+
+    implicit val toPrefixTransformer: Transformer[String, Prefix] =
+      stringTransformer.map(Prefix.from)
+
+    val id = "1"
+    id.into[Length].transform ==> Length(id.length)
+    id.into[Prefix].transform ==> Prefix.FooPrefix
+  }
+
   test("contramap") {
     case class Id(id: String)
 
