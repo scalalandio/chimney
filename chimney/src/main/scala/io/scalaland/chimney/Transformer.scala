@@ -52,6 +52,28 @@ trait Transformer[From, To] extends Transformer.AutoDerived[From, To] { self =>
   final def contramap[A](f: A => From): Transformer[A, To] = new Transformer[A, To] {
     override def transform(src: A): To = self.transform(f(src))
   }
+
+  /** Creates a new [[io.scalaland.chimney.Transformer Transformer]] by applying a pure function to a result of
+    * transforming `From` to `To`. See an example:
+    * {{{
+    *   val stringTransformer: Transformer[String, Int] = _.length
+    *
+    *   case class Length(length: Int)
+    *
+    *   implicit val toLengthTransformer: Transformer[String, Length] =
+    *     stringTransformer.map(id => Length(id))
+    * }}}
+    *
+    * @param f
+    *   a pure function that maps a value of `To` to `A`
+    * @return
+    *   new [[io.scalaland.chimney.Transformer Transformer]]
+    *
+    * @since 1.5.0
+    */
+  final def map[A](f: To => A): Transformer[From, A] = new Transformer[From, A] {
+    override def transform(src: From): A = f(self.transform(src))
+  }
 }
 
 /** Companion of [[io.scalaland.chimney.Transformer]].
