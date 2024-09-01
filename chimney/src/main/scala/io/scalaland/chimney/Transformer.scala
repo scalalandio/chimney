@@ -43,6 +43,12 @@ trait Transformer[From, To] extends Transformer.AutoDerived[From, To] {
   */
 object Transformer extends TransformerCompanionPlatform {
 
+  /** Access an implicit `Transformer[From, To]`.
+    *
+    * @since 1.5.0
+    */
+  def apply[From, To](implicit t: Transformer[From, To]): Transformer[From, To] = t
+
   /** Creates an empty [[io.scalaland.chimney.dsl.TransformerDefinition]] that you can customize to derive
     * [[io.scalaland.chimney.Transformer]].
     *
