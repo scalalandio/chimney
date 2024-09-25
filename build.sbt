@@ -290,9 +290,16 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
   def withCoverage(tasks: String*): Vector[String] =
     "coverage" +: tasks.toVector :+ "coverageAggregate" :+ "coverageOff"
 
-  val projects = (Vector("chimney", "chimneyCats", "chimneyProtobufs") ++ (if (isJVM) Vector("chimneyJavaCollections")
-                                                                           else Vector.empty))
-    .map(name => s"$name${if (isJVM) "" else platform}$scalaSuffix")
+  val projects = for {
+    name <- Vector(
+      "chimney",
+      "chimneyCats",
+      "chimneyProtobufs",
+      if (isJVM) "chimneyJavaCollections" else "",
+      "chimneyEngine"
+    )
+    if name.nonEmpty
+  } yield s"$name${if (isJVM) "" else platform}$scalaSuffix"
   def tasksOf(name: String): Vector[String] = projects.map(project => s"$project/$name")
 
   val tasks = if (isJVM) {
@@ -325,9 +332,12 @@ lazy val root = project
   .settings(settings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate(
-    (chimneyMacroCommons.projectRefs ++ chimney.projectRefs ++ chimneyCats.projectRefs ++ chimneyJavaCollections.projectRefs ++ chimneyProtobufs.projectRefs) *
-  )
+  .aggregate(chimneyMacroCommons.projectRefs *)
+  .aggregate(chimney.projectRefs *)
+  .aggregate(chimneyCats.projectRefs *)
+  .aggregate(chimneyJavaCollections.projectRefs *)
+  .aggregate(chimneyProtobufs.projectRefs *)
+  .aggregate(chimneyEngine.projectRefs *)
   .settings(
     moduleName := "chimney-build",
     name := "chimney-build",
@@ -528,10 +538,11 @@ lazy val chimneyEngine = projectMatrix
     description := "Chimney derivation engine exposed for reuse in other libraries"
   )
   .settings(settings *)
-  .settings(versionSchemeSettings *)
+  .settings(versionScheme := None) // macros internal API is NOT stable yet
   .settings(publishSettings *)
-  .settings(mimaSettings *)
+  // .settings(mimaSettings *) // we need to get some feedback before we stabilize this
   .settings(
+    coverageExcludedPackages := "io.scalaland.chimney.internal.compiletime.*", // we're only checking if it compiles
     mimaFailOnNoPrevious := false // this hasn't been published yet
   )
   .settings(dependencies *)

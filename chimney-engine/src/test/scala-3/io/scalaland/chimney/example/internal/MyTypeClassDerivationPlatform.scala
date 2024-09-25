@@ -1,7 +1,6 @@
 package io.scalaland.chimney.example.internal
 
 import io.scalaland.chimney.example.MyTypeClass
-import io.scalaland.chimney.example.internal.MyTypeClassDerivation
 import io.scalaland.chimney.internal.compiletime.{DerivationEnginePlatform, StandardRules}
 
 /** Scala-3-specifc implementations */
