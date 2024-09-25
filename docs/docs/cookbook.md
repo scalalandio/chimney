@@ -2348,3 +2348,50 @@ easier just like Neotype or other libraries described in
 
 You can find it on [GitHub](https://github.com/kevin-lee/refined4s) or
 [Scaladex](https://index.scala-lang.org/kevin-lee/refined4s/artifacts/refined4s-cats).
+
+## Reusing Chimney macros in your own macro library
+
+Some parts of the Chimney macros could be useful to developers of other libraries. As part of the 0.8.0 refactor,
+we developed:
+
+ - a platform-agnostic way of defining macro logic - see [Under the Hood](under-the-hood.md) for more information
+ - `chimney-macro-commons` - the module extracting non-Chimney-specific macro utilities: extracting fields/nullary
+   `def`s from classes, extracting constructors and all setters (if available), extracting enum subtypes/values,
+   exposing `blackbox.Context`/`Quotes` utilities in a platform-agnostic way, etc
+ - an automatic derivation without the standard automatic derivation overhead
+ - a recursive derivation engine based on the chain-of-responsibility pattern
+
+For now there aren't many people interested in them, so comments and Chimney-code-as-examples is the only documentation
+available.
+
+### `chimney-macro-commons`
+
+This module contains no dependencies on Chimney runtime types, not Chimney-specific macro logic. It could be used to
+reuse Chimney utilities for e.g.:
+
+ - extracting `val`ues and nullary `def`s from any class
+ - extracting public constructors and setters
+ - converting between singleton `Type[A]` and `Expr[A]`
+ - providing a platform-agnostic utilities for some common types and expressions
+
+!!! note
+
+    This module is checked by MiMa, its API should be considered stable.
+
+### `chimney-engine`
+
+This module exposes Chimney derivation engine to make it easier to use in one's own macros. It assumes that user would
+implement its macro the same way as Chimney does it, and with similar assumptions
+(see [Under the Hood](under-the-hood.md)).
+
+The only documentation is
+[the example code](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-engine/src/test/) which
+illustrates how one would start developing a macro basing on Chimney engine.
+
+!!! warning
+
+    This module exposes Chimney internal macros, their API can change to enable new feature development, so consider it
+    unstable and experimental!
+ 
+    The module's version matches `chimney` version it was compiled against, but it should NOT be considered a semantic
+    version.
