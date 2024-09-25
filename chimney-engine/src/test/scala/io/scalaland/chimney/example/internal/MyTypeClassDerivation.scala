@@ -3,6 +3,7 @@ package io.scalaland.chimney.example.internal
 import io.scalaland.chimney.example.MyTypeClass
 import io.scalaland.chimney.internal.compiletime.DerivationEngine
 
+/** Derivation logic expressed in the platform-agnostic way. */
 trait MyTypeClassDerivation extends DerivationEngine {
 
   // example of platform-independent type definition
@@ -53,6 +54,12 @@ trait MyTypeClassDerivation extends DerivationEngine {
     override def expand[From, To](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Rule.ExpansionResult[To]] =
+      // We are avoiding normal overhead of automatic derivation by separating:
+      //   - MyTypeClass[From, To]
+      //   - MyTypeClass.AutoDerived[From, To]
+      // In macro we are summonging ONLY MyTypeClass, while automatic derivation can return ONLY MyTypeClass.AutoDerived
+      // so the macro never summons itself recursively - the only recursion that's allowed happens within the same macro
+      // which saves CPU and allows generation of more optimal code.
       MyExprs.summonMyTypeClass[From, To] match {
         case Some(myTypeClass) => DerivationResult.expandedTotal(myTypeClass.convert(ctx.src))
         case None              => DerivationResult.attemptNextRule

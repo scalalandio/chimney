@@ -4,6 +4,7 @@ import io.scalaland.chimney.example.MyTypeClass
 import io.scalaland.chimney.example.internal.MyTypeClassDerivation
 import io.scalaland.chimney.internal.compiletime.{DerivationEnginePlatform, StandardRules}
 
+/** Scala-2-specifc implementations */
 trait MyTypeClassDerivationPlatform extends DerivationEnginePlatform with MyTypeClassDerivation with StandardRules {
 
   // in Scala-2-specific code, remember to import content of the universe
