@@ -87,7 +87,7 @@ package io.scalaland.chimney.internal.compiletime
   *
   *   def deriveBody(src: c.Expr[From]): c.Expr[To] = {
   *     val cfg = TransformerConfiguration() // customize, read config with DSL etc
-  *     val context = TransformationContext.ForTotal(src, cfg)
+  *     val context = TransformationContext.ForTotal.create(src, cfg)
   *
   *     deriveFinalTransformationResultExpr(context).toEither.fold(
   *       derivationErrors => reportError(derivationErrors.toString), // customize
@@ -118,7 +118,7 @@ package io.scalaland.chimney.internal.compiletime
   *
   *   def deriveBody(src: Expr[From]): Expr[To] = {
   *     val cfg = TransformerConfiguration() // customize, read config with DSL etc
-  *     val context = TransformationContext.ForTotal(src, cfg)
+  *     val context = TransformationContext.ForTotal.create(src, cfg)
   *
   *     deriveFinalTransformationResultExpr(context).toEither.fold(
   *       derivationErrors => reportError(derivationErrors.toString), // customize
@@ -150,4 +150,20 @@ trait DerivationEngine
     with derivation.transformer.integrations.PartiallyBuildIterables
     with derivation.transformer.integrations.TotallyBuildIterables
     with derivation.transformer.integrations.TotallyOrPartiallyBuildIterables
-    with derivation.transformer.rules.TransformationRules
+    with derivation.transformer.rules.TransformationRules {
+
+  type DerivationResult[+A] = io.scalaland.chimney.internal.compiletime.DerivationResult[A]
+  val DerivationResult = io.scalaland.chimney.internal.compiletime.DerivationResult
+
+  /** Adapts TransformationExpr[To] to expected type of transformation */
+  def deriveFinalTransformationResultExpr[From, To](implicit
+      ctx: TransformationContext[From, To]
+  ): DerivationResult[Expr[ctx.Target]] =
+    DerivationResult.log(s"Start derivation with context: $ctx") >>
+      deriveTransformationResultExpr[From, To]
+        .map { transformationExpr =>
+          ctx.fold(_ => transformationExpr.ensureTotal.asInstanceOf[Expr[ctx.Target]])(_ =>
+            transformationExpr.ensurePartial.asInstanceOf[Expr[ctx.Target]]
+          )
+        }
+}
