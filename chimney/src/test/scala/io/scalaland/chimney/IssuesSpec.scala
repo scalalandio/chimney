@@ -769,4 +769,23 @@ class IssuesSpec extends ChimneySpec {
       .withFieldConst(_.bar.matchingSome.baz.everyItem.b, "new")
       .transform ==> Foo(Some(Bar(List(Baz(a = 10, b = "new", c = 10.0), Baz(a = 10, b = "new", c = 20.0)))))
   }
+
+  test("fix-issue #479") {
+    import Issue479.*
+    val orangeTarget = Target.Impl("orange")
+    val pinkTarget = Target.Impl("pink")
+    val yellowTarget = Target.Impl("yellow")
+
+    val writer: Transformer[color, Target] = Transformer
+      .define[color, Target]
+      .withCoproductInstance[color.orange.type](_ => orangeTarget)
+      .withCoproductInstance[color.pink.type](_ => pinkTarget)
+      .withCoproductInstance[color.yellow.type](_ => yellowTarget)
+      .enableMacrosLogging
+      .buildTransformer
+
+    assert(writer.transform(color.pink) == pinkTarget)
+    assert(writer.transform(color.yellow) == yellowTarget)
+    assert(writer.transform(color.orange) == orangeTarget)
+  }
 }
