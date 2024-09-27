@@ -214,3 +214,17 @@ object Issue579 {
   case class Bar(baz: List[Baz])
   case class Baz(a: Int, b: String, c: Double)
 }
+
+object Issue479 {
+  sealed trait color
+  object color {
+    case object orange extends color
+    case object pink extends color
+    case object yellow extends color
+  }
+
+  sealed trait Target
+  object Target {
+    case class Impl(value: String) extends Target
+  }
+}
