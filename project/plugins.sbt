@@ -6,7 +6,7 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.2.0")
 // cross-compile
 addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.10.0")
 addSbtPlugin("com.indoorvivants" % "sbt-commandmatrix" % "0.0.5")
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.16.0")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.17.0")
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.5")
 // publishing
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.11.3")
