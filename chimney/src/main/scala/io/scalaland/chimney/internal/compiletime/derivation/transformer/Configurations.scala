@@ -226,6 +226,13 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
   }
 
+  sealed trait Verification extends scala.Product with Serializable
+  object Verification {
+    final case class RequireAllSourceFieldsUsedExcept(sourceFields: Set[String]) extends Verification {
+      override def toString: String = s"RequireAllSourceFieldsUsedExcept(sourceFields=${sourceFields.mkString(", ")})"
+    }
+  }
+
   sealed protected trait TransformerOverride extends scala.Product with Serializable
   protected object TransformerOverride {
     sealed trait ForField extends TransformerOverride
@@ -278,7 +285,9 @@ private[compiletime] trait Configurations { this: Derivation =>
       /** Stores all customizations provided by user */
       private val runtimeOverrides: Vector[(Path, TransformerOverride)] = Vector.empty,
       /** Let us prevent `implicit val foo = foo` but allow `implicit val foo = new Foo { def sth = foo }` */
-      private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
+      private val preventImplicitSummoningForTypes: Option[(??, ??)] = None,
+      /** Stores all verification settings provided by user */
+      verifications: Vector[Verification] = Vector.empty
   ) {
 
     private lazy val runtimeOverridesForCurrent = runtimeOverrides.filter {
@@ -304,6 +313,8 @@ private[compiletime] trait Configurations { this: Derivation =>
     def areLocalFlagsEmpty: Boolean =
       !localFlagsOverridden
 
+    def addVerification(verification: Verification): TransformerConfiguration =
+      copy(verifications = verifications :+ verification)
     def addTransformerOverride(path: Path, runtimeOverride: TransformerOverride): TransformerConfiguration =
       copy(runtimeOverrides = runtimeOverrides :+ (path -> runtimeOverride))
     def areOverridesEmpty: Boolean =
@@ -568,6 +579,15 @@ private[compiletime] trait Configurations { this: Derivation =>
             extractPath[FromPath],
             TransformerOverride.RenamedTo(extractPath[ToPath])
           )
+      case ChimneyType.TransformerOverrides.RequireSourceFieldsExcept(fromPathList, cfg) =>
+        import fromPathList.Underlying as FromPathList, cfg.Underlying as Tail2
+        val fields = extractPathList[FromPathList].map {
+          case Path.AtField(fromName, _) => fromName
+          case path                      => reportError(s"$path is not a field selector!")
+        }.toSet
+
+        extractTransformerConfig[Tail2](runtimeDataIdx, runtimeDataStore)
+          .addVerification(Verification.RequireAllSourceFieldsUsedExcept(fields))
       // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
       case _ =>
         reportError(s"Invalid internal TransformerOverrides type shape: ${Type.prettyPrint[Tail]}!!")
