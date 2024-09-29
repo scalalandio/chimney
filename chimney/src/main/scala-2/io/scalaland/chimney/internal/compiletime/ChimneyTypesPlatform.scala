@@ -249,6 +249,17 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             )
           }
       }
+      object RequireSourceFieldsExcept extends RequireSourceFieldsExceptModule {
+        def apply[
+            FromPathList <: runtime.PathList: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.RequireSourceFieldsExcept[FromPathList, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.RequireSourceFieldsExcept[FromPathList, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.PathList], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.RequireSourceFieldsExcept[?, ?]].map { A0 =>
+            (A0.param_<[runtime.PathList](0), A0.param_<[runtime.TransformerOverrides](1))
+          }
+      }
     }
 
     object TransformerFlags extends TransformerFlagsModule {
@@ -403,6 +414,17 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           weakTypeTag[runtime.Path.EveryMapValue[Init]]
         def unapply[A](A: Type[A]): Option[?<[runtime.Path]] =
           A.asCtor[runtime.Path.EveryMapValue[?]].map(A0 => A0.param_<[runtime.Path](0))
+      }
+    }
+
+    object PathList extends PathListModule {
+      val Empty: Type[runtime.PathList.Empty] = weakTypeTag[runtime.PathList.Empty]
+      object List extends ListModule {
+        def apply[Head <: runtime.Path: Type, Tail <: runtime.PathList: Type]: Type[runtime.PathList.List[Head, Tail]] =
+          weakTypeTag[runtime.PathList.List[Head, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.PathList])] =
+          A.asCtor[runtime.PathList.List[?, ?]]
+            .map(A0 => A0.param_<[runtime.Path](0) -> A0.param_<[runtime.PathList](1))
       }
     }
 

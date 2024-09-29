@@ -1,7 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
 import io.scalaland.chimney.dsl.TransformerInto
-import io.scalaland.chimney.internal.runtime.{ArgumentLists, Path, TransformerFlags, TransformerOverrides}
+import io.scalaland.chimney.internal.runtime.{ArgumentLists, Path, PathList, TransformerFlags, TransformerOverrides}
 import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
 
 import scala.annotation.unused
@@ -96,4 +96,17 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       .addOverride(f)
       .asInstanceOfExpr[TransformerInto[From, To, Constructor[Args, Path.Root, Overrides], Flags]]
   }.applyFromBody(f)
+
+  def requireSourceFieldsUsedExceptImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selectorFrom: Tree*): Tree = c.prefix.tree
+    .asInstanceOfExpr(
+      new ApplyFieldNamesType {
+        def apply[FromPathList <: PathList: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerInto[From, To, RequireSourceFieldsExcept[FromPathList, Overrides], Flags]]
+      }.applyFromSelector(selectorFrom)
+    )
 }
