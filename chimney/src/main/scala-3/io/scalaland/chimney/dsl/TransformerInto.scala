@@ -211,6 +211,13 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
   )(using IsFunction.Of[Ctor, To]): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerIntoMacros.withConstructorImpl('this, 'f) }
 
+  /** Require that all fields of the source object except fields mentioned in `selectorFrom` are used in the
+    * transformation. and fail compilation otherwise.
+    *
+    * @param selectorFrom
+    *   exception fields that are not required to be used in the transformation
+    * @return
+    */
   transparent inline def requireSourceFieldsUsedExcept(
       inline selectorFrom: From => Any*
   ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
