@@ -196,6 +196,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   case Right(possibleSourceField) =>
                     possibleSourceField.map { case (fromName, toName, getter) =>
                       useExtractor[From, To, CtorParam](ctorParam.value.targetType, fromName, toName, getter)
+                        .registerSourceFieldUseOnSuccess(fromName)
                     }
                   case Left(foundFromNames) =>
                     Some(
@@ -260,6 +261,25 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .map(toName -> _)
           }
           .map(_.filterNot(_._2 == unmatchedSetter).filterNot(_._2 == nonUnitSetter))
+          .withUsedSourceFields
+          .logSuccess { case (usedSourceFields, _) =>
+            (for (verification <- verifications) yield verification match {
+              case Verification.RequireAllSourceFieldsUsedExcept(exceptFields) =>
+                s"validate all source fields used except ${exceptFields.mkString(",")} (all=${fromEnabledExtractors.keySet.mkString(",")}, used=${usedSourceFields.mkString(",")})"
+            }).mkString("\n")
+          }
+          .flatMap { case (usedSourceFields, res) =>
+            verifications
+              .flatMap { case Verification.RequireAllSourceFieldsUsedExcept(exceptFields) =>
+                Option(fromEnabledExtractors.keySet -- exceptFields -- usedSourceFields) // unused but required fields
+                  .filter(_.nonEmpty)
+                  .map(
+                    DerivationResult.requiredFieldNotUsed[From, To, List[(String, Existential[TransformationExpr])]](_)
+                  )
+              }
+              .headOption
+              .getOrElse(DerivationResult.pure(res))
+          }
           .logSuccess { args =>
             val totals = args.count(_._2.value.isTotal)
             val partials = args.count(_._2.value.isPartial)
@@ -366,9 +386,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   s"""|Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found
                       |available methods: ${getters.keys.map(n => s"`$n`").mkString(", ")}""".stripMargin
                 )
-              case (_, getter) :: Nil =>
+              case (name, getter) :: Nil =>
                 import getter.Underlying as Getter, getter.value.get
-                DerivationResult.pure(get(extractedSrcExpr).as_??)
+                DerivationResult.pure(get(extractedSrcExpr).as_??).registerSourceFieldUseOnSuccess(name)
               case matchingGetters =>
                 DerivationResult.ambiguousFieldOverrides[From, To, ExistentialExpr](
                   sourceName,
