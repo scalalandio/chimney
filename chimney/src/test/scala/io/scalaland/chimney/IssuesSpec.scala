@@ -778,9 +778,9 @@ class IssuesSpec extends ChimneySpec {
 
     val writer: Transformer[color, Target] = Transformer
       .define[color, Target]
-      .withCoproductInstance[color.orange.type](_ => orangeTarget)
-      .withCoproductInstance[color.pink.type](_ => pinkTarget)
-      .withCoproductInstance[color.yellow.type](_ => yellowTarget)
+      .withSealedSubtypeHandled[color.orange.type](_ => orangeTarget)
+      .withSealedSubtypeHandled[color.pink.type](_ => pinkTarget)
+      .withSealedSubtypeHandled[color.yellow.type](_ => yellowTarget)
       .enableMacrosLogging
       .buildTransformer
 
