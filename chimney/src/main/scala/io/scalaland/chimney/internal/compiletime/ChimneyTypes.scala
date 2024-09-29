@@ -151,6 +151,14 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerOverrides,
             runtime.TransformerOverrides.RenamedTo
           ] { this: RenamedTo.type => }
+
+      val RequireSourceFieldsExcept: RequireSourceFieldsExceptModule
+      trait RequireSourceFieldsExceptModule
+          extends Type.Ctor2UpperBounded[
+            runtime.PathList,
+            runtime.TransformerOverrides,
+            runtime.TransformerOverrides.RequireSourceFieldsExcept
+          ] { this: RequireSourceFieldsExcept.type => }
     }
 
     val TransformerFlags: TransformerFlagsModule

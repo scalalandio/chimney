@@ -211,6 +211,11 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
   )(using IsFunction.Of[Ctor, To]): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerIntoMacros.withConstructorImpl('this, 'f) }
 
+  transparent inline def requireSourceFieldsUsedExcept(
+      inline selectorFrom: From => Any*
+  ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    ${ TransformerIntoMacros.requireSourceFieldsUsedExceptImpl('this, 'selectorFrom) }
+
   /** Apply configured transformation in-place.
     *
     * It runs macro that tries to derive instance of `Transformer[From, To]` and immediately apply it to captured

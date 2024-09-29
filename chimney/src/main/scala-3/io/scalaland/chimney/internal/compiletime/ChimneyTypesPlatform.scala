@@ -219,6 +219,25 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             case _ => scala.None
           }
       }
+
+      object RequireSourceFieldsExcept extends RequireSourceFieldsExceptModule {
+        def apply[
+            FromPathList <: runtime.PathList: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.RequireSourceFieldsExcept[FromPathList, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.RequireSourceFieldsExcept[FromPathList, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.PathList], ?<[runtime.TransformerOverrides])] =
+          tpe match {
+            case '[runtime.TransformerOverrides.RequireSourceFieldsExcept[fromPath, cfg]] =>
+              Some(
+                (
+                  Type[fromPath].as_?<[runtime.PathList],
+                  Type[cfg].as_?<[runtime.TransformerOverrides]
+                )
+              )
+            case _ => scala.None
+          }
+      }
     }
 
     object TransformerFlags extends TransformerFlagsModule {

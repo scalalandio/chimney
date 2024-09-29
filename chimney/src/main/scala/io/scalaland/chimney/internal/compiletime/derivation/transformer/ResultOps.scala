@@ -11,7 +11,8 @@ import io.scalaland.chimney.internal.compiletime.{
   MissingJavaBeanSetterParam,
   MissingSubtypeTransformer,
   NotSupportedTransformerDerivation,
-  TupleArityMismatch
+  TupleArityMismatch,
+  UnusedButRequiredToUseSourceFields
 }
 import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
 
@@ -164,6 +165,14 @@ private[compiletime] trait ResultOps { this: Derivation =>
     ): DerivationResult[A] = DerivationResult.transformerError(
       NotSupportedTransformerDerivation(
         exprPrettyPrint = fieldName
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+    )
+
+    def requiredFieldNotUsed[From, To, A](unusedRequiredFields: Set[String])(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      UnusedButRequiredToUseSourceFields(
+        unused = unusedRequiredFields
       )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 

@@ -21,4 +21,6 @@ object TransformerOverrides {
   final class RenamedFrom[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
   // Computes a value from matched subtype, targeting another subtype
   final class RenamedTo[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
+  // Throws a compile error if not all fields of the source are not used
+  final class RequireSourceFieldsExcept[FromPaths <: PathList, Tail <: Overrides] extends Overrides
 }
