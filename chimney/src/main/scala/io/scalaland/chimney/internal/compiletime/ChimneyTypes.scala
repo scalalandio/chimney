@@ -289,6 +289,23 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
           ] { this: EveryMapValue.type => }
     }
 
+    val PathList: PathListModule
+    trait PathListModule {
+      this: PathList.type =>
+      val Empty: Type[runtime.PathList.Empty]
+
+      val List: ListModule
+
+      trait ListModule
+          extends Type.Ctor2UpperBounded[
+            runtime.Path,
+            runtime.PathList,
+            runtime.PathList.List
+          ] {
+        this: List.type =>
+      }
+    }
+
     val DefaultValue: DefaultValueModule
     trait DefaultValueModule extends Type.Ctor1[integrations.DefaultValue] { this: DefaultValue.type => }
 

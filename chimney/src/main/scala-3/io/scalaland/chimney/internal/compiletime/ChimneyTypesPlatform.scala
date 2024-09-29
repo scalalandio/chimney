@@ -405,6 +405,19 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       }
     }
 
+    object PathList extends PathListModule {
+      val Empty: Type[runtime.PathList.Empty] = quoted.Type.of[runtime.PathList.Empty]
+      object List extends ListModule {
+        def apply[Head <: runtime.Path: Type, Tail <: runtime.PathList: Type]: Type[runtime.PathList.List[Head, Tail]] =
+          quoted.Type.of[runtime.PathList.List[Head, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.PathList])] = tpe match {
+          case '[runtime.PathList.List[head, tail]] =>
+            Some((Type[head].as_?<[runtime.Path], Type[tail].as_?<[runtime.PathList]))
+          case _ => scala.None
+        }
+      }
+    }
+
     object DefaultValue extends DefaultValueModule {
       def apply[Value: Type]: Type[integrations.DefaultValue[Value]] =
         quoted.Type.of[integrations.DefaultValue[Value]]

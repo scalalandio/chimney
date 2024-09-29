@@ -574,6 +574,13 @@ private[compiletime] trait Configurations { this: Derivation =>
       // $COVERAGE-ON$
     }
 
+    private def extractPathList[PathType <: runtime.PathList: Type]: List[Path] = Type[PathType] match {
+      case empty if empty =:= ChimneyType.PathList.Empty => List.empty
+      case ChimneyType.PathList.List(head, tail) =>
+        import head.Underlying as Head, tail.Underlying as Tail
+        extractPath[Head] :: extractPathList[Tail]
+    }
+
     private def extractPath[PathType <: runtime.Path: Type]: Path = Type[PathType] match {
       case root if root =:= ChimneyType.Path.Root =>
         Path.Root

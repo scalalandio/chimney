@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime.dsl.utils
 
 import io.scalaland.chimney.internal.runtime
+import io.scalaland.chimney.internal.runtime.PathList
 
 import scala.annotation.nowarn
 import scala.quoted.*
@@ -282,6 +283,44 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
 
     private def invalidConstructor(t: Tree): String =
       s"Expected function, instead got: ${t.show(using Printer.TreeAnsiCode)}: ${t.asInstanceOf[Term].tpe.show(using Printer.TypeReprAnsiCode)}"
+  }
+
+  private trait ExistentialPathList {
+    type Underlying <: runtime.PathList
+    implicit val Underlying: Type[Underlying]
+  }
+  private object ExistentialPathList {
+    def parse(t: Expr[Seq[?]]): Either[String, ExistentialPathList] =
+      (t match {
+        case Varargs(selectors: Seq[Expr[Any]]) =>
+          selectors
+            .map(selector => ExistentialPath.parse(selector.asTerm))
+            .foldLeft[Either[String, List[ExistentialPath]]](Right(Nil)) {
+              case (err @ Left(_), _)        => err
+              case (Right(acc), Left(error)) => Left(error)
+              case (Right(acc), Right(path)) => Right(acc :+ path)
+            }
+      }).map { params =>
+        val value1: Type[PathList] = combine(params)
+
+        new ExistentialPathList {
+          type Underlying = runtime.PathList
+          implicit val Underlying: Type[Underlying] = value1
+        }
+      }
+
+    private def combine(paths: Seq[ExistentialPath]): Type[runtime.PathList] = {
+      object Combine {
+        def apply[A <: runtime.Path: Type, Args <: runtime.PathList: Type]: Type[runtime.PathList.List[A, Args]] =
+          Type.of[runtime.PathList.List[A, Args]]
+      }
+
+      paths
+        .foldLeft[Type[? <: runtime.PathList]](Type.of[runtime.PathList.Empty]) { (acc, path) =>
+          Combine(path.Underlying, acc)
+        }
+        .asInstanceOf[Type[runtime.PathList]]
+    }
   }
 
   def applyFieldNameType[Out](f: [A <: runtime.Path] => Type[A] ?=> Out)(selector: Expr[?]): Out =
