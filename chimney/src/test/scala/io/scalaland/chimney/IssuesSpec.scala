@@ -781,7 +781,6 @@ class IssuesSpec extends ChimneySpec {
       .withSealedSubtypeHandled[color.orange.type](_ => orangeTarget)
       .withSealedSubtypeHandled[color.pink.type](_ => pinkTarget)
       .withSealedSubtypeHandled[color.yellow.type](_ => yellowTarget)
-      .enableMacrosLogging
       .buildTransformer
 
     assert(writer.transform(color.pink) == pinkTarget)
