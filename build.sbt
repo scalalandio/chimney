@@ -24,7 +24,7 @@ ciRelease := {
 val versions = new {
   val scala212 = "2.12.20"
   val scala213 = "2.13.15"
-  val scala3 = "3.3.3"
+  val scala3 = "3.3.4"
 
   // Which versions should be cross-compiled for publishing
   val scalas = List(scala212, scala213, scala3)
@@ -93,6 +93,7 @@ val settings = Seq(
           "-feature",
           "-no-indent",
           "-Wconf:msg=Unreachable case:s", // suppress fake (?) errors in internal.compiletime
+          "-Wconf:msg=Missing symbol position:s", // suppress warning https://github.com/scala/scala3/issues/21672
           "-Wnonunit-statement",
           // "-Wunused:imports", // import x.Underlying as X is marked as unused even though it is! probably one of https://github.com/scala/scala3/issues/: #18564, #19252, #19657, #19912
           "-Wunused:privates",
