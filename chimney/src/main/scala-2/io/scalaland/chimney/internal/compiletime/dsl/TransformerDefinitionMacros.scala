@@ -96,4 +96,17 @@ class TransformerDefinitionMacros(val c: whitebox.Context) extends utils.DslMacr
       .addOverride(f)
       .asInstanceOfExpr[TransformerDefinition[From, To, Constructor[Args, Path.Root, Overrides], Flags]]
   }.applyFromBody(f)
+
+  def withIgnoreUnusedField[
+    From: WeakTypeTag,
+    To: WeakTypeTag,
+    Overrides <: TransformerOverrides : WeakTypeTag,
+    Flags <: TransformerFlags : WeakTypeTag
+  ](selectorFrom: Tree): Tree = c.prefix.tree
+    .asInstanceOfExpr(
+      new ApplyFieldNameType {
+        def apply[FromPath <: Path : WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerDefinition[From, To, IgnoreUnusedField[FromPath, Overrides], Flags]]
+      }.applyFromSelector(selectorFrom)
+    )
 }

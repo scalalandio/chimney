@@ -230,6 +230,20 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   )(using IsFunction.Of[Ctor, To]): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withConstructorImpl('this, 'f) }
 
+  /** Ignore if a source field is not used in the transformation. This can be useful when `.enableUnusedFieldPolicy` is
+    * enabled.
+    *
+    * @param selectorFrom
+    *   the field is that not required to be used in the transformation
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerInto]]
+    * @since 1.5.0
+    */
+  transparent inline def withIgnoreUnusedField(
+      inline selectorFrom: From => ?
+  ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${ TransformerDefinitionMacros.withIgnoreUnusedFieldImpl('this, 'selectorFrom) }
+
   /** Build Transformer using current configuration.
     *
     * It runs macro that tries to derive instance of `Transformer[From, To]`. When transformation can't be derived, it
