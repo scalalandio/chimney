@@ -107,16 +107,6 @@ sealed private[compiletime] trait DerivationResult[+A] {
       }
     }
 
-  // tracking
-
-  final def registerSourceFieldUseOnSuccess(field: String): DerivationResult[A] = this match {
-    case _: Success[?] =>
-      updateState(_.appendToUsedSourceFields(field)).logSuccess(_ => s"source field $field usage registered")
-    case _: Failure => this
-  }
-
-  final def withUsedSourceFields: DerivationResult[(Set[String], A)] = map(a => (state.usedSourceFields, a))
-
   // logging
 
   final def log(msg: => String): DerivationResult[A] = updateState(_.log(msg))
@@ -146,21 +136,16 @@ private[compiletime] object DerivationResult {
 
   final case class State(
       journal: Log.Journal = Log.Journal(logs = Vector.empty),
-      usedSourceFields: Set[String] = Set.empty,
       macroLogging: Option[State.MacroLogging] = None
   ) {
 
     private[DerivationResult] def log(msg: => String): State = copy(journal = journal.append(msg))
-
-    private[DerivationResult] def appendToUsedSourceFields(field: String): State =
-      copy(usedSourceFields = usedSourceFields + field)
 
     private[DerivationResult] def nestScope(scopeName: String): State =
       copy(journal = Log.Journal(Vector(Log.Scope(scopeName = scopeName, journal = journal))))
 
     private[DerivationResult] def appendedTo(previousState: State): State = State(
       journal = Log.Journal(logs = previousState.journal.logs ++ this.journal.logs),
-      usedSourceFields = previousState.usedSourceFields ++ usedSourceFields,
       macroLogging = previousState.macroLogging.orElse(macroLogging)
     )
   }

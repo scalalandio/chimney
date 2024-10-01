@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
-import io.scalaland.chimney.dsl.FailOnUnused
+import io.scalaland.chimney.dsl.{ActionOnUnused, FailOnUnused}
 import io.scalaland.chimney.internal.compiletime.{DerivationErrors, DerivationResult}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
@@ -121,7 +121,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           .parTraverse[
             DerivationResult,
             (String, Existential[Product.Parameter]),
-            (String, Existential[TransformationExpr])
+            ResolvedArgument
           ](
             if (flags.nonUnitBeanSetters) parameters.toList
             else
@@ -172,15 +172,22 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .orElse(filterCurrentOverridesForField(areFieldNamesMatching(_, toName)).headOption)
               .map {
                 case AmbiguousOverrides(overrideName, foundOverrides) =>
-                  DerivationResult.ambiguousFieldOverrides[From, To, Existential[TransformationExpr]](
+                  DerivationResult.ambiguousFieldOverrides[From, To, ResolvedArgument](
                     overrideName,
                     foundOverrides,
                     flags.getFieldNameComparison.toString
                   )
                 case (_, value) =>
-                  useOverride[From, To, CtorParam](toName, value).flatMap(
-                    DerivationResult.existential[TransformationExpr, CtorParam](_)
-                  )
+                  useOverride[From, To, CtorParam](toName, value)
+                    .flatMap(DerivationResult.existential[TransformationExpr, CtorParam](_))
+                    .map { expr =>
+                      value match {
+                        case TransformerOverride.RenamedFrom(Path.AtField(sourceName, _)) =>
+                          ResolvedArgument(expr, toName, Some(sourceName))
+                        case _ =>
+                          ResolvedArgument(expr, toName)
+                      }
+                    }
               }
               .orElse {
                 val ambiguityOrPossibleSourceField =
@@ -197,11 +204,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   case Right(possibleSourceField) =>
                     possibleSourceField.map { case (fromName, toName, getter) =>
                       useExtractor[From, To, CtorParam](ctorParam.value.targetType, fromName, toName, getter)
-                        .registerSourceFieldUseOnSuccess(fromName)
+                        .map(ResolvedArgument(_, toName, Some(fromName)))
                     }
                   case Left(foundFromNames) =>
                     Some(
-                      DerivationResult.ambiguousFieldSources[From, To, Existential[TransformationExpr]](
+                      DerivationResult.ambiguousFieldSources[From, To, ResolvedArgument](
                         foundFromNames,
                         toName
                       )
@@ -211,9 +218,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .orElse {
                 useFallbackValues[From, To, CtorParam](
                   defaultValue.orElse(summonDefaultValue[CtorParam].map(_.provide()))
-                )
+                ).map(_.map(ResolvedArgument(_, toName)))
               }
-              .getOrElse[DerivationResult[Existential[TransformationExpr]]] {
+              .getOrElse[DerivationResult[ResolvedArgument]] {
                 if (usePositionBasedMatching)
                   DerivationResult.tupleArityMismatch(fromArity = fromEnabledExtractors.size, toArity = parameters.size)
                 else {
@@ -230,7 +237,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   ctorParam.value.targetType match {
                     case Product.Parameter.TargetType.ConstructorParameter =>
                       DerivationResult
-                        .missingConstructorArgument[From, To, CtorParam, Existential[TransformationExpr]](
+                        .missingConstructorArgument[From, To, CtorParam, ResolvedArgument](
                           toName,
                           availableMethodAccessors,
                           availableInheritedAccessors,
@@ -244,7 +251,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                       DerivationResult.pure(nonUnitSetter)
                     case Product.Parameter.TargetType.SetterParameter(_) =>
                       DerivationResult
-                        .missingJavaBeanSetterParam[From, To, CtorParam, Existential[TransformationExpr]](
+                        .missingJavaBeanSetterParam[From, To, CtorParam, ResolvedArgument](
                           toName,
                           availableMethodAccessors,
                           availableInheritedAccessors,
@@ -257,37 +264,18 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 case `unmatchedSetter` => s"Setter `$toName` not resolved but ignoring setters is allowed"
                 case `nonUnitSetter` =>
                   s"Setter `$toName` not resolved it has non-Unit return type and they are ignored"
-                case expr => s"Resolved `$toName` field value to ${expr.value.prettyPrint}"
+                case resolvedArgument => s"Resolved `$toName` field value to ${resolvedArgument.expr.value.prettyPrint}"
               }
-              .map(toName -> _)
           }
-          .map(_.filterNot(_._2 == unmatchedSetter).filterNot(_._2 == nonUnitSetter))
-          .withUsedSourceFields
-          .logSuccess { case (usedSourceFields, _) =>
-            if (ctx.config.flags.unusedFieldPolicy.contains(FailOnUnused)) {
-              "unused-field-policy(fail-on-used) is enabled\n" +
-                s"all source fields: ${fromEnabledExtractors.keySet.mkString(",")}\n" +
-                s"used fields: ${usedSourceFields.mkString(",")}) \n" +
-                s"ignore unused field(s) ${ctx.config.getIgnoreUnusedFields.mkString(",")}"
-            } else ""
-          }
-          .flatMap { case (usedSourceFields, res) =>
-            Option
-              .when(ctx.config.flags.unusedFieldPolicy.contains(FailOnUnused)) {
-                fromEnabledExtractors.keySet -- ctx.config.getIgnoreUnusedFields -- usedSourceFields // unused but required fields
-              }
-              .filter(_.nonEmpty)
-              .map(DerivationResult.requiredFieldNotUsed[From, To, List[(String, Existential[TransformationExpr])]](_))
-              .getOrElse(DerivationResult.pure(res))
-          }
+          .map(_.filterNot(Seq(unmatchedSetter, nonUnitSetter).contains))
+          .flatMap(verifyUnusedFieldPolicies(fromEnabledExtractors.keySet, _))
           .logSuccess { args =>
-            val totals = args.count(_._2.value.isTotal)
-            val partials = args.count(_._2.value.isPartial)
+            val totals = args.count(_.expr.value.isTotal)
+            val partials = args.count(_.expr.value.isPartial)
             s"Resolved ${args.size} arguments, $totals as total and $partials as partial Expr"
           }
-          .map[TransformationExpr[ToOrPartialTo]] {
-            (resolvedArguments: List[(String, Existential[TransformationExpr])]) =>
-              wireArgumentsToConstructor[From, To, ToOrPartialTo](resolvedArguments, constructor)
+          .map[TransformationExpr[ToOrPartialTo]] { resolvedArguments =>
+            wireArgumentsToConstructor[From, To, ToOrPartialTo](resolvedArguments, constructor)
           }
           .flatMap(DerivationResult.expanded)
     }
@@ -388,7 +376,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 )
               case (name, getter) :: Nil =>
                 import getter.Underlying as Getter, getter.value.get
-                DerivationResult.pure(get(extractedSrcExpr).as_??).registerSourceFieldUseOnSuccess(name)
+                DerivationResult.pure(get(extractedSrcExpr).as_??)
               case matchingGetters =>
                 DerivationResult.ambiguousFieldOverrides[From, To, ExistentialExpr](
                   sourceName,
@@ -524,15 +512,15 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     }
 
     private def wireArgumentsToConstructor[From, To, ToOrPartialTo: Type](
-        resolvedArguments: List[(String, Existential[TransformationExpr])],
+        resolvedArguments: List[ResolvedArgument],
         constructor: Product.Arguments => Expr[ToOrPartialTo]
     )(implicit ctx: TransformationContext[From, To]): TransformationExpr[ToOrPartialTo] = {
       val totalConstructorArguments: Map[String, ExistentialExpr] = resolvedArguments.collect {
-        case (name, exprE) if exprE.value.isTotal => name -> exprE.mapK[Expr](_ => _.ensureTotal)
+        case ResolvedArgument(exprE, name, _) if exprE.value.isTotal => name -> exprE.mapK[Expr](_ => _.ensureTotal)
       }.toMap
 
       resolvedArguments.collect {
-        case (name, exprE) if exprE.value.isPartial =>
+        case ResolvedArgument(exprE, name, _) if exprE.value.isPartial =>
           name -> exprE.mapK[PartialExpr] { implicit ExprE: Type[exprE.Underlying] => _.ensurePartial }
       } match {
         case Nil =>
@@ -763,10 +751,42 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       newError.parTuple(oldErrors).map[Nothing](_ => ???)
     }
 
+    private def verifyUnusedFieldPolicies[From, To](
+        allSourceFields: Set[String],
+        resolvedArguments: List[ResolvedArgument]
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[List[ResolvedArgument]] = {
+      val used = resolvedArguments.flatMap(_.fromSourceField).toSet
+      val ignored = ctx.config.getIgnoreUnusedFields
+      val fatalUnused = allSourceFields -- ignored -- used
+
+      val failOnUnused =
+        if (ctx.config.flags.unusedFieldPolicy.contains(FailOnUnused)) {
+          val result =
+            if (fatalUnused.nonEmpty) DerivationResult.requiredFieldNotUsed[From, To, Unit](fatalUnused)
+            else DerivationResult.unit
+          result.log {
+            "UnusedFieldPolicy(FailOnUsed) is enabled\n" +
+              s"all source fields: ${allSourceFields.mkString(",")}\n" +
+              s"used fields: ${used.mkString(",")}) \n" +
+              s"ignore unused field(s) ${ignored.mkString(",")}"
+          }
+        } else DerivationResult.unit
+
+      failOnUnused.map(_ => resolvedArguments)
+    }
+
     // Stub to use when the setter's return type is not Unit and nonUnitBeanSetters flag is off.
-    private val nonUnitSetter = Existential[TransformationExpr, Null](TransformationExpr.fromTotal(Expr.Null))
+    private val nonUnitSetter =
+      ResolvedArgument(Existential[TransformationExpr, Null](TransformationExpr.fromTotal(Expr.Null)), "")
 
     // Stub to use when the setter's was not matched and beanSettersIgnoreUnmatched flag is on.
-    private val unmatchedSetter = Existential[TransformationExpr, Null](TransformationExpr.fromTotal(Expr.Null))
+    private val unmatchedSetter =
+      ResolvedArgument(Existential[TransformationExpr, Null](TransformationExpr.fromTotal(Expr.Null)), "")
   }
+
+  private case class ResolvedArgument(
+      expr: Existential[TransformationExpr],
+      toTargetField: String,
+      fromSourceField: Option[String] = None
+  )
 }
