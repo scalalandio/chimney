@@ -35,6 +35,8 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val FailOnUnused: Type[io.scalaland.chimney.dsl.FailOnUnused.type]
+
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
     val ArgumentList: ArgumentListModule
@@ -151,6 +153,14 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerOverrides,
             runtime.TransformerOverrides.RenamedTo
           ] { this: RenamedTo.type => }
+
+      val IgnoreUnusedField: IgnoreUnusedFieldModule
+      trait IgnoreUnusedFieldModule
+          extends Type.Ctor2UpperBounded[
+            runtime.Path,
+            runtime.TransformerOverrides,
+            runtime.TransformerOverrides.IgnoreUnusedField
+          ] { this: IgnoreUnusedField.type => }
     }
 
     val TransformerFlags: TransformerFlagsModule
@@ -196,6 +206,13 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
               dsls.ImplicitTransformerPreference,
               runtime.TransformerFlags.ImplicitConflictResolution
             ] { this: ImplicitConflictResolution.type => }
+        val UnusedFieldPolicy: UnusedFieldPolicyModule
+        trait UnusedFieldPolicyModule
+            extends Type.Ctor1UpperBounded[
+              dsls.ActionOnUnused,
+              runtime.TransformerFlags.UnusedFieldPolicy
+            ] {
+          this: UnusedFieldPolicy.type => }
         val FieldNameComparison: FieldNameComparisonModule
         trait FieldNameComparisonModule
             extends Type.Ctor1UpperBounded[

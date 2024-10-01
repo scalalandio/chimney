@@ -307,4 +307,5 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       case Right(ctorType) => f(using ctorType.Underlying)
       case Left(error)     => report.errorAndAbort(error, Position.ofMacroExpansion)
     }
+
 }

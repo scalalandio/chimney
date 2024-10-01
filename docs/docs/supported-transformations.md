@@ -759,6 +759,55 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
+### Unused source fields policies
+
+If you want to enforce that every field of the source type is used in the transformation, you can enable the
+`.enableUnusedFieldPolicy(FailOnUnused)` setting.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+
+    case class Source(a: String, b: Int, c: String)
+    case class Target(a: String)
+
+    Source("value", 512, "anotherValue")
+      .into[Target]
+      .enableUnusedFieldPolicy(FailOnUnused)
+      .transform
+    // Chimney can't derive transformation from Source to Target
+    // 
+    // Target
+    //   field(s) b, c of Source were required to be used in the transformation but are not used!
+    //
+    // Consult https://chimney.readthedocs.io for usage examples.
+    ```
+
+The setting `.withIgnoreUnusedField` allows you to specify a certain subset of fields to be ignored if left unused.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+
+    case class Source(a: String, b: Int, c: String)
+    case class Target(a: String)
+
+    pprint.pprintln(
+        Source("value", 512, "anotherValue")
+          .into[Target]
+          .enableUnusedFieldPolicy(FailOnUnused)
+          .withIgnoreUnusedField(_.b)
+          .withIgnoreUnusedField(_.c)
+          .transform
+    )
+    // expected output:
+    // Target(a = "value")
+    ```
+
 ### Writing to Bean setters
 
 If we want to write to `def setFieldName(fieldName: A): Unit` as if it was `fieldName: A` argument of a constructor -

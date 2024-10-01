@@ -96,6 +96,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       weakTypeTag[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val FailOnUnused: Type[io.scalaland.chimney.dsl.FailOnUnused.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.FailOnUnused.type]
+
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
       weakTypeTag[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
@@ -249,6 +252,17 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             )
           }
       }
+      object IgnoreUnusedField extends IgnoreUnusedFieldModule {
+        def apply[
+          FromPath <: runtime.Path: Type,
+          Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.IgnoreUnusedField[FromPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.IgnoreUnusedField[FromPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.IgnoreUnusedField[?, ?]].map { A0 =>
+            (A0.param_<[runtime.Path](0), A0.param_<[runtime.TransformerOverrides](1))
+          }
+      }
     }
 
     object TransformerFlags extends TransformerFlagsModule {
@@ -307,6 +321,15 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           def unapply[A](A: Type[A]): Option[?<[dsls.ImplicitTransformerPreference]] =
             A.asCtor[runtime.TransformerFlags.ImplicitConflictResolution[?]].map { A0 =>
               A0.param_<[dsls.ImplicitTransformerPreference](0)
+            }
+        }
+        object UnusedFieldPolicy extends UnusedFieldPolicyModule {
+          def apply[R <: dsls.ActionOnUnused: Type]
+          : Type[runtime.TransformerFlags.UnusedFieldPolicy[R]] =
+            weakTypeTag[runtime.TransformerFlags.UnusedFieldPolicy[R]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.ActionOnUnused]] =
+            A.asCtor[runtime.TransformerFlags.UnusedFieldPolicy[?]].map { A0 =>
+              A0.param_<[dsls.ActionOnUnused](0)
             }
         }
         object FieldNameComparison extends FieldNameComparisonModule {
