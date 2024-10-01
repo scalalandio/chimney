@@ -172,7 +172,7 @@ private[compiletime] trait ResultOps { this: Derivation =>
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       UnusedButRequiredToUseSourceFields(
-        unused = unusedRequiredFields
+        unusedFields = unusedRequiredFields
       )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 

@@ -308,11 +308,4 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
       case Left(error)     => report.errorAndAbort(error, Position.ofMacroExpansion)
     }
 
-  def applyRequireSourceFieldsExceptType[Out](
-      f: [A <: runtime.PathList] => Type[A] ?=> Out
-  )(fieldSelectors: Expr[Seq[?]]): Out =
-    ExistentialPathList.parse(fieldSelectors) match {
-      case Right(pathList) => f(using pathList.Underlying)
-      case Left(error)     => report.errorAndAbort(error, Position.ofMacroExpansion)
-    }
 }

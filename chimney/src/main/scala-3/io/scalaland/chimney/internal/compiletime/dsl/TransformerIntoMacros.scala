@@ -8,7 +8,6 @@ import io.scalaland.chimney.internal.compiletime.dsl.utils.DslMacroUtils
 import io.scalaland.chimney.internal.runtime.{
   ArgumentLists,
   Path,
-  PathList,
   TransformerFlags,
   TransformerOverrides,
   WithRuntimeDataStore
@@ -145,21 +144,20 @@ object TransformerIntoMacros {
         }
     }(f)
 
-  def requireSourceFieldsUsedExceptImpl[
+  def withIgnoreUnusedFieldImpl[
       From: Type,
       To: Type,
       Overrides <: TransformerOverrides: Type,
-      Flags <: TransformerFlags: Type,
-      Ctor: Type
+      Flags <: TransformerFlags: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selectorFrom: Expr[Seq[From => Any]]
+      fromSelector: Expr[From => ?]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
-    DslMacroUtils().applyRequireSourceFieldsExceptType {
-      [args <: PathList] =>
-        (_: Type[args]) ?=>
+    DslMacroUtils().applyFieldNameType {
+      [fromPath <: Path] =>
+        (_: Type[fromPath]) ?=>
           '{
-            $ti.asInstanceOf[TransformerInto[From, To, RequireSourceFieldsExcept[args, Overrides], Flags]]
+            $ti.asInstanceOf[TransformerInto[From, To, IgnoreUnusedField[fromPath, Overrides], Flags]]
         }
-    }(selectorFrom)
+    }(fromSelector)
 }

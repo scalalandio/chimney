@@ -377,6 +377,27 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
   def disableMacrosLogging: UpdateFlag[Disable[MacrosLogging, Flags]] =
     disableFlag[MacrosLogging]
 
+  /** Enable an action to be executed upon unused fields in the source type.
+    *
+    * @param action
+    *   parameter specifying what to do when some fields of the source are not used in the target
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#unused-source-fields-policies]] for more details for more details
+   *
+    * @since 1.5.0
+    */
+  def enableUnusedFieldPolicy[R <: ActionOnUnused](@unused action: R): UpdateFlag[Enable[UnusedFieldPolicy[R], Flags]] =
+    enableFlag[UnusedFieldPolicy[R]]
+
+  /** Disable any action registered to be executed upon unused fields in the source type.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/TODO:???]] for more details for more details
+    * @since 1.5.0
+    */
+  def disableUnusedFieldPolicy: UpdateFlag[Disable[UnusedFieldPolicy[?], Flags]] =
+    disableFlag[UnusedFieldPolicy[?]]
+
   private def enableFlag[F <: TransformerFlags.Flag]: UpdateFlag[Enable[F, Flags]] =
     this.asInstanceOf[UpdateFlag[Enable[F, Flags]]]
 

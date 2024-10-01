@@ -77,7 +77,7 @@ final case class NotSupportedTransformerDerivation(
     extends TransformerDerivationError
 
 final case class UnusedButRequiredToUseSourceFields(
-    unused: Set[String]
+    unusedFields: Set[String]
 )(val fromType: String, val toType: String)
     extends TransformerDerivationError
 
@@ -114,7 +114,7 @@ object TransformerDerivationError {
           case NotSupportedTransformerDerivation(exprPrettyPrint) =>
             s"  derivation from $exprPrettyPrint: $fromType to $toType is not supported in Chimney!"
           case UnusedButRequiredToUseSourceFields(unusedFields) =>
-            s"  field(s) $MAGENTA${unusedFields.mkString(", ")}$RESET of $MAGENTA${fromType}$RESET are required to be used in the transformation but are not used!"
+            s"  field(s) $MAGENTA${unusedFields.mkString(", ")}$RESET of $MAGENTA${fromType}$RESET were required to be used in the transformation but are not used!"
         }
 
         def prettyFieldList(fields: Seq[String])(use: String => String): String =

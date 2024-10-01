@@ -26,6 +26,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
       fieldNameComparison: Option[dsls.TransformedNamesComparison] = None,
       subtypeNameComparison: Option[dsls.TransformedNamesComparison] = None,
+      unusedFieldPolicy: Option[dsls.ActionOnUnused] = None,
       displayMacrosLogging: Boolean = false
   ) {
 
@@ -85,6 +86,9 @@ private[compiletime] trait Configurations { this: Derivation =>
     def setSubtypeNameComparison(nameComparison: Option[dsls.TransformedNamesComparison]): TransformerFlags =
       copy(subtypeNameComparison = nameComparison)
 
+    def setUnusedFieldPolicy(action: Option[dsls.ActionOnUnused]): TransformerFlags =
+      copy(unusedFieldPolicy = action)
+
     override def toString: String = s"TransformerFlags(${Vector(
         if (inheritedAccessors) Vector("inheritedAccessors") else Vector.empty,
         if (methodAccessors) Vector("methodAccessors") else Vector.empty,
@@ -98,6 +102,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
         if (nonAnyValWrappers) Vector("nonAnyValWrappers") else Vector.empty,
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
+        unusedFieldPolicy.map(r => s"UnusedFieldPolicy=$r").toList.toVector,
         fieldNameComparison.map(r => s"fieldNameComparison=$r").toList.toVector,
         subtypeNameComparison.map(r => s"subtypeNameComparison=$r").toList.toVector,
         if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
@@ -123,6 +128,11 @@ private[compiletime] trait Configurations { this: Derivation =>
           case "PreferTotalTransformer"   => Some(dsls.PreferTotalTransformer)
           case "PreferPartialTransformer" => Some(dsls.PreferPartialTransformer)
           case "none"                     => None
+        })
+      case (cfg, transformerFlag"UnusedFieldPolicy=$value") =>
+        cfg.copy(unusedFieldPolicy = value match {
+          case "FailOnUnused"   => Some(dsls.FailOnUnused)
+          case "none"           => None
         })
       case (cfg, transformerFlag"MacrosLogging=$value") => cfg.copy(displayMacrosLogging = value.toBoolean)
       case (cfg, _)                                     => cfg
@@ -226,15 +236,10 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
   }
 
-  sealed trait Verification extends scala.Product with Serializable
-  object Verification {
-    final case class RequireAllSourceFieldsUsedExcept(sourceFields: Set[String]) extends Verification {
-      override def toString: String = s"RequireAllSourceFieldsUsedExcept(sourceFields=${sourceFields.mkString(", ")})"
-    }
-  }
 
   sealed protected trait TransformerOverride extends scala.Product with Serializable
   protected object TransformerOverride {
+    sealed trait ForFieldPolicy extends TransformerOverride
     sealed trait ForField extends TransformerOverride
     sealed trait ForSubtype extends TransformerOverride
     sealed trait ForConstructor extends TransformerOverride
@@ -271,6 +276,10 @@ private[compiletime] trait Configurations { this: Derivation =>
     final case class RenamedFrom(sourcePath: Path) extends ForField
     final case class RenamedTo(targetPath: Path) extends ForSubtype
 
+    final case class IgnoreUnusedField(fieldName: String) extends ForFieldPolicy {
+      override def toString: String = s"IgnoreUnusedField(${fieldName})"
+    }
+
     private def printArgs(args: Args): String = {
       import ExistentialType.prettyPrint as printTpe
       if (args.isEmpty) "<no list>"
@@ -286,8 +295,6 @@ private[compiletime] trait Configurations { this: Derivation =>
       private val runtimeOverrides: Vector[(Path, TransformerOverride)] = Vector.empty,
       /** Let us prevent `implicit val foo = foo` but allow `implicit val foo = new Foo { def sth = foo }` */
       private val preventImplicitSummoningForTypes: Option[(??, ??)] = None,
-      /** Stores all verification settings provided by user */
-      verifications: Vector[Verification] = Vector.empty
   ) {
 
     private lazy val runtimeOverridesForCurrent = runtimeOverrides.filter {
@@ -313,8 +320,6 @@ private[compiletime] trait Configurations { this: Derivation =>
     def areLocalFlagsEmpty: Boolean =
       !localFlagsOverridden
 
-    def addVerification(verification: Verification): TransformerConfiguration =
-      copy(verifications = verifications :+ verification)
     def addTransformerOverride(path: Path, runtimeOverride: TransformerOverride): TransformerConfiguration =
       copy(runtimeOverrides = runtimeOverrides :+ (path -> runtimeOverride))
     def areOverridesEmpty: Boolean =
@@ -395,12 +400,19 @@ private[compiletime] trait Configurations { this: Derivation =>
             case _: TransformerOverride.ForField | _: TransformerOverride.ForSubtype => true
             // Constructor is always matched at "_" Path, and dropped only when going inward
             case _: TransformerOverride.ForConstructor => false
+            case _: TransformerOverride.ForFieldPolicy => false
           }
           newPath <- path.drop(toPath).to(Vector)
           if !(newPath == Path.Root && alwaysDropOnRoot)
         } yield newPath -> runtimeOverride,
         preventImplicitSummoningForTypes = None
       )
+
+    def getIgnoreUnusedFields: Set[String] = ListSet.from {
+      runtimeOverrides.collect {
+        case (_, TransformerOverride.IgnoreUnusedField(fieldName)) => fieldName
+      }
+    }
 
     override def toString: String = {
       val runtimeOverridesString =
@@ -480,6 +492,16 @@ private[compiletime] trait Configurations { this: Derivation =>
             extractTransformerFlags[Flags2](defaultFlags).setSubtypeNameComparison(
               Some(extractNameComparisonObject[Comparison])
             )
+          case ChimneyType.TransformerFlags.Flags.UnusedFieldPolicy(r) =>
+            if (r.Underlying =:= ChimneyType.FailOnUnused)
+              extractTransformerFlags[Flags2](defaultFlags).setUnusedFieldPolicy(
+                Some(dsls.FailOnUnused)
+              )
+            else {
+              // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+              reportError("Invalid ActionOnUnused type!!")
+              // $COVERAGE-ON$
+            }
           case _ =>
             extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = true)
         }
@@ -495,6 +517,8 @@ private[compiletime] trait Configurations { this: Derivation =>
             extractTransformerFlags[Flags2](defaultFlags).setFieldNameComparison(None)
           case ChimneyType.TransformerFlags.Flags.SubtypeNameComparison(_) =>
             extractTransformerFlags[Flags2](defaultFlags).setSubtypeNameComparison(None)
+          case ChimneyType.TransformerFlags.Flags.UnusedFieldPolicy(_) =>
+            extractTransformerFlags[Flags2](defaultFlags).setUnusedFieldPolicy(None)
           case _ =>
             extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = false)
         }
@@ -579,15 +603,14 @@ private[compiletime] trait Configurations { this: Derivation =>
             extractPath[FromPath],
             TransformerOverride.RenamedTo(extractPath[ToPath])
           )
-      case ChimneyType.TransformerOverrides.RequireSourceFieldsExcept(fromPathList, cfg) =>
-        import fromPathList.Underlying as FromPathList, cfg.Underlying as Tail2
-        val fields = extractPathList[FromPathList].map {
-          case Path.AtField(fromName, _) => fromName
+      case ChimneyType.TransformerOverrides.IgnoreUnusedField(fromPath, cfg) =>
+        import fromPath.Underlying as FromPath, cfg.Underlying as Tail2
+        extractPath[FromPath] match {
+          case path @ Path.AtField(fromName, _) =>
+            extractTransformerConfig[Tail2](runtimeDataIdx, runtimeDataStore)
+              .addTransformerOverride(path, TransformerOverride.IgnoreUnusedField(fromName))
           case path                      => reportError(s"$path is not a field selector!")
-        }.toSet
-
-        extractTransformerConfig[Tail2](runtimeDataIdx, runtimeDataStore)
-          .addVerification(Verification.RequireAllSourceFieldsUsedExcept(fields))
+        }
       // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
       case _ =>
         reportError(s"Invalid internal TransformerOverrides type shape: ${Type.prettyPrint[Tail]}!!")

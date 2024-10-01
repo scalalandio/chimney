@@ -519,90 +519,108 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
   }
 
-  group("""setting .requireSourceFieldsUsedExcept(_.field1, _.field2)""") {
+  group("flag .enableUnusedFieldPolicy") {
     import shapes1.{Point, Rectangle, Triangle}
 
-    test("should fail if not all required source fields are used") {
+    test("should fail transform if unused source fields exist") {
       compileErrors(
         """
          Triangle(p1 = Point(0, 0), p2 = Point(2, 2), p3 = Point(2, 0))
           .into[Rectangle]
-          .requireSourceFieldsUsedExcept()
+          .enableUnusedFieldPolicy(FailOnUnused)
           .transform
         """
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.shapes1.Triangle to io.scalaland.chimney.fixtures.shapes1.Rectangle",
-        "field(s) p3 of io.scalaland.chimney.fixtures.shapes1.Triangle are required to be used in the transformation but are not used!"
+        "field(s) p3 of io.scalaland.chimney.fixtures.shapes1.Triangle were required to be used in the transformation but are not used!"
       )
     }
 
-    test("should pass if all required source fields are either used or included in exceptions") {
-      Triangle(p1 = Point(0, 0), p2 = shapes1.Point(2, 2), p3 = shapes1.Point(2, 0))
+    test("should not fail transform if unused source fields exist but are ignored through .withIgnoreUnusedField") {
+      Triangle(p1 = Point(0, 0), p2 = Point(2, 2), p3 = Point(2, 0))
         .into[Rectangle]
-        .requireSourceFieldsUsedExcept(_.p3)
+        .withIgnoreUnusedField(_.p3)
+        .enableUnusedFieldPolicy(FailOnUnused)
         .transform ==> Rectangle(p1 = Point(0, 0), p2 = Point(2, 2))
     }
 
-    test("should pass if all required source fields are used (withFieldRenamed)") {
+    test("should not fail transform if all source fields are used (withFieldRenamed)") {
       case class AnotherRectangle(p1: Point, PPPP: Point)
 
       Rectangle(p1 = Point(0, 0), p2 = Point(2, 2))
         .into[AnotherRectangle]
         .withFieldRenamed(_.p2, _.PPPP)
-        .requireSourceFieldsUsedExcept()
+        .enableUnusedFieldPolicy(FailOnUnused)
         .transform ==> AnotherRectangle(p1 = Point(0, 0), PPPP = Point(2, 2))
     }
 
-    test("should pass if all required source fields are used (enableCustomFieldNameComparison)") {
+    test("should not fail transform if all source fields are used (enableCustomFieldNameComparison)") {
       case class AnotherRectangle(p1: Point, P2: Point)
 
       Rectangle(p1 = Point(0, 0), p2 = Point(2, 2))
         .into[AnotherRectangle]
-        .requireSourceFieldsUsedExcept()
+        .enableUnusedFieldPolicy(FailOnUnused)
         .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
         .transform ==> AnotherRectangle(p1 = Point(0, 0), P2 = Point(2, 2))
     }
 
-    test("should pass if all required source fields are used (withFieldRenamed + enableCustomFieldNameComparison)") {
+    test("should not fail transform if all source fields are used (withFieldRenamed + enableCustomFieldNameComparison)") {
       case class AnotherTriangle(p1: Point, P2: Point, PPPP: Point)
 
       Triangle(p1 = Point(0, 0), p2 = Point(2, 2), p3 = Point(2, 0))
         .into[AnotherTriangle]
         .withFieldRenamed(_.p3, _.PPPP)
-        .requireSourceFieldsUsedExcept()
+        .enableUnusedFieldPolicy(FailOnUnused)
         .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
         .transform ==> AnotherTriangle(p1 = Point(0, 0), P2 = Point(2, 2), PPPP = Point(2, 0))
     }
 
-    test(
-      "should pass if all required source fields are either used or included in exceptions (withFieldRenamed + enableCustomFieldNameComparison)"
-    ) {
+    test("should fail transform if unused source fields exist (withFieldRenamed + enableCustomFieldNameComparison)") {
+      @unused
       case class AnotherTriangle(p11111: Point, P2: Point, PPPP: Point)
 
-      // without p1 in exceptions
       compileErrors(
         """
          Triangle(p1 = Point(0, 0), p2 = Point(2, 2), p3 = Point(2, 0))
           .into[AnotherTriangle]
           .withFieldRenamed(_.p3, _.PPPP)
           .withFieldConst(_.p11111, Point(0, 0))
-          .requireSourceFieldsUsedExcept()
+          .enableUnusedFieldPolicy(FailOnUnused)
           .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
           .transform ==> AnotherTriangle(p11111 = Point(0, 0), P2 = Point(2, 2), PPPP = Point(2, 0))
         """
       ).check(
         "Chimney can't derive transformation from io.scalaland.chimney.fixtures.shapes1.Triangle to io.scalaland.chimney.TotalTransformerProductSpec.AnotherTriangle",
-        "field(s) p1 of io.scalaland.chimney.fixtures.shapes1.Triangle are required to be used in the transformation but are not used!"
+        "field(s) p1 of io.scalaland.chimney.fixtures.shapes1.Triangle were required to be used in the transformation but are not used!"
       )
+    }
 
-      // with p1 in exceptions
+    test(
+      "should not fail transform if unused source fields exist but are ignored through .withIgnoreUnusedField (withFieldRenamed + enableCustomFieldNameComparison)"
+    ) {
+      case class AnotherTriangle(p11111: Point, P2: Point, PPPP: Point)
+
       Triangle(p1 = Point(0, 0), p2 = Point(2, 2), p3 = Point(2, 0))
         .into[AnotherTriangle]
         .withFieldRenamed(_.p3, _.PPPP)
         .withFieldConst(_.p11111, Point(0, 0))
-        .requireSourceFieldsUsedExcept(_.p1)
+        .withIgnoreUnusedField(_.p1)
+        .enableUnusedFieldPolicy(FailOnUnused)
         .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
         .transform ==> AnotherTriangle(p11111 = Point(0, 0), P2 = Point(2, 2), PPPP = Point(2, 0))
+    }
+  }
+
+  group("flag .disableUnusedFieldPolicy") {
+    import shapes1.{Point, Rectangle, Triangle}
+
+    test("should disable globally enabled .enableUnusedFieldPolicy") {
+      @unused implicit val config = TransformerConfiguration.default.enableUnusedFieldPolicy(FailOnUnused)
+
+      Triangle(p1 = Point(0, 0), p2 = Point(2, 2), p3 = Point(2, 0))
+        .into[Rectangle]
+        .disableUnusedFieldPolicy
+        .transform ==> Rectangle(p1 = Point(0, 0), p2 = Point(2, 2))
     }
   }
 

@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import io.scalaland.chimney.dsl.FailOnUnused
 import io.scalaland.chimney.internal.compiletime.{DerivationErrors, DerivationResult}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
@@ -263,21 +264,20 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           .map(_.filterNot(_._2 == unmatchedSetter).filterNot(_._2 == nonUnitSetter))
           .withUsedSourceFields
           .logSuccess { case (usedSourceFields, _) =>
-            (for (verification <- verifications) yield verification match {
-              case Verification.RequireAllSourceFieldsUsedExcept(exceptFields) =>
-                s"validate all source fields used except ${exceptFields.mkString(",")} (all=${fromEnabledExtractors.keySet.mkString(",")}, used=${usedSourceFields.mkString(",")})"
-            }).mkString("\n")
+            if (ctx.config.flags.unusedFieldPolicy.contains(FailOnUnused)) {
+              "unused-field-policy(fail-on-used) is enabled\n" +
+                s"all source fields: ${fromEnabledExtractors.keySet.mkString(",")}\n" +
+                s"used fields: ${usedSourceFields.mkString(",")}) \n" +
+                s"ignore unused field(s) ${ctx.config.getIgnoreUnusedFields.mkString(",")}"
+            } else ""
           }
           .flatMap { case (usedSourceFields, res) =>
-            verifications
-              .flatMap { case Verification.RequireAllSourceFieldsUsedExcept(exceptFields) =>
-                Option(fromEnabledExtractors.keySet -- exceptFields -- usedSourceFields) // unused but required fields
-                  .filter(_.nonEmpty)
-                  .map(
-                    DerivationResult.requiredFieldNotUsed[From, To, List[(String, Existential[TransformationExpr])]](_)
-                  )
+            Option
+              .when(ctx.config.flags.unusedFieldPolicy.contains(FailOnUnused)) {
+                fromEnabledExtractors.keySet -- ctx.config.getIgnoreUnusedFields -- usedSourceFields // unused but required fields
               }
-              .headOption
+              .filter(_.nonEmpty)
+              .map(DerivationResult.requiredFieldNotUsed[From, To, List[(String, Existential[TransformationExpr])]](_))
               .getOrElse(DerivationResult.pure(res))
           }
           .logSuccess { args =>

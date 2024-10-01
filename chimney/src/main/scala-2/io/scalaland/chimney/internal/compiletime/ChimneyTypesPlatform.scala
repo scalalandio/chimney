@@ -96,6 +96,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       weakTypeTag[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val FailOnUnused: Type[io.scalaland.chimney.dsl.FailOnUnused.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.FailOnUnused.type]
+
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
       weakTypeTag[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
@@ -249,15 +252,15 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             )
           }
       }
-      object RequireSourceFieldsExcept extends RequireSourceFieldsExceptModule {
+      object IgnoreUnusedField extends IgnoreUnusedFieldModule {
         def apply[
-            FromPathList <: runtime.PathList: Type,
-            Tail <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.RequireSourceFieldsExcept[FromPathList, Tail]] =
-          weakTypeTag[runtime.TransformerOverrides.RequireSourceFieldsExcept[FromPathList, Tail]]
-        def unapply[A](A: Type[A]): Option[(?<[runtime.PathList], ?<[runtime.TransformerOverrides])] =
-          A.asCtor[runtime.TransformerOverrides.RequireSourceFieldsExcept[?, ?]].map { A0 =>
-            (A0.param_<[runtime.PathList](0), A0.param_<[runtime.TransformerOverrides](1))
+          FromPath <: runtime.Path: Type,
+          Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.IgnoreUnusedField[FromPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.IgnoreUnusedField[FromPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.IgnoreUnusedField[?, ?]].map { A0 =>
+            (A0.param_<[runtime.Path](0), A0.param_<[runtime.TransformerOverrides](1))
           }
       }
     }
@@ -318,6 +321,15 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           def unapply[A](A: Type[A]): Option[?<[dsls.ImplicitTransformerPreference]] =
             A.asCtor[runtime.TransformerFlags.ImplicitConflictResolution[?]].map { A0 =>
               A0.param_<[dsls.ImplicitTransformerPreference](0)
+            }
+        }
+        object UnusedFieldPolicy extends UnusedFieldPolicyModule {
+          def apply[R <: dsls.ActionOnUnused: Type]
+          : Type[runtime.TransformerFlags.UnusedFieldPolicy[R]] =
+            weakTypeTag[runtime.TransformerFlags.UnusedFieldPolicy[R]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.ActionOnUnused]] =
+            A.asCtor[runtime.TransformerFlags.UnusedFieldPolicy[?]].map { A0 =>
+              A0.param_<[dsls.ActionOnUnused](0)
             }
         }
         object FieldNameComparison extends FieldNameComparisonModule {
@@ -414,17 +426,6 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           weakTypeTag[runtime.Path.EveryMapValue[Init]]
         def unapply[A](A: Type[A]): Option[?<[runtime.Path]] =
           A.asCtor[runtime.Path.EveryMapValue[?]].map(A0 => A0.param_<[runtime.Path](0))
-      }
-    }
-
-    object PathList extends PathListModule {
-      val Empty: Type[runtime.PathList.Empty] = weakTypeTag[runtime.PathList.Empty]
-      object List extends ListModule {
-        def apply[Head <: runtime.Path: Type, Tail <: runtime.PathList: Type]: Type[runtime.PathList.List[Head, Tail]] =
-          weakTypeTag[runtime.PathList.List[Head, Tail]]
-        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.PathList])] =
-          A.asCtor[runtime.PathList.List[?, ?]]
-            .map(A0 => A0.param_<[runtime.Path](0) -> A0.param_<[runtime.PathList](1))
       }
     }
 

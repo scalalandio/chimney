@@ -43,6 +43,9 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       quoted.Type.of[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val FailOnUnused: Type[io.scalaland.chimney.dsl.FailOnUnused.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.FailOnUnused.type]
+
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
       quoted.Type.of[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
@@ -219,22 +222,16 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             case _ => scala.None
           }
       }
-
-      object RequireSourceFieldsExcept extends RequireSourceFieldsExceptModule {
+      object IgnoreUnusedField extends IgnoreUnusedFieldModule {
         def apply[
-            FromPathList <: runtime.PathList: Type,
+            FromPath <: runtime.Path: Type,
             Tail <: runtime.TransformerOverrides: Type
-        ]: Type[runtime.TransformerOverrides.RequireSourceFieldsExcept[FromPathList, Tail]] =
-          quoted.Type.of[runtime.TransformerOverrides.RequireSourceFieldsExcept[FromPathList, Tail]]
-        def unapply[A](tpe: Type[A]): Option[(?<[runtime.PathList], ?<[runtime.TransformerOverrides])] =
+        ]: Type[runtime.TransformerOverrides.IgnoreUnusedField[FromPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.IgnoreUnusedField[FromPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           tpe match {
-            case '[runtime.TransformerOverrides.RequireSourceFieldsExcept[fromPath, cfg]] =>
-              Some(
-                (
-                  Type[fromPath].as_?<[runtime.PathList],
-                  Type[cfg].as_?<[runtime.TransformerOverrides]
-                )
-              )
+            case '[runtime.TransformerOverrides.IgnoreUnusedField[fromPath, cfg]] =>
+              Some((Type[fromPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
             case _ => scala.None
           }
       }
@@ -302,6 +299,15 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           def unapply[A](tpe: Type[A]): Option[?<[dsls.ImplicitTransformerPreference]] = tpe match {
             case '[runtime.TransformerFlags.ImplicitConflictResolution[r]] =>
               Some(Type[r].as_?<[dsls.ImplicitTransformerPreference])
+            case _ => scala.None
+          }
+        }
+        object UnusedFieldPolicy extends UnusedFieldPolicyModule {
+          def apply[R <: dsls.ActionOnUnused: Type]: Type[runtime.TransformerFlags.UnusedFieldPolicy[R]] =
+            quoted.Type.of[runtime.TransformerFlags.UnusedFieldPolicy[R]]
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.ActionOnUnused]] = tpe match {
+            case '[runtime.TransformerFlags.UnusedFieldPolicy[r]] =>
+              Some(Type[r].as_?<[dsls.ActionOnUnused])
             case _ => scala.None
           }
         }

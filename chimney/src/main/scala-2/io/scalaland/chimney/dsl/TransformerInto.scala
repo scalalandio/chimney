@@ -205,17 +205,18 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
   ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withConstructorImpl[From, To, Overrides, Flags]
 
-  /** Require that all fields of the source object except fields mentioned in `selectorFrom` are used in the
-    * transformation. and fail compilation otherwise.
-    *
-    * @param selectorFrom
-    *   exception fields that are not required to be used in the transformation
-    * @return
-    */
-  def requireSourceFieldsUsedExcept[T, U](
-      selectorFrom: From => Any*
-  ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
-    macro TransformerIntoMacros.requireSourceFieldsUsedExceptImpl[From, To, Overrides, Flags]
+  /** Ignore if a source field is not used in the transformation. This can be useful when `.enableUnusedFieldPolicy` is
+   * enabled.
+   *
+   * @param selectorFrom
+   *   the field is that not required to be used in the transformation
+   * @return
+   *   [[io.scalaland.chimney.dsl.TransformerInto]]
+   *
+   * @since 1.5.0
+   */
+  def withIgnoreUnusedField(selectorFrom: From => ?): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerIntoMacros.withIgnoreUnusedField[From, To, Overrides, Flags]
 
   /** Apply configured transformation in-place.
     *

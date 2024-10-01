@@ -266,99 +266,6 @@ private[chimney] trait DslMacroUtils {
       s"Expected function, instead got: $MAGENTA$t$RESET: $MAGENTA${t.tpe}$RESET"
   }
 
-  private trait ExistentialPathList {
-    type Underlying <: runtime.PathList
-    val Underlying: c.WeakTypeTag[Underlying]
-  }
-  private object ExistentialPathList {
-    def parse(selectors: Seq[Tree]): Either[String, ExistentialPathList] =
-      selectors
-        .map(selector => ExistentialPath.parse(selector))
-        .foldLeft[Either[String, List[ExistentialPath]]](Right(Nil)) {
-          case (err @ Left(_), _)        => err
-          case (_, Left(error))          => Left(error)
-          case (Right(acc), Right(path)) => Right(acc :+ path)
-        }
-        .map { params =>
-          new ExistentialPathList {
-            type Underlying = runtime.PathList
-            implicit val Underlying: WeakTypeTag[Underlying] = combine(params)
-          }
-        }
-
-    private def combine(paths: Seq[ExistentialPath]): WeakTypeTag[runtime.PathList] = {
-      object Combine {
-        def apply[A <: runtime.Path: WeakTypeTag, Args <: runtime.PathList: WeakTypeTag]
-            : WeakTypeTag[runtime.PathList.List[A, Args]] =
-          weakTypeTag[runtime.PathList.List[A, Args]]
-      }
-
-      paths
-        .foldLeft[WeakTypeTag[? <: runtime.PathList]](weakTypeTag[runtime.PathList.Empty]) { (acc, path) =>
-          Combine(path.Underlying, acc)
-        }
-        .asInstanceOf[WeakTypeTag[runtime.PathList]]
-    }
-
-//      selectors
-//        .map(ExistentialPath.parse)
-//
-//      extractParams(t).map { params =>
-//        new ExistentialCtor {
-//          type Underlying = runtime.ArgumentLists
-//          implicit val Underlying: WeakTypeTag[runtime.ArgumentLists] = paramsToType(params)
-//        }
-//      }
-//    }
-//
-//    private def paramsToType(paramsLists: List[List[ValDef]]): WeakTypeTag[runtime.ArgumentLists] =
-//      paramsLists
-//        .map { paramList =>
-//          paramList.foldRight[WeakTypeTag[? <: runtime.ArgumentList]](weakTypeTag[runtime.ArgumentList.Empty])(
-//            constructArgumentListType
-//          )
-//        }
-//        .foldRight[WeakTypeTag[? <: runtime.ArgumentLists]](weakTypeTag[runtime.ArgumentLists.Empty])(
-//          constructArgumentListsType
-//        )
-//        .asInstanceOf[WeakTypeTag[runtime.ArgumentLists]]
-//
-//    private def constructArgumentListsType(
-//                                            head: WeakTypeTag[? <: runtime.ArgumentList],
-//                                            tail: WeakTypeTag[? <: runtime.ArgumentLists]
-//                                          ): WeakTypeTag[? <: runtime.ArgumentLists] = {
-//      object ApplyParams {
-//        def apply[Head <: runtime.ArgumentList: WeakTypeTag, Tail <: runtime.ArgumentLists: WeakTypeTag]
-//        : WeakTypeTag[runtime.ArgumentLists.List[Head, Tail]] =
-//          weakTypeTag[runtime.ArgumentLists.List[Head, Tail]]
-//      }
-//
-//      ApplyParams(head, tail)
-//    }
-//
-//    private def constructArgumentListType(
-//                                           t: ValDef,
-//                                           args: WeakTypeTag[? <: runtime.ArgumentList]
-//                                         ): WeakTypeTag[? <: runtime.ArgumentList] = {
-//      object ApplyParam {
-//        def apply[ParamName <: String: WeakTypeTag, ParamType: WeakTypeTag, Args <: runtime.ArgumentList: WeakTypeTag]
-//        : WeakTypeTag[runtime.ArgumentList.Argument[ParamName, ParamType, Args]] =
-//          weakTypeTag[runtime.ArgumentList.Argument[ParamName, ParamType, Args]]
-//      }
-//
-//      ApplyParam(
-//        c.WeakTypeTag(c.internal.constantType(Constant(t.name.decodedName.toString))),
-//        c.WeakTypeTag(t.tpt.tpe),
-//        args
-//      )
-//    }
-//
-//    import Console.*
-//
-//    private def invalidConstructor(t: Tree): String =
-//      s"Expected function, instead got: $MAGENTA$t$RESET: $MAGENTA${t.tpe}$RESET"
-  }
-
   // If we try to do:
   //
   //   implicit val toPath = fieldName.Underlying
@@ -395,16 +302,6 @@ private[chimney] trait DslMacroUtils {
         case (Left(error), _)             => c.abort(c.enclosingPosition, error)
         case (_, Left(error))             => c.abort(c.enclosingPosition, error)
       }
-  }
-
-  protected trait ApplyFieldNamesType {
-    def apply[A <: runtime.PathList: WeakTypeTag]: WeakTypeTag[?]
-
-    final def applyFromSelector(t: Seq[Tree]): WeakTypeTag[?] =
-      apply(extractSelectorAsType(t).Underlying)
-
-    private def extractSelectorAsType(t: Seq[Tree]): ExistentialPathList =
-      ExistentialPathList.parse(t).fold(error => c.abort(c.enclosingPosition, error), path => path)
   }
 
   /** Workaround for Java Enums, see [[io.scalaland.chimney.internal.runtime.RefinedJavaEnum]]. */
