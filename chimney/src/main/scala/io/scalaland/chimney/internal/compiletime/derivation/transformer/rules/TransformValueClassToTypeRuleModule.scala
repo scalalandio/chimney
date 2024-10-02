@@ -34,8 +34,7 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
       // '{ ${ derivedTo } /* using ${ src }.from internally */ }
       deriveRecursiveTransformationExpr[InnerFrom, To](
         unwrapFromIntoInnerFrom(ctx.src),
-        Path.Root.select(innerFromFieldName),
-        Path.Root
+        followFrom = Path(_.select(innerFromFieldName))
       )
         .flatMap(DerivationResult.expanded)
         // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info

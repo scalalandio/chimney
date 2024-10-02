@@ -163,6 +163,8 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     val Root = new Path(Vector())
 
+    def apply(selector: Path => Path): Path = selector(Root)
+
     object AtField {
       def unapply(path: Path): Option[(String, Path)] =
         path.segments.headOption.collect { case Segment.Select(name) => name -> new Path(path.segments.tail) }
@@ -232,7 +234,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         case TargetPath(toPath)   => toPath.drop(droppedTo).map(TargetPath(_))
       }
   }
-  object SidedPath {
+  protected object SidedPath {
 
     def unapply(sidedPath: SidedPath): Some[Path] = sidedPath match {
       case SourcePath(fromPath) => Some(fromPath)
