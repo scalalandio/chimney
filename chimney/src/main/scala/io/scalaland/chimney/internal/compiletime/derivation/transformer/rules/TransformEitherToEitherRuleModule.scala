@@ -31,6 +31,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
       useOverrideIfPresentOr("matchingLeft", ctx.config.filterCurrentOverridesForLeft) {
         deriveRecursiveTransformationExpr[FromL, ToL](
           ctx.src.upcastToExprOf[Left[FromL, FromR]].value,
+          Path.Root.matching[Left[FromL, FromR]],
           Path.Root.matching[Left[ToL, ToR]]
         )
       }
@@ -46,6 +47,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
       useOverrideIfPresentOr("matchingRight", ctx.config.filterCurrentOverridesForRight) {
         deriveRecursiveTransformationExpr[FromR, ToR](
           ctx.src.upcastToExprOf[Right[FromL, FromR]].value,
+          Path.Root.matching[Right[FromL, FromR]],
           Path.Root.matching[Right[ToL, ToR]]
         )
       }
@@ -62,7 +64,11 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
         .promise[FromL](ExprPromise.NameGenerationStrategy.FromPrefix("left"))
         .traverse { (leftExpr: Expr[FromL]) =>
           useOverrideIfPresentOr("matchingLeft", ctx.config.filterCurrentOverridesForLeft) {
-            deriveRecursiveTransformationExpr[FromL, ToL](leftExpr, Path.Root.matching[Left[ToL, ToR]])
+            deriveRecursiveTransformationExpr[FromL, ToL](
+              leftExpr,
+              Path.Root.matching[Either[FromL, FromR]],
+              Path.Root.matching[Left[ToL, ToR]]
+            )
           }
         }
 
@@ -70,7 +76,11 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
         .promise[FromR](ExprPromise.NameGenerationStrategy.FromPrefix("right"))
         .traverse { (rightExpr: Expr[FromR]) =>
           useOverrideIfPresentOr("matchingRight", ctx.config.filterCurrentOverridesForRight) {
-            deriveRecursiveTransformationExpr[FromR, ToR](rightExpr, Path.Root.matching[Right[ToL, ToR]])
+            deriveRecursiveTransformationExpr[FromR, ToR](
+              rightExpr,
+              Path.Root.matching[Either[FromL, FromR]],
+              Path.Root.matching[Right[ToL, ToR]]
+            )
           }
         }
 

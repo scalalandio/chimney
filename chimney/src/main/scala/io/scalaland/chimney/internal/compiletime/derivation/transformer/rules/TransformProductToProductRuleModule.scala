@@ -405,7 +405,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           ) {
             // We're constructing:
             // '{ ${ derivedToElement } } // using ${ src.$name }
-            deriveRecursiveTransformationExpr[ExtractedSrc, CtorParam](extractedSrcExpr, Path.Root.select(toName))
+            deriveRecursiveTransformationExpr[ExtractedSrc, CtorParam](
+              extractedSrcExpr,
+              sourcePath,
+              Path.Root.select(toName)
+            )
               .transformWith { expr =>
                 // If we derived partial.Result[$ctorParam] we are appending:
                 //  ${ derivedToElement }.prependErrorPath(...).prependErrorPath(...) // sourcePath
@@ -454,11 +458,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         ) {
           // We're constructing:
           // '{ ${ derivedToElement } } // using ${ src.$name }
-          deriveRecursiveTransformationExpr[Getter, CtorParam](get(ctx.src), Path.Root.select(toName)).transformWith {
-            expr =>
-              // If we derived partial.Result[$ctorParam] we are appending:
-              //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
-              DerivationResult.existential[TransformationExpr, CtorParam](appendPath(expr, fromName))
+          deriveRecursiveTransformationExpr[Getter, CtorParam](
+            get(ctx.src),
+            Path.Root.select(fromName),
+            Path.Root.select(toName)
+          ).transformWith { expr =>
+            // If we derived partial.Result[$ctorParam] we are appending:
+            //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
+            DerivationResult.existential[TransformationExpr, CtorParam](appendPath(expr, fromName))
           } { errors =>
             appendMissingTransformer[From, To, Getter, CtorParam](errors, toName)
           }

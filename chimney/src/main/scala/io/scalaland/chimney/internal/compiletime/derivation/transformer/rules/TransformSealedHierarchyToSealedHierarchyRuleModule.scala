@@ -56,18 +56,10 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
     private def mapOverriddenElements[From, To](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[List[Existential[ExprPromise[*, TransformationExpr[To]]]]] = {
-      val overrides = ctx.config
-        .filterCurrentOverridesForSubtype(
-          someFrom => {
-            import someFrom.Underlying as SomeFrom
-            Type[SomeFrom] <:< Type[From]
-          },
-          _ => false
-        )
-        .toList
-        .collect { case (Some(someFrom), runtimeCoproductOverride) =>
-          someFrom -> runtimeCoproductOverride
-        }
+      val overrides = ctx.config.filterCurrentOverridesForSubtype { (someFrom: ??) =>
+        import someFrom.Underlying as SomeFrom
+        Type[SomeFrom] <:< Type[From]
+      }.toList
 
       Traverse[List].parTraverse[
         DerivationResult,
@@ -108,7 +100,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                       import someTo.Underlying as SomeTo
                       deriveRecursiveTransformationExpr[SomeFrom, SomeTo](
                         someFromExpr,
-                        Path.Root.sourceMatching[SomeFrom]
+                        Path.Root.matching[SomeFrom],
+                        Path.Root.matching[SomeTo]
                       ).map(
                         _.fold(totalExpr => TransformationExpr.fromTotal(totalExpr.asInstanceOfExpr[To])) {
                           partialExpr =>
@@ -154,6 +147,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               lazy val fromSubtypeIntoToSubtype =
                 deriveRecursiveTransformationExpr[FromSubtype, ToSubtype](
                   fromSubtypeExpr,
+                  Path.Root.matching[FromSubtype],
                   Path.Root.matching[ToSubtype]
                 ).map(_.map(toUpcast))
               // We're constructing:
@@ -168,7 +162,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                       ) >>
                         deriveRecursiveTransformationExpr[FromSubtypeInner, ToSubtype](
                           wrapper.unwrap(fromSubtypeExpr),
-                          Path.Root
+                          Path.Root.matching[FromSubtype].select(wrapper.fieldName),
+                          Path.Root.matching[ToSubtype]
                         ).map(_.map(toUpcast))
                     )
                   case _ => None
@@ -184,6 +179,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                     ) >>
                       deriveRecursiveTransformationExpr[FromSubtype, ToSubtypeInner](
                         fromSubtypeExpr,
+                        Path.Root.matching[FromSubtype],
                         Path.Root.select(wrapper.fieldName)
                       ).map(_.map(wrapper.wrap)).map(_.map(toUpcast))
                   )
@@ -218,9 +214,11 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
           DerivationResult.log(
             s"Falling back on ${Type.prettyPrint[FromSubtype]} to ${Type.prettyPrint[To]} (target upcasted)"
           ) >>
-            deriveRecursiveTransformationExprUpdatingRules[FromSubtype, To](fromSubtypeExpr, Path.Root)(rules =>
-              rules.filter(rule => rule.name == "Implicit")
-            )
+            deriveRecursiveTransformationExprUpdatingRules[FromSubtype, To](
+              fromSubtypeExpr,
+              Path.Root.matching[FromSubtype],
+              Path.Root
+            )(rules => rules.filter(rule => rule.name == "Implicit"))
         }
         .map(Existential[ExprPromise[*, TransformationExpr[To]], FromSubtype](_))
     }

@@ -12,13 +12,19 @@ private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Der
         case (ValueClassType(from2), ValueClassType(to2)) =>
           if (ctx.config.areOverridesEmpty) {
             import from2.{Underlying as InnerFrom, value as valueFrom}, to2.{Underlying as InnerTo, value as valueTo}
-            unwrapTransformAndWrapAgain[From, To, InnerFrom, InnerTo](valueFrom.unwrap, valueTo.fieldName, valueTo.wrap)
+            unwrapTransformAndWrapAgain[From, To, InnerFrom, InnerTo](
+              valueFrom.fieldName,
+              valueFrom.unwrap,
+              valueTo.fieldName,
+              valueTo.wrap
+            )
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
         case (WrapperClassType(from2), WrapperClassType(to2)) =>
           if (ctx.config.areOverridesEmpty) {
             if (ctx.config.flags.nonAnyValWrappers) {
               import from2.{Underlying as InnerFrom, value as valueFrom}, to2.{Underlying as InnerTo, value as valueTo}
               unwrapTransformAndWrapAgain[From, To, InnerFrom, InnerTo](
+                valueFrom.fieldName,
                 valueFrom.unwrap,
                 valueTo.fieldName,
                 valueTo.wrap
@@ -31,12 +37,14 @@ private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Der
   }
 
   private def unwrapTransformAndWrapAgain[From, To, InnerFrom: Type, InnerTo: Type](
+      innerFromFieldName: String,
       unwrapFromIntoInnerFrom: Expr[From] => Expr[InnerFrom],
       innerToFieldName: String,
       wrapInnerToIntoIo: Expr[InnerTo] => Expr[To]
   )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
     deriveRecursiveTransformationExpr[InnerFrom, InnerTo](
       unwrapFromIntoInnerFrom(ctx.src),
+      Path.Root.select(innerFromFieldName),
       Path.Root.select(innerToFieldName)
     ).flatMap { (derivedInnerTo: TransformationExpr[InnerTo]) =>
       // We're constructing:
