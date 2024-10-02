@@ -38,7 +38,11 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
         .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromType)
         .traverse { (newFromExpr: Expr[InnerFrom]) =>
           useOverrideIfPresentOr("matchingSome", ctx.config.filterCurrentOverridesForSome) {
-            deriveRecursiveTransformationExpr[InnerFrom, InnerTo](newFromExpr, Path.Root.matching[Some[InnerTo]])
+            deriveRecursiveTransformationExpr[InnerFrom, InnerTo](
+              newFromExpr,
+              Path.Root.matching[Some[InnerFrom]],
+              Path.Root.matching[Some[InnerTo]]
+            )
           }
         }
         .flatMap { (derivedToExprPromise: ExprPromise[InnerFrom, TransformationExpr[InnerTo]]) =>

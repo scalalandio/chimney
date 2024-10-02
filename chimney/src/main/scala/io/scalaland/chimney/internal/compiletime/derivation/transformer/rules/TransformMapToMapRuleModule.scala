@@ -76,14 +76,14 @@ private[compiletime] trait TransformMapToMapRuleModule {
         .promise[FromK](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
         .traverse { key =>
           useOverrideIfPresentOr("everyMapKey", ctx.config.filterCurrentOverridesForEveryMapKey) {
-            deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.everyMapKey)
+            deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.everyMapKey, Path.Root.everyMapKey)
           }.map(_.ensureTotal)
         }
       val toValueResult = ExprPromise
         .promise[FromV](ExprPromise.NameGenerationStrategy.FromPrefix("value"))
         .traverse { value =>
           useOverrideIfPresentOr("everyMapValue", ctx.config.filterCurrentOverridesForEveryMapValue) {
-            deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue)
+            deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue, Path.Root.everyMapValue)
           }.map(_.ensureTotal)
         }
 
@@ -123,14 +123,14 @@ private[compiletime] trait TransformMapToMapRuleModule {
         .promise[FromK](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
         .traverse { key =>
           useOverrideIfPresentOr("everyMapKey", ctx.config.filterCurrentOverridesForEveryMapKey) {
-            deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.everyMapKey)
+            deriveRecursiveTransformationExpr[FromK, ToK](key, Path.Root.everyMapKey, Path.Root.everyMapKey)
           }.map(_.ensurePartial -> key)
         }
       val toValueResult = ExprPromise
         .promise[FromV](ExprPromise.NameGenerationStrategy.FromPrefix("value"))
         .traverse { value =>
           useOverrideIfPresentOr("everyMapValue", ctx.config.filterCurrentOverridesForEveryMapValue) {
-            deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue)
+            deriveRecursiveTransformationExpr[FromV, ToV](value, Path.Root.everyMapValue, Path.Root.everyMapValue)
           }.map(_.ensurePartial -> value)
         }
 

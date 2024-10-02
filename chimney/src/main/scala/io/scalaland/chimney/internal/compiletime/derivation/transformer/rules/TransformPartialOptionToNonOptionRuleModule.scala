@@ -6,7 +6,7 @@ import io.scalaland.chimney.partial
 
 private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: Derivation =>
 
-  import ChimneyType.Implicits.*
+  import Type.Implicits.*, ChimneyType.Implicits.*
 
   protected object TransformPartialOptionToNonOptionRule extends Rule("PartialOptionToNonOption") {
 
@@ -46,7 +46,13 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
             ctx.src,
             ChimneyExpr.PartialResult.fromEmpty[To],
             Expr.Function1.instance[InnerFrom, partial.Result[To]] { (from2Expr: Expr[InnerFrom]) =>
-              await(deriveRecursiveTransformationExpr[InnerFrom, To](from2Expr, Path.Root)).ensurePartial
+              await(
+                deriveRecursiveTransformationExpr[InnerFrom, To](
+                  from2Expr,
+                  Path.Root.matching[Some[InnerFrom]],
+                  Path.Root
+                )
+              ).ensurePartial
             }
           )
         }
