@@ -11,29 +11,35 @@ private[compiletime] trait Contexts { this: Derivation =>
     val From: Type[From]
     val To: Type[To]
 
+    val srcJournal: Vector[(Path, ExistentialExpr)]
+
     /** When using nested paths (_.foo.bar.baz) and recursive derivation this is the original, "top-level" value */
-    val originalSrc: ExistentialExpr
+    val originalSrc: ExistentialExpr = srcJournal.head._2
     val config: TransformerConfiguration
     val derivationStartedAt: java.time.Instant
 
     type Target
     val Target: Type[Target]
 
-    def updateFromTo[NewFrom: Type, NewTo: Type](newSrc: Expr[NewFrom]): TransformationContext[NewFrom, NewTo] =
+    def updateFromTo[NewFrom: Type, NewTo: Type](
+        newSrc: Expr[NewFrom],
+        followFrom: Path = Path.Root,
+        followTo: Path = Path.Root
+    ): TransformationContext[NewFrom, NewTo] =
       fold[TransformationContext[NewFrom, NewTo]] { (ctx: TransformationContext.ForTotal[From, To]) =>
         TransformationContext.ForTotal[NewFrom, NewTo](src = newSrc)(
           From = Type[NewFrom],
           To = Type[NewTo],
-          originalSrc = ctx.originalSrc,
-          config = ctx.config,
+          srcJournal = ctx.srcJournal :+ (ctx.srcJournal.last._1.concat(followFrom) -> newSrc.as_??),
+          config = ctx.config.prepareForRecursiveCall(followFrom, followTo)(ctx),
           ctx.derivationStartedAt
         )
       } { (ctx: TransformationContext.ForPartial[From, To]) =>
         TransformationContext.ForPartial[NewFrom, NewTo](src = newSrc, failFast = ctx.failFast)(
           From = Type[NewFrom],
           To = Type[NewTo],
-          originalSrc = ctx.originalSrc,
-          config = ctx.config,
+          srcJournal = ctx.srcJournal :+ (ctx.srcJournal.last._1.concat(followFrom) -> newSrc.as_??),
+          config = ctx.config.prepareForRecursiveCall(followFrom, followTo)(ctx),
           ctx.derivationStartedAt
         )
       }
@@ -43,7 +49,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         TransformationContext.ForTotal[From, To](src = ctx.src)(
           From = ctx.From,
           To = ctx.To,
-          originalSrc = ctx.originalSrc,
+          srcJournal = ctx.srcJournal,
           config = update(ctx.config),
           derivationStartedAt = ctx.derivationStartedAt
         )
@@ -51,7 +57,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         TransformationContext.ForPartial[From, To](src = ctx.src, failFast = ctx.failFast)(
           From = ctx.From,
           To = ctx.To,
-          originalSrc = ctx.originalSrc,
+          srcJournal = ctx.srcJournal,
           config = update(ctx.config),
           derivationStartedAt = ctx.derivationStartedAt
         )
@@ -78,7 +84,7 @@ private[compiletime] trait Contexts { this: Derivation =>
     final case class ForTotal[From, To](src: Expr[From])(
         val From: Type[From],
         val To: Type[To],
-        val originalSrc: ExistentialExpr,
+        val srcJournal: Vector[(Path, ExistentialExpr)],
         val config: TransformerConfiguration,
         val derivationStartedAt: java.time.Instant
     ) extends TransformationContext[From, To] {
@@ -105,7 +111,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         ForTotal(src = src)(
           From = Type[From],
           To = Type[To],
-          originalSrc = src.as_??,
+          srcJournal = Vector(Path.Root -> src.as_??),
           config = config.preventImplicitSummoningFor[From, To],
           derivationStartedAt = java.time.Instant.now()
         )
@@ -114,7 +120,7 @@ private[compiletime] trait Contexts { this: Derivation =>
     final case class ForPartial[From, To](src: Expr[From], failFast: Expr[Boolean])(
         val From: Type[From],
         val To: Type[To],
-        val originalSrc: ExistentialExpr,
+        val srcJournal: Vector[(Path, ExistentialExpr)],
         val config: TransformerConfiguration,
         val derivationStartedAt: java.time.Instant
     ) extends TransformationContext[From, To] {
@@ -142,7 +148,7 @@ private[compiletime] trait Contexts { this: Derivation =>
       ): ForPartial[From, To] = ForPartial(src = src, failFast = failFast)(
         From = Type[From],
         To = Type[To],
-        originalSrc = src.as_??,
+        srcJournal = Vector(Path.Root -> src.as_??),
         config = config.preventImplicitSummoningFor[From, To],
         derivationStartedAt = java.time.Instant.now()
       )
