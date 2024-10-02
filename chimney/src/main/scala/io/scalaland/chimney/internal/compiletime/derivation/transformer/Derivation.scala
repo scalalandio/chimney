@@ -49,9 +49,7 @@ private[compiletime] trait Derivation
       updateRules: List[Rule] => List[Rule] = identity
   )(implicit ctx: TransformationContext[?, ?]): DerivationResult[TransformationExpr[NewTo]] = {
     val newCtx: TransformationContext[NewFrom, NewTo] =
-      ctx
-        .updateFromTo[NewFrom, NewTo](newSrc)
-        .updateConfig(_.prepareForRecursiveCall(followFrom, followTo))
+      ctx.updateFromTo[NewFrom, NewTo](newSrc, followFrom, followTo)
     deriveTransformationResultExprUpdatingRules(updateRules)(newCtx)
       .logSuccess {
         case TransformationExpr.TotalExpr(expr)   => s"Derived recursively total expression ${Expr.prettyPrint(expr)}"

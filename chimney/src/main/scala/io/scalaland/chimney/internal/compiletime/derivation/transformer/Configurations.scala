@@ -140,6 +140,8 @@ private[compiletime] trait Configurations { this: Derivation =>
     def everyMapKey: Path = new Path(segments :+ EveryMapKey)
     def everyMapValue: Path = new Path(segments :+ EveryMapValue)
 
+    def concat(path: Path): Path = new Path(segments ++ path.segments)
+
     @scala.annotation.tailrec
     def drop(prefix: Path)(implicit ctx: TransformationContext[?, ?]): Option[Path] = (prefix, this) match {
       case (Root, result)                                                                         => Some(result)
