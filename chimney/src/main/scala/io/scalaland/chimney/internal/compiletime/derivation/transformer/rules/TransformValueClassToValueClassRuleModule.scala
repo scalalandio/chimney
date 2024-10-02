@@ -44,8 +44,8 @@ private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Der
   )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
     deriveRecursiveTransformationExpr[InnerFrom, InnerTo](
       unwrapFromIntoInnerFrom(ctx.src),
-      Path.Root.select(innerFromFieldName),
-      Path.Root.select(innerToFieldName)
+      Path(_.select(innerFromFieldName)),
+      Path(_.select(innerToFieldName))
     ).flatMap { (derivedInnerTo: TransformationExpr[InnerTo]) =>
       // We're constructing:
       // '{ ${ new $To(${ derivedInnerTo }) } /* using ${ src }.$from internally */ }

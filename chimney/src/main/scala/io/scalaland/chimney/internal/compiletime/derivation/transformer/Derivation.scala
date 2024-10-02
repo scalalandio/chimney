@@ -44,21 +44,14 @@ private[compiletime] trait Derivation
   /** Intended use case: recursive derivation within rules */
   final protected def deriveRecursiveTransformationExpr[NewFrom: Type, NewTo: Type](
       newSrc: Expr[NewFrom],
-      followFrom: Path,
-      followTo: Path
-  )(implicit ctx: TransformationContext[?, ?]): DerivationResult[TransformationExpr[NewTo]] =
-    deriveRecursiveTransformationExprUpdatingRules[NewFrom, NewTo](newSrc, followFrom, followTo)(identity)
-
-  /** Intended use case: recursive derivation within rules which should remove some rules from consideration */
-  final protected def deriveRecursiveTransformationExprUpdatingRules[NewFrom: Type, NewTo: Type](
-      newSrc: Expr[NewFrom],
-      followFrom: Path,
-      followTo: Path
-  )(
-      updateRules: List[Rule] => List[Rule]
+      followFrom: Path = Path.Root,
+      followTo: Path = Path.Root,
+      updateRules: List[Rule] => List[Rule] = identity
   )(implicit ctx: TransformationContext[?, ?]): DerivationResult[TransformationExpr[NewTo]] = {
     val newCtx: TransformationContext[NewFrom, NewTo] =
-      ctx.updateFromTo[NewFrom, NewTo](newSrc).updateConfig(_.prepareForRecursiveCall(followFrom, followTo))
+      ctx
+        .updateFromTo[NewFrom, NewTo](newSrc)
+        .updateConfig(_.prepareForRecursiveCall(followFrom, followTo))
     deriveTransformationResultExprUpdatingRules(updateRules)(newCtx)
       .logSuccess {
         case TransformationExpr.TotalExpr(expr)   => s"Derived recursively total expression ${Expr.prettyPrint(expr)}"

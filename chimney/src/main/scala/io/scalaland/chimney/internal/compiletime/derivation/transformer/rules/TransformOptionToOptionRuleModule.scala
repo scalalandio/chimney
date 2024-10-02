@@ -40,8 +40,8 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
           useOverrideIfPresentOr("matchingSome", ctx.config.filterCurrentOverridesForSome) {
             deriveRecursiveTransformationExpr[InnerFrom, InnerTo](
               newFromExpr,
-              Path.Root.matching[Some[InnerFrom]],
-              Path.Root.matching[Some[InnerTo]]
+              Path(_.matching[Some[InnerFrom]]),
+              Path(_.matching[Some[InnerTo]])
             )
           }
         }

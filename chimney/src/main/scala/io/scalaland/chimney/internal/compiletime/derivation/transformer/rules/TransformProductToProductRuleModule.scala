@@ -408,7 +408,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             deriveRecursiveTransformationExpr[ExtractedSrc, CtorParam](
               extractedSrcExpr,
               sourcePath,
-              Path.Root.select(toName)
+              Path(_.select(toName))
             )
               .transformWith { expr =>
                 // If we derived partial.Result[$ctorParam] we are appending:
@@ -460,8 +460,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           // '{ ${ derivedToElement } } // using ${ src.$name }
           deriveRecursiveTransformationExpr[Getter, CtorParam](
             get(ctx.src),
-            Path.Root.select(fromName),
-            Path.Root.select(toName)
+            Path(_.select(fromName)),
+            Path(_.select(toName))
           ).transformWith { expr =>
             // If we derived partial.Result[$ctorParam] we are appending:
             //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))

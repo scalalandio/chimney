@@ -33,8 +33,7 @@ private[compiletime] trait TransformTypeToValueClassRuleModule {
   )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
     deriveRecursiveTransformationExpr[From, InnerTo](
       ctx.src,
-      Path.Root,
-      Path.Root.select(innerToFieldName)
+      followTo = Path(_.select(innerToFieldName))
     )
       .flatMap { derivedInnerTo =>
         // We're constructing:
