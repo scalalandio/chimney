@@ -66,7 +66,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
           useOverrideIfPresentOr("matchingLeft", ctx.config.filterCurrentOverridesForLeft) {
             deriveRecursiveTransformationExpr[FromL, ToL](
               leftExpr,
-              Path(_.matching[Either[FromL, FromR]]),
+              Path(_.matching[Left[FromL, FromR]]),
               Path(_.matching[Left[ToL, ToR]])
             )
           }
@@ -78,7 +78,7 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
           useOverrideIfPresentOr("matchingRight", ctx.config.filterCurrentOverridesForRight) {
             deriveRecursiveTransformationExpr[FromR, ToR](
               rightExpr,
-              Path(_.matching[Either[FromL, FromR]]),
+              Path(_.matching[Right[FromL, FromR]]),
               Path(_.matching[Right[ToL, ToR]])
             )
           }
