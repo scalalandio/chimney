@@ -397,7 +397,20 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               )
           }
 
-        extractNestedSource(sourcePath, ctx.originalSrc).flatMap { extractedSrc =>
+        val extractedNestedSourceCandidates = for {
+          (prefixPath, prefixExpr) <- ctx.srcJournal.reverseIterator
+          newSourcePath <- sourcePath.drop(prefixPath).iterator
+        } yield extractNestedSource(newSourcePath, prefixExpr)
+
+        val extractedSrcResult = extractedNestedSourceCandidates
+          .fold(DerivationResult.assertionError("ctx.srcJournal should never be empty")) { (a, b) =>
+            // We're not using orElse because we want to:
+            // - find the first successful result
+            // - but NOT aggregate the errors, if everything fails, keep only the first error
+            a.recoverWith(errors => b.recoverWith(_ => DerivationResult.fail(errors)))
+          }
+
+        extractedSrcResult.flatMap { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
           DerivationResult.namedScope(
             s"Recursive derivation for field `$sourcePath`: ${Type
