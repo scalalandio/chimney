@@ -79,8 +79,8 @@ But don't you worry! Usually Chimney only needs your help if there is no field i
 or whe the targeted type has a private constructor. Out of the box, it supports:
 
  * conversions [between `case class`es](supported-transformations.md#into-a-case-class)
-   * actually, a conversion between *any* `class` and *another `class` with a public constructor*
-   * with [an opt-in support for Java Beans](supported-transformations.md#reading-from-bean-getters)
+    * actually, a conversion between *any* `class` and *another `class` with a public constructor*
+    * with [an opt-in support for Java Beans](supported-transformations.md#reading-from-bean-getters)
  * conversions [between `sealed trait`s, Scala 3 `enum`s, Java `enum`s](supported-transformations.md#between-sealedenums)
  * conversions [between collections](supported-transformations.md#between-scalas-collectionsarrays)
  * conversions [between `Option`s](supported-transformations.md#frominto-an-option)
