@@ -226,6 +226,31 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result11.asOption ==> Some(expected4)
       result11.asEither ==> Right(expected4)
       result11.asErrorPathMessageStrings ==> Iterable.empty
+
+      import fixtures.products.Renames
+
+      val result12 = (NestedADT.Foo(Renames.User(1, "Kuba", Some(28))): NestedADT[Renames.User])
+        .intoPartial[NestedADT[Renames.UserPLStd]]
+        .withFieldRenamed(
+          _.matching[NestedADT.Foo[Renames.User]].foo.name,
+          _.matching[NestedADT.Foo[Renames.UserPLStd]].foo.imie
+        )
+        .withFieldRenamed(
+          _.matching[NestedADT.Foo[Renames.User]].foo.age,
+          _.matching[NestedADT.Foo[Renames.UserPLStd]].foo.wiek
+        )
+        .withFieldRenamed(
+          _.matching[NestedADT.Bar[Renames.User]].bar.name,
+          _.matching[NestedADT.Bar[Renames.UserPLStd]].bar.imie
+        )
+        .withFieldRenamed(
+          _.matching[NestedADT.Bar[Renames.User]].bar.age,
+          _.matching[NestedADT.Bar[Renames.UserPLStd]].bar.wiek
+        )
+        .transform
+      result12.asOption ==> Some(NestedADT.Foo(Renames.UserPLStd(1, "Kuba", Some(28))))
+      result12.asEither ==> Right(NestedADT.Foo(Renames.UserPLStd(1, "Kuba", Some(28))))
+      result12.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
