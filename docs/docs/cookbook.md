@@ -142,6 +142,19 @@ By default, code is annotated with`@SuppressWarnings("org.wartremover.warts.All"
 
 ## Automatic, Semiautomatic and Inlined derivation
 
+!!! note "Chimney is not like other libs" 
+
+    If you are used to _automatic_ vs _semi-atuomatic_ derivation conventions from other libraries, like Circe, and you
+    had bad experience (long compilation times, poor performance) with the automatic derivation, please note that
+    Chimney derivation DOES NOT work the same way, so your experiences are unlikely to carry over to Chimney.
+    
+    Please, read the section below, as it will explain why replacing `import io.scalaland.chimney.dsl._` with
+    `Transformer.derive` + `import io.scalaland.chimney.syntax._` + `import io.scalaland.chimney.auto._` might actually
+    *degrade* the performance, instead of improving it.
+    
+    In the future, there will be a conference talk that we will link here, explaining the _sanely-automatic_ derivation
+    that we used in Chimney and how it avoids issues of the automatic derivation that are present in other libraries.  
+
 When you use the standard way of working with Chimney, but `import io.scalaland.chimney.dsl._`
 you might notice that it is a very convenient approach, making a lot of things easy:
 
@@ -165,7 +178,7 @@ However, sometimes you may want to restrict this behavior. It might be too easy 
 
 In other libraries this issue is addressed by providing 2 flavors of derivation:
 
-  - automatic derivation: usually requires some `import library.auto._`, allows you
+  - *automatic derivation*: usually requires some `import library.auto._`, allows you
     to get a derived instance just by summoning it e.g. with `implicitly[TypeClass[A]]`
     or calling any other method that would take it as an `implicit` parameter.
   
@@ -182,7 +195,7 @@ In other libraries this issue is addressed by providing 2 flavors of derivation:
     to cache this instance in e.g. companion object. In some libraries, it also makes it hard
     to use automatic derivation to work with recursive data structures.
 
-  - semiautomatic derivation: requires you to explicitly call some method that will provide
+  - *semi-automatic derivation*: requires you to explicitly call some method that will provide
     a derived instance. It has the downside that for each instance that you would like to summon
     you need to manually derive and assign to an `implicit val` or `def`
 
@@ -202,7 +215,8 @@ and many libraries provide automatic derivation as a quick and dirty way of doin
 requiring an opt-in.
 
 Chimney's defaults for (good) historical reasons mix these 2 modes (and one more, which
-will describe in a moment), but it also allows you to selectively use these imports
+will describe in a moment), but (_due to popular demand_) it also allows you to selectively
+use these imports
 
 !!! example
 
@@ -317,6 +331,13 @@ derivation upcast `Transformer` and recursive construction of an expression requ
 a normal `Transformer` so automatic derivation is NOT triggered. Either the user provided
 an implicit or there is none.
 
+!!! note
+
+    What it means for you is that Chimney will try to minimize the amount of macro expansions
+    and achieve as much as possible withing the same expansion. `implicit Transformer`s and
+    `PartialTransformer`s are only needed to *override* the default behavior, and they are *not*
+    needed for the handling of every intermediate value.
+
 However, with `import io.scalaland.chimney.auto._` the same semantics as in other
 libraries is used: implicit def returns `Transformer`, so if derivation with defaults
 is possible it will always be triggered.
@@ -326,14 +347,38 @@ The matter is even more complex with `PartialTransformer` s - they look for both
 With the automatic derivation both versions could always be available, so users need to always
 provide `implicitConflictResolution` flag.
 
+!!! note
+
+    In other words, replicating the setup where you do:
+    
+    ```scala
+    implicit val transformer: Transformer[From, To] = locally {
+      import io.scalaland.chimney.auto._
+      Transformer.derive[From, To]
+    }
+    ```
+    
+    (which might be popular in other libaries when semi-automatic derivation is preferred) will introduce additional,
+    unnecessary macro expansions, which could increase the compilation time and degrade the performance.
+    
+    This would not happen if you do:
+    
+    ```scala
+    implicit val transformer: Transformer[From, To] = Transformer.derive[From, To]
+    ```
+    
+    instead.
+
 For the reasons above the recommendations are as follows:
 
-  - if you care about performance use either inline derivation (for a one-time-usage) or
-    semiautomatic derivation (`.derive`/`.define.build*` + `syntax._`)
+  - if you care about performance, use either inlined derivation (`.into.transform`, for a one-time-usage) or
+    semi-automatic derivation with recursion handled in the macro(`.derive`/`.define.build*` + `syntax._`, without
+    importing `auto._`)
   - only use `import auto._` when you want predictable behavior similar to other libraries
     (predictably bad)
-  - if you use unit tests to ensure that your code does what it should and benchmarks to
-    ensure it is reasonably fast keep on using `import dsl._`
+  - use unit tests to ensure, that your code does what it should do
+  - use benchmarks to ensure it is reasonably fast
+  - and keep on using `import dsl._` until you have some good proof that (recursive) semi-automatic derivation is needed 
 
 ## Bidirectional transformations
 
