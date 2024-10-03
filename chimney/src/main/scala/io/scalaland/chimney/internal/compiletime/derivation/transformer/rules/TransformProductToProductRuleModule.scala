@@ -409,10 +409,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             // We're not using orElse because we want to:
             // - find the first successful result
             // - but NOT aggregate the errors, if everything fails, keep only the first error
-            a.recoverWith { errors =>
-              println(ctx.srcJournal.mkString("\n"))
-              b.recoverWith(_ => DerivationResult.fail(errors))
-            }
+            a.recoverWith(errors => b.recoverWith(_ => DerivationResult.fail(errors)))
           }
 
         extractedSrcResult.flatMap { extractedSrc =>
