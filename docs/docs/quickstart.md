@@ -29,12 +29,6 @@ libraryDependencies += "io.scalaland" %% "chimney" % "{{ chimney_version() }}"
 libraryDependencies += "io.scalaland" %%% "chimney" % "{{ chimney_version() }}"
 ```
 
-and then import in your codebase:
-
-```scala
-import io.scalaland.chimney.dsl._
-```
-
 or try it in [Scala CLI](https://scala-cli.virtuslab.org/):
 
 ```bash
@@ -45,6 +39,59 @@ scala-cli repl --scala "{{ scala.2_13 }}" --dependency "io.scalaland::chimney::{
 # Scala 3
 scala-cli repl --scala "{{ scala.3 }}" --dependency "io.scalaland::chimney::{{ chimney_version() }}"
 ```
+
+then import in your codebase:
+
+```scala
+import io.scalaland.chimney.dsl._
+```
+
+and you are good to go!
+
+```scala
+case class User(id: UUID, name: String, surname: String)
+case class ApiUser(name: String, surname: String)
+
+val userID: UUID = ...
+val user: User = ...
+
+// Use .transformInto[Type], when don't need to customize anything... 
+val apiUser: ApiUser  = user.transformInto[ApiUser]
+
+// ...and .into[Type].customization.transform when you do.
+val user2: User = apiUser.into[User].withFieldConst(_.id, userID).transform
+```
+
+Chimney will take care of generating the boring transformation code, and if it finds something non-obvious, it will give
+you a nice error message what it needs:  
+
+```scala
+apiUser.transformInto[User]
+// Chimney can't derive transformation from ApiUser to User
+//
+// User
+//   id: java.util.UUID - no accessor named id in source type ApiUser
+//
+// Consult https://chimney.readthedocs.io for usage examples.
+```
+
+But don't you worry! Usually Chimney only needs your help if there is no field in the source value with a matching name
+or whe the targeted type has a private constructor. Out of the box, it supports:
+
+ * conversions [between `case class`es](supported-transformations.md#into-a-case-class)
+   * actually, a conversion between *any* `class` and *another `class` with a public constructor*
+   * with [an opt-in support for Java Beans](supported-transformations.md#reading-from-bean-getters)
+ * conversions [between `sealed trait`s, Scala 3 `enum`s, Java `enum`s](supported-transformations.md#between-sealedenums)
+ * conversions [between collections](supported-transformations.md#between-scalas-collectionsarrays)
+ * conversions [between `Option`s](supported-transformations.md#frominto-an-option)
+ * conversions [between `Either`s](supported-transformations.md#between-eithers)
+ * [wrapping/unwrapping `AnyVal`s](supported-transformations.md#frominto-an-anyval)
+ * conversions where [some transformation can fail in runtime](supported-transformations.md#total-transformers-vs-partialtransformers)
+   (parsing, smart constructors)
+ * [patching one `case class` with another](supported-patching.md)
+ * [previewing how Chimney attempts to generate the transformation](troubleshooting.md#debugging-macros) 
+
+[And much, much more!](supported-transformations.md)
 
 !!! tip
 
