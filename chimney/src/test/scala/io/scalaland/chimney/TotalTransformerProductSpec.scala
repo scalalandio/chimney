@@ -145,6 +145,28 @@ class TotalTransformerProductSpec extends ChimneySpec {
         .withFieldConst(_.everyItem.matching[NestedADT.Foo[User]].foo.age, 20)
         .withFieldConst(_.everyItem.matching[NestedADT.Bar[User]].bar.age, 30)
         .transform ==> Vector(NestedADT.Foo(User("John", 20, 140)), NestedADT.Bar(User("John", 30, 140)))
+
+      import fixtures.products.Renames
+
+      (NestedADT.Foo(Renames.User(1, "Kuba", Some(28))): NestedADT[Renames.User])
+        .into[NestedADT[Renames.UserPLStd]]
+        .withFieldRenamed(
+          _.matching[NestedADT.Foo[Renames.User]].foo.name,
+          _.matching[NestedADT.Foo[Renames.UserPLStd]].foo.imie
+        )
+        .withFieldRenamed(
+          _.matching[NestedADT.Foo[Renames.User]].foo.age,
+          _.matching[NestedADT.Foo[Renames.UserPLStd]].foo.wiek
+        )
+        .withFieldRenamed(
+          _.matching[NestedADT.Bar[Renames.User]].bar.name,
+          _.matching[NestedADT.Bar[Renames.UserPLStd]].bar.imie
+        )
+        .withFieldRenamed(
+          _.matching[NestedADT.Bar[Renames.User]].bar.age,
+          _.matching[NestedADT.Bar[Renames.UserPLStd]].bar.wiek
+        )
+        .transform ==> NestedADT.Foo(Renames.UserPLStd(1, "Kuba", Some(28)))
     }
   }
 
