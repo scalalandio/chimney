@@ -145,6 +145,14 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
     Iterable(Foo("a")).into[Array[Bar]].withFieldConst(_.everyItem.value, "override").transform ==> Array(
       Bar("override")
     )
+
+    import fixtures.products.Renames.*
+
+    List(User(1, "Kuba", Some(28)))
+      .into[List[UserPLStd]]
+      .withFieldRenamed(_.everyItem.name, _.everyItem.imie)
+      .withFieldRenamed(_.everyItem.age, _.everyItem.wiek)
+      .transform ==> List(UserPLStd(1, "Kuba", Some(28)))
   }
 
   test("transform from Map-type to Map-type") {
@@ -185,6 +193,16 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
       .withFieldConst(_.everyMapKey.value, "ov1")
       .withFieldConst(_.everyMapValue.value, "ov2")
       .transform ==> Map(Bar("ov1") -> Bar("ov2"))
+
+    import fixtures.products.Renames.*
+
+    Map(User(1, "Kuba", Some(28)) -> User(1, "Kuba", Some(28)))
+      .into[Map[UserPLStd, UserPLStd]]
+      .withFieldRenamed(_.everyMapKey.name, _.everyMapKey.imie)
+      .withFieldRenamed(_.everyMapKey.age, _.everyMapKey.wiek)
+      .withFieldRenamed(_.everyMapValue.name, _.everyMapValue.imie)
+      .withFieldRenamed(_.everyMapValue.age, _.everyMapValue.wiek)
+      .transform ==> Map(UserPLStd(1, "Kuba", Some(28)) -> UserPLStd(1, "Kuba", Some(28)))
   }
 
   group("flag .enableOptionDefaultsToNone") {

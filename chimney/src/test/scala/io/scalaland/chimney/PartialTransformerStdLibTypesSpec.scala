@@ -372,6 +372,16 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .transform
       .asOption
       .get ==> Array(Bar("override"))
+
+    import fixtures.products.Renames.*
+
+    List(User(1, "Kuba", Some(28)))
+      .intoPartial[List[UserPLStd]]
+      .withFieldRenamed(_.everyItem.name, _.everyItem.imie)
+      .withFieldRenamed(_.everyItem.age, _.everyItem.wiek)
+      .transform
+      .asOption
+      .get ==> List(UserPLStd(1, "Kuba", Some(28)))
   }
 
   test("transform Map-type to Map-type, using Total Transformer for inner type transformation") {
@@ -514,6 +524,18 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .withFieldConst(_.everyMapValue.value, "ov2")
       .transform
       .asOption ==> Some(Map(Bar("ov1") -> Bar("ov2")))
+
+    import fixtures.products.Renames.*
+
+    Map(User(1, "Kuba", Some(28)) -> User(1, "Kuba", Some(28)))
+      .intoPartial[Map[UserPLStd, UserPLStd]]
+      .withFieldRenamed(_.everyMapKey.name, _.everyMapKey.imie)
+      .withFieldRenamed(_.everyMapKey.age, _.everyMapKey.wiek)
+      .withFieldRenamed(_.everyMapValue.name, _.everyMapValue.imie)
+      .withFieldRenamed(_.everyMapValue.age, _.everyMapValue.wiek)
+      .transform
+      .asOption
+      .get ==> Map(UserPLStd(1, "Kuba", Some(28)) -> UserPLStd(1, "Kuba", Some(28)))
   }
 
   group("flag .enableOptionDefaultsToNone") {
