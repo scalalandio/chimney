@@ -244,6 +244,27 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
       )
     }
 
+  /** To use `fallback` when the source of type `From` is missing fields.
+    *
+    * Fallbacks can be stacked - then they will be tried in the order in which they were added.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam FromFallback
+    *   type of the fallback value which would be checked for fields when the `From` value would be missing
+    * @param fallback
+    *   fallback value which would be checked for fields when the `From` value would be missing
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    *
+    * @since TODO
+    */
+  transparent inline def withFallback[FromFallback](
+      inline fallback: FromFallback
+  ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${ TransformerDefinitionMacros.withFallbackImpl('this, 'fallback) }
+
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *
     * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.

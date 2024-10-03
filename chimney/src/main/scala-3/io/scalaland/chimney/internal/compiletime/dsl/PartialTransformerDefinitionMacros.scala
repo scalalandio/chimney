@@ -257,6 +257,22 @@ object PartialTransformerDefinitionMacros {
         ]]
     }
 
+  def withFallbackImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      FromFallback: Type
+  ](
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      fallback: Expr[FromFallback]
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
+    '{
+      WithRuntimeDataStore
+        .update($td, $fallback)
+        .asInstanceOf[PartialTransformerDefinition[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
+    }
+
   def withConstructorImpl[
       From: Type,
       To: Type,

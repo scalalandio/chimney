@@ -359,6 +359,27 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   def withEnumCaseRenamed[FromSubtype, ToSubtype]: PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]
 
+  /** To use `fallback` when the source of type `From` is missing fields.
+    *
+    * Fallbacks can be stacked - then they will be tried in the order in which they were added.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam FromFallback
+    *   type of the fallback value which would be checked for fields when the `From` value would be missing
+    * @param fallback
+    *   fallback value which would be checked for fields when the `From` value would be missing
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerOverrides]]
+    *
+    * @since TODO
+    */
+  def withFallback[FromFallback](
+      fallback: FromFallback
+  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerIntoMacros.withFallbackImpl[From, To, Overrides, Flags, FromFallback]
+
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *
     * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.

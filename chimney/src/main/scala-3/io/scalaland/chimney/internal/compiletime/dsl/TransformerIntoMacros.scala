@@ -169,6 +169,22 @@ object TransformerIntoMacros {
         }
     }(f)
 
+  def withFallbackImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      FromFallback: Type
+  ](
+      ti: Expr[TransformerInto[From, To, Overrides, Flags]],
+      fallback: Expr[FromFallback]
+  )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    '{
+      WithRuntimeDataStore
+        .update($ti, $fallback)
+        .asInstanceOf[TransformerInto[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
+    }
+
   def withConstructorToImpl[
       From: Type,
       To: Type,
