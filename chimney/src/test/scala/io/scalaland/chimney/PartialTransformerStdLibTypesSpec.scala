@@ -202,6 +202,16 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
     Option("abc").intoPartial[Option[String]].withFieldConst(_.matchingSome, "def").transform.asOption ==> Some(
       Some("def")
     )
+
+    import fixtures.products.Renames.*
+
+    Option(User(1, "Kuba", Some(28)))
+      .intoPartial[Option[UserPLStd]]
+      .withFieldRenamed(_.matchingSome.name, _.matchingSome.imie)
+      .withFieldRenamed(_.matchingSome.age, _.matchingSome.wiek)
+      .transform
+      .asOption
+      .get ==> Option(UserPLStd(1, "Kuba", Some(28)))
   }
 
   test("transform from Either-type into Either-type, using Total Transformer for inner types transformation") {
