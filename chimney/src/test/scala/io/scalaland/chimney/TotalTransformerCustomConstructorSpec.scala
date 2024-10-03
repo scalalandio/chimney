@@ -21,7 +21,7 @@ class TotalTransformerCustomConstructorSpec extends ChimneySpec {
 
     Foo(3, "pi", (3.14, 3.14))
       .into[Bar]
-      .withConstructor(nullaryConstructor _)
+      .withConstructor((() => nullaryConstructor()))
       .transform ==> Bar(0, (0.0, 0.0))
     Foo(3, "pi", (3.14, 3.14))
       .into[Bar]
@@ -34,7 +34,7 @@ class TotalTransformerCustomConstructorSpec extends ChimneySpec {
 
     Foo(3, "pi", (3.14, 3.14))
       .into[Bar]
-      .withConstructor(uncurriedConstructor _)
+      .withConstructor(uncurriedConstructor)
       .transform ==> Bar(6, (6.28, 6.28))
     Foo(3, "pi", (3.14, 3.14))
       .into[Bar]
@@ -47,7 +47,7 @@ class TotalTransformerCustomConstructorSpec extends ChimneySpec {
 
     Foo(3, "pi", (3.14, 3.14))
       .into[Bar]
-      .withConstructor(curriedConstructor _)
+      .withConstructor(curriedConstructor)
       .transform ==> Bar(9, (9.42, 9.42))
     Foo(3, "pi", (3.14, 3.14))
       .into[Bar]
@@ -60,7 +60,7 @@ class TotalTransformerCustomConstructorSpec extends ChimneySpec {
 
     Foo(3, "pi", (3.14, 3.14))
       .into[BarParams[Int, Double]]
-      .withConstructor(typeParametricConstructor[Int, Double] _)
+      .withConstructor(typeParametricConstructor[Int, Double])
       .transform ==> BarParams(3, (3.14, 12.56))
   }
 

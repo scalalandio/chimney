@@ -104,13 +104,13 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       DerivationResult.log {
         val gettersStr = fromExtractors
           .map { case (k, v) =>
-            s"`$k`: ${Type.prettyPrint(v.Underlying)} (${v.value.sourceType}, ${if (!v.value.isInherited) "declared"
+            s"`$k`: ${Type.prettyPrint(using v.Underlying)} (${v.value.sourceType}, ${if (!v.value.isInherited) "declared"
               else "inherited"})"
           }
           .mkString(", ")
         val constructorStr = parameters
           .map { case (k, v) =>
-            s"`$k`: ${Type.prettyPrint(v.Underlying)} (${v.value.targetType}, default = ${v.value.defaultValue
+            s"`$k`: ${Type.prettyPrint(using v.Underlying)} (${v.value.targetType}, default = ${v.value.defaultValue
                 .map(a => Expr.prettyPrint(a))})"
           }
           .mkString(", ")
@@ -688,7 +688,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                         },
                         // Here, we're building:
                         // '{ if (allerrors == null) $ifBlock else $elseBock }
-                        Expr.ifElse[partial.Result[ToOrPartialTo]](allerrors eqExpr Expr.Null) {
+                        Expr.ifElse[partial.Result[ToOrPartialTo]](allerrors `eqExpr` Expr.Null) {
                           // Here, we're building:
                           // '{ partial.Result.Value(${ constructor }) } // using res1.asInstanceOf[partial.Result.Value[Tpe]].value, ...
                           ChimneyExpr.PartialResult

@@ -178,7 +178,7 @@ private[compiletime] trait Types { this: (Existentials & Results) =>
       .unapply(S)
       .getOrElse {
         // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
-        assertionFailed(s"Invalid string literal type: ${prettyPrint(S)}")
+        assertionFailed(s"Invalid string literal type: ${prettyPrint(using S)}")
         // $COVERAGE-ON$
       }
       .value
@@ -199,12 +199,12 @@ private[compiletime] trait Types { this: (Existentials & Results) =>
 
     def isTuple: Boolean = Type.isTuple(tpe)
     def isAnyVal: Boolean = tpe <:< Type.AnyVal
-    def isOption: Boolean = tpe <:< Type.Option(Type.Any)
-    def isEither: Boolean = tpe <:< Type.Either(Type.Any, Type.Any)
-    def isLeft: Boolean = tpe <:< Type.Either.Left(Type.Any, Type.Any)
-    def isRight: Boolean = tpe <:< Type.Either.Right(Type.Any, Type.Any)
-    def isIterable: Boolean = tpe <:< Type.Iterable(Type.Any)
-    def isMap: Boolean = tpe <:< Type.Map(Type.Any, Type.Any)
+    def isOption: Boolean = tpe <:< Type.Option(using Type.Any)
+    def isEither: Boolean = tpe <:< Type.Either(using Type.Any, Type.Any)
+    def isLeft: Boolean = tpe <:< Type.Either.Left(using Type.Any, Type.Any)
+    def isRight: Boolean = tpe <:< Type.Either.Right(using Type.Any, Type.Any)
+    def isIterable: Boolean = tpe <:< Type.Iterable(using Type.Any)
+    def isMap: Boolean = tpe <:< Type.Map(using Type.Any, Type.Any)
 
     def as_?? : ?? = ExistentialType[A](tpe)
     def as_>?<[L <: A, U >: A]: L >?< U = ExistentialType.Bounded[L, U, A](tpe)

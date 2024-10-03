@@ -32,8 +32,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         toElements: Enum.Elements[To]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       DerivationResult.log {
-        val fromSubs = fromElements.map(tpe => Type.prettyPrint(tpe.Underlying)).mkString(", ")
-        val toSubs = toElements.map(tpe => Type.prettyPrint(tpe.Underlying)).mkString(", ")
+        val fromSubs = fromElements.map(tpe => Type.prettyPrint(using tpe.Underlying)).mkString(", ")
+        val toSubs = toElements.map(tpe => Type.prettyPrint(using tpe.Underlying)).mkString(", ")
         s"Resolved ${Type.prettyPrint[From]} subtypes: ($fromSubs) and ${Type.prettyPrint[To]} subtypes ($toSubs)"
       } >> mapOverriddenElements[From, To].flatMap { overrideMappings =>
         Traverse[List]

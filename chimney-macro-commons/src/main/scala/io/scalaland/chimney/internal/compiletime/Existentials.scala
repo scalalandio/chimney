@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime
 
-private[compiletime] trait Existentials { this: Types with Exprs =>
+private[compiletime] trait Existentials { this: Types & Exprs =>
 
   /** Represents value with some existential type `t` both for `Type[t]` as well as `F[t]`.
     *
@@ -20,7 +20,7 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
       val value: F[Underlying]
 
       def mapK[G[_]](f: Type[Underlying] => F[Underlying] => G[Underlying]): Bounded[L, U, G] =
-        Bounded[L, U, G, Underlying](f(Underlying)(value))(Underlying)
+        Bounded[L, U, G, Underlying](f(Underlying)(value))(using Underlying)
     }
     object Bounded {
       def apply[L, U >: L, F[_ >: L <: U], A >: L <: U: Type](value: F[A]): Bounded[L, U, F] =
@@ -63,9 +63,9 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
       def apply[U, A <: U](implicit A: Type[A]): Bounded[Nothing, U] = Existential.Bounded[Nothing, U, Type, A](A)
     }
 
-    def apply[A](implicit A: Type[A]): ExistentialType = Existential[Type, A](A)(A)
+    def apply[A](implicit A: Type[A]): ExistentialType = Existential[Type, A](A)(using A)
 
-    def prettyPrint(existentialType: ExistentialType): String = Type.prettyPrint(existentialType.Underlying)
+    def prettyPrint(existentialType: ExistentialType): String = Type.prettyPrint(using existentialType.Underlying)
   }
 
   /** Convenient utility to represent `Expr[?]` with erased inner type with accompanying `Type[?]` of the same `?`. */
@@ -74,7 +74,7 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
 
     def apply[A: Type](expr: Expr[A]): ExistentialExpr = Existential[Expr, A](expr)
 
-    def withoutType[A](expr: Expr[A]): ExistentialExpr = apply(expr)(Expr.typeOf(expr))
+    def withoutType[A](expr: Expr[A]): ExistentialExpr = apply(expr)(using Expr.typeOf(expr))
 
     def prettyPrint(existentialExpr: ExistentialExpr): String = Expr.prettyPrint(existentialExpr.value)
   }

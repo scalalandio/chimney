@@ -168,7 +168,9 @@ object PartialTransformer extends PartialTransformerCompanionPlatform {
   }
 
   /** @since 0.8.0 */
-  object AutoDerived extends PartialTransformerAutoDerivedCompanionPlatform {
+  object AutoDerived extends AutoDerivedLowPriorityImplicits1
+  private[chimney] trait AutoDerivedLowPriorityImplicits1 extends PartialTransformerAutoDerivedCompanionPlatform {
+    this: AutoDerived.type =>
 
     implicit def liftTotal[From, To](implicit total: Transformer[From, To]): AutoDerived[From, To] =
       (src: From, failFast: Boolean) => partial.Result.fromCatching(total.transform(src))

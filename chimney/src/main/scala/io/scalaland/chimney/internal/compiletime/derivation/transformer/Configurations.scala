@@ -203,7 +203,7 @@ private[compiletime] trait Configurations { this: Derivation =>
           case _              => false
         }
 
-        override def toString: String = s".matching[${Type.prettyPrint(tpe.Underlying)}]"
+        override def toString: String = s".matching[${Type.prettyPrint(using tpe.Underlying)}]"
       }
       final case class SourceMatching(tpe: ??) extends Segment {
         override def equals(obj: Any): Boolean = obj match {
@@ -211,7 +211,7 @@ private[compiletime] trait Configurations { this: Derivation =>
           case _              => false
         }
 
-        override def toString: String = s" if src.isInstanceOf[${Type.prettyPrint(tpe.Underlying)}]"
+        override def toString: String = s" if src.isInstanceOf[${Type.prettyPrint(using tpe.Underlying)}]"
       }
       case object EveryItem extends Segment {
         override def toString: String = ".everyItem"

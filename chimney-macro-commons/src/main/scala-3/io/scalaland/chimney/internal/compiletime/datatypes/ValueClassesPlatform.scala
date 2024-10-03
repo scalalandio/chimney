@@ -32,8 +32,8 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
           assert(
             Argument <:< Inner,
             s"Wrapper/AnyVal ${Type.prettyPrint[A]} only property's type (${Type
-                .prettyPrint(Argument)}) was expected to be the same as only constructor argument's type (${Type
-                .prettyPrint(Inner)})"
+                .prettyPrint(using Argument)}) was expected to be the same as only constructor argument's type (${Type
+                .prettyPrint(using Inner)})"
           )
           Some(
             Existential[WrapperClass[A, *], Inner](

@@ -63,7 +63,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         '{ scala.IArray.apply[A](${ quoted.Varargs[A](args.toSeq) }*)(using ${ summonImplicitUnsafe[ClassTag[A]] }) }
 
       def map[A: Type, B: Type](iarray: Expr[IArray[A]])(fExpr: Expr[A => B]): Expr[scala.IArray[B]] =
-        '{ ${ resetOwner(iarray) }.map(${ resetOwner(fExpr) })(${ summonImplicitUnsafe[ClassTag[B]] }) }
+        '{ ${ resetOwner(iarray) }.map(${ resetOwner(fExpr) })(using ${ summonImplicitUnsafe[ClassTag[B]] }) }
 
       def to[A: Type, C: Type](iarray: Expr[IArray[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]

@@ -150,7 +150,7 @@ private[compiletime] trait Derivation
         if (ctx.config.flags.ignoreRedundantPatcherFields)
           DerivationResult.pure(None)
         else
-          DerivationResult.patcherError(PatchFieldNotFoundInTargetObj(patchFieldName, Type.prettyPrint(ctx.A)))
+          DerivationResult.patcherError(PatchFieldNotFoundInTargetObj(patchFieldName, Type.prettyPrint(using ctx.A)))
     }
   }
 

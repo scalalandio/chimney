@@ -31,7 +31,7 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
 
     val result = Foo(3, "pi", (3.14, 3.14))
       .intoPartial[Bar]
-      .withConstructor(nullaryConstructor _)
+      .withConstructor((() => nullaryConstructor()))
       .transform
     result.asOption ==> Some(nullaryExpected)
     result.asEither ==> Right(nullaryExpected)
@@ -51,7 +51,7 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
 
     val result3 = Foo(3, "pi", (3.14, 3.14))
       .intoPartial[Bar]
-      .withConstructorPartial(nullaryConstructorPartial _)
+      .withConstructorPartial((() => nullaryConstructorPartial()))
       .transform
     result3.asOption ==> Some(nullaryExpected)
     result3.asEither ==> Right(nullaryExpected)
@@ -73,7 +73,7 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
 
     val result5 = Foo(3, "pi", (3.14, 3.14))
       .intoPartial[Bar]
-      .withConstructor(uncurriedConstructor _)
+      .withConstructor(uncurriedConstructor)
       .transform
     result5.asOption ==> Some(uncurriedExpected)
     result5.asEither ==> Right(uncurriedExpected)
@@ -94,7 +94,7 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
 
     val result7 = Foo(3, "pi", (3.14, 3.14))
       .intoPartial[Bar]
-      .withConstructorPartial(uncurriedConstructorPartial _)
+      .withConstructorPartial(uncurriedConstructorPartial)
       .transform
     result7.asOption ==> Some(uncurriedExpected)
     result7.asEither ==> Right(uncurriedExpected)
@@ -116,7 +116,7 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
 
     val result9 = Foo(3, "pi", (3.14, 3.14))
       .intoPartial[Bar]
-      .withConstructor(curriedConstructor _)
+      .withConstructor(curriedConstructor)
       .transform
     result9.asOption ==> Some(curriedExpected)
     result9.asEither ==> Right(curriedExpected)
@@ -137,7 +137,7 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
 
     val result11 = Foo(3, "pi", (3.14, 3.14))
       .intoPartial[Bar]
-      .withConstructorPartial(curriedConstructorPartial _)
+      .withConstructorPartial(curriedConstructorPartial)
       .transform
     result11.asOption ==> Some(curriedExpected)
     result11.asEither ==> Right(curriedExpected)
@@ -159,7 +159,7 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
 
     val result13 = Foo(3, "pi", (3.14, 3.14))
       .intoPartial[BarParams[Int, Double]]
-      .withConstructor(typeParametricConstructor[Int, Double] _)
+      .withConstructor(typeParametricConstructor[Int, Double])
       .transform
     result13.asOption ==> Some(typeParametricExpected)
     result13.asEither ==> Right(typeParametricExpected)
@@ -170,7 +170,7 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
 
     val result14 = Foo(3, "pi", (3.14, 3.14))
       .intoPartial[BarParams[Int, Double]]
-      .withConstructorPartial(typeParametricConstructorPartial[Int, Double] _)
+      .withConstructorPartial(typeParametricConstructorPartial[Int, Double])
       .transform
     result14.asOption ==> Some(typeParametricExpected)
     result14.asEither ==> Right(typeParametricExpected)
@@ -181,7 +181,7 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
 
     val result15 = Foo(3, "pi", (3.14, 3.14))
       .intoPartial[BarParams[Int, Double]]
-      .withConstructorEither(typeParametricConstructorEither[Int, Double] _)
+      .withConstructorEither(typeParametricConstructorEither[Int, Double])
       .transform
     result15.asOption ==> Some(typeParametricExpected)
     result15.asEither ==> Right(typeParametricExpected)

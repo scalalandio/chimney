@@ -64,7 +64,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
           // $COVERAGE-OFF$should never happen unless we messed up
           case out =>
             assertionFailed(
-              s"Constructor of ${Type.prettyPrint(fromUntyped[Any](tpe))} has unrecognized/unsupported format of type: $out"
+              s"Constructor of ${Type.prettyPrint(using fromUntyped[Any](tpe))} has unrecognized/unsupported format of type: $out"
             )
           // $COVERAGE-ON$
         }

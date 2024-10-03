@@ -16,9 +16,11 @@ trait IterableOrArraysPlatform extends IterableOrArrays { this: DefinitionsPlatf
           new IterableOrArray[M, Inner] {
             def factory: Expr[Factory[Inner, M]] =
               '{
-                io.scalaland.chimney.integrations.FactoryCompat.iarrayFactory[Inner](${
-                  Expr.summonImplicitUnsafe[ClassTag[Inner]]
-                })
+                io.scalaland.chimney.integrations.FactoryCompat.iarrayFactory[Inner](using
+                  ${
+                    Expr.summonImplicitUnsafe[ClassTag[Inner]]
+                  }
+                )
               }.asExprOf[Factory[Inner, M]]
 
             def iterator(m: Expr[M]): Expr[Iterator[Inner]] =

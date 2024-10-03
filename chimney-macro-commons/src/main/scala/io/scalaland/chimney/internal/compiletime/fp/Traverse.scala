@@ -7,7 +7,7 @@ trait Traverse[F[_]] extends Functor[F] {
   def parTraverse[G[_]: Parallel, A, B](fa: F[A])(f: A => G[B]): G[F[B]]
 
   override def map[A, B](fa: F[A])(f: A => B): F[B] =
-    traverse[Applicative.Id, A, B](fa)(f)(Applicative.IdentityApplicative)
+    traverse[Applicative.Id, A, B](fa)(f)(using Applicative.IdentityApplicative)
 }
 object Traverse {
 

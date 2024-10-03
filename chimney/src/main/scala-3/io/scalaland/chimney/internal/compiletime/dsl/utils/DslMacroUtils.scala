@@ -258,7 +258,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
           Type.of[runtime.ArgumentLists.List[Head, Tail]]
       }
 
-      ApplyParams(head, tail)
+      ApplyParams(using head, tail)
     }
 
     private def constructArgumentListType(
@@ -273,7 +273,7 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
           Type.of[runtime.ArgumentList.Argument[ParamName, ParamType, Args]]
       }
 
-      ApplyParam(
+      ApplyParam(using
         ConstantType(StringConstant(name)).asType.asInstanceOf[Type[String]],
         tpe.tpe.asType.asInstanceOf[Type[Any]],
         args

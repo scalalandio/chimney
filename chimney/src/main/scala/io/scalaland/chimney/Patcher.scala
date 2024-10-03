@@ -80,5 +80,8 @@ object Patcher extends PatcherCompanionPlatform {
   }
 
   /** @since 0.8.0 */
-  object AutoDerived extends PatcherAutoDerivedCompanionPlatform
+  object AutoDerived extends AutoDerivedLowPriorityImplicits1
+  private[chimney] trait AutoDerivedLowPriorityImplicits1 extends PatcherAutoDerivedCompanionPlatform {
+    this: AutoDerived.type =>
+  }
 }

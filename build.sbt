@@ -24,7 +24,7 @@ ciRelease := {
 val versions = new {
   val scala212 = "2.12.20"
   val scala213 = "2.13.15"
-  val scala3 = "3.3.4"
+  val scala3 = "3.5.1"
 
   // Which versions should be cross-compiled for publishing
   val scalas = List(scala212, scala213, scala3)
@@ -84,7 +84,9 @@ val settings = Seq(
           // format: off
           "-encoding", "UTF-8",
           "-rewrite",
-          "-source", "3.3-migration",
+          //"-source", "3.4-migration",
+          "-source", "3.6",
+          //"-source", "3.3-migration",
           // format: on
           "-unchecked",
           "-deprecation",
@@ -102,7 +104,7 @@ val settings = Seq(
           "-Wunused:implicits",
           "-Wunused:params",
           "-Wvalue-discard",
-          "-Xfatal-warnings",
+          //"-Xfatal-warnings",
           "-Xcheck-macros",
           "-Ykind-projector:underscores"
         )

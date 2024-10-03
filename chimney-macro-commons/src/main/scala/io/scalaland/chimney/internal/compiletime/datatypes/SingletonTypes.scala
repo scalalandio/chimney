@@ -47,6 +47,6 @@ trait SingletonTypes { this: (Definitions & ProductTypes) =>
         case _ => None
       }
     }
-    final def unapply[A](tpe: Type[A]): Option[Singleton[A]] = parse(tpe)
+    final def unapply[A](tpe: Type[A]): Option[Singleton[A]] = parse(using tpe)
   }
 }

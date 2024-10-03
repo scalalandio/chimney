@@ -24,7 +24,7 @@ object tag {
   def apply[Tag] = new Tagger[Tag]
 
   trait Tagged[Tag]
-  type @@[+A, Tag] = A with Tagged[Tag]
+  type @@[+A, Tag] = A & Tagged[Tag]
 
   class Tagger[Tag] {
     def apply[A](a: A): A @@ Tag = a.asInstanceOf[A @@ Tag]

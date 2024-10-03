@@ -31,7 +31,7 @@ trait ValueClasses { this: Definitions =>
   protected trait WrapperClassTypeModule { this: WrapperClassType.type =>
 
     def parse[A: Type]: Option[Existential[WrapperClass[A, *]]]
-    final def unapply[A](tpe: Type[A]): Option[Existential[WrapperClass[A, *]]] = parse(tpe)
+    final def unapply[A](tpe: Type[A]): Option[Existential[WrapperClass[A, *]]] = parse(using tpe)
   }
 
   protected object ValueClassType {
@@ -45,6 +45,6 @@ trait ValueClasses { this: Definitions =>
           }
         }
       else None
-    def unapply[A](tpe: Type[A]): Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]] = parse(tpe)
+    def unapply[A](tpe: Type[A]): Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]] = parse(using tpe)
   }
 }

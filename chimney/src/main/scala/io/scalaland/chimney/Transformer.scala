@@ -101,7 +101,13 @@ object Transformer extends TransformerCompanionPlatform {
   }
 
   /** @since 0.8.0 */
-  object AutoDerived extends TransformerAutoDerivedCompanionPlatform
+  object AutoDerived extends AutoDerivedLowPriorityImplicits1
+  private[chimney] trait AutoDerivedLowPriorityImplicits1 extends AutoDerivedLowPriorityImplicits2 {
+    this: AutoDerived.type =>
+  }
+  private[chimney] trait AutoDerivedLowPriorityImplicits2 extends TransformerAutoDerivedCompanionPlatform {
+    this: AutoDerived.type =>
+  }
 }
 // extended by TransformerCompanionPlatform
 private[chimney] trait TransformerLowPriorityImplicits1 extends TransformerLowPriorityImplicits2 {

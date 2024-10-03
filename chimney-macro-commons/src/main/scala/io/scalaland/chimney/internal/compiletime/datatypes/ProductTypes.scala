@@ -48,7 +48,7 @@ trait ProductTypes { this: Definitions =>
     final case class Extraction[From](extraction: Getters[From])
     object Extraction {
       def unapply[From](From: Type[From]): Option[Getters[From]] =
-        ProductType.parseExtraction(From).map(getters => getters.extraction)
+        ProductType.parseExtraction(using From).map(getters => getters.extraction)
     }
 
     final case class Parameter[A](targetType: Parameter.TargetType, defaultValue: Option[Expr[A]])
@@ -62,7 +62,7 @@ trait ProductTypes { this: Definitions =>
         /** When constructing, value will be passed as setter argument */
         final case class SetterParameter(returnedType: ??) extends TargetType {
           override def toString: String =
-            s"SetterParameter(returnedType = ${Type.prettyPrint(returnedType.Underlying)})"
+            s"SetterParameter(returnedType = ${Type.prettyPrint(using returnedType.Underlying)})"
         }
       }
     }
@@ -76,7 +76,7 @@ trait ProductTypes { this: Definitions =>
     final case class Constructor[To](parameters: Parameters, constructor: Arguments => Expr[To])
     object Constructor {
       def unapply[To](To: Type[To]): Option[(Parameters, Arguments => Expr[To])] =
-        ProductType.parseConstructor(To).map(constructor => constructor.parameters -> constructor.constructor)
+        ProductType.parseConstructor(using To).map(constructor => constructor.parameters -> constructor.constructor)
 
       def exprAsInstanceOfMethod[To: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Constructor[To] =
         ProductType.exprAsInstanceOfMethod[To](args)(expr)
@@ -109,7 +109,7 @@ trait ProductTypes { this: Definitions =>
     final def parse[A: Type]: Option[Product[A]] = parseExtraction[A].zip(parseConstructor[A]).headOption.map {
       case (getters, constructor) => Product(getters, constructor)
     }
-    final def unapply[A](tpe: Type[A]): Option[Product[A]] = parse(tpe)
+    final def unapply[A](tpe: Type[A]): Option[Product[A]] = parse(using tpe)
 
     def exprAsInstanceOfMethod[A: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Product.Constructor[A]
 
@@ -145,7 +145,7 @@ trait ProductTypes { this: Definitions =>
             // $COVERAGE-OFF$should never happen unless we messed up
             assertionFailed(
               s"Constructor of ${Type.prettyPrint[A]} expected expr for parameter $param of type ${Type
-                  .prettyPrint[param.Underlying]}, instead got ${Expr.prettyPrint(argument.value)} ${Type.prettyPrint(argument.Underlying)}"
+                  .prettyPrint[param.Underlying]}, instead got ${Expr.prettyPrint(argument.value)} ${Type.prettyPrint(using argument.Underlying)}"
             )
             // $COVERAGE-ON$
           }

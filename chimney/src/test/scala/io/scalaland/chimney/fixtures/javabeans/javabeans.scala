@@ -41,9 +41,9 @@ class JavaBeanSourceWithAmbiguity(var id: String, var name: String, var flag: Bo
 }
 
 class JavaBeanTarget {
-  private var id: String = _
-  private var name: String = _
-  private var flag: Boolean = _
+  private var id: String = scala.compiletime.uninitialized
+  private var name: String = scala.compiletime.uninitialized
+  private var flag: Boolean = scala.compiletime.uninitialized
 
   def setId(id: String): Unit =
     this.id = id
@@ -72,7 +72,7 @@ class JavaBeanTarget {
 }
 
 class JavaBeanTargetNoIdSetter {
-  private var id: String = _
+  private var id: String = scala.compiletime.uninitialized
 
   def withId(id: String): Unit =
     this.id = id
@@ -91,9 +91,9 @@ class JavaBeanTargetNoIdSetter {
 }
 
 class JavaBeanTargetNonUnitSetter {
-  private var id: String = _
-  private var name: String = _
-  private var flag: Boolean = _
+  private var id: String = scala.compiletime.uninitialized
+  private var name: String = scala.compiletime.uninitialized
+  private var flag: Boolean = scala.compiletime.uninitialized
 
   def getId(): String = id
   def setId(id: String): Unit = this.id = id
@@ -120,7 +120,7 @@ class JavaBeanTargetNonUnitSetter {
 case class EnclosingCaseClass(ccNoFlag: CaseClassNoFlag)
 
 class EnclosingBean {
-  private var ccNoFlag: CaseClassNoFlag = _
+  private var ccNoFlag: CaseClassNoFlag = scala.compiletime.uninitialized
 
   def getCcNoFlag: CaseClassNoFlag = ccNoFlag
 
