@@ -225,6 +225,27 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
       : TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerIntoMacros.withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]('this) }
 
+  /** To use `fallback` when the source of type `From` is missing fields.
+    *
+    * Fallbacks can be stacked - then they will be tried in the order in which they were added.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam FromFallback
+    *   type of the fallback value which would be checked for fields when the `From` value would be missing
+    * @param fallback
+    *   fallback value which would be checked for fields when the `From` value would be missing
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerInto]]
+    *
+    * @since TODO
+    */
+  transparent inline def withFallback[FromFallback](
+      inline fallback: FromFallback
+  ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    ${ TransformerIntoMacros.withFallbackImpl('this, 'fallback) }
+
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *
     * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.
