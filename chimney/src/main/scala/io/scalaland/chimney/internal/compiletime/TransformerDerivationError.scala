@@ -103,7 +103,7 @@ object TransformerDerivationError {
               foundOverrides.map(fieldOverride => s"$MAGENTA$fieldOverride$RESET").mkString(", ")
             s"  field $toName: $toType could not resolve overrides since the current $MAGENTA$fieldNamesComparator: TransformedNamedComparison$RESET treats the following overrides as the same: $overrides making it ambiguous - change the field name comparator with $MAGENTA.enableCustomFieldNameComparison$RESET to resolve the ambiguity"
           case NotSupportedRenameFromPath(toName, foundFromPath, allowedFromPaths) =>
-            s"  field $toName: renaming from $foundFromPath, for this field allowed selectors are: $allowedFromPaths and chains of .fieldNames ($allowedFromPaths.field1.field2, etc)"
+            s"  field $toName: renaming from $foundFromPath is not allowed, try selecting only field names from $allowedFromPaths ($allowedFromPaths.field1.field2, etc)"
           case MissingSubtypeTransformer(fromSubtype) =>
             s"  can't transform coproduct instance $fromSubtype to $toType"
           case AmbiguousSubtypeTargets(fromField, foundToFields) =>

@@ -1485,11 +1485,9 @@ it with another field. Since the usual cause of such cases is a _rename_, we can
 The requirements to use a rename are as follows:
 
   - you have to pass `_.fieldName` directly, it cannot be done with a reference to the function
-  - you can only use `val`/nullary method/Bean getter as a source field name
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
     setters are enabled) to point which argument you are targeting
-  - the field rename can be _nested_, you can pass `_.foo.bar.baz` there, and on the constructor's arguments side
-    additionally you can use:
+  - the field rename can be _nested_, you can pass `_.foo.bar.baz` there, additionally you can use:
      - `.matching[Subtype]` to select just one subtype of ADT e.g `_.adt.matching[Subtype].subtypeField` (do not use for
        matching on `Option` or `Either`! Use dedicated matchers described below)
      - `.matchingSome` to select values inside `Option` e.g. `_.option.matchingSome.field`
@@ -1498,8 +1496,10 @@ The requirements to use a rename are as follows:
      - `.everyItem` to select items inside collection or array e.g. `_.list.everyItem.field`, `_.array.everyItem.field`
      - `.everyMapKey` and `.everyMapValue` to select keys/values inside maps e.g. `_.map.everyMapKey.field`,
        `_.map.everyMapValue.field`
+     - selectors for collections/`Option`s/`Either`s must be possible to implement, so e.g. you cannot rename from
+       `_.everyItem.fieldName` into `_.fieldNameOutsideCollection` 
  
-The last 2 conditions are always met when working with `case class`es with no `private val`s in constructor, and classes
+The first 2 conditions are always met when working with: `case class`es with no `private val`s in constructor, classes
 with all arguments declared as public `val`s, and Java Beans where each setter has a corresponding getter defined.
 
 !!! example
@@ -1580,6 +1580,42 @@ We are also able to rename fields in nested structure:
     )
     // expected output:
     // Right(value = NestedBar(bar = Bar(a = "value", c = 1248)))
+    ```
+
+including collections:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a: String, b: Int)
+    case class Bar(a: String, c: Int)
+
+    case class NestedFoo(foo: Foo)
+    case class NestedBar(bar: Bar)
+
+    pprint.pprintln(
+      List(NestedFoo(Foo("value", 1248)))
+        .into[Vector[NestedBar]]
+        .withFieldRenamed(_.everyItem.foo, _.everyItem.bar)
+        .withFieldRenamed(_.everyItem.foo.b, _.everyItem.bar.c)
+        .transform
+    )
+    // expected output:
+    // Vector(NestedBar(bar = Bar(a = "value", c = 1248)))
+    pprint.pprintln(
+      List(NestedFoo(Foo("value", 1248)))
+        .intoPartial[Vector[NestedBar]]
+        .withFieldRenamed(_.everyItem.foo, _.everyItem.bar)
+        .withFieldRenamed(_.everyItem.foo.b, _.everyItem.bar.c)
+        .transform
+        .asEither
+    )
+    // expected output:
+    // Right(value = Vector(NestedBar(bar = Bar(a = "value", c = 1248))))
     ```
 
 ### Wiring the constructor's parameter to a provided value
