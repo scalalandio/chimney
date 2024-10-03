@@ -65,6 +65,14 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
   test("transform into Option-type with an override") {
     Foo("abc").into[Option[Foo]].withFieldConst(_.matchingSome.value, "def").transform ==> Some(Foo("def"))
     Option(Foo("abc")).into[Option[Foo]].withFieldConst(_.matchingSome.value, "def").transform ==> Some(Foo("def"))
+
+    import fixtures.products.Renames.*
+
+    Option(User(1, "Kuba", Some(28)))
+      .into[Option[UserPLStd]]
+      .withFieldRenamed(_.matchingSome.name, _.matchingSome.imie)
+      .withFieldRenamed(_.matchingSome.age, _.matchingSome.wiek)
+      .transform ==> Option(UserPLStd(1, "Kuba", Some(28)))
   }
 
   test("transform from Either-type into Either-type") {
