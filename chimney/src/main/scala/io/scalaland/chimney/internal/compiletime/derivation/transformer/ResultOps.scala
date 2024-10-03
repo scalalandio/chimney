@@ -10,6 +10,7 @@ import io.scalaland.chimney.internal.compiletime.{
   MissingFieldTransformer,
   MissingJavaBeanSetterParam,
   MissingSubtypeTransformer,
+  NotSupportedRenameFromPath,
   NotSupportedTransformerDerivation,
   TupleArityMismatch
 }
@@ -104,6 +105,18 @@ private[compiletime] trait ResultOps { this: Derivation =>
         toName = toName,
         foundOverrides = foundOverrides.sorted,
         fieldNamesComparator = fieldNamesComparator
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+    )
+
+    def notSupportedRenameFromPath[From, To, A](
+        toName: String,
+        foundFromPath: Path,
+        allowedFromPaths: Path
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[A] = DerivationResult.transformerError(
+      NotSupportedRenameFromPath(
+        toName = toName,
+        foundFromPath = foundFromPath.toString,
+        allowedFromPaths = allowedFromPaths.toString
       )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 

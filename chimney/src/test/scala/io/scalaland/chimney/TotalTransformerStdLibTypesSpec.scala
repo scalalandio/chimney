@@ -91,6 +91,23 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
       .transform ==> Right(Bar("c"))
     Left(Foo("a")).into[Either[Bar, Bar]].withFieldConst(_.matchingLeft.value, "b").transform ==> Left(Bar("b"))
     Right(Foo("a")).into[Either[Bar, Bar]].withFieldConst(_.matchingRight.value, "c").transform ==> Right(Bar("c"))
+
+    import fixtures.products.Renames.*
+
+    (Left(User(1, "Kuba", Some(28))): Either[User, User])
+      .into[Either[UserPLStd, UserPLStd]]
+      .withFieldRenamed(_.matchingLeft.name, _.matchingLeft.imie)
+      .withFieldRenamed(_.matchingLeft.age, _.matchingLeft.wiek)
+      .withFieldRenamed(_.matchingRight.name, _.matchingRight.imie)
+      .withFieldRenamed(_.matchingRight.age, _.matchingRight.wiek)
+      .transform ==> Left(UserPLStd(1, "Kuba", Some(28)))
+    (Right(User(1, "Kuba", Some(28))): Either[User, User])
+      .into[Either[UserPLStd, UserPLStd]]
+      .withFieldRenamed(_.matchingLeft.name, _.matchingLeft.imie)
+      .withFieldRenamed(_.matchingLeft.age, _.matchingLeft.wiek)
+      .withFieldRenamed(_.matchingRight.name, _.matchingRight.imie)
+      .withFieldRenamed(_.matchingRight.age, _.matchingRight.wiek)
+      .transform ==> Right(UserPLStd(1, "Kuba", Some(28)))
   }
 
   test("transform from Iterable-type to Iterable-type") {

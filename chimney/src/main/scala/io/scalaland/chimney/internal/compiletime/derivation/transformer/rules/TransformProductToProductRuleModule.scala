@@ -392,8 +392,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 extractNestedSource(path2, extractedSrcValue2)
               }
             case path =>
-              DerivationResult.assertionError(
-                s"Renames are supported only From nested fields, only To path can contain operations like $path"
+              DerivationResult.notSupportedRenameFromPath[From, To, ExistentialExpr](
+                toName,
+                path,
+                ctx.srcJournal.last._1
               )
           }
 
@@ -403,11 +405,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         } yield extractNestedSource(newSourcePath, prefixExpr)
 
         val extractedSrcResult = extractedNestedSourceCandidates
-          .fold(DerivationResult.assertionError("ctx.srcJournal should never be empty")) { (a, b) =>
+          .fold(extractedNestedSourceCandidates.next()) { (a, b) =>
             // We're not using orElse because we want to:
             // - find the first successful result
             // - but NOT aggregate the errors, if everything fails, keep only the first error
-            a.recoverWith(errors => b.recoverWith(_ => DerivationResult.fail(errors)))
+            a.recoverWith { errors =>
+              println(ctx.srcJournal.mkString("\n"))
+              b.recoverWith(_ => DerivationResult.fail(errors))
+            }
           }
 
         extractedSrcResult.flatMap { extractedSrc =>

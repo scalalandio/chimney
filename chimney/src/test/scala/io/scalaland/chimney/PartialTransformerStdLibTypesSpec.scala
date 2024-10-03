@@ -257,6 +257,27 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .withFieldConst(_.matchingRight, "c")
       .transform
       .asOption ==> Some(Right("c"))
+
+    import fixtures.products.Renames.*
+
+    (Left(User(1, "Kuba", Some(28))): Either[User, User])
+      .intoPartial[Either[UserPLStd, UserPLStd]]
+      .withFieldRenamed(_.matchingLeft.name, _.matchingLeft.imie)
+      .withFieldRenamed(_.matchingLeft.age, _.matchingLeft.wiek)
+      .withFieldRenamed(_.matchingRight.name, _.matchingRight.imie)
+      .withFieldRenamed(_.matchingRight.age, _.matchingRight.wiek)
+      .transform
+      .asOption
+      .get ==> Left(UserPLStd(1, "Kuba", Some(28)))
+    (Right(User(1, "Kuba", Some(28))): Either[User, User])
+      .intoPartial[Either[UserPLStd, UserPLStd]]
+      .withFieldRenamed(_.matchingLeft.name, _.matchingLeft.imie)
+      .withFieldRenamed(_.matchingLeft.age, _.matchingLeft.wiek)
+      .withFieldRenamed(_.matchingRight.name, _.matchingRight.imie)
+      .withFieldRenamed(_.matchingRight.age, _.matchingRight.wiek)
+      .transform
+      .asOption
+      .get ==> Right(UserPLStd(1, "Kuba", Some(28)))
   }
 
   test("transform Iterable-type to Iterable-type, using Total Transformer for inner type transformation") {
