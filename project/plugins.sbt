@@ -10,7 +10,7 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.17.0")
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.5")
 // publishing
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.11.3")
-addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.2.1")
+addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.3.0")
 // MiMa
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.4")
 // benchmarks
