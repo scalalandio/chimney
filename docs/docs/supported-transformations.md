@@ -908,6 +908,46 @@ It's an unplanned but internally consistent outcome of several overlapping requi
 So consistent behavior on Scala 3 requires aligning writing to `var`a with using setters, and Scala 2/Scala 3 parity
 requires doing the same on Scala 2.
 
+This allows using `.enableBeanSetters` to handle transformations of Scala.js' `js.Object`s:
+
+!!! example
+
+    ```scala
+    //> using platform scala-js
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import scala.scalajs.js
+    import scala.scalajs.js.annotation.JSGlobal
+    import io.scalaland.chimney.dsl._
+    
+    @js.native
+    @JSGlobal
+    class RTCIceCandidate1 extends js.Object {
+    
+      /** Returns a transport address for the candidate that can be used for connectivity checks. The format of this address
+        * is a candidate-attribute as defined in RFC 5245.
+        */
+      var candidate: String = js.native
+    
+      /** If not null, this contains the identifier of the "media stream identification" (as defined in RFC 5888) for the
+        * media component this candidate is associated with.
+        */
+      var sdpMid: String = js.native
+    
+      /** If not null, this indicates the index (starting at zero) of the media description (as defined in RFC 4566) in the
+        * SDP this candidate is associated with.
+        */
+      var sdpMLineIndex: Double = js.native
+    }
+    
+    case class RTCIceCandidate2(candidate: String, sdpMid: String, sdpMLineIndex: Double)
+    
+    val c1 = RTCIceCandidate2("test", "test", 2.0)
+    
+    val c2 = c1.into[RTCIceCandidate1].enableBeanSetters.transform
+    
+    val c3 = c2.transformInto[RTCIceCandidate2]
+    ```
+
 ### Ignoring unmatched Bean setters
 
 If the target class has any method that Chimney recognized as a setter, by default it will refuse to generate the code
