@@ -269,5 +269,7 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
         }
         .getOrElse(repr.toString)
     }
+    def simplePrint[A: Type]: String =
+      (TypeRepr.of[A].dealias.typeSymbol.name: String).replaceAll("\\$", "")
   }
 }

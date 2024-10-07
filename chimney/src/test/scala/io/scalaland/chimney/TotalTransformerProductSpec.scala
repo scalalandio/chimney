@@ -51,6 +51,16 @@ class TotalTransformerProductSpec extends ChimneySpec {
     CaseBar(100).into[BaseFoo].withFieldConst(_.x, 200).transform.x ==> 200
   }
 
+  test("""transformation from a "superset" of fields into a "subset" of vars with .enableBeanSetters flag""") {
+    import products.{Foo, BarVars}
+
+    Foo(3, "pi", (3.14, 3.14)).into[BarVars].enableBeanSetters.transform ==> BarVars(3, (3.14, 3.14))
+    locally {
+      implicit val cfg = TransformerConfiguration.default.enableBeanSetters
+      Foo(3, "pi", (3.14, 3.14)).transformInto[BarVars] ==> BarVars(3, (3.14, 3.14))
+    }
+  }
+
   group("setting .withFieldConst(_.field, value)") {
 
     test("should not compile when selector is invalid") {

@@ -866,6 +866,48 @@ If the flag was enabled in the implicit config it can be disabled with `.disable
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
+This flag would ALSO enable writing to public `var`s:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    import io.scalaland.chimney.dsl._
+
+    class Source(val a: String, val b: Int)
+    class Target() {
+      var a: String = ""
+      var b: Int = 0
+    }
+
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    implicit val cfg = TransformerConfiguration.default.enableBeanSetters
+
+    (new Source("value", 512)).transformInto[Target]
+    // val source = new Source("value", 512)
+    // val target = new Target()
+    // target.a = source.a
+    // target.b = source.b
+    // target
+    (new Source("value", 512)).transformIntoPartial[Target]
+    // val source = new Source("value", 512)
+    // val target = new Target()
+    // target.a = source.a
+    // target.b = source.b
+    // partial.Result.fromValue(target)
+    ```
+
+It's an unplanned but internally consistent outcome of several overlapping requirements:
+
+ - Chimney tries to keep behavior consistent between Scala 2 and Scala 3
+ - Chimney tries (best effort, no tests currently) to handle classes compiled with 2.13 in macros compiled with Scala 3
+   and vice versa
+ - Scala 3 [changed the behavior of `@BeanProperty`](https://docs.scala-lang.org/scala3/guides/migration/incompat-other-changes.html#invisible-bean-property)
+   so that `var`'s would generate getters and setters visible only from Java - Scala would see only `var`s
+
+So consistent behavior on Scala 3 requires aligning writing to `var`a with using setters, and Scala 2/Scala 3 parity
+requires doing the same on Scala 2.
+
 ### Ignoring unmatched Bean setters
 
 If the target class has any method that Chimney recognized as a setter, by default it will refuse to generate the code

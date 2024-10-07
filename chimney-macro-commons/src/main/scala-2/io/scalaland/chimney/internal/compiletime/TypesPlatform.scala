@@ -181,5 +181,12 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
       Console.MAGENTA + helper(Type[A].tpe) + Console.RESET
     }
+    def simplePrint[A: Type]: String = {
+      val tpe = Type[A].tpe
+      tpe.toString match {
+        case javaEnumRegexpFormat(_, valueName) if tpe.typeSymbol.isJavaEnum => valueName
+        case _                                                               => tpe.dealias.typeSymbol.name.toString
+      }
+    }
   }
 }

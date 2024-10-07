@@ -83,6 +83,22 @@ class PartialTransformerProductSpec extends ChimneySpec {
     result.asErrorPathMessageStrings ==> Iterable.empty
   }
 
+  test("""transformation from a "superset" of fields into a "subset" of vars with .enableBeanSetters flag""") {
+    import products.{Foo, BarVars}
+
+    val result = Foo(3, "pi", (3.14, 3.14)).intoPartial[BarVars].enableBeanSetters.transform
+    result.asOption ==> Some(BarVars(3, (3.14, 3.14)))
+    result.asEither ==> Right(BarVars(3, (3.14, 3.14)))
+    result.asErrorPathMessageStrings ==> Iterable.empty
+    locally {
+      implicit val cfg = TransformerConfiguration.default.enableBeanSetters
+      val result2 = Foo(3, "pi", (3.14, 3.14)).transformIntoPartial[BarVars]
+      result2.asOption ==> Some(BarVars(3, (3.14, 3.14)))
+      result2.asEither ==> Right(BarVars(3, (3.14, 3.14)))
+      result2.asErrorPathMessageStrings ==> Iterable.empty
+    }
+  }
+
   group("setting .withFieldConst(_.field, value)") {
 
     test("should not compile when selector is invalid") {
