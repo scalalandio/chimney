@@ -26,6 +26,44 @@ private[compiletime] trait ImplicitSummoning { this: Derivation =>
       : Option[Expr[io.scalaland.chimney.PartialTransformer[From, To]]] =
     Expr.summonImplicit[io.scalaland.chimney.PartialTransformer[From, To]]
 
+  final protected def summonTotalOuterTransformer[From: Type, To: Type]: Option[TotalOuterTransformer[From, To]] = {
+    val inferred = ChimneyType.TotalOuterTransformer.inferred[From, To]
+    import inferred.Underlying as Inferred
+    Expr.summonImplicit[Inferred].map { outerTransformerExpr =>
+      val ChimneyType.TotalOuterTransformer(_, _, innerFrom, innerTo) = outerTransformerExpr.tpe: @unchecked
+      new TotalOuterTransformer[From, To] {
+        type InnerFrom = innerFrom.Underlying
+        implicit val InnerFrom: Type[InnerFrom] = innerFrom.Underlying
+
+        type InnerTo = innerTo.Underlying
+        implicit val InnerTo: Type[InnerTo] = innerTo.Underlying
+
+        val instance: Expr[io.scalaland.chimney.integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]] =
+          outerTransformerExpr
+            .asInstanceOf[Expr[io.scalaland.chimney.integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]]]
+      }
+    }
+  }
+
+  final protected def summonPartialOuterTransformer[From: Type, To: Type]: Option[PartialOuterTransformer[From, To]] = {
+    val inferred = ChimneyType.PartialOuterTransformer.inferred[From, To]
+    import inferred.Underlying as Inferred
+    Expr.summonImplicit[Inferred].map { outerTransformerExpr =>
+      val ChimneyType.PartialOuterTransformer(_, _, innerFrom, innerTo) = outerTransformerExpr.tpe: @unchecked
+      new PartialOuterTransformer[From, To] {
+        type InnerFrom = innerFrom.Underlying
+        implicit val InnerFrom: Type[InnerFrom] = innerFrom.Underlying
+
+        type InnerTo = innerTo.Underlying
+        implicit val InnerTo: Type[InnerTo] = innerTo.Underlying
+
+        val instance: Expr[io.scalaland.chimney.integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]] =
+          outerTransformerExpr
+            .asInstanceOf[Expr[io.scalaland.chimney.integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]]]
+      }
+    }
+  }
+
   final protected def summonDefaultValue[Value: Type]
       : Option[Expr[io.scalaland.chimney.integrations.DefaultValue[Value]]] =
     Expr.summonImplicit[io.scalaland.chimney.integrations.DefaultValue[Value]]

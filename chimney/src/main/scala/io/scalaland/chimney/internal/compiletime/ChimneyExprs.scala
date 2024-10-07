@@ -137,6 +137,40 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
       ): Expr[io.scalaland.chimney.Patcher[A, Patch]]
     }
 
+    val PartialOuterTransformer: PartialOuterTransformerModule
+    trait PartialOuterTransformerModule { this: PartialOuterTransformer.type =>
+
+      def transformWithTotalInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
+          partialOuterTransformer: Expr[integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]],
+          src: Expr[From],
+          failFast: Expr[Boolean],
+          inner: Expr[InnerFrom => InnerTo]
+      ): Expr[partial.Result[To]]
+
+      def transformWithPartialInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
+          partialOuterTransformer: Expr[integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]],
+          src: Expr[From],
+          failFast: Expr[Boolean],
+          inner: Expr[InnerFrom => partial.Result[InnerTo]]
+      ): Expr[partial.Result[To]]
+    }
+
+    val TotalOuterTransformer: TotalOuterTransformerModule
+    trait TotalOuterTransformerModule { this: TotalOuterTransformer.type =>
+
+      def transformWithTotalInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
+          totalOuterTransformer: Expr[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]],
+          src: Expr[From],
+          inner: Expr[InnerFrom => InnerTo]
+      ): Expr[To]
+
+      def transformWithPartialInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
+          totalOuterTransformer: Expr[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]],
+          src: Expr[From],
+          inner: Expr[InnerFrom => partial.Result[InnerTo]]
+      ): Expr[partial.Result[To]]
+    }
+
     val DefaultValue: DefaultValueModule
     trait DefaultValueModule { this: DefaultValue.type =>
 
@@ -266,6 +300,43 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
 
     def patch(obj: Expr[A], patch: Expr[Patch]): Expr[A] =
       ChimneyExpr.Patcher.patch(patcherExpr, obj, patch)
+  }
+
+  implicit final protected class PartialOuterTransformerOps[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
+      private val
+      partialOuterTransformer: Expr[integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]]
+  ) {
+
+    def transformWithTotalInner(
+        src: Expr[From],
+        failFast: Expr[Boolean],
+        inner: Expr[InnerFrom => InnerTo]
+    ): Expr[partial.Result[To]] =
+      ChimneyExpr.PartialOuterTransformer.transformWithTotalInner(partialOuterTransformer, src, failFast, inner)
+
+    def transformWithPartialInner(
+        src: Expr[From],
+        failFast: Expr[Boolean],
+        inner: Expr[InnerFrom => partial.Result[InnerTo]]
+    ): Expr[partial.Result[To]] =
+      ChimneyExpr.PartialOuterTransformer.transformWithPartialInner(partialOuterTransformer, src, failFast, inner)
+  }
+
+  implicit final protected class TotalOuterTransformerOps[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
+      private val
+      totalOuterTransformer: Expr[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]]
+  ) {
+
+    def transformWithTotalInner(
+        src: Expr[From],
+        inner: Expr[InnerFrom => InnerTo]
+    ): Expr[To] = ChimneyExpr.TotalOuterTransformer.transformWithTotalInner(totalOuterTransformer, src, inner)
+
+    def transformWithPartialInner(
+        src: Expr[From],
+        inner: Expr[InnerFrom => partial.Result[InnerTo]]
+    ): Expr[partial.Result[To]] =
+      ChimneyExpr.TotalOuterTransformer.transformWithPartialInner(totalOuterTransformer, src, inner)
   }
 
   implicit final protected class DefaultValueOps[Value: Type](

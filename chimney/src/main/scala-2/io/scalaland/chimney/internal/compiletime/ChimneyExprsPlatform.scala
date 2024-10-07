@@ -209,6 +209,42 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
       }
     }
 
+    object PartialOuterTransformer extends PartialOuterTransformerModule {
+
+      def transformWithTotalInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
+          partialOuterTransformer: Expr[integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]],
+          src: Expr[From],
+          failFast: Expr[Boolean],
+          inner: Expr[InnerFrom => InnerTo]
+      ): Expr[partial.Result[To]] =
+        c.Expr[partial.Result[To]](q"$partialOuterTransformer.transformWithTotalInner($src, $failFast, $inner)")
+
+      def transformWithPartialInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
+          partialOuterTransformer: Expr[integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]],
+          src: Expr[From],
+          failFast: Expr[Boolean],
+          inner: Expr[InnerFrom => partial.Result[InnerTo]]
+      ): Expr[partial.Result[To]] =
+        c.Expr[partial.Result[To]](q"$partialOuterTransformer.transformWithPartialInner($src, $failFast, $inner)")
+    }
+
+    object TotalOuterTransformer extends TotalOuterTransformerModule {
+
+      def transformWithTotalInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
+          totalOuterTransformer: Expr[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]],
+          src: Expr[From],
+          inner: Expr[InnerFrom => InnerTo]
+      ): Expr[To] =
+        c.Expr[To](q"$totalOuterTransformer.transformWithTotalInner($src, $inner)")
+
+      def transformWithPartialInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
+          totalOuterTransformer: Expr[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]],
+          src: Expr[From],
+          inner: Expr[InnerFrom => partial.Result[InnerTo]]
+      ): Expr[partial.Result[To]] =
+        c.Expr[partial.Result[To]](q"$totalOuterTransformer.transformWithPartialInner($src, $inner)")
+    }
+
     object DefaultValue extends DefaultValueModule {
 
       def provide[Value: Type](

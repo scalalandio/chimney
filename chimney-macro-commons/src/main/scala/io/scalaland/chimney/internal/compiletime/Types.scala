@@ -40,6 +40,20 @@ private[compiletime] trait Types { this: (Existentials & Results) =>
         extends Ctor3Bounded[Nothing, U1, Nothing, U2, Nothing, U3, F]
     trait Ctor3[F[_, _, _]] extends Ctor3Bounded[Nothing, Any, Nothing, Any, Nothing, Any, F]
 
+    /** Allow applying and extracting some types `L1 <:< ? <:< U1, L2 <:< ? <:< U2, L3 <:< ? <:< U3, L4 <:< ? <:< U4` */
+    trait Ctor4Bounded[L1, U1 >: L1, L2, U2 >: L2, L3, U3 >: L3, L4, U4 >: L4, F[
+        _ >: L1 <: U1,
+        _ >: L2 <: U2,
+        _ >: L3 <: U3,
+        _ >: L4 <: U4
+    ]] {
+      def apply[A >: L1 <: U1: Type, B >: L2 <: U2: Type, C >: L3 <: U3: Type, D >: L4 <: U4: Type]: Type[F[A, B, C, D]]
+      def unapply[A](A: Type[A]): Option[(L1 >?< U1, L2 >?< U2, L3 >?< U3, L4 >?< U4)]
+    }
+    trait Ctor4UpperBounded[U1, U2, U3, U4, F[_ <: U1, _ <: U2, _ <: U3, _ <: U4]]
+        extends Ctor4Bounded[Nothing, U1, Nothing, U2, Nothing, U3, Nothing, U4, F]
+    trait Ctor4[F[_, _, _, _]] extends Ctor4Bounded[Nothing, Any, Nothing, Any, Nothing, Any, Nothing, Any, F]
+
     // Build-in types' definitions
 
     val Nothing: Type[Nothing]
