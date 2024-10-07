@@ -2419,6 +2419,20 @@ reuse Chimney utilities for e.g.:
  - converting between singleton `Type[A]` and `Expr[A]`
  - providing a platform-agnostic utilities for some common types and expressions
 
+For details consult sources of
+
+ - [Types](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Types.scala) - for types and definitions related to type manipulations and build-in `Type` support
+ - [Exprs](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Exprs.scala) - for types and definitions related to expression manipulations and build-in `Expr` support
+ - [Results](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Results.scala) - for types and definitions related to returning info/error messages from macros
+ - [Definitions](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Definitions.scala) - for types and definitions related to reading macro configurations
+ - [Existentials](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Existentials.scala) - for types and definitions related to working with unknown types ("existential types")
+ - [ExprPromises](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/ExprPromises.scala) - for types and definitions related to computing `val`s/`lazy val`s/`def`s/`var`s before knowing the returned `Expr`'s `Type`, caching value as val, caching  derivation as `def`
+ - [ProductTypes](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ProductTypes.scala) - for types and definitions related to extractors and constructors of a product type
+ - [SealedHierarchies](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SealedHierarchies.scala) - for types and definitions related to finding all subtypes of `sealed trait`s/`sealed abstrcto class`es/Scala 3 `enum`s/Java `enum`s
+ - [ValueClasses](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ValueClasses.scala) - for types and definitions related to `AnyVal`s and "wrapper"s
+ - [SingletonTypes](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SingletonTypes.scala) - for types and definitions related to singleton types
+ - [IterableOrArrays](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/IterableOrArrays.scala) - for types and definitions related to unified interface for working with Arrays and Scala collections 
+
 !!! note
 
     This module is checked by MiMa, its API should be considered stable.
