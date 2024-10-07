@@ -22,6 +22,14 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
       if isSealed[A] then Some(symbolsToEnum(extractSealedSubtypes[A]))
       else None
 
+    implicit private val order: Ordering[Symbol] = Ordering
+      .Option(Ordering.fromLessThan[Position] { (a, b) =>
+        a.startLine < b.startLine || (a.startLine == b.startLine && a.startColumn < b.startColumn)
+      })
+      .on[Symbol](_.pos.filter(pos => scala.util.Try(pos.start).isSuccess))
+      // Stabilize order in case of https://github.com/scala/scala3/issues/21672 (does not solve the warnings!)
+      .orElseBy(_.name)
+
     private def extractSealedSubtypes[A: Type]: List[(String, ?<[A])] = {
       def extractRecursively(sym: Symbol): List[Symbol] =
         if sym.flags.is(Flags.Sealed) then sym.children.flatMap(extractRecursively)
@@ -29,13 +37,8 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
         else if sym.flags.is(Flags.Module) then List(sym.typeRef.typeSymbol.moduleClass)
         else List(sym)
 
-      val order = Ordering.Option(Ordering.fromLessThan[Position] { (a, b) =>
-        a.startLine < b.startLine || (a.startLine == b.startLine && a.startColumn < b.startColumn)
-      })
-
       // calling .distinct here as `children` returns duplicates for multiply-inherited types
-      extractRecursively(TypeRepr.of[A].typeSymbol).distinct
-        .sortBy(_.pos.filter(pos => scala.util.Try(pos.start).isSuccess))(order)
+      extractRecursively(TypeRepr.of[A].typeSymbol).distinct.sorted
         .map(typeSymbol => subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol))
     }
 
