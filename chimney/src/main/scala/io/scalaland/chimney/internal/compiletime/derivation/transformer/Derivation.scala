@@ -13,6 +13,8 @@ private[compiletime] trait Derivation
     with datatypes.SealedHierarchies
     with datatypes.SingletonTypes
     with datatypes.ValueClasses
+    with integrations.TotalOuterTransformers
+    with integrations.PartialOuterTransformers
     with integrations.OptionalValues
     with integrations.PartiallyBuildIterables
     with integrations.TotallyBuildIterables

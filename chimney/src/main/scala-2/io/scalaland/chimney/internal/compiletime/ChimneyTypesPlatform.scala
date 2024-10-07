@@ -406,6 +406,26 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       }
     }
 
+    object PartialOuterTransformer extends PartialOuterTransformerModule {
+      def apply[From: Type, To: Type, InnerFrom: Type, InnerTo: Type]
+          : Type[integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]] =
+        weakTypeTag[integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]]
+      def unapply[A](A: Type[A]): Option[(??, ??, ??, ??)] =
+        A.asCtor[integrations.PartialOuterTransformer[?, ?, ?, ?]]
+          .map(A0 => (A0.param(0), A0.param(1), A0.param(2), A0.param(3)))
+      def inferred[From: Type, To: Type]: ExistentialType =
+        weakTypeTag[integrations.PartialOuterTransformer[From, To, ?, ?]].as_??
+    }
+    object TotalOuterTransformer extends TotalOuterTransformerModule {
+      def apply[From: Type, To: Type, InnerFrom: Type, InnerTo: Type]
+          : Type[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]] =
+        weakTypeTag[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]]
+      def unapply[A](A: Type[A]): Option[(??, ??, ??, ??)] =
+        A.asCtor[integrations.TotalOuterTransformer[?, ?, ?, ?]]
+          .map(A0 => (A0.param(0), A0.param(1), A0.param(2), A0.param(3)))
+      def inferred[From: Type, To: Type]: ExistentialType =
+        weakTypeTag[integrations.TotalOuterTransformer[From, To, ?, ?]].as_??
+    }
     object DefaultValue extends DefaultValueModule {
       def apply[Value: Type]: Type[integrations.DefaultValue[Value]] =
         weakTypeTag[integrations.DefaultValue[Value]]

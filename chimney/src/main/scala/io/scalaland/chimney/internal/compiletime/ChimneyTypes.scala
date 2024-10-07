@@ -289,6 +289,18 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
           ] { this: EveryMapValue.type => }
     }
 
+    val PartialOuterTransformer: PartialOuterTransformerModule
+    trait PartialOuterTransformerModule extends Type.Ctor4[integrations.PartialOuterTransformer] {
+      this: PartialOuterTransformer.type =>
+      def inferred[From: Type, To: Type]: ExistentialType
+    }
+
+    val TotalOuterTransformer: TotalOuterTransformerModule
+    trait TotalOuterTransformerModule extends Type.Ctor4[integrations.TotalOuterTransformer] {
+      this: TotalOuterTransformer.type =>
+      def inferred[From: Type, To: Type]: ExistentialType
+    }
+
     val DefaultValue: DefaultValueModule
     trait DefaultValueModule extends Type.Ctor1[integrations.DefaultValue] { this: DefaultValue.type => }
 
@@ -300,7 +312,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     val PartiallyBuildIterable: PartiallyBuildIterableModule
     trait PartiallyBuildIterableModule extends Type.Ctor2[integrations.PartiallyBuildIterable] {
       this: PartiallyBuildIterable.type =>
-      def inferred[Optional: Type]: ExistentialType
+      def inferred[Collection: Type]: ExistentialType
     }
 
     val PartiallyBuildMap: PartiallyBuildMapModule
@@ -309,7 +321,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     val TotallyBuildIterable: TotallyBuildIterableModule
     trait TotallyBuildIterableModule extends Type.Ctor2[integrations.TotallyBuildIterable] {
       this: TotallyBuildIterable.type =>
-      def inferred[Optional: Type]: ExistentialType
+      def inferred[Collection: Type]: ExistentialType
     }
 
     val TotallyBuildMap: TotallyBuildMapModule
@@ -340,6 +352,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
 
       implicit val RuntimeDataStoreType: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] = RuntimeDataStore
 
+      implicit def PartialOuterTransformerType[From: Type, To: Type, InnerFrom: Type, InnerTo: Type]
+          : Type[integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]] =
+        PartialOuterTransformer[From, To, InnerFrom, InnerTo]
+      implicit def TotalOuterTransformerType[From: Type, To: Type, InnerFrom: Type, InnerTo: Type]
+          : Type[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]] =
+        TotalOuterTransformer[From, To, InnerFrom, InnerTo]
       implicit def DefaultValueType[Value: Type]: Type[integrations.DefaultValue[Value]] = DefaultValue[Value]
       implicit def OptionalValueType[Optional: Type, Value: Type]: Type[integrations.OptionalValue[Optional, Value]] =
         OptionalValue[Optional, Value]

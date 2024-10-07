@@ -405,6 +405,30 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       }
     }
 
+    object PartialOuterTransformer extends PartialOuterTransformerModule {
+      def apply[From: Type, To: Type, InnerFrom: Type, InnerTo: Type]
+          : Type[integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]] =
+        quoted.Type.of[integrations.PartialOuterTransformer[From, To, InnerFrom, InnerTo]]
+      def unapply[A](tpe: Type[A]): Option[(??, ??, ??, ??)] = tpe match {
+        case '[integrations.PartialOuterTransformer[from, to, innerFrom, innerTo]] =>
+          Some((Type[from].as_??, Type[to].as_??, Type[innerFrom].as_??, Type[innerTo].as_??))
+        case _ => None
+      }
+      def inferred[From: Type, To: Type]: ExistentialType =
+        quoted.Type.of[integrations.PartialOuterTransformer[From, To, ?, ?]].as_??
+    }
+    object TotalOuterTransformer extends TotalOuterTransformerModule {
+      def apply[From: Type, To: Type, InnerFrom: Type, InnerTo: Type]
+          : Type[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]] =
+        quoted.Type.of[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]]
+      def unapply[A](tpe: Type[A]): Option[(??, ??, ??, ??)] = tpe match {
+        case '[integrations.TotalOuterTransformer[from, to, innerFrom, innerTo]] =>
+          Some((Type[from].as_??, Type[to].as_??, Type[innerFrom].as_??, Type[innerTo].as_??))
+        case _ => None
+      }
+      def inferred[From: Type, To: Type]: ExistentialType =
+        quoted.Type.of[integrations.TotalOuterTransformer[From, To, ?, ?]].as_??
+    }
     object DefaultValue extends DefaultValueModule {
       def apply[Value: Type]: Type[integrations.DefaultValue[Value]] =
         quoted.Type.of[integrations.DefaultValue[Value]]

@@ -14,6 +14,7 @@ import io.scalaland.chimney.internal.compiletime.{
   NotSupportedTransformerDerivation,
   TupleArityMismatch
 }
+import io.scalaland.chimney.integrations as in
 import io.scalaland.chimney.{partial, PartialTransformer, Transformer}
 
 private[compiletime] trait ResultOps { this: Derivation =>
@@ -156,6 +157,18 @@ private[compiletime] trait ResultOps { this: Derivation =>
     def ambiguousImplicitPriority[From, To, A](
         total: Expr[Transformer[From, To]],
         partial: Expr[PartialTransformer[From, To]]
+    )(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      AmbiguousImplicitPriority(
+        totalExprPrettyPrint = total.prettyPrint,
+        partialExprPrettyPrint = partial.prettyPrint
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+    )
+
+    def ambiguousImplicitOuterPriority[From, To, InnerFromT: Type, InnerToT: Type, InnerFromP: Type, InnerToP: Type, A](
+        total: Expr[in.TotalOuterTransformer[From, To, InnerFromT, InnerToT]],
+        partial: Expr[in.PartialOuterTransformer[From, To, InnerFromP, InnerToP]]
     )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(

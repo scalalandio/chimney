@@ -10,6 +10,7 @@ trait DerivationPlatform
     with datatypes.SealedHierarchiesPlatform
     with datatypes.ValueClassesPlatform
     with rules.TransformImplicitRuleModule
+    with rules.TransformImplicitOuterTransformerRuleModule
     with rules.TransformSubtypesRuleModule
     with rules.TransformToSingletonRuleModule
     with rules.TransformOptionToOptionRuleModule
@@ -26,6 +27,7 @@ trait DerivationPlatform
 
   final override protected val rulesAvailableForPlatform: List[Rule] = List(
     TransformImplicitRule,
+    TransformImplicitOuterTransformerRule,
     TransformSubtypesRule,
     TransformToSingletonRule,
     TransformOptionToOptionRule,
