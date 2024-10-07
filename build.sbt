@@ -317,10 +317,15 @@ val ciCommand = (platform: String, scalaSuffix: String) => {
 }
 
 val publishLocalForTests = {
-  for {
+  val jvm = for {
     module <- Vector("chimneyMacroCommons", "chimney", "chimneyCats", "chimneyProtobufs", "chimneyJavaCollections")
     moduleVersion <- Vector(module, module + "3")
   } yield moduleVersion + "/publishLocal"
+  val js = for {
+    module <- Vector("chimneyMacroCommons", "chimney").map(_ + "JS")
+    moduleVersion <- Vector(module)
+  } yield moduleVersion + "/publishLocal"
+  jvm ++ js
 }.mkString(" ; ")
 
 val releaseCommand = (tag: Seq[String]) =>
