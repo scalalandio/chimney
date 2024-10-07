@@ -211,9 +211,7 @@ val settings = Seq(
       case _             => Seq.empty
     }
   },
-  coverageExcludedPackages += Seq(
-    ".*DefCache.*" // DefCache is kind-a experimental utility
-  )
+  coverageExcludedPackages := ".*DefCache.*" // DefCache is kind-a experimental utility
 )
 
 val dependencies = Seq(
