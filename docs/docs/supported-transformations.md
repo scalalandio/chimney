@@ -913,6 +913,7 @@ This allows using `.enableBeanSetters` to handle transformations of Scala.js' `j
 !!! example
 
     ```scala
+    //> using scala {{ scala.2_13 }}
     //> using platform scala-js
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import scala.scalajs.js
@@ -941,11 +942,13 @@ This allows using `.enableBeanSetters` to handle transformations of Scala.js' `j
     
     case class RTCIceCandidate2(candidate: String, sdpMid: String, sdpMLineIndex: Double)
     
+    def convertBackAndForth: Unit = {
     val c1 = RTCIceCandidate2("test", "test", 2.0)
     
     val c2 = c1.into[RTCIceCandidate1].enableBeanSetters.transform
     
     val c3 = c2.transformInto[RTCIceCandidate2]
+    }
     ```
 
 ### Ignoring unmatched Bean setters
