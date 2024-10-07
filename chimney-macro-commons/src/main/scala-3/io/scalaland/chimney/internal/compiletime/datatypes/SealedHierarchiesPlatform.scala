@@ -23,19 +23,28 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
       else None
 
     private def extractSealedSubtypes[A: Type]: List[(String, ?<[A])] = {
+      def hasPosition: Boolean =
+        TypeRepr.of[A].typeSymbol.pos.exists(pos => scala.util.Try(pos.start).isSuccess)
+
       def extractRecursively(sym: Symbol): List[Symbol] =
         if sym.flags.is(Flags.Sealed) then sym.children.flatMap(extractRecursively)
         else if sym.flags.is(Flags.Enum) then List(sym.typeRef.typeSymbol)
         else if sym.flags.is(Flags.Module) then List(sym.typeRef.typeSymbol.moduleClass)
         else List(sym)
 
-      val order = Ordering.Option(Ordering.fromLessThan[Position] { (a, b) =>
+      val positionOrder = Ordering.Option(Ordering.fromLessThan[Position] { (a, b) =>
         a.startLine < b.startLine || (a.startLine == b.startLine && a.startColumn < b.startColumn)
       })
 
       // calling .distinct here as `children` returns duplicates for multiply-inherited types
-      extractRecursively(TypeRepr.of[A].typeSymbol).distinct
-        .sortBy(_.pos.filter(pos => scala.util.Try(pos.start).isSuccess))(order)
+      val allChildren = extractRecursively(TypeRepr.of[A].typeSymbol).distinct
+      val sortedChildren = if hasPosition then {
+        allChildren.sortBy(_.pos)(positionOrder)
+      } else {
+        allChildren.sortBy(_.name)
+      }
+
+      sortedChildren
         .map(typeSymbol => subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol))
     }
 

@@ -31,16 +31,27 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
     private def extractSealedSubtypes[A: Type]: List[(String, ?<[A])] = {
       forceTypeSymbolInitialization[A]
 
+      def hasPosition: Boolean = {
+        val position = Type[A].tpe.typeSymbol.pos
+        !(position.line == 0 && position.column == 0)
+      }
+
       def extractRecursively(t: TypeSymbol): List[TypeSymbol] =
         if (t.asClass.isSealed) t.asClass.knownDirectSubclasses.toList.map(_.asType).flatMap(extractRecursively)
         else List(t)
 
-      val order =
+      val positionOrder =
         Ordering.fromLessThan[Position]((a, b) => a.line < b.line || (a.line == b.line && a.column < b.column))
 
-      // calling .distinct here as `knownDirectSubclasses` returns duplicates for multiply-inherited types
-      extractRecursively(Type[A].tpe.typeSymbol.asType).distinct
-        .sortBy(_.pos)(order)
+      // calling .distinct here as `children` returns duplicates for multiply-inherited types
+      val allChildren = extractRecursively(Type[A].tpe.typeSymbol.asType).distinct
+      val sortedChildren = if (hasPosition) {
+        allChildren.sortBy(_.pos)(positionOrder)
+      } else {
+        allChildren.sortBy(_.name.toString)
+      }
+
+      sortedChildren
         .map(typeSymbol => subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol))
     }
 
