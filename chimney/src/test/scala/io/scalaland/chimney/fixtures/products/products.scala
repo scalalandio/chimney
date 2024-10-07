@@ -42,6 +42,25 @@ object NonCaseDomain {
 
 case class Foo(x: Int, y: String, z: (Double, Double))
 case class Bar(x: Int, z: (Double, Double))
+class BarVars {
+  var x: Int = -100
+  var z: (Double, Double) = (Double.MinValue, Double.MinValue)
+
+  override def equals(obj: Any): Boolean = obj match {
+    case b: BarVars => x == b.x && z == b.z
+    case _          => false
+  }
+
+  override def toString: String = s"BarVars($x, $z)"
+}
+object BarVars {
+  def apply(x: Int, z: (Double, Double)): BarVars = {
+    val barVars = new BarVars
+    barVars.x = x
+    barVars.z = z
+    barVars
+  }
+}
 case class BarParams[A, B](x: A, z: (B, Double))
 case class HaveY(y: String)
 

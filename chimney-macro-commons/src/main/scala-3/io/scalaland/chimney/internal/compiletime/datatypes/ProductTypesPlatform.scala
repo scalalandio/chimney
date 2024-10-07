@@ -39,7 +39,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           .isSetterName(setter.name)
 
       def isVar(setter: Symbol): Boolean =
-        setter.isPublic && setter.isValDef && setter.flags.is(Flags.Mutable)
+        setter.isPublic && (setter.isValDef || setter.isDefDef) && setter.flags.is(Flags.Mutable)
 
       def isJavaSetterOrVar(setter: Symbol): Boolean =
         isJavaSetter(setter) || isVar(setter)
@@ -185,7 +185,9 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
           .filterNot(isGarbageSymbol)
           .filter(isJavaSetterOrVar)
           .map { setter =>
-            setter.name -> setter
+            val n = setter.name
+            val name = if isVar(setter) then n.stripSuffix("_$eq").stripSuffix("_=") else n
+            name -> setter
           }
           .filter { case (name, _) => !paramTypes.keySet.contains(name) } // _exact_ name match!
           .map { case (name, setter) =>

@@ -2419,7 +2419,7 @@ reuse Chimney utilities for e.g.:
  - converting between singleton `Type[A]` and `Expr[A]`
  - providing a platform-agnostic utilities for some common types and expressions
 
-For details consult sources of
+For details, consult sources of
 
  - [Types](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Types.scala) - for types and definitions related to type manipulations and build-in `Type` support
  - [Exprs](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Exprs.scala) - for types and definitions related to expression manipulations and build-in `Expr` support

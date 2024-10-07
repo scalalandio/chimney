@@ -189,13 +189,7 @@ private[compiletime] trait Types { this: (Existentials & Results) =>
     def isSameAs[A, B](A: Type[A], B: Type[B]): Boolean
 
     def prettyPrint[A: Type]: String
-    def simplePrint[A: Type]: String = {
-      val colored = prettyPrint[A]
-      val mono = "\u001b\\[([0-9]+)m".r.replaceAllIn(colored, "") // drop ANSI colors
-      val start = mono.lastIndexOf(".") + 1
-      val end = mono.indexOf("[", start) - 1
-      mono.substring(start.max(0), if (end < 0) mono.length else end) // drop packages/objects and type params
-    }
+    def simplePrint[A: Type]: String
   }
   implicit final protected class TypeOps[A](private val tpe: Type[A]) {
 
