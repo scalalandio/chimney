@@ -210,7 +210,10 @@ val settings = Seq(
       case Some((2, 12)) => Seq("-Ywarn-unused:locals") // Scala 2.12 ignores @unused warns
       case _             => Seq.empty
     }
-  }
+  },
+  coverageExcludedPackages += Seq(
+    ".*DefCache.*" // DefCache is kind-a experimental utility
+  )
 )
 
 val dependencies = Seq(

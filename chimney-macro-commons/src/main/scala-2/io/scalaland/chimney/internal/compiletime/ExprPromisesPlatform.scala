@@ -83,4 +83,72 @@ private[compiletime] trait ExprPromisesPlatform extends ExprPromises { this: Def
 
     def setVal[To: Type](name: ExprPromiseName): Expr[To] => Expr[Unit] = value => c.Expr[Unit](q"$name = $value")
   }
+
+  protected object DefCache extends DefCacheModule {
+
+    import ExprPromise.{provideFreshName, NameGenerationStrategy, UsageHint}
+
+    def apply[F[_]: fp.DirectStyle]: DefCache[F] = new DefCache[F] {
+
+      protected def define1[In1: Type, Out: Type](name: String): Define[Expr[In1], Expr[Out]] =
+        new Define[Expr[In1], Expr[Out]] {
+          private val termName = provideFreshName[In1](NameGenerationStrategy.FromPrefix(name), UsageHint.None)
+          private val call: Expr[In1] => Expr[Out] = in1 => c.Expr[Out](q"$termName($in1)")
+
+          def apply(body: Expr[In1] => Expr[Out]): Def = new Def {
+            private val defdef = fp.DirectStyle[F].asyncUnsafe {
+              val in1 = provideFreshName[In1](NameGenerationStrategy.FromType, UsageHint.None)
+              q"""
+              def $termName($in1: ${Type[In1]}): ${Type[Out]} = ${body(c.Expr[In1](q"$in1"))}
+              """
+            }
+            def prependDef[A: Type](expr: Expr[A]): Expr[A] = c.Expr[A](
+              q"""
+              ${fp.DirectStyle[F].awaitUnsafe(defdef)}
+              $expr
+              """
+            )
+            def cast[A]: A = { (in1: Expr[In1]) =>
+              fp.DirectStyle[F].awaitUnsafe(defdef) // re-fail
+              call(in1)
+            }.asInstanceOf[A]
+          }
+          val pending: PendingDef = new PendingDef {
+            def cast[A]: A = call.asInstanceOf[A]
+          }
+        }
+      protected def define2[In1: Type, In2: Type, Out: Type](
+          name: String
+      ): Define[(Expr[In1], Expr[In2]), Expr[Out]] = new Define[(Expr[In1], Expr[In2]), Expr[Out]] {
+        private val termName = provideFreshName[In1](NameGenerationStrategy.FromPrefix(name), UsageHint.None)
+        private val call: (Expr[In1], Expr[In2]) => Expr[Out] = (in1, in2) => c.Expr[Out](q"$termName($in1, $in2)")
+
+        def apply(body: ((Expr[In1], Expr[In2])) => Expr[Out]): Def = new Def {
+          private val defdef = fp.DirectStyle[F].asyncUnsafe {
+
+            val in1 = provideFreshName[In1](NameGenerationStrategy.FromType, UsageHint.None)
+            val in2 = provideFreshName[In2](NameGenerationStrategy.FromType, UsageHint.None)
+            q"""
+            def $termName($in1: ${Type[In1]}, $in2: ${Type[In2]}): ${Type[Out]} = ${body(
+                (c.Expr[In1](q"$in1"), c.Expr[In2](q"$in2"))
+              )}
+            """
+          }
+          def prependDef[A: Type](expr: Expr[A]): Expr[A] = c.Expr[A](
+            q"""
+            ${fp.DirectStyle[F].awaitUnsafe(defdef)}
+            $expr
+            """
+          )
+          def cast[A]: A = { (in1: Expr[In1], in2: Expr[In2]) =>
+            fp.DirectStyle[F].awaitUnsafe(defdef) // re-fail
+            call(in1, in2)
+          }.asInstanceOf[A]
+        }
+        val pending: PendingDef = new PendingDef {
+          def cast[A]: A = call.asInstanceOf[A]
+        }
+      }
+    }
+  }
 }
