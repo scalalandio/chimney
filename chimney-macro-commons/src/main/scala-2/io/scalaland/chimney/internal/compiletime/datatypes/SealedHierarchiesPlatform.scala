@@ -28,6 +28,18 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
         .map(termSymbol => termSymbol.name.toString -> fromUntyped[A](termSymbol.asTerm.typeSignature).as_?<[A])
         .toList
 
+    implicit private val order: Ordering[TypeSymbol] = {
+      val o1 = Ordering
+        .fromLessThan[Position]((a, b) => a.line < b.line || (a.line == b.line && a.column < b.column))
+        .on[TypeSymbol](_.pos)
+      // Ensure parity with Scala 3 (which workes around https://github.com/scala/scala3/issues/21672 bug)
+      val o2 = Ordering[String].on[TypeSymbol](subtypeName)
+      (a, b) => {
+        val result = o1.compare(a, b)
+        if (result != 0) result else o2.compare(a, b)
+      }
+    }
+
     private def extractSealedSubtypes[A: Type]: List[(String, ?<[A])] = {
       forceTypeSymbolInitialization[A]
 
@@ -35,12 +47,8 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
         if (t.asClass.isSealed) t.asClass.knownDirectSubclasses.toList.map(_.asType).flatMap(extractRecursively)
         else List(t)
 
-      val order =
-        Ordering.fromLessThan[Position]((a, b) => a.line < b.line || (a.line == b.line && a.column < b.column))
-
       // calling .distinct here as `knownDirectSubclasses` returns duplicates for multiply-inherited types
-      extractRecursively(Type[A].tpe.typeSymbol.asType).distinct
-        .sortBy(_.pos)(order)
+      extractRecursively(Type[A].tpe.typeSymbol.asType).distinct.sorted
         .map(typeSymbol => subtypeName(typeSymbol) -> subtypeTypeOf[A](typeSymbol))
     }
 
