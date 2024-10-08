@@ -10,6 +10,102 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
   import TotalTransformerIntegrationsSpec.*
   import TotalTransformerStdLibTypesSpec.{Bar, Foo}
 
+  test("transform using TotalOuterTransformer") {
+    import OuterTransformers.totalNonEmptyToSorted
+
+    implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
+
+    val result = NonEmptyWrapper(Foo("b"), Foo("a")).transformIntoPartial[SortedWrapper[Bar]]
+    result.asOption ==> Some(SortedWrapper(Bar("a"), Bar("b")))
+    result.asEither ==> Right(SortedWrapper(Bar("a"), Bar("b")))
+    result.asErrorPathMessageStrings ==> Iterable.empty
+  }
+
+  test("transform using TotalOuterTransformer with an override") {
+    import OuterTransformers.totalNonEmptyToSorted
+
+    implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
+
+    val result = NonEmptyWrapper(Foo("b"), Foo("a"))
+      .intoPartial[SortedWrapper[Bar]]
+      .withFieldConst(_.everyItem.value, "c")
+      .transform
+    result.asOption ==> Some(SortedWrapper(Bar("c")))
+    result.asEither ==> Right(SortedWrapper(Bar("c")))
+    result.asErrorPathMessageStrings ==> Iterable.empty
+  }
+
+  test("transform using PartialOuterTransformer") {
+    import OuterTransformers.partialNonEmptyToSorted
+
+    implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
+
+    val result = NonEmptyWrapper(Foo("b"), Foo("a")).transformIntoPartial[SortedWrapper[Bar]]
+    result.asOption ==> Some(SortedWrapper(Bar("a"), Bar("b")))
+    result.asEither ==> Right(SortedWrapper(Bar("a"), Bar("b")))
+    result.asErrorPathMessageStrings ==> Iterable.empty
+  }
+
+  test("transform using PartialOuterTransformer with an override") {
+    import OuterTransformers.partialNonEmptyToSorted
+
+    implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
+
+    val result = NonEmptyWrapper(Foo("b"), Foo("a"))
+      .intoPartial[SortedWrapper[Bar]]
+      .withFieldConst(_.everyItem.value, "c")
+      .transform
+    result.asOption ==> Some(SortedWrapper(Bar("c")))
+    result.asEither ==> Right(SortedWrapper(Bar("c")))
+    result.asErrorPathMessageStrings ==> Iterable.empty
+  }
+
+  test("transform using PartialOuterTransformer resolving total-partial-conflict") {
+    import OuterTransformers.*
+
+    implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
+
+    val result = NonEmptyWrapper(Foo("b"), Foo("a"))
+      .intoPartial[SortedWrapper[Bar]]
+      .enableImplicitConflictResolution(PreferTotalTransformer)
+      .transform
+    result.asOption ==> Some(SortedWrapper(Bar("a"), Bar("b")))
+    result.asEither ==> Right(SortedWrapper(Bar("a"), Bar("b")))
+    result.asErrorPathMessageStrings ==> Iterable.empty
+
+    val result2 = NonEmptyWrapper(Foo("b"), Foo("a"))
+      .intoPartial[SortedWrapper[Bar]]
+      .enableImplicitConflictResolution(PreferPartialTransformer)
+      .transform
+    result2.asOption ==> Some(SortedWrapper(Bar("a"), Bar("b")))
+    result2.asEither ==> Right(SortedWrapper(Bar("a"), Bar("b")))
+    result2.asErrorPathMessageStrings ==> Iterable.empty
+
+    compileErrors("""NonEmptyWrapper(Foo("b"), Foo("a")).transformIntoPartial[SortedWrapper[Bar]]""").check(
+      "Chimney can't derive transformation from io.scalaland.chimney.TotalTransformerIntegrationsSpec.NonEmptyWrapper[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo] to io.scalaland.chimney.TotalTransformerIntegrationsSpec.SortedWrapper[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
+      "io.scalaland.chimney.TotalTransformerIntegrationsSpec.SortedWrapper[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar]",
+      "ambiguous implicits while resolving Chimney recursive transformation!",
+      "TotalTransformerIntegrationsSpec.OuterTransformers.partialNonEmptyToSorted[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar](barOrdering)",
+      "TotalTransformerIntegrationsSpec.OuterTransformers.totalNonEmptyToSorted[io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Foo, io.scalaland.chimney.TotalTransformerStdLibTypesSpec.Bar](barOrdering)",
+      "Please eliminate total/partial ambiguity from implicit scope or use enableImplicitConflictResolution/withFieldComputed/withFieldComputedPartial to decide which one should be used.",
+      "Consult https://chimney.readthedocs.io for usage examples."
+    )
+  }
+
+  test("transform using TotalOuterTransformer with an override") {
+    import OuterTransformers.totalNonEmptyToSorted
+
+    implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
+
+    val result = NonEmptyWrapper(Foo("b"), Foo("a"))
+      .intoPartial[SortedWrapper[Bar]]
+      .withFieldConst(_.everyItem.value, "c")
+      .transform
+    result.asOption ==> Some(SortedWrapper(Bar("c")))
+    result.asEither ==> Right(SortedWrapper(Bar("c")))
+    result.asErrorPathMessageStrings ==> Iterable.empty
+  }
+
   group("transform from Option-type into Option-type, using Total Transformer for inner type transformation") {
 
     implicit val intPrinter: Transformer[Int, String] = _.toString

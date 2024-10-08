@@ -4,12 +4,32 @@ import io.scalaland.chimney.dsl.*
 
 import scala.annotation.unused
 import scala.collection.compat.*
+import scala.collection.immutable.SortedSet
 import scala.collection.mutable
 
 class TotalTransformerIntegrationsSpec extends ChimneySpec {
 
   import TotalTransformerIntegrationsSpec.*
   import TotalTransformerStdLibTypesSpec.{Bar, Foo}
+
+  test("transform using TotalOuterTransformer") {
+    import OuterTransformers.totalNonEmptyToSorted
+
+    implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
+
+    NonEmptyWrapper(Foo("b"), Foo("a")).transformInto[SortedWrapper[Bar]] ==> SortedWrapper(Bar("a"), Bar("b"))
+  }
+
+  test("transform using TotalOuterTransformer with an override") {
+    import OuterTransformers.totalNonEmptyToSorted
+
+    implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
+
+    NonEmptyWrapper(Foo("b"), Foo("a"))
+      .into[SortedWrapper[Bar]]
+      .withFieldConst(_.everyItem.value, "c")
+      .transform ==> SortedWrapper(Bar("c"))
+  }
 
   test("transform from OptionalValue into OptionalValue") {
     Possible(Foo("a")).transformInto[Possible[Bar]] ==> Possible(Bar("a"))
@@ -181,6 +201,93 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
 object TotalTransformerIntegrationsSpec {
 
   import integrations.*
+
+  class NonEmptyWrapper[A] private (val head: A, val tail: Set[A]) {
+    def add(a: A): NonEmptyWrapper[A] = if (tail(a)) this else new NonEmptyWrapper(head, tail + a)
+
+    override def equals(obj: Any): Boolean = obj match {
+      case wrapper: NonEmptyWrapper[?] => (tail + head) == (wrapper.tail + wrapper.head)
+      case _                           => false
+    }
+  }
+  object NonEmptyWrapper {
+    def apply[A](a: A, as: A*): NonEmptyWrapper[A] = new NonEmptyWrapper[A](a, as.toSet)
+  }
+  class SortedWrapper[A] private (val set: SortedSet[A]) {
+    def add(a: A): SortedWrapper[A] = new SortedWrapper(set + a)
+
+    override def equals(obj: Any): Boolean = obj match {
+      case wrapper: SortedWrapper[?] => set == wrapper.set
+      case _                         => false
+    }
+  }
+  object SortedWrapper {
+    def apply[A: Ordering](as: A*): SortedWrapper[A] = new SortedWrapper(SortedSet[A](as*))
+  }
+
+  object OuterTransformers {
+
+    implicit def totalNonEmptyToSorted[A, B: Ordering]
+        : integrations.TotalOuterTransformer[NonEmptyWrapper[A], SortedWrapper[B], A, B] =
+      new integrations.TotalOuterTransformer[NonEmptyWrapper[A], SortedWrapper[B], A, B] {
+
+        def transformWithTotalInner(
+            src: NonEmptyWrapper[A],
+            inner: A => B
+        ): SortedWrapper[B] = SortedWrapper((src.tail + src.head).map(inner).toSeq*)
+
+        def transformWithPartialInner(
+            src: NonEmptyWrapper[A],
+            failFast: Boolean,
+            inner: A => partial.Result[B]
+        ): partial.Result[SortedWrapper[B]] = partial.Result
+          .traverse[Seq[B], A, B]((src.tail + src.head).iterator, inner, failFast)
+          .map(bs => SortedWrapper[B](bs*))
+      }
+    implicit def partialNonEmptyToSorted[A, B: Ordering]
+        : integrations.PartialOuterTransformer[NonEmptyWrapper[A], SortedWrapper[B], A, B] =
+      new integrations.PartialOuterTransformer[NonEmptyWrapper[A], SortedWrapper[B], A, B] {
+
+        def transformWithTotalInner(
+            src: NonEmptyWrapper[A],
+            failFast: Boolean,
+            inner: A => B
+        ): partial.Result[SortedWrapper[B]] =
+          partial.Result.fromValue(SortedWrapper((src.tail + src.head).map(inner).toSeq*))
+
+        def transformWithPartialInner(
+            src: NonEmptyWrapper[A],
+            failFast: Boolean,
+            inner: A => partial.Result[B]
+        ): partial.Result[SortedWrapper[B]] =
+          partial.Result
+            .traverse[Seq[B], A, B]((src.tail + src.head).iterator, inner, failFast)
+            .map(bs => SortedWrapper[B](bs*))
+      }
+    implicit def partialSortedToNonEmpty[A, B]
+        : integrations.PartialOuterTransformer[SortedWrapper[A], NonEmptyWrapper[B], A, B] =
+      new integrations.PartialOuterTransformer[SortedWrapper[A], NonEmptyWrapper[B], A, B] {
+
+        def transformWithTotalInner(
+            src: SortedWrapper[A],
+            failFast: Boolean,
+            inner: A => B
+        ): partial.Result[NonEmptyWrapper[B]] = src.set.toList.map(inner) match {
+          case head :: tail => partial.Result.fromValue(NonEmptyWrapper(head, tail.toSeq*))
+          case _            => partial.Result.fromEmpty
+        }
+
+        def transformWithPartialInner(
+            src: SortedWrapper[A],
+            failFast: Boolean,
+            inner: A => partial.Result[B]
+        ): partial.Result[NonEmptyWrapper[B]] =
+          partial.Result.traverse[List[B], A, B](src.set.iterator, inner, failFast).flatMap {
+            case head :: tail => partial.Result.fromValue(NonEmptyWrapper(head, tail.toSeq*))
+            case _            => partial.Result.fromEmpty
+          }
+      }
+  }
 
   sealed trait Possible[+A] extends Product with Serializable
   object Possible {
