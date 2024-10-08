@@ -1,5 +1,6 @@
 package io.scalaland.chimney.cats
 
+import cats.{Order, Traverse}
 import cats.data.{Chain, NonEmptyChain, NonEmptyList, NonEmptyMap, NonEmptySeq, NonEmptySet, NonEmptyVector}
 import io.scalaland.chimney.integrations.*
 import io.scalaland.chimney.partial
@@ -9,6 +10,54 @@ import scala.collection.mutable
 
 /** @since 1.0.0 */
 trait CatsDataImplicits extends CatsDataImplicitsCompat {
+
+  /** @since 1.5.0 */
+  implicit def catsTotalOuterTransformerFromTraverse[F[_]: Traverse, A, B]: TotalOuterTransformer[F[A], F[B], A, B] =
+    new TotalOuterTransformer[F[A], F[B], A, B] {
+
+      def transformWithTotalInner(src: F[A], inner: A => B): F[B] = Traverse[F].map(src)(inner)
+
+      def transformWithPartialInner(
+          src: F[A],
+          failFast: Boolean,
+          inner: A => partial.Result[B]
+      ): partial.Result[F[B]] = Traverse[F].traverseWithIndexM(src) { (a, idx) =>
+        inner(a).prependErrorPath(partial.PathElement.Index(idx))
+      }
+    }
+
+  /** @since 1.5.0 */
+  implicit def catsTotalOuterTransformerForNonEmptyMap[A, B, C: Order, D]
+      : TotalOuterTransformer[NonEmptyMap[A, B], NonEmptyMap[C, D], (A, B), (C, D)] =
+    new TotalOuterTransformer[NonEmptyMap[A, B], NonEmptyMap[C, D], (A, B), (C, D)] {
+
+      def transformWithTotalInner(src: NonEmptyMap[A, B], inner: ((A, B)) => (C, D)): NonEmptyMap[C, D] =
+        src.mapBoth((k, v) => inner(k -> v))
+
+      def transformWithPartialInner(
+          src: NonEmptyMap[A, B],
+          failFast: Boolean,
+          inner: ((A, B)) => partial.Result[(C, D)]
+      ): partial.Result[NonEmptyMap[C, D]] = partial.Result
+        .traverse[Seq[(C, D)], (A, B), (C, D)](src.toSortedMap.iterator, inner, failFast)
+        .map(seq => NonEmptyMap.of(seq.head, seq.tail*))
+    }
+
+  /** @since 1.5.0 */
+  implicit def catsTotalOuterTransformerForNonEmptySet[A, B: Order]
+      : TotalOuterTransformer[NonEmptySet[A], NonEmptySet[B], A, B] =
+    new TotalOuterTransformer[NonEmptySet[A], NonEmptySet[B], A, B] {
+
+      def transformWithTotalInner(src: NonEmptySet[A], inner: A => B): NonEmptySet[B] = src.map(inner)
+
+      def transformWithPartialInner(
+          src: NonEmptySet[A],
+          failFast: Boolean,
+          inner: A => partial.Result[B]
+      ): partial.Result[NonEmptySet[B]] = partial.Result
+        .traverse[Seq[B], A, B](src.toSortedSet.iterator, inner, failFast)
+        .map(seq => NonEmptySet.of(seq.head, seq.tail*))
+    }
 
   /** @since 1.0.0 */
   implicit def catsChainIsTotallyBuildIterable[A]: TotallyBuildIterable[Chain[A], A] =

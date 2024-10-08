@@ -524,14 +524,20 @@ Cats integration module contains the following utilities:
         - `InvariantSemigroupal[Iso[First, *]]` (implementing also `Invariant`, `Semigroupal`)
   - instances for `cats.data` types allowing Chimney to recognize them as collections:
     - `cats.data.Chain` (transformation _from_ and _to_ always available)
-    - `cats.data.NonEmptyChain` (transformations: _from_ always available, _to_ only with `PartialTransformer`)
-    - `cats.data.NonEmptyLazyList` (transformation: _from_ always available, _to_ only with `PartialTransformer`,
-      the type is only defined on 2.13+)
-    - `cats.data.NonEmptyList` (transformation: _from_ always available, _to_ only with `PartialTransformer`)
-    - `cats.data.NonEmptyMap` (transformation: _from_ always available, _to_ only with `PartialTransformer`)
-    - `cats.data.NonEmptySeq` (transformation: _from_ always available, _to_ only with `PartialTransformer`)
-    - `cats.data.NonEmptySet` (transformation: _from_ always available, _to_ only with `PartialTransformer`)
-    - `cats.data.NonEmptyVector` (transformation: _from_ always available, _to_ only with `PartialTransformer`)
+    - `cats.data.NonEmptyChain` (transformations: _from_ always available, _to_ only with `PartialTransformer`
+      or to another `NonEmptyChain`)
+    - `cats.data.NonEmptyLazyList` (transformation: _from_ always available, _to_ only with `PartialTransformer`
+      or to another `NonEmptyLazyList`, the type is only defined on 2.13+)
+    - `cats.data.NonEmptyList` (transformation: _from_ always available, _to_ only with `PartialTransformer`
+      or to another `NonEmptyList`)
+    - `cats.data.NonEmptyMap` (transformation: _from_ always available, _to_ only with `PartialTransformer`
+      or to another `NonEmptyMap`)
+    - `cats.data.NonEmptySeq` (transformation: _from_ always available, _to_ only with `PartialTransformer`
+      or to another `NonEmptySeq`)
+    - `cats.data.NonEmptySet` (transformation: _from_ always available, _to_ only with `PartialTransformer`
+      or to another `NonEmptySet`)
+    - `cats.data.NonEmptyVector` (transformation: _from_ always available, _to_ only with `PartialTransformer`
+      or to another `NonEmptyVector`)
 
 !!! important
 
