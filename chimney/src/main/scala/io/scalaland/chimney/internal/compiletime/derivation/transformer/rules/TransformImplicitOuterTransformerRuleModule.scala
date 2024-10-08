@@ -20,7 +20,7 @@ private[compiletime] trait TransformImplicitOuterTransformerRuleModule { this: D
     ): DerivationResult[Rule.ExpansionResult[To]] = ctx match {
       case TransformationContext.ForTotal(src) =>
         summonTotalOuterTransformer[From, To].fold(DerivationResult.attemptNextRule[To]) { totalOuterTransformer =>
-          useTotalOuterTransformer(totalOuterTransformer, src)
+          useTotalOuterTransformer(totalOuterTransformer, src, None)
         }
       case TransformationContext.ForPartial(src, failFast) =>
         import ctx.config.flags.implicitConflictResolution
@@ -31,7 +31,7 @@ private[compiletime] trait TransformImplicitOuterTransformerRuleModule { this: D
             DerivationResult.ambiguousImplicitOuterPriority(total.instance, partial.instance)
           case (Some(totalOuterTransformer), partialOuterTransformerOpt)
               if partialOuterTransformerOpt.isEmpty || implicitConflictResolution.contains(PreferTotalTransformer) =>
-            useTotalOuterTransformer(totalOuterTransformer, src)
+            useTotalOuterTransformer(totalOuterTransformer, src, Some(failFast))
           case (totalOuterTransformerOpt, Some(partialOuterTransformer))
               if totalOuterTransformerOpt.isEmpty || implicitConflictResolution.contains(PreferPartialTransformer) =>
             usePartialOuterTransformer(partialOuterTransformer, src, failFast)
@@ -41,7 +41,8 @@ private[compiletime] trait TransformImplicitOuterTransformerRuleModule { this: D
 
     private def useTotalOuterTransformer[From, To](
         totalOuterTransformer: TotalOuterTransformer[From, To],
-        src: Expr[From]
+        src: Expr[From],
+        failFast: Option[Expr[Boolean]]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
       import totalOuterTransformer.{InnerFrom, InnerTo}
       ExprPromise
@@ -55,9 +56,14 @@ private[compiletime] trait TransformImplicitOuterTransformerRuleModule { this: D
               totalOuterTransformer.transformWithTotalInner(src, onTotal.fulfilAsLambda[InnerTo])
             )
           } { (onPartial: ExprPromise[InnerFrom, Expr[Result[InnerTo]]]) =>
-            DerivationResult.expandedPartial(
-              totalOuterTransformer.transformWithPartialInner(src, onPartial.fulfilAsLambda[partial.Result[InnerTo]])
-            )
+            failFast.fold(
+              DerivationResult.assertionError[Rule.ExpansionResult[To]]("Derived Partial Expr for Total Context")
+            ) { failFast =>
+              DerivationResult.expandedPartial(
+                totalOuterTransformer
+                  .transformWithPartialInner(src, failFast, onPartial.fulfilAsLambda[partial.Result[InnerTo]])
+              )
+            }
           }
         }
     }
@@ -71,11 +77,7 @@ private[compiletime] trait TransformImplicitOuterTransformerRuleModule { this: D
       ExprPromise
         .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
         .traverse { (innerFromExpr: Expr[InnerFrom]) =>
-          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](
-            innerFromExpr,
-            Path(_.everyItem),
-            Path(_.everyItem)
-          )
+          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](innerFromExpr, Path(_.everyItem), Path(_.everyItem))
         }
         .flatMap { promise =>
           promise.foldTransformationExpr { (onTotal: ExprPromise[InnerFrom, Expr[InnerTo]]) =>

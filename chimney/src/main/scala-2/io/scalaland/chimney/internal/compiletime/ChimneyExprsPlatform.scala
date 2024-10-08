@@ -240,9 +240,10 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
       def transformWithPartialInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
           totalOuterTransformer: Expr[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]],
           src: Expr[From],
+          failFast: Expr[Boolean],
           inner: Expr[InnerFrom => partial.Result[InnerTo]]
       ): Expr[partial.Result[To]] =
-        c.Expr[partial.Result[To]](q"$totalOuterTransformer.transformWithPartialInner($src, $inner)")
+        c.Expr[partial.Result[To]](q"$totalOuterTransformer.transformWithPartialInner($src, $failFast, $inner)")
     }
 
     object DefaultValue extends DefaultValueModule {

@@ -22,8 +22,9 @@ trait TotalOuterTransformers { this: Derivation =>
 
     def transformWithPartialInner(
         src: Expr[From],
+        failFast: Expr[Boolean],
         inner: Expr[InnerFrom => partial.Result[InnerTo]]
-    ): Expr[partial.Result[To]] = instance.transformWithPartialInner(src, inner)
+    ): Expr[partial.Result[To]] = instance.transformWithPartialInner(src, failFast, inner)
   }
   protected object TotalOuterTransformer {
 

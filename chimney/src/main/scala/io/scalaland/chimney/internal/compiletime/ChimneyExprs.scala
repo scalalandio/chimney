@@ -167,6 +167,7 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
       def transformWithPartialInner[From: Type, To: Type, InnerFrom: Type, InnerTo: Type](
           totalOuterTransformer: Expr[integrations.TotalOuterTransformer[From, To, InnerFrom, InnerTo]],
           src: Expr[From],
+          failFast: Expr[Boolean],
           inner: Expr[InnerFrom => partial.Result[InnerTo]]
       ): Expr[partial.Result[To]]
     }
@@ -334,9 +335,10 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
 
     def transformWithPartialInner(
         src: Expr[From],
+        failFast: Expr[Boolean],
         inner: Expr[InnerFrom => partial.Result[InnerTo]]
     ): Expr[partial.Result[To]] =
-      ChimneyExpr.TotalOuterTransformer.transformWithPartialInner(totalOuterTransformer, src, inner)
+      ChimneyExpr.TotalOuterTransformer.transformWithPartialInner(totalOuterTransformer, src, failFast, inner)
   }
 
   implicit final protected class DefaultValueOps[Value: Type](

@@ -11,6 +11,7 @@ trait TotalOuterTransformer[From, To, InnerFrom, InnerTo] {
 
   def transformWithPartialInner(
       src: From,
+      failFast: Boolean,
       inner: InnerFrom => partial.Result[InnerTo]
   ): partial.Result[To]
 }
