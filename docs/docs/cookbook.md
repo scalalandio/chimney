@@ -1624,7 +1624,7 @@ such generic `implicit` would:
    (why is explained in [one of sections above](#automatic-semiautomatic-and-inlined-derivation))
  * NOT cooperate with DSL for overriding values by paths e.g.
    `FooCollection[Foo].into[BarCollection[Bar]].withFieldConst(_.everyItem.value, someValue).transform`
- * require defining a separare `implicit` between each 2 collections types
+ * require defining a separate `implicit` between each 2 collections types
 
 Similarly, newtypes/refined types would require dedicated pair of implicits for wrapping/unwrapping if we went with
 a naive approach, custom optional types would not behave like `Option`s, etc.
@@ -2259,6 +2259,164 @@ An example of such collections are `java.util` collections for which support is 
 and `TotallyBuildMap` in [Java collections' integration](#java-collections-integration), or `cats.data` types
 provided in [Cats integration](#cats-integration).
 
+### Custom outer type conversion
+
+Providing `implicit` `Transformer` or `PartialTransformer` is usually needed when conversion between outer types
+can be generated, except for some inner values. What if the opposite is true?
+
+!!! example
+
+    ```scala
+    case class NonEmptyList[A] private (head: A, tail: List[A])
+    object NonEmptyList { def make[A](a: A, as: A*): NonEmptyList[A] = new NonEmptyList(a, as.toList) }
+    case class NonEmptyVector[A] private (head: A, tail: Vector[A])
+    object NonEmptyVector { def make[A](a: A, as: A*): NonEmptyVector[A] = new NonEmptyVector(a, as.toVector) }
+    ```
+
+In the above example, we might want to convert `NonEmptyList` into `NonEmptyVector`. If we use integrations for
+collections, then we can define `PartiallyBuildIterable` for both of them... but the conversion can only be partial,
+with a `PartialTransformer[NonEmptyList[From], NonEmptyVector[To]]`. Even when we know that all such conversions
+succeeds (we can always convert `From` into `To`), and that `NonEmptyList` when converted can only create a non-empty
+vector -  `PartiallyBuildIterable` cannot know this. But we do.
+
+Such outer conversion can be defined using `TotalOuterTransformer`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    
+    import io.scalaland.chimney.integrations._
+    import io.scalaland.chimney.partial
+    
+    case class NonEmptyList[A] private (head: A, tail: List[A])
+    object NonEmptyList { def make[A](a: A, as: A*): NonEmptyList[A] = new NonEmptyList(a, as.toList) }
+    case class NonEmptyVector[A] private (head: A, tail: Vector[A])
+    object NonEmptyVector { def make[A](a: A, as: A*): NonEmptyVector[A] = new NonEmptyVector(a, as.toVector) }
+    
+    // Always creates NonEmptyVector as long as ALL of its values can be created
+    implicit def nonEmptyListToNonEmptyVector[A, B]: TotalOuterTransformer[NonEmptyList[A], NonEmptyVector[B], A, B] =
+      new TotalOuterTransformer[NonEmptyList[A], NonEmptyVector[B], A, B] {
+      
+        // used when A => B will be resolved by Chimney to be a total transformation
+        def transformWithTotalInner(
+            src: NonEmptyList[A],
+            inner: A => B
+        ): NonEmptyVector[B] = NonEmptyVector.make(inner(src.head), src.tail.map(inner).toSeq: _*)
+      
+        // used when A => B will be resolved by Chimney to be a partial transformation
+        def transformWithPartialInner(
+            src: NonEmptyList[A],
+            failFast: Boolean,
+            inner: A => partial.Result[B]
+        ): partial.Result[NonEmptyVector[B]] = partial.Result.map2(
+          inner(src.head),
+          partial.Result.traverse[Seq[B], A, B](src.tail.iterator, inner, failFast),
+          (head: B, tail: Seq[B]) => NonEmptyVector.make[B](head, tail: _*),
+          failFast
+        )
+      }
+      
+    // ...and now we can convert:
+    import io.scalaland.chimney.dsl._
+    
+    pprint.pprintln(
+      NonEmptyList.make("a", "b").transformInto[NonEmptyVector[String]]
+    )
+    // expected output:
+    // NonEmptyVector(head = "a", tail = Vector("b"))
+    pprint.pprintln(
+      NonEmptyList.make("a", "b").into[NonEmptyVector[String]]
+        .withFieldConst(_.everyItem, "c") // we can provide overrides using .everyItem in DSL
+        .transform
+    )
+    // expected output:
+    // NonEmptyVector(head = "c", tail = Vector("c"))
+    ```
+
+The other kind of Outer Transformer is `PartialOuterTransformer`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    
+    import io.scalaland.chimney.integrations._
+    import io.scalaland.chimney.partial
+    
+    case class NonEmptyList[A] private (head: A, tail: List[A])
+    object NonEmptyList { def make[A](a: A, as: A*): NonEmptyList[A] = new NonEmptyList(a, as.toList) }
+    case class TwoItemVector[A](head: A, tail: A)
+    
+    // Only creates TwoItemVector if NonEmptyList has exactly 2 items, and both are valid
+    implicit def nonEmptyListToTwoItemVector[A, B]: PartialOuterTransformer[NonEmptyList[A], TwoItemVector[B], A, B] =
+      new PartialOuterTransformer[NonEmptyList[A], TwoItemVector[B], A, B] {
+      
+        // used when A => B will be resolved by Chimney to be a total transformation
+        def transformWithTotalInner(
+            src: NonEmptyList[A],
+            failFast: Boolean,
+            inner: A => B
+        ): partial.Result[TwoItemVector[B]] = src match {
+          case NonEmptyList(a, b :: Nil) => partial.Result.fromValue(
+            TwoItemVector[B](inner(a), inner(b))
+          )
+          case _ => partial.Result.fromErrorString("Exactly 2 items expected")
+        }
+      
+        // used when A => B will be resolved by Chimney to be a partial transformation
+        def transformWithPartialInner(
+            src: NonEmptyList[A],
+            failFast: Boolean,
+            inner: A => partial.Result[B]
+        ): partial.Result[TwoItemVector[B]] = src match {
+          case NonEmptyList(a, b :: Nil) => partial.Result.map2(
+            inner(a),
+            inner(b),
+            TwoItemVector[B](_, _),
+            failFast
+          )
+          case _ => partial.Result.fromErrorString("Exactly 2 items expected")
+        }
+      }
+      
+    // ...and now we can convert:
+    import io.scalaland.chimney.dsl._
+    
+    pprint.pprintln(
+      NonEmptyList.make("a", "b").transformIntoPartial[TwoItemVector[String]]
+    )
+    // expected output:
+    // Value(value = TwoItemVector(head = "a", tail = "b"))
+    pprint.pprintln(
+      NonEmptyList.make("a", "b").intoPartial[TwoItemVector[String]]
+        .withFieldConst(_.everyItem, "c") // we can provide overrides using .everyItem in DSL
+        .transform
+    )
+    // expected output:
+    // Value(value = TwoItemVector(head = "c", tail = "c"))
+    ```
+
+!!! tip
+
+    Since `TotalOuterTransformer` and `PartialOuterTransformer` seem to be pretty generic, one can ask why not use them
+    to handle all conversions beteen all collections?
+    
+    The problem is: _how would you define the implicits?_ If you wanted to define them between every pair, that's a
+    sqaure of all collections that we would have to handle. If we wanted to define some API so that each of them would
+    require only 1 implicit - that's precisly what `TotallyBuildIterable` and `PartiallyBuildIterable` provide.
+    
+    As a result, defining an Outer Transformer for collection is necessary only when it's a collection with a smart
+    constructor and we have to handle a case when we know that this smart constructor would not fail.
+    
+!!! tip
+
+    Outer Transformers are useful not only for special cases in collections, but they can also be used when one would
+    like to handle the conversion inside some wrapper types (that cannot be handled by Chimney OOTB) like e.g. some
+    new types implementations. 
+
 ### Custom error types
 
 Chimney's derivation supports only 1 error type: `partial.Result[A]`. It allows to effectively combine errors,
@@ -2311,7 +2469,7 @@ Out of the box, Chimney provides `partial.Result[A]` conversions:
     * `(ttry: Try[A]).asResult`
     * `(ttry: Try[A]).toPartialResult` (old syntax)
 
-To enable `.asResult` syntax, all you need to do is providind an `implicit` instance of
+To enable `.asResult` syntax, all you need to do is providing an `implicit` instance of
 `io.scalaland.chimney.partial.AsResult` type class:
 
 !!! example

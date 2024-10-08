@@ -6,9 +6,10 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivati
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.partial.Result
 
-private[compiletime] trait TransformImplicitOuterTransformerRuleModule { this: Derivation =>
+private[compiletime] trait TransformImplicitOuterTransformerRuleModule {
+  this: Derivation & TransformProductToProductRuleModule =>
 
-  import ChimneyType.Implicits.*
+  import ChimneyType.Implicits.*, TransformProductToProductRule.useOverrideIfPresentOr
 
   protected object TransformImplicitOuterTransformerRule extends Rule("ImplicitOuterTransformer") {
 
@@ -48,7 +49,9 @@ private[compiletime] trait TransformImplicitOuterTransformerRuleModule { this: D
       ExprPromise
         .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
         .traverse { (innerFromExpr: Expr[InnerFrom]) =>
-          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](innerFromExpr, Path(_.everyItem), Path(_.everyItem))
+          useOverrideIfPresentOr("everyItem", ctx.config.filterCurrentOverridesForEveryItem) {
+            deriveRecursiveTransformationExpr[InnerFrom, InnerTo](innerFromExpr, Path(_.everyItem), Path(_.everyItem))
+          }
         }
         .flatMap { promise =>
           promise.foldTransformationExpr { (onTotal: ExprPromise[InnerFrom, Expr[InnerTo]]) =>
@@ -77,7 +80,9 @@ private[compiletime] trait TransformImplicitOuterTransformerRuleModule { this: D
       ExprPromise
         .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromType, ExprPromise.UsageHint.None)
         .traverse { (innerFromExpr: Expr[InnerFrom]) =>
-          deriveRecursiveTransformationExpr[InnerFrom, InnerTo](innerFromExpr, Path(_.everyItem), Path(_.everyItem))
+          useOverrideIfPresentOr("everyItem", ctx.config.filterCurrentOverridesForEveryItem) {
+            deriveRecursiveTransformationExpr[InnerFrom, InnerTo](innerFromExpr, Path(_.everyItem), Path(_.everyItem))
+          }
         }
         .flatMap { promise =>
           promise.foldTransformationExpr { (onTotal: ExprPromise[InnerFrom, Expr[InnerTo]]) =>
