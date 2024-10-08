@@ -2,9 +2,32 @@ package io.scalaland.chimney.cats
 
 import cats.data.{Chain, NonEmptyChain, NonEmptyList, NonEmptyMap, NonEmptySeq, NonEmptySet, NonEmptyVector}
 import io.scalaland.chimney.ChimneySpec
+import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.*
 
 class CatsDataSpec extends ChimneySpec {
+
+  test("DSL should always allow transformation when outer type has Traverse") {
+    implicit val intToStr: Transformer[Int, String] = _.toString
+
+    NonEmptyChain.one(1).transformInto[NonEmptyChain[String]] ==> NonEmptyChain.one("1")
+    NonEmptyList.one(1).transformInto[NonEmptyList[String]] ==> NonEmptyList.one("1")
+    NonEmptyMap.one(1, 1).transformInto[NonEmptyMap[String, String]] ==> NonEmptyMap.one("1", "1")
+    NonEmptySeq.one(1).transformInto[NonEmptySeq[String]] ==> NonEmptySeq.one("1")
+    NonEmptyVector.one(1).transformInto[NonEmptyVector[String]] ==> NonEmptyVector.one("1")
+  }
+
+  test("DSL should always allow transformation between NonEmptyMaps") {
+    implicit val intToStr: Transformer[Int, String] = _.toString
+
+    NonEmptyMap.one(1, 1).transformInto[NonEmptyMap[String, String]] ==> NonEmptyMap.one("1", "1")
+  }
+
+  test("DSL should always allow transformation between NonEmptySets") {
+    implicit val intToStr: Transformer[Int, String] = _.toString
+
+    NonEmptySet.one(1).transformInto[NonEmptySet[String]] ==> NonEmptySet.one("1")
+  }
 
   test("DSL should handle transformation to and from cats.data.Chain") {
     List("test").transformInto[Chain[String]] ==> Chain("test")
