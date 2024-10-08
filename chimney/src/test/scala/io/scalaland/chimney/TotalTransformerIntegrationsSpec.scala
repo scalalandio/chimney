@@ -17,6 +17,7 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
 
     implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
 
+    NonEmptyWrapper("b", "a").transformInto[SortedWrapper[String]] ==> SortedWrapper("a", "b")
     NonEmptyWrapper(Foo("b"), Foo("a")).transformInto[SortedWrapper[Bar]] ==> SortedWrapper(Bar("a"), Bar("b"))
   }
 
@@ -25,6 +26,10 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
 
     implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
 
+    NonEmptyWrapper("b", "a")
+      .into[SortedWrapper[String]]
+      .withFieldConst(_.everyItem, "c")
+      .transform ==> SortedWrapper("c")
     NonEmptyWrapper(Foo("b"), Foo("a"))
       .into[SortedWrapper[Bar]]
       .withFieldConst(_.everyItem.value, "c")

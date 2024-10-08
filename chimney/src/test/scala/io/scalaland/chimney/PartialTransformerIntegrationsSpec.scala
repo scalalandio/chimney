@@ -13,51 +13,77 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
   test("transform using TotalOuterTransformer") {
     import OuterTransformers.totalNonEmptyToSorted
 
+    val result = NonEmptyWrapper("b", "a").transformIntoPartial[SortedWrapper[String]]
+    result.asOption ==> Some(SortedWrapper("a", "b"))
+    result.asEither ==> Right(SortedWrapper("a", "b"))
+    result.asErrorPathMessageStrings ==> Iterable.empty
+
     implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
 
-    val result = NonEmptyWrapper(Foo("b"), Foo("a")).transformIntoPartial[SortedWrapper[Bar]]
-    result.asOption ==> Some(SortedWrapper(Bar("a"), Bar("b")))
-    result.asEither ==> Right(SortedWrapper(Bar("a"), Bar("b")))
-    result.asErrorPathMessageStrings ==> Iterable.empty
+    val result2 = NonEmptyWrapper(Foo("b"), Foo("a")).transformIntoPartial[SortedWrapper[Bar]]
+    result2.asOption ==> Some(SortedWrapper(Bar("a"), Bar("b")))
+    result2.asEither ==> Right(SortedWrapper(Bar("a"), Bar("b")))
+    result2.asErrorPathMessageStrings ==> Iterable.empty
   }
 
   test("transform using TotalOuterTransformer with an override") {
     import OuterTransformers.totalNonEmptyToSorted
 
+    val result = NonEmptyWrapper("b", "a")
+      .intoPartial[SortedWrapper[String]]
+      .withFieldConst(_.everyItem, "c")
+      .transform
+    result.asOption ==> Some(SortedWrapper("c"))
+    result.asEither ==> Right(SortedWrapper("c"))
+    result.asErrorPathMessageStrings ==> Iterable.empty
+
     implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
 
-    val result = NonEmptyWrapper(Foo("b"), Foo("a"))
+    val result2 = NonEmptyWrapper(Foo("b"), Foo("a"))
       .intoPartial[SortedWrapper[Bar]]
       .withFieldConst(_.everyItem.value, "c")
       .transform
-    result.asOption ==> Some(SortedWrapper(Bar("c")))
-    result.asEither ==> Right(SortedWrapper(Bar("c")))
-    result.asErrorPathMessageStrings ==> Iterable.empty
+    result2.asOption ==> Some(SortedWrapper(Bar("c")))
+    result2.asEither ==> Right(SortedWrapper(Bar("c")))
+    result2.asErrorPathMessageStrings ==> Iterable.empty
   }
 
   test("transform using PartialOuterTransformer") {
     import OuterTransformers.partialNonEmptyToSorted
 
+    val result = NonEmptyWrapper("b", "a").transformIntoPartial[SortedWrapper[String]]
+    result.asOption ==> Some(SortedWrapper("a", "b"))
+    result.asEither ==> Right(SortedWrapper("a", "b"))
+    result.asErrorPathMessageStrings ==> Iterable.empty
+
     implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
 
-    val result = NonEmptyWrapper(Foo("b"), Foo("a")).transformIntoPartial[SortedWrapper[Bar]]
-    result.asOption ==> Some(SortedWrapper(Bar("a"), Bar("b")))
-    result.asEither ==> Right(SortedWrapper(Bar("a"), Bar("b")))
-    result.asErrorPathMessageStrings ==> Iterable.empty
+    val result2 = NonEmptyWrapper(Foo("b"), Foo("a")).transformIntoPartial[SortedWrapper[Bar]]
+    result2.asOption ==> Some(SortedWrapper(Bar("a"), Bar("b")))
+    result2.asEither ==> Right(SortedWrapper(Bar("a"), Bar("b")))
+    result2.asErrorPathMessageStrings ==> Iterable.empty
   }
 
   test("transform using PartialOuterTransformer with an override") {
     import OuterTransformers.partialNonEmptyToSorted
 
+    val result = NonEmptyWrapper("b", "a")
+      .intoPartial[SortedWrapper[String]]
+      .withFieldConst(_.everyItem, "c")
+      .transform
+    result.asOption ==> Some(SortedWrapper("c"))
+    result.asEither ==> Right(SortedWrapper("c"))
+    result.asErrorPathMessageStrings ==> Iterable.empty
+
     implicit val barOrdering: Ordering[Bar] = Ordering[String].on[Bar](_.value)
 
-    val result = NonEmptyWrapper(Foo("b"), Foo("a"))
+    val result2 = NonEmptyWrapper(Foo("b"), Foo("a"))
       .intoPartial[SortedWrapper[Bar]]
       .withFieldConst(_.everyItem.value, "c")
       .transform
-    result.asOption ==> Some(SortedWrapper(Bar("c")))
-    result.asEither ==> Right(SortedWrapper(Bar("c")))
-    result.asErrorPathMessageStrings ==> Iterable.empty
+    result2.asOption ==> Some(SortedWrapper(Bar("c")))
+    result2.asEither ==> Right(SortedWrapper(Bar("c")))
+    result2.asErrorPathMessageStrings ==> Iterable.empty
   }
 
   test("transform using PartialOuterTransformer resolving total-partial-conflict") {
