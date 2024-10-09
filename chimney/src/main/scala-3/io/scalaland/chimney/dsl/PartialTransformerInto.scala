@@ -372,6 +372,27 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   )(using IsFunction.Of[Ctor, Either[String, To]]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withConstructorEitherImpl('this, 'f) }
 
+  /** To use `fallback` when the source of type `From` is missing fields.
+    *
+    * Fallbacks can be stacked - then they will be tried in the order in which they were added.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam FromFallback
+    *   type of the fallback value which would be checked for fields when the `From` value would be missing
+    * @param fallback
+    *   fallback value which would be checked for fields when the `From` value would be missing
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *
+    * @since TODO
+    */
+  transparent inline def withFallback[FromFallback](
+      inline fallback: FromFallback
+  ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerIntoMacros.withFallbackImpl('this, 'fallback) }
+
   /** Apply configured partial transformation in-place.
     *
     * It runs macro that tries to derive instance of `PartialTransformer[From, To]` and immediately apply it to captured
