@@ -1385,7 +1385,7 @@ will generate something similar to:
       case object WORK extends PhoneType(0) with PhoneType.Recognized { /* ... */ }
       
       final case class Unrecognized(unrecognizedValue: Int) extends PhoneType(unrecognizedValue)
-        with scalapb.UnrecogneizedEnum
+        with scalapb.UnrecognizedEnum
         
       // ...
     }
