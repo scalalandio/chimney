@@ -51,17 +51,16 @@ trait CatsPartialTransformerImplicits {
 
       override def tailRecM[A, B](a: A)(
           f: A => PartialTransformer[Source, Either[A, B]]
-      ): PartialTransformer[Source, B] =
-        (src, failFast) => {
-          def run(a1: A) = partial.Result.fromCatching(f(a1).transform(src, failFast)).flatMap(identity)
-          @scala.annotation.tailrec
-          def loop(a1: A): partial.Result[B] = run(a1) match {
-            case partial.Result.Value(Left(a2)) => loop(a2)
-            case partial.Result.Value(Right(b)) => partial.Result.Value(b)
-            case errors                         => errors.asInstanceOf[partial.Result[B]]
-          }
-          loop(a)
+      ): PartialTransformer[Source, B] = { (src, failFast) =>
+        def run(a1: A) = partial.Result.fromCatching(f(a1).transform(src, failFast)).flatMap(identity)
+        @scala.annotation.tailrec
+        def loop(a1: A): partial.Result[B] = run(a1) match {
+          case partial.Result.Value(Left(a2)) => loop(a2)
+          case partial.Result.Value(Right(b)) => partial.Result.Value(b)
+          case errors                         => errors.asInstanceOf[partial.Result[B]]
         }
+        loop(a)
+      }
 
       override def raiseError[A](e: partial.Result.Errors): PartialTransformer[Source, A] = (_, _) => e
 
