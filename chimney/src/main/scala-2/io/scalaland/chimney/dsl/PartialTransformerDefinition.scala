@@ -364,6 +364,27 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerDefinitionMacros.withConstructorEitherImpl[From, To, Overrides, Flags]
 
+  /** To use `fallback` when the source of type `From` is missing fields.
+    *
+    * Fallbacks can be stacked - then they will be tried in the order in which they were added.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam FromFallback
+    *   type of the fallback value which would be checked for fields when the `From` value would be missing
+    * @param fallback
+    *   fallback value which would be checked for fields when the `From` value would be missing
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *
+    * @since TODO
+    */
+  def withFallback[FromFallback](
+      fallback: FromFallback
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerDefinitionMacros.withFallbackImpl[From, To, Overrides, Flags, FromFallback]
+
   /** Build Partial Transformer using current configuration.
     *
     * It runs macro that tries to derive instance of `PartialTransformer[From, To]`. When transformation can't be

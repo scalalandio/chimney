@@ -205,6 +205,25 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
   ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withConstructorImpl[From, To, Overrides, Flags]
 
+  /** To use `fallback` when the source of type `From` is missing fields.
+    *
+    * Fallbacks can be stacked - then they will be tried in the order in which they were added.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam FromFallback
+    *   type of the fallback value which would be checked for fields when the `From` value would be missing
+    * @param fallback
+    *   fallback value which would be checked for fields when the `From` value would be missing
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerInto]]
+    *
+    * @since TODO
+    */
+  def withFallback[FromFallback](fallback: FromFallback): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerIntoMacros.withFallbackImpl[From, To, Overrides, Flags, FromFallback]
+
   /** Apply configured transformation in-place.
     *
     * It runs macro that tries to derive instance of `Transformer[From, To]` and immediately apply it to captured

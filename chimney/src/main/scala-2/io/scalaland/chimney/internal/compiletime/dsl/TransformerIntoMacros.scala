@@ -96,4 +96,15 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       .addOverride(f)
       .asInstanceOfExpr[TransformerInto[From, To, Constructor[Args, Path.Root, Overrides], Flags]]
   }.applyFromBody(f)
+
+  def withFallbackImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      FromFallback: WeakTypeTag
+  ](fallback: Tree): Tree =
+    c.prefix.tree
+      .addOverride(fallback)
+      .asInstanceOfExpr[TransformerInto[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
 }

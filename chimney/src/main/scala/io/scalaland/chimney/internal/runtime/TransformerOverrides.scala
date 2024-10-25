@@ -21,4 +21,6 @@ object TransformerOverrides {
   final class RenamedFrom[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
   // Computes a value from matched subtype, targeting another subtype
   final class RenamedTo[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
+  // Fallback value allowing merging several sources
+  final class Fallback[FromFallback, ToPath <: Path, Tail <: Overrides] extends Overrides
 }

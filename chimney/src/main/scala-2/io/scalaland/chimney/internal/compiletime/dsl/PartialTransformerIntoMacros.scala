@@ -163,4 +163,15 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
       .addOverride(q"_root_.io.scalaland.chimney.internal.runtime.FunctionEitherToResult.lift($f)")
       .asInstanceOfExpr[PartialTransformerInto[From, To, ConstructorPartial[Args, Path.Root, Overrides], Flags]]
   }.applyFromBody(f)
+
+  def withFallbackImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      FromFallback: WeakTypeTag
+  ](fallback: Tree): Tree =
+    c.prefix.tree
+      .addOverride(fallback)
+      .asInstanceOfExpr[PartialTransformerInto[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
 }
