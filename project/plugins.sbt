@@ -7,7 +7,7 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.2.2")
 addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.10.0")
 addSbtPlugin("com.indoorvivants" % "sbt-commandmatrix" % "0.0.5")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.17.0")
-addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.5")
+addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.6")
 // publishing
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.12.2")
 addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.3.0")
