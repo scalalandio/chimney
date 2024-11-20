@@ -1,16 +1,25 @@
 package io.scalaland.chimney.internal.compiletime
 
+import io.scalaland.chimney.*
 import io.scalaland.chimney.dsl.TransformerDefinitionCommons
-import io.scalaland.chimney.{integrations, partial, PartialTransformer, Patcher, Transformer}
 
 import scala.collection.compat.Factory
 import scala.quoted
 
-private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: ChimneyDefinitionsPlatform =>
+private[compiletime] object ChimneyExprsPlatform {
+
+  /**Transformer class introduced to avoid multiple anonymous classes creation*/
+  class TransformerClass[From, To](impl: From => To) extends Transformer[From, To] {
+    def transform(src: From): To = impl(src)
+  }
+}
+private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs {
+  this: ChimneyDefinitionsPlatform =>
 
   object ChimneyExpr extends ChimneyExprModule {
 
     import Expr.platformSpecific.resetOwner
+    import io.scalaland.chimney.internal.compiletime.ChimneyExprsPlatform.TransformerClass
 
     object Transformer extends TransformerModule {
 
@@ -21,14 +30,15 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
 
       def instance[From: Type, To: Type](toExpr: Expr[From] => Expr[To]): Expr[Transformer[From, To]] =
         '{
-          new Transformer[From, To] {
-            def transform(src: From): To = ${
+          new TransformerClass[From, To](src =>
+            ${
               PrependDefinitionsTo
                 .prependVal[From](resetOwner('{ src }), ExprPromise.NameGenerationStrategy.FromType)
                 .use(toExpr)
             }
-          }
+          )
         }
+
     }
 
     object PartialTransformer extends PartialTransformerModule {
