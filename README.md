@@ -28,6 +28,7 @@ If you are looking to up-to-date artifacts versions ready to copy-paste into you
 
 If your company is using Chimney, please consider adding it to the list below:
 
+ * [AvantStay](https://avantstay.com)
  * [Iterators](https://www.iteratorshq.com/)
 
 ## Contribution
