@@ -24,6 +24,12 @@ If you are looking to up-to-date artifacts versions ready to copy-paste into you
 [Scaladex](https://index.scala-lang.org/scalalandio/chimney/artifacts/chimney) or
 [Maven Repository](https://mvnrepository.com/search?q=chimney).
 
+## Adopters
+
+If your company is using Chimney, please consider adding it to the list below:
+
+ * [Iterators](https://www.iteratorshq.com/)
+
 ## Contribution
 
 A way to get started is described in [CONTRIBUTING.md](CONTRIBUTING.md) and the general overview of the architecture
