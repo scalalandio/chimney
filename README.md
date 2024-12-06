@@ -32,6 +32,7 @@ If your company is using Chimney, please consider adding it to the list below:
  * [Iterators](https://www.iteratorshq.com/)
  * [Medidata](https://medidata.com)
  * [SwissBorg](https://swissborg.com/)
+ * [Rudder.io](https://github.com/Normation/rudder)
 
 ## Contribution
 
