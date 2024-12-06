@@ -31,6 +31,7 @@ If your company is using Chimney, please consider adding it to the list below:
  * [AvantStay](https://avantstay.com)
  * [Iterators](https://www.iteratorshq.com/)
  * [SwissBorg](https://swissborg.com/)
+ * [Medidata](https://medidata.com)
 
 ## Contribution
 
