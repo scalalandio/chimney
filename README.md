@@ -29,6 +29,7 @@ If you are looking to up-to-date artifacts versions ready to copy-paste into you
 If your company is using Chimney, please consider adding it to the list below:
 
  * [AvantStay](https://avantstay.com)
+ * [CompStak](https://compstak.com)
  * [Iterators](https://www.iteratorshq.com/)
  * [Medidata](https://medidata.com)
  * [Rudder.io](https://github.com/Normation/rudder)
