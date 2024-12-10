@@ -14,44 +14,45 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
       // to align API between Scala versions
       extension (sym: Symbol) {
-        def isAbstract: Boolean = !sym.isNoSymbol && sym.flags.is(Flags.Abstract) || sym.flags.is(Flags.Trait)
+        @deprecated("Moved to Type.platformSpecific", "1.6.0")
+        def isAbstract: Boolean = Type.platformSpecific.isPublic(sym)
 
-        def isPublic: Boolean = !sym.isNoSymbol &&
-          !(sym.flags.is(Flags.Private) || sym.flags.is(Flags.PrivateLocal) || sym.flags.is(Flags.Protected) ||
-            sym.privateWithin.isDefined || sym.protectedWithin.isDefined)
+        @deprecated("Moved to Type.platformSpecific", "1.6.0")
+        def isPublic: Boolean = Type.platformSpecific.isAbstract(sym)
       }
 
       def isParameterless(method: Symbol): Boolean =
         method.paramSymss.filterNot(_.exists(_.isType)).flatten.isEmpty
 
       def isDefaultConstructor(ctor: Symbol): Boolean =
-        ctor.isPublic && ctor.isClassConstructor && isParameterless(ctor)
+        Type.platformSpecific.isPublic(ctor) && ctor.isClassConstructor && isParameterless(ctor)
 
       def isAccessor(accessor: Symbol): Boolean =
-        accessor.isPublic && accessor.isDefDef && isParameterless(accessor)
+        Type.platformSpecific.isPublic(accessor) && accessor.isDefDef && isParameterless(accessor)
 
       // assuming isAccessor was tested earlier
       def isJavaGetter(getter: Symbol): Boolean =
         ProductTypes.BeanAware.isGetterName(getter.name)
 
       def isJavaSetter(setter: Symbol): Boolean =
-        setter.isPublic && setter.isDefDef && setter.paramSymss.flatten.size == 1 && ProductTypes.BeanAware
-          .isSetterName(setter.name)
+        Type.platformSpecific.isPublic(setter) && setter.isDefDef && setter.paramSymss.flatten.size == 1 &&
+          ProductTypes.BeanAware.isSetterName(setter.name)
 
       def isVar(setter: Symbol): Boolean =
-        setter.isPublic && (setter.isValDef || setter.isDefDef) && setter.flags.is(Flags.Mutable)
+        Type.platformSpecific.isPublic(setter) && (setter.isValDef || setter.isDefDef) && setter.flags.is(Flags.Mutable)
 
       def isJavaSetterOrVar(setter: Symbol): Boolean =
         isJavaSetter(setter) || isVar(setter)
     }
 
-    import platformSpecific.*
+    import platformSpecific.{isAbstract as _, isPublic as _, *}
     import Type.platformSpecific.*
     import Type.Implicits.*
 
     def isPOJO[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
-      !A.isPrimitive && !(A <:< Type[String]) && sym.isClassDef && !sym.isAbstract && sym.primaryConstructor.isPublic
+      !A.isPrimitive && !(A <:< Type[String]) && sym.isClassDef && !sym.isAbstract &&
+      publicPrimaryOrOnlyPublicConstructor(sym).isDefined
     }
     def isCaseClass[A](implicit A: Type[A]): Boolean = {
       val sym = TypeRepr.of(using A).typeSymbol
@@ -145,15 +146,15 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
         val A = TypeRepr.of[A]
         val sym = A.typeSymbol
 
-        val primaryConstructor =
-          Option(sym.primaryConstructor).filter(_.isPublic).getOrElse {
+        val unambiguousConstructor =
+          publicPrimaryOrOnlyPublicConstructor(sym).getOrElse {
             // $COVERAGE-OFF$should never happen unless we messed up
             assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
             // $COVERAGE-ON$
           }
-        val paramss = paramListsOf(A, primaryConstructor)
+        val paramss = paramListsOf(A, unambiguousConstructor)
         val paramNames = paramss.flatMap(_.map(param => param -> param.name)).toMap
-        val paramTypes = paramsWithTypes(A, primaryConstructor, isConstructor = true)
+        val paramTypes = paramsWithTypes(A, unambiguousConstructor, isConstructor = true)
         val defaultValues = paramss.flatten.zipWithIndex.collect {
           case (param, idx) if param.flags.is(Flags.HasDefault) =>
             val mod = sym.companionModule
@@ -222,7 +223,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
           def newExpr = {
             // new A
-            val select = New(TypeTree.of[A]).select(primaryConstructor)
+            val select = New(TypeTree.of[A]).select(unambiguousConstructor)
             // new A[B1, B2, ...] vs new A
             val tree = if A.typeArgs.nonEmpty then select.appliedToTypes(A.typeArgs) else select
             // new A... or new A() or new A(b1, b2), ...

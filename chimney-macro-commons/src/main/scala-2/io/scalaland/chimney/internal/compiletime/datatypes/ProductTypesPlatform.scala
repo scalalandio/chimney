@@ -46,7 +46,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
     def isPOJO[A](implicit A: Type[A]): Boolean = {
       val sym = A.tpe.typeSymbol
       !A.isPrimitive && !(A <:< Type[String]) && !sym.isJavaEnum && sym.isClass && !sym.isAbstract &&
-      sym.asClass.primaryConstructor != NoSymbol && sym.asClass.primaryConstructor.isPublic
+      publicPrimaryOrOnlyPublicConstructor(A.tpe).isDefined
     }
     def isCaseClass[A](implicit A: Type[A]): Boolean =
       isPOJO[A] && A.tpe.typeSymbol.asClass.isCaseClass
@@ -116,15 +116,14 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       } else if (isCaseObject[A] || isCaseVal[A]) {
         Some(Product.Constructor(ListMap.empty, _ => c.Expr[A](q"${sym.asClass.module}")))
       } else if (isPOJO[A]) {
-        val primaryConstructor =
-          Option(sym).filter(_.isClass).map(_.asClass.primaryConstructor).filter(_.isPublic).getOrElse {
-            // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
-            assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
-            // $COVERAGE-ON$
-          }
-        val paramss = paramListsOf(A, primaryConstructor)
+        val unambiguousConstructor = publicPrimaryOrOnlyPublicConstructor(A).getOrElse {
+          // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+          assertionFailed(s"Expected public constructor of ${Type.prettyPrint[A]}")
+          // $COVERAGE-ON$
+        }
+        val paramss = paramListsOf(A, unambiguousConstructor)
         val paramNames = paramss.flatMap(_.map(param => param -> getDecodedName(param))).toMap
-        val paramTypes = paramsWithTypes(A, primaryConstructor)
+        val paramTypes = paramsWithTypes(A, unambiguousConstructor)
         lazy val companion = companionSymbol[A]
         val defaultValues = paramss.flatten.zipWithIndex.collect {
           case (param, idx) if param.asTerm.isParamWithDefault =>
