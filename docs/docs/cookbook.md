@@ -2540,6 +2540,15 @@ requires a normal extension methods provided by the user.
 
 Some libraries already provided support for Chimney, and you don't have to provide it yourself:
 
+#### Enumz
+
+[Enumz](https://github.com/scalalandio/enumz) is Scala 2/3 library which creates `Enum[E]` type class, allowing working
+with enumeration types (`sealed trait`s, Scala 3 `enum`s, Java `enum`s, `scala.Enumeration`) in a uniform way.
+It provides an integration which might be useful if one needs to convert to/from `scala.Enumeration`.
+
+You can find it on [GitHub](https://github.com/scalalandio/enumz) or
+[Scaladex](https://index.scala-lang.org/scalalandio/enumz/artifacts/enumz-chimney).
+
 #### Neotype
 
 [Neotype](https://github.com/kitlangton/neotype) is Scala 3 only library which makes working with `opaque type`s
@@ -2557,6 +2566,15 @@ easier just like Neotype or other libraries described in
 
 You can find it on [GitHub](https://github.com/kevin-lee/refined4s) or
 [Scaladex](https://index.scala-lang.org/kevin-lee/refined4s/artifacts/refined4s-cats).
+
+#### Utils (ZIO Prelude integration)
+
+[Utils](https://github.com/kinoplan/utils) is a set of Scala libraries providing, among others, integrations.
+One of them is an integration between [ZIO Prelude](https://github.com/zio/zio-prelude) and Chimney, working
+similar to [Cats](#cats-integration) and using [Integrations API](#integrations).
+
+You can find it on [GitHub](https://github.com/kinoplan/utils) or
+[Scaladex](https://index.scala-lang.org/kinoplan/utils/artifacts/utils-chimney-zio-prelude).
 
 ## Reusing Chimney macros in your own macro library
 
