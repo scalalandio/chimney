@@ -10,7 +10,7 @@ class MacroCrossCompilationScala3Spec extends ChimneySpec {
   group("Scala 2.13 compiler analyzing Scala 3 code and Scala 3 compiler analyzing Scala 2.13 code") {
 
     test("should handle reading from and writing to sealed trait/enum") {
-      // only Scala 3 makes distinction between vals in mattern matching :/
+      // TODO: Only Scala 3 makes distinction between vals in pattern matching :/ Maybe we can fix this one day?
       (s3.Enums.Foo.A: s3.Enums.Foo).transformInto[s213.Sealed.Foo] ==> s213.Sealed.Foo.A
       (s3.Enums.Foo.B: s3.Enums.Foo).transformInto[s213.Sealed.Foo] ==> s213.Sealed.Foo.B
     }
