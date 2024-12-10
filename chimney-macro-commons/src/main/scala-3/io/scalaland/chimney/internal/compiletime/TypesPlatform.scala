@@ -12,6 +12,31 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object platformSpecific {
 
+      // to align API between Scala versions
+      extension (sym: Symbol) {
+        def isAbstract: Boolean = !sym.isNoSymbol && sym.flags.is(Flags.Abstract) || sym.flags.is(Flags.Trait)
+
+        def isPublic: Boolean = !sym.isNoSymbol &&
+          !(sym.flags.is(Flags.Private) || sym.flags.is(Flags.PrivateLocal) || sym.flags.is(Flags.Protected) ||
+            sym.privateWithin.isDefined || sym.protectedWithin.isDefined)
+      }
+
+      /** Symbol for public primary constructor if it exists */
+      def publicPrimaryConstructor(sym: Symbol): Option[Symbol] =
+        scala.Option(sym.primaryConstructor).filter(_.isPublic)
+
+      /** Finds all public constructors */
+      def publicConstructors(sym: Symbol): List[Symbol] =
+        sym.declarations.filter(_.isPublic).filter(_.isClassConstructor)
+
+      /** Unambiguous constructor */
+      def publicPrimaryOrOnlyPublicConstructor(sym: Symbol): Option[Symbol] =
+        publicPrimaryConstructor(sym).orElse {
+          val candidates = publicConstructors(sym)
+          if candidates.size == 1 then candidates.headOption else None
+        }
+
+      /** Nice alias for turning type representation with no type in its signature into Type[A] */
       def fromUntyped[A](untyped: TypeRepr): Type[A] = untyped.asType.asInstanceOf[Type[A]]
 
       // TODO: assumes each parameter list is made completely out of types OR completely out of values

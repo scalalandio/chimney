@@ -11,6 +11,27 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
 
     object platformSpecific {
 
+      /** Symbol for public primary constructor if it exists */
+      def publicPrimaryConstructor(tpe: c.Type): Option[Symbol] =
+        scala
+          .Option(tpe.typeSymbol)
+          .filter(_.isClass)
+          .map(_.asClass.primaryConstructor)
+          .filter(m => m.isPublic && m.isConstructor)
+
+      /** Finds all public constructors */
+      def publicConstructors(tpe: c.Type): List[Symbol] =
+        tpe.decls
+          .filter(m => m.isPublic && m.isConstructor)
+          .toList
+
+      /** Unambiguous constructor */
+      def publicPrimaryOrOnlyPublicConstructor(tpe: c.Type): Option[Symbol] =
+        publicPrimaryConstructor(tpe).orElse {
+          val candidates = publicConstructors(tpe)
+          if (candidates.size == 1) candidates.headOption else None
+        }
+
       /** Nice alias for turning type representation with no type in its signature into Type[A] */
       def fromUntyped[A](untyped: c.Type): Type[A] = c.WeakTypeTag(untyped)
 
