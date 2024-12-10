@@ -1600,6 +1600,48 @@ For these cases, a proper optics library (like Quicklens) is recommended. As you
 were selected in such way that there should be no conflicts with other libraries, so you don't have to choose one - you
 can pick up both.
 
+## Mixing Scala 2.13 and Scala 3 types
+
+[Scala 2.13 project can use Scala 3 artifacts and vice versa](https://docs.scala-lang.org/scala3/guides/migration/compatibility-classpath.html).
+For Scala 3 project to depends on Scala 2.13 usually only some build tool configuration is needed, e.g.
+
+```scala
+libraryDependencies += ("org.bar" %% "bar" % "1.0.0").cross(CrossVersion.for3Use2_13)
+```
+
+For Scala 2.13 to rely on Scala 3 artifact, and additional compiler option is required as well:
+
+```scala
+libraryDependencies += ("org.bar" %% "bar" % "1.0.0").cross(CrossVersion.for2_13Use3)
+scalacOptions += "-Ytasty-reader"
+```
+
+One can even create module hierarchies where Scala 3 module depends on 2.13, which depends on 3, which depends on 2.13,
+etc., sometimes called [the sandwich pattern](https://www.scala-lang.org/blog/2021/04/08/scala-3-in-sbt.html#the-sandwich-pattern).  
+
+Chimney took it seriously to make sure that in such case:
+
+ * Scala 2.13 macros would be able to handle `case class`es and `sealed trait`s compiled with Scala 3  
+ * Scala 3 macros would be able to handle `case class`es and `sealed trait`s compiled with Scala 2.13
+ * `@BeanProperties` would continue working despite
+   [changes in their semantics](https://docs.scala-lang.org/scala3/guides/migration/incompat-other-changes.html#invisible-bean-property)
+ * default values will also work despite [changes to constructors](https://docs.scala-lang.org/scala3/reference/other-new-features/creator-applications.html)
+   which changed how default values are stored in the byte code 
+
+to contribute to easier migration from Scala 2.13 to Scala 3.
+
+!!! note
+
+    At the moment conversion from Scala 3 `enum` by Scala 2.13 macros is not yet handled correctly.
+    
+!!! warning
+
+    Chimney is NOT [mixing Scala 2.13 and Scala 3 macros](https://docs.scala-lang.org/scala3/guides/migration/tutorial-macro-mixing.html)
+    and probably never will.
+    
+    It is required that there is only 1 version of Chimney on the class-path - either Scala 2 or Scala 3 version - which
+    would be called only from modules with the matching version of Scala. 
+
 ## Integrations
 
 While Chimney supports a lot of transformations out of the box, sometimes it needs our help. We can do it ad hoc
