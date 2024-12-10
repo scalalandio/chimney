@@ -287,7 +287,7 @@ val noPublishSettings =
 
 val ciCommand = (platform: String, scalaSuffix: String) => {
   val isJVM = platform == "JVM"
-  val isSandwichable = scalaSuffix != "2_12"
+  val isSandwichable = isJVM && scalaSuffix != "2_12"
 
   val clean = Vector("clean")
   def withCoverage(tasks: String*): Vector[String] =
@@ -560,7 +560,7 @@ lazy val chimneyEngine = projectMatrix
 
 lazy val chimneySandwichTestCases213 = projectMatrix
   .in(file("chimney-sandwich-test-cases-213"))
-  .someVariations(List(versions.scala213), versions.platforms)()
+  .someVariations(List(versions.scala213), List(VirtualAxis.jvm))()
   .settings(settings *)
   .settings(publishSettings *)
   .settings(noPublishSettings *)
@@ -573,7 +573,7 @@ lazy val chimneySandwichTestCases213 = projectMatrix
 
 lazy val chimneySandwichTestCases3 = projectMatrix
   .in(file("chimney-sandwich-test-cases-3"))
-  .someVariations(List(versions.scala3), versions.platforms)()
+  .someVariations(List(versions.scala3), List(VirtualAxis.jvm))()
   .settings(settings *)
   .settings(publishSettings *)
   .settings(noPublishSettings *)
@@ -586,7 +586,7 @@ lazy val chimneySandwichTestCases3 = projectMatrix
 
 lazy val chimneySandwichTests = projectMatrix
   .in(file("chimney-sandwich-tests"))
-  .someVariations(List(versions.scala213, versions.scala3), versions.platforms)(only1VersionInIDE *)
+  .someVariations(List(versions.scala213, versions.scala3), List(VirtualAxis.jvm))(only1VersionInIDE *)
   .settings(settings *)
   .settings(publishSettings *)
   .settings(noPublishSettings *)

@@ -1623,7 +1623,7 @@ Chimney took it seriously to make sure that in such case:
 
  * Scala 2.13 macros would be able to handle `case class`es and `sealed trait`s compiled with Scala 3  
  * Scala 3 macros would be able to handle `case class`es and `sealed trait`s compiled with Scala 2.13
- * `@BeanProperties` would continue working despite
+ * `@BeanProperty` would continue working despite
    [changes in their semantics](https://docs.scala-lang.org/scala3/guides/migration/incompat-other-changes.html#invisible-bean-property)
  * default values will also work despite [changes to constructors](https://docs.scala-lang.org/scala3/reference/other-new-features/creator-applications.html)
    which changed how default values are stored in the byte code 
