@@ -345,7 +345,8 @@ In particular, when the source type is (`=:=`) the target type, you will end up 
 
 Every type can have its `val`s read and used as data sources for the transformation.
 
-And every class with a public primary constructor can be the target of the transformation.
+And every class with a public primary constructor can be the target of the transformation. (Or, if the primary is not
+public, with exactly one public constructor to make the choice unambiguous).
 
 To make it work out of the box, every argument of a constructor needs to be paired with a matching field (`val`) in the
 transformed value.
@@ -4085,8 +4086,8 @@ On Scala 3, parameterless `case` can be used as well:
 
 ## Types with manually provided constructors
 
-If you cannot use a public primary constructor to create the target type, is NOT a Scala collection, `Option`, `AnyVal`,
-... but is e.g.:
+If you cannot use a public primary constructor to create the target type, it is NOT a Scala collection, `Option`,
+`AnyVal`, ... but is e.g.:
 
   - a type using a smart constructor
   - a type which has multiple constructors and you need to point which one you want to use
