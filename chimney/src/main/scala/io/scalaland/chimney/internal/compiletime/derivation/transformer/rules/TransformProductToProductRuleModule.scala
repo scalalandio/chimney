@@ -23,7 +23,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           mapOverridesAndExtractorsToConstructorArguments[From, To, To](fromExtractors, parameters, constructor)
         case _ =>
           DerivationResult.attemptNextRuleBecause(
-            s"Type ${Type.prettyPrint[To]} does not have a public primary constructor"
+            s"Type ${Type.prettyPrint[To]} does not have a public primary constructor NOR exactly one (non-primary) public constructor"
           )
       }
 

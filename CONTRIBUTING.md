@@ -126,7 +126,12 @@ Information about Scala macros can be found on:
    * [**Quasiquotes for Scala**](https://infoscience.epfl.ch/record/185242?ln=en) (Scala 2 macros)
    * [**Scalable Metaprogramming in Scala 3**](https://infoscience.epfl.ch/record/299370?ln=en) (Scala 3 macros)
  * [**Scala 2 vs Scala 3 macros** presentation](https://kubuszok.com/presentations/#scala-2-vs-scala-3-macros-presentation)
-   made by one of library's coauthors 
+   made by one of library's coauthors
+ * [**Slow Auto, Inconvenient Semi - escaping false dichotomy with sanely-automatic derivation** presentation](https://mateuszkubuszok.github.io/SlowAutoInconvenientSemi/#/)
+   discussing the mechanism used for (sanely) automatic derivation used in Chimney: why it exists and how it works
+   * [**Scala.io** recording](https://www.youtube.com/watch?v=h9NdXLTZkGk) - 2nd time it was shown
+   * [**Art of Scala** recording](https://www.youtube.com/watch?v=scWvlO_fb78) - 1st time it was shown
+   * [**Scala Space** podcast discussing **Derive and conquer** recording](https://www.youtube.com/watch?v=FUL4Ou1SDx4) - followup to the presentation
 
 Additionally, [**Polymorphic Embedding of DSLs** paper](https://www.informatik.uni-marburg.de/~rendel/hofer08polymorphic.pdf)
 is useful to understanding how compatibility layer between Scala 2 macros and Scala 3 macros was created.

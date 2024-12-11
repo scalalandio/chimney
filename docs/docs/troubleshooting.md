@@ -2236,6 +2236,7 @@ Videos/presentations including or describing Chimney:
 Articles/written tutorials including or describing Chimney:
 
  * [*5 Scala Libraries That Will Make Your Life Easier*, Jacek Kunicki](https://softwaremill.com/5-scala-libraries-that-will-make-your-life-easier/) - mentions Chimney as #2
+ * [*Introduction to Chimney*, Brad Ovitt](https://www.baeldung.com/scala/chimney-data-transformation-library) - tutorial
 
 ## Ideas, questions or bug reports
 
