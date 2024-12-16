@@ -133,7 +133,7 @@ object TransformerDefinitionMacros {
       Flags <: TransformerFlags: Type,
       Ctor: Type
   ](
-      ti: Expr[TransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[TransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Ctor]
   )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -141,8 +141,24 @@ object TransformerDefinitionMacros {
         (_: Type[args]) ?=>
           '{
             WithRuntimeDataStore
-              .update($ti, $f)
+              .update($td, $f)
               .asInstanceOf[TransformerDefinition[From, To, Constructor[args, Path.Root, Overrides], Flags]]
         }
     }(f)
+
+  def withFallbackImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      FromFallback: Type
+  ](
+      ti: Expr[TransformerDefinition[From, To, Overrides, Flags]],
+      fallback: Expr[FromFallback]
+  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
+    '{
+      WithRuntimeDataStore
+        .update($ti, $fallback)
+        .asInstanceOf[TransformerDefinition[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
+    }
 }

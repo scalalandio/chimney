@@ -209,7 +209,7 @@ object PartialTransformerDefinitionMacros {
       Flags <: TransformerFlags: Type,
       Ctor: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -217,7 +217,7 @@ object PartialTransformerDefinitionMacros {
         (_: Type[args]) ?=>
           '{
             WithRuntimeDataStore
-              .update($ti, $f)
+              .update($td, $f)
               .asInstanceOf[PartialTransformerDefinition[From, To, Constructor[args, Path.Root, Overrides], Flags]]
         }
     }(f)
@@ -229,7 +229,7 @@ object PartialTransformerDefinitionMacros {
       Flags <: TransformerFlags: Type,
       Ctor: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -237,7 +237,7 @@ object PartialTransformerDefinitionMacros {
         (_: Type[args]) ?=>
           '{
             WithRuntimeDataStore
-              .update($ti, $f)
+              .update($td, $f)
               .asInstanceOf[PartialTransformerDefinition[
                 From,
                 To,
@@ -254,7 +254,7 @@ object PartialTransformerDefinitionMacros {
       Flags <: TransformerFlags: Type,
       Ctor: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -263,7 +263,7 @@ object PartialTransformerDefinitionMacros {
           '{
             WithRuntimeDataStore
               .update(
-                $ti,
+                $td,
                 FunctionEitherToResult.lift[Ctor, Any]($f)(
                   ${ Expr.summon[FunctionEitherToResult[Ctor]].get }.asInstanceOf[FunctionEitherToResult.Aux[Ctor, Any]]
                 )
@@ -276,6 +276,22 @@ object PartialTransformerDefinitionMacros {
               ]]
         }
     }(f)
+
+  def withFallbackImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      FromFallback: Type
+  ](
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      fallback: Expr[FromFallback]
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
+    '{
+      WithRuntimeDataStore
+        .update($td, $fallback)
+        .asInstanceOf[PartialTransformerDefinition[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
+    }
 
   def buildTransformer[
       From: Type,
