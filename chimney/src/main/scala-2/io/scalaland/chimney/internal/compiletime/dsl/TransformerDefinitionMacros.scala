@@ -39,6 +39,20 @@ class TransformerDefinitionMacros(val c: whitebox.Context) extends utils.DslMacr
       }.applyFromSelector(selector)
     )
 
+  def withFieldComputedFromImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selectorFrom: Tree, selectorTo: Tree, f: Tree)(@unused ev: Tree): Tree = c.prefix.tree
+    .addOverride(f)
+    .asInstanceOfExpr(
+      new ApplyFieldNameTypes {
+        def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[TransformerDefinition[From, To, ComputedFrom[FromPath, ToPath, Overrides], Flags]]
+      }.applyFromSelectors(selectorFrom, selectorTo)
+    )
+
   def withFieldRenamedImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,
@@ -95,5 +109,21 @@ class TransformerDefinitionMacros(val c: whitebox.Context) extends utils.DslMacr
     def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
       .addOverride(f)
       .asInstanceOfExpr[TransformerDefinition[From, To, Constructor[Args, Path.Root, Overrides], Flags]]
+  }.applyFromBody(f)
+
+  def withConstructorToImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+    def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
+      .addOverride(f)
+      .asInstanceOfExpr(
+        new ApplyFieldNameType {
+          def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+            weakTypeTag[TransformerDefinition[From, To, Constructor[Args, ToPath, Overrides], Flags]]
+        }.applyFromSelector(selector)
+      )
   }.applyFromBody(f)
 }

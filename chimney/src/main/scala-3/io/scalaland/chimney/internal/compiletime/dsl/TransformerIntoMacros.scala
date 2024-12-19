@@ -62,6 +62,31 @@ object TransformerIntoMacros {
         }
     }(selector)
 
+  def withFieldComputedFromImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      S: Type,
+      T: Type,
+      U: Type
+  ](
+      ti: Expr[TransformerInto[From, To, Overrides, Flags]],
+      selectorFrom: Expr[From => S],
+      selectorTo: Expr[To => T],
+      f: Expr[From => U]
+  )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyFieldNameTypes {
+      [fromPath <: Path, toPath <: Path] =>
+        (_: Type[fromPath]) ?=>
+          (_: Type[toPath]) ?=>
+            '{
+              WithRuntimeDataStore
+                .update($ti, $f)
+                .asInstanceOf[TransformerInto[From, To, ComputedFrom[fromPath, toPath, Overrides], Flags]]
+          }
+    }(selectorFrom, selectorTo)
+
   def withFieldRenamedImpl[
       From: Type,
       To: Type,
@@ -142,5 +167,30 @@ object TransformerIntoMacros {
               .update($ti, $f)
               .asInstanceOf[TransformerInto[From, To, Constructor[args, Path.Root, Overrides], Flags]]
         }
+    }(f)
+
+  def withConstructorToImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      Ctor: Type
+  ](
+      ti: Expr[TransformerInto[From, To, Overrides, Flags]],
+      selector: Expr[To => Ctor],
+      f: Expr[Ctor]
+  )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyConstructorType {
+      [args <: ArgumentLists] =>
+        (_: Type[args]) ?=>
+          DslMacroUtils().applyFieldNameType {
+            [toPath <: Path] =>
+              (_: Type[toPath]) ?=>
+                '{
+                  WithRuntimeDataStore
+                    .update($ti, $f)
+                    .asInstanceOf[TransformerInto[From, To, Constructor[args, toPath, Overrides], Flags]]
+              }
+          }(selector)
     }(f)
 }

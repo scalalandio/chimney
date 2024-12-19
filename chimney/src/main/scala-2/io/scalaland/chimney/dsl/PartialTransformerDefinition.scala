@@ -108,6 +108,11 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerDefinitionMacros.withFieldComputedImpl[From, To, Overrides, Flags]
 
+  def withFieldComputedFrom[S, T, U](selectorFrom: From => S, selectorTo: To => T, f: From => U)(implicit
+      ev: U <:< T
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerDefinitionMacros.withFieldComputedFromImpl[From, To, Overrides, Flags]
+
   /** Use function `f` to compute partial result for field picked using `selector`.
     *
     * By default if `From` is missing field picked by `selector` compilation fails.
@@ -134,6 +139,13 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
       f: From => partial.Result[U]
   )(implicit ev: U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerDefinitionMacros.withFieldComputedPartialImpl[From, To, Overrides, Flags]
+
+  def withFieldComputedPartialFrom[S, T, U](
+      selectorFrom: From => S,
+      selectorTo: To => T,
+      f: From => partial.Result[U]
+  )(implicit ev: U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerDefinitionMacros.withFieldComputedPartialFromImpl[From, To, Overrides, Flags]
 
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`.
     *
@@ -312,6 +324,12 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   )(implicit ev: IsFunction.Of[Ctor, To]): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerDefinitionMacros.withConstructorImpl[From, To, Overrides, Flags]
 
+  def withConstructorTo[Ctor](
+      selector: To => Ctor,
+      f: Ctor
+  )(implicit ev: IsFunction.Of[Ctor, To]): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerDefinitionMacros.withConstructorToImpl[From, To, Overrides, Flags]
+
   /** Use `f` instead of the primary constructor to parse into `partial.Result[To]` value.
     *
     * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.
@@ -338,6 +356,14 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerDefinitionMacros.withConstructorPartialImpl[From, To, Overrides, Flags]
 
+  def withConstructorPartialTo[Ctor](
+      selector: To => Ctor,
+      f: Ctor
+  )(implicit
+      ev: IsFunction.Of[Ctor, partial.Result[To]]
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerDefinitionMacros.withConstructorPartialToImpl[From, To, Overrides, Flags]
+
   /** Use `f` instead of the primary constructor to parse into `Either[String, To]` value.
     *
     * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.
@@ -363,6 +389,14 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
       ev: IsFunction.Of[Ctor, Either[String, To]]
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerDefinitionMacros.withConstructorEitherImpl[From, To, Overrides, Flags]
+
+  def withConstructorEitherTo[Ctor](
+      selector: To => Ctor,
+      f: Ctor
+  )(implicit
+      ev: IsFunction.Of[Ctor, Either[String, To]]
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro PartialTransformerDefinitionMacros.withConstructorEitherToImpl[From, To, Overrides, Flags]
 
   /** Build Partial Transformer using current configuration.
     *

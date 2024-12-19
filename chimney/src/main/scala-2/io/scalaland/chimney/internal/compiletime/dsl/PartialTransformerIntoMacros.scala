@@ -53,6 +53,20 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
       }.applyFromSelector(selector)
     )
 
+  def withFieldComputedFromImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selectorFrom: Tree, selectorTo: Tree, f: Tree)(@unused ev: Tree): Tree = c.prefix.tree
+    .addOverride(f)
+    .asInstanceOfExpr(
+      new ApplyFieldNameTypes {
+        def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[PartialTransformerInto[From, To, ComputedFrom[FromPath, ToPath, Overrides], Flags]]
+      }.applyFromSelectors(selectorFrom, selectorTo)
+    )
+
   def withFieldComputedPartialImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,
@@ -65,6 +79,20 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
         def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
           weakTypeTag[PartialTransformerInto[From, To, ComputedPartial[ToPath, Overrides], Flags]]
       }.applyFromSelector(selector)
+    )
+
+  def withFieldComputedPartialFromImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selectorFrom: Tree, selectorTo: Tree, f: Tree)(@unused ev: Tree): Tree = c.prefix.tree
+    .addOverride(f)
+    .asInstanceOfExpr(
+      new ApplyFieldNameTypes {
+        def apply[FromPath <: Path: WeakTypeTag, ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[PartialTransformerInto[From, To, ComputedPartialFrom[FromPath, ToPath, Overrides], Flags]]
+      }.applyFromSelectors(selectorFrom, selectorTo)
     )
 
   def withFieldRenamedImpl[
@@ -142,6 +170,22 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
       .asInstanceOfExpr[PartialTransformerInto[From, To, Constructor[Args, Path.Root, Overrides], Flags]]
   }.applyFromBody(f)
 
+  def withConstructorToImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+    def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
+      .addOverride(f)
+      .asInstanceOfExpr(
+        new ApplyFieldNameType {
+          def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+            weakTypeTag[PartialTransformerInto[From, To, Constructor[Args, ToPath, Overrides], Flags]]
+        }.applyFromSelector(selector)
+      )
+  }.applyFromBody(f)
+
   def withConstructorPartialImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,
@@ -153,6 +197,22 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
       .asInstanceOfExpr[PartialTransformerInto[From, To, ConstructorPartial[Args, Path.Root, Overrides], Flags]]
   }.applyFromBody(f)
 
+  def withConstructorPartialToImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+    def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
+      .addOverride(f)
+      .asInstanceOfExpr(
+        new ApplyFieldNameType {
+          def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+            weakTypeTag[PartialTransformerInto[From, To, ConstructorPartial[Args, ToPath, Overrides], Flags]]
+        }.applyFromSelector(selector)
+      )
+  }.applyFromBody(f)
+
   def withConstructorEitherImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,
@@ -162,5 +222,21 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
     def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
       .addOverride(q"_root_.io.scalaland.chimney.internal.runtime.FunctionEitherToResult.lift($f)")
       .asInstanceOfExpr[PartialTransformerInto[From, To, ConstructorPartial[Args, Path.Root, Overrides], Flags]]
+  }.applyFromBody(f)
+
+  def withConstructorEitherToImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+    def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
+      .addOverride(q"_root_.io.scalaland.chimney.internal.runtime.FunctionEitherToResult.lift($f)")
+      .asInstanceOfExpr(
+        new ApplyFieldNameType {
+          def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+            weakTypeTag[PartialTransformerInto[From, To, ConstructorPartial[Args, ToPath, Overrides], Flags]]
+        }.applyFromSelector(selector)
+      )
   }.applyFromBody(f)
 }

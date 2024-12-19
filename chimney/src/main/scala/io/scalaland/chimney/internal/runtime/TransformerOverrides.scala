@@ -15,7 +15,7 @@ object TransformerOverrides {
   // Computes a value from an expr
   final class ComputedFrom[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
   final class ComputedPartialFrom[FromPath <: Path, ToPath <: Path, Tail <: Overrides] extends Overrides
-  // FIXME (2.0.0 cleanup)...
+  // FIXME (2.0.0 cleanup) - merge CaseComputed with ComputedFrom, CaseComputedPartial with ComputedPartialFrom
   // Computes a value from an already extracted (e.g. matched) piece of (src: From)
   final class CaseComputed[ToPath <: Path, Tail <: Overrides] extends Overrides
   final class CaseComputedPartial[ToPath <: Path, Tail <: Overrides] extends Overrides

@@ -87,6 +87,14 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
   )(implicit ev: U <:< T): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withFieldComputedImpl[From, To, Overrides, Flags]
 
+  // TODO
+  def withFieldComputedFrom[S, T, U](
+      selectorFrom: From => S,
+      selectorTo: To => T,
+      f: From => U
+  )(implicit ev: U <:< T): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerIntoMacros.withFieldComputedFromImpl[From, To, Overrides, Flags]
+
   /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`
     *
     * By default if `From` is missing field picked by `selectorTo` compilation fails.
@@ -204,6 +212,12 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
       ev: IsFunction.Of[Ctor, To]
   ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withConstructorImpl[From, To, Overrides, Flags]
+
+  // TODO
+  def withConstructorTo[Ctor](selector: From => Ctor, f: Ctor)(implicit
+      ev: IsFunction.Of[Ctor, To]
+  ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerIntoMacros.withConstructorToImpl[From, To, Overrides, Flags]
 
   /** Apply configured transformation in-place.
     *
