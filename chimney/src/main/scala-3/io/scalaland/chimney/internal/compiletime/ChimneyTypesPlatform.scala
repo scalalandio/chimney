@@ -92,7 +92,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           quoted.Type.of[runtime.TransformerOverrides.ConstPartial[ToPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
           case '[runtime.TransformerOverrides.ConstPartial[toPath, cfg]] =>
-            Some((Type[toPath].as_>?<[Nothing, runtime.Path], Type[cfg].as_>?<[Nothing, runtime.TransformerOverrides]))
+            Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
           case _ => scala.None
         }
       }
@@ -110,10 +110,50 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.ComputedPartial[ToPath, Tail]] =
           quoted.Type.of[runtime.TransformerOverrides.ComputedPartial[ToPath, Tail]]
-        def unapply[A](tpe: Type[A]): Option[(Nothing >?< runtime.Path, Nothing >?< runtime.TransformerOverrides)] =
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           tpe match {
             case '[runtime.TransformerOverrides.ComputedPartial[toPath, cfg]] =>
               Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
+            case _ => scala.None
+          }
+      }
+      object ComputedFrom extends ComputedFromModule {
+        def apply[
+            FromPath <: runtime.Path: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.ComputedFrom[FromPath, ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.ComputedFrom[FromPath, ToPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          tpe match {
+            case '[runtime.TransformerOverrides.ComputedFrom[fromPath, toPath, cfg]] =>
+              Some(
+                (
+                  Type[fromPath].as_?<[runtime.Path],
+                  Type[toPath].as_?<[runtime.Path],
+                  Type[cfg].as_?<[runtime.TransformerOverrides]
+                )
+              )
+            case _ => scala.None
+          }
+      }
+      object ComputedPartialFrom extends ComputedPartialFromModule {
+        def apply[
+            FromPath <: runtime.Path: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.ComputedPartialFrom[FromPath, ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.ComputedPartialFrom[FromPath, ToPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          tpe match {
+            case '[runtime.TransformerOverrides.ComputedPartialFrom[fromPath, toPath, cfg]] =>
+              Some(
+                (
+                  Type[fromPath].as_?<[runtime.Path],
+                  Type[toPath].as_?<[runtime.Path],
+                  Type[cfg].as_?<[runtime.TransformerOverrides]
+                )
+              )
             case _ => scala.None
           }
       }

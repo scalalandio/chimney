@@ -85,6 +85,31 @@ object PartialTransformerIntoMacros {
         }
     }(selector)
 
+  def withFieldComputedFromImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      S: Type,
+      T: Type,
+      U: Type
+  ](
+      ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
+      selectorFrom: Expr[From => S],
+      selectorTo: Expr[To => T],
+      f: Expr[From => U]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyFieldNameTypes {
+      [fromPath <: Path, toPath <: Path] =>
+        (_: Type[fromPath]) ?=>
+          (_: Type[toPath]) ?=>
+            '{
+              WithRuntimeDataStore
+                .update($ti, $f)
+                .asInstanceOf[PartialTransformerInto[From, To, ComputedFrom[fromPath, toPath, Overrides], Flags]]
+          }
+    }(selectorFrom, selectorTo)
+
   def withFieldComputedPartialImpl[
       From: Type,
       To: Type,
@@ -106,6 +131,31 @@ object PartialTransformerIntoMacros {
               .asInstanceOf[PartialTransformerInto[From, To, ComputedPartial[toPath, Overrides], Flags]]
         }
     }(selector)
+
+  def withFieldComputedPartialFromImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      S: Type,
+      T: Type,
+      U: Type
+  ](
+      ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
+      selectorFrom: Expr[From => S],
+      selectorTo: Expr[To => T],
+      f: Expr[From => partial.Result[U]]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyFieldNameTypes {
+      [fromPath <: Path, toPath <: Path] =>
+        (_: Type[fromPath]) ?=>
+          (_: Type[toPath]) ?=>
+            '{
+              WithRuntimeDataStore
+                .update($ti, $f)
+                .asInstanceOf[PartialTransformerInto[From, To, ComputedPartialFrom[fromPath, toPath, Overrides], Flags]]
+          }
+    }(selectorFrom, selectorTo)
 
   def withFieldRenamedImpl[
       From: Type,
@@ -212,6 +262,31 @@ object PartialTransformerIntoMacros {
         }
     }(f)
 
+  def withConstructorToImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      Ctor: Type
+  ](
+      ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
+      selector: Expr[To => Ctor],
+      f: Expr[Ctor]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyConstructorType {
+      [args <: ArgumentLists] =>
+        (_: Type[args]) ?=>
+          DslMacroUtils().applyFieldNameType {
+            [toPath <: Path] =>
+              (_: Type[toPath]) ?=>
+                '{
+                  WithRuntimeDataStore
+                    .update($ti, $f)
+                    .asInstanceOf[PartialTransformerInto[From, To, Constructor[args, toPath, Overrides], Flags]]
+              }
+          }(selector)
+    }(f)
+
   def withConstructorPartialImpl[
       From: Type,
       To: Type,
@@ -228,8 +303,43 @@ object PartialTransformerIntoMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $f)
-              .asInstanceOf[PartialTransformerInto[From, To, ConstructorPartial[args, Path.Root, Overrides], Flags]]
+              .asInstanceOf[PartialTransformerInto[
+                From,
+                To,
+                ConstructorPartial[args, Path.Root, Overrides],
+                Flags
+              ]]
         }
+    }(f)
+
+  def withConstructorPartialToImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      Ctor: Type
+  ](
+      ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
+      selector: Expr[To => Ctor],
+      f: Expr[Ctor]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyConstructorType {
+      [args <: ArgumentLists] =>
+        (_: Type[args]) ?=>
+          DslMacroUtils().applyFieldNameType {
+            [toPath <: Path] =>
+              (_: Type[toPath]) ?=>
+                '{
+                  WithRuntimeDataStore
+                    .update($ti, $f)
+                    .asInstanceOf[PartialTransformerInto[
+                      From,
+                      To,
+                      ConstructorPartial[args, toPath, Overrides],
+                      Flags
+                    ]]
+              }
+          }(selector)
     }(f)
 
   def withConstructorEitherImpl[
@@ -255,5 +365,41 @@ object PartialTransformerIntoMacros {
               )
               .asInstanceOf[PartialTransformerInto[From, To, ConstructorPartial[args, Path.Root, Overrides], Flags]]
         }
+    }(f)
+
+  def withConstructorEitherToImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      Ctor: Type
+  ](
+      ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
+      selector: Expr[To => Ctor],
+      f: Expr[Ctor]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyConstructorType {
+      [args <: ArgumentLists] =>
+        (_: Type[args]) ?=>
+          DslMacroUtils().applyFieldNameType {
+            [toPath <: Path] =>
+              (_: Type[toPath]) ?=>
+                '{
+                  WithRuntimeDataStore
+                    .update(
+                      $ti,
+                      FunctionEitherToResult.lift[Ctor, Any]($f)(
+                        ${ Expr.summon[FunctionEitherToResult[Ctor]].get }
+                          .asInstanceOf[FunctionEitherToResult.Aux[Ctor, Any]]
+                      )
+                    )
+                    .asInstanceOf[PartialTransformerInto[
+                      From,
+                      To,
+                      ConstructorPartial[args, Path.Root, Overrides],
+                      Flags
+                    ]]
+              }
+          }(selector)
     }(f)
 }
