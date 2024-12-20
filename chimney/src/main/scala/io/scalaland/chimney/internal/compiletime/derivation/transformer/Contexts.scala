@@ -12,9 +12,14 @@ private[compiletime] trait Contexts { this: Derivation =>
     val To: Type[To]
 
     val srcJournal: Vector[(Path, ExistentialExpr)]
+    val tgtJournal: Vector[Path]
 
     /** When using nested paths (_.foo.bar.baz) and recursive derivation this is the original, "top-level" value */
     val originalSrc: ExistentialExpr = srcJournal.head._2
+
+    /** Path to the current target value */
+    val currentTgt: Path = tgtJournal.last
+
     val config: TransformerConfiguration
     val derivationStartedAt: java.time.Instant
 
@@ -31,6 +36,7 @@ private[compiletime] trait Contexts { this: Derivation =>
           From = Type[NewFrom],
           To = Type[NewTo],
           srcJournal = ctx.srcJournal :+ (ctx.srcJournal.last._1.concat(followFrom) -> newSrc.as_??),
+          tgtJournal = ctx.tgtJournal :+ ctx.tgtJournal.last.concat(followTo),
           config = ctx.config.prepareForRecursiveCall(followFrom, followTo)(ctx),
           ctx.derivationStartedAt
         )
@@ -39,6 +45,7 @@ private[compiletime] trait Contexts { this: Derivation =>
           From = Type[NewFrom],
           To = Type[NewTo],
           srcJournal = ctx.srcJournal :+ (ctx.srcJournal.last._1.concat(followFrom) -> newSrc.as_??),
+          tgtJournal = ctx.tgtJournal :+ ctx.tgtJournal.last.concat(followTo),
           config = ctx.config.prepareForRecursiveCall(followFrom, followTo)(ctx),
           ctx.derivationStartedAt
         )
@@ -50,6 +57,7 @@ private[compiletime] trait Contexts { this: Derivation =>
           From = ctx.From,
           To = ctx.To,
           srcJournal = ctx.srcJournal,
+          tgtJournal = ctx.tgtJournal,
           config = update(ctx.config),
           derivationStartedAt = ctx.derivationStartedAt
         )
@@ -58,6 +66,7 @@ private[compiletime] trait Contexts { this: Derivation =>
           From = ctx.From,
           To = ctx.To,
           srcJournal = ctx.srcJournal,
+          tgtJournal = ctx.tgtJournal,
           config = update(ctx.config),
           derivationStartedAt = ctx.derivationStartedAt
         )
@@ -85,6 +94,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         val From: Type[From],
         val To: Type[To],
         val srcJournal: Vector[(Path, ExistentialExpr)],
+        val tgtJournal: Vector[Path],
         val config: TransformerConfiguration,
         val derivationStartedAt: java.time.Instant
     ) extends TransformationContext[From, To] {
@@ -112,6 +122,7 @@ private[compiletime] trait Contexts { this: Derivation =>
           From = Type[From],
           To = Type[To],
           srcJournal = Vector(Path.Root -> src.as_??),
+          tgtJournal = Vector(Path.Root),
           config = config.preventImplicitSummoningFor[From, To],
           derivationStartedAt = java.time.Instant.now()
         )
@@ -121,6 +132,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         val From: Type[From],
         val To: Type[To],
         val srcJournal: Vector[(Path, ExistentialExpr)],
+        val tgtJournal: Vector[Path],
         val config: TransformerConfiguration,
         val derivationStartedAt: java.time.Instant
     ) extends TransformationContext[From, To] {
@@ -149,6 +161,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         From = Type[From],
         To = Type[To],
         srcJournal = Vector(Path.Root -> src.as_??),
+        tgtJournal = Vector(Path.Root),
         config = config.preventImplicitSummoningFor[From, To],
         derivationStartedAt = java.time.Instant.now()
       )
