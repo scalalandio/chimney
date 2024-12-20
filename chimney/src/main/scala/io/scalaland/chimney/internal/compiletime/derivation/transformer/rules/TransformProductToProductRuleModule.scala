@@ -151,11 +151,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           s".withFieldConst(_.$anotherToName, ...)"
                         case TransformerOverride.ConstPartial(_) =>
                           s".withFieldConstPartial(_.$anotherToName, ...)"
-                        case TransformerOverride.Computed(_) =>
+                        case TransformerOverride.Computed(_, _, _) =>
                           s".withFieldComputed(_.$anotherToName, ...)"
-                        case TransformerOverride.ComputedPartial(_) =>
+                        case TransformerOverride.ComputedPartial(_, _, _) =>
                           s".withFieldComputedPartial(_.$anotherToName, ...)"
-                        case TransformerOverride.RenamedFrom(sourcePath) =>
+                        case TransformerOverride.Renamed(sourcePath, _) =>
                           s".withFieldRenamed($sourcePath, _.$anotherToName})"
                       }
                   }
@@ -303,116 +303,58 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               )
           )
         )
-      case TransformerOverride.Computed(runtimeData) =>
-        import ctx.originalSrc.{Underlying as OriginalFrom, value as originalSrc}
-        ctx match {
-          case TransformationContext.ForTotal(_) =>
-            // We're constructing:
-            // '{ ${ runtimeDataStore }(idx).asInstanceOf[$OriginalFrom => $CtorParam](${ originalSrc }) }
-            DerivationResult.pure(
+      case TransformerOverride.Computed(sourcePath, _, runtimeData) =>
+        extractSrcByPath(sourcePath, toName).map { extractedSrc =>
+          import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
+          ctx match {
+            case TransformationContext.ForTotal(_) =>
+              // We're constructing:
+              // '{ ${ runtimeDataStore }(idx).asInstanceOf[$ExtractedSrc => $CtorParam](${ extractedSrcExpr }) }
               TransformationExpr.fromTotal(
-                runtimeData.asInstanceOfExpr[OriginalFrom => CtorParam].apply(originalSrc)
+                runtimeData.asInstanceOfExpr[ExtractedSrc => CtorParam].apply(extractedSrcExpr)
               )
-            )
-          case TransformationContext.ForPartial(_, _) =>
-            // We're constructing:
-            // '{
-            //   partial.Result.fromFunction(
-            //     ${ runtimeDataStore }(idx).asInstanceOf[$OriginalFrom => $CtorParam]
-            //   )
-            //   .apply(${ originalSrc })
-            //   .prependErrorPath(PathElement.Accessor("toName"))
-            // }
-            DerivationResult.pure(
+            case TransformationContext.ForPartial(_, _) =>
+              // We're constructing:
+              // '{
+              //   partial.Result.fromFunction(
+              //     ${ runtimeDataStore }(idx).asInstanceOf[$ExtractedSrc => $CtorParam]
+              //   )
+              //   .apply(${ extractedSrcExpr })
+              //   .prependErrorPath(PathElement.Accessor("toName"))
+              // }
               TransformationExpr.fromPartial(
                 ChimneyExpr.PartialResult
-                  .fromFunction(runtimeData.asInstanceOfExpr[OriginalFrom => CtorParam])
-                  .apply(originalSrc)
+                  .fromFunction(runtimeData.asInstanceOfExpr[ExtractedSrc => CtorParam])
+                  .apply(extractedSrcExpr)
                   .prependErrorPath(
                     ChimneyExpr.PathElement
                       .Accessor(Expr.String(toName))
                       .upcastToExprOf[partial.PathElement]
                   )
               )
-            )
+
+          }
         }
-      case TransformerOverride.ComputedPartial(runtimeData) =>
-        // We're constructing:
-        // '{
-        //   ${ runtimeDataStore }(idx)
-        //     .asInstanceOf[$OriginalFrom => partial.Result[$CtorParam]](${ originalSrc })
-        //     .prependErrorPath(PathElement.Accessor("toName"))
-        // }
-        import ctx.originalSrc.{Underlying as OriginalFrom, value as originalSrc}
-        DerivationResult.pure(
+      case TransformerOverride.ComputedPartial(sourcePath, _, runtimeData) =>
+        extractSrcByPath(sourcePath, toName).map { extractedSrc =>
+          import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
+          // We're constructing:
+          // '{
+          //   ${ runtimeDataStore }(idx)
+          //     .asInstanceOf[$ExtractedSrc => partial.Result[$CtorParam]](${ extractedSrcExpr })
+          //     .prependErrorPath(PathElement.Accessor("toName"))
+          // }
           TransformationExpr.fromPartial(
             runtimeData
-              .asInstanceOfExpr[OriginalFrom => partial.Result[CtorParam]]
-              .apply(originalSrc)
+              .asInstanceOfExpr[ExtractedSrc => partial.Result[CtorParam]]
+              .apply(extractedSrcExpr)
               .prependErrorPath(
                 ChimneyExpr.PathElement.Accessor(Expr.String(toName)).upcastToExprOf[partial.PathElement]
               )
           )
-        )
-      case TransformerOverride.RenamedFrom(sourcePath) =>
-        def extractSource[Source: Type](
-            sourceName: String,
-            extractedSrcExpr: Expr[Source]
-        ): DerivationResult[ExistentialExpr] = Type[Source] match {
-          case Product.Extraction(getters) =>
-            getters.filter { case (fromName, _) => areFieldNamesMatching(fromName, sourceName) }.toList match {
-              case Nil =>
-                DerivationResult.assertionError(
-                  s"""|Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found
-                      |available methods: ${getters.keys.map(n => s"`$n`").mkString(", ")}""".stripMargin
-                )
-              case (_, getter) :: Nil =>
-                import getter.Underlying as Getter, getter.value.get
-                DerivationResult.pure(get(extractedSrcExpr).as_??)
-              case matchingGetters =>
-                DerivationResult.ambiguousFieldOverrides[From, To, ExistentialExpr](
-                  sourceName,
-                  matchingGetters.map(_._1).sorted,
-                  ctx.config.flags.getFieldNameComparison.toString
-                )
-            }
-          case _ =>
-            DerivationResult.assertionError(
-              s"""Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found"""
-            )
         }
-
-        def extractNestedSource(path: Path, extractedSrcValue: ExistentialExpr): DerivationResult[ExistentialExpr] =
-          path match {
-            case Path.Root =>
-              DerivationResult.pure(extractedSrcValue)
-            case Path.AtField(sourceName, path2) =>
-              import extractedSrcValue.Underlying as ExtractedSourceValue, extractedSrcValue.value as extractedSrcExpr
-              extractSource[ExtractedSourceValue](sourceName, extractedSrcExpr).flatMap { extractedSrcValue2 =>
-                extractNestedSource(path2, extractedSrcValue2)
-              }
-            case path =>
-              DerivationResult.notSupportedRenameFromPath[From, To, ExistentialExpr](
-                toName,
-                path,
-                ctx.srcJournal.last._1
-              )
-          }
-
-        val extractedNestedSourceCandidates = for {
-          (prefixPath, prefixExpr) <- ctx.srcJournal.reverseIterator
-          newSourcePath <- sourcePath.drop(prefixPath).iterator
-        } yield extractNestedSource(newSourcePath, prefixExpr)
-
-        val extractedSrcResult = extractedNestedSourceCandidates
-          .fold(extractedNestedSourceCandidates.next()) { (a, b) =>
-            // We're not using orElse because we want to:
-            // - find the first successful result
-            // - but NOT aggregate the errors, if everything fails, keep only the first error
-            a.recoverWith(errors => b.recoverWith(_ => DerivationResult.fail(errors)))
-          }
-
-        extractedSrcResult.flatMap { extractedSrc =>
+      case TransformerOverride.Renamed(sourcePath, _) =>
+        extractSrcByPath(sourcePath, toName).flatMap { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
           DerivationResult.namedScope(
             s"Recursive derivation for field `$sourcePath`: ${Type
@@ -434,6 +376,62 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               }
           }
         }
+    }
+
+    private def extractSrcByPath[From, To](sourcePath: Path, toName: String)(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[ExistentialExpr] = {
+      def extractSource[Source: Type](
+          sourceName: String,
+          extractedSrcExpr: Expr[Source]
+      ): DerivationResult[ExistentialExpr] = Type[Source] match {
+        case Product.Extraction(getters) =>
+          getters.filter { case (fromName, _) => areFieldNamesMatching(fromName, sourceName) }.toList match {
+            case Nil =>
+              DerivationResult.assertionError(
+                s"""|Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found
+                    |available methods: ${getters.keys.map(n => s"`$n`").mkString(", ")}""".stripMargin
+              )
+            case (_, getter) :: Nil =>
+              import getter.Underlying as Getter, getter.value.get
+              DerivationResult.pure(get(extractedSrcExpr).as_??)
+            case matchingGetters =>
+              DerivationResult.ambiguousFieldOverrides[From, To, ExistentialExpr](
+                sourceName,
+                matchingGetters.map(_._1).sorted,
+                ctx.config.flags.getFieldNameComparison.toString
+              )
+          }
+        case _ =>
+          DerivationResult.assertionError(
+            s"""Assumed that field $sourceName is a part of ${Type.prettyPrint[Source]}, but wasn't found"""
+          )
+      }
+
+      def extractNestedSource(path: Path, extractedSrcValue: ExistentialExpr): DerivationResult[ExistentialExpr] =
+        path match {
+          case Path.Root =>
+            DerivationResult.pure(extractedSrcValue)
+          case Path.AtField(sourceName, path2) =>
+            import extractedSrcValue.Underlying as ExtractedSourceValue, extractedSrcValue.value as extractedSrcExpr
+            extractSource[ExtractedSourceValue](sourceName, extractedSrcExpr).flatMap { extractedSrcValue2 =>
+              extractNestedSource(path2, extractedSrcValue2)
+            }
+          case path =>
+            DerivationResult.notSupportedRenameFromPath[From, To, ExistentialExpr](toName, path, ctx.srcJournal.last._1)
+        }
+
+      val extractedNestedSourceCandidates = for {
+        (prefixPath, prefixExpr) <- ctx.srcJournal.reverseIterator
+        newSourcePath <- sourcePath.drop(prefixPath).iterator
+      } yield extractNestedSource(newSourcePath, prefixExpr)
+
+      extractedNestedSourceCandidates.fold(extractedNestedSourceCandidates.next()) { (a, b) =>
+        // We're not using orElse because we want to:
+        // - find the first successful result
+        // - but NOT aggregate the errors, if everything fails, keep only the first error
+        a.recoverWith(errors => b.recoverWith(_ => DerivationResult.fail(errors)))
+      }
     }
 
     // Exposes logic for: OptionToOption, EitherToEither, ...
