@@ -102,7 +102,7 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selectorFrom: Expr[From => S],
       selectorTo: Expr[To => T],
-      f: Expr[From => U]
+      f: Expr[S => U]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameTypes {
       [fromPath <: Path, toPath <: Path] =>
@@ -154,7 +154,7 @@ object PartialTransformerDefinitionMacros {
       td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selectorFrom: Expr[From => S],
       selectorTo: Expr[To => T],
-      f: Expr[From => partial.Result[U]]
+      f: Expr[S => partial.Result[U]]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameTypes {
       [fromPath <: Path, toPath <: Path] =>
@@ -282,10 +282,11 @@ object PartialTransformerDefinitionMacros {
       To: Type,
       Overrides <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
+      T: Type,
       Ctor: Type
   ](
       ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
-      selector: Expr[To => Ctor],
+      selector: Expr[To => T],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -337,10 +338,11 @@ object PartialTransformerDefinitionMacros {
       To: Type,
       Overrides <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
+      T: Type,
       Ctor: Type
   ](
       ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
-      selector: Expr[To => Ctor],
+      selector: Expr[To => T],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -397,10 +399,11 @@ object PartialTransformerDefinitionMacros {
       To: Type,
       Overrides <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
+      T: Type,
       Ctor: Type
   ](
       ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
-      selector: Expr[To => Ctor],
+      selector: Expr[To => T],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {

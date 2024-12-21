@@ -58,7 +58,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       To: WeakTypeTag,
       Overrides <: TransformerOverrides: WeakTypeTag,
       Flags <: TransformerFlags: WeakTypeTag
-  ](selectorFrom: Tree, selectorTo: Tree, f: Tree)(@unused ev: Tree): Tree = c.prefix.tree
+  ](selectorFrom: Tree)(selectorTo: Tree, f: Tree)(@unused ev: Tree): Tree = c.prefix.tree
     .addOverride(f)
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
@@ -86,7 +86,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       To: WeakTypeTag,
       Overrides <: TransformerOverrides: WeakTypeTag,
       Flags <: TransformerFlags: WeakTypeTag
-  ](selectorFrom: Tree, selectorTo: Tree, f: Tree)(@unused ev: Tree): Tree = c.prefix.tree
+  ](selectorFrom: Tree)(selectorTo: Tree, f: Tree)(@unused ev: Tree): Tree = c.prefix.tree
     .addOverride(f)
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
@@ -175,7 +175,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       To: WeakTypeTag,
       Overrides <: TransformerOverrides: WeakTypeTag,
       Flags <: TransformerFlags: WeakTypeTag
-  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+  ](selector: Tree)(f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
     def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
       .addOverride(f)
       .asInstanceOfExpr(
@@ -202,7 +202,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       To: WeakTypeTag,
       Overrides <: TransformerOverrides: WeakTypeTag,
       Flags <: TransformerFlags: WeakTypeTag
-  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+  ](selector: Tree)(f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
     def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
       .addOverride(f)
       .asInstanceOfExpr(
@@ -229,7 +229,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       To: WeakTypeTag,
       Overrides <: TransformerOverrides: WeakTypeTag,
       Flags <: TransformerFlags: WeakTypeTag
-  ](selector: Tree, f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
+  ](selector: Tree)(f: Tree)(@unused ev: Tree): Tree = new ApplyConstructorType {
     def apply[Args <: ArgumentLists: WeakTypeTag]: Tree = c.prefix.tree
       .addOverride(q"_root_.io.scalaland.chimney.internal.runtime.FunctionEitherToResult.lift($f)")
       .asInstanceOfExpr(

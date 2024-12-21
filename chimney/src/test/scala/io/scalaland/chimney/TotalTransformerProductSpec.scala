@@ -284,6 +284,120 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
   }
 
+  group("setting .withFieldComputedFrom(_.field)(_.field, source => value)") {
+
+    test("should not compile when selector is invalid") {
+      import products.{Foo, Bar, HaveY}
+
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputedFrom(_.x)(_.y + "abc", _.toString).transform""")
+        .check(
+          "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
+        )
+
+      compileErrors(
+        """
+        val haveY = HaveY("")
+        Bar(3, (3.14, 3.14)).into[Foo].withFieldComputedFrom(_.x)(cc => haveY.y, _.toString).transform
+        """
+      ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
+
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.x)(_.matching, _.toString).transform""")
+        .arePresent()
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.x)(_.matchingSome, _.toString).transform""")
+        .arePresent()
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.x)(_.matchingLeft, _.toString).transform""")
+        .arePresent()
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.x)(_.matchingRight, _.toString).transform""")
+        .arePresent()
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.x)(_.everyItem, _.toString).transform""")
+        .arePresent()
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.x)(_.everyMapKey, _.toString).transform""")
+        .arePresent()
+      compileErrors("""Bar(3, (3.14, 3.14)).into[Foo].withFieldComputed(_.x)(_.everyMapValue, _.toString).transform""")
+        .arePresent()
+    }
+
+    test("should provide a value for selected target case class field when selector is valid") {
+      import products.{Foo, Bar}, nestedpath.*
+
+      implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
+
+      Bar(3, (3.14, 3.14)).into[Foo].withFieldComputedFrom(_.x)(_.y, a => a.toString).transform ==> Foo(
+        3,
+        "3",
+        (3.14, 3.14)
+      )
+      Bar(3, (3.14, 3.14)).into[Foo].withFieldComputedFrom(aa => aa.x)(cc => cc.y, _.toString).transform ==> Foo(
+        3,
+        "3",
+        (3.14, 3.14)
+      )
+
+      NestedProduct(Bar(3, (3.14, 3.14)))
+        .into[NestedValueClass[Foo]]
+        .withFieldComputedFrom(_.value.x)(_.value.y, _.toString)
+        .transform ==> NestedValueClass(Foo(3, "3", (3.14, 3.14)))
+      NestedValueClass(Bar(3, (3.14, 3.14)))
+        .into[NestedJavaBean[Foo]]
+        .withFieldComputedFrom(aa => aa.value.x)(cc => cc.getValue.y, _.toString)
+        .transform ==> NestedJavaBean(Foo(3, "3", (3.14, 3.14)))
+      NestedJavaBean(Bar(3, (3.14, 3.14)))
+        .into[NestedProduct[Foo]]
+        .withFieldComputedFrom(aa => aa.getValue.x)(cc => cc.value.y, _.toString)
+        .transform ==> NestedProduct(Foo(3, "3", (3.14, 3.14)))
+
+      import trip.*
+
+      Person("John", 10, 140).into[User].withFieldComputed(_.age, _.age * 2).transform ==> User("John", 20, 140)
+
+      NestedProduct(Person("John", 10, 140))
+        .into[NestedValueClass[User]]
+        .withFieldComputedFrom(_.value.age)(_.value.age, _ * 2)
+        .transform ==> NestedValueClass(User("John", 20, 140))
+      NestedValueClass(Person("John", 10, 140))
+        .into[NestedJavaBean[User]]
+        .withFieldComputedFrom(_.value.age)(_.getValue.age, _ * 2)
+        .transform ==> NestedJavaBean(User("John", 20, 140))
+      NestedJavaBean(Person("John", 10, 140))
+        .into[NestedProduct[User]]
+        .withFieldComputedFrom(_.getValue.age)(_.value.age, _ * 2)
+        .transform ==> NestedProduct(User("John", 20, 140))
+
+      NestedComplex(
+        Person("John", 10, 140),
+        Some(Person("John", 10, 140)),
+        Right(Person("John", 10, 140)),
+        List(Person("John", 10, 140)),
+        ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
+      ).into[NestedComplex[User]]
+        .withFieldComputedFrom(_.id.age)(_.option.matchingSome.age, _ + 5)
+        .withFieldComputedFrom(_.id.age)(_.either.matchingLeft.age, _ * 2)
+        .withFieldComputedFrom(_.id.age)(_.either.matchingRight.age, _ * 3)
+        .withFieldComputedFrom(_.id.age)(_.collection.everyItem.age, _ * 4)
+        .withFieldComputedFrom(_.id.age)(_.map.everyMapKey.age, _ * 5)
+        .withFieldComputedFrom(_.id.age)(_.map.everyMapValue.age, _ * 6)
+        .transform ==> NestedComplex(
+        User("John", 10, 140),
+        Some(User("John", 15, 140)),
+        Right(User("John", 30, 140)),
+        List(User("John", 40, 140)),
+        ListMap(User("John", 50, 140) -> User("John", 60, 140))
+      )
+
+      List[NestedADT[Person]](NestedADT.Foo(Person("John", 10, 140)), NestedADT.Bar(Person("John", 10, 140)))
+        .into[Vector[NestedADT[User]]]
+        .withFieldComputedFrom(_.everyItem.matching[NestedADT.Foo[Person]].foo.age)(
+          _.everyItem.matching[NestedADT.Foo[User]].foo.age,
+          _ * 2
+        )
+        .withFieldComputedFrom(_.everyItem.matching[NestedADT.Bar[Person]].bar.age)(
+          _.everyItem.matching[NestedADT.Bar[User]].bar.age,
+          _ * 3
+        )
+        .transform ==> Vector(NestedADT.Foo(User("John", 20, 140)), NestedADT.Bar(User("John", 30, 140)))
+    }
+  }
+
   group("""setting .withFieldRenamed(_.from, _.to)""") {
 
     test("should not be enabled by default") {

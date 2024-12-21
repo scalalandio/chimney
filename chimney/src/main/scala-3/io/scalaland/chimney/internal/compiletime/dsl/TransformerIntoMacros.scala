@@ -74,7 +74,7 @@ object TransformerIntoMacros {
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
       selectorFrom: Expr[From => S],
       selectorTo: Expr[To => T],
-      f: Expr[From => U]
+      f: Expr[S => U]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyFieldNameTypes {
       [fromPath <: Path, toPath <: Path] =>
@@ -174,10 +174,11 @@ object TransformerIntoMacros {
       To: Type,
       Overrides <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
+      T: Type,
       Ctor: Type
   ](
       ti: Expr[TransformerInto[From, To, Overrides, Flags]],
-      selector: Expr[To => Ctor],
+      selector: Expr[To => T],
       f: Expr[Ctor]
   )(using Quotes): Expr[TransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
