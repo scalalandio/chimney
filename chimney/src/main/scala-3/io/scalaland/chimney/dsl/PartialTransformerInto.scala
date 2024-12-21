@@ -114,10 +114,9 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withFieldComputedImpl('this, 'selector, 'f) }
 
-  transparent inline def withFieldComputedFrom[S, T, U](
-      inline selectorFrom: From => S,
+  transparent inline def withFieldComputedFrom[S, T, U](inline selectorFrom: From => S)(
       inline selectorTo: To => T,
-      inline f: From => U
+      inline f: S => U
   )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withFieldComputedFromImpl('this, 'selectorFrom, 'selectorTo, 'f) }
 
@@ -148,10 +147,9 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withFieldComputedPartialImpl('this, 'selector, 'f) }
 
-  transparent inline def withFieldComputedPartialFrom[S, T, U](
-      inline selectorFrom: From => S,
+  transparent inline def withFieldComputedPartialFrom[S, T, U](inline selectorFrom: From => S)(
       inline selectorTo: To => T,
-      inline f: From => partial.Result[U]
+      inline f: S => partial.Result[U]
   )(using U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withFieldComputedPartialFromImpl('this, 'selectorFrom, 'selectorTo, 'f) }
 
@@ -338,10 +336,9 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   )(using IsFunction.Of[Ctor, To]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withConstructorImpl('this, 'f) }
 
-  transparent inline def withConstructorTo[Ctor](
-      inline selector: To => Ctor,
+  transparent inline def withConstructorTo[T, Ctor](inline selector: To => T)(
       inline f: Ctor
-  )(using IsFunction.Of[Ctor, To]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+  )(using IsFunction.Of[Ctor, T]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withConstructorToImpl('this, 'selector, 'f) }
 
   /** Use `f` instead of the primary constructor to parse into `partial.Result[To]` value.
@@ -368,10 +365,9 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   )(using IsFunction.Of[Ctor, partial.Result[To]]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withConstructorPartialImpl('this, 'f) }
 
-  transparent inline def withConstructorPartialTo[Ctor](
-      inline selector: To => Ctor,
+  transparent inline def withConstructorPartialTo[T, Ctor](inline selector: To => T)(
       inline f: Ctor
-  )(using IsFunction.Of[Ctor, partial.Result[To]]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+  )(using IsFunction.Of[Ctor, partial.Result[T]]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withConstructorPartialToImpl('this, 'selector, 'f) }
 
   /** Use `f` instead of the primary constructor to parse into `Either[String, To]` value.
@@ -398,10 +394,9 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   )(using IsFunction.Of[Ctor, Either[String, To]]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withConstructorEitherImpl('this, 'f) }
 
-  transparent inline def withConstructorEitherTo[Ctor](
-      inline selector: To => Ctor,
+  transparent inline def withConstructorEitherTo[T, Ctor](inline selector: To => T)(
       inline f: Ctor
-  )(using IsFunction.Of[Ctor, Either[String, To]]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+  )(using IsFunction.Of[Ctor, Either[String, T]]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withConstructorEitherToImpl('this, 'selector, 'f) }
 
   /** Apply configured partial transformation in-place.

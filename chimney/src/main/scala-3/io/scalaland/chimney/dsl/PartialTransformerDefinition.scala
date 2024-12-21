@@ -110,10 +110,9 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedImpl('this, 'selector, 'f) }
 
-  transparent inline def withFieldComputedFrom[S, T, U](
-      inline selectorFrom: From => S,
+  transparent inline def withFieldComputedFrom[S, T, U](inline selectorFrom: From => S)(
       inline selectorTo: To => T,
-      inline f: From => U
+      inline f: S => U
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedFromImpl('this, 'selectorFrom, 'selectorTo, 'f) }
 
@@ -144,10 +143,9 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedPartialImpl('this, 'selector, 'f) }
 
-  transparent inline def withFieldComputedPartialFrom[S, T, U](
-      inline selectorFrom: From => S,
+  transparent inline def withFieldComputedPartialFrom[S, T, U](inline selectorFrom: From => S)(
       inline selectorTo: To => T,
-      inline f: From => partial.Result[U]
+      inline f: S => partial.Result[U]
   )(using U <:< T): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFieldComputedPartialFromImpl('this, 'selectorFrom, 'selectorTo, 'f) }
 
@@ -332,10 +330,9 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   )(using IsFunction.Of[Ctor, To]): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withConstructorImpl('this, 'f) }
 
-  transparent inline def withConstructorTo[Ctor](
-      inline selector: To => Ctor,
+  transparent inline def withConstructorTo[T, Ctor](inline selector: To => T)(
       inline f: Ctor
-  )(using IsFunction.Of[Ctor, To]): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+  )(using IsFunction.Of[Ctor, T]): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withConstructorToImpl('this, 'selector, 'f) }
 
   /** Use `f` instead of the primary constructor to parse into `partial.Result[To]` value.
@@ -364,11 +361,10 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withConstructorPartialImpl('this, 'f) }
 
-  transparent inline def withConstructorPartialTo[Ctor](
-      inline selector: To => Ctor,
+  transparent inline def withConstructorPartialTo[T, Ctor](inline selector: To => T)(
       inline f: Ctor
   )(using
-      IsFunction.Of[Ctor, partial.Result[To]]
+      IsFunction.Of[Ctor, partial.Result[T]]
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withConstructorPartialToImpl('this, 'selector, 'f) }
 
@@ -398,11 +394,10 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withConstructorEitherImpl('this, 'f) }
 
-  transparent inline def withConstructorEitherTo[Ctor](
-      inline selector: To => Ctor,
+  transparent inline def withConstructorEitherTo[T, Ctor](inline selector: To => T)(
       inline f: Ctor
   )(using
-      IsFunction.Of[Ctor, Either[String, To]]
+      IsFunction.Of[Ctor, Either[String, T]]
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withConstructorEitherToImpl('this, 'selector, 'f) }
 

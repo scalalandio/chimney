@@ -88,10 +88,9 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     macro TransformerIntoMacros.withFieldComputedImpl[From, To, Overrides, Flags]
 
   // TODO
-  def withFieldComputedFrom[S, T, U](
-      selectorFrom: From => S,
+  def withFieldComputedFrom[S, T, U](selectorFrom: From => S)(
       selectorTo: To => T,
-      f: From => U
+      f: S => U
   )(implicit ev: U <:< T): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withFieldComputedFromImpl[From, To, Overrides, Flags]
 
@@ -214,8 +213,8 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     macro TransformerIntoMacros.withConstructorImpl[From, To, Overrides, Flags]
 
   // TODO
-  def withConstructorTo[Ctor](selector: From => Ctor, f: Ctor)(implicit
-      ev: IsFunction.Of[Ctor, To]
+  def withConstructorTo[T, Ctor](selector: To => T)(f: Ctor)(implicit
+      ev: IsFunction.Of[Ctor, T]
   ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withConstructorToImpl[From, To, Overrides, Flags]
 

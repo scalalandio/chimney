@@ -113,10 +113,9 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   )(implicit ev: U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withFieldComputedImpl[From, To, Overrides, Flags]
 
-  def withFieldComputedFrom[S, T, U](
-      selectorFrom: From => S,
+  def withFieldComputedFrom[S, T, U](selectorFrom: From => S)(
       selectorTo: To => T,
-      f: From => U
+      f: S => U
   )(implicit ev: U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withFieldComputedFromImpl[From, To, Overrides, Flags]
 
@@ -147,10 +146,9 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   )(implicit ev: U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withFieldComputedPartialImpl[From, To, Overrides, Flags]
 
-  def withFieldComputedPartialFrom[S, T, U](
-      selectorFrom: From => S,
+  def withFieldComputedPartialFrom[S, T, U](selectorFrom: From => S)(
       selectorTo: To => T,
-      f: From => partial.Result[U]
+      f: S => partial.Result[U]
   )(implicit ev: U <:< T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withFieldComputedPartialFromImpl[From, To, Overrides, Flags]
 
@@ -328,10 +326,9 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   )(implicit ev: IsFunction.Of[Ctor, To]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withConstructorImpl[From, To, Overrides, Flags]
 
-  def withConstructorTo[Ctor](
-      selector: To => Ctor,
+  def withConstructorTo[T, Ctor](selector: To => T)(
       f: Ctor
-  )(implicit ev: IsFunction.Of[Ctor, To]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
+  )(implicit ev: IsFunction.Of[Ctor, T]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withConstructorToImpl[From, To, Overrides, Flags]
 
   /** Use `f` instead of the primary constructor to parse into `partial.Result[To]` value.
@@ -360,11 +357,10 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withConstructorPartialImpl[From, To, Overrides, Flags]
 
-  def withConstructorPartialTo[Ctor](
-      selector: To => Ctor,
+  def withConstructorPartialTo[T, Ctor](selector: To => T)(
       f: Ctor
   )(implicit
-      ev: IsFunction.Of[Ctor, partial.Result[To]]
+      ev: IsFunction.Of[Ctor, partial.Result[T]]
   ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withConstructorPartialToImpl[From, To, Overrides, Flags]
 
@@ -394,11 +390,10 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withConstructorEitherImpl[From, To, Overrides, Flags]
 
-  def withConstructorEitherTo[Ctor](
-      selector: To => Ctor,
+  def withConstructorEitherTo[T, Ctor](selector: To => T)(
       f: Ctor
   )(implicit
-      ev: IsFunction.Of[Ctor, Either[String, To]]
+      ev: IsFunction.Of[Ctor, Either[String, T]]
   ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withConstructorEitherToImpl[From, To, Overrides, Flags]
 

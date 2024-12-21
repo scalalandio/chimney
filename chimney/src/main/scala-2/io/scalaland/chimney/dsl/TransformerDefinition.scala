@@ -94,10 +94,9 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     macro TransformerDefinitionMacros.withFieldComputedImpl[From, To, Overrides, Flags]
 
   // TODO
-  def withFieldComputedFrom[S, T, U](
-      selectorFrom: From => S,
+  def withFieldComputedFrom[S, T, U](selectorFrom: From => S)(
       selectorTo: To => T,
-      f: From => U
+      f: S => U
   )(implicit ev: U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withFieldComputedFromImpl[From, To, Overrides, Flags]
 
@@ -227,10 +226,9 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     macro TransformerDefinitionMacros.withConstructorImpl[From, To, Overrides, Flags]
 
   // TODO
-  def withConstructorTo[Ctor](
-      selector: To => Ctor,
+  def withConstructorTo[T, Ctor](selector: To => T)(
       f: Ctor
-  )(implicit ev: IsFunction.Of[Ctor, To]): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+  )(implicit ev: IsFunction.Of[Ctor, T]): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withConstructorToImpl[From, To, Overrides, Flags]
 
   /** Build Transformer using current configuration.
