@@ -632,6 +632,193 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
   }
 
+  group("setting .withFieldComputedFrom(_.field)(_.field, source => value)") {
+
+    test("should not compile when selector is invalid") {
+      import products.{Foo, Bar, HaveY}
+
+      compileErrors(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedFrom(_.x)(_.y + "abc", _.toString).transform
+        """
+      ).check(
+        "The path expression has to be a single chain of calls on the original input, got operation other than value extraction:"
+      )
+
+      compileErrors(
+        """
+        val haveY = HaveY("")
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedFrom(_.x)(cc => haveY.y, _.toString).transform
+        """
+      ).check("The path expression has to be a single chain of calls on the original input, got external identifier:")
+
+      compileErrors(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedFrom(_.x)(_.matching, _.toString).transform
+        """
+      ).arePresent()
+      compileErrors(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedFrom(_.x)(_.matchingSome, _.toString).transform
+        """
+      ).arePresent()
+      compileErrors(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedFrom(_.x)(_.matchingLeft, _.toString).transform
+        """
+      ).arePresent()
+      compileErrors(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedFrom(_.x)(_.matchingRight, _.toString).transform
+        """
+      ).arePresent()
+      compileErrors(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedFrom(_.x)(_.everyItem, _.toString).transform
+        """
+      ).arePresent()
+      compileErrors(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedFrom(_.x)(_.everyMapKey, _.toString).transform
+        """
+      ).arePresent()
+      compileErrors(
+        """
+        Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedFrom(_.x)(_.everyMapValue, _.toString).transform
+        """
+      ).arePresent()
+    }
+
+    test("should provide a value for selected target case class field when selector is valid") {
+      import products.{Foo, Bar}, nestedpath.*
+
+      implicit val cfg = TransformerConfiguration.default.enableBeanGetters.enableBeanSetters
+
+      val expected = Foo(3, "3", (3.14, 3.14))
+
+      val result = Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedFrom(_.x)(_.y, _.toString).transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = Bar(3, (3.14, 3.14)).intoPartial[Foo].withFieldComputedFrom(_.x)(cc => cc.y, _.toString).transform
+      result2.asOption ==> Some(expected)
+      result2.asEither ==> Right(expected)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result3 = NestedProduct(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedValueClass[Foo]]
+        .withFieldComputedFrom(_.value.x)(_.value.y, _.toString)
+        .transform
+      result3.asOption ==> Some(NestedValueClass(expected))
+      result3.asEither ==> Right(NestedValueClass(expected))
+      result3.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result4 = NestedValueClass(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedJavaBean[Foo]]
+        .withFieldComputedFrom(_.value.x)(_.getValue.y, _.toString)
+        .transform
+      result4.asOption ==> Some(NestedJavaBean(expected))
+      result4.asEither ==> Right(NestedJavaBean(expected))
+      result4.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result5 = NestedJavaBean(Bar(3, (3.14, 3.14)))
+        .intoPartial[NestedProduct[Foo]]
+        .withFieldComputedFrom(_.getValue.x)(_.value.y, _.toString)
+        .transform
+      result5.asOption ==> Some(NestedProduct(expected))
+      result5.asEither ==> Right(NestedProduct(expected))
+      result5.asErrorPathMessageStrings ==> Iterable.empty
+
+      import trip.*
+
+      val expected2 = User("John", 20, 140)
+
+      val result6 = Person("John", 10, 140).intoPartial[User].withFieldComputedFrom(_.age)(_.age, _ * 2).transform
+      result6.asOption ==> Some(expected2)
+      result6.asEither ==> Right(expected2)
+      result6.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result7 = Person("John", 10, 140)
+        .intoPartial[User]
+        .withFieldComputedFrom(_.age)(_.age, _ => sys.error("error happened"))
+        .transform
+      result7.asOption ==> None
+      result7.asEither.isLeft ==> true
+      result7.asErrorPathMessageStrings ==> Iterable(
+        "age" -> "error happened"
+      )
+
+      val result8 = NestedProduct(Person("John", 10, 140))
+        .intoPartial[NestedValueClass[User]]
+        .withFieldComputedFrom(_.value.age)(_.value.age, _ * 2)
+        .transform
+      result8.asOption ==> Some(NestedValueClass(expected2))
+      result8.asEither ==> Right(NestedValueClass(expected2))
+      result8.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result9 = NestedValueClass(Person("John", 10, 140))
+        .intoPartial[NestedJavaBean[User]]
+        .withFieldComputedFrom(_.value.age)(_.getValue.age, _ * 2)
+        .transform
+      result9.asOption ==> Some(NestedJavaBean(expected2))
+      result9.asEither ==> Right(NestedJavaBean(expected2))
+      result9.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result10 = NestedJavaBean(Person("John", 10, 140))
+        .intoPartial[NestedProduct[User]]
+        .withFieldComputedFrom(_.getValue.age)(_.value.age, _ * 2)
+        .transform
+      result10.asOption ==> Some(NestedProduct(expected2))
+      result10.asEither ==> Right(NestedProduct(expected2))
+      result10.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected3 = NestedComplex(
+        User("John", 10, 140),
+        Some(User("John", 15, 140)),
+        Right(User("John", 30, 140)),
+        List(User("John", 40, 140)),
+        ListMap(User("John", 50, 140) -> User("John", 60, 140))
+      )
+
+      val result11 = NestedComplex(
+        Person("John", 10, 140),
+        Some(Person("John", 10, 140)),
+        Right(Person("John", 10, 140)),
+        List(Person("John", 10, 140)),
+        ListMap(Person("John", 10, 140) -> Person("John", 10, 140))
+      ).intoPartial[NestedComplex[User]]
+        .withFieldComputedFrom(_.id.age)(_.option.matchingSome.age, _ + 5)
+        .withFieldComputedFrom(_.id.age)(_.either.matchingLeft.age, _ * 2)
+        .withFieldComputedFrom(_.id.age)(_.either.matchingRight.age, _ * 3)
+        .withFieldComputedFrom(_.id.age)(_.collection.everyItem.age, _ * 4)
+        .withFieldComputedFrom(_.id.age)(_.map.everyMapKey.age, _ * 5)
+        .withFieldComputedFrom(_.id.age)(_.map.everyMapValue.age, _ * 6)
+        .transform
+      result11.asOption ==> Some(expected3)
+      result11.asEither ==> Right(expected3)
+      result11.asErrorPathMessageStrings ==> Iterable.empty
+
+      val expected4 = Vector(NestedADT.Foo(User("John", 20, 140)), NestedADT.Bar(User("John", 30, 140)))
+
+      val result12 =
+        List[NestedADT[Person]](NestedADT.Foo(Person("John", 10, 140)), NestedADT.Bar(Person("John", 10, 140)))
+          .intoPartial[Vector[NestedADT[User]]]
+          .withFieldComputedFrom(_.everyItem.matching[NestedADT.Foo[Person]].foo.age)(
+            _.everyItem.matching[NestedADT.Foo[User]].foo.age,
+            _ * 2
+          )
+          .withFieldComputedFrom(_.everyItem.matching[NestedADT.Bar[Person]].bar.age)(
+            _.everyItem.matching[NestedADT.Bar[User]].bar.age,
+            _ * 3
+          )
+          .transform
+      result12.asOption ==> Some(expected4)
+      result12.asEither ==> Right(expected4)
+      result12.asErrorPathMessageStrings ==> Iterable.empty
+    }
+  }
+
   group("setting .withFieldComputedPartial(_.field, source => value)") {
 
     test("should not compile when selector is invalid") {
