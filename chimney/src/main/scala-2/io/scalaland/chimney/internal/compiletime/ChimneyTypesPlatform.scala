@@ -163,6 +163,38 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
           }
       }
+      object ComputedFrom extends ComputedFromModule {
+        def apply[
+            FromPath <: runtime.Path: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.ComputedFrom[FromPath, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.ComputedFrom[FromPath, ToPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.ComputedFrom[?, ?, ?]].map { A0 =>
+            (
+              fixJavaEnums(A0.param_<[runtime.Path](0)),
+              fixJavaEnums(A0.param_<[runtime.Path](1)),
+              A0.param_<[runtime.TransformerOverrides](2)
+            )
+          }
+      }
+      object ComputedPartialFrom extends ComputedPartialFromModule {
+        def apply[
+            FromPath <: runtime.Path: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.ComputedPartialFrom[FromPath, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.ComputedPartialFrom[FromPath, ToPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.ComputedPartialFrom[?, ?, ?]].map { A0 =>
+            (
+              fixJavaEnums(A0.param_<[runtime.Path](0)),
+              fixJavaEnums(A0.param_<[runtime.Path](1)),
+              A0.param_<[runtime.TransformerOverrides](2)
+            )
+          }
+      }
       object CaseComputed extends CaseComputedModule {
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.CaseComputed[ToPath, Tail]] =

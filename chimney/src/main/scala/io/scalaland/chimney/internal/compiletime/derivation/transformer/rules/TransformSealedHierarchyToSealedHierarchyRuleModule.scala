@@ -56,10 +56,21 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
     private def mapOverriddenElements[From, To](implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[List[Existential[ExprPromise[*, TransformationExpr[To]]]]] = {
-      val overrides = ctx.config.filterCurrentOverridesForSubtype { (someFrom: ??) =>
-        import someFrom.Underlying as SomeFrom
-        Type[SomeFrom] <:< Type[From]
-      }.toList
+      val overrides = ctx.config
+        .filterCurrentOverridesForSubtype { (someFrom: ??) =>
+          import someFrom.Underlying as SomeFrom
+          Type[SomeFrom] <:< Type[From]
+        }
+        .filter {
+          case (_, TransformerOverride.Computed(_, targetPath, _))        => targetPath == ctx.currentTgt
+          case (_, TransformerOverride.ComputedPartial(_, targetPath, _)) => targetPath == ctx.currentTgt
+          case (_, TransformerOverride.Renamed(_, targetPath)) =>
+            targetPath match {
+              case Path.AtSubtype(someTo, root) => someTo.Underlying <:< Type[To] && root == ctx.currentTgt
+              case _                            => false
+            }
+        }
+        .toList
 
       Traverse[List].parTraverse[
         DerivationResult,
@@ -79,40 +90,36 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               // complaining that javaEnum.type is not equal to expected JavaEnum.Value.type.
               lazy val fromExpr = someFromExpr.upcastToExprOf[From]
 
+              // targetPath verified by filter in overrides
               runtimeSubtype match {
-                case TransformerOverride.CaseComputed(runtimeData) =>
+                case TransformerOverride.Computed(_, _, runtimeData) =>
                   // We're constructing:
                   // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => $To](someFromExpr)
                   TransformationExpr.fromTotal(
                     runtimeData.asInstanceOfExpr[From => To].apply(fromExpr)
                   )
-                case TransformerOverride.CaseComputedPartial(runtimeData) =>
+                case TransformerOverride.ComputedPartial(_, _, runtimeData) =>
                   // We're constructing:
                   // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => partial.Result[$To]](someFromExpr)
                   TransformationExpr.fromPartial(
                     runtimeData.asInstanceOfExpr[From => partial.Result[To]].apply(fromExpr)
                   )
-                case TransformerOverride.RenamedTo(targetPath) =>
+                case TransformerOverride.Renamed(_, targetPath) =>
+                  val Path.AtSubtype(someTo, _) = targetPath: @unchecked
                   // We're constructing:
                   // case someFromExpr: $someFrom => $derivedToSubtype.asInstance
-                  await(targetPath match {
-                    case Path.AtSubtype(someTo, root) if someTo.Underlying <:< Type[To] && root == Path.Root =>
-                      import someTo.Underlying as SomeTo
-                      deriveRecursiveTransformationExpr[SomeFrom, SomeTo](
-                        someFromExpr,
-                        Path(_.matching[SomeFrom]),
-                        Path(_.matching[SomeTo])
-                      ).map(
-                        _.fold(totalExpr => TransformationExpr.fromTotal(totalExpr.asInstanceOfExpr[To])) {
-                          partialExpr =>
-                            TransformationExpr.fromPartial(partialExpr.asInstanceOfExpr[partial.Result[To]])
-                        }
-                      )
-                    // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
-                    case _ =>
-                      DerivationResult.assertionError(s"Unexpected path: $targetPath")
-                    // $COVERAGE-ON$
-                  })
+                  import someTo.Underlying as SomeTo
+                  await(
+                    deriveRecursiveTransformationExpr[SomeFrom, SomeTo](
+                      someFromExpr,
+                      Path(_.matching[SomeFrom]),
+                      Path(_.matching[SomeTo])
+                    ).map(
+                      _.fold(totalExpr => TransformationExpr.fromTotal(totalExpr.asInstanceOfExpr[To])) { partialExpr =>
+                        TransformationExpr.fromPartial(partialExpr.asInstanceOfExpr[partial.Result[To]])
+                      }
+                    )
+                  )
               }
             }
           Existential[ExprPromise[*, TransformationExpr[To]], SomeFrom](promise)
