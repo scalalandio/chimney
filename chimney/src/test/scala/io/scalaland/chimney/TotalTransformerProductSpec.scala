@@ -348,7 +348,7 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       import trip.*
 
-      Person("John", 10, 140).into[User].withFieldComputed(_.age, _.age * 2).transform ==> User("John", 20, 140)
+      Person("John", 10, 140).into[User].withFieldComputedFrom(_.age)(_.age, _ * 2).transform ==> User("John", 20, 140)
 
       NestedProduct(Person("John", 10, 140))
         .into[NestedValueClass[User]]
