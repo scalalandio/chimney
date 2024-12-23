@@ -398,7 +398,7 @@ object PartialTransformerIntoMacros {
                     .asInstanceOf[PartialTransformerInto[
                       From,
                       To,
-                      ConstructorPartial[args, Path.Root, Overrides],
+                      ConstructorPartial[args, toPath, Overrides],
                       Flags
                     ]]
               }
