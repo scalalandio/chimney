@@ -42,7 +42,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
 
   /** Use provided value `value` for field picked using `selector`.
     *
-    * By default if `From` is missing field picked by `selector`, compilation fails.
+    * By default, if `From` is missing field picked by `selector`, compilation fails.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-a-provided-value]]
@@ -66,9 +66,9 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withFieldConstImpl[From, To, Overrides, Flags]
 
-  /** Use function `f` to compute value of field picked using `selector`.
+  /** Use the function `f` to compute a value of the field picked using the `selector`.
     *
-    * By default if `From` is missing field picked by `selector` compilation fails.
+    * By default, if `From` is missing a field and it's not provided with some `selector`, the compilation fails.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-computed-value]]
@@ -93,16 +93,41 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   )(implicit ev: U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withFieldComputedImpl[From, To, Overrides, Flags]
 
-  // TODO
+  /** Use the function `f` to compute a value of the field picked using the `selectorTo` from a value extracted with
+    * `selectorFrom` as an input.
+    *
+    * By default, if `From` is missing a field and it's not provided with some `selectorTo`, the compilation fails.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-computed-value]]
+    *   for more details
+    *
+    * @tparam S
+    *   * type of source field
+    * @tparam T
+    *   type of target field
+    * @tparam U
+    *   type of computed value
+    * @param selectorFrom
+    *   source field in `From`, defined like `_.name`
+    * @param selectorTo
+    *   target field in `To`, defined like `_.name`
+    * @param f
+    *   function used to compute value of the target field
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    *
+    * @since 1.6.0
+    */
   def withFieldComputedFrom[S, T, U](selectorFrom: From => S)(
       selectorTo: To => T,
       f: S => U
   )(implicit ev: U <:< T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withFieldComputedFromImpl[From, To, Overrides, Flags]
 
-  /** Use `selectorFrom` field in `From` to obtain the value of `selectorTo` field in `To`.
+  /** Use the `selectorFrom` field in `From` to obtain the value of the `selectorTo` field in `To`.
     *
-    * By default if `From` is missing field picked by `selectorTo` compilation fails.
+    * By default, if `From` is missing a field and it's not provided with some `selectorTo`, the compilation fails.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-its-source-field]]
@@ -129,14 +154,14 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
 
   /** Use `f` to calculate the unmatched subtype when mapping one sealed/enum into another.
     *
-    * By default if mapping one coproduct in `From` into another coproduct in `To` derivation expects that coproducts to
-    * have matching names of its components, and for every component in `To` field's type there is matching component in
-    * `From` type. If some component is missing it fails compilation unless provided replacement with this operation.
+    * By default, if mapping one coproduct in `From` into another coproduct in `To` derivation expects that coproducts
+    * to have matching names of its components, and for every component in `To` field's type there is matching component
+    * in `From` type. If some component is missing it fails compilation unless provided replacement with this operation.
     *
     * For convenience/readability [[withEnumCaseHandled]] alias can be used (e.g. for Scala 3 enums or Java enums).
     *
     * It differs from `withFieldComputed(_.matching[Subtype], src => ...)`, since `withSealedSubtypeHandled` matches on
-    * `From` subtype, while `.matching[Subtype]` matches on `To` value's piece.
+    * a `From` subtype, while `.matching[Subtype]` matches on a `To` value's piece.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-with-a-computed-value]]
@@ -175,7 +200,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withSealedSubtypeHandledImpl[From, To, Overrides, Flags, Subtype]
 
-  /** Use `FromSubtype` in `From` as a source for `ToSubtype` in `To`.
+  /** Use the `FromSubtype` in `From` as a source for the `ToSubtype` in `To`.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#handling-a-specific-sealed-subtype-by-a-specific-target-subtype]]
@@ -225,7 +250,29 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   )(implicit ev: IsFunction.Of[Ctor, To]): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withConstructorImpl[From, To, Overrides, Flags]
 
-  // TODO
+  /** Use `f` instead of the primary constructor to construct the value extracted from `To` using the `selector`.
+    *
+    * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.
+    *
+    * Values for each parameter can be provided the same way as if they were normal constructor's arguments.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/supported-transformations/#types-with-manually-provided-constructors]] for more
+    *   details
+    *
+    * @tparam T
+    *   type of the value which would be constructed with a custom constructor
+    * @tparam Ctor
+    *   type of the Eta-expanded method/lambda which should return `T`
+    * @param selector
+    *   target field in `To`, defined like `_.name`
+    * @param f
+    *   method name or lambda which constructs `To`
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    *
+    * @since 1.6.0
+    */
   def withConstructorTo[T, Ctor](selector: To => T)(
       f: Ctor
   )(implicit ev: IsFunction.Of[Ctor, T]): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
