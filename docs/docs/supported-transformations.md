@@ -1965,15 +1965,37 @@ using `.withFieldComputed`:
     // expected output:
     // Bar(a = "value", b = 40, c = 20L)
     // Right(value = Bar(a = "value", b = 40, c = 20L))
+    
+    // we can also use values extracted from the source
+    pprint.pprintln(
+      List(Foo("value", 10))
+        .into[Vector[Bar]]
+        .withFieldComputedFrom(_.everyItem.b)(_.everyItem.c, _.toLong * 2)
+        .withFieldComputedFrom(_.everyItem.b)(_.everyItem.b, _ * 4)
+        .transform
+    )
+    pprint.pprintln(
+      List(Foo("value", 10))
+        .intoPartial[Vector[Bar]]
+        .withFieldComputedFrom(_.everyItem.b)(_.everyItem.c, _.toLong * 2)
+        .withFieldComputedFrom(_.everyItem.b)(_.everyItem.b, _ * 4)
+        .transform
+        .asEither
+    )
+    // expected output:
+    // Vector(Bar(a = "value", b = 40, c = 20L))
+    // Right(value = Vector(Bar(a = "value", b = 40, c = 20L)))
     ```
 
-`.withFieldComputed` can be used to compute only _successful_ values. What if we want to provide a failure, e.g.:
+`.withFieldComputed`/`.withFieldComputedFrom` can be used to compute only _successful_ values. What if we want to
+provide a failure, e.g.:
 
   - a `String` with an error message
   - an `Exception`
   - or a notion of the empty value?
 
-These cases can be handled only with `PartialTransformer` using `.withFieldComputedPartial`:
+These cases can be handled only with `PartialTransformer` using
+`.withFieldComputedPartial`/.withFieldComputedPartialFrom`:
 
 !!! example 
 
@@ -2036,6 +2058,38 @@ These cases can be handled only with `PartialTransformer` using `.withFieldCompu
     // Left(
     //   value = List(
     //     ("c", ThrowableMessage(throwable = java.lang.NumberFormatException: For input string: "value"))
+    //   )
+    // )
+    
+    // we can also use values extracted from the source
+    pprint.pprintln(
+      List(Foo("20", 10))
+        .intoPartial[Vector[Bar]]
+        .withFieldComputedPartialFrom(_.everyItem.a)(_.everyItem.c, a => partial.Result.fromCatching(a.toLong))
+        .transform
+        .asEither
+        .left
+        .map(_.asErrorPathMessages)
+    )
+    pprint.pprintln(
+      List(Foo("value", 10))
+        .intoPartial[Vector[Bar]]
+        .withFieldComputedPartialFrom(_.everyItem.a)(_.everyItem.c, a => partial.Result.fromCatching(a.toLong))
+        .transform
+        .asEither
+    )
+    // expected output:
+    // Right(value = Vector(Bar(a = "20", b = 10, c = 20L)))
+    // Left(
+    //   value = Errors(
+    //     errors = NonEmptyErrorsChain(
+    //       Error(
+    //         message = ThrowableMessage(
+    //           throwable = java.lang.NumberFormatException: For input string: "value"
+    //         ),
+    //         path = Path(elements = List(Index(index = 0), Accessor(name = "c")))
+    //       )
+    //     )
     //   )
     // )
     ``` 
@@ -4126,6 +4180,18 @@ Then Chimney will try to match the source type's getters against the method's pa
     )
     // expected output:
     // Bar(value = "1000")
+    
+    // we can also provide constructor to selected fields
+    pprint.pprintln(
+      List(Foo(10))
+        .into[Vector[Bar]]
+        .withConstructorTo(_.everyItem) { (value: Int) =>
+          Bar.make(value * 100)
+        }
+        .transform
+    )
+    // expected output:
+    // Vector(Bar(value = "1000"))
     ```
 
 !!! warning
@@ -4190,6 +4256,28 @@ constructor for `PartialTransformer`:
     )
     // expected output:
     // Right(value = Bar(value = 10))
+    
+    // we can also provide constructor to selected fields
+    
+    pprint.pprintln(
+      List(Foo("10"))
+        .intoPartial[Vector[Bar]]
+        .withConstructorPartialTo(_.everyItem)(smartConstructor _)
+        .transform
+        .asEither
+    )
+    // expected output:
+    // Right(value = Vector(Bar(value = 10)))
+    
+    pprint.pprintln(
+      List(Foo("10"))
+        .intoPartial[Vector[Bar]]
+        .withConstructorEitherTo(_.everyItem)(Bar.parse _)
+        .transform
+        .asEither
+    )
+    // expected output:
+    // Right(value = Vector(Bar(value = 10)))
     ```
 
 You can use this to automatically match the source's getters e.g. against smart constructor's arguments - these types
