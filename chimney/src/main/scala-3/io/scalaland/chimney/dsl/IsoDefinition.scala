@@ -36,7 +36,7 @@ final class IsoDefinition[
 
   /** Use `selectorFirst` field in `First` to obtain the value of `selectorSecond` field in `Second`.
     *
-    * By default if `First` is missing field picked by `selectorSecond` (or reverse) the compilation fails.
+    * By default, if `First` is missing field picked by `selectorSecond` (or reverse) the compilation fails.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-its-source-field]]

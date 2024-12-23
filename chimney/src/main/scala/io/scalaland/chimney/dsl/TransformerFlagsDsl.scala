@@ -14,7 +14,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Enable lookup in definitions inherited from supertype.
     *
-    * By default only values defined directly in the type are considered. With this flag supertype methods would not be
+    * By default, only values defined directly in the type are considered. With this flag supertype methods would not be
     * filtered out
     *
     * @see
@@ -39,7 +39,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Enable values to be supplied from method calls. Source method must be public and have no parameter list.
     *
-    * By default this is disabled because method calls may perform side effects (e.g. mutations)
+    * By default, this is disabled because method calls may perform side effects (e.g. mutations)
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#reading-from-methods]] for more details
@@ -61,7 +61,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Enable fallback to default case class values in `To` type.
     *
-    * By default in such case derivation will fail. By enabling this flag, derivation will fallback to default value.
+    * By default, in such case derivation will fail. By enabling this flag, derivation will fallback to default value.
     *
     * This flag can be set in parallel to enabling default values for specific field type with
     * [[enableDefaultValueOfType]].
@@ -91,7 +91,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Enable fallback to default case class values in `To` type for fields of `T` type.
     *
-    * By default in such case derivation will fail. By enabling this flag, derivation will fallback to default value.
+    * By default, in such case derivation will fail. By enabling this flag, derivation will fallback to default value.
     *
     * This flag can be set in parallel to globally enabling default values with [[enableDefaultValues]].
     *
@@ -119,7 +119,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Enable Java Beans naming convention (`.getName`, `.isName`) on `From`.
     *
-    * By default only Scala conversions (`.name`) are allowed.
+    * By default, only Scala conversions (`.name`) are allowed.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#reading-from-bean-getters]] for more details
@@ -141,7 +141,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Enable Java Beans naming convention (`.setName(value)`) on `To`.
     *
-    * By default only Scala conversions (`.copy(name = value)`) are allowed.
+    * By default, only Scala conversions (`.copy(name = value)`) are allowed.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#writing-to-bean-setters]] for more details
@@ -163,8 +163,8 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Enable not failing compilation on unresolved Java Beans naming convention (`.setName(value)`) in `To`.
     *
-    * By default presence of setters (`.setName(value)`) fails compilation unless setters are enabled and matched with a
-    * source field or provided valued.
+    * By default, presence of setters (`.setName(value)`) fails compilation unless setters are enabled and matched with
+    * a source field or provided valued.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#ignoring-unmatched-bean-setters]] for more details
@@ -186,7 +186,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Enable calling unary non-Unit methods with Java Beans naming convention (`.setName(value)`) in `To`.
     *
-    * By default only methods returning `Unit` (`setName(value): Unit`) could be considered setters.
+    * By default, only methods returning `Unit` (`setName(value): Unit`) could be considered setters.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#writing-to-non-unit-bean-setters]] for more details
@@ -208,7 +208,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
 
   /** Sets target value of optional field to None if field is missing from source type `From`.
     *
-    * By default in such case compilation fails.
+    * By default, in such case compilation fails.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#allowing-fallback-to-none-as-the-constructors-argument]]
@@ -259,7 +259,7 @@ private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags 
   /** Enable unpacking/wrapping with wrapper types (classes with have only 1 val, set in a constructor) even when they
     * are not AnyVals.
     *
-    * By default in such case compilation fails.
+    * By default, in such case compilation fails.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#frominto-a-wrapper-type]] for more details

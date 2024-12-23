@@ -37,7 +37,7 @@ final class CodecDefinition[
 
   /** Use `selectorDomain` field in `Domain` to obtain the value of `selectorDto` field in `Dto`.
     *
-    * By default if `Domain` is missing field picked by `selectorDto` (or reverse) the compilation fails.
+    * By default, if `Domain` is missing field picked by `selectorDto` (or reverse) the compilation fails.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-transformations/#wiring-the-constructors-parameter-to-its-source-field]]
