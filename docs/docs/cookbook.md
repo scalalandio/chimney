@@ -152,8 +152,10 @@ By default, code is annotated with`@SuppressWarnings("org.wartremover.warts.All"
     `Transformer.derive` + `import io.scalaland.chimney.syntax._` + `import io.scalaland.chimney.auto._` might actually
     *degrade* the performance, instead of improving it.
     
-    In the future, there will be a conference talk that we will link here, explaining the _sanely-automatic_ derivation
-    that we used in Chimney and how it avoids issues of the automatic derivation that are present in other libraries.  
+    In depth explanation why automatic derivation is slow (when it's slow!) and how Chimney avoided such slowdown can be
+    found in [*Slow-Auto, Inconvenient-Semi: escaping false dichotomy with sanely-automatic derivation*](https://mateuszkubuszok.github.io/SlowAutoInconvenientSemi/)
+    presentation recorded in [Art of Scala](https://www.youtube.com/watch?v=scWvlO_fb78) and [Scala.io](https://www.youtube.com/watch?v=h9NdXLTZkGk),
+    and expanded during [Scala Space podcast](https://www.youtube.com/watch?v=FUL4Ou1SDx4).  
 
 When you use the standard way of working with Chimney, but `import io.scalaland.chimney.dsl._`
 you might notice that it is a very convenient approach, making a lot of things easy:
