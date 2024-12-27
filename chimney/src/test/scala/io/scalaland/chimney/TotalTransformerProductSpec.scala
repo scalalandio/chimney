@@ -831,6 +831,22 @@ class TotalTransformerProductSpec extends ChimneySpec {
         User(1, "Adam", None).into[User2ID].transform ==> User2ID(1, "Adam", None, 0)
       }
     }
+
+    test("should be usable to work in scope") {
+      import products.Renames.*
+
+      implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
+
+      // 1. DSL macros
+      // 2. config parsing and API
+      // 3. tests
+      // TODO: make it work
+      User(1, "Adam", None)
+        .into[User2ID]
+        .withTargetFlag(_.extraID)
+        .enableDefaultValues
+        .transform ==> User2ID(1, "Adam", None, 0)
+    }
   }
 
   group("flag .disableDefaultValues") {

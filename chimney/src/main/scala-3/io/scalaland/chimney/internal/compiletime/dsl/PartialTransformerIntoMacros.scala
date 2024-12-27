@@ -404,4 +404,38 @@ object PartialTransformerIntoMacros {
               }
           }(selector)
     }(f)
+
+  def withSourceFlagImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      T: Type
+  ](
+      ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
+      selectorFrom: Expr[From => T]
+  )(using Quotes): Expr[TransformerSourceFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ? <: Path]] =
+    DslMacroUtils()
+      .applyFieldNameType {
+        [fromPath <: Path] =>
+          (_: Type[fromPath]) ?=>
+            '{ TransformerSourceFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, fromPath]($ti) }
+      }(selectorFrom)
+
+  def withTargetFlagImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      T: Type
+  ](
+      ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
+      selectorTo: Expr[To => T]
+  )(using Quotes): Expr[TransformerTargetFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ? <: Path]] =
+    DslMacroUtils()
+      .applyFieldNameType {
+        [toPath <: Path] =>
+          (_: Type[toPath]) ?=>
+            '{ TransformerTargetFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, toPath]($ti) }
+      }(selectorTo)
 }

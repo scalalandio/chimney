@@ -3,7 +3,13 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.TransformerIntoMacros
-import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{
+  IsFunction,
+  Path,
+  TransformerFlags,
+  TransformerOverrides,
+  WithRuntimeDataStore
+}
 
 /** Provides DSL for configuring [[io.scalaland.chimney.Transformer]]'s generation and using the result to transform
   * value at the same time
@@ -270,6 +276,16 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
       inline f: Ctor
   )(using IsFunction.Of[Ctor, T]): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerIntoMacros.withConstructorToImpl('this, 'selector, 'f) }
+
+  transparent inline def withSourceFlag[T](
+      inline selectorFrom: From => T
+  ): TransformerSourceFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ? <: Path] =
+    ${ TransformerIntoMacros.withSourceFlagImpl[From, To, Overrides, Flags, T]('this, 'selectorFrom) }
+
+  transparent inline def withTargetFlag[T](
+      inline selectorTo: To => T
+  ): TransformerTargetFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ? <: Path] =
+    ${ TransformerIntoMacros.withTargetFlagImpl[From, To, Overrides, Flags, T]('this, 'selectorTo) }
 
   /** Apply configured transformation in-place.
     *

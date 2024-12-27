@@ -2,7 +2,13 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.TransformerIntoMacros
-import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{
+  IsFunction,
+  Path,
+  TransformerFlags,
+  TransformerOverrides,
+  WithRuntimeDataStore
+}
 
 import scala.language.experimental.macros
 
@@ -264,6 +270,16 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
       ev: IsFunction.Of[Ctor, T]
   ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerIntoMacros.withConstructorToImpl[From, To, Overrides, Flags]
+
+  def withSourceFlag[T](
+      selectorFrom: From => T
+  ): TransformerSourceFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ? <: Path] =
+    macro TransformerIntoMacros.withSourceFlagImpl[From, To, Overrides, Flags]
+
+  def withTargetFlag[T](
+      selectorTo: To => T
+  ): TransformerTargetFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ? <: Path] =
+    macro TransformerIntoMacros.withTargetFlagImpl[From, To, Overrides, Flags]
 
   /** Apply configured transformation in-place.
     *

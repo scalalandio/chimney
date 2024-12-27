@@ -7,6 +7,10 @@ object TransformerFlags {
   final class Default extends TransformerFlags
   final class Enable[F <: Flag, Flags <: TransformerFlags] extends TransformerFlags
   final class Disable[F <: Flag, Flags <: TransformerFlags] extends TransformerFlags
+  final class Source[SourcePath <: Path, SourceFlags <: TransformerFlags, Flags <: TransformerFlags]
+      extends TransformerFlags
+  final class Target[TargetPath <: Path, TargetFlags <: TransformerFlags, Flags <: TransformerFlags]
+      extends TransformerFlags
 
   sealed abstract class Flag
   final class InheritedAccessors extends Flag

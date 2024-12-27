@@ -1,6 +1,6 @@
 package io.scalaland.chimney.dsl
 
-import io.scalaland.chimney.internal.runtime.TransformerFlags
+import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}
 import io.scalaland.chimney.internal.runtime.TransformerFlags.*
 
 import scala.annotation.unused
@@ -10,7 +10,7 @@ import scala.annotation.unused
   *
   * @since 1.6.0
   */
-private[dsl] trait TransformerSourceFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
+private[chimney] trait TransformerSourceFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
 
   /** Enable custom way of comparing if source subtypes' names and target fields' names are matching.
     *
@@ -37,9 +37,82 @@ private[dsl] trait TransformerSourceFlagsDsl[UpdateFlag[_ <: TransformerFlags], 
   def disableCustomSubtypeNameComparison: UpdateFlag[Disable[SubtypeNameComparison[?], Flags]] =
     disableFlag[SubtypeNameComparison[?]]
 
+  protected def castedSource: Any = this
+
   private def enableFlag[F <: TransformerFlags.Flag]: UpdateFlag[Enable[F, Flags]] =
-    this.asInstanceOf[UpdateFlag[Enable[F, Flags]]]
+    castedSource.asInstanceOf[UpdateFlag[Enable[F, Flags]]]
 
   private def disableFlag[F <: TransformerFlags.Flag]: UpdateFlag[Disable[F, Flags]] =
-    this.asInstanceOf[UpdateFlag[Disable[F, Flags]]]
+    castedSource.asInstanceOf[UpdateFlag[Disable[F, Flags]]]
+}
+object TransformerSourceFlagsDsl {
+
+  // It's ugly but:
+  // - it works between 2.12/2.13/3
+  // - it let us work around limitations of existential types that we have to use in return types fof whitebox macros on Scala 2
+  // - it let us work around lack of existential types on Scala 3
+
+  final class OfTransformerInto[
+      From,
+      To,
+      Overrides <: TransformerOverrides,
+      Flags <: TransformerFlags,
+      FromPath <: Path
+  ](
+      override protected val castedSource: Any
+  ) extends TransformerSourceFlagsDsl[
+        ({
+          type At[SourceFlags <: TransformerFlags] =
+            TransformerInto[From, To, Overrides, Source[FromPath, SourceFlags, Flags]]
+        })#At,
+        Flags
+      ]
+
+  final class OfTransformerDefinition[
+      From,
+      To,
+      Overrides <: TransformerOverrides,
+      Flags <: TransformerFlags,
+      FromPath <: Path
+  ](
+      override protected val castedSource: Any
+  ) extends TransformerSourceFlagsDsl[
+        ({
+          type At[SourceFlags <: TransformerFlags] =
+            TransformerDefinition[From, To, Overrides, Source[FromPath, SourceFlags, Flags]]
+        })#At,
+        Flags
+      ]
+
+  final class OfPartialTransformerInto[
+      From,
+      To,
+      Overrides <: TransformerOverrides,
+      Flags <: TransformerFlags,
+      FromPath <: Path
+  ](
+      override protected val castedSource: Any
+  ) extends TransformerSourceFlagsDsl[
+        ({
+          type At[SourceFlags <: TransformerFlags] =
+            PartialTransformerInto[From, To, Overrides, Source[FromPath, SourceFlags, Flags]]
+        })#At,
+        Flags
+      ]
+
+  final class OfPartialTransformerDefinition[
+      From,
+      To,
+      Overrides <: TransformerOverrides,
+      Flags <: TransformerFlags,
+      FromPath <: Path
+  ](
+      override protected val castedSource: Any
+  ) extends TransformerSourceFlagsDsl[
+        ({
+          type At[SourceFlags <: TransformerFlags] =
+            PartialTransformerDefinition[From, To, Overrides, Source[FromPath, SourceFlags, Flags]]
+        })#At,
+        Flags
+      ]
 }

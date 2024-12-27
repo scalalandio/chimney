@@ -304,6 +304,42 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             A0.param_<[runtime.TransformerFlags.Flag](0) -> A0.param_<[runtime.TransformerFlags](1)
           }
       }
+      object Source extends SourceModule {
+        def apply[
+            SourcePath <: runtime.Path: Type,
+            SourceFlags <: runtime.TransformerFlags: Type,
+            Flags <: runtime.TransformerFlags: Type
+        ]: Type[runtime.TransformerFlags.Source[SourcePath, SourceFlags, Flags]] =
+          weakTypeTag[runtime.TransformerFlags.Source[SourcePath, SourceFlags, Flags]]
+        def unapply[A](
+            A: Type[A]
+        ): Option[(?<[runtime.Path], ?<[runtime.TransformerFlags], ?<[runtime.TransformerFlags])] =
+          A.asCtor[runtime.TransformerFlags.Source[?, ?, ?]].map { A0 =>
+            (
+              A0.param_<[runtime.Path](0),
+              A0.param_<[runtime.TransformerFlags](1),
+              A0.param_<[runtime.TransformerFlags](1)
+            )
+          }
+      }
+      object Target extends TargetModule {
+        def apply[
+            TargetPath <: runtime.Path: Type,
+            TargetFlags <: runtime.TransformerFlags: Type,
+            Flags <: runtime.TransformerFlags: Type
+        ]: Type[runtime.TransformerFlags.Target[TargetPath, TargetFlags, Flags]] =
+          weakTypeTag[runtime.TransformerFlags.Target[TargetPath, TargetFlags, Flags]]
+        def unapply[A](
+            A: Type[A]
+        ): Option[(?<[runtime.Path], ?<[runtime.TransformerFlags], ?<[runtime.TransformerFlags])] =
+          A.asCtor[runtime.TransformerFlags.Target[?, ?, ?]].map { A0 =>
+            (
+              A0.param_<[runtime.Path](0),
+              A0.param_<[runtime.TransformerFlags](1),
+              A0.param_<[runtime.TransformerFlags](1)
+            )
+          }
+      }
 
       object Flags extends FlagsModule {
         val InheritedAccessors: Type[runtime.TransformerFlags.InheritedAccessors] =

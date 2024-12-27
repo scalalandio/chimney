@@ -431,14 +431,37 @@ object PartialTransformerDefinitionMacros {
           }(selector)
     }(f)
 
-  def buildTransformer[
+  def withSourceFlagImpl[
       From: Type,
       To: Type,
       Overrides <: TransformerOverrides: Type,
       Flags <: TransformerFlags: Type,
-      ImplicitScopeFlags <: TransformerFlags: Type
+      T: Type
   ](
-      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]]
-  )(using Quotes): Expr[PartialTransformer[From, To]] =
-    TransformerMacros.derivePartialTransformerWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags](td)
+      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      selectorFrom: Expr[From => T]
+  )(using Quotes): Expr[TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path]] =
+    DslMacroUtils()
+      .applyFieldNameType {
+        [fromPath <: Path] =>
+          (_: Type[fromPath]) ?=>
+            '{ TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, fromPath]($ti) }
+      }(selectorFrom)
+
+  def withTargetFlagImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      T: Type
+  ](
+      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      selectorTo: Expr[To => T]
+  )(using Quotes): Expr[TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path]] =
+    DslMacroUtils()
+      .applyFieldNameType {
+        [toPath <: Path] =>
+          (_: Type[toPath]) ?=>
+            '{ TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, toPath]($ti) }
+      }(selectorTo)
 }

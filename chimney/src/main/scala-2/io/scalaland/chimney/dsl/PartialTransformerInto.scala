@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerIntoMacros
-import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, Path, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
 
 import scala.language.experimental.macros
 
@@ -519,6 +519,16 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
       ev: IsFunction.Of[Ctor, Either[String, T]]
   ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withConstructorEitherToImpl[From, To, Overrides, Flags]
+
+  def withSourceFlag[T](
+      selectorFrom: From => T
+  ): TransformerSourceFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ? <: Path] =
+    macro PartialTransformerIntoMacros.withSourceFlagImpl[From, To, Overrides, Flags]
+
+  def withTargetFlag[T](
+      selectorTo: To => T
+  ): TransformerTargetFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ? <: Path] =
+    macro PartialTransformerIntoMacros.withTargetFlagImpl[From, To, Overrides, Flags]
 
   /** Apply configured partial transformation in-place.
     *

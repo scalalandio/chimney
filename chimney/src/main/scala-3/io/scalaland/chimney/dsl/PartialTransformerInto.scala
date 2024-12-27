@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Transfor
 import io.scalaland.chimney.internal.compiletime.dsl
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerIntoMacros
-import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, Path, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
 
 /** Provides DSL for configuring [[io.scalaland.chimney.PartialTransformer]]'s generation and using the result to
   * transform value at the same time
@@ -520,6 +520,16 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
       inline f: Ctor
   )(using IsFunction.Of[Ctor, Either[String, T]]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withConstructorEitherToImpl('this, 'selector, 'f) }
+
+  transparent inline def withSourceFlag[T](
+      inline selectorFrom: From => T
+  ): TransformerSourceFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ? <: Path] =
+    ${ PartialTransformerIntoMacros.withSourceFlagImpl[From, To, Overrides, Flags, T]('this, 'selectorFrom) }
+
+  transparent inline def withTargetFlag[T](
+      inline selectorTo: To => T
+  ): TransformerTargetFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ? <: Path] =
+    ${ PartialTransformerIntoMacros.withTargetFlagImpl[From, To, Overrides, Flags, T]('this, 'selectorTo) }
 
   /** Apply configured partial transformation in-place.
     *
