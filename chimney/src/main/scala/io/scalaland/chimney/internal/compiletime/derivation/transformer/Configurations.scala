@@ -26,7 +26,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
       fieldNameComparison: Option[dsls.TransformedNamesComparison] = None,
       subtypeNameComparison: Option[dsls.TransformedNamesComparison] = None,
-      displayMacrosLogging: Boolean = false
+      displayMacrosLogging: Boolean = false,
+      scopedUpdates: List[(SidedPath, TransformerFlags => TransformerFlags)] = List.empty
   ) {
 
     def setBoolFlag[Flag <: runtime.TransformerFlags.Flag: Type](value: Boolean): TransformerFlags =
@@ -85,6 +86,26 @@ private[compiletime] trait Configurations { this: Derivation =>
     def setSubtypeNameComparison(nameComparison: Option[dsls.TransformedNamesComparison]): TransformerFlags =
       copy(subtypeNameComparison = nameComparison)
 
+    def setSourceFlags(sourcePath: Path)(update: TransformerFlags => TransformerFlags): TransformerFlags =
+      copy(scopedUpdates = scopedUpdates :+ (SourcePath(sourcePath) -> update))
+
+    def setTargetFlags(targetPath: Path)(update: TransformerFlags => TransformerFlags): TransformerFlags =
+      copy(scopedUpdates = scopedUpdates :+ (TargetPath(targetPath) -> update))
+
+    def at(prefix: SidedPath)(implicit ctx: TransformationContext[?, ?]): TransformerFlags = prefix match {
+      case SourcePath(fromPath) => prepareForRecursiveCall(fromPath, Path.Root)
+      case TargetPath(toPath)   => prepareForRecursiveCall(Path.Root, toPath)
+    }
+
+    def prepareForRecursiveCall(fromPath: Path, toPath: Path)(implicit
+        ctx: TransformationContext[?, ?]
+    ): TransformerFlags = {
+      val (nested, immediate) = scopedUpdates.view
+        .flatMap { case (path, update) => path.drop(fromPath, toPath).map(_ -> update) }
+        .partition(_._1.path == Path.Root)
+      immediate.map(_._2).foldLeft(this)((f, u) => u(f)).copy(scopedUpdates = nested.toList)
+    }
+
     override def toString: String = s"TransformerFlags(${Vector(
         if (inheritedAccessors) Vector("inheritedAccessors") else Vector.empty,
         if (methodAccessors) Vector("methodAccessors") else Vector.empty,
@@ -100,7 +121,9 @@ private[compiletime] trait Configurations { this: Derivation =>
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
         fieldNameComparison.map(r => s"fieldNameComparison=$r").toList.toVector,
         subtypeNameComparison.map(r => s"subtypeNameComparison=$r").toList.toVector,
-        if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
+        if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty,
+        if (scopedUpdates.nonEmpty) Vector(scopedUpdates.map(_._1).mkString("scopedUpdates=(", ", ", ")"))
+        else Vector.empty
       ).flatten.mkString(", ")})"
   }
   object TransformerFlags {
@@ -234,6 +257,10 @@ private[compiletime] trait Configurations { this: Derivation =>
         case SourcePath(fromPath) => fromPath.drop(droppedFrom).map(SourcePath(_))
         case TargetPath(toPath)   => toPath.drop(droppedTo).map(TargetPath(_))
       }
+    def drop(prefix: SidedPath)(implicit ctx: TransformationContext[?, ?]): Option[SidedPath] = prefix match {
+      case SourcePath(fromPath) => drop(fromPath, Path.Root)
+      case TargetPath(toPath)   => drop(Path.Root, toPath)
+    }
   }
   protected object SidedPath {
 
@@ -405,6 +432,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         ctx: TransformationContext[?, ?]
     ): TransformerConfiguration =
       copy(
+        flags = flags.prepareForRecursiveCall(fromPath, toPath),
         localFlagsOverridden = false,
         runtimeOverrides = for {
           (sidedPath, runtimeOverride) <- runtimeOverrides
@@ -518,6 +546,16 @@ private[compiletime] trait Configurations { this: Derivation =>
           case _ =>
             extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = false)
         }
+      case ChimneyType.TransformerFlags.Source(sourcePath, sourceFlags, flags) =>
+        import sourcePath.Underlying as FSourcePath, sourceFlags.Underlying as SourceFlags, flags.Underlying as Flags2
+        extractTransformerFlags[Flags2](defaultFlags).setSourceFlags(extractPath[FSourcePath])(flags =>
+          extractTransformerFlags[SourceFlags](flags)
+        )
+      case ChimneyType.TransformerFlags.Target(targetPath, targetFlags, flags) =>
+        import targetPath.Underlying as FTargetPath, targetFlags.Underlying as TargetFlags, flags.Underlying as Flags2
+        extractTransformerFlags[Flags2](defaultFlags).setTargetFlags(extractPath[FTargetPath])(flags =>
+          extractTransformerFlags[TargetFlags](flags)
+        )
       // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
       case _ =>
         reportError(s"Invalid internal TransformerFlags type shape: ${Type.prettyPrint[Flags]}!")

@@ -837,14 +837,16 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
 
-      // 1. DSL macros
-      // 2. config parsing and API
-      // 3. tests
+      // 1. DSL macros - done
+      // 2. config parsing and API - done
+      // 3. read scoped flags
+      // 4. tests
       // TODO: make it work
       User(1, "Adam", None)
         .into[User2ID]
         .withTargetFlag(_.extraID)
         .enableDefaultValues
+        .enableMacrosLogging
         .transform ==> User2ID(1, "Adam", None, 0)
     }
   }
