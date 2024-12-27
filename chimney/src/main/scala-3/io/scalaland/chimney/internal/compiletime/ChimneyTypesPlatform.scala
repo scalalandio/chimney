@@ -286,6 +286,50 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             case _ => scala.None
           }
       }
+      object Source extends SourceModule {
+        def apply[
+            SourcePath <: runtime.Path: Type,
+            SourceFlags <: runtime.TransformerFlags: Type,
+            Flags <: runtime.TransformerFlags: Type
+        ]: Type[runtime.TransformerFlags.Source[SourcePath, SourceFlags, Flags]] =
+          quoted.Type.of[runtime.TransformerFlags.Source[SourcePath, SourceFlags, Flags]]
+        def unapply[A](
+            tpe: Type[A]
+        ): Option[(?<[runtime.Path], ?<[runtime.TransformerFlags], ?<[runtime.TransformerFlags])] =
+          tpe match {
+            case '[runtime.TransformerFlags.Source[sourcePath, sourceFlags, flags]] =>
+              Some(
+                (
+                  Type[sourcePath].as_?<[runtime.Path],
+                  Type[sourceFlags].as_?<[runtime.TransformerFlags],
+                  Type[flags].as_?<[runtime.TransformerFlags]
+                )
+              )
+            case _ => scala.None
+          }
+      }
+      object Target extends TargetModule {
+        def apply[
+            TargetPath <: runtime.Path: Type,
+            TargetFlags <: runtime.TransformerFlags: Type,
+            Flags <: runtime.TransformerFlags: Type
+        ]: Type[runtime.TransformerFlags.Target[TargetPath, TargetFlags, Flags]] =
+          quoted.Type.of[runtime.TransformerFlags.Target[TargetPath, TargetFlags, Flags]]
+        def unapply[A](
+            tpe: Type[A]
+        ): Option[(?<[runtime.Path], ?<[runtime.TransformerFlags], ?<[runtime.TransformerFlags])] =
+          tpe match {
+            case '[runtime.TransformerFlags.Target[targetPath, targetFlags, flags]] =>
+              Some(
+                (
+                  Type[targetPath].as_?<[runtime.Path],
+                  Type[targetFlags].as_?<[runtime.TransformerFlags],
+                  Type[flags].as_?<[runtime.TransformerFlags]
+                )
+              )
+            case _ => scala.None
+          }
+      }
 
       object Flags extends FlagsModule {
         val InheritedAccessors: Type[runtime.TransformerFlags.InheritedAccessors] =

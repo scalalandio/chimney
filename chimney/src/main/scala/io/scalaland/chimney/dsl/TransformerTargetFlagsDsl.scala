@@ -1,7 +1,7 @@
 package io.scalaland.chimney.dsl
 
+import io.scalaland.chimney.internal.runtime.{Path, TransformerFlags, TransformerOverrides}
 import io.scalaland.chimney.internal.runtime.TransformerFlags.*
-import io.scalaland.chimney.internal.runtime.TransformerFlags
 
 import scala.annotation.unused
 
@@ -10,7 +10,7 @@ import scala.annotation.unused
   *
   * @since 1.6.0
   */
-private[dsl] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
+private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags] {
 
   /** Enable lookup in definitions inherited from supertype.
     *
@@ -332,9 +332,58 @@ private[dsl] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlags], 
   def disableCustomFieldNameComparison: UpdateFlag[Disable[FieldNameComparison[?], Flags]] =
     disableFlag[FieldNameComparison[?]]
 
+  protected def castedTarget: Any = this
+
   private def enableFlag[F <: TransformerFlags.Flag]: UpdateFlag[Enable[F, Flags]] =
-    this.asInstanceOf[UpdateFlag[Enable[F, Flags]]]
+    castedTarget.asInstanceOf[UpdateFlag[Enable[F, Flags]]]
 
   private def disableFlag[F <: TransformerFlags.Flag]: UpdateFlag[Disable[F, Flags]] =
-    this.asInstanceOf[UpdateFlag[Disable[F, Flags]]]
+    castedTarget.asInstanceOf[UpdateFlag[Disable[F, Flags]]]
+}
+object TransformerTargetFlagsDsl {
+
+  // It's ugly but:
+  // - it works between 2.12/2.13/3
+  // - it let us work around limitations of existential types that we have to use in return types fof whitebox macros on Scala 2
+  // - it let us work around lack of existential types on Scala 3
+
+  final class OfTransformerInto[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags, ToPath <: Path](
+      override protected val castedTarget: Any
+  ) extends TransformerTargetFlagsDsl[
+        ({
+          type At[TargetFlags <: TransformerFlags] =
+            TransformerInto[From, To, Overrides, Target[ToPath, TargetFlags, Flags]]
+        })#At,
+        Flags
+      ]
+
+  final class OfTransformerDefinition[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags, ToPath <: Path](
+      override protected val castedTarget: Any
+  ) extends TransformerTargetFlagsDsl[
+        ({
+          type At[TargetFlags <: TransformerFlags] =
+            TransformerDefinition[From, To, Overrides, Target[ToPath, TargetFlags, Flags]]
+        })#At,
+        Flags
+      ]
+
+  final class OfPartialTransformerInto[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags, ToPath <: Path](
+      override protected val castedTarget: Any
+  ) extends TransformerTargetFlagsDsl[
+        ({
+          type At[TargetFlags <: TransformerFlags] =
+            PartialTransformerInto[From, To, Overrides, Target[ToPath, TargetFlags, Flags]]
+        })#At,
+        Flags
+      ]
+
+  final class OfPartialTransformerDefinition[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags, ToPath <: Path](
+      override protected val castedTarget: Any
+  ) extends TransformerTargetFlagsDsl[
+        ({
+          type At[TargetFlags <: TransformerFlags] =
+            PartialTransformerDefinition[From, To, Overrides, Target[ToPath, TargetFlags, Flags]]
+        })#At,
+        Flags
+      ]
 }

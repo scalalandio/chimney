@@ -191,6 +191,24 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerFlags.Disable
           ] { this: Disable.type => }
 
+      val Source: SourceModule
+      trait SourceModule
+          extends Type.Ctor3UpperBounded[
+            runtime.Path,
+            runtime.TransformerFlags,
+            runtime.TransformerFlags,
+            runtime.TransformerFlags.Source
+          ] { this: Source.type => }
+
+      val Target: TargetModule
+      trait TargetModule
+          extends Type.Ctor3UpperBounded[
+            runtime.Path,
+            runtime.TransformerFlags,
+            runtime.TransformerFlags,
+            runtime.TransformerFlags.Target
+          ] { this: Target.type => }
+
       val Flags: FlagsModule
       trait FlagsModule { this: Flags.type =>
         val InheritedAccessors: Type[runtime.TransformerFlags.InheritedAccessors]

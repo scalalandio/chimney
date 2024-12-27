@@ -3,16 +3,14 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.internal.runtime.TransformerFlags.*
 import io.scalaland.chimney.internal.runtime.TransformerFlags
 
-import scala.annotation.unused
-
 /** Type-level representation of derivation flags which can be enabled/disabled for a specific transformation or
   * globally.
   *
   * @since 0.6.0
   */
 private[dsl] trait TransformerFlagsDsl[UpdateFlag[_ <: TransformerFlags], Flags <: TransformerFlags]
-    extends TransformerTargetFlagsDsl[UpdateFlag, Flags]
-    with TransformerSourceFlagsDsl[UpdateFlag, Flags] {
+    extends TransformerSourceFlagsDsl[UpdateFlag, Flags]
+    with TransformerTargetFlagsDsl[UpdateFlag, Flags] {
 
   /** Enable printing the logs from the derivation process.
     *

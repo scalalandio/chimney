@@ -4,7 +4,7 @@ import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.*
-import io.scalaland.chimney.internal.runtime.{IsFunction, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{IsFunction, Path, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
 
 import scala.quoted.*
 
@@ -289,6 +289,16 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
       inline f: Ctor
   )(using IsFunction.Of[Ctor, T]): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerDefinitionMacros.withConstructorToImpl('this, 'selector, 'f) }
+
+  transparent inline def withSourceFlag[T](
+      inline selectorFrom: From => T
+  ): TransformerSourceFlagsDsl.OfTransformerDefinition[From, To, Overrides, Flags, ? <: Path] =
+    ${ TransformerDefinitionMacros.withSourceFlagImpl[From, To, Overrides, Flags, T]('this, 'selectorFrom) }
+
+  transparent inline def withTargetFlag[T](
+      inline selectorTo: To => T
+  ): TransformerTargetFlagsDsl.OfTransformerDefinition[From, To, Overrides, Flags, ? <: Path] =
+    ${ TransformerDefinitionMacros.withTargetFlagImpl[From, To, Overrides, Flags, T]('this, 'selectorTo) }
 
   /** Build Transformer using current configuration.
     *
