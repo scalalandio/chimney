@@ -66,21 +66,19 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[ToOrPartialTo]] = {
       import ctx.config.*
 
-      lazy val fromEnabledExtractors = fromExtractors
-        .filter { getter =>
-          getter._2.value.sourceType match {
-            case Product.Getter.SourceType.ConstructorVal => true
-            case Product.Getter.SourceType.AccessorMethod => flags.methodAccessors
-            case Product.Getter.SourceType.JavaBeanGetter => flags.beanGetters
-          }
-        }
-        .filter { getter =>
-          !getter._2.value.isInherited || flags.inheritedAccessors
-        }
-
       val usePositionBasedMatching = Type[From].isTuple || Type[To].isTuple
-      lazy val ctorParamToGetter = parameters
-        .zip(fromEnabledExtractors)
+      lazy val fromEnabledExtractorsForPositionBasedMatching = fromExtractors.filter { case (name, getter) =>
+        val fieldFlags = flags.at(TargetPath(Path(_.select(name))))
+        val allowedSourceType = getter.value.sourceType match {
+          case Product.Getter.SourceType.ConstructorVal => true
+          case Product.Getter.SourceType.AccessorMethod => fieldFlags.methodAccessors
+          case Product.Getter.SourceType.JavaBeanGetter => fieldFlags.beanGetters
+        }
+        val allowedInheritance = !getter.value.isInherited || fieldFlags.inheritedAccessors
+        allowedSourceType && allowedInheritance
+      }
+      lazy val ctorParamToGetterByPosition = parameters
+        .zip(fromEnabledExtractorsForPositionBasedMatching)
         .map { case ((toName, ctorParam), (fromName, getter)) =>
           val t3 = (fromName, toName, getter)
           ctorParam -> t3
@@ -122,19 +120,19 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             (String, Existential[Product.Parameter]),
             (String, Existential[TransformationExpr])
           ](
-            if (flags.nonUnitBeanSetters) parameters.toList
-            else
               parameters
-                .filter(to =>
-                  to._2.value.targetType match {
+                .filter { case (toName, param) =>
+                  flags.atTgt(_.select(toName)).nonUnitBeanSetters || (param.value.targetType match {
                     case Product.Parameter.TargetType.SetterParameter(returnedType) =>
                       returnedType.Underlying =:= Type[Unit]
                     case Product.Parameter.TargetType.ConstructorParameter => true
-                  }
-                )
+                  })
+                }
                 .toList
           ) { case (toName: String, ctorParam: Existential[Product.Parameter]) =>
             import ctorParam.Underlying as CtorParam, ctorParam.value.defaultValue
+
+            val fieldFlags = flags.atTgt(_.select(toName))
 
             // .withFieldRenamed(_.isField, _.isField2) has no way if figuring out if user means mapping getter
             // into Field2 or isField2 if there are multiple matching target arguments/setters
@@ -174,7 +172,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                   DerivationResult.ambiguousFieldOverrides[From, To, Existential[TransformationExpr]](
                     overrideName,
                     foundOverrides,
-                    flags.getFieldNameComparison.toString
+                    flags.getFieldNameComparison.toString // name comparison is defined for nested fields, not the field itself
                   )
                 case (_, value) =>
                   useOverride[From, To, CtorParam](toName, value).flatMap(
@@ -183,9 +181,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               }
               .orElse {
                 val ambiguityOrPossibleSourceField =
-                  if (usePositionBasedMatching) Right(ctorParamToGetter.get(ctorParam))
+                  if (usePositionBasedMatching) Right(ctorParamToGetterByPosition.get(ctorParam))
                   else
-                    fromEnabledExtractors.collect {
+                    fromEnabledExtractorsForPositionBasedMatching.collect {
                       case (fromName, getter) if areFieldNamesMatching(fromName, toName) => (fromName, toName, getter)
                     }.toList match {
                       case Nil                  => Right(None)
@@ -207,13 +205,16 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 }
               }
               .orElse {
-                useFallbackValues[From, To, CtorParam](
+                useFallbackValues[From, To, CtorParam](toName)(
                   defaultValue.orElse(summonDefaultValue[CtorParam].map(_.provide()))
                 )
               }
               .getOrElse[DerivationResult[Existential[TransformationExpr]]] {
                 if (usePositionBasedMatching)
-                  DerivationResult.tupleArityMismatch(fromArity = fromEnabledExtractors.size, toArity = parameters.size)
+                  DerivationResult.tupleArityMismatch(
+                    fromArity = fromEnabledExtractorsForPositionBasedMatching.size,
+                    toArity = parameters.size
+                  )
                 else {
                   lazy val availableGetters = fromExtractors.filter { case (fromName, _) =>
                     areFieldNamesMatching(fromName, toName)
@@ -235,10 +236,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                           availableDefault = defaultValue.isDefined,
                           availableNone = OptionalValue.unapply[CtorParam].isDefined
                         )
-                    case Product.Parameter.TargetType.SetterParameter(_) if flags.beanSettersIgnoreUnmatched =>
+                    case Product.Parameter.TargetType.SetterParameter(_) if fieldFlags.beanSettersIgnoreUnmatched =>
                       DerivationResult.pure(unmatchedSetter)
                     case Product.Parameter.TargetType.SetterParameter(returnedType)
-                        if !flags.nonUnitBeanSetters && !(returnedType.Underlying =:= Type[Unit]) =>
+                        if !fieldFlags.nonUnitBeanSetters && !(returnedType.Underlying =:= Type[Unit]) =>
                       DerivationResult.pure(nonUnitSetter)
                     case Product.Parameter.TargetType.SetterParameter(_) =>
                       DerivationResult
@@ -399,7 +400,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               DerivationResult.ambiguousFieldOverrides[From, To, ExistentialExpr](
                 sourceName,
                 matchingGetters.map(_._1).sorted,
-                ctx.config.flags.getFieldNameComparison.toString
+                ctx.config.flags.getFieldNameComparison.toString // name comparison is defined for nested fields, not the field itself
               )
           }
         case _ =>
@@ -459,7 +460,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Existential[TransformationExpr]] = ctorTargetType match {
-      case Product.Parameter.TargetType.SetterParameter(_) if !ctx.config.flags.beanSetters =>
+      case Product.Parameter.TargetType.SetterParameter(_) if !ctx.config.flags.atTgt(_.select(toName)).beanSetters =>
         DerivationResult
           .notSupportedTransformerDerivation(ctx)
           .log(s"Matched $fromName to $toName but $toName is setter and they are disabled")
@@ -485,12 +486,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         }
     }
 
-    private def useFallbackValues[From, To, CtorParam: Type](
+    private def useFallbackValues[From, To, CtorParam: Type](toName: String)(
         defaultValue: => Option[Expr[CtorParam]]
     )(implicit ctx: TransformationContext[From, To]): Option[DerivationResult[Existential[TransformationExpr]]] = {
+      lazy val fieldFlags = ctx.config.flags.atTgt(_.select(toName))
+
       def useDefaultValue: Option[DerivationResult[Existential[TransformationExpr]]] =
         // Default values are provided from ProductType parsing.
-        if (ctx.config.flags.isDefaultValueEnabledGloballyOrFor[CtorParam]) {
+        if (fieldFlags.isDefaultValueEnabledGloballyOrFor[CtorParam]) {
           defaultValue.map { (value: Expr[CtorParam]) =>
             // We're constructing:
             // '{ ${ defaultValue } }
@@ -502,7 +505,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
       def useNone: Option[DerivationResult[Existential[TransformationExpr]]] =
         // OptionalValue handles both scala.Options as well as a support provided through integrations.OptionalValue.
-        OptionalValue.unapply[CtorParam].filter(_ => ctx.config.flags.optionDefaultsToNone).map { optional =>
+        OptionalValue.unapply[CtorParam].filter(_ => fieldFlags.optionDefaultsToNone).map { optional =>
           // We're constructing:
           // '{ None }
           DerivationResult.existential[TransformationExpr, CtorParam](

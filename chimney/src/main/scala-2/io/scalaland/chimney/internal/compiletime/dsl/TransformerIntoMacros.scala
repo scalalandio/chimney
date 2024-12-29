@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.dsl.{TransformerInto, TransformerSourceFlagsDsl, TransformerTargetFlagsDsl}
+import io.scalaland.chimney.dsl.TransformerInto
 import io.scalaland.chimney.internal.runtime.{ArgumentLists, Path, TransformerFlags, TransformerOverrides}
 import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
 
@@ -134,10 +134,11 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       Flags <: TransformerFlags: WeakTypeTag
   ](selectorFrom: Tree): Tree = {
     val pathFrom = new ApplyFieldNameType {
-      def apply[FromPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[TransformerSourceFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, FromPath]]
+      def apply[FromPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] = weakTypeTag[FromPath]
     }.applyFromSelector(selectorFrom)
-    q"""new _root_.io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfTransformerInto[${weakTypeOf[From]}, ${weakTypeOf[To]}, ${weakTypeOf[Overrides]}, ${weakTypeOf[Flags]}, $pathFrom](${c.prefix.tree})"""
+    q"""new _root_.io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfTransformerInto[${weakTypeOf[
+        From
+      ]}, ${weakTypeOf[To]}, ${weakTypeOf[Overrides]}, ${weakTypeOf[Flags]}, $pathFrom](${c.prefix.tree})"""
   }
 
   def withTargetFlagImpl[
@@ -147,9 +148,10 @@ class TransformerIntoMacros(val c: whitebox.Context) extends utils.DslMacroUtils
       Flags <: TransformerFlags: WeakTypeTag
   ](selectorTo: Tree): Tree = {
     val pathTo = new ApplyFieldNameType {
-      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[TransformerTargetFlagsDsl.OfTransformerInto[From, To, Overrides, Flags, ToPath]]
+      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] = weakTypeTag[ToPath]
     }.applyFromSelector(selectorTo)
-    q"""new _root_.io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfTransformerInto[${weakTypeOf[From]}, ${weakTypeOf[To]}, ${weakTypeOf[Overrides]}, ${weakTypeOf[Flags]}, $pathTo](${c.prefix.tree})"""
+    q"""new _root_.io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfTransformerInto[${weakTypeOf[
+        From
+      ]}, ${weakTypeOf[To]}, ${weakTypeOf[Overrides]}, ${weakTypeOf[Flags]}, $pathTo](${c.prefix.tree})"""
   }
 }
