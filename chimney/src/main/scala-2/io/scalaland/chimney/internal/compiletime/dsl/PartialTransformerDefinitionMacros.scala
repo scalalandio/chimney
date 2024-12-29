@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.dsl
 
-import io.scalaland.chimney.dsl.{PartialTransformerDefinition, TransformerSourceFlagsDsl, TransformerTargetFlagsDsl}
+import io.scalaland.chimney.dsl.PartialTransformerDefinition
 import io.scalaland.chimney.internal.runtime.{ArgumentLists, Path, TransformerFlags, TransformerOverrides}
 import io.scalaland.chimney.internal.runtime.TransformerOverrides.*
 
@@ -247,8 +247,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       Flags <: TransformerFlags: WeakTypeTag
   ](selectorFrom: Tree): Tree = {
     val pathFrom = new ApplyFieldNameType {
-      def apply[FromPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, FromPath]]
+      def apply[FromPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] = weakTypeTag[FromPath]
     }.applyFromSelector(selectorFrom)
     q"""new _root_.io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfPartialTransformerDefinition[${weakTypeOf[
         From
@@ -262,8 +261,7 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       Flags <: TransformerFlags: WeakTypeTag
   ](selectorTo: Tree): Tree = {
     val pathTo = new ApplyFieldNameType {
-      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-        weakTypeTag[TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ToPath]]
+      def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] = weakTypeTag[ToPath]
     }.applyFromSelector(selectorTo)
     q"""new _root_.io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfPartialTransformerDefinition[${weakTypeOf[
         From

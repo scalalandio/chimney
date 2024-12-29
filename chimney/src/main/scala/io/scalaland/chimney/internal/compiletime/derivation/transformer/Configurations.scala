@@ -96,11 +96,17 @@ private[compiletime] trait Configurations { this: Derivation =>
       case SourcePath(fromPath) => prepareForRecursiveCall(fromPath, Path.Root)
       case TargetPath(toPath)   => prepareForRecursiveCall(Path.Root, toPath)
     }
+    def atSrc(selector: Path => Path)(implicit ctx: TransformationContext[?, ?]): TransformerFlags = at(
+      SourcePath(selector)
+    )
+    def atTgt(selector: Path => Path)(implicit ctx: TransformationContext[?, ?]): TransformerFlags = at(
+      TargetPath(selector)
+    )
 
     def prepareForRecursiveCall(fromPath: Path, toPath: Path)(implicit
         ctx: TransformationContext[?, ?]
     ): TransformerFlags = {
-      val (nested, immediate) = scopedUpdates.view
+      val (immediate, nested) = scopedUpdates.view
         .flatMap { case (path, update) => path.drop(fromPath, toPath).map(_ -> update) }
         .partition(_._1.path == Path.Root)
       immediate.map(_._2).foldLeft(this)((f, u) => u(f)).copy(scopedUpdates = nested.toList)
@@ -272,8 +278,14 @@ private[compiletime] trait Configurations { this: Derivation =>
   final protected case class SourcePath(fromPath: Path) extends SidedPath {
     override def toString: String = s"Source at $fromPath"
   }
+  protected object SourcePath {
+    def apply(selector: Path => Path): SourcePath = new SourcePath(Path(selector))
+  }
   final protected case class TargetPath(toPath: Path) extends SidedPath {
     override def toString: String = s"Target at $toPath"
+  }
+  protected object TargetPath {
+    def apply(selector: Path => Path): TargetPath = new TargetPath(Path(selector))
   }
 
   sealed protected trait TransformerOverride extends scala.Product with Serializable

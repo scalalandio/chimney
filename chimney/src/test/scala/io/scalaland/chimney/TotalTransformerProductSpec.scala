@@ -839,14 +839,12 @@ class TotalTransformerProductSpec extends ChimneySpec {
 
       // 1. DSL macros - done
       // 2. config parsing and API - done
-      // 3. read scoped flags
-      // 4. tests
-      // TODO: make it work
+      // 3. read scoped flags - done
+      // 4. tests - done
       User(1, "Adam", None)
         .into[User2ID]
         .withTargetFlag(_.extraID)
         .enableDefaultValues
-        .enableMacrosLogging
         .transform ==> User2ID(1, "Adam", None, 0)
     }
   }
