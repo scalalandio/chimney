@@ -259,6 +259,11 @@ class TotalTransformerStdLibTypesSpec extends ChimneySpec {
       .withFieldConst(_.everyMapKey.value, "ov1")
       .withFieldConst(_.everyMapValue.value, "ov2")
       .transform ==> Map(Bar("ov1") -> Bar("ov2"))
+    Iterable(Foo("a") -> Foo("b"))
+      .into[Map[Bar, Bar]]
+      .withFieldRenamed(_.everyItem._1.value, _.everyMapKey.value)
+      .withFieldRenamed(_.everyItem._2.value, _.everyMapValue.value)
+      .transform ==> Map(Bar("a") -> Bar("b"))
 
     import fixtures.products.Renames.*
 
