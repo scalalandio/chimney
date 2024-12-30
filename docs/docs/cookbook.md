@@ -2,7 +2,7 @@
 
 Examples of various use cases already handled by Chimney.
 
-## Reusing flags for several transformations/patchings
+## Reusing the flags for several transformations/patchings
 
 If we do not want to enable the same flag(s) in several places, we can define shared flag configuration as an implicit:
 
@@ -139,6 +139,57 @@ like [WartRemover](https://www.wartremover.org/) or [Scapegoat](https://github.c
 | `chimney.nowarn=none`                        | does not annotate the generated code with `@nowarn`                           |
 
 By default, code is annotated with`@SuppressWarnings("org.wartremover.warts.All", "all")` and without `@nowarn`. 
+
+## Constraining the flags to a specific field/subtype
+
+Flags set up immediately on a `Transformer` or a `TransformerConfiguration` will affect every field (if it configures
+how to build a class) or every subtype (if it configures how to pattern-match a `sealed`/`enum`).
+
+But we might want to e.g. allow using default values only in a specific field. To achieve that we can use
+`.withSourceFlag`/`.withTargetFlag` methods:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}    
+    import io.scalaland.chimney.dsl._
+    
+    case class User(id: Int, name: String, age: Option[Int])
+    case class User2ID(id: Int, name: String, age: Option[Int], extraID: Int = 0)
+    
+    pprint.pprintln(
+      User(1, "Adam", None)
+        .into[User2ID]
+        .withTargetFlag(_.extraID).enableDefaultValues
+        .transform
+    )
+    // expected output:
+    // User2ID(id = 1, name = "Adam", age = None, extraID = 0)
+    ```
+
+Whether a flag is a part of `.withSourceFlag` or `.withTargetFlag` depends on what it does:
+
+ * when wiring input values to the constructor/setters, there are flags controlling which values can be used as inputs
+   (e.g. inherited values, `def` methods, getters) and whether setters are allowed or not (if there are any). For these
+   flags we are configuring the behavior for a particular constructor argument/setter, so the selector path in on
+   the target side (`.withTargetFlag(pathToTarget)`)
+ * when pattern matching on a `sealed` hierarchy/`enum` we are configuring how the subtype will be handled in a pattern
+   match so the selector path is on the source side (`.withSourceFlag(pathFromSource)`)
+
+Additionally, we need to be aware that some flags cannot act immediately,  on the path we defined it on, but on every
+subptype/field of the path it is defined:
+
+ * `.enableCustomFieldNameComparison` - since the comparator is (also) used to determine if a field has a flag defined
+   for it, we cannot configure a comparator for a single field - the target path of the comparator will decide how 
+   _all_ fields under this target path will be compared  
+ * `.enableCustomSubtypeNameComparison` - since the comparator is (also) used to determine if a subtype has a flag
+   defined for it, we cannot configure a comparator for a single subtype - the source path of the comparator will decide
+   how _all_ fields under this target path will be compared
+
+Some flags can only be set globally:
+
+ * `.enableMacrosLogging` cannot be done for a single field/subtype
 
 ## Automatic, Semiautomatic and Inlined derivation
 
