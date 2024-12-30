@@ -707,6 +707,30 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         result6.asErrorPathMessageStrings ==> Iterable()
       }
     }
+
+    test(
+      "should allow subtypes to be matched using user-provided predicate only for a single field when scoped using .withSourceFlag(_.field)"
+    ) {
+      import fixtures.nestedpath.NestedProduct
+
+      val result = NestedProduct(Foo.BAZ: Foo)
+        .intoPartial[NestedProduct[Bar]]
+        .withSourceFlag(_.value)
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform
+      result.asOption ==> Some(NestedProduct(Bar.Baz))
+      result.asEither ==> Right(NestedProduct(Bar.Baz))
+      result.asErrorPathMessageStrings ==> Iterable()
+
+      val result2 = NestedProduct(Bar.Baz: Bar)
+        .intoPartial[NestedProduct[Foo]]
+        .withSourceFlag(_.value)
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform
+      result2.asOption ==> Some(NestedProduct(Foo.BAZ))
+      result2.asEither ==> Right(NestedProduct(Foo.BAZ))
+      result2.asErrorPathMessageStrings ==> Iterable()
+    }
   }
 
   group("flag .disableCustomSubtypeNameComparison") {

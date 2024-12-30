@@ -4,7 +4,13 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.Transfor
 import io.scalaland.chimney.internal.compiletime.dsl
 import io.scalaland.chimney.partial
 import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerIntoMacros
-import io.scalaland.chimney.internal.runtime.{IsFunction, Path, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{
+  IsFunction,
+  Path,
+  TransformerFlags,
+  TransformerOverrides,
+  WithRuntimeDataStore
+}
 
 /** Provides DSL for configuring [[io.scalaland.chimney.PartialTransformer]]'s generation and using the result to
   * transform value at the same time

@@ -886,6 +886,17 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
         )
       )
     }
+
+    test(
+      "use OptionalValue.empty for fields without source but with default value when enabled only for a single field when scoped using .withTargetFlag(_.field)"
+    ) {
+      Source("foo")
+        .intoPartial[TargetWithOptionAndDefault]
+        .withTargetFlag(_.y)
+        .enableOptionDefaultsToNone
+        .transform
+        .asOption ==> Some(TargetWithOptionAndDefault("foo", Possible.Nope))
+    }
   }
 
   group("flag .disableOptionDefaultsToNone") {

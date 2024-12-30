@@ -636,6 +636,17 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
         )
       )
     }
+
+    test(
+      "use None for fields without source but with default value when enabled only for a single field when scoped using .withTargetFlag(_.field)"
+    ) {
+      Source("foo")
+        .intoPartial[TargetWithOptionAndDefault]
+        .withTargetFlag(_.y)
+        .enableOptionDefaultsToNone
+        .transform
+        .asOption ==> Some(TargetWithOptionAndDefault("foo", None))
+    }
   }
 
   group("flag .disableOptionDefaultsToNone") {

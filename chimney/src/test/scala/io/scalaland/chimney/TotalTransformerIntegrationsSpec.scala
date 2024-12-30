@@ -183,6 +183,16 @@ class TotalTransformerIntegrationsSpec extends ChimneySpec {
         Possible.Present(42)
       )
     }
+
+    test(
+      "use OptionalValue.empty for fields without source but with default value when enabled only for a single field when scoped using .withTargetFlag(_.field)"
+    ) {
+      Source("foo")
+        .into[TargetWithOptionAndDefault]
+        .withTargetFlag(_.y)
+        .enableOptionDefaultsToNone
+        .transform ==> TargetWithOptionAndDefault("foo", Possible.Nope)
+    }
   }
 
   group("flag .disableOptionDefaultsToNone") {

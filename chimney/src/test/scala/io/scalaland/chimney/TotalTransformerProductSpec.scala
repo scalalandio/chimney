@@ -832,15 +832,13 @@ class TotalTransformerProductSpec extends ChimneySpec {
       }
     }
 
-    test("should be usable to work in scope") {
+    test(
+      "should use default value provided with DefaultValue[A] only for a single field when scoped using .withTargetFlag(_.field)"
+    ) {
       import products.Renames.*
 
       implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
 
-      // 1. DSL macros - done
-      // 2. config parsing and API - done
-      // 3. read scoped flags - done
-      // 4. tests - done
       User(1, "Adam", None)
         .into[User2ID]
         .withTargetFlag(_.extraID)
@@ -1021,6 +1019,21 @@ class TotalTransformerProductSpec extends ChimneySpec {
         User(1, "Adam", None).into[User2ID].transform ==> User2ID(1, "Adam", None, 0)
       }
     }
+
+    test(
+      "should use default value provided with DefaultValue[A] only for a single field when scoped using .withTargetFlag(_.field)"
+    ) {
+      import products.Renames.*
+
+      implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
+
+      User(1, "Adam", None).into[User2ID].withTargetFlag(_.extraID).enableDefaultValueOfType[Int].transform ==> User2ID(
+        1,
+        "Adam",
+        None,
+        0
+      )
+    }
   }
 
   group("flag .disableDefaultValueForType[A]") {
@@ -1076,6 +1089,18 @@ class TotalTransformerProductSpec extends ChimneySpec {
       import products.Inherited.*
 
       (new Source).into[Target].enableInheritedAccessors.transform ==> Target("value")
+
+      locally {
+        implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
+
+        (new Source).transformInto[Target] ==> Target("value")
+      }
+    }
+
+    test("should enable using inherited accessors only for a single field when scoped using .withTargetFlag(_.field)") {
+      import products.Inherited.*
+
+      (new Source).into[Target].withTargetFlag(_.value).enableInheritedAccessors.transform ==> Target("value")
 
       locally {
         implicit val cfg = TransformerConfiguration.default.enableInheritedAccessors
@@ -1180,6 +1205,12 @@ class TotalTransformerProductSpec extends ChimneySpec {
         Source(10).into[Target2].withFieldComputed(_.z, a => a.z * 3).transform ==> Target2(10, 30.0)
       }
     }
+
+    test("should enable using accessors only for a single field when scoped using .withTargetFlag(_.field)") {
+      import products.Accessors.*
+
+      Source(10).into[Target2].withTargetFlag(_.z).enableMethodAccessors.transform ==> Target2(10, 10.0)
+    }
   }
 
   group("flag .disableMethodAccessors") {
@@ -1236,18 +1267,18 @@ class TotalTransformerProductSpec extends ChimneySpec {
         UserWithName("value").transformInto[String] ==> "value"
         UserWithName("value").into[String].transform ==> "value"
       }
+    }
 
-      test("should allow wrapping non-AnyVal wrappers") {
-        import fixtures.valuetypes.*
+    test("should allow wrapping non-AnyVal wrappers") {
+      import fixtures.valuetypes.*
 
-        "value".into[UserWithName].enableNonAnyValWrappers.transform ==> UserWithName("value")
+      "value".into[UserWithName].enableNonAnyValWrappers.transform ==> UserWithName("value")
 
-        locally {
-          implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
+      locally {
+        implicit val cfg = TransformerConfiguration.default.enableNonAnyValWrappers
 
-          "value".transformInto[UserWithName] ==> UserWithName("value")
-          "value".into[UserWithName].transform ==> UserWithName("value")
-        }
+        "value".transformInto[UserWithName] ==> UserWithName("value")
+        "value".into[UserWithName].transform ==> UserWithName("value")
       }
     }
 
@@ -1263,6 +1294,17 @@ class TotalTransformerProductSpec extends ChimneySpec {
         UserWithName("value").transformInto[NestedProduct[String]] ==> NestedProduct("value")
         UserWithName("value").into[NestedProduct[String]].transform ==> NestedProduct("value")
       }
+    }
+
+    test("should allow (re)wrapping only for a single field when scoped using .withTargetFlag(_.field)") {
+      import fixtures.nestedpath.NestedProduct
+      import fixtures.valuetypes.*
+
+      NestedProduct(UserWithName("value"))
+        .into[NestedProduct[NestedProduct[String]]]
+        .withTargetFlag(_.value)
+        .enableNonAnyValWrappers
+        .transform ==> NestedProduct(NestedProduct("value"))
     }
   }
 
@@ -1405,6 +1447,22 @@ class TotalTransformerProductSpec extends ChimneySpec {
         Bar(Bar.Baz("test"), 1024).transformInto[Foo] ==> Foo(Foo.Baz("test"), 1024)
         Bar(Bar.Baz("test"), 1024).into[Foo].transform ==> Foo(Foo.Baz("test"), 1024)
       }
+    }
+
+    test("should use user-provided predicate only for a single field when scoped using .withTargetFlag(_.field)") {
+      import fixtures.nestedpath.NestedProduct
+
+      NestedProduct(Foo(Foo.Baz("test"), 1024))
+        .into[NestedProduct[Bar]]
+        .withTargetFlag(_.value)
+        .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform ==> NestedProduct(Bar(Bar.Baz("test"), 1024))
+
+      NestedProduct(Bar(Bar.Baz("test"), 1024))
+        .into[NestedProduct[Foo]]
+        .withTargetFlag(_.value)
+        .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform ==> NestedProduct(Foo(Foo.Baz("test"), 1024))
     }
   }
 

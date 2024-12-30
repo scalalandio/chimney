@@ -120,15 +120,13 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             (String, Existential[Product.Parameter]),
             (String, Existential[TransformationExpr])
           ](
-              parameters
-                .filter { case (toName, param) =>
-                  flags.atTgt(_.select(toName)).nonUnitBeanSetters || (param.value.targetType match {
-                    case Product.Parameter.TargetType.SetterParameter(returnedType) =>
-                      returnedType.Underlying =:= Type[Unit]
-                    case Product.Parameter.TargetType.ConstructorParameter => true
-                  })
-                }
-                .toList
+            parameters.filter { case (toName, param) =>
+              flags.atTgt(_.select(toName)).nonUnitBeanSetters || (param.value.targetType match {
+                case Product.Parameter.TargetType.SetterParameter(returnedType) =>
+                  returnedType.Underlying =:= Type[Unit]
+                case Product.Parameter.TargetType.ConstructorParameter => true
+              })
+            }.toList
           ) { case (toName: String, ctorParam: Existential[Product.Parameter]) =>
             import ctorParam.Underlying as CtorParam, ctorParam.value.defaultValue
 

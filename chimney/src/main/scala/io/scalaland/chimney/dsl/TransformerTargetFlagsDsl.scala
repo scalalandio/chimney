@@ -357,7 +357,13 @@ object TransformerTargetFlagsDsl {
         Flags
       ]
 
-  final class OfTransformerDefinition[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags, ToPath <: Path](
+  final class OfTransformerDefinition[
+      From,
+      To,
+      Overrides <: TransformerOverrides,
+      Flags <: TransformerFlags,
+      ToPath <: Path
+  ](
       override protected val castedTarget: Any
   ) extends TransformerTargetFlagsDsl[
         ({
@@ -367,7 +373,13 @@ object TransformerTargetFlagsDsl {
         Flags
       ]
 
-  final class OfPartialTransformerInto[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags, ToPath <: Path](
+  final class OfPartialTransformerInto[
+      From,
+      To,
+      Overrides <: TransformerOverrides,
+      Flags <: TransformerFlags,
+      ToPath <: Path
+  ](
       override protected val castedTarget: Any
   ) extends TransformerTargetFlagsDsl[
         ({
@@ -377,7 +389,13 @@ object TransformerTargetFlagsDsl {
         Flags
       ]
 
-  final class OfPartialTransformerDefinition[From, To, Overrides <: TransformerOverrides, Flags <: TransformerFlags, ToPath <: Path](
+  final class OfPartialTransformerDefinition[
+      From,
+      To,
+      Overrides <: TransformerOverrides,
+      Flags <: TransformerFlags,
+      ToPath <: Path
+  ](
       override protected val castedTarget: Any
   ) extends TransformerTargetFlagsDsl[
         ({
