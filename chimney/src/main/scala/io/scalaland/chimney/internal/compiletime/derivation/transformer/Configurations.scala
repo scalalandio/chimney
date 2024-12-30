@@ -405,22 +405,28 @@ private[compiletime] trait Configurations { this: Derivation =>
     )
     def filterCurrentOverridesForSome: Set[TransformerOverride.ForField] = ListSet.from(
       runtimeOverrides.collect {
-        case (TargetPath(Path.AtSubtype(tpe, path)), runtimeFieldOverride: TransformerOverride.ForField)
-            if path == Path.Root && tpe.Underlying <:< Type[Some[Any]] =>
+        case (
+              TargetPath(Path.AtSubtype(tpe, Path.AtField("value", path))),
+              runtimeFieldOverride: TransformerOverride.ForField
+            ) if path == Path.Root && tpe.Underlying <:< Type[Some[Any]] =>
           runtimeFieldOverride
       }
     )
     def filterCurrentOverridesForLeft: Set[TransformerOverride.ForField] = ListSet.from(
       runtimeOverrides.collect {
-        case (TargetPath(Path.AtSubtype(tpe, path)), runtimeFieldOverride: TransformerOverride.ForField)
-            if path == Path.Root && tpe.Underlying <:< Type[Left[Any, Any]] =>
+        case (
+              TargetPath(Path.AtSubtype(tpe, Path.AtField("value", path))),
+              runtimeFieldOverride: TransformerOverride.ForField
+            ) if path == Path.Root && tpe.Underlying <:< Type[Left[Any, Any]] =>
           runtimeFieldOverride
       }
     )
     def filterCurrentOverridesForRight: Set[TransformerOverride.ForField] = ListSet.from(
       runtimeOverrides.collect {
-        case (TargetPath(Path.AtSubtype(tpe, path)), runtimeFieldOverride: TransformerOverride.ForField)
-            if path == Path.Root && tpe.Underlying <:< Type[Right[Any, Any]] =>
+        case (
+              TargetPath(Path.AtSubtype(tpe, Path.AtField("value", path))),
+              runtimeFieldOverride: TransformerOverride.ForField
+            ) if path == Path.Root && tpe.Underlying <:< Type[Right[Any, Any]] =>
           runtimeFieldOverride
       }
     )

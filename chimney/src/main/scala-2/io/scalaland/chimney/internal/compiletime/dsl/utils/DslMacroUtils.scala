@@ -90,47 +90,62 @@ private[chimney] trait DslMacroUtils {
                 }
               applyTypes(init.Underlying, name.Underlying)
             }
-          // matches `.matchingSome`
+          // matches `.matchingSome` == `.matching[Some[A]].value`
           case Apply(TypeApply(Select(Apply(_, List(t2)), TermName("matchingSome")), List(_, tpeSomeA)), _) =>
             unpackSelects(t2).map { init =>
               val someA = ExistentialType(c.WeakTypeTag(tpeSomeA.tpe))
+              val value = ExistentialString(TermName("value")) // hardcoded
 
-              def applyTypes[Init <: runtime.Path: c.WeakTypeTag, SomeA: c.WeakTypeTag] =
+              def applyTypes[
+                  Init <: runtime.Path: c.WeakTypeTag,
+                  SomeA: c.WeakTypeTag,
+                  Value <: String: c.WeakTypeTag
+              ] =
                 new ExistentialPath {
-                  type Underlying = runtime.Path.Matching[Init, SomeA]
-                  val Underlying: WeakTypeTag[runtime.Path.Matching[Init, SomeA]] =
-                    weakTypeTag[runtime.Path.Matching[Init, SomeA]]
+                  type Underlying = runtime.Path.Select[runtime.Path.Matching[Init, SomeA], Value]
+                  val Underlying: WeakTypeTag[runtime.Path.Select[runtime.Path.Matching[Init, SomeA], Value]] =
+                    weakTypeTag[runtime.Path.Select[runtime.Path.Matching[Init, SomeA], Value]]
                 }
 
-              applyTypes(init.Underlying, someA.Underlying)
+              applyTypes(init.Underlying, someA.Underlying, value.Underlying)
             }
-          // matches `.matchingLeft`
+          // matches `.matchingLeft` == `.matching[Left[L, R]].value`
           case Apply(TypeApply(Select(Apply(_, List(t2)), TermName("matchingLeft")), List(_, _, tpeLeftL, _)), _) =>
             unpackSelects(t2).map { init =>
               val leftL = ExistentialType(c.WeakTypeTag(tpeLeftL.tpe))
+              val value = ExistentialString(TermName("value")) // hardcoded
 
-              def applyTypes[Init <: runtime.Path: c.WeakTypeTag, LeftL: c.WeakTypeTag] =
+              def applyTypes[
+                  Init <: runtime.Path: c.WeakTypeTag,
+                  LeftL: c.WeakTypeTag,
+                  Value <: String: c.WeakTypeTag
+              ] =
                 new ExistentialPath {
-                  type Underlying = runtime.Path.Matching[Init, LeftL]
-                  val Underlying: WeakTypeTag[runtime.Path.Matching[Init, LeftL]] =
-                    weakTypeTag[runtime.Path.Matching[Init, LeftL]]
+                  type Underlying = runtime.Path.Select[runtime.Path.Matching[Init, LeftL], Value]
+                  val Underlying: WeakTypeTag[runtime.Path.Select[runtime.Path.Matching[Init, LeftL], Value]] =
+                    weakTypeTag[runtime.Path.Select[runtime.Path.Matching[Init, LeftL], Value]]
                 }
 
-              applyTypes(init.Underlying, leftL.Underlying)
+              applyTypes(init.Underlying, leftL.Underlying, value.Underlying)
             }
-          // matches `.matchingRight`
+          // matches `.matchingRight` == `.matching[Right[L, R]].value`
           case Apply(TypeApply(Select(Apply(_, List(t2)), TermName("matchingRight")), List(_, _, _, tpeRightR)), _) =>
             unpackSelects(t2).map { init =>
               val rightR = ExistentialType(c.WeakTypeTag(tpeRightR.tpe))
+              val value = ExistentialString(TermName("value")) // hardcoded
 
-              def applyTypes[Init <: runtime.Path: c.WeakTypeTag, RightR: c.WeakTypeTag] =
+              def applyTypes[
+                  Init <: runtime.Path: c.WeakTypeTag,
+                  RightR: c.WeakTypeTag,
+                  Value <: String: c.WeakTypeTag
+              ] =
                 new ExistentialPath {
-                  type Underlying = runtime.Path.Matching[Init, RightR]
-                  val Underlying: WeakTypeTag[runtime.Path.Matching[Init, RightR]] =
-                    weakTypeTag[runtime.Path.Matching[Init, RightR]]
+                  type Underlying = runtime.Path.Select[runtime.Path.Matching[Init, RightR], Value]
+                  val Underlying: WeakTypeTag[runtime.Path.Select[runtime.Path.Matching[Init, RightR], Value]] =
+                    weakTypeTag[runtime.Path.Select[runtime.Path.Matching[Init, RightR], Value]]
                 }
 
-              applyTypes(init.Underlying, rightR.Underlying)
+              applyTypes(init.Underlying, rightR.Underlying, value.Underlying)
             }
           // matches `.everyItem`
           case Apply(Select(Apply(_, List(t2)), TermName("everyItem")), _) =>

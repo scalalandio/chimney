@@ -118,40 +118,46 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
                   Type.of[runtime.Path.Matching[Init, Subtype]]
               }
             }
-          // matches `.matchingSome`
+          // matches `.matchingSome` == `.matching[Some[A]].value`
           case Apply(
                 TypeApply(Apply(TypeApply(Ident("matchingSome"), _), List(t2)), _),
                 List(IsOptionOf(_, _, someA))
               ) =>
             unpackSelects(t2).map { init =>
-              import init.Underlying as Init, someA.Underlying as SomeA
+              val name = ExistentialString("value") // hardcoded
+              import init.Underlying as Init, someA.Underlying as SomeA, name.Underlying as Value
               new ExistentialPath {
-                type Underlying = runtime.Path.Matching[Init, SomeA]
-                val Underlying: Type[runtime.Path.Matching[Init, SomeA]] = Type.of[runtime.Path.Matching[Init, SomeA]]
+                type Underlying = runtime.Path.Select[runtime.Path.Matching[Init, SomeA], Value]
+                val Underlying: Type[runtime.Path.Select[runtime.Path.Matching[Init, SomeA], Value]] =
+                  Type.of[runtime.Path.Select[runtime.Path.Matching[Init, SomeA], Value]]
               }
             }
-          // matches `.matchingLeft`
+          // matches `.matchingLeft` == `.matching[Left[L, R]].value`
           case Apply(
                 TypeApply(Apply(TypeApply(Ident("matchingLeft"), _), List(t2)), _),
                 List(IsEitherOf(_, _, _, left, _))
               ) =>
             unpackSelects(t2).map { init =>
-              import init.Underlying as Init, left.Underlying as Left
+              val name = ExistentialString("value") // hardcoded
+              import init.Underlying as Init, left.Underlying as Left, name.Underlying as Value
               new ExistentialPath {
-                type Underlying = runtime.Path.Matching[Init, Left]
-                val Underlying: Type[runtime.Path.Matching[Init, Left]] = Type.of[runtime.Path.Matching[Init, Left]]
+                type Underlying = runtime.Path.Select[runtime.Path.Matching[Init, Left], Value]
+                val Underlying: Type[runtime.Path.Select[runtime.Path.Matching[Init, Left], Value]] =
+                  Type.of[runtime.Path.Select[runtime.Path.Matching[Init, Left], Value]]
               }
             }
-          // matches `.matchingRight`
+          // matches `.matchingRight` == `.matching[Right[L, R]].value`
           case Apply(
                 TypeApply(Apply(TypeApply(Ident("matchingRight"), _), List(t2)), _),
                 List(IsEitherOf(_, _, _, _, right))
               ) =>
             unpackSelects(t2).map { init =>
-              import init.Underlying as Init, right.Underlying as Right
+              val name = ExistentialString("value") // hardcoded
+              import init.Underlying as Init, right.Underlying as Right, name.Underlying as Value
               new ExistentialPath {
-                type Underlying = runtime.Path.Matching[Init, Right]
-                val Underlying: Type[runtime.Path.Matching[Init, Right]] = Type.of[runtime.Path.Matching[Init, Right]]
+                type Underlying = runtime.Path.Select[runtime.Path.Matching[Init, Right], Value]
+                val Underlying: Type[runtime.Path.Select[runtime.Path.Matching[Init, Right], Value]] =
+                  Type.of[runtime.Path.Select[runtime.Path.Matching[Init, Right], Value]]
               }
             }
           // matches `.everyItem`

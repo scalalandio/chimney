@@ -49,7 +49,7 @@ private[compiletime] trait TransformPartialOptionToNonOptionRuleModule { this: D
               await(
                 deriveRecursiveTransformationExpr[InnerFrom, To](
                   from2Expr,
-                  followFrom = Path(_.matching[Some[InnerFrom]])
+                  followFrom = Path(_.matching[Some[InnerFrom]].select("value"))
                 )
               ).ensurePartial
             }

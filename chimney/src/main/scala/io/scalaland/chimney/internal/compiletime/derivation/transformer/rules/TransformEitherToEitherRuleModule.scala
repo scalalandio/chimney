@@ -31,8 +31,8 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
       useOverrideIfPresentOr("matchingLeft", ctx.config.filterCurrentOverridesForLeft) {
         deriveRecursiveTransformationExpr[FromL, ToL](
           ctx.src.upcastToExprOf[Left[FromL, FromR]].value,
-          Path(_.matching[Left[FromL, FromR]]),
-          Path(_.matching[Left[ToL, ToR]])
+          Path(_.matching[Left[FromL, FromR]].select("value")),
+          Path(_.matching[Left[ToL, ToR]].select("value"))
         )
       }
         .flatMap { (derivedToL: TransformationExpr[ToL]) =>
@@ -47,8 +47,8 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
       useOverrideIfPresentOr("matchingRight", ctx.config.filterCurrentOverridesForRight) {
         deriveRecursiveTransformationExpr[FromR, ToR](
           ctx.src.upcastToExprOf[Right[FromL, FromR]].value,
-          Path(_.matching[Right[FromL, FromR]]),
-          Path(_.matching[Right[ToL, ToR]])
+          Path(_.matching[Right[FromL, FromR]].select("value")),
+          Path(_.matching[Right[ToL, ToR]].select("value"))
         )
       }
         .flatMap { (derivedToR: TransformationExpr[ToR]) =>
@@ -66,8 +66,8 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
           useOverrideIfPresentOr("matchingLeft", ctx.config.filterCurrentOverridesForLeft) {
             deriveRecursiveTransformationExpr[FromL, ToL](
               leftExpr,
-              Path(_.matching[Left[FromL, FromR]]),
-              Path(_.matching[Left[ToL, ToR]])
+              Path(_.matching[Left[FromL, FromR]].select("value")),
+              Path(_.matching[Left[ToL, ToR]].select("value"))
             )
           }
         }
@@ -78,8 +78,8 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
           useOverrideIfPresentOr("matchingRight", ctx.config.filterCurrentOverridesForRight) {
             deriveRecursiveTransformationExpr[FromR, ToR](
               rightExpr,
-              Path(_.matching[Right[FromL, FromR]]),
-              Path(_.matching[Right[ToL, ToR]])
+              Path(_.matching[Right[FromL, FromR]].select("value")),
+              Path(_.matching[Right[ToL, ToR]].select("value"))
             )
           }
         }
