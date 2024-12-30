@@ -206,18 +206,28 @@ private[compiletime] trait Configurations { this: Derivation =>
     }
 
     object AtItem {
-      def unapply(path: Path): Option[Path] =
-        path.segments.headOption.collect { case Segment.EveryItem => new Path(path.segments.tail) }
+      def unapply(path: Path): Option[Path] = path.segments match {
+        case Segment.EveryItem +: rest     => Some(new Path(rest))
+        case Segment.EveryMapKey +: rest   => Some(new Path(Segment.Select("_1") +: rest))
+        case Segment.EveryMapValue +: rest => Some(new Path(Segment.Select("_2") +: rest))
+        case _                             => None
+      }
     }
 
     object AtMapKey {
-      def unapply(path: Path): Option[Path] =
-        path.segments.headOption.collect { case Segment.EveryMapKey => new Path(path.segments.tail) }
+      def unapply(path: Path): Option[Path] = path.segments match {
+        case Segment.EveryMapKey +: rest                       => Some(new Path(rest))
+        case Segment.EveryItem +: Segment.Select("_1") +: rest => Some(new Path(rest))
+        case _                                                 => None
+      }
     }
 
     object AtMapValue {
-      def unapply(path: Path): Option[Path] =
-        path.segments.headOption.collect { case Segment.EveryMapValue => new Path(path.segments.tail) }
+      def unapply(path: Path): Option[Path] = path.segments match {
+        case Segment.EveryMapValue +: rest                     => Some(new Path(rest))
+        case Segment.EveryItem +: Segment.Select("_2") +: rest => Some(new Path(rest))
+        case _                                                 => None
+      }
     }
 
     sealed private trait Segment extends scala.Product with Serializable
