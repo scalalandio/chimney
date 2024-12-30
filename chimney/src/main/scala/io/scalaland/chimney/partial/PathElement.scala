@@ -25,7 +25,7 @@ sealed trait PathElement {
   */
 object PathElement {
 
-  /** Object property accessor (e.g case class param name).
+  /** Object property accessor (e.g. case class param name).
     *
     * @param name
     *   field name
@@ -69,6 +69,18 @@ object PathElement {
     override def asString: String = s"keys($key)"
   }
 
+  /** At the beginning of a Path that should be modified further, because e.g. it was created by withFieldConst,
+    * withFieldComputed, withFieldConstPartial, withFieldComputedPartial and the whole Path is already constructed.
+    *
+    * @since 1.6.0
+    */
+  final case class Provided(targetPath: String, sourcePath: Option[String]) extends PathElement {
+    override def asString: String = sourcePath match {
+      case Some(src) => s"<provided for path `$targetPath`, computed from expr `$src`>"
+      case None      => s"<provided for path `$targetPath`, const value>"
+    }
+  }
+
   /** Specifies if path element in conventional string representation should be prepended with a dot.
     *
     * @param pathElement
@@ -81,5 +93,6 @@ object PathElement {
     case _: Index    => false
     case _: MapValue => false
     case _: MapKey   => true
+    case _: Provided => false
   }
 }

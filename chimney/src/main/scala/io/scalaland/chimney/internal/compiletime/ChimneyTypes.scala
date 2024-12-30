@@ -30,6 +30,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       val Index: Type[partial.PathElement.Index]
       val MapKey: Type[partial.PathElement.MapKey]
       val MapValue: Type[partial.PathElement.MapValue]
+      val Provided: Type[partial.PathElement.Provided]
     }
 
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
@@ -385,6 +386,7 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       implicit val PathElementIndex: Type[partial.PathElement.Index] = PathElement.Index
       implicit val PathElementMapKey: Type[partial.PathElement.MapKey] = PathElement.MapKey
       implicit val PathElementMapValue: Type[partial.PathElement.MapValue] = PathElement.MapValue
+      implicit val PathElementProvided: Type[partial.PathElement.Provided] = PathElement.Provided
 
       implicit val RuntimeDataStoreType: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] = RuntimeDataStore
 

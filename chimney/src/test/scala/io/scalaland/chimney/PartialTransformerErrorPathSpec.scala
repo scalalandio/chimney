@@ -74,15 +74,15 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
       .transform
     result.asErrorPathMessages ==> Iterable(
       "inner.str" -> partial.ErrorMessage.EmptyValue,
-      "inner.int2" -> partial.ErrorMessage.EmptyValue,
-      "inner.double" -> partial.ErrorMessage.EmptyValue,
-      "b" -> partial.ErrorMessage.EmptyValue
+      "<provided for path `_.int2`, const value>" -> partial.ErrorMessage.EmptyValue,
+      "<provided for path `_.double`, computed from expr `innerfoo`>" -> partial.ErrorMessage.EmptyValue,
+      "<provided for path `_.b`, const value>" -> partial.ErrorMessage.EmptyValue
     )
     result.asErrorPathMessageStrings ==> Iterable(
       "inner.str" -> "empty value",
-      "inner.int2" -> "empty value",
-      "inner.double" -> "empty value",
-      "b" -> "empty value"
+      "<provided for path `_.int2`, const value>" -> "empty value",
+      "<provided for path `_.double`, computed from expr `innerfoo`>" -> "empty value",
+      "<provided for path `_.b`, const value>" -> "empty value"
     )
   }
 

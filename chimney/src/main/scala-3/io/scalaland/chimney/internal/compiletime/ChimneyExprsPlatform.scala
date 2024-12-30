@@ -153,6 +153,9 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
 
       def MapValue(key: Expr[Any]): Expr[partial.PathElement.MapValue] =
         '{ partial.PathElement.MapValue(${ key }) }
+
+      def Provided(targetPath: Expr[String], sourcePath: Expr[Option[String]]): Expr[partial.PathElement.Provided] =
+        '{ partial.PathElement.Provided(${ targetPath }, ${ sourcePath }) }
     }
 
     object RuntimeDataStore extends RuntimeDataStoreModule {

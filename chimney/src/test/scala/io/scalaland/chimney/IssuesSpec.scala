@@ -592,6 +592,9 @@ class IssuesSpec extends ChimneySpec {
       )
     }
 
+    // This whole approach was broken in #209: it showed a path to _target_ field, in a structure that prepends data by
+    // _source_ path, so for nested structures it was a random mixture of source and target fields.
+
     test("withFieldComputedPartial") {
       val result = RawData("any")
         .intoPartial[Data]
@@ -599,7 +602,7 @@ class IssuesSpec extends ChimneySpec {
         .transform
 
       result.asErrorPathMessageStrings ==> Iterable(
-        "id" -> "always fails"
+        "<provided for path `_.id`, computed from expr `rawdata`>" -> "always fails"
       )
 
       val definedPT = PartialTransformer
@@ -608,7 +611,7 @@ class IssuesSpec extends ChimneySpec {
         .buildTransformer
 
       definedPT.transform(RawData("any")).asErrorPathMessageStrings ==> Iterable(
-        "id" -> "always fails"
+        "<provided for path `_.id`, computed from expr `rawdata`>" -> "always fails"
       )
     }
 
@@ -619,7 +622,7 @@ class IssuesSpec extends ChimneySpec {
         .transform
 
       result.asErrorPathMessageStrings ==> Iterable(
-        "id" -> "always fails"
+        "<provided for path `_.id`, const value>" -> "always fails"
       )
 
       val definedPT = PartialTransformer
@@ -628,7 +631,7 @@ class IssuesSpec extends ChimneySpec {
         .buildTransformer
 
       definedPT.transform(RawData("any")).asErrorPathMessageStrings ==> Iterable(
-        "id" -> "always fails"
+        "<provided for path `_.id`, const value>" -> "always fails"
       )
     }
 
