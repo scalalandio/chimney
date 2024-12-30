@@ -608,6 +608,12 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .withFieldConst(_.everyMapValue.value, "ov2")
       .transform
       .asOption ==> Some(Map(Bar("ov1") -> Bar("ov2")))
+    Iterable(Foo("a") -> Foo("b"))
+      .intoPartial[Map[Bar, Bar]]
+      .withFieldRenamed(_.everyItem._1.value, _.everyMapKey.value)
+      .withFieldRenamed(_.everyItem._2.value, _.everyMapValue.value)
+      .transform
+      .asOption ==> Some(Map(Bar("a") -> Bar("b")))
 
     import fixtures.products.Renames.*
 
