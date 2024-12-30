@@ -415,6 +415,24 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
         (Bar.Baz: Bar).into[Foo].transform ==> Foo.BAZ
       }
     }
+
+    test(
+      "should allow subtypes to be matched using user-provided predicate only for a single field when scoped using .withSourceFlag(_.field)"
+    ) {
+      import fixtures.nestedpath.NestedProduct
+
+      NestedProduct(Foo.BAZ: Foo)
+        .into[NestedProduct[Bar]]
+        .withSourceFlag(_.value)
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform ==> NestedProduct(Bar.Baz)
+
+      NestedProduct(Bar.Baz: Bar)
+        .into[NestedProduct[Foo]]
+        .withSourceFlag(_.value)
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform ==> NestedProduct(Foo.BAZ)
+    }
   }
 
   group("flag .disableCustomSubtypeNameComparison") {

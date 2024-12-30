@@ -381,6 +381,18 @@ class TotalTransformerEnumSpec extends ChimneySpec {
         (Foo.bar: Foo).into[Bar].transform ==> Bar.Bar
       }
     }
+
+    test(
+      "should allow subtypes to be matched using user-provided predicate only for a single field when scoped using .withSourceFlag(_.field)"
+    ) {
+      import fixtures.nestedpath.NestedProduct
+
+      NestedProduct(Foo.bar: Foo)
+        .into[NestedProduct[Bar]]
+        .withSourceFlag(_.value)
+        .enableCustomSubtypeNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform ==> NestedProduct(Bar.Bar)
+    }
   }
 
   group("flag .disableCustomSubtypeNameComparison") {

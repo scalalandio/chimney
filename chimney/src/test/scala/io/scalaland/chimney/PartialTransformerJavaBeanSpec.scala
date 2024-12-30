@@ -193,6 +193,24 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       }
     }
 
+    test(
+      "should enable automatic reading from Java Bean getters only for a single field when scoped using .withTargetFlag(_.field)"
+    ) {
+      val source = new JavaBeanSourceWithFlag(id = "test-id", name = "test-name", flag = true)
+      source
+        .intoPartial[CaseClassWithFlag]
+        .withTargetFlag(_.id)
+        .enableBeanGetters
+        .withTargetFlag(_.name)
+        .enableBeanGetters
+        .withTargetFlag(_.flag)
+        .enableBeanGetters
+        .transform
+        .asOption
+        .get
+        .equalsToBean(source) ==> true
+    }
+
     test("not compile when matching an is- getter with type other than Boolean") {
       compileErrors(
         """
@@ -266,6 +284,26 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
           .transform
           .asOption ==> Some(expected)
       }
+    }
+
+    test(
+      "should enable automatic writing to Java Bean setters only for a single field when scoped using .withTargetFlag(_.field)"
+    ) {
+      val expected = new JavaBeanTarget
+      expected.setId("100")
+      expected.setName("name")
+      expected.setFlag(true)
+
+      CaseClassWithFlag("100", "name", flag = true)
+        .intoPartial[JavaBeanTarget]
+        .withTargetFlag(_.getId)
+        .enableBeanSetters
+        .withTargetFlag(_.getName)
+        .enableBeanSetters
+        .withTargetFlag(_.isFlag)
+        .enableBeanSetters
+        .transform
+        .asOption ==> Some(expected)
     }
 
     test("should not compile when accessors are missing") {
@@ -414,6 +452,21 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
       }
     }
 
+    test(
+      "should allow creating Java Bean without calling any of its setters if none are matched only for a single field when scoped using .withTargetFlag(_.field)"
+    ) {
+      ()
+        .intoPartial[JavaBeanTarget]
+        .withTargetFlag(_.getId)
+        .enableIgnoreUnmatchedBeanSetters
+        .withTargetFlag(_.getName)
+        .enableIgnoreUnmatchedBeanSetters
+        .withTargetFlag(_.isFlag)
+        .enableIgnoreUnmatchedBeanSetters
+        .transform
+        .asOption ==> Some(new JavaBeanTarget)
+    }
+
     test("should not compile when some setters are unmatched but of them are and they are disabled") {
       val expected = new JavaBeanTarget
       expected.setId("100")
@@ -538,6 +591,37 @@ class PartialTransformerJavaBeanSpec extends ChimneySpec {
           .transform
           .asOption ==> Some(expected)
       }
+    }
+
+    test(
+      "should allow targeting setter method returning non-Unit values only for a single field when scoped using .withTargetFlag(_.field)"
+    ) {
+      val expected = new JavaBeanTargetNonUnitSetter
+      expected.setId("test1")
+      // Scala 2.12 does not allow us to define 2 val _ = ... in the same scope :/
+      locally {
+        val _ = expected.setName("test2")
+      }
+      locally {
+        val _ = expected.setFlag(true)
+      }
+
+      CaseClassWithFlag("test1", "test2", flag = true)
+        .intoPartial[JavaBeanTargetNonUnitSetter]
+        .withTargetFlag(_.getId())
+        .enableBeanSetters
+        .withTargetFlag(_.getId())
+        .enableNonUnitBeanSetters
+        .withTargetFlag(_.getName())
+        .enableBeanSetters
+        .withTargetFlag(_.getName())
+        .enableNonUnitBeanSetters
+        .withTargetFlag(_.isFlag())
+        .enableBeanSetters
+        .withTargetFlag(_.isFlag())
+        .enableNonUnitBeanSetters
+        .transform
+        .asOption ==> Some(expected)
     }
   }
 

@@ -1715,6 +1715,21 @@ class PartialTransformerProductSpec extends ChimneySpec {
         result3.asErrorPathMessageStrings ==> Iterable.empty
       }
     }
+
+    test(
+      "should use default value provided with DefaultValue[A] only for a single field when scoped using .withTargetFlag(_.field)"
+    ) {
+      import products.Renames.*
+
+      implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
+
+      val expected = User2ID(1, "Adam", None, 0)
+
+      val result = User(1, "Adam", None).intoPartial[User2ID].withTargetFlag(_.extraID).enableDefaultValues.transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
   }
 
   group("flag .disableDefaultValues") {
@@ -1946,6 +1961,22 @@ class PartialTransformerProductSpec extends ChimneySpec {
         result3.asErrorPathMessageStrings ==> Iterable.empty
       }
     }
+
+    test(
+      "should use default value provided with DefaultValue[A] only for a single field when scoped using .withTargetFlag(_.field)"
+    ) {
+      import products.Renames.*
+
+      implicit val defaultInt: integrations.DefaultValue[Int] = () => 0
+
+      val expected = User2ID(1, "Adam", None, 0)
+
+      val result =
+        User(1, "Adam", None).intoPartial[User2ID].withTargetFlag(_.extraID).enableDefaultValueOfType[Int].transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
   }
 
   group("flag .disableDefaultValueForType[A]") {
@@ -2015,6 +2046,17 @@ class PartialTransformerProductSpec extends ChimneySpec {
         result2.asEither ==> Right(expected)
         result2.asErrorPathMessageStrings ==> Iterable.empty
       }
+    }
+
+    test("should enable using inherited accessors only for a single field when scoped using .withTargetFlag(_.field)") {
+      import products.Inherited.*
+
+      val expected = Target("value")
+
+      val result = (new Source).intoPartial[Target].withTargetFlag(_.value).enableInheritedAccessors.transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -2169,6 +2211,17 @@ class PartialTransformerProductSpec extends ChimneySpec {
         result4.asErrorPathMessageStrings ==> Iterable.empty
       }
     }
+
+    test("should enable using accessors only for a single field when scoped using .withTargetFlag(_.field)") {
+      import products.Accessors.*
+
+      val expected = Target2(10, 10.0)
+
+      val result = Source(10).intoPartial[Target2].withTargetFlag(_.z).enableMethodAccessors.transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
   }
 
   group("flag .disableMethodAccessors") {
@@ -2288,6 +2341,22 @@ class PartialTransformerProductSpec extends ChimneySpec {
         result3.asEither ==> Right(expected)
         result3.asErrorPathMessageStrings ==> Iterable.empty
       }
+    }
+
+    test("should allow (re)wrapping only for a single field when scoped using .withTargetFlag(_.field)") {
+      import fixtures.nestedpath.NestedProduct
+      import fixtures.valuetypes.*
+
+      val expected = NestedProduct(NestedProduct[String]("value"))
+
+      val result = NestedProduct(UserWithName("value"))
+        .intoPartial[NestedProduct[NestedProduct[String]]]
+        .withTargetFlag(_.value)
+        .enableNonAnyValWrappers
+        .transform
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -2453,6 +2522,71 @@ class PartialTransformerProductSpec extends ChimneySpec {
         result6.asEither ==> Right(Foo(Foo.Baz("test"), 1024))
         result6.asErrorPathMessageStrings ==> Iterable()
       }
+    }
+
+    test("should allow fields to be matched using user-provided predicate") {
+
+      val result = Foo(Foo.Baz("test"), 1024)
+        .intoPartial[Bar]
+        .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform
+      result.asOption ==> Some(Bar(Bar.Baz("test"), 1024))
+      result.asEither ==> Right(Bar(Bar.Baz("test"), 1024))
+      result.asErrorPathMessageStrings ==> Iterable()
+
+      val result2 = Bar(Bar.Baz("test"), 1024)
+        .intoPartial[Foo]
+        .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform
+      result2.asOption ==> Some(Foo(Foo.Baz("test"), 1024))
+      result2.asEither ==> Right(Foo(Foo.Baz("test"), 1024))
+      result2.asErrorPathMessageStrings ==> Iterable()
+
+      locally {
+        implicit val config = TransformerConfiguration.default.enableCustomFieldNameComparison(
+          TransformedNamesComparison.CaseInsensitiveEquality
+        )
+
+        val result3 = Foo(Foo.Baz("test"), 1024).transformIntoPartial[Bar]
+        result3.asOption ==> Some(Bar(Bar.Baz("test"), 1024))
+        result3.asEither ==> Right(Bar(Bar.Baz("test"), 1024))
+        result3.asErrorPathMessageStrings ==> Iterable()
+        val result4 = Foo(Foo.Baz("test"), 1024).intoPartial[Bar].transform
+        result4.asOption ==> Some(Bar(Bar.Baz("test"), 1024))
+        result4.asEither ==> Right(Bar(Bar.Baz("test"), 1024))
+        result4.asErrorPathMessageStrings ==> Iterable()
+
+        val result5 = Bar(Bar.Baz("test"), 1024).transformIntoPartial[Foo]
+        result5.asOption ==> Some(Foo(Foo.Baz("test"), 1024))
+        result5.asEither ==> Right(Foo(Foo.Baz("test"), 1024))
+        result5.asErrorPathMessageStrings ==> Iterable()
+        val result6 = Bar(Bar.Baz("test"), 1024).intoPartial[Foo].transform
+        result6.asOption ==> Some(Foo(Foo.Baz("test"), 1024))
+        result6.asEither ==> Right(Foo(Foo.Baz("test"), 1024))
+        result6.asErrorPathMessageStrings ==> Iterable()
+      }
+    }
+
+    test("should use user-provided predicate only for a single field when scoped using .withTargetFlag(_.field)") {
+      import fixtures.nestedpath.NestedProduct
+
+      val result = NestedProduct(Foo(Foo.Baz("test"), 1024))
+        .intoPartial[NestedProduct[Bar]]
+        .withTargetFlag(_.value)
+        .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform
+      result.asOption ==> Some(NestedProduct(Bar(Bar.Baz("test"), 1024)))
+      result.asEither ==> Right(NestedProduct(Bar(Bar.Baz("test"), 1024)))
+      result.asErrorPathMessageStrings ==> Iterable()
+
+      val result2 = NestedProduct(Bar(Bar.Baz("test"), 1024))
+        .intoPartial[NestedProduct[Foo]]
+        .withTargetFlag(_.value)
+        .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+        .transform
+      result2.asOption ==> Some(NestedProduct(Foo(Foo.Baz("test"), 1024)))
+      result2.asEither ==> Right(NestedProduct(Foo(Foo.Baz("test"), 1024)))
+      result2.asErrorPathMessageStrings ==> Iterable()
     }
   }
 
