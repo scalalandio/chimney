@@ -690,16 +690,28 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
     //   e = NonEmptyList(
     //     head = Error(
     //       message = StringMessage(message = "John's email: does not contain '@' character"),
-    //       path = Path(elements = List(Index(index = 0), Accessor(name = "email")))
+    //       path = Path(
+    //         elements = List(
+    //           Provided(targetPath = "_.email", sourcePath = Some(value = "registrationform"))
+    //         )
+    //       )
     //     ),
     //     tail = List(
     //       Error(
     //         message = StringMessage(message = "John's age: must have at least 18 years"),
-    //         path = Path(elements = List(Index(index = 0), Accessor(name = "age")))
+    //         path = Path(
+    //           elements = List(
+    //             Provided(targetPath = "_.age", sourcePath = Some(value = "registrationform"))
+    //           )
+    //         )
     //       ),
     //       Error(
     //         message = StringMessage(message = "Bob's age: invalid number"),
-    //         path = Path(elements = List(Index(index = 2), Accessor(name = "age")))
+    //         path = Path(
+    //           elements = List(
+    //             Provided(targetPath = "_.age", sourcePath = Some(value = "registrationform"))
+    //           )
+    //         )
     //       )
     //     )
     //   )
