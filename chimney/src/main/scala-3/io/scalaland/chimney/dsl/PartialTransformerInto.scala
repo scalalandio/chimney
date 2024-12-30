@@ -527,11 +527,39 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   )(using IsFunction.Of[Ctor, Either[String, T]]): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withConstructorEitherToImpl('this, 'selector, 'f) }
 
+  /** Define a flag only on some source value using the `selectorFrom`, rather than globally.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/cookbook/#constraining-flags-to-a-specific-fieldsubtype]] for more details
+    *
+    * @tparam T
+    *   type of the source field
+    * @param selectorFrom
+    *   source field in `From`, defined like `_.name`
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *
+    * @since 1.6.0
+    */
   transparent inline def withSourceFlag[T](
       inline selectorFrom: From => T
   ): TransformerSourceFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ? <: Path] =
     ${ PartialTransformerIntoMacros.withSourceFlagImpl[From, To, Overrides, Flags, T]('this, 'selectorFrom) }
 
+  /** Define a flag only on some source value using the `selectorTo`, rather than globally.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/cookbook/#constraining-flags-to-a-specific-fieldsubtype]] for more details
+    *
+    * @tparam T
+    *   type of the target field
+    * @param selectorTo
+    *   target field in `To`, defined like `_.name`
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *
+    * @since 1.6.0
+    */
   transparent inline def withTargetFlag[T](
       inline selectorTo: To => T
   ): TransformerTargetFlagsDsl.OfPartialTransformerInto[From, To, Overrides, Flags, ? <: Path] =

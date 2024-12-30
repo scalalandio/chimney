@@ -3,7 +3,13 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.{partial, PartialTransformer}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.TransformerMacros
 import io.scalaland.chimney.internal.compiletime.dsl.PartialTransformerDefinitionMacros
-import io.scalaland.chimney.internal.runtime.{IsFunction, Path, TransformerFlags, TransformerOverrides, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{
+  IsFunction,
+  Path,
+  TransformerFlags,
+  TransformerOverrides,
+  WithRuntimeDataStore
+}
 
 import scala.language.experimental.macros
 
@@ -505,7 +511,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @param f
     *   method name or lambda which constructs `Either[String, T]`
     * @return
-    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
     * @since 1.6.0
     */
@@ -516,11 +522,39 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerDefinitionMacros.withConstructorEitherToImpl[From, To, Overrides, Flags]
 
+  /** Define a flag only on some source value using the `selectorFrom`, rather than globally.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/cookbook/#constraining-flags-to-a-specific-fieldsubtype]] for more details
+    *
+    * @tparam T
+    *   type of the source field
+    * @param selectorFrom
+    *   source field in `From`, defined like `_.name`
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *
+    * @since 1.6.0
+    */
   def withSourceFlag[T](
       selectorFrom: From => T
   ): TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path] =
     macro PartialTransformerDefinitionMacros.withSourceFlagImpl[From, To, Overrides, Flags]
 
+  /** Define a flag only on some source value using the `selectorTo`, rather than globally.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/cookbook/#constraining-flags-to-a-specific-fieldsubtype]] for more details
+    *
+    * @tparam T
+    *   type of the target field
+    * @param selectorTo
+    *   target field in `To`, defined like `_.name`
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    *
+    * @since 1.6.0
+    */
   def withTargetFlag[T](
       selectorTo: To => T
   ): TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, ? <: Path] =
