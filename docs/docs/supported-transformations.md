@@ -1574,8 +1574,9 @@ The requirements to use a rename are as follows:
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
     setters are enabled) to point which argument you are targeting
   - the field rename can be _nested_, you can pass `_.foo.bar.baz` there, additionally you can use:
-     - `.matching[Subtype]` to select just one subtype of ADT e.g `_.adt.matching[Subtype].subtypeField` (do not use for
-       matching on `Option` or `Either`! Use dedicated matchers described below)
+     - `.matching[Subtype]` to select just one subtype of ADT e.g `_.adt.matching[Subtype].subtypeField` (not
+       recommended for matching on `Option` or `Either`, as the subtype might be lengthy and require a subsequent
+       `.value`. Use dedicated matchers described below).
      - `.matchingSome` to select values inside `Option` e.g. `_.option.matchingSome.field`
      - `.matchingLeft` and `.matchingRight` to select values inside `Either` e.g. `_.either.matchingLeft.field` or
        `_.either.matchingRight.field`
@@ -1823,8 +1824,9 @@ The requirements to use a value provision are as follows:
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
     setters are enabled)
   - the path can be _nested_, you can pass `_.foo.bar.baz` there, and additionally you can use:
-     - `.matching[Subtype]` to select just one subtype of ADT e.g `_.adt.matching[Subtype].subtypeField` (do not use for
-       matching on `Option` or `Either`! Use dedicated matchers described below)
+     - `.matching[Subtype]` to select just one subtype of ADT e.g `_.adt.matching[Subtype].subtypeField` (not
+       recommended for matching on `Option` or `Either`, as the subtype might be lengthy and require a subsequent
+       `.value`. Use dedicated matchers described below).
      - `.matchingSome` to select values inside `Option` e.g. `_.option.matchingSome.field`
      - `.matchingLeft` and `.matchingRight` to select values inside `Either` e.g. `_.either.matchingLeft.field` or
        `_.either.matchingRight.field`
@@ -2109,8 +2111,9 @@ The requirements to use a value computation are as follows:
   - you have to have a `val`/nullary method/Bean getter with a name matching constructor's argument (or Bean setter if
     setters are enabled)
   - the path can be _nested_, you can pass `_.foo.bar.baz` there, and additionally you can use:
-     - `.matching[Subtype]` to select just one subtype of ADT e.g `_.adt.matching[Subtype].subtypeField` (do not use for
-       matching on `Option` or `Either`! Use dedicated matchers described below)
+     - `.matching[Subtype]` to select just one subtype of ADT e.g `_.adt.matching[Subtype].subtypeField` (not
+       recommended for matching on `Option` or `Either`, as the subtype might be lengthy and require a subsequent
+       `.value`. Use dedicated matchers described below).
      - `.matchingSome` to select values inside `Option` e.g. `_.option.matchingSome.field`
      - `.matchingLeft` and `.matchingRight` to select values inside `Either` e.g. `_.either.matchingLeft.field` or
        `_.either.matchingRight.field`
