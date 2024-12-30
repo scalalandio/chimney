@@ -110,6 +110,7 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
       def Index(index: Expr[Int]): Expr[partial.PathElement.Index]
       def MapKey(key: Expr[Any]): Expr[partial.PathElement.MapKey]
       def MapValue(key: Expr[Any]): Expr[partial.PathElement.MapValue]
+      def Provided(targetPath: Expr[String], sourcePath: Expr[Option[String]]): Expr[partial.PathElement.Provided]
     }
 
     val RuntimeDataStore: RuntimeDataStoreModule

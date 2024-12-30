@@ -18,7 +18,9 @@ final case class Path(private val elements: List[PathElement]) extends AnyVal {
     *
     * @since 0.7.0
     */
-  def prepend(pathElement: PathElement): Path = Path(pathElement :: elements)
+  def prepend(pathElement: PathElement): Path =
+    if (elements.nonEmpty && elements.head.isInstanceOf[PathElement.Provided]) this
+    else Path(pathElement :: elements)
 
   /** Returns conventional string based representation of a path
     *
@@ -31,10 +33,14 @@ final case class Path(private val elements: List[PathElement]) extends AnyVal {
       val it = elements.iterator
       while (it.hasNext) {
         val curr = it.next()
-        if (sb.nonEmpty && PathElement.shouldPrependWithDot(curr)) {
-          sb += '.'
+        if (curr.isInstanceOf[PathElement.Provided]) {
+          sb ++= curr.asString
+        } else {
+          if (sb.nonEmpty && PathElement.shouldPrependWithDot(curr)) {
+            sb += '.'
+          }
+          sb ++= curr.asString
         }
-        sb ++= curr.asString
       }
       sb.result()
     }

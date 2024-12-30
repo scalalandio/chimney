@@ -271,7 +271,6 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           .flatMap(DerivationResult.expanded)
     }
 
-    // TODO: perhaps we should NOT pass To's field name as From's field name when providing errors to overrides?
     def useOverride[From, To, CtorParam: Type](
         toName: String,
         runtimeFieldOverride: TransformerOverride.ForField
@@ -291,15 +290,13 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         // '{
         //   ${ runtimeDataStore }(idx)
         //     .asInstanceOf[partial.Result[$ctorParam]]
-        //     .prependErrorPath(PathElement.Accessor("toName"))
+        //     .prependErrorPath(PathElement.Provided("_.toName", None))
         //  }
         DerivationResult.pure(
           TransformationExpr.fromPartial(
             runtimeData
               .asInstanceOfExpr[partial.Result[CtorParam]]
-              .prependErrorPath(
-                ChimneyExpr.PathElement.Accessor(Expr.String(toName)).upcastToExprOf[partial.PathElement]
-              )
+              .prependErrorPath(providedValue(ctx.currentTgt, toName))
           )
         )
       case TransformerOverride.Computed(sourcePath, _, runtimeData) =>
@@ -319,19 +316,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               //     ${ runtimeDataStore }(idx).asInstanceOf[$ExtractedSrc => $CtorParam]
               //   )
               //   .apply(${ extractedSrcExpr })
-              //   .prependErrorPath(PathElement.Accessor("toName"))
+              //   // prepend sourcePath
+              //   .prependErrorPath(PathElement.Provided("_.toName", Some("src")))
               // }
               TransformationExpr.fromPartial(
-                ChimneyExpr.PartialResult
-                  .fromFunction(runtimeData.asInstanceOfExpr[ExtractedSrc => CtorParam])
-                  .apply(extractedSrcExpr)
-                  .prependErrorPath(
-                    ChimneyExpr.PathElement
-                      .Accessor(Expr.String(toName))
-                      .upcastToExprOf[partial.PathElement]
-                  )
+                prependWholeErrorPath(
+                  ChimneyExpr.PartialResult
+                    .fromFunction(runtimeData.asInstanceOfExpr[ExtractedSrc => CtorParam])
+                    .apply(extractedSrcExpr),
+                  sourcePath
+                ).prependErrorPath(providedValue(ctx.currentTgt, toName, extractedSrc))
               )
-
           }
         }
       case TransformerOverride.ComputedPartial(sourcePath, _, runtimeData) =>
@@ -341,15 +336,15 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           // '{
           //   ${ runtimeDataStore }(idx)
           //     .asInstanceOf[$ExtractedSrc => partial.Result[$CtorParam]](${ extractedSrcExpr })
-          //     .prependErrorPath(PathElement.Accessor("toName"))
+          //     .prependErrorPath(PathElement.Provided("_.toName", Some(src)))
           // }
           TransformationExpr.fromPartial(
-            runtimeData
-              .asInstanceOfExpr[ExtractedSrc => partial.Result[CtorParam]]
-              .apply(extractedSrcExpr)
-              .prependErrorPath(
-                ChimneyExpr.PathElement.Accessor(Expr.String(toName)).upcastToExprOf[partial.PathElement]
-              )
+            prependWholeErrorPath(
+              runtimeData
+                .asInstanceOfExpr[ExtractedSrc => partial.Result[CtorParam]]
+                .apply(extractedSrcExpr),
+              sourcePath
+            ).prependErrorPath(providedValue(ctx.currentTgt, toName, extractedSrc))
           )
         }
       case TransformerOverride.Renamed(sourcePath, _) =>
@@ -369,7 +364,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               .transformWith { expr =>
                 // If we derived partial.Result[$ctorParam] we are appending:
                 //  ${ derivedToElement }.prependErrorPath(...).prependErrorPath(...) // sourcePath
-                DerivationResult.pure(appendPath(expr, sourcePath))
+                DerivationResult.pure(expr.fold(TransformationExpr.fromTotal) { partialExpr =>
+                  TransformationExpr.fromPartial(prependWholeErrorPath(partialExpr, sourcePath))
+                })
               } { errors =>
                 appendMissingTransformer[From, To, ExtractedSrc, CtorParam](errors, toName)
               }
@@ -477,7 +474,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           ).transformWith { expr =>
             // If we derived partial.Result[$ctorParam] we are appending:
             //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
-            DerivationResult.existential[TransformationExpr, CtorParam](appendPath(expr, fromName))
+            DerivationResult.existential[TransformationExpr, CtorParam](expr.fold(TransformationExpr.fromTotal) {
+              partialExpr =>
+                TransformationExpr.fromPartial(prependWholeErrorPath(partialExpr, Path(_.select(fromName))))
+            })
           } { errors =>
             appendMissingTransformer[From, To, Getter, CtorParam](errors, toName)
           }
@@ -730,24 +730,22 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     // If we derived partial.Result[$ctorParam] we are appending:
     //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
     @scala.annotation.tailrec
-    private def appendPath[A: Type](expr: TransformationExpr[A], path: Path): TransformationExpr[A] =
+    private def prependWholeErrorPath[A: Type](expr: Expr[partial.Result[A]], path: Path): Expr[partial.Result[A]] =
       path match {
-        case Path.AtField(name, path2) => appendPath[A](appendPath[A](expr, name), path2)
-        case _                         => expr // Path.Root - other values are not possible in from Path for renames
-      }
-
-    // If we derived partial.Result[$ctorParam] we are appending:
-    //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
-    private def appendPath[A: Type](expr: TransformationExpr[A], path: String): TransformationExpr[A] =
-      expr.fold(TransformationExpr.fromTotal)(partialE =>
-        TransformationExpr.fromPartial(
-          partialE.prependErrorPath(
-            ChimneyExpr.PathElement
-              .Accessor(Expr.String(path))
-              .upcastToExprOf[partial.PathElement]
+        case Path.AtField(name, path2) =>
+          prependWholeErrorPath(
+            expr.prependErrorPath(
+              ChimneyExpr.PathElement
+                .Accessor(Expr.String(name))
+                .upcastToExprOf[partial.PathElement]
+            ),
+            path2
           )
-        )
-      )
+        case Path.AtSubtype(_, path2) =>
+          prependWholeErrorPath(expr, path2)
+        // TODO: extract values from Context for .everyItem/.everyMapKey/.everyMapValue for better useOverrides errors
+        case _ => expr // Path.Root
+      }
 
     private def appendMissingTransformer[From, To, SourceField: Type, TargetField: Type](
         errors: DerivationErrors,
@@ -769,5 +767,18 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     // Stub to use when the setter's was not matched and beanSettersIgnoreUnmatched flag is on.
     private val unmatchedSetter = Existential[TransformationExpr, Null](TransformationExpr.fromTotal(Expr.Null))
+
+    private val AnsiControlCode = "\u001b\\[([0-9]+)m".r
+    private def providedValue(targetPath: Path, toName: String) =
+      ChimneyExpr.PathElement
+        .Provided(Expr.String(targetPath.toString + "." + toName), Expr.Option.None.asInstanceOfExpr[Option[String]])
+        .upcastToExprOf[partial.PathElement]
+    private def providedValue(targetPath: Path, toName: String, lastExpr: ExistentialExpr) =
+      ChimneyExpr.PathElement
+        .Provided(
+          Expr.String(targetPath.toString + "." + toName),
+          Expr.Option(Expr.String(AnsiControlCode.replaceAllIn(ExistentialExpr.prettyPrint(lastExpr), "")))
+        )
+        .upcastToExprOf[partial.PathElement]
   }
 }
