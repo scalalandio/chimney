@@ -29,9 +29,17 @@ class TotalTransformerLensLikeSpec extends ChimneySpec {
       .into[WithOption[Foo[Int]]]
       .withFieldConst(_.option.matchingSome.value, 20)
       .transform ==> WithOption(Some(Foo(20, "example")))
+    WithOption(Some(Foo(10, "example")))
+      .into[WithOption[Foo[Int]]]
+      .withFieldConst(_.option.matching[Some[Foo[Int]]].value.value, 20)
+      .transform ==> WithOption(Some(Foo(20, "example")))
     Foo(WithOption(Some(10)), "example")
       .into[Foo[WithOption[Int]]]
       .withFieldConst(_.value.option.matchingSome, 20)
+      .transform ==> Foo(WithOption(Some(20)), "example")
+    Foo(WithOption(Some(10)), "example")
+      .into[Foo[WithOption[Int]]]
+      .withFieldConst(_.value.option.matching[Some[Int]].value, 20)
       .transform ==> Foo(WithOption(Some(20)), "example")
   }
 
@@ -41,20 +49,40 @@ class TotalTransformerLensLikeSpec extends ChimneySpec {
       .withFieldConst(_.either.matchingLeft.value, 20)
       .withFieldConst(_.either.matchingRight.value, 30)
       .transform ==> WithEither(Left(Foo(20, "example")))
+    WithEither[Foo[Int], Foo[Int]](Left(Foo(10, "example")))
+      .into[WithEither[Foo[Int], Foo[Int]]]
+      .withFieldConst(_.either.matching[Left[Foo[Int], Foo[Int]]].value.value, 20)
+      .withFieldConst(_.either.matching[Right[Foo[Int], Foo[Int]]].value.value, 30)
+      .transform ==> WithEither(Left(Foo(20, "example")))
     WithEither[Foo[Int], Foo[Int]](Right(Foo(10, "example")))
       .into[WithEither[Foo[Int], Foo[Int]]]
       .withFieldConst(_.either.matchingLeft.value, 20)
       .withFieldConst(_.either.matchingRight.value, 30)
+      .transform ==> WithEither(Right(Foo(30, "example")))
+    WithEither[Foo[Int], Foo[Int]](Right(Foo(10, "example")))
+      .into[WithEither[Foo[Int], Foo[Int]]]
+      .withFieldConst(_.either.matching[Left[Foo[Int], Foo[Int]]].value.value, 20)
+      .withFieldConst(_.either.matching[Right[Foo[Int], Foo[Int]]].value.value, 30)
       .transform ==> WithEither(Right(Foo(30, "example")))
     Foo[WithEither[Int, Int]](WithEither(Left(10)), "example")
       .into[Foo[WithEither[Int, Int]]]
       .withFieldConst(_.value.either.matchingLeft, 20)
       .withFieldConst(_.value.either.matchingRight, 30)
       .transform ==> Foo(WithEither(Left(20)), "example")
+    Foo[WithEither[Int, Int]](WithEither(Left(10)), "example")
+      .into[Foo[WithEither[Int, Int]]]
+      .withFieldConst(_.value.either.matching[Left[Int, Int]].value, 20)
+      .withFieldConst(_.value.either.matching[Right[Int, Int]].value, 30)
+      .transform ==> Foo(WithEither(Left(20)), "example")
     Foo[WithEither[Int, Int]](WithEither(Right(10)), "example")
       .into[Foo[WithEither[Int, Int]]]
       .withFieldConst(_.value.either.matchingLeft, 20)
       .withFieldConst(_.value.either.matchingRight, 30)
+      .transform ==> Foo(WithEither(Right(30)), "example")
+    Foo[WithEither[Int, Int]](WithEither(Right(10)), "example")
+      .into[Foo[WithEither[Int, Int]]]
+      .withFieldConst(_.value.either.matching[Left[Int, Int]].value, 20)
+      .withFieldConst(_.value.either.matching[Right[Int, Int]].value, 30)
       .transform ==> Foo(WithEither(Right(30)), "example")
   }
 
