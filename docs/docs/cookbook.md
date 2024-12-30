@@ -178,7 +178,7 @@ Whether a flag is a part of `.withSourceFlag` or `.withTargetFlag` depends on wh
    match so the selector path is on the source side (`.withSourceFlag(pathFromSource)`)
 
 Additionally, we need to be aware that some flags cannot act immediately,  on the path we defined it on, but on every
-subptype/field of the path it is defined:
+subtype/field of the path it is defined:
 
  * `.enableCustomFieldNameComparison` - since the comparator is (also) used to determine if a field has a flag defined
    for it, we cannot configure a comparator for a single field - the target path of the comparator will decide how 
