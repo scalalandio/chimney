@@ -934,6 +934,19 @@ class PartialTransformerIntegrationsSpec extends ChimneySpec {
         Target("value")
       )
     }
+
+    test("should be turned on only for a single field when scoped using .withTargetFlag(_.field)") {
+      implicit val config = TransformerConfiguration.default.disablePartialUnwrapsOption
+
+      Source(Possible.Present("value"))
+        .intoPartial[Target]
+        .withTargetFlag(_.a)
+        .enablePartialUnwrapsOption
+        .transform
+        .asOption ==> Some(
+        Target("value")
+      )
+    }
   }
 
   group("flag .disablePartialUnwrapsOption") {

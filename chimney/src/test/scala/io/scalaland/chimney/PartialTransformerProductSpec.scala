@@ -2932,6 +2932,15 @@ class PartialTransformerProductSpec extends ChimneySpec {
           )
         }
       }
+
+      test("using .withTargetFlag(_.field)") {
+        Foo("100")
+          .intoPartial[Bar]
+          .withTargetFlag(_.value)
+          .enableImplicitConflictResolution(PreferTotalTransformer)
+          .transform
+          .asOption ==> Some(Bar(100))
+      }
     }
 
     group("resolve conflict using partial transformer implicit preference") {
@@ -2962,6 +2971,15 @@ class PartialTransformerProductSpec extends ChimneySpec {
             "Ambiguous implicits while resolving Chimney recursive transformation"
           )
         }
+      }
+
+      test("using .withTargetFlag(_.field)") {
+        Foo("100")
+          .intoPartial[Bar]
+          .withTargetFlag(_.value)
+          .enableImplicitConflictResolution(PreferPartialTransformer)
+          .transform
+          .asOption ==> Some(Bar(200))
       }
     }
 
