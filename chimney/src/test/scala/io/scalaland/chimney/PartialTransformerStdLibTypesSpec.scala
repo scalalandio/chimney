@@ -199,9 +199,14 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
 
   test("transform into Option-type with an override") {
     "abc".intoPartial[Option[String]].withFieldConst(_.matchingSome, "def").transform.asOption ==> Some(Some("def"))
-    Option("abc").intoPartial[Option[String]].withFieldConst(_.matchingSome, "def").transform.asOption ==> Some(
+    "abc".intoPartial[Option[String]].withFieldConst(_.matching[Some[String]].value, "def").transform.asOption ==> Some(
       Some("def")
     )
+    Option("abc")
+      .intoPartial[Option[String]]
+      .withFieldConst(_.matching[Some[String]].value, "def")
+      .transform
+      .asOption ==> Some(Some("def"))
 
     import fixtures.products.Renames.*
 
@@ -209,6 +214,14 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .intoPartial[Option[UserPLStd]]
       .withFieldRenamed(_.matchingSome.name, _.matchingSome.imie)
       .withFieldRenamed(_.matchingSome.age, _.matchingSome.wiek)
+      .transform
+      .asOption
+      .get ==> Option(UserPLStd(1, "Kuba", Some(28)))
+
+    Option(User(1, "Kuba", Some(28)))
+      .intoPartial[Option[UserPLStd]]
+      .withFieldRenamed(_.matching[Some[User]].value.name, _.matching[Some[UserPLStd]].value.imie)
+      .withFieldRenamed(_.matching[Some[User]].value.age, _.matching[Some[UserPLStd]].value.wiek)
       .transform
       .asOption
       .get ==> Option(UserPLStd(1, "Kuba", Some(28)))
@@ -251,10 +264,22 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .withFieldConst(_.matchingRight, "c")
       .transform
       .asOption ==> Some(Left("b"))
+    (Left("a"): Either[String, String])
+      .intoPartial[Either[String, String]]
+      .withFieldConst(_.matching[Left[String, String]].value, "b")
+      .withFieldConst(_.matching[Right[String, String]].value, "c")
+      .transform
+      .asOption ==> Some(Left("b"))
     (Right("a"): Either[String, String])
       .intoPartial[Either[String, String]]
       .withFieldConst(_.matchingLeft, "b")
       .withFieldConst(_.matchingRight, "c")
+      .transform
+      .asOption ==> Some(Right("c"))
+    (Right("a"): Either[String, String])
+      .intoPartial[Either[String, String]]
+      .withFieldConst(_.matching[Left[String, String]].value, "b")
+      .withFieldConst(_.matching[Right[String, String]].value, "c")
       .transform
       .asOption ==> Some(Right("c"))
     Left("a")
@@ -262,9 +287,19 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .withFieldConst(_.matchingLeft, "b")
       .transform
       .asOption ==> Some(Left("b"))
+    Left("a")
+      .intoPartial[Either[String, String]]
+      .withFieldConst(_.matching[Left[String, String]].value, "b")
+      .transform
+      .asOption ==> Some(Left("b"))
     Right("a")
       .intoPartial[Either[String, String]]
       .withFieldConst(_.matchingRight, "c")
+      .transform
+      .asOption ==> Some(Right("c"))
+    Right("a")
+      .intoPartial[Either[String, String]]
+      .withFieldConst(_.matching[Right[String, String]].value, "c")
       .transform
       .asOption ==> Some(Right("c"))
 
@@ -279,12 +314,30 @@ class PartialTransformerStdLibTypesSpec extends ChimneySpec {
       .transform
       .asOption
       .get ==> Left(UserPLStd(1, "Kuba", Some(28)))
+    (Left(User(1, "Kuba", Some(28))): Either[User, User])
+      .intoPartial[Either[UserPLStd, UserPLStd]]
+      .withFieldRenamed(_.matching[Left[User, User]].value.name, _.matching[Left[UserPLStd, UserPLStd]].value.imie)
+      .withFieldRenamed(_.matching[Left[User, User]].value.age, _.matching[Left[UserPLStd, UserPLStd]].value.wiek)
+      .withFieldRenamed(_.matching[Right[User, User]].value.name, _.matching[Right[UserPLStd, UserPLStd]].value.imie)
+      .withFieldRenamed(_.matching[Right[User, User]].value.age, _.matching[Right[UserPLStd, UserPLStd]].value.wiek)
+      .transform
+      .asOption
+      .get ==> Left(UserPLStd(1, "Kuba", Some(28)))
     (Right(User(1, "Kuba", Some(28))): Either[User, User])
       .intoPartial[Either[UserPLStd, UserPLStd]]
       .withFieldRenamed(_.matchingLeft.name, _.matchingLeft.imie)
       .withFieldRenamed(_.matchingLeft.age, _.matchingLeft.wiek)
       .withFieldRenamed(_.matchingRight.name, _.matchingRight.imie)
       .withFieldRenamed(_.matchingRight.age, _.matchingRight.wiek)
+      .transform
+      .asOption
+      .get ==> Right(UserPLStd(1, "Kuba", Some(28)))
+    (Right(User(1, "Kuba", Some(28))): Either[User, User])
+      .intoPartial[Either[UserPLStd, UserPLStd]]
+      .withFieldRenamed(_.matching[Left[User, User]].value.name, _.matching[Left[UserPLStd, UserPLStd]].value.imie)
+      .withFieldRenamed(_.matching[Left[User, User]].value.age, _.matching[Left[UserPLStd, UserPLStd]].value.wiek)
+      .withFieldRenamed(_.matching[Right[User, User]].value.name, _.matching[Right[UserPLStd, UserPLStd]].value.imie)
+      .withFieldRenamed(_.matching[Right[User, User]].value.age, _.matching[Right[UserPLStd, UserPLStd]].value.wiek)
       .transform
       .asOption
       .get ==> Right(UserPLStd(1, "Kuba", Some(28)))
