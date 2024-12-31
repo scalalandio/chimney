@@ -148,7 +148,7 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       deriveTransformationResultExpr[From, To]
         .map { transformationExpr =>
           ctx.fold(_ => transformationExpr.ensureTotal.asInstanceOf[Expr[ctx.Target]])(_ =>
-            transformationExpr.ensurePartial.asInstanceOf[Expr[ctx.Target]]
+            transformationExpr.ensurePartial.unsealErrorPath.asInstanceOf[Expr[ctx.Target]]
           )
         }
 

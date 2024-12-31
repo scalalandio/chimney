@@ -89,7 +89,8 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       val Index: Type[partial.PathElement.Index] = weakTypeTag[partial.PathElement.Index]
       val MapKey: Type[partial.PathElement.MapKey] = weakTypeTag[partial.PathElement.MapKey]
       val MapValue: Type[partial.PathElement.MapValue] = weakTypeTag[partial.PathElement.MapValue]
-      val Provided: Type[partial.PathElement.Provided] = weakTypeTag[partial.PathElement.Provided]
+      val Const: Type[partial.PathElement.Const] = weakTypeTag[partial.PathElement.Const]
+      val Computed: Type[partial.PathElement.Computed] = weakTypeTag[partial.PathElement.Computed]
     }
 
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type] =

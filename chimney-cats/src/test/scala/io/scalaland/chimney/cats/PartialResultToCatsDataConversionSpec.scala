@@ -62,9 +62,9 @@ class PartialResultToCatsDataConversionSpec extends ChimneySpec {
           .withFieldConstPartial(_.height, NonEmptyList.of("abc", "def").invalid.asResult)
           .transform
 
-        val expectedErr1 = Error.fromString("foo").prependErrorPath(PathElement.Provided("_.name", None))
-        val expectedErr2 = Error.fromString("abc").prependErrorPath(PathElement.Provided("_.height", None))
-        val expectedErr3 = Error.fromString("def").prependErrorPath(PathElement.Provided("_.height", None))
+        val expectedErr1 = Error.fromString("foo").prependErrorPath(PathElement.Const("_.name"))
+        val expectedErr2 = Error.fromString("abc").prependErrorPath(PathElement.Const("_.height"))
+        val expectedErr3 = Error.fromString("def").prependErrorPath(PathElement.Const("_.height"))
 
         result.asValidated ==> Validated.invalid(
           partial.Result.fromErrors(expectedErr1, expectedErr2, expectedErr3)
@@ -97,9 +97,9 @@ class PartialResultToCatsDataConversionSpec extends ChimneySpec {
           )
           .transform
 
-        val expectedErr1 = Error.fromThrowable(ex1).prependErrorPath(PathElement.Provided("_.name", None))
-        val expectedErr2 = Error.fromThrowable(ex2).prependErrorPath(PathElement.Provided("_.height", None))
-        val expectedErr3 = Error.fromThrowable(ex3).prependErrorPath(PathElement.Provided("_.height", None))
+        val expectedErr1 = Error.fromThrowable(ex1).prependErrorPath(PathElement.Const("_.name"))
+        val expectedErr2 = Error.fromThrowable(ex2).prependErrorPath(PathElement.Const("_.height"))
+        val expectedErr3 = Error.fromThrowable(ex3).prependErrorPath(PathElement.Const("_.height"))
 
         result.asValidated ==> Validated.invalid(
           partial.Result.fromErrors(expectedErr1, expectedErr2, expectedErr3)

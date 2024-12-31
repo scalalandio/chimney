@@ -9,7 +9,7 @@ package io.scalaland.chimney.partial
   */
 final case class Path(private val elements: List[PathElement]) extends AnyVal {
 
-  /** Prepend of error path with a path element
+  /** Prepend of error path with a path element.
     *
     * @param pathElement
     *   path element to be prepended
@@ -18,11 +18,18 @@ final case class Path(private val elements: List[PathElement]) extends AnyVal {
     *
     * @since 0.7.0
     */
-  def prepend(pathElement: PathElement): Path =
-    if (elements.nonEmpty && elements.head.isInstanceOf[PathElement.Provided]) this
-    else Path(pathElement :: elements)
+  def prepend(pathElement: PathElement): Path = elements match {
+    case (_: PathElement.Const) :: _    => this
+    case (h: PathElement.Computed) :: t => if (h.sealPath) this else Path(h :: pathElement :: t)
+    case _                              => Path(pathElement :: elements)
+  }
 
-  /** Returns conventional string based representation of a path
+  def unsealPath(): Unit = elements match {
+    case (h: PathElement.Computed) :: _ => h.sealPath = false
+    case _                              =>
+  }
+
+  /** Returns conventional String-based representation of a path.
     *
     * @since 0.7.0
     */
@@ -31,10 +38,12 @@ final case class Path(private val elements: List[PathElement]) extends AnyVal {
     else {
       val sb = new StringBuilder
       val it = elements.iterator
+      // PathElement.Computed should always be the first element if present
+      var computedSuffix: String = null
       while (it.hasNext) {
         val curr = it.next()
-        if (curr.isInstanceOf[PathElement.Provided]) {
-          sb ++= curr.asString
+        if (computedSuffix == null && curr.isInstanceOf[PathElement.Computed]) {
+          computedSuffix = curr.asString
         } else {
           if (sb.nonEmpty && PathElement.shouldPrependWithDot(curr)) {
             sb += '.'
@@ -42,11 +51,17 @@ final case class Path(private val elements: List[PathElement]) extends AnyVal {
           sb ++= curr.asString
         }
       }
+      if (computedSuffix != null) {
+        if (sb.nonEmpty) {
+          sb ++= " => "
+        }
+        sb ++= computedSuffix
+      }
       sb.result()
     }
 }
 
-/** Companion of [[io.scalaland.chimney.partial.Path]]
+/** Companion of [[io.scalaland.chimney.partial.Path]].
   *
   * @since 0.7.0
   */

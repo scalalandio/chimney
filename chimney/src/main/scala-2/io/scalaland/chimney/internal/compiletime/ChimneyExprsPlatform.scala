@@ -154,6 +154,10 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           fa: Expr[partial.Result[A]],
           path: Expr[partial.PathElement]
       ): Expr[partial.Result[A]] = c.Expr[partial.Result[A]](q"$fa.prependErrorPath($path)")
+
+      def unsealErrorPath[A: Type](
+          fa: Expr[partial.Result[A]]
+      ): Expr[partial.Result[A]] = c.Expr[partial.Result[A]](q"$fa.unsealErrorPath")
     }
 
     object PathElement extends PathElementModule {
@@ -165,10 +169,10 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
         c.Expr[partial.PathElement.MapKey](q"_root_.io.scalaland.chimney.partial.PathElement.MapKey($key)")
       def MapValue(value: Expr[Any]): Expr[partial.PathElement.MapValue] =
         c.Expr[partial.PathElement.MapValue](q"_root_.io.scalaland.chimney.partial.PathElement.MapValue($value)")
-      def Provided(targetPath: Expr[String], sourcePath: Expr[Option[String]]): Expr[partial.PathElement.Provided] =
-        c.Expr[partial.PathElement.Provided](
-          q"_root_.io.scalaland.chimney.partial.PathElement.Provided($targetPath, $sourcePath)"
-        )
+      def Const(targetPath: Expr[String]): Expr[partial.PathElement.Const] =
+        c.Expr[partial.PathElement.Const](q"_root_.io.scalaland.chimney.partial.PathElement.Const($targetPath)")
+      def Computed(targetPath: Expr[String]): Expr[partial.PathElement.Computed] =
+        c.Expr[partial.PathElement.Computed](q"_root_.io.scalaland.chimney.partial.PathElement.Computed($targetPath)")
     }
 
     object RuntimeDataStore extends RuntimeDataStoreModule {

@@ -36,7 +36,8 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       val Index: Type[partial.PathElement.Index] = quoted.Type.of[partial.PathElement.Index]
       val MapKey: Type[partial.PathElement.MapKey] = quoted.Type.of[partial.PathElement.MapKey]
       val MapValue: Type[partial.PathElement.MapValue] = quoted.Type.of[partial.PathElement.MapValue]
-      val Provided: Type[partial.PathElement.Provided] = quoted.Type.of[partial.PathElement.Provided]
+      val Const: Type[partial.PathElement.Const] = quoted.Type.of[partial.PathElement.Const]
+      val Computed: Type[partial.PathElement.Computed] = quoted.Type.of[partial.PathElement.Computed]
     }
 
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type] =

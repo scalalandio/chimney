@@ -77,8 +77,8 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
           //   ${ src }.iterator,
           //   { case (fromKey, fromValue) =>
           //     partial.Result.product(
-          //       ${ derivedToKey }.prependErrorPath(partial.PathElement.MapKey(fromKey)))
-          //       ${ derivedToValue }.prependErrorPath(partial.PathElement.MapValue(fromKey))),
+          //       ${ derivedToKey }.unsealErrorPath.prependErrorPath(partial.PathElement.MapKey(fromKey)))
+          //       ${ derivedToValue }.unsealErrorPath.prependErrorPath(partial.PathElement.MapValue(fromKey))),
           //   },
           //   ${ failFast }
           // )(${ factory }) }
@@ -88,10 +88,10 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
               toKeyP
                 .fulfilAsLambda2(toValueP) { case ((keyResult, key), valueResult) =>
                   ChimneyExpr.PartialResult.product(
-                    keyResult.prependErrorPath(
+                    keyResult.unsealErrorPath.prependErrorPath(
                       ChimneyExpr.PathElement.MapKey(key.upcastToExprOf[Any]).upcastToExprOf[partial.PathElement]
                     ),
-                    valueResult.prependErrorPath(
+                    valueResult.unsealErrorPath.prependErrorPath(
                       ChimneyExpr.PathElement.MapValue(key.upcastToExprOf[Any]).upcastToExprOf[partial.PathElement]
                     ),
                     failFast
@@ -160,7 +160,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
                   // '{ partial.Result.traverse[To, ($InnerFrom, Int), $InnerTo](
                   //   ${ src }.iterator.zipWithIndex,
                   //   { case (value, index) =>
-                  //     ${ resultTo }.prependErrorPath(partial.PathElement.Index(index))
+                  //     ${ resultTo }.unsealErrorPath.prependErrorPath(partial.PathElement.Index(index))
                   //   },
                   //   ${ failFast }
                   // )(${ factory }) }
@@ -170,7 +170,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
                       .fulfilAsLambda2(
                         ExprPromise.promise[Int](ExprPromise.NameGenerationStrategy.FromPrefix("idx"))
                       ) { (result: Expr[partial.Result[InnerTo]], idx: Expr[Int]) =>
-                        result.prependErrorPath(
+                        result.unsealErrorPath.prependErrorPath(
                           ChimneyExpr.PathElement.Index(idx).upcastToExprOf[partial.PathElement]
                         )
                       }

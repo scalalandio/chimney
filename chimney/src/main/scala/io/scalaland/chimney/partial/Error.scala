@@ -27,6 +27,8 @@ final case class Error(message: ErrorMessage, path: Path = Path.Empty) {
     * @since 0.7.0
     */
   def prependErrorPath(pathElement: PathElement): Error = Error(message, path.prepend(pathElement))
+
+  def unsealErrorPath: Error = { path.unsealPath(); this }
 }
 
 object Error {

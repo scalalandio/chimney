@@ -290,13 +290,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         // '{
         //   ${ runtimeDataStore }(idx)
         //     .asInstanceOf[partial.Result[$ctorParam]]
-        //     .prependErrorPath(PathElement.Provided("_.toName", None))
+        //     .prependErrorPath(PathElement.Const("_.toName"))
         //  }
         DerivationResult.pure(
           TransformationExpr.fromPartial(
             runtimeData
               .asInstanceOfExpr[partial.Result[CtorParam]]
-              .prependErrorPath(providedValue(ctx.currentTgt, toName))
+              .prependErrorPath(
+                ChimneyExpr.PathElement
+                  .Const(Expr.String(s"${ctx.currentTgt}.$toName"))
+                  .upcastToExprOf[partial.PathElement]
+              )
           )
         )
       case TransformerOverride.Computed(sourcePath, _, runtimeData) =>
@@ -317,7 +321,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               //   )
               //   .apply(${ extractedSrcExpr })
               //   // prepend sourcePath
-              //   .prependErrorPath(PathElement.Provided("_.toName", Some("src")))
+              //   .prependErrorPath(PathElement.Computed("_.toName"))
               // }
               TransformationExpr.fromPartial(
                 prependWholeErrorPath(
@@ -325,7 +329,12 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     .fromFunction(runtimeData.asInstanceOfExpr[ExtractedSrc => CtorParam])
                     .apply(extractedSrcExpr),
                   sourcePath
-                ).prependErrorPath(providedValue(ctx.currentTgt, toName, extractedSrc))
+                )
+                  .prependErrorPath(
+                    ChimneyExpr.PathElement
+                      .Computed(Expr.String(s"${ctx.currentTgt}.$toName"))
+                      .upcastToExprOf[partial.PathElement]
+                  )
               )
           }
         }
@@ -336,7 +345,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           // '{
           //   ${ runtimeDataStore }(idx)
           //     .asInstanceOf[$ExtractedSrc => partial.Result[$CtorParam]](${ extractedSrcExpr })
-          //     .prependErrorPath(PathElement.Provided("_.toName", Some(src)))
+          //     // prepend sourcePath
+          //     .prependErrorPath(PathElement.Computed("_.toName"))
           // }
           TransformationExpr.fromPartial(
             prependWholeErrorPath(
@@ -344,7 +354,12 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 .asInstanceOfExpr[ExtractedSrc => partial.Result[CtorParam]]
                 .apply(extractedSrcExpr),
               sourcePath
-            ).prependErrorPath(providedValue(ctx.currentTgt, toName, extractedSrc))
+            )
+              .prependErrorPath(
+                ChimneyExpr.PathElement
+                  .Computed(Expr.String(s"${ctx.currentTgt}.$toName"))
+                  .upcastToExprOf[partial.PathElement]
+              )
           )
         }
       case TransformerOverride.Renamed(sourcePath, _) =>
@@ -727,11 +742,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       }
     }
 
-    // If we derived partial.Result[$ctorParam] we are appending:
-    //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
     @scala.annotation.tailrec
     private def prependWholeErrorPath[A: Type](expr: Expr[partial.Result[A]], path: Path): Expr[partial.Result[A]] =
       path match {
+        // If we derived partial.Result[$ctorParam] we are appending:
+        //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
         case Path.AtField(name, path2) =>
           prependWholeErrorPath(
             expr.prependErrorPath(
@@ -741,9 +756,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             ),
             path2
           )
+        // We are not appending anything on pattern-match, so we can just drop Path on it
         case Path.AtSubtype(_, path2) =>
           prependWholeErrorPath(expr, path2)
-        // TODO: extract values from Context for .everyItem/.everyMapKey/.everyMapValue for better useOverrides errors
+        // To append values in .everyItem/.everyMapKey/.everyMapValue we simply have to unsealPath in their results
         case _ => expr // Path.Root
       }
 
@@ -767,18 +783,5 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     // Stub to use when the setter's was not matched and beanSettersIgnoreUnmatched flag is on.
     private val unmatchedSetter = Existential[TransformationExpr, Null](TransformationExpr.fromTotal(Expr.Null))
-
-    private val AnsiControlCode = "\u001b\\[([0-9]+)m".r
-    private def providedValue(targetPath: Path, toName: String) =
-      ChimneyExpr.PathElement
-        .Provided(Expr.String(targetPath.toString + "." + toName), Expr.Option.None.asInstanceOfExpr[Option[String]])
-        .upcastToExprOf[partial.PathElement]
-    private def providedValue(targetPath: Path, toName: String, lastExpr: ExistentialExpr) =
-      ChimneyExpr.PathElement
-        .Provided(
-          Expr.String(targetPath.toString + "." + toName),
-          Expr.Option(Expr.String(AnsiControlCode.replaceAllIn(ExistentialExpr.prettyPrint(lastExpr), "")))
-        )
-        .upcastToExprOf[partial.PathElement]
   }
 }
