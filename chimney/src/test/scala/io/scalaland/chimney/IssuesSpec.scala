@@ -602,7 +602,7 @@ class IssuesSpec extends ChimneySpec {
         .transform
 
       result.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.id`, computed from expr `rawdata`>" -> "always fails"
+        "<computed for _.id>" -> "always fails"
       )
 
       val definedPT = PartialTransformer
@@ -611,7 +611,27 @@ class IssuesSpec extends ChimneySpec {
         .buildTransformer
 
       definedPT.transform(RawData("any")).asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.id`, computed from expr `rawdata`>" -> "always fails"
+        "<computed for _.id>" -> "always fails"
+      )
+    }
+
+    test("withFieldComputedPartialFrom") {
+      val result = RawData("any")
+        .intoPartial[Data]
+        .withFieldComputedPartialFrom(_.id)(_.id, _.transformIntoPartial[Int])
+        .transform
+
+      result.asErrorPathMessageStrings ==> Iterable(
+        "id => <computed for _.id>" -> "always fails"
+      )
+
+      val definedPT = PartialTransformer
+        .define[RawData, Data]
+        .withFieldComputedPartialFrom(_.id)(_.id, _.transformIntoPartial[Int])
+        .buildTransformer
+
+      definedPT.transform(RawData("any")).asErrorPathMessageStrings ==> Iterable(
+        "id => <computed for _.id>" -> "always fails"
       )
     }
 
@@ -622,7 +642,7 @@ class IssuesSpec extends ChimneySpec {
         .transform
 
       result.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.id`, const value>" -> "always fails"
+        "<const for _.id>" -> "always fails"
       )
 
       val definedPT = PartialTransformer
@@ -631,7 +651,7 @@ class IssuesSpec extends ChimneySpec {
         .buildTransformer
 
       definedPT.transform(RawData("any")).asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.id`, const value>" -> "always fails"
+        "<const for _.id>" -> "always fails"
       )
     }
 

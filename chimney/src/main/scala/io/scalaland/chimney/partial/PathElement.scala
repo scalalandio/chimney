@@ -69,16 +69,28 @@ object PathElement {
     override def asString: String = s"keys($key)"
   }
 
-  /** At the beginning of a Path that should be modified further, because e.g. it was created by withFieldConst,
-    * withFieldComputed, withFieldConstPartial, withFieldComputedPartial and the whole Path is already constructed.
+  /** Value was provided as constant.
+    *
+    * @param targetPath
+    *   path that was passed to PartialTransformer as target field
     *
     * @since 1.6.0
     */
-  final case class Provided(targetPath: String, sourcePath: Option[String]) extends PathElement {
-    override def asString: String = sourcePath match {
-      case Some(src) => s"<provided for path `$targetPath`, computed from expr `$src`>"
-      case None      => s"<provided for path `$targetPath`, const value>"
-    }
+  final case class Const(targetPath: String) extends PathElement {
+    override def asString: String = s"<const for $targetPath>"
+  }
+
+  /** Value was provided as function.
+    *
+    * @param targetPath
+    *   path that was passed to PartialTransformer as target field
+    *
+    * @since 1.6.0
+    */
+  final case class Computed(targetPath: String) extends PathElement {
+    // TODO: description
+    var sealPath: Boolean = true
+    override def asString: String = s"<computed for $targetPath>"
   }
 
   /** Specifies if path element in conventional string representation should be prepended with a dot.
@@ -93,6 +105,7 @@ object PathElement {
     case _: Index    => false
     case _: MapValue => false
     case _: MapKey   => true
-    case _: Provided => false
+    case _: Const    => false
+    case _: Computed => false
   }
 }

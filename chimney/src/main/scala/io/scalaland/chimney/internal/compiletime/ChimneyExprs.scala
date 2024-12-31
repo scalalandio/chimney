@@ -102,6 +102,10 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
           fa: Expr[partial.Result[A]],
           path: Expr[partial.PathElement]
       ): Expr[partial.Result[A]]
+
+      def unsealErrorPath[A: Type](
+          fa: Expr[partial.Result[A]]
+      ): Expr[partial.Result[A]]
     }
 
     val PathElement: PathElementModule
@@ -110,7 +114,8 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
       def Index(index: Expr[Int]): Expr[partial.PathElement.Index]
       def MapKey(key: Expr[Any]): Expr[partial.PathElement.MapKey]
       def MapValue(key: Expr[Any]): Expr[partial.PathElement.MapValue]
-      def Provided(targetPath: Expr[String], sourcePath: Expr[Option[String]]): Expr[partial.PathElement.Provided]
+      def Const(targetPath: Expr[String]): Expr[partial.PathElement.Const]
+      def Computed(targetPath: Expr[String]): Expr[partial.PathElement.Computed]
     }
 
     val RuntimeDataStore: RuntimeDataStoreModule
@@ -273,6 +278,9 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
 
     def prependErrorPath(path: Expr[partial.PathElement]): Expr[partial.Result[A]] =
       ChimneyExpr.PartialResult.prependErrorPath(resultExpr, path)
+
+    def unsealErrorPath: Expr[partial.Result[A]] =
+      ChimneyExpr.PartialResult.unsealErrorPath(resultExpr)
   }
 
   implicit final protected class PartialResultFlattenExprOps[A: Type](

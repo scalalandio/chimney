@@ -191,6 +191,11 @@ sealed trait Result[+A] {
     case _: Result.Value[?] => this
     case e: Result.Errors   => e.prependPath(pathElement).asInstanceOf[this.type]
   }
+
+  final def unsealErrorPath: this.type = this match {
+    case _: Result.Value[?] => this
+    case e: Result.Errors   => e.unsealPath.asInstanceOf[this.type]
+  }
 }
 
 /** Companion to [[io.scalaland.chimney.partial.Result]].
@@ -226,6 +231,8 @@ object Result {
   final case class Errors(errors: NonEmptyErrorsChain) extends Result[Nothing] {
 
     def prependPath(pathElement: PathElement): Errors = Errors(errors.prependPath(pathElement))
+
+    def unsealPath: Errors = Errors(errors.unsealPath)
 
     def asErrorPathMessages: Iterable[(String, ErrorMessage)] = errors.map(_.asErrorPathMessage)
   }

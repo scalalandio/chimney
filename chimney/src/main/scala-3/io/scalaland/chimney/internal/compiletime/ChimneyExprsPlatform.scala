@@ -139,6 +139,11 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           path: Expr[partial.PathElement]
       ): Expr[partial.Result[A]] =
         '{ ${ fa }.prependErrorPath(${ path }) }
+
+      def unsealErrorPath[A: Type](
+          fa: Expr[partial.Result[A]]
+      ): Expr[partial.Result[A]] =
+        '{ ${ fa }.unsealErrorPath }
     }
 
     object PathElement extends PathElementModule {
@@ -154,8 +159,11 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
       def MapValue(key: Expr[Any]): Expr[partial.PathElement.MapValue] =
         '{ partial.PathElement.MapValue(${ key }) }
 
-      def Provided(targetPath: Expr[String], sourcePath: Expr[Option[String]]): Expr[partial.PathElement.Provided] =
-        '{ partial.PathElement.Provided(${ targetPath }, ${ sourcePath }) }
+      def Const(targetPath: Expr[String]): Expr[partial.PathElement.Const] =
+        '{ partial.PathElement.Const(${ targetPath }) }
+
+      def Computed(targetPath: Expr[String]): Expr[partial.PathElement.Computed] =
+        '{ partial.PathElement.Computed(${ targetPath }) }
     }
 
     object RuntimeDataStore extends RuntimeDataStoreModule {

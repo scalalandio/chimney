@@ -384,7 +384,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result7.asOption ==> None
       result7.asEither.isLeft ==> true
       result7.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.age`, const value>" -> "empty value"
+        "<const for _.age>" -> "empty value"
       )
 
       val result8 = NestedProduct(Person("John", 10, 140))
@@ -565,7 +565,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result7.asOption ==> None
       result7.asEither.isLeft ==> true
       result7.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.age`, computed from expr `person`>" -> "error happened"
+        "<computed for _.age>" -> "error happened"
       )
 
       val result8 = NestedProduct(Person("John", 10, 140))
@@ -746,7 +746,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result7.asOption ==> None
       result7.asEither.isLeft ==> true
       result7.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.age`, computed from expr `person.age`>.age" -> "error happened"
+        "age => <computed for _.age>" -> "error happened"
       )
 
       val result8 = NestedProduct(Person("John", 10, 140))
@@ -942,7 +942,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result7.asOption ==> None
       result7.asEither.isLeft ==> true
       result7.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.age`, computed from expr `person`>" -> "empty value"
+        "<computed for _.age>" -> "empty value"
       )
 
       val result8 = NestedProduct(Person("John", 10, 140))
@@ -1138,7 +1138,7 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result7.asOption ==> None
       result7.asEither.isLeft ==> true
       result7.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.age`, computed from expr `person.age`>.age" -> "empty value"
+        "age => <computed for _.age>" -> "empty value"
       )
 
       val result8 = NestedProduct(Person("John", 10, 140))
@@ -2642,10 +2642,10 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result.asEither ==> Left(
         partial.Result.Errors
           .single(partial.Error.fromEmptyValue)
-          .prependErrorPath(partial.PathElement.Provided("_.height", None))
+          .prependErrorPath(partial.PathElement.Const("_.height"))
       )
       result.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.height`, const value>" -> "empty value"
+        "<const for _.height>" -> "empty value"
       )
     }
 
@@ -2665,10 +2665,10 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result.asEither ==> Left(
         partial.Result.Errors
           .single(partial.Error.fromNotDefinedAt(person))
-          .prependErrorPath(partial.PathElement.Provided("_.height", Some("person")))
+          .prependErrorPath(partial.PathElement.Computed("_.height"))
       )
       result.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.height`, computed from expr `person`>" -> s"not defined at $person"
+        "<computed for _.height>" -> s"not defined at $person"
       )
     }
 
@@ -2685,11 +2685,11 @@ class PartialTransformerProductSpec extends ChimneySpec {
             partial.Error.fromString("abc"),
             partial.Error.fromString("def")
           )
-          .prependErrorPath(partial.PathElement.Provided("_.height", None))
+          .prependErrorPath(partial.PathElement.Const("_.height"))
       )
       result.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.height`, const value>" -> "abc",
-        "<provided for path `_.height`, const value>" -> "def"
+        "<const for _.height>" -> "abc",
+        "<const for _.height>" -> "def"
       )
     }
 
@@ -2706,10 +2706,10 @@ class PartialTransformerProductSpec extends ChimneySpec {
           .single(
             partial.Error.fromThrowable(MyException)
           )
-          .prependErrorPath(partial.PathElement.Provided("_.height", None))
+          .prependErrorPath(partial.PathElement.Const("_.height"))
       )
       result.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.height`, const value>" -> "my exception"
+        "<const for _.height>" -> "my exception"
       )
     }
   }
@@ -2762,9 +2762,9 @@ class PartialTransformerProductSpec extends ChimneySpec {
 
       result.asOption ==> None
       result.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.name`, computed from expr `personform`>" -> "empty value",
-        "<provided for path `_.age`, computed from expr `personform`>" -> "For input string: \"foo\"",
-        "<provided for path `_.height`, computed from expr `personform`>" -> "empty value"
+        "<computed for _.name>" -> "empty value",
+        "<computed for _.age>" -> "For input string: \"foo\"",
+        "<computed for _.height>" -> "empty value"
       )
     }
   }
@@ -2811,19 +2811,25 @@ class PartialTransformerProductSpec extends ChimneySpec {
         partial.Result.Errors(
           partial.Error
             .fromString("bad trip id")
-            .prependErrorPath(partial.PathElement.Provided("_.id", Some("tripform"))),
+            .prependErrorPath(partial.PathElement.Computed("_.id")),
           partial.Error
             .fromString("bad height value")
-            .prependErrorPath(partial.PathElement.Provided("_.height", Some("personform"))),
+            .prependErrorPath(partial.PathElement.Computed("_.height"))
+            .unsealErrorPath
+            .prependErrorPath(partial.PathElement.Index(0))
+            .prependErrorPath(partial.PathElement.Accessor("people")),
           partial.Error
             .fromString("bad age value")
-            .prependErrorPath(partial.PathElement.Provided("_.age", Some("personform")))
+            .prependErrorPath(partial.PathElement.Computed("_.age"))
+            .unsealErrorPath
+            .prependErrorPath(partial.PathElement.Index(1))
+            .prependErrorPath(partial.PathElement.Accessor("people"))
         )
       )
       result.asErrorPathMessageStrings ==> Iterable(
-        "<provided for path `_.id`, computed from expr `tripform`>" -> "bad trip id",
-        "<provided for path `_.height`, computed from expr `personform`>" -> "bad height value",
-        "<provided for path `_.age`, computed from expr `personform`>" -> "bad age value"
+        "<computed for _.id>" -> "bad trip id",
+        "people(0) => <computed for _.height>" -> "bad height value",
+        "people(1) => <computed for _.age>" -> "bad age value"
       )
     }
   }
