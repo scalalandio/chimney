@@ -88,9 +88,10 @@ object PathElement {
     * @since 1.6.0
     */
   final case class Computed(targetPath: String) extends PathElement {
-    // TODO: description
-    var sealPath: Boolean = true
     override def asString: String = s"<computed for $targetPath>"
+
+    /** Flag preventing appending when the whole path was already precomputed. */
+    var sealPath: Boolean = true
   }
 
   /** Specifies if path element in conventional string representation should be prepended with a dot.
@@ -105,7 +106,9 @@ object PathElement {
     case _: Index    => false
     case _: MapValue => false
     case _: MapKey   => true
+    // $COVERAGE-OFF$Required by exhaustive check but never really used in runtime
     case _: Const    => false
     case _: Computed => false
+    // $COVERAGE-ON$
   }
 }

@@ -19,9 +19,22 @@ final case class Path(private val elements: List[PathElement]) extends AnyVal {
     * @since 0.7.0
     */
   def prepend(pathElement: PathElement): Path = elements match {
+    // Const shouldn't be modified (or we can overwrite several nested Consts with outer one, which is useless)
     case (_: PathElement.Const) :: _    => this
-    case (h: PathElement.Computed) :: t => if (h.sealPath) this else Path(h :: pathElement :: t)
-    case _                              => Path(pathElement :: elements)
+    case (h: PathElement.Computed) :: t =>
+      // sealed Computed should not be modified
+      if (h.sealPath || pathElement.isInstanceOf[PathElement.Computed]) this
+      // Computed inside Const should stay Computed - but it should be sealed again
+      else if (pathElement.isInstanceOf[PathElement.Const]) {
+        h.sealPath = true
+        this
+      }
+      // Unsealed Computed can be prepended
+      else Path(h :: pathElement :: t)
+    case _ =>
+      // If something prepends Const it should replace the content
+      if (pathElement.isInstanceOf[PathElement.Const]) Path(pathElement :: Nil)
+      else Path(pathElement :: elements)
   }
 
   /** Unseals the [[io.scalaland.chimney.partial.Path]] of current [[io.scalaland.chimney.partial.Error]].
@@ -54,7 +67,7 @@ final case class Path(private val elements: List[PathElement]) extends AnyVal {
       var computedSuffix: String = null
       while (it.hasNext) {
         val curr = it.next()
-        if (computedSuffix == null && curr.isInstanceOf[PathElement.Computed]) {
+        if (computedSuffix == null && (curr.isInstanceOf[PathElement.Computed])) {
           computedSuffix = curr.asString
         } else {
           if (sb.nonEmpty && PathElement.shouldPrependWithDot(curr)) {
