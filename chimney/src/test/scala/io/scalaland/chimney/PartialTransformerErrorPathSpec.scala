@@ -61,29 +61,138 @@ class PartialTransformerErrorPathSpec extends ChimneySpec {
     case class Bar(inner: InnerBar, b: Int)
     case class InnerBar(int1: Int, int2: Int, double: Double)
 
-    implicit val innerT: PartialTransformer[InnerFoo, InnerBar] = PartialTransformer
-      .define[InnerFoo, InnerBar]
-      .withFieldRenamed(_.str, _.int1)
-      .withFieldConstPartial(_.int2, intParserOpt.transform("notint"))
-      .withFieldComputedPartial(_.double, foo => partial.Result.fromOption(foo.str.parseDouble))
-      .buildTransformer
+    locally {
+      // withFieldComputedPartial
+      implicit val innerT: PartialTransformer[InnerFoo, InnerBar] = PartialTransformer
+        .define[InnerFoo, InnerBar]
+        .withFieldRenamed(_.str, _.int1)
+        .withFieldConstPartial(_.int2, intParserOpt.transform("notint"))
+        .withFieldComputedPartial(_.double, foo => partial.Result.fromOption(foo.str.parseDouble))
+        .buildTransformer
 
-    val result = Foo(InnerFoo("aaa"))
-      .intoPartial[Bar]
-      .withFieldConstPartial(_.b, intParserOpt.transform("bbb"))
-      .transform
-    result.asErrorPathMessages ==> Iterable(
-      "inner.str" -> partial.ErrorMessage.EmptyValue,
-      "<const for _.int2>" -> partial.ErrorMessage.EmptyValue,
-      "inner => <computed for _.double>" -> partial.ErrorMessage.EmptyValue,
-      "<const for _.b>" -> partial.ErrorMessage.EmptyValue
-    )
-    result.asErrorPathMessageStrings ==> Iterable(
-      "inner.str" -> "empty value",
-      "<const for _.int2>" -> "empty value",
-      "inner => <computed for _.double>" -> "empty value",
-      "<const for _.b>" -> "empty value"
-    )
+      val result = Foo(InnerFoo("aaa"))
+        .intoPartial[Bar]
+        .withFieldConstPartial(_.b, intParserOpt.transform("bbb"))
+        .transform
+      result.asErrorPathMessages ==> Iterable(
+        "inner.str" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.int2>" -> partial.ErrorMessage.EmptyValue,
+        "inner => <computed for _.double>" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.b>" -> partial.ErrorMessage.EmptyValue
+      )
+      result.asErrorPathMessageStrings ==> Iterable(
+        "inner.str" -> "empty value",
+        "<const for _.int2>" -> "empty value",
+        "inner => <computed for _.double>" -> "empty value",
+        "<const for _.b>" -> "empty value"
+      )
+
+      val result2 = List(Map("value" -> Foo(InnerFoo("aaa"))))
+        .intoPartial[List[Map[String, Bar]]]
+        .withFieldConstPartial(_.everyItem.everyMapValue.b, intParserOpt.transform("bbb"))
+        .transform
+      result2.asErrorPathMessages ==> Iterable(
+        "(0)(value).inner.str" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.int2>" -> partial.ErrorMessage.EmptyValue,
+        "(0)(value).inner => <computed for _.double>" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.everyItem.everyMapValue.b>" -> partial.ErrorMessage.EmptyValue
+      )
+      result2.asErrorPathMessageStrings ==> Iterable(
+        "(0)(value).inner.str" -> "empty value",
+        "<const for _.int2>" -> "empty value",
+        "(0)(value).inner => <computed for _.double>" -> "empty value",
+        "<const for _.everyItem.everyMapValue.b>" -> "empty value"
+      )
+
+      val result3 = List(Map("value" -> Foo(InnerFoo("aaa"))))
+        .intoPartial[List[Map[String, Bar]]]
+        .withFieldConstPartial(_.everyItem.everyMapValue.b, InnerFoo("aaa").transformIntoPartial[InnerBar].map(_ => 0))
+        .transform
+      result3.asErrorPathMessages ==> Iterable(
+        "(0)(value).inner.str" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.int2>" -> partial.ErrorMessage.EmptyValue,
+        "(0)(value).inner => <computed for _.double>" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.everyItem.everyMapValue.b>" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.int2>" -> partial.ErrorMessage.EmptyValue,
+        "(0)(value) => <computed for _.double>" -> partial.ErrorMessage.EmptyValue
+      )
+      result3.asErrorPathMessageStrings ==> Iterable(
+        "(0)(value).inner.str" -> "empty value",
+        "<const for _.int2>" -> "empty value",
+        "(0)(value).inner => <computed for _.double>" -> "empty value",
+        "<const for _.everyItem.everyMapValue.b>" -> "empty value",
+        "<const for _.int2>" -> "empty value",
+        "(0)(value) => <computed for _.double>" -> "empty value"
+      )
+    }
+
+    locally {
+      // withFieldComputedPartialFrom
+      implicit val innerT: PartialTransformer[InnerFoo, InnerBar] = PartialTransformer
+        .define[InnerFoo, InnerBar]
+        .withFieldRenamed(_.str, _.int1)
+        .withFieldConstPartial(_.int2, intParserOpt.transform("notint"))
+        .withFieldComputedPartialFrom(_.str)(_.double, str => partial.Result.fromOption(str.parseDouble))
+        .buildTransformer
+
+      val result = Foo(InnerFoo("aaa"))
+        .intoPartial[Bar]
+        .withFieldConstPartial(_.b, intParserOpt.transform("bbb"))
+        .transform
+      result.asErrorPathMessages ==> Iterable(
+        "inner.str" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.int2>" -> partial.ErrorMessage.EmptyValue,
+        "inner.str => <computed for _.double>" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.b>" -> partial.ErrorMessage.EmptyValue
+      )
+      result.asErrorPathMessageStrings ==> Iterable(
+        "inner.str" -> "empty value",
+        "<const for _.int2>" -> "empty value",
+        "inner.str => <computed for _.double>" -> "empty value",
+        "<const for _.b>" -> "empty value"
+      )
+
+      val result2 = List(Map("value" -> Foo(InnerFoo("aaa"))))
+        .intoPartial[List[Map[String, Bar]]]
+        .withFieldConstPartial(_.everyItem.everyMapValue.b, intParserOpt.transform("bbb"))
+        .transform
+      result2.asErrorPathMessages ==> Iterable(
+        "(0)(value).inner.str" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.int2>" -> partial.ErrorMessage.EmptyValue,
+        "(0)(value).inner.str => <computed for _.double>" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.everyItem.everyMapValue.b>" -> partial.ErrorMessage.EmptyValue
+      )
+      result2.asErrorPathMessageStrings ==> Iterable(
+        "(0)(value).inner.str" -> "empty value",
+        "<const for _.int2>" -> "empty value",
+        "(0)(value).inner.str => <computed for _.double>" -> "empty value",
+        "<const for _.everyItem.everyMapValue.b>" -> "empty value"
+      )
+
+      val result3 = List(Map("value" -> Foo(InnerFoo("aaa"))))
+        .intoPartial[List[Map[String, Bar]]]
+        .withFieldComputedPartialFrom(_.everyItem.everyMapValue.inner)(
+          _.everyItem.everyMapValue.b,
+          _.transformIntoPartial[InnerBar].map(_ => 0)
+        )
+        .transform
+      result3.asErrorPathMessages ==> Iterable(
+        "(0)(value).inner.str" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.int2>" -> partial.ErrorMessage.EmptyValue,
+        "(0)(value).inner.str => <computed for _.double>" -> partial.ErrorMessage.EmptyValue,
+        "(0)(value).str => <computed for _.everyItem.everyMapValue.b>" -> partial.ErrorMessage.EmptyValue,
+        "<const for _.int2>" -> partial.ErrorMessage.EmptyValue,
+        "(0)(value).str => <computed for _.double>" -> partial.ErrorMessage.EmptyValue
+      )
+      result3.asErrorPathMessageStrings ==> Iterable(
+        "(0)(value).inner.str" -> "empty value",
+        "<const for _.int2>" -> "empty value",
+        "(0)(value).inner.str => <computed for _.double>" -> "empty value",
+        "(0)(value).str => <computed for _.everyItem.everyMapValue.b>" -> "empty value",
+        "<const for _.int2>" -> "empty value",
+        "(0)(value).str => <computed for _.double>" -> "empty value"
+      )
+    }
   }
 
   test("Java Bean accessors error should contain path to the failed getter") {
