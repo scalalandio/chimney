@@ -1804,16 +1804,11 @@ These cases can be handled only with `PartialTransformer` using `.withFieldConst
         .map(_.asErrorPathMessages)
     )
     // expected output:    
-    // Left(value = List(("<provided for path `_.c`, const value>", EmptyValue)))
+    // Left(value = List(("<const for _.c>", EmptyValue)))
     // Left(
-    //   value = List(
-    //     (
-    //       "<provided for path `_.c`, const value>",
-    //       ThrowableMessage(throwable = java.lang.NullPointerException)
-    //     )
-    //   )
+    //   value = List(("<const for _.c>", ThrowableMessage(throwable = java.lang.NullPointerException)))
     // )
-    // Left(value = List(("<provided for path `_.c`, const value>", StringMessage(message = "bad value"))))
+    // Left(value = List(("<const for _.c>", StringMessage(message = "bad value"))))
     ``` 
 
 As you can see, the transformed value will automatically preserve the field name for which a failure happened.
@@ -2041,11 +2036,7 @@ These cases can be handled only with `PartialTransformer` using
         .map(_.asErrorPathMessages)
     )
     // expected output:
-    // Left(
-    //   value = List(
-    //     ("<provided for path `_.c`, computed from expr `foo`>", StringMessage(message = "bad value"))
-    //   )
-    // )
+    // Left(value = List(("<computed for _.c>", StringMessage(message = "bad value"))))
     
     // failure depends on the input (whether .toLong throws or not)
     pprint.pprintln(
@@ -2071,7 +2062,7 @@ These cases can be handled only with `PartialTransformer` using
     // Left(
     //   value = List(
     //     (
-    //       "<provided for path `_.c`, computed from expr `foo`>",
+    //       "<computed for _.c>",
     //       ThrowableMessage(throwable = java.lang.NumberFormatException: For input string: "value")
     //     )
     //   )
@@ -2103,11 +2094,7 @@ These cases can be handled only with `PartialTransformer` using
     //         message = ThrowableMessage(
     //           throwable = java.lang.NumberFormatException: For input string: "value"
     //         ),
-    //         path = Path(
-    //           elements = List(
-    //             Provided(targetPath = "_.everyItem.c", sourcePath = Some(value = "list.a"))
-    //           )
-    //         )
+    //         path = Path(elements = List(Computed(targetPath = "_.everyItem.c"), Index(index = 0)))
     //       )
     //     )
     //   )
