@@ -192,6 +192,21 @@ sealed trait Result[+A] {
     case e: Result.Errors   => e.prependPath(pathElement).asInstanceOf[this.type]
   }
 
+  /** Unseals the [[io.scalaland.chimney.partial.Path]] of current [[io.scalaland.chimney.partial.Error]].
+    *
+    * When derivation is building up the result it automatically appends fields/indices/map keys - however values
+    * obtained with withFieldComputed(Partial)(From) contains the whole Path already, so [[prependErrorPath]] should be
+    * a noop for them.
+    *
+    * However, this path can only be precomputed only up to the boundaries of a
+    * [[io.scalaland.chimney.PartialTransformer]], and when one transformer calls another, path should be appended
+    * again. This method allows this.
+    *
+    * @return
+    *   error with a path prepended with provided path element
+    *
+    * @since 1.6.0
+    */
   final def unsealErrorPath: this.type = this match {
     case _: Result.Value[?] => this
     case e: Result.Errors   => e.unsealPath.asInstanceOf[this.type]
