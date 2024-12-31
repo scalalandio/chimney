@@ -46,7 +46,7 @@ sealed abstract class NonEmptyErrorsChain extends Iterable[partial.Error] {
       case NonEmptyErrorsChain.Wrap(errors)                  => errors.iterator
       case NonEmptyErrorsChain.Merge(left, right)            => left.iterator ++ right.iterator
       case NonEmptyErrorsChain.WrapPath(errors, pathElement) => errors.iterator.map(_.prependErrorPath(pathElement))
-      case NonEmptyErrorsChain.UnsealPath(errors)            => errors.iterator.map(_.unsealErrorPath)
+      case NonEmptyErrorsChain.UnsealPath(errors)            => errors.iterator.map(_.unsealErrorPath())
     }
 
   /** Returns a new errors collection containing elements from this, followed by elements of other collection.

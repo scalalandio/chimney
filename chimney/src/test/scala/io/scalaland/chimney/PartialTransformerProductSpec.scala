@@ -2815,13 +2815,13 @@ class PartialTransformerProductSpec extends ChimneySpec {
           partial.Error
             .fromString("bad height value")
             .prependErrorPath(partial.PathElement.Computed("_.height"))
-            .unsealErrorPath
+            .unsealErrorPath()
             .prependErrorPath(partial.PathElement.Index(0))
             .prependErrorPath(partial.PathElement.Accessor("people")),
           partial.Error
             .fromString("bad age value")
             .prependErrorPath(partial.PathElement.Computed("_.age"))
-            .unsealErrorPath
+            .unsealErrorPath()
             .prependErrorPath(partial.PathElement.Index(1))
             .prependErrorPath(partial.PathElement.Accessor("people"))
         )

@@ -24,6 +24,18 @@ final case class Path(private val elements: List[PathElement]) extends AnyVal {
     case _                              => Path(pathElement :: elements)
   }
 
+  /** Unseals the [[io.scalaland.chimney.partial.Path]] of current [[io.scalaland.chimney.partial.Error]].
+    *
+    * When derivation is building up the result it automatically appends fields/indices/map keys - however values
+    * obtained with withFieldComputed(Partial)(From) contains the whole Path already, so [[prepend]] should be a noop
+    * for them.
+    *
+    * However, this path can only be precomputed only up to the boundaries of a
+    * [[io.scalaland.chimney.PartialTransformer]], and when one transformer calls another, path should be appended
+    * again. This method allows this.
+    *
+    * @since 1.6.0
+    */
   def unsealPath(): Unit = elements match {
     case (h: PathElement.Computed) :: _ => h.sealPath = false
     case _                              =>
