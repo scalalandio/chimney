@@ -1521,6 +1521,240 @@ Each of these transformations is provided by the same import:
     import io.scalaland.chimney.protobufs._
     ```
 
+## Encoding/decoding sealed/enum with `String`
+
+Out of the box Chimney does not encode `sealed trait`/`enum` value as `String` and it does not decode `String`
+as `partial.Result` of `sealed trait`/`enum`. But you can easily do it yourself!
+
+!!! example "Scala 2 with Enumeratum"
+
+    If you are already using [Enumeratum](https://github.com/lloydmeta/enumeratum), you can use it to define your
+    transformers. You can adapt this approach to make it work for `StringEnumEntry`/`IntEnumEntry`/etc.
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.beachape::enumeratum::{{ libraries.enumeratum }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import enumeratum._
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+    import io.scalaland.chimney.partial.syntax._
+
+    sealed trait Foo extends EnumEntry
+    object Foo extends Enum[Foo] {
+      case object Bar extends Foo
+      case object Baz extends Foo
+
+      def values = findValues
+    }
+
+    locally {
+      // hardcoded version, working with Foo specifically
+      implicit val encodeFoo: Transformer[Foo, String] =
+        new Transformer[Foo, String] {
+  
+          def transform(src: Foo): String =
+            src.toString
+        }
+      implicit val decodeFoo: PartialTransformer[String, Foo] =
+        new PartialTransformer[String, Foo] {
+  
+          def transform(src: String, failFast: Boolean): partial.Result[Foo] =
+            Foo.withNameEither(src).left.map(_.getMessage).asResult
+        }
+        
+      pprint.pprintln(
+        (Foo.Bar : Foo).transformInto[String]
+      )
+      // expected output:
+      // "Bar"
+      pprint.pprintln(
+        "Bar".transformIntoPartial[Foo]
+      )
+      // expected output:
+      // Value(value = Bar)
+      pprint.pprintln(
+        "Foo".transformIntoPartial[Foo]
+      )
+      // expected output:
+      // Errors(
+      //   errors = NonEmptyErrorsChain(
+      //     Error(
+      //       message = StringMessage(message = "Foo is not a member of Enum (Bar, Baz)"),
+      //       path = Path(elements = List())
+      //     )
+      //   )
+      // )
+    }
+
+    locally {
+      // generic version, working with every EnumEntry
+      implicit def encode[E <: EnumEntry: Enum]: Transformer[E, String] =
+        new Transformer[E, String] {
+  
+          def transform(src: E): String =
+            src.toString
+        }
+      implicit def decoder[E <: EnumEntry: Enum]: PartialTransformer[String, E] =
+        new PartialTransformer[String, E] {
+  
+          def transform(src: String, failFast: Boolean): partial.Result[E] =
+            implicitly[Enum[E]].withNameEither(src).left.map(_.getMessage).asResult
+        }
+        
+      pprint.pprintln(
+        (Foo.Bar : Foo).transformInto[String]
+      )
+      // expected output:
+      // "Bar"
+      pprint.pprintln(
+        "Bar".transformIntoPartial[Foo]
+      )
+      // expected output:
+      // Value(value = Bar)
+      pprint.pprintln(
+        "Foo".transformIntoPartial[Foo]
+      )
+      // expected output:
+      // Errors(
+      //   errors = NonEmptyErrorsChain(
+      //     Error(
+      //       message = StringMessage(message = "Foo is not a member of Enum (Bar, Baz)"),
+      //       path = Path(elements = List())
+      //     )
+      //   )
+      // )
+    }
+    ```
+
+!!! example "Scala 3 enum with parameterless cases"
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+    import io.scalaland.chimney.partial.syntax._
+
+    enum Foo {
+      case Bar, Baz
+    }
+
+    implicit val encodeFoo: Transformer[Foo, String] =
+      new Transformer[Foo, String] {
+
+        def transform(src: Foo): String =
+          src.toString
+      }
+    implicit val decodeFoo: PartialTransformer[String, Foo] =
+      new PartialTransformer[String, Foo] {
+
+        def transform(src: String, failFast: Boolean): partial.Result[Foo] =
+          scala.util.Try(Foo.valueOf(src)).asResult
+      }
+      
+    pprint.pprintln(
+      (Foo.Bar : Foo).transformInto[String]
+    )
+    // expected output:
+    // "Bar"
+    pprint.pprintln(
+      "Bar".transformIntoPartial[Foo]
+    )
+    // expected output:
+    // Value(value = Bar)
+    pprint.pprintln(
+      "Foo".transformIntoPartial[Foo]
+    )
+    // expected output:
+    // Errors(
+    //   errors = NonEmptyErrorsChain(
+    //     Error(
+    //       message = ThrowableMessage(
+    //         throwable = java.lang.IllegalArgumentException: enum snippet$_.Foo has no case with name: Foo
+    //       ),
+    //       path = Path(elements = List())
+    //     )
+    //   )
+    // )
+    ```
+
+!!! example "Scala with sealed trait"
+
+    `Enum` type class from [Enumz](https://github.com/scalalandio/enumz) works for:
+    
+      - `sealed trait`s/`sealed abstract class`es (including Enumeratum ones)
+      - Java `enum`s
+      - Scala 3 `enum`s
+      - Scala `Enumeration` type
+
+    so you can use it to define transformers for each of these cases.
+    
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep io.scalaland::enumz::{{ libraries.enumz }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+    import io.scalaland.chimney.partial.syntax._
+
+    import io.scalaland.enumz.Enum
+
+    sealed trait Foo extends Product with Serializable
+    object Foo {
+      case object Bar extends Foo
+      case object Baz extends Foo
+    }
+
+    // hardcoded version, working with Foo specifically
+    implicit val encodeFoo: Transformer[Foo, String] =
+      new Transformer[Foo, String] {
+
+        def transform(src: Foo): String =
+          src.toString
+      }
+    implicit val decoderFoo: PartialTransformer[String, Foo] =
+      new PartialTransformer[String, Foo] {
+
+        def transform(src: String, failFast: Boolean): partial.Result[Foo] =
+          Enum[Foo].withNameOption(src).asResult
+      }
+
+    // generic version, working with every enum type
+    implicit def encode[E: Enum]: Transformer[E, String] =
+      new Transformer[E, String] {
+
+        def transform(src: E): String =
+          Enum[E].getName(src)
+      }
+    implicit def decode[E: Enum]: PartialTransformer[String, E] =
+      new PartialTransformer[String, E] {
+
+        def transform(src: String, failFast: Boolean): partial.Result[E] =
+          Enum[E].withNameOption(src).asResult
+      }
+      
+    pprint.pprintln(
+      (Foo.Bar : Foo).transformInto[String]
+    )
+    // expected output:
+    // "Bar"
+    pprint.pprintln(
+      "Bar".transformIntoPartial[Foo]
+    )
+    // expected output:
+    // Value(value = Bar)
+    pprint.pprintln(
+      "Foo".transformIntoPartial[Foo]
+    )
+    // expected output:
+    // Errors(errors = NonEmptyErrorsChain(Error(message = EmptyValue, path = Path(elements = List()))))
+    ```
+
 ## Lens-like use cases
 
 Chimney can be used in some cases where optics/prisms are normally used. Let us demonstrate them by reimplementing
