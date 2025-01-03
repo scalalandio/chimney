@@ -191,6 +191,344 @@ Some flags can only be set globally:
 
  * `.enableMacrosLogging` cannot be done for a single field/subtype
 
+## Avoiding nested Transformers
+
+In previous version of Chimney there way many cases when users were forced to define inner `Transformer` to customize
+transformation of some nested value, or used `.withFieldComputed` running `.into....transform`. Newest versions
+eliminated this requirement, and users need to define an implicit `Transformer`/`PartialTransformer` only if they
+actually want to reuse some of them.
+
+### Enabling flag only for one nested value
+
+Let's say we want to enable method accessors in a nested case class. How most people would do this (due to restrictions of
+older Chimney's versions) would be:
+
+!!! example "Intermediate Transformer"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    class Foo (a: Int) {
+      val value: String = a.toString
+    }
+    case class OuterFoo(inner: Foo)
+
+    case class Bar(value: String)
+    case class OuterBar(inner: Bar)
+
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+
+    implicit val innerTransformer: Transformer[Foo, Bar] =
+      Transformer.define[Foo, Bar].enableMethodAccessors.buildTransformer
+
+    pprint.pprintln(
+      OuterFoo(new Foo(20)).transformInto[OuterBar]
+    )
+    // expected output:
+    // OuterBar(inner = Bar(value = "20"))
+    ```
+
+or
+
+!!! example "Nested .into.transform"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    class Foo (a: Int) {
+      val value: String = a.toString
+    }
+    case class OuterFoo(inner: Foo)
+
+    case class Bar(value: String)
+    case class OuterBar(inner: Bar)
+
+    import io.scalaland.chimney.dsl._
+
+    pprint.pprintln(
+      OuterFoo(new Foo(20)).into[OuterBar]
+        .withFieldComputed(_.inner, foo => foo.inner.into[Bar].enableMethodAccessors.transform)
+        .transform
+    )
+    // expected output:
+    // OuterBar(inner = Bar(value = "20"))
+    ```
+
+Since Chimney 1.6.0 we are able to [scope the flag to a particular field](#constraining-the-flags-to-a-specific-fieldsubtype):
+
+!!! example "Nested .into.transform"
+
+    ```scala
+    //> using dep io.scalaland::chimney::1.6.0
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    class Foo (a: Int) {
+      val value: String = a.toString
+    }
+    case class OuterFoo(inner: Foo)
+
+    case class Bar(value: String)
+    case class OuterBar(inner: Bar)
+
+    import io.scalaland.chimney.dsl._
+
+    pprint.pprintln(
+      OuterFoo(new Foo(20)).into[OuterBar]
+        .withTargetFlag(_.inner).enableMethodAccessors
+        .transform
+    )
+    // expected output:
+    // OuterBar(inner = Bar(value = "20"))
+    ```
+
+If the particular flag we want to use in limited scope is `.enableDefaultValues`, we might also consider
+[`.enableDefaultValueOfType[A]`](supported-transformations.md#allowing-fallback-to-the-constructors-default-values)
+available since Chimney 1.2.0 (but scoped flag would work as well!).
+
+!!! example "Enabling default values only for 1 type"
+
+    ```scala
+    //> using dep io.scalaland::chimney::1.2.0
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    class Foo
+    case class OuterFoo(inner: Foo)
+
+    case class Bar(value: String = "default")
+    case class OuterBar(inner: Bar)
+
+    import io.scalaland.chimney.dsl._
+
+    pprint.pprintln(
+      OuterFoo(new Foo()).into[OuterBar]
+        .enableDefaultValueOfType[String]
+        .transform
+    )
+    // expected output:
+    // OuterBar(inner = Bar(value = "default"))
+    ```
+
+### Computing value from field at a different level of nesting
+
+`.withFieldComputed` (or a locally defined `Transformer`) was used to work around a few limitation.
+
+One of them was a requirement of only renaming fields at the same level of nesting.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class Foo(a: String)
+    case class OuterFoo(inner: Foo)
+
+    case class Bar(b: String)
+    case class OuterBar(inner: Bar)
+
+    import io.scalaland.chimney.dsl._
+
+    pprint.pprintln(
+      OuterFoo(Foo("value")).into[OuterBar]
+        .withFieldComputed(_.inner, outer => outer.inner.into[Bar].withFieldRenamed(_.a, _.b).transform)
+        .transform
+    )
+    // expected output:
+    // OuterBar(inner = Bar(b = "value"))
+    ```
+
+This limitation was lifted since Chimney 1.0.0, and one can rename fields in nested `case class`es using
+only `.withFieldRenamed`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::1.0.0
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class Foo(a: String)
+    case class OuterFoo(inner: Foo)
+
+    case class Bar(b: String)
+    case class OuterBar(inner: Bar)
+
+    import io.scalaland.chimney.dsl._
+
+    pprint.pprintln(
+      OuterFoo(Foo("value")).into[OuterBar]
+        .withFieldRenamed(_.inner.a, _.inner.b)
+        .transform
+    )
+    // expected output:
+    // OuterBar(inner = Bar(b = "value"))
+    ```
+
+Another issue solved by nesting a transformation inside the `.withFieldComputed` (or creating intermediate
+`Transformer`) was providing some function to compute the field in the target type, which should be wired
+to some particular field in source value.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class Foo(a: Int)
+    case class OuterFoo(inner: Foo, inner2: Foo)
+
+    case class Bar(b: String)
+    case class OuterBar(inner: Bar)
+
+    def helper(input: Int): String = (input * 2).toString
+
+    import io.scalaland.chimney.dsl._
+
+    pprint.pprintln(
+      OuterFoo(Foo(0), Foo(10)).into[OuterBar]
+        .withFieldComputed(
+          _.inner,
+          outer => outer.inner.into[Bar].withFieldConst(_.b, helper(outer.inner2.a)).transform
+        )
+        .transform
+    )
+    // expected output:
+    // OuterBar(inner = Bar(b = "20"))
+    ```
+
+We can wire input for such helpers using specialized [`.withFieldComputedFrom`](supported-transformations.md#wiring-the-constructors-parameter-to-the-computed-value)
+available since Chimney 1.6.0:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::1.6.0
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class Foo(a: Int)
+    case class OuterFoo(inner: Foo, inner2: Foo)
+
+    case class Bar(b: String)
+    case class OuterBar(inner: Bar)
+
+    def helper(input: Int): String = (input * 2).toString
+
+    import io.scalaland.chimney.dsl._
+
+    pprint.pprintln(
+      OuterFoo(Foo(0), Foo(10)).into[OuterBar]
+        .withFieldComputedFrom(_.inner2.a)(_.inner.b, helper)
+        .transform
+    )
+    // expected output:
+    // OuterBar(inner = Bar(b = "20"))
+    ```
+
+### Customizing transformation within collection/map/Option/Either
+
+Many users are not aware that Chimney can transform one Scala collection into another. You can still find examples like this:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class Foo(a: Int)
+    case class Bar(a: Int)
+
+    import io.scalaland.chimney.dsl._
+
+    pprint.pprintln(
+      List(Foo(10)).map { foo =>
+        foo.transformInto[Bar]
+      }
+    )
+    // expected output:
+    // List(Bar(a = 10))
+    ```
+
+even though transforming all values of a collection (and even the type of a collection!) was supported since Chimney 0.2.0:
+
+!!! example
+
+    ```scala
+    //> using scala {{ scala.2_12 }}
+    //> using dep io.scalaland::chimney::0.2.0
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class Foo(a: Int)
+    case class Bar(a: Int)
+
+    import io.scalaland.chimney.dsl._
+
+    pprint.pprintln(
+      List(Foo(10)).transformInto[Vector[Bar]]
+    )
+    // expected output:
+    // Vector(Bar(10))
+    ```
+
+However, every time one needed to customize how a value inside a collection is transformed, one was falling back to `.map`s
+or intermediate transformers:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class Foo(a: Int)
+    case class OuterFoo(values: List[Foo])
+
+    case class Bar(a: Int, b: String)
+    case class OuterBar(values: Vector[Bar])
+
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+
+    implicit val foo2bar: Transformer[Foo, Bar] =
+      Transformer.define[Foo, Bar].withFieldConst(_.b, "value").buildTransformer
+
+    pprint.pprintln(
+      OuterFoo(List(Foo(10))).transformInto[OuterBar]
+    )
+    // expected output:
+    // OuterBar(values = Vector(Bar(a = 10, b = "value")))
+    ```
+
+This is no longer needed, since Chimney 1.0.0 added an ability to customize collections, maps, `Option`s and `Either`s
+with the DSL:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::1.0.0
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class Foo(a: Int)
+    case class OuterFoo(values: List[Foo])
+
+    case class Bar(a: Int, b: String)
+    case class OuterBar(values: Vector[Bar])
+
+    import io.scalaland.chimney.dsl._
+
+    pprint.pprintln(
+      OuterFoo(List(Foo(10))).into[OuterBar]
+        .withFieldConst(_.values.everyItem.b, "value")
+        .transform
+    )
+    // expected output:
+    // OuterBar(values = Vector(Bar(a = 10, b = "value")))
+    ```
+
+Path selectors and examples for [collections, maps and arrays](supported-transformations.md#between-scalas-collectionsarrays),
+[`Option`s](supported-transformations.md#frominto-an-option) and [`Either`s](supported-transformations.md#between-eithers)
+are described in each type's section.
+
 ## Automatic, Semiautomatic and Inlined derivation
 
 !!! note "Chimney is not like other libs" 
