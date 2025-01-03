@@ -1069,7 +1069,7 @@ explanation:
     val example: Transformer[Int, String] = _.toString
 
     pprint.pprintln(
-      example.map(str => s"valis is $str").transform(10)
+      example.map(str => s"value is $str").transform(10)
     )
     pprint.pprintln(
       example.dimap[Double, String](_.toInt)(str => "value " + str).transform(10.50)
@@ -1079,7 +1079,7 @@ explanation:
       cats.arrow.Arrow[Transformer].id[String].transform("value")
     )
     // expected output:
-    // "valis is 10"
+    // "value is 10"
     // "value 10"
     // "value"
     ```
@@ -1297,6 +1297,116 @@ Notice that this is not an issue if we are transforming one value into another v
 `map`, `contramap`, `dimap`. There is also no issie if we chain several `flatMap`s for something more like Kleisli
 composition (`result.flatMap(f).flatMap(g)`) but becomes an issue when we use `flatMap` and `flatMap`-based operations
 for building products (`result.flatMap(a => result2.map(b => (a, b))`).
+
+Once we understand that difference we are able to understand the differences between building `PartialTransformer`s
+and `partial.Result`s with `parMapN` and `for`-comprehension:
+
+!!! example "Combining PartialTransformers with Cats"
+
+    ```scala
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
+    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import cats.syntax.all._
+    import io.scalaland.chimney.PartialTransformer
+    import io.scalaland.chimney.partial
+    import io.scalaland.chimney.cats._
+
+    case class Foo(a: String, b: String)
+    case class Bar(a: Int, b: Int)
+
+    pprint.pprintln(
+      (for {
+        a <- PartialTransformer[Foo, Int](foo => partial.Result.fromCatching(foo.a.toInt))
+        b <- PartialTransformer[Foo, Int](foo => partial.Result.fromCatching(foo.b.toInt))
+      } yield Bar(a, b))
+        .transform(Foo("a", "b"))
+        .asErrorPathMessageStrings
+    )
+    // expected output:
+    // List(("", "For input string: \"a\""))
+
+    pprint.pprintln(
+      (
+        PartialTransformer[Foo, Int](foo => partial.Result.fromCatching(foo.a.toInt)),
+        PartialTransformer[Foo, Int](foo => partial.Result.fromCatching(foo.b.toInt))
+      ).parMapN((a, b) => Bar(a, b))
+        .transform(Foo("a", "b"))
+        .asErrorPathMessageStrings
+    )
+    // expected output:
+    // List(("", "For input string: \"a\""), ("", "For input string: \"b\""))
+    ```
+
+!!! example "Combining partial.Results with Cats"
+
+    ```scala
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
+    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import cats.syntax.all._
+    import io.scalaland.chimney.partial
+    import io.scalaland.chimney.cats._
+
+    case class Foo(a: String, b: String)
+    case class Bar(a: Int, b: Int)
+    
+    pprint.pprintln(
+      (for {
+        a <- partial.Result.fromCatching("a".toInt)
+        b <- partial.Result.fromCatching("b".toInt)
+      } yield Bar(a, b))
+        .asErrorPathMessageStrings
+    )
+    // expected output:
+    // List(("", "For input string: \"a\""))
+
+    pprint.pprintln(
+      (
+        partial.Result.fromCatching("a".toInt),
+        partial.Result.fromCatching("b".toInt)
+      ).parMapN((a, b) => Bar(a, b))
+        .asErrorPathMessageStrings
+    )
+    // expected output:
+    // List(("", "For input string: \"a\""), ("", "For input string: \"b\""))
+    ```
+
+`Transformer`s have only `mapN`/for-comprehension as they as there is nothing that they can aggregate:
+
+!!! example "Combining Transformers with Cats"
+
+    ```scala
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
+    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import cats.syntax.all._
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.cats._
+
+    case class Foo(a: String, b: String)
+    case class Bar(a: Int, b: Int)
+
+    pprint.pprintln(
+      (for {
+        a <- cats.arrow.Arrow[Transformer].lift[Bar, String](_.a.toString)
+        b <- cats.arrow.Arrow[Transformer].lift[Bar, String](_.a.toString)
+      } yield Foo(a, b))
+        .transform(Bar(10, 20))
+    )
+    // expected output:
+    // Foo(a = "10", b = "10")
+
+    pprint.pprintln(
+      (
+        cats.arrow.Arrow[Transformer].lift[Bar, String](_.a.toString),
+        cats.arrow.Arrow[Transformer].lift[Bar, String](_.a.toString)
+      ).mapN((a, b) => Foo(a, b))
+        .transform(Bar(10, 20))
+    )
+    // expected output:
+    // Foo(a = "10", b = "10")
+    ```
 
 ## Protocol Buffers integration
 
