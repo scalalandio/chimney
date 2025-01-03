@@ -1051,6 +1051,133 @@ new extension methods: `asValidatedNec`, `asValidatedNel`, `asValidatedChain` an
     Result of the partial transformation is then converted to `ValidatedNel` or `ValidatedNec` using either
     `.asValidatedNel` or `.asValidatedNec` extension method call.
 
+### Conversions to/from Cats collections
+
+If you want to convert between Scala collections and Cats collections, or between 2 Cats collections
+(or between Cats collections and some other collection whose support was provided via integration e.g. Java
+collection), then you can:
+
+ * convert *from* `Chain`, `NonEmptyChain`, `NonEmptyList`, `NonEmptyLazyList`, `NonEmptyMap`, `NonEmptySeq`,
+   `NonEmptySet` and `NonEmptyVector` with *both* `Transformer`s and `PartialTransformer`s (since iterating over
+   a collection is always possible)
+ * convert *into* `Chain` with *both* `Transformer`s and `PartialTransformer`s (since `Chain` can always be created)
+ * convert *into* `NonEmptyChain`, `NonEmptyList`, `NonEmptyLazyList`, `NonEmptyMap`, `NonEmptySeq` and `NonEmptySeq`,
+   and `NonEmptySet` and `NonEmptyVector` with *only* `PartialTransformer`s (since their constructor performs
+   validation), except when you try to
+ * convert *between* `NonEmptyChain` and another `NonEmptyChain`, `NonEmptyList` and another `NonEmptyList`,
+   `NonEmptyLazyList` and another `NonEmptyLazyList`, `NonEmptyMap` and another `NonEmptyMap`,
+   `NonEmptySeq` and another `NonEmptySeq`, `NonEmptyVector` and another `NonEmptyVector`,
+    and any other `F[A]` into `F[B]` which has `Traverse` instance, with *both* `Transformer`s and `PartialTransformer`s
+    (since we can use `.traverseWithIndexM` and avoid running that validation again)
+
+!!! example "Converting from Cats collections"
+
+   ```scala
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
+    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import cats.data._
+    import cats.Order
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.cats._
+
+    case class Foo(a: Int)
+    case class Bar(a: Int)
+
+    pprint.pprintln(
+      Chain.one(Foo(10)).transformInto[List[Bar]]
+    )
+    pprint.pprintln(
+      NonEmptyChain.one(Foo(10)).transformInto[List[Bar]]
+    )
+    pprint.pprintln(
+      NonEmptyList.one(Foo(10)).transformInto[List[Bar]]
+    )
+    implicit val fooOrder: Order[Foo] = Order.by[Foo, Int](_.a) // required by NonEmptySet.one!!!
+    import Order.catsKernelOrderingForOrder // required by NonEmptySet integration!!!
+    pprint.pprintln(
+      NonEmptySet.one(Foo(10)).transformInto[List[Bar]]
+    )
+    pprint.pprintln(
+      NonEmptyVector.one(Foo(10)).transformInto[List[Bar]]
+    )
+    // expected output:
+    // List(Bar(a = 10))
+    // List(Bar(a = 10))
+    // List(Bar(a = 10))
+    // List(Bar(a = 10))
+    // List(Bar(a = 10))
+    ```
+
+!!! example "Converting into Cats collections"
+
+    ```scala
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
+    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import cats.data._
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.cats._
+
+    case class Foo(a: Int)
+    case class Bar(a: Int)
+
+    pprint.pprintln(
+      List(Foo(10)).transformInto[Chain[Bar]]
+    )
+    pprint.pprintln(
+      List(Foo(10)).transformIntoPartial[NonEmptyChain[Bar]].asOption
+    )
+    pprint.pprintln(
+      List(Foo(10)).transformIntoPartial[NonEmptyList[Bar]].asOption
+    )
+    implicit val barOrdering: Ordering[Bar] = Ordering.by[Bar, Int](_.a) // required by NonEmptySet integration!!!
+    pprint.pprintln(
+      List(Foo(10)).transformIntoPartial[NonEmptySet[Bar]].asOption
+    )
+    pprint.pprintln(
+      List(Foo(10)).transformIntoPartial[NonEmptyVector[Bar]].asOption
+    )
+    // expected output:
+    // Singleton(a = Bar(a = 10))
+    // Some(value = Singleton(a = Bar(a = 10)))
+    // Some(value = NonEmptyList(head = Bar(a = 10), tail = List()))
+    // Some(value = TreeSet(Bar(a = 10)))
+    // Some(value = NonEmptyVector(Bar(10)))
+    ```
+
+!!! example "Converting between Cats collections of the same type"
+
+   ```scala
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
+    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import cats.data._
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.cats._
+
+    case class Foo(a: Int)
+    case class Bar(a: Int)
+
+    pprint.pprintln(
+      Chain.one(Foo(10)).transformInto[Chain[Bar]]
+    )
+    pprint.pprintln(
+      NonEmptyChain.one(Foo(10)).transformInto[NonEmptyChain[Bar]]
+    )
+    pprint.pprintln(
+      NonEmptyList.one(Foo(10)).transformInto[NonEmptyList[Bar]]
+    )
+    pprint.pprintln(
+      NonEmptyVector.one(Foo(10)).transformInto[NonEmptyVector[Bar]]
+    )
+    // expected output:
+    // Singleton(a = Bar(a = 10))
+    // Singleton(a = Bar(a = 10))
+    // NonEmptyList(head = Bar(a = 10), tail = List())
+    // NonEmptyVector(Bar(10))
+    ```
+
 ### Cats instances
 
 If you have the experience with Cats and their type classes, then behavior of `Transformer` needs no additional
