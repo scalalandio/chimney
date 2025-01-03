@@ -1408,6 +1408,38 @@ and `partial.Result`s with `parMapN` and `for`-comprehension:
     // Foo(a = "10", b = "10")
     ```
 
+Piping `Transformer`s/`PartialTransformers` is also possible:
+
+!!! example "Piping Transformers with Cats"
+
+    ```scala
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
+    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import cats.syntax.all._
+    import io.scalaland.chimney.{PartialTransformer, Transformer}
+    import io.scalaland.chimney.cats._
+
+    case class Foo(a: Int)
+
+    pprint.pprintln(
+      cats.arrow.Arrow[Transformer].lift[Foo, Int](_.a)
+        .andThen(cats.arrow.Arrow[Transformer].lift[Int, String](_.toString))
+        .transform(Foo(10))
+    )
+    // expected output:
+    // "10"
+
+    pprint.pprintln(
+      cats.arrow.Arrow[PartialTransformer].lift[Int, String](_.toString)
+        .compose(cats.arrow.Arrow[PartialTransformer].lift[Foo, Int](_.a))
+        .transform(Foo(10))
+        .asOption
+    )
+    // expected output:
+    // Some(value = "10")
+    ```
+
 ## Protocol Buffers integration
 
 Most of the time, working with Protocol Buffers should not be different from
