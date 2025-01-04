@@ -97,7 +97,7 @@ extra:
     cats:             "2.12.0"
     scala_automapper: "0.7.0"
     henkan:           "0.6.5"
-    ducktape:         "0.2.5"
+    ducktape:         "0.2.7"
     pprint:           "0.9.0"
     quicklens:        "1.9.9"
     enumeratum:       "1.7.5"

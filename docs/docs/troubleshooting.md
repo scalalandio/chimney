@@ -858,7 +858,7 @@ and more!
     If it's out-of-date, please let us know, or even better, provide a PR with an update!
     
 [Ducktape](https://arainko.github.io/ducktape/) was first released in November 2022. Its latest version, similarly to
-Chimney, is based on macros. It supports only Scala 3 on JVM, Scala.js 1.x and Scala Native 0.4.
+Chimney, is based on macros. It supports only Scala 3 on JVM, Scala.js 1.x and Scala Native 0.5.
 
 Here are some features it shares with Chimney (Ducktape's code based on GitHub Pages documentation):
 
@@ -1221,7 +1221,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     }
     ```
 
-!!! example "Nested enum with missing counterpart"
+!!! example "Providing missing values"
 
     ```scala
     //> using scala {{ scala.3 }}
@@ -1407,6 +1407,76 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     }
     ```
 
+!!! example "Providing missing values in nested fields"
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class SourceToplevel1(level1: Option[SourceLevel1])
+    case class SourceLevel1(level2: Option[SourceLevel2])
+    case class SourceLevel2(int: Int)
+
+    case class DestToplevel1(level1: Option[DestLevel1])
+    case class DestLevel1(level2: Option[DestLevel2])
+    case class DestLevel2(int: Long)
+
+    val source = SourceToplevel1(Some(SourceLevel1(Some(SourceLevel2(1)))))
+    
+    import io.github.arainko.ducktape.*
+
+    pprint.pprintln(
+      source
+        .into[DestToplevel1]
+        .transform(
+          Field.computedDeep(
+            _.level1.element.level2.element.int,
+            // the type here cannot be inferred automatically and needs to be provided by the user,
+            // a nice compiletime error message is shown (with a suggestion on what the proper type to use is) otherwise
+            (value: Int) => value + 10L
+          )
+        )
+    )
+    // expected output:
+    // DestToplevel1(level1 = Some(value = DestLevel1(level2 = Some(value = DestLevel2(int = 11L)))))
+    ```
+
+    Chimney's counterpart:
+
+    ```scala
+    // file: snippet.scala - part of Ductape counterpart 4
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+
+    case class SourceToplevel1(level1: Option[SourceLevel1])
+    case class SourceLevel1(level2: Option[SourceLevel2])
+    case class SourceLevel2(int: Int)
+
+    case class DestToplevel1(level1: Option[DestLevel1])
+    case class DestLevel1(level2: Option[DestLevel2])
+    case class DestLevel2(int: Long)
+
+    val source = SourceToplevel1(Some(SourceLevel1(Some(SourceLevel2(1)))))
+
+    import io.scalaland.chimney.dsl.*
+
+    @main def example: Unit = {
+    pprint.pprintln(
+      source
+        .into[DestToplevel1]
+        .withFieldComputedFrom(_.level1.matchingSome.level2.matchingSome.int)( // from which field
+          _.level1.matchingSome.level2.matchingSome.int, // into which field
+          value => value + 10L
+        )
+        .transform
+    )
+    // expected output:
+    // DestToplevel1(level1 = Some(value = DestLevel1(level2 = Some(value = DestLevel2(int = 11L)))))
+    }  
+    ```
+
 !!! example "Coproduct configurations"
 
     ```scala
@@ -1475,7 +1545,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     Chimney's counterpart:
 
     ```scala
-    // file: snippet.scala - part of Ductape counterpart 4
+    // file: snippet.scala - part of Ductape counterpart 5
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
@@ -1675,7 +1745,7 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     Chimney's counterpart:
 
     ```scala
-    // file: snippet.scala - part of Ductape counterpart 5
+    // file: snippet.scala - part of Ductape counterpart 6
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
