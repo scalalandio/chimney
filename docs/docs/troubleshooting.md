@@ -1312,6 +1312,23 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     //   extra = None,
     //   transformable = Some(value = 400)
     // )
+
+    pprint.pprintln(
+      source
+        .into[DestToplevel]
+        .transform(
+          Field.fallbackToNone.regional(
+            _.level1
+          ), // <-- we're applying the config starting on the `.level1` field and below, it'll be also applied to other transformations nested inside
+          Field.const(_.extra, Some(123)) // <-- note that this field now needs to be configured manually
+        )
+    )
+    // expected output:
+    // DestToplevel(
+    //   level1 = DestLevel1(extra = None, str = "str"),
+    //   extra = Some(value = 123),
+    //   transformable = Some(value = 400)
+    // )
     ```
     
     Chimney's counterpart:
@@ -1402,6 +1419,20 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     // DestToplevel(
     //   level1 = DestLevel1(extra = None, str = "str"),
     //   extra = None,
+    //   transformable = Some(value = 400)
+    // )
+    
+    pprint.pprintln(
+      source
+        .into[DestToplevel]
+        .withTargetFlag(_.level1).enableOptionDefaultsToNone
+        .withFieldConst(_.extra, Some(123))
+        .transform
+    )
+    // expected output:
+    // DestToplevel(
+    //   level1 = DestLevel1(extra = None, str = "str"),
+    //   extra = Some(value = 123),
     //   transformable = Some(value = 400)
     // )
     }
@@ -1897,7 +1928,6 @@ Since Ducktape is inspired by Chimney, there is a huge overlap in functionality.
       another config provided value for level "above"
     * `Field.allMatching` which has no direct counterpart in Chimney (in _some_ cases `Patcher`s could fulfill that role
       but not in all of them)
-    * flags overrides on local scope, for selected fields (it calls it "regional" configs)
  * Chimney provides/allows:
     * [conversions to/from tuples](supported-transformations.md#frominto-a-tuple)
     * reading to/from Java Bean accessors ([getters](supported-transformations.md#reading-from-bean-getters) and
