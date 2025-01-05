@@ -2919,6 +2919,37 @@ Or we might want to redirect two subtypes into the same target subtype. For that
 
 !!! notice
 
+    If one needs to handle this case in but nested inside a `case class`/`Option`/`Either`/collection, one can use
+    `.withFieldRenamed` with proper selectors:
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+    
+    sealed trait Source
+    object Source {
+      case object Foo extends Source
+      case class Baz(a: Int) extends Source
+    }
+    
+    sealed trait Target
+    object Target {
+      case object Foo extends Target
+      case class Bar(a: Int) extends Target
+    }
+    
+    pprint.pprintln(
+      List(Source.Baz(10): Source).into[List[Target]]
+        .withFieldRenamed(_.everyItem.matching[Source.Baz], _.everyItem.matching[Target.Bar])
+        .transform
+    )
+    // expected output:
+    // List(Bar(a = 10))
+    ```
+
+!!! notice
+
     While `sealed` hierarchies, Scala 3 `enum`s and Java `enum`s fall into the same category of Algebraic Data Types,
     manu users might consider them different things and e.g. not look for methods starting with `withSealedSubtype`
     when dealing with `enum`s. For that reason we provide an aliases to this methods - `withEnumCaseRenamed`:
@@ -3079,6 +3110,55 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     )
     // expected output:
     // Right(value = Buzz)
+    ```
+
+!!! notice
+
+    If one needs to handle this case in but nested inside a `case class`/`Option`/`Either`/collection, one can use
+    `.withFieldComputedFrom`/`.withFieldComputedPartialFrom` with proper selectors:
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+
+    sealed trait Foo
+    object Foo {
+      case class Baz(a: String) extends Foo
+      case object Buzz extends Foo
+    }
+    sealed trait Bar
+    object Bar {
+      case class Baz(a: String) extends Bar
+      case object Fizz extends Bar
+      case object Buzz extends Bar
+    }
+
+    pprint.pprintln(
+      List(Bar.Baz("value"): Bar, Bar.Fizz: Bar, Bar.Buzz: Bar)
+        .into[List[Foo]]
+        .withFieldComputedFrom(_.everyItem.matching[Bar.Fizz.type])(_.everyItem, fizz => Foo.Baz(fizz.toString))
+        .transform
+    )
+    // expected output:
+    //  List(Baz(a = "value"), Baz(a = "Fizz"), Buzz)
+    
+    pprint.pprintln(
+      List(Bar.Baz("value"): Bar, Bar.Fizz: Bar, Bar.Buzz: Bar)
+        .intoPartial[List[Foo]]
+        .withFieldComputedPartialFrom(_.everyItem.matching[Bar.Fizz.type])(_.everyItem, fizz => partial.Result.fromEmpty)
+        .transform
+        .asEither
+    )
+    // expected output:
+    // Left(
+    //   value = Errors(
+    //     errors = NonEmptyErrorsChain(
+    //       Error(message = EmptyValue, path = Path(elements = List(Index(index = 1))))
+    //     )
+    //   )
+    // )
     ```
 
 !!! notice
@@ -3324,6 +3404,9 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     // Red
     }
     ```
+
+If one needs to handle this case in but nested inside a `case class`/`Option`/`Either`/collection, one can use
+`.withFieldRenamed` with a proper selectors:
 
 ### Customizing subtype name matching
 
