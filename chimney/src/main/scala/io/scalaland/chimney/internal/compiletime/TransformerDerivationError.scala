@@ -1,6 +1,7 @@
 package io.scalaland.chimney.internal.compiletime
 
 import Console.*
+import io.scalaland.chimney.internal.compiletime.NotSupportedOperationFromPath.Operation as FromOperation
 import io.scalaland.chimney.internal.compiletime.datatypes.ProductTypes.BeanAware
 
 /** Transformer-specific error related to derivation logic */
@@ -48,12 +49,21 @@ final case class AmbiguousFieldOverrides(
 )(val fromType: String, val toType: String)
     extends TransformerDerivationError
 
-final case class NotSupportedRenameFromPath(
+final case class NotSupportedOperationFromPath(
+    operation: NotSupportedOperationFromPath.Operation,
     toName: String,
     foundFromPath: String,
     allowedFromPaths: String
 )(val fromType: String, val toType: String)
     extends TransformerDerivationError
+object NotSupportedOperationFromPath {
+  sealed trait Operation extends Product with Serializable
+  object Operation {
+    case object Computed extends Operation
+    case object ComputedPartial extends Operation
+    case object Renamed extends Operation
+  }
+}
 
 final case class MissingSubtypeTransformer(
     fromSubtype: String
@@ -102,8 +112,15 @@ object TransformerDerivationError {
             val overrides =
               foundOverrides.map(fieldOverride => s"$MAGENTA$fieldOverride$RESET").mkString(", ")
             s"  field $toName: $toType could not resolve overrides since the current $MAGENTA$fieldNamesComparator: TransformedNamedComparison$RESET treats the following overrides as the same: $overrides making it ambiguous - change the field name comparator with $MAGENTA.enableCustomFieldNameComparison$RESET to resolve the ambiguity"
-          case NotSupportedRenameFromPath(toName, foundFromPath, allowedFromPaths) =>
-            s"  field $toName: renaming from $foundFromPath is not allowed, try selecting only field names from $allowedFromPaths ($allowedFromPaths.field1.field2, etc)"
+          case NotSupportedOperationFromPath(operation, toName, foundFromPath, allowedFromPaths) =>
+            operation match {
+              case FromOperation.Computed =>
+                s"  field $toName: computing from $foundFromPath is not allowed, try selecting only field names from $allowedFromPaths ($allowedFromPaths.field1.field2, etc)"
+              case FromOperation.ComputedPartial =>
+                s"  field $toName: partial computing from $foundFromPath is not allowed, try selecting only field names from $allowedFromPaths ($allowedFromPaths.field1.field2, etc)"
+              case FromOperation.Renamed =>
+                s"  field $toName: renaming from $foundFromPath is not allowed, try selecting only field names from $allowedFromPaths ($allowedFromPaths.field1.field2, etc)"
+            }
           case MissingSubtypeTransformer(fromSubtype) =>
             s"  can't transform coproduct instance $fromSubtype to $toType"
           case AmbiguousSubtypeTargets(fromField, foundToFields) =>
