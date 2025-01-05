@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import io.scalaland.chimney.internal.compiletime.NotSupportedOperationFromPath.Operation as FromOperation
 import io.scalaland.chimney.internal.compiletime.{DerivationErrors, DerivationResult}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
@@ -304,7 +305,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           )
         )
       case TransformerOverride.Computed(sourcePath, _, runtimeData) =>
-        extractSrcByPath(sourcePath, toName).map { extractedSrc =>
+        extractSrcByPath(FromOperation.Computed, sourcePath, toName).map { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
           ctx match {
             case TransformationContext.ForTotal(_) =>
@@ -339,7 +340,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           }
         }
       case TransformerOverride.ComputedPartial(sourcePath, _, runtimeData) =>
-        extractSrcByPath(sourcePath, toName).map { extractedSrc =>
+        extractSrcByPath(FromOperation.ComputedPartial, sourcePath, toName).map { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
           // We're constructing:
           // '{
@@ -363,7 +364,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           )
         }
       case TransformerOverride.Renamed(sourcePath, _) =>
-        extractSrcByPath(sourcePath, toName).flatMap { extractedSrc =>
+        extractSrcByPath(FromOperation.Renamed, sourcePath, toName).flatMap { extractedSrc =>
           import extractedSrc.Underlying as ExtractedSrc, extractedSrc.value as extractedSrcExpr
           DerivationResult.namedScope(
             s"Recursive derivation for field `$sourcePath`: ${Type
@@ -389,7 +390,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         }
     }
 
-    private def extractSrcByPath[From, To](sourcePath: Path, toName: String)(implicit
+    private def extractSrcByPath[From, To](operation: FromOperation, sourcePath: Path, toName: String)(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[ExistentialExpr] = {
       def extractSource[Source: Type](
@@ -429,7 +430,12 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               extractNestedSource(path2, extractedSrcValue2)
             }
           case path =>
-            DerivationResult.notSupportedRenameFromPath[From, To, ExistentialExpr](toName, path, ctx.srcJournal.last._1)
+            DerivationResult.notSupportedOperationFromPath[From, To, ExistentialExpr](
+              operation,
+              toName,
+              path,
+              ctx.srcJournal.last._1
+            )
         }
 
       val extractedNestedSourceCandidates = for {
