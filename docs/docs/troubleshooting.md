@@ -1145,8 +1145,8 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     // )
     ```
 
-    Chimney doesn't allow handling sealed subtypes/enum cases when nested, and require using implicit `Transformer`
-    which would handle them as top level:
+    Chimney allows handling nested sealed subtypes/enum cases when by using
+    `.withFieldComputedFrom`/'.withFieldComputedPartial`/`.withFieldRenamed` using proper selectors:
 
     ```scala
     // file: snippet.scala - part of Ductape counterpart 2
@@ -1191,23 +1191,17 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     )
     
     import io.scalaland.chimney.dsl.*
-    import io.scalaland.chimney.Transformer
     
-    pprint.pprintln {
-      // There is no direct analogue to nested:
-      //   Case.const(_.paymentMethods.element.at[wire.PaymentMethod.Transfer], domain.PaymentMethod.Cash)
-      // so this has to be handled "top level" by creating implicit/given.
-      given Transformer[wire.PaymentMethod, domain.PaymentMethod] = Transformer
-        .define[wire.PaymentMethod, domain.PaymentMethod]
-        .withEnumCaseHandled[wire.PaymentMethod.Transfer](_ => domain.PaymentMethod.Cash)
-        .buildTransformer
-
+    pprint.pprintln(
       wirePerson
         .into[domain.Person]
         .withFieldConst(_.firstName, "Jane")
-        // implicit instead of nested handling for withEnumCaseHandled
+        .withFieldComputedFrom(_.paymentMethods.everyItem.matching[wire.PaymentMethod.Transfer])(
+          _.paymentMethods.everyItem,
+          _ => domain.PaymentMethod.Cash
+        )
         .transform
-    }
+    )
     // expected output:
     // Person(
     //   firstName = "Jane",
