@@ -67,6 +67,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[ToOrPartialTo]] = {
       import ctx.config.*
 
+      // FIXME (2.0.0 cleanup): use only ConstructorArgVals as source in position-based matching, unless enabled by flag
       val usePositionBasedMatching = Type[From].isTuple || Type[To].isTuple
       lazy val fromEnabledExtractorsForPositionBasedMatching = fromExtractors.filter { case (name, getter) =>
         val fieldFlags = flags.at(TargetPath(Path(_.select(name))))
