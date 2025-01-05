@@ -65,9 +65,9 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
           case (_, TransformerOverride.Computed(_, targetPath, _))        => targetPath == ctx.currentTgt
           case (_, TransformerOverride.ComputedPartial(_, targetPath, _)) => targetPath == ctx.currentTgt
           case (_, TransformerOverride.Renamed(_, targetPath)) =>
-            targetPath match {
-              case Path.AtSubtype(someTo, root) => someTo.Underlying <:< Type[To] && root == ctx.currentTgt
-              case _                            => false
+            targetPath.drop(ctx.currentTgt) match {
+              case Some(Path.AtSubtype(someTo, root)) => someTo.Underlying <:< Type[To] && root == Path.Root
+              case _                                  => false
             }
         }
         .toList
@@ -105,7 +105,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                     runtimeData.asInstanceOfExpr[From => partial.Result[To]].apply(fromExpr)
                   )
                 case TransformerOverride.Renamed(_, targetPath) =>
-                  val Path.AtSubtype(someTo, _) = targetPath: @unchecked
+                  val Some(Path.AtSubtype(someTo, _)) = targetPath.drop(ctx.currentTgt): @unchecked
                   // We're constructing:
                   // case someFromExpr: $someFrom => $derivedToSubtype.asInstance
                   import someTo.Underlying as SomeTo
