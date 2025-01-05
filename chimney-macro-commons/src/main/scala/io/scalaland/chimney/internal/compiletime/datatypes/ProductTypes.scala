@@ -32,6 +32,7 @@ trait ProductTypes { this: Definitions =>
       sealed trait SourceType extends scala.Product with Serializable
       object SourceType {
 
+        // FIXME (2.0.0 cleanup): split into ConstructorArgVar and ConstructorBodyVal
         /** `val`/`lazy val` initialized by constructor - either as val parameter or in body */
         case object ConstructorVal extends SourceType
 
