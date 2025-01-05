@@ -461,11 +461,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       case Nil =>
         whenAbsent
       case runtimeFieldOverride :: Nil =>
-        import FromOperation.{Computed, ComputedPartial}
         import io.scalaland.chimney.internal.compiletime.DerivationError.TransformerError as TError
         import io.scalaland.chimney.internal.compiletime.NotSupportedOperationFromPath as NotSupportedFrom
         useOverride[From, To, CtorParam](toName, runtimeFieldOverride).recoverWith {
-          case DerivationErrors(TError(NotSupportedFrom(Computed | ComputedPartial, `toName`, _, _)), Vector()) =>
+          case DerivationErrors(TError(NotSupportedFrom(_, `toName`, _, _)), Vector()) =>
             // If we cannot extract value in .withFieldComputedFrom/.withFieldComputedPartialFrom, it might be because
             // path is matching on TargetSide, but SourceSide requires recursion, TransformationContext update,
             // and then matching on some other rule.

@@ -315,6 +315,146 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
     }
   }
 
+  group("setting .withFieldComputedFrom(selectorFrom)(selectorTo, mapping)") {
+
+    test("should provide support for withSealedSubtypeHandled/withEnumCaseHandled cases but nested") {
+      def blackIsRed(@unused b: colors2.Black.type): colors1.Color =
+        colors1.Red
+
+      (Some(colors2.Black): Option[colors2.Color])
+        .into[Option[colors1.Color]]
+        .withFieldComputedFrom(_.matchingSome.matching[colors2.Black.type])(_.matchingSome, blackIsRed)
+        .transform ==> Some(colors1.Red)
+      (Some(colors2.Red): Option[colors2.Color])
+        .into[Option[colors1.Color]]
+        .withFieldComputedFrom(_.matchingSome.matching[colors2.Black.type])(_.matchingSome, blackIsRed)
+        .transform ==> Some(colors1.Red)
+      (Some(colors2.Green): Option[colors2.Color])
+        .into[Option[colors1.Color]]
+        .withFieldComputedFrom(_.matchingSome.matching[colors2.Black.type])(_.matchingSome, blackIsRed)
+        .transform ==> Some(colors1.Green)
+      (Some(colors2.Blue): Option[colors2.Color])
+        .into[Option[colors1.Color]]
+        .withFieldComputedFrom(_.matchingSome.matching[colors2.Black.type])(_.matchingSome, blackIsRed)
+        .transform ==> Some(colors1.Blue)
+
+      (Left(colors2.Black): Either[colors2.Color, colors2.Color])
+        .into[Either[colors1.Color, colors1.Color]]
+        .withFieldComputedFrom(_.matchingLeft.matching[colors2.Black.type])(_.matchingLeft, blackIsRed)
+        .withFieldComputedFrom(_.matchingRight.matching[colors2.Black.type])(_.matchingRight, blackIsRed)
+        .transform ==> Left(colors1.Red)
+      (Left(colors2.Red): Either[colors2.Color, colors2.Color])
+        .into[Either[colors1.Color, colors1.Color]]
+        .withFieldComputedFrom(_.matchingLeft.matching[colors2.Black.type])(_.matchingLeft, blackIsRed)
+        .withFieldComputedFrom(_.matchingRight.matching[colors2.Black.type])(_.matchingRight, blackIsRed)
+        .transform ==> Left(colors1.Red)
+      (Left(colors2.Green): Either[colors2.Color, colors2.Color])
+        .into[Either[colors1.Color, colors1.Color]]
+        .withFieldComputedFrom(_.matchingLeft.matching[colors2.Black.type])(_.matchingLeft, blackIsRed)
+        .withFieldComputedFrom(_.matchingRight.matching[colors2.Black.type])(_.matchingRight, blackIsRed)
+        .transform ==> Left(colors1.Green)
+      (Left(colors2.Blue): Either[colors2.Color, colors2.Color])
+        .into[Either[colors1.Color, colors1.Color]]
+        .withFieldComputedFrom(_.matchingLeft.matching[colors2.Black.type])(_.matchingLeft, blackIsRed)
+        .withFieldComputedFrom(_.matchingRight.matching[colors2.Black.type])(_.matchingRight, blackIsRed)
+        .transform ==> Left(colors1.Blue)
+      (Right(colors2.Black): Either[colors2.Color, colors2.Color])
+        .into[Either[colors1.Color, colors1.Color]]
+        .withFieldComputedFrom(_.matchingLeft.matching[colors2.Black.type])(_.matchingLeft, blackIsRed)
+        .withFieldComputedFrom(_.matchingRight.matching[colors2.Black.type])(_.matchingRight, blackIsRed)
+        .transform ==> Right(colors1.Red)
+      (Right(colors2.Red): Either[colors2.Color, colors2.Color])
+        .into[Either[colors1.Color, colors1.Color]]
+        .withFieldComputedFrom(_.matchingLeft.matching[colors2.Black.type])(_.matchingLeft, blackIsRed)
+        .withFieldComputedFrom(_.matchingRight.matching[colors2.Black.type])(_.matchingRight, blackIsRed)
+        .transform ==> Right(colors1.Red)
+      (Right(colors2.Green): Either[colors2.Color, colors2.Color])
+        .into[Either[colors1.Color, colors1.Color]]
+        .withFieldComputedFrom(_.matchingLeft.matching[colors2.Black.type])(_.matchingLeft, blackIsRed)
+        .withFieldComputedFrom(_.matchingRight.matching[colors2.Black.type])(_.matchingRight, blackIsRed)
+        .transform ==> Right(colors1.Green)
+      (Right(colors2.Blue): Either[colors2.Color, colors2.Color])
+        .into[Either[colors1.Color, colors1.Color]]
+        .withFieldComputedFrom(_.matchingLeft.matching[colors2.Black.type])(_.matchingLeft, blackIsRed)
+        .withFieldComputedFrom(_.matchingRight.matching[colors2.Black.type])(_.matchingRight, blackIsRed)
+        .transform ==> Right(colors1.Blue)
+
+      (List(colors2.Black, colors2.Red, colors2.Green, colors2.Blue): List[colors2.Color])
+        .into[List[colors1.Color]]
+        .withFieldComputedFrom(_.everyItem.matching[colors2.Black.type])(_.everyItem, blackIsRed)
+        .transform ==> List(colors1.Red, colors1.Red, colors1.Green, colors1.Blue)
+
+      (Map(
+        colors2.Black -> colors2.Black,
+        colors2.Red -> colors2.Red,
+        colors2.Green -> colors2.Green,
+        colors2.Blue -> colors2.Blue
+      ): Map[
+        colors2.Color,
+        colors2.Color
+      ])
+        .into[Map[colors1.Color, colors1.Color]]
+        .withFieldComputedFrom(_.everyMapKey.matching[colors2.Black.type])(_.everyMapKey, blackIsRed)
+        .withFieldComputedFrom(_.everyMapValue.matching[colors2.Black.type])(_.everyMapValue, blackIsRed)
+        .transform ==>
+        Map(
+          colors1.Red -> colors1.Red,
+          colors1.Red -> colors1.Red,
+          colors1.Green -> colors1.Green,
+          colors1.Blue -> colors1.Blue
+        )
+
+    }
+  }
+
+  group("settings .withFieldRenamed(selectorFrom, selectorTo)") {
+
+    import fixtures.renames.Subtypes.*
+
+    test("should provide support for withSealedSubtypeRenamed/withEnumCaseRenamed cases but nested") {
+      (Some(Foo3.Baz): Option[Foo3])
+        .into[Option[Bar]]
+        .withFieldRenamed(_.matchingSome.matching[Foo3.Bazz.type], _.matchingSome.matching[Bar.Baz.type])
+        .transform ==> Some(Bar.Baz)
+      (Some(Foo3.Bazz): Option[Foo3])
+        .into[Option[Bar]]
+        .withFieldRenamed(_.matchingSome.matching[Foo3.Bazz.type], _.matchingSome.matching[Bar.Baz.type])
+        .transform ==> Some(Bar.Baz)
+
+      (Left(Foo3.Baz): Either[Foo3, Foo3])
+        .into[Either[Bar, Bar]]
+        .withFieldRenamed(_.matchingLeft.matching[Foo3.Bazz.type], _.matchingLeft.matching[Bar.Baz.type])
+        .withFieldRenamed(_.matchingRight.matching[Foo3.Bazz.type], _.matchingRight.matching[Bar.Baz.type])
+        .transform ==> Left(Bar.Baz)
+      (Left(Foo3.Bazz): Either[Foo3, Foo3])
+        .into[Either[Bar, Bar]]
+        .withFieldRenamed(_.matchingLeft.matching[Foo3.Bazz.type], _.matchingLeft.matching[Bar.Baz.type])
+        .withFieldRenamed(_.matchingRight.matching[Foo3.Bazz.type], _.matchingRight.matching[Bar.Baz.type])
+        .transform ==> Left(Bar.Baz)
+      (Right(Foo3.Baz): Either[Foo3, Foo3])
+        .into[Either[Bar, Bar]]
+        .withFieldRenamed(_.matchingLeft.matching[Foo3.Bazz.type], _.matchingLeft.matching[Bar.Baz.type])
+        .withFieldRenamed(_.matchingRight.matching[Foo3.Bazz.type], _.matchingRight.matching[Bar.Baz.type])
+        .transform ==> Right(Bar.Baz)
+      (Right(Foo3.Bazz): Either[Foo3, Foo3])
+        .into[Either[Bar, Bar]]
+        .withFieldRenamed(_.matchingLeft.matching[Foo3.Bazz.type], _.matchingLeft.matching[Bar.Baz.type])
+        .withFieldRenamed(_.matchingRight.matching[Foo3.Bazz.type], _.matchingRight.matching[Bar.Baz.type])
+        .transform ==> Right(Bar.Baz)
+
+      (List(Foo3.Baz, Foo3.Bazz): List[Foo3])
+        .into[List[Bar]]
+        .withFieldRenamed(_.everyItem.matching[Foo3.Bazz.type], _.everyItem.matching[Bar.Baz.type])
+        .transform ==> List(Bar.Baz, Bar.Baz)
+
+      (Map(Foo3.Baz -> Foo3.Baz, Foo3.Bazz -> Foo3.Bazz): Map[Foo3, Foo3])
+        .into[Map[Bar, Bar]]
+        .withFieldRenamed(_.everyMapKey.matching[Foo3.Bazz.type], _.everyMapKey.matching[Bar.Baz.type])
+        .withFieldRenamed(_.everyMapValue.matching[Foo3.Bazz.type], _.everyMapValue.matching[Bar.Baz.type])
+        .transform ==> Map(Bar.Baz -> Bar.Baz)
+    }
+  }
+
   group("flag .enableCustomSubtypeNameComparison") {
 
     import fixtures.renames.Subtypes.*
