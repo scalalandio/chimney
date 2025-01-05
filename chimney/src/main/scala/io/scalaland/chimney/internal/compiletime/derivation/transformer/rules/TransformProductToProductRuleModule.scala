@@ -272,7 +272,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           .flatMap(DerivationResult.expanded)
     }
 
-    def useOverride[From, To, CtorParam: Type](
+    private def useOverride[From, To, CtorParam: Type](
         toName: String,
         runtimeFieldOverride: TransformerOverride.ForField
     )(implicit
@@ -451,7 +451,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       }
     }
 
-    // Exposes logic for: OptionToOption, EitherToEither, ...
+    // Exposes logic for: OptionToOption, EitherToEither, IterableToIterable, MapToMap...
     def useOverrideIfPresentOr[From, To, CtorParam: Type](
         toName: String,
         runtimeFieldOverrides: Set[TransformerOverride.ForField]
@@ -461,7 +461,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       case Nil =>
         whenAbsent
       case runtimeFieldOverride :: Nil =>
-        TransformProductToProductRule.useOverride[From, To, CtorParam](toName, runtimeFieldOverride)
+        import FromOperation.{Computed, ComputedPartial}
+        import io.scalaland.chimney.internal.compiletime.DerivationError.TransformerError as TError
+        import io.scalaland.chimney.internal.compiletime.NotSupportedOperationFromPath as NotSupportedFrom
+        useOverride[From, To, CtorParam](toName, runtimeFieldOverride).recoverWith {
+          case DerivationErrors(TError(NotSupportedFrom(Computed | ComputedPartial, `toName`, _, _)), Vector()) =>
+            // If we cannot extract value in .withFieldComputedFrom/.withFieldComputedPartialFrom, it might be because
+            // path is matching on TargetSide, but SourceSide requires recursion, TransformationContext update,
+            // and then matching on some other rule.
+            whenAbsent
+          case errors => DerivationResult.fail(errors)
+        }
       // $COVERAGE-OFF$Config parsing dedupliate values
       case runtimeFieldOverrides =>
         DerivationResult.assertionError(s"Unexpected multiple overrides: ${runtimeFieldOverrides.mkString(", ")}")
