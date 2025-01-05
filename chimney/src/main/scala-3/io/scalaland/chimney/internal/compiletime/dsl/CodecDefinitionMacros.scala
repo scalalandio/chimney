@@ -46,10 +46,10 @@ object CodecDefinitionMacros {
       DomainSubtype: Type,
       DtoSubtype: Type
   ](
-      id: Expr[CodecDefinition[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags]]
+      cd: Expr[CodecDefinition[Domain, Dto, EncodeOverrides, DecodeOverrides, Flags]]
   )(using Quotes): Expr[CodecDefinition[Domain, Dto, ? <: TransformerOverrides, ? <: TransformerOverrides, Flags]] =
     '{
-      $id
+      $cd
         .asInstanceOf[CodecDefinition[
           Domain,
           Dto,
