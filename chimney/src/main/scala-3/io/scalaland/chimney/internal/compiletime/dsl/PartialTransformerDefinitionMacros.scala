@@ -264,7 +264,7 @@ object PartialTransformerDefinitionMacros {
       Flags <: TransformerFlags: Type,
       Ctor: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -272,7 +272,7 @@ object PartialTransformerDefinitionMacros {
         (_: Type[args]) ?=>
           '{
             WithRuntimeDataStore
-              .update($ti, $f)
+              .update($td, $f)
               .asInstanceOf[PartialTransformerDefinition[From, To, Constructor[args, Path.Root, Overrides], Flags]]
         }
     }(f)
@@ -285,7 +285,7 @@ object PartialTransformerDefinitionMacros {
       T: Type,
       Ctor: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
@@ -297,7 +297,7 @@ object PartialTransformerDefinitionMacros {
               (_: Type[toPath]) ?=>
                 '{
                   WithRuntimeDataStore
-                    .update($ti, $f)
+                    .update($td, $f)
                     .asInstanceOf[PartialTransformerDefinition[
                       From,
                       To,
@@ -315,7 +315,7 @@ object PartialTransformerDefinitionMacros {
       Flags <: TransformerFlags: Type,
       Ctor: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -323,7 +323,7 @@ object PartialTransformerDefinitionMacros {
         (_: Type[args]) ?=>
           '{
             WithRuntimeDataStore
-              .update($ti, $f)
+              .update($td, $f)
               .asInstanceOf[PartialTransformerDefinition[
                 From,
                 To,
@@ -341,7 +341,7 @@ object PartialTransformerDefinitionMacros {
       T: Type,
       Ctor: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
@@ -353,7 +353,7 @@ object PartialTransformerDefinitionMacros {
               (_: Type[toPath]) ?=>
                 '{
                   WithRuntimeDataStore
-                    .update($ti, $f)
+                    .update($td, $f)
                     .asInstanceOf[PartialTransformerDefinition[
                       From,
                       To,
@@ -371,7 +371,7 @@ object PartialTransformerDefinitionMacros {
       Flags <: TransformerFlags: Type,
       Ctor: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
     DslMacroUtils().applyConstructorType {
@@ -380,7 +380,7 @@ object PartialTransformerDefinitionMacros {
           '{
             WithRuntimeDataStore
               .update(
-                $ti,
+                $td,
                 FunctionEitherToResult.lift[Ctor, Any]($f)(
                   ${ Expr.summon[FunctionEitherToResult[Ctor]].get }.asInstanceOf[FunctionEitherToResult.Aux[Ctor, Any]]
                 )
@@ -402,7 +402,7 @@ object PartialTransformerDefinitionMacros {
       T: Type,
       Ctor: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selector: Expr[To => T],
       f: Expr[Ctor]
   )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
@@ -415,7 +415,7 @@ object PartialTransformerDefinitionMacros {
                 '{
                   WithRuntimeDataStore
                     .update(
-                      $ti,
+                      $td,
                       FunctionEitherToResult.lift[Ctor, Any]($f)(
                         ${ Expr.summon[FunctionEitherToResult[Ctor]].get }
                           .asInstanceOf[FunctionEitherToResult.Aux[Ctor, Any]]
@@ -438,7 +438,7 @@ object PartialTransformerDefinitionMacros {
       Flags <: TransformerFlags: Type,
       T: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selectorFrom: Expr[From => T]
   )(using
       Quotes
@@ -447,7 +447,7 @@ object PartialTransformerDefinitionMacros {
       .applyFieldNameType {
         [fromPath <: Path] =>
           (_: Type[fromPath]) ?=>
-            '{ TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, fromPath]($ti) }
+            '{ TransformerSourceFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, fromPath]($td) }
       }(selectorFrom)
 
   def withTargetFlagImpl[
@@ -457,7 +457,7 @@ object PartialTransformerDefinitionMacros {
       Flags <: TransformerFlags: Type,
       T: Type
   ](
-      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      td: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
       selectorTo: Expr[To => T]
   )(using
       Quotes
@@ -466,6 +466,6 @@ object PartialTransformerDefinitionMacros {
       .applyFieldNameType {
         [toPath <: Path] =>
           (_: Type[toPath]) ?=>
-            '{ TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, toPath]($ti) }
+            '{ TransformerTargetFlagsDsl.OfPartialTransformerDefinition[From, To, Overrides, Flags, toPath]($td) }
       }(selectorTo)
 }
