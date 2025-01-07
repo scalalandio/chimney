@@ -1,6 +1,11 @@
 package io.scalaland.chimney.internal.runtime
 
-import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformedNamesComparison}
+import io.scalaland.chimney.dsl.{
+  ImplicitTransformerPreference,
+  TransformedNamesComparison,
+  UnmatchedSubtypePolicy,
+  UnusedFieldPolicy
+}
 
 sealed abstract class TransformerFlags
 object TransformerFlags {
@@ -27,5 +32,7 @@ object TransformerFlags {
   final class ImplicitConflictResolution[R <: ImplicitTransformerPreference] extends Flag
   final class FieldNameComparison[C <: TransformedNamesComparison] extends Flag
   final class SubtypeNameComparison[C <: TransformedNamesComparison] extends Flag
+  final class UnusedFieldPolicyCheck[P <: UnusedFieldPolicy] extends Flag
+  final class UnmatchedSubtypePolicyCheck[P <: UnmatchedSubtypePolicy] extends Flag
   final class MacrosLogging extends Flag
 }

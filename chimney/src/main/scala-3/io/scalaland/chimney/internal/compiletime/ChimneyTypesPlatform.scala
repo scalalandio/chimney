@@ -45,6 +45,12 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       quoted.Type.of[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val FailOnIgnoredSourceVal: Type[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type]
+
+    val FailOnUnmatchedTargetSubtype: Type[io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype.type]
+
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
       quoted.Type.of[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
@@ -388,6 +394,25 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           def unapply[A](tpe: Type[A]): Option[?<[dsls.TransformedNamesComparison]] = tpe match {
             case '[runtime.TransformerFlags.SubtypeNameComparison[c]] =>
               Some(Type[c].as_?<[dsls.TransformedNamesComparison])
+            case _ => scala.None
+          }
+        }
+        object UnusedFieldPolicyCheck extends UnusedFieldPolicyCheckModule {
+          def apply[P <: dsls.UnusedFieldPolicy: Type]: Type[runtime.TransformerFlags.UnusedFieldPolicyCheck[P]] =
+            quoted.Type.of[runtime.TransformerFlags.UnusedFieldPolicyCheck[P]]
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.UnusedFieldPolicy]] = tpe match {
+            case '[runtime.TransformerFlags.UnusedFieldPolicyCheck[p]] =>
+              Some(Type[p].as_?<[dsls.UnusedFieldPolicy])
+            case _ => scala.None
+          }
+        }
+        object UnmatchedSubtypePolicyCheck extends UnmatchedSubtypePolicyCheckModule {
+          def apply[P <: dsls.UnmatchedSubtypePolicy: Type]
+              : Type[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[P]] =
+            quoted.Type.of[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[P]]
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.UnmatchedSubtypePolicy]] = tpe match {
+            case '[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[p]] =>
+              Some(Type[p].as_?<[dsls.UnmatchedSubtypePolicy])
             case _ => scala.None
           }
         }
