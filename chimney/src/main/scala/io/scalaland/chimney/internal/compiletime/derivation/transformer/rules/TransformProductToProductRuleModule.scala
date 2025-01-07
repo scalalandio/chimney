@@ -273,29 +273,16 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             val partials = args.count(_._2.value.isPartial)
             s"Resolved ${args.size} arguments, $totals as total and $partials as partial Expr"
           }
-          .flatMap { args =>
-            ctx.config.flags.unusedFieldPolicy match {
-              case None => DerivationResult.pure(args)
-              case Some(FailOnIgnoredSourceVal) =>
-                val requiredFromNames = fromExtractors.view
-                  .collect {
-                    case (fromName, getter) if getter.value.sourceType == Product.Getter.SourceType.ConstructorVal =>
-                      fromName
-                  }
-                  .to(SortedSet)
-                val fromNamesUsedInOverrides = ctx.sourceFieldsUsedByOverrides
-                val unusedFromNames = requiredFromNames -- fromNamesUsedByExtractors -- fromNamesUsedInOverrides
-                if (unusedFromNames.isEmpty) {
-                  DerivationResult
-                    .pure(args)
-                    .logSuccess(_ => s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, all source vals used")
-                } else
-                  DerivationResult
-                    .failedPolicyCheck(FailOnIgnoredSourceVal, ctx.currentSrc, unusedFromNames.toList)
-                    .logFailure(_ =>
-                      s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, unused source vals: ${unusedFromNames.mkString(", ")}"
-                    )
-            }
+          .flatTap { _ =>
+            checkPolicy(
+              fromExtractors.view
+                .collect {
+                  case (fromName, getter) if getter.value.sourceType == Product.Getter.SourceType.ConstructorVal =>
+                    fromName
+                }
+                .to(SortedSet),
+              fromNamesUsedByExtractors.toSet
+            )
           }
           .map[TransformationExpr[ToOrPartialTo]] {
             (resolvedArguments: List[(String, Existential[TransformationExpr])]) =>
@@ -788,6 +775,25 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           )
       }
     }
+
+    private def checkPolicy[From, To](requiredFromNames: SortedSet[String], fromNamesUsedByExtractors: Set[String])(
+        implicit ctx: TransformationContext[From, To]
+    ): DerivationResult[Unit] =
+      ctx.config.flags.unusedFieldPolicy match {
+        case None => DerivationResult.unit
+        case Some(FailOnIgnoredSourceVal) =>
+          val fromNamesUsedInOverrides = ctx.sourceFieldsUsedByOverrides
+          val unusedFromNames = requiredFromNames -- fromNamesUsedByExtractors -- fromNamesUsedInOverrides
+          if (unusedFromNames.isEmpty) {
+            DerivationResult.unit
+              .logSuccess(_ => s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, all source vals used")
+          } else
+            DerivationResult
+              .failedPolicyCheck(FailOnIgnoredSourceVal, ctx.currentSrc, unusedFromNames.toList)
+              .logFailure(_ =>
+                s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, unused source vals: ${unusedFromNames.mkString(", ")}"
+              )
+      }
 
     @scala.annotation.tailrec
     private def prependWholeErrorPath[A: Type](expr: Expr[partial.Result[A]], path: Path): Expr[partial.Result[A]] =
