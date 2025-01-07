@@ -1,11 +1,15 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import io.scalaland.chimney.dsl.FailOnIgnoredSourceVal
 import io.scalaland.chimney.internal.compiletime.NotSupportedOperationFromPath.Operation as FromOperation
 import io.scalaland.chimney.internal.compiletime.{DerivationErrors, DerivationResult}
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
+
+import scala.collection.compat.*
+import scala.collection.immutable.SortedSet
 
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>
 
@@ -101,6 +105,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           )
         }
 
+      val fromNamesUsedByExtractors = scala.collection.mutable.Set.empty[String]
+
       DerivationResult.log {
         val gettersStr = fromExtractors
           .map { case (k, v) =>
@@ -193,6 +199,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 ambiguityOrPossibleSourceField match {
                   case Right(possibleSourceField) =>
                     possibleSourceField.map { case (fromName, toName, getter) =>
+                      fromNamesUsedByExtractors += fromName
                       useExtractor[From, To, CtorParam](ctorParam.value.targetType, fromName, toName, getter)
                     }
                   case Left(foundFromNames) =>
@@ -265,6 +272,30 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             val totals = args.count(_._2.value.isTotal)
             val partials = args.count(_._2.value.isPartial)
             s"Resolved ${args.size} arguments, $totals as total and $partials as partial Expr"
+          }
+          .flatMap { args =>
+            ctx.config.flags.unusedFieldPolicy match {
+              case None => DerivationResult.pure(args)
+              case Some(FailOnIgnoredSourceVal) =>
+                val requiredFromNames = fromExtractors.view
+                  .collect {
+                    case (fromName, getter) if getter.value.sourceType == Product.Getter.SourceType.ConstructorVal =>
+                      fromName
+                  }
+                  .to(SortedSet)
+                val fromNamesUsedInOverrides = ctx.sourceFieldsUsedByOverrides
+                val unusedFromNames = requiredFromNames -- fromNamesUsedByExtractors -- fromNamesUsedInOverrides
+                if (unusedFromNames.isEmpty) {
+                  DerivationResult
+                    .pure(args)
+                    .logSuccess(_ => s"Run UnusedPolicyCheck=$FailOnIgnoredSourceVal, all source vals used")
+                } else
+                  DerivationResult
+                    .failedPolicyCheck(FailOnIgnoredSourceVal, ctx.currentSrc, unusedFromNames.toList)
+                    .logFailure(_ =>
+                      s"Run UnusedPolicyCheck=$FailOnIgnoredSourceVal, unused source vals: ${unusedFromNames.mkString(", ")}"
+                    )
+            }
           }
           .map[TransformationExpr[ToOrPartialTo]] {
             (resolvedArguments: List[(String, Existential[TransformationExpr])]) =>

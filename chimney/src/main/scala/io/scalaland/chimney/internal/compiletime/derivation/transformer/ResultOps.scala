@@ -6,6 +6,7 @@ import io.scalaland.chimney.internal.compiletime.{
   AmbiguousImplicitPriority,
   AmbiguousSubtypeTargets,
   DerivationResult,
+  FailedPolicyCheck,
   MissingConstructorArgument,
   MissingFieldTransformer,
   MissingJavaBeanSetterParam,
@@ -192,6 +193,16 @@ private[compiletime] trait ResultOps { this: Derivation =>
     ): DerivationResult[A] = DerivationResult.transformerError(
       NotSupportedTransformerDerivation(
         exprPrettyPrint = fieldName
+      )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
+    )
+
+    def failedPolicyCheck[From, To, A](policy: Any, path: Path, failedValues: List[String])(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[A] = DerivationResult.transformerError(
+      FailedPolicyCheck(
+        policyName = policy.toString,
+        path = path.toString,
+        failedValues = failedValues
       )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 

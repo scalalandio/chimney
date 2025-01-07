@@ -367,6 +367,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       private val localFlagsOverridden: Boolean = false,
       /** Stores all customizations provided by user */
       private val runtimeOverrides: Vector[(SidedPath, TransformerOverride)] = Vector.empty,
+      /** Stores all customizations provided by user at the top level of derivation */
+      private val originalRuntimeOverrides: Vector[(SidedPath, TransformerOverride)] = Vector.empty,
       /** Let us prevent `implicit val foo = foo` but allow `implicit val foo = new Foo { def sth = foo }` */
       private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
   ) {
@@ -393,16 +395,19 @@ private[compiletime] trait Configurations { this: Derivation =>
     def areLocalFlagsEmpty: Boolean =
       !localFlagsOverridden
 
-    def addTransformerOverride(sidedPath: SidedPath, runtimeOverride: TransformerOverride): TransformerConfiguration =
-      copy(runtimeOverrides = runtimeOverrides :+ (sidedPath -> runtimeOverride))
+    def addTransformerOverride(sidedPath: SidedPath, runtimeOverride: TransformerOverride): TransformerConfiguration = {
+      val newRuntimeOverrides = runtimeOverrides :+ (sidedPath -> runtimeOverride)
+      copy(runtimeOverrides = newRuntimeOverrides, originalRuntimeOverrides = newRuntimeOverrides)
+    }
     def addTransformerOverride(
         sourcePath: Path,
         targetPath: Path,
         runtimeOverride: TransformerOverride
-    ): TransformerConfiguration =
-      copy(runtimeOverrides =
+    ): TransformerConfiguration = {
+      val newRuntimeOverrides =
         runtimeOverrides :+ (SourcePath(sourcePath) -> runtimeOverride) :+ (TargetPath(targetPath) -> runtimeOverride)
-      )
+      copy(runtimeOverrides = newRuntimeOverrides, originalRuntimeOverrides = newRuntimeOverrides)
+    }
     def areOverridesEmpty: Boolean =
       runtimeOverrides.isEmpty
     def areLocalFlagsAndOverridesEmpty: Boolean =
@@ -477,6 +482,29 @@ private[compiletime] trait Configurations { this: Derivation =>
         case (TargetPath(_), runtimeConstructorOverride: TransformerOverride.ForConstructor) =>
           runtimeConstructorOverride
       }
+
+    def sourceFieldsUsedByOverrides(currentSrc: Path)(implicit ctx: TransformationContext[?, ?]): List[String] =
+      originalRuntimeOverrides.view
+        .collect {
+          case (_, TransformerOverride.Computed(sourcePath, _, _))        => sourcePath.drop(currentSrc)
+          case (_, TransformerOverride.ComputedPartial(sourcePath, _, _)) => sourcePath.drop(currentSrc)
+          case (_, TransformerOverride.Renamed(sourcePath, _))            => sourcePath.drop(currentSrc)
+        }
+        .collect { case Some(Path.AtField(fromName, _)) => fromName }
+        .toList
+        .distinct
+    def targetSubtypesUsedByOverrides(
+        currentTgt: Path
+    )(implicit ctx: TransformationContext[?, ?]): List[ExistentialType] =
+      originalRuntimeOverrides.view
+        .collect {
+          case (_, TransformerOverride.Computed(_, targetPath, _))        => targetPath.drop(currentTgt)
+          case (_, TransformerOverride.ComputedPartial(_, targetPath, _)) => targetPath.drop(currentTgt)
+          case (_, TransformerOverride.Renamed(_, targetPath))            => targetPath.drop(currentTgt)
+        }
+        .collect { case Some(Path.AtSubtype(toSubtype, _)) => toSubtype }
+        .toList
+        .distinctBy(a => Type.prettyPrint(a.Underlying))
 
     def prepareForRecursiveCall(fromPath: Path, toPath: Path)(implicit
         ctx: TransformationContext[?, ?]
