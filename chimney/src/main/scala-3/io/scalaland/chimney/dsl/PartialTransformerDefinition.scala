@@ -385,6 +385,31 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
   ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerDefinitionMacros.withFallbackImpl('this, 'fallback) }
 
+  /** To use `fallback` when the source of type `T`, extracted with `selectorFrom`, is missing fields.
+    *
+    * Fallbacks can be stacked - then they will be tried in the order in which they were added.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam T
+    *   type of the source value that fallback is provided for
+    * @tparam FromFallback
+    *   type of the fallback value which would be checked for fields when the `From` value would be missing
+    * @param selectorFrom
+    *   path to the source value the fallback will be provided for
+    * @param fallback
+    *   fallback value which would be checked for fields when the `From` value would be missing
+    * @return
+    *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
+    *
+    * @since TODO
+    */
+  transparent inline def withFallbackFrom[T, FromFallback](inline selectorFrom: From => T)(
+      inline fallback: FromFallback
+  ): PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    ${ PartialTransformerDefinitionMacros.withFallbackFromImpl('this, 'selectorFrom, 'fallback) }
+
   /** Use `f` instead of the primary constructor to construct the `To` value.
     *
     * Macro will read the names of Eta-expanded method's/lambda's parameters and try to match them with `From` getters.

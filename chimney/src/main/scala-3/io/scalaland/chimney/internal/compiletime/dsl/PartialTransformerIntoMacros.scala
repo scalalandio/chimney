@@ -258,6 +258,28 @@ object PartialTransformerIntoMacros {
         .asInstanceOf[PartialTransformerInto[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
     }
 
+  def withFallbackFromImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      T: Type,
+      FromFallback: Type
+  ](
+      ti: Expr[PartialTransformerInto[From, To, Overrides, Flags]],
+      selectorFrom: Expr[From => T],
+      fallback: Expr[FromFallback]
+  )(using Quotes): Expr[PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyFieldNameType {
+      [fromPath <: Path] =>
+        (_: Type[fromPath]) ?=>
+          '{
+            WithRuntimeDataStore
+              .update($ti, $fallback)
+              .asInstanceOf[PartialTransformerInto[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
+        }
+    }(selectorFrom)
+
   def withConstructorImpl[
       From: Type,
       To: Type,
