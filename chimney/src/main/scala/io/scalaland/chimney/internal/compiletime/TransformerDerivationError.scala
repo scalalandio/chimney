@@ -93,6 +93,11 @@ final case class NotSupportedTransformerDerivation(
 )(val fromType: String, val toType: String)
     extends TransformerDerivationError
 
+final case class FailedPolicyCheck(policyName: String, path: String, failedValues: List[String])(
+    val fromType: String,
+    val toType: String
+) extends TransformerDerivationError
+
 object TransformerDerivationError {
   def printErrors(errors: Seq[TransformerDerivationError]): String =
     errors
@@ -134,6 +139,8 @@ object TransformerDerivationError {
                |  Please eliminate total/partial ambiguity from implicit scope or use ${MAGENTA}enableImplicitConflictResolution$RESET/${MAGENTA}withFieldComputed$RESET/${MAGENTA}withFieldComputedPartial$RESET to decide which one should be used.""".stripMargin
           case NotSupportedTransformerDerivation(exprPrettyPrint) =>
             s"  derivation from $exprPrettyPrint: $fromType to $toType is not supported in Chimney!"
+          case FailedPolicyCheck(policyName, path, failedValues) =>
+            s"  $policyName policy check failed at $path, offenders: ${failedValues.mkString(", ")}!"
         }
 
         def prettyFieldList(fields: Seq[String])(use: String => String): String =

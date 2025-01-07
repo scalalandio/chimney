@@ -16,6 +16,7 @@ private[compiletime] trait Contexts { this: Derivation =>
 
     /** When using nested paths (_.foo.bar.baz) and recursive derivation this is the original, "top-level" value */
     val originalSrc: ExistentialExpr = srcJournal.head._2
+    val currentSrc: Path = srcJournal.last._1
 
     /** Path to the current target value */
     val currentTgt: Path = tgtJournal.last
@@ -25,6 +26,9 @@ private[compiletime] trait Contexts { this: Derivation =>
 
     type Target
     val Target: Type[Target]
+
+    def sourceFieldsUsedByOverrides: List[String] = config.sourceFieldsUsedByOverrides(currentSrc)(this)
+    def targetSubtypesUsedByOverrides: List[ExistentialType] = config.targetSubtypesUsedByOverrides(currentTgt)(this)
 
     def updateFromTo[NewFrom: Type, NewTo: Type](
         newSrc: Expr[NewFrom],
