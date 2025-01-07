@@ -98,6 +98,12 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       weakTypeTag[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val FailOnIgnoredSourceVal: Type[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type]
+
+    val FailOnUnmatchedTargetSubtype: Type[io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype.type]
+
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
       weakTypeTag[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
@@ -394,6 +400,23 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           def unapply[A](A: Type[A]): Option[?<[dsls.TransformedNamesComparison]] =
             A.asCtor[runtime.TransformerFlags.SubtypeNameComparison[?]].map { A0 =>
               A0.param_<[dsls.TransformedNamesComparison](0)
+            }
+        }
+        object UnusedFieldPolicyCheck extends UnusedFieldPolicyCheckModule {
+          def apply[P <: dsls.UnusedFieldPolicy: Type]: Type[runtime.TransformerFlags.UnusedFieldPolicyCheck[P]] =
+            weakTypeTag[runtime.TransformerFlags.UnusedFieldPolicyCheck[P]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.UnusedFieldPolicy]] =
+            A.asCtor[runtime.TransformerFlags.UnusedFieldPolicyCheck[?]].map { A0 =>
+              A0.param_<[dsls.UnusedFieldPolicy](0)
+            }
+        }
+        object UnmatchedSubtypePolicyCheck extends UnmatchedSubtypePolicyCheckModule {
+          def apply[P <: dsls.UnmatchedSubtypePolicy: Type]
+              : Type[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[P]] =
+            weakTypeTag[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[P]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.UnmatchedSubtypePolicy]] =
+            A.asCtor[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[?]].map { A0 =>
+              A0.param_<[dsls.UnmatchedSubtypePolicy](0)
             }
         }
         val MacrosLogging: Type[runtime.TransformerFlags.MacrosLogging] =
