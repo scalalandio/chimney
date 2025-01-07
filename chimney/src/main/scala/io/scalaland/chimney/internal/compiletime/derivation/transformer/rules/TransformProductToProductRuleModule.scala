@@ -288,12 +288,12 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 if (unusedFromNames.isEmpty) {
                   DerivationResult
                     .pure(args)
-                    .logSuccess(_ => s"Run UnusedPolicyCheck=$FailOnIgnoredSourceVal, all source vals used")
+                    .logSuccess(_ => s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, all source vals used")
                 } else
                   DerivationResult
                     .failedPolicyCheck(FailOnIgnoredSourceVal, ctx.currentSrc, unusedFromNames.toList)
                     .logFailure(_ =>
-                      s"Run UnusedPolicyCheck=$FailOnIgnoredSourceVal, unused source vals: ${unusedFromNames.mkString(", ")}"
+                      s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, unused source vals: ${unusedFromNames.mkString(", ")}"
                     )
             }
           }

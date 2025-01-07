@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.internal.compiletime.fp.Traverse
@@ -30,7 +31,9 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
     private def mapEachSealedElementToAnotherSealedElement[From, To](
         fromElements: Enum.Elements[From],
         toElements: Enum.Elements[To]
-    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
+      val toSubtypesMatched = scala.collection.mutable.Set.empty[ExistentialType]
+
       DerivationResult.log {
         val fromSubs = fromElements.map(tpe => Type.prettyPrint(tpe.Underlying)).mkString(", ")
         val toSubs = toElements.map(tpe => Type.prettyPrint(tpe.Underlying)).mkString(", ")
@@ -46,12 +49,46 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             // the need for several non-abstract subtypes - keeping them would result in unreachable code errors.
             overrideMappings.exists(usedFromSubtype => fromSubtype.Underlying <:< usedFromSubtype.Underlying)
           }) { (fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]]) =>
-            mapElementsMatchedByName[From, To](fromSubtype, toElements).orElse(mapWholeTo[From, To](fromSubtype))
+            mapElementsMatchedByName[From, To](fromSubtype, toElements)
+              .tap { _ =>
+                if (ctx.config.flags.unmatchedSubtypePolicy.isDefined) {
+                  toSubtypesMatched += toElements.collectFirst {
+                    case toSubtype if areSubtypeNamesMatching(fromSubtype.value.name, toSubtype.value.name) =>
+                      toSubtype.Underlying.as_??
+                  }.get
+                }
+              }
+              .orElse(mapWholeTo[From, To](fromSubtype))
+          }
+          .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
+            ctx.config.flags.unmatchedSubtypePolicy match {
+              case None => DerivationResult.pure(nameMatchedMappings)
+              case Some(FailOnUnmatchedTargetSubtype) =>
+                val requiredToSubtypes = toElements
+                val toSubtypesUsedInMatch = toSubtypesMatched
+                val toSubtypesUsedInOverrides = ctx.targetSubtypesUsedByOverrides
+                val unmatchedToSubtypes = requiredToSubtypes.view
+                  .filterNot(tpe => toSubtypesUsedInMatch.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
+                  .filterNot(tpe => toSubtypesUsedInOverrides.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
+                  .map(tpe => Type.prettyPrint(tpe.Underlying))
+                  .toList
+                if (unmatchedToSubtypes.isEmpty) {
+                  DerivationResult
+                    .pure(nameMatchedMappings)
+                    .logSuccess(_ => s"Run UnmatchedSubtypePolicy=$FailOnUnmatchedTargetSubtype, all source vals used")
+                } else
+                  DerivationResult
+                    .failedPolicyCheck(FailOnUnmatchedTargetSubtype, ctx.currentSrc, unmatchedToSubtypes)
+                    .logFailure(_ =>
+                      s"Run UnmatchedSubtypePolicy=$FailOnUnmatchedTargetSubtype, unused source vals: ${unmatchedToSubtypes.mkString(", ")}"
+                    )
+            }
           }
           .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
             combineElementsMappings[From, To](overrideMappings ++ nameMatchedMappings)
           }
       }
+    }
 
     private def mapOverriddenElements[From, To](implicit
         ctx: TransformationContext[From, To]
