@@ -37,6 +37,10 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val FailOnIgnoredSourceVal: Type[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type]
+
+    val FailOnUnmatchedTargetSubtype: Type[io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype.type]
+
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
     val ArgumentList: ArgumentListModule
@@ -246,6 +250,18 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
               dsls.TransformedNamesComparison,
               runtime.TransformerFlags.SubtypeNameComparison
             ] { this: SubtypeNameComparison.type => }
+        val UnusedFieldPolicyCheck: UnusedFieldPolicyCheckModule
+        trait UnusedFieldPolicyCheckModule
+            extends Type.Ctor1UpperBounded[
+              dsls.UnusedFieldPolicy,
+              runtime.TransformerFlags.UnusedFieldPolicyCheck
+            ] { this: UnusedFieldPolicyCheck.type => }
+        val UnmatchedSubtypePolicyCheck: UnmatchedSubtypePolicyCheckModule
+        trait UnmatchedSubtypePolicyCheckModule
+            extends Type.Ctor1UpperBounded[
+              dsls.UnmatchedSubtypePolicy,
+              runtime.TransformerFlags.UnmatchedSubtypePolicyCheck
+            ] { this: UnmatchedSubtypePolicyCheck.type => }
         val MacrosLogging: Type[runtime.TransformerFlags.MacrosLogging]
       }
     }

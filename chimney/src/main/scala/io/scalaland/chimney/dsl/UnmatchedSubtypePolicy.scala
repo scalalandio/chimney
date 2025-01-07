@@ -1,0 +1,4 @@
+package io.scalaland.chimney.dsl
+
+sealed abstract class UnmatchedSubtypePolicy
+case object FailOnUnmatchedTargetSubtype extends UnmatchedSubtypePolicy

@@ -6,6 +6,8 @@ import io.scalaland.chimney.internal.runtime
 
 import scala.collection.compat.*
 import scala.collection.immutable.{ListMap, ListSet}
+import io.scalaland.chimney.dsl.UnusedFieldPolicy
+import io.scalaland.chimney.dsl.UnmatchedSubtypePolicy
 
 private[compiletime] trait Configurations { this: Derivation =>
 
@@ -26,6 +28,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
       fieldNameComparison: Option[dsls.TransformedNamesComparison] = None,
       subtypeNameComparison: Option[dsls.TransformedNamesComparison] = None,
+      unusedFieldPolicy: Option[dsls.UnusedFieldPolicy] = None,
+      unmatchedSubtypePolicy: Option[dsls.UnmatchedSubtypePolicy] = None,
       displayMacrosLogging: Boolean = false,
       scopedUpdates: List[(SidedPath, TransformerFlags => TransformerFlags)] = List.empty
   ) {
@@ -86,6 +90,12 @@ private[compiletime] trait Configurations { this: Derivation =>
     def setSubtypeNameComparison(nameComparison: Option[dsls.TransformedNamesComparison]): TransformerFlags =
       copy(subtypeNameComparison = nameComparison)
 
+    def setUnusedFieldPolicy(policy: Option[UnusedFieldPolicy]): TransformerFlags =
+      copy(unusedFieldPolicy = policy)
+
+    def setUnmatchedSubtypePolicy(policy: Option[UnmatchedSubtypePolicy]): TransformerFlags =
+      copy(unmatchedSubtypePolicy = policy)
+
     def setSourceFlags(sourcePath: Path)(update: TransformerFlags => TransformerFlags): TransformerFlags =
       copy(scopedUpdates = scopedUpdates :+ (SourcePath(sourcePath) -> update))
 
@@ -127,6 +137,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
         fieldNameComparison.map(r => s"fieldNameComparison=$r").toList.toVector,
         subtypeNameComparison.map(r => s"subtypeNameComparison=$r").toList.toVector,
+        unusedFieldPolicy.map(r => s"unusedFieldPolicy=$r").toList.toVector,
+        unmatchedSubtypePolicy.map(r => s"unmatchedSubtypePolicy=$r").toList.toVector,
         if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty,
         if (scopedUpdates.nonEmpty) Vector(scopedUpdates.map(_._1).mkString("scopedUpdates=(", ", ", ")"))
         else Vector.empty
@@ -152,6 +164,16 @@ private[compiletime] trait Configurations { this: Derivation =>
           case "PreferTotalTransformer"   => Some(dsls.PreferTotalTransformer)
           case "PreferPartialTransformer" => Some(dsls.PreferPartialTransformer)
           case "none"                     => None
+        })
+      case (cfg, transformerFlag"UnusedFieldPolicy=$value") =>
+        cfg.copy(unusedFieldPolicy = value match {
+          case "FailOnIgnoredSourceVal" => Some(dsls.FailOnIgnoredSourceVal)
+          case "none"                   => None
+        })
+      case (cfg, transformerFlag"UnmatchedSubtypePolicy=$value") =>
+        cfg.copy(unmatchedSubtypePolicy = value match {
+          case "FailOnUnmatchedTargetSubtype" => Some(dsls.FailOnUnmatchedTargetSubtype)
+          case "none"                         => None
         })
       case (cfg, transformerFlag"MacrosLogging=$value") => cfg.copy(displayMacrosLogging = value.toBoolean)
       case (cfg, _)                                     => cfg
@@ -556,6 +578,26 @@ private[compiletime] trait Configurations { this: Derivation =>
             extractTransformerFlags[Flags2](defaultFlags).setSubtypeNameComparison(
               Some(extractNameComparisonObject[Comparison])
             )
+          case ChimneyType.TransformerFlags.Flags.UnusedFieldPolicyCheck(p) =>
+            if (p.Underlying =:= ChimneyType.FailOnIgnoredSourceVal) {
+              extractTransformerFlags[Flags2](defaultFlags).setUnusedFieldPolicy(
+                Some(dsls.FailOnIgnoredSourceVal)
+              )
+            } else {
+              // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+              reportError("Invalid UnusedFieldPolicy type!!")
+              // $COVERAGE-ON$
+            }
+          case ChimneyType.TransformerFlags.Flags.UnmatchedSubtypePolicyCheck(p) =>
+            if (p.Underlying =:= ChimneyType.FailOnUnmatchedTargetSubtype) {
+              extractTransformerFlags[Flags2](defaultFlags).setUnmatchedSubtypePolicy(
+                Some(dsls.FailOnUnmatchedTargetSubtype)
+              )
+            } else {
+              // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+              reportError("Invalid UnmatchedSubtypePolicy type!!")
+              // $COVERAGE-ON$
+            }
           case _ =>
             extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = true)
         }
@@ -571,6 +613,10 @@ private[compiletime] trait Configurations { this: Derivation =>
             extractTransformerFlags[Flags2](defaultFlags).setFieldNameComparison(None)
           case ChimneyType.TransformerFlags.Flags.SubtypeNameComparison(_) =>
             extractTransformerFlags[Flags2](defaultFlags).setSubtypeNameComparison(None)
+          case ChimneyType.TransformerFlags.Flags.UnusedFieldPolicyCheck(_) =>
+            extractTransformerFlags[Flags2](defaultFlags).setUnusedFieldPolicy(None)
+          case ChimneyType.TransformerFlags.Flags.UnmatchedSubtypePolicyCheck(_) =>
+            extractTransformerFlags[Flags2](defaultFlags).setUnmatchedSubtypePolicy(None)
           case _ =>
             extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = false)
         }
