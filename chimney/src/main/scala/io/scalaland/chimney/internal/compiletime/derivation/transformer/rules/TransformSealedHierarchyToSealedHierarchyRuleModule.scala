@@ -60,30 +60,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               }
               .orElse(mapWholeTo[From, To](fromSubtype))
           }
-          .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
-            ctx.config.flags.unmatchedSubtypePolicy match {
-              case None => DerivationResult.pure(nameMatchedMappings)
-              case Some(FailOnUnmatchedTargetSubtype) =>
-                val requiredToSubtypes = toElements
-                val toSubtypesUsedInMatch = toSubtypesMatched
-                val toSubtypesUsedInOverrides = ctx.targetSubtypesUsedByOverrides
-                val unmatchedToSubtypes = requiredToSubtypes.view
-                  .filterNot(tpe => toSubtypesUsedInMatch.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
-                  .filterNot(tpe => toSubtypesUsedInOverrides.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
-                  .map(tpe => Type.prettyPrint(tpe.Underlying))
-                  .toList
-                if (unmatchedToSubtypes.isEmpty) {
-                  DerivationResult
-                    .pure(nameMatchedMappings)
-                    .logSuccess(_ => s"Run UnmatchedSubtypePolicy=$FailOnUnmatchedTargetSubtype, all source vals used")
-                } else
-                  DerivationResult
-                    .failedPolicyCheck(FailOnUnmatchedTargetSubtype, ctx.currentSrc, unmatchedToSubtypes)
-                    .logFailure(_ =>
-                      s"Run UnmatchedSubtypePolicy=$FailOnUnmatchedTargetSubtype, unused source vals: ${unmatchedToSubtypes.mkString(", ")}"
-                    )
-            }
-          }
+          .flatTap(_ => checkPolicy(toElements, toSubtypesMatched.toSet))
           .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
             combineElementsMappings[From, To](overrideMappings ++ nameMatchedMappings)
           }
@@ -294,5 +271,29 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             }
             .matchOn(ctx.src)
         )
+
+    private def checkPolicy[From, To](
+        requiredToSubtypes: Enum.Elements[To],
+        toSubtypesUsedInMatch: Set[ExistentialType]
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Unit] =
+      ctx.config.flags.unmatchedSubtypePolicy match {
+        case None => DerivationResult.unit
+        case Some(FailOnUnmatchedTargetSubtype) =>
+          val toSubtypesUsedInOverrides = ctx.targetSubtypesUsedByOverrides
+          val unmatchedToSubtypes = requiredToSubtypes.view
+            .filterNot(tpe => toSubtypesUsedInMatch.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
+            .filterNot(tpe => toSubtypesUsedInOverrides.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
+            .map(tpe => Type.prettyPrint(tpe.Underlying))
+            .toList
+          if (unmatchedToSubtypes.isEmpty) {
+            DerivationResult.unit
+              .logSuccess(_ => s"Run UnmatchedSubtypePolicy=$FailOnUnmatchedTargetSubtype, all source vals used")
+          } else
+            DerivationResult
+              .failedPolicyCheck(FailOnUnmatchedTargetSubtype, ctx.currentSrc, unmatchedToSubtypes)
+              .logFailure(_ =>
+                s"Run UnmatchedSubtypePolicy=$FailOnUnmatchedTargetSubtype, unused source vals: ${unmatchedToSubtypes.mkString(", ")}"
+              )
+      }
   }
 }
