@@ -167,6 +167,28 @@ object TransformerDefinitionMacros {
         .asInstanceOf[TransformerDefinition[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
     }
 
+  def withFallbackFromImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      T: Type,
+      FromFallback: Type
+  ](
+      ti: Expr[TransformerDefinition[From, To, Overrides, Flags]],
+      selectorFrom: Expr[From => T],
+      fallback: Expr[FromFallback]
+  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyFieldNameType {
+      [fromPath <: Path] =>
+        (_: Type[fromPath]) ?=>
+          '{
+            WithRuntimeDataStore
+              .update($ti, $fallback)
+              .asInstanceOf[TransformerDefinition[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
+        }
+    }(selectorFrom)
+
   def withConstructorImpl[
       From: Type,
       To: Type,
