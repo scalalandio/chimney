@@ -45,10 +45,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
       import Product.Constructor.exprAsInstanceOfMethod as mkCtor
       constructorOverride match {
-        case TransformerOverride.Constructor(runtimeData, args) =>
+        case TransformerOverride.Constructor(args, runtimeData) =>
           val Product.Constructor(parameters, constructor) = mkCtor[To](args)(runtimeData)
           mapOverridesAndExtractorsToConstructorArguments[From, To, To](fromExtractors, parameters, constructor)
-        case TransformerOverride.ConstructorPartial(runtimeData, args) =>
+        case TransformerOverride.ConstructorPartial(args, runtimeData) =>
           val Product.Constructor(params, ctor) = mkCtor[partial.Result[To]](args)(runtimeData)
           mapOverridesAndExtractorsToConstructorArguments[From, To, partial.Result[To]](fromExtractors, params, ctor)
             .map {
