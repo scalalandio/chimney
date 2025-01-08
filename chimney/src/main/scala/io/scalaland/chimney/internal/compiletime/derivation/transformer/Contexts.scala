@@ -32,7 +32,8 @@ private[compiletime] trait Contexts { this: Derivation =>
     def updateFromTo[NewFrom: Type, NewTo: Type](
         newSrc: Expr[NewFrom],
         followFrom: Path = Path.Root,
-        followTo: Path = Path.Root
+        followTo: Path = Path.Root,
+        updateFallbacks: TransformerOverride.ForFallback => Option[TransformerOverride.ForFallback] = Option(_)
     ): TransformationContext[NewFrom, NewTo] =
       fold[TransformationContext[NewFrom, NewTo]] { (ctx: TransformationContext.ForTotal[From, To]) =>
         TransformationContext.ForTotal[NewFrom, NewTo](src = newSrc)(
@@ -40,7 +41,7 @@ private[compiletime] trait Contexts { this: Derivation =>
           To = Type[NewTo],
           srcJournal = ctx.srcJournal :+ (ctx.srcJournal.last._1.concat(followFrom) -> newSrc.as_??),
           tgtJournal = ctx.tgtJournal :+ ctx.tgtJournal.last.concat(followTo),
-          config = ctx.config.prepareForRecursiveCall(followFrom, followTo)(ctx),
+          config = ctx.config.prepareForRecursiveCall(followFrom, followTo, updateFallbacks)(ctx),
           ctx.derivationStartedAt
         )
       } { (ctx: TransformationContext.ForPartial[From, To]) =>
@@ -49,7 +50,7 @@ private[compiletime] trait Contexts { this: Derivation =>
           To = Type[NewTo],
           srcJournal = ctx.srcJournal :+ (ctx.srcJournal.last._1.concat(followFrom) -> newSrc.as_??),
           tgtJournal = ctx.tgtJournal :+ ctx.tgtJournal.last.concat(followTo),
-          config = ctx.config.prepareForRecursiveCall(followFrom, followTo)(ctx),
+          config = ctx.config.prepareForRecursiveCall(followFrom, followTo, updateFallbacks)(ctx),
           ctx.derivationStartedAt
         )
       }
