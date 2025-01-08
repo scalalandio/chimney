@@ -33,7 +33,7 @@ private[compiletime] trait Contexts { this: Derivation =>
         newSrc: Expr[NewFrom],
         followFrom: Path = Path.Root,
         followTo: Path = Path.Root,
-        updateFallbacks: TransformerOverride.ForFallback => Option[TransformerOverride.ForFallback] = Option(_)
+        updateFallbacks: TransformerOverride.ForFallback => Vector[TransformerOverride.ForFallback] = Vector(_)
     ): TransformationContext[NewFrom, NewTo] =
       fold[TransformationContext[NewFrom, NewTo]] { (ctx: TransformationContext.ForTotal[From, To]) =>
         TransformationContext.ForTotal[NewFrom, NewTo](src = newSrc)(

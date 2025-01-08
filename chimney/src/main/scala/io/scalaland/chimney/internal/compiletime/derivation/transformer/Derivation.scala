@@ -48,10 +48,11 @@ private[compiletime] trait Derivation
       newSrc: Expr[NewFrom],
       followFrom: Path = Path.Root,
       followTo: Path = Path.Root,
+      updateFallbacks: TransformerOverride.ForFallback => Vector[TransformerOverride.ForFallback] = Vector(_),
       updateRules: List[Rule] => List[Rule] = identity
   )(implicit ctx: TransformationContext[?, ?]): DerivationResult[TransformationExpr[NewTo]] = {
     val newCtx: TransformationContext[NewFrom, NewTo] =
-      ctx.updateFromTo[NewFrom, NewTo](newSrc, followFrom, followTo)
+      ctx.updateFromTo[NewFrom, NewTo](newSrc, followFrom, followTo, updateFallbacks)
     deriveTransformationResultExprUpdatingRules(updateRules)(newCtx)
       .logSuccess {
         case TransformationExpr.TotalExpr(expr)   => s"Derived recursively total expression ${Expr.prettyPrint(expr)}"
