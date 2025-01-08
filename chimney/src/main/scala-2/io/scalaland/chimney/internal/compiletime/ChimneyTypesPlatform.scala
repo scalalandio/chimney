@@ -221,6 +221,22 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
           }
       }
+      object Fallback extends FallbackModule {
+        def apply[
+            FallbackType: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.Fallback[FallbackType, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.Fallback[FallbackType, ToPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(??, ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.Fallback[?, ?, ?]].map { A0 =>
+            (
+              A0.param(0),
+              fixJavaEnums(A0.param_<[runtime.Path](1)),
+              A0.param_<[runtime.TransformerOverrides](2)
+            )
+          }
+      }
       object Constructor extends ConstructorModule {
         def apply[
             Args <: runtime.ArgumentLists: Type,

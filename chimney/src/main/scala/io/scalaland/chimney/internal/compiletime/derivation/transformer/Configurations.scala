@@ -346,9 +346,9 @@ private[compiletime] trait Configurations { this: Derivation =>
         s"ComputedPartial($sourcePath, $targetPath, ${ExistentialExpr.prettyPrint(runtimeData)})"
     }
 
-    final case class Fallback(fallbackType: ExistentialType, runtimeData: ExistentialExpr) extends ForFallback {
+    final case class Fallback(runtimeData: ExistentialExpr) extends ForFallback {
       override def toString: String =
-        s"Fallback(${ExistentialType.prettyPrint(fallbackType)}, ${ExistentialExpr.prettyPrint(runtimeData)})"
+        s"Fallback(${ExistentialExpr.prettyPrint(runtimeData)})"
     }
 
     type Args = List[ListMap[String, ??]]
@@ -741,6 +741,12 @@ private[compiletime] trait Configurations { this: Derivation =>
         extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
           SourcePath(sourcePath),
           TransformerOverride.ComputedPartial(sourcePath, Path.Root, runtimeDataStore(runtimeDataIdx).as_??)
+        )
+      case ChimneyType.TransformerOverrides.Fallback(fallbackType, fromPath, cfg) =>
+        import fallbackType.Underlying as FallbackType, fromPath.Underlying as FromPath, cfg.Underlying as Tail2
+        extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(
+          SourcePath(extractPath[FromPath]),
+          TransformerOverride.Fallback(runtimeDataStore(runtimeDataIdx).asInstanceOfExpr[FallbackType].as_??)
         )
       case ChimneyType.TransformerOverrides.Constructor(args, toPath, cfg) =>
         import args.Underlying as Args, toPath.Underlying as ToPath, cfg.Underlying as Tail2
