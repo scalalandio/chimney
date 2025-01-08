@@ -522,7 +522,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     def prepareForRecursiveCall(
         fromPath: Path,
         toPath: Path,
-        updateFallbacks: TransformerOverride.ForFallback => Option[TransformerOverride.ForFallback]
+        updateFallbacks: TransformerOverride.ForFallback => Vector[TransformerOverride.ForFallback]
     )(implicit ctx: TransformationContext[?, ?]): TransformerConfiguration =
       copy(
         flags = flags.prepareForRecursiveCall(fromPath, toPath),
@@ -535,7 +535,7 @@ private[compiletime] trait Configurations { this: Derivation =>
             // checking if there might be some relevant overrides for current/nested values
             case _: TransformerOverride.ForField | _: TransformerOverride.ForSubtype => true -> Vector(runtimeOverride)
             // Fallbacks are always matched at "_" Path, and dropped _manually_ only when going inward
-            case f: TransformerOverride.ForFallback => false -> updateFallbacks(f).toVector
+            case f: TransformerOverride.ForFallback => false -> updateFallbacks(f)
             // Constructor is always matched at "_" Path, and dropped only when going inward
             case _: TransformerOverride.ForConstructor => false -> Vector(runtimeOverride)
           }
