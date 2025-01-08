@@ -73,18 +73,11 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
       // FIXME (2.0.0 cleanup): use only ConstructorArgVals as source in position-based matching, unless enabled by flag
       val usePositionBasedMatching = Type[From].isTuple || Type[To].isTuple
-      lazy val fromEnabledExtractorsForPositionBasedMatching = fromExtractors.filter { case (name, getter) =>
-        val fieldFlags = flags.at(TargetPath(Path(_.select(name))))
-        val allowedSourceType = getter.value.sourceType match {
-          case Product.Getter.SourceType.ConstructorVal => true
-          case Product.Getter.SourceType.AccessorMethod => fieldFlags.methodAccessors
-          case Product.Getter.SourceType.JavaBeanGetter => fieldFlags.beanGetters
-        }
-        val allowedInheritance = !getter.value.isInherited || fieldFlags.inheritedAccessors
-        allowedSourceType && allowedInheritance
+      lazy val fromEnabledExtractors = fromExtractors.filter { case (name, getter) =>
+        filterAllowedFieldsByFlags(flags.at(TargetPath(Path(_.select(name)))))(getter)
       }
       lazy val ctorParamToGetterByPosition = parameters
-        .zip(fromEnabledExtractorsForPositionBasedMatching)
+        .zip(fromEnabledExtractors)
         .map { case ((toName, ctorParam), (fromName, getter)) =>
           val t3 = (fromName, toName, getter)
           ctorParam -> t3
@@ -189,7 +182,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 val ambiguityOrPossibleSourceField =
                   if (usePositionBasedMatching) Right(ctorParamToGetterByPosition.get(ctorParam))
                   else
-                    fromEnabledExtractorsForPositionBasedMatching.collect {
+                    fromEnabledExtractors.collect {
                       case (fromName, getter) if areFieldNamesMatching(fromName, toName) => (fromName, toName, getter)
                     }.toList match {
                       case Nil                  => Right(None)
@@ -212,14 +205,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 }
               }
               .orElse {
-                useFallbackValues[From, To, CtorParam](toName)(
+                useFallbackValues[From, To, CtorParam](toName) {
                   defaultValue.orElse(summonDefaultValue[CtorParam].map(_.provide()))
-                )
+                }
               }
               .getOrElse[DerivationResult[Existential[TransformationExpr]]] {
                 if (usePositionBasedMatching)
                   DerivationResult.tupleArityMismatch(
-                    fromArity = fromEnabledExtractorsForPositionBasedMatching.size,
+                    fromArity = fromEnabledExtractors.size,
                     toArity = parameters.size
                   )
                 else {
@@ -395,6 +388,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               extractedSrcExpr,
               sourcePath,
               Path(_.select(toName))
+              // TODO: update fallbacks!
             )
               .transformWith { expr =>
                 // If we derived partial.Result[$ctorParam] we are appending:
@@ -520,6 +514,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             get(ctx.src),
             Path(_.select(fromName)),
             Path(_.select(toName))
+            // TODO: update fallbacks!
           ).transformWith { expr =>
             // If we derived partial.Result[$ctorParam] we are appending:
             //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
@@ -537,6 +532,18 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         defaultValue: => Option[Expr[CtorParam]]
     )(implicit ctx: TransformationContext[From, To]): Option[DerivationResult[Existential[TransformationExpr]]] = {
       lazy val fieldFlags = ctx.config.flags.atTgt(_.select(toName))
+
+      def useFallbackValue: Option[DerivationResult[Existential[TransformationExpr]]] =
+        findMatchingFallbackFields(toName).collectFirst {
+          case (fromName, fromFallbackField) if areFieldNamesMatching(fromName, toName) =>
+            import fromFallbackField.{Underlying as FromFallbackField, value as fallbackExpr}
+            deriveRecursiveTransformationExpr[FromFallbackField, CtorParam](
+              fallbackExpr,
+              Path(_.select(fromName)),
+              Path(_.select(toName))
+              // TODO: update fallbacks!
+            ).flatMap(expr => DerivationResult.existential[TransformationExpr, CtorParam](expr))
+        }
 
       def useDefaultValue: Option[DerivationResult[Existential[TransformationExpr]]] =
         // Default values are provided from ProductType parsing.
@@ -570,7 +577,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           )
         }
 
-      useDefaultValue.orElse(useNone).orElse(useSingletonType)
+      useFallbackValue.orElse(useDefaultValue).orElse(useNone).orElse(useSingletonType)
     }
 
     private def wireArgumentsToConstructor[From, To, ToOrPartialTo: Type](
@@ -775,6 +782,35 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           )
       }
     }
+
+    private def filterAllowedFieldsByFlags[A](
+        fieldFlags: TransformerFlags
+    ): Existential[Product.Getter[A, *]] => Boolean = getter => {
+      val allowedSourceType = getter.value.sourceType match {
+        case Product.Getter.SourceType.ConstructorVal => true
+        case Product.Getter.SourceType.AccessorMethod => fieldFlags.methodAccessors
+        case Product.Getter.SourceType.JavaBeanGetter => fieldFlags.beanGetters
+      }
+      val allowedInheritance = !getter.value.isInherited || fieldFlags.inheritedAccessors
+      allowedSourceType && allowedInheritance
+    }
+
+    @scala.annotation.nowarn("msg=fromName") // on Scala 2.13 fromName is makred as unused 0_0
+    private def findMatchingFallbackFields[From, To](toName: String)(implicit
+        ctx: TransformationContext[From, To]
+    ) = ctx.config.filterCurrentOverridesForFallbacks.view.flatMap { case TransformerOverride.Fallback(fallback) =>
+      val fieldFlags = ctx.config.flags.atTgt(_.select(toName))
+      import fallback.{Underlying as Fallback, value as fallbackExpr}
+      for {
+        Product.Extraction(getters) <- ProductType.parseExtraction[Fallback].view
+        (fromName, getter) <- getters.view
+        if filterAllowedFieldsByFlags(fieldFlags)(getter)
+        if areFieldNamesMatching(fromName, toName)
+      } yield {
+        import getter.{Underlying as FromFallback, value as fromField}
+        fromName -> fromField.get(fallbackExpr).as_??
+      }
+    } // keep lazy
 
     private def checkPolicy[From, To](requiredFromNames: SortedSet[String], fromNamesUsedByExtractors: Set[String])(
         implicit ctx: TransformationContext[From, To]
