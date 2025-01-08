@@ -185,6 +185,25 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           case _ => scala.None
         }
       }
+      object Fallback extends FallbackModule {
+        def apply[
+            FallbackType: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.Fallback[FallbackType, ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.Fallback[FallbackType, ToPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(??, ?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
+          case '[runtime.TransformerOverrides.Fallback[fallbackType, toPath, cfg]] =>
+            Some(
+              (
+                Type[fallbackType].as_??,
+                Type[toPath].as_?<[runtime.Path],
+                Type[cfg].as_?<[runtime.TransformerOverrides]
+              )
+            )
+          case _ => scala.None
+        }
+      }
       object Constructor extends ConstructorModule {
         def apply[
             Args <: runtime.ArgumentLists: Type,
