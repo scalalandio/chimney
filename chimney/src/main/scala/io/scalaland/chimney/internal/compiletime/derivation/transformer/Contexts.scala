@@ -14,8 +14,7 @@ private[compiletime] trait Contexts { this: Derivation =>
     val srcJournal: Vector[(Path, ExistentialExpr)]
     val tgtJournal: Vector[Path]
 
-    /** When using nested paths (_.foo.bar.baz) and recursive derivation this is the original, "top-level" value */
-    val originalSrc: ExistentialExpr = srcJournal.head._2
+    /** Path to the current source value */
     val currentSrc: Path = srcJournal.last._1
 
     /** Path to the current target value */
