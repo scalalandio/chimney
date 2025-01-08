@@ -204,6 +204,29 @@ private[compiletime] trait Types { this: (Existentials & Results) =>
 
     def prettyPrint[A: Type]: String
     def simplePrint[A: Type]: String
+
+    private val AnsiControlCode = "\u001b\\[([0-9]+)m".r
+    def extractObjectSingleton[ModuleSingleton: Type]: Option[ModuleSingleton] = {
+      // based on https://github.com/MateuszKubuszok/MacroTypeclass ideas
+      object ModuleSingleton {
+        def unapply(className: String): Option[ModuleSingleton] =
+          try
+            scala.Option(Class.forName(className).getField("MODULE$").get(null).asInstanceOf[ModuleSingleton])
+          catch {
+            case _: Throwable => None
+          }
+      }
+
+      // assuming this is "foo.bar.baz"...
+      val name = AnsiControlCode.replaceAllIn(Type.prettyPrint[ModuleSingleton], "")
+
+      scala.collection.Iterator
+        .iterate(name + '$')(_.reverse.replaceFirst("[.]", "\\$").reverse)
+        .take(name.count(_ == '.') + 1) // ...then this is: "foo.bar.baz$", "foo.bar$baz$", "foo$bar$baz$"...
+        .toArray
+        .reverse // ...and this is: "foo.bar.baz$", "foo.bar$baz$", "foo$bar$baz$"
+        .collectFirst { case ModuleSingleton(value) => value } // attempts: top-level object, object in object, etc
+    }
   }
   implicit final protected class TypeOps[A](private val tpe: Type[A]) {
 

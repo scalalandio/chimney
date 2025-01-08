@@ -80,8 +80,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
           case (_, TransformerOverride.ComputedPartial(_, targetPath, _)) => targetPath == ctx.currentTgt
           case (_, TransformerOverride.Renamed(_, targetPath)) =>
             targetPath.drop(ctx.currentTgt) match {
-              case Some(Path.AtSubtype(someTo, root)) => someTo.Underlying <:< Type[To] && root == Path.Root
-              case _                                  => false
+              case Some(Path.AtSubtype(someTo, Path.Root)) => someTo.Underlying <:< Type[To]
+              case _                                       => false
             }
         }
         .toList
