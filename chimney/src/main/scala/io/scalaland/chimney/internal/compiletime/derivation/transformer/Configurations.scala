@@ -519,27 +519,30 @@ private[compiletime] trait Configurations { this: Derivation =>
         .toList
         .distinctBy(a => ExistentialType.prettyPrint(a))
 
-    def prepareForRecursiveCall(fromPath: Path, toPath: Path)(implicit
-        ctx: TransformationContext[?, ?]
-    ): TransformerConfiguration =
+    def prepareForRecursiveCall(
+        fromPath: Path,
+        toPath: Path,
+        updateFallbacks: TransformerOverride.ForFallback => Option[TransformerOverride.ForFallback]
+    )(implicit ctx: TransformationContext[?, ?]): TransformerConfiguration =
       copy(
         flags = flags.prepareForRecursiveCall(fromPath, toPath),
         localFlagsOverridden = false,
         runtimeOverrides = for {
           (sidedPath, runtimeOverride) <- runtimeOverrides
-          alwaysDropOnRoot = runtimeOverride match {
+          (alwaysDropOnRoot, runtimeOverrides2) = runtimeOverride match {
             // Fields are always matched with "_.fieldName" Path while subtypes are always matched with
             // "_ match { case _: Tpe => }" so "_" Paths are useless in their case while they might get in way of
             // checking if there might be some relevant overrides for current/nested values
-            case _: TransformerOverride.ForField | _: TransformerOverride.ForSubtype => true
-            // Fallbacks is always matched at "_" Path, and dropped _manually_ only when going inward
-            case _: TransformerOverride.ForFallback => false
+            case _: TransformerOverride.ForField | _: TransformerOverride.ForSubtype => true -> Vector(runtimeOverride)
+            // Fallbacks are always matched at "_" Path, and dropped _manually_ only when going inward
+            case f: TransformerOverride.ForFallback => false -> updateFallbacks(f).toVector
             // Constructor is always matched at "_" Path, and dropped only when going inward
-            case _: TransformerOverride.ForConstructor => false
+            case _: TransformerOverride.ForConstructor => false -> Vector(runtimeOverride)
           }
+          newRuntimeOverride <- runtimeOverrides2
           newSidePath <- sidedPath.drop(fromPath, toPath).to(Vector)
           if !(newSidePath.path == Path.Root && alwaysDropOnRoot)
-        } yield newSidePath -> runtimeOverride,
+        } yield newSidePath -> newRuntimeOverride,
         preventImplicitSummoningForTypes = None
       )
 
