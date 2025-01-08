@@ -140,6 +140,15 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.TransformerOverrides.CaseComputedPartial
           ] { this: CaseComputedPartial.type => }
 
+      val Fallback: FallbackModule
+      trait FallbackModule
+          extends Type.Ctor3UpperBounded[
+            Any,
+            runtime.Path,
+            runtime.TransformerOverrides,
+            runtime.TransformerOverrides.Fallback
+          ] { this: Fallback.type => }
+
       val Constructor: ConstructorModule
       trait ConstructorModule
           extends Type.Ctor3UpperBounded[
