@@ -9,7 +9,7 @@ import io.scalaland.chimney.internal.compiletime.fp.Traverse
 import io.scalaland.chimney.partial
 
 import scala.collection.compat.*
-import scala.collection.immutable.SortedSet
+import scala.collection.immutable.{ListMap, SortedSet}
 
 private[compiletime] trait TransformProductToProductRuleModule { this: Derivation =>
 
@@ -387,8 +387,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
             deriveRecursiveTransformationExpr[ExtractedSrc, CtorParam](
               extractedSrcExpr,
               sourcePath,
-              Path(_.select(toName))
-              // TODO: update fallbacks!
+              Path(_.select(toName)),
+              findMatchingUpdateCandidates(toName)
             )
               .transformWith { expr =>
                 // If we derived partial.Result[$ctorParam] we are appending:
@@ -513,8 +513,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           deriveRecursiveTransformationExpr[Getter, CtorParam](
             get(ctx.src),
             Path(_.select(fromName)),
-            Path(_.select(toName))
-            // TODO: update fallbacks!
+            Path(_.select(toName)),
+            findMatchingUpdateCandidates(toName)
           ).transformWith { expr =>
             // If we derived partial.Result[$ctorParam] we are appending:
             //  ${ derivedToElement }.prependErrorPath(PathElement.Accessor("fromName"))
@@ -534,14 +534,14 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       lazy val fieldFlags = ctx.config.flags.atTgt(_.select(toName))
 
       def useFallbackValue: Option[DerivationResult[Existential[TransformationExpr]]] =
-        findMatchingFallbackFields(toName).collectFirst {
-          case (fromName, fromFallbackField) if areFieldNamesMatching(fromName, toName) =>
+        findMatchingFallbackFieldAndUpdateCandidates(toName).collectFirst {
+          case (fromName, fromFallbackField, updateCandidates) =>
             import fromFallbackField.{Underlying as FromFallbackField, value as fallbackExpr}
             deriveRecursiveTransformationExpr[FromFallbackField, CtorParam](
               fallbackExpr,
               Path(_.select(fromName)),
-              Path(_.select(toName))
-              // TODO: update fallbacks!
+              Path(_.select(toName)),
+              updateCandidates
             ).flatMap(expr => DerivationResult.existential[TransformationExpr, CtorParam](expr))
         }
 
@@ -798,7 +798,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     @scala.annotation.nowarn("msg=fromName") // on Scala 2.13 fromName is makred as unused 0_0
     private def findMatchingFallbackFields[From, To](toName: String)(implicit
         ctx: TransformationContext[From, To]
-    ) = ctx.config.filterCurrentOverridesForFallbacks.view.flatMap { case TransformerOverride.Fallback(fallback) =>
+    ) = ctx.config.filterCurrentOverridesForFallbacks.view.flatMap { case to @ TransformerOverride.Fallback(fallback) =>
       val fieldFlags = ctx.config.flags.atTgt(_.select(toName))
       import fallback.{Underlying as Fallback, value as fallbackExpr}
       for {
@@ -808,9 +808,40 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         if areFieldNamesMatching(fromName, toName)
       } yield {
         import getter.{Underlying as FromFallback, value as fromField}
-        fromName -> fromField.get(fallbackExpr).as_??
+        (to, fromName, fromField.get(fallbackExpr).as_??)
       }
     } // keep lazy
+
+    private def findMatchingUpdateCandidates[From, To](toName: String)(implicit
+        ctx: TransformationContext[From, To]
+    ): Map[TransformerOverride.ForFallback, Vector[TransformerOverride.ForFallback]] = ListMap
+      .from(
+        findMatchingFallbackFields(toName)
+          .groupBy[TransformerOverride.ForFallback](_._1)
+          .view
+          .mapValues(_.map(t => TransformerOverride.Fallback(t._3): TransformerOverride.ForFallback).toVector)
+      )
+      .withDefaultValue(Vector.empty)
+
+    private def findMatchingFallbackFieldAndUpdateCandidates[From, To](toName: String)(implicit
+        ctx: TransformationContext[From, To]
+    ): Option[
+      (String, ExistentialExpr, Map[TransformerOverride.ForFallback, Vector[TransformerOverride.ForFallback]])
+    ] = {
+      val fromFallbackCandidates = findMatchingFallbackFields(toName)
+      fromFallbackCandidates.collectFirst { case (to, fromName, fromFallbackField) =>
+        val updateCandidates = ListMap
+          .from(
+            fromFallbackCandidates.tail
+              .groupBy[TransformerOverride.ForFallback](_._1)
+              .view
+              .filterKeys(to != _) // we don't need fallback for value that became the new main src
+              .mapValues(_.map(t => TransformerOverride.Fallback(t._3): TransformerOverride.ForFallback).toVector)
+          )
+          .withDefaultValue(Vector.empty)
+        (fromName, fromFallbackField, updateCandidates)
+      }
+    }
 
     private def checkPolicy[From, To](requiredFromNames: SortedSet[String], fromNamesUsedByExtractors: Set[String])(
         implicit ctx: TransformationContext[From, To]
