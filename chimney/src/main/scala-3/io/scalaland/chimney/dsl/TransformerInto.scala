@@ -266,7 +266,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     *
     * @since TODO
     */
-  transparent inline def withFallback[T, FromFallback](inline selectorFrom: From => T)(
+  transparent inline def withFallbackFrom[T, FromFallback](inline selectorFrom: From => T)(
       inline fallback: FromFallback
   ): TransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ TransformerIntoMacros.withFallbackFromImpl('this, 'selectorFrom, 'fallback) }
