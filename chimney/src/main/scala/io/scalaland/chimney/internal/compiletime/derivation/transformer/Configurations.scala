@@ -418,7 +418,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       copy(runtimeOverrides = newRuntimeOverrides, originalRuntimeOverrides = newRuntimeOverrides)
     }
     def areOverridesEmpty: Boolean =
-      runtimeOverrides.isEmpty
+      runtimeOverrides.view.filterNot(_._2.isInstanceOf[TransformerOverride.ForFallback]).isEmpty
     def areLocalFlagsAndOverridesEmpty: Boolean =
       areLocalFlagsEmpty && areOverridesEmpty
 
@@ -529,18 +529,24 @@ private[compiletime] trait Configurations { this: Derivation =>
         localFlagsOverridden = false,
         runtimeOverrides = for {
           (sidedPath, runtimeOverride) <- runtimeOverrides
-          (alwaysDropOnRoot, runtimeOverrides2) = runtimeOverride match {
+          (alwaysDropOnRoot, dropOnlyByUpdate, runtimeOverrides2) = runtimeOverride match {
             // Fields are always matched with "_.fieldName" Path while subtypes are always matched with
             // "_ match { case _: Tpe => }" so "_" Paths are useless in their case while they might get in way of
             // checking if there might be some relevant overrides for current/nested values
-            case _: TransformerOverride.ForField | _: TransformerOverride.ForSubtype => true -> Vector(runtimeOverride)
-            // Fallbacks are always matched at "_" Path, and dropped _manually_ only when going inward
-            case f: TransformerOverride.ForFallback => false -> updateFallbacks(f)
+            case _: TransformerOverride.ForField | _: TransformerOverride.ForSubtype =>
+              (true, false, Vector(runtimeOverride))
+            // Fallbacks are always matched at "_" Path, and dropped _manually_ only when going inward,
+            // because we have to update their inner value
+            case f: TransformerOverride.ForFallback => (false, true, updateFallbacks(f))
             // Constructor is always matched at "_" Path, and dropped only when going inward
-            case _: TransformerOverride.ForConstructor => false -> Vector(runtimeOverride)
+            case _: TransformerOverride.ForConstructor => (false, false, Vector(runtimeOverride))
           }
           newRuntimeOverride <- runtimeOverrides2
-          newSidePath <- sidedPath.drop(fromPath, toPath).to(Vector)
+          newSidePath <- sidedPath
+            .drop(fromPath, toPath)
+            // Fallback is dropped only when updateFallbacks(f) == Vector.empty
+            .orElse(if (dropOnlyByUpdate && sidedPath.path == Path.Root) Some(sidedPath) else None)
+            .to(Vector)
           if !(newSidePath.path == Path.Root && alwaysDropOnRoot)
         } yield newSidePath -> newRuntimeOverride,
         preventImplicitSummoningForTypes = None
