@@ -80,6 +80,40 @@ class TotalTransformerMergingSpec extends ChimneySpec {
         .withFallback(Nested(Bar(4, "e", 6.0)))
         .transform ==> Nested((1, "b", 3.0, 4, "e", 6.0))
     }
+
+    test("should merge cases classes (none of them a tuple) into tuple") {
+      import merges.Disjoint.*, merges.Nested
+
+      compileErrors(
+        """
+        Foo(1, "b", 3.0)
+          .into[(Int, String, Double, Int, String, Double, Long)]
+          .withFallback(Bar(4, "e", 6.0))
+          .transform
+        """
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.merges.Disjoint.Foo[scala.Double] to scala.Tuple7[scala.Int, java.lang.String, scala.Double, scala.Int, java.lang.String, scala.Double, scala.Long]",
+        "scala.Tuple7[scala.Int, java.lang.String, scala.Double, scala.Int, java.lang.String, scala.Double, scala.Long]",
+        "source tuple io.scalaland.chimney.fixtures.merges.Disjoint.Foo[scala.Double] is of arity 3 (with fallbacks of arities: 3), while target type scala.Tuple7[scala.Int, java.lang.String, scala.Double, scala.Int, java.lang.String, scala.Double, scala.Long] is of arity 7; source should be at least as big as target!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      compileErrors(
+        """
+        Nested(Foo(1, "b", 3.0))
+          .into[Nested[(Int, String, Double, Int, String, Double, Long)]]
+          .withFallback(Nested(Bar(4, "e", 6.0)))
+          .transform
+        """
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.fixtures.merges.Disjoint.Foo[scala.Double]] to io.scalaland.chimney.fixtures.merges.Nested[scala.Tuple7[scala.Int, java.lang.String, scala.Double, scala.Int, java.lang.String, scala.Double, scala.Long]]",
+        "io.scalaland.chimney.fixtures.merges.Nested[scala.Tuple7[scala.Int, java.lang.String, scala.Double, scala.Int, java.lang.String, scala.Double, scala.Long]]",
+        "value: scala.Tuple7[scala.Int, java.lang.String, scala.Double, scala.Int, java.lang.String, scala.Double, scala.Long] - can't derive transformation from value: io.scalaland.chimney.fixtures.merges.Disjoint.Foo[scala.Double] in source type io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.fixtures.merges.Disjoint.Foo[scala.Double]]",
+        "scala.Tuple7[scala.Int, java.lang.String, scala.Double, scala.Int, java.lang.String, scala.Double, scala.Long]",
+        "source tuple io.scalaland.chimney.fixtures.merges.Disjoint.Foo[scala.Double] is of arity 3 (with fallbacks of arities: 3), while target type scala.Tuple7[scala.Int, java.lang.String, scala.Double, scala.Int, java.lang.String, scala.Double, scala.Long] is of arity 7; source should be at least as big as target!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
   }
 
   group("setting .withFallbackFrom(selectorFrom)(fallbackValue)") {
