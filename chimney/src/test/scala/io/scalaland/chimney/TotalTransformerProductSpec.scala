@@ -1629,13 +1629,13 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("handle tuple transformation errors") {
 
       compileErrors("""(0, "test").transformInto[Foo]""").check(
-        "source tuple scala.Tuple2[scala.Int, java.lang.String] is of arity 2, while target type io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3; they need to be equal!"
+        "source tuple scala.Tuple2[scala.Int, java.lang.String] is of arity 2, while target type io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3; source should be at least as big as target"
       )
 
       compileErrors("""(10.5, "abc", 6).transformInto[Foo]""").check("can't derive transformation")
 
       compileErrors("""Foo(10, 36.6, "test").transformInto[(Double, String, Int, Float, Boolean)]""").check(
-        "source tuple io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3, while target type scala.Tuple5[scala.Double, java.lang.String, scala.Int, scala.Float, scala.Boolean] is of arity 5; they need to be equal!"
+        "source tuple io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3, while target type scala.Tuple5[scala.Double, java.lang.String, scala.Int, scala.Float, scala.Boolean] is of arity 5; source should be at least as big as target!"
       )
 
       compileErrors("""Foo(10, 36.6, "test").transformInto[(Int, Double, Boolean)]""").check(
