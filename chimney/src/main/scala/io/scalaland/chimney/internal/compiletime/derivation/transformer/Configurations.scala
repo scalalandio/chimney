@@ -527,28 +527,26 @@ private[compiletime] trait Configurations { this: Derivation =>
       copy(
         flags = flags.prepareForRecursiveCall(fromPath, toPath),
         localFlagsOverridden = false,
-        runtimeOverrides = for {
-          (sidedPath, runtimeOverride) <- runtimeOverrides
-          (alwaysDropOnRoot, dropOnlyByUpdate, runtimeOverrides2) = runtimeOverride match {
+        runtimeOverrides = runtimeOverrides.flatMap { case (sidedPath, runtimeOverride) =>
+          runtimeOverride match {
             // Fields are always matched with "_.fieldName" Path while subtypes are always matched with
-            // "_ match { case _: Tpe => }" so "_" Paths are useless in their case while they might get in way of
+            // "_ match { case _: Tpe => }", so "_" Path (Root) is useless in their case while they might get in way of
             // checking if there might be some relevant overrides for current/nested values
             case _: TransformerOverride.ForField | _: TransformerOverride.ForSubtype =>
-              (true, false, Vector(runtimeOverride))
+              val newSidedPath = sidedPath.drop(fromPath, toPath).view.filterNot(_.path == Path.Root)
+              newSidedPath.map(_ -> runtimeOverride)
             // Fallbacks are always matched at "_" Path, and dropped _manually_ only when going inward,
             // because we have to update their inner value
-            case f: TransformerOverride.ForFallback => (false, true, updateFallbacks(f))
+            case f: TransformerOverride.ForFallback =>
+              if (sidedPath.path == Path.Root)
+                Vector(sidedPath).view.flatMap(path => updateFallbacks(f).view.map(path -> _))
+              else sidedPath.drop(fromPath, toPath).view.map(_ -> f)
             // Constructor is always matched at "_" Path, and dropped only when going inward
-            case _: TransformerOverride.ForConstructor => (false, false, Vector(runtimeOverride))
+            case _: TransformerOverride.ForConstructor =>
+              val newSidedPath = sidedPath.drop(fromPath, toPath).view
+              newSidedPath.map(_ -> runtimeOverride)
           }
-          newRuntimeOverride <- runtimeOverrides2
-          newSidePath <- sidedPath
-            .drop(fromPath, toPath)
-            // Fallback is dropped only when updateFallbacks(f) == Vector.empty
-            .orElse(if (dropOnlyByUpdate && sidedPath.path == Path.Root) Some(sidedPath) else None)
-            .to(Vector)
-          if !(newSidePath.path == Path.Root && alwaysDropOnRoot)
-        } yield newSidePath -> newRuntimeOverride,
+        },
         preventImplicitSummoningForTypes = None
       )
 
