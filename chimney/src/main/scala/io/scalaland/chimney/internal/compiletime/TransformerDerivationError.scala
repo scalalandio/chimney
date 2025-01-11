@@ -78,7 +78,8 @@ final case class AmbiguousSubtypeTargets(
 
 final case class TupleArityMismatch(
     fromArity: Int,
-    toArity: Int
+    toArity: Int,
+    fallbackArity: List[Int]
 )(val fromType: String, val toType: String)
     extends TransformerDerivationError
 
@@ -130,8 +131,9 @@ object TransformerDerivationError {
             s"  can't transform coproduct instance $fromSubtype to $toType"
           case AmbiguousSubtypeTargets(fromField, foundToFields) =>
             s"  coproduct instance $fromField of $fromType has ambiguous matches in $toType: ${foundToFields.mkString(", ")}"
-          case TupleArityMismatch(fromArity, toArity) =>
-            s"  source tuple $fromType is of arity $fromArity, while target type $toType is of arity $toArity; they need to be equal!"
+          case TupleArityMismatch(fromArity, toArity, fallbackArity) =>
+            val fa = if (fallbackArity.isEmpty) "" else s" (with fallbacks of arities: ${fallbackArity.mkString(", ")})"
+            s"  source tuple $fromType is of arity $fromArity$fa, while target type $toType is of arity $toArity; source should be at least as big as target!"
           case AmbiguousImplicitPriority(totalExprPrettyPrint, partialExprPrettyPrint) =>
             s"""  ambiguous implicits while resolving Chimney recursive transformation!
                |    PartialTransformer[$fromType, $toType]: $partialExprPrettyPrint

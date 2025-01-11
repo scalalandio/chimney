@@ -257,12 +257,22 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 }
               }
               .getOrElse[DerivationResult[Existential[TransformationExpr]]] {
-                if (usePositionBasedMatching)
+                if (usePositionBasedMatching) {
+                  val arities = ctorParamToGetterByPosition.view.zipWithIndex
+                    .collect { case ((_, (_, sof)), idx) => sof.src -> idx }
+                    .groupBy(_._1)
+                    .view
+                    .mapValues(_.map(_._2))
+                    .map { case (_, vals) => vals.min -> vals.size }
+                    .toList
+                    .sortBy(_._1)
+                    .map(_._2)
                   DerivationResult.tupleArityMismatch(
-                    fromArity = fromEnabledExtractors.size,
-                    toArity = parameters.size
+                    fromArity = arities.head,
+                    toArity = parameters.size,
+                    fallbackArity = arities.tail
                   )
-                else {
+                } else {
                   lazy val availableGetters = fromExtractors.filter { case (fromName, _) =>
                     areFieldNamesMatching(fromName, toName)
                   }.toList
