@@ -148,12 +148,13 @@ private[compiletime] trait ResultOps { this: Derivation =>
       )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
-    def tupleArityMismatch[From, To, A](fromArity: Int, toArity: Int)(implicit
+    def tupleArityMismatch[From, To, A](fromArity: Int, toArity: Int, fallbackArity: List[Int])(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[A] = DerivationResult.transformerError(
       TupleArityMismatch(
         fromArity = fromArity,
-        toArity = toArity
+        toArity = toArity,
+        fallbackArity = fallbackArity
       )(fromType = Type.prettyPrint[From], toType = Type.prettyPrint[To])
     )
 
