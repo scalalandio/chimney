@@ -71,16 +71,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[ToOrPartialTo]] = {
       import ctx.config.*
 
+      lazy val fromEnabledExtractors = fromExtractors.filter { case (name, getter) =>
+        filterAllowedFieldsByFlags(flags.at(TargetPath(Path(_.select(name)))))(getter)
+      }
+
       // FIXME (2.0.0 cleanup): use only ConstructorArgVals as source in position-based matching, unless enabled by flag
       val usePositionBasedMatching =
         Type[From].isTuple || Type[To].isTuple || ctx.config.filterCurrentOverridesForFallbacks.exists {
           case TransformerOverride.Fallback(runtimeData) => runtimeData.Underlying.isTuple
         }
-      lazy val fromEnabledExtractors = fromExtractors.filter { case (name, getter) =>
-        filterAllowedFieldsByFlags(flags.at(TargetPath(Path(_.select(name)))))(getter)
-      }
       lazy val ctorParamToGetterByPosition = {
-        val fromGetters = fromEnabledExtractors.view.map { case (fromName, fromGetter) =>
+        val fromGetters = fromExtractors.view.map { case (fromName, fromGetter) =>
           FromOrFallbackGetter[From](ctx.src, fromName, fromGetter)
         }
         val fallbackGetters = ctx.config.filterCurrentOverridesForFallbacks.toVector.flatMap {
@@ -94,8 +95,12 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               case _ => Vector.empty[FromOrFallbackGetter].view
             }
         }
+        // tuples should use ONLY vals
+        val valGetters = (fromGetters ++ fallbackGetters).filter { case fof =>
+          !fof.getter.value.isInherited && fof.getter.value.sourceType == Product.Getter.SourceType.ConstructorVal
+        }
         parameters.view
-          .zip(fromGetters ++ fallbackGetters)
+          .zip(valGetters)
           .map { case ((toName, ctorParam), fromOrFallback) =>
             ctorParam -> (toName -> fromOrFallback)
           }
@@ -131,7 +136,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 .map(a => Expr.prettyPrint(a))})"
           }
           .mkString(", ")
-        s"Resolved ${Type.prettyPrint[From]} getters: ($gettersStr) and ${Type.prettyPrint[To]} constructor ($constructorStr)"
+        s"Resolved ${Type.prettyPrint[From]} getters: ($gettersStr) and ${Type.prettyPrint[To]} constructor ($constructorStr), using ${if (usePositionBasedMatching) "position-based matching (tuple present)" else "name-based matching"}"
       } >> verifyNoOverrideUnused >>
         Traverse[List]
           .parTraverse[
