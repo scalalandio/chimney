@@ -79,47 +79,25 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       lazy val fromEnabledExtractors = fromExtractors.filter { case (name, getter) =>
         filterAllowedFieldsByFlags(flags.at(TargetPath(Path(_.select(name)))))(getter)
       }
-      trait FromOrFallbackGetter {
-        type FromOrFallback
-        implicit val FromOrFallback: Type[FromOrFallback]
-
-        val src: Expr[FromOrFallback]
-        val name: String
-        val getter: Existential[Product.Getter[FromOrFallback, *]]
-      }
       lazy val ctorParamToGetterByPosition = {
         val fromGetters = fromEnabledExtractors.view.map { case (fromName, fromGetter) =>
-          new FromOrFallbackGetter {
-            type FromOrFallback = From
-            val FromOrFallback = Type[From]
-
-            val src = ctx.src
-            val name = fromName
-            val getter = fromGetter
-          }
+          FromOrFallbackGetter[From](ctx.src, fromName, fromGetter)
         }
-        val fallbackGetters = ctx.config.filterCurrentOverridesForFallbacks.flatMap {
+        val fallbackGetters = ctx.config.filterCurrentOverridesForFallbacks.toVector.flatMap {
           case TransformerOverride.Fallback(runtimeData) =>
             import runtimeData.{Underlying as Fallback, value as fallbackExpr}
             Type[Fallback] match {
               case Product.Extraction(fallbackExtractors) =>
                 fallbackExtractors.view.map { case (fallbackName, fallbackGetter) =>
-                  new FromOrFallbackGetter {
-                    type FromOrFallback = Fallback
-                    val FromOrFallback = Type[Fallback]
-
-                    val src = fallbackExpr
-                    val name = fallbackName
-                    val getter = fallbackGetter
-                  }
+                  FromOrFallbackGetter[Fallback](fallbackExpr, fallbackName, fallbackGetter)
                 }
-              case _ => Vector.empty.view
+              case _ => Vector.empty[FromOrFallbackGetter].view
             }
         }
-        parameters
+        parameters.view
           .zip(fromGetters ++ fallbackGetters)
           .map { case ((toName, ctorParam), fromOrFallback) =>
-            ctorParam -> (toName, fromOrFallback)
+            ctorParam -> (toName -> fromOrFallback)
           }
           .toMap
       }
@@ -840,6 +818,31 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       }
     }
 
+    // Fallback utilities
+
+    private trait FromOrFallbackGetter {
+      type FromOrFallback
+      implicit val FromOrFallback: Type[FromOrFallback]
+
+      val src: Expr[FromOrFallback]
+      val name: String
+      val getter: Existential[Product.Getter[FromOrFallback, *]]
+    }
+    private object FromOrFallbackGetter {
+      def apply[FromOrFallback0: Type](
+          src_ : Expr[FromOrFallback0],
+          name_ : String,
+          getter_ : Existential[Product.Getter[FromOrFallback0, *]]
+      ): FromOrFallbackGetter = new FromOrFallbackGetter {
+        type FromOrFallback = FromOrFallback0
+        val FromOrFallback = Type[FromOrFallback0]
+
+        val src: Expr[FromOrFallback0] = src_
+        val name: String = name_
+        val getter: Existential[Product.Getter[FromOrFallback0, *]] = getter_
+      }
+    }
+
     private def filterAllowedFieldsByFlags[A](
         fieldFlags: TransformerFlags
     ): Existential[Product.Getter[A, *]] => Boolean = getter => {
@@ -900,6 +903,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       }
     }
 
+    // UnnamedFieldPolicy utilities
+
     private def checkPolicy[From, To](requiredFromNames: SortedSet[String], fromNamesUsedByExtractors: Set[String])(
         implicit ctx: TransformationContext[From, To]
     ): DerivationResult[Unit] =
@@ -918,6 +923,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, unused source vals: ${unusedFromNames.mkString(", ")}"
               )
       }
+
+    // Error-related utilities
 
     @scala.annotation.tailrec
     private def prependWholeErrorPath[A: Type](expr: Expr[partial.Result[A]], path: Path): Expr[partial.Result[A]] =
@@ -954,6 +961,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       val oldErrors = DerivationResult.fail(errors)
       newError.parTuple(oldErrors).map[Nothing](_ => ???)
     }
+
+    // Constants compared by refs to handle some special cases without an explosion in complexity.
 
     // Stub to use when the setter's return type is not Unit and nonUnitBeanSetters flag is off.
     private val nonUnitSetter = Existential[TransformationExpr, Null](TransformationExpr.fromTotal(Expr.Null))
