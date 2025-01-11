@@ -51,11 +51,11 @@ class TotalTransformerMergingSpec extends ChimneySpec {
       Foo(1, "b", 3.0)
         .into[(Int, String, Double, Int, String, Double)]
         .withFallback((4, "e", 6.0))
-        .transform ==> (1, "b", 3.0, 4, "e", 6.0)
+        .transform ==> ((1, "b", 3.0, 4, "e", 6.0))
       (1, "b", 3.0)
         .into[(Int, String, Double, Int, String, Double)]
         .withFallback(Bar(4, "e", 6.0))
-        .transform ==> (1, "b", 3.0, 4, "e", 6.0)
+        .transform ==> ((1, "b", 3.0, 4, "e", 6.0))
 
       Nested(Foo(1, "b", 3.0))
         .into[Nested[(Int, String, Double, Int, String, Double)]]
@@ -73,7 +73,7 @@ class TotalTransformerMergingSpec extends ChimneySpec {
       Foo(1, "b", 3.0)
         .into[(Int, String, Double, Int, String, Double)]
         .withFallback(Bar(4, "e", 6.0))
-        .transform ==> (1, "b", 3.0, 4, "e", 6.0)
+        .transform ==> ((1, "b", 3.0, 4, "e", 6.0))
 
       Nested(Foo(1, "b", 3.0))
         .into[Nested[(Int, String, Double, Int, String, Double)]]
