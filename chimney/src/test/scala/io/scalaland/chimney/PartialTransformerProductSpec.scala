@@ -2626,6 +2626,61 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
   }
 
+  group("flag .enableUnusedFieldPolicyCheck(policyName)") {
+
+    import products.{Foo, Bar}
+
+    test("should be disabled by default") {
+      val result = Foo(10, "unused", (1.0, 2.0)).transformIntoPartial[Bar]
+      result.asOption ==> Some(Bar(10, (1.0, 2.0)))
+      result.asEither ==> Right(Bar(10, (1.0, 2.0)))
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = Foo(10, "unused", (1.0, 2.0)).intoPartial[Bar].transform
+      result2.asOption ==> Some(Bar(10, (1.0, 2.0)))
+      result2.asEither ==> Right(Bar(10, (1.0, 2.0)))
+      result2.asErrorPathMessageStrings ==> Iterable.empty
+    }
+
+    test("should fail compilation when policy is violated") {
+      compileErrors(
+        """Foo(10, "unused", (1.0, 2.0)).intoPartial[Bar].enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal).transform"""
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Foo to io.scalaland.chimney.fixtures.products.Bar",
+        "io.scalaland.chimney.fixtures.products.Bar",
+        "FailOnIgnoredSourceVal policy check failed at _, offenders: y!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      locally {
+        @unused implicit val config =
+          TransformerConfiguration.default.enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
+
+        compileErrors("""Foo(10, "unused", (1.0, 2.0)).transformIntoPartial[Bar]""").check(
+          "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Foo to io.scalaland.chimney.fixtures.products.Bar",
+          "io.scalaland.chimney.fixtures.products.Bar",
+          "FailOnIgnoredSourceVal policy check failed at _, offenders: y!",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+      }
+    }
+  }
+
+  group("flag .disableUnusedFieldPolicyCheck") {
+
+    import products.{Foo, Bar}
+
+    test("should disable globally enabled .enableUnusedFieldPolicyCheck") {
+      @unused implicit val config =
+        TransformerConfiguration.default.enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
+
+      val result = Foo(10, "unused", (1.0, 2.0)).intoPartial[Bar].disableUnusedFieldPolicyCheck.transform
+      result.asOption ==> Some(Bar(10, (1.0, 2.0)))
+      result.asEither ==> Right(Bar(10, (1.0, 2.0)))
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
+  }
+
   // old tests, which could be rewritten into something more structured and better named, but are valuable nonetheless
 
   group("transform always fails") {
