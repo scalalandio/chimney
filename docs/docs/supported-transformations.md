@@ -916,6 +916,7 @@ This allows using `.enableBeanSetters` to handle transformations of Scala.js' `j
     ```scala
     //> using scala {{ scala.2_13 }}
     //> using platform scala-js
+    //> using jsVersion {{ scala.js }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     import scala.scalajs.js
     import scala.scalajs.js.annotation.JSGlobal
