@@ -1,7 +1,9 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
+import io.scalaland.chimney.internal.compiletime.fp.Implicits.*
 import io.scalaland.chimney.partial
 
 private[compiletime] trait TransformOptionToOptionRuleModule {
@@ -22,8 +24,25 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
             to2.{Underlying as InnerTo, value as optionalTo}
           DerivationResult.log(
             s"Resolved ${Type.prettyPrint[From]} (${from2.value}) and ${Type.prettyPrint[To]} (${to2.value}) as optional types"
-          ) >>
-            mapOptions[From, To, InnerFrom, InnerTo](optionalFrom, optionalTo)
+          ) >> {
+            def srcToResult = mapOptions[From, To, InnerFrom, InnerTo](optionalFrom, optionalTo)
+
+            def fallbackToResult = mapFallbackOptions[From, To, InnerTo](optionalTo)
+
+            val merge = ctx match {
+              case TransformationContext.ForTotal(_)             => mergeTotal(optionalTo)
+              case TransformationContext.ForPartial(_, failFast) => mergePartial(optionalTo, failFast)
+            }
+
+            (ctx.config.flags.optionFallbackMerge match {
+              case None =>
+                srcToResult
+              case Some(dsls.SourceOrElseFallback) =>
+                srcToResult.parMap2(fallbackToResult)((srcTo, fallbackTo) => fallbackTo.foldLeft(srcTo)(merge))
+              case Some(dsls.FallbackOrElseSource) =>
+                srcToResult.parMap2(fallbackToResult)((srcTo, fallbackTo) => fallbackTo.foldRight(srcTo)(merge))
+            }).flatMap(DerivationResult.expanded(_))
+          }
         case _ =>
           DerivationResult.attemptNextRule
       }
@@ -33,7 +52,7 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
         optionalTo: OptionalValue[To, InnerTo]
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Rule.ExpansionResult[To]] =
+    ): DerivationResult[TransformationExpr[To]] =
       ExprPromise
         .promise[InnerFrom](ExprPromise.NameGenerationStrategy.FromType)
         .traverse { (newFromExpr: Expr[InnerFrom]) =>
@@ -50,7 +69,7 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
             // We're constructing:
             // ${ src }.fold[$To](None, innerFrom: $InnerFrom => Some(${ innerFrom }))
             // but working with every OptionalValue
-            DerivationResult.expandedTotal(
+            DerivationResult.totalExpr(
               optionalFrom.fold[To](
                 ctx.src,
                 optionalTo.empty,
@@ -63,7 +82,7 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
             //   ${ derivedResultInnerTo }.map(Option(_))
             // }
             // but working with every OptionalValue
-            DerivationResult.expandedPartial(
+            DerivationResult.partialExpr(
               optionalFrom.fold[partial.Result[To]](
                 ctx.src,
                 ChimneyExpr.PartialResult.Value(optionalTo.empty).upcastToExprOf[partial.Result[To]],
@@ -78,5 +97,46 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
             )
           }
         }
+
+    private def mapFallbackOptions[From, To, InnerTo: Type](optionalTo: OptionalValue[To, InnerTo])(implicit
+        ctx: TransformationContext[From, To]
+    ): DerivationResult[Vector[TransformationExpr[To]]] = ctx.config.filterCurrentOverridesForFallbacks.view
+      .map { case TransformerOverride.Fallback(fallback) =>
+        import fallback.{Underlying as Fallback, value as fallbackExpr}
+        Type[Fallback] match {
+          case OptionalValue(fallback2) =>
+            import fallback2.{Underlying as InnerFallback, value as optionalFallback}
+            implicit val fallbackCtx: TransformationContext[Fallback, To] =
+              ctx.updateFromTo[Fallback, To](fallbackExpr, updateFallbacks = _ => Vector.empty)(Fallback, ctx.To)
+            Some(mapOptions[Fallback, To, InnerFallback, InnerTo](optionalFallback, optionalTo))
+          case _ => None
+        }
+      }
+      .collect { case Some(result) => result }
+      .toVector
+      .sequence
+
+    private def mergeTotal[To, InnerTo](
+        optionalTo: OptionalValue[To, InnerTo]
+    ): (TransformationExpr[To], TransformationExpr[To]) => TransformationExpr[To] =
+      (texpr1, texpt2) => TransformationExpr.fromTotal(optionalTo.orElse(texpr1.ensureTotal, texpt2.ensureTotal))
+
+    private def mergePartial[To: Type, InnerTo](
+        optionalTo: OptionalValue[To, InnerTo],
+        failFast: Expr[Boolean]
+    ): (TransformationExpr[To], TransformationExpr[To]) => TransformationExpr[To] = {
+      case (TransformationExpr.TotalExpr(expr1), TransformationExpr.TotalExpr(expr2)) =>
+        TransformationExpr.fromTotal(optionalTo.orElse(expr1, expr2))
+      case (texpr1, texpr2) =>
+        TransformationExpr.fromPartial(
+          ChimneyExpr.PartialResult.map2(
+            texpr1.ensurePartial,
+            texpr2.ensurePartial,
+            Expr.Function2.instance(optionalTo.orElse(_, _)),
+            failFast
+          )
+        )
+    }
+
   }
 }

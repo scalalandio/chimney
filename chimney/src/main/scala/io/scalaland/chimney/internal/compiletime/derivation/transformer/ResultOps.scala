@@ -28,12 +28,15 @@ private[compiletime] trait ResultOps { this: Derivation =>
     def existential[F[_], A: Type](fa: F[A]): DerivationResult[Existential[F]] =
       DerivationResult.pure(Existential[F, A](fa))
 
+    def totalExpr[To](expr: Expr[To]): DerivationResult[TransformationExpr[To]] =
+      DerivationResult.pure(TransformationExpr.fromTotal(expr))
+    def partialExpr[To](expr: Expr[partial.Result[To]]): DerivationResult[TransformationExpr[To]] =
+      DerivationResult.pure(TransformationExpr.fromPartial(expr))
+
     def expanded[To](expr: TransformationExpr[To]): DerivationResult[Rule.ExpansionResult[To]] =
       DerivationResult.pure(Rule.ExpansionResult.Expanded(expr))
-
     def expandedTotal[To](expr: Expr[To]): DerivationResult[Rule.ExpansionResult[To]] =
       DerivationResult.pure(Rule.ExpansionResult.Expanded(TransformationExpr.TotalExpr[To](expr)))
-
     def expandedPartial[To](expr: Expr[partial.Result[To]]): DerivationResult[Rule.ExpansionResult[To]] =
       DerivationResult.pure(Rule.ExpansionResult.Expanded(TransformationExpr.PartialExpr[To](expr)))
 
