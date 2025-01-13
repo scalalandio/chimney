@@ -1,7 +1,9 @@
 package io.scalaland.chimney.internal.runtime
 
 import io.scalaland.chimney.dsl.{
+  CollectionFallbackMergeStrategy,
   ImplicitTransformerPreference,
+  OptionFallbackMergeStrategy,
   TransformedNamesComparison,
   UnmatchedSubtypePolicy,
   UnusedFieldPolicy
@@ -30,6 +32,8 @@ object TransformerFlags {
   final class PartialUnwrapsOption extends Flag
   final class NonAnyValWrappers extends Flag
   final class ImplicitConflictResolution[R <: ImplicitTransformerPreference] extends Flag
+  final class OptionFallbackMerge[S <: OptionFallbackMergeStrategy] extends Flag
+  final class CollectionFallbackMerge[S <: CollectionFallbackMergeStrategy] extends Flag
   final class FieldNameComparison[C <: TransformedNamesComparison] extends Flag
   final class SubtypeNameComparison[C <: TransformedNamesComparison] extends Flag
   final class UnusedFieldPolicyCheck[P <: UnusedFieldPolicy] extends Flag
