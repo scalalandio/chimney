@@ -37,7 +37,7 @@ private[chimney] trait TransformerSourceFlagsDsl[UpdateFlag[_ <: TransformerFlag
   def disableCustomSubtypeNameComparison: UpdateFlag[Disable[SubtypeNameComparison[?], Flags]] =
     disableFlag[SubtypeNameComparison[?]]
 
-  /** Enable policy check for target subtypes that would not be used anywhere during transformarion.
+  /** Enable policy check for target subtypes that would not be used anywhere during transformation.
     *
     * @param unmatchedSubtypePolicy
     *   parameter specifying how unmatched target subtypes should be treated
@@ -52,7 +52,7 @@ private[chimney] trait TransformerSourceFlagsDsl[UpdateFlag[_ <: TransformerFlag
   ): UpdateFlag[Enable[UnmatchedSubtypePolicyCheck[P], Flags]] =
     enableFlag[UnmatchedSubtypePolicyCheck[P]]
 
-  /** Disable policy check for target subtypes that would not be used anywhere during transformarion.
+  /** Disable policy check for target subtypes that would not be used anywhere during transformation.
     *
     * @see
     *   [[TODO]] for more details
