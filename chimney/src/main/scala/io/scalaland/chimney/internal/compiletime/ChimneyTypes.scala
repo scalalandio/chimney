@@ -37,6 +37,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     val PreferTotalTransformer: Type[io.scalaland.chimney.dsl.PreferTotalTransformer.type]
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val SourceOrElseFallback: Type[io.scalaland.chimney.dsl.SourceOrElseFallback.type]
+    val FallbackOrElseSource: Type[io.scalaland.chimney.dsl.FallbackOrElseSource.type]
+
+    val SourceAppendFallback: Type[io.scalaland.chimney.dsl.SourceAppendFallback.type]
+    val FallbackAppendSource: Type[io.scalaland.chimney.dsl.FallbackAppendSource.type]
+
     val FailOnIgnoredSourceVal: Type[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type]
 
     val FailOnUnmatchedTargetSubtype: Type[io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype.type]
@@ -247,6 +253,18 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
               dsls.ImplicitTransformerPreference,
               runtime.TransformerFlags.ImplicitConflictResolution
             ] { this: ImplicitConflictResolution.type => }
+        val OptionFallbackMerge: OptionFallbackMergeModule
+        trait OptionFallbackMergeModule
+            extends Type.Ctor1UpperBounded[
+              dsls.OptionFallbackMergeStrategy,
+              runtime.TransformerFlags.OptionFallbackMerge
+            ] { this: OptionFallbackMerge.type => }
+        val CollectionFallbackMerge: CollectionFallbackMergeModule
+        trait CollectionFallbackMergeModule
+            extends Type.Ctor1UpperBounded[
+              dsls.CollectionFallbackMergeStrategy,
+              runtime.TransformerFlags.CollectionFallbackMerge
+            ] { this: CollectionFallbackMerge.type => }
         val FieldNameComparison: FieldNameComparisonModule
         trait FieldNameComparisonModule
             extends Type.Ctor1UpperBounded[

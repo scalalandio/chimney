@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-import io.scalaland.chimney.dsl.{ImplicitTransformerPreference, TransformerDefinitionCommons}
+import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.runtime
 
@@ -25,7 +25,9 @@ private[compiletime] trait Configurations { this: Derivation =>
       optionDefaultsToNone: Boolean = false,
       partialUnwrapsOption: Boolean = true,
       nonAnyValWrappers: Boolean = false,
-      implicitConflictResolution: Option[ImplicitTransformerPreference] = None,
+      implicitConflictResolution: Option[dsls.ImplicitTransformerPreference] = None,
+      optionFallbackMerge: Option[dsls.OptionFallbackMergeStrategy] = None,
+      collectionFallbackMerge: Option[dsls.CollectionFallbackMergeStrategy] = None,
       fieldNameComparison: Option[dsls.TransformedNamesComparison] = None,
       subtypeNameComparison: Option[dsls.TransformedNamesComparison] = None,
       unusedFieldPolicy: Option[dsls.UnusedFieldPolicy] = None,
@@ -75,8 +77,14 @@ private[compiletime] trait Configurations { this: Derivation =>
     def isDefaultValueEnabledGloballyOrFor[A: Type]: Boolean =
       processDefaultValues || getDefaultValueOfType[A]
 
-    def setImplicitConflictResolution(preference: Option[ImplicitTransformerPreference]): TransformerFlags =
+    def setImplicitConflictResolution(preference: Option[dsls.ImplicitTransformerPreference]): TransformerFlags =
       copy(implicitConflictResolution = preference)
+
+    def setOptionFallbackMerge(strategy: Option[dsls.OptionFallbackMergeStrategy]): TransformerFlags =
+      copy(optionFallbackMerge = strategy)
+
+    def setCollectionFallbackMerge(strategy: Option[dsls.CollectionFallbackMergeStrategy]): TransformerFlags =
+      copy(collectionFallbackMerge = strategy)
 
     def getFieldNameComparison: dsls.TransformedNamesComparison =
       fieldNameComparison.getOrElse(dsls.TransformedNamesComparison.FieldDefault)
@@ -135,10 +143,12 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
         if (nonAnyValWrappers) Vector("nonAnyValWrappers") else Vector.empty,
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
-        fieldNameComparison.map(r => s"fieldNameComparison=$r").toList.toVector,
-        subtypeNameComparison.map(r => s"subtypeNameComparison=$r").toList.toVector,
-        unusedFieldPolicy.map(r => s"unusedFieldPolicy=$r").toList.toVector,
-        unmatchedSubtypePolicy.map(r => s"unmatchedSubtypePolicy=$r").toList.toVector,
+        optionFallbackMerge.map(s => s"OptionFallbackMerge=$s").toList.toVector,
+        collectionFallbackMerge.map(s => s"CollectionFallbackMerge=$s").toList.toVector,
+        fieldNameComparison.map(c => s"fieldNameComparison=$c").toList.toVector,
+        subtypeNameComparison.map(c => s"subtypeNameComparison=$c").toList.toVector,
+        unusedFieldPolicy.map(p => s"unusedFieldPolicy=$p").toList.toVector,
+        unmatchedSubtypePolicy.map(p => s"unmatchedSubtypePolicy=$p").toList.toVector,
         if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty,
         if (scopedUpdates.nonEmpty) Vector(scopedUpdates.map(_._1).mkString("scopedUpdates=(", ", ", ")"))
         else Vector.empty
@@ -164,6 +174,18 @@ private[compiletime] trait Configurations { this: Derivation =>
           case "PreferTotalTransformer"   => Some(dsls.PreferTotalTransformer)
           case "PreferPartialTransformer" => Some(dsls.PreferPartialTransformer)
           case "none"                     => None
+        })
+      case (cfg, transformerFlag"OptionFallbackMerge=$value") =>
+        cfg.copy(optionFallbackMerge = value match {
+          case "SourceOrElseFallback" => Some(dsls.SourceOrElseFallback)
+          case "FallbackOrElseSource" => Some(dsls.FallbackOrElseSource)
+          case "none"                 => None
+        })
+      case (cfg, transformerFlag"CollectionFallbackMerge=$value") =>
+        cfg.copy(collectionFallbackMerge = value match {
+          case "SourceAppendFallback" => Some(dsls.SourceAppendFallback)
+          case "FallbackAppendSource" => Some(dsls.FallbackAppendSource)
+          case "none"                 => None
         })
       case (cfg, transformerFlag"UnusedFieldPolicy=$value") =>
         cfg.copy(unusedFieldPolicy = value match {
@@ -618,6 +640,34 @@ private[compiletime] trait Configurations { this: Derivation =>
               reportError("Invalid ImplicitTransformerPreference type!!")
               // $COVERAGE-ON$
             }
+          case ChimneyType.TransformerFlags.Flags.OptionFallbackMerge(s) =>
+            if (s.Underlying =:= ChimneyType.SourceOrElseFallback)
+              extractTransformerFlags[Flags2](defaultFlags).setOptionFallbackMerge(
+                Some(dsls.SourceOrElseFallback)
+              )
+            else if (s.Underlying =:= ChimneyType.FallbackOrElseSource)
+              extractTransformerFlags[Flags2](defaultFlags).setOptionFallbackMerge(
+                Some(dsls.FallbackOrElseSource)
+              )
+            else {
+              // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+              reportError("Invalid OptionFallbackMergeStrategy type!!")
+              // $COVERAGE-ON$
+            }
+          case ChimneyType.TransformerFlags.Flags.CollectionFallbackMerge(s) =>
+            if (s.Underlying =:= ChimneyType.SourceAppendFallback)
+              extractTransformerFlags[Flags2](defaultFlags).setCollectionFallbackMerge(
+                Some(dsls.SourceAppendFallback)
+              )
+            else if (s.Underlying =:= ChimneyType.FallbackAppendSource)
+              extractTransformerFlags[Flags2](defaultFlags).setCollectionFallbackMerge(
+                Some(dsls.FallbackAppendSource)
+              )
+            else {
+              // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+              reportError("Invalid CollectionFallbackMergeStrategy type!!")
+              // $COVERAGE-ON$
+            }
           case ChimneyType.TransformerFlags.Flags.FieldNameComparison(c) =>
             import c.Underlying as Comparison
             extractTransformerFlags[Flags2](defaultFlags).setFieldNameComparison(
@@ -659,6 +709,10 @@ private[compiletime] trait Configurations { this: Derivation =>
             extractTransformerFlags[Flags2](defaultFlags).setDefaultValueOfType[T](value = false)
           case ChimneyType.TransformerFlags.Flags.ImplicitConflictResolution(_) =>
             extractTransformerFlags[Flags2](defaultFlags).setImplicitConflictResolution(None)
+          case ChimneyType.TransformerFlags.Flags.OptionFallbackMerge(_) =>
+            extractTransformerFlags[Flags2](defaultFlags).setOptionFallbackMerge(None)
+          case ChimneyType.TransformerFlags.Flags.CollectionFallbackMerge(_) =>
+            extractTransformerFlags[Flags2](defaultFlags).setCollectionFallbackMerge(None)
           case ChimneyType.TransformerFlags.Flags.FieldNameComparison(_) =>
             extractTransformerFlags[Flags2](defaultFlags).setFieldNameComparison(None)
           case ChimneyType.TransformerFlags.Flags.SubtypeNameComparison(_) =>

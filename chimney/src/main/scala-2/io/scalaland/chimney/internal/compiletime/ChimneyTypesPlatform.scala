@@ -98,6 +98,16 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       weakTypeTag[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val SourceOrElseFallback: Type[io.scalaland.chimney.dsl.SourceOrElseFallback.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.SourceOrElseFallback.type]
+    val FallbackOrElseSource: Type[io.scalaland.chimney.dsl.FallbackOrElseSource.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.FallbackOrElseSource.type]
+
+    val SourceAppendFallback: Type[io.scalaland.chimney.dsl.SourceAppendFallback.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.SourceAppendFallback.type]
+    val FallbackAppendSource: Type[io.scalaland.chimney.dsl.FallbackAppendSource.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.FallbackAppendSource.type]
+
     val FailOnIgnoredSourceVal: Type[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type] =
       weakTypeTag[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type]
 
@@ -399,6 +409,24 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           def unapply[A](A: Type[A]): Option[?<[dsls.ImplicitTransformerPreference]] =
             A.asCtor[runtime.TransformerFlags.ImplicitConflictResolution[?]].map { A0 =>
               A0.param_<[dsls.ImplicitTransformerPreference](0)
+            }
+        }
+        object OptionFallbackMerge extends OptionFallbackMergeModule {
+          def apply[S <: dsls.OptionFallbackMergeStrategy: Type]
+              : Type[runtime.TransformerFlags.OptionFallbackMerge[S]] =
+            weakTypeTag[runtime.TransformerFlags.OptionFallbackMerge[S]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.OptionFallbackMergeStrategy]] =
+            A.asCtor[runtime.TransformerFlags.OptionFallbackMerge[?]].map { A0 =>
+              A0.param_<[dsls.OptionFallbackMergeStrategy](0)
+            }
+        }
+        object CollectionFallbackMerge extends CollectionFallbackMergeModule {
+          def apply[S <: dsls.CollectionFallbackMergeStrategy: Type]
+              : Type[runtime.TransformerFlags.CollectionFallbackMerge[S]] =
+            weakTypeTag[runtime.TransformerFlags.CollectionFallbackMerge[S]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.CollectionFallbackMergeStrategy]] =
+            A.asCtor[runtime.TransformerFlags.CollectionFallbackMerge[?]].map { A0 =>
+              A0.param_<[dsls.CollectionFallbackMergeStrategy](0)
             }
         }
         object FieldNameComparison extends FieldNameComparisonModule {
