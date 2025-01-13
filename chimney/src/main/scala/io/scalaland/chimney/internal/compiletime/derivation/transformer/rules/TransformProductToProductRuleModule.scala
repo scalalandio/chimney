@@ -823,6 +823,18 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       }
     }
 
+    private def filterAllowedFieldsByFlags[A](
+        fieldFlags: TransformerFlags
+    ): Existential[Product.Getter[A, *]] => Boolean = getter => {
+      val allowedSourceType = getter.value.sourceType match {
+        case Product.Getter.SourceType.ConstructorVal => true
+        case Product.Getter.SourceType.AccessorMethod => fieldFlags.methodAccessors
+        case Product.Getter.SourceType.JavaBeanGetter => fieldFlags.beanGetters
+      }
+      val allowedInheritance = !getter.value.isInherited || fieldFlags.inheritedAccessors
+      allowedSourceType && allowedInheritance
+    }
+
     // Fallback utilities
 
     private trait FromOrFallbackGetter {
@@ -848,19 +860,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       }
     }
 
-    private def filterAllowedFieldsByFlags[A](
-        fieldFlags: TransformerFlags
-    ): Existential[Product.Getter[A, *]] => Boolean = getter => {
-      val allowedSourceType = getter.value.sourceType match {
-        case Product.Getter.SourceType.ConstructorVal => true
-        case Product.Getter.SourceType.AccessorMethod => fieldFlags.methodAccessors
-        case Product.Getter.SourceType.JavaBeanGetter => fieldFlags.beanGetters
-      }
-      val allowedInheritance = !getter.value.isInherited || fieldFlags.inheritedAccessors
-      allowedSourceType && allowedInheritance
-    }
-
-    @scala.annotation.nowarn("msg=fromName") // on Scala 2.13 fromName is marked as unused 0_0
+    @scala.annotation.nowarn("msg=never used") // on Scala 2.13 fromName/exact/possible are marked as unused 0_0
     private def findMatchingFallbackFields[From, To](toName: String)(implicit
         ctx: TransformationContext[From, To]
     ) = ctx.config.filterCurrentOverridesForFallbacks.view.flatMap { case to @ TransformerOverride.Fallback(fallback) =>
@@ -868,7 +868,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
       import fallback.{Underlying as Fallback, value as fallbackExpr}
       for {
         Product.Extraction(getters) <- ProductType.parseExtraction[Fallback].view
-        (fromName, getter) <- getters.view
+        // make sure that exact name match (==) takes priority before other matches
+        (exact, possible) = getters.view.partition(_._1 == toName)
+        (fromName, getter) <- (exact ++ possible)
         if filterAllowedFieldsByFlags(fieldFlags)(getter)
         if areFieldNamesMatching(fromName, toName)
       } yield {
