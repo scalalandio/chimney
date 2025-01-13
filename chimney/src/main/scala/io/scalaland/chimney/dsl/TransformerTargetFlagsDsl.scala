@@ -332,7 +332,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   def disableCustomFieldNameComparison: UpdateFlag[Disable[FieldNameComparison[?], Flags]] =
     disableFlag[FieldNameComparison[?]]
 
-  /** Enable policy check for source fields that would not be used anywhere during transformarion.
+  /** Enable policy check for source fields that would not be used anywhere during transformation.
     *
     * @param unusedFieldPolicy
     *   parameter specifying how unused source fields should be treated
@@ -342,19 +342,19 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     *
     * @since TODO
     */
-  def enableUnusuedFieldPolicyCheck[P <: UnusedFieldPolicy & Singleton](
+  def enableUnusedFieldPolicyCheck[P <: UnusedFieldPolicy & Singleton](
       @unused unusedFieldPolicy: P
   ): UpdateFlag[Enable[UnusedFieldPolicyCheck[P], Flags]] =
     enableFlag[UnusedFieldPolicyCheck[P]]
 
-  /** Disable policy check for source fields that would not be used anywhere during transformarion.
+  /** Disable policy check for source fields that would not be used anywhere during transformation.
     *
     * @see
     *   [[TODO]] for more details
     *
     * @since TODO
     */
-  def disableUnusuedFieldPolicyCheck: UpdateFlag[Disable[UnusedFieldPolicyCheck[?], Flags]] =
+  def disableUnusedFieldPolicyCheck: UpdateFlag[Disable[UnusedFieldPolicyCheck[?], Flags]] =
     disableFlag[UnusedFieldPolicyCheck[?]]
 
   protected def castedTarget: Any = this
