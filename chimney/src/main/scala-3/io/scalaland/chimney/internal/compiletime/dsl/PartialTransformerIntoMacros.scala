@@ -276,7 +276,7 @@ object PartialTransformerIntoMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $fallback)
-              .asInstanceOf[PartialTransformerInto[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
+              .asInstanceOf[PartialTransformerInto[From, To, Fallback[FromFallback, fromPath, Overrides], Flags]]
         }
     }(selectorFrom)
 
