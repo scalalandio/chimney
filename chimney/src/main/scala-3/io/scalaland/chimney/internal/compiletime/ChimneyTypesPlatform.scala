@@ -45,6 +45,16 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       quoted.Type.of[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val SourceOrElseFallback: Type[io.scalaland.chimney.dsl.SourceOrElseFallback.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.SourceOrElseFallback.type]
+    val FallbackOrElseSource: Type[io.scalaland.chimney.dsl.FallbackOrElseSource.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.FallbackOrElseSource.type]
+
+    val SourceAppendFallback: Type[io.scalaland.chimney.dsl.SourceAppendFallback.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.SourceAppendFallback.type]
+    val FallbackAppendSource: Type[io.scalaland.chimney.dsl.FallbackAppendSource.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.FallbackAppendSource.type]
+
     val FailOnIgnoredSourceVal: Type[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type] =
       quoted.Type.of[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type]
 
@@ -394,6 +404,26 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           def unapply[A](tpe: Type[A]): Option[?<[dsls.ImplicitTransformerPreference]] = tpe match {
             case '[runtime.TransformerFlags.ImplicitConflictResolution[r]] =>
               Some(Type[r].as_?<[dsls.ImplicitTransformerPreference])
+            case _ => scala.None
+          }
+        }
+        object OptionFallbackMerge extends OptionFallbackMergeModule {
+          def apply[S <: dsls.OptionFallbackMergeStrategy: Type]
+              : Type[runtime.TransformerFlags.OptionFallbackMerge[S]] =
+            quoted.Type.of[runtime.TransformerFlags.OptionFallbackMerge[S]]
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.OptionFallbackMergeStrategy]] = tpe match {
+            case '[runtime.TransformerFlags.OptionFallbackMerge[s]] =>
+              Some(Type[s].as_?<[dsls.OptionFallbackMergeStrategy])
+            case _ => scala.None
+          }
+        }
+        object CollectionFallbackMerge extends CollectionFallbackMergeModule {
+          def apply[S <: dsls.CollectionFallbackMergeStrategy: Type]
+              : Type[runtime.TransformerFlags.CollectionFallbackMerge[S]] =
+            quoted.Type.of[runtime.TransformerFlags.CollectionFallbackMerge[S]]
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.CollectionFallbackMergeStrategy]] = tpe match {
+            case '[runtime.TransformerFlags.CollectionFallbackMerge[s]] =>
+              Some(Type[s].as_?<[dsls.CollectionFallbackMergeStrategy])
             case _ => scala.None
           }
         }
