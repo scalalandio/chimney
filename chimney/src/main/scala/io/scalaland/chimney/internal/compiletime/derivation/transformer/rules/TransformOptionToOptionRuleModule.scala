@@ -137,6 +137,5 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
           )
         )
     }
-
   }
 }
