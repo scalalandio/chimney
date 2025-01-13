@@ -577,12 +577,17 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         findMatchingFallbackFieldAndUpdateCandidates(toName).collectFirst {
           case (fromName, fromFallbackField, updateCandidates) =>
             import fromFallbackField.{Underlying as FromFallbackField, value as fallbackExpr}
-            deriveRecursiveTransformationExpr[FromFallbackField, CtorParam](
-              fallbackExpr,
-              Path(_.select(fromName)),
-              Path(_.select(toName)),
-              updateCandidates
-            ).flatMap(expr => DerivationResult.existential[TransformationExpr, CtorParam](expr))
+            DerivationResult.namedScope(
+              s"Recursive derivation for fallback field `$fromName`: ${Type
+                  .prettyPrint[FromFallbackField]} into matched `$toName`: ${Type.prettyPrint[CtorParam]}"
+            ) {
+              deriveRecursiveTransformationExpr[FromFallbackField, CtorParam](
+                fallbackExpr,
+                Path(_.select(fromName)),
+                Path(_.select(toName)),
+                updateCandidates
+              ).flatMap(expr => DerivationResult.existential[TransformationExpr, CtorParam](expr))
+            }
         }
 
       def useDefaultValue: Option[DerivationResult[Existential[TransformationExpr]]] =
