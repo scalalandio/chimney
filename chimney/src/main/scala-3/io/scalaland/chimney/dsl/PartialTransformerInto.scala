@@ -411,7 +411,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     *
     * @since TODO
     */
-  transparent inline def withFallback[T, FromFallback](inline selectorFrom: From => T)(
+  transparent inline def withFallbackFrom[T, FromFallback](inline selectorFrom: From => T)(
       inline fallback: FromFallback
   ): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     ${ PartialTransformerIntoMacros.withFallbackFromImpl('this, 'selectorFrom, 'fallback) }
