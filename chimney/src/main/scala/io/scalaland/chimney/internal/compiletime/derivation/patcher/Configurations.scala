@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
+import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.runtime
 
 private[compiletime] trait Configurations { this: Derivation =>
@@ -23,13 +24,19 @@ private[compiletime] trait Configurations { this: Derivation =>
         // $COVERAGE-ON$
       }
 
+    def toTransformerFlags: TransformerFlags = TransformerFlags(
+      optionFallbackMerge = if (ignoreNoneInPatch) Some(dsls.SourceOrElseFallback) else None,
+      unusedFieldPolicy = if (ignoreRedundantPatcherFields) None else Some(dsls.FailOnIgnoredSourceVal),
+      displayMacrosLogging = displayMacrosLogging
+    )
+
     override def toString: String = s"PatcherFlags(${Vector(
         if (ignoreNoneInPatch) Vector("ignoreNoneInPatch") else Vector.empty,
         if (ignoreRedundantPatcherFields) Vector("ignoreRedundantPatcherFields") else Vector.empty,
         if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
       ).flatten.mkString(", ")})"
   }
-  object PatcherFlags {
+  protected object PatcherFlags {
 
     // $COVERAGE-OFF$It's testable in (Scala-CLI) snippets and not really in normal tests with coverage
     def global: PatcherFlags = XMacroSettings.foldLeft(PatcherFlags()) {
@@ -42,21 +49,57 @@ private[compiletime] trait Configurations { this: Derivation =>
     // $COVERAGE-ON$
   }
 
+  sealed protected trait PatcherOverride extends scala.Product with Serializable
+  protected object PatcherOverride {
+    final case class Const(runtimeData: ExistentialExpr) extends PatcherOverride {
+      override def toString: String = s"Const(${ExistentialExpr.prettyPrint(runtimeData)})"
+    }
+
+    final case class Computed(sourcePath: Path, targetPath: Path, runtimeData: ExistentialExpr)
+        extends PatcherOverride {
+      override def toString: String = s"Computed($sourcePath, $targetPath, ${ExistentialExpr.prettyPrint(runtimeData)})"
+    }
+  }
+
   final protected case class PatcherConfiguration(
       flags: PatcherFlags = PatcherFlags(),
+      /** Let us distinct if flags were modified only by implicit TransformerConfiguration or maybe also locally */
+      private val localFlagsOverridden: Boolean = false,
+      /** Stores all customizations provided by user */
+      private val runtimeOverrides: Vector[(SidedPath, PatcherOverride)] = Vector.empty,
+      /** Let us prevent `implicit val foo = foo` but allow `implicit val foo = new Foo { def sth = foo }` */
       private val preventImplicitSummoningForTypes: Option[(??, ??)] = None
   ) {
 
     def allowAPatchImplicitSearch: PatcherConfiguration = copy(preventImplicitSummoningForTypes = None)
-
     def preventImplicitSummoningFor[A: Type, Patch: Type]: PatcherConfiguration =
       copy(preventImplicitSummoningForTypes = Some(Type[A].as_?? -> Type[Patch].as_??))
-
     def isImplicitSummoningPreventedFor[A: Type, Patch: Type]: Boolean =
       preventImplicitSummoningForTypes.exists { case (someA, somePatch) =>
         import someA.Underlying as SomeA, somePatch.Underlying as SomePatch
         Type[SomeA] =:= Type[A] && Type[SomePatch] =:= Type[Patch]
       }
+
+    def setLocalFlagsOverriden: PatcherConfiguration =
+      copy(localFlagsOverridden = true)
+
+    def toTransformerConfiguration(obj: ExistentialExpr): TransformerConfiguration = {
+      val transformerOverrides =
+        (TargetPath(Path.Root) -> (TransformerOverride.Fallback(obj): TransformerOverride)) +: runtimeOverrides
+          .map {
+            case (sidedPath, PatcherOverride.Const(expr)) =>
+              sidedPath -> (TransformerOverride.Const(expr): TransformerOverride)
+            case (sidedPath, PatcherOverride.Computed(sourcePath, targetPath, expr)) =>
+              sidedPath -> (TransformerOverride.Computed(sourcePath, targetPath, expr): TransformerOverride)
+          }
+      TransformerConfiguration(
+        flags = flags.toTransformerFlags,
+        localFlagsOverridden = localFlagsOverridden,
+        runtimeOverrides = transformerOverrides,
+        originalRuntimeOverrides = transformerOverrides,
+        preventImplicitSummoningForTypes = preventImplicitSummoningForTypes.map(_.swap)
+      )
+    }
 
     override def toString: String = {
       val preventImplicitSummoningForTypesString = preventImplicitSummoningForTypes.map { case (f, t) =>
@@ -73,12 +116,13 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     final def readPatcherConfiguration[
         Tail <: runtime.PatcherOverrides: Type,
-        Flags <: runtime.PatcherFlags: Type,
+        InstanceFlags <: runtime.PatcherFlags: Type,
         ImplicitScopeFlags <: runtime.PatcherFlags: Type
     ]: PatcherConfiguration = {
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](PatcherFlags.global)
-      val allFlags = extractTransformerFlags[Flags](implicitScopeFlags)
-      extractPatcherConfig[Tail]().copy(flags = allFlags)
+      val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
+      val cfg = extractPatcherConfig[Tail]().copy(flags = allFlags)
+      if (Type[InstanceFlags] =:= ChimneyType.PatcherFlags.Default) cfg else cfg.setLocalFlagsOverriden
     }
 
     private def extractTransformerFlags[Flags <: runtime.PatcherFlags: Type](defaultFlags: PatcherFlags): PatcherFlags =
