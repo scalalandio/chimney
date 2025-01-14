@@ -3,7 +3,7 @@ package io.scalaland.chimney.internal.compiletime.derivation.patcher
 private[compiletime] trait Contexts { this: Derivation =>
 
   /** Stores all the "global" information that might be needed: types used, user configuration, runtime values, etc */
-  final case class PatcherContext[A, Patch](obj: Expr[A], patch: Expr[Patch])(
+  final protected case class PatcherContext[A, Patch](obj: Expr[A], patch: Expr[Patch])(
       val A: Type[A],
       val Patch: Type[Patch],
       val config: PatcherConfiguration,
@@ -38,7 +38,7 @@ private[compiletime] trait Contexts { this: Derivation =>
       s"PatcherContext[A = ${Type.prettyPrint(A)}, Patch = ${Type
           .prettyPrint(Patch)}](obj = ${Expr.prettyPrint(obj)}, patch = ${Expr.prettyPrint(patch)})($config)"
   }
-  object PatcherContext {
+  protected object PatcherContext {
 
     def create[A: Type, Patch: Type](
         obj: Expr[A],
@@ -51,6 +51,15 @@ private[compiletime] trait Contexts { this: Derivation =>
         config = config.preventImplicitSummoningFor[A, Patch],
         derivationStartedAt = java.time.Instant.now()
       )
+  }
+
+  protected object Patched {
+
+    def unapply[Patch, A](implicit ctx: TransformationContext[Patch, A]): Option[Expr[A]] =
+      ctx.config.filterCurrentOverridesForFallbacks.collectFirst {
+        case TransformerOverride.Fallback(fallback) if fallback.Underlying =:= Type[A] =>
+          fallback.value.asInstanceOf[Expr[A]]
+      }
   }
 
   // unpacks Types from Contexts

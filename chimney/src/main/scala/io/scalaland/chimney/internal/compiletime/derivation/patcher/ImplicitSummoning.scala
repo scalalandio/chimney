@@ -5,9 +5,9 @@ private[compiletime] trait ImplicitSummoning { this: Derivation =>
   import ChimneyType.Implicits.*
 
   final protected def summonPatcherSafe[A: Type, Patch: Type](implicit
-      ctx: PatcherContext[A, Patch]
+      ctx: TransformationContext[Patch, A]
   ): Option[Expr[io.scalaland.chimney.Patcher[A, Patch]]] =
-    if (ctx.config.isImplicitSummoningPreventedFor[A, Patch]) None
+    if (ctx.config.isImplicitSummoningPreventedFor[Patch, A]) None
     else summonPatcherUnchecked[A, Patch]
 
   final protected def summonPatcherUnchecked[A: Type, Patch: Type]
