@@ -26,7 +26,7 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     with rules.TransformProductToProductRuleModule
     with rules.TransformSealedHierarchyToSealedHierarchyRuleModule {
 
-  final override protected val rulesAvailableForPlatform: List[Rule] = List(
+  override protected val rulesAvailableForPlatform: List[Rule] = List(
     TransformImplicitRule,
     TransformImplicitOuterTransformerRule,
     TransformSubtypesRule,

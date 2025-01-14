@@ -85,7 +85,7 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     def toTransformerConfiguration(obj: ExistentialExpr): TransformerConfiguration = {
       val transformerOverrides =
-        (TargetPath(Path.Root) -> (TransformerOverride.Fallback(obj): TransformerOverride)) +: runtimeOverrides
+        (SourcePath(Path.Root) -> (TransformerOverride.Fallback(obj): TransformerOverride)) +: runtimeOverrides
           .map {
             case (sidedPath, PatcherOverride.Const(expr)) =>
               sidedPath -> (TransformerOverride.Const(expr): TransformerOverride)

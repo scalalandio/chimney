@@ -5,3 +5,27 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer
 abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     extends transformer.DerivationPlatform(q)
     with Derivation
+    with rules.PatchImplicitRuleModule
+    with rules.PatchFlattenOptionPatchRuleModule
+    with rules.PatchOptionWithNonOptionRuleModule {
+
+  override protected val rulesAvailableForPlatform: List[Rule] = List(
+    PatchImplicitRule,
+    TransformImplicitRule,
+    TransformImplicitOuterTransformerRule,
+    PatchOptionWithNonOptionRule,
+    PatchFlattenOptionPatchRule,
+    TransformOptionToOptionRule,
+    TransformToOptionRule,
+    TransformSubtypesRule,
+    TransformToSingletonRule,
+    TransformValueClassToValueClassRule,
+    TransformValueClassToTypeRule,
+    TransformTypeToValueClassRule,
+    TransformEitherToEitherRule,
+    TransformMapToMapRule,
+    TransformIterableToIterableRule,
+    TransformProductToProductRule,
+    TransformSealedHierarchyToSealedHierarchyRule
+  )
+}
