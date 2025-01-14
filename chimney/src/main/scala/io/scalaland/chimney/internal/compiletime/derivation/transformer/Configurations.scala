@@ -154,7 +154,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         else Vector.empty
       ).flatten.mkString(", ")})"
   }
-  object TransformerFlags {
+  protected object TransformerFlags {
 
     // $COVERAGE-OFF$It's testable in (Scala-CLI) snippets and not really in normal tests with coverage
     def global: TransformerFlags = XMacroSettings.foldLeft(TransformerFlags()) {

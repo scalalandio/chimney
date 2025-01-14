@@ -79,7 +79,8 @@ class PartialMergingStdLibSpec extends ChimneySpec {
       Nested("10")
         .intoPartial[Nested[Option[Int]]]
         .withFallbackFrom(_.value)(20)
-        .transform.asOption ==> Some(Nested(Some(10)))
+        .transform
+        .asOption ==> Some(Nested(Some(10)))
       Nested(Option("10"))
         .intoPartial[Nested[Option[Int]]]
         .withFallbackFrom(_.value)(Option(20))
@@ -136,7 +137,8 @@ class PartialMergingStdLibSpec extends ChimneySpec {
 
       implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
 
-      "10".intoPartial[Option[Int]]
+      "10"
+        .intoPartial[Option[Int]]
         .withFallback(20)
         .enableOptionFallbackMerge(SourceOrElseFallback)
         .transform
@@ -205,7 +207,8 @@ class PartialMergingStdLibSpec extends ChimneySpec {
 
       implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
 
-      "10".intoPartial[Option[Int]]
+      "10"
+        .intoPartial[Option[Int]]
         .withFallback(20)
         .enableOptionFallbackMerge(FallbackOrElseSource)
         .transform
