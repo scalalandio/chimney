@@ -22,6 +22,18 @@ private[compiletime] trait Contexts { this: Derivation =>
       )
         .asInstanceOf[this.type]
 
+    def toTransformerContext: TransformationContext.ForTotal[Patch, A] = {
+      implicit val self: PatcherContext[A, Patch] = this // for A: Type, Patch: Type
+      TransformationContext.ForTotal[Patch, A](patch)(
+        From = Patch,
+        To = A,
+        srcJournal = Vector(Path.Root -> patch.as_??),
+        tgtJournal = Vector(Path.Root),
+        config = config.toTransformerConfiguration(obj.as_??),
+        derivationStartedAt = derivationStartedAt
+      )
+    }
+
     override def toString: String =
       s"PatcherContext[A = ${Type.prettyPrint(A)}, Patch = ${Type
           .prettyPrint(Patch)}](obj = ${Expr.prettyPrint(obj)}, patch = ${Expr.prettyPrint(patch)})($config)"
