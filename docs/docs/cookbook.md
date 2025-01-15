@@ -2273,6 +2273,56 @@ which would compare them according to [custom name comparison requirements](supp
 
 Out of the box Chimney does not encode `sealed trait`/`enum` value as `String` and it does not decode `String`
 as `partial.Result` of `sealed trait`/`enum`. But you can easily do it yourself!
+(Or use [Enumz](https://enumz.readthedocs.io/) integration).
+
+!!! example "Scala 2/3 with sealed/Java enum/Scala 3 enum/Enumeration"
+
+    If you don't mind adding an additional dependency `enumz-chimney` would handle a total transformation from
+    enum to String and a partial transformation from String to enum with just 1 import:
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep io.scalaland::enumz-chimney::{{ libraries.enumz }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.partial
+    import io.scalaland.chimney.partial.syntax._
+
+    // this import handles all the cases
+    import io.scalaland.enumz.chimney._
+
+    sealed trait Foo extends Product with Serializable
+    object Foo {
+      case object Bar extends Foo
+      case object Baz extends Foo
+    }
+      
+    pprint.pprintln(
+      (Foo.Bar : Foo).transformInto[String]
+    )
+    // expected output:
+    // "Bar"
+    pprint.pprintln(
+      "Bar".transformIntoPartial[Foo]
+    )
+    // expected output:
+    // Value(value = Bar)
+    pprint.pprintln(
+      "Foo".transformIntoPartial[Foo]
+    )
+    // expected output:
+    // Errors(errors = NonEmptyErrorsChain(Error(message = EmptyValue, path = Path(elements = List()))))
+    ```
+
+    However, if you don't want to add a dependency - or if you want to customize how `String` is encoded/decoded -
+    the examples below could give you an idea.
+
+!!! warning
+
+    Enumz Chimney integration provides implicits to encode/decode `String` but also overrides the default way enums
+    are handled with Chimney. That means that e.g. [customizing subtype name matching](supported-transformations.md#customizing-subtype-name-matching)
+    will no longer work. We suggest importing it selectively, only when and where needed.
 
 !!! example "Scala 2 with Enumeratum"
 

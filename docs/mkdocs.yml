@@ -101,6 +101,6 @@ extra:
     pprint:           "0.9.0"
     quicklens:        "1.9.9"
     enumeratum:       "1.7.5"
-    enumz:            "1.1.0"
+    enumz:            "1.2.0"
   local:
     tag: !ENV [CI_LATEST_TAG, 'latest'] # used as git.tag fallback in Docker container
