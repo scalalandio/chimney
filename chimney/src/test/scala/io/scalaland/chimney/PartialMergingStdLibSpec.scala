@@ -2,7 +2,6 @@ package io.scalaland.chimney
 
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
-import io.scalaland.chimney.PartialTransformer
 
 class PartialMergingStdLibSpec extends ChimneySpec {
 
