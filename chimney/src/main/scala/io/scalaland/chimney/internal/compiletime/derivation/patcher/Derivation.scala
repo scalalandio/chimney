@@ -15,7 +15,6 @@ private[compiletime] trait Derivation
     with transformer.Derivation {
 
   // TODO: translate errors?
-  // - NotSupportedPatcherDerivation
   // - PatchFieldNotFoundInTargetObj
 
   final def derivePatcherResultExpr[A, Patch](implicit ctx: PatcherContext[A, Patch]): DerivationResult[Expr[A]] =
