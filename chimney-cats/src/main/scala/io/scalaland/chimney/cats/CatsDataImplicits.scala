@@ -1,6 +1,6 @@
 package io.scalaland.chimney.cats
 
-import cats.{Order, Traverse}
+import cats.{~>, Order, Traverse}
 import cats.data.{Chain, NonEmptyChain, NonEmptyList, NonEmptyMap, NonEmptySeq, NonEmptySet, NonEmptyVector}
 import io.scalaland.chimney.integrations.*
 import io.scalaland.chimney.partial
@@ -172,5 +172,26 @@ trait CatsDataImplicits extends CatsDataImplicitsCompat {
             }
         }
       def iterator(collection: NonEmptyVector[A]): Iterator[A] = collection.iterator
+    }
+}
+
+/** @since 1.7.0 */
+private[cats] trait CatsDataImplicitsLowPriority {
+
+  /** @since 1.7.0 */
+  implicit def catsTotalTransformerFromFunctionK[F[_]: Traverse, G[_], A, B](implicit
+      fk: F ~> G
+  ): TotalOuterTransformer[F[A], G[B], A, B] =
+    new TotalOuterTransformer[F[A], G[B], A, B] {
+
+      private val F = catsTotalOuterTransformerFromTraverse[F, A, B]
+
+      def transformWithTotalInner(src: F[A], inner: A => B): G[B] = fk(F.transformWithTotalInner(src, inner))
+
+      def transformWithPartialInner(
+          src: F[A],
+          failFast: Boolean,
+          inner: A => partial.Result[B]
+      ): partial.Result[G[B]] = F.transformWithPartialInner(src, failFast, inner).map(fk.apply)
     }
 }

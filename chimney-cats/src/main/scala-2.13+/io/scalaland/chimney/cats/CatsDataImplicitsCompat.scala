@@ -8,7 +8,7 @@ import scala.collection.compat.Factory
 import scala.collection.mutable
 
 /** @since 1.0.0 */
-private[cats] trait CatsDataImplicitsCompat {
+private[cats] trait CatsDataImplicitsCompat extends CatsDataImplicitsLowPriority {
 
   /** @since 1.0.0 */
   implicit def catsNonEmptyLazyListIsPartiallyBuildIterable[A]: PartiallyBuildIterable[NonEmptyLazyList[A], A] =

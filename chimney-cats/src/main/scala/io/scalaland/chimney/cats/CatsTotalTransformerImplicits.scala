@@ -39,15 +39,14 @@ trait CatsTotalTransformerImplicits {
 
       override def tailRecM[A, B](a: A)(
           f: A => Transformer[Source, Either[A, B]]
-      ): Transformer[Source, B] =
-        src => {
-          @scala.annotation.tailrec
-          def loop(a1: A): B = f(a1).transform(src) match {
-            case Left(a2) => loop(a2)
-            case Right(b) => b
-          }
-          loop(a)
+      ): Transformer[Source, B] = { src =>
+        @scala.annotation.tailrec
+        def loop(a1: A): B = f(a1).transform(src) match {
+          case Left(a2) => loop(a2)
+          case Right(b) => b
         }
+        loop(a)
+      }
 
       override def coflatMap[A, B](
           fa: Transformer[Source, A]
