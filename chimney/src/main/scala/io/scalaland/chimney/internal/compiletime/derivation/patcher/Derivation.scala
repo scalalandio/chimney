@@ -14,9 +14,6 @@ private[compiletime] trait Derivation
     with datatypes.ValueClasses
     with transformer.Derivation {
 
-  // TODO: translate errors?
-  // - PatchFieldNotFoundInTargetObj
-
   final def derivePatcherResultExpr[A, Patch](implicit ctx: PatcherContext[A, Patch]): DerivationResult[Expr[A]] =
     DerivationResult.namedScope(
       s"Deriving Patcher expression for ${Type.prettyPrint[A]} with patch ${Type.prettyPrint[Patch]} with context:\n$ctx"
