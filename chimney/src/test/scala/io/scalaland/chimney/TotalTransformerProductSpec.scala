@@ -1500,6 +1500,51 @@ class TotalTransformerProductSpec extends ChimneySpec {
     }
   }
 
+  group("flag .enableUnusedFieldPolicyCheck(policyName)") {
+
+    import products.{Foo, Bar}
+
+    test("should be disabled by default") {
+      Foo(10, "unused", (1.0, 2.0)).transformInto[Bar] ==> Bar(10, (1.0, 2.0))
+      Foo(10, "unused", (1.0, 2.0)).into[Bar].transform ==> Bar(10, (1.0, 2.0))
+    }
+
+    test("should fail compilation when policy is violated") {
+      compileErrors(
+        """Foo(10, "unused", (1.0, 2.0)).into[Bar].enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal).transform"""
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Foo to io.scalaland.chimney.fixtures.products.Bar",
+        "io.scalaland.chimney.fixtures.products.Bar",
+        "FailOnIgnoredSourceVal policy check failed at _, offenders: y!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      locally {
+        @unused implicit val config =
+          TransformerConfiguration.default.enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
+
+        compileErrors("""Foo(10, "unused", (1.0, 2.0)).transformInto[Bar]""").check(
+          "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Foo to io.scalaland.chimney.fixtures.products.Bar",
+          "io.scalaland.chimney.fixtures.products.Bar",
+          "FailOnIgnoredSourceVal policy check failed at _, offenders: y!",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+      }
+    }
+  }
+
+  group("flag .disableUnusedFieldPolicyCheck") {
+
+    import products.{Foo, Bar}
+
+    test("should disable globally enabled .enableUnusedFieldPolicyCheck") {
+      @unused implicit val config =
+        TransformerConfiguration.default.enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
+
+      Foo(10, "unused", (1.0, 2.0)).into[Bar].disableUnusedFieldPolicyCheck.transform ==> Bar(10, (1.0, 2.0))
+    }
+  }
+
   // old tests, which could be rewritten into something more structured and better named, but are valuable nonetheless
 
   group("support polymorphic source/target objects and modifiers") {
@@ -1629,13 +1674,13 @@ class TotalTransformerProductSpec extends ChimneySpec {
     test("handle tuple transformation errors") {
 
       compileErrors("""(0, "test").transformInto[Foo]""").check(
-        "source tuple scala.Tuple2[scala.Int, java.lang.String] is of arity 2, while target type io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3; they need to be equal!"
+        "source tuple scala.Tuple2[scala.Int, java.lang.String] is of arity 2, while target type io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3; source should be at least as big as target"
       )
 
       compileErrors("""(10.5, "abc", 6).transformInto[Foo]""").check("can't derive transformation")
 
       compileErrors("""Foo(10, 36.6, "test").transformInto[(Double, String, Int, Float, Boolean)]""").check(
-        "source tuple io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3, while target type scala.Tuple5[scala.Double, java.lang.String, scala.Int, scala.Float, scala.Boolean] is of arity 5; they need to be equal!"
+        "source tuple io.scalaland.chimney.TotalTransformerProductSpec.Foo is of arity 3, while target type scala.Tuple5[scala.Double, java.lang.String, scala.Int, scala.Float, scala.Boolean] is of arity 5; source should be at least as big as target!"
       )
 
       compileErrors("""Foo(10, 36.6, "test").transformInto[(Int, Double, Boolean)]""").check(

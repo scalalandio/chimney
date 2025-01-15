@@ -14,8 +14,8 @@ private[compiletime] trait Contexts { this: Derivation =>
     val srcJournal: Vector[(Path, ExistentialExpr)]
     val tgtJournal: Vector[Path]
 
-    /** When using nested paths (_.foo.bar.baz) and recursive derivation this is the original, "top-level" value */
-    val originalSrc: ExistentialExpr = srcJournal.head._2
+    /** Path to the current source value */
+    val currentSrc: Path = srcJournal.last._1
 
     /** Path to the current target value */
     val currentTgt: Path = tgtJournal.last
@@ -26,10 +26,14 @@ private[compiletime] trait Contexts { this: Derivation =>
     type Target
     val Target: Type[Target]
 
+    def sourceFieldsUsedByOverrides: List[String] = config.sourceFieldsUsedByOverrides(currentSrc)(this)
+    def targetSubtypesUsedByOverrides: List[ExistentialType] = config.targetSubtypesUsedByOverrides(currentTgt)(this)
+
     def updateFromTo[NewFrom: Type, NewTo: Type](
         newSrc: Expr[NewFrom],
         followFrom: Path = Path.Root,
-        followTo: Path = Path.Root
+        followTo: Path = Path.Root,
+        updateFallbacks: TransformerOverride.ForFallback => Vector[TransformerOverride.ForFallback] = Vector(_)
     ): TransformationContext[NewFrom, NewTo] =
       fold[TransformationContext[NewFrom, NewTo]] { (ctx: TransformationContext.ForTotal[From, To]) =>
         TransformationContext.ForTotal[NewFrom, NewTo](src = newSrc)(
@@ -37,7 +41,7 @@ private[compiletime] trait Contexts { this: Derivation =>
           To = Type[NewTo],
           srcJournal = ctx.srcJournal :+ (ctx.srcJournal.last._1.concat(followFrom) -> newSrc.as_??),
           tgtJournal = ctx.tgtJournal :+ ctx.tgtJournal.last.concat(followTo),
-          config = ctx.config.prepareForRecursiveCall(followFrom, followTo)(ctx),
+          config = ctx.config.prepareForRecursiveCall(followFrom, followTo, updateFallbacks)(ctx),
           ctx.derivationStartedAt
         )
       } { (ctx: TransformationContext.ForPartial[From, To]) =>
@@ -46,7 +50,7 @@ private[compiletime] trait Contexts { this: Derivation =>
           To = Type[NewTo],
           srcJournal = ctx.srcJournal :+ (ctx.srcJournal.last._1.concat(followFrom) -> newSrc.as_??),
           tgtJournal = ctx.tgtJournal :+ ctx.tgtJournal.last.concat(followTo),
-          config = ctx.config.prepareForRecursiveCall(followFrom, followTo)(ctx),
+          config = ctx.config.prepareForRecursiveCall(followFrom, followTo, updateFallbacks)(ctx),
           ctx.derivationStartedAt
         )
       }

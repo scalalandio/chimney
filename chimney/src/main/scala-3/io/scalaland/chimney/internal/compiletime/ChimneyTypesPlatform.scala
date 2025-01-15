@@ -45,6 +45,22 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       quoted.Type.of[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val SourceOrElseFallback: Type[io.scalaland.chimney.dsl.SourceOrElseFallback.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.SourceOrElseFallback.type]
+    val FallbackOrElseSource: Type[io.scalaland.chimney.dsl.FallbackOrElseSource.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.FallbackOrElseSource.type]
+
+    val SourceAppendFallback: Type[io.scalaland.chimney.dsl.SourceAppendFallback.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.SourceAppendFallback.type]
+    val FallbackAppendSource: Type[io.scalaland.chimney.dsl.FallbackAppendSource.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.FallbackAppendSource.type]
+
+    val FailOnIgnoredSourceVal: Type[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type]
+
+    val FailOnUnmatchedTargetSubtype: Type[io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype.type] =
+      quoted.Type.of[io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype.type]
+
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
       quoted.Type.of[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
@@ -176,6 +192,25 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
           case '[runtime.TransformerOverrides.CaseComputedPartial[toPath, cfg]] =>
             Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
+          case _ => scala.None
+        }
+      }
+      object Fallback extends FallbackModule {
+        def apply[
+            FallbackType: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.Fallback[FallbackType, ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.Fallback[FallbackType, ToPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(??, ?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
+          case '[runtime.TransformerOverrides.Fallback[fallbackType, toPath, cfg]] =>
+            Some(
+              (
+                Type[fallbackType].as_??,
+                Type[toPath].as_?<[runtime.Path],
+                Type[cfg].as_?<[runtime.TransformerOverrides]
+              )
+            )
           case _ => scala.None
         }
       }
@@ -372,6 +407,26 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             case _ => scala.None
           }
         }
+        object OptionFallbackMerge extends OptionFallbackMergeModule {
+          def apply[S <: dsls.OptionFallbackMergeStrategy: Type]
+              : Type[runtime.TransformerFlags.OptionFallbackMerge[S]] =
+            quoted.Type.of[runtime.TransformerFlags.OptionFallbackMerge[S]]
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.OptionFallbackMergeStrategy]] = tpe match {
+            case '[runtime.TransformerFlags.OptionFallbackMerge[s]] =>
+              Some(Type[s].as_?<[dsls.OptionFallbackMergeStrategy])
+            case _ => scala.None
+          }
+        }
+        object CollectionFallbackMerge extends CollectionFallbackMergeModule {
+          def apply[S <: dsls.CollectionFallbackMergeStrategy: Type]
+              : Type[runtime.TransformerFlags.CollectionFallbackMerge[S]] =
+            quoted.Type.of[runtime.TransformerFlags.CollectionFallbackMerge[S]]
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.CollectionFallbackMergeStrategy]] = tpe match {
+            case '[runtime.TransformerFlags.CollectionFallbackMerge[s]] =>
+              Some(Type[s].as_?<[dsls.CollectionFallbackMergeStrategy])
+            case _ => scala.None
+          }
+        }
         object FieldNameComparison extends FieldNameComparisonModule {
           def apply[C <: dsls.TransformedNamesComparison: Type]: Type[runtime.TransformerFlags.FieldNameComparison[C]] =
             quoted.Type.of[runtime.TransformerFlags.FieldNameComparison[C]]
@@ -388,6 +443,25 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           def unapply[A](tpe: Type[A]): Option[?<[dsls.TransformedNamesComparison]] = tpe match {
             case '[runtime.TransformerFlags.SubtypeNameComparison[c]] =>
               Some(Type[c].as_?<[dsls.TransformedNamesComparison])
+            case _ => scala.None
+          }
+        }
+        object UnusedFieldPolicyCheck extends UnusedFieldPolicyCheckModule {
+          def apply[P <: dsls.UnusedFieldPolicy: Type]: Type[runtime.TransformerFlags.UnusedFieldPolicyCheck[P]] =
+            quoted.Type.of[runtime.TransformerFlags.UnusedFieldPolicyCheck[P]]
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.UnusedFieldPolicy]] = tpe match {
+            case '[runtime.TransformerFlags.UnusedFieldPolicyCheck[p]] =>
+              Some(Type[p].as_?<[dsls.UnusedFieldPolicy])
+            case _ => scala.None
+          }
+        }
+        object UnmatchedSubtypePolicyCheck extends UnmatchedSubtypePolicyCheckModule {
+          def apply[P <: dsls.UnmatchedSubtypePolicy: Type]
+              : Type[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[P]] =
+            quoted.Type.of[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[P]]
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.UnmatchedSubtypePolicy]] = tpe match {
+            case '[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[p]] =>
+              Some(Type[p].as_?<[dsls.UnmatchedSubtypePolicy])
             case _ => scala.None
           }
         }

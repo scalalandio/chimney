@@ -79,8 +79,10 @@ trait ProductTypes { this: Definitions =>
       def unapply[To](To: Type[To]): Option[(Parameters, Arguments => Expr[To])] =
         ProductType.parseConstructor(To).map(constructor => constructor.parameters -> constructor.constructor)
 
-      def exprAsInstanceOfMethod[To: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Constructor[To] =
-        ProductType.exprAsInstanceOfMethod[To](args)(expr)
+      def exprAsInstanceOfMethod[To: Type](args: List[ListMap[String, ??]])(expr: ExistentialExpr): Constructor[To] = {
+        import Type.Implicits.*
+        ProductType.exprAsInstanceOfMethod[To](args)(expr.asInstanceOfExpr[Any])
+      }
     }
   }
 

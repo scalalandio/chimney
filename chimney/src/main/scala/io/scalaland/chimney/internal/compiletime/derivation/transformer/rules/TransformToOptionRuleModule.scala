@@ -30,5 +30,16 @@ private[compiletime] trait TransformToOptionRuleModule { this: Derivation & Tran
   ): DerivationResult[Rule.ExpansionResult[To]] =
     // We're constructing:
     // '{ ${ derivedTo2 } /* created from Option(src) */  }
-    TransformOptionToOptionRule.expand(ctx.updateFromTo[Option[From], To](Expr.Option(ctx.src)))
+    TransformOptionToOptionRule.expand(
+      ctx.updateFromTo[Option[From], To](Expr.Option(ctx.src), updateFallbacks = wrapFallbacks)
+    )
+
+  private val wrapFallbacks: TransformerOverride.ForFallback => Vector[TransformerOverride.ForFallback] = {
+    case fb @ TransformerOverride.Fallback(fallback) =>
+      import fallback.{Underlying as Fallback, value as fallbackExpr}
+      Vector(Type[Fallback] match {
+        case OptionalValue(_) => fb
+        case _                => TransformerOverride.Fallback(Expr.Option(fallbackExpr).as_??)
+      })
+  }
 }

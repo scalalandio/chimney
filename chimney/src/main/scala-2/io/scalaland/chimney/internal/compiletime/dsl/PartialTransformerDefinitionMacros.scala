@@ -159,6 +159,29 @@ class PartialTransformerDefinitionMacros(val c: whitebox.Context) extends utils.
       ]]
     )
 
+  def withFallbackImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      FromFallback: WeakTypeTag
+  ](fallback: Tree): Tree = c.prefix.tree
+    .addOverride(fallback)
+    .asInstanceOfExpr[PartialTransformerDefinition[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
+
+  def withFallbackFromImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag,
+      FromFallback: WeakTypeTag
+  ](selectorFrom: Tree)(fallback: Tree): Tree = c.prefix.tree
+    .addOverride(fallback)
+    .asInstanceOfExpr(new ApplyFieldNameType {
+      def apply[FromPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+        weakTypeTag[PartialTransformerDefinition[From, To, Fallback[FromFallback, FromPath, Overrides], Flags]]
+    }.applyFromSelector(selectorFrom))
+
   def withConstructorImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,

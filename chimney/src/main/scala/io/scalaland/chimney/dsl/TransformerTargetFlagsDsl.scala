@@ -307,6 +307,56 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   def disableImplicitConflictResolution: UpdateFlag[Disable[ImplicitConflictResolution[?], Flags]] =
     disableFlag[ImplicitConflictResolution[?]]
 
+  /** Enable merging fallback `Option` values into the source `Option` value.
+    *
+    * @param strategy
+    *   parameter specifying which strategy should be used to merge fallbacks with source value
+    *
+    * @see
+    *   TODO
+    *
+    * @since TODO
+    */
+  def enableOptionFallbackMerge[S <: OptionFallbackMergeStrategy](
+      @unused strategy: S
+  ): UpdateFlag[Enable[OptionFallbackMerge[S], Flags]] =
+    enableFlag[OptionFallbackMerge[S]]
+
+  /** Disable merging fallback `Option` values into the source `Option` value.
+    *
+    * @see
+    *   TODO
+    *
+    * @since TODO
+    */
+  def disableOptionFallbackMerge: UpdateFlag[Disable[OptionFallbackMerge[?], Flags]] =
+    disableFlag[OptionFallbackMerge[?]]
+
+  /** Enable merging fallback collection values into the source collection value.
+    *
+    * @param strategy
+    *   parameter specifying which strategy should be used to merge fallbacks with source value
+    *
+    * @see
+    *   TODO
+    *
+    * @since TODO
+    */
+  def enableCollectionFallbackMerge[S <: CollectionFallbackMergeStrategy](
+      @unused strategy: S
+  ): UpdateFlag[Enable[CollectionFallbackMerge[S], Flags]] =
+    enableFlag[CollectionFallbackMerge[S]]
+
+  /** Disable merging fallback collection values into the source collection value.
+    *
+    * @see
+    *   TODO
+    *
+    * @since TODO
+    */
+  def disableCollectionFallbackMerge: UpdateFlag[Disable[CollectionFallbackMerge[?], Flags]] =
+    disableFlag[CollectionFallbackMerge[?]]
+
   /** Enable custom way of comparing if source fields' names and target fields' names are matching.
     *
     * @param namesComparison
@@ -331,6 +381,31 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     */
   def disableCustomFieldNameComparison: UpdateFlag[Disable[FieldNameComparison[?], Flags]] =
     disableFlag[FieldNameComparison[?]]
+
+  /** Enable policy check for source fields that would not be used anywhere during transformation.
+    *
+    * @param unusedFieldPolicy
+    *   parameter specifying how unused source fields should be treated
+    *
+    * @see
+    *   [[TODO]] for more details
+    *
+    * @since TODO
+    */
+  def enableUnusedFieldPolicyCheck[P <: UnusedFieldPolicy & Singleton](
+      @unused unusedFieldPolicy: P
+  ): UpdateFlag[Enable[UnusedFieldPolicyCheck[P], Flags]] =
+    enableFlag[UnusedFieldPolicyCheck[P]]
+
+  /** Disable policy check for source fields that would not be used anywhere during transformation.
+    *
+    * @see
+    *   [[TODO]] for more details
+    *
+    * @since TODO
+    */
+  def disableUnusedFieldPolicyCheck: UpdateFlag[Disable[UnusedFieldPolicyCheck[?], Flags]] =
+    disableFlag[UnusedFieldPolicyCheck[?]]
 
   protected def castedTarget: Any = this
 

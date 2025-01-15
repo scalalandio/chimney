@@ -25,7 +25,7 @@ trait DerivationPlatform
     with rules.TransformProductToProductRuleModule
     with rules.TransformSealedHierarchyToSealedHierarchyRuleModule {
 
-  final override protected val rulesAvailableForPlatform: List[Rule] = List(
+  override protected val rulesAvailableForPlatform: List[Rule] = List(
     TransformImplicitRule,
     TransformImplicitOuterTransformerRule,
     TransformSubtypesRule,

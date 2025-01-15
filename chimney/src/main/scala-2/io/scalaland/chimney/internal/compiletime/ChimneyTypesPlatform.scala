@@ -98,6 +98,22 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
     val PreferPartialTransformer: Type[io.scalaland.chimney.dsl.PreferPartialTransformer.type] =
       weakTypeTag[io.scalaland.chimney.dsl.PreferPartialTransformer.type]
 
+    val SourceOrElseFallback: Type[io.scalaland.chimney.dsl.SourceOrElseFallback.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.SourceOrElseFallback.type]
+    val FallbackOrElseSource: Type[io.scalaland.chimney.dsl.FallbackOrElseSource.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.FallbackOrElseSource.type]
+
+    val SourceAppendFallback: Type[io.scalaland.chimney.dsl.SourceAppendFallback.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.SourceAppendFallback.type]
+    val FallbackAppendSource: Type[io.scalaland.chimney.dsl.FallbackAppendSource.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.FallbackAppendSource.type]
+
+    val FailOnIgnoredSourceVal: Type[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.FailOnIgnoredSourceVal.type]
+
+    val FailOnUnmatchedTargetSubtype: Type[io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype.type] =
+      weakTypeTag[io.scalaland.chimney.dsl.FailOnUnmatchedTargetSubtype.type]
+
     val RuntimeDataStore: Type[dsls.TransformerDefinitionCommons.RuntimeDataStore] =
       weakTypeTag[dsls.TransformerDefinitionCommons.RuntimeDataStore]
 
@@ -213,6 +229,22 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
           A.asCtor[runtime.TransformerOverrides.CaseComputedPartial[?, ?]].map { A0 =>
             fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
+          }
+      }
+      object Fallback extends FallbackModule {
+        def apply[
+            FallbackType: Type,
+            ToPath <: runtime.Path: Type,
+            Tail <: runtime.TransformerOverrides: Type
+        ]: Type[runtime.TransformerOverrides.Fallback[FallbackType, ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.Fallback[FallbackType, ToPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(??, ?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.Fallback[?, ?, ?]].map { A0 =>
+            (
+              A0.param(0),
+              fixJavaEnums(A0.param_<[runtime.Path](1)),
+              A0.param_<[runtime.TransformerOverrides](2)
+            )
           }
       }
       object Constructor extends ConstructorModule {
@@ -379,6 +411,24 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
               A0.param_<[dsls.ImplicitTransformerPreference](0)
             }
         }
+        object OptionFallbackMerge extends OptionFallbackMergeModule {
+          def apply[S <: dsls.OptionFallbackMergeStrategy: Type]
+              : Type[runtime.TransformerFlags.OptionFallbackMerge[S]] =
+            weakTypeTag[runtime.TransformerFlags.OptionFallbackMerge[S]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.OptionFallbackMergeStrategy]] =
+            A.asCtor[runtime.TransformerFlags.OptionFallbackMerge[?]].map { A0 =>
+              A0.param_<[dsls.OptionFallbackMergeStrategy](0)
+            }
+        }
+        object CollectionFallbackMerge extends CollectionFallbackMergeModule {
+          def apply[S <: dsls.CollectionFallbackMergeStrategy: Type]
+              : Type[runtime.TransformerFlags.CollectionFallbackMerge[S]] =
+            weakTypeTag[runtime.TransformerFlags.CollectionFallbackMerge[S]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.CollectionFallbackMergeStrategy]] =
+            A.asCtor[runtime.TransformerFlags.CollectionFallbackMerge[?]].map { A0 =>
+              A0.param_<[dsls.CollectionFallbackMergeStrategy](0)
+            }
+        }
         object FieldNameComparison extends FieldNameComparisonModule {
           def apply[C <: dsls.TransformedNamesComparison: Type]: Type[runtime.TransformerFlags.FieldNameComparison[C]] =
             weakTypeTag[runtime.TransformerFlags.FieldNameComparison[C]]
@@ -394,6 +444,23 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           def unapply[A](A: Type[A]): Option[?<[dsls.TransformedNamesComparison]] =
             A.asCtor[runtime.TransformerFlags.SubtypeNameComparison[?]].map { A0 =>
               A0.param_<[dsls.TransformedNamesComparison](0)
+            }
+        }
+        object UnusedFieldPolicyCheck extends UnusedFieldPolicyCheckModule {
+          def apply[P <: dsls.UnusedFieldPolicy: Type]: Type[runtime.TransformerFlags.UnusedFieldPolicyCheck[P]] =
+            weakTypeTag[runtime.TransformerFlags.UnusedFieldPolicyCheck[P]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.UnusedFieldPolicy]] =
+            A.asCtor[runtime.TransformerFlags.UnusedFieldPolicyCheck[?]].map { A0 =>
+              A0.param_<[dsls.UnusedFieldPolicy](0)
+            }
+        }
+        object UnmatchedSubtypePolicyCheck extends UnmatchedSubtypePolicyCheckModule {
+          def apply[P <: dsls.UnmatchedSubtypePolicy: Type]
+              : Type[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[P]] =
+            weakTypeTag[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[P]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.UnmatchedSubtypePolicy]] =
+            A.asCtor[runtime.TransformerFlags.UnmatchedSubtypePolicyCheck[?]].map { A0 =>
+              A0.param_<[dsls.UnmatchedSubtypePolicy](0)
             }
         }
         val MacrosLogging: Type[runtime.TransformerFlags.MacrosLogging] =

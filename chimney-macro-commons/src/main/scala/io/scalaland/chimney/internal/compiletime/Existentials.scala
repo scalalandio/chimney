@@ -86,6 +86,27 @@ private[compiletime] trait Existentials { this: Types with Exprs =>
     type Underlying = A
   }
 
+  implicit protected class ExistentialExprOps(private val expr: ExistentialExpr) {
+
+    // Both methods below change Expr[A] to Expr[B], but they differ in checks and how it affects the underlying code:
+    // - asInstanceOfExpr[B] should be used when we want to have .asInstanceOf[B] in the generated code, because we need
+    //   to perform the cast in the runtime - WE know what we can perform it but the JVN does not
+    // - upcastToExprOf[B] should be used when WE know that A <: B, but it is not obvious to Scala compiler - in such
+    //   case Type[A] <:< Type[B] assertion will be checked and the expression upcasted
+
+    /** Creates '{ ${ expr }.asInstanceOf[B] } expression in emitted code, moving check to the runtime */
+    def asInstanceOfExpr[B: Type]: Expr[B] = {
+      import expr.Underlying
+      Expr.asInstanceOf[Underlying, B](expr.value)
+    }
+
+    /** Upcasts `Expr[A]` to `Expr[B]` if `A <:< B`, without upcasting the underlying code */
+    def upcastToExprOf[B: Type]: Expr[B] = {
+      import expr.Underlying
+      Expr.upcast[Underlying, B](expr.value)
+    }
+  }
+
   /** Convenient for literal singletons */
   type Id[A] = A
 

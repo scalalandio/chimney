@@ -78,7 +78,8 @@ final case class AmbiguousSubtypeTargets(
 
 final case class TupleArityMismatch(
     fromArity: Int,
-    toArity: Int
+    toArity: Int,
+    fallbackArity: List[Int]
 )(val fromType: String, val toType: String)
     extends TransformerDerivationError
 
@@ -92,6 +93,11 @@ final case class NotSupportedTransformerDerivation(
     exprPrettyPrint: String
 )(val fromType: String, val toType: String)
     extends TransformerDerivationError
+
+final case class FailedPolicyCheck(policyName: String, path: String, failedValues: List[String])(
+    val fromType: String,
+    val toType: String
+) extends TransformerDerivationError
 
 object TransformerDerivationError {
   def printErrors(errors: Seq[TransformerDerivationError]): String =
@@ -125,8 +131,9 @@ object TransformerDerivationError {
             s"  can't transform coproduct instance $fromSubtype to $toType"
           case AmbiguousSubtypeTargets(fromField, foundToFields) =>
             s"  coproduct instance $fromField of $fromType has ambiguous matches in $toType: ${foundToFields.mkString(", ")}"
-          case TupleArityMismatch(fromArity, toArity) =>
-            s"  source tuple $fromType is of arity $fromArity, while target type $toType is of arity $toArity; they need to be equal!"
+          case TupleArityMismatch(fromArity, toArity, fallbackArity) =>
+            val fa = if (fallbackArity.isEmpty) "" else s" (with fallbacks of arities: ${fallbackArity.mkString(", ")})"
+            s"  source tuple $fromType is of arity $fromArity$fa, while target type $toType is of arity $toArity; source should be at least as big as target!"
           case AmbiguousImplicitPriority(totalExprPrettyPrint, partialExprPrettyPrint) =>
             s"""  ambiguous implicits while resolving Chimney recursive transformation!
                |    PartialTransformer[$fromType, $toType]: $partialExprPrettyPrint
@@ -134,6 +141,8 @@ object TransformerDerivationError {
                |  Please eliminate total/partial ambiguity from implicit scope or use ${MAGENTA}enableImplicitConflictResolution$RESET/${MAGENTA}withFieldComputed$RESET/${MAGENTA}withFieldComputedPartial$RESET to decide which one should be used.""".stripMargin
           case NotSupportedTransformerDerivation(exprPrettyPrint) =>
             s"  derivation from $exprPrettyPrint: $fromType to $toType is not supported in Chimney!"
+          case FailedPolicyCheck(policyName, path, failedValues) =>
+            s"  $policyName policy check failed at $path, offenders: ${failedValues.mkString(", ")}!"
         }
 
         def prettyFieldList(fields: Seq[String])(use: String => String): String =
