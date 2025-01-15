@@ -4285,6 +4285,13 @@ Then Chimney will try to match the source type's getters against the method's pa
     // Vector(Bar(value = "1000"))
     ```
 
+!!! note
+
+    `withConstructor` overrides the constructor **only on the top level target**. It would not be used when the same type
+    occurs somewhere in a nested field.
+
+    Similarly `withConstructorTo` only overrides the constructor for the selected field.
+
 !!! warning
 
     The current implementation has a limit of 22 arguments even on Scala 3 (it doesn't use `scala.FunctionXXL`).
