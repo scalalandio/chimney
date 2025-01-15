@@ -6,18 +6,21 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     extends transformer.DerivationPlatform(q)
     with Derivation
     with rules.PatchImplicitRuleModule
-    with rules.PatchFlattenOptionPatchRuleModule
-    with rules.PatchOptionWithNonOptionRuleModule {
+    with rules.PatchSubtypeRuleModule
+    with rules.PatchOptionWithOptionOptionModule
+    with rules.PatchOptionWithNonOptionRuleModule
+    with rules.PatchProductWithProductRuleModule
+    with rules.PatchNotMatchedRuleModule {
 
   override protected val rulesAvailableForPlatform: List[Rule] = List(
     PatchImplicitRule,
     TransformImplicitRule,
     TransformImplicitOuterTransformerRule,
+    PatchSubtypeRuleModule,
     PatchOptionWithNonOptionRule,
-    PatchFlattenOptionPatchRule,
+    PatchOptionWithOptionOptionRule,
     TransformOptionToOptionRule,
     TransformToOptionRule,
-    TransformSubtypesRule,
     TransformToSingletonRule,
     TransformValueClassToValueClassRule,
     TransformValueClassToTypeRule,
@@ -25,7 +28,9 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     TransformEitherToEitherRule,
     TransformMapToMapRule,
     TransformIterableToIterableRule,
-    TransformProductToProductRule,
-    TransformSealedHierarchyToSealedHierarchyRule
+    PatchProductWithProductRule,
+    TransformSealedHierarchyToSealedHierarchyRule,
+    TransformSubtypesRule,
+    PatchNotMatchedRule
   )
 }
