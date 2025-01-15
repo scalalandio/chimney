@@ -3,18 +3,20 @@ package io.scalaland.chimney.cats
 import cats.~>
 import cats.data.{Chain, NonEmptyChain, NonEmptyList, NonEmptyMap, NonEmptySeq, NonEmptySet, NonEmptyVector}
 import io.scalaland.chimney.ChimneySpec
-import io.scalaland.chimney.Transformer
+import io.scalaland.chimney.{PartialTransformer, Transformer}
 import io.scalaland.chimney.dsl.*
 
 class CatsDataSpec extends ChimneySpec {
 
   test("DSL should always allow transformation when F ~> G is provided and F is Traverse") {
     implicit val intToStr: Transformer[Int, String] = _.toString
+    implicit val strToInt: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
     implicit val listToOption: List ~> Option = new _root_.cats.arrow.FunctionK[List, Option] {
       def apply[A](fa: List[A]): Option[A] = fa.headOption
     }
 
     List(1, 2, 3).transformInto[Option[String]] ==> Some("1")
+    List("1", "2", "3").transformIntoPartial[Option[Int]].asOption ==> Some(Some(1))
   }
 
   test("DSL should always allow transformation when outer type has Traverse") {
