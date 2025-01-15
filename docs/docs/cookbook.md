@@ -929,6 +929,7 @@ Cats integration module contains the following utilities:
       or to another `NonEmptySet`)
     - `cats.data.NonEmptyVector` (transformation: _from_ always available, _to_ only with `PartialTransformer`
       or to another `NonEmptyVector`)
+  - transforming `F[A]` to `G[B]` if implicit `F ~> G` and `Traverse[F]` are present
 
 !!! important
 
@@ -1069,6 +1070,8 @@ collection), then you can:
    `NonEmptySeq` and another `NonEmptySeq`, `NonEmptyVector` and another `NonEmptyVector`,
     and any other `F[A]` into `F[B]` which has `Traverse` instance, with *both* `Transformer`s and `PartialTransformer`s
     (since we can use `.traverseWithIndexM` and avoid running that validation again)
+ * convert any collection `F[_]` that has `Traverse[F]` and between any 2 collections `F[_]`, `G[_]` if implicit
+   `Traverse[F]` and `F ~> G` exist
 
 !!! example "Converting from Cats collections"
 
@@ -1176,6 +1179,29 @@ collection), then you can:
     // Singleton(a = Bar(a = 10))
     // NonEmptyList(head = Bar(a = 10), tail = List())
     // NonEmptyVector(Bar(10))
+    ```
+
+!!! example "Converting using implicit ~> (FunctionK)"
+
+   ```scala
+    //> using dep org.typelevel::cats-core::{{ libraries.cats }}
+    //> using dep io.scalaland::chimney-cats::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import cats.~>
+    import io.scalaland.chimney.Transformer
+    import io.scalaland.chimney.dsl._
+    import io.scalaland.chimney.cats._
+
+    implicit val intToStr: Transformer[Int, String] = _.toString
+    implicit val listToOption: List ~> Option = new (List ~> Option) {
+      def apply[A](fa: List[A]): Option[A] = fa.headOption
+    }
+
+    pprint.pprintln(
+      List(1, 2, 3).transformInto[Option[String]]
+    )
+    // expected output:
+    // Some(value = "1")
     ```
 
 ### Cats instances
