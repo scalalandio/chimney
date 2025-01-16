@@ -289,7 +289,7 @@ private[compiletime] trait ChimneyExprsPlatform extends ChimneyExprs { this: Chi
           optionalValue: Expr[integrations.OptionalValue[Optional, Value]],
           optional: Expr[Optional],
           optional2: Expr[Optional]
-      ): Expr[Optional] = c.Expr[Optional](q"$optionalValue.fold($optional, $optional2)")
+      ): Expr[Optional] = c.Expr[Optional](q"$optionalValue.orElse($optional, $optional2)")
     }
 
     object PartiallyBuildIterable extends PartiallyBuildIterableModule {
