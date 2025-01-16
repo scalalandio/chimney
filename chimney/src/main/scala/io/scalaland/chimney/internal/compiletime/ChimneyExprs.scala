@@ -275,6 +275,10 @@ private[compiletime] trait ChimneyExprs { this: ChimneyDefinitions =>
     def flatMap[B: Type](fExpr: Expr[A => partial.Result[B]]): Expr[partial.Result[B]] =
       ChimneyExpr.PartialResult.flatMap(resultExpr)(fExpr)
     def map[B: Type](fExpr: Expr[A => B]): Expr[partial.Result[B]] = ChimneyExpr.PartialResult.map(resultExpr)(fExpr)
+    def map2[B: Type, C: Type](result2Expr: Expr[partial.Result[B]], failFast: Expr[Boolean])(
+        fExpr: Expr[(A, B) => C]
+    ): Expr[partial.Result[C]] =
+      ChimneyExpr.PartialResult.map2(resultExpr, result2Expr, fExpr, failFast)
 
     def prependErrorPath(path: Expr[partial.PathElement]): Expr[partial.Result[A]] =
       ChimneyExpr.PartialResult.prependErrorPath(resultExpr, path)

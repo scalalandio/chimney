@@ -113,7 +113,6 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     object Iterable extends IterableModule {
       def map[A: Type, B: Type](iterable: Expr[Iterable[A]])(fExpr: Expr[A => B]): Expr[Iterable[B]] =
         '{ ${ resetOwner(iterable) }.map(${ resetOwner(fExpr) }) }
-
       def to[A: Type, C: Type](iterable: Expr[Iterable[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
       ): Expr[C] =
@@ -130,6 +129,9 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     object Iterator extends IteratorModule {
       def map[A: Type, B: Type](iterator: Expr[Iterator[A]])(fExpr: Expr[A => B]): Expr[Iterator[B]] =
         '{ ${ iterator }.map(${ fExpr }) }
+
+      def concat[A: Type](iterator: Expr[Iterator[A]], iterator2: Expr[Iterator[A]]): Expr[Iterator[A]] =
+        '{ ${ resetOwner(iterator) }.concat(${ resetOwner(iterator2) }) }
 
       def to[A: Type, C: Type](iterator: Expr[Iterator[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]

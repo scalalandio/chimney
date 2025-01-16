@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer.rules
 
+import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 import io.scalaland.chimney.partial
@@ -9,16 +10,39 @@ import scala.collection.compat.Factory
 private[compiletime] trait TransformMapToMapRuleModule {
   this: Derivation & TransformIterableToIterableRuleModule & TransformProductToProductRuleModule =>
 
-  import Type.Implicits.*, ChimneyType.Implicits.*, TransformProductToProductRule.useOverrideIfPresentOr
+  import Type.Implicits.*, ChimneyType.Implicits.*
+  import TransformProductToProductRule.useOverrideIfPresentOr,
+    TransformIterableToIterableRule.{mergePartial, mergeTotal}
 
   protected object TransformMapToMapRule extends Rule("MapToMap") {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+      mapMaps[From, To] match {
+        case Right(srcToResult) =>
+          def fallbackToResult = mapFallbackMaps[From, To]
+
+          val merge = ctx match {
+            case TransformationContext.ForTotal(_)             => mergeTotal[To](_, _)
+            case TransformationContext.ForPartial(_, failFast) => mergePartial[To](failFast)(_, _)
+          }
+
+          (ctx.config.flags.collectionFallbackMerge match {
+            case None                            => srcToResult
+            case Some(dsls.SourceAppendFallback) => fallbackToResult.foldLeft(srcToResult)(merge)
+            case Some(dsls.FallbackAppendSource) => fallbackToResult.foldRight(srcToResult)(merge)
+          }).flatMap(DerivationResult.expanded)
+        case Left(Some(reason)) => DerivationResult.attemptNextRuleBecause(reason)
+        case Left(None)         => DerivationResult.attemptNextRule
+      }
+
+    private def mapMaps[From, To](implicit
+        ctx: TransformationContext[From, To]
+    ): Either[Option[String], DerivationResult[TransformationExpr[To]]] =
       (ctx, Type[From], Type[To]) match {
         case (TransformationContext.ForTotal(_), TotallyOrPartiallyBuildMap(fromMap), TotallyOrPartiallyBuildMap(toMap))
             if !ctx.config.areOverridesEmpty =>
           import fromMap.{Key as FromK, Value as FromV}, toMap.{Key as ToK, Value as ToV}
-          mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](fromMap.iterator(ctx.src), toMap.factory)
+          Right(mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](fromMap.iterator(ctx.src), toMap.factory))
         case (
               TransformationContext.ForTotal(_),
               TotallyOrPartiallyBuildIterable(from2),
@@ -27,9 +51,13 @@ private[compiletime] trait TransformMapToMapRuleModule {
           val Type.Tuple2(fromK, fromV) = from2.Underlying: @unchecked
           import from2.{Underlying as InnerFrom, value as fromIterable}, fromK.Underlying as FromK,
             fromV.Underlying as FromV, toMap.{Key as ToK, Value as ToV}
-          mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](
-            fromIterable.iterator(ctx.src).upcastToExprOf[Iterator[(FromK, FromV)]], // needed because iterable, not map
-            toMap.factory
+          Right(
+            mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](
+              fromIterable
+                .iterator(ctx.src)
+                .upcastToExprOf[Iterator[(FromK, FromV)]], // needed because iterable, not map
+              toMap.factory
+            )
           )
         case (
               TransformationContext.ForPartial(_, failFast),
@@ -37,11 +65,13 @@ private[compiletime] trait TransformMapToMapRuleModule {
               TotallyOrPartiallyBuildMap(toMap)
             ) =>
           import fromMap.{Key as FromK, Value as FromV}, toMap.{Key as ToK, Value as ToV}
-          mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
-            fromMap.iterator(ctx.src),
-            toMap.factory,
-            failFast,
-            isConversionFromMap = true
+          Right(
+            mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
+              fromMap.iterator(ctx.src),
+              toMap.factory,
+              failFast,
+              isConversionFromMap = true
+            )
           )
         case (
               TransformationContext.ForPartial(_, failFast),
@@ -51,27 +81,49 @@ private[compiletime] trait TransformMapToMapRuleModule {
           val Type.Tuple2(fromK, fromV) = from2.Underlying: @unchecked
           import from2.{Underlying as InnerFrom, value as fromIterable}, fromK.Underlying as FromK,
             fromV.Underlying as FromV, toMap.{Key as ToK, Value as ToV}
-          mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
-            fromIterable.iterator(ctx.src).upcastToExprOf[Iterator[(FromK, FromV)]],
-            toMap.factory,
-            failFast,
-            isConversionFromMap = false
+          Right(
+            mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
+              fromIterable.iterator(ctx.src).upcastToExprOf[Iterator[(FromK, FromV)]],
+              toMap.factory,
+              failFast,
+              isConversionFromMap = false
+            )
           )
         case (_, _, Type.Map(_, _)) | (_, Type.Map(_, _), _) =>
-          DerivationResult.namedScope(
-            "MapToMap matched in the context of total transformation without overrides - delegating to IterableToIterable"
-          ) {
-            TransformIterableToIterableRule.expand(ctx)
+          DerivationResult
+            .namedScope(
+              "MapToMap matched in the context of total transformation without overrides - delegating to IterableToIterable"
+            ) {
+              TransformIterableToIterableRule.expand(ctx)
+            }
+            .toEither match {
+            case Left(errors)                                        => Right(DerivationResult.fail(errors))
+            case Right(Rule.ExpansionResult.AttemptNextRule(reason)) => Left(reason)
+            case Right(Rule.ExpansionResult.Expanded(texpr)) =>
+              Right(DerivationResult.pure(texpr.asInstanceOf[TransformationExpr[To]]))
           }
-        case _ => DerivationResult.attemptNextRule
+        case _ => Left(None)
       }
+
+    private def mapFallbackMaps[From, To](implicit
+        ctx: TransformationContext[From, To]
+    ): Vector[DerivationResult[TransformationExpr[To]]] =
+      ctx.config.filterCurrentOverridesForFallbacks.view
+        .map { case TransformerOverride.Fallback(fallback) =>
+          import fallback.{Underlying as Fallback, value as fallbackExpr}
+          implicit val iterableCtx: TransformationContext[Fallback, To] =
+            ctx.updateFromTo[Fallback, To](fallbackExpr, updateFallbacks = _ => Vector.empty)(Fallback, ctx.To)
+          mapMaps[Fallback, To]
+        }
+        .collect { case Right(value) => value }
+        .toVector
 
     private def mapMapForTotalTransformers[From, To, FromK: Type, FromV: Type, ToK: Type, ToV: Type](
         iterator: Expr[Iterator[(FromK, FromV)]],
         factoryEither: Either[Expr[Factory[(ToK, ToV), To]], Expr[Factory[(ToK, ToV), partial.Result[To]]]]
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Rule.ExpansionResult[To]] = {
+    ): DerivationResult[TransformationExpr[To]] = {
       val toKeyResult = ExprPromise
         .promise[FromK](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
         .traverse { key =>
@@ -105,8 +157,8 @@ private[compiletime] trait TransformMapToMapRuleModule {
             .to(factory)
 
         factoryEither match {
-          case Left(totalFactory)    => DerivationResult.expandedTotal(iteratorMapTo(totalFactory))
-          case Right(partialFactory) => DerivationResult.expandedPartial(iteratorMapTo(partialFactory))
+          case Left(totalFactory)    => DerivationResult.totalExpr(iteratorMapTo(totalFactory))
+          case Right(partialFactory) => DerivationResult.partialExpr(iteratorMapTo(partialFactory))
         }
       }
     }
@@ -118,7 +170,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
         isConversionFromMap: Boolean // or from any sequence of tuples
     )(implicit
         ctx: TransformationContext[From, To]
-    ): DerivationResult[Rule.ExpansionResult[To]] = {
+    ): DerivationResult[TransformationExpr[To]] = {
       val toKeyResult = ExprPromise
         .promise[FromK](ExprPromise.NameGenerationStrategy.FromPrefix("key"))
         .traverse { key =>
@@ -244,8 +296,8 @@ private[compiletime] trait TransformMapToMapRuleModule {
               )
 
         factoryEither match {
-          case Left(totalFactory)   => DerivationResult.expandedPartial(partialResultTraverse(totalFactory))
-          case Right(partialResult) => DerivationResult.expandedPartial(partialResultTraverse(partialResult).flatten)
+          case Left(totalFactory)   => DerivationResult.partialExpr(partialResultTraverse(totalFactory))
+          case Right(partialResult) => DerivationResult.partialExpr(partialResultTraverse(partialResult).flatten)
         }
       }
     }
