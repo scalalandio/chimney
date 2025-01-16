@@ -108,6 +108,8 @@ private[compiletime] trait Exprs { this: Definitions =>
     trait IteratorModule { this: Iterator.type =>
       def map[A: Type, B: Type](iterator: Expr[Iterator[A]])(fExpr: Expr[A => B]): Expr[Iterator[B]]
 
+      def concat[A: Type](iterator: Expr[Iterator[A]], iterator2: Expr[Iterator[A]]): Expr[Iterator[A]]
+
       def to[A: Type, C: Type](iterator: Expr[Iterator[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]
       ): Expr[C]
@@ -228,6 +230,7 @@ private[compiletime] trait Exprs { this: Definitions =>
   implicit final protected class IteratorExprOps[A: Type](private val iteratorExpr: Expr[Iterator[A]]) {
 
     def map[B: Type](fExpr: Expr[A => B]): Expr[Iterator[B]] = Expr.Iterator.map(iteratorExpr)(fExpr)
+    def concat(iteratorExpr2: Expr[Iterator[A]]): Expr[Iterator[A]] = Expr.Iterator.concat(iteratorExpr, iteratorExpr2)
     def to[C: Type](factoryExpr: Expr[scala.collection.compat.Factory[A, C]]): Expr[C] =
       Expr.Iterator.to(iteratorExpr)(factoryExpr)
     def zipWithIndex: Expr[Iterator[(A, Int)]] = Expr.Iterator.zipWithIndex(iteratorExpr)
