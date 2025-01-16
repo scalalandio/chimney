@@ -263,6 +263,8 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
         val OptionDefaultsToNone: Type[runtime.TransformerFlags.OptionDefaultsToNone]
         val PartialUnwrapsOption: Type[runtime.TransformerFlags.PartialUnwrapsOption]
         val NonAnyValWrappers: Type[runtime.TransformerFlags.NonAnyValWrappers]
+        val TypeConstraintEvidence: Type[runtime.TransformerFlags.TypeConstraintEvidence]
+        val ImplicitConversions: Type[runtime.TransformerFlags.ImplicitConversions]
         val ImplicitConflictResolution: ImplicitConflictResolutionModule
         trait ImplicitConflictResolutionModule
             extends Type.Ctor1UpperBounded[
