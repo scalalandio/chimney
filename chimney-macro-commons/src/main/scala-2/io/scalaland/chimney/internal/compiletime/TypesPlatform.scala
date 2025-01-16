@@ -2,6 +2,8 @@ package io.scalaland.chimney.internal.compiletime
 
 import scala.collection.compat.Factory
 
+import TypeAlias.<:<<
+
 private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatform =>
 
   import c.universe.{internal as _, Transformer as _, *}
@@ -184,6 +186,12 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     object DoubleLiteral extends LiteralImpl[Double] with DoubleLiteralModule
     object CharLiteral extends LiteralImpl[Char] with CharLiteralModule
     object StringLiteral extends LiteralImpl[String] with StringLiteralModule
+
+    object <:< extends `<:<Module` {
+      def apply[From: Type, To: Type]: Type[From <:<< To] = weakTypeTag[From <:<< To]
+      def unapply[A](A: Type[A]): Option[(??, ??)] =
+        A.asCtor[<:<<[?, ?]].map(A0 => A0.param(0) -> A0.param(1))
+    }
 
     def isTuple[A](A: Type[A]): Boolean = A.tpe.typeSymbol.fullName.startsWith("scala.Tuple")
 

@@ -12,7 +12,9 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     with datatypes.ValueClassesPlatform
     with rules.TransformImplicitRuleModule
     with rules.TransformImplicitOuterTransformerRuleModule
+    with rules.TransformImplicitConversionRuleModule
     with rules.TransformSubtypesRuleModule
+    with rules.TransformTypeConstraintRuleModule
     with rules.TransformToSingletonRuleModule
     with rules.TransformOptionToOptionRuleModule
     with rules.TransformPartialOptionToNonOptionRuleModule
@@ -29,7 +31,9 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
   override protected val rulesAvailableForPlatform: List[Rule] = List(
     TransformImplicitRule,
     TransformImplicitOuterTransformerRule,
+    TransformImplicitConversionRule,
     TransformSubtypesRule,
+    TransformTypeConstraintRule,
     TransformToSingletonRule,
     TransformOptionToOptionRule,
     TransformPartialOptionToNonOptionRule,

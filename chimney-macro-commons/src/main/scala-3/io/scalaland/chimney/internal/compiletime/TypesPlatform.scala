@@ -3,6 +3,8 @@ package io.scalaland.chimney.internal.compiletime
 import scala.quoted
 import scala.collection.compat.Factory
 
+import TypeAlias.<:<<
+
 private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatform =>
 
   import quotes.*, quotes.reflect.*
@@ -260,6 +262,14 @@ private[compiletime] trait TypesPlatform extends Types { this: DefinitionsPlatfo
     object DoubleLiteral extends LiteralImpl[Double](DoubleConstant(_)) with DoubleLiteralModule
     object CharLiteral extends LiteralImpl[Char](CharConstant(_)) with CharLiteralModule
     object StringLiteral extends LiteralImpl[String](StringConstant(_)) with StringLiteralModule
+
+    object <:< extends `<:<Module` {
+      def apply[From: Type, To: Type]: Type[From <:<< To] = quoted.Type.of[From <:<< To]
+      def unapply[A](A: Type[A]): Option[(??, ??)] = A match {
+        case '[<:<<[from, to]] => Some(Type[to].as_?? -> Type[to].as_??)
+        case _                 => scala.None
+      }
+    }
 
     def isTuple[A](A: Type[A]): Boolean = TypeRepr.of(using A).typeSymbol.fullName.startsWith("scala.Tuple")
 
