@@ -3,6 +3,8 @@ package io.scalaland.chimney.internal.compiletime
 import scala.collection.compat.Factory
 import scala.collection.immutable.ListSet
 
+import TypeAlias.<:<<
+
 private[compiletime] trait Types { this: (Existentials & Results) =>
 
   /** Platform-specific type representation (`c.WeakTypeTag[A]` in 2, `scala.quoted.Type[A]` in 3) */
@@ -145,6 +147,9 @@ private[compiletime] trait Types { this: (Existentials & Results) =>
     val StringLiteral: StringLiteralModule
     trait StringLiteralModule extends Literal[String] { this: StringLiteral.type => }
 
+    val <:< : `<:<Module`
+    trait `<:<Module` extends Ctor2[<:<<] { this: `<:<`.type => }
+
     // You can `import Type.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts
     // with implicit types seen in platform-specific scopes (which would happen if those implicits were always used).
     object Implicits {
@@ -183,6 +188,8 @@ private[compiletime] trait Types { this: (Existentials & Results) =>
       implicit def MapType[K: Type, V: Type]: Type[scala.collection.Map[K, V]] = Map[K, V]
       implicit def IteratorType[A: Type]: Type[Iterator[A]] = Iterator[A]
       implicit def FactoryType[A: Type, C: Type]: Type[Factory[A, C]] = Factory[A, C]
+
+      implicit def `<:<Type`[From: Type, To: Type]: Type[From <:<< To] = <:<[From, To]
     }
 
     // Implementations of extension methods
@@ -253,4 +260,9 @@ private[compiletime] trait Types { this: (Existentials & Results) =>
 
     def extractStringSingleton: String = Type.extractStringSingleton(tpe)
   }
+}
+private[compiletime] object TypeAlias {
+  // Workaround for "type <:< is not a member of object Predef":
+  // apparently on 2.13/3 <:< is seen as defined in scala not scala.Predef.
+  type <:<<[-From, +To] = From <:< To
 }
