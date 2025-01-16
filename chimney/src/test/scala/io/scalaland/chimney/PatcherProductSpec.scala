@@ -223,4 +223,32 @@ class PatcherProductSpec extends ChimneySpec {
         .patch ==> exampleUserWithOptionalField.copy(phone = None)
     }
   }
+
+  test("Patcher should work in nested fields") {
+    case class Foo(a: Int, b: String, c: Double)
+    case class Bar(c: Double, a: Int)
+    case class Nested[A](value: A)
+
+    val foo = Nested(Foo(0, "", 0.0))
+    val bar = Nested(Bar(10.0, 10))
+
+    foo.patchUsing(bar) ==> Nested(Foo(10, "", 10.0))
+    foo.using(bar).patch ==> Nested(Foo(10, "", 10.0))
+  }
+
+  test("Patcher should use implicits in nested fields") {
+    case class Foo(a: Int, b: String, c: Double)
+    case class Bar(c: Double, a: Int)
+    case class Nested[A](value: A)
+
+    val foo = Nested(Foo(0, "", 0.0))
+    val bar = Nested(Bar(10.0, 10))
+
+    implicit val patcher: Patcher[Foo, Bar] = new Patcher[Foo, Bar] {
+      def patch(obj: Foo, patch: Bar): Foo = Foo(patch.a * 2, obj.b, patch.c * 3)
+    }
+
+    foo.patchUsing(bar) ==> Nested(Foo(20, "", 30.0))
+    foo.using(bar).patch ==> Nested(Foo(20, "", 30.0))
+  }
 }
