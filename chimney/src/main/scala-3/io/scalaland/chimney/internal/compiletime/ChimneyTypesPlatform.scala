@@ -417,6 +417,10 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           quoted.Type.of[runtime.TransformerFlags.PartialUnwrapsOption]
         val NonAnyValWrappers: Type[runtime.TransformerFlags.NonAnyValWrappers] =
           quoted.Type.of[runtime.TransformerFlags.NonAnyValWrappers]
+        val TypeConstraintEvidence: Type[runtime.TransformerFlags.TypeConstraintEvidence] =
+          quoted.Type.of[runtime.TransformerFlags.TypeConstraintEvidence]
+        val ImplicitConversions: Type[runtime.TransformerFlags.ImplicitConversions] =
+          quoted.Type.of[runtime.TransformerFlags.ImplicitConversions]
         object ImplicitConflictResolution extends ImplicitConflictResolutionModule {
           def apply[R <: dsls.ImplicitTransformerPreference: Type]
               : Type[runtime.TransformerFlags.ImplicitConflictResolution[R]] =

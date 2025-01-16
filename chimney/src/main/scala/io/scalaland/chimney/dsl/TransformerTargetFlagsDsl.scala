@@ -280,6 +280,50 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   def disableNonAnyValWrappers: UpdateFlag[Disable[NonAnyValWrappers, Flags]] =
     disableFlag[NonAnyValWrappers]
 
+  /** Enable using [[scala.Predef.<:<]] or [[scala.Predef.=:=]] to prove that `From` is a subtype of `To`.
+    *
+    * By default, such evidence is ignored.
+    *
+    * @see
+    *   TODO
+    *
+    * @since TODO
+    */
+  def enableTypeConstraintEvidence: UpdateFlag[Enable[TypeConstraintEvidence, Flags]] =
+    enableFlag[TypeConstraintEvidence]
+
+  /** Disable using [[scala.Predef.<:<]] or [[scala.Predef.=:=]] to prove that `From` is a subtype of `To`.
+    *
+    * @see
+    *   TODO
+    *
+    * @since TODO
+    */
+  def disableTypeConstraintEvidence: UpdateFlag[Disable[TypeConstraintEvidence, Flags]] =
+    disableFlag[TypeConstraintEvidence]
+
+  /** Enable using implicit conversions to transform one `From` into `To`.
+    *
+    * By default, implicit conversions are ignored.
+    *
+    * @see
+    *   TODO
+    *
+    * @since TODO
+    */
+  def enableImplicitConversions: UpdateFlag[Enable[ImplicitConversions, Flags]] =
+    enableFlag[ImplicitConversions]
+
+  /** Disable using implicit conversions to transform one `From` into `To`.
+    *
+    * @see
+    *   TODO
+    *
+    * @since TODO
+    */
+  def disableImplicitConversions: UpdateFlag[Disable[ImplicitConversions, Flags]] =
+    disableFlag[ImplicitConversions]
+
   /** Enable conflict resolution when both `Transformer` and `PartialTransformer` are available in the implicit scope.
     *
     * @param preference

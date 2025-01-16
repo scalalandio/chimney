@@ -31,6 +31,8 @@ object TransformerFlags {
   final class OptionDefaultsToNone extends Flag
   final class PartialUnwrapsOption extends Flag
   final class NonAnyValWrappers extends Flag
+  final class TypeConstraintEvidence extends Flag
+  final class ImplicitConversions extends Flag
   final class ImplicitConflictResolution[R <: ImplicitTransformerPreference] extends Flag
   final class OptionFallbackMerge[S <: OptionFallbackMergeStrategy] extends Flag
   final class EitherFallbackMerge[S <: OptionFallbackMergeStrategy] extends Flag

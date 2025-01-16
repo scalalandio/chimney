@@ -25,6 +25,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       optionDefaultsToNone: Boolean = false,
       partialUnwrapsOption: Boolean = true,
       nonAnyValWrappers: Boolean = false,
+      typeConstraintEvidence: Boolean = true,
+      implicitConversions: Boolean = false,
       implicitConflictResolution: Option[dsls.ImplicitTransformerPreference] = None,
       optionFallbackMerge: Option[dsls.OptionFallbackMergeStrategy] = None,
       eitherFallbackMerge: Option[dsls.OptionFallbackMergeStrategy] = None,
@@ -58,6 +60,10 @@ private[compiletime] trait Configurations { this: Derivation =>
         copy(partialUnwrapsOption = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.NonAnyValWrappers) {
         copy(nonAnyValWrappers = value)
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.TypeConstraintEvidence) {
+        copy(typeConstraintEvidence = value)
+      } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.ImplicitConversions) {
+        copy(implicitConversions = value)
       } else if (Type[Flag] =:= ChimneyType.TransformerFlags.Flags.MacrosLogging) {
         copy(displayMacrosLogging = value)
       } else {
@@ -146,6 +152,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (beanGetters) Vector("beanGetters") else Vector.empty,
         if (optionDefaultsToNone) Vector("optionDefaultsToNone") else Vector.empty,
         if (nonAnyValWrappers) Vector("nonAnyValWrappers") else Vector.empty,
+        if (typeConstraintEvidence) Vector("typeConstraintEvidence") else Vector.empty,
+        if (implicitConversions) Vector("implicitConversions") else Vector.empty,
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
         optionFallbackMerge.map(s => s"optionFallbackMerge=$s").toList.toVector,
         eitherFallbackMerge.map(s => s"eitherFallbackMerge=$s").toList.toVector,
@@ -169,11 +177,13 @@ private[compiletime] trait Configurations { this: Derivation =>
       case (cfg, transformerFlag"BeanSetters=$value")        => cfg.copy(beanSetters = value.toBoolean)
       case (cfg, transformerFlag"BeanSettersIgnoreUnmatched=$value") =>
         cfg.copy(beanSettersIgnoreUnmatched = value.toBoolean)
-      case (cfg, transformerFlag"NonUnitBeanSetters=$value")   => cfg.copy(nonUnitBeanSetters = value.toBoolean)
-      case (cfg, transformerFlag"BeanGetters=$value")          => cfg.copy(beanGetters = value.toBoolean)
-      case (cfg, transformerFlag"OptionDefaultsToNone=$value") => cfg.copy(optionDefaultsToNone = value.toBoolean)
-      case (cfg, transformerFlag"PartialUnwrapsOption=$value") => cfg.copy(partialUnwrapsOption = value.toBoolean)
-      case (cfg, transformerFlag"NonAnyValWrappers=$value")    => cfg.copy(nonAnyValWrappers = value.toBoolean)
+      case (cfg, transformerFlag"NonUnitBeanSetters=$value")     => cfg.copy(nonUnitBeanSetters = value.toBoolean)
+      case (cfg, transformerFlag"BeanGetters=$value")            => cfg.copy(beanGetters = value.toBoolean)
+      case (cfg, transformerFlag"OptionDefaultsToNone=$value")   => cfg.copy(optionDefaultsToNone = value.toBoolean)
+      case (cfg, transformerFlag"PartialUnwrapsOption=$value")   => cfg.copy(partialUnwrapsOption = value.toBoolean)
+      case (cfg, transformerFlag"NonAnyValWrappers=$value")      => cfg.copy(nonAnyValWrappers = value.toBoolean)
+      case (cfg, transformerFlag"TypeConstraintEvidence=$value") => cfg.copy(typeConstraintEvidence = value.toBoolean)
+      case (cfg, transformerFlag"ImplicitConversions=$value")    => cfg.copy(implicitConversions = value.toBoolean)
       case (cfg, transformerFlag"ImplicitConflictResolution=$value") =>
         cfg.copy(implicitConflictResolution = value match {
           case "PreferTotalTransformer"   => Some(dsls.PreferTotalTransformer)
