@@ -420,6 +420,15 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
               A0.param_<[dsls.OptionFallbackMergeStrategy](0)
             }
         }
+        object EitherFallbackMerge extends EitherFallbackMergeModule {
+          def apply[S <: dsls.OptionFallbackMergeStrategy: Type]
+              : Type[runtime.TransformerFlags.EitherFallbackMerge[S]] =
+            weakTypeTag[runtime.TransformerFlags.EitherFallbackMerge[S]]
+          def unapply[A](A: Type[A]): Option[?<[dsls.OptionFallbackMergeStrategy]] =
+            A.asCtor[runtime.TransformerFlags.EitherFallbackMerge[?]].map { A0 =>
+              A0.param_<[dsls.OptionFallbackMergeStrategy](0)
+            }
+        }
         object CollectionFallbackMerge extends CollectionFallbackMergeModule {
           def apply[S <: dsls.CollectionFallbackMergeStrategy: Type]
               : Type[runtime.TransformerFlags.CollectionFallbackMerge[S]] =

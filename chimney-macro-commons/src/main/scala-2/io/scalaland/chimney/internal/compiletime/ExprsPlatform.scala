@@ -87,6 +87,13 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       ): Expr[A] =
         c.Expr[A](q"""$either.fold[${Type[A]}]($left, $right)""")
 
+      def orElse[L: Type, R: Type](either1: Expr[Either[L, R]], either2: Expr[Either[L, R]]): Expr[Either[L, R]] =
+        if (isScala212)
+          c.Expr[Either[L, R]](
+            q"$either1.fold[_root_.scala.util.Either[${Type[L]}, ${Type[R]}]](_ => $either2, scala.util.Right(_))"
+          )
+        else c.Expr[Either[L, R]](q"$either1.orElse[${Type[L]}, ${Type[R]}]($either2)")
+
       object Left extends LeftModule {
         def apply[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]] =
           c.Expr[Left[L, R]](q"new _root_.scala.util.Left[${Type[L]}, ${Type[R]}]($value)")

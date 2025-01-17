@@ -417,6 +417,16 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             case _ => scala.None
           }
         }
+        object EitherFallbackMerge extends EitherFallbackMergeModule {
+          def apply[S <: dsls.OptionFallbackMergeStrategy: Type]
+              : Type[runtime.TransformerFlags.EitherFallbackMerge[S]] =
+            quoted.Type.of[runtime.TransformerFlags.EitherFallbackMerge[S]]
+          def unapply[A](tpe: Type[A]): Option[?<[dsls.OptionFallbackMergeStrategy]] = tpe match {
+            case '[runtime.TransformerFlags.EitherFallbackMerge[s]] =>
+              Some(Type[s].as_?<[dsls.OptionFallbackMergeStrategy])
+            case _ => scala.None
+          }
+        }
         object CollectionFallbackMerge extends CollectionFallbackMergeModule {
           def apply[S <: dsls.CollectionFallbackMergeStrategy: Type]
               : Type[runtime.TransformerFlags.CollectionFallbackMerge[S]] =

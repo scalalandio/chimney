@@ -98,6 +98,9 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
       ): Expr[A] =
         '{ ${ resetOwner(either) }.fold[A](${ left }, ${ right }) }
 
+      def orElse[L: Type, R: Type](either1: Expr[Either[L, R]], either2: Expr[Either[L, R]]): Expr[Either[L, R]] =
+        '{ ${ resetOwner(either1) }.orElse(${ resetOwner(either2) }) }
+
       object Left extends LeftModule {
         def apply[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]] = '{ scala.Left[L, R](${ resetOwner(value) }) }
 

@@ -74,6 +74,8 @@ private[compiletime] trait Exprs { this: Definitions =>
     trait EitherModule { this: Either.type =>
       def fold[L: Type, R: Type, A: Type](either: Expr[Either[L, R]])(left: Expr[L => A])(right: Expr[R => A]): Expr[A]
 
+      def orElse[L: Type, R: Type](either1: Expr[Either[L, R]], either2: Expr[Either[L, R]]): Expr[Either[L, R]]
+
       val Left: LeftModule
       trait LeftModule { this: Left.type =>
         def apply[L: Type, R: Type](value: Expr[L]): Expr[Left[L, R]]
@@ -202,6 +204,8 @@ private[compiletime] trait Exprs { this: Definitions =>
 
     def fold[B: Type](matchingLeft: Expr[L => B])(matchingRight: Expr[R => B]): Expr[B] =
       Expr.Either.fold(eitherExpr)(matchingLeft)(matchingRight)
+    def orElse(either2Expr: Expr[Either[L, R]]): Expr[Either[L, R]] =
+      Expr.Either.orElse(eitherExpr, either2Expr)
   }
 
   implicit final protected class LeftExprOps[L: Type, R: Type](private val leftExpr: Expr[Left[L, R]]) {

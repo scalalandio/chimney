@@ -259,6 +259,12 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
               dsls.OptionFallbackMergeStrategy,
               runtime.TransformerFlags.OptionFallbackMerge
             ] { this: OptionFallbackMerge.type => }
+        val EitherFallbackMerge: EitherFallbackMergeModule
+        trait EitherFallbackMergeModule
+            extends Type.Ctor1UpperBounded[
+              dsls.OptionFallbackMergeStrategy,
+              runtime.TransformerFlags.EitherFallbackMerge
+            ] { this: EitherFallbackMerge.type => }
         val CollectionFallbackMerge: CollectionFallbackMergeModule
         trait CollectionFallbackMergeModule
             extends Type.Ctor1UpperBounded[

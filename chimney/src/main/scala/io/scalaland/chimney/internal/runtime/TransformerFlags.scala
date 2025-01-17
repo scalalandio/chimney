@@ -33,6 +33,7 @@ object TransformerFlags {
   final class NonAnyValWrappers extends Flag
   final class ImplicitConflictResolution[R <: ImplicitTransformerPreference] extends Flag
   final class OptionFallbackMerge[S <: OptionFallbackMergeStrategy] extends Flag
+  final class EitherFallbackMerge[S <: OptionFallbackMergeStrategy] extends Flag
   final class CollectionFallbackMerge[S <: CollectionFallbackMergeStrategy] extends Flag
   final class FieldNameComparison[C <: TransformedNamesComparison] extends Flag
   final class SubtypeNameComparison[C <: TransformedNamesComparison] extends Flag
