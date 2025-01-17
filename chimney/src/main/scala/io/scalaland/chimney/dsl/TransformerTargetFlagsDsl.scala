@@ -332,6 +332,31 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   def disableOptionFallbackMerge: UpdateFlag[Disable[OptionFallbackMerge[?], Flags]] =
     disableFlag[OptionFallbackMerge[?]]
 
+  /** Enable merging fallback `Either` values into the source `Either` value.
+    *
+    * @param strategy
+    *   parameter specifying which strategy should be used to merge fallbacks with source value
+    *
+    * @see
+    *   TODO
+    *
+    * @since TODO
+    */
+  def enableEitherFallbackMerge[S <: OptionFallbackMergeStrategy](
+      @unused strategy: S
+  ): UpdateFlag[Enable[EitherFallbackMerge[S], Flags]] =
+    enableFlag[EitherFallbackMerge[S]]
+
+  /** Disable merging fallback `Either` values into the source `Either` value.
+    *
+    * @see
+    *   TODO
+    *
+    * @since TODO
+    */
+  def disableEitherFallbackMerge: UpdateFlag[Disable[EitherFallbackMerge[?], Flags]] =
+    disableFlag[EitherFallbackMerge[?]]
+
   /** Enable merging fallback collection values into the source collection value.
     *
     * @param strategy

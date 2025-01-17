@@ -27,6 +27,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       nonAnyValWrappers: Boolean = false,
       implicitConflictResolution: Option[dsls.ImplicitTransformerPreference] = None,
       optionFallbackMerge: Option[dsls.OptionFallbackMergeStrategy] = None,
+      eitherFallbackMerge: Option[dsls.OptionFallbackMergeStrategy] = None,
       collectionFallbackMerge: Option[dsls.CollectionFallbackMergeStrategy] = None,
       fieldNameComparison: Option[dsls.TransformedNamesComparison] = None,
       subtypeNameComparison: Option[dsls.TransformedNamesComparison] = None,
@@ -82,6 +83,9 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     def setOptionFallbackMerge(strategy: Option[dsls.OptionFallbackMergeStrategy]): TransformerFlags =
       copy(optionFallbackMerge = strategy)
+
+    def setEitherFallbackMerge(strategy: Option[dsls.OptionFallbackMergeStrategy]): TransformerFlags =
+      copy(eitherFallbackMerge = strategy)
 
     def setCollectionFallbackMerge(strategy: Option[dsls.CollectionFallbackMergeStrategy]): TransformerFlags =
       copy(collectionFallbackMerge = strategy)
@@ -144,6 +148,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         if (nonAnyValWrappers) Vector("nonAnyValWrappers") else Vector.empty,
         implicitConflictResolution.map(r => s"ImplicitTransformerPreference=$r").toList.toVector,
         optionFallbackMerge.map(s => s"OptionFallbackMerge=$s").toList.toVector,
+        eitherFallbackMerge.map(s => s"EitherFallbackMerge=$s").toList.toVector,
         collectionFallbackMerge.map(s => s"CollectionFallbackMerge=$s").toList.toVector,
         fieldNameComparison.map(c => s"fieldNameComparison=$c").toList.toVector,
         subtypeNameComparison.map(c => s"subtypeNameComparison=$c").toList.toVector,
@@ -177,6 +182,12 @@ private[compiletime] trait Configurations { this: Derivation =>
         })
       case (cfg, transformerFlag"OptionFallbackMerge=$value") =>
         cfg.copy(optionFallbackMerge = value match {
+          case "SourceOrElseFallback" => Some(dsls.SourceOrElseFallback)
+          case "FallbackOrElseSource" => Some(dsls.FallbackOrElseSource)
+          case "none"                 => None
+        })
+      case (cfg, transformerFlag"EitherFallbackMerge=$value") =>
+        cfg.copy(eitherFallbackMerge = value match {
           case "SourceOrElseFallback" => Some(dsls.SourceOrElseFallback)
           case "FallbackOrElseSource" => Some(dsls.FallbackOrElseSource)
           case "none"                 => None
@@ -647,6 +658,20 @@ private[compiletime] trait Configurations { this: Derivation =>
               )
             else if (s.Underlying =:= ChimneyType.FallbackOrElseSource)
               extractTransformerFlags[Flags2](defaultFlags).setOptionFallbackMerge(
+                Some(dsls.FallbackOrElseSource)
+              )
+            else {
+              // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
+              reportError("Invalid OptionFallbackMergeStrategy type!!")
+              // $COVERAGE-ON$
+            }
+          case ChimneyType.TransformerFlags.Flags.EitherFallbackMerge(s) =>
+            if (s.Underlying =:= ChimneyType.SourceOrElseFallback)
+              extractTransformerFlags[Flags2](defaultFlags).setEitherFallbackMerge(
+                Some(dsls.SourceOrElseFallback)
+              )
+            else if (s.Underlying =:= ChimneyType.FallbackOrElseSource)
+              extractTransformerFlags[Flags2](defaultFlags).setEitherFallbackMerge(
                 Some(dsls.FallbackOrElseSource)
               )
             else {
