@@ -19,7 +19,7 @@ package io.scalaland.chimney.internal.compiletime
   *
   * (Do the same when you need more types and utility methods shared between 2 different macro implementations.)
   *
-  * 2. Mix-in with the implementation for Scala 2/Scala 3 macros:
+  *   2. Mix-in with the implementation for Scala 2/Scala 3 macros:
   *
   * {{{
   * // Scala 2
@@ -74,7 +74,7 @@ package io.scalaland.chimney.internal.compiletime
   *
   * (You can provide platform-specific implementations of your types/utilities the same way).
   *
-  * 3. Use `deriveFinalTransformationResultExpr` in your macros:
+  *   3. Use `deriveFinalTransformationResultExpr` in your macros:
   *
   * {{{
   * // Scala 2

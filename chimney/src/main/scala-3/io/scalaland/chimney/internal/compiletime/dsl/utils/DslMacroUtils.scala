@@ -197,7 +197,9 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
     }
 
     private def invalidSelectorErrorMessage(t: Tree): String =
-      s"The path expression has to be a single chain of calls on the original input, got: ${t.show(using Printer.TreeAnsiCode)}"
+      s"The path expression has to be a single chain of calls on the original input, got: ${t.show(using
+          Printer.TreeAnsiCode
+        )}"
 
     private def arbitraryFunctionNotAllowed(f: Tree, t: Tree): String =
       s"The path expression has to be a single chain of calls on the original input, got operation other than value extraction: ${f
@@ -287,7 +289,9 @@ private[chimney] class DslMacroUtils()(using quotes: Quotes) {
     }
 
     private def invalidConstructor(t: Tree): String =
-      s"Expected function, instead got: ${t.show(using Printer.TreeAnsiCode)}: ${t.asInstanceOf[Term].tpe.show(using Printer.TypeReprAnsiCode)}"
+      s"Expected function, instead got: ${t.show(using
+          Printer.TreeAnsiCode
+        )}: ${t.asInstanceOf[Term].tpe.show(using Printer.TypeReprAnsiCode)}"
   }
 
   def applyFieldNameType[Out](f: [A <: runtime.Path] => Type[A] ?=> Out)(selector: Expr[?]): Out =
