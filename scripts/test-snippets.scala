@@ -1,4 +1,4 @@
-//> using scala 3.3.3
+//> using scala 3.3.4
 //> using dep com.kubuszok::scala-cli-md-spec:0.1.1
 //> using dep org.virtuslab::scala-yaml:0.3.0
 
@@ -45,7 +45,7 @@ class ChimneyExtendedRunner(runner: Runner)(
     mkDocsCfg: MkDocsConfig
 ) extends Runner {
 
-  private val defaultScalaVersion = "2.13.15"
+  private val defaultScalaVersion = "2.13.16"
 
   private val replacePatterns = (mkDocsCfg.extra + (raw"chimney_version\(\)" -> chimneyVersion)).map { case (k, v) =>
     (raw"\{\{\s*" + k + raw"\s*\}\}") -> v
