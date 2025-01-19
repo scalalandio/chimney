@@ -141,8 +141,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     def ifElse[A: Type](cond: Expr[Boolean])(ifBranch: Expr[A])(elseBranch: Expr[A]): Expr[A] =
       '{
-        if ${ resetOwner(cond) } then ${ ifBranch }
-        else ${ elseBranch }
+        if ${ resetOwner(cond) } then ${ ifBranch } else ${ elseBranch }
       }
 
     def block[A: Type](statements: List[Expr[Unit]], expr: Expr[A]): Expr[A] =
