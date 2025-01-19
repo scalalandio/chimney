@@ -1,7 +1,7 @@
 // git
 addSbtPlugin("com.github.sbt" % "sbt-git" % "2.1.0")
 // linters
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.2.2")
 // cross-compile
 addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.10.1")
