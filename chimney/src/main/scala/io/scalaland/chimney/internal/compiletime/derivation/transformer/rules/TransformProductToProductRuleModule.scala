@@ -136,7 +136,9 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                 .map(a => Expr.prettyPrint(a))})"
           }
           .mkString(", ")
-        s"Resolved ${Type.prettyPrint[From]} getters: ($gettersStr) and ${Type.prettyPrint[To]} constructor ($constructorStr), using ${if (usePositionBasedMatching) "position-based matching (tuple present)" else "name-based matching"}"
+        s"Resolved ${Type.prettyPrint[From]} getters: ($gettersStr) and ${Type
+            .prettyPrint[To]} constructor ($constructorStr), using ${if (usePositionBasedMatching) "position-based matching (tuple present)"
+          else "name-based matching"}"
       } >> verifyNoOverrideUnused >>
         Traverse[List]
           .parTraverse[
