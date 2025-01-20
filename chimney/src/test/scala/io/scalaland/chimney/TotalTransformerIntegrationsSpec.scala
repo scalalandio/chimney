@@ -330,6 +330,7 @@ object TotalTransformerIntegrationsSpec {
       case _                                     => false
     }
     override def hashCode(): Int = impl.hashCode()
+    override def toString(): String = s"CustomCollection(${impl.mkString(", ")})"
   }
   object CustomCollection {
 
@@ -407,6 +408,7 @@ object TotalTransformerIntegrationsSpec {
       case _                          => false
     }
     override def hashCode(): Int = impl.hashCode()
+    override def toString(): String = s"CustomMap(${impl.mkString(", ")})"
   }
   object CustomMap {
 

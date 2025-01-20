@@ -43,76 +43,68 @@ private[compiletime] trait TransformMapToMapRuleModule {
 
     private def mapMaps[From, To](implicit
         ctx: TransformationContext[From, To]
-    ): Either[Option[String], DerivationResult[TransformationExpr[To]]] =
-      (ctx, Type[From], Type[To]) match {
-        case (TransformationContext.ForTotal(_), TotallyOrPartiallyBuildMap(fromMap), TotallyOrPartiallyBuildMap(toMap))
-            if !ctx.config.areOverridesEmpty =>
-          import fromMap.{Key as FromK, Value as FromV}, toMap.{Key as ToK, Value as ToV}
-          Right(mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](fromMap.iterator(ctx.src), toMap.factory))
-        case (
-              TransformationContext.ForTotal(_),
-              TotallyOrPartiallyBuildIterable(from2),
-              TotallyOrPartiallyBuildMap(toMap)
-            ) if !ctx.config.areOverridesEmpty && from2.Underlying.isTuple =>
-          val Type.Tuple2(fromK, fromV) = from2.Underlying: @unchecked
-          import from2.{Underlying as InnerFrom, value as fromIterable}, fromK.Underlying as FromK,
-            fromV.Underlying as FromV, toMap.{Key as ToK, Value as ToV}
-          Right(
-            mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](
-              fromIterable
-                .iterator(ctx.src)
-                .upcastToExprOf[Iterator[(FromK, FromV)]], // needed because iterable, not map
-              toMap.factory
+    ): Either[Option[String], DerivationResult[TransformationExpr[To]]] = (Type[From], Type[To]) match {
+      case (TotallyOrPartiallyBuildMap(fromMap), TotallyOrPartiallyBuildMap(toMap)) =>
+        import fromMap.{Key as FromK, Value as FromV}, toMap.{Key as ToK, Value as ToV}
+        ctx match {
+          case TransformationContext.ForTotal(_) if !ctx.config.areOverridesEmpty =>
+            Right(
+              mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](fromMap.iterator(ctx.src), toMap.factory)
             )
-          )
-        case (
-              TransformationContext.ForPartial(_, failFast),
-              TotallyOrPartiallyBuildMap(fromMap),
-              TotallyOrPartiallyBuildMap(toMap)
-            ) =>
-          import fromMap.{Key as FromK, Value as FromV}, toMap.{Key as ToK, Value as ToV}
-          Right(
-            mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
-              fromMap.iterator(ctx.src),
-              toMap.factory,
-              failFast,
-              isConversionFromMap = true
-            )
-          )
-        case (
-              TransformationContext.ForPartial(_, failFast),
-              TotallyOrPartiallyBuildIterable(from2),
-              TotallyOrPartiallyBuildMap(toMap)
-            ) if from2.Underlying.isTuple =>
-          val Type.Tuple2(fromK, fromV) = from2.Underlying: @unchecked
-          import from2.{Underlying as InnerFrom, value as fromIterable}, fromK.Underlying as FromK,
-            fromV.Underlying as FromV, toMap.{Key as ToK, Value as ToV}
-          Right(
-            mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
-              fromIterable.iterator(ctx.src).upcastToExprOf[Iterator[(FromK, FromV)]],
-              toMap.factory,
-              failFast,
-              isConversionFromMap = false
-            )
-          )
-        case (_, _, Type.Map(_, _)) | (_, Type.Map(_, _), _) =>
-          val result = DerivationResult
-            .namedScope(
-              "MapToMap matched in the context of total transformation without overrides - delegating to IterableToIterable"
-            ) {
-              // Removes fallbacks are they are handled here (otherwise they would be appended/prepended twice)
-              TransformIterableToIterableRule.expand(
-                ctx.updateFromTo(ctx.src, updateFallbacks = _ => Vector.empty)(ctx.From, ctx.To)
+          case TransformationContext.ForPartial(_, failFast) =>
+            Right(
+              mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
+                fromMap.iterator(ctx.src),
+                toMap.factory,
+                failFast,
+                isConversionFromMap = true
               )
+            )
+          case _ =>
+            val result = DerivationResult
+              .namedScope(
+                "MapToMap matched in the context of total transformation without overrides - delegating to IterableToIterable (fallbacks handled in MapToMap)"
+              ) {
+                // Removes fallbacks, as are they are handled here (otherwise they would be appended/prepended twice)
+                TransformIterableToIterableRule.expand(
+                  ctx.updateFromTo(ctx.src, updateFallbacks = _ => Vector.empty)(ctx.From, ctx.To)
+                )
+              }
+            result.toEither match {
+              case Left(errors)                                        => Right(result >> DerivationResult.fail(errors))
+              case Right(Rule.ExpansionResult.AttemptNextRule(reason)) => Left(reason)
+              case Right(Rule.ExpansionResult.Expanded(texpr)) =>
+                Right(result >> DerivationResult.pure(texpr.asInstanceOf[TransformationExpr[To]]))
             }
-          result.toEither match {
-            case Left(errors)                                        => Right(result >> DerivationResult.fail(errors))
-            case Right(Rule.ExpansionResult.AttemptNextRule(reason)) => Left(reason)
-            case Right(Rule.ExpansionResult.Expanded(texpr)) =>
-              Right(result >> DerivationResult.pure(texpr.asInstanceOf[TransformationExpr[To]]))
-          }
-        case _ => Left(None)
-      }
+        }
+      case (TotallyOrPartiallyBuildIterable(from2), TotallyOrPartiallyBuildMap(toMap))
+          if !ctx.config.areOverridesEmpty && from2.Underlying.isTuple =>
+        val Type.Tuple2(fromK, fromV) = from2.Underlying: @unchecked
+        import from2.{Underlying as InnerFrom, value as fromIterable}, fromK.Underlying as FromK,
+          fromV.Underlying as FromV, toMap.{Key as ToK, Value as ToV}
+        ctx match {
+          case TransformationContext.ForTotal(_) =>
+            Right(
+              mapMapForTotalTransformers[From, To, FromK, FromV, ToK, ToV](
+                fromIterable
+                  .iterator(ctx.src)
+                  .upcastToExprOf[Iterator[(FromK, FromV)]], // needed because iterable, not map
+                toMap.factory
+              )
+            )
+          case TransformationContext.ForPartial(_, failFast) =>
+            Right(
+              mapMapForPartialTransformers[From, To, FromK, FromV, ToK, ToV](
+                fromIterable.iterator(ctx.src).upcastToExprOf[Iterator[(FromK, FromV)]],
+                toMap.factory,
+                failFast,
+                isConversionFromMap = false
+              )
+            )
+        }
+
+      case _ => Left(None)
+    }
 
     private def mapFallbackMaps[From, To](implicit
         ctx: TransformationContext[From, To]
@@ -122,7 +114,11 @@ private[compiletime] trait TransformMapToMapRuleModule {
           import fallback.{Underlying as Fallback, value as fallbackExpr}
           implicit val iterableCtx: TransformationContext[Fallback, To] =
             ctx.updateFromTo[Fallback, To](fallbackExpr, updateFallbacks = _ => Vector.empty)(Fallback, ctx.To)
-          mapMaps[Fallback, To]
+          val x = mapMaps[Fallback, To]
+          if (ctx.config.flags.displayMacrosLogging) {
+            println(s"Fallbacks: ${ctx.config.filterCurrentOverridesForFallbacks}\nHandled as: $x\n")
+          }
+          x
         }
         .collect { case Right(value) => value }
         .toVector

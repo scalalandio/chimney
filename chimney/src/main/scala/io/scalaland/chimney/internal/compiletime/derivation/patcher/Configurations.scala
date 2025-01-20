@@ -33,7 +33,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     def toTransformerFlags: TransformerFlags = TransformerFlags(
       optionFallbackMerge = if (ignoreNoneInPatch) Some(dsls.SourceOrElseFallback) else None,
       eitherFallbackMerge = if (ignoreLeftInPatch) Some(dsls.SourceOrElseFallback) else None,
-      collectionFallbackMerge = if (appendCollectionInPatch) Some(dsls.SourceAppendFallback) else None,
+      collectionFallbackMerge = if (appendCollectionInPatch) Some(dsls.FallbackAppendSource) else None,
       unusedFieldPolicy = if (ignoreRedundantPatcherFields) None else Some(dsls.FailOnIgnoredSourceVal),
       displayMacrosLogging = displayMacrosLogging
     )
