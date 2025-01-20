@@ -134,7 +134,7 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
         '{ ${ iterator }.map(${ fExpr }) }
 
       def concat[A: Type](iterator: Expr[Iterator[A]], iterator2: Expr[Iterator[A]]): Expr[Iterator[A]] =
-        '{ ${ resetOwner(iterator) }.concat(${ resetOwner(iterator2) }) }
+        '{ ${ resetOwner(iterator) } ++ ${ resetOwner(iterator2) } }
 
       def to[A: Type, C: Type](iterator: Expr[Iterator[A]])(
           factoryExpr: Expr[scala.collection.compat.Factory[A, C]]

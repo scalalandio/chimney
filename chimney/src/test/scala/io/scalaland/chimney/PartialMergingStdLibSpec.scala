@@ -3,6 +3,8 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
+import scala.collection.immutable.{ListMap, ListSet}
+
 class PartialMergingStdLibSpec extends ChimneySpec {
 
   group("setting .withFallback(fallbackValue)") {
@@ -66,6 +68,64 @@ class PartialMergingStdLibSpec extends ChimneySpec {
         .transform
         .asOption ==> Some(Nested(None))
     }
+
+    test("should use only source sequential-type when no merging strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      List("1", "2", "3", "4", "5")
+        .intoPartial[Vector[Int]]
+        .withFallback(ListSet("6", "7", "8", "9", "10"))
+        .transform
+        .asOption ==> Some(Vector(1, 2, 3, 4, 5))
+      Vector("1", "2", "3", "4", "5")
+        .intoPartial[ListSet[Int]]
+        .withFallback(List("6", "7", "8", "9", "10"))
+        .transform
+        .asOption ==> Some(ListSet(1, 2, 3, 4, 5))
+      ListSet("1", "2", "3", "4", "5")
+        .intoPartial[List[Int]]
+        .withFallback(Vector("6", "7", "8", "9", "10"))
+        .transform
+        .asOption ==> Some(List(1, 2, 3, 4, 5))
+
+      Nested(List("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[Vector[Int]]]
+        .withFallback(Nested(ListSet("6", "7", "8", "9", "10")))
+        .transform
+        .asOption ==> Some(Nested(Vector(1, 2, 3, 4, 5)))
+      Nested(Vector("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[ListSet[Int]]]
+        .withFallback(Nested(List("6", "7", "8", "9", "10")))
+        .transform
+        .asOption ==> Some(Nested(ListSet(1, 2, 3, 4, 5)))
+      Nested(ListSet("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[List[Int]]]
+        .withFallback(Nested(Vector("6", "7", "8", "9", "10")))
+        .transform
+        .asOption ==> Some(Nested(List(1, 2, 3, 4, 5)))
+    }
+
+    test("should use only source Map-type when no merging strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      ListMap("1" -> "2", "3" -> "4")
+        .intoPartial[ListMap[Int, Int]]
+        .withFallback(ListMap(5 -> 6, 7 -> 8))
+        .transform
+        .asOption
+        .map(_.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
+
+      Nested(ListMap("1" -> "2", "3" -> "4"))
+        .intoPartial[Nested[ListMap[Int, Int]]]
+        .withFallback(Nested(ListMap("5" -> "6", "7" -> "8")))
+        .transform
+        .asOption
+        .map(_.value.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
+    }
   }
 
   group("setting .withFallbackFrom(selectorFrom)(fallbackValue)") {
@@ -126,6 +186,64 @@ class PartialMergingStdLibSpec extends ChimneySpec {
         .withFallbackFrom(_.value)(Nested(Option.empty[Int]))
         .transform
         .asOption ==> Some(Nested(Nested(None)))
+    }
+
+    test("should use only source sequential-type when no merging strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      Nested(List("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[Vector[Int]]]
+        .withFallbackFrom(_.value)(ListSet("6", "7", "8", "9", "10"))
+        .transform
+        .asOption ==> Some(Nested(Vector(1, 2, 3, 4, 5)))
+      Nested(Vector("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[ListSet[Int]]]
+        .withFallbackFrom(_.value)(List("6", "7", "8", "9", "10"))
+        .transform
+        .asOption ==> Some(Nested(ListSet(1, 2, 3, 4, 5)))
+      Nested(ListSet("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[List[Int]]]
+        .withFallbackFrom(_.value)(Vector("6", "7", "8", "9", "10"))
+        .transform
+        .asOption ==> Some(Nested(List(1, 2, 3, 4, 5)))
+
+      Nested(Nested(List("1", "2", "3", "4", "5")))
+        .intoPartial[Nested[Nested[Vector[Int]]]]
+        .withFallbackFrom(_.value)(Nested(ListSet("6", "7", "8", "9", "10")))
+        .transform
+        .asOption ==> Some(Nested(Nested(Vector(1, 2, 3, 4, 5))))
+      Nested(Nested(Vector("1", "2", "3", "4", "5")))
+        .intoPartial[Nested[Nested[ListSet[Int]]]]
+        .withFallbackFrom(_.value)(Nested(List("6", "7", "8", "9", "10")))
+        .transform
+        .asOption ==> Some(Nested(Nested(ListSet(1, 2, 3, 4, 5))))
+      Nested(Nested(ListSet("1", "2", "3", "4", "5")))
+        .intoPartial[Nested[Nested[List[Int]]]]
+        .withFallbackFrom(_.value)(Nested(Vector("6", "7", "8", "9", "10")))
+        .transform
+        .asOption ==> Some(Nested(Nested(List(1, 2, 3, 4, 5))))
+    }
+
+    test("should use only source Map-type when no merging strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      Nested(ListMap("1" -> "2", "3" -> "4"))
+        .intoPartial[Nested[ListMap[Int, Int]]]
+        .withFallbackFrom(_.value)(ListMap("5" -> "6", "7" -> "8"))
+        .transform
+        .asOption
+        .map(_.value.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
+
+      Nested(Nested(ListMap("1" -> "2", "3" -> "4")))
+        .intoPartial[Nested[Nested[ListMap[Int, Int]]]]
+        .withFallbackFrom(_.value)(Nested(ListMap("5" -> "6", "7" -> "8")))
+        .transform
+        .asOption
+        .map(_.value.value.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
     }
   }
 
@@ -269,6 +387,141 @@ class PartialMergingStdLibSpec extends ChimneySpec {
         .enableOptionFallbackMerge(FallbackOrElseSource)
         .transform
         .asOption ==> Some(Nested(None))
+    }
+  }
+
+  group("flag .enableCollectionFallbackMerge(collectionFallbackMergeStrategy)") {
+
+    test("should merge sequential-types from source to fallback when SourceAppendFallback strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      List("1", "2", "3", "4", "5")
+        .intoPartial[Vector[Int]]
+        .withFallback(ListSet("6", "7", "8", "9", "10"))
+        .enableCollectionFallbackMerge(SourceAppendFallback)
+        .transform
+        .asOption ==> Some(Vector(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
+      Vector("1", "2", "3", "4", "5")
+        .intoPartial[ListSet[Int]]
+        .withFallback(List("6", "7", "8", "9", "10"))
+        .enableCollectionFallbackMerge(SourceAppendFallback)
+        .transform
+        .asOption ==> Some(ListSet(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
+      ListSet("1", "2", "3", "4", "5")
+        .intoPartial[List[Int]]
+        .withFallback(Vector("6", "7", "8", "9", "10"))
+        .enableCollectionFallbackMerge(SourceAppendFallback)
+        .transform
+        .asOption ==> Some(List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
+
+      Nested(List("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[Vector[Int]]]
+        .withFallback(Nested(ListSet("6", "7", "8", "9", "10")))
+        .enableCollectionFallbackMerge(SourceAppendFallback)
+        .transform
+        .asOption ==> Some(Nested(Vector(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)))
+      Nested(Vector("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[ListSet[Int]]]
+        .withFallback(Nested(List("6", "7", "8", "9", "10")))
+        .enableCollectionFallbackMerge(SourceAppendFallback)
+        .transform
+        .asOption ==> Some(Nested(ListSet(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)))
+      Nested(ListSet("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[List[Int]]]
+        .withFallback(Nested(Vector("6", "7", "8", "9", "10")))
+        .enableCollectionFallbackMerge(SourceAppendFallback)
+        .transform
+        .asOption ==> Some(Nested(List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)))
+    }
+
+    test("should merge Map-types from source to fallback when SourceAppendFallback strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      ListMap("1" -> "2", "3" -> "4")
+        .intoPartial[ListMap[Int, Int]]
+        .withFallback(ListMap("5" -> "6", "7" -> "8"))
+        .enableCollectionFallbackMerge(SourceAppendFallback)
+        .transform
+        .asOption
+        .map(_.toVector) ==> Some(Vector(1 -> 2, 3 -> 4, 5 -> 6, 7 -> 8))
+
+      Nested(Map("1" -> "2", "3" -> "4"))
+        .intoPartial[Nested[Map[Int, Int]]]
+        .withFallback(Nested(Map("5" -> "6", "7" -> "8")))
+        .enableCollectionFallbackMerge(SourceAppendFallback)
+        .transform
+        .asOption
+        .map(_.value.toVector) ==> Some(Vector(1 -> 2, 3 -> 4, 5 -> 6, 7 -> 8))
+    }
+
+    test("should merge sequential-types from fallback to source when FallbackAppendSource strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      List("1", "2", "3", "4", "5")
+        .intoPartial[Vector[Int]]
+        .withFallback(ListSet("6", "7", "8", "9", "10"))
+        .enableCollectionFallbackMerge(FallbackAppendSource)
+        .transform
+        .asOption ==> Some(Vector(6, 7, 8, 9, 10, 1, 2, 3, 4, 5))
+      Vector("1", "2", "3", "4", "5")
+        .intoPartial[ListSet[Int]]
+        .withFallback(List("6", "7", "8", "9", "10"))
+        .enableCollectionFallbackMerge(FallbackAppendSource)
+        .transform
+        .asOption ==> Some(ListSet(6, 7, 8, 9, 10, 1, 2, 3, 4, 5))
+      ListSet("1", "2", "3", "4", "5")
+        .intoPartial[List[Int]]
+        .withFallback(Vector("6", "7", "8", "9", "10"))
+        .enableCollectionFallbackMerge(FallbackAppendSource)
+        .transform
+        .asOption ==> Some(List(6, 7, 8, 9, 10, 1, 2, 3, 4, 5))
+
+      Nested(List("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[Vector[Int]]]
+        .withFallback(Nested(ListSet("6", "7", "8", "9", "10")))
+        .enableCollectionFallbackMerge(FallbackAppendSource)
+        .transform
+        .asOption ==> Some(Nested(Vector(6, 7, 8, 9, 10, 1, 2, 3, 4, 5)))
+      Nested(Vector("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[ListSet[Int]]]
+        .withFallback(Nested(List("6", "7", "8", "9", "10")))
+        .enableCollectionFallbackMerge(FallbackAppendSource)
+        .transform
+        .asOption ==> Some(Nested(ListSet(6, 7, 8, 9, 10, 1, 2, 3, 4, 5)))
+      Nested(ListSet("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[List[Int]]]
+        .withFallback(Nested(Vector("6", "7", "8", "9", "10")))
+        .enableCollectionFallbackMerge(FallbackAppendSource)
+        .transform
+        .asOption ==> Some(Nested(List(6, 7, 8, 9, 10, 1, 2, 3, 4, 5)))
+    }
+
+    test("should merge Map-types from fallback to source when FallbackAppendSource strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      ListMap("1" -> "2", "3" -> "4")
+        .intoPartial[ListMap[Int, Int]]
+        .withFallback(ListMap("5" -> "6", "7" -> "8"))
+        .enableCollectionFallbackMerge(FallbackAppendSource)
+        .transform
+        .asOption
+        .map(_.toVector) ==> Some(Vector(5 -> 6, 7 -> 8, 1 -> 2, 3 -> 4))
+
+      Nested(ListMap("1" -> "2", "3" -> "4"))
+        .intoPartial[Nested[ListMap[Int, Int]]]
+        .withFallback(Nested(ListMap("5" -> "6", "7" -> "8")))
+        .enableCollectionFallbackMerge(FallbackAppendSource)
+        .transform
+        .asOption
+        .map(_.value.toVector) ==> Some(Vector(5 -> 6, 7 -> 8, 1 -> 2, 3 -> 4))
     }
   }
 }
