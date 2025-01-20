@@ -20,6 +20,20 @@ class PatcherStdLibSpec extends ChimneySpec {
     (None: Option[Bar]).using(None: Option[Bar]).patch ==> None
   }
 
+  test("patch Either-type with Either-type of the same type, replacing the value") {
+    Either.cond(true, Bar("a"), "fail").patchUsing(Either.cond(true, Bar("b"), "fall")) ==> Right(Bar("b"))
+    Either.cond(true, Bar("a"), "fail").using(Either.cond(true, Bar("b"), "fall")).patch ==> Right(Bar("b"))
+
+    Either.cond(true, Bar("a"), "fail").patchUsing(Either.cond(false, Bar("b"), "fall")) ==> Left("fall")
+    Either.cond(true, Bar("a"), "fail").using(Either.cond(false, Bar("b"), "fall")).patch ==> Left("fall")
+
+    Either.cond(false, Bar("a"), "fail").patchUsing(Either.cond(true, Bar("b"), "fall")) ==> Right(Bar("b"))
+    Either.cond(false, Bar("a"), "fail").using(Either.cond(true, Bar("b"), "fall")).patch ==> Right(Bar("b"))
+
+    Either.cond(false, Bar("a"), "fail").patchUsing(Either.cond(false, Bar("b"), "fall")) ==> Left("fall")
+    Either.cond(false, Bar("a"), "fail").using(Either.cond(false, Bar("b"), "fall")).patch ==> Left("fall")
+  }
+
   group("flag .ignoreNoneInPatch") {
 
     test("should patch Option-type with Option-type of the same type, with patch.orElse(obj)") {
@@ -35,6 +49,41 @@ class PatcherStdLibSpec extends ChimneySpec {
         Option(Bar("a")).patchUsing(None: Option[Bar]) ==> Option(Bar("a"))
         (None: Option[Bar]).patchUsing(Option(Bar("b"))) ==> Option(Bar("b"))
         (None: Option[Bar]).patchUsing(None: Option[Bar]) ==> None
+      }
+    }
+  }
+
+  group("flag .ignoreLeftInPatch") {
+
+    test("should patch Either-type with Either-type of the same type, with patch.orElse(obj)") {
+      Either
+        .cond(true, Bar("a"), "fail")
+        .using(Either.cond(true, Bar("b"), "fall"))
+        .ignoreLeftInPatch
+        .patch ==> Right(Bar("b"))
+      Either
+        .cond(true, Bar("a"), "fail")
+        .using(Either.cond(false, Bar("b"), "fall"))
+        .ignoreLeftInPatch
+        .patch ==> Right(Bar("a"))
+      Either
+        .cond(false, Bar("a"), "fail")
+        .using(Either.cond(true, Bar("b"), "fall"))
+        .ignoreLeftInPatch
+        .patch ==> Right(Bar("b"))
+      Either
+        .cond(false, Bar("a"), "fail")
+        .using(Either.cond(false, Bar("b"), "fall"))
+        .ignoreLeftInPatch
+        .patch ==> Left("fail")
+
+      locally {
+        implicit val ctx = PatcherConfiguration.default.ignoreLeftInPatch
+
+        Either.cond(true, Bar("a"), "fail").patchUsing(Either.cond(true, Bar("b"), "fall")) ==> Right(Bar("b"))
+        Either.cond(true, Bar("a"), "fail").patchUsing(Either.cond(false, Bar("b"), "fall")) ==> Right(Bar("a"))
+        Either.cond(false, Bar("a"), "fail").patchUsing(Either.cond(true, Bar("b"), "fall")) ==> Right(Bar("b"))
+        Either.cond(false, Bar("a"), "fail").patchUsing(Either.cond(false, Bar("b"), "fall")) ==> Left("fail")
       }
     }
   }

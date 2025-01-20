@@ -26,7 +26,7 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
   def ignoreNoneInPatch: UpdateFlag[Enable[IgnoreNoneInPatch, Flags]] =
     enableFlag[IgnoreNoneInPatch]
 
-  /** Then there [[scala.Option]] is patching [[scala.Option]], on [[scala.None]] value will be cleared.
+  /** When [[scala.Option]] is patching [[scala.Option]], on [[scala.None]] value will be cleared.
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-patching/#treating-none-as-no-update-instead-of-set-to-none]] for
@@ -39,6 +39,64 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
     */
   def clearOnNoneInPatch: UpdateFlag[Disable[IgnoreNoneInPatch, Flags]] =
     disableFlag[IgnoreNoneInPatch]
+
+  /** In case when both object to patch and patch value contain field of type [[scala.Either]], this option allows to
+    * treat [[scala.Left]] value in patch as if the value was not provided.
+    *
+    * By default, when [[scala.Left]] is delivered in patch, Chimney used this new value.
+    *
+    * @see
+    *   TODO
+    *
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *
+    * @since TODO
+    */
+  def ignoreLeftInPatch: UpdateFlag[Enable[IgnoreLeftInPatch, Flags]] =
+    enableFlag[IgnoreLeftInPatch]
+
+  /** When [[scala.Either]] is patching [[scala.Either]], on [[scala.Left]] value will be overrides.
+    *
+    * @see
+    *   TODO
+    *
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *
+    * @since TODO
+    */
+  def useLeftOnLeftInPatch: UpdateFlag[Disable[IgnoreLeftInPatch, Flags]] =
+    disableFlag[IgnoreLeftInPatch]
+
+  /** In case when both object to patch and patch value contain field with a collection, this option allows to append
+    * value from patch to the source value, rather than overriding it.
+    *
+    * By default, patch's collection overrides the content of a field.
+    *
+    * @see
+    *   TODO
+    *
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *
+    * @since TODO
+    */
+  def appendCollectionInPatch: UpdateFlag[Enable[AppendCollectionInPatch, Flags]] =
+    enableFlag[AppendCollectionInPatch]
+
+  /** When collection is patching collection, the value will be simply overriden.
+    *
+    * @see
+    *   TODO
+    *
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *
+    * @since TODO
+    */
+  def overrideCollectionInPatch: UpdateFlag[Disable[AppendCollectionInPatch, Flags]] =
+    disableFlag[AppendCollectionInPatch]
 
   /** In case that patch object contains a redundant field (i.e. field that is not present in patched object type), this
     * option enables ignoring value of such fields and generate patch successfully.

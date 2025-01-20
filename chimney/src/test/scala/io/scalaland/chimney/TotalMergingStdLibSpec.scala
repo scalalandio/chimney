@@ -59,6 +59,50 @@ class TotalMergingStdLibSpec extends ChimneySpec {
         .transform ==> Nested(None)
     }
 
+    test("should use only source Either when no merging strategy is enabled") {
+      import merges.Nested
+
+      implicit val i2s: Transformer[Int, String] = _.toString
+
+      Either
+        .cond(true, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(true, "fallback", "fail"))
+        .transform ==> Right("10")
+      Either
+        .cond(true, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(false, "fallback", "fail"))
+        .transform ==> Right("10")
+      Either
+        .cond(false, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(true, "fallback", "fail"))
+        .transform ==> Left("0")
+      Either
+        .cond(false, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(false, "fallback", "fail"))
+        .transform ==> Left("0")
+
+      Nested(Either.cond(true, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(true, "fallback", "fail")))
+        .transform ==> Nested(Right("10"))
+      Nested(Either.cond(true, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(false, "fallback", "fail")))
+        .transform ==> Nested(Right("10"))
+      Nested(Either.cond(false, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(true, "fallback", "fail")))
+        .transform ==> Nested(Left("0"))
+      Nested(Either.cond(false, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(false, "fallback", "fail")))
+        .transform ==> Nested(Left("0"))
+    }
+
     test("should use only source sequential-type when no merging strategy is enabled") {
       import merges.Nested
 
@@ -159,6 +203,46 @@ class TotalMergingStdLibSpec extends ChimneySpec {
         .into[Nested[Nested[Option[String]]]]
         .withFallbackFrom(_.value)(Nested(Option.empty[String]))
         .transform ==> Nested(Nested(None))
+    }
+
+    test("should use only source Either when no merging strategy is enabled") {
+      import merges.Nested
+
+      implicit val i2s: Transformer[Int, String] = _.toString
+
+      Nested(Either.cond(true, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallbackFrom(_.value)(Either.cond(true, "fallback", "fail"))
+        .transform ==> Nested(Right("10"))
+      Nested(Either.cond(true, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallbackFrom(_.value)(Either.cond(false, "fallback", "fail"))
+        .transform ==> Nested(Right("10"))
+      Nested(Either.cond(false, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallbackFrom(_.value)(Either.cond(true, "fallback", "fail"))
+        .transform ==> Nested(Left("0"))
+      Nested(Either.cond(false, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallbackFrom(_.value)(Either.cond(false, "fallback", "fail"))
+        .transform ==> Nested(Left("0"))
+
+      Nested(Nested(Either.cond(true, 10, 0)))
+        .into[Nested[Nested[Either[String, String]]]]
+        .withFallbackFrom(_.value)(Nested(Either.cond(true, "fallback", "fail")))
+        .transform ==> Nested(Nested(Right("10")))
+      Nested(Nested(Either.cond(true, 10, 0)))
+        .into[Nested[Nested[Either[String, String]]]]
+        .withFallbackFrom(_.value)(Nested(Either.cond(false, "fallback", "fail")))
+        .transform ==> Nested(Nested(Right("10")))
+      Nested(Nested(Either.cond(false, 10, 0)))
+        .into[Nested[Nested[Either[String, String]]]]
+        .withFallbackFrom(_.value)(Nested(Either.cond(true, "fallback", "fail")))
+        .transform ==> Nested(Nested(Left("0")))
+      Nested(Nested(Either.cond(false, 10, 0)))
+        .into[Nested[Nested[Either[String, String]]]]
+        .withFallbackFrom(_.value)(Nested(Either.cond(false, "fallback", "fail")))
+        .transform ==> Nested(Nested(Left("0")))
     }
 
     test("should use only source sequential-type when no merging strategy is enabled") {
@@ -333,6 +417,113 @@ class TotalMergingStdLibSpec extends ChimneySpec {
         .withFallback(Nested(Option.empty[String]))
         .enableOptionFallbackMerge(FallbackOrElseSource)
         .transform ==> Nested(None)
+    }
+  }
+
+  group("flag .enableEitherFallbackMerge(optionFallbackMergeStrategy)") {
+
+    test("should merge Eithers from source to fallback when SourceOrElseFallback strategy is enabled") {
+      import merges.Nested
+
+      implicit val i2s: Transformer[Int, String] = _.toString
+
+      Either
+        .cond(true, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(true, "fallback", "fail"))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform ==> Right("10")
+      Either
+        .cond(true, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(false, "fallback", "fail"))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform ==> Right("10")
+      Either
+        .cond(false, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(true, "fallback", "fail"))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform ==> Right("fallback")
+      Either
+        .cond(false, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(false, "fallback", "fail"))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform ==> Left("fail")
+
+      Nested(Either.cond(true, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(true, "fallback", "fail")))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform ==> Nested(Right("10"))
+      Nested(Either.cond(true, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(false, "fallback", "fail")))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform ==> Nested(Right("10"))
+      Nested(Either.cond(false, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(true, "fallback", "fail")))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform ==> Nested(Right("fallback"))
+      Nested(Either.cond(false, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(false, "fallback", "fail")))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform ==> Nested(Left("fail"))
+    }
+
+    test("should merge Eithers from fallback to source when FallbackOrElseSource strategy is enabled") {
+      import merges.Nested
+
+      implicit val i2s: Transformer[Int, String] = _.toString
+
+      Either
+        .cond(true, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(true, "fallback", "fail"))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform ==> Right("fallback")
+      Either
+        .cond(true, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(false, "fallback", "fail"))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform ==> Right("10")
+      Either
+        .cond(false, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(true, "fallback", "fail"))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform ==> Right("fallback")
+      Either
+        .cond(false, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(false, "fallback", "fail"))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform ==> Left("0")
+
+      Nested(Either.cond(true, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(true, "fallback", "fail")))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform ==> Nested(Right("fallback"))
+      Nested(Either.cond(true, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(false, "fallback", "fail")))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform ==> Nested(Right("10"))
+      Nested(Either.cond(false, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(true, "fallback", "fail")))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform ==> Nested(Right("fallback"))
+      Nested(Either.cond(false, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(false, "fallback", "fail")))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform ==> Nested(Left("0"))
     }
   }
 
