@@ -327,6 +327,8 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
       val Flags: FlagsModule
       trait FlagsModule { this: Flags.type =>
         val IgnoreNoneInPatch: Type[runtime.PatcherFlags.IgnoreNoneInPatch]
+        val IgnoreLeftInPatch: Type[runtime.PatcherFlags.IgnoreLeftInPatch]
+        val AppendCollectionInPatch: Type[runtime.PatcherFlags.AppendCollectionInPatch]
         val IgnoreRedundantPatcherFields: Type[runtime.PatcherFlags.IgnoreRedundantPatcherFields]
         val MacrosLogging: Type[runtime.PatcherFlags.MacrosLogging]
       }

@@ -515,6 +515,10 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
       object Flags extends FlagsModule {
         val IgnoreNoneInPatch: Type[runtime.PatcherFlags.IgnoreNoneInPatch] =
           quoted.Type.of[runtime.PatcherFlags.IgnoreNoneInPatch]
+        val IgnoreLeftInPatch: Type[runtime.PatcherFlags.IgnoreLeftInPatch] =
+          quoted.Type.of[runtime.PatcherFlags.IgnoreLeftInPatch]
+        val AppendCollectionInPatch: Type[runtime.PatcherFlags.AppendCollectionInPatch] =
+          quoted.Type.of[runtime.PatcherFlags.AppendCollectionInPatch]
         val IgnoreRedundantPatcherFields: Type[runtime.PatcherFlags.IgnoreRedundantPatcherFields] =
           quoted.Type.of[runtime.PatcherFlags.IgnoreRedundantPatcherFields]
         val MacrosLogging: Type[runtime.PatcherFlags.MacrosLogging] = quoted.Type.of[runtime.PatcherFlags.MacrosLogging]

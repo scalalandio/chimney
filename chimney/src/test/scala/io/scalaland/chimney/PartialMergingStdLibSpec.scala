@@ -69,6 +69,58 @@ class PartialMergingStdLibSpec extends ChimneySpec {
         .asOption ==> Some(Nested(None))
     }
 
+    test("should use only source Either when no merging strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      Either
+        .cond(true, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(true, -1, 20))
+        .transform
+        .asOption ==> Some(Right(10))
+      Either
+        .cond(true, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(false, -1, 20))
+        .transform
+        .asOption ==> Some(Right(10))
+      Either
+        .cond(false, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(true, -1, 20))
+        .transform
+        .asOption ==> Some(Left(0))
+      Either
+        .cond(false, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(false, -1, 20))
+        .transform
+        .asOption ==> Some(Left(0))
+
+      Nested(Either.cond(true, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(true, -1, 20)))
+        .transform
+        .asOption ==> Some(Nested(Right(10)))
+      Nested(Either.cond(true, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(false, -1, 20)))
+        .transform
+        .asOption ==> Some(Nested(Right(10)))
+      Nested(Either.cond(false, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(true, -1, 20)))
+        .transform
+        .asOption ==> Some(Nested(Left(0)))
+      Nested(Either.cond(false, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(false, -1, 20)))
+        .transform
+        .asOption ==> Some(Nested(Left(0)))
+    }
+
     test("should use only source sequential-type when no merging strategy is enabled") {
       import merges.Nested
 
@@ -186,6 +238,54 @@ class PartialMergingStdLibSpec extends ChimneySpec {
         .withFallbackFrom(_.value)(Nested(Option.empty[Int]))
         .transform
         .asOption ==> Some(Nested(Nested(None)))
+    }
+
+    test("should use only source Either when no merging strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      Nested(Either.cond(true, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallbackFrom(_.value)(Either.cond(true, -1, 20))
+        .transform
+        .asOption ==> Some(Nested(Right(10)))
+      Nested(Either.cond(true, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallbackFrom(_.value)(Either.cond(false, -1, 20))
+        .transform
+        .asOption ==> Some(Nested(Right(10)))
+      Nested(Either.cond(false, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallbackFrom(_.value)(Either.cond(true, -1, 20))
+        .transform
+        .asOption ==> Some(Nested(Left(0)))
+      Nested(Either.cond(false, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallbackFrom(_.value)(Either.cond(false, -1, 20))
+        .transform
+        .asOption ==> Some(Nested(Left(0)))
+
+      Nested(Nested(Either.cond(true, "10", "0")))
+        .intoPartial[Nested[Nested[Either[Int, Int]]]]
+        .withFallbackFrom(_.value)(Nested(Either.cond(true, -1, 20)))
+        .transform
+        .asOption ==> Some(Nested(Nested(Right(10))))
+      Nested(Nested(Either.cond(true, "10", "0")))
+        .intoPartial[Nested[Nested[Either[Int, Int]]]]
+        .withFallbackFrom(_.value)(Nested(Either.cond(false, -1, 20)))
+        .transform
+        .asOption ==> Some(Nested(Nested(Right(10))))
+      Nested(Nested(Either.cond(false, "10", "0")))
+        .intoPartial[Nested[Nested[Either[Int, Int]]]]
+        .withFallbackFrom(_.value)(Nested(Either.cond(true, -1, 20)))
+        .transform
+        .asOption ==> Some(Nested(Nested(Left(0))))
+      Nested(Nested(Either.cond(false, "10", "0")))
+        .intoPartial[Nested[Nested[Either[Int, Int]]]]
+        .withFallbackFrom(_.value)(Nested(Either.cond(false, -1, 20)))
+        .transform
+        .asOption ==> Some(Nested(Nested(Left(0))))
     }
 
     test("should use only source sequential-type when no merging strategy is enabled") {
@@ -387,6 +487,129 @@ class PartialMergingStdLibSpec extends ChimneySpec {
         .enableOptionFallbackMerge(FallbackOrElseSource)
         .transform
         .asOption ==> Some(Nested(None))
+    }
+  }
+
+  group("flag .enableEitherFallbackMerge(optionFallbackMergeStrategy)") {
+
+    test("should merge Eithers from source to fallback when SourceOrElseFallback strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      Either
+        .cond(true, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(true, 20, -1))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform
+        .asOption ==> Some(Right(10))
+      Either
+        .cond(true, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(false, 20, -1))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform
+        .asOption ==> Some(Right(10))
+      Either
+        .cond(false, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(true, 20, -1))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform
+        .asOption ==> Some(Right(20))
+      Either
+        .cond(false, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(false, 20, -1))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform
+        .asOption ==> Some(Left(-1))
+
+      Nested(Either.cond(true, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(true, 20, -1)))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform
+        .asOption ==> Some(Nested(Right(10)))
+      Nested(Either.cond(true, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(false, 20, -1)))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform
+        .asOption ==> Some(Nested(Right(10)))
+      Nested(Either.cond(false, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(true, 20, -1)))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform
+        .asOption ==> Some(Nested(Right(20)))
+      Nested(Either.cond(false, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(false, 20, -1)))
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform
+        .asOption ==> Some(Nested(Left(-1)))
+    }
+
+    test("should merge Eithers from fallback to source when FallbackOrElseSource strategy is enabled") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      Either
+        .cond(true, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(true, 20, -1))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform
+        .asOption ==> Some(Right(20))
+      Either
+        .cond(true, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(false, 20, -1))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform
+        .asOption ==> Some(Right(10))
+      Either
+        .cond(false, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(true, 20, -1))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform
+        .asOption ==> Some(Right(20))
+      Either
+        .cond(false, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(false, 20, -1))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform
+        .asOption ==> Some(Left(0))
+
+      Nested(Either.cond(true, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(true, 20, -1)))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform
+        .asOption ==> Some(Nested(Right(20)))
+      Nested(Either.cond(true, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(false, 20, -1)))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform
+        .asOption ==> Some(Nested(Right(10)))
+      Nested(Either.cond(false, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(true, 20, -1)))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform
+        .asOption ==> Some(Nested(Right(20)))
+      Nested(Either.cond(false, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(false, 20, -1)))
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform
+        .asOption ==> Some(Nested(Left(0)))
     }
   }
 

@@ -7,6 +7,8 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   final protected case class PatcherFlags(
       ignoreNoneInPatch: Boolean = false,
+      ignoreLeftInPatch: Boolean = false,
+      appendCollectionInPatch: Boolean = false,
       ignoreRedundantPatcherFields: Boolean = false,
       displayMacrosLogging: Boolean = false
   ) {
@@ -14,6 +16,10 @@ private[compiletime] trait Configurations { this: Derivation =>
     def setBoolFlag[Flag <: runtime.PatcherFlags.Flag: Type](value: Boolean): PatcherFlags =
       if (Type[Flag] =:= ChimneyType.PatcherFlags.Flags.IgnoreNoneInPatch) {
         copy(ignoreNoneInPatch = value)
+      } else if (Type[Flag] =:= ChimneyType.PatcherFlags.Flags.IgnoreLeftInPatch) {
+        copy(ignoreLeftInPatch = value)
+      } else if (Type[Flag] =:= ChimneyType.PatcherFlags.Flags.AppendCollectionInPatch) {
+        copy(appendCollectionInPatch = value)
       } else if (Type[Flag] =:= ChimneyType.PatcherFlags.Flags.IgnoreRedundantPatcherFields) {
         copy(ignoreRedundantPatcherFields = value)
       } else if (Type[Flag] =:= ChimneyType.PatcherFlags.Flags.MacrosLogging) {
@@ -26,12 +32,16 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     def toTransformerFlags: TransformerFlags = TransformerFlags(
       optionFallbackMerge = if (ignoreNoneInPatch) Some(dsls.SourceOrElseFallback) else None,
+      eitherFallbackMerge = if (ignoreLeftInPatch) Some(dsls.SourceOrElseFallback) else None,
+      collectionFallbackMerge = if (appendCollectionInPatch) Some(dsls.SourceAppendFallback) else None,
       unusedFieldPolicy = if (ignoreRedundantPatcherFields) None else Some(dsls.FailOnIgnoredSourceVal),
       displayMacrosLogging = displayMacrosLogging
     )
 
     override def toString: String = s"PatcherFlags(${Vector(
         if (ignoreNoneInPatch) Vector("ignoreNoneInPatch") else Vector.empty,
+        if (ignoreLeftInPatch) Vector("ignoreLeftInPatch") else Vector.empty,
+        if (appendCollectionInPatch) Vector("appendCollectionInPatch") else Vector.empty,
         if (ignoreRedundantPatcherFields) Vector("ignoreRedundantPatcherFields") else Vector.empty,
         if (displayMacrosLogging) Vector("displayMacrosLogging") else Vector.empty
       ).flatten.mkString(", ")})"
@@ -40,7 +50,9 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     // $COVERAGE-OFF$It's testable in (Scala-CLI) snippets and not really in normal tests with coverage
     def global: PatcherFlags = XMacroSettings.foldLeft(PatcherFlags()) {
-      case (cfg, patcherFlag"IgnoreNoneInPatch=$value") => cfg.copy(ignoreNoneInPatch = value.toBoolean)
+      case (cfg, patcherFlag"IgnoreNoneInPatch=$value")       => cfg.copy(ignoreNoneInPatch = value.toBoolean)
+      case (cfg, patcherFlag"IgnoreLeftInPatch=$value")       => cfg.copy(ignoreLeftInPatch = value.toBoolean)
+      case (cfg, patcherFlag"AppendCollectionInPatch=$value") => cfg.copy(appendCollectionInPatch = value.toBoolean)
       case (cfg, patcherFlag"IgnoreRedundantPatcherFields=$value") =>
         cfg.copy(ignoreRedundantPatcherFields = value.toBoolean)
       case (cfg, patcherFlag"MacrosLogging=$value") => cfg.copy(displayMacrosLogging = value.toBoolean)
