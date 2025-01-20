@@ -21,7 +21,7 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
     // Called by PatcherUsing => prefix is PatcherUsing
     cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Overrides, Flags]](c.prefix.tree)) { pu =>
       Expr.block(
-        List(Expr.suppressUnused(pu)),
+        List(Expr.suppressUnused(tc)),
         derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
           obj = c.Expr[A](q"$pu.obj"),
           patch = c.Expr[Patch](q"$pu.objPatch")
@@ -39,12 +39,10 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   ](
       tc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): Expr[Patcher[A, Patch]] = retypecheck(
-    cacheDefinition(c.Expr[dsl.PatcherDefinition[A, Patch, Overrides, InstanceFlags]](c.prefix.tree)) { pu =>
-      Expr.block(
-        List(Expr.suppressUnused(pu)),
-        derivePatcher[A, Patch, Overrides, InstanceFlags, ImplicitScopeFlags]
-      )
-    }
+    Expr.block(
+      List(Expr.suppressUnused(tc)),
+      derivePatcher[A, Patch, Overrides, InstanceFlags, ImplicitScopeFlags]
+    )
   )
 
   def derivePatcherWithDefaults[
