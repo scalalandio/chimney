@@ -384,6 +384,69 @@ class TotalMergingIntegrationsSpec extends ChimneySpec {
     }
   }
 
+  group("flag .disableOptionFallbackMerge") {
+
+    test("should disable globally enabled .enableOptionFallbackMerge") {
+      import merges.Nested
+
+      implicit val i2s: Transformer[Int, String] = _.toString
+
+      implicit val cfg = TransformerConfiguration.default.enableOptionFallbackMerge(SourceOrElseFallback)
+
+      10
+        .into[Possible[String]]
+        .withFallback("fallback")
+        .disableOptionFallbackMerge
+        .transform ==> Possible.Present("10")
+      Possible(10)
+        .into[Possible[String]]
+        .withFallback(Possible("fallback"))
+        .disableOptionFallbackMerge
+        .transform ==> Possible.Present("10")
+      Possible(10)
+        .into[Possible[String]]
+        .withFallback(Possible.Nope: Possible[String])
+        .disableOptionFallbackMerge
+        .transform ==> Possible.Present("10")
+      (Possible.Nope: Possible[Int])
+        .into[Possible[String]]
+        .withFallback(Possible("fallback"))
+        .disableOptionFallbackMerge
+        .transform ==> Possible.Nope
+      (Possible.Nope: Possible[Int])
+        .into[Possible[String]]
+        .withFallback(Possible.Nope: Possible[String])
+        .disableOptionFallbackMerge
+        .transform ==> Possible.Nope
+
+      Nested(10)
+        .into[Nested[Possible[String]]]
+        .withFallback(Nested("fallback"))
+        .disableOptionFallbackMerge
+        .transform ==> Nested(Possible.Present("10"))
+      Nested(Possible(10))
+        .into[Nested[Possible[String]]]
+        .withFallback(Nested(Possible("fallback")))
+        .disableOptionFallbackMerge
+        .transform ==> Nested(Possible.Present("10"))
+      Nested(Possible(10))
+        .into[Nested[Possible[String]]]
+        .withFallback(Nested(Possible.Nope: Possible[String]))
+        .disableOptionFallbackMerge
+        .transform ==> Nested(Possible.Present("10"))
+      Nested(Possible.Nope: Possible[Int])
+        .into[Nested[Possible[String]]]
+        .withFallback(Nested(Possible("fallback")))
+        .disableOptionFallbackMerge
+        .transform ==> Nested(Possible.Nope)
+      Nested(Possible.Nope: Possible[Int])
+        .into[Nested[Possible[String]]]
+        .withFallback(Nested(Possible.Nope: Possible[String]))
+        .disableOptionFallbackMerge
+        .transform ==> Nested(Possible.Nope)
+    }
+  }
+
   group("flag .enableCollectionFallbackMerge(collectionFallbackMergeStrategy)") {
 
     test("should merge sequential-types from source to fallback when SourceAppendFallback strategy is enabled") {
@@ -562,6 +625,95 @@ class TotalMergingIntegrationsSpec extends ChimneySpec {
         .transform
         .value
         .toVector ==> Vector("5" -> "6", "7" -> "8", "1" -> "2", "3" -> "4")
+    }
+  }
+
+  group("flag .disableCollectionFallbackMerge") {
+
+    test("should disable globally enabled .enableCollectionFallbackMerge") {
+
+      import merges.Nested
+
+      implicit val i2s: Transformer[Int, String] = _.toString
+
+      implicit val cfg = TransformerConfiguration.default.enableCollectionFallbackMerge(SourceAppendFallback)
+
+      CustomCollection
+        .of(1, 2, 3, 4, 5)
+        .into[Vector[String]]
+        .withFallback(CustomCollection.of(6, 7, 8, 9, 10))
+        .disableCollectionFallbackMerge
+        .transform ==> Vector("1", "2", "3", "4", "5")
+      Vector(1, 2, 3, 4, 5)
+        .into[CustomCollection[String]]
+        .withFallback(List(6, 7, 8, 9, 10))
+        .disableCollectionFallbackMerge
+        .transform ==> CustomCollection.of("1", "2", "3", "4", "5")
+      CustomCollection
+        .of(1, 2, 3, 4, 5)
+        .into[CustomCollection[String]]
+        .withFallback(CustomCollection.of(6, 7, 8, 9, 10))
+        .disableCollectionFallbackMerge
+        .transform ==> CustomCollection.of("1", "2", "3", "4", "5")
+
+      Nested(CustomCollection.of(1, 2, 3, 4, 5))
+        .into[Nested[Vector[String]]]
+        .withFallback(Nested(CustomCollection.of(6, 7, 8, 9, 10)))
+        .disableCollectionFallbackMerge
+        .transform ==> Nested(Vector("1", "2", "3", "4", "5"))
+      Nested(Vector(1, 2, 3, 4, 5))
+        .into[Nested[CustomCollection[String]]]
+        .withFallback(Nested(List(6, 7, 8, 9, 10)))
+        .disableCollectionFallbackMerge
+        .transform ==> Nested(CustomCollection.of("1", "2", "3", "4", "5"))
+      Nested(CustomCollection.of(1, 2, 3, 4, 5))
+        .into[Nested[CustomCollection[String]]]
+        .withFallback(Nested(CustomCollection.of(6, 7, 8, 9, 10)))
+        .disableCollectionFallbackMerge
+        .transform ==> Nested(CustomCollection.of("1", "2", "3", "4", "5"))
+
+      CustomMap
+        .of(1 -> 2, 3 -> 4)
+        .into[ListMap[String, String]]
+        .withFallback(CustomMap.of(5 -> 6, 7 -> 8))
+        .disableCollectionFallbackMerge
+        .transform
+        .toVector ==> Vector("1" -> "2", "3" -> "4")
+      ListMap(1 -> 2, 3 -> 4)
+        .into[CustomMap[String, String]]
+        .withFallback(ListMap(5 -> 6, 7 -> 8))
+        .disableCollectionFallbackMerge
+        .transform
+        .toVector ==> Vector("1" -> "2", "3" -> "4")
+      CustomMap
+        .of(1 -> 2, 3 -> 4)
+        .into[CustomMap[String, String]]
+        .withFallback(CustomMap.of(5 -> 6, 7 -> 8))
+        .disableCollectionFallbackMerge
+        .transform
+        .toVector ==> Vector("1" -> "2", "3" -> "4")
+
+      Nested(CustomCollection.of(1 -> 2, 3 -> 4))
+        .into[Nested[ListMap[String, String]]]
+        .withFallback(Nested(ListMap(5 -> 6, 7 -> 8)))
+        .disableCollectionFallbackMerge
+        .transform
+        .value
+        .toVector ==> Vector("1" -> "2", "3" -> "4")
+      Nested(ListMap(1 -> 2, 3 -> 4))
+        .into[Nested[CustomMap[String, String]]]
+        .withFallback(Nested(ListMap(5 -> 6, 7 -> 8)))
+        .disableCollectionFallbackMerge
+        .transform
+        .value
+        .toVector ==> Vector("1" -> "2", "3" -> "4")
+      Nested(CustomMap.of(1 -> 2, 3 -> 4))
+        .into[Nested[CustomMap[String, String]]]
+        .withFallback(Nested(CustomMap.of(5 -> 6, 7 -> 8)))
+        .disableCollectionFallbackMerge
+        .transform
+        .value
+        .toVector ==> Vector("1" -> "2", "3" -> "4")
     }
   }
 }

@@ -62,7 +62,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         copy(displayMacrosLogging = value)
       } else {
         // $COVERAGE-OFF$
-        reportError(s"Invalid internal TransformerFlag type: ${Type[Flag]}!")
+        reportError(s"Invalid internal TransformerFlag type: ${Type.prettyPrint[Flag]}!")
         // $COVERAGE-ON$
       }
 
@@ -736,6 +736,8 @@ private[compiletime] trait Configurations { this: Derivation =>
             extractTransformerFlags[Flags2](defaultFlags).setImplicitConflictResolution(None)
           case ChimneyType.TransformerFlags.Flags.OptionFallbackMerge(_) =>
             extractTransformerFlags[Flags2](defaultFlags).setOptionFallbackMerge(None)
+          case ChimneyType.TransformerFlags.Flags.EitherFallbackMerge(_) =>
+            extractTransformerFlags[Flags2](defaultFlags).setEitherFallbackMerge(None)
           case ChimneyType.TransformerFlags.Flags.CollectionFallbackMerge(_) =>
             extractTransformerFlags[Flags2](defaultFlags).setCollectionFallbackMerge(None)
           case ChimneyType.TransformerFlags.Flags.FieldNameComparison(_) =>

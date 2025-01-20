@@ -490,6 +490,81 @@ class PartialMergingStdLibSpec extends ChimneySpec {
     }
   }
 
+  group("flag .disableOptionFallbackMerge") {
+
+    test("should disable globally enabled .enableOptionFallbackMerge") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      implicit val cfg = TransformerConfiguration.default.enableOptionFallbackMerge(SourceOrElseFallback)
+
+      "10"
+        .intoPartial[Option[Int]]
+        .withFallback(20)
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Some(10))
+      Option("10")
+        .intoPartial[Option[Int]]
+        .withFallback(Option(20))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Some(10))
+      Option("10")
+        .intoPartial[Option[Int]]
+        .withFallback(Option.empty[Int])
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Some(10))
+      Option
+        .empty[String]
+        .intoPartial[Option[Int]]
+        .withFallback(Option(20))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(None)
+      Option
+        .empty[String]
+        .intoPartial[Option[Int]]
+        .withFallback(Option.empty[Int])
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(None)
+
+      Nested("10")
+        .intoPartial[Nested[Option[Int]]]
+        .withFallback(Nested(20))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Some(10)))
+      Nested(Option("10"))
+        .intoPartial[Nested[Option[Int]]]
+        .withFallback(Nested(Option(20)))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Some(10)))
+      Nested(Option("10"))
+        .intoPartial[Nested[Option[Int]]]
+        .withFallback(Nested(Option.empty[String]))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Some(10)))
+      Nested(Option.empty[String])
+        .intoPartial[Nested[Option[Int]]]
+        .withFallback(Nested(Option(20)))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(None))
+      Nested(Option.empty[String])
+        .intoPartial[Nested[Option[Int]]]
+        .withFallback(Nested(Option.empty[Int]))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(None))
+    }
+  }
+
   group("flag .enableEitherFallbackMerge(optionFallbackMergeStrategy)") {
 
     test("should merge Eithers from source to fallback when SourceOrElseFallback strategy is enabled") {
@@ -608,6 +683,71 @@ class PartialMergingStdLibSpec extends ChimneySpec {
         .intoPartial[Nested[Either[Int, Int]]]
         .withFallback(Nested(Either.cond(false, 20, -1)))
         .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform
+        .asOption ==> Some(Nested(Left(0)))
+    }
+  }
+
+  group("flag .disableOptionFallbackMerge") {
+
+    test("should disable globally enabled .enableOptionFallbackMerge") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      implicit val cfg = TransformerConfiguration.default.enableEitherFallbackMerge(SourceOrElseFallback)
+
+      Either
+        .cond(true, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(true, -1, 20))
+        .disableEitherFallbackMerge
+        .transform
+        .asOption ==> Some(Right(10))
+      Either
+        .cond(true, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(false, -1, 20))
+        .disableEitherFallbackMerge
+        .transform
+        .asOption ==> Some(Right(10))
+      Either
+        .cond(false, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(true, -1, 20))
+        .disableEitherFallbackMerge
+        .transform
+        .asOption ==> Some(Left(0))
+      Either
+        .cond(false, "10", "0")
+        .intoPartial[Either[Int, Int]]
+        .withFallback(Either.cond(false, -1, 20))
+        .disableEitherFallbackMerge
+        .transform
+        .asOption ==> Some(Left(0))
+
+      Nested(Either.cond(true, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(true, -1, 20)))
+        .disableEitherFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Right(10)))
+      Nested(Either.cond(true, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(false, -1, 20)))
+        .disableEitherFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Right(10)))
+      Nested(Either.cond(false, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(true, -1, 20)))
+        .disableEitherFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Left(0)))
+      Nested(Either.cond(false, "10", "0"))
+        .intoPartial[Nested[Either[Int, Int]]]
+        .withFallback(Nested(Either.cond(false, -1, 20)))
+        .disableEitherFallbackMerge
         .transform
         .asOption ==> Some(Nested(Left(0)))
     }
@@ -745,6 +885,71 @@ class PartialMergingStdLibSpec extends ChimneySpec {
         .transform
         .asOption
         .map(_.value.toVector) ==> Some(Vector(5 -> 6, 7 -> 8, 1 -> 2, 3 -> 4))
+    }
+  }
+
+  group("flag .disableCollectionFallbackMerge") {
+
+    test("should disable globally enabled .enableCollectionFallbackMerge") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      implicit val cfg = TransformerConfiguration.default.enableCollectionFallbackMerge(SourceAppendFallback)
+
+      List("1", "2", "3", "4", "5")
+        .intoPartial[Vector[Int]]
+        .withFallback(ListSet("6", "7", "8", "9", "10"))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(Vector(1, 2, 3, 4, 5))
+      Vector("1", "2", "3", "4", "5")
+        .intoPartial[ListSet[Int]]
+        .withFallback(List("6", "7", "8", "9", "10"))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(ListSet(1, 2, 3, 4, 5))
+      ListSet("1", "2", "3", "4", "5")
+        .intoPartial[List[Int]]
+        .withFallback(Vector("6", "7", "8", "9", "10"))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(List(1, 2, 3, 4, 5))
+
+      Nested(List("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[Vector[Int]]]
+        .withFallback(Nested(ListSet("6", "7", "8", "9", "10")))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Vector(1, 2, 3, 4, 5)))
+      Nested(Vector("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[ListSet[Int]]]
+        .withFallback(Nested(List("6", "7", "8", "9", "10")))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(ListSet(1, 2, 3, 4, 5)))
+      Nested(ListSet("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[List[Int]]]
+        .withFallback(Nested(Vector("6", "7", "8", "9", "10")))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(List(1, 2, 3, 4, 5)))
+
+      ListMap("1" -> "2", "3" -> "4")
+        .intoPartial[ListMap[Int, Int]]
+        .withFallback(ListMap(5 -> 6, 7 -> 8))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption
+        .map(_.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
+
+      Nested(ListMap("1" -> "2", "3" -> "4"))
+        .intoPartial[Nested[ListMap[Int, Int]]]
+        .withFallback(Nested(ListMap("5" -> "6", "7" -> "8")))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption
+        .map(_.value.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
     }
   }
 }

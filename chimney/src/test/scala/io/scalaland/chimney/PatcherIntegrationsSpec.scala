@@ -62,6 +62,18 @@ class PatcherIntegrationsSpec extends ChimneySpec {
     }
   }
 
+  group("flag .ignoreNoneInPatch") {
+
+    test("should disable globally enabled .ignoreNoneInPatch") {
+      implicit val cfg = PatcherConfiguration.default.ignoreNoneInPatch
+
+      Possible(Bar("a")).using(Possible(Bar("b"))).clearOnNoneInPatch.patch ==> Possible(Bar("b"))
+      Possible(Bar("a")).using(Possible.Nope: Possible[Bar]).clearOnNoneInPatch.patch ==> Possible.Nope
+      (Possible.Nope: Possible[Bar]).using(Possible(Bar("b"))).clearOnNoneInPatch.patch ==> Possible(Bar("b"))
+      (Possible.Nope: Possible[Bar]).using(Possible.Nope: Possible[Bar]).clearOnNoneInPatch.patch ==> Possible.Nope
+    }
+  }
+
   group("flag .appendCollectionInPatch") {
 
     test("should patch sequential-type with sequential-type of the same type, with obj ++ patch") {
@@ -115,6 +127,39 @@ class PatcherIntegrationsSpec extends ChimneySpec {
           .of("id" -> Bar("a"))
           .patchUsing(CustomMap.of("id2" -> Bar("b"))) ==> CustomMap.of("id" -> Bar("a"), "id2" -> Bar("b"))
       }
+    }
+  }
+
+  group("flag .overrideCollectionInPatch") {
+
+    test("should disable globally enabled .appendCollectionInPatch") {
+      implicit val cfg = PatcherConfiguration.default.appendCollectionInPatch
+
+      CustomCollection
+        .of(Bar("a"))
+        .using(Vector(Bar("b")))
+        .overrideCollectionInPatch
+        .patch ==> CustomCollection.of(Bar("b"))
+      Vector(Bar("a")).using(CustomCollection.of(Bar("b"))).overrideCollectionInPatch.patch ==> Vector(Bar("b"))
+      CustomCollection
+        .of(Bar("a"))
+        .using(CustomCollection.of(Bar("b")))
+        .overrideCollectionInPatch
+        .patch ==> CustomCollection.of(Bar("b"))
+      CustomMap
+        .of("id" -> Bar("a"))
+        .using(Map("id2" -> Bar("b")))
+        .overrideCollectionInPatch
+        .patch ==> CustomMap.of("id2" -> Bar("b"))
+      Map("id" -> Bar("a"))
+        .using(CustomMap.of("id2" -> Bar("b")))
+        .overrideCollectionInPatch
+        .patch ==> Map("id2" -> Bar("b"))
+      CustomMap
+        .of("id" -> Bar("a"))
+        .using(CustomMap.of("id2" -> Bar("b")))
+        .overrideCollectionInPatch
+        .patch ==> CustomMap.of("id2" -> Bar("b"))
     }
   }
 }

@@ -420,6 +420,71 @@ class TotalMergingStdLibSpec extends ChimneySpec {
     }
   }
 
+  group("flag .disableOptionFallbackMerge") {
+
+    test("should disable globally enabled .enableOptionFallbackMerge") {
+      import merges.Nested
+
+      implicit val i2s: Transformer[Int, String] = _.toString
+
+      implicit val cfg = TransformerConfiguration.default.enableOptionFallbackMerge(SourceOrElseFallback)
+
+      10
+        .into[Option[String]]
+        .withFallback("fallback")
+        .disableOptionFallbackMerge
+        .transform ==> Some("10")
+      Option(10)
+        .into[Option[String]]
+        .withFallback(Option("fallback"))
+        .disableOptionFallbackMerge
+        .transform ==> Some("10")
+      Option(10)
+        .into[Option[String]]
+        .withFallback(Option.empty[String])
+        .disableOptionFallbackMerge
+        .transform ==> Some("10")
+      Option
+        .empty[Int]
+        .into[Option[String]]
+        .withFallback(Option("fallback"))
+        .disableOptionFallbackMerge
+        .transform ==> None
+      Option
+        .empty[Int]
+        .into[Option[String]]
+        .withFallback(Option.empty[String])
+        .disableOptionFallbackMerge
+        .transform ==> None
+
+      Nested(10)
+        .into[Nested[Option[String]]]
+        .withFallback(Nested("fallback"))
+        .disableOptionFallbackMerge
+        .transform ==> Nested(Some("10"))
+      Nested(Option(10))
+        .into[Nested[Option[String]]]
+        .withFallback(Nested(Option("fallback")))
+        .disableOptionFallbackMerge
+        .transform ==> Nested(Some("10"))
+      Nested(Option(10))
+        .into[Nested[Option[String]]]
+        .withFallback(Nested(Option.empty[String]))
+        .disableOptionFallbackMerge
+        .transform ==> Nested(Some("10"))
+      Nested(Option.empty[Int])
+        .into[Nested[Option[String]]]
+        .withFallback(Nested(Option("fallback")))
+        .disableOptionFallbackMerge
+        .transform ==> Nested(None)
+      Nested(Option.empty[Int])
+        .into[Nested[Option[String]]]
+        .withFallback(Nested(Option.empty[String]))
+        .disableOptionFallbackMerge
+        .transform ==> Nested(None)
+    }
+  }
+
   group("flag .enableEitherFallbackMerge(optionFallbackMergeStrategy)") {
 
     test("should merge Eithers from source to fallback when SourceOrElseFallback strategy is enabled") {
@@ -523,6 +588,63 @@ class TotalMergingStdLibSpec extends ChimneySpec {
         .into[Nested[Either[String, String]]]
         .withFallback(Nested(Either.cond(false, "fallback", "fail")))
         .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform ==> Nested(Left("0"))
+    }
+  }
+
+  group("flag .disableEitherFallbackMerge") {
+
+    test("should disable globally enabled .enableEitherFallbackMerge") {
+      import merges.Nested
+
+      implicit val i2s: Transformer[Int, String] = _.toString
+
+      implicit val cfg = TransformerConfiguration.default.enableEitherFallbackMerge(SourceOrElseFallback)
+
+      Either
+        .cond(true, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(true, "fallback", "fail"))
+        .disableEitherFallbackMerge
+        .transform ==> Right("10")
+      Either
+        .cond(true, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(false, "fallback", "fail"))
+        .disableEitherFallbackMerge
+        .transform ==> Right("10")
+      Either
+        .cond(false, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(true, "fallback", "fail"))
+        .disableEitherFallbackMerge
+        .transform ==> Left("0")
+      Either
+        .cond(false, 10, 0)
+        .into[Either[String, String]]
+        .withFallback(Either.cond(false, "fallback", "fail"))
+        .disableEitherFallbackMerge
+        .transform ==> Left("0")
+
+      Nested(Either.cond(true, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(true, "fallback", "fail")))
+        .disableEitherFallbackMerge
+        .transform ==> Nested(Right("10"))
+      Nested(Either.cond(true, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(false, "fallback", "fail")))
+        .disableEitherFallbackMerge
+        .transform ==> Nested(Right("10"))
+      Nested(Either.cond(false, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(true, "fallback", "fail")))
+        .disableEitherFallbackMerge
+        .transform ==> Nested(Left("0"))
+      Nested(Either.cond(false, 10, 0))
+        .into[Nested[Either[String, String]]]
+        .withFallback(Nested(Either.cond(false, "fallback", "fail")))
+        .disableEitherFallbackMerge
         .transform ==> Nested(Left("0"))
     }
   }
@@ -645,6 +767,64 @@ class TotalMergingStdLibSpec extends ChimneySpec {
         .transform
         .value
         .toVector ==> Vector("5" -> "6", "7" -> "8", "1" -> "2", "3" -> "4")
+    }
+  }
+
+  group("flag .disableCollectionFallbackMerge") {
+
+    test("should disable globally enabled .enableCollectionFallbackMerge") {
+      import merges.Nested
+
+      implicit val i2s: Transformer[Int, String] = _.toString
+
+      implicit val cfg = TransformerConfiguration.default.enableCollectionFallbackMerge(SourceAppendFallback)
+
+      List(1, 2, 3, 4, 5)
+        .into[Vector[String]]
+        .withFallback(ListSet(6, 7, 8, 9, 10))
+        .disableCollectionFallbackMerge
+        .transform ==> Vector("1", "2", "3", "4", "5")
+      Vector(1, 2, 3, 4, 5)
+        .into[ListSet[String]]
+        .withFallback(List(6, 7, 8, 9, 10))
+        .disableCollectionFallbackMerge
+        .transform ==> ListSet("1", "2", "3", "4", "5")
+      ListSet(1, 2, 3, 4, 5)
+        .into[List[String]]
+        .withFallback(Vector(6, 7, 8, 9, 10))
+        .disableCollectionFallbackMerge
+        .transform ==> List("1", "2", "3", "4", "5")
+
+      Nested(List(1, 2, 3, 4, 5))
+        .into[Nested[Vector[String]]]
+        .withFallback(Nested(ListSet(6, 7, 8, 9, 10)))
+        .disableCollectionFallbackMerge
+        .transform ==> Nested(Vector("1", "2", "3", "4", "5"))
+      Nested(Vector(1, 2, 3, 4, 5))
+        .into[Nested[ListSet[String]]]
+        .withFallback(Nested(List(6, 7, 8, 9, 10)))
+        .disableCollectionFallbackMerge
+        .transform ==> Nested(ListSet("1", "2", "3", "4", "5"))
+      Nested(ListSet(1, 2, 3, 4, 5))
+        .into[Nested[List[String]]]
+        .withFallback(Nested(Vector(6, 7, 8, 9, 10)))
+        .disableCollectionFallbackMerge
+        .transform ==> Nested(List("1", "2", "3", "4", "5"))
+
+      ListMap(1 -> 2, 3 -> 4)
+        .into[ListMap[String, String]]
+        .withFallback(ListMap(5 -> 6, 7 -> 8))
+        .disableCollectionFallbackMerge
+        .transform
+        .toVector ==> Vector("1" -> "2", "3" -> "4")
+
+      Nested(Map(1 -> 2, 3 -> 4))
+        .into[Nested[ListMap[String, String]]]
+        .withFallback(Nested(ListMap(5 -> 6, 7 -> 8)))
+        .disableCollectionFallbackMerge
+        .transform
+        .value
+        .toVector ==> Vector("1" -> "2", "3" -> "4")
     }
   }
 }

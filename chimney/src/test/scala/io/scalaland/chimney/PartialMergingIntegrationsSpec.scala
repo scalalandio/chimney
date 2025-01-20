@@ -438,6 +438,79 @@ class PartialMergingIntegrationsSpec extends ChimneySpec {
     }
   }
 
+  group("flag .disableOptionFallbackMerge") {
+
+    test("should disable globally enabled .enableOptionFallbackMerge") {
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      implicit val cfg = TransformerConfiguration.default.enableOptionFallbackMerge(SourceOrElseFallback)
+
+      "10"
+        .intoPartial[Possible[Int]]
+        .withFallback(20)
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Possible.Present(10))
+      Possible("10")
+        .intoPartial[Possible[Int]]
+        .withFallback(Possible(20))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Possible.Present(10))
+      Possible("10")
+        .intoPartial[Possible[Int]]
+        .withFallback(Possible.Nope: Possible[Int])
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Possible.Present(10))
+      (Possible.Nope: Possible[String])
+        .intoPartial[Possible[Int]]
+        .withFallback(Possible(20))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Possible.Nope)
+      (Possible.Nope: Possible[String])
+        .intoPartial[Possible[Int]]
+        .withFallback(Possible.Nope: Possible[Int])
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Possible.Nope)
+
+      Nested("10")
+        .intoPartial[Nested[Possible[Int]]]
+        .withFallback(Nested(20))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Possible.Present(10)))
+      Nested(Possible("10"))
+        .intoPartial[Nested[Possible[Int]]]
+        .withFallback(Nested(Possible(20)))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Possible.Present(10)))
+      Nested(Possible("10"))
+        .intoPartial[Nested[Possible[Int]]]
+        .withFallback(Nested(Possible.Nope: Possible[String]))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Possible.Present(10)))
+      Nested(Possible.Nope: Possible[String])
+        .intoPartial[Nested[Possible[Int]]]
+        .withFallback(Nested(Possible(20)))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Possible.Nope))
+      Nested(Possible.Nope: Possible[String])
+        .intoPartial[Nested[Possible[Int]]]
+        .withFallback(Nested(Possible.Nope: Possible[Int]))
+        .disableOptionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Possible.Nope))
+    }
+  }
+
   group("flag .enableCollectionFallbackMerge(collectionFallbackMergeStrategy)") {
 
     test("should merge sequential-types from source to fallback when SourceAppendFallback strategy is enabled") {
@@ -634,6 +707,104 @@ class PartialMergingIntegrationsSpec extends ChimneySpec {
         .transform
         .asOption
         .map(_.value.toVector) ==> Some(Vector(5 -> 6, 7 -> 8, 1 -> 2, 3 -> 4))
+    }
+  }
+
+  group("flag .disableCollectionFallbackMerge") {
+
+    test("should disable globally enabled .enableCollectionFallbackMerge") {
+
+      import merges.Nested
+
+      implicit val s2i: PartialTransformer[String, Int] = PartialTransformer.fromFunction[String, Int](_.toInt)
+
+      implicit val cfg = TransformerConfiguration.default.enableCollectionFallbackMerge(SourceAppendFallback)
+
+      CustomCollection
+        .of("1", "2", "3", "4", "5")
+        .intoPartial[Vector[Int]]
+        .withFallback(CustomCollection.of("6", "7", "8", "9", "10"))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(Vector(1, 2, 3, 4, 5))
+      Vector("1", "2", "3", "4", "5")
+        .intoPartial[CustomCollection[Int]]
+        .withFallback(List("6", "7", "8", "9", "10"))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(CustomCollection.of(1, 2, 3, 4, 5))
+      CustomCollection
+        .of("1", "2", "3", "4", "5")
+        .intoPartial[CustomCollection[Int]]
+        .withFallback(CustomCollection.of("6", "7", "8", "9", "10"))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(CustomCollection.of(1, 2, 3, 4, 5))
+
+      Nested(CustomCollection.of("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[Vector[Int]]]
+        .withFallback(Nested(CustomCollection.of("6", "7", "8", "9", "10")))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(Vector(1, 2, 3, 4, 5)))
+      Nested(Vector("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[CustomCollection[Int]]]
+        .withFallback(Nested(List("6", "7", "8", "9", "10")))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(CustomCollection.of(1, 2, 3, 4, 5)))
+      Nested(CustomCollection.of("1", "2", "3", "4", "5"))
+        .intoPartial[Nested[CustomCollection[Int]]]
+        .withFallback(Nested(CustomCollection.of("6", "7", "8", "9", "10")))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption ==> Some(Nested(CustomCollection.of(1, 2, 3, 4, 5)))
+
+      CustomMap
+        .of("1" -> "2", "3" -> "4")
+        .intoPartial[ListMap[Int, Int]]
+        .withFallback(CustomMap.of("5" -> "6", "7" -> "8"))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption
+        .map(_.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
+      ListMap(1 -> 2, 3 -> 4)
+        .intoPartial[CustomMap[Int, Int]]
+        .withFallback(ListMap("5" -> "6", "7" -> "8"))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption
+        .map(_.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
+      CustomMap
+        .of("1" -> "2", "3" -> "4")
+        .intoPartial[CustomMap[Int, Int]]
+        .withFallback(CustomMap.of("5" -> "6", "7" -> "8"))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption
+        .map(_.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
+
+      Nested(CustomCollection.of("1" -> "2", "3" -> "4"))
+        .intoPartial[Nested[ListMap[Int, Int]]]
+        .withFallback(Nested(ListMap("5" -> "6", "7" -> "8")))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption
+        .map(_.value.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
+      Nested(ListMap("1" -> "2", "3" -> "4"))
+        .intoPartial[Nested[CustomMap[Int, Int]]]
+        .withFallback(Nested(ListMap("5" -> "6", "7" -> "8")))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption
+        .map(_.value.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
+      Nested(CustomMap.of("1" -> "2", "3" -> "4"))
+        .intoPartial[Nested[CustomMap[Int, Int]]]
+        .withFallback(Nested(CustomMap.of("5" -> "6", "7" -> "8")))
+        .disableCollectionFallbackMerge
+        .transform
+        .asOption
+        .map(_.value.toVector) ==> Some(Vector(1 -> 2, 3 -> 4))
     }
   }
 }

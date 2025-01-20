@@ -63,6 +63,18 @@ class PatcherStdLibSpec extends ChimneySpec {
     }
   }
 
+  group("flag .ignoreNoneInPatch") {
+
+    test("should disable globally enabled .ignoreNoneInPatch") {
+      implicit val cfg = PatcherConfiguration.default.ignoreNoneInPatch
+
+      Option(Bar("a")).using(Option(Bar("b"))).clearOnNoneInPatch.patch ==> Option(Bar("b"))
+      Option(Bar("a")).using(None: Option[Bar]).clearOnNoneInPatch.patch ==> None
+      (None: Option[Bar]).using(Option(Bar("b"))).clearOnNoneInPatch.patch ==> Option(Bar("b"))
+      (None: Option[Bar]).using(None: Option[Bar]).clearOnNoneInPatch.patch ==> None
+    }
+  }
+
   group("flag .ignoreLeftInPatch") {
 
     test("should patch Either-type with Either-type of the same type, with patch.orElse(obj)") {
@@ -98,6 +110,34 @@ class PatcherStdLibSpec extends ChimneySpec {
     }
   }
 
+  group("flag .useLeftOnLeftInPatch") {
+
+    test("should disable globally enabled .ignoreLeftInPatch") {
+      implicit val cfg = PatcherConfiguration.default.ignoreLeftInPatch
+
+      Either
+        .cond(true, Bar("a"), "fail")
+        .using(Either.cond(true, Bar("b"), "fall"))
+        .useLeftOnLeftInPatch
+        .patch ==> Right(Bar("b"))
+      Either
+        .cond(true, Bar("a"), "fail")
+        .using(Either.cond(false, Bar("b"), "fall"))
+        .useLeftOnLeftInPatch
+        .patch ==> Left("fall")
+      Either
+        .cond(false, Bar("a"), "fail")
+        .using(Either.cond(true, Bar("b"), "fall"))
+        .useLeftOnLeftInPatch
+        .patch ==> Right(Bar("b"))
+      Either
+        .cond(false, Bar("a"), "fail")
+        .using(Either.cond(false, Bar("b"), "fall"))
+        .useLeftOnLeftInPatch
+        .patch ==> Left("fall")
+    }
+  }
+
   group("flag .appendCollectionInPatch") {
 
     test("should patch sequential-type with sequential-type of the same type, with obj ++ patch") {
@@ -121,6 +161,16 @@ class PatcherStdLibSpec extends ChimneySpec {
 
         Map("id" -> Bar("a")).patchUsing(Map("id2" -> Bar("b"))) ==> Map("id" -> Bar("a"), "id2" -> Bar("b"))
       }
+    }
+  }
+
+  group("flag .overrideCollectionInPatch") {
+
+    test("should disable globally enabled .appendCollectionInPatch") {
+      implicit val cfg = PatcherConfiguration.default.appendCollectionInPatch
+
+      List(Bar("a")).using(Vector(Bar("b"))).overrideCollectionInPatch.patch ==> List(Bar("b"))
+      Map("id" -> Bar("a")).using(Map("id2" -> Bar("b"))).overrideCollectionInPatch.patch ==> Map("id2" -> Bar("b"))
     }
   }
 }
