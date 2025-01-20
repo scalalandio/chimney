@@ -400,6 +400,8 @@ object TotalTransformerIntegrationsSpec {
 
     def iterator: Iterator[(K, V)] = impl.iterator
 
+    def toVector: Vector[(K, V)] = impl
+
     override def equals(obj: Any): Boolean = obj match {
       case customMap: CustomMap[?, ?] => impl == customMap.impl
       case _                          => false
