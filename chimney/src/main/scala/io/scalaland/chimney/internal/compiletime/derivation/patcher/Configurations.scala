@@ -26,7 +26,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         copy(displayMacrosLogging = value)
       } else {
         // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
-        reportError(s"Invalid internal PatcherFlags type shape: ${Type[Flag]}!")
+        reportError(s"Invalid internal PatcherFlags type shape: ${Type.prettyPrint[Flag]}!")
         // $COVERAGE-ON$
       }
 
