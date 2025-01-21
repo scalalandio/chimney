@@ -1459,6 +1459,38 @@ class PartialTransformerProductSpec extends ChimneySpec {
     }
   }
 
+  group("setting .withFieldUnused(_.from)") {
+    import products.{Foo, Bar}
+
+    test("should fail derivarion if the field is required") {
+      compileErrors("""Foo(10, "test", (1,2)).intoPartial[Bar].withFieldUnused(_.x).transform""").check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Foo to io.scalaland.chimney.fixtures.products.Bar",
+        "io.scalaland.chimney.fixtures.products.Bar",
+        "x: scala.Int - no accessor named x in source type io.scalaland.chimney.fixtures.products.Foo",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should suppress error if UnusedFieldPolicy is used") {
+      compileErrors(
+        """Foo(10, "test", (1,2)).intoPartial[Bar].enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal).transform"""
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.products.Foo to io.scalaland.chimney.fixtures.products.Bar",
+        "io.scalaland.chimney.fixtures.products.Bar",
+        "FailOnIgnoredSourceVal policy check failed at _, offenders: y!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      Foo(10, "test", (1, 2))
+        .intoPartial[Bar]
+        // FIXME: if we swap these 2 it's assertion error in -Xcheck-macros on Scala 3 o_0
+        .withFieldUnused(_.y)
+        .enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
+        .transform
+        .asOption ==> Some(Bar(10, (1, 2)))
+    }
+  }
+
   group("flag .enableDefaultValues") {
 
     test("should be disabled by default") {

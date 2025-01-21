@@ -122,7 +122,7 @@ object TransformerIntoMacros {
       [fromPath <: Path] =>
         (_: Type[fromPath]) ?=>
           '{
-            ${ ti }.asInstanceOf[TransformerInto[From, To, Unused[fromPath, Overrides], Flags]]
+            $ti.asInstanceOf[TransformerInto[From, To, Unused[fromPath, Overrides], Flags]]
         }
     }(selectorFrom)
 

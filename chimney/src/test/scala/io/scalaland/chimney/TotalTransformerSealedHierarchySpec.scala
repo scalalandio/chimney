@@ -315,6 +315,74 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
     }
   }
 
+  group("setting .withSealedSubtypeUnmatched(_.from)") {
+
+    test("should fail derivarion if the subtype is required") {
+      compileErrors(
+        """(colors1.Red: colors1.Color).into[colors2.Color].withSealedSubtypeUnmatched(_.matching[colors2.Green.type]).transform"""
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
+        "io.scalaland.chimney.fixtures.colors2.Color",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color",
+        "io.scalaland.chimney.fixtures.colors2.Color",
+        "derivation from green: io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color is not supported in Chimney!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should suppress error if UnusedFieldPolicy is used") {
+      compileErrors(
+        """(colors1.Red: colors1.Color).into[colors2.Color].enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype).transform"""
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
+        "io.scalaland.chimney.fixtures.colors2.Color",
+        "FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      (colors1.Red: colors1.Color)
+        .into[colors2.Color]
+        // FIXME: if we swap these 2 it's assertion error in -Xcheck-macros on Scala 3 o_0
+        .withSealedSubtypeUnmatched(_.matching[colors2.Black.type])
+        .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+        .transform ==> colors2.Red
+    }
+  }
+
+  group("setting .withEnumCaseUnmatched(_.from)") {
+
+    test("should fail derivarion if the subtype is required") {
+      compileErrors(
+        """(colors1.Red: colors1.Color).into[colors2.Color].withEnumCaseUnmatched(_.matching[colors2.Green.type]).transform"""
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
+        "io.scalaland.chimney.fixtures.colors2.Color",
+        "can't transform coproduct instance io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color",
+        "io.scalaland.chimney.fixtures.colors2.Color",
+        "derivation from green: io.scalaland.chimney.fixtures.colors1.Green to io.scalaland.chimney.fixtures.colors2.Color is not supported in Chimney!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should suppress error if UnusedFieldPolicy is used") {
+      compileErrors(
+        """(colors1.Red: colors1.Color).into[colors2.Color].enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype).transform"""
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
+        "io.scalaland.chimney.fixtures.colors2.Color",
+        "FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      (colors1.Red: colors1.Color)
+        .into[colors2.Color]
+        // FIXME: if we swap these 2 it's assertion error in -Xcheck-macros on Scala 3 o_0
+        .withEnumCaseUnmatched(_.matching[colors2.Black.type])
+        .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+        .transform ==> colors2.Red
+    }
+  }
+
   group("setting .withFieldComputedFrom(selectorFrom)(selectorTo, mapping)") {
 
     test("should provide support for withSealedSubtypeHandled/withEnumCaseHandled cases but nested") {
@@ -601,6 +669,50 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
         "can't transform coproduct instance io.scalaland.chimney.fixtures.renames.Subtypes.Bar.Baz to io.scalaland.chimney.fixtures.renames.Subtypes.Foo",
         "Consult https://chimney.readthedocs.io for usage examples."
       )
+    }
+  }
+
+  group("flag .enableUnmatchedSubtypePolicyCheck(policyName)") {
+
+    test("should be disabled by default") {
+      (colors1.Red: colors1.Color).transformInto[colors2.Color] ==> colors2.Red
+      (colors1.Green: colors1.Color).transformInto[colors2.Color] ==> colors2.Green
+      (colors1.Blue: colors1.Color).transformInto[colors2.Color] ==> colors2.Blue
+    }
+
+    test("should fail compilation when policy is violated") {
+      compileErrors(
+        """(colors1.Red: colors1.Color).into[colors2.Color].enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype).transform"""
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
+        "io.scalaland.chimney.fixtures.colors2.Color",
+        "FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+
+      locally {
+        @unused implicit val config =
+          TransformerConfiguration.default.enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+
+        compileErrors("""(colors1.Red: colors1.Color).transformInto[colors2.Color]""").check(
+          "Chimney can't derive transformation from io.scalaland.chimney.fixtures.colors1.Color to io.scalaland.chimney.fixtures.colors2.Color",
+          "io.scalaland.chimney.fixtures.colors2.Color",
+          "FailOnUnmatchedTargetSubtype policy check failed at _, offenders: io.scalaland.chimney.fixtures.colors2.Black!",
+          "Consult https://chimney.readthedocs.io for usage examples."
+        )
+      }
+    }
+  }
+
+  group("flag .disableUnusedFieldPolicyCheck") {
+
+    test("should disable globally enabled .enableUnusedFieldPolicyCheck") {
+      @unused implicit val config =
+        TransformerConfiguration.default.enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+
+      (colors1.Red: colors1.Color).into[colors2.Color].disableUnmatchedSubtypePolicyCheck.transform ==> colors2.Red
+      (colors1.Green: colors1.Color).into[colors2.Color].disableUnmatchedSubtypePolicyCheck.transform ==> colors2.Green
+      (colors1.Blue: colors1.Color).into[colors2.Color].disableUnmatchedSubtypePolicyCheck.transform ==> colors2.Blue
     }
   }
 }
