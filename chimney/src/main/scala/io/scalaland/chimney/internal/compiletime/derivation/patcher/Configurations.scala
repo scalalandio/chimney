@@ -187,7 +187,13 @@ private[compiletime] trait Configurations { this: Derivation =>
             SourcePath(TransformerConfigurations.extractPath[PatchPath]),
             PatcherOverride.Ignored
           )
-        case ChimneyType.PatcherOverrides.ComputedFrom(patchPath, objPath, cfg) =>
+        case ChimneyType.PatcherOverrides.Const(objPath, cfg) =>
+          import objPath.Underlying as ObjPath, cfg.Underlying as Tail2
+          extractPatcherConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addPatcherOverride(
+            TargetPath(TransformerConfigurations.extractPath[ObjPath]),
+            PatcherOverride.Const(runtimeDataStore(runtimeDataIdx).as_??)
+          )
+        case ChimneyType.PatcherOverrides.Computed(patchPath, objPath, cfg) =>
           import patchPath.Underlying as PatchPath, objPath.Underlying as ObjPath, cfg.Underlying as Tail2
           val sourcePath = TransformerConfigurations.extractPath[PatchPath]
           val targetPath = TransformerConfigurations.extractPath[ObjPath]
