@@ -173,7 +173,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   transparent inline def withFieldUnused[T](
       inline selectorFrom: From => T
@@ -275,7 +275,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerInto]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   transparent inline def withSealedSubtypeUnmatched[T](
       inline selectorTo: To => T
@@ -284,7 +284,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
 
   /** Alias to [[withSealedSubtypeUnmatched]].
     *
-    * @since TODO
+    * @since 1.7.0
     */
   transparent inline def withEnumCaseUnmatched[T](
       inline selectorTo: To => T
@@ -305,7 +305,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   transparent inline def withFallback[FromFallback](
       inline fallback: FromFallback
@@ -329,7 +329,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     *   fallback value which would be checked for fields when the `From` value would be missing
     *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   transparent inline def withFallback[T, FromFallback](inline selectorFrom: From => T)(
       inline fallback: FromFallback

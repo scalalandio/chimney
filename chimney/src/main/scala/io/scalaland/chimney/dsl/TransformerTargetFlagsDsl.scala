@@ -315,7 +315,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   TODO
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def enableOptionFallbackMerge[S <: OptionFallbackMergeStrategy](
       @unused strategy: S
@@ -327,7 +327,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   TODO
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def disableOptionFallbackMerge: UpdateFlag[Disable[OptionFallbackMerge[?], Flags]] =
     disableFlag[OptionFallbackMerge[?]]
@@ -340,7 +340,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   TODO
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def enableEitherFallbackMerge[S <: OptionFallbackMergeStrategy](
       @unused strategy: S
@@ -352,7 +352,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   TODO
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def disableEitherFallbackMerge: UpdateFlag[Disable[EitherFallbackMerge[?], Flags]] =
     disableFlag[EitherFallbackMerge[?]]
@@ -365,7 +365,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   TODO
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def enableCollectionFallbackMerge[S <: CollectionFallbackMergeStrategy](
       @unused strategy: S
@@ -377,7 +377,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   TODO
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def disableCollectionFallbackMerge: UpdateFlag[Disable[CollectionFallbackMerge[?], Flags]] =
     disableFlag[CollectionFallbackMerge[?]]
@@ -415,7 +415,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   [[TODO]] for more details
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def enableUnusedFieldPolicyCheck[P <: UnusedFieldPolicy & Singleton](
       @unused unusedFieldPolicy: P
@@ -427,7 +427,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   [[TODO]] for more details
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def disableUnusedFieldPolicyCheck: UpdateFlag[Disable[UnusedFieldPolicyCheck[?], Flags]] =
     disableFlag[UnusedFieldPolicyCheck[?]]

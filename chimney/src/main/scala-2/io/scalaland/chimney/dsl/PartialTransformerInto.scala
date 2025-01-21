@@ -248,7 +248,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withFieldUnused[T](selectorFrom: From => T): PartialTransformerInto[From, To, ? <: TransformerOverrides, Flags] =
     macro PartialTransformerIntoMacros.withFieldUnusedImpl[From, To, Overrides, Flags]
@@ -388,7 +388,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withSealedSubtypeUnmatched[T](
       selectorTo: To => T
@@ -397,7 +397,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
 
   /** Alias to [[withSealedSubtypeUnmatched]].
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withEnumCaseUnmatched[T](
       selectorTo: To => T
@@ -418,7 +418,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerOverrides]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withFallback[FromFallback](
       fallback: FromFallback
@@ -443,7 +443,7 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerOverrides]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withFallbackFrom[T, FromFallback](selectorFrom: From => T)(
       fallback: FromFallback

@@ -45,7 +45,7 @@ private[chimney] trait TransformerSourceFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   [[TODO]] for more details
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def enableUnmatchedSubtypePolicyCheck[P <: UnmatchedSubtypePolicy & Singleton](
       @unused unmatchedSubtypePolicy: P
@@ -57,7 +57,7 @@ private[chimney] trait TransformerSourceFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   [[TODO]] for more details
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def disableUnmatchedSubtypePolicyCheck: UpdateFlag[Disable[UnmatchedSubtypePolicyCheck[?], Flags]] =
     disableFlag[UnmatchedSubtypePolicyCheck[?]]

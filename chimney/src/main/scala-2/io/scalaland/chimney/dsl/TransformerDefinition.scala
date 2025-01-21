@@ -170,7 +170,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withFieldUnused[T](selectorFrom: From => T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withFieldUnusedImpl[From, To, Overrides, Flags]
@@ -261,7 +261,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withSealedSubtypeUnmatched[T](
       selectorTo: To => T
@@ -270,7 +270,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
 
   /** Alias to [[withSealedSubtypeUnmatched]].
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withEnumCaseUnmatched[T](selectorTo: To => T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withSealedSubtypeUnmatchedImpl[From, To, Overrides, Flags]
@@ -289,7 +289,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withFallback[FromFallback](
       fallback: FromFallback
@@ -314,7 +314,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withFallbackFrom[T, FromFallback](selectorFrom: From => T)(
       fallback: FromFallback

@@ -243,7 +243,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withFieldUnused[T](
       selectorFrom: From => T
@@ -388,7 +388,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withSealedSubtypeUnmatched[T](
       selectorTo: To => T
@@ -397,7 +397,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
 
   /** Alias to [[withSealedSubtypeUnmatched]].
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withEnumCaseUnmatched[T](
       selectorTo: To => T
@@ -418,7 +418,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withFallback[FromFallback](
       fallback: FromFallback
@@ -443,7 +443,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @return
     *   [[io.scalaland.chimney.dsl.PartialTransformerDefinition]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def withFallbackFrom[T, FromFallback](selectorFrom: From => T)(
       fallback: FromFallback
