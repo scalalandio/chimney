@@ -261,7 +261,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
           }
         }
 
-    // exposed for TransformMapToMapRuleModule
+    // Exposed for TransformMapToMapRuleModule
 
     def mergeTotal[To: Type](
         result1: DerivationResult[TransformationExpr[To]],

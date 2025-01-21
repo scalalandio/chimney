@@ -4,7 +4,7 @@ import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.transformer.Derivation
 
 private[compiletime] trait TransformValueClassToTypeRuleModule {
-  this: Derivation & TransformProductToProductRuleModule =>
+  this: Derivation & TransformProductToProductRuleModule & TransformValueClassToValueClassRuleModule =>
 
   protected object TransformValueClassToTypeRule extends Rule("ValueClassToType") {
 
@@ -34,7 +34,8 @@ private[compiletime] trait TransformValueClassToTypeRuleModule {
       // '{ ${ derivedTo } /* using ${ src }.from internally */ }
       deriveRecursiveTransformationExpr[InnerFrom, To](
         unwrapFromIntoInnerFrom(ctx.src),
-        followFrom = Path(_.select(innerFromFieldName))
+        followFrom = Path(_.select(innerFromFieldName)),
+        updateFallbacks = TransformValueClassToValueClassRule.unwrapFallbacksWherePossible[From, To]
       )
         .flatMap(DerivationResult.expanded)
         // fall back to case classes expansion; see https://github.com/scalalandio/chimney/issues/297 for more info
