@@ -497,6 +497,31 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
 
     object PatcherOverrides extends PatcherOverridesModule {
       val Empty: Type[runtime.PatcherOverrides.Empty] = weakTypeTag[runtime.PatcherOverrides.Empty]
+      object Ignored extends IgnoredModule {
+        def apply[PatchPath <: runtime.Path: Type, Tail <: runtime.PatcherOverrides: Type]
+            : Type[runtime.PatcherOverrides.Ignored[PatchPath, Tail]] =
+          weakTypeTag[runtime.PatcherOverrides.Ignored[PatchPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.PatcherOverrides])] =
+          A.asCtor[runtime.PatcherOverrides.Ignored[?, ?]].map { A0 =>
+            fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.PatcherOverrides](1)
+          }
+      }
+      object ComputedFrom extends ComputedFromModule {
+        def apply[
+            PatchPath <: runtime.Path: Type,
+            ObjPath <: runtime.Path: Type,
+            Tail <: runtime.PatcherOverrides: Type
+        ]: Type[runtime.PatcherOverrides.ComputedFrom[PatchPath, ObjPath, Tail]] =
+          weakTypeTag[runtime.PatcherOverrides.ComputedFrom[PatchPath, ObjPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.PatcherOverrides])] =
+          A.asCtor[runtime.PatcherOverrides.ComputedFrom[?, ?, ?]].map { A0 =>
+            (
+              fixJavaEnums(A0.param_<[runtime.Path](0)),
+              fixJavaEnums(A0.param_<[runtime.Path](1)),
+              A0.param_<[runtime.PatcherOverrides](2)
+            )
+          }
+      }
     }
 
     object PatcherFlags extends PatcherFlagsModule {

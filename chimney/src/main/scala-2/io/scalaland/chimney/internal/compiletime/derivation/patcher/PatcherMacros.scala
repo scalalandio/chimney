@@ -16,15 +16,16 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
       Flags <: runtime.PatcherFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.PatcherFlags: WeakTypeTag
   ](
-      tc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
+      pc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): c.Expr[A] = retypecheck(
     // Called by PatcherUsing => prefix is PatcherUsing
     cacheDefinition(c.Expr[dsl.PatcherUsing[A, Patch, Overrides, Flags]](c.prefix.tree)) { pu =>
       Expr.block(
-        List(Expr.suppressUnused(tc)),
+        List(Expr.suppressUnused(pc)),
         derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
           obj = c.Expr[A](q"$pu.obj"),
-          patch = c.Expr[Patch](q"$pu.objPatch")
+          patch = c.Expr[Patch](q"$pu.objPatch"),
+          runtimeDataStore = c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"$pu.pd.runtimeData")
         )
       )
     }
@@ -37,11 +38,14 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
       InstanceFlags <: runtime.PatcherFlags: WeakTypeTag,
       ImplicitScopeFlags <: runtime.PatcherFlags: WeakTypeTag
   ](
-      tc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
+      pc: Expr[io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]]
   ): Expr[Patcher[A, Patch]] = retypecheck(
     Expr.block(
-      List(Expr.suppressUnused(tc)),
-      derivePatcher[A, Patch, Overrides, InstanceFlags, ImplicitScopeFlags]
+      List(Expr.suppressUnused(pc)),
+      derivePatcher[A, Patch, Overrides, InstanceFlags, ImplicitScopeFlags](
+        // Called by PatcherDefinition => prefix is PatcherDefinition
+        c.Expr[dsl.PatcherDefinitionCommons.RuntimeDataStore](q"${c.prefix.tree}.runtimeData")
+      )
     )
   )
 
@@ -51,7 +55,9 @@ final class PatcherMacros(val c: blackbox.Context) extends DerivationPlatform wi
   ]: Expr[Patcher[A, Patch]] = retypecheck(
     resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
       import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
-      derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
+      derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags](
+        ChimneyExpr.RuntimeDataStore.empty
+      )
     }
   )
 

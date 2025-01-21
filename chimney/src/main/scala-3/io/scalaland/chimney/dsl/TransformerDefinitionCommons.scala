@@ -1,7 +1,6 @@
 package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.internal.runtime.TransformerOverrides
-import scala.annotation.static
 
 object TransformerDefinitionCommons {
   type RuntimeDataStore = Vector[Any]
@@ -17,6 +16,6 @@ private[chimney] trait TransformerDefinitionCommons[UpdateOverrides[_ <: Transfo
 
   import TransformerDefinitionCommons.*
 
-  /** runtime storage for values and functions that transformer definition is customized with */
+  /** Runtime storage for values and functions that Transformer definition is customized with. */
   val runtimeData: RuntimeDataStore
 }

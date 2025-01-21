@@ -85,5 +85,9 @@ extension [A](obj: A) {
   transparent inline def using[Patch](
       patch: Patch
   ): PatcherUsing[A, Patch, PatcherOverrides.Empty, PatcherFlags.Default] =
-    new PatcherUsing[A, Patch, PatcherOverrides.Empty, PatcherFlags.Default](obj, patch)
+    new PatcherUsing[A, Patch, PatcherOverrides.Empty, PatcherFlags.Default](
+      obj,
+      patch,
+      new PatcherDefinition(PatcherDefinitionCommons.emptyRuntimeDataStore)
+    )
 }

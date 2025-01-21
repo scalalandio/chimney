@@ -1,9 +1,12 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
+import io.scalaland.chimney.dsl.TransformerDefinitionCommons
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.runtime
 
 private[compiletime] trait Configurations { this: Derivation =>
+
+  import Type.Implicits.*
 
   final protected case class PatcherFlags(
       ignoreNoneInPatch: Boolean = false,
@@ -63,6 +66,10 @@ private[compiletime] trait Configurations { this: Derivation =>
 
   sealed protected trait PatcherOverride extends scala.Product with Serializable
   protected object PatcherOverride {
+    case object Ignored extends PatcherOverride {
+      override def toString: String = "Ignored"
+    }
+
     final case class Const(runtimeData: ExistentialExpr) extends PatcherOverride {
       override def toString: String = s"Const(${ExistentialExpr.prettyPrint(runtimeData)})"
     }
@@ -95,10 +102,26 @@ private[compiletime] trait Configurations { this: Derivation =>
     def setLocalFlagsOverriden: PatcherConfiguration =
       copy(localFlagsOverridden = true)
 
+    def addPatcherOverride(sidedPath: SidedPath, runtimeOverride: PatcherOverride): PatcherConfiguration = {
+      val newRuntimeOverrides = runtimeOverrides :+ (sidedPath -> runtimeOverride)
+      copy(runtimeOverrides = newRuntimeOverrides)
+    }
+    def addPatcherOverride(
+        sourcePath: Path,
+        targetPath: Path,
+        runtimeOverride: PatcherOverride
+    ): PatcherConfiguration = {
+      val newRuntimeOverrides =
+        runtimeOverrides :+ (SourcePath(sourcePath) -> runtimeOverride) :+ (TargetPath(targetPath) -> runtimeOverride)
+      copy(runtimeOverrides = newRuntimeOverrides)
+    }
+
     def toTransformerConfiguration(obj: ExistentialExpr): TransformerConfiguration = {
       val transformerOverrides =
         (SourcePath(Path.Root) -> (TransformerOverride.Fallback(obj): TransformerOverride)) +: runtimeOverrides
           .map {
+            case (sidedPatch, PatcherOverride.Ignored) =>
+              sidedPatch -> (TransformerOverride.Unused: TransformerOverride)
             case (sidedPath, PatcherOverride.Const(expr)) =>
               sidedPath -> (TransformerOverride.Const(expr): TransformerOverride)
             case (sidedPath, PatcherOverride.Computed(sourcePath, targetPath, expr)) =>
@@ -130,10 +153,10 @@ private[compiletime] trait Configurations { this: Derivation =>
         Tail <: runtime.PatcherOverrides: Type,
         InstanceFlags <: runtime.PatcherFlags: Type,
         ImplicitScopeFlags <: runtime.PatcherFlags: Type
-    ]: PatcherConfiguration = {
+    ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): PatcherConfiguration = {
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](PatcherFlags.global)
       val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
-      val cfg = extractPatcherConfig[Tail]().copy(flags = allFlags)
+      val cfg = extractPatcherConfig[Tail](runtimeDataIdx = 0, runtimeDataStore).copy(flags = allFlags)
       if (Type[InstanceFlags] =:= ChimneyType.PatcherFlags.Default) cfg else cfg.setLocalFlagsOverriden
     }
 
@@ -152,9 +175,27 @@ private[compiletime] trait Configurations { this: Derivation =>
         // $COVERAGE-ON$
       }
 
-    private def extractPatcherConfig[Tail <: runtime.PatcherOverrides: Type](): PatcherConfiguration =
+    private def extractPatcherConfig[Tail <: runtime.PatcherOverrides: Type](
+        runtimeDataIdx: Int,
+        runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
+    ): PatcherConfiguration =
       Type[Tail] match {
         case empty if empty =:= ChimneyType.PatcherOverrides.Empty => PatcherConfiguration()
+        case ChimneyType.PatcherOverrides.Ignored(patchPath, cfg) =>
+          import patchPath.Underlying as PatchPath, cfg.Underlying as Tail2
+          extractPatcherConfig[Tail2](runtimeDataIdx, runtimeDataStore).addPatcherOverride(
+            SourcePath(TransformerConfigurations.extractPath[PatchPath]),
+            PatcherOverride.Ignored
+          )
+        case ChimneyType.PatcherOverrides.ComputedFrom(patchPath, objPath, cfg) =>
+          import patchPath.Underlying as PatchPath, objPath.Underlying as ObjPath, cfg.Underlying as Tail2
+          val sourcePath = TransformerConfigurations.extractPath[PatchPath]
+          val targetPath = TransformerConfigurations.extractPath[ObjPath]
+          extractPatcherConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addPatcherOverride(
+            sourcePath,
+            targetPath,
+            PatcherOverride.Computed(sourcePath, targetPath, runtimeDataStore(runtimeDataIdx).as_??)
+          )
         // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         case _ =>
           reportError(s"Invalid internal PatcherOverrides type shape: ${Type.prettyPrint[Tail]}!!")

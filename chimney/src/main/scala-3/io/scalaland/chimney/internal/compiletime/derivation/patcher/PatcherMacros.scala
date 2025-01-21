@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
+import io.scalaland.chimney.dsl.PatcherDefinition
 import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.runtime
 
@@ -15,14 +16,19 @@ final class PatcherMacros(q: Quotes) extends DerivationPlatform(q) with Gateway 
       Overrides <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
-  ]: Expr[Patcher[A, Patch]] = derivePatcher[A, Patch, Overrides, Flags, ImplicitScopeFlags]
+  ](
+      pc: Expr[PatcherDefinition[A, Patch, Overrides, Flags]]
+  ): Expr[Patcher[A, Patch]] =
+    derivePatcher[A, Patch, Overrides, Flags, ImplicitScopeFlags](runtimeDataStore = '{ ${ pc }.runtimeData })
 
   def derivePatcherWithDefaults[
       A: Type,
       Patch: Type
   ]: Expr[Patcher[A, Patch]] = resolveImplicitScopeConfigAndMuteUnusedWarnings { implicitScopeFlagsType =>
     import implicitScopeFlagsType.Underlying as ImplicitScopeFlags
-    derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags]
+    derivePatcher[A, Patch, runtime.PatcherOverrides.Empty, runtime.PatcherFlags.Default, ImplicitScopeFlags](
+      runtimeDataStore = ChimneyExpr.RuntimeDataStore.empty
+    )
   }
 
   private def resolveImplicitScopeConfigAndMuteUnusedWarnings[A: Type](
@@ -54,8 +60,8 @@ object PatcherMacros {
       Overrides <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
-  ](using q: Quotes): Expr[Patcher[A, Patch]] =
-    new PatcherMacros(q).derivePatcherWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags]
+  ](pd: Expr[PatcherDefinition[A, Patch, Overrides, Flags]])(using q: Quotes): Expr[Patcher[A, Patch]] =
+    new PatcherMacros(q).derivePatcherWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags](pd)
 
   final def derivePatcherWithDefaults[A: Type, Patch: Type](using q: Quotes): Expr[Patcher[A, Patch]] =
     new PatcherMacros(q).derivePatcherWithDefaults[A, Patch]
@@ -68,7 +74,12 @@ object PatcherMacros {
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ](
       obj: Expr[A],
-      patch: Expr[Patch]
+      patch: Expr[Patch],
+      pd: Expr[PatcherDefinition[A, Patch, Overrides, Flags]]
   )(using q: Quotes): Expr[A] =
-    new PatcherMacros(q).derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](obj, patch)
+    new PatcherMacros(q).derivePatcherResult[A, Patch, Overrides, Flags, ImplicitScopeFlags](
+      obj,
+      patch,
+      '{ ${ pd }.runtimeData }
+    )
 }

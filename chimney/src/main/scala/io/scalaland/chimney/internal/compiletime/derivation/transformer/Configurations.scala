@@ -1,6 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.transformer
 
-import io.scalaland.chimney.dsl.TransformerDefinitionCommons
+import io.scalaland.chimney.dsl.PatcherDefinitionCommons
 import io.scalaland.chimney.dsl as dsls
 import io.scalaland.chimney.internal.runtime
 
@@ -618,7 +618,7 @@ private[compiletime] trait Configurations { this: Derivation =>
         Tail <: runtime.TransformerOverrides: Type,
         InstanceFlags <: runtime.TransformerFlags: Type,
         ImplicitScopeFlags <: runtime.TransformerFlags: Type
-    ](runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]): TransformerConfiguration = {
+    ](runtimeDataStore: Expr[PatcherDefinitionCommons.RuntimeDataStore]): TransformerConfiguration = {
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags.global)
       val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
       val cfg = extractTransformerConfig[Tail](runtimeDataIdx = 0, runtimeDataStore).copy(flags = allFlags)
@@ -783,7 +783,7 @@ private[compiletime] trait Configurations { this: Derivation =>
 
     private def extractTransformerConfig[Tail <: runtime.TransformerOverrides: Type](
         runtimeDataIdx: Int,
-        runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
+        runtimeDataStore: Expr[PatcherDefinitionCommons.RuntimeDataStore]
     ): TransformerConfiguration = Type[Tail] match {
       case empty if empty =:= ChimneyType.TransformerOverrides.Empty => TransformerConfiguration()
       case ChimneyType.TransformerOverrides.Unused(fromPath, cfg) =>
@@ -898,7 +898,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       // $COVERAGE-ON$
     }
 
-    private def extractPath[PathType <: runtime.Path: Type]: Path = Type[PathType] match {
+    // Exposed for Patcher Configuration
+    def extractPath[PathType <: runtime.Path: Type]: Path = Type[PathType] match {
       case root if root =:= ChimneyType.Path.Root =>
         Path.Root
       case ChimneyType.Path.Select(init, fieldName) =>
