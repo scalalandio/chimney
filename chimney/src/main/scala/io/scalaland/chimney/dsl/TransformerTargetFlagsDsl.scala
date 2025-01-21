@@ -287,7 +287,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   TODO
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def enableTypeConstraintEvidence: UpdateFlag[Enable[TypeConstraintEvidence, Flags]] =
     enableFlag[TypeConstraintEvidence]
@@ -297,7 +297,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   TODO
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def disableTypeConstraintEvidence: UpdateFlag[Disable[TypeConstraintEvidence, Flags]] =
     disableFlag[TypeConstraintEvidence]
@@ -309,7 +309,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   TODO
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def enableImplicitConversions: UpdateFlag[Enable[ImplicitConversions, Flags]] =
     enableFlag[ImplicitConversions]
@@ -319,7 +319,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * @see
     *   TODO
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def disableImplicitConversions: UpdateFlag[Disable[ImplicitConversions, Flags]] =
     disableFlag[ImplicitConversions]
