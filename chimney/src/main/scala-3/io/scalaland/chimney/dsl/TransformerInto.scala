@@ -162,7 +162,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerInto]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   transparent inline def withFieldUnused[T](
       inline selectorFrom: From => T
@@ -256,7 +256,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerInto]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   transparent inline def withSealedSubtypeUnmatched[T](
       inline selectorTo: To => T
@@ -265,7 +265,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
 
   /** Alias to [[withSealedSubtypeUnmatched]].
     *
-    * @since TODO
+    * @since 1.7.0
     */
   transparent inline def withEnumCaseUnmatched[T](
       inline selectorTo: To => T
@@ -286,7 +286,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerInto]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   transparent inline def withFallback[FromFallback](
       inline fallback: FromFallback
@@ -311,7 +311,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     * @return
     *   [[io.scalaland.chimney.dsl.TransformerInto]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   transparent inline def withFallbackFrom[T, FromFallback](inline selectorFrom: From => T)(
       inline fallback: FromFallback

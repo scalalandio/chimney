@@ -51,7 +51,7 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
     * @return
     *   [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def ignoreLeftInPatch: UpdateFlag[Enable[IgnoreLeftInPatch, Flags]] =
     enableFlag[IgnoreLeftInPatch]
@@ -64,7 +64,7 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
     * @return
     *   [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def useLeftOnLeftInPatch: UpdateFlag[Disable[IgnoreLeftInPatch, Flags]] =
     disableFlag[IgnoreLeftInPatch]
@@ -80,7 +80,7 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
     * @return
     *   [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def appendCollectionInPatch: UpdateFlag[Enable[AppendCollectionInPatch, Flags]] =
     enableFlag[AppendCollectionInPatch]
@@ -93,7 +93,7 @@ private[dsl] trait PatcherFlagsDsl[UpdateFlag[_ <: PatcherFlags], Flags <: Patch
     * @return
     *   [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
-    * @since TODO
+    * @since 1.7.0
     */
   def overrideCollectionInPatch: UpdateFlag[Disable[AppendCollectionInPatch, Flags]] =
     disableFlag[AppendCollectionInPatch]
