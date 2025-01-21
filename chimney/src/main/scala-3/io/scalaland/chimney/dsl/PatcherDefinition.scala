@@ -41,6 +41,11 @@ final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: 
   ): Patcher[A, Patch] =
     ${ PatcherMacros.derivePatcherWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags]('this) }
 
+  // FIXME: (2.0.0 cleanup) - kept to make MiMa happy
+  // $COVERAGE-OFF$
+  def this() = this(PatcherDefinitionCommons.emptyRuntimeDataStore)
+  // $COVERAGE-ON$
+
   private[chimney] def addOverride(overrideData: Any): this.type =
     new PatcherDefinition(overrideData +: runtimeData).asInstanceOf[this.type]
 }
