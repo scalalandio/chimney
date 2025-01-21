@@ -34,21 +34,47 @@ private[compiletime] trait TransformValueClassToValueClassRuleModule { this: Der
           } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
         case _ => DerivationResult.attemptNextRule
       }
-  }
 
-  private def unwrapTransformAndWrapAgain[From, To, InnerFrom: Type, InnerTo: Type](
-      innerFromFieldName: String,
-      unwrapFromIntoInnerFrom: Expr[From] => Expr[InnerFrom],
-      innerToFieldName: String,
-      wrapInnerToIntoIo: Expr[InnerTo] => Expr[To]
-  )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-    deriveRecursiveTransformationExpr[InnerFrom, InnerTo](
-      unwrapFromIntoInnerFrom(ctx.src),
-      Path(_.select(innerFromFieldName)),
-      Path(_.select(innerToFieldName))
-    ).flatMap { (derivedInnerTo: TransformationExpr[InnerTo]) =>
-      // We're constructing:
-      // '{ ${ new $To(${ derivedInnerTo }) } /* using ${ src }.$from internally */ }
-      DerivationResult.expanded(derivedInnerTo.map(wrapInnerToIntoIo))
+    // Exposed for TransformValueClassToTypeRuleModule
+    def unwrapFallbacksWherePossible[From, To](implicit
+        ctx: TransformationContext[From, To]
+    ): TransformerOverride.ForFallback => Vector[TransformerOverride.ForFallback] = {
+      val updates = ctx.config.filterCurrentOverridesForFallbacks.view.map {
+        case original @ TransformerOverride.Fallback(fallback) =>
+          import fallback.{Underlying as Fallback, value as fallbackExpr}
+
+          val key: TransformerOverride.ForFallback = original
+          val value: TransformerOverride.ForFallback = TransformerOverride.Fallback(Type[Fallback] match {
+            case ValueClassType(fallback2) =>
+              import fallback2.Underlying as InnerFallback
+              fallback2.value.unwrap(fallbackExpr).as_??
+            case WrapperClassType(fallback2) if ctx.config.flags.nonAnyValWrappers =>
+              import fallback2.Underlying as InnerFallback
+              fallback2.value.unwrap(fallbackExpr).as_??
+            case _ =>
+              fallback
+          })
+
+          key -> Vector(key, value).distinct
+      }.toMap
+      key => updates.getOrElse(key, Vector(key))
     }
+
+    private def unwrapTransformAndWrapAgain[From, To, InnerFrom: Type, InnerTo: Type](
+        innerFromFieldName: String,
+        unwrapFromIntoInnerFrom: Expr[From] => Expr[InnerFrom],
+        innerToFieldName: String,
+        wrapInnerToIntoIo: Expr[InnerTo] => Expr[To]
+    )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
+      deriveRecursiveTransformationExpr[InnerFrom, InnerTo](
+        unwrapFromIntoInnerFrom(ctx.src),
+        followTo = Path(_.select(innerFromFieldName)),
+        followFrom = Path(_.select(innerToFieldName)),
+        updateFallbacks = unwrapFallbacksWherePossible[From, To]
+      ).flatMap { (derivedInnerTo: TransformationExpr[InnerTo]) =>
+        // We're constructing:
+        // '{ ${ new $To(${ derivedInnerTo }) } /* using ${ src }.$from internally */ }
+        DerivationResult.expanded(derivedInnerTo.map(wrapInnerToIntoIo))
+      }
+  }
 }

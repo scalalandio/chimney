@@ -518,7 +518,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       }
     )
     def filterCurrentOverridesForFallbacks: Set[TransformerOverride.ForFallback] = ListSet.from(
-      runtimeOverridesForCurrent.collectFirst {
+      runtimeOverridesForCurrent.collect {
         case (SourcePath(_), runtimeConstructorOverride: TransformerOverride.ForFallback) =>
           runtimeConstructorOverride
       }
