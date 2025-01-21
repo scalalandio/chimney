@@ -1,6 +1,6 @@
 package io.scalaland.chimney
 
-import io.scalaland.chimney.dsl.PatcherDefinition
+import io.scalaland.chimney.dsl.{PatcherDefinition, PatcherDefinitionCommons}
 import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
 
 /** Type class definition that wraps patching behavior.
@@ -57,7 +57,7 @@ object Patcher extends PatcherCompanionPlatform {
     * @since 0.8.0
     */
   def define[A, Patch]: PatcherDefinition[A, Patch, PatcherOverrides.Empty, PatcherFlags.Default] =
-    new PatcherDefinition
+    new PatcherDefinition(PatcherDefinitionCommons.emptyRuntimeDataStore)
 
   /** Type class used when you want to allow using automatically derived patchings.
     *

@@ -502,6 +502,36 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
 
     object PatcherOverrides extends PatcherOverridesModule {
       val Empty: Type[runtime.PatcherOverrides.Empty] = quoted.Type.of[runtime.PatcherOverrides.Empty]
+      object Ignored extends IgnoredModule {
+        def apply[PatchPath <: runtime.Path: Type, Tail <: runtime.PatcherOverrides: Type]
+            : Type[runtime.PatcherOverrides.Ignored[PatchPath, Tail]] =
+          quoted.Type.of[runtime.PatcherOverrides.Ignored[PatchPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.PatcherOverrides])] = tpe match {
+          case '[runtime.PatcherOverrides.Ignored[patchPath, cfg]] =>
+            Some((Type[patchPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.PatcherOverrides]))
+          case _ => scala.None
+        }
+      }
+      object ComputedFrom extends ComputedFromModule {
+        def apply[
+            PatchPath <: runtime.Path: Type,
+            ObjPath <: runtime.Path: Type,
+            Tail <: runtime.PatcherOverrides: Type
+        ]: Type[runtime.PatcherOverrides.ComputedFrom[PatchPath, ObjPath, Tail]] =
+          quoted.Type.of[runtime.PatcherOverrides.ComputedFrom[PatchPath, ObjPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.PatcherOverrides])] =
+          tpe match {
+            case '[runtime.PatcherOverrides.ComputedFrom[patchPath, objPath, cfg]] =>
+              Some(
+                (
+                  Type[patchPath].as_?<[runtime.Path],
+                  Type[objPath].as_?<[runtime.Path],
+                  Type[cfg].as_?<[runtime.PatcherOverrides]
+                )
+              )
+            case _ => scala.None
+          }
+      }
     }
 
     object PatcherFlags extends PatcherFlagsModule {

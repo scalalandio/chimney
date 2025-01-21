@@ -318,6 +318,23 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     val PatcherOverrides: PatcherOverridesModule
     trait PatcherOverridesModule { this: PatcherOverrides.type =>
       val Empty: Type[runtime.PatcherOverrides.Empty]
+
+      val Ignored: IgnoredModule
+      trait IgnoredModule
+          extends Type.Ctor2UpperBounded[
+            runtime.Path,
+            runtime.PatcherOverrides,
+            runtime.PatcherOverrides.Ignored
+          ] { this: Ignored.type => }
+
+      val ComputedFrom: ComputedFromModule
+      trait ComputedFromModule
+          extends Type.Ctor3UpperBounded[
+            runtime.Path,
+            runtime.Path,
+            runtime.PatcherOverrides,
+            runtime.PatcherOverrides.ComputedFrom
+          ] { this: ComputedFrom.type => }
     }
 
     val PatcherFlags: PatcherFlagsModule

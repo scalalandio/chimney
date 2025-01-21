@@ -1,5 +1,6 @@
 package io.scalaland.chimney.internal.compiletime.derivation.patcher
 
+import io.scalaland.chimney.dsl.PatcherDefinitionCommons
 import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.compiletime.DerivationResult
 import io.scalaland.chimney.internal.compiletime.derivation.GatewayCommons
@@ -17,24 +18,28 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
   ](
       obj: Expr[A],
-      patch: Expr[Patch]
+      patch: Expr[Patch],
+      runtimeDataStore: Expr[PatcherDefinitionCommons.RuntimeDataStore]
   ): Expr[A] = suppressWarnings {
-    cacheDefinition(obj) { obj =>
-      cacheDefinition(patch) { patch =>
-        val context = PatcherContext
-          .create[A, Patch](
-            obj,
-            patch,
-            config = PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags]
+    cacheDefinition(runtimeDataStore) { runtimeDataStore =>
+      cacheDefinition(obj) { obj =>
+        cacheDefinition(patch) { patch =>
+          val context = PatcherContext
+            .create[A, Patch](
+              obj,
+              patch,
+              config =
+                PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags](runtimeDataStore)
+            )
+            .updateConfig(_.allowAPatchImplicitSearch)
+
+          val result = enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
+
+          Expr.block(
+            List(Expr.suppressUnused(runtimeDataStore), Expr.suppressUnused(obj), Expr.suppressUnused(patch)),
+            extractExprAndLog[A, Patch, A](result)
           )
-          .updateConfig(_.allowAPatchImplicitSearch)
-
-        val result = enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context)
-
-        Expr.block(
-          List(Expr.suppressUnused(obj), Expr.suppressUnused(patch)),
-          extractExprAndLog[A, Patch, A](result)
-        )
+        }
       }
     }
   }
@@ -45,20 +50,28 @@ private[compiletime] trait Gateway extends GatewayCommons { this: Derivation =>
       Overrides <: runtime.PatcherOverrides: Type,
       Flags <: runtime.PatcherFlags: Type,
       ImplicitScopeFlags <: runtime.PatcherFlags: Type
-  ]: Expr[Patcher[A, Patch]] = suppressWarnings {
-    val result = DerivationResult.direct[Expr[A], Expr[Patcher[A, Patch]]] { await =>
-      ChimneyExpr.Patcher.instance[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
-        val context = PatcherContext.create[A, Patch](
-          obj,
-          patch,
-          config = PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags]
-        )
+  ](
+      runtimeDataStore: Expr[PatcherDefinitionCommons.RuntimeDataStore]
+  ): Expr[Patcher[A, Patch]] = suppressWarnings {
+    cacheDefinition(runtimeDataStore) { runtimeDataStore =>
+      val result = DerivationResult.direct[Expr[A], Expr[Patcher[A, Patch]]] { await =>
+        ChimneyExpr.Patcher.instance[A, Patch] { (obj: Expr[A], patch: Expr[Patch]) =>
+          val context = PatcherContext.create[A, Patch](
+            obj,
+            patch,
+            config =
+              PatcherConfigurations.readPatcherConfiguration[Overrides, Flags, ImplicitScopeFlags](runtimeDataStore)
+          )
 
-        await(enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context))
+          await(enableLoggingIfFlagEnabled(derivePatcherResultExpr(context), context))
+        }
       }
-    }
 
-    extractExprAndLog[A, Patch, Patcher[A, Patch]](result)
+      Expr.block(
+        List(Expr.suppressUnused(runtimeDataStore)),
+        extractExprAndLog[A, Patch, Patcher[A, Patch]](result)
+      )
+    }
   }
 
   private def enableLoggingIfFlagEnabled[A](

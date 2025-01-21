@@ -3,7 +3,7 @@ package io.scalaland.chimney.dsl
 import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
-import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
+import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, WithRuntimeDataStore}
 
 /** Allows customization of [[io.scalaland.chimney.Patcher]] derivation.
   *
@@ -18,8 +18,13 @@ import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
   *
   * @since 0.8.0
   */
-final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: PatcherFlags]
-    extends PatcherFlagsDsl[[Flags1 <: PatcherFlags] =>> PatcherDefinition[A, Patch, Overrides, Flags1], Flags] {
+final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: PatcherFlags](
+    val runtimeData: PatcherDefinitionCommons.RuntimeDataStore
+) extends PatcherFlagsDsl[[Flags1 <: PatcherFlags] =>> PatcherDefinition[A, Patch, Overrides, Flags1], Flags]
+    with PatcherDefinitionCommons[
+      [Overrides1 <: PatcherOverrides] =>> PatcherDefinition[A, Patch, Overrides1, Flags]
+    ]
+    with WithRuntimeDataStore {
 
   /** Build Patcher using current configuration.
     *
@@ -34,5 +39,8 @@ final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: 
   inline def buildPatcher[ImplicitScopeFlags <: PatcherFlags](using
       tc: PatcherConfiguration[ImplicitScopeFlags]
   ): Patcher[A, Patch] =
-    ${ PatcherMacros.derivePatcherWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags] }
+    ${ PatcherMacros.derivePatcherWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags]('this) }
+
+  private[chimney] def addOverride(overrideData: Any): this.type =
+    new PatcherDefinition(overrideData +: runtimeData).asInstanceOf[this.type]
 }

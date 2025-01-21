@@ -3,6 +3,8 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.{
   PartialTransformerDefinition,
   PartialTransformerInto,
+  PatcherDefinition,
+  PatcherDefinitionCommons,
   PatcherUsing,
   TransformerDefinition,
   TransformerDefinitionCommons,
@@ -90,6 +92,10 @@ package object inlined {
       * @since 0.4.0
       */
     final def using[Patch](patch: Patch): PatcherUsing[A, Patch, PatcherOverrides.Empty, PatcherFlags.Default] =
-      new PatcherUsing[A, Patch, PatcherOverrides.Empty, PatcherFlags.Default](obj, patch)
+      new PatcherUsing[A, Patch, PatcherOverrides.Empty, PatcherFlags.Default](
+        obj,
+        patch,
+        new PatcherDefinition(PatcherDefinitionCommons.emptyRuntimeDataStore)
+      )
   }
 }

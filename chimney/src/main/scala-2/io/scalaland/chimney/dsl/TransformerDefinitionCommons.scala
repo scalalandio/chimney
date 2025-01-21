@@ -11,6 +11,6 @@ private[chimney] trait TransformerDefinitionCommons[UpdateOverrides[_ <: Transfo
 
   import TransformerDefinitionCommons.*
 
-  /** runtime storage for values and functions that transformer definition is customized with */
+  /** Runtime storage for values and functions that Transformer definition is customized with. */
   val runtimeData: RuntimeDataStore
 }
