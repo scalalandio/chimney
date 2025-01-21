@@ -35,7 +35,7 @@ val versions = new {
   val idePlatform = VirtualAxis.jvm
 
   // Dependencies
-  val cats = "2.12.0"
+  val cats = "2.13.0"
   val kindProjector = "0.13.3"
   val munit = "1.0.4"
   val scalaCollectionCompat = "2.12.0"
