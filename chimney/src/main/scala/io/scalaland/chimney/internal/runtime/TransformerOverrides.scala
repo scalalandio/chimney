@@ -5,6 +5,9 @@ import io.scalaland.chimney.internal.runtime.TransformerOverrides as Overrides
 sealed abstract class TransformerOverrides
 object TransformerOverrides {
   final class Empty extends Overrides
+  // Suppress unused field/unmatched subtype error
+  final class Unused[FromPath <: Path, Tail <: Overrides] extends Overrides
+  final class Unmatched[ToPath <: Path, Tail <: Overrides] extends Overrides
   // Provides a precomputed value
   final class Const[ToPath <: Path, Tail <: Overrides] extends Overrides
   final class ConstPartial[ToPath <: Path, Tail <: Overrides] extends Overrides

@@ -122,6 +122,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
         }
 
       val fromNamesUsedByExtractors = scala.collection.mutable.Set.empty[String]
+      val fromNamesExplicitlyUnused = ctx.config.filterCurrentUnusedFields
 
       DerivationResult.log {
         val gettersStr = fromExtractors
@@ -169,6 +170,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     case (anotherToName, _)
                         if toName == anotherToName || areFieldNamesMatching(toName, anotherToName) =>
                       runtimeField match {
+                        case TransformerOverride.Unused =>
+                          ".withFieldUnused(...)"
                         case TransformerOverride.Const(_) =>
                           s".withFieldConst(_.$anotherToName, ...)"
                         case TransformerOverride.ConstPartial(_) =>
@@ -205,16 +208,19 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
               }
               .orElse {
                 if (usePositionBasedMatching) {
-                  ctorParamToGetterByPosition.get(ctorParam).map { case (toName, fromOrFallback) =>
-                    import fromOrFallback.{FromOrFallback, src as srcOrFallback, name as fromName, getter}
-                    fromNamesUsedByExtractors += fromName
-                    implicit val positionBasedCtx: TransformationContext[FromOrFallback, To] =
-                      ctx.updateFromTo[FromOrFallback, To](newSrc = srcOrFallback)(FromOrFallback, ctx.To)
-                    useExtractor[FromOrFallback, To, CtorParam](ctorParam.value.targetType, fromName, toName, getter)
+                  ctorParamToGetterByPosition.get(ctorParam).collect {
+                    case (toName, fromOrFallback) if !fromNamesExplicitlyUnused(fromOrFallback.name) =>
+                      import fromOrFallback.{FromOrFallback, src as srcOrFallback, name as fromName, getter}
+                      fromNamesUsedByExtractors += fromName
+                      implicit val positionBasedCtx: TransformationContext[FromOrFallback, To] =
+                        ctx.updateFromTo[FromOrFallback, To](newSrc = srcOrFallback)(FromOrFallback, ctx.To)
+                      useExtractor[FromOrFallback, To, CtorParam](ctorParam.value.targetType, fromName, toName, getter)
                   }
                 } else {
                   val ambiguityOrPossibleSourceField = fromEnabledExtractors.collect {
-                    case (fromName, getter) if areFieldNamesMatching(fromName, toName) => (fromName, toName, getter)
+                    case (fromName, getter)
+                        if areFieldNamesMatching(fromName, toName) && !fromNamesExplicitlyUnused(fromName) =>
+                      (fromName, toName, getter)
                   }.toList match {
                     case Nil                  => Right(None)
                     case fromFieldData :: Nil => Right(Some(fromFieldData))
@@ -316,7 +322,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
                     fromName
                 }
                 .to(SortedSet),
-              fromNamesUsedByExtractors.toSet
+              fromNamesUsedByExtractors.toSet,
+              fromNamesExplicitlyUnused
             )
           }
           .map[TransformationExpr[ToOrPartialTo]] {
@@ -332,6 +339,8 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[TransformationExpr[CtorParam]] = runtimeFieldOverride match {
+      case TransformerOverride.Unused =>
+        DerivationResult.assertionError("Unused field override should have been checked on source side Path")
       case TransformerOverride.Const(runtimeData) =>
         // We're constructing:
         // '{ ${ runtimeDataStore }(idx).asInstanceOf[$ctorParam] }
@@ -919,14 +928,19 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
 
     // UnnamedFieldPolicy utilities
 
-    private def checkPolicy[From, To](requiredFromNames: SortedSet[String], fromNamesUsedByExtractors: Set[String])(
-        implicit ctx: TransformationContext[From, To]
+    private def checkPolicy[From, To](
+        requiredFromNames: SortedSet[String],
+        fromNamesUsedByExtractors: Set[String],
+        fromNamesExplicitlyUnmatched: Set[String]
+    )(implicit
+        ctx: TransformationContext[From, To]
     ): DerivationResult[Unit] =
       ctx.config.flags.unusedFieldPolicy match {
         case None => DerivationResult.unit
         case Some(FailOnIgnoredSourceVal) =>
           val fromNamesUsedInOverrides = ctx.sourceFieldsUsedByOverrides
-          val unusedFromNames = requiredFromNames -- fromNamesUsedByExtractors -- fromNamesUsedInOverrides
+          val unusedFromNames =
+            requiredFromNames -- fromNamesUsedByExtractors -- fromNamesUsedInOverrides -- fromNamesExplicitlyUnmatched
           if (unusedFromNames.isEmpty) {
             DerivationResult.unit
               .logSuccess(_ => s"Run UnusedFieldPolicy=$FailOnIgnoredSourceVal, all source vals used")

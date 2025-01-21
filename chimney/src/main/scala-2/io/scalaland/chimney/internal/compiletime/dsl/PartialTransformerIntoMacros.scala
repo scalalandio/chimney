@@ -108,6 +108,19 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
       }.applyFromSelectors(selectorFrom, selectorTo)
     )
 
+  def withFieldUnusedImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selectorFrom: Tree): Tree = c.prefix.tree
+    .asInstanceOfExpr(
+      new ApplyFieldNameType {
+        def apply[FromPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[PartialTransformerInto[From, To, Unused[FromPath, Overrides], Flags]]
+      }.applyFromSelector(selectorFrom)
+    )
+
   def withSealedSubtypeHandledImpl[
       From: WeakTypeTag,
       To: WeakTypeTag,
@@ -157,6 +170,19 @@ class PartialTransformerIntoMacros(val c: whitebox.Context) extends utils.DslMac
         RenamedTo[Path.SourceMatching[Path.Root, FromSubtype], Path.Matching[Path.Root, ToSubtype], Overrides],
         Flags
       ]]
+    )
+
+  def withSealedSubtypeUnmatchedImpl[
+      From: WeakTypeTag,
+      To: WeakTypeTag,
+      Overrides <: TransformerOverrides: WeakTypeTag,
+      Flags <: TransformerFlags: WeakTypeTag
+  ](selectorTo: Tree): Tree = c.prefix.tree
+    .asInstanceOfExpr(
+      new ApplyFieldNameType {
+        def apply[ToPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[PartialTransformerInto[From, To, Unmatched[ToPath, Overrides], Flags]]
+      }.applyFromSelector(selectorTo)
     )
 
   def withConstructorImpl[

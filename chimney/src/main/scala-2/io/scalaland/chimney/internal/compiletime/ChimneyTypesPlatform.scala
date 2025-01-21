@@ -145,6 +145,24 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
 
     object TransformerOverrides extends TransformerOverridesModule {
       val Empty: Type[runtime.TransformerOverrides.Empty] = weakTypeTag[runtime.TransformerOverrides.Empty]
+      object Unused extends UnusedModule {
+        def apply[FromPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.Unused[FromPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.Unused[FromPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.Unused[?, ?]].map { A0 =>
+            fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
+          }
+      }
+      object Unmatched extends UnmatchedModule {
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.Unmatched[ToPath, Tail]] =
+          weakTypeTag[runtime.TransformerOverrides.Unmatched[ToPath, Tail]]
+        def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] =
+          A.asCtor[runtime.TransformerOverrides.Unmatched[?, ?]].map { A0 =>
+            fixJavaEnums(A0.param_<[runtime.Path](0)) -> A0.param_<[runtime.TransformerOverrides](1)
+          }
+      }
       object Const extends ConstModule {
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.Const[ToPath, Tail]] =

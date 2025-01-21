@@ -110,6 +110,24 @@ object TransformerDefinitionMacros {
           }
     }(selectorFrom, selectorTo)
 
+  def withFieldUnusedImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      T: Type
+  ](
+      ti: Expr[TransformerDefinition[From, To, Overrides, Flags]],
+      selectorFrom: Expr[From => T]
+  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyFieldNameType {
+      [fromPath <: Path] =>
+        (_: Type[fromPath]) ?=>
+          '{
+            ${ ti }.asInstanceOf[TransformerDefinition[From, To, Unused[fromPath, Overrides], Flags]]
+        }
+    }(selectorFrom)
+
   def withSealedSubtypeHandledImpl[
       From: Type,
       To: Type,
@@ -150,6 +168,24 @@ object TransformerDefinitionMacros {
           Flags
         ]]
     }
+
+  def withSealedSubtypeUnmatchedImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      T: Type
+  ](
+      ti: Expr[TransformerDefinition[From, To, Overrides, Flags]],
+      selectorTo: Expr[To => T]
+  )(using Quotes): Expr[TransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyFieldNameType {
+      [toPath <: Path] =>
+        (_: Type[toPath]) ?=>
+          '{
+            ${ ti }.asInstanceOf[TransformerDefinition[From, To, Unmatched[toPath, Overrides], Flags]]
+        }
+    }(selectorTo)
 
   def withFallbackImpl[
       From: Type,

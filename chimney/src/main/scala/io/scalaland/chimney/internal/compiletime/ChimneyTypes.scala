@@ -80,6 +80,22 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
     trait TransformerOverridesModule { this: TransformerOverrides.type =>
       val Empty: Type[runtime.TransformerOverrides.Empty]
 
+      val Unused: UnusedModule
+      trait UnusedModule
+          extends Type.Ctor2UpperBounded[
+            runtime.Path,
+            runtime.TransformerOverrides,
+            runtime.TransformerOverrides.Unused
+          ] { this: Unused.type => }
+
+      val Unmatched: UnmatchedModule
+      trait UnmatchedModule
+          extends Type.Ctor2UpperBounded[
+            runtime.Path,
+            runtime.TransformerOverrides,
+            runtime.TransformerOverrides.Unmatched
+          ] { this: Unmatched.type => }
+
       val Const: ConstModule
       trait ConstModule
           extends Type.Ctor2UpperBounded[
