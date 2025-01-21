@@ -512,16 +512,29 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
           case _ => scala.None
         }
       }
-      object ComputedFrom extends ComputedFromModule {
+      object Const extends ConstModule {
+        def apply[
+            ObjPath <: runtime.Path: Type,
+            Tail <: runtime.PatcherOverrides: Type
+        ]: Type[runtime.PatcherOverrides.Const[ObjPath, Tail]] =
+          quoted.Type.of[runtime.PatcherOverrides.Const[ObjPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.PatcherOverrides])] =
+          tpe match {
+            case '[runtime.PatcherOverrides.Const[objPath, cfg]] =>
+              Some((Type[objPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.PatcherOverrides]))
+            case _ => scala.None
+          }
+      }
+      object Computed extends ComputedModule {
         def apply[
             PatchPath <: runtime.Path: Type,
             ObjPath <: runtime.Path: Type,
             Tail <: runtime.PatcherOverrides: Type
-        ]: Type[runtime.PatcherOverrides.ComputedFrom[PatchPath, ObjPath, Tail]] =
-          quoted.Type.of[runtime.PatcherOverrides.ComputedFrom[PatchPath, ObjPath, Tail]]
+        ]: Type[runtime.PatcherOverrides.Computed[PatchPath, ObjPath, Tail]] =
+          quoted.Type.of[runtime.PatcherOverrides.Computed[PatchPath, ObjPath, Tail]]
         def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.Path], ?<[runtime.PatcherOverrides])] =
           tpe match {
-            case '[runtime.PatcherOverrides.ComputedFrom[patchPath, objPath, cfg]] =>
+            case '[runtime.PatcherOverrides.Computed[patchPath, objPath, cfg]] =>
               Some(
                 (
                   Type[patchPath].as_?<[runtime.Path],
