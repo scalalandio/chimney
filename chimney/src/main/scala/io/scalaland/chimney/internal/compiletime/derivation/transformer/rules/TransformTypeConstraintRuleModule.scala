@@ -10,12 +10,14 @@ private[compiletime] trait TransformTypeConstraintRuleModule { this: Derivation 
   protected object TransformTypeConstraintRule extends Rule("TypeConstraint") {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-      if (ctx.config.flags.typeConstraintEvidence) {
-        Expr.summonImplicit[From <:< To] match {
-          case Some(ev) => transformWithEvidence[From, To](ev)
-          case None     => DerivationResult.attemptNextRule
-        }
-      } else DerivationResult.attemptNextRuleBecause("<:< evidence is disabled")
+      if (ctx.config.areOverridesEmpty) {
+        if (ctx.config.flags.typeConstraintEvidence) {
+          Expr.summonImplicit[From <:< To] match {
+            case Some(ev) => transformWithEvidence[From, To](ev)
+            case None     => DerivationResult.attemptNextRule
+          }
+        } else DerivationResult.attemptNextRuleBecause("<:< evidence is disabled")
+      } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
 
     private def transformWithEvidence[From, To](ev: Expr[From <:< To])(implicit
         ctx: TransformationContext[From, To]
