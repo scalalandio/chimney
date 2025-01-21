@@ -195,6 +195,24 @@ object PartialTransformerDefinitionMacros {
           }
     }(selectorFrom, selectorTo)
 
+  def withFieldUnusedImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      T: Type
+  ](
+      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      selectorFrom: Expr[From => T]
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyFieldNameType {
+      [fromPath <: Path] =>
+        (_: Type[fromPath]) ?=>
+          '{
+            ${ ti }.asInstanceOf[PartialTransformerDefinition[From, To, Unused[fromPath, Overrides], Flags]]
+        }
+    }(selectorFrom)
+
   def withSealedSubtypeHandledImpl[
       From: Type,
       To: Type,
@@ -256,6 +274,24 @@ object PartialTransformerDefinitionMacros {
           Flags
         ]]
     }
+
+  def withSealedSubtypeUnmatchedImpl[
+      From: Type,
+      To: Type,
+      Overrides <: TransformerOverrides: Type,
+      Flags <: TransformerFlags: Type,
+      T: Type
+  ](
+      ti: Expr[PartialTransformerDefinition[From, To, Overrides, Flags]],
+      selectorTo: Expr[To => T]
+  )(using Quotes): Expr[PartialTransformerDefinition[From, To, ? <: TransformerOverrides, Flags]] =
+    DslMacroUtils().applyFieldNameType {
+      [toPath <: Path] =>
+        (_: Type[toPath]) ?=>
+          '{
+            ${ ti }.asInstanceOf[PartialTransformerDefinition[From, To, Unmatched[toPath, Overrides], Flags]]
+        }
+    }(selectorTo)
 
   def withFallbackImpl[
       From: Type,

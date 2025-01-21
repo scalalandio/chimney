@@ -158,6 +158,23 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
   ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withFieldRenamedImpl[From, To, Overrides, Flags]
 
+  /** Mark field as expected to be unused when it would fail [[UnusedFieldPolicy]] by default.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam T
+    *   type of source field
+    * @param selectorFrom
+    *   source field in `From`, defined like `_.originalName`
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    *
+    * @since TODO
+    */
+  def withFieldUnused[T](selectorFrom: From => T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerDefinitionMacros.withFieldUnusedImpl[From, To, Overrides, Flags]
+
   /** Use `f` to calculate the unmatched subtype when mapping one sealed/enum into another.
     *
     * By default, if mapping one coproduct in `From` into another coproduct in `To` derivation expects that coproducts
@@ -231,6 +248,32 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     */
   def withEnumCaseRenamed[FromSubtype, ToSubtype]: TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
     macro TransformerDefinitionMacros.withSealedSubtypeRenamedImpl[From, To, Overrides, Flags, FromSubtype, ToSubtype]
+
+  /** Mark subtype as expected to be unmatched when it would fail [[UnmatchedSubtypePolicy]] by default.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam T
+    *   type of subtype
+    * @param selectorTo
+    *   target subtype in `To`, defined like `_.matching[Subtype]`
+    * @return
+    *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    *
+    * @since TODO
+    */
+  def withSealedSubtypeUnmatched[T](
+      selectorTo: To => T
+  ): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerDefinitionMacros.withSealedSubtypeUnmatchedImpl[From, To, Overrides, Flags]
+
+  /** Alias to [[withSealedSubtypeUnmatched]].
+    *
+    * @since TODO
+    */
+  def withEnumCaseUnmatched[T](selectorTo: To => T): TransformerDefinition[From, To, ? <: TransformerOverrides, Flags] =
+    macro TransformerDefinitionMacros.withSealedSubtypeUnmatchedImpl[From, To, Overrides, Flags]
 
   /** To use `fallback` when the source of type `From` is missing fields.
     *

@@ -360,6 +360,10 @@ private[compiletime] trait Configurations { this: Derivation =>
     sealed trait ForFallback extends TransformerOverride
     sealed trait ForConstructor extends TransformerOverride
 
+    case object Unused extends ForField with ForSubtype {
+      override def toString: String = "Unused"
+    }
+
     final case class Const(runtimeData: ExistentialExpr) extends ForField {
       override def toString: String = s"Const(${ExistentialExpr.prettyPrint(runtimeData)})"
     }
@@ -455,11 +459,21 @@ private[compiletime] trait Configurations { this: Derivation =>
     def areLocalFlagsAndOverridesEmpty: Boolean =
       areLocalFlagsEmpty && areOverridesEmpty
 
+    def filterCurrentUnusedFields: Set[String] = ListSet.from(
+      runtimeOverridesForCurrent.collect { case (SourcePath(Path.AtField(name, _)), TransformerOverride.Unused) =>
+        name
+      }
+    )
+    def filterCurrentUnusedSubtypes: Set[??] = ListSet.from(
+      runtimeOverridesForCurrent.collect { case (TargetPath(Path.AtSubtype(tpe, _)), TransformerOverride.Unused) =>
+        tpe
+      }
+    )
     def filterCurrentOverridesForField(nameFilter: String => Boolean): Map[String, TransformerOverride.ForField] =
       ListMap.from(
         runtimeOverridesForCurrent.collect {
           case (TargetPath(Path.AtField(name, _)), runtimeFieldOverride: TransformerOverride.ForField)
-              if nameFilter(name) =>
+              if nameFilter(name) && runtimeFieldOverride != TransformerOverride.Unused =>
             name -> runtimeFieldOverride
         }
       )
@@ -468,7 +482,7 @@ private[compiletime] trait Configurations { this: Derivation =>
     ): Map[??, TransformerOverride.ForSubtype] = ListMap.from(
       runtimeOverridesForCurrent.collect {
         case (SourcePath(Path.AtSubtype(tpe, _)), runtimeCoproductOverride: TransformerOverride.ForSubtype)
-            if sourceTypeFilter(tpe) =>
+            if sourceTypeFilter(tpe) && runtimeCoproductOverride != TransformerOverride.Unused =>
           tpe -> runtimeCoproductOverride
       }
     )
@@ -772,6 +786,18 @@ private[compiletime] trait Configurations { this: Derivation =>
         runtimeDataStore: Expr[TransformerDefinitionCommons.RuntimeDataStore]
     ): TransformerConfiguration = Type[Tail] match {
       case empty if empty =:= ChimneyType.TransformerOverrides.Empty => TransformerConfiguration()
+      case ChimneyType.TransformerOverrides.Unused(fromPath, cfg) =>
+        import fromPath.Underlying as FromPath, cfg.Underlying as Tail2
+        extractTransformerConfig[Tail2](runtimeDataIdx, runtimeDataStore).addTransformerOverride(
+          SourcePath(extractPath[FromPath]),
+          TransformerOverride.Unused
+        )
+      case ChimneyType.TransformerOverrides.Unmatched(toPath, cfg) =>
+        import toPath.Underlying as ToPath, cfg.Underlying as Tail2
+        extractTransformerConfig[Tail2](runtimeDataIdx, runtimeDataStore).addTransformerOverride(
+          TargetPath(extractPath[ToPath]),
+          TransformerOverride.Unused
+        )
       case ChimneyType.TransformerOverrides.Const(toPath, cfg) =>
         import toPath.Underlying as ToPath, cfg.Underlying as Tail2
         extractTransformerConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addTransformerOverride(

@@ -94,6 +94,26 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
 
     object TransformerOverrides extends TransformerOverridesModule {
       val Empty: Type[runtime.TransformerOverrides.Empty] = quoted.Type.of[runtime.TransformerOverrides.Empty]
+      object Unused extends UnusedModule {
+        def apply[FromPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.Unused[FromPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.Unused[FromPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
+          case '[runtime.TransformerOverrides.Unused[fromPath, cfg]] =>
+            Some((Type[fromPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
+          case _ => scala.None
+        }
+      }
+      object Unmatched extends UnmatchedModule {
+        def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
+            : Type[runtime.TransformerOverrides.Unmatched[ToPath, Tail]] =
+          quoted.Type.of[runtime.TransformerOverrides.Unmatched[ToPath, Tail]]
+        def unapply[A](tpe: Type[A]): Option[(?<[runtime.Path], ?<[runtime.TransformerOverrides])] = tpe match {
+          case '[runtime.TransformerOverrides.Unmatched[toPath, cfg]] =>
+            Some((Type[toPath].as_?<[runtime.Path], Type[cfg].as_?<[runtime.TransformerOverrides]))
+          case _ => scala.None
+        }
+      }
       object Const extends ConstModule {
         def apply[ToPath <: runtime.Path: Type, Tail <: runtime.TransformerOverrides: Type]
             : Type[runtime.TransformerOverrides.Const[ToPath, Tail]] =

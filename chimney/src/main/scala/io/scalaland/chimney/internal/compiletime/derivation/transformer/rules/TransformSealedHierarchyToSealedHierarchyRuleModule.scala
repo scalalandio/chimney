@@ -33,6 +33,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         toElements: Enum.Elements[To]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
       val toSubtypesMatched = scala.collection.mutable.Set.empty[ExistentialType]
+      val toSubtypesExplicitlyUnmatched = ctx.config.filterCurrentUnusedSubtypes
 
       DerivationResult.log {
         val fromSubs = fromElements.map(tpe => Type.prettyPrint(tpe.Underlying)).mkString(", ")
@@ -49,7 +50,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             // the need for several non-abstract subtypes - keeping them would result in unreachable code errors.
             overrideMappings.exists(usedFromSubtype => fromSubtype.Underlying <:< usedFromSubtype.Underlying)
           }) { (fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]]) =>
-            mapElementsMatchedByName[From, To](fromSubtype, toElements)
+            mapElementsMatchedByName[From, To](fromSubtype, toElements, toSubtypesExplicitlyUnmatched)
               .tap { _ =>
                 if (ctx.config.flags.unmatchedSubtypePolicy.isDefined) {
                   toSubtypesMatched += toElements.collectFirst {
@@ -60,7 +61,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
               }
               .orElse(mapWholeTo[From, To](fromSubtype))
           }
-          .flatTap(_ => checkPolicy(toElements, toSubtypesMatched.toSet))
+          .flatTap(_ => checkPolicy(toElements, toSubtypesMatched.toSet, toSubtypesExplicitlyUnmatched))
           .flatMap { (nameMatchedMappings: List[Existential[ExprPromise[*, TransformationExpr[To]]]]) =>
             combineElementsMappings[From, To](overrideMappings ++ nameMatchedMappings)
           }
@@ -76,6 +77,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
           Type[SomeFrom] <:< Type[From]
         }
         .filter {
+          case (_, TransformerOverride.Unused)                            => true
           case (_, TransformerOverride.Computed(_, targetPath, _))        => targetPath == ctx.currentTgt
           case (_, TransformerOverride.ComputedPartial(_, targetPath, _)) => targetPath == ctx.currentTgt
           case (_, TransformerOverride.Renamed(_, targetPath)) =>
@@ -106,6 +108,11 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
 
               // targetPath verified by filter in overrides
               runtimeSubtype match {
+                case TransformerOverride.Unused =>
+                  await(
+                    DerivationResult
+                      .assertionError("Unmatched subtype override should have been checked on target side Path")
+                  )
                 case TransformerOverride.Computed(_, _, runtimeData) =>
                   // We're constructing:
                   // case someFromExpr: $someFrom => runtimeDataStore(${ idx }).asInstanceOf[$someFrom => $To](someFromExpr)
@@ -143,12 +150,16 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
 
     private def mapElementsMatchedByName[From, To](
         fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]],
-        toElements: Enum.Elements[To]
+        toElements: Enum.Elements[To],
+        toSubtypesExplicitlyUnmatched: Set[??]
     )(implicit
         ctx: TransformationContext[From, To]
     ): DerivationResult[Existential[ExprPromise[*, TransformationExpr[To]]]] = {
       import fromSubtype.Underlying as FromSubtype, fromSubtype.value.name as fromName
-      toElements.filter(toSubtype => areSubtypeNamesMatching(fromName, toSubtype.value.name)) match {
+      toElements.filter { toSubtype =>
+        areSubtypeNamesMatching(fromName, toSubtype.value.name) &&
+        !toSubtypesExplicitlyUnmatched.exists(um => toSubtype.Underlying <:< um.Underlying)
+      } match {
         // 0 matches - no coproduct with the same name
         case Nil =>
           DerivationResult
@@ -274,7 +285,8 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
 
     private def checkPolicy[From, To](
         requiredToSubtypes: Enum.Elements[To],
-        toSubtypesUsedInMatch: Set[ExistentialType]
+        toSubtypesUsedInMatch: Set[ExistentialType],
+        toSubtypesExplicitlyUnmatched: Set[ExistentialType]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Unit] =
       ctx.config.flags.unmatchedSubtypePolicy match {
         case None => DerivationResult.unit
@@ -283,6 +295,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
           val unmatchedToSubtypes = requiredToSubtypes.view
             .filterNot(tpe => toSubtypesUsedInMatch.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
             .filterNot(tpe => toSubtypesUsedInOverrides.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
+            .filterNot(tpe => toSubtypesExplicitlyUnmatched.exists(tpe2 => tpe.Underlying =:= tpe2.Underlying))
             .map(tpe => Type.prettyPrint(tpe.Underlying))
             .toList
           if (unmatchedToSubtypes.isEmpty) {
