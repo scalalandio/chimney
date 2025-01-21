@@ -32,7 +32,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
         fromElements: Enum.Elements[From],
         toElements: Enum.Elements[To]
     )(implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] = {
-      val toSubtypesMatched = scala.collection.mutable.Set.empty[ExistentialType]
+      val toSubtypesMatched = scala.collection.mutable.ListBuffer.empty[ExistentialType]
       val toSubtypesExplicitlyUnmatched = ctx.config.filterCurrentUnusedSubtypes
 
       DerivationResult.log {
@@ -50,15 +50,12 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
             // the need for several non-abstract subtypes - keeping them would result in unreachable code errors.
             overrideMappings.exists(usedFromSubtype => fromSubtype.Underlying <:< usedFromSubtype.Underlying)
           }) { (fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]]) =>
-            mapElementsMatchedByName[From, To](fromSubtype, toElements, toSubtypesExplicitlyUnmatched)
-              .tap { _ =>
-                if (ctx.config.flags.unmatchedSubtypePolicy.isDefined) {
-                  toSubtypesMatched += toElements.collectFirst {
-                    case toSubtype if areSubtypeNamesMatching(fromSubtype.value.name, toSubtype.value.name) =>
-                      toSubtype.Underlying.as_??
-                  }.get
-                }
-              }
+            mapElementsMatchedByName[From, To](
+              fromSubtype,
+              toElements,
+              toSubtypesMatched,
+              toSubtypesExplicitlyUnmatched
+            )
               .orElse(mapWholeTo[From, To](fromSubtype))
           }
           .flatTap(_ => checkPolicy(toElements, toSubtypesMatched.toSet, toSubtypesExplicitlyUnmatched))
@@ -151,6 +148,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
     private def mapElementsMatchedByName[From, To](
         fromSubtype: Existential.UpperBounded[From, Enum.Element[From, *]],
         toElements: Enum.Elements[To],
+        toSubtypesMatched: scala.collection.mutable.ListBuffer[??],
         toSubtypesExplicitlyUnmatched: Set[??]
     )(implicit
         ctx: TransformationContext[From, To]
@@ -218,6 +216,7 @@ private[compiletime] trait TransformSealedHierarchyToSealedHierarchyRuleModule {
                 case _ => None
               }
 
+              toSubtypesMatched += toSubtype.Underlying.as_??
               fromSubtypeIntoToSubtype
                 .orElseOpt(fromSubtypeUnwrappedIntoToSubtype)
                 .orElseOpt(fromSubtypeIntoToSubtypeUnwrapped)

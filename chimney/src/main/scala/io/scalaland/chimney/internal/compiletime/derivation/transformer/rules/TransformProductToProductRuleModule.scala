@@ -121,7 +121,7 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
           )
         }
 
-      val fromNamesUsedByExtractors = scala.collection.mutable.Set.empty[String]
+      val fromNamesUsedByExtractors = scala.collection.mutable.ListBuffer.empty[String]
       val fromNamesExplicitlyUnused = ctx.config.filterCurrentUnusedFields
 
       DerivationResult.log {
