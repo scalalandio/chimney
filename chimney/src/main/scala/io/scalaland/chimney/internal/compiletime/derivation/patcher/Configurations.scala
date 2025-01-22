@@ -60,7 +60,7 @@ private[compiletime] trait Configurations { this: Derivation =>
   }
   protected object PatcherFlags {
 
-    /** Let us impliment TransformerFlags => TransformerFlags using PatcherFlags => PatcherFlags */
+    /** Let us implement TransformerFlags => TransformerFlags using PatcherFlags => PatcherFlags */
     private val originalFlags = scala.collection.mutable.Map.empty[TransformerFlags, PatcherFlags]
     def register(patchFlags: PatcherFlags)(transformerFlags: TransformerFlags): TransformerFlags = {
       originalFlags += (transformerFlags -> patchFlags)

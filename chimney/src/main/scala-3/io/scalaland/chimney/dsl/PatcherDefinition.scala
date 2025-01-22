@@ -39,7 +39,7 @@ final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: 
     *
     * @since 1.7.0
     */
-  transparent inline def withFieldConst[T, U](selectorObj: A => T, value: U)(using
+  transparent inline def withFieldConst[T, U](inline selectorObj: A => T, inline value: U)(using
       U <:< T
   ): PatcherDefinition[A, Patch, ? <: PatcherOverrides, Flags] =
     ${ PatcherDefinitionMacros.withFieldConstImpl('this, 'selectorObj, 'value) }
@@ -95,7 +95,7 @@ final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: 
     *
     * @since 1.7.0
     */
-  transparent inline def withFieldComputedFrom[S, T, U](selectorPatch: Patch => S)(
+  transparent inline def withFieldComputedFrom[S, T, U](inline selectorPatch: Patch => S)(
       inline selectorObj: A => T,
       inline f: S => U
   )(using U <:< T): PatcherDefinition[A, Patch, ? <: PatcherOverrides, Flags] =
@@ -135,7 +135,7 @@ final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: 
     * @since 1.7.0
     */
   transparent inline def withPatchedValueFlag[T](
-      selectorObj: A => T
+      inline selectorObj: A => T
   ): PatcherPatchedValueFlagsDsl.OfPatcherDefinition[A, Patch, Overrides, Flags, ? <: Path] =
     ${ PatcherDefinitionMacros.withPatchedValueFlagImpl('this, 'selectorObj) }
 

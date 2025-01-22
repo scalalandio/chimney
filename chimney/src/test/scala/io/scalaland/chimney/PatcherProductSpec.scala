@@ -88,6 +88,64 @@ class PatcherProductSpec extends ChimneySpec {
     }
   }
 
+  group("setting .withFieldConst(_.field, value)") {
+
+    test("should provide value to the patched value") {
+      import PatchDomain.*
+
+      User(1, Email("a@b.c"), Phone(123456789L))
+        .using(UpdateDetails("d@e.f", 98765432L))
+        .withFieldConst(_.id, 2)
+        .patch ==> User(2, Email("d@e.f"), Phone(98765432L))
+    }
+  }
+
+  group("setting .withFieldComputed(_.field, value)") {
+
+    test("should compute patched value from a whole patch") {
+      import PatchDomain.*
+
+      User(1, Email("a@b.c"), Phone(123456789L))
+        .using(UpdateDetails("d@e.f", 98765432L))
+        .withFieldComputed(_.id, _ => 2)
+        .patch ==> User(2, Email("d@e.f"), Phone(98765432L))
+    }
+  }
+
+  group("setting .withFieldComputedFrom(selectorFrom)(selectorTo, value)") {
+
+    test("should compute patched value from a whole patch") {
+      import PatchDomain.*
+
+      User(1, Email("a@b.c"), Phone(123456789L))
+        .using(UpdateDetails("d@e.f", 98765432L))
+        .withFieldComputedFrom(_.phone)(_.id, _.toInt)
+        .patch ==> User(98765432, Email("d@e.f"), Phone(98765432L))
+    }
+  }
+
+  group("setting .withFieldIgnored(_.field, value)") {
+
+    test("should leave the original value for the selected field") {
+      import PatchDomain.*
+
+      User(1, Email("a@b.c"), Phone(123456789L))
+        .using(UpdateDetails("d@e.f", 98765432L))
+        .withFieldIgnored(_.email)
+        .patch ==> User(1, Email("a@b.c"), Phone(98765432L))
+    }
+
+    test("should suppress errors about unused value") {
+
+      import PatchDomain.*
+
+      UpdateDetails("d@e.f", 98765432L)
+        .using(User(1, Email("a@b.c"), Phone(123456789L)))
+        .withFieldIgnored(_.id)
+        .patch ==> UpdateDetails("a@b.c", 123456789L)
+    }
+  }
+
   group("flag .ignoreRedundantPatcherFields") {
     import PatchDomain.*
 
@@ -122,14 +180,12 @@ class PatcherProductSpec extends ChimneySpec {
       exampleUser
         .using(patch1)
         .ignoreRedundantPatcherFields
-        .patch ==>
-        exampleUser.copy(phone = patch1.phone)
+        .patch ==> exampleUser.copy(phone = patch1.phone)
 
       exampleUser
         .using(patch2)
         .ignoreRedundantPatcherFields
-        .patch ==>
-        exampleUser.copy(phone = patch2.phone)
+        .patch ==> exampleUser.copy(phone = patch2.phone)
 
       locally {
         implicit val cfg = PatcherConfiguration.default.ignoreRedundantPatcherFields
@@ -140,6 +196,24 @@ class PatcherProductSpec extends ChimneySpec {
         exampleUser.patchUsing(patch2) ==> exampleUser.copy(phone = patch2.phone)
         exampleUser.using(patch2).patch ==> exampleUser.copy(phone = patch2.phone)
       }
+    }
+
+    test(
+      """should be turned on only for a single field when scoped using .withPatchedValueFlag(_.field)"""
+    ) {
+      import merges.Nested
+
+      Nested(exampleUser)
+        .using(Nested(patch1))
+        .withPatchedValueFlag(_.value)
+        .ignoreRedundantPatcherFields
+        .patch ==> Nested(exampleUser.copy(phone = patch1.phone))
+
+      Nested(exampleUser)
+        .using(Nested(patch2))
+        .withPatchedValueFlag(_.value)
+        .ignoreRedundantPatcherFields
+        .patch ==> Nested(exampleUser.copy(phone = patch2.phone))
     }
   }
 
@@ -199,6 +273,24 @@ class PatcherProductSpec extends ChimneySpec {
         exampleUserWithOptionalField.patchUsing(IntPatch(None)) ==> exampleUserWithOptionalField
         exampleUserWithOptionalField.using(IntPatch(None)).patch ==> exampleUserWithOptionalField
       }
+    }
+
+    test(
+      """should be turned on only for a single field when scoped using .withPatchedValueFlag(_.field)"""
+    ) {
+      import merges.Nested
+
+      Nested(exampleUserWithOptionalField)
+        .using(Nested(PhonePatch(None)))
+        .withPatchedValueFlag(_.value)
+        .ignoreNoneInPatch
+        .patch ==> Nested(exampleUserWithOptionalField)
+
+      Nested(exampleUserWithOptionalField)
+        .using(Nested(IntPatch(None)))
+        .withPatchedValueFlag(_.value)
+        .ignoreNoneInPatch
+        .patch ==> Nested(exampleUserWithOptionalField)
     }
   }
 
