@@ -4508,6 +4508,143 @@ to be automatically recognized as such:
     easier to define [a custom transformer](#custom-transformations), perhaps by using a dedicated new type/refined type
     library and [providing an integration for all of its types](cookbook.md#libraries-with-smart-constructors).
 
+## Merging multiple input source into a single target value
+
+Sometimes we have one flat structure on one side and several structures on the other.
+
+```scala
+import java.time.Instant
+
+case class UserDto(id: Long, firstName: String, lastName: String, createdAt: Instance, updatedAt: Instant)
+
+case class User(id: Long, data: Data, meta: Meta)
+object User {
+  case class Data(firstName: String, lastName: String)
+  case class Meta(createdAt: Instance, updatedAt: Instant)
+}
+```
+
+We could easily convert a whole model into smaller pieces:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}    
+    import io.scalaland.chimney.dsl._
+    import java.time.Instant
+
+    case class UserDto(id: Long, firstName: String, lastName: String, createdAt: Instant, updatedAt: Instant)
+
+    case class User(id: User.ID, data: User.Data, meta: User.Meta)
+    object User {
+      case class ID(id: Long)
+      case class Data(firstName: String, lastName: String)
+      case class Meta(createdAt: Instant, updatedAt: Instant)
+    }
+
+    val dto = UserDto(42L, "John", "Smith", Instant.parse("2000-01-01T12:00:00.00Z"), Instant.parse("2010-01-01T12:00:00.00Z"))
+
+    val id   = dto.transformInto[User.ID]
+    val data = dto.transformInto[User.Data]
+    val meta = dto.transformInto[User.Meta]
+    pprint.pprintln(
+      User(id, data, meta)
+    )
+    // expected output:
+    // User(
+    //   id = ID(id = 42L),
+    //   data = Data(firstName = "John", lastName = "Smith"),
+    //   meta = Meta(createdAt = 2000-01-01T12:00:00Z, updatedAt = 2010-01-01T12:00:00Z)
+    // )
+    ```
+
+but how could we combine them back together without wiring most of the fields manually?
+
+By defining some source value as the main one (usable in DSL for e.g. renames), and 1 or more fallbacks:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+    import java.time.Instant
+
+    case class UserDto(id: Long, firstName: String, lastName: String, createdAt: Instant, updatedAt: Instant)
+
+    case class User(id: User.ID, data: User.Data, meta: User.Meta)
+    object User {
+      case class ID(id: Long)
+      case class Data(firstName: String, lastName: String)
+      case class Meta(createdAt: Instant, updatedAt: Instant)
+    }
+
+    val user = User(
+      User.ID(42L),
+      User.Data("John", "Smith"),
+      User.Meta(Instant.parse("2000-01-01T12:00:00.00Z"), Instant.parse("2010-01-01T12:00:00.00Z"))
+    )
+    pprint.pprintln(
+      user.id.into[UserDto]
+        .withFallback(user.data)
+        .withFallback(user.meta)
+        .transform
+    )
+    // expected output:
+    // UserDto(
+    //   id = 42L,
+    //   firstName = "John",
+    //   lastName = "Smith",
+    //   createdAt = 2000-01-01T12:00:00Z,
+    //   updatedAt = 2010-01-01T12:00:00Z
+    // )
+    ```
+
+  Sometimes we might want to provide fallbacks only to some fields rather than globally:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+    import java.time.Instant
+
+    case class UserDto(id: Long, firstName: String, lastName: String, createdAt: Instant, updatedAt: Instant)
+
+    case class User(id: User.ID, data: User.Data, meta: User.Meta)
+    object User {
+      case class ID(id: Long)
+      case class Data(firstName: String, lastName: String)
+      case class Meta(createdAt: Instant, updatedAt: Instant)
+    }
+
+    case class Nested[A](value: A)
+
+    val user = User(
+      User.ID(42L),
+      User.Data("John", "Smith"),
+      User.Meta(Instant.parse("2000-01-01T12:00:00.00Z"), Instant.parse("2010-01-01T12:00:00.00Z"))
+    )
+    pprint.pprintln(
+      Nested(User.ID(128L)).into[Nested[UserDto]]
+        .withFallbackFrom(_.value)(user.data)
+        .withFallbackFrom(_.value)(user.meta)
+        .transform
+    )
+    // expected output:
+    // Nested(
+    //   value = UserDto(
+    //     id = 128L,
+    //     firstName = "John",
+    //     lastName = "Smith",
+    //     createdAt = 2000-01-01T12:00:00Z,
+    //     updatedAt = 2010-01-01T12:00:00Z
+    //   )
+    // )
+    ```
+
 ## Custom transformations
 
 For virtually every 2 types that you want, you can define your own `Transformer` or `PartialTransformer` as `implicit`.
