@@ -4645,6 +4645,60 @@ By defining some source value as the main one (usable in DSL for e.g. renames), 
     // )
     ```
 
+### Merging case classes (or POJOs)
+
+This is how the merging algorithm works:
+
+ * when mergnig several `case class`es (or POJOs) into a `case class` (or POJO), for each target field:
+   * check if there is explicitly provided override ([const value](#wiring-the-constructors-parameter-to-a-provided-value),
+     [computed value](#wiring-the-constructors-parameter-to-the-computed-value),
+     [rename](#wiring-the-constructors-parameter-to-its-source-field), ...)
+     * if there is one, use it
+   * if there is no override, see if the source value try to find a field with a matching name
+     * if there is one, convert it into the target field's type
+   * if there is no source field, go through the list of fallback values (in the order they were provided) and check
+     if one of them has a field with a matching name
+     * if there is one, convert it into the target field's type
+   * if there is no such field, try to use other fallback values if they are enabled
+     ([default values](#allowing-fallback-to-the-constructors-default-values),
+     [`None`](#allowing-fallback-to-none-as-the-constructors-argument)) as last resort
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+    
+    case class Foo(a: Int, b: String)
+    case class Bar(b: String, c: Long)
+    case class Baz(c: Long, d: String)
+    
+    case class Result(a: Int, b: String, c: Long, d: String, e: Int)
+
+    pprint.pprintln(
+      Foo(1, "2").into[Result]
+        .withFallback(Bar("3", 4L))
+        .withFallback(Baz(5L, "6"))
+        .withFieldConst(_.e, 7)
+        .transform
+    )
+    // expected output:
+    // Result(a = 1, b = "2", c = 4L, d = "6", e = 7)
+    ```
+
+!!! tip
+
+    You can use all overrides and flags that you normally use for [a single value conversions](#into-a-case-class-or-pojo).
+
+!!! tip
+
+    You can control priority of fallback values just by ordering them:
+
+    ```scala
+    theMostImprtant.into[Result].withFallback(lessImportant).withFallback(evenLessImportant) ...
+    ```
+
 ## Custom transformations
 
 For virtually every 2 types that you want, you can define your own `Transformer` or `PartialTransformer` as `implicit`.
