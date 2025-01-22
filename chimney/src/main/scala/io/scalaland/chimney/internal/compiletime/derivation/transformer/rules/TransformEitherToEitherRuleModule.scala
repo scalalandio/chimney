@@ -32,7 +32,9 @@ private[compiletime] trait TransformEitherToEitherRuleModule {
                 case Some(dsls.SourceOrElseFallback) =>
                   srcToResult.parMap2(fallbackToResult)((srcTo, fallbackTo) => fallbackTo.foldLeft(srcTo)(merge))
                 case Some(dsls.FallbackOrElseSource) =>
-                  srcToResult.parMap2(fallbackToResult)((srcTo, fallbackTo) => fallbackTo.foldRight(srcTo)(merge))
+                  srcToResult.parMap2(fallbackToResult)((srcTo, fallbackTo) =>
+                    fallbackTo.reverseIterator.foldRight(srcTo)(merge)
+                  )
               }).flatMap(either => DerivationResult.expanded(either.map(_.upcastToExprOf[To])))
             case _ => DerivationResult.attemptNextRule
           }
