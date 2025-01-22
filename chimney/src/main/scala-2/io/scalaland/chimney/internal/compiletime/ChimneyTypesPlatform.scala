@@ -513,7 +513,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         ]: Type[runtime.PatcherOverrides.Const[ObjPath, Tail]] =
           weakTypeTag[runtime.PatcherOverrides.Const[ObjPath, Tail]]
         def unapply[A](A: Type[A]): Option[(?<[runtime.Path], ?<[runtime.PatcherOverrides])] =
-          A.asCtor[runtime.PatcherOverrides.Computed[?, ?, ?]].map { A0 =>
+          A.asCtor[runtime.PatcherOverrides.Const[?, ?]].map { A0 =>
             (fixJavaEnums(A0.param_<[runtime.Path](0)), A0.param_<[runtime.PatcherOverrides](1))
           }
       }

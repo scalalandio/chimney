@@ -50,7 +50,7 @@ class PatcherUsingMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
       new ApplyFieldNameTypes {
         def apply[PatchPath <: Path: WeakTypeTag, ObjPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
           weakTypeTag[PatcherUsing[A, Patch, Computed[PatchPath, ObjPath, Overrides], Flags]]
-      }.applyFromSelectors(selectorObj, selectorPatch)
+      }.applyFromSelectors(selectorPatch, selectorObj)
     )
 
   def withFieldIgnoredImpl[
