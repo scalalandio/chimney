@@ -58,11 +58,11 @@ class PatcherDefinitionMacros(val c: whitebox.Context) extends utils.DslMacroUti
       Patch: WeakTypeTag,
       Overrides <: PatcherOverrides: WeakTypeTag,
       Flags <: PatcherFlags: WeakTypeTag
-  ](selectorA: Tree): Tree = c.prefix.tree
+  ](selectorPatch: Tree): Tree = c.prefix.tree
     .asInstanceOfExpr(
       new ApplyFieldNameType {
         def apply[PatchPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
           weakTypeTag[PatcherDefinition[A, Patch, Ignored[PatchPath, Overrides], Flags]]
-      }.applyFromSelector(selectorA)
+      }.applyFromSelector(selectorPatch)
     )
 }
