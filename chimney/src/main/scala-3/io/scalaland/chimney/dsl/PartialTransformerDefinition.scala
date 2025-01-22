@@ -642,7 +642,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @param selectorFrom
     *   source field in `From`, defined like `_.name`
     * @return
-    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *   [[io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfPartialTransformerDefinition]]
     *
     * @since 1.6.0
     */
@@ -661,7 +661,7 @@ final class PartialTransformerDefinition[From, To, Overrides <: TransformerOverr
     * @param selectorTo
     *   target field in `To`, defined like `_.name`
     * @return
-    *   [[io.scalaland.chimney.dsl.PartialTransformerInto]]
+    *   [[io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfPartialTransformerDefinition]]
     *
     * @since 1.6.0
     */

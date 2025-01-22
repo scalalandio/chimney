@@ -13,7 +13,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       ignoreLeftInPatch: Boolean = false,
       appendCollectionInPatch: Boolean = false,
       ignoreRedundantPatcherFields: Boolean = false,
-      displayMacrosLogging: Boolean = false
+      displayMacrosLogging: Boolean = false,
+      scopedUpdates: List[(SidedPath, PatcherFlags => PatcherFlags)] = List.empty
   ) {
 
     def setBoolFlag[Flag <: runtime.PatcherFlags.Flag: Type](value: Boolean): PatcherFlags =
@@ -33,13 +34,21 @@ private[compiletime] trait Configurations { this: Derivation =>
         // $COVERAGE-ON$
       }
 
-    def toTransformerFlags: TransformerFlags = TransformerFlags(
-      optionFallbackMerge = if (ignoreNoneInPatch) Some(dsls.SourceOrElseFallback) else None,
-      eitherFallbackMerge = if (ignoreLeftInPatch) Some(dsls.SourceOrElseFallback) else None,
-      collectionFallbackMerge = if (appendCollectionInPatch) Some(dsls.FallbackAppendSource) else None,
-      unusedFieldPolicy = if (ignoreRedundantPatcherFields) None else Some(dsls.FailOnIgnoredSourceVal),
-      displayMacrosLogging = displayMacrosLogging
-    )
+    def setPatchedValueFlags(objPath: Path)(update: PatcherFlags => PatcherFlags): PatcherFlags =
+      copy(scopedUpdates = scopedUpdates :+ (TargetPath(objPath) -> update))
+
+    lazy val toTransformerFlags: TransformerFlags = PatcherFlags.register(this) {
+      TransformerFlags(
+        optionFallbackMerge = if (ignoreNoneInPatch) Some(dsls.SourceOrElseFallback) else None,
+        eitherFallbackMerge = if (ignoreLeftInPatch) Some(dsls.SourceOrElseFallback) else None,
+        collectionFallbackMerge = if (appendCollectionInPatch) Some(dsls.FallbackAppendSource) else None,
+        unusedFieldPolicy = if (ignoreRedundantPatcherFields) None else Some(dsls.FailOnIgnoredSourceVal),
+        displayMacrosLogging = displayMacrosLogging,
+        scopedUpdates = scopedUpdates.view.map { case (sidedPath, update) =>
+          sidedPath -> ((tflags: TransformerFlags) => update(PatcherFlags.originalFlags(tflags)).toTransformerFlags)
+        }.toList
+      )
+    }
 
     override def toString: String = s"PatcherFlags(${Vector(
         if (ignoreNoneInPatch) Vector("ignoreNoneInPatch") else Vector.empty,
@@ -50,6 +59,13 @@ private[compiletime] trait Configurations { this: Derivation =>
       ).flatten.mkString(", ")})"
   }
   protected object PatcherFlags {
+
+    /** Let us impliment TransformerFlags => TransformerFlags using PatcherFlags => PatcherFlags */
+    private val originalFlags = scala.collection.mutable.Map.empty[TransformerFlags, PatcherFlags]
+    def register(patchFlags: PatcherFlags)(transformerFlags: TransformerFlags): TransformerFlags = {
+      originalFlags += (transformerFlags -> patchFlags)
+      transformerFlags
+    }
 
     // $COVERAGE-OFF$It's testable in (Scala-CLI) snippets and not really in normal tests with coverage
     def global: PatcherFlags = XMacroSettings.foldLeft(PatcherFlags()) {
@@ -160,6 +176,8 @@ private[compiletime] trait Configurations { this: Derivation =>
       if (Type[InstanceFlags] =:= ChimneyType.PatcherFlags.Default) cfg else cfg.setLocalFlagsOverriden
     }
 
+    import TransformerConfigurations.extractPath
+
     private def extractTransformerFlags[Flags <: runtime.PatcherFlags: Type](defaultFlags: PatcherFlags): PatcherFlags =
       Type[Flags] match {
         case default if default =:= ChimneyType.PatcherFlags.Default => defaultFlags
@@ -169,6 +187,11 @@ private[compiletime] trait Configurations { this: Derivation =>
         case ChimneyType.PatcherFlags.Disable(flag, flags) =>
           import flag.Underlying as Flag, flags.Underlying as Flags2
           extractTransformerFlags[Flags2](defaultFlags).setBoolFlag[Flag](value = false)
+        case ChimneyType.PatcherFlags.PatchedValue(objPath, objFlags, flags) =>
+          import objPath.Underlying as ObjPath, objFlags.Underlying as ObjFlags, flags.Underlying as Flags2
+          extractTransformerFlags[Flags2](defaultFlags).setPatchedValueFlags(extractPath[ObjPath])(flags =>
+            extractTransformerFlags[ObjFlags](flags)
+          )
         // $COVERAGE-OFF$should never happen unless someone mess around with type-level representation
         case _ =>
           reportError(s"Invalid internal PatcherFlags type shape: ${Type.prettyPrint[Flags]}!")
@@ -184,19 +207,19 @@ private[compiletime] trait Configurations { this: Derivation =>
         case ChimneyType.PatcherOverrides.Ignored(patchPath, cfg) =>
           import patchPath.Underlying as PatchPath, cfg.Underlying as Tail2
           extractPatcherConfig[Tail2](runtimeDataIdx, runtimeDataStore).addPatcherOverride(
-            SourcePath(TransformerConfigurations.extractPath[PatchPath]),
+            SourcePath(extractPath[PatchPath]),
             PatcherOverride.Ignored
           )
         case ChimneyType.PatcherOverrides.Const(objPath, cfg) =>
           import objPath.Underlying as ObjPath, cfg.Underlying as Tail2
           extractPatcherConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addPatcherOverride(
-            TargetPath(TransformerConfigurations.extractPath[ObjPath]),
+            TargetPath(extractPath[ObjPath]),
             PatcherOverride.Const(runtimeDataStore(runtimeDataIdx).as_??)
           )
         case ChimneyType.PatcherOverrides.Computed(patchPath, objPath, cfg) =>
           import patchPath.Underlying as PatchPath, objPath.Underlying as ObjPath, cfg.Underlying as Tail2
-          val sourcePath = TransformerConfigurations.extractPath[PatchPath]
-          val targetPath = TransformerConfigurations.extractPath[ObjPath]
+          val sourcePath = extractPath[PatchPath]
+          val targetPath = extractPath[ObjPath]
           extractPatcherConfig[Tail2](1 + runtimeDataIdx, runtimeDataStore).addPatcherOverride(
             sourcePath,
             targetPath,

@@ -4,7 +4,7 @@ import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.*
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
 import io.scalaland.chimney.internal.compiletime.dsl.PatcherDefinitionMacros
-import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, WithRuntimeDataStore}
+import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, Path, WithRuntimeDataStore}
 
 /** Allows customization of [[io.scalaland.chimney.Patcher]] derivation.
   *
@@ -119,6 +119,25 @@ final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: 
       inline selectorPatch: Patch => T
   ): PatcherDefinition[A, Patch, ? <: PatcherOverrides, Flags] =
     ${ PatcherDefinitionMacros.withFieldIgnoredImpl('this, 'selectorPatch) }
+
+  /** Define a flag only on some source value using the `selectorTo`, rather than globally.
+    *
+    * @see
+    *   [[https://chimney.readthedocs.io/cookbook/#constraining-flags-to-a-specific-fieldsubtype]] for more details
+    *
+    * @tparam T
+    *   type of the target field
+    * @param selectorObj
+    *   patched value field in `A`, defined like `_.name`
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherPatchedValueFlagsDsl.OfPatcherDefinition]]
+    *
+    * @since 1.7.0
+    */
+  transparent inline def withPatchedValueFlag[T](
+      selectorObj: A => T
+  ): PatcherPatchedValueFlagsDsl.OfPatcherDefinition[A, Patch, Overrides, Flags, ? <: Path] =
+    ${ PatcherDefinitionMacros.withPatchedValueFlagImpl('this, 'selectorObj) }
 
   /** Build Patcher using current configuration.
     *

@@ -98,4 +98,21 @@ object PatcherUsingMacros {
             $pu.asInstanceOf[PatcherUsing[A, Patch, Ignored[patchPath, Overrides], Flags]]
         }
     }(selectorPatch)
+
+  def withPatchedValueFlagImpl[
+      A: Type,
+      Patch: Type,
+      Overrides <: PatcherOverrides: Type,
+      Flags <: PatcherFlags: Type,
+      T: Type
+  ](
+      pu: Expr[PatcherUsing[A, Patch, Overrides, Flags]],
+      selectorObj: Expr[A => T]
+  )(using Quotes): Expr[PatcherPatchedValueFlagsDsl.OfPatcherUsing[A, Patch, Overrides, Flags, ? <: Path]] =
+    DslMacroUtils()
+      .applyFieldNameType {
+        [objPath <: Path] =>
+          (_: Type[objPath]) ?=>
+            '{ PatcherPatchedValueFlagsDsl.OfPatcherUsing[A, Patch, Overrides, Flags, objPath]($pu) }
+      }(selectorObj)
 }
