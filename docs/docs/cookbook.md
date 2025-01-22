@@ -191,6 +191,180 @@ Some flags can only be set globally:
 
  * `.enableMacrosLogging` cannot be done for a single field/subtype
 
+## Checking for unused source fields/unmatched target subtypes
+
+While most of the time Chimney is picked for generating mapping between 2 data types wit as little hassle as possible,
+some people use type mapping tools to express mapping as a declarative description of the transformation. As a Part of
+that requirement is making it explicit, that some field in the source value was dropped, or that matching between 2
+`sealed` hierarchies didn't use one target subtype.
+
+These can be enabled with `UnusedFieldPolicy`:
+
+!!! example "Field has to be explicitly ignored to compile"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}    
+    import io.scalaland.chimney.dsl._
+    
+    case class User1(id: Int, name: String, age: Option[Int])
+    case class User2(id: Int, name: String)
+    
+    pprint.pprintln(
+      User1(1, "Adam", None)
+        .into[User2]
+        .withFieldUnused(_.age)
+        .enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
+        .transform
+    )
+    // expected output:
+    // User2(id = 1, name = "Adam")
+
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = TransformerConfiguration.default.enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
+
+      pprint.pprintln(
+        User1(1, "Adam", None)
+          .into[User2]
+          .withFieldUnused(_.age)
+          .transform
+      )
+      // expected output:
+      // User2(id = 1, name = "Adam")
+    }
+    ```
+
+!!! example "Silent drop of a field causes failure"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}    
+    import io.scalaland.chimney.dsl._
+    
+    case class User1(id: Int, name: String, age: Option[Int])
+    case class User2(id: Int, name: String)
+    
+    pprint.pprintln(
+      User1(1, "Adam", None)
+        .into[User2]
+        .enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
+        .transform
+    )
+    // expected error:
+    // Chimney can't derive transformation from User1 to User2
+    // 
+    // User2
+    //   FailOnIgnoredSourceVal policy check failed at _, offenders: age!
+    // 
+    // Consult https://chimney.readthedocs.io for usage examples.
+    ```
+
+and `UnmatchedSubtypePolicy`:
+
+!!! example "Subptype has to be explicitly ignored to compile"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}    
+    import io.scalaland.chimney.dsl._
+    
+    sealed trait RGB extends Product with Serializable
+    object RGB {
+      case object Red extends RGB
+      case object Green extends RGB
+      case object Blue extends RGB
+    }
+
+    sealed trait RGBA extends Product with Serializable
+    object RGBA {
+      case object Red extends RGBA
+      case object Green extends RGBA
+      case object Blue extends RGBA
+      case object Alpha extends RGBA
+    }
+    
+    pprint.pprintln(
+      (RGB.Red: RGB)
+        .into[RGBA]
+        .withSealedSubtypeUnmatched(_.matching[RGBA.Alpha.type])
+        .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+        .transform
+    )
+    // expected output:
+    // Red
+
+    pprint.pprintln(
+      (RGB.Green: RGB)
+        .into[RGBA]
+        .withEnumCaseUnmatched(_.matching[RGBA.Alpha.type])
+        .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+        .transform
+    )
+    // expected output:
+    // Green
+
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = TransformerConfiguration.default.enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+
+      pprint.pprintln(
+      (RGB.Blue: RGB)
+        .into[RGBA]
+        .withSealedSubtypeUnmatched(_.matching[RGBA.Alpha.type])
+        .transform
+      )
+      // expected output:
+      // Blue
+
+      pprint.pprintln(
+      (RGB.Red: RGB)
+        .into[RGBA]
+        .withEnumCaseUnmatched(_.matching[RGBA.Alpha.type])
+        .transform
+      )
+      // expected output:
+      // Red
+    }
+    ```
+
+!!! example "Silent drop of a subtype causes failure"
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}    
+    import io.scalaland.chimney.dsl._
+    
+    sealed trait RGB extends Product with Serializable
+    object RGB {
+      case object Red extends RGB
+      case object Green extends RGB
+      case object Blue extends RGB
+    }
+
+    sealed trait RGBA extends Product with Serializable
+    object RGBA {
+      case object Red extends RGBA
+      case object Green extends RGBA
+      case object Blue extends RGBA
+      case object Alpha extends RGBA
+    }
+    
+    pprint.pprintln(
+      (RGB.Red: RGB)
+        .into[RGBA]
+        .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+        .transform
+    )
+    // expected error:
+    // Chimney can't derive transformation from RGB to RGBA
+    // 
+    // RGBA
+    //   FailOnUnmatchedTargetSubtype policy check failed at _, offenders: RGBA.Alpha!
+    // 
+    // Consult https://chimney.readthedocs.io for usage examples.
+    ```
+
 ## Avoiding nested Transformers
 
 In previous version of Chimney there way many cases when users were forced to define inner `Transformer` to customize
