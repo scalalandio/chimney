@@ -7,7 +7,9 @@ private[compiletime] trait DerivationPlatform
     with transformer.DerivationPlatform
     with rules.PatchImplicitRuleModule
     with rules.PatchSubtypeRuleModule
-    with rules.PatchOptionWithOptionOptionModule
+    with rules.PatchOptionWithOptionOptionRuleModule
+    with rules.PatchEitherWithOptionEitherRuleModule
+    with rules.PatchCollectionWithOptionCollectionRuleModule
     with rules.PatchOptionWithNonOptionRuleModule
     with rules.PatchProductWithProductRuleModule
     with rules.PatchNotMatchedRuleModule {
@@ -19,6 +21,8 @@ private[compiletime] trait DerivationPlatform
     PatchSubtypeRuleModule,
     PatchOptionWithNonOptionRule,
     PatchOptionWithOptionOptionRule,
+    PatchEitherWithOptionEitherRule,
+    PatchCollectionWithOptionCollectionRule,
     TransformOptionToOptionRule,
     TransformToOptionRule,
     TransformToSingletonRule,

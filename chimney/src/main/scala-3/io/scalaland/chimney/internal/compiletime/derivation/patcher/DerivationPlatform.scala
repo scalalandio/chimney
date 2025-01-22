@@ -7,7 +7,9 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     with Derivation
     with rules.PatchImplicitRuleModule
     with rules.PatchSubtypeRuleModule
-    with rules.PatchOptionWithOptionOptionModule
+    with rules.PatchOptionWithOptionOptionRuleModule
+    with rules.PatchEitherWithOptionEitherRuleModule
+    with rules.PatchCollectionWithOptionCollectionRuleModule
     with rules.PatchOptionWithNonOptionRuleModule
     with rules.PatchProductWithProductRuleModule
     with rules.PatchNotMatchedRuleModule {
@@ -19,6 +21,8 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     PatchSubtypeRuleModule,
     PatchOptionWithNonOptionRule,
     PatchOptionWithOptionOptionRule,
+    PatchEitherWithOptionEitherRule,
+    PatchCollectionWithOptionCollectionRule,
     TransformOptionToOptionRule,
     TransformToOptionRule,
     TransformToSingletonRule,
