@@ -365,6 +365,15 @@ private[compiletime] trait ChimneyTypes { this: ChimneyDefinitions =>
             runtime.PatcherFlags.Disable
           ] { this: Disable.type => }
 
+      val PatchedValue: PatchedValueModule
+      trait PatchedValueModule
+          extends Type.Ctor3UpperBounded[
+            runtime.Path,
+            runtime.PatcherFlags,
+            runtime.PatcherFlags,
+            runtime.PatcherFlags.PatchedValue
+          ] { this: PatchedValue.type => }
+
       val Flags: FlagsModule
       trait FlagsModule { this: Flags.type =>
         val IgnoreNoneInPatch: Type[runtime.PatcherFlags.IgnoreNoneInPatch]

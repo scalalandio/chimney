@@ -574,6 +574,28 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             case _ => scala.None
           }
       }
+      object PatchedValue extends PatchedValueModule {
+        def apply[
+            ObjPath <: runtime.Path: Type,
+            ObjFlags <: runtime.PatcherFlags: Type,
+            Flags <: runtime.PatcherFlags: Type
+        ]: Type[runtime.PatcherFlags.PatchedValue[ObjPath, ObjFlags, Flags]] =
+          quoted.Type.of[runtime.PatcherFlags.PatchedValue[ObjPath, ObjFlags, Flags]]
+        def unapply[A](
+            tpe: Type[A]
+        ): Option[(?<[runtime.Path], ?<[runtime.PatcherFlags], ?<[runtime.PatcherFlags])] =
+          tpe match {
+            case '[runtime.PatcherFlags.PatchedValue[objPath, objFlags, flags]] =>
+              Some(
+                (
+                  Type[objPath].as_?<[runtime.Path],
+                  Type[objFlags].as_?<[runtime.PatcherFlags],
+                  Type[flags].as_?<[runtime.PatcherFlags]
+                )
+              )
+            case _ => scala.None
+          }
+      }
 
       object Flags extends FlagsModule {
         val IgnoreNoneInPatch: Type[runtime.PatcherFlags.IgnoreNoneInPatch] =

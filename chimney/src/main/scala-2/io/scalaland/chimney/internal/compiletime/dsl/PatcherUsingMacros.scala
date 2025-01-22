@@ -48,8 +48,8 @@ class PatcherUsingMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
     .addOverride(f)
     .asInstanceOfExpr(
       new ApplyFieldNameTypes {
-        def apply[APath <: Path: WeakTypeTag, ObjPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
-          weakTypeTag[PatcherUsing[A, Patch, Computed[APath, ObjPath, Overrides], Flags]]
+        def apply[PatchPath <: Path: WeakTypeTag, ObjPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] =
+          weakTypeTag[PatcherUsing[A, Patch, Computed[PatchPath, ObjPath, Overrides], Flags]]
       }.applyFromSelectors(selectorObj, selectorPatch)
     )
 
@@ -65,4 +65,18 @@ class PatcherUsingMacros(val c: whitebox.Context) extends utils.DslMacroUtils {
           weakTypeTag[PatcherUsing[A, Patch, Ignored[PatchPath, Overrides], Flags]]
       }.applyFromSelector(selectorPatch)
     )
+
+  def withPatchedValueFlagImpl[
+      A: WeakTypeTag,
+      Patch: WeakTypeTag,
+      Overrides <: PatcherOverrides: WeakTypeTag,
+      Flags <: PatcherFlags: WeakTypeTag
+  ](selectorObj: Tree): Tree = {
+    val pathObj = new ApplyFieldNameType {
+      def apply[ObjPath <: Path: WeakTypeTag]: c.WeakTypeTag[?] = weakTypeTag[ObjPath]
+    }.applyFromSelector(selectorObj)
+    q"""new _root_.io.scalaland.chimney.dsl.PatcherPatchedValueFlagsDsl.OfPatcherUsing[${weakTypeOf[
+        A
+      ]}, ${weakTypeOf[Patch]}, ${weakTypeOf[Overrides]}, ${weakTypeOf[Flags]}, $pathObj](${c.prefix.tree})"""
+  }
 }

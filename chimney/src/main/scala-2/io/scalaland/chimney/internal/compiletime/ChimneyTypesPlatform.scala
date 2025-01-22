@@ -370,7 +370,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             (
               A0.param_<[runtime.Path](0),
               A0.param_<[runtime.TransformerFlags](1),
-              A0.param_<[runtime.TransformerFlags](1)
+              A0.param_<[runtime.TransformerFlags](2)
             )
           }
       }
@@ -388,7 +388,7 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
             (
               A0.param_<[runtime.Path](0),
               A0.param_<[runtime.TransformerFlags](1),
-              A0.param_<[runtime.TransformerFlags](1)
+              A0.param_<[runtime.TransformerFlags](2)
             )
           }
       }
@@ -554,6 +554,24 @@ private[compiletime] trait ChimneyTypesPlatform extends ChimneyTypes { this: Chi
         def unapply[A](A: Type[A]): Option[(?<[runtime.PatcherFlags.Flag], ?<[runtime.PatcherFlags])] =
           A.asCtor[runtime.PatcherFlags.Disable[?, ?]].map { A0 =>
             A0.param_<[runtime.PatcherFlags.Flag](0) -> A0.param_<[runtime.PatcherFlags](1)
+          }
+      }
+      object PatchedValue extends PatchedValueModule {
+        def apply[
+            ObjPath <: runtime.Path: Type,
+            ObjFlags <: runtime.PatcherFlags: Type,
+            Flags <: runtime.PatcherFlags: Type
+        ]: Type[runtime.PatcherFlags.PatchedValue[ObjPath, ObjFlags, Flags]] =
+          weakTypeTag[runtime.PatcherFlags.PatchedValue[ObjPath, ObjFlags, Flags]]
+        def unapply[A](
+            A: Type[A]
+        ): Option[(?<[runtime.Path], ?<[runtime.PatcherFlags], ?<[runtime.PatcherFlags])] =
+          A.asCtor[runtime.PatcherFlags.PatchedValue[?, ?, ?]].map { A0 =>
+            (
+              A0.param_<[runtime.Path](0),
+              A0.param_<[runtime.PatcherFlags](1),
+              A0.param_<[runtime.PatcherFlags](2)
+            )
           }
       }
 

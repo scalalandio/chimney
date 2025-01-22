@@ -380,7 +380,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     * @param selectorFrom
     *   source field in `From`, defined like `_.name`
     * @return
-    *   [[io.scalaland.chimney.dsl.TransformerInto]]
+    *   [[io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfTransformerInto]]
     *
     * @since 1.6.0
     */
@@ -399,7 +399,7 @@ final class TransformerInto[From, To, Overrides <: TransformerOverrides, Flags <
     * @param selectorTo
     *   target field in `To`, defined like `_.name`
     * @return
-    *   [[io.scalaland.chimney.dsl.TransformerInto]]
+    *   [[io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfTransformerInto]]
     *
     * @since 1.6.0
     */

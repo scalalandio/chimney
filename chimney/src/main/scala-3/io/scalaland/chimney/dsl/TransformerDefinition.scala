@@ -398,7 +398,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @param selectorFrom
     *   source field in `From`, defined like `_.name`
     * @return
-    *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    *   [[io.scalaland.chimney.dsl.TransformerSourceFlagsDsl.OfTransformerDefinition]]
     *
     * @since 1.6.0
     */
@@ -417,7 +417,7 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * @param selectorTo
     *   target field in `To`, defined like `_.name`
     * @return
-    *   [[io.scalaland.chimney.dsl.TransformerDefinition]]
+    *   [[io.scalaland.chimney.dsl.TransformerTargetFlagsDsl.OfTransformerDefinition]]
     *
     * @since 1.6.0
     */

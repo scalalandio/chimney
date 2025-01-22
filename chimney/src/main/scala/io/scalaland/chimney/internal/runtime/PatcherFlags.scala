@@ -5,6 +5,7 @@ object PatcherFlags {
   final class Default extends PatcherFlags
   final class Enable[F <: Flag, Flags <: PatcherFlags] extends PatcherFlags
   final class Disable[F <: Flag, Flags <: PatcherFlags] extends PatcherFlags
+  final class PatchedValue[ObjPath <: Path, ObjFlags <: PatcherFlags, Flags <: PatcherFlags] extends PatcherFlags
 
   sealed abstract class Flag
   final class IgnoreRedundantPatcherFields extends Flag
