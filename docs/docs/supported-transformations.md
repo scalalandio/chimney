@@ -4656,12 +4656,25 @@ This is how the merging algorithm works:
      * if there is one, use it
    * if there is no override, see if the source value try to find a field with a matching name
      * if there is one, convert it into the target field's type
+     * use fallbacks' matching fields as the source field's fallbacks
    * if there is no source field, go through the list of fallback values (in the order they were provided) and check
      if one of them has a field with a matching name
      * if there is one, convert it into the target field's type
    * if there is no such field, try to use other fallback values if they are enabled
      ([default values](#allowing-fallback-to-the-constructors-default-values),
      [`None`](#allowing-fallback-to-none-as-the-constructors-argument)) as last resort
+
+!!! tip
+
+    You can use all overrides and flags that you normally use for [a single value conversions](#into-a-case-class-or-pojo).
+
+!!! tip
+
+    You can control priority of fallback values just by ordering them:
+
+    ```scala
+    theMostImprtant.into[Result].withFallback(lessImportant).withFallback(evenLessImportant) ...
+    ```
 
 !!! example
 
@@ -4689,14 +4702,34 @@ This is how the merging algorithm works:
 
 !!! tip
 
-    You can use all overrides and flags that you normally use for [a single value conversions](#into-a-case-class-or-pojo).
+    `case class`es/POJOs are merged **recursively** - matching fallbacks' fields becomes fallbacks themselves automatically
 
-!!! tip
-
-    You can control priority of fallback values just by ordering them:
+!!! example s
 
     ```scala
-    theMostImprtant.into[Result].withFallback(lessImportant).withFallback(evenLessImportant) ...
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Source1(value: Source2)
+    case class Source2(innerValue: Source3)
+    case class Source3(foo: String)
+
+    case class Fallback1(value: Fallback2)
+    case class Fallback2(innerValue: Fallback3)
+    case class Fallback3(bar: String)
+
+    case class Target1(value: Target2)
+    case class Target2(innerValue: Target3)
+    case class Target3(foo: String, bar: String)
+
+    pprint.pprintln(
+      Source1(Source2(Source3("value 1"))).into[Target1]
+        .withFallback(Fallback1(Fallback2(Fallback3("value 2"))))
+        .transform
+    )
+    // expected output:
+    // Target1(value = Target2(innerValue = Target3(foo = "value 1", bar = "value 2")))
     ```
 
 ## Custom transformations
