@@ -66,8 +66,8 @@ object PatcherUsingMacros {
       U: Type
   ](
       pu: Expr[PatcherUsing[A, Patch, Overrides, Flags]],
-      selectorPatch: Expr[Patch => T],
-      selectorObj: Expr[A => S],
+      selectorPatch: Expr[Patch => S],
+      selectorObj: Expr[A => T],
       f: Expr[S => U]
   )(using Quotes): Expr[PatcherUsing[A, Patch, ? <: PatcherOverrides, Flags]] =
     DslMacroUtils().applyFieldNameTypes {
@@ -81,7 +81,7 @@ object PatcherUsingMacros {
           }
     }(selectorPatch, selectorObj)
 
-  def withFieldUnusedImpl[
+  def withFieldIgnoredImpl[
       A: Type,
       Patch: Type,
       Overrides <: PatcherOverrides: Type,
@@ -89,13 +89,13 @@ object PatcherUsingMacros {
       T: Type
   ](
       pu: Expr[PatcherUsing[A, Patch, Overrides, Flags]],
-      selectorObj: Expr[A => T]
+      selectorPatch: Expr[Patch => T]
   )(using Quotes): Expr[PatcherUsing[A, Patch, ? <: PatcherOverrides, Flags]] =
     DslMacroUtils().applyFieldNameType {
-      [objPath <: Path] =>
-        (_: Type[objPath]) ?=>
+      [patchPath <: Path] =>
+        (_: Type[patchPath]) ?=>
           '{
-            $pu.asInstanceOf[PatcherUsing[A, Patch, Ignored[objPath, Overrides], Flags]]
+            $pu.asInstanceOf[PatcherUsing[A, Patch, Ignored[patchPath, Overrides], Flags]]
         }
-    }(selectorObj)
+    }(selectorPatch)
 }

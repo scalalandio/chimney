@@ -2,6 +2,7 @@ package io.scalaland.chimney.dsl
 
 import io.scalaland.chimney.Patcher
 import io.scalaland.chimney.internal.compiletime.derivation.patcher.PatcherMacros
+import io.scalaland.chimney.internal.compiletime.dsl.PatcherDefinitionMacros
 import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides, WithRuntimeDataStore}
 
 import scala.language.experimental.macros
@@ -19,15 +20,106 @@ import scala.language.experimental.macros
   *
   * @since 0.8.0
   */
-final class PatcherDefinition[From, To, Overrides <: PatcherOverrides, Flags <: PatcherFlags](
+final class PatcherDefinition[A, Patch, Overrides <: PatcherOverrides, Flags <: PatcherFlags](
     val runtimeData: PatcherDefinitionCommons.RuntimeDataStore
 ) extends PatcherFlagsDsl[Lambda[
-      `Flags1 <: PatcherFlags` => PatcherDefinition[From, To, Overrides, Flags1]
+      `Flags1 <: PatcherFlags` => PatcherDefinition[A, Patch, Overrides, Flags1]
     ], Flags]
     with PatcherDefinitionCommons[
-      Lambda[`Overrides1 <: PatcherOverrides` => PatcherDefinition[From, To, Overrides1, Flags]]
+      Lambda[`Overrides1 <: PatcherOverrides` => PatcherDefinition[A, Patch, Overrides1, Flags]]
     ]
     with WithRuntimeDataStore {
+
+  /** Use the `value` provided here for the field picked using the `selectorObj`.
+    *
+    * By default, if `Patch` is missing a field, the original `A`'s field value is taken.
+    *
+    * @see
+    *   TODO
+    *
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *
+    * @since 1.7.0
+    */
+  def withFieldConst[T, U](selectorObj: A => T, value: U)(implicit
+      ev: U <:< T
+  ): PatcherDefinition[A, Patch, ? <: PatcherOverrides, Flags] =
+    macro PatcherDefinitionMacros.withFieldConstImpl[A, Patch, Overrides, Flags]
+
+  /** Use the function `f` to compute a value of the field picked using the `selectorObj`.
+    *
+    * By default, if `Patch` is missing a field, the original `A`'s field value is taken.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam T
+    *   type of patched value field
+    * @tparam U
+    *   type of computed value
+    * @param selectorObj
+    *   patched value field in `A`, defined like `_.name`
+    * @param f
+    *   function used to compute value of the target field
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *
+    * @since 1.7.0
+    */
+  def withFieldComputed[T, U](
+      selectorObj: A => T,
+      f: Patch => U
+  )(implicit ev: U <:< T): PatcherDefinition[A, Patch, ? <: PatcherOverrides, Flags] =
+    macro PatcherDefinitionMacros.withFieldComputedImpl[A, Patch, Overrides, Flags]
+
+  /** Use the function `f` to compute a value of the field picked using the `selectorObj` from a value extracted with
+    * `selectorPatch` as an input.
+    *
+    * By default, if `Patch` is missing a field, the original `A`'s field value is taken.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam S
+    *   type of patch field
+    * @tparam T
+    *   type of patched value field
+    * @tparam U
+    *   type of computed value
+    * @param selectorPatch
+    *   patch field in `Patch`, defined like `_.name`
+    * @param selectorObj
+    *   patched value field in `A`, defined like `_.name`
+    * @param f
+    *   function used to compute value of the target field
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *
+    * @since 1.7.0
+    */
+  def withFieldComputedFrom[S, T, U](selectorPatch: Patch => S)(
+      selectorObj: A => T,
+      f: S => U
+  )(implicit ev: U <:< T): PatcherDefinition[A, Patch, ? <: PatcherOverrides, Flags] =
+    macro PatcherDefinitionMacros.withFieldComputedFromImpl[A, Patch, Overrides, Flags]
+
+  /** Mark `Patch`` field as expected to be ignored, so that the orignial value would be used.
+    *
+    * @see
+    *   TODO
+    *
+    * @tparam T
+    *   type of patch field
+    * @param selectorPatch
+    *   patch field in `Patch`, defined like `_.originalName`
+    * @return
+    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *
+    * @since 1.7.0
+    */
+  def withFieldIgnored[T](selectorPatch: Patch => T): PatcherDefinition[A, Patch, ? <: PatcherOverrides, Flags] =
+    macro PatcherDefinitionMacros.withFieldIgnoredImpl[A, Patch, Overrides, Flags]
 
   /** Build Patcher using current configuration.
     *
@@ -41,8 +133,8 @@ final class PatcherDefinition[From, To, Overrides <: PatcherOverrides, Flags <: 
     */
   def buildPatcher[ImplicitScopeFlags <: PatcherFlags](implicit
       pc: io.scalaland.chimney.dsl.PatcherConfiguration[ImplicitScopeFlags]
-  ): Patcher[From, To] =
-    macro PatcherMacros.derivePatcherWithConfig[From, To, Overrides, Flags, ImplicitScopeFlags]
+  ): Patcher[A, Patch] =
+    macro PatcherMacros.derivePatcherWithConfig[A, Patch, Overrides, Flags, ImplicitScopeFlags]
 
   // FIXME: (2.0.0 cleanup) - kept to make MiMa happy
   // $COVERAGE-OFF$
