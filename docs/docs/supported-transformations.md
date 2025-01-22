@@ -4645,7 +4645,11 @@ By defining some source value as the main one (usable in DSL for e.g. renames), 
     // )
     ```
 
-### Merging case classes (or POJOs)
+!!! warning
+
+    If the source type `<:<` target type, [subtyping rule will apply](#upcasting-and-identity-transformation) and merging will not happen.
+
+### Merging `case class`es (or POJOs)
 
 This is how the merging algorithm works:
 
@@ -4730,6 +4734,221 @@ This is how the merging algorithm works:
     )
     // expected output:
     // Target1(value = Target2(innerValue = Target3(foo = "value 1", bar = "value 2")))
+    ```
+
+### Merging with at least one tuple
+
+If there is at least 1 tuple-type among: source value type, target type, fallbacks, then merging works as following:
+
+ * take all `val`s from the source as list
+ * take all `val`s from 1st fallback as list
+ * ...
+ * concatenate these lists
+ * fill target type's values with (converted) values by their **index**
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a: String, b: Int)
+    case class Bar(c: String, d: Int)
+    case class Baz(a: String, b: Int, c: String, d: Int)
+
+    pprint.pprintln(
+      Foo("1", 2).into[(String, Int, String, Int)]
+        .withFallback(Bar("3", 4))
+        .transform
+    )
+    // expected output:
+    // ("1", 2, "3", 4)
+
+    pprint.pprintln(
+      Foo("1", 2).into[Baz]
+        .withFallback(("3", 4))
+        .transform
+    )
+    // expected output:
+    // Baz(a = "1", b = 2, c = "3", d = 4)
+
+    pprint.pprintln(
+      ("1", 2).into[Baz]
+        .withFallback(Bar("3", 4))
+        .transform
+    )
+    // expected output:
+    // Baz(a = "1", b = 2, c = "3", d = 4)
+    ```
+
+### Merging `Option` with `Option` into `Option`
+
+If we have:
+
+ * `Option`-type in the source type/field
+ * `Option`-type in the target type/field
+ * 1 or more `Option`-types in fallbacks
+
+there are 3 possible ways of handling them with Chimney:
+
+ * just take the source value's value and call it a day (default)
+ * merge left-to-right (`src.orElse(fallback2).orElse(fallback2)...`)
+ * merge right-to-left (`fallback2.orElse(fallback1).orElse(src)...`)
+
+We can select merging with `enableOptionFallbackMerge` flag:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(value: String)
+    case class Bar(value: String)
+
+    pprint.pprintln(
+      Option.empty[Foo].into[Option[Bar]]
+        .withFallback(Option(Foo("fallback1")))
+        .withFallback(Option(Foo("fallback2")))
+        .transform
+    )
+    // expected output:
+    // None
+
+    pprint.pprintln(
+      Option.empty[Foo].into[Option[Bar]]
+        .withFallback(Option(Foo("fallback1")))
+        .withFallback(Option(Foo("fallback2")))
+        .enableOptionFallbackMerge(SourceOrElseFallback)
+        .enableMacrosLogging
+        .transform
+    )
+    // expected output:
+    // Some(value = Bar(value = "fallback1"))
+
+    pprint.pprintln(
+      Option.empty[Foo].into[Option[Bar]]
+        .withFallback(Option(Foo("fallback1")))
+        .withFallback(Option(Foo("fallback2")))
+        .enableOptionFallbackMerge(FallbackOrElseSource)
+        .transform
+    )
+    // expected output:
+    // Some(value = Bar(value = "fallback2"))
+    ```
+
+### Merging `Either` with `Either` into `Either`
+
+If we have:
+
+ * `Either`-type in the source type/field
+ * `Either`-type in the target type/field
+ * 1 or more `Either`-types in fallbacks
+
+there are 3 possible ways of handling them with Chimney:
+
+ * just take the source value's value and call it a day (default)
+ * merge left-to-right (`src.orElse(fallback2).orElse(fallback2)...`)
+ * merge right-to-left (`fallback2.orElse(fallback1).orElse(src)...`)
+
+We can select merging with `enableEitherFallbackMerge` flag:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(value: String)
+    case class Bar(value: String)
+
+    pprint.pprintln(
+      (Left("nope"): Either[String, Foo]).into[Either[String, Bar]]
+        .withFallback(Right(Foo("fallback1")): Either[String, Foo])
+        .withFallback(Right(Foo("fallback2")): Either[String, Foo])
+        .transform
+    )
+    // expected output:
+    // Left(value = "nope")
+
+    pprint.pprintln(
+      (Left("nope"): Either[String, Foo]).into[Either[String, Bar]]
+        .withFallback(Right(Foo("fallback1")): Either[String, Foo])
+        .withFallback(Right(Foo("fallback2")): Either[String, Foo])
+        .enableEitherFallbackMerge(SourceOrElseFallback)
+        .transform
+    )
+    // expected output:
+    // Right(value = Bar(value = "fallback1"))
+
+    pprint.pprintln(
+      (Left("nope"): Either[String, Foo]).into[Either[String, Bar]]
+        .withFallback(Right(Foo("fallback1")): Either[String, Foo])
+        .withFallback(Right(Foo("fallback2")): Either[String, Foo])
+        .enableEitherFallbackMerge(FallbackOrElseSource)
+        .transform
+    )
+    // expected output:
+    // Right(value = Bar(value = "fallback2"))
+    ```
+
+### Merging collection with collection into collection
+
+If we have:
+
+ * collection-type in the source type/field
+ * collection-type in the target type/field
+ * 1 or more collections in fallbacks
+
+there are 3 possible ways of handling them with Chimney:
+
+ * just take the source value's value and call it a day (default)
+ * merge left-to-right (`src ++ fallback2 ++ fallback2...`)
+ * merge right-to-left (`fallback2 ++ fallback1 ++ src...`)
+
+We can select merging with `enableCollectionFallbackMerge` flag:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(value: String)
+    case class Bar(value: String)
+
+    pprint.pprintln(
+      (List(Foo("source"))).into[Vector[Bar]]
+        .withFallback(Array(Foo("fallback1")))
+        .withFallback(Set(Foo("fallback2")))
+        .transform
+    )
+    // expected output:
+    // Vector(Bar(value = "source"))
+
+    pprint.pprintln(
+      (List(Foo("source"))).into[Vector[Bar]]
+        .withFallback(Array(Foo("fallback1")))
+        .withFallback(Set(Foo("fallback2")))
+        .enableCollectionFallbackMerge(SourceAppendFallback)
+        .transform
+    )
+    // expected output:
+    // Vector(Bar(value = "source"), Bar(value = "fallback1"), Bar(value = "fallback2"))
+
+    pprint.pprintln(
+      (List(Foo("source"))).into[Vector[Bar]]
+        .withFallback(Array(Foo("fallback1")))
+        .withFallback(Set(Foo("fallback2")))
+        .enableCollectionFallbackMerge(FallbackAppendSource)
+        .transform
+    )
+    // expected output:
+    // Vector(Bar(value = "fallback2"), Bar(value = "fallback1"), Bar(value = "source"))
     ```
 
 ## Custom transformations

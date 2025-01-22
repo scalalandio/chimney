@@ -33,7 +33,7 @@ private[compiletime] trait TransformIterableToIterableRuleModule {
                 .foldLeft(srcToResult)(merge)
                 .log(s"Combined source collection with ${fallbackToResult.size} fallbacks (appended)")
             case Some(dsls.FallbackAppendSource) =>
-              fallbackToResult
+              fallbackToResult.reverseIterator
                 .foldRight(srcToResult)(merge)
                 .log(s"Combined source collection with ${fallbackToResult.size} fallbacks (prepended)")
           }).flatMap(DerivationResult.expanded)

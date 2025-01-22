@@ -40,7 +40,9 @@ private[compiletime] trait TransformOptionToOptionRuleModule {
               case Some(dsls.SourceOrElseFallback) =>
                 srcToResult.parMap2(fallbackToResult)((srcTo, fallbackTo) => fallbackTo.foldLeft(srcTo)(merge))
               case Some(dsls.FallbackOrElseSource) =>
-                srcToResult.parMap2(fallbackToResult)((srcTo, fallbackTo) => fallbackTo.foldRight(srcTo)(merge))
+                srcToResult.parMap2(fallbackToResult)((srcTo, fallbackTo) =>
+                  fallbackTo.reverseIterator.foldRight(srcTo)(merge)
+                )
             }).flatMap(DerivationResult.expanded(_))
           }
         case _ =>

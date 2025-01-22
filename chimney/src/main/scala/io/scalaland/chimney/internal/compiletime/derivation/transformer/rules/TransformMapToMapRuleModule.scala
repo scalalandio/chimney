@@ -33,7 +33,7 @@ private[compiletime] trait TransformMapToMapRuleModule {
                 .foldLeft(srcToResult)(merge)
                 .log(s"Combined source Map with ${fallbackToResult.size} fallbacks (appended)")
             case Some(dsls.FallbackAppendSource) =>
-              fallbackToResult
+              fallbackToResult.reverseIterator
                 .foldRight(srcToResult)(merge)
                 .log(s"Combined source Map with ${fallbackToResult.size} fallbacks (prepended)")
           }).flatMap(DerivationResult.expanded)
