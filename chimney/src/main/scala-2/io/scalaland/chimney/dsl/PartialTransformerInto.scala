@@ -239,7 +239,8 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   /** Mark field as expected to be unused when it would fail [[UnusedFieldPolicy]] by default.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/cookbook/#checking-for-unused-source-fieldsunmatched-target-subtypes]] for more
+    *   details
     *
     * @tparam T
     *   type of source field
@@ -379,7 +380,8 @@ final class PartialTransformerInto[From, To, Overrides <: TransformerOverrides, 
   /** Mark subtype as expected to be unmatched when it would fail [[UnmatchedSubtypePolicy]] by default.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/cookbook/#checking-for-unused-source-fieldsunmatched-target-subtypes]] for more
+    *   details
     *
     * @tparam T
     *   type of subtype
