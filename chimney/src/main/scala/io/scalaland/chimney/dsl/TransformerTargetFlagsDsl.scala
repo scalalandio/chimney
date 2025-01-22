@@ -413,7 +413,8 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     *   parameter specifying how unused source fields should be treated
     *
     * @see
-    *   [[TODO]] for more details
+    *   [[https://chimney.readthedocs.io/cookbook/#checking-for-unused-source-fieldsunmatched-target-subtypes]] for more
+    *   details
     *
     * @since 1.7.0
     */
@@ -425,7 +426,8 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   /** Disable policy check for source fields that would not be used anywhere during transformation.
     *
     * @see
-    *   [[TODO]] for more details
+    *   [[https://chimney.readthedocs.io/cookbook/#checking-for-unused-source-fieldsunmatched-target-subtypes]] for more
+    *   details
     *
     * @since 1.7.0
     */
