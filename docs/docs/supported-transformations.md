@@ -4782,6 +4782,87 @@ If there is at least 1 tuple-type among: source value type, target type, fallbac
     // Baz(a = "1", b = 2, c = "3", d = 4)
     ```
 
+### Merging `AnyVal`s
+
+If the source type is `AnyVal` (or wrapper [if they are enabled](#frominto-a-wrapper-type)), both it and fallbacks can
+be automaically unwrapped:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class ValueType[A](value: A) extends AnyVal
+    case class Foo(a: String)
+    case class Bar(b: String)
+    case class Baz(a: String, b: String)
+
+    pprint.pprintln(
+      ValueType(Foo("a")).into[Baz].withFallback(Bar("b")).transform
+    )
+    // expected output:
+    // Baz(a = "a", b = "b")
+
+    pprint.pprintln(
+      ValueType(Foo("a")).into[ValueType[Baz]].withFallback(Bar("b")).transform
+    )
+    // expected output:
+    // ValueType(value = Baz(a = "a", b = "b"))
+    
+    pprint.pprintln(
+      ValueType(Foo("a")).into[Baz].withFallback(ValueType(Bar("b"))).transform
+    )
+    // expected output:
+    // Baz(a = "a", b = "b")
+    
+    pprint.pprintln(
+      ValueType(Foo("a")).into[ValueType[Baz]].withFallback(ValueType(Bar("b"))).transform
+    )
+    // expected output:
+    // ValueType(value = Baz(a = "a", b = "b"))
+    ```
+
+### Merging `sealed`/`enum` with `case class`/POJO into `sealed`/`enum`
+
+It is possible to convert each subtype/case of a source `sealed`/`enum` into corresponding 
+subtype/case of a target `sealed`/`enum` sharing the same common fallbacks between them:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    sealed trait Foo extends Product with Serializable
+    object Foo {
+      case class One(a: Int) extends Foo
+      case class Two(b: String) extends Foo
+    }
+
+    case class Bar(c: Boolean)
+
+    sealed trait Baz extends Product with Serializable
+    object Baz {
+      case class One(a: Int, c: Boolean) extends Baz
+      case class Two(b: String, c: Boolean) extends Baz
+    }
+
+    pprint.pprintln(
+      (Foo.One(10): Foo).into[Baz].withFallback(Bar(true)).transform
+    )
+    // expected output:
+    // One(a = 10, c = true)
+    pprint.pprintln(
+      (Foo.Two("test"): Foo).into[Baz].withFallback(Bar(true)).transform
+    )
+    // expected output:
+    // Two(b = "test", c = true)
+    ```
+
+
 ### Merging `Option` with `Option` into `Option`
 
 If we have:
