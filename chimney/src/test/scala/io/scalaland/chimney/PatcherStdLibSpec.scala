@@ -10,14 +10,34 @@ class PatcherStdLibSpec extends ChimneySpec {
     Option(Bar("a")).patchUsing(Option(Bar("b"))) ==> Option(Bar("b"))
     Option(Bar("a")).using(Option(Bar("b"))).patch ==> Option(Bar("b"))
 
-    Option(Bar("a")).patchUsing(None: Option[Bar]) ==> None
-    Option(Bar("a")).using(None: Option[Bar]).patch ==> None
+    Option(Bar("a")).patchUsing(Option.empty[Bar]) ==> None
+    Option(Bar("a")).using(Option.empty[Bar]).patch ==> None
 
-    (None: Option[Bar]).patchUsing(Option(Bar("b"))) ==> Option(Bar("b"))
-    (None: Option[Bar]).using(Option(Bar("b"))).patch ==> Option(Bar("b"))
+    Option.empty[Bar].patchUsing(Option(Bar("b"))) ==> Option(Bar("b"))
+    Option.empty[Bar].using(Option(Bar("b"))).patch ==> Option(Bar("b"))
 
-    (None: Option[Bar]).patchUsing(None: Option[Bar]) ==> None
-    (None: Option[Bar]).using(None: Option[Bar]).patch ==> None
+    Option.empty[Bar].patchUsing(Option.empty[Bar]) ==> None
+    Option.empty[Bar].using(Option.empty[Bar]).patch ==> None
+  }
+
+  test("patch Option-type with Option-Option-type, keeping value on None, replacing on Some(option)") {
+    Option(Bar("a")).patchUsing(Option(Option(Bar("b")))) ==> Option(Bar("b"))
+    Option(Bar("a")).using(Option(Option(Bar("b")))).patch ==> Option(Bar("b"))
+
+    Option(Bar("a")).patchUsing(Option(Option.empty[Bar])) ==> None
+    Option(Bar("a")).using(Option(Option.empty[Bar])).patch ==> None
+
+    Option(Bar("a")).patchUsing(Option.empty[Option[Bar]]) ==> Option(Bar("a"))
+    Option(Bar("a")).using(Option.empty[Option[Bar]]).patch ==> Option(Bar("a"))
+
+    Option.empty[Bar].patchUsing(Option(Option(Bar("b")))) ==> Option(Bar("b"))
+    Option.empty[Bar].using(Option(Option(Bar("b")))).patch ==> Option(Bar("b"))
+
+    Option.empty[Bar].patchUsing(Option(Option.empty[Bar])) ==> None
+    Option.empty[Bar].using(Option(Option.empty[Bar])).patch ==> None
+
+    Option.empty[Bar].patchUsing(Option.empty[Option[Bar]]) ==> None
+    Option.empty[Bar].using(Option.empty[Option[Bar]]).patch ==> None
   }
 
   test("patch Either-type with Either-type of the same type, replacing the value") {
@@ -32,6 +52,46 @@ class PatcherStdLibSpec extends ChimneySpec {
 
     Either.cond(false, Bar("a"), "fail").patchUsing(Either.cond(false, Bar("b"), "fall")) ==> Left("fall")
     Either.cond(false, Bar("a"), "fail").using(Either.cond(false, Bar("b"), "fall")).patch ==> Left("fall")
+  }
+
+  test("patch Option-type with Option-Either-type, keeping value on None, replacing on Some(option)") {
+    Either
+      .cond(true, Bar("a"), "fail")
+      .patchUsing(Option(Either.cond(true, Bar("b"), "fall"))) ==> Either.cond(true, Bar("b"), "fall")
+    Either
+      .cond(true, Bar("a"), "fail")
+      .using(Option(Either.cond(true, Bar("b"), "fall")))
+      .patch ==> Either.cond(true, Bar("b"), "fall")
+
+    Either
+      .cond(true, Bar("a"), "fail")
+      .patchUsing(Option(Either.cond(false, Bar("b"), "fall"))) ==> Left("fall")
+    Either
+      .cond(true, Bar("a"), "fail")
+      .using(Option(Either.cond(false, Bar("b"), "fall")))
+      .patch ==> Left("fall")
+
+    Either
+      .cond(true, Bar("a"), "fail")
+      .patchUsing(Option.empty[Either[String, Bar]]) ==> Either.cond(true, Bar("a"), "fail")
+    Either
+      .cond(true, Bar("a"), "fail")
+      .using(Option.empty[Either[String, Bar]])
+      .patch ==> Either.cond(true, Bar("a"), "fail")
+
+    Either
+      .cond(false, Bar("a"), "fail")
+      .patchUsing(Option(Either.cond(true, Bar("b"), "fall"))) ==> Either.cond(true, Bar("b"), "fall")
+    Either
+      .cond(false, Bar("a"), "fail")
+      .using(Option(Either.cond(true, Bar("b"), "fall")))
+      .patch ==> Either.cond(true, Bar("b"), "fall")
+
+    Either.cond(false, Bar("a"), "fail").patchUsing(Option(Either.cond(false, Bar("b"), "fall"))) ==> Left("fall")
+    Either.cond(false, Bar("a"), "fail").using(Option(Either.cond(false, Bar("b"), "fall"))).patch ==> Left("fall")
+
+    Either.cond(false, Bar("a"), "fail").patchUsing(Option.empty[Either[String, Bar]]) ==> Left("fail")
+    Either.cond(false, Bar("a"), "fail").using(Option.empty[Either[String, Bar]]).patch ==> Left("fail")
   }
 
   test("patch sequential-type with sequential-type of the same type, replacing the value") {
