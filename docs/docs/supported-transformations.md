@@ -4807,11 +4807,12 @@ We can select merging with `enableOptionFallbackMerge` flag:
 
     case class Foo(value: String)
     case class Bar(value: String)
+    case class Baz(value: String)
 
     pprint.pprintln(
       Option.empty[Foo].into[Option[Bar]]
         .withFallback(Option(Foo("fallback1")))
-        .withFallback(Option(Foo("fallback2")))
+        .withFallback(Option(Baz("fallback2")))
         .transform
     )
     // expected output:
@@ -4820,9 +4821,8 @@ We can select merging with `enableOptionFallbackMerge` flag:
     pprint.pprintln(
       Option.empty[Foo].into[Option[Bar]]
         .withFallback(Option(Foo("fallback1")))
-        .withFallback(Option(Foo("fallback2")))
+        .withFallback(Option(Baz("fallback2")))
         .enableOptionFallbackMerge(SourceOrElseFallback)
-        .enableMacrosLogging
         .transform
     )
     // expected output:
@@ -4831,7 +4831,7 @@ We can select merging with `enableOptionFallbackMerge` flag:
     pprint.pprintln(
       Option.empty[Foo].into[Option[Bar]]
         .withFallback(Option(Foo("fallback1")))
-        .withFallback(Option(Foo("fallback2")))
+        .withFallback(Option(Baz("fallback2")))
         .enableOptionFallbackMerge(FallbackOrElseSource)
         .transform
     )
@@ -4864,11 +4864,12 @@ We can select merging with `enableEitherFallbackMerge` flag:
 
     case class Foo(value: String)
     case class Bar(value: String)
+    case class Baz(value: String)
 
     pprint.pprintln(
       (Left("nope"): Either[String, Foo]).into[Either[String, Bar]]
         .withFallback(Right(Foo("fallback1")): Either[String, Foo])
-        .withFallback(Right(Foo("fallback2")): Either[String, Foo])
+        .withFallback(Right(Baz("fallback2")): Either[String, Baz])
         .transform
     )
     // expected output:
@@ -4877,7 +4878,7 @@ We can select merging with `enableEitherFallbackMerge` flag:
     pprint.pprintln(
       (Left("nope"): Either[String, Foo]).into[Either[String, Bar]]
         .withFallback(Right(Foo("fallback1")): Either[String, Foo])
-        .withFallback(Right(Foo("fallback2")): Either[String, Foo])
+        .withFallback(Right(Baz("fallback2")): Either[String, Baz])
         .enableEitherFallbackMerge(SourceOrElseFallback)
         .transform
     )
@@ -4887,7 +4888,7 @@ We can select merging with `enableEitherFallbackMerge` flag:
     pprint.pprintln(
       (Left("nope"): Either[String, Foo]).into[Either[String, Bar]]
         .withFallback(Right(Foo("fallback1")): Either[String, Foo])
-        .withFallback(Right(Foo("fallback2")): Either[String, Foo])
+        .withFallback(Right(Baz("fallback2")): Either[String, Baz])
         .enableEitherFallbackMerge(FallbackOrElseSource)
         .transform
     )
@@ -4920,11 +4921,12 @@ We can select merging with `enableCollectionFallbackMerge` flag:
 
     case class Foo(value: String)
     case class Bar(value: String)
+    case class Baz(value: String)
 
     pprint.pprintln(
       (List(Foo("source"))).into[Vector[Bar]]
         .withFallback(Array(Foo("fallback1")))
-        .withFallback(Set(Foo("fallback2")))
+        .withFallback(Set(Baz("fallback2")))
         .transform
     )
     // expected output:
@@ -4933,7 +4935,7 @@ We can select merging with `enableCollectionFallbackMerge` flag:
     pprint.pprintln(
       (List(Foo("source"))).into[Vector[Bar]]
         .withFallback(Array(Foo("fallback1")))
-        .withFallback(Set(Foo("fallback2")))
+        .withFallback(Set(Baz("fallback2")))
         .enableCollectionFallbackMerge(SourceAppendFallback)
         .transform
     )
@@ -4943,7 +4945,7 @@ We can select merging with `enableCollectionFallbackMerge` flag:
     pprint.pprintln(
       (List(Foo("source"))).into[Vector[Bar]]
         .withFallback(Array(Foo("fallback1")))
-        .withFallback(Set(Foo("fallback2")))
+        .withFallback(Set(Baz("fallback2")))
         .enableCollectionFallbackMerge(FallbackAppendSource)
         .transform
     )
