@@ -313,7 +313,8 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     *   parameter specifying which strategy should be used to merge fallbacks with source value
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#merging-option-with-option-into-option]] for more
+    *   details
     *
     * @since 1.7.0
     */
@@ -325,7 +326,8 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   /** Disable merging fallback `Option` values into the source `Option` value.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#merging-option-with-option-into-option]] for more
+    *   details
     *
     * @since 1.7.0
     */
@@ -338,7 +340,8 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     *   parameter specifying which strategy should be used to merge fallbacks with source value
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#merging-either-with-either-into-either]] for more
+    *   details
     *
     * @since 1.7.0
     */
@@ -350,7 +353,8 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   /** Disable merging fallback `Either` values into the source `Either` value.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#merging-either-with-either-into-either]] for more
+    *   details
     *
     * @since 1.7.0
     */
@@ -363,7 +367,8 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     *   parameter specifying which strategy should be used to merge fallbacks with source value
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#merging-collection-with-collection-into-collection]]
+    *   for more details
     *
     * @since 1.7.0
     */
@@ -375,7 +380,8 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   /** Disable merging fallback collection values into the source collection value.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#merging-collection-with-collection-into-collection]]
+    *   for more details
     *
     * @since 1.7.0
     */
