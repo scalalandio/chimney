@@ -191,6 +191,29 @@ Some flags can only be set globally:
 
  * `.enableMacrosLogging` cannot be done for a single field/subtype
 
+Similarly `Patcher` has `.withPatchedValueFlag(pathFromPatchedValue)`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}    
+    import io.scalaland.chimney.dsl._
+    
+    case class User(id: Int, name: String, age: Option[Int])
+    case class UserPatch(name: String, age: Option[Int], extraID: Int = 0)
+    case class Nested[A](value: A)
+
+    pprint.pprintln(
+      Nested(User(1, "Adam", None))
+        .using(Nested(UserPatch("Jogn", Some(10), 10)))
+        .withPatchedValueFlag(_.value).ignoreRedundantPatcherFields
+        .patch
+    )
+    // expected output:
+    // Nested(value = User(id = 1, name = "Jogn", age = Some(value = 10)))
+    ```
+
 ## Checking for unused source fields/unmatched target subtypes
 
 While most of the time Chimney is picked for generating mapping between 2 data types wit as little hassle as possible,
