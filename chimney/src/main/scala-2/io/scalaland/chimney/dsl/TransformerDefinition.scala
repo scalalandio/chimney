@@ -282,7 +282,8 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * Fallbacks can be stacked - then they will be tried in the order in which they were added.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#merging-multiple-input-sources-into-a-single-target-value]]
+    *   for more details
     *
     * @tparam FromFallback
     *   type of the fallback value which would be checked for fields when the `From` value would be missing
@@ -303,7 +304,8 @@ final class TransformerDefinition[From, To, Overrides <: TransformerOverrides, F
     * Fallbacks can be stacked - then they will be tried in the order in which they were added.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#merging-multiple-input-sources-into-a-single-target-value]]
+    *   for more details
     *
     * @tparam T
     *   type of the source value that fallback is provided for

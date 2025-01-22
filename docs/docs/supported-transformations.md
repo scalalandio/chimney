@@ -4508,7 +4508,7 @@ to be automatically recognized as such:
     easier to define [a custom transformer](#custom-transformations), perhaps by using a dedicated new type/refined type
     library and [providing an integration for all of its types](cookbook.md#libraries-with-smart-constructors).
 
-## Merging multiple input source into a single target value
+## Merging multiple input sources into a single target value
 
 Sometimes we have one flat structure on one side and several structures on the other.
 
