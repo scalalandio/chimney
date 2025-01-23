@@ -109,7 +109,7 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
   /** Mark `Patch`` field as expected to be ignored, so that the orignial value would be used.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-patching/#ignoring-fields-in-patches]] for more details
     *
     * @tparam T
     *   type of patch field
