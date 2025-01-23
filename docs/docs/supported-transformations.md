@@ -341,6 +341,78 @@ In particular, when the source type is (`=:=`) the target type, you will end up 
     
     since that customization couldn't be applied if we only upcasted the value. 
 
+### Type-evidence-based conversions
+
+But default conversions using `=:=` and `<:<` are disabled, but they can be enabled with a flag
+`enableTypeConstraintEvidence`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo[A](value: A)
+    case class Bar[A](value: A)
+
+    def fooToBar[A, B](value: Foo[A])(implicit ev: A <:< B): Bar[B] =
+        value.into[Bar[B]].enableTypeConstraintEvidence.transform
+  
+    pprint.pprintln(
+       fooToBar[String, String](Foo("bar"))
+    )
+    // expected output:
+    // Bar(value = "bar")
+
+    def fooToBar2[A, B](value: Foo[A])(implicit ev: A <:< B): Bar[B] = {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = TransformerConfiguration.default.enableTypeConstraintEvidence
+
+      value.transformInto[Bar[B]]
+    }
+  
+    pprint.pprintln(
+      fooToBar2[String, String](Foo("bar"))
+    )
+    // expected output:
+    // Bar(value = "bar")
+    ```
+
+If the flag was enabled in the implicit config it can be disabled with `.enableTypeConstraintEvidence`.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo[A](value: A)
+    case class Bar[A](value: A)
+
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    implicit val cfg = TransformerConfiguration.default.enableTypeConstraintEvidence
+
+
+    def fooToBar[A, B](value: Foo[A])(implicit ev: A <:< B): Bar[B] =
+        value.into[Bar[B]].disableTypeConstraintEvidence.transform
+  
+    pprint.pprintln(
+       fooToBar[String, String](Foo("bar"))
+    )
+    // expected error:
+    // Chimney can't derive transformation from Foo[A] to Bar[B]
+    // 
+    // Bar[B]
+    //   value: B - can't derive transformation from value: A in source type Foo[A]
+    // 
+    // B
+    //   derivation from foo.value: A to B is not supported in Chimney!
+    //
+    // Consult https://chimney.readthedocs.io for usage examples.
+    ```
+
 ## Into a `case class` (or POJO)
 
 Every type can have its `val`s read and used as data sources for the transformation.
@@ -5032,6 +5104,68 @@ We can select merging with `enableCollectionFallbackMerge` flag:
     )
     // expected output:
     // Vector(Bar(value = "fallback2"), Bar(value = "fallback1"), Bar(value = "source"))
+    ```
+
+## Implicit conversions
+
+Implicit conversions are often considered a dangerous feature, which is why they are disabled by default.
+
+However, sometimes one may need them, so it may be useful to be able to call them in macro. This can be enabled
+with a flag `.enableImplicitConversions`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    import scala.language.implicitConversions
+
+    implicit def convert(a: Int): String = a.toString
+
+    pprint.pprintln(
+      10.into[String].enableImplicitConversions.transform
+    )
+    // expected output:
+    // "10"
+
+    locally {
+      // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = TransformerConfiguration.default.enableImplicitConversions
+
+      pprint.pprintln(
+        10.transformInto[String]
+      )
+      // expected output:
+      // "10"
+    }
+    ```
+
+If the flag was enabled in the implicit config it can be disabled with `.disableImplicitConversions`.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    import scala.language.implicitConversions
+
+    implicit def convert(a: Int): String = a.toString
+
+    // All transformations derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+    implicit val cfg = TransformerConfiguration.default.enableImplicitConversions
+
+    10.into[String].disableImplicitConversions.transform
+    // expected error:
+    // Chimney can't derive transformation from scala.Int to java.lang.String
+    //
+    // java.lang.String
+    //   derivation from int: scala.Int to java.lang.String is not supported in Chimney!
+    //
+    // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
 ## Custom transformations
