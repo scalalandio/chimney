@@ -126,6 +126,38 @@ If the flag was enabled in the implicit config it can be disabled with `.failRed
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
+## Updating `AnyVal` with `AnyVal`
+
+It is possible to update values containing `AnyVal`s:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo[A](value: A)
+    case class Bar[A](value: A)
+    case class Wrapper(str: String) extends AnyVal
+
+    pprint.pprintln(
+      Foo("aaa").patchUsing(Bar(Wrapper("bbb")))
+    )
+    // expected output:
+    // Foo(value = "bbb")
+    pprint.pprintln(
+      Foo(Wrapper("aaa")).patchUsing(Bar("bbb"))
+    )
+    // expected output:
+    // Foo(value = Wrapper(str = "bbb"))
+    pprint.pprintln(
+      Foo(Wrapper("aaa")).patchUsing(Bar(Wrapper("bbb")))
+    )
+    // expected output:
+    // Foo(value = Wrapper(str = "bbb"))
+    ```
+
 ## Updating value with `Option`
 
 It is possible to patch using optional values of type `Option[A]` as long as the `Transformer` is available (or derivable)
