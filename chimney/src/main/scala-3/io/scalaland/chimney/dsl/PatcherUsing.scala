@@ -36,7 +36,7 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
     * By default, if `Patch` is missing a field, the original `A`'s field value is taken.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-patching/#updating-field-with-a-provided-value]] for more details
     *
     * @return
     *   [[io.scalaland.chimney.dsl.PatcherUsing]]
@@ -53,7 +53,7 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
     * By default, if `Patch` is missing a field, the original `A`'s field value is taken.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-patching/#updating-field-with-a-computed-value]] for more details
     *
     * @tparam T
     *   type of patched value field
@@ -80,7 +80,7 @@ final class PatcherUsing[A, Patch, Overrides <: PatcherOverrides, Flags <: Patch
     * By default, if `Patch` is missing a field, the original `A`'s field value is taken.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-patching/#updating-field-with-a-computed-value]] for more details
     *
     * @tparam S
     *   type of patch field
