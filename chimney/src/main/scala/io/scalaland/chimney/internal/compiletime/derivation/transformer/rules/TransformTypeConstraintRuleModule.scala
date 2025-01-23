@@ -10,8 +10,8 @@ private[compiletime] trait TransformTypeConstraintRuleModule { this: Derivation 
   protected object TransformTypeConstraintRule extends Rule("TypeConstraint") {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-      if (ctx.config.areOverridesEmpty) {
-        if (ctx.config.flags.typeConstraintEvidence) {
+      if (ctx.config.areLocalFlagsAndOverridesEmpty) {
+        if (ctx.config.flags.typeConstraintEvidence && !(Type[From] <:< Type[To])) {
           Expr.summonImplicit[From <:< To] match {
             case Some(ev) => transformWithEvidence[From, To](ev)
             case None     => DerivationResult.attemptNextRule
