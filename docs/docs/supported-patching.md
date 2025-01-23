@@ -126,6 +126,30 @@ If the flag was enabled in the implicit config it can be disabled with `.failRed
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
+Alternatively you can explicitly point to the fields that you want to ignore:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class User(id: Int, email: String, phone: Long)
+    case class UserUpdateForm(email: String, phone: Long, address: String)
+
+    val user = User(10, "abc@@domain.com", 1234567890L)
+
+    pprint.pprintln(
+      user
+        .using(UserUpdateForm("xyz@@domain.com", 123123123L, "some address"))
+        .withFieldIgnored(_.address)
+        .patch
+    )
+    // expected output:
+    // User(id = 10, email = "xyz@@domain.com", phone = 123123123L)
+    ```
+
 ## Updating `AnyVal` with `AnyVal`
 
 It is possible to update values containing `AnyVal`s:
