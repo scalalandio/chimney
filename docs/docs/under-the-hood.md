@@ -570,11 +570,20 @@ rule has to look at it, and decide whether fallbacks apply and if they should be
 
 In other words, merging has to be supported separately by every rule that should allow it.
 
-`Patcher`s have been rewritten in Chimney 1.7.0 to be a specialized version of merging transformations, similar to:
+`Patcher`s have been rewritten in Chimney 1.7.0 to be a specialized version of merging transformations:
 
-```scala
-patch.into[PatchedValue].withFallback(originalValue).transform
-```
+!!! example
+
+    ```scala
+    originalValue.patchUsing(patch) // or
+    originalValue.using(patch).patch
+    ```
+
+    is similar to
+
+    ```scala
+    patch.into[PatchedValue].withFallback(originalValue).transform
+    ```
 
 but with a few changes, like e.g.:
 

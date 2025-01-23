@@ -400,10 +400,10 @@ If the flag was enabled in the implicit config it can be disabled with `.clearOn
  
 ### Unambiguous `Option` update
 
- The flag is not required when updating `Option[A]` with `Option[Option[B]]`, as then it is always
- unambiguous what to do:
+The flag is not required when updating `Option[A]` with `Option[Option[B]]`, as then it is always
+unambiguous what to do:
 
- !!! example
+!!! example
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
@@ -556,10 +556,10 @@ If the flag was enabled in the implicit config it can be disabled with `.useLeft
  
 ### Unambiguous `Either` update
 
- The flag is not required when updating `Either[K, V]` with `Option[Either[K2, V2]]`, as then it is always
- unambiguous what to do:
+The flag is not required when updating `Either[K, V]` with `Option[Either[K2, V2]]`, as then it is always
+unambiguous what to do:
 
- !!! example
+!!! example
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
@@ -697,10 +697,10 @@ If the flag was enabled in the implicit config it can be disabled with `.overrid
  
 ### Unambiguous collection update
 
- The flag is not required when updating collection with `Option[collection]`, as then it is always
- unambiguous what to do (leave unchanged or replace):
+The flag is not required when updating collection with `Option[collection]`, as then it is always
+unambiguous what to do (leave unchanged or replace):
 
- !!! example
+!!! example
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}

@@ -1539,7 +1539,7 @@ The `None` value is used as a fallback, meaning:
 
 !!! example
 
-    Behavior when both [`.enableDefaultValues`](#allowing-the-constructors-default-values) and `.enableOptionDefaultsToNone` are used:
+    Behavior when both [`.enableDefaultValues`](#allowing-fallback-to-the-constructors-default-values) and `.enableOptionDefaultsToNone` are used:
 
     ```scala
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
