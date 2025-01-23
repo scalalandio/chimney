@@ -1920,7 +1920,7 @@ Since Ducktape is inspired by Chimney, there is a huge overlap in functionality.
  * Ducktape provides/allows:
     * some linting telling the users that they overrode some things twice, or that some config cannot be used because
       another config provided value for level "above"
-    * `Field.allMatching` which has no direct counterpart in Chimney, but in many cases it could replaced using
+    * `Field.allMatching` which has no direct counterpart in Chimney, but in many cases it could be replaced by: using
       [`withFallback`](supported-transformations.md#merging-multiple-input-sources-into-a-single-target-value),
       using data from `allMatching` as the source, and source of Ducktape transformation as a fallback
  * Chimney provides/allows:
@@ -1933,7 +1933,7 @@ Since Ducktape is inspired by Chimney, there is a huge overlap in functionality.
       `_.everyMapKey` and `_.everyMapValue` would work with them (including Java collections and Cats data)
     * customizing the [field-](supported-transformations.md#customizing-field-name-matching) and
       [subtype-name](supported-transformations.md#customizing-subtype-name-matching) matching methods
-    * [sharing flags overrides between all derivations in the same scope](cookbook.md#reusing-flags-for-several-transformationspatchings)
+    * [sharing flags overrides between all derivations in the same scope](cookbook.md#reusing-the-flags-for-several-transformationspatchings)
     * [smart constructors](supported-transformations.md#types-with-manually-provided-constructors), not only custom
       constructors guaranteed to create the value
     * [`Patcher`s](supported-patching.md)

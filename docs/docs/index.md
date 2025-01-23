@@ -228,11 +228,32 @@ You can also merge values!
     pprint.pprintln(
       UserData("John", "Smith").into[User]
         .withFallback(UserMeta(10L, isDeleted = false))
-        .enableMacrosLogging
         .transform
     )
     // expected output:
     // User(id = 10L, isDeleted = false, name = "John", surname = "Smith")
+    ```
+
+??? example
+
+    ```scala
+    // macro outputs code like this (reformatted a bit for readability):
+
+    val vector = ... // overrides stored by DSL in Vector[Any], here UserMeta fallback
+
+    final class $anon() extends Transformer[UserData, User] {
+      def transform(src: UserData): User = {
+        val userData: UserData = src
+        new User(
+          vector(0).asInstanceOf[UserMeta].id,
+          vector(0).asInstanceOf[UserMeta].isDeleted,
+          userdata.name,
+          userdata.surname
+        )
+      }
+    }
+
+    (new $anon(): Transformer[User, UserDTO])
     ```
 
 Or patch one of them with another! 
@@ -256,8 +277,25 @@ Or patch one of them with another!
     // User(id = 10L, isDeleted = false, name = "Jane", surname = "Doe")
     ```
 
+??? example
+
+    ```scala
+    // macro outputs code like this (reformatted a bit for readability):
+    final class $anon extends Patcher[User, UserUpdate] {
+      def patch(user: User, userupdate: UserUpdate): User =
+        new User(
+          user.id,
+          userupdate.isDeleted.fold(user.isDeleted)(((boolean: Boolean) => boolean)),
+          userupdate.name.fold(user.name)(((string: String) => string)),
+          userupdate.surname.fold(user.surname)(((string: String) => string))
+        )
+    }
+
+    new $anon()
+    ```
+
 Now, visit the [quick start section](quickstart.md) to learn how to get Chimney and the move
-to the [supported transformations section](supported-transformations.md) and [supported patching section](supported-patching.md.md)
+to the [supported transformations section](supported-transformations.md) and [supported patching section](supported-patching.md)
 to learn about a plethora of transformations supported out of the box - and even more enabled with easy customizations!
 
 !!! tip
