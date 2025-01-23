@@ -104,6 +104,26 @@ class PatcherStdLibSpec extends ChimneySpec {
     Map("id" -> Bar("a")).using(Map("id2" -> Bar("b"))).patch ==> Map("id2" -> Bar("b"))
   }
 
+  test("patch collection-type with Option-collection-type, keeping value on None, replacing on Some(collection)") {
+    List(Bar("a")).patchUsing(Option(Vector(Bar("b")))) ==> List(Bar("b"))
+    List(Bar("a")).using(Option(Vector(Bar("b")))).patch ==> List(Bar("b"))
+
+    List(Bar("a")).patchUsing(Option(Vector.empty[Bar])) ==> List.empty[Bar]
+    List(Bar("a")).using(Option(Vector.empty[Bar])).patch ==> List.empty[Bar]
+
+    List(Bar("a")).patchUsing(Option.empty[Vector[Bar]]) ==> List(Bar("a"))
+    List(Bar("a")).using(Option.empty[Vector[Bar]]).patch ==> List(Bar("a"))
+
+    List.empty[Bar].patchUsing(Option(Vector(Bar("b")))) ==> List(Bar("b"))
+    List.empty[Bar].using(Option(Vector(Bar("b")))).patch ==> List(Bar("b"))
+
+    List.empty[Bar].patchUsing(Option(Vector.empty[Bar])) ==> List.empty[Bar]
+    List.empty[Bar].using(Option(Vector.empty[Bar])).patch ==> List.empty[Bar]
+
+    List.empty[Bar].patchUsing(Option.empty[Vector[Bar]]) ==> List.empty[Bar]
+    List.empty[Bar].using(Option.empty[Vector[Bar]]).patch ==> List.empty[Bar]
+  }
+
   group("flag .ignoreNoneInPatch") {
 
     test("should patch Option-type with Option-type of the same type, with patch.orElse(obj)") {
