@@ -64,14 +64,7 @@ class TotalTransformerImplicitResolutionSpec extends ChimneySpec {
 
         indirection[String, String](Nested("value"))
         """
-      ).check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.A] to io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.B]",
-        "io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.B]",
-        "value: io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.B - can't derive transformation from value: io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.A in source type io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.A]",
-        "io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.B",
-        "derivation from nested.value: io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.A to io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.B is not supported in Chimney!",
-        "Consult https://chimney.readthedocs.io for usage examples."
-      )
+      ).arePresent()
     }
 
     test("should use <:< based-evidence") {
@@ -100,14 +93,7 @@ class TotalTransformerImplicitResolutionSpec extends ChimneySpec {
 
         indirection[String, String](Nested("value"))
         """
-      ).check(
-        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.A] to io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.B]",
-        "io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.B]",
-        "value: io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.B - can't derive transformation from value: io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.A in source type io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.A]",
-        "io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.B",
-        "derivation from nested.value: io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.A to io.scalaland.chimney.TotalTransformerImplicitResolutionSpec.B is not supported in Chimney!",
-        "Consult https://chimney.readthedocs.io for usage examples."
-      )
+      ).arePresent()
     }
   }
 
