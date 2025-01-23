@@ -211,9 +211,54 @@ Done! Decoding Protobuf into domain object with a fallible transformation, like 
 
 Also done! And if a field cannot be converted, you'll get the path to the problematic value!
 
+You can also merge values!
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class UserData(name: String, surname: String)
+    case class UserMeta(id: Long, isDeleted: Boolean)
+
+    case class User(id: Long, isDeleted: Boolean, name: String, surname: String)
+
+    pprint.pprintln(
+      UserData("John", "Smith").into[User]
+        .withFallback(UserMeta(10L, isDeleted = false))
+        .enableMacrosLogging
+        .transform
+    )
+    // expected output:
+    // User(id = 10L, isDeleted = false, name = "John", surname = "Smith")
+    ```
+
+Or patch one of them with another! 
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class User(id: Long, isDeleted: Boolean, name: String, surname: String)
+
+    case class UserUpdate(isDeleted: Option[Boolean], name: Option[String], surname: Option[String])
+
+    pprint.pprintln(
+      User(10L, false, "Jane", "Smith")
+        .patchUsing(UserUpdate(None, None, Some("Doe")))
+    )
+    // expected output:
+    // User(id = 10L, isDeleted = false, name = "Jane", surname = "Doe")
+    ```
+
 Now, visit the [quick start section](quickstart.md) to learn how to get Chimney and the move
-to the [supported transformations section](supported-transformations.md) to learn about a plethora of transformations
-supported out of the box and even more enabled with easy customizations!
+to the [supported transformations section](supported-transformations.md) and [supported patching section](supported-patching.md.md)
+to learn about a plethora of transformations supported out of the box - and even more enabled with easy customizations!
 
 !!! tip
 
