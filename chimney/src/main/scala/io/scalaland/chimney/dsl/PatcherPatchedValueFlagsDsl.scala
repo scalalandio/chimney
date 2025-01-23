@@ -19,9 +19,6 @@ private[chimney] trait PatcherPatchedValueFlagsDsl[UpdateFlag[_ <: PatcherFlags]
     *   [[https://chimney.readthedocs.io/supported-patching/#treating-none-as-no-update-instead-of-set-to-none]] for
     *   more details
     *
-    * @return
-    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
-    *
     * @since 0.4.0
     */
   def ignoreNoneInPatch: UpdateFlag[Enable[IgnoreNoneInPatch, Flags]] =
@@ -32,9 +29,6 @@ private[chimney] trait PatcherPatchedValueFlagsDsl[UpdateFlag[_ <: PatcherFlags]
     * @see
     *   [[https://chimney.readthedocs.io/supported-patching/#treating-none-as-no-update-instead-of-set-to-none]] for
     *   more details
-    *
-    * @return
-    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
     * @since 0.8.0
     */
@@ -47,10 +41,8 @@ private[chimney] trait PatcherPatchedValueFlagsDsl[UpdateFlag[_ <: PatcherFlags]
     * By default, when [[scala.Left]] is delivered in patch, Chimney used this new value.
     *
     * @see
-    *   TODO
-    *
-    * @return
-    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *   [[https://chimney.readthedocs.io/supported-patching/#treating-left-as-no-update-instead-of-set-to-left]] for
+    *   more details
     *
     * @since 1.7.0
     */
@@ -60,10 +52,8 @@ private[chimney] trait PatcherPatchedValueFlagsDsl[UpdateFlag[_ <: PatcherFlags]
   /** When [[scala.Either]] is patching [[scala.Either]], on [[scala.Left]] value will be overrides.
     *
     * @see
-    *   TODO
-    *
-    * @return
-    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *   [[https://chimney.readthedocs.io/supported-patching/#treating-left-as-no-update-instead-of-set-to-left]] for
+    *   more details
     *
     * @since 1.7.0
     */
@@ -76,10 +66,8 @@ private[chimney] trait PatcherPatchedValueFlagsDsl[UpdateFlag[_ <: PatcherFlags]
     * By default, patch's collection overrides the content of a field.
     *
     * @see
-    *   TODO
-    *
-    * @return
-    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *   [[https://chimney.readthedocs.io/supported-patching/#appending-to-collection-instead-of-replacing-it]] for more
+    *   details
     *
     * @since 1.7.0
     */
@@ -89,10 +77,8 @@ private[chimney] trait PatcherPatchedValueFlagsDsl[UpdateFlag[_ <: PatcherFlags]
   /** When collection is patching collection, the value will be simply overriden.
     *
     * @see
-    *   TODO
-    *
-    * @return
-    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
+    *   [[https://chimney.readthedocs.io/supported-patching/#appending-to-collection-instead-of-replacing-it]] for more
+    *   details
     *
     * @since 1.7.0
     */
@@ -108,9 +94,6 @@ private[chimney] trait PatcherPatchedValueFlagsDsl[UpdateFlag[_ <: PatcherFlags]
     * @see
     *   [[https://chimney.readthedocs.io/supported-patching/#ignoring-fields-in-patches]] for more details
     *
-    * @return
-    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
-    *
     * @since 0.4.0
     */
   def ignoreRedundantPatcherFields: UpdateFlag[Enable[IgnoreRedundantPatcherFields, Flags]] =
@@ -120,9 +103,6 @@ private[chimney] trait PatcherPatchedValueFlagsDsl[UpdateFlag[_ <: PatcherFlags]
     *
     * @see
     *   [[https://chimney.readthedocs.io/supported-patching/#ignoring-fields-in-patches]] for more details
-    *
-    * @return
-    *   [[io.scalaland.chimney.dsl.PatcherUsing]]
     *
     * @since 0.8.0
     */
