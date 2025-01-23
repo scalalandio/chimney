@@ -557,6 +557,37 @@ The derivation has a few stages:
     To prevent both issues we are passing type parameters (to have the correct types of extracted values) and annotating
     the matched value with `@scala.unchecked`.
 
+### Merging transformations and `Patcher`s
+
+Merging transformations require storing the list of possible fallbacks inside the transformation context, then each
+rule has to look at it, and decide whether fallbacks apply and if they should be propagated further, e.g.
+
+  - product rule obtains the list of fields for each fallback and tries to use it if the original source has no such field,
+    then it uses fallbacks' fields of names matching with target field as the fallbacks for resursive derivation
+  - options and eithers rules look at the flags to decide whether or not to merge multiple `Option`s/`Either`s with `orElse`,
+    and then they won't propagate fallbacks further
+  - similarly collections might be combined tohether with `++` if there is a flag allowing it
+
+In other words, merging has to be supported separately by every rule that should allow it.
+
+`Patcher`s have been rewritten in Chimney 1.7.0 to be a specialized version of merging transformations, similar to:
+
+```scala
+patch.into[PatchedValue].withFallback(originalValue).transform
+```
+
+but with a few changes, like e.g.:
+
+  - supporting implicit `Patcher` rule
+  - failing on unused source value by default
+  - `SourceOrElseFallback` strategy for `Option`s and `Either`s
+  - dedicated support for updating Option with Option of Option, Either with Option of Either, collection with Option
+    of collection
+  - specialized errors messages for certain cases
+
+This enabled porting to `Patcher`s many features that `Transformer`s were already supporting without douplicating
+the effort, allowed patching to be recursive, etc.
+
 ### Error handling and logging
 
 Each macro expansion can emit only 1 message of each of these logging levels: info, warn, error, trace. Each next call
