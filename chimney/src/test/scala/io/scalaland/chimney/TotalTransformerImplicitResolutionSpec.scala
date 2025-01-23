@@ -110,4 +110,47 @@ class TotalTransformerImplicitResolutionSpec extends ChimneySpec {
       )
     }
   }
+
+  group("flag .enableImplicitConversions") {
+
+    import scala.language.implicitConversions
+
+    implicit def convert(a: Int): String = a.toString
+
+    test("should be disabled by default") {
+      compileErrors("""10.transformInto[String]""").check(
+        "Chimney can't derive transformation from scala.Int to java.lang.String",
+        "java.lang.String",
+        "derivation from int: scala.Int to java.lang.String is not supported in Chimney!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should convert values when enabled") {
+      10.into[String].enableImplicitConversions.transform ==> "10"
+
+      locally {
+        implicit val cfg = TransformerConfiguration.default.enableImplicitConversions
+        10.transformInto[String] ==> "10"
+      }
+    }
+  }
+
+  group("flag .disableImplicitConversions") {
+
+    import scala.language.implicitConversions
+
+    @unused implicit def convert(a: Int): String = a.toString
+
+    test("should disable globally enabled .enableImplicitConversions") {
+      @unused implicit val cfg = TransformerConfiguration.default.enableImplicitConversions
+
+      compileErrors("""10.into[String].disableImplicitConversions.transform""").check(
+        "Chimney can't derive transformation from scala.Int to java.lang.String",
+        "java.lang.String",
+        "derivation from int: scala.Int to java.lang.String is not supported in Chimney!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+  }
 }
