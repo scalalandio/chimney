@@ -21,6 +21,26 @@ class PatcherIntegrationsSpec extends ChimneySpec {
     (Possible.Nope: Possible[Bar]).using(Possible.Nope: Possible[Bar]).patch ==> Possible.Nope
   }
 
+  test("patch Option-type with Option-Option-type, keeping value on None, replacing on Some(option)") {
+    Possible(Bar("a")).patchUsing(Possible(Possible(Bar("b")))) ==> Possible(Bar("b"))
+    Possible(Bar("a")).using(Possible(Possible(Bar("b")))).patch ==> Possible(Bar("b"))
+
+    Possible(Bar("a")).patchUsing(Possible(Possible.Nope: Possible[Bar])) ==> Possible.Nope
+    Possible(Bar("a")).using(Possible(Possible.Nope: Possible[Bar])).patch ==> Possible.Nope
+
+    Possible(Bar("a")).patchUsing(Possible.Nope: Possible[Possible[Bar]]) ==> Possible(Bar("a"))
+    Possible(Bar("a")).using(Possible.Nope: Possible[Possible[Bar]]).patch ==> Possible(Bar("a"))
+
+    (Possible.Nope: Possible[Bar]).patchUsing(Possible(Possible(Bar("b")))) ==> Possible(Bar("b"))
+    (Possible.Nope: Possible[Bar]).using(Possible(Possible(Bar("b")))).patch ==> Possible(Bar("b"))
+
+    (Possible.Nope: Possible[Bar]).patchUsing(Possible(Possible.Nope: Possible[Bar])) ==> Possible.Nope
+    (Possible.Nope: Possible[Bar]).using(Possible(Possible.Nope: Possible[Bar])).patch ==> Possible.Nope
+
+    (Possible.Nope: Possible[Bar]).patchUsing(Possible.Nope: Possible[Possible[Bar]]) ==> Possible.Nope
+    (Possible.Nope: Possible[Bar]).using(Possible.Nope: Possible[Possible[Bar]]).patch ==> Possible.Nope
+  }
+
   test("patch sequential-type with sequential-type of the same type, replacing the value") {
     CustomCollection.of(Bar("a")).patchUsing(Vector(Bar("b"))) ==> CustomCollection.of(Bar("b"))
     CustomCollection.of(Bar("a")).using(Vector(Bar("b"))).patch ==> CustomCollection.of(Bar("b"))
@@ -41,6 +61,33 @@ class PatcherIntegrationsSpec extends ChimneySpec {
 
     CustomMap.of("id" -> Bar("a")).patchUsing(CustomMap.of("id2" -> Bar("b"))) ==> CustomMap.of("id2" -> Bar("b"))
     CustomMap.of("id" -> Bar("a")).using(CustomMap.of("id2" -> Bar("b"))).patch ==> CustomMap.of("id2" -> Bar("b"))
+  }
+
+  test(
+    "patch collection-type with Option-collection-type, keeping value on Possible.Nope, replacing on Some(collection)"
+  ) {
+    CustomCollection.of(Bar("a")).patchUsing(Possible(CustomCollection.of(Bar("b")))) ==> CustomCollection.of(Bar("b"))
+    CustomCollection.of(Bar("a")).using(Possible(CustomCollection.of(Bar("b")))).patch ==> CustomCollection.of(Bar("b"))
+
+    CustomCollection.of(Bar("a")).patchUsing(Possible(CustomCollection.of[Bar]())) ==> CustomCollection.of[Bar]()
+    CustomCollection.of(Bar("a")).using(Possible(CustomCollection.of[Bar]())).patch ==> CustomCollection.of[Bar]()
+
+    CustomCollection.of(Bar("a")).patchUsing(Possible.Nope: Possible[CustomCollection[Bar]]) ==> CustomCollection.of(
+      Bar("a")
+    )
+    CustomCollection.of(Bar("a")).using(Possible.Nope: Possible[CustomCollection[Bar]]).patch ==> CustomCollection.of(
+      Bar("a")
+    )
+
+    CustomCollection.of[Bar]().patchUsing(Possible(CustomCollection.of(Bar("b")))) ==> CustomCollection.of(Bar("b"))
+    CustomCollection.of[Bar]().using(Possible(CustomCollection.of(Bar("b")))).patch ==> CustomCollection.of(Bar("b"))
+
+    CustomCollection.of[Bar]().patchUsing(Possible(CustomCollection.of[Bar]())) ==> CustomCollection.of[Bar]()
+    CustomCollection.of[Bar]().using(Possible(CustomCollection.of[Bar]())).patch ==> CustomCollection.of[Bar]()
+
+    CustomCollection.of[Bar]().patchUsing(Possible.Nope: Possible[CustomCollection[Bar]]) ==> CustomCollection.of[Bar]()
+    CustomCollection.of[Bar]().using(Possible.Nope: Possible[CustomCollection[Bar]]).patch ==> CustomCollection
+      .of[Bar]()
   }
 
   group("flag .ignoreNoneInPatch") {
