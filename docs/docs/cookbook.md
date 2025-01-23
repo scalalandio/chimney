@@ -2967,6 +2967,29 @@ to contribute to easier migration from Scala 2.13 to Scala 3.
     It is required that there is only 1 version of Chimney on the class-path - either Scala 2 or Scala 3 version - which
     would be called only from modules with the matching version of Scala. 
 
+## Patching `case class` with another instance of the same `case class`
+
+You can use 2 instances of the same `case class` to copy fields form one another - you only need to exclude some
+fields from the patching:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Foo(a: String, b: String)
+
+    pprint.pprintln(
+      Foo("a", "b").using(Foo("c", "d"))
+        .withFieldIgnored(_.a)
+        .patch
+    )
+    // expected output:
+    // Foo(a = "a", b = "d")
+    ```
+
 ## Integrations
 
 While Chimney supports a lot of transformations out of the box, sometimes it needs our help. We can do it ad hoc
