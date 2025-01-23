@@ -111,4 +111,62 @@ class PartialTransformerImplicitResolutionSpec extends ChimneySpec {
     result3.asEither ==> Right(expectedDefault)
     result3.asErrorPathMessageStrings ==> Iterable.empty
   }
+
+  group("flag .enableTypeConstraintEvidence") {
+    import merges.Nested
+
+    test("should be disabled by default") {
+      compileErrors(
+        """
+        def indirection[A, B](value: Nested[A])(implicit ev: A <:< B): partial.Result[Nested[B]] =
+          value.transformIntoPartial[Nested[B]]
+
+        indirection[String, String](Nested("value"))
+        """
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.A] to io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.B]",
+        "io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.B]",
+        "value: io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.B - can't derive transformation from value: io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.A in source type io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.A]",
+        "io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.B",
+        "derivation from nested.value: io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.A to io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.B is not supported in Chimney!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+
+    test("should use <:< based-evidence") {
+      def indirection1[A, B](value: Nested[A])(implicit ev: A <:< B): partial.Result[Nested[B]] =
+        value.intoPartial[Nested[B]].enableTypeConstraintEvidence.transform
+      def indirection2[A, B](value: Nested[A])(implicit ev: A <:< B): partial.Result[Nested[B]] = {
+        implicit val cfg = TransformerConfiguration.default.enableTypeConstraintEvidence
+        value.transformIntoPartial[Nested[B]]
+      }
+
+      indirection1[String, String](Nested("value")).asOption ==> Some(Nested("value"))
+      indirection2[String, String](Nested("value")).asOption ==> Some(Nested("value"))
+    }
+  }
+
+  group("flag .disableTypeConstraintEvidence") {
+    import merges.Nested
+
+    test("should disable globally enabled .enableTypeConstraintEvidence") {
+      @unused implicit val cfg = TransformerConfiguration.default.enableTypeConstraintEvidence
+
+      compileErrors(
+        """
+        def indirection[A, B](value: Nested[A])(implicit ev: A <:< B): partial.Result[Nested[B]] =
+          value.intoPartial[Nested[B]].disableTypeConstraintEvidence.transform
+
+        indirection[String, String](Nested("value"))
+        """
+      ).check(
+        "Chimney can't derive transformation from io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.A] to io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.B]",
+        "io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.B]",
+        "value: io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.B - can't derive transformation from value: io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.A in source type io.scalaland.chimney.fixtures.merges.Nested[io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.A]",
+        "io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.B",
+        "derivation from nested.value: io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.A to io.scalaland.chimney.PartialTransformerImplicitResolutionSpec.B is not supported in Chimney!",
+        "Consult https://chimney.readthedocs.io for usage examples."
+      )
+    }
+  }
 }
