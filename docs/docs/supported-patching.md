@@ -33,6 +33,88 @@ Currently, the only supported case is updating one `case class` with another:
 As we see the values from the "patch" aren't always of the same type as the values they are supposed to update.
 In such case, macros use `Transformer`s logic under the hood to convert a patch into a patched value.
 
+### Updating field with a provided value
+
+When we want to not only update one object with fields from another object but also set some fields manually,
+we can do it using `withFieldConst` (just like with `Transformer`s):
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Email(address: String) extends AnyVal
+    case class Phone(number: Long) extends AnyVal
+
+    case class User(id: Int, email: Email, phone: Phone)
+    case class UserUpdateForm(email: String, phone: Long)
+
+    val user = User(10, Email("abc@@domain.com"), Phone(1234567890L))
+    val updateForm = UserUpdateForm("xyz@@domain.com", 123123123L)
+
+    pprint.pprintln(
+      user.using(updateForm)
+        .withFieldConst(_.id, 20)
+        .patch
+    )
+    // expected output:
+    // User(id = 20, email = Email(address = "xyz@@domain.com"), phone = Phone(number = 123123123L))
+    ```
+
+### Updating field with a computed value
+
+When we want to not only update one object with fields from another object but also set some fields to computed value,
+we can do it using `withFieldComputed` (just like with `Transformer`s) or `withFieldComputedFrom`:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class Email(address: String) extends AnyVal
+    case class Phone(number: Long) extends AnyVal
+
+    case class User(id: Int, email: Email, phone: Phone)
+    case class UserUpdateForm(email: String, phone: Long)
+
+    case class Wrapper[A](value: A)
+
+    val wrappedUser = Wrapper(User(10, Email("abc@@domain.com"), Phone(1234567890L)))
+    val updateForm = Wrapper(UserUpdateForm("xyz@@domain.com", 123123123L))
+
+    pprint.pprintln(
+      wrappedUser.using(updateForm)
+        .withFieldComputed(_.value.id, patch => patch.value.phone.toInt)
+        .patch
+    )
+    // expected output:
+    // Wrapper(
+    //   value = User(
+    //     id = 123123123,
+    //     email = Email(address = "xyz@@domain.com"),
+    //     phone = Phone(number = 123123123L)
+    //   )
+    // )
+
+    pprint.pprintln(
+      wrappedUser.using(updateForm)
+        .withFieldComputedFrom(_.value.phone)(_.value.id, phone => phone.toInt)
+        .patch
+    )
+    // expected output:
+    // Wrapper(
+    //   value = User(
+    //     id = 123123123,
+    //     email = Email(address = "xyz@@domain.com"),
+    //     phone = Phone(number = 123123123L)
+    //   )
+    // )
+    ```
+
 ### Ignoring fields in patches
 
 When the patch `case class` contains a field that does not exist in patched object, Chimney will not be able to generate
