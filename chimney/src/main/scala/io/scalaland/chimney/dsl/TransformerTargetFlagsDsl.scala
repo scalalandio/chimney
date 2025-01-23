@@ -285,7 +285,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * By default, such evidence is ignored.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#type-evidence-based-conversions]] for more details
     *
     * @since 1.7.0
     */
@@ -295,7 +295,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   /** Disable using [[scala.Predef.<:<]] or [[scala.Predef.=:=]] to prove that `From` is a subtype of `To`.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#type-evidence-based-conversions]] for more details
     *
     * @since 1.7.0
     */
@@ -307,7 +307,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
     * By default, implicit conversions are ignored.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#implicit-conversions]] for more details
     *
     * @since 1.7.0
     */
@@ -317,7 +317,7 @@ private[chimney] trait TransformerTargetFlagsDsl[UpdateFlag[_ <: TransformerFlag
   /** Disable using implicit conversions to transform one `From` into `To`.
     *
     * @see
-    *   TODO
+    *   [[https://chimney.readthedocs.io/supported-transformations/#implicit-conversions]] for more details
     *
     * @since 1.7.0
     */
