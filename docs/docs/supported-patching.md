@@ -182,7 +182,7 @@ regardless of the original object field value. When both field are `None`, the p
 
 But if the original object contains a some value, but the patch comes with a `None`, we can do two things:
 
-  - clear value in target object (replace it with None)
+  - clear value in target object (replace it with `None`)
   - or ignore updating this particular field (as in the previous section)
 
 Both choices may make perfect sense, depending on the context. By default, Chimney does the former (clears the value),
@@ -297,7 +297,27 @@ If the flag was enabled in the implicit config it can be disabled with `.clearOn
 
 ## Updating value with `Either`
 
-By default patch always just replaces
+By default patch always just replaces the old value with a new one:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class User(name: Either[String, String], age: Either[String, Int])
+    case class UserPatch(name: Either[String, String], age: Either[String, Int])
+
+    val user = User(Right("John"), Right(30))
+    val userPatch = UserPatch(Left("nope"), Left("nope"))
+
+    pprint.pprintln(
+      user.patchUsing(userPatch)
+    )
+    // expected output:
+    // User(name = Left(value = "nope"), age = Left(value = "nope"))
+    ```
 
 ### Treating `Left` as no-update instead of "set to `Left`"
 
@@ -319,10 +339,10 @@ But if the original object contains a `Right` value, but the patch comes with a 
   - fail value in target object (replace it with `Left`)
   - or ignore updating this particular field (as in the previous section)
 
-The latter would assume that `Either` is `Right`-biased.
-
 Both choices may make perfect sense, depending on the context. By default, Chimney does the former (fails the value),
 but it also gives a simple way to always ignore `Left` from the patch with `.ignoreLeftInPatch` operation.
+
+The latter would assume that `Either` is `Right`-biased.
 
 !!! example
 
@@ -383,7 +403,7 @@ If the flag was enabled in the implicit config it can be disabled with `.useLeft
     val userPatch = UserPatch(Left("nope"), Left("nope"))
 
     // all patching derived in this scope will see these new flags
-    implicit val cfg = PatcherConfiguration.default.useLeftOnLeftInPatch
+    implicit val cfg = PatcherConfiguration.default.ignoreLeftInPatch
 
     pprint.pprintln(
       user
@@ -429,4 +449,145 @@ If the flag was enabled in the implicit config it can be disabled with `.useLeft
     // ignores updating both fields:
     // expected output:
     // User(name = Right(value = "Jane"), age = Right(value = 25))
+    ```
+
+## Updating value with collection
+
+By default patch always just replaces the old value with a new one:
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class UserStats(names: List[String], ages: List[Int])
+    case class UserStatsPatch(names: Vector[String], ages: Vector[Int])
+
+    val user = UserStats(List("John"), List(30))
+    val userPatch = UserStatsPatch(Vector("Jane"), Vector(25))
+
+    pprint.pprintln(
+      user.patchUsing(userPatch)
+    )
+    // expected output:
+    // UserStats(names = List("Jane"), ages = List(25))
+    ```
+
+### Appending to collection instead of replacing it
+
+If the original object contains a collection, and the patch comes with another one`, we can do two things:
+
+  - replace the old one with a new one
+  - or append the value from patch to the existing value
+
+Both choices may make perfect sense, depending on the context. By default, Chimney does the former (replaces the value),
+but it also gives a simple way to append collection to the old value.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class UserStats(names: List[String], ages: List[Int])
+    case class UserStatsPatch(names: Vector[String], ages: Vector[Int])
+
+    val user = UserStats(List("John"), List(30))
+    val userPatch = UserStatsPatch(Vector("Jane"), Vector(25))
+     
+    pprint.pprintln(
+      user.patchUsing(userPatch)
+    )
+    // fails both fields:
+    // expected output:
+    // UserStats(names = List("Jane"), ages = List(25))
+
+    pprint.pprintln(
+      user
+        .using(userPatch)
+        .appendCollectionInPatch
+        .patch
+    )
+    // ignores updating both fields:
+    // expected output:
+    // UserStats(names = List("John", "Jane"), ages = List(30, 25))
+
+    locally {
+      // All patching derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = PatcherConfiguration.default.appendCollectionInPatch
+
+      pprint.pprintln(
+        user.patchUsing(userPatch)
+      )
+      // ignores updating both fields:
+      // expected output:
+      // UserStats(names = List("John", "Jane"), ages = List(30, 25))
+    }
+    ```
+
+If the flag was enabled in the implicit config it can be disabled with `.overrideCollectionInPatch`.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class UserStats(names: List[String], ages: List[Int])
+    case class UserStatsPatch(names: Vector[String], ages: Vector[Int])
+
+    val user = UserStats(List("John"), List(30))
+    val userPatch = UserStatsPatch(Vector("Jane"), Vector(25))
+
+    // all patching derived in this scope will see these new flags
+    implicit val cfg = PatcherConfiguration.default.appendCollectionInPatch
+
+    pprint.pprintln(
+      user
+        .using(userPatch)
+        .overrideCollectionInPatch
+        .patch
+    )
+    // clears both fields:
+    // expected output:
+    // UserStats(names = List("Jane"), ages = List(25))
+    ```
+ 
+### Unambiguous collection update
+
+ The flag is not required when updating collection with `Option[collection]`, as then it is always
+ unambiguous what to do (leave unchanged or replace):
+
+ !!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class UserStats(names: List[String], ages: List[Int])
+    case class UserStatsPatch(names: Option[Vector[String]], ages: Option[Vector[Int]])
+
+    val user = UserStats(List("John"), List(30))
+    val userPatch1 = UserStatsPatch(None, None)
+     
+    pprint.pprintln(
+      user.patchUsing(userPatch1)
+    )
+    // clears both fields:
+    // expected output:
+    // UserStats(names = List("John"), ages = List(30))
+
+    val userPatch2 = UserStatsPatch(Some(Vector("Jane")), Some(Vector(25)))
+
+    pprint.pprintln(
+      user.patchUsing(userPatch2)
+    )
+    // ignores updating both fields:
+    // expected output:
+    // UserStats(names = List("Jane"), ages = List(25))
     ```
