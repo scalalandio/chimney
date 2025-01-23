@@ -31,11 +31,7 @@ Currently, the only supported case is updating one `case class` with another:
     ```
 
 As we see the values from the "patch" aren't always of the same type as the values they are supposed to update.
-In such case, macros use `Transformer`s logic under the hood to convert a patch into a patched value. 
-
-!!! notice
-
-    Currently `Patcher`s are flat - they cannot perform a nested update. 
+In such case, macros use `Transformer`s logic under the hood to convert a patch into a patched value.
 
 ### Ignoring fields in patches
 
@@ -130,10 +126,10 @@ If the flag was enabled in the implicit config it can be disabled with `.failRed
     // Consult https://chimney.readthedocs.io for usage examples.
     ```
 
-### Treating `None` as no-update instead of "set to `None`"
+## Updating value with `Option`
 
-It is possible to patch using optional values of type `Option[A]` as long as the `Transformer` is available for `A`.
-If the value is present (`Some`), it’s used for patching a field in the target object; otherwise (`None`) it’s ignored
+It is possible to patch using optional values of type `Option[A]` as long as the `Transformer` is available (or derivable)
+for `A`. If the value is present (`Some`), it’s used for patching a field in the target object; otherwise (`None`) it’s ignored
 and the field value is copied from the original object.
 
 Let’s consider the following patch:
@@ -161,7 +157,15 @@ Let’s consider the following patch:
 The field `phone` remained the same as in the original `user`, while the optional e-mail string got updated from
 a patch object.
 
-#### `Option[A]` on both sides
+!!! tip
+
+    There are special rules which makes sure that we can not only update `A` with `Option[B]`, but also
+
+     * `Option[A]` with `Option[Option[B]]`
+     * `Either[A, B]` with `Option[Either[C, D]]`
+     * `Collection1[A]` with `Option[Collection2[B]]`
+
+### Treating `None` as no-update instead of "set to `None`"
 
 An interesting case appears when both the patch `case class` and the patched object define fields `f: Option[A]`
 Depending on the values of `f` in the patched object and patch, we would like to apply the following semantic table:
@@ -256,3 +260,35 @@ If the flag was enabled in the implicit config it can be disabled with `.clearOn
     // User(name = None, age = None)
     ```
  
+ The flag is not required when updating `Option[A]` with `Option[Option[B]]`, as then it is always
+ unambiguous what to do:
+
+ !!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class User(name: Option[String], age: Option[Int])
+    case class UserPatch(name: Option[Option[String]], age: Option[Option[Int]])
+
+    val user = User(Some("John"), Some(30))
+    val userPatch1 = UserPatch(None, None)
+     
+    pprint.pprintln(
+      user.patchUsing(userPatch1)
+    )
+    // clears both fields:
+    // expected output:
+    // User(name = Some(value = "John"), age = Some(value = 30))
+
+    val userPatch2 = UserPatch(Some(Some("Jane")), Some(Some(25)))
+
+    pprint.pprintln(
+      user.patchUsing(userPatch2)
+    )
+    // ignores updating both fields:
+    // expected output:
+    // User(name = Some(value = "Jane"), age = Some(value = 25))
+    ```
