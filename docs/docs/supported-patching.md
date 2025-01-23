@@ -167,7 +167,7 @@ a patch object.
 
 ### Treating `None` as no-update instead of "set to `None`"
 
-An interesting case appears when both the patch `case class` and the patched object define fields `f: Option[A]`
+An interesting case appears when both the patch `case class` and the patched object define fields `f: Option[A]`.
 Depending on the values of `f` in the patched object and patch, we would like to apply the following semantic table:
 
 | `patchedObject.f` | `patch.f`      | patching result |
@@ -260,6 +260,8 @@ If the flag was enabled in the implicit config it can be disabled with `.clearOn
     // User(name = None, age = None)
     ```
  
+### Unambiguous `Option` update
+
  The flag is not required when updating `Option[A]` with `Option[Option[B]]`, as then it is always
  unambiguous what to do:
 
@@ -291,4 +293,140 @@ If the flag was enabled in the implicit config it can be disabled with `.clearOn
     // ignores updating both fields:
     // expected output:
     // User(name = Some(value = "Jane"), age = Some(value = 25))
+    ```
+
+## Updating value with `Either`
+
+By default patch always just replaces
+
+### Treating `Left` as no-update instead of "set to `Left`"
+
+Depending on the values of `f` in the patched object and patch, we could like to apply the following semantic table:
+
+| `patchedObject.f` | `patch.f`       | patching result |
+|-------------------|-----------------|-----------------|
+| `Left(err)`       | `Right(value)`  | `Right(value)`  |
+| `Right(value1)`   | `Right(value2)` | `Right(value2)` |
+| `Left(err1)`      | `Left(err2)`    | `Left(err2)`    |
+| `Right(value)`    | `Left(err)`     | **???**         |
+
+When a `patch.f` contains `Right` value, it’s immediately used for replacing a field in the target object (rows 1 and 2), 
+regardless of the original object field value. When both field are `Left`, the patching result is also `Left`
+(with newer error) (row 3).
+
+But if the original object contains a `Right` value, but the patch comes with a `Left`, we can do two things:
+
+  - fail value in target object (replace it with `Left`)
+  - or ignore updating this particular field (as in the previous section)
+
+The latter would assume that `Either` is `Right`-biased.
+
+Both choices may make perfect sense, depending on the context. By default, Chimney does the former (fails the value),
+but it also gives a simple way to always ignore `Left` from the patch with `.ignoreLeftInPatch` operation.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class User(name: Either[String, String], age: Either[String, Int])
+    case class UserPatch(name: Either[String, String], age: Either[String, Int])
+
+    val user = User(Right("John"), Right(30))
+    val userPatch = UserPatch(Left("nope"), Left("nope"))
+     
+    pprint.pprintln(
+      user.patchUsing(userPatch)
+    )
+    // fails both fields:
+    // expected output:
+    // User(name = Left(value = "nope"), age = Left(value = "nope"))
+
+    pprint.pprintln(
+      user
+        .using(userPatch)
+        .ignoreLeftInPatch
+        .patch
+    )
+    // ignores updating both fields:
+    // expected output:
+    // User(name = Right(value = "John"), age = Right(value = 30))
+
+    locally {
+      // All patching derived in this scope will see these new flags (Scala 2-only syntax, see cookbook for Scala 3)
+      implicit val cfg = PatcherConfiguration.default.ignoreLeftInPatch
+
+      pprint.pprintln(
+        user.patchUsing(userPatch)
+      )
+      // ignores updating both fields:
+      // expected output:
+      // User(name = Right(value = "John"), age = Right(value = 30))
+    }
+    ```
+
+If the flag was enabled in the implicit config it can be disabled with `.useLeftOnLeftInPatch`.
+
+!!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class User(name: Either[String, String], age: Either[String, Int])
+    case class UserPatch(name: Either[String, String], age: Either[String, Int])
+
+    val user = User(Right("John"), Right(30))
+    val userPatch = UserPatch(Left("nope"), Left("nope"))
+
+    // all patching derived in this scope will see these new flags
+    implicit val cfg = PatcherConfiguration.default.useLeftOnLeftInPatch
+
+    pprint.pprintln(
+      user
+        .using(userPatch)
+        .useLeftOnLeftInPatch
+        .patch
+    )
+    // clears both fields:
+    // expected output:
+    // User(name = Left(value = "nope"), age = Left(value = "nope"))
+    ```
+ 
+### Unambiguous `Either` update
+
+ The flag is not required when updating `Either[K, V]` with `Option[Either[K2, V2]]`, as then it is always
+ unambiguous what to do:
+
+ !!! example
+
+    ```scala
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    import io.scalaland.chimney.dsl._
+
+    case class User(name: Either[String, String], age: Either[String, Int])
+    case class UserPatch(name: Option[Either[String, String]], age: Option[Either[String, Int]])
+
+    val user = User(Right("John"), Right(30))
+    val userPatch1 = UserPatch(None, None)
+     
+    pprint.pprintln(
+      user.patchUsing(userPatch1)
+    )
+    // clears both fields:
+    // expected output:
+    // User(name = Right(value = "John"), age = Right(value = 30))
+
+    val userPatch2 = UserPatch(Some(Right("Jane")), Some(Right(25)))
+
+    pprint.pprintln(
+      user.patchUsing(userPatch2)
+    )
+    // ignores updating both fields:
+    // expected output:
+    // User(name = Right(value = "Jane"), age = Right(value = 25))
     ```
