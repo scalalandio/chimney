@@ -1920,8 +1920,9 @@ Since Ducktape is inspired by Chimney, there is a huge overlap in functionality.
  * Ducktape provides/allows:
     * some linting telling the users that they overrode some things twice, or that some config cannot be used because
       another config provided value for level "above"
-    * `Field.allMatching` which has no direct counterpart in Chimney (in _some_ cases `Patcher`s could fulfill that role
-      but not in all of them)
+    * `Field.allMatching` which has no direct counterpart in Chimney, but in many cases it could replaced using
+      [`withFallback`](supported-transformations.md#merging-multiple-input-sources-into-a-single-target-value),
+      using data from `allMatching` as the source, and source of Ducktape transformation as a fallback
  * Chimney provides/allows:
     * [conversions to/from tuples](supported-transformations.md#frominto-a-tuple)
     * reading to/from Java Bean accessors ([getters](supported-transformations.md#reading-from-bean-getters) and
