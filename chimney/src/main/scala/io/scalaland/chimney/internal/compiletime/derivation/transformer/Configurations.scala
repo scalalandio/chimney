@@ -632,7 +632,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](TransformerFlags.global)
       val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
       val cfg = extractTransformerConfig[Tail](runtimeDataIdx = 0, runtimeDataStore).copy(flags = allFlags)
-      if (Type[InstanceFlags] =:= ChimneyType.TransformerFlags.Default) cfg else cfg.setLocalFlagsOverriden
+      if (wereLocalFlagsOverriden[InstanceFlags]) cfg.setLocalFlagsOverriden else cfg
     }
 
     private def extractArgumentList[Args <: runtime.ArgumentList: Type]: List[(String, ??)] =
@@ -789,6 +789,19 @@ private[compiletime] trait Configurations { this: Derivation =>
       case _ =>
         reportError(s"Invalid internal TransformerFlags type shape: ${Type.prettyPrint[Flags]}!")
       // $COVERAGE-ON$
+    }
+
+    @scala.annotation.tailrec
+    private def wereLocalFlagsOverriden[Flags <: runtime.TransformerFlags: Type]: Boolean = Type[Flags] match {
+      case default if default =:= ChimneyType.TransformerFlags.Default => false
+      case ChimneyType.TransformerFlags.Enable(flag, flags) =>
+        import flag.Underlying as Flag, flags.Underlying as Flags2
+        // ImplicitConversions and TypeConstraintEvidence are excluded from check, otherwise they would be impossible
+        // to use with instance flags.
+        if (Flag =:= ChimneyType.TransformerFlags.Flags.ImplicitConversions) wereLocalFlagsOverriden[Flags2]
+        else if (Flag =:= ChimneyType.TransformerFlags.Flags.TypeConstraintEvidence) wereLocalFlagsOverriden[Flags2]
+        else true
+      case _ => true
     }
 
     private def extractTransformerConfig[Tail <: runtime.TransformerOverrides: Type](

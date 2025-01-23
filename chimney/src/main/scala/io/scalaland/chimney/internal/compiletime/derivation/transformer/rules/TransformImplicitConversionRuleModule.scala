@@ -10,12 +10,14 @@ private[compiletime] trait TransformImplicitConversionRuleModule { this: Derivat
   protected object TransformImplicitConversionRule extends Rule("ImplicitConversion") {
 
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
-      if (ctx.config.flags.implicitConversions) {
-        Expr.summonImplicit[From => To] match {
-          case Some(ev) => transformWithConversion[From, To](ev)
-          case None     => DerivationResult.attemptNextRule
-        }
-      } else DerivationResult.attemptNextRuleBecause("Implicit conversions are disabled")
+      if (ctx.config.areLocalFlagsAndOverridesEmpty) {
+        if (ctx.config.flags.implicitConversions) {
+          Expr.summonImplicit[From => To] match {
+            case Some(ev) => transformWithConversion[From, To](ev)
+            case None     => DerivationResult.attemptNextRule
+          }
+        } else DerivationResult.attemptNextRuleBecause("Implicit conversions are disabled")
+      } else DerivationResult.attemptNextRuleBecause("Configuration has defined overrides")
 
     private def transformWithConversion[From, To](ev: Expr[From => To])(implicit
         ctx: TransformationContext[From, To]
