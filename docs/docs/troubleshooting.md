@@ -1600,7 +1600,6 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
         case Card(digits: Long, name: String)
         case Cash
     
-    @main def example: Unit = {
     val transfer = wire.PaymentMethod.Transfer("2764262")
     
     val wirePerson = wire.Person(
@@ -1638,8 +1637,110 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     )
     // expected output:
     // Card(digits = 2764262L, name = "J. Doe")
-    }
     ```
+
+!!! example "Tuple transformations"
+
+    ```scala
+    //> using scala {{ scala.3 }}
+    //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    
+    case class Toplevel(int: Int, opt: Option[Int], coll: Vector[Int], level1: Level1)
+    case class Level1(int1: Int, int2: Int)
+
+    // product to tuple
+    pprint.pprintln {
+      val source = (1, 1, List(1), (1, 2, 3))
+      source.to[Toplevel]
+    }
+    // expected output:
+    // Toplevel(int = 1, opt = Some(value = 1), coll = Vector(1), level1 = Level1(int1 = 1, int2 = 2))
+    
+    // tuple to product
+    pprint.pprintln {
+      val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
+      source.to[(Int, Option[Int], List[Int], (Int, Int))]
+    }
+    // expected output:
+    // (1, Some(value = 1), List(1), (1, 2))
+
+    // tuple to tuple
+    pprint.pprintln {
+      val source = (1, 1, List(1), (1, 2, 3))
+      source.to[(Int, Option[Int], Vector[Int], (Int, Int))]
+    }
+    // expected output:
+    // (1, Some(value = 1), Vector(1), (1, 2))
+
+    // configuring transformations that target a tuple
+    pprint.pprintln {
+      val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
+      source
+        .into[(Int, Option[Int], List[Int], (Int, Int, String))]
+        .transform(Field.const(_._4._3, "Missing value!")) // '_n' accessors on tuples are 1-based
+    }
+    // expected output:
+    // (1, Some(value = 1), List(1), (1, 2, "Missing value!"))
+
+    //The above can be rewritten to:
+    pprint.pprintln {
+      val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
+      source
+        .into[(Int, Option[Int], List[Int], (Int, Int, String))]
+        .transform(Field.const(_.apply(3).apply(2), "Missing value!")) // '.apply' accessors on tuples are 0-based, these are needed if we're operating on tuples of size larger than  22 (since they do not have _n accessors)
+    }
+    // expected output:
+    // (1, Some(value = 1), List(1), (1, 2, "Missing value!"))
+    ```
+
+    Chimney's counterpart:
+
+    ```scala
+    // file: snippet.scala - part of Ductape counterpart 5
+    //> using scala {{ scala.3 }}
+    //> using dep io.scalaland::chimney::{{ chimney_version() }}
+    //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
+    
+    case class Toplevel(int: Int, opt: Option[Int], coll: Vector[Int], level1: Level1)
+    case class Level1(int1: Int, int2: Int)
+
+    // product to tuple
+    pprint.pprintln {
+      val source = (1, 1, List(1), (1, 2, 3))
+      source.transformInto[Toplevel]
+    }
+    // expected output:
+    // Toplevel(int = 1, opt = Some(value = 1), coll = Vector(1), level1 = Level1(int1 = 1, int2 = 2))
+    
+    // tuple to product
+    pprint.pprintln {
+      val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
+      source.transformInto[(Int, Option[Int], List[Int], (Int, Int))]
+    }
+    // expected output:
+    // (1, Some(value = 1), List(1), (1, 2))
+
+    // tuple to tuple
+    pprint.pprintln {
+      val source = (1, 1, List(1), (1, 2, 3))
+      source.transformInto[(Int, Option[Int], Vector[Int], (Int, Int))]
+    }
+    // expected output:
+    // (1, Some(value = 1), Vector(1), (1, 2))
+
+    // configuring transformations that target a tuple
+    pprint.pprintln {
+      val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
+      source
+        .into[(Int, Option[Int], List[Int], (Int, Int, String))]
+        .withFieldConst(_._4._3, "Missing value!")
+        .transform
+    }
+    // expected output:
+    // (1, Some(value = 1), List(1), (1, 2, "Missing value!"))
+    ```
+
 
 The biggest difference might be approach towards transformations that can fail in runtime. Ducktape uses user-provided
 `F[_]` in derivation with one of two modes: accumulating errors (which requires computing every value, just to see if
@@ -1716,17 +1817,17 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
       newtypes.Positive.create
 
     pprint.pprintln {
-      given Mode.FailFast.Either[String] with {}
-      
-      wirePerson
-        .into[domain.Person]
-        .fallible
-        .transform(
-          Field.fallibleConst(
-            _.paymentMethods.element.at[domain.PaymentMethod.PayPal].email,
-            newtypes.NonEmptyString.create("overridden@email.com")
+      Mode.FailFast.Either[String].locally {
+        wirePerson
+          .into[domain.Person]
+          .fallible
+          .transform(
+            Field.fallibleConst(
+              _.paymentMethods.element.at[domain.PaymentMethod.PayPal].email,
+              newtypes.NonEmptyString.create("overridden@email.com")
+            )
           )
-        )
+      }
     }
     // expected output:
     // Right(
@@ -1749,9 +1850,9 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
       newtypes.Positive.create(_).left.map(_ :: Nil)
       
     pprint.pprintln {
-      given Mode.Accumulating.Either[String, List] with {}
-    
-      wirePerson.fallibleTo[domain.Person]
+      Mode.Accumulating.Either[String, List].locally {
+        wirePerson.fallibleTo[domain.Person]
+      }
     }
     // expected output:
     // Right(
@@ -1910,7 +2011,7 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
 Since Ducktape is inspired by Chimney, there is a huge overlap in functionality. However, there are some differences:
 
  * Ducktape is developed only on Scala 3, while Chimney supports 2.12 and 2.13 as well
- * Ducktape provides support to arbitrary effect `F[_]` through `Fallible[F]` combined with 2 modes of derivation:
+ * Ducktape provides support to arbitrary effect `F[_]` through `Mode[F]` combined with 2 modes of derivation:
    `Mode.Accumulating[F]`  (aggregating errors from different fields, basically `Applicative`/`Parallel`) and
    `Mode.FailFast[F]` (terminating on the first error, basically `Monad`). Chimney supports one, dedicated and optimized
    result type `partial.Result` which: can be switched between aggregating/fail-fast mode in runtime, stores path to
@@ -1924,7 +2025,6 @@ Since Ducktape is inspired by Chimney, there is a huge overlap in functionality.
       [`withFallback`](supported-transformations.md#merging-multiple-input-sources-into-a-single-target-value),
       using data from `allMatching` as the source, and source of Ducktape transformation as a fallback
  * Chimney provides/allows:
-    * [conversions to/from tuples](supported-transformations.md#frominto-a-tuple)
     * reading to/from Java Bean accessors ([getters](supported-transformations.md#reading-from-bean-getters) and
       [setters](supported-transformations.md#writing-to-non-unit-bean-setters))
     * [Java enums](supported-transformations.md#javas-enums) support
@@ -1934,8 +2034,6 @@ Since Ducktape is inspired by Chimney, there is a huge overlap in functionality.
     * customizing the [field-](supported-transformations.md#customizing-field-name-matching) and
       [subtype-name](supported-transformations.md#customizing-subtype-name-matching) matching methods
     * [sharing flags overrides between all derivations in the same scope](cookbook.md#reusing-the-flags-for-several-transformationspatchings)
-    * [smart constructors](supported-transformations.md#types-with-manually-provided-constructors), not only custom
-      constructors guaranteed to create the value
     * [`Patcher`s](supported-patching.md)
 
 which means each library can bring something unique to the table.
