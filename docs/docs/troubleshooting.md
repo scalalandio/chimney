@@ -1649,6 +1649,8 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     case class Toplevel(int: Int, opt: Option[Int], coll: Vector[Int], level1: Level1)
     case class Level1(int1: Int, int2: Int)
 
+    import io.github.arainko.ducktape.*
+
     // product to tuple
     pprint.pprintln {
       val source = (1, 1, List(1), (1, 2, 3))
@@ -1704,6 +1706,8 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     
     case class Toplevel(int: Int, opt: Option[Int], coll: Vector[Int], level1: Level1)
     case class Level1(int1: Int, int2: Int)
+
+    import io.scalaland.chimney.dsl.*
 
     // product to tuple
     pprint.pprintln {
