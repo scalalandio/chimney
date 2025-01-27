@@ -1600,6 +1600,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
         case Card(digits: Long, name: String)
         case Cash
     
+    @main def example: Unit = {
     val transfer = wire.PaymentMethod.Transfer("2764262")
     
     val wirePerson = wire.Person(
@@ -1637,11 +1638,13 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     )
     // expected output:
     // Card(digits = 2764262L, name = "J. Doe")
+    }
     ```
 
 !!! example "Tuple transformations"
 
     ```scala
+    // file: snippet.scala - part of Ductape counterpart 6
     //> using scala {{ scala.3 }}
     //> using dep io.github.arainko::ducktape::{{ libraries.ducktape }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
@@ -1651,46 +1654,48 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
 
     import io.github.arainko.ducktape.*
 
-    // product to tuple
-    pprint.pprintln {
-      val source = (1, 1, List(1), (1, 2, 3))
-      source.to[Toplevel]
-    }
-    // expected output:
-    // Toplevel(int = 1, opt = Some(value = 1), coll = Vector(1), level1 = Level1(int1 = 1, int2 = 2))
-    
-    // tuple to product
-    pprint.pprintln {
-      val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
-      source.to[(Int, Option[Int], List[Int], (Int, Int))]
-    }
-    // expected output:
-    // (1, Some(value = 1), List(1), (1, 2))
+    @main def example = {
+      // product to tuple
+      pprint.pprintln {
+        val source = (1, 1, List(1), (1, 2, 3))
+        source.to[Toplevel]
+      }
+      // expected output:
+      // Toplevel(int = 1, opt = Some(value = 1), coll = Vector(1), level1 = Level1(int1 = 1, int2 = 2))
+      
+      // tuple to product
+      pprint.pprintln {
+        val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
+        source.to[(Int, Option[Int], List[Int], (Int, Int))]
+      }
+      // expected output:
+      // (1, Some(value = 1), List(1), (1, 2))
 
-    // tuple to tuple
-    pprint.pprintln {
-      val source = (1, 1, List(1), (1, 2, 3))
-      source.to[(Int, Option[Int], Vector[Int], (Int, Int))]
-    }
-    // expected output:
-    // (1, Some(value = 1), Vector(1), (1, 2))
+      // tuple to tuple
+      pprint.pprintln {
+        val source = (1, 1, List(1), (1, 2, 3))
+        source.to[(Int, Option[Int], Vector[Int], (Int, Int))]
+      }
+      // expected output:
+      // (1, Some(value = 1), Vector(1), (1, 2))
 
-    // configuring transformations that target a tuple
-    pprint.pprintln {
-      val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
-      source
-        .into[(Int, Option[Int], List[Int], (Int, Int, String))]
-        .transform(Field.const(_._4._3, "Missing value!")) // '_n' accessors on tuples are 1-based
-    }
-    // expected output:
-    // (1, Some(value = 1), List(1), (1, 2, "Missing value!"))
+      // configuring transformations that target a tuple
+      pprint.pprintln {
+        val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
+        source
+          .into[(Int, Option[Int], List[Int], (Int, Int, String))]
+          .transform(Field.const(_._4._3, "Missing value!")) // '_n' accessors on tuples are 1-based
+      }
+      // expected output:
+      // (1, Some(value = 1), List(1), (1, 2, "Missing value!"))
 
-    //The above can be rewritten to:
-    pprint.pprintln {
-      val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
-      source
-        .into[(Int, Option[Int], List[Int], (Int, Int, String))]
-        .transform(Field.const(_.apply(3).apply(2), "Missing value!")) // '.apply' accessors on tuples are 0-based, these are needed if we're operating on tuples of size larger than  22 (since they do not have _n accessors)
+      //The above can be rewritten to:
+      pprint.pprintln {
+        val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
+        source
+          .into[(Int, Option[Int], List[Int], (Int, Int, String))]
+          .transform(Field.const(_.apply(3).apply(2), "Missing value!")) // '.apply' accessors on tuples are 0-based, these are needed if we're operating on tuples of size larger than  22 (since they do not have _n accessors)
+      }
     }
     // expected output:
     // (1, Some(value = 1), List(1), (1, 2, "Missing value!"))
@@ -1699,7 +1704,7 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
     Chimney's counterpart:
 
     ```scala
-    // file: snippet.scala - part of Ductape counterpart 5
+    // file: snippet.scala - part of Ductape counterpart 7
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
@@ -1709,40 +1714,42 @@ Here are some features it shares with Chimney (Ducktape's code based on GitHub P
 
     import io.scalaland.chimney.dsl.*
 
-    // product to tuple
-    pprint.pprintln {
-      val source = (1, 1, List(1), (1, 2, 3))
-      source.transformInto[Toplevel]
-    }
-    // expected output:
-    // Toplevel(int = 1, opt = Some(value = 1), coll = Vector(1), level1 = Level1(int1 = 1, int2 = 2))
-    
-    // tuple to product
-    pprint.pprintln {
-      val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
-      source.transformInto[(Int, Option[Int], List[Int], (Int, Int))]
-    }
-    // expected output:
-    // (1, Some(value = 1), List(1), (1, 2))
+    @main def example = {
+      // product to tuple
+      pprint.pprintln {
+        val source = (1, 1, List(1), (1, 2, 3))
+        source.transformInto[Toplevel]
+      }
+      // expected output:
+      // Toplevel(int = 1, opt = Some(value = 1), coll = Vector(1), level1 = Level1(int1 = 1, int2 = 2))
+      
+      // tuple to product
+      pprint.pprintln {
+        val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
+        source.transformInto[(Int, Option[Int], List[Int], (Int, Int))]
+      }
+      // expected output:
+      // (1, Some(value = 1), List(1), (1, 2))
 
-    // tuple to tuple
-    pprint.pprintln {
-      val source = (1, 1, List(1), (1, 2, 3))
-      source.transformInto[(Int, Option[Int], Vector[Int], (Int, Int))]
-    }
-    // expected output:
-    // (1, Some(value = 1), Vector(1), (1, 2))
+      // tuple to tuple
+      pprint.pprintln {
+        val source = (1, 1, List(1), (1, 2, 3))
+        source.transformInto[(Int, Option[Int], Vector[Int], (Int, Int))]
+      }
+      // expected output:
+      // (1, Some(value = 1), Vector(1), (1, 2))
 
-    // configuring transformations that target a tuple
-    pprint.pprintln {
-      val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
-      source
-        .into[(Int, Option[Int], List[Int], (Int, Int, String))]
-        .withFieldConst(_._4._3, "Missing value!")
-        .transform
+      // configuring transformations that target a tuple
+      pprint.pprintln {
+        val source = Toplevel(1, Some(1), Vector(1), Level1(1, 2))
+        source
+          .into[(Int, Option[Int], List[Int], (Int, Int, String))]
+          .withFieldConst(_._4._3, "Missing value!")
+          .transform
+      }
+      // expected output:
+      // (1, Some(value = 1), List(1), (1, 2, "Missing value!"))
     }
-    // expected output:
-    // (1, Some(value = 1), List(1), (1, 2, "Missing value!"))
     ```
 
 
@@ -1875,7 +1882,7 @@ deciding between error accumulating and fail-fast in runtime. It provides utilit
     Chimney's counterpart:
 
     ```scala
-    // file: snippet.scala - part of Ductape counterpart 6
+    // file: snippet.scala - part of Ductape counterpart 8
     //> using scala {{ scala.3 }}
     //> using dep io.scalaland::chimney::{{ chimney_version() }}
     //> using dep com.lihaoyi::pprint::{{ libraries.pprint }}
