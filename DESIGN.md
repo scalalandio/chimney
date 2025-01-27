@@ -31,7 +31,7 @@ The simplified version of how the code above works:
    **both the transformed value and possible field/coproduct value overrides**
 2. these overrides are stored in `RuntimeDataStore` (currently implemented as `Vector[Any]`) -
    `.withFieldConst(_.c, 3.0)` adds `3.0` as a value to this vector.
-   **Both wrapping and override appending would happen during runtime**, so this DLS imposes some overhead
+   **Both wrapping and override appending would happen during runtime**, so this DSL imposes some overhead
 3. the final `.transform` would generate a code similar to:
    ```scala
    {
@@ -108,7 +108,7 @@ Bar(1, "test").transformInto(
 
 ### Partial transformation
 
-Partial transformers works on the same principles, when it comes to what is represents in type level, what is stored
+Partial transformers works on the same principles, when it comes to what is represented in type level, what is stored
 in runtime, and how DSL is defined. **The true difference lies inside macros being called by the DSL**.
 
 ## DSL implementation
@@ -131,7 +131,7 @@ There are actually 2 sets of configuration options that are stored by DSL in typ
 
 * `TransformerCfg` stores information about field and coproduct overrides, most of them is accompanied by a runtime
   value (either some constant or a function)
-* `TransformerFlags` store information about options which aren't tied to a particular field od subtype, so they can be
+* `TransformerFlags` store information about options which aren't tied to a particular field or subtype, so they can be
   considered global - indeed there is a way for sharing these flags by all derivations in the same scope
   (`TransformerConfiguration`).
 
@@ -139,7 +139,7 @@ In Scala 2 overrides are implemented with [whitebox macros](https://docs.scala-l
 which allow read which field was selected with `_.fieldName` syntax, turning it into a `String` singleton type (e.g.
 `"fieldName"` type) and prepending type level information to the type (e.g.
 `TransformerCfg.FieldConst["fieldName", TransformerCfg.Empty]` prepends information that 0-index in `RuntimeDataStore`
-contains override for `"fieldName"` to and empty config).
+contains override for `"fieldName"` to an empty config).
 
 In Scala 3 the mechanism is similar except whitebox macros are replaced by
 [`transparent inline`](https://docs.scala-lang.org/scala3/guides/macros/inline.html#transparent-inline-methods) macros.
@@ -148,7 +148,7 @@ In Scala 3 the mechanism is similar except whitebox macros are replaced by
 > them.
 
 Flags, since they don't need to extract any data to generate type information, are just "normal" Scala code which
-prepends flags to flag type representation.
+prepends flags to the flag type representation.
 
 ## Derivation implementation
 
@@ -174,12 +174,12 @@ It has several consequences:
   (it is much easier to understand just by looking around e.g. `Types` and `TypesPlatform` and seeing how they are used)
 * most common types used are `type Type[A]` and `type Expr[A]`, defined as abstract in shared code, and specified to
   concrete implementation in platform-specific code
-* Scala 3 quotes depends on implicit `scala.quoted.Type` _a lot_, so shared code has to pass around types everywhere
+* Scala 3 quotes depend on implicit `scala.quoted.Type` _a lot_, so shared code has to pass around types everywhere
 * since only a few types can be known upfront and named: source value-type, target-type, types based one them, a lot of
   types are virtually existential: types of each constructor parameter, types returned by getters, subtypes. This
   requires us to express some types as existential types with values of types using these existential types. Often it's
   `Type[something]` or `Expr[something]` (of both at once with the same existential type used), so certain abstractions
-  needed bo be designed (see `Existentials`)
+  needed to be designed (see `Existentials`)
 
 Additionally, there are several implications of how code is generated:
 
