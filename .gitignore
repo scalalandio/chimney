@@ -5,6 +5,7 @@ target
 *.class
 # Mdocs documentation
 docs/build
+docs/__pycache__
 # Scala Metals and BSP
 .bloop
 .bsp
