@@ -3995,23 +3995,231 @@ reuse Chimney utilities for e.g.:
  - converting between singleton `Type[A]` and `Expr[A]`
  - providing a platform-agnostic utilities for some common types and expressions
 
-For details, consult sources of
-
- - [Types](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Types.scala) - for types and definitions related to type manipulations and build-in `Type` support
- - [Exprs](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Exprs.scala) - for types and definitions related to expression manipulations and build-in `Expr` support
- - [Results](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Results.scala) - for types and definitions related to returning info/error messages from macros
- - [Definitions](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Definitions.scala) - for types and definitions related to reading macro configurations
- - [Existentials](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Existentials.scala) - for types and definitions related to working with unknown types ("existential types")
- - [ExprPromises](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/ExprPromises.scala) - for types and definitions related to computing `val`s/`lazy val`s/`def`s/`var`s before knowing the returned `Expr`'s `Type`, caching value as val, caching  derivation as `def`
- - [ProductTypes](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ProductTypes.scala) - for types and definitions related to extractors and constructors of a product type
- - [SealedHierarchies](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SealedHierarchies.scala) - for types and definitions related to finding all subtypes of `sealed trait`s/`sealed abstrcto class`es/Scala 3 `enum`s/Java `enum`s
- - [ValueClasses](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ValueClasses.scala) - for types and definitions related to `AnyVal`s and "wrapper"s
- - [SingletonTypes](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SingletonTypes.scala) - for types and definitions related to singleton types
- - [IterableOrArrays](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/IterableOrArrays.scala) - for types and definitions related to unified interface for working with Arrays and Scala collections 
-
 !!! note
 
     This module is checked by MiMa, its API should be considered stable.
+
+#### macro-commons architecture
+
+The idea behind macro commond, (and whole Chimney), is to avoid using low-level macro API, and coding against higher level
+interface, where actual Scala 2/Scala 3 macros are mixed in later (it's a cake pattern):
+
+!!! example
+
+    DSL is defined using path-dependent types, we are using abstract type, extension methods and "companion objects"
+    to define our API
+
+    ```scala
+    // APIs related to types reporesentation
+    trait Types {
+
+      type Type[A]
+      val Type: TypeModule
+      trait TypeModule {: Type.type =>
+        
+        def apply[A](implicit A: Type[A]): Type[A] = A
+
+        def isSubtypeOf[A: Type, B: Type]: Boolean
+      }
+
+      implicit class TypeOps[A](private val A: Type[A]) {
+
+        def <:<[B](B: Type[B]): Boolean = Type.isSubtypeOf(A, B)
+      }
+    }
+    // APIs related to expressions
+    trait Exprs {
+
+      type Expr[A]
+      val Expr: ExprModule
+      trait ExprModule { Expr.type =>
+        
+        def asInstanceOfExpr[A: Type, B: Type](expr: Expr[A]): Expr[B]
+        def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B]
+      }
+
+      implicit class ExprOps[A: Type](private val expr: Expr[A]) {
+
+        def asInstanceOfExpr[B: Type]: Expr[B] = Expr.asInstanceOfExpr[A, B](expr)
+        def upcast[B: Type]: Expr[B] = Expr.upcast[A, B](expr)
+      }
+    }
+    // APIs related to e.g. reporting compilation errors
+    trait Results {
+
+      def reportError(errors: String): Nothing
+    }
+    // single trait to mix-in for convenience
+    trait Definitions extends Types with Exprs with Reports
+    ```
+
+    then we can code against this API:
+
+    ```scala
+    trait UpcastIfYouCan { this: Definitions =>
+
+      def upcastIfYouCan[A: Type, B: Type](expr: Expr[A]): Expr[B] =
+        if (Type[A] <:< Type[B]) expr.upcast[B] else reportError("Invalid upcasting")
+    }
+    ```
+
+    Meanwhile, all Scala 2/Scala 3 specific code can be contained inside platform-specific traits that would be mixed-in when composing whole macro:
+
+    ```scala
+    // Scala 2
+    trait TypesPlatform extends Types {
+      val c: blackbox.Context
+
+      import c.universe._
+
+      type Type[A] = c.WeakTypeTag[A]
+      object Type extends TypeModule {
+
+        def isSubtypeOf[A: Type, B: Type]: Boolean = Type[A].tpe <:< Type[B].tpe
+      }
+    }
+    trait ExprsPlatform extends Exprs { this: TypesPlatform =>
+      import c.universe._
+
+      type Expr[A] = c.Expr[A]
+      object Expr extends ExprModule {
+
+        def asInstanceOfExpr[A: Type, B: Type](expr: Expr[A]): Expr[B] = c.Expr[B](q"$expr.asInstanceOf[${Type[B]}]")
+        def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] = c.Expr[B](q"($expr : ${Type[B]})")
+      }
+    }
+    trait ReportsPlatform extends Reports {
+      import c.universe._
+
+      def reportError(errors: String): Nothing = c.abort(c.enclosingPosition, errors)
+    }
+    trait DefinitionsPlatform extends Definitions with TypesPlatform with ExprsPlatform with ReportsPlatform
+    ```
+
+    ```scala
+    // Scala 3
+    abstract class TypesPlatform(using q: Quotes) extends Types {
+      import q.*, q.reflect.*
+
+      type Type[A] = quoted.Type[A]
+      object Type extends TypeModule {
+
+        def isSubtypeOf[A: Type, B: Type]: Boolean = TypeRepr.of(using A) <:< TypeRepr.of(using B)
+      }
+    }
+    trait ExprsPlatform extends Exprs { this: TypesPlatform =>
+      import q.*, q.reflect.*
+
+      type Expr[A] = quoted.Expr[A]
+      object Expr extends ExprModule {
+
+        def asInstanceOfExpr[A: Type, B: Type](expr: Expr[A]): Expr[B] = '{ ${ expr }.asInstanceOf[B] }
+        def upcast[A: Type, B: Type](expr: Expr[A]): Expr[B] = expr.asInstanceOf[Expr[B]]
+      }
+    }
+    trait ReportsPlatform extends Reports { this: TypesPlatform =>
+      import q.*, q.reflect.*
+
+      def reportError(errors: String): Nothing = report.errorAndAbort(errors, Position.ofMacroExpansion)
+    }
+    abstract class DefinitionsPlatform(q: Quotes) extends Definitions with TypesPlatform with ExprsPlatform with ExprPromisesPlatform with ResultsPlatform
+    ```
+
+    Having both Scala-macro-agnostic logic and platform-specific implementation, we can build compose ourselves the final macro:
+
+    ```scala
+    // Scala 2
+
+    // So called macro bundle - class with a single argument - Context - whose method will be called during expansion 
+    final class UpcastingMacros(val c: blackbox.Context) extends DefinitionsPlatform(q) with UpcastIfYouCan {
+
+      import c.universe.*
+
+      // we have to align argument names and arity between macro and its definition
+      def upcastImpl[A: c.WeakTypeTag, B: c.WeakTypeTag](value: c.Expr[A]): c.Expr[B] = upcastIfYouCan[A, B](value)
+    }
+    object Upcasting {
+
+      def upcast[A, B](value: A): B = macro UpcastingMacros.upcastImpl[A, B]
+    }
+    ```
+
+    ```scala
+    // Scala 3
+
+    // Putting everything in one class is very convenient...
+    final class UpcastingMacros(q: Quotes) extends DefinitionsPlatform(q) with UpcastIfYouCan
+    // ...but Scala 3 requires us to store macros inside top-level objects
+    object UpcastingMacros {
+
+      def upcastImpl[A: Type, B: Type](a: Expr[A])(using q: Quotes): Expr[B] =
+        new UpcastingMacros(q).upcastIfYouCan[A, B](a)
+    }
+    
+    object Upcasting {
+
+      inline def upcast[A, B](inline value: A): B = ${ UpcastingMacros.upcast[A, B](${ value }) }
+    }
+    ```
+
+The whole premise of this approach relies on a few assumptions:
+
+ * macros will grow bigger and more comples in time
+ * library might target more than 1 scala macro system (2.12, 2.13, 3)
+ * library authors see the value in separation of concerns, avoiding mixing levels of abstraction, DRY
+ * library authors see the valud in coding against higher-level API which encapsulates how some corner cases are handled
+
+For smaller/simpler/short-living libraries it might feel over-engineered.
+
+#### Components of `chimney-macro-commons`
+
+ - [Types](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Types.scala) - for types and definitions related to type manipulations and build-in `Type` support, e.g.:
+    - summoning with `Type[A]`
+    - printing type with `Type.prettyPrint[A]`
+    - comparison with `Type[A] =:= Type[B]`, `Type[A] <:< Type[B]`
+    - creating (`apply`) or matching (`unapply`) some build-in types: primitives, `Option`s, `Either`s, `Iterable`s, `Map`s, `Factory`ies
+    - implicit instances for some common types (`import Type.Implicits._`) - required in macro-agnostic code since it is not synthesising
+      `c.WeakTypeTag`s nor `scala.quoted.Type`
+ - [Exprs](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Exprs.scala) - for types and definitions related to expression manipulations and build-in `Expr` support, e.g.:
+    - creating primitives' literals
+    - printing with `Expr.prettyPrint(expr)`
+    - creating instances of `Function1`/`Function2` out of `Expr[A] => Expr[B]`/``(Expr[A], Expr[B]) => Expr[C]`
+    - creating instances of `Array`s, `Option`s, `Either`s, `Iterable`s, `Map`s
+    - suppressing warnings
+    - summoning implicits
+    - creating `if`-`else` branches and blocks
+    - upcasting
+ - [Results](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Results.scala) - for types and definitions related to returning info/error messages from macros:
+    - reporting `info` message that compiler should show in output/IDE
+    - reporting `error` message that compiler should show as the reason for macro failure
+ - [Existentials](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Existentials.scala) - for types and definitions related to working with unknown types ("existential types"), e.g.:
+    - `ExistntialType` or `??` - usable via `import existentialType.Underlying as NewTypeName`
+    - `ExistentialExpr` - usable via `import existentialExpr.{Underlying as NewTypeName, value as expr}`
+ - [ExprPromises](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/ExprPromises.scala) - for types and definitions related to computing `val`s/`lazy val`s/`def`s/`var`s before knowing the returned `Expr`'s `Type`, caching value as val, caching  derivation as `def`
+ - [Definitions](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/Definitions.scala) - for types and definitions related to reading macro configurations:
+    - `Definitions` contains all of the above traits for convenience
+    - additionally, exposes the content of `-Xmacro-setting` scalac option
+ - [ProductTypes](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ProductTypes.scala) - for types and definitions related to extractors and constructors of a product type:
+    - `Type[A] match { case Product.Extraction(getters) => ... }` - provides getters (`val`s, `var`s, Java Bean getters, nullary `defs`) - always available
+    - `Type[A] match { case Product.Constructor(getters, constructor) => ... }` - provides a constructor - primary constructor if it's public OR
+      the only public constructor if there is exactly one
+    - `Type[A] match { case Product(getters, constructor) => ... }` - provides both getters and constructor
+ - [SealedHierarchies](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SealedHierarchies.scala) - for types and definitions related to finding all subtypes of `sealed trait`s/`sealed abstrcto class`es/Scala 3 `enum`s/Java `enum`s:
+    - `Type[A] match { case SealedHierarchy(elements) => }` - provides a list of subtypes of a `sealed` hierarchy/Java `enum`/Scala 3 `enum`
+ - [ValueClasses](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/ValueClasses.scala) - for types and definitions related to `AnyVal`s and "wrapper"s:
+    - `Type[A] match { case ValueClassType(valueType) => ... }` - provides `wrap` and `unwrap` method if `Type[A]` is a subtype of `AnyVal` with unary public constructor
+      and public value
+    - `Type[A] match { case WrapperClassType(valueType) => ... }` - provides `wrap` and `unwrap` method if `Type[A]` has unary public constructor and public value
+ - [SingletonTypes](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/SingletonTypes.scala) - for types and definitions related to singleton types:
+    - `Type[A] match { case SingletonType(singleton) => ... }` - provides `Expr[A]` if it's a primitive type literal, `case object`, Scala 3 `enum` parameterless
+      `case` or Java `enum` value
+ - [IterableOrArrays](https://github.com/scalalandio/chimney/blob/{{ git.short_commit }}/chimney-macro-commons/src/main/scala/io/scalaland/chimney/internal/compiletime/datatypes/IterableOrArrays.scala) - for types and definitions related to unified interface for working with Arrays and Scala collections:
+    - `Type[A] match { case IterableOrArray(iOrA) => ... }` - provides `Factory`, `.map`, `.to` and `.interator` methods for Arrays/iterables/maps
+
+#### macro-commons examples
+
+ * Chimney's source code - since 0.8.0 Chimney has been build upon this architecture
+ * [`chimney-macro-commons` template](https://github.com/scalalandio/chimney-macro-commons-template) - can be used as a GitHub template
 
 ### `chimney-engine`
 
