@@ -344,7 +344,7 @@ In particular, when the source type is (`=:=`) the target type, you will end up 
 ### Type-evidence-based conversions
 
 But default conversions using `=:=` and `<:<` are disabled, but they can be enabled with a flag
-`enableTypeConstraintEvidence`:
+`.enableTypeConstraintEvidence`:
 
 !!! example
 
@@ -2071,7 +2071,7 @@ provide a failure, e.g.:
   - or a notion of the empty value?
 
 These cases can be handled only with `PartialTransformer` using
-`.withFieldComputedPartial`/.withFieldComputedPartialFrom`:
+`.withFieldComputedPartial`/.`withFieldComputedPartialFrom`:
 
 !!! example 
 
@@ -2384,7 +2384,7 @@ For details about `TransformedNamesComparison` look at [their dedicated section]
     However, if you named your constructor parameters e.g. `names` and `setNames` then it it would create an ambiguity
     in override matching.
 
-    The former ambiguity can be resolved e.g. by providing value using one of `withField*` overrides. The later requires
+    The former ambiguity can be resolved e.g. by providing value using one of `.withField*` overrides. The later requires
     opting out of any smart matching and only relying on `StrictEquality` and manual overrides.
 
 If the flag was enabled in the implicit config it can be disabled with `.disableCustomFieldNameComparison`.
@@ -2462,6 +2462,10 @@ constructor's argument is made by position instead of name:
     You can use all the flags, renames, value provisions, and computations that are available to case classes,
     Java Beans and so on.
 
+!!! tip
+
+    If you are not sure whether the derivation treats your case as tuple conversion, [try enabling macro logging](troubleshooting.md#debugging-macros).
+
 ## From/into an `AnyVal`
 
 `AnyVal`s can be used both as data sources for derivation as well as the targets of the transformation.
@@ -2533,7 +2537,7 @@ as transparent, similarly to virtually every other Scala library.
 
 !!! warning
 
-    If you use any value override (`withFieldConst`, `withFieldComputed`, etc.) getting value from/to `AnyVal`, it
+    If you use any value override (`.withFieldConst`, `.withFieldComputed`, etc.) getting value from/to `AnyVal`, it
     _will_ be treated as just a normal product type.
 
 ### From/into a wrapper type
@@ -2599,7 +2603,11 @@ a flag:
       // Right(value = UserName(value = "user name"))
     }
     ```
-    
+
+!!! tip
+
+    If you are not sure whether the derivation treats your case as wrapper conversion, [try enabling macro logging](troubleshooting.md#debugging-macros).
+
 If the flag was enabled in the implicit config it can be disabled with `.disbleNonAnyValWrappers`.
 
 !!! example
@@ -3023,8 +3031,8 @@ Or we might want to redirect two subtypes into the same target subtype. For that
 !!! notice
 
     While `sealed` hierarchies, Scala 3 `enum`s and Java `enum`s fall into the same category of Algebraic Data Types,
-    manu users might consider them different things and e.g. not look for methods starting with `withSealedSubtype`
-    when dealing with `enum`s. For that reason we provide an aliases to this methods - `withEnumCaseRenamed`:
+    manu users might consider them different things and e.g. not look for methods starting with `.withSealedSubtype`
+    when dealing with `enum`s. For that reason we provide an aliases to this methods - `.withEnumCaseRenamed`:
 
     ```scala
     // file: snippet.scala - part of withEnumCaseRenamed example
@@ -3052,8 +3060,8 @@ Or we might want to redirect two subtypes into the same target subtype. For that
     }
     ```
     
-    These methods are only aliases and there is no difference in behavior between `withSealedSubtypeRenamed` and
-    `withEnumCaseRenamed` - the difference in names exist only for the sake of readability and discoverability.
+    These methods are only aliases and there is no difference in behavior between `.withSealedSubtypeRenamed` and
+    `.withEnumCaseRenamed` - the difference in names exist only for the sake of readability and discoverability.
 
 !!! warning
 
@@ -3236,9 +3244,9 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
 !!! notice
 
     While `sealed` hierarchies, Scala 3 `enum`s and Java `enum`s fall into the same category of Algebraic Data Types,
-    manu users might consider them different things and e.g. not look for methods starting with `withSealedSubtype`
-    when dealing with `enum`s. For that reason we provide an aliases to both of these methods - `withEnumCaseHandled`
-    and `withEnumCaseHandledPartial`:
+    manu users might consider them different things and e.g. not look for methods starting with `.withSealedSubtype`
+    when dealing with `enum`s. For that reason we provide an aliases to both of these methods - `.withEnumCaseHandled`
+    and `.withEnumCaseHandledPartial`:
     
     ```scala
     // file: snippet.scala - part of withEnumCaseHandled example
@@ -3326,14 +3334,14 @@ If the computation needs to allow failure, there is `.withSealedSubtypeHandledPa
     }
     ```
     
-    These methods are only aliases and there is no difference in behavior between `withSealedCaseHandled` and
-    `withEnumCaseHandled` - the difference in names exist only for the sake of readability and discoverability.
-    For similar reason the only name of this method - `withCoproductInstance` - was deprecated (although it was left as
+    These methods are only aliases and there is no difference in behavior between `.withSealedCaseHandled` and
+    `.withEnumCaseHandled` - the difference in names exist only for the sake of readability and discoverability.
+    For similar reason the only name of this method - `.withCoproductInstance` - was deprecated (although it was left as
     an alias to let the old code work, while encourage users to use newer, more understanable names).
 
 !!! notice
 
-     `withSealedSubtypeHandled[Subtype](...)` might look similar to `withFieldComputed(_.matching[Subtype], ...)` but
+     `.withSealedSubtypeHandled[Subtype](...)` might look similar to `.withFieldComputed(_.matching[Subtype], ...)` but
      the difference becomes clear when we provide the types:
      
       * `foo.into[Bar].withSealedSubtypeHandled[Foo.Baz](subtype => ...).transform` matches the subtype on the **source**
@@ -3586,7 +3594,7 @@ For details about `TransformedNamesComparison` look at [their dedicated section]
     }
     ```
 
-    Such cases always have to be handled manually (`withSealedSubtypeHandled(...)`).
+    Such cases always have to be handled manually (`.withSealedSubtypeHandled(...)`).
 
 If the flag was enabled in the implicit config it can be disabled with `.disableCustomSubtypeNameComparison`.
 
@@ -4359,10 +4367,10 @@ Then Chimney will try to match the source type's getters against the method's pa
 
 !!! note
 
-    `withConstructor` overrides the constructor **only on the top level target**. It would not be used when the same type
+    `.withConstructor` overrides the constructor **only on the top level target**. It would not be used when the same type
     occurs somewhere in a nested field.
 
-    Similarly `withConstructorTo` only overrides the constructor for the selected field.
+    Similarly `.withConstructorTo` only overrides the constructor for the selected field.
 
 !!! warning
 
@@ -4949,7 +4957,7 @@ there are 3 possible ways of handling them with Chimney:
  * merge left-to-right (`src.orElse(fallback2).orElse(fallback2)...`)
  * merge right-to-left (`fallback2.orElse(fallback1).orElse(src)...`)
 
-We can select merging with `enableOptionFallbackMerge` flag:
+We can select merging with `.enableOptionFallbackMerge` flag:
 
 !!! example
 
@@ -5006,7 +5014,7 @@ there are 3 possible ways of handling them with Chimney:
  * merge left-to-right (`src.orElse(fallback2).orElse(fallback2)...`)
  * merge right-to-left (`fallback2.orElse(fallback1).orElse(src)...`)
 
-We can select merging with `enableEitherFallbackMerge` flag:
+We can select merging with `.enableEitherFallbackMerge` flag:
 
 !!! example
 
@@ -5063,7 +5071,7 @@ there are 3 possible ways of handling them with Chimney:
  * merge left-to-right (`src ++ fallback2 ++ fallback2...`)
  * merge right-to-left (`fallback2 ++ fallback1 ++ src...`)
 
-We can select merging with `enableCollectionFallbackMerge` flag:
+We can select merging with `.enableCollectionFallbackMerge` flag:
 
 !!! example
 

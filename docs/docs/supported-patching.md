@@ -36,7 +36,7 @@ In such case, macros use `Transformer`s logic under the hood to convert a patch 
 ### Updating field with a provided value
 
 When we want to not only update one object with fields from another object but also set some fields manually,
-we can do it using `withFieldConst` (just like with `Transformer`s):
+we can do it using `.withFieldConst` (just like with `Transformer`s):
 
 !!! example
 
@@ -66,7 +66,7 @@ we can do it using `withFieldConst` (just like with `Transformer`s):
 ### Updating field with a computed value
 
 When we want to not only update one object with fields from another object but also set some fields to computed value,
-we can do it using `withFieldComputed` (just like with `Transformer`s) or `withFieldComputedFrom`:
+we can do it using `.withFieldComputed` (just like with `Transformer`s) or `.withFieldComputedFrom`:
 
 !!! example
 
