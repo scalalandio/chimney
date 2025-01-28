@@ -3485,7 +3485,11 @@ Most of the time a collection doesn't perform any sort of validations, and you c
     // MyCollection(Bar(test,3.14))
     ```
 
-If your collection performs some sort of validation, you integrate it with Chimney as well:
+!!! tip
+
+    If you are not sure whether the derivation treats your case as custom collection, [try enabling macro logging](troubleshooting.md#debugging-macros).
+
+If your collection performs some sort of validation, you can integrate it with Chimney as well:
 
 !!! example
 
