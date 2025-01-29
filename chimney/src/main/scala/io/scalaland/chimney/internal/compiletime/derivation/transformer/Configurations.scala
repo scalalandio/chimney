@@ -800,6 +800,8 @@ private[compiletime] trait Configurations { this: Derivation =>
         // to use with instance flags.
         if (Flag =:= ChimneyType.TransformerFlags.Flags.ImplicitConversions) wereLocalFlagsOverriden[Flags2]
         else if (Flag =:= ChimneyType.TransformerFlags.Flags.TypeConstraintEvidence) wereLocalFlagsOverriden[Flags2]
+        // Whether or not we're logging macros should not affect the result of the derivation
+        else if (Flag =:= ChimneyType.TransformerFlags.Flags.MacrosLogging) wereLocalFlagsOverriden[Flags2]
         else true
       case _ => true
     }
