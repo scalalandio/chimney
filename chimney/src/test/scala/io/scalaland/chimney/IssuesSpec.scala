@@ -827,4 +827,19 @@ class IssuesSpec extends ChimneySpec {
     Foo(1, "value").transformIntoPartial[Bar].asOption.get ==> Bar(20, "value")
     Foo(1, "value").patchUsing(Baz(30)) ==> Foo(30, "patched")
   }
+
+  test("fix issue #683") {
+    import Issue683.*
+
+    (Proto.Foo(10): Proto)
+      .intoPartial[Domain]
+      .withSealedSubtypeRenamed[Proto.Foo, Domain.Foo1]
+      .transform
+      .asOption ==> Some(Domain.Foo1(10))
+    (Proto.Empty: Proto)
+      .intoPartial[Domain]
+      .withSealedSubtypeRenamed[Proto.Foo, Domain.Foo1]
+      .transform
+      .asOption ==> None
+  }
 }
