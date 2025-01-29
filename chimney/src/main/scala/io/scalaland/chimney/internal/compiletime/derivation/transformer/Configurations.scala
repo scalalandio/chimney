@@ -591,7 +591,7 @@ private[compiletime] trait Configurations { this: Derivation =>
             // checking if there might be some relevant overrides for current/nested values
             case _: TransformerOverride.ForField | _: TransformerOverride.ForSubtype =>
               val newSidedPath = sidedPath.drop(fromPath, toPath).view.filterNot(_.path == Path.Root)
-              newSidedPath.map(_ -> runtimeOverride)
+              newSidedPath.map(_ -> runtimeOverride).filterNot(pathCannotBeUsedButBlocksRuleForEmptyOverrides)
             // Fallbacks are always matched at "_" Path, and dropped _manually_ only when going inward,
             // because we have to update their inner value
             case f: TransformerOverride.ForFallback =>
@@ -606,6 +606,12 @@ private[compiletime] trait Configurations { this: Derivation =>
         },
         preventImplicitSummoningForTypes = None
       )
+
+    // I haven't found a more "principled" way to achieve this, that wouldn't break half the tests
+    private lazy val pathCannotBeUsedButBlocksRuleForEmptyOverrides: ((SidedPath, TransformerOverride)) => Boolean = {
+      case (TargetPath(Path.AtSubtype(_, Path.Root)), _: TransformerOverride.Renamed) => true
+      case _                                                                          => false
+    }
 
     override def toString: String = {
       val runtimeOverridesString =

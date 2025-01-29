@@ -1,6 +1,7 @@
 package io.scalaland.chimney.fixtures
 
-import io.scalaland.chimney.Transformer
+import io.scalaland.chimney.{PartialTransformer, Transformer}
+import io.scalaland.chimney.partial
 
 object foo {
   import io.scalaland.chimney.dsl.*
@@ -227,4 +228,20 @@ object Issue479 {
   object Target {
     case class Impl(value: String) extends Target
   }
+}
+
+object Issue683 {
+  sealed trait Proto extends Product with Serializable
+  object Proto {
+    case class Foo(a: Int) extends Proto
+    case object Empty extends Proto
+  }
+
+  sealed trait Domain extends Product with Serializable
+  object Domain {
+    case class Foo1(a: Int) extends Domain
+  }
+
+  implicit def handleEmpty[To]: PartialTransformer[Proto.Empty.type, To] =
+    (_: Proto.Empty.type, _: Boolean) => partial.Result.fromEmpty[To]
 }
