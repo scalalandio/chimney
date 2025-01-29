@@ -173,7 +173,7 @@ private[compiletime] trait Configurations { this: Derivation =>
       val implicitScopeFlags = extractTransformerFlags[ImplicitScopeFlags](PatcherFlags.global)
       val allFlags = extractTransformerFlags[InstanceFlags](implicitScopeFlags)
       val cfg = extractPatcherConfig[Tail](runtimeDataIdx = 0, runtimeDataStore).copy(flags = allFlags)
-      if (Type[InstanceFlags] =:= ChimneyType.PatcherFlags.Default) cfg else cfg.setLocalFlagsOverriden
+      if (wereLocalFlagsOverriden[InstanceFlags]) cfg.setLocalFlagsOverriden else cfg
     }
 
     import TransformerConfigurations.extractPath
@@ -197,6 +197,17 @@ private[compiletime] trait Configurations { this: Derivation =>
           reportError(s"Invalid internal PatcherFlags type shape: ${Type.prettyPrint[Flags]}!")
         // $COVERAGE-ON$
       }
+
+    @scala.annotation.tailrec
+    private def wereLocalFlagsOverriden[Flags <: runtime.PatcherFlags: Type]: Boolean = Type[Flags] match {
+      case default if default =:= ChimneyType.PatcherFlags.Default => false
+      case ChimneyType.PatcherFlags.Enable(flag, flags) =>
+        import flag.Underlying as Flag, flags.Underlying as Flags2
+        // Whether or not we're logging macros should not affect the result of the derivation
+        if (Flag =:= ChimneyType.PatcherFlags.Flags.MacrosLogging) wereLocalFlagsOverriden[Flags2]
+        else true
+      case _ => true
+    }
 
     private def extractPatcherConfig[Tail <: runtime.PatcherOverrides: Type](
         runtimeDataIdx: Int,
