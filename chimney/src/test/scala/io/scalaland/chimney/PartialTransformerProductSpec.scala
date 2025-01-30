@@ -268,6 +268,18 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result12.asEither ==> Right(NestedADT.Foo(Renames.UserPLStd(1, "Kuba", Some(28))))
       result12.asErrorPathMessageStrings ==> Iterable.empty
     }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      val expected = Foo(3, "pi", (3.14, 3.14))
+
+      val result =
+        PartialTransformer.define[Bar, Foo].withFieldConst(_.y, "pi").buildTransformer.transform(Bar(3, (3.14, 3.14)))
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
   }
 
   group("setting .withFieldConstPartial(_.field, result)") {
@@ -449,6 +461,21 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result12.asEither ==> Right(expected4)
       result12.asErrorPathMessageStrings ==> Iterable.empty
     }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      val expected = Foo(3, "pi", (3.14, 3.14))
+
+      val result = PartialTransformer
+        .define[Bar, Foo]
+        .withFieldConstPartial(_.y, partial.Result.fromValue("pi"))
+        .buildTransformer
+        .transform(Bar(3, (3.14, 3.14)))
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
   }
 
   group("setting .withFieldComputed(_.field, source => value)") {
@@ -629,6 +656,21 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result12.asOption ==> Some(expected4)
       result12.asEither ==> Right(expected4)
       result12.asErrorPathMessageStrings ==> Iterable.empty
+    }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      val expected = Foo(3, "3", (3.14, 3.14))
+
+      val result = PartialTransformer
+        .define[Bar, Foo]
+        .withFieldComputed(_.y, _.x.toString)
+        .buildTransformer
+        .transform(Bar(3, (3.14, 3.14)))
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -816,6 +858,21 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result12.asOption ==> Some(expected4)
       result12.asEither ==> Right(expected4)
       result12.asErrorPathMessageStrings ==> Iterable.empty
+    }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      val expected = Foo(3, "3", (3.14, 3.14))
+
+      val result = PartialTransformer
+        .define[Bar, Foo]
+        .withFieldComputedFrom(_.x)(_.y, _.toString)
+        .buildTransformer
+        .transform(Bar(3, (3.14, 3.14)))
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -1013,6 +1070,21 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result12.asEither ==> Right(expected4)
       result12.asErrorPathMessageStrings ==> Iterable.empty
     }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      val expected = Foo(3, "3", (3.14, 3.14))
+
+      val result = PartialTransformer
+        .define[Bar, Foo]
+        .withFieldComputedPartial(_.y, bar => partial.Result.fromValue(bar.x.toString))
+        .buildTransformer
+        .transform(Bar(3, (3.14, 3.14)))
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
   }
 
   group("setting .withFieldComputedPartialFrom(_.field)(_.field, source => value)") {
@@ -1208,6 +1280,21 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result12.asOption ==> Some(expected4)
       result12.asEither ==> Right(expected4)
       result12.asErrorPathMessageStrings ==> Iterable.empty
+    }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      val expected = Foo(3, "3", (3.14, 3.14))
+
+      val result = PartialTransformer
+        .define[Bar, Foo]
+        .withFieldComputedPartialFrom(_.x)(_.y, x => partial.Result.fromValue(x.toString))
+        .buildTransformer
+        .transform(Bar(3, (3.14, 3.14)))
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -1457,6 +1544,22 @@ class PartialTransformerProductSpec extends ChimneySpec {
       result2.asEither ==> Left(expected2)
       result2.asErrorPathMessageStrings ==> expected2.asErrorPathMessageStrings
     }
+
+    test("should work with semiautomatic derivation") {
+      import products.Renames.*
+
+      val expected = UserPLStd(1, "Kuba", Some(28))
+
+      val result = PartialTransformer
+        .define[User, UserPLStd]
+        .withFieldRenamed(_.name, _.imie)
+        .withFieldRenamed(_.age, _.wiek)
+        .buildTransformer
+        .transform(User(1, "Kuba", Some(28)))
+      result.asOption ==> Some(expected)
+      result.asEither ==> Right(expected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+    }
   }
 
   group("setting .withFieldUnused(_.from)") {
@@ -1487,6 +1590,18 @@ class PartialTransformerProductSpec extends ChimneySpec {
         .withFieldUnused(_.y)
         .enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
         .transform
+        .asOption ==> Some(Bar(10, (1, 2)))
+    }
+
+    test("should work with semiautomatic derivation") {
+
+      PartialTransformer
+        .define[Foo, Bar]
+        // FIXME: if we swap these 2 it's assertion error in -Xcheck-macros on Scala 3 o_0
+        .withFieldUnused(_.y)
+        .enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
+        .buildTransformer
+        .transform(Foo(10, "test", (1, 2)))
         .asOption ==> Some(Bar(10, (1, 2)))
     }
   }

@@ -221,7 +221,7 @@ object TransformerDefinitionMacros {
           '{
             WithRuntimeDataStore
               .update($ti, $fallback)
-              .asInstanceOf[TransformerDefinition[From, To, Fallback[FromFallback, Path.Root, Overrides], Flags]]
+              .asInstanceOf[TransformerDefinition[From, To, Fallback[FromFallback, fromPath, Overrides], Flags]]
         }
     }(selectorFrom)
 

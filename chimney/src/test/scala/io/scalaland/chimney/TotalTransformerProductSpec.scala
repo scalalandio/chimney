@@ -178,6 +178,21 @@ class TotalTransformerProductSpec extends ChimneySpec {
         )
         .transform ==> NestedADT.Foo(Renames.UserPLStd(1, "Kuba", Some(28)))
     }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      Transformer
+        .define[Bar, Foo]
+        .withFieldConst(_.y, "pi")
+        .buildTransformer
+        .transform(Bar(3, (3.14, 3.14))) ==> Foo(3, "pi", (3.14, 3.14))
+      Transformer
+        .define[Bar, Foo]
+        .withFieldConst(cc => cc.y, "pi")
+        .buildTransformer
+        .transform(Bar(3, (3.14, 3.14))) ==> Foo(3, "pi", (3.14, 3.14))
+    }
   }
 
   group("setting .withFieldComputed(_.field, source => value)") {
@@ -281,6 +296,21 @@ class TotalTransformerProductSpec extends ChimneySpec {
         .withFieldComputed(_.everyItem.matching[NestedADT.Foo[User]].foo.age, _ => 20)
         .withFieldComputed(_.everyItem.matching[NestedADT.Bar[User]].bar.age, _ => 30)
         .transform ==> Vector(NestedADT.Foo(User("John", 20, 140)), NestedADT.Bar(User("John", 30, 140)))
+    }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      Transformer
+        .define[Bar, Foo]
+        .withFieldComputed(_.y, _.x.toString)
+        .buildTransformer
+        .transform(Bar(3, (3.14, 3.14))) ==> Foo(3, "3", (3.14, 3.14))
+      Transformer
+        .define[Bar, Foo]
+        .withFieldComputed(cc => cc.y, _.x.toString)
+        .buildTransformer
+        .transform(Bar(3, (3.14, 3.14))) ==> Foo(3, "3", (3.14, 3.14))
     }
   }
 
@@ -395,6 +425,21 @@ class TotalTransformerProductSpec extends ChimneySpec {
           _ * 3
         )
         .transform ==> Vector(NestedADT.Foo(User("John", 20, 140)), NestedADT.Bar(User("John", 30, 140)))
+    }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      Transformer
+        .define[Bar, Foo]
+        .withFieldComputedFrom(_.x)(_.y, a => a.toString)
+        .buildTransformer
+        .transform(Bar(3, (3.14, 3.14))) ==> Foo(3, "3", (3.14, 3.14))
+      Transformer
+        .define[Bar, Foo]
+        .withFieldComputedFrom(aa => aa.x)(cc => cc.y, _.toString)
+        .buildTransformer
+        .transform(Bar(3, (3.14, 3.14))) ==> Foo(3, "3", (3.14, 3.14))
     }
   }
 
@@ -663,6 +708,17 @@ class TotalTransformerProductSpec extends ChimneySpec {
         )
       }
     }
+
+    test("should work with semiautomatic derivation") {
+      import products.Renames.*
+
+      Transformer
+        .define[User, UserPLStd]
+        .withFieldRenamed(_.name, _.imie)
+        .withFieldRenamed(_.age, _.wiek)
+        .buildTransformer
+        .transform(User(1, "Kuba", Some(28))) ==> UserPLStd(1, "Kuba", Some(28))
+    }
   }
 
   group("setting .withFieldUnused(_.from)") {
@@ -694,6 +750,17 @@ class TotalTransformerProductSpec extends ChimneySpec {
         .withFieldUnused(_.y)
         .enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
         .transform ==> Bar(10, (1, 2))
+    }
+
+    test("should work with semiautomatic derivation") {
+
+      Transformer
+        .define[Foo, Bar]
+        // FIXME: if we swap these 2 it's assertion error in -Xcheck-macros on Scala 3 o_0
+        .withFieldUnused(_.y)
+        .enableUnusedFieldPolicyCheck(FailOnIgnoredSourceVal)
+        .buildTransformer
+        .transform(Foo(10, "test", (1, 2))) ==> Bar(10, (1, 2))
     }
   }
 

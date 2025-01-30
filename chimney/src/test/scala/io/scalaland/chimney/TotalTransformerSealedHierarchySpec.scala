@@ -202,6 +202,32 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
         List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
       )
     }
+
+    test("should work with semiautomatic derivation") {
+      def blackIsRed(@unused b: colors2.Black.type): colors1.Color =
+        colors1.Red
+
+      Transformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Black) ==> colors1.Red
+      Transformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Red) ==> colors1.Red
+      Transformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Green) ==> colors1.Green
+      Transformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Blue) ==> colors1.Blue
+    }
   }
 
   group("setting .withEnumCaseHandled[Subtype](mapping)") {
@@ -277,9 +303,35 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
         List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
       )
     }
+
+    test("should work with semiautomatic derivation") {
+      def blackIsRed(@unused b: colors2.Black.type): colors1.Color =
+        colors1.Red
+
+      Transformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Black) ==> colors1.Red
+      Transformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Red) ==> colors1.Red
+      Transformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Green) ==> colors1.Green
+      Transformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Blue) ==> colors1.Blue
+    }
   }
 
-  group("settings .withSealedSubtypeRenamed[FromSubtype, ToSubtype]") {
+  group("setting .withSealedSubtypeRenamed[FromSubtype, ToSubtype]") {
 
     import fixtures.renames.Subtypes.*
 
@@ -302,9 +354,23 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
       (Foo3.Baz: Foo3).into[Bar].withSealedSubtypeRenamed[Foo3.Bazz.type, Bar.Baz.type].transform ==> Bar.Baz
       (Foo3.Bazz: Foo3).into[Bar].withSealedSubtypeRenamed[Foo3.Bazz.type, Bar.Baz.type].transform ==> Bar.Baz
     }
+
+    test("should work with semiautomatic derivation") {
+
+      Transformer
+        .define[Foo3, Bar]
+        .withSealedSubtypeRenamed[Foo3.Bazz.type, Bar.Baz.type]
+        .buildTransformer
+        .transform(Foo3.Baz) ==> Bar.Baz
+      Transformer
+        .define[Foo3, Bar]
+        .withSealedSubtypeRenamed[Foo3.Bazz.type, Bar.Baz.type]
+        .buildTransformer
+        .transform(Foo3.Bazz) ==> Bar.Baz
+    }
   }
 
-  group("settings .withEnumCaseRenamed[FromSubtype, ToSubtype]") {
+  group("setting .withEnumCaseRenamed[FromSubtype, ToSubtype]") {
 
     import fixtures.renames.Subtypes.*
 
@@ -312,6 +378,20 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
 
       (Foo3.Baz: Foo3).into[Bar].withEnumCaseRenamed[Foo3.Bazz.type, Bar.Baz.type].transform ==> Bar.Baz
       (Foo3.Bazz: Foo3).into[Bar].withEnumCaseRenamed[Foo3.Bazz.type, Bar.Baz.type].transform ==> Bar.Baz
+    }
+
+    test("transform sealed hierarchy's subtype into user-provided subtype") {
+
+      Transformer
+        .define[Foo3, Bar]
+        .withEnumCaseRenamed[Foo3.Bazz.type, Bar.Baz.type]
+        .buildTransformer
+        .transform(Foo3.Baz) ==> Bar.Baz
+      Transformer
+        .define[Foo3, Bar]
+        .withEnumCaseRenamed[Foo3.Bazz.type, Bar.Baz.type]
+        .buildTransformer
+        .transform(Foo3.Bazz) ==> Bar.Baz
     }
   }
 
@@ -347,6 +427,17 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
         .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
         .transform ==> colors2.Red
     }
+
+    test("should work with semiautomatic derivation") {
+
+      Transformer
+        .define[colors1.Color, colors2.Color]
+        // FIXME: if we swap these 2 it's assertion error in -Xcheck-macros on Scala 3 o_0
+        .withSealedSubtypeUnmatched(_.matching[colors2.Black.type])
+        .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+        .buildTransformer
+        .transform(colors1.Red) ==> colors2.Red
+    }
   }
 
   group("setting .withEnumCaseUnmatched(_.from)") {
@@ -380,6 +471,17 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
         .withEnumCaseUnmatched(_.matching[colors2.Black.type])
         .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
         .transform ==> colors2.Red
+    }
+
+    test("should work with semiautomatic derivation") {
+
+      Transformer
+        .define[colors1.Color, colors2.Color]
+        // FIXME: if we swap these 2 it's assertion error in -Xcheck-macros on Scala 3 o_0
+        .withEnumCaseUnmatched(_.matching[colors2.Black.type])
+        .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+        .buildTransformer
+        .transform(colors1.Red) ==> colors2.Red
     }
   }
 
@@ -475,7 +577,7 @@ class TotalTransformerSealedHierarchySpec extends ChimneySpec {
     }
   }
 
-  group("settings .withFieldRenamed(selectorFrom, selectorTo)") {
+  group("setting .withFieldRenamed(selectorFrom, selectorTo)") {
 
     import fixtures.renames.Subtypes.*
 
