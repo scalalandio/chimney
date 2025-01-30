@@ -3,9 +3,9 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
-class TotalMergingSealedHiearchySpec extends ChimneySpec {
+class TotalMergingSealedHierarchySpec extends ChimneySpec {
 
-  import TotalMergingSealedHiearchySpec.*
+  import TotalMergingSealedHierarchySpec.*
 
   group("setting .withFallback(fallbackValue)") {
 
@@ -51,7 +51,7 @@ class TotalMergingSealedHiearchySpec extends ChimneySpec {
     }
   }
 }
-object TotalMergingSealedHiearchySpec {
+object TotalMergingSealedHierarchySpec {
 
   sealed trait Foo extends Product with Serializable
   object Foo {
