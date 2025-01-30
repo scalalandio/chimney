@@ -84,6 +84,23 @@ class TotalTransformerCustomConstructorSpec extends ChimneySpec {
       result.id ==> "id"
       result.name ==> "name"
     }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      def uncurriedConstructor(x: Int, z: (Double, Double)): Bar = Bar(x * 2, (z._1 * 2, z._2 * 2))
+
+      Transformer
+        .define[Foo, Bar]
+        .withConstructor(uncurriedConstructor _)
+        .buildTransformer
+        .transform(Foo(3, "pi", (3.14, 3.14))) ==> Bar(6, (6.28, 6.28))
+      Transformer
+        .define[Foo, Bar]
+        .withConstructor((x: Int, z: (Double, Double)) => uncurriedConstructor(x, z))
+        .buildTransformer
+        .transform(Foo(3, "pi", (3.14, 3.14))) ==> Bar(6, (6.28, 6.28))
+    }
   }
 
   group("setting .withConstructorTo(_.field)(fn)") {
@@ -166,6 +183,23 @@ class TotalTransformerCustomConstructorSpec extends ChimneySpec {
       val result = NestedProduct(new ClassSource("id", "name")).transformInto[NestedProduct[TraitSource]]
       result.value.id ==> "id"
       result.value.name ==> "name"
+    }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}, nestedpath.*
+
+      def uncurriedConstructor(x: Int, z: (Double, Double)): Bar = Bar(x * 2, (z._1 * 2, z._2 * 2))
+
+      Transformer
+        .define[NestedProduct[Foo], NestedProduct[Bar]]
+        .withConstructorTo(_.value)(uncurriedConstructor _)
+        .buildTransformer
+        .transform(NestedProduct(Foo(3, "pi", (3.14, 3.14)))) ==> NestedProduct(Bar(6, (6.28, 6.28)))
+      Transformer
+        .define[NestedProduct[Foo], NestedProduct[Bar]]
+        .withConstructorTo(_.value)((x: Int, z: (Double, Double)) => uncurriedConstructor(x, z))
+        .buildTransformer
+        .transform(NestedProduct(Foo(3, "pi", (3.14, 3.14)))) ==> NestedProduct(Bar(6, (6.28, 6.28)))
     }
   }
 }

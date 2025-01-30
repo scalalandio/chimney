@@ -20,7 +20,7 @@ class IsoProductSpec extends ChimneySpec {
   }
 
   group(
-    "settings .withSealedSubtypeRenamed[FromSubtype, ToSubtype] should be correctly forwarded to Transformer/PartialTransformer"
+    "setting .withSealedSubtypeRenamed[FromSubtype, ToSubtype] should be correctly forwarded to Transformer/PartialTransformer"
   ) {
 
     import fixtures.renames.Subtypes.*
@@ -37,7 +37,7 @@ class IsoProductSpec extends ChimneySpec {
   }
 
   group(
-    "settings .withEnumCaseRenamed[FromSubtype, ToSubtype] should be correctly forwarded to Transformer/PartialTransformer"
+    "setting .withEnumCaseRenamed[FromSubtype, ToSubtype] should be correctly forwarded to Transformer/PartialTransformer"
   ) {
 
     import fixtures.renames.Subtypes.*

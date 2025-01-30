@@ -247,6 +247,36 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         )
       )
     }
+
+    test("should work with semiautomatic derivation") {
+      def blackIsRed(@unused b: colors2.Black.type): colors1.Color =
+        colors1.Red
+
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Black)
+        .asOption ==> Some(colors1.Red)
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Red)
+        .asOption ==> Some(colors1.Red)
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Green)
+        .asOption ==> Some(colors1.Green)
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Blue)
+        .asOption ==> Some(colors1.Blue)
+    }
   }
 
   group("setting .withEnumCaseHandled[Subtype](mapping)") {
@@ -329,6 +359,36 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
           List(shapes2.Point(0, 0), shapes2.Point(0, 4), shapes2.Point(6, 4), shapes2.Point(6, 0))
         )
       )
+    }
+
+    test("should work with semiautomatic derivation") {
+      def blackIsRed(@unused b: colors2.Black.type): colors1.Color =
+        colors1.Red
+
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Black)
+        .asOption ==> Some(colors1.Red)
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Red)
+        .asOption ==> Some(colors1.Red)
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Green)
+        .asOption ==> Some(colors1.Green)
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandled(blackIsRed)
+        .buildTransformer
+        .transform(colors2.Blue)
+        .asOption ==> Some(colors1.Blue)
     }
   }
 
@@ -446,6 +506,36 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         )
       )
     }
+
+    test("should work with semiautomatic derivation") {
+      def blackIsFail(b: colors2.Black.type): partial.Result[colors1.Color] =
+        partial.Result.fromEmpty
+
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandledPartial(blackIsFail)
+        .buildTransformer
+        .transform(colors2.Black)
+        .asOption ==> None
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandledPartial(blackIsFail)
+        .buildTransformer
+        .transform(colors2.Red)
+        .asOption ==> Some(colors1.Red)
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandledPartial(blackIsFail)
+        .buildTransformer
+        .transform(colors2.Green)
+        .asOption ==> Some(colors1.Green)
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withSealedSubtypeHandledPartial(blackIsFail)
+        .buildTransformer
+        .transform(colors2.Blue)
+        .asOption ==> Some(colors1.Blue)
+    }
   }
 
   group("setting .withEnumCaseHandledPartial[Subtype](mapping)") {
@@ -533,9 +623,39 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         )
       )
     }
+
+    test("should work with semiautomatic derivation") {
+      def blackIsFail(b: colors2.Black.type): partial.Result[colors1.Color] =
+        partial.Result.fromEmpty
+
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandledPartial(blackIsFail)
+        .buildTransformer
+        .transform(colors2.Black)
+        .asOption ==> None
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandledPartial(blackIsFail)
+        .buildTransformer
+        .transform(colors2.Red)
+        .asOption ==> Some(colors1.Red)
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandledPartial(blackIsFail)
+        .buildTransformer
+        .transform(colors2.Green)
+        .asOption ==> Some(colors1.Green)
+      PartialTransformer
+        .define[colors2.Color, colors1.Color]
+        .withEnumCaseHandledPartial(blackIsFail)
+        .buildTransformer
+        .transform(colors2.Blue)
+        .asOption ==> Some(colors1.Blue)
+    }
   }
 
-  group("settings .withSealedSubtypeRenamed[FromSubtype, ToSubtype]") {
+  group("setting .withSealedSubtypeRenamed[FromSubtype, ToSubtype]") {
 
     import fixtures.renames.Subtypes.*
 
@@ -566,9 +686,25 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         .transform
         .asOption ==> Some(Bar.Baz)
     }
+
+    test("should work with semiautomatic derivation") {
+
+      PartialTransformer
+        .define[Foo3, Bar]
+        .withSealedSubtypeRenamed[Foo3.Bazz.type, Bar.Baz.type]
+        .buildTransformer
+        .transform(Foo3.Baz)
+        .asOption ==> Some(Bar.Baz)
+      PartialTransformer
+        .define[Foo3, Bar]
+        .withSealedSubtypeRenamed[Foo3.Bazz.type, Bar.Baz.type]
+        .buildTransformer
+        .transform(Foo3.Bazz)
+        .asOption ==> Some(Bar.Baz)
+    }
   }
 
-  group("settings .withEnumCaseRenamed[FromSubtype, ToSubtype]") {
+  group("setting .withEnumCaseRenamed[FromSubtype, ToSubtype]") {
 
     import fixtures.renames.Subtypes.*
 
@@ -583,6 +719,22 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         .intoPartial[Bar]
         .withEnumCaseRenamed[Foo3.Bazz.type, Bar.Baz.type]
         .transform
+        .asOption ==> Some(Bar.Baz)
+    }
+
+    test("should work with semiautomatic derivation") {
+
+      PartialTransformer
+        .define[Foo3, Bar]
+        .withEnumCaseRenamed[Foo3.Bazz.type, Bar.Baz.type]
+        .buildTransformer
+        .transform(Foo3.Baz)
+        .asOption ==> Some(Bar.Baz)
+      PartialTransformer
+        .define[Foo3, Bar]
+        .withEnumCaseRenamed[Foo3.Bazz.type, Bar.Baz.type]
+        .buildTransformer
+        .transform(Foo3.Bazz)
         .asOption ==> Some(Bar.Baz)
     }
   }
@@ -620,6 +772,18 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         .transform
         .asOption ==> Some(colors2.Red)
     }
+
+    test("should work with semiautomatic derivation") {
+
+      PartialTransformer
+        .define[colors1.Color, colors2.Color]
+        // FIXME: if we swap these 2 it's assertion error in -Xcheck-macros on Scala 3 o_0
+        .withSealedSubtypeUnmatched(_.matching[colors2.Black.type])
+        .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+        .buildTransformer
+        .transform(colors1.Red)
+        .asOption ==> Some(colors2.Red)
+    }
   }
 
   group("setting .withEnumCaseUnmatched(_.from)") {
@@ -653,6 +817,18 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
         .withEnumCaseUnmatched(_.matching[colors2.Black.type])
         .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
         .transform
+        .asOption ==> Some(colors2.Red)
+    }
+
+    test("should work with semiautomatic derivation") {
+
+      PartialTransformer
+        .define[colors1.Color, colors2.Color]
+        // FIXME: if we swap these 2 it's assertion error in -Xcheck-macros on Scala 3 o_0
+        .withEnumCaseUnmatched(_.matching[colors2.Black.type])
+        .enableUnmatchedSubtypePolicyCheck(FailOnUnmatchedTargetSubtype)
+        .buildTransformer
+        .transform(colors1.Red)
         .asOption ==> Some(colors2.Red)
     }
   }
@@ -876,7 +1052,7 @@ class PartialTransformerSealedHierarchySpec extends ChimneySpec {
     }
   }
 
-  group("settings .withFieldRenamed(selectorFrom, selectorTo)") {
+  group("setting .withFieldRenamed(selectorFrom, selectorTo)") {
 
     import fixtures.renames.Subtypes.*
 

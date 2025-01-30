@@ -134,6 +134,22 @@ class TotalMergingProductSpec extends ChimneySpec {
         .withFieldRenamed(_.value.a, _.value._7)
         .transform ==> Nested((1, "const", 3.0, 4, "computed", 6.0, 1))
     }
+
+    test("should work with semiautomatic derivation") {
+      import merges.Disjoint.*, merges.Nested
+
+      Transformer
+        .define[Foo[Double], Baz[Double]]
+        .withFallback(Bar(4, "e", 6.0))
+        .buildTransformer
+        .transform(Foo(1, "b", 3.0)) ==> Baz(1, "b", 3.0, 4, "e", 6.0)
+
+      Transformer
+        .define[Nested[Foo[Double]], Nested[Baz[Double]]]
+        .withFallback(Nested(Bar(4, "e", 6.0)))
+        .buildTransformer
+        .transform(Nested(Foo(1, "b", 3.0))) ==> Nested(Baz(1, "b", 3.0, 4, "e", 6.0))
+    }
   }
 
   group("setting .withFallbackFrom(selectorFrom)(fallbackValue)") {
@@ -280,6 +296,22 @@ class TotalMergingProductSpec extends ChimneySpec {
         .withFieldComputedFrom(_.value)(_.value.value._5, _ => "computed")
         .withFieldRenamed(_.value.value.a, _.value.value._7)
         .transform ==> Nested(Nested((1, "const", 3.0, 4, "computed", 6.0, 1)))
+    }
+
+    test("should work with semiautomatic derivation") {
+      import merges.Disjoint.*, merges.Nested
+
+      Transformer
+        .define[Nested[Foo[Double]], Nested[Baz[Double]]]
+        .withFallbackFrom(_.value)(Bar(4, "e", 6.0))
+        .buildTransformer
+        .transform(Nested(Foo(1, "b", 3.0))) ==> Nested(Baz(1, "b", 3.0, 4, "e", 6.0))
+
+      Transformer
+        .define[Nested[Nested[Foo[Double]]], Nested[Nested[Baz[Double]]]]
+        .withFallbackFrom(_.value)(Nested(Bar(4, "e", 6.0)))
+        .buildTransformer
+        .transform(Nested(Nested(Foo(1, "b", 3.0)))) ==> Nested(Nested(Baz(1, "b", 3.0, 4, "e", 6.0)))
     }
   }
 }

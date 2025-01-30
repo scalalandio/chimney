@@ -117,6 +117,32 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
       result.id ==> "id"
       result.name ==> "name"
     }
+
+    test("""should allow defining transformers with overrides""") {
+      import products.{Foo, Bar}
+
+      val uncurriedExpected = Bar(6, (6.28, 6.28))
+
+      def uncurriedConstructor(x: Int, z: (Double, Double)): Bar = Bar(x * 2, (z._1 * 2, z._2 * 2))
+
+      val result = PartialTransformer
+        .define[Foo, Bar]
+        .withConstructor(uncurriedConstructor _)
+        .buildTransformer
+        .transform(Foo(3, "pi", (3.14, 3.14)))
+      result.asOption ==> Some(uncurriedExpected)
+      result.asEither ==> Right(uncurriedExpected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = PartialTransformer
+        .define[Foo, Bar]
+        .withConstructor((x: Int, z: (Double, Double)) => uncurriedConstructor(x, z))
+        .buildTransformer
+        .transform(Foo(3, "pi", (3.14, 3.14)))
+      result2.asOption ==> Some(uncurriedExpected)
+      result2.asEither ==> Right(uncurriedExpected)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
+    }
   }
 
   group("setting .withConstructorTo(_.field)(fn)") {
@@ -235,6 +261,32 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
       result.value.id ==> "id"
       result.value.name ==> "name"
     }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}, nestedpath.*
+
+      val uncurriedExpected = NestedProduct(Bar(6, (6.28, 6.28)))
+
+      def uncurriedConstructor(x: Int, z: (Double, Double)): Bar = Bar(x * 2, (z._1 * 2, z._2 * 2))
+
+      val result = PartialTransformer
+        .define[NestedProduct[Foo], NestedProduct[Bar]]
+        .withConstructorTo(_.value)(uncurriedConstructor _)
+        .buildTransformer
+        .transform(NestedProduct(Foo(3, "pi", (3.14, 3.14))))
+      result.asOption ==> Some(uncurriedExpected)
+      result.asEither ==> Right(uncurriedExpected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = PartialTransformer
+        .define[NestedProduct[Foo], NestedProduct[Bar]]
+        .withConstructorTo(_.value)((x: Int, z: (Double, Double)) => uncurriedConstructor(x, z))
+        .buildTransformer
+        .transform(NestedProduct(Foo(3, "pi", (3.14, 3.14))))
+      result2.asOption ==> Some(uncurriedExpected)
+      result2.asEither ==> Right(uncurriedExpected)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
+    }
   }
 
   group("setting .withConstructorPartial(fn)") {
@@ -352,6 +404,33 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
       val result = (new ClassSource("id", "name")).transformIntoPartial[TraitSource].asOption.get
       result.id ==> "id"
       result.name ==> "name"
+    }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      val uncurriedExpected = Bar(6, (6.28, 6.28))
+
+      def uncurriedConstructor(x: Int, z: (Double, Double)): partial.Result[Bar] =
+        partial.Result.fromValue(Bar(x * 2, (z._1 * 2, z._2 * 2)))
+
+      val result = PartialTransformer
+        .define[Foo, Bar]
+        .withConstructorPartial(uncurriedConstructor _)
+        .buildTransformer
+        .transform(Foo(3, "pi", (3.14, 3.14)))
+      result.asOption ==> Some(uncurriedExpected)
+      result.asEither ==> Right(uncurriedExpected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = PartialTransformer
+        .define[Foo, Bar]
+        .withConstructorPartial((x: Int, z: (Double, Double)) => uncurriedConstructor(x, z))
+        .buildTransformer
+        .transform(Foo(3, "pi", (3.14, 3.14)))
+      result2.asOption ==> Some(uncurriedExpected)
+      result2.asEither ==> Right(uncurriedExpected)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -473,6 +552,33 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
       result.value.id ==> "id"
       result.value.name ==> "name"
     }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}, nestedpath.*
+
+      val uncurriedExpected = NestedProduct(Bar(6, (6.28, 6.28)))
+
+      def uncurriedConstructor(x: Int, z: (Double, Double)): partial.Result[Bar] =
+        partial.Result.fromValue(Bar(x * 2, (z._1 * 2, z._2 * 2)))
+
+      val result = PartialTransformer
+        .define[NestedProduct[Foo], NestedProduct[Bar]]
+        .withConstructorPartialTo(_.value)(uncurriedConstructor _)
+        .buildTransformer
+        .transform(NestedProduct(Foo(3, "pi", (3.14, 3.14))))
+      result.asOption ==> Some(uncurriedExpected)
+      result.asEither ==> Right(uncurriedExpected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = PartialTransformer
+        .define[NestedProduct[Foo], NestedProduct[Bar]]
+        .withConstructorPartialTo(_.value)((x: Int, z: (Double, Double)) => uncurriedConstructor(x, z))
+        .buildTransformer
+        .transform(NestedProduct(Foo(3, "pi", (3.14, 3.14))))
+      result2.asOption ==> Some(uncurriedExpected)
+      result2.asEither ==> Right(uncurriedExpected)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
+    }
   }
 
   group("setting .withConstructorEither(fn)") {
@@ -589,6 +695,33 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
       val result = (new ClassSource("id", "name")).transformIntoPartial[TraitSource].asOption.get
       result.id ==> "id"
       result.name ==> "name"
+    }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}
+
+      val uncurriedExpected = Bar(6, (6.28, 6.28))
+
+      def uncurriedConstructor(x: Int, z: (Double, Double)): Either[String, Bar] =
+        Right(Bar(x * 2, (z._1 * 2, z._2 * 2)))
+
+      val result = PartialTransformer
+        .define[Foo, Bar]
+        .withConstructorEither(uncurriedConstructor _)
+        .buildTransformer
+        .transform(Foo(3, "pi", (3.14, 3.14)))
+      result.asOption ==> Some(uncurriedExpected)
+      result.asEither ==> Right(uncurriedExpected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = PartialTransformer
+        .define[Foo, Bar]
+        .withConstructorEither((x: Int, z: (Double, Double)) => uncurriedConstructor(x, z))
+        .buildTransformer
+        .transform(Foo(3, "pi", (3.14, 3.14)))
+      result2.asOption ==> Some(uncurriedExpected)
+      result2.asEither ==> Right(uncurriedExpected)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 
@@ -708,6 +841,33 @@ class PartialTransformerCustomConstructorSpec extends ChimneySpec {
         NestedProduct(new ClassSource("id", "name")).transformIntoPartial[NestedProduct[TraitSource]].asOption.get
       result.value.id ==> "id"
       result.value.name ==> "name"
+    }
+
+    test("should work with semiautomatic derivation") {
+      import products.{Foo, Bar}, nestedpath.*
+
+      val uncurriedExpected = NestedProduct(Bar(6, (6.28, 6.28)))
+
+      def uncurriedConstructor(x: Int, z: (Double, Double)): Either[String, Bar] =
+        Right(Bar(x * 2, (z._1 * 2, z._2 * 2)))
+
+      val result = PartialTransformer
+        .define[NestedProduct[Foo], NestedProduct[Bar]]
+        .withConstructorEitherTo(_.value)(uncurriedConstructor _)
+        .buildTransformer
+        .transform(NestedProduct(Foo(3, "pi", (3.14, 3.14))))
+      result.asOption ==> Some(uncurriedExpected)
+      result.asEither ==> Right(uncurriedExpected)
+      result.asErrorPathMessageStrings ==> Iterable.empty
+
+      val result2 = PartialTransformer
+        .define[NestedProduct[Foo], NestedProduct[Bar]]
+        .withConstructorEitherTo(_.value)((x: Int, z: (Double, Double)) => uncurriedConstructor(x, z))
+        .buildTransformer
+        .transform(NestedProduct(Foo(3, "pi", (3.14, 3.14))))
+      result2.asOption ==> Some(uncurriedExpected)
+      result2.asEither ==> Right(uncurriedExpected)
+      result2.asErrorPathMessageStrings ==> Iterable.empty
     }
   }
 }

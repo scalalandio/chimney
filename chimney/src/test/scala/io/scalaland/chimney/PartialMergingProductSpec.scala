@@ -162,6 +162,24 @@ class PartialMergingProductSpec extends ChimneySpec {
         .transform
         .asOption ==> Some(Nested((1, "const", 3.0, 4, "computed", 6.0, 1)))
     }
+
+    test("should work with semiautomatic derivation") {
+      import merges.Disjoint.*, merges.Nested
+
+      PartialTransformer
+        .define[Foo[Double], Baz[Double]]
+        .withFallback(Bar(4, "e", 6.0))
+        .buildTransformer
+        .transform(Foo(1, "b", 3.0))
+        .asOption ==> Some(Baz(1, "b", 3.0, 4, "e", 6.0))
+
+      PartialTransformer
+        .define[Nested[Foo[Double]], Nested[Baz[Double]]]
+        .withFallback(Nested(Bar(4, "e", 6.0)))
+        .buildTransformer
+        .transform(Nested(Foo(1, "b", 3.0)))
+        .asOption ==> Some(Nested(Baz(1, "b", 3.0, 4, "e", 6.0)))
+    }
   }
 
   group("setting .withFallbackFrom(selectorFrom)(fallbackValue)") {
@@ -324,6 +342,24 @@ class PartialMergingProductSpec extends ChimneySpec {
         .withFieldRenamed(_.value.value.a, _.value.value._7)
         .transform
         .asOption ==> Some(Nested(Nested((1, "const", 3.0, 4, "computed", 6.0, 1))))
+    }
+
+    test("should work with semiautomatic derivation") {
+      import merges.Disjoint.*, merges.Nested
+
+      PartialTransformer
+        .define[Nested[Foo[Double]], Nested[Baz[Double]]]
+        .withFallbackFrom(_.value)(Bar(4, "e", 6.0))
+        .buildTransformer
+        .transform(Nested(Foo(1, "b", 3.0)))
+        .asOption ==> Some(Nested(Baz(1, "b", 3.0, 4, "e", 6.0)))
+
+      PartialTransformer
+        .define[Nested[Nested[Foo[Double]]], Nested[Nested[Baz[Double]]]]
+        .withFallbackFrom(_.value)(Nested(Bar(4, "e", 6.0)))
+        .buildTransformer
+        .transform(Nested(Nested(Foo(1, "b", 3.0))))
+        .asOption ==> Some(Nested(Nested(Baz(1, "b", 3.0, 4, "e", 6.0))))
     }
   }
 }
