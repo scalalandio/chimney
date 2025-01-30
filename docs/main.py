@@ -30,7 +30,7 @@ def define_env(env):
     """
     If git describe tells us that this is NOT a git tag but git tag + some offset, we need to add -SNAPSHOT to match sbt 
     """
-    if re.compile('.+-[0-9]+-g[0-9a-z]{8}').match(chimney_version_string):
+    if re.compile('.+-[0-9]+-g[0-9a-z]{7}').match(chimney_version_string):
         chimney_version_string = chimney_version_string + '-SNAPSHOT'
 
     @env.macro
