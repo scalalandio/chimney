@@ -110,6 +110,20 @@ class PatcherProductSpec extends ChimneySpec {
         .withFieldComputed(_.id, _ => 2)
         .patch ==> User(2, Email("d@e.f"), Phone(98765432L))
     }
+
+    test("should work with semiautomatic derivation") {
+      import PatchDomain.*
+
+      Patcher
+        .define[User, UpdateDetails]
+        .withFieldComputed(_.id, _ => 2)
+        .buildPatcher
+        .patch(User(1, Email("a@b.c"), Phone(123456789L)), UpdateDetails("d@e.f", 98765432L)) ==> User(
+        2,
+        Email("d@e.f"),
+        Phone(98765432L)
+      )
+    }
   }
 
   group("setting .withFieldComputedFrom(selectorFrom)(selectorTo, value)") {
@@ -121,6 +135,20 @@ class PatcherProductSpec extends ChimneySpec {
         .using(UpdateDetails("d@e.f", 98765432L))
         .withFieldComputedFrom(_.phone)(_.id, _.toInt)
         .patch ==> User(98765432, Email("d@e.f"), Phone(98765432L))
+    }
+
+    test("should work with semiautomatic derivation") {
+      import PatchDomain.*
+
+      Patcher
+        .define[User, UpdateDetails]
+        .withFieldComputedFrom(_.phone)(_.id, _.toInt)
+        .buildPatcher
+        .patch(User(1, Email("a@b.c"), Phone(123456789L)), UpdateDetails("d@e.f", 98765432L)) ==> User(
+        98765432,
+        Email("d@e.f"),
+        Phone(98765432L)
+      )
     }
   }
 
@@ -143,6 +171,19 @@ class PatcherProductSpec extends ChimneySpec {
         .using(User(1, Email("a@b.c"), Phone(123456789L)))
         .withFieldIgnored(_.id)
         .patch ==> UpdateDetails("a@b.c", 123456789L)
+    }
+
+    test("should work with semiautomatic derivation") {
+      import PatchDomain.*
+
+      Patcher
+        .define[UpdateDetails, User]
+        .withFieldIgnored(_.id)
+        .buildPatcher
+        .patch(UpdateDetails("d@e.f", 98765432L), User(1, Email("a@b.c"), Phone(123456789L))) ==> UpdateDetails(
+        "a@b.c",
+        123456789L
+      )
     }
   }
 
