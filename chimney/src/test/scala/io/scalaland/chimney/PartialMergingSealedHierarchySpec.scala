@@ -3,9 +3,9 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
-class PartialMergingSealedHiearchySpec extends ChimneySpec {
+class PartialMergingSealedHierarchySpec extends ChimneySpec {
 
-  import TotalMergingSealedHiearchySpec.*
+  import TotalMergingSealedHierarchySpec.*
 
   group("setting .withFallback(fallbackValue)") {
 
