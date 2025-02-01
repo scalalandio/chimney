@@ -3,6 +3,7 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
+import java.util.UUID
 import scala.annotation.unused
 
 class PatcherProductSpec extends ChimneySpec {
@@ -16,6 +17,21 @@ class PatcherProductSpec extends ChimneySpec {
 
     foo.patchUsing(bar) ==> Foo(10, "", 10.0)
     foo.using(bar).patch ==> Foo(10, "", 10.0)
+  }
+
+  test(
+    """patch an product type object with a product type patch object containing a "subset" of fields including a UUID"""
+  ) {
+    case class Foo(id: Int, externalReference: UUID)
+    case class Bar(externalReference: UUID)
+
+    val uuid1 = UUID.randomUUID()
+    val uuid2 = UUID.randomUUID()
+    val foo = Foo(42, uuid1)
+    val bar = Bar(uuid2)
+
+    foo.patchUsing(bar) ==> Foo(42, uuid2)
+    foo.using(bar).patch ==> Foo(42, uuid2)
   }
 
   test(
