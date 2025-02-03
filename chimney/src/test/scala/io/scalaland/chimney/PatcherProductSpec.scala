@@ -3,7 +3,6 @@ package io.scalaland.chimney
 import io.scalaland.chimney.dsl.*
 import io.scalaland.chimney.fixtures.*
 
-import java.util.UUID
 import scala.annotation.unused
 
 class PatcherProductSpec extends ChimneySpec {
@@ -20,18 +19,27 @@ class PatcherProductSpec extends ChimneySpec {
   }
 
   test(
-    """patch an product type object with a product type patch object containing a "subset" of fields including a UUID"""
+    """patch an product type object with a product type patch object containing a non-self-transformable pojo"""
   ) {
-    case class Foo(id: Int, externalReference: UUID)
-    case class Bar(externalReference: UUID)
+    object UUIDish {
+      def randomUUID(): UUIDish = {
+        val ng = scala.util.Random
+        new UUIDish(ng.nextLong(), ng.nextLong())
+      }
+    }
+    class UUIDish(mostSigBits: Long, leastSigBits: Long) {
+      override def toString: String = s"$mostSigBits::$leastSigBits"
+    }
+    case class Foo(id: Int, externalReference: UUIDish)
+    case class Bar(externalReference: UUIDish)
 
-    val uuid1 = UUID.randomUUID()
-    val uuid2 = UUID.randomUUID()
+    val uuid1 = UUIDish.randomUUID()
+    val uuid2 = UUIDish.randomUUID()
     val foo = Foo(42, uuid1)
     val bar = Bar(uuid2)
 
-    foo.patchUsing(bar) ==> Foo(42, uuid2)
     foo.using(bar).patch ==> Foo(42, uuid2)
+    foo.patchUsing(bar) ==> Foo(42, uuid2)
   }
 
   test(

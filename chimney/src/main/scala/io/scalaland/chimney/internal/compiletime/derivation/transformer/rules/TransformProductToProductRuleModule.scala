@@ -22,6 +22,10 @@ private[compiletime] trait TransformProductToProductRuleModule { this: Derivatio
     def expand[From, To](implicit ctx: TransformationContext[From, To]): DerivationResult[Rule.ExpansionResult[To]] =
       // From is checked after To, because extraction always succeeds
       (Type[To], Type[From]) match {
+        case (l, r) if r <:< l && ctx.config.areLocalFlagsAndOverridesEmpty =>
+          DerivationResult.attemptNextRuleBecause(
+            s"Type ${Type.prettyPrint[From]} <:< ${Type.prettyPrint[To]}. Falling back to TransformSubtypesRule"
+          )
         case (HasCustomConstructor(constructorOverride), Product.Extraction(fromExtractors)) =>
           mapOverridesAndExtractorsToConstructorArguments[From, To](fromExtractors, constructorOverride)
         case (Product.Constructor(parameters, constructor), Product.Extraction(fromExtractors)) =>
