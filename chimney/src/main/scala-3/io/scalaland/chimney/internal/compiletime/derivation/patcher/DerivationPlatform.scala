@@ -34,9 +34,9 @@ abstract private[compiletime] class DerivationPlatform(q: scala.quoted.Quotes)
     TransformEitherToEitherRule,
     TransformMapToMapRule,
     TransformIterableToIterableRule,
+    TransformSubtypesRule,
     PatchProductWithProductRule,
     TransformSealedHierarchyToSealedHierarchyRule,
-    TransformSubtypesRule,
     PatchNotMatchedRule
   )
 }
