@@ -34,9 +34,9 @@ private[compiletime] trait DerivationPlatform
     TransformEitherToEitherRule,
     TransformMapToMapRule,
     TransformIterableToIterableRule,
+    TransformSubtypesRule,
     PatchProductWithProductRule,
     TransformSealedHierarchyToSealedHierarchyRule,
-    TransformSubtypesRule,
     PatchNotMatchedRule
   )
 }
