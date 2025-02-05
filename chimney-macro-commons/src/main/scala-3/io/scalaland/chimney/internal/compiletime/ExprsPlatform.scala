@@ -152,7 +152,9 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
     def block[A: Type](statements: List[Expr[Unit]], expr: Expr[A]): Expr[A] =
       Block(statements.map(_.asTerm), expr.asTerm).asExprOf[A]
 
-    def summonImplicit[A: Type]: Option[Expr[A]] = scala.quoted.Expr.summon[A]
+    private type OptionExpr[A] = Option[Expr[A]]
+    private val implicitCache = new Type.Cache[OptionExpr]
+    def summonImplicit[A: Type]: Option[Expr[A]] = implicitCache(Type[A])(scala.quoted.Expr.summon[A])
 
     def nowarn[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
       val annotationSymbol: Symbol = TypeRepr.of[scala.annotation.nowarn].typeSymbol
