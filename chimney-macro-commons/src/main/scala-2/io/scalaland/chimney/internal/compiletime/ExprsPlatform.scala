@@ -152,11 +152,15 @@ private[compiletime] trait ExprsPlatform extends Exprs { this: DefinitionsPlatfo
 
     def block[A: Type](statements: List[Expr[Unit]], expr: Expr[A]): Expr[A] = c.Expr[A](q"..$statements; $expr")
 
-    def summonImplicit[A: Type]: Option[Expr[A]] = scala.util
-      .Try(c.inferImplicitValue(Type[A].tpe, silent = true, withMacrosDisabled = false))
-      .toOption
-      .filterNot(_ == EmptyTree)
-      .map(c.Expr[A](_))
+    private type OptionExpr[A] = Option[Expr[A]]
+    private val implicitCache = new Type.Cache[OptionExpr]
+    def summonImplicit[A: Type]: Option[Expr[A]] = implicitCache(Type[A]) {
+      scala.util
+        .Try(c.inferImplicitValue(Type[A].tpe, silent = true, withMacrosDisabled = false))
+        .toOption
+        .filterNot(_ == EmptyTree)
+        .map(c.Expr[A](_))
+    }
 
     def nowarn[A: Type](warnings: Option[String])(expr: Expr[A]): Expr[A] = {
       val name = ExprPromise.platformSpecific.freshTermName("nowarnResult")

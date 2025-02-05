@@ -150,6 +150,28 @@ private[compiletime] trait Types { this: (Existentials & Results) =>
     val <:< : `<:<Module`
     trait `<:<Module` extends Ctor2[<:<<] { this: `<:<`.type => }
 
+    class Cache[F[_]] {
+      sealed private trait Entry {
+        type Underlying
+        val key: Type[Underlying]
+        val value: F[Underlying]
+      }
+      private object Entry {
+        def apply[A](key: Type[A], value: F[A]): Entry { type Underlying = A } = new Impl(key, value)
+        final class Impl[A](val key: Type[A], val value: F[A]) extends Entry { type Underlying = A }
+      }
+      private val storage = scala.collection.mutable.ListBuffer.empty[Entry]
+
+      def apply[A](key: Type[A])(newValue: => F[A]): F[A] =
+        storage.find(_.key =:= key) match {
+          case Some(found) => found.value.asInstanceOf[F[A]]
+          case None =>
+            val value = newValue
+            storage += Entry(key, value)
+            value
+        }
+    }
+
     // You can `import Type.Implicits.*` in your shared code to avoid providing types manually, while avoiding conflicts
     // with implicit types seen in platform-specific scopes (which would happen if those implicits were always used).
     object Implicits {
