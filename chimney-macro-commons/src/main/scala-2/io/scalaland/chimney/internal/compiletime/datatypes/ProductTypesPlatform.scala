@@ -69,44 +69,50 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       isPOJO[A] && mem.exists(isDefaultConstructor) && mem.exists(isJavaSetterOrVar)
     }
 
-    def parseExtraction[A: Type]: Option[Product.Extraction[A]] = Some(
-      Product.Extraction(
-        ListMap.from[String, Existential[Product.Getter[A, *]]] {
-          forceTypeSymbolInitialization[A]
-          val localDefinitions = Type[A].tpe.decls.to(Set)
-          Type[A].tpe.members.sorted
-            .to(List)
-            .filterNot(isGarbageSymbol)
-            .collect { case method if method.isMethod => method.asMethod }
-            .filter(isAccessor)
-            .map { getter =>
-              val name = getDecodedName(getter)
-              val tpe = ExistentialType(fromUntyped(returnTypeOf(Type[A].tpe, getter)))
-              import tpe.Underlying as Tpe
-              def conformToIsGetters = !name.take(2).equalsIgnoreCase("is") || Tpe <:< Type[Boolean]
-              name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
-                val termName = getter.asMethod.name.toTermName
-                Product.Getter[A, Tpe](
-                  sourceType =
-                    if (isCaseClassField(getter)) Product.Getter.SourceType.ConstructorVal
-                    else if (isJavaGetter(getter) && conformToIsGetters) Product.Getter.SourceType.JavaBeanGetter
-                    else if (getter.isStable) Product.Getter.SourceType.ConstructorVal // Hmm...
-                    else Product.Getter.SourceType.AccessorMethod,
-                  isInherited = !localDefinitions(getter),
-                  get =
-                    // TODO: handle pathological cases like getName[Unused]()()()
-                    if (getter.asMethod.paramLists.isEmpty) (in: Expr[A]) => c.Expr[Tpe](q"$in.$termName")
-                    else
-                      (in: Expr[A]) =>
-                        c.Expr[Tpe](q"$in.$termName(...${getter.paramLists.map(_.map(_.asInstanceOf[Tree]))})")
-                )
+    private type CachedExtraction[A] = Option[Product.Extraction[A]]
+    private val extractionCache = new Type.Cache[CachedExtraction]
+    def parseExtraction[A: Type]: Option[Product.Extraction[A]] = extractionCache(Type[A])(
+      Some(
+        Product.Extraction(
+          ListMap.from[String, Existential[Product.Getter[A, *]]] {
+            forceTypeSymbolInitialization[A]
+            val localDefinitions = Type[A].tpe.decls.to(Set)
+            Type[A].tpe.members.sorted
+              .to(List)
+              .filterNot(isGarbageSymbol)
+              .collect { case method if method.isMethod => method.asMethod }
+              .filter(isAccessor)
+              .map { getter =>
+                val name = getDecodedName(getter)
+                val tpe = ExistentialType(fromUntyped(returnTypeOf(Type[A].tpe, getter)))
+                import tpe.Underlying as Tpe
+                def conformToIsGetters = !name.take(2).equalsIgnoreCase("is") || Tpe <:< Type[Boolean]
+                name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
+                  val termName = getter.asMethod.name.toTermName
+                  Product.Getter[A, Tpe](
+                    sourceType =
+                      if (isCaseClassField(getter)) Product.Getter.SourceType.ConstructorVal
+                      else if (isJavaGetter(getter) && conformToIsGetters) Product.Getter.SourceType.JavaBeanGetter
+                      else if (getter.isStable) Product.Getter.SourceType.ConstructorVal // Hmm...
+                      else Product.Getter.SourceType.AccessorMethod,
+                    isInherited = !localDefinitions(getter),
+                    get =
+                      // TODO: handle pathological cases like getName[Unused]()()()
+                      if (getter.asMethod.paramLists.isEmpty) (in: Expr[A]) => c.Expr[Tpe](q"$in.$termName")
+                      else
+                        (in: Expr[A]) =>
+                          c.Expr[Tpe](q"$in.$termName(...${getter.paramLists.map(_.map(_.asInstanceOf[Tree]))})")
+                  )
+                }
               }
-            }
-        }
+          }
+        )
       )
     )
 
-    def parseConstructor[A: Type]: Option[Product.Constructor[A]] = {
+    private type CachedConstructor[A] = Option[Product.Constructor[A]]
+    private val constructorCache = new Type.Cache[CachedConstructor]
+    def parseConstructor[A: Type]: Option[Product.Constructor[A]] = constructorCache(Type[A]) {
       val A = Type[A].tpe
       val sym = A.typeSymbol
       forceTypeSymbolInitialization(sym)

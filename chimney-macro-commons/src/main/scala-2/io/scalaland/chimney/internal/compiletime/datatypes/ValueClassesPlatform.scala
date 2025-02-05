@@ -11,7 +11,9 @@ trait ValueClassesPlatform extends ValueClasses { this: DefinitionsPlatform =>
 
   protected object WrapperClassType extends WrapperClassTypeModule {
 
-    def parse[A: Type]: Option[Existential[WrapperClass[A, *]]] = {
+    private type Cached[A] = Option[Existential[WrapperClass[A, *]]]
+    private val wrapperClassCache = new Type.Cache[Cached]
+    def parse[A: Type]: Option[Existential[WrapperClass[A, *]]] = wrapperClassCache(Type[A]) {
       val A = Type[A].tpe
       forceTypeSymbolInitialization[A]
 

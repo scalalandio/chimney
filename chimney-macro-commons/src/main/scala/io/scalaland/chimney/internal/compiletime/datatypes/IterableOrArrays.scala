@@ -25,7 +25,9 @@ trait IterableOrArrays { this: Definitions =>
   protected val IterableOrArray: IterableOrArrayModule
   protected trait IterableOrArrayModule { this: IterableOrArray.type =>
 
-    def unapply[M](implicit M: Type[M]): Option[Existential[IterableOrArray[M, *]]] = M match {
+    private type Cached[M] = Option[Existential[IterableOrArray[M, *]]]
+    private val iterableOrArrayCache = new Type.Cache[Cached]
+    def unapply[M](implicit M: Type[M]): Option[Existential[IterableOrArray[M, *]]] = iterableOrArrayCache(M)(M match {
       case Type.Map(k, v) =>
         import k.Underlying as K, v.Underlying as V
         val a = ExistentialType[(K, V)]
@@ -41,7 +43,7 @@ trait IterableOrArrays { this: Definitions =>
         import a.Underlying as Inner
         Some(buildInArraySupport[M, Inner])
       case _ => buildInIArraySupport[M]
-    }
+    })
 
     private def buildInIterableSupport[M: Type, Inner: Type](hint: String): Existential[IterableOrArray[M, *]] =
       Existential[IterableOrArray[M, *], Inner](

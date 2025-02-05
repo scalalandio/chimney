@@ -17,10 +17,13 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
       sym.isClass && sym.asClass.isSealed
     }
 
-    def parse[A: Type]: Option[Enum[A]] =
+    private type Cached[A] = Option[Enum[A]]
+    private val enumCache = new Type.Cache[Cached]
+    def parse[A: Type]: Option[Enum[A]] = enumCache(Type[A]) {
       if (isJavaEnum[A]) Some(symbolsToEnum(extractJavaEnumInstances[A]))
       else if (isSealed[A]) Some(symbolsToEnum(extractSealedSubtypes[A]))
       else None
+    }
 
     private def extractJavaEnumInstances[A: Type]: List[(String, ?<[A])] =
       Type[A].tpe.companion.decls
