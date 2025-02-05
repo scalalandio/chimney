@@ -17,10 +17,13 @@ trait SealedHierarchiesPlatform extends SealedHierarchies { this: DefinitionsPla
       flags.is(Flags.Sealed) // do NOT use flags.is(Flags.Enum) since it will also match enums cases!
     }
 
-    def parse[A: Type]: Option[Enum[A]] =
+    private type Cached[A] = Option[Enum[A]]
+    private val enumCache = new Type.Cache[Cached]
+    def parse[A: Type]: Option[Enum[A]] = enumCache(Type[A]) {
       // no need for separate java.lang.Enum handling contrary to Scala 2
       if isSealed[A] then Some(symbolsToEnum(extractSealedSubtypes[A]))
       else None
+    }
 
     implicit private val order: Ordering[Symbol] = Ordering
       .Option(Ordering.fromLessThan[Position] { (a, b) =>

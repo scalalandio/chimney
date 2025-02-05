@@ -35,7 +35,9 @@ trait ValueClasses { this: Definitions =>
   }
 
   protected object ValueClassType {
-    def parse[A: Type]: Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]] =
+    private type Cached[A] = Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]]
+    private val valueClassCache = new Type.Cache[Cached]
+    def parse[A: Type]: Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]] = valueClassCache(Type[A]) {
       if (Type[A].isAnyVal)
         WrapperClassType.parse[A].map {
           _.asInstanceOf[Existential.UpperBounded[AnyVal, WrapperClass[A, *]]].mapK[ValueClass[A, *]] { _ =>
@@ -45,6 +47,7 @@ trait ValueClasses { this: Definitions =>
           }
         }
       else None
+    }
     def unapply[A](tpe: Type[A]): Option[Existential.UpperBounded[AnyVal, ValueClass[A, *]]] = parse(tpe)
   }
 }

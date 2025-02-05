@@ -76,64 +76,70 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
       isPOJO[A] && mem.exists(isDefaultConstructor) && mem.exists(isJavaSetterOrVar)
     }
 
-    def parseExtraction[A: Type]: Option[Product.Extraction[A]] = Some(
-      Product.Extraction(ListMap.from[String, Existential[Product.Getter[A, *]]] {
-        import Type.platformSpecific.*
-        val A = TypeRepr.of[A]
-        val sym = A.typeSymbol
+    private type CachedExtraction[A] = Option[Product.Extraction[A]]
+    private val extractionCache = new Type.Cache[CachedExtraction]
+    def parseExtraction[A: Type]: Option[Product.Extraction[A]] = extractionCache(Type[A])(
+      Some(
+        Product.Extraction(ListMap.from[String, Existential[Product.Getter[A, *]]] {
+          import Type.platformSpecific.*
+          val A = TypeRepr.of[A]
+          val sym = A.typeSymbol
 
-        // case class fields appear once in sym.caseFields as vals and once in sym.declaredMethods as methods
-        // additionally sometimes they appear twice! once as "val name" and once as "method name " (notice space at the end
-        // of name). This breaks matching by order (tuples) but has to be fixed in a way that doesn't filter out fields
-        // for normal cases.
-        val caseFields = sym.caseFields.zipWithIndex
-          .groupBy(_._1.name.trim)
-          .view
-          .map {
-            case (_, Seq(fieldIdx, _)) if fieldIdx._1.isDefDef => fieldIdx
-            case (_, Seq(_, fieldIdx)) if fieldIdx._1.isDefDef => fieldIdx
-            case (_, fieldIdxs)                                => fieldIdxs.head
+          // case class fields appear once in sym.caseFields as vals and once in sym.declaredMethods as methods
+          // additionally sometimes they appear twice! once as "val name" and once as "method name " (notice space at the end
+          // of name). This breaks matching by order (tuples) but has to be fixed in a way that doesn't filter out fields
+          // for normal cases.
+          val caseFields = sym.caseFields.zipWithIndex
+            .groupBy(_._1.name.trim)
+            .view
+            .map {
+              case (_, Seq(fieldIdx, _)) if fieldIdx._1.isDefDef => fieldIdx
+              case (_, Seq(_, fieldIdx)) if fieldIdx._1.isDefDef => fieldIdx
+              case (_, fieldIdxs)                                => fieldIdxs.head
+            }
+            .toList
+            .sortBy(_._2)
+            .map(_._1)
+            .toList
+          val caseFieldNames = caseFields.map(_.name.trim).toSet
+
+          def isCaseFieldName(sym: Symbol) = caseFieldNames(sym.name.trim)
+
+          val accessorsAndGetters = sym.methodMembers
+            .filterNot(_.paramSymss.exists(_.exists(_.isType))) // remove methods with type parameters
+            .filterNot(isGarbageSymbol)
+            .filterNot(isCaseFieldName)
+            .filter(isAccessor)
+          val localDefinitions = (sym.declaredMethods ++ sym.declaredFields).toSet
+
+          // if we are taking caseFields but then we also are using ALL fieldMembers shouldn't we just use fieldMembers?
+          (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).filter(_.isPublic).distinct.map { getter =>
+            val name = getter.name
+            val tpe = ExistentialType(returnTypeOf[Any](A, getter))
+            def conformToIsGetters = !name.take(2).equalsIgnoreCase("is") || tpe.Underlying <:< Type[Boolean]
+            name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
+              Product.Getter(
+                sourceType =
+                  if isCaseFieldName(getter) then Product.Getter.SourceType.ConstructorVal
+                  else if isJavaGetter(getter) && conformToIsGetters then Product.Getter.SourceType.JavaBeanGetter
+                  else if getter.isValDef then Product.Getter.SourceType.ConstructorVal
+                  else Product.Getter.SourceType.AccessorMethod,
+                isInherited = !localDefinitions(getter),
+                get =
+                  // TODO: pathological cases like def foo[Unused]()()()
+                  if getter.paramSymss.isEmpty then (in: Expr[A]) =>
+                    in.asTerm.select(getter).appliedToArgss(Nil).asExprOf[tpe.Underlying]
+                  else (in: Expr[A]) => in.asTerm.select(getter).appliedToNone.asExprOf[tpe.Underlying]
+              )
+            }
           }
-          .toList
-          .sortBy(_._2)
-          .map(_._1)
-          .toList
-        val caseFieldNames = caseFields.map(_.name.trim).toSet
-
-        def isCaseFieldName(sym: Symbol) = caseFieldNames(sym.name.trim)
-
-        val accessorsAndGetters = sym.methodMembers
-          .filterNot(_.paramSymss.exists(_.exists(_.isType))) // remove methods with type parameters
-          .filterNot(isGarbageSymbol)
-          .filterNot(isCaseFieldName)
-          .filter(isAccessor)
-        val localDefinitions = (sym.declaredMethods ++ sym.declaredFields).toSet
-
-        // if we are taking caseFields but then we also are using ALL fieldMembers shouldn't we just use fieldMembers?
-        (caseFields ++ sym.fieldMembers ++ accessorsAndGetters).filter(_.isPublic).distinct.map { getter =>
-          val name = getter.name
-          val tpe = ExistentialType(returnTypeOf[Any](A, getter))
-          def conformToIsGetters = !name.take(2).equalsIgnoreCase("is") || tpe.Underlying <:< Type[Boolean]
-          name -> tpe.mapK[Product.Getter[A, *]] { implicit Tpe: Type[tpe.Underlying] => _ =>
-            Product.Getter(
-              sourceType =
-                if isCaseFieldName(getter) then Product.Getter.SourceType.ConstructorVal
-                else if isJavaGetter(getter) && conformToIsGetters then Product.Getter.SourceType.JavaBeanGetter
-                else if getter.isValDef then Product.Getter.SourceType.ConstructorVal
-                else Product.Getter.SourceType.AccessorMethod,
-              isInherited = !localDefinitions(getter),
-              get =
-                // TODO: pathological cases like def foo[Unused]()()()
-                if getter.paramSymss.isEmpty then (in: Expr[A]) =>
-                  in.asTerm.select(getter).appliedToArgss(Nil).asExprOf[tpe.Underlying]
-                else (in: Expr[A]) => in.asTerm.select(getter).appliedToNone.asExprOf[tpe.Underlying]
-            )
-          }
-        }
-      })
+        })
+      )
     )
 
-    def parseConstructor[A: Type]: Option[Product.Constructor[A]] =
+    private type CachedConstructor[A] = Option[Product.Constructor[A]]
+    private val constructorCache = new Type.Cache[CachedConstructor]
+    def parseConstructor[A: Type]: Option[Product.Constructor[A]] = constructorCache(Type[A]) {
       if isCaseObject[A] || isCaseVal[A] || isJavaEnumValue[A] then {
         val A = TypeRepr.of[A]
         // Workaround for different Symbol used when we obtain things from SealedHierarchies and passed by user as
@@ -253,6 +259,7 @@ trait ProductTypesPlatform extends ProductTypes { this: DefinitionsPlatform =>
 
         Some(Product.Constructor(parameters, constructor))
       } else None
+    }
 
     def exprAsInstanceOfMethod[A: Type](args: List[ListMap[String, ??]])(expr: Expr[Any]): Product.Constructor[A] = {
       val parameters: Product.Parameters = ListMap.from(for {
