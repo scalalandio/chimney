@@ -2093,7 +2093,7 @@ The same is true for partial transformers.
 
 ### Recursive calls on implicits
 
-Old versions of Chimney in situations like this:
+In situations like this:
 
 !!! example
 
@@ -2102,7 +2102,7 @@ Old versions of Chimney in situations like this:
     implicit val t: Transformer[Foo, Bar] = foo => foo.into[Bar].transform
     ```
     
-would result in errors like:
+the old versions of Chimney would result in errors like:
 
 !!! example
 
@@ -2110,13 +2110,37 @@ would result in errors like:
     forward reference extends over definition of value t
     ```
 
-In newer, it can result in errors like:
+In newer, it can result in errors like stack overflow:
 
 !!! example
 
     ```scala
     java.lang.StackOverflowError
     ```
+
+The reason for that is that:
+
+!!! example
+
+    ```scala
+    implicit val t: Transformer[Foo, Bar] = foo => foo.transformInto[Bar] // or
+    implicit val t: Transformer[Foo, Bar] = foo => foo.into[Bar].transform
+    ```
+
+generates this code:
+
+!!! example
+
+    ```scala
+    implicit val t: Transformer[Foo, Bar] = foo => foo.transformInto(t) // t is calling itself!
+    implicit val t: Transformer[Foo, Bar] = foo => t.transform(foo) // t is calling itself!
+    ```
+
+When you have such reference to itself, then depending on where it was defined, or whether it was `val`, `lazy val`
+or `def`, you can have runtime exception such as:
+
+ * `StackOverflowError` - when `Transformer` initialized correctly, but calling it resulted in inifinite recursion
+ * `NullPointerException` - when it's something like `implicit val t: Transformer[Foo, Bar] = implicitly[Transformer[Foo, Bar]]`
 
 It's a sign of recursion which has to be handled with [semiautomatic derivation](cookbook.md#automatic-vs-semiautomatic).
 
@@ -2125,6 +2149,20 @@ It's a sign of recursion which has to be handled with [semiautomatic derivation]
     ```scala
     implicit val t: Transformer[Foo, Bar] = Transformer.derive[Foo, Bar] // or
     implicit val t: Transformer[Foo, Bar] = Transformer.define[Foo, Bar].buildTransformer
+    ```
+
+When using `.derive` (counterpart to `.transformInto`)/`.define.buildTransformer` (counterpart `.into.transform` as it also
+allows to put overrides/flags), implicit `Transformer` is **not being searched for the top level transformation** -
+but it **is allowed in nested fields** which allows transforming recursive data structures.
+
+Implicits are also not searched when the type has overrides (as using implicit would skip all these overrides):
+
+!!! example
+
+    ```scala
+    // This does NOT call itself as withField*/withSealedSubtype*/withEnumCase*/withFallback*/withConstructor*
+    // prevents implicit usage (and upcasting)
+    implicit val t: Transformer[Foo, Bar] = foo => foo.into[Bar].withFieldConst(_.field, value).transform
     ```
 
 ### `sealed trait`s fail to recompile
