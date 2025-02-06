@@ -350,7 +350,9 @@ In particular, when the source type is (`=:=`) the target type, you will end up 
     val b = new B
 
     b.into[A].withFieldConst(_.a, "copied").transform // new A("copied")
-    Transformer.define[A, B].buildTransformer.transform(b) // new A("copied")
+
+    import io.scalaland.chimney.Transformer
+    Transformer.derive[A, B].withFieldConst(_.a, "copied").buildTransformer.transform(b) // new A("copied")
     ```
     
     since that customization couldn't be applied if we only upcasted the value. 
@@ -4229,7 +4231,7 @@ knows how to apply it, the transformation can still be derived:
     case class Bar[A](value: A)
 
     def refinedExample[A <: { val value: String }](foo: Foo[A]): Bar[Bar[String]] =
-      foo.into[Bar[Bar[String]]].enableMacrosLogging.transform
+      foo.transformInto[Bar[Bar[String]]]
 
     pprint.pprintln(
       refinedExample[Foo[String]](Foo(Foo("value")))
