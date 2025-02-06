@@ -37,6 +37,8 @@ transformation is through `Transformer[From, To]`:
       override def toString: String = s"MyOtherType($b)"
     }
 
+    // There are better ways of defining implicit Transformer - see Transformer.derive[From, To] and
+    // Transformer.define[From, To].buildTransformer - but for completely arbitrary type it's ok
     val transformer: Transformer[MyType, MyOtherType] = (src: MyType) => new MyOtherType(src.a.toString)
 
     transformer.transform(new MyType(10)) // new MyOtherType("10")
@@ -57,7 +59,7 @@ transformation is through `Transformer[From, To]`:
 For many cases, Chimney can generate this `Transformer` for you, without you having to do anything. As a matter of
 fact, the majority of this page describes exactly that. In some cases Chimney might not know how to generate a total
 transformation - but you would know, and you [could provide it yourself](#custom-transformations). But what if
-converting one type into another cannot be described with a total function?
+converting one type into another cannot be described with a total function?    
 
 Partial Transformers owe their name to **partial functions**. They might successfully convert only some values of
 the source type. However, contrary to Scala's `PartialFunction` they do not throw an `Exception` when you pass a "wrong"
@@ -78,6 +80,8 @@ function was not defined, "empty value" when something was expected) and even th
       override def toString: String = s"MyOtherType($a)"
     }
 
+    // There are better ways of defining implicit PartialTransformer - see PartialTransformer.derive[From, To] and
+    // PartialTransformer.define[From, To].buildTransformer - but for completely arbitrary type it's ok
     val transformer: PartialTransformer[MyType, MyOtherType] =
       PartialTransformer[MyType, MyOtherType] { (src: MyType) =>
         partial.Result
@@ -317,6 +321,15 @@ If you transform one type into itself or its supertype, it will be upcast withou
     b.into[A].transform // == (b: A)
     b.transformIntoPartial[A].asEither // == Right(b: A)
     b.intoPartial[A].transform.asEither // == Right(b: A)
+
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+
+    // If we want to reuse Transformer we can create implicits using
+    val totalTransformer: Transformer[A, B] = Transformer.derive[A, B]
+    val partialTransformer: PartialTransformer[A, B] = PartialTransformer.derive[A, B]
+    // or)
+    val totalTransformer2: Transformer[A, B] = Transformer.define[A, B].buildTransformer
+    val partialTransformer2: PartialTransformer[A, B] = PartialTransformer.define[A, B].buildTransformer
     ```
 
 In particular, when the source type is (`=:=`) the target type, you will end up with an identity transformation.
@@ -337,6 +350,7 @@ In particular, when the source type is (`=:=`) the target type, you will end up 
     val b = new B
 
     b.into[A].withFieldConst(_.a, "copied").transform // new A("copied")
+    Transformer.define[A, B].buildTransformer.transform(b) // new A("copied")
     ```
     
     since that customization couldn't be applied if we only upcasted the value. 
@@ -461,6 +475,17 @@ The obvious examples are `case class`es with the same fields:
     // Target(a = 42, b = 0.07)
     // Right(value = Target(a = 42, b = 0.07))
     // Right(value = Target(a = 42, b = 0.07))
+
+    import io.scalaland.chimney.{Transformer, PartialTransformer}
+
+    // If we want to reuse Transformer we can create implicits using
+    val totalTransformer: Transformer[Source, Target] = Transformer.derive[Source, Target]
+    val partialTransformer: PartialTransformer[Source, Target] = PartialTransformer.derive[Source, Target]
+    // or (if you want to pass overrides)
+    val totalTransformer2: Transformer[Source, Target] = Transformer.define[Source, Target]
+      .buildTransformer
+    val partialTransformer2: PartialTransformer[Source, Target] = PartialTransformer.define[Source, Target]
+      .buildTransformer
     ```
 
 However, the original value might have fields absent in the target type and/or appearing in a different order:
@@ -633,6 +658,13 @@ side effects - you need to enable the `.enableMethodAccessors` flag:
       // val source = new Source("value", 512)
       // partial.Result.fromValue(new Target(source.a, source.b()))
     }
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
+      .enableMethodAccessors
+      .buildTransformer
     ```
 
 Flag `.enableMethodAccessors` will allow macros to consider methods that are:
@@ -713,6 +745,13 @@ inherited from a source value's supertype, you need to enable the `.enableInheri
       // Target(a = "value", b = 10)
       // Right(value = Target(a = "value", b = 10))
     }
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
+      .enableInheritedAccessors
+      .buildTransformer
     ```
 
 !!! tip
@@ -790,6 +829,13 @@ If we want to read `def getFieldName(): A` as if it was `val fieldName: A` - whi
       // val source = new Source("value", 512)
       // partial.Result.fromValue(new Target(source.getA(), source.getB()))
     }
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
+      .enableBeanGetters
+      .buildTransformer
     ```
 
 Flag `.enableBeanGetters` will allow macros to consider methods which are:
@@ -888,6 +934,13 @@ flag:
       // target.setB(source.b)
       // partial.Result.fromValue(target)
     }
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
+      .enableBeanSetters
+      .buildTransformer
     ```
 
 Flag `.enableBeanSetters` will allow macros to write to methods which are:
@@ -1060,6 +1113,13 @@ them:
       ().transformInto[Target] // new Target()
       ().transformIntoPartial[Target] // partial.Result.fromValue(new Target())
     }
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Unit, Target] = Transformer.define[Unit, Target]
+      .enableIgnoreUnmatchedBeanSetters
+      .buildTransformer
     ```
 
 If the flag was enabled in the implicit config it can be disabled with `.disableIgnoreUnmatchedBeanSetters`.
@@ -1223,6 +1283,14 @@ To consider such methods (and fail compilation if they are not matched) you can 
       // target.setB(source.b)
       // partial.Result.fromValue(target)
     }
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
+      .enableBeanSetters
+      .enableNonUnitBeanSetters
+      .buildTransformer
     ```
 
 It is disabled by default for the same reasons as default values - being potentially dangerous.
@@ -1415,6 +1483,13 @@ to default values with the `.enableDefaultValues` flag:
     // expected output:
     // Target(a = "value", b = 128, c = 0L)
     // Value(value = Target(a = "value", b = 128, c = 0L))
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Source, Target] = Transformer.define[Source, Target]
+      .enableDefaultValues
+      .buildTransformer
     ```
 
 A default value is used as a fallback, meaning:
@@ -1523,6 +1598,13 @@ similar reasons to default values support, but we can enable it with the `.enabl
       // Bar(a = "value", b = None)
       // Some(value = Bar(a = "value", b = None))
     }
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
+      .enableOptionDefaultsToNone
+      .buildTransformer
     ```
 
 The `None` value is used as a fallback, meaning:
@@ -1630,6 +1712,13 @@ it with another field. Since the usual cause of such cases is a _rename_, we can
     // expected output:
     // Bar(a = "value", c = 1248)
     // Right(value = Bar(a = "value", c = 1248))
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
+      .withFieldRenamed(_.b, _.c)
+      .buildTransformer
     ```
 
 !!! tip
@@ -1813,6 +1902,14 @@ the constructor's argument/setter yourself. The successful value can be provided
     // expected output:
     // Bar(a = "value", b = 20, c = 1000L)
     // Right(value = Bar(a = "value", b = 20, c = 1000L))
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
+      .withFieldConst(_.c, 1000L)
+      .withFieldConst(_.b, 20)
+      .buildTransformer
     ```
 
 `.withFieldConst` can be used to provide/override only _successful_ values. What if we want to provide a failure, e.g.:
@@ -2061,6 +2158,14 @@ using `.withFieldComputed`:
     // expected output:
     // Vector(Bar(a = "value", b = 40, c = 20L))
     // Right(value = Vector(Bar(a = "value", b = 40, c = 20L)))
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
+      .withFieldComputed(_.c, foo => foo.b.toLong * 2)
+      .withFieldComputed(_.b, foo => foo.b * 4)
+      .buildTransformer
     ```
 
 `.withFieldComputed`/`.withFieldComputedFrom` can be used to compute only _successful_ values. What if we want to
@@ -2365,6 +2470,13 @@ The field name matching predicate can be overridden with a flag:
       // Right(value = Bar(baz = Baz(s = "test"), a = 1024))
       // Right(value = Bar(baz = Baz(s = "test"), a = 1024))
     }
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
+      .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+      .buildTransformer
     ```
 
 For details about `TransformedNamesComparison` look at [their dedicated section](#defining-custom-name-matching-predicate).
@@ -2694,6 +2806,13 @@ type's subtype needs to have a corresponding subtype with a matching name in the
     // expected output:
     // Right(value = Buzz)
     // Right(value = Buzz)
+
+    import io.scalaland.chimney.Transformer
+
+    // If we want to reuse Transformer with overrides we can create implicits using
+    val transformer: Transformer[Foo, Bar] = Transformer.define[Foo, Bar]
+      .enableCustomFieldNameComparison(TransformedNamesComparison.CaseInsensitiveEquality)
+      .buildTransformer
     ```
 
 !!! tip
