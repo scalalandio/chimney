@@ -5,6 +5,12 @@ import io.scalaland.chimney.internal.runtime.{PatcherFlags, PatcherOverrides}
 
 /** Type class definition that wraps patching behavior.
   *
+  * @note
+  *   You should not need to instantiate this class manually, if you can derive it - take a look at [[.derive]] and
+  *   [[.define]] methods for that. Manual intantiation is only necessary if you want to add support for the
+  *   transformation that is not supported out of the box. Even then consult
+  *   [[https://chimney.readthedocs.io/cookbook/#integrations]] first!
+  *
   * @see
   *   [[https://chimney.readthedocs.io/supported-patching/]]
   *
