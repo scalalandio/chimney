@@ -55,11 +55,22 @@ case class ApiUser(name: String, surname: String)
 val userID: UUID = ...
 val user: User = ...
 
-// Use .transformInto[Type], when don't need to customize anything... 
+// Use .transformInto[Type], when don't need to customize anything...:
 val apiUser: ApiUser  = user.transformInto[ApiUser]
 
-// ...and .into[Type].customization.transform when you do.
+// ...and .into[Type].customization.transform when you do:
 val user2: User = apiUser.into[User].withFieldConst(_.id, userID).transform
+
+// If yout want to reuse some Transformation (and you don't want to write it by hand)
+// you can generate it with .derive:
+implicit val transformer: Transformer[ApiUser, User] = Transformer.derive[ApiUser, User]
+
+// ...or with .define.customization.buildTransformer:
+implicit val transformerWithOverrides: Transformer[User, ApiUser] = Transformer.define[User, ApiUser]
+  .withFieldConst(_.id, userID)
+  .buildTransformer
+
+// It works the same way with PartialTransformers and Patchers.
 ```
 
 Chimney will take care of generating the boring transformation code, and if it finds something non-obvious, it will give
