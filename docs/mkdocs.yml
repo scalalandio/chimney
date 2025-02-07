@@ -75,7 +75,7 @@ plugins:
   - search
 copyright: |
   <div style="color: var(--md-footer-fg-color--lighter)">
-  Copyright © 2017—2024, <a href="https://scalaland.io" target="_blank" rel="noopener">Scalaland.io</a>.<br />
+  Copyright © 2017—2025, <a href="https://scalaland.io" target="_blank" rel="noopener">Scalaland.io</a>.<br />
   Chimney is FOSS licensed under Apache 2.0<br />
   <br />
   Documentation made with <a href="https://www.mkdocs.org" target="_blank" rel="noopener">MkDocs</a>, <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">Material for MkDocs</a> and <a href="https://mkdocs-macros-plugin.readthedocs.io/" target="_blank" rel="noopener">Mkdocs-Macros</a>, hosted on <a href="https://readthedocs.org/" target="_blank" rel="noopener">Read the Docs</a>
