@@ -28,6 +28,14 @@ Currently, the only supported case is updating one `case class` with another:
     )
     // expected output:
     // User(id = 10, email = Email(address = "xyz@@domain.com"), phone = Phone(number = 123123123L))
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[User, UserUpdateForm] = Patcher.derive[User, UserUpdateForm]
+    // or (if you want to pass overrides):
+    val patcher2: Patcher[User, UserUpdateForm] = Patcher.define[User, UserUpdateForm]
+      .buildPatcher
     ```
 
 As we see the values from the "patch" aren't always of the same type as the values they are supposed to update.
@@ -61,6 +69,13 @@ we can do it using `.withFieldConst` (just like with `Transformer`s):
     )
     // expected output:
     // User(id = 20, email = Email(address = "xyz@@domain.com"), phone = Phone(number = 123123123L))
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[User, UserUpdateForm] = Patcher.define[User, UserUpdateForm]
+      .withFieldConst(_.id, 20)
+      .buildPatcher
     ```
 
 ### Updating field with a computed value
@@ -113,6 +128,13 @@ we can do it using `.withFieldComputed` (just like with `Transformer`s) or `.wit
     //     phone = Phone(number = 123123123L)
     //   )
     // )
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[Wrapper[User], Wrapper[UserUpdateForm]] = Patcher.define[Wrapper[User], Wrapper[UserUpdateForm]]
+      .withFieldComputed(_.value.id, patch => patch.value.phone.toInt)
+      .buildPatcher
     ```
 
 ### Ignoring fields in patches
@@ -175,6 +197,13 @@ But there is a way to ignore redundant patcher fields explicitly with `.ignoreRe
       // expected output:
       // User(id = 10, email = "xyz@@domain.com", phone = 123123123L)
     }
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[User, UserUpdateForm] = Patcher.define[User, UserUpdateForm]
+      .ignoreRedundantPatcherFields
+      .buildPatcher
     ```
 
 Patching succeeded using only relevant fields that appear in the patched object and ignoring address: `String` field 
@@ -262,6 +291,14 @@ It is possible to update values containing `AnyVal`s:
     )
     // expected output:
     // Foo(value = Wrapper(str = "bbb"))
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[Foo[String], Bar[Wrapper]] = Patcher.derive[Foo[String], Bar[Wrapper]]
+    // or (if you want to pass overrides):
+    val patcher2: Patcher[Foo[String], Bar[Wrapper]] = Patcher.define[Foo[String], Bar[Wrapper]]
+      .buildPatcher
     ```
 
 ## Updating value with `Option`
@@ -290,6 +327,14 @@ Let’s consider the following patch:
     )
     // expected output:
     // User(id = 10, email = "updated@@example.com", phone = 1234567890L)
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[User, UserPatch] = Patcher.derive[User, UserPatch]
+    // or (if you want to pass overrides):
+    val patcher2: Patcher[User, UserPatch] = Patcher.define[User, UserPatch]
+      .buildPatcher
     ```
 
 The field `phone` remained the same as in the original `user`, while the optional e-mail string got updated from
@@ -367,6 +412,13 @@ but it also gives a simple way to always ignore `None` from the patch with `.ign
       // expected output:
       // User(name = Some(value = "John"), age = Some(value = 30))
     }
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[User, UserPatch] = Patcher.define[User, UserPatch]
+      .ignoreNoneInPatch
+      .buildPatcher
     ```
 
 If the flag was enabled in the implicit config it can be disabled with `.clearOnNoneInPatch`.
@@ -396,6 +448,13 @@ If the flag was enabled in the implicit config it can be disabled with `.clearOn
     // clears both fields:
     // expected output:
     // User(name = None, age = None)
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[User, UserPatch] = Patcher.define[User, UserPatch]
+      .clearOnNoneInPatch
+      .buildPatcher
     ```
  
 ### Unambiguous `Option` update
@@ -431,6 +490,14 @@ unambiguous what to do:
     // ignores updating both fields:
     // expected output:
     // User(name = Some(value = "Jane"), age = Some(value = 25))
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[User, UserPatch] = Patcher.derive[User, UserPatch]
+    // or (if you want to pass overrides):
+    val patcher2: Patcher[User, UserPatch] = Patcher.define[User, UserPatch]
+      .buildPatcher
     ```
 
 ## Updating value with `Either`
@@ -455,6 +522,14 @@ By default patch always just replaces the old value with a new one:
     )
     // expected output:
     // User(name = Left(value = "nope"), age = Left(value = "nope"))
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[User, UserPatch] = Patcher.derive[User, UserPatch]
+    // or (if you want to pass overrides):
+    val patcher2: Patcher[User, UserPatch] = Patcher.define[User, UserPatch]
+      .buildPatcher
     ```
 
 ### Treating `Left` as no-update instead of "set to `Left`"
@@ -523,6 +598,13 @@ The latter would assume that `Either` is `Right`-biased.
       // expected output:
       // User(name = Right(value = "John"), age = Right(value = 30))
     }
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher2: Patcher[User, UserPatch] = Patcher.define[User, UserPatch]
+      .ignoreLeftInPatch
+      .buildPatcher
     ```
 
 If the flag was enabled in the implicit config it can be disabled with `.useLeftOnLeftInPatch`.
@@ -552,6 +634,13 @@ If the flag was enabled in the implicit config it can be disabled with `.useLeft
     // clears both fields:
     // expected output:
     // User(name = Left(value = "nope"), age = Left(value = "nope"))
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher2: Patcher[User, UserPatch] = Patcher.define[User, UserPatch]
+      .useLeftOnLeftInPatch
+      .buildPatcher
     ```
  
 ### Unambiguous `Either` update
@@ -587,6 +676,14 @@ unambiguous what to do:
     // ignores updating both fields:
     // expected output:
     // User(name = Right(value = "Jane"), age = Right(value = 25))
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[User, UserPatch] = Patcher.derive[User, UserPatch]
+    // or (if you want to pass overrides):
+    val patcher2: Patcher[User, UserPatch] = Patcher.define[User, UserPatch]
+      .buildPatcher
     ```
 
 ## Updating value with collection
@@ -611,6 +708,14 @@ By default patch always just replaces the old value with a new one:
     )
     // expected output:
     // UserStats(names = List("Jane"), ages = List(25))
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[UserStats, UserStatsPatch] = Patcher.derive[UserStats, UserStatsPatch]
+    // or (if you want to pass overrides):
+    val patcher2: Patcher[UserStats, UserStatsPatch] = Patcher.define[UserStats, UserStatsPatch]
+      .buildPatcher
     ```
 
 ### Appending to collection instead of replacing it
@@ -664,6 +769,13 @@ but it also gives a simple way to append collection to the old value.
       // expected output:
       // UserStats(names = List("John", "Jane"), ages = List(30, 25))
     }
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[UserStats, UserStatsPatch] = Patcher.define[UserStats, UserStatsPatch]
+      .appendCollectionInPatch
+      .buildPatcher
     ```
 
 If the flag was enabled in the implicit config it can be disabled with `.overrideCollectionInPatch`.
@@ -693,6 +805,13 @@ If the flag was enabled in the implicit config it can be disabled with `.overrid
     // clears both fields:
     // expected output:
     // UserStats(names = List("Jane"), ages = List(25))
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[UserStats, UserStatsPatch] = Patcher.define[UserStats, UserStatsPatch]
+      .overrideCollectionInPatch
+      .buildPatcher
     ```
  
 ### Unambiguous collection update
@@ -728,4 +847,12 @@ unambiguous what to do (leave unchanged or replace):
     // ignores updating both fields:
     // expected output:
     // UserStats(names = List("Jane"), ages = List(25))
+    
+    import io.scalaland.chimney.Patcher
+
+    // If we want to reuse Patcher, we can create implicits using:
+    val patcher: Patcher[UserStats, UserStatsPatch] = Patcher.derive[UserStats, UserStatsPatch]
+    // or (if you want to pass overrides):
+    val patcher2: Patcher[UserStats, UserStatsPatch] = Patcher.define[UserStats, UserStatsPatch]
+      .buildPatcher
     ```

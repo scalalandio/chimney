@@ -354,7 +354,7 @@ In particular, when the source type is (`=:=`) the target type, you will end up 
     b.into[A].withFieldConst(_.a, "copied").transform // new A("copied")
 
     import io.scalaland.chimney.Transformer
-    Transformer.define[A, B].withFieldConst(_.a, "copied").buildTransformer.transform(b) // new A("copied")
+    Transformer.define[B, A].withFieldConst(_.a, "copied").buildTransformer.transform(b) // new A("copied")
     ```
     
     since that customization couldn't be applied if we only upcasted the value. 
